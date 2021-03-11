@@ -1,0 +1,33 @@
+file_config:
+  - file_name: ../log/system.log
+    roles:
+      - type: normal
+        level: INFO
+        regex: blockchain \[.*\] start success
+        message: "链${1}启动成功"
+        email: true
+        wx: false
+        wxwork: false
+        mail_config: &mail_ref
+          address: 2795571304@qq.com
+      - type: normal
+        level: ERROR
+        regex: ".*"
+        message: "${message}"
+        email: true
+        wx: false
+        wxwork: false
+        mail_config:
+          <<: *mail_ref
+  - file_name: ../log/panic.log
+    roles:
+      - type: panic
+        message: "panic: ${message}, stack: ${stack}"
+        email: true
+        wx: false
+        wxwork: false
+        mail_config:
+          <<: *mail_ref
+
+alram_center_config:
+  send_mail_url: http://127.0.0.1:12091/alarm-api/v1/mail

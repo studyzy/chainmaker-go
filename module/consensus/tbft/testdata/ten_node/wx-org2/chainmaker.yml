@@ -1,0 +1,76 @@
+blockchain:
+  - chainId: chain1
+    genesis: chainconfig/bc1.yml
+#  - chainId: chain2
+#    genesis: chainconfig/bc2.yml
+
+node:
+  # 节点类型：full、spv
+  type: full
+
+  # node1
+#  priv_key_file: ./certs/wx-org1/node/node.key
+#  cert_file:     ./certs/wx-org1/node/node.crt
+#  priv_key_file: ./crypto-config/wx-org1.chainmaker.org/node/consensus1/consensus1.tls.key
+#  cert_file:     ./crypto-config/wx-org1.chainmaker.org/node/consensus1/consensus1.tls.crt
+#  org_id: wx-org1
+
+  # node2
+#  priv_key_file: ./certs/wx-org2/node/node.key
+#  cert_file:     ./certs/wx-org2/node/node.crt
+  priv_key_file: ./crypto-config/wx-org2.chainmaker.org/node/consensus1/consensus1.tls.key
+  cert_file:     ./crypto-config/wx-org2.chainmaker.org/node/consensus1/consensus1.tls.crt
+  org_id: wx-org2
+
+  # node3
+#  priv_key_file: ./certs/wx-org3/node/node.key
+#  cert_file:     ./certs/wx-org3/node/node.crt
+#  priv_key_file: ./crypto-config/wx-org3.chainmaker.org/node/consensus1/consensus1.tls.key
+#  cert_file:     ./crypto-config/wx-org3.chainmaker.org/node/consensus1/consensus1.tls.crt
+#  org_id: wx-org3
+
+  # node4
+#  priv_key_file: ./certs/wx-org4/node/node.key
+#  cert_file:     ./certs/wx-org4/node/node.crt
+#  priv_key_file: ./crypto-config/wx-org4.chainmaker.org/node/consensus1/consensus1.tls.key
+#  cert_file:     ./crypto-config/wx-org4.chainmaker.org/node/consensus1/consensus1.tls.crt
+#  org_id: wx-org4
+
+net:
+  provider: LibP2P
+  listen_addr: /ip4/0.0.0.0/tcp/6666
+  tls:
+    enabled: true
+    #priv_key_file: ./certs/wx-org2/node/node.key
+    #cert_file:     ./certs/wx-org2/node/node.crt
+    priv_key_file: ./crypto-config/wx-org2.chainmaker.org/node/consensus1/consensus1.tls.key
+    cert_file:     ./crypto-config/wx-org2.chainmaker.org/node/consensus1/consensus1.tls.crt
+
+txpool:
+  max_txpool_size: 5120 # 普通交易池上限
+  max_config_txpool_size: 10 # config交易池的上限
+  full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
+
+rpc:
+  provider: grpc
+  port: 7988
+  tls:
+    # TLS模式:
+    #   disable - 不启用TLS
+    #   oneway  - 单向认证
+    #   twoway  - 双向认证
+    mode: disable
+    #mode: oneway
+#    mode: twoway
+#    priv_key_file:               ./crypto-config/wx-org1.chainmaker.org/node/consensus1/consensus1.tls.key
+#    cert_file:                   ./crypto-config/wx-org1.chainmaker.org/node/consensus1/consensus1.tls.crt
+
+storage:
+  provider: LevelDB
+  store_path: ../testdata/wx-org2/ledgerData
+
+debug:
+  # 是否开启CLI功能，过度期间使用
+  is_cli_open: true
+  is_http_open: false
+

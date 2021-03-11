@@ -1,0 +1,32 @@
+global:
+  scrape_interval:     15s 
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'node'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['172.17.0.1:17989']
+  - job_name: 'wx-org1'
+    scrape_interval: 1s
+    static_configs:
+      - targets: ['172.29.0.1:14321']
+  - job_name: 'wx-org2'
+    scrape_interval: 1s
+    static_configs:
+      - targets: ['172.29.0.1:14322']
+  - job_name: 'wx-org3'
+    scrape_interval: 1s
+    static_configs:
+      - targets: ['172.29.0.1:14323']
+  - job_name: 'wx-org4'
+    scrape_interval: 1s
+    static_configs:
+      - targets: ['172.29.0.1:14324']
+
+
+remote_write:
+  - url: "http://influxdb:8086/api/v1/prom/write?db=prometheus"
+
+remote_read:
+  - url: "http://influxdb:8086/api/v1/prom/read?db=prometheus"

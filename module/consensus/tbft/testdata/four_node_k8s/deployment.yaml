@@ -1,0 +1,432 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: node1
+  labels:
+    node: node1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      node: node1
+  template:
+    metadata:
+      name: node1
+      labels: 
+        node: node1
+    spec:
+      containers:
+        - name: node1
+          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          imagePullPolicy: Always
+          workingDir: "/chainmaker-go/bin"
+          command: 
+            - "/bin/sh"
+            - "-c"
+            - "mkdir /chainmaker-go/config && tar -zxf /tmp/crypto.tgz -C /chainmaker-go && tar -zxf /tmp/config.tgz -C /chainmaker-go/config && chainmaker -e wx-org1 start"
+            # - "mkdir /chainmaker-go/config && tar -zxf /tmp/crypto.tgz -C /chainmaker-go && tar -zxf /tmp/config.tgz -C /chainmaker-go/config && sleep 1000000"
+          ports:
+            - containerPort: 7988
+            - containerPort: 17989
+            - containerPort: 4321
+            - containerPort: 6666
+          volumeMounts:
+            - name: conf
+              mountPath: /tmp
+      volumes:
+        - name: conf
+          configMap:
+            name: conf
+            items:
+              - key: crypto.tgz
+                path: crypto.tgz
+              - key: config.tgz
+                path: config.tgz
+      nodeSelector:
+        kubernetes.io/hostname: vm-16-17-centos
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node1
+  labels:
+    node: node1
+spec:
+  selector:
+    node: node1
+  type: NodePort
+  ports:
+    - name: "grpc" 
+      port: 7988
+      nodePort: 30101 
+    - name: "monitor" 
+      port: 17989
+      nodePort: 30102 
+    - name: "pprof" 
+      port: 4321
+      nodePort: 30103 
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node1-p2p
+  labels:
+    node: node1-p2p
+spec:
+  selector:
+    node: node1
+  ports:
+    - name: "p2p"
+      port: 6666
+      targetPort: 6666
+  clusterIP: 10.96.1.1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: node2
+  labels:
+    node: node2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      node: node2
+  template:
+    metadata:
+      name: node2
+      labels: 
+        node: node2
+    spec:
+      containers:
+        - name: node2
+          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          imagePullPolicy: Always
+          workingDir: "/chainmaker-go/bin"
+          command: 
+            - "/bin/sh"
+            - "-c"
+            - "mkdir /chainmaker-go/config && tar -zxf /tmp/crypto.tgz -C /chainmaker-go && tar -zxf /tmp/config.tgz -C /chainmaker-go/config && chainmaker -e wx-org2 start"
+          ports:
+            - containerPort: 7988
+            - containerPort: 17989
+            - containerPort: 4321
+            - containerPort: 6666
+          volumeMounts:
+            - name: conf
+              mountPath: /tmp
+      volumes:
+        - name: conf
+          configMap:
+            name: conf
+            items:
+              - key: crypto.tgz
+                path: crypto.tgz
+              - key: config.tgz
+                path: config.tgz
+      nodeSelector:
+        kubernetes.io/hostname: vm-16-5-centos
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node2
+  labels:
+    node: node2
+spec:
+  selector:
+    node: node2
+  type: NodePort
+  ports:
+    - name: "grpc" 
+      port: 7988
+      nodePort: 30201 
+    - name: "monitor" 
+      port: 17989
+      nodePort: 30202 
+    - name: "pprof" 
+      port: 4321
+      nodePort: 30203 
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node2-p2p
+  labels:
+    node: node2-p2p
+spec:
+  selector:
+    node: node2
+  ports:
+    - name: "p2p"
+      port: 6666
+      targetPort: 6666
+  clusterIP: 10.96.1.2
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: node3
+  labels:
+    node: node3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      node: node3
+  template:
+    metadata:
+      name: node3
+      labels: 
+        node: node3
+    spec:
+      containers:
+        - name: node3
+          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          imagePullPolicy: Always
+          workingDir: "/chainmaker-go/bin"
+          command: 
+            - "/bin/sh"
+            - "-c"
+            - "mkdir /chainmaker-go/config && tar -zxf /tmp/crypto.tgz -C /chainmaker-go && tar -zxf /tmp/config.tgz -C /chainmaker-go/config && chainmaker -e wx-org3 start"
+          ports:
+            - containerPort: 7988
+            - containerPort: 17989
+            - containerPort: 4321
+            - containerPort: 6666
+          volumeMounts:
+            - name: conf
+              mountPath: /tmp
+      volumes:
+        - name: conf
+          configMap:
+            name: conf
+            items:
+              - key: crypto.tgz
+                path: crypto.tgz
+              - key: config.tgz
+                path: config.tgz
+      nodeSelector:
+        kubernetes.io/hostname: vm-16-6-centos
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node3
+  labels:
+    node: node3
+spec:
+  selector:
+    node: node3
+  type: NodePort
+  ports:
+    - name: "grpc" 
+      port: 7988
+      nodePort: 30301 
+    - name: "monitor" 
+      port: 17989
+      nodePort: 30302 
+    - name: "pprof" 
+      port: 4321
+      nodePort: 30303 
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node3-p2p
+  labels:
+    node: node3-p2p
+spec:
+  selector:
+    node: node3
+  ports:
+    - name: "p2p"
+      port: 6666
+      targetPort: 6666
+  clusterIP: 10.96.1.3
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: node4
+  labels:
+    node: node4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      node: node4
+  template:
+    metadata:
+      name: node4
+      labels: 
+        node: node4
+    spec:
+      containers:
+        - name: node4
+          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          imagePullPolicy: Always
+          workingDir: "/chainmaker-go/bin"
+          command: 
+            - "/bin/sh"
+            - "-c"
+            - "mkdir /chainmaker-go/config && tar -zxf /tmp/crypto.tgz -C /chainmaker-go && tar -zxf /tmp/config.tgz -C /chainmaker-go/config && chainmaker -e wx-org4 start"
+          ports:
+            - containerPort: 7988
+            - containerPort: 17989
+            - containerPort: 4321
+            - containerPort: 6666
+          volumeMounts:
+            - name: conf
+              mountPath: /tmp
+      volumes:
+        - name: conf
+          configMap:
+            name: conf
+            items:
+              - key: crypto.tgz
+                path: crypto.tgz
+              - key: config.tgz
+                path: config.tgz
+      nodeSelector:
+        kubernetes.io/hostname: vm-16-8-centos
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node4
+  labels:
+    node: node4
+spec:
+  selector:
+    node: node4
+  type: NodePort
+  ports:
+    - name: "grpc" 
+      port: 7988
+      nodePort: 30401 
+    - name: "monitor" 
+      port: 17989
+      nodePort: 30402 
+    - name: "pprof" 
+      port: 4321
+      nodePort: 30403 
+---
+apiVersion: v1
+kind: Service
+metadata: 
+  name: node4-p2p
+  labels:
+    node: node4-p2p
+spec:
+  selector:
+    node: node4
+  ports:
+    - name: "p2p"
+      port: 6666
+      targetPort: 6666
+  clusterIP: 10.96.1.4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#---
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: server
+#  labels:
+#    app: server
+#spec:
+#  containers:
+#    - name: server
+#      image: travelping/nettools
+#      imagePullPolicy: IfNotPresent
+#      command: ["nc", "-l", "0.0.0.0", "-p", "8888"]
+#  nodeSelector:
+#    kubernetes.io/hostname: vm-16-5-centos
+#
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: svc
+#spec:
+#  selector:
+#    app: server
+#  ports:
+#    - name: "listen"
+#      port: 8888
+#      targetPort: 8888
+#  clusterIP: 10.96.1.8
+#
+#--- 
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: client1
+#spec:
+#  containers:
+#    - name: client1
+#      image: travelping/nettools
+#      imagePullPolicy: IfNotPresent
+#      command: ["sleep", "10000000"]
+#  nodeSelector:
+#    kubernetes.io/hostname: vm-16-17-centos
+#--- 
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: client2
+#spec:
+#  containers:
+#    - name: client2
+#      image: travelping/nettools
+#      imagePullPolicy: IfNotPresent
+#      command: ["sleep", "10000000"]
+#  nodeSelector:
+#    kubernetes.io/hostname: vm-16-5-centos
+#--- 
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: client3
+#spec:
+#  containers:
+#    - name: client3
+#      image: travelping/nettools
+#      imagePullPolicy: IfNotPresent
+#      command: ["sleep", "10000000"]
+#  nodeSelector:
+#    kubernetes.io/hostname: vm-16-6-centos
+#--- 
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: client4
+#spec:
+#  containers:
+#    - name: client4
+#      image: travelping/nettools
+#      imagePullPolicy: IfNotPresent
+#      command: ["sleep", "10000000"]
+#  nodeSelector:
+#    kubernetes.io/hostname: vm-16-8-centos

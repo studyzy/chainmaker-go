@@ -1,0 +1,2 @@
+CREATE USER chainmaker WITH PASSWORD 'chainmaker' WITH ALL PRIVILEGES;
+CREATE DATABASE prometheus;

@@ -1,0 +1,83 @@
+version: '3'
+
+services:
+  node1:
+    container_name: node1
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org1 start"
+    ports:
+      - "7988:7988"
+      - "17989:17989"
+      - "4321:4321"
+    volumes:
+      - ./wx-org1:/chainmaker-go/config/wx-org1
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ./volume/wx-org1/ledgerData:/chainmaker-go/testdata/wx-org1/ledgerData
+      - ./volume/wx-org1/log:/chainmaker-go/log
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.2
+
+  node2:
+    container_name: node2
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org2 start"
+    ports:
+      - "7989:7988"
+      - "17990:17989"
+      - "4322:4321"
+    volumes:
+      - ./wx-org2:/chainmaker-go/config/wx-org2
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ./volume/wx-org2/ledgerData:/chainmaker-go/testdata/wx-org2/ledgerData
+      - ./volume/wx-org2/log:/chainmaker-go/log
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.3
+
+  node3:
+    container_name: node3
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org3 start"
+    ports:
+      - "7990:7988"
+      - "17991:17989"
+      - "4323:4321"
+    volumes:
+      - ./wx-org3:/chainmaker-go/config/wx-org3
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ./volume/wx-org3/ledgerData:/chainmaker-go/testdata/wx-org3/ledgerData
+      - ./volume/wx-org3/log:/chainmaker-go/log
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.4
+
+  node4:
+    container_name: node4
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org4 start"
+    ports:
+      - "7991:7988"
+      - "17992:17989"
+      - "4324:4321"
+    volumes:
+      - ./wx-org4:/chainmaker-go/config/wx-org4
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
+      - ./volume/wx-org4/ledgerData:/chainmaker-go/testdata/wx-org4/ledgerData
+      - ./volume/wx-org4/log:/chainmaker-go/log
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.5
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 192.168.2.0/16

@@ -1,0 +1,117 @@
+version: '2'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.20.1
+    hostname: prometheus
+    container_name: prom
+    volumes:
+      #- /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - '9090:9090'
+    depends_on:
+      - influxdb
+    networks:
+      prometheus:
+        aliases:
+          - prometheus
+        ipv4_address: 172.29.0.2
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+  grafana:
+    image: grafana/grafana:7.1.2
+    hostname: grafana
+    container_name: grafana
+    volumes:
+      #- /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - ./grafana.ini:/etc/grafana/grafana.ini
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=chainmaker
+    depends_on:
+      - prometheus
+      - mysql
+    ports:
+      - '3000:3000'
+    restart: always
+    networks:
+      prometheus:
+        aliases:
+          - grafana
+        ipv4_address: 172.29.0.3
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+  influxdb:
+    image: influxdb:1.8.1
+    hostname: influxdb
+    container_name: influxdb
+    volumes:
+      #- /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - influxdb_data:/var/lib/influxdb
+    ports:
+      - '8083:8083'
+      - '8086:8086'
+      - '8090:8090'
+    environment:
+      - INFLUXDB_DB=prometheus
+    networks:
+      prometheus:
+        aliases:
+          - influxdb
+        ipv4_address: 172.29.0.4
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+  mysql:
+    image: mysql:8.0.22
+    hostname: mysql
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=chainmaker
+      - MYSQL_DATABASE=grafana
+      - MYSQL_USER=chainmaker
+      - MYSQL_PASSWORD=chainmaker
+    volumes:
+      #- /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+      - mysql_data:/var/lib/mysql
+    ports:
+      - '33306:3306'
+    networks:
+      prometheus:
+        aliases:
+          - mysql
+        ipv4_address: 172.29.0.5
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 100m
+
+networks:
+  prometheus:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/16
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
+  influxdb_data: {}
+  mysql_data: {}

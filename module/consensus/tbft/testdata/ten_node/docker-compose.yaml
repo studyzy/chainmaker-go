@@ -1,0 +1,150 @@
+version: '3'
+
+services:
+  node1:
+    container_name: node1
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org1 start"
+    ports:
+      - "17988:7988"
+    volumes:
+      - ./wx-org1:/chainmaker-go/config/wx-org1
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org1/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.2
+
+  node2:
+    container_name: node2
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org2 start"
+    ports:
+      - "10002:7988"
+    volumes:
+      - ./wx-org2:/chainmaker-go/config/wx-org2
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org2/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.3
+
+  node3:
+   container_name: node3
+   image: "chainmaker:v0.7.0"
+   working_dir: "/chainmaker-go/bin"
+   command: "chainmaker -e wx-org3 start"
+   ports:
+     - "10003:7988"
+   volumes:
+     - ./wx-org3:/chainmaker-go/config/wx-org3
+     - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org3/crypto-config
+   networks:
+     localnet:
+       ipv4_address: 192.168.10.4
+
+  node4:
+   container_name: node4
+   image: "chainmaker:v0.7.0"
+   working_dir: "/chainmaker-go/bin"
+   command: "chainmaker -e wx-org4 start"
+   ports:
+     - "10004:7988"
+   volumes:
+     - ./wx-org4:/chainmaker-go/config/wx-org4
+     - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org4/crypto-config
+   networks:
+     localnet:
+       ipv4_address: 192.168.10.5
+
+  node5:
+    container_name: node5
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org5 start"
+    ports:
+      - "10005:7988"
+    volumes:
+      - ./wx-org5:/chainmaker-go/config/wx-org5
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org5/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.6
+
+  node6:
+    container_name: node6
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org6 start"
+    ports:
+      - "10006:7988"
+    volumes:
+      - ./wx-org6:/chainmaker-go/config/wx-org6
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org6/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.7
+
+  node7:
+    container_name: node7
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org7 start"
+    ports:
+      - "10007:7988"
+    volumes:
+      - ./wx-org7:/chainmaker-go/config/wx-org7
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org7/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.8
+
+  node8:
+    container_name: node8
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org8 start"
+    ports:
+      - "10008:7988"
+    volumes:
+      - ./wx-org8:/chainmaker-go/config/wx-org8
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org8/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.9
+
+  node9:
+    container_name: node9
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org9 start"
+    ports:
+      - "10009:7988"
+    volumes:
+      - ./wx-org9:/chainmaker-go/config/wx-org9
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org9/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.10
+
+  node10:
+    container_name: node10
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org10 start"
+    ports:
+      - "10010:7988"
+    volumes:
+      - ./wx-org10:/chainmaker-go/config/wx-org10
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org10/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.11
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 192.168.10.0/16

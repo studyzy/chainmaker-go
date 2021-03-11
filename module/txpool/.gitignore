@@ -1,0 +1,15 @@
+database
+main/ledgerData
+main/database
+main/store
+main/__debug_bin
+main/main
+module/store/store
+log
+.idea
+**/*.exe
+**/*.log
+release
+bin
+*.log.*
+**/go.sum

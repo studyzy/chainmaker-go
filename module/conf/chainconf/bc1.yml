@@ -1,0 +1,115 @@
+chain_id: chain1     # 链标识
+version: v0.3.0      # 链版本
+sequence: 1          # 配置版本
+auth_type: "identity"# 认证类型
+
+crypto:
+  hash: SHA256
+
+# 交易、区块相关配置
+block:
+  tx_timestamp_verify: true # 是否需要开启交易时间戳校验
+  tx_timeout: 600  # 交易时间戳的过期时间(秒)
+  block_tx_capacity: 100  # 区块中最大交易数
+  block_size: 10  # 区块最大限制，单位MB
+  block_interval: 2000 # 出块间隔，单位:ms
+
+# core模块
+core:
+  tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
+  tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
+
+#共识配置
+consensus:
+  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
+  type: 1
+  # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
+  # 组织若在配置更新中被移除，对应的共识节点也应同步移出共识网络
+  # 规则：
+  #  - 1、org_id不能重复，
+  #  - 2、address中的nodeAddr不能重复，
+  #  - 3、ip+端口号不能重复，
+  #  - 4、创世时，nodes的org_id必须在trust_roots中，
+  #  - 5、若trust_root配置更新中被移除，对应的共识节点也应同步移出共识网络
+  #  - 6、新增共识节点，trust_root中必须存在其机构org_Id
+  nodes:
+    - org_id: "wx-org1"
+      address:
+        - "/ip4/127.0.0.1/tcp/6666/p2p/Qmcuo82hYEDQvB8Fmn6jyVUB7YhiWDaoPgdATJG1LZdh5T"
+    - org_id: "wx-org2"
+      address:
+        - "/ip4/127.0.0.1/tcp/7777/p2p/QmWadx5pdsqBhywJAEfrb21ywLq98jc4rfugWeoMh3Bx1W"
+    - org_id: "wx-org3"
+      address:
+        - "/ip4/127.0.0.1/tcp/8888/p2p/QmNxrWdGePGXwDQwQFMq8Eu3kBNfGbTZxY3sKBhrbxhs4V"
+    - org_id: "wx-org4"
+      address:
+        - "/ip4/127.0.0.1/tcp/9999/p2p/QmcMG1pSHZHMhg4fK4615uamm3TGcu9HAtrCoyVKU4HamD"
+  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+    - key: aa
+      value: chain01_ext11
+
+# 信任组织和根证书
+# 若在后续更新中组织被移除，consensus.nodes中该组织下的节点应自动被移出共识节点
+trust_roots:
+  - org_id: "wx-org1"
+    root: "../../../config/crypto-config/wx-org1.chainmaker.org/ca/ca.crt"
+  - org_id: "wx-org2"
+    root: "../../../config/crypto-config/wx-org2.chainmaker.org/ca/ca.crt"
+  - org_id: "wx-org3"
+    root: "../../../config/crypto-config/wx-org3.chainmaker.org/ca/ca.crt"
+  - org_id: "wx-org4"
+    root: "../../../config/crypto-config/wx-org4.chainmaker.org/ca/ca.crt"
+# 权限配置（只能整体添加、修改、删除）
+resource_policies:
+  - resource_name: NODE_ADDR_UPDATE
+    policy:
+      rule: SELF # 规则（ANY，MAJORITY...，全部大写，自动转大写）
+      org_list: # 组织名称（组织名称，区分大小写）
+      role_list: # 角色名称（role，全部小写，自动转小写）
+        - admin
+  - resource_name: TRUST_ROOT_UPDATE
+    policy:
+      rule: SELF # 规则（ANY，MAJORITY...，全部大写）
+      org_list: # 组织名称（组织名称）
+      role_list: # 角色名称（role，全部小写）
+        - admin
+  - resource_name: CONSENSUS_EXT_DELETE
+    policy:
+      rule: MAJORITY
+      org_list:
+      role_list:
+        - admin
+  - resource_name: BLOCK_UPDATE
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+        - admin
+        - client
+  - resource_name: INIT_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: UPGRADE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: FREEZE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: UNFREEZE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: REVOKE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+

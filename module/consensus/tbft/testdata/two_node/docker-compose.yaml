@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  node1:
+    container_name: node1
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org1 start"
+    ports:
+      - "7988:7988"
+    volumes:
+      - ./wx-org1:/chainmaker-go/config/wx-org1
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org1/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.2
+
+  node2:
+    container_name: node2
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org2 start"
+    ports:
+      - "17988:7988"
+    volumes:
+      - ./wx-org2:/chainmaker-go/config/wx-org2
+      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org2/crypto-config
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.3
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 192.168.2.0/16

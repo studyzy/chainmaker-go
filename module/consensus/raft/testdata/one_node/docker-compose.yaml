@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  node1:
+    container_name: node1
+    image: "chainmaker:v0.7.0"
+    working_dir: "/chainmaker-go/bin"
+    command: "chainmaker -e wx-org1 start"
+    ports:
+      - "7988:7988"
+      - "17989:17989"
+      - "4321:4321"
+    volumes:
+      - ./wx-org1:/chainmaker-go/config/wx-org1
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.2
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 192.168.2.0/16

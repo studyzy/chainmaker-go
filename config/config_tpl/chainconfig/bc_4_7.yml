@@ -1,0 +1,128 @@
+#
+# Copyright (C) BABEC. All rights reserved.
+# Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+chain_id: {chain_id}    # 链标识
+version: v1.0.0         # 链版本
+sequence: 1             # 配置版本
+auth_type: "identity"   # 认证类型
+
+crypto:
+  hash: SHA256
+
+# 交易、区块相关配置
+block:
+  tx_timestamp_verify: true # 是否需要开启交易时间戳校验
+  tx_timeout: 600  # 交易时间戳的过期时间(秒)
+  block_tx_capacity: 100  # 区块中最大交易数
+  block_size: 10  # 区块最大限制，单位MB
+  block_interval: 2000 # 出块间隔，单位:ms
+
+# core模块
+core:
+  tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
+  tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
+
+#共识配置
+consensus:
+  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
+  type: {consensus_type}
+  # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
+  nodes:
+    - org_id: "{org1_id}"
+      address:
+        - "/ip4/127.0.0.1/tcp/{org1_port}/p2p/{org1_peerid}"
+    - org_id: "{org2_id}"
+      address:
+        - "/ip4/127.0.0.1/tcp/{org2_port}/p2p/{org2_peerid}"
+    - org_id: "{org3_id}"
+      address:
+        - "/ip4/127.0.0.1/tcp/{org3_port}/p2p/{org3_peerid}"
+    - org_id: "{org4_id}"
+      address:
+        - "/ip4/127.0.0.1/tcp/{org4_port}/p2p/{org4_peerid}"
+#    - org_id: "{org5_id}"
+#      address:
+#        - "/ip4/127.0.0.1/tcp/{org5_port}/p2p/{org5_peerid}"
+#    - org_id: "{org6_id}"
+#      address:
+#        - "/ip4/127.0.0.1/tcp/{org6_port}/p2p/{org6_peerid}"
+#    - org_id: "{org7_id}"
+#      address:
+#        - "/ip4/127.0.0.1/tcp/{org7_port}/p2p/{org7_peerid}"
+  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+    - key: aa
+      value: chain01_ext11
+
+# 信任组织和根证书
+trust_roots:
+  - org_id: "{org1_id}"
+    root: "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
+  - org_id: "{org2_id}"
+    root: "../config/{org_path}/certs/ca/{org2_id}/ca.crt"
+  - org_id: "{org3_id}"
+    root: "../config/{org_path}/certs/ca/{org3_id}/ca.crt"
+  - org_id: "{org4_id}"
+    root: "../config/{org_path}/certs/ca/{org4_id}/ca.crt"
+#  - org_id: "{org5_id}"
+#    root: "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
+#  - org_id: "{org6_id}"
+#    root: "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
+#  - org_id: "{org7_id}"
+#    root: "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
+
+# 权限配置（只能整体添加、修改、删除）
+resource_policies:
+  - resource_name: NODE_ADDR_UPDATE
+    policy:
+      rule: SELF # 规则（ANY，MAJORITY...，全部大写，自动转大写）
+      org_list: # 组织名称（组织名称，区分大小写）
+      role_list: # 角色名称（role，自动转大写）
+        - admin
+  - resource_name: TRUST_ROOT_UPDATE
+    policy:
+      rule: SELF # 规则（ANY，MAJORITY...，全部大写）
+      org_list: # 组织名称（组织名称）
+      role_list: # 角色名称（role，自动转大写）
+        - admin
+  - resource_name: CONSENSUS_EXT_DELETE
+    policy:
+      rule: MAJORITY
+      org_list:
+      role_list:
+        - admin
+  - resource_name: BLOCK_UPDATE
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+        - admin
+        - client
+  - resource_name: INIT_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: UPGRADE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: FREEZE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: UNFREEZE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: REVOKE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
