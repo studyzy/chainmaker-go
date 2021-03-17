@@ -59,25 +59,35 @@ func startPerf() {
 
     finishNum := int64(0)
     start := time.Now().UnixNano() / 1e6
-    wg := sync.WaitGroup{}
-    for i := int64(0); i < totalCallTimes; i++ {
-        wg.Add(1)
-        go func() {
-            defer wg.Done()
-            invokeCallContract("increase", int32(i), contractId, txContext, byteCode)
-            end := time.Now().UnixNano() / 1e6
-            finished := atomic.AddInt64(&finishNum, 1)
-            //if (end-start)/1000 > 0 && finished % 100 == 0 {
-                fmt.Printf("【tps】 %d/s 【spend】%dms, finished=%d \n",
-                    finished/(int64(end-start)/1000), end-start, finished)
-            //}
-        }()
+    for i := int64(0); i < totalCallTimes; {
+        var createNum int64
+        if i + vmGoroutineNum >= totalCallTimes {
+            createNum = totalCallTimes - i
+        } else {
+            createNum = vmGoroutineNum
+        }
+        i += createNum
+        wg := sync.WaitGroup{}
+        for j := int64(0); j < createNum; j++ {
+            wg.Add(1)
+            go func() {
+                defer wg.Done()
+                invokeCallContract("increase", int32(i), contractId, txContext, byteCode)
+                end := time.Now().UnixNano() / 1e6
+                finished := atomic.AddInt64(&finishNum, 1)
+                //atomic.AddInt64(&finishNum, 1)
+                if (end-start)/1000 > 0 && finished % 100 == 0 {
+                   fmt.Printf("【tps】 %d/s 【spend】%dms, finished=%d \n",
+                       finished * 1000/int64(end-start), end-start, finished)
+                }
+            }()
+        }
+        wg.Wait()
+        end := time.Now().UnixNano() / 1e6
+        fmt.Printf("finished %d task in %dms, average tps is %d, totalCallTimes: %d, vmGoroutineNum: %d, " +
+            "createNum: %d, i: %d\n",
+            finishNum, end-start, finishNum * 1000/(end-start), totalCallTimes, vmGoroutineNum, createNum, i)
     }
-    endGoroutes := time.Now().UnixNano() / 1e6
-    fmt.Printf("begin to wait %d vm goroutines, start goroutines used %dms\n", totalCallTimes, endGoroutes - start)
-    wg.Wait()
-    end := time.Now().UnixNano() / 1e6
-    fmt.Printf("finished %d task in %dms, average tps is %d\n", totalCallTimes, end-start, totalCallTimes/((end-start)/1000))
 }
 
 func invokeCallContract(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) {
@@ -110,7 +120,7 @@ func Perf() *cobra.Command {
 func initFlagSet() *pflag.FlagSet {
     flags := &pflag.FlagSet{}
     flags.Int64Var(&totalCallTimes, flagTotalCallTimes, 500000, "specify run times")
-    flags.Int64Var(&vmGoroutineNum, flagVmGoroutineNum, 10000, "specify run times")
+    flags.Int64Var(&vmGoroutineNum, flagVmGoroutineNum, 50000, "specify goroutines for vm")
     flags.StringVar(&wasmFilePath, flagWasmFilePath, "./counter.wasm", "specify the wasm file path")
     flags.StringVar(&certFilePath, flagCertFilePath, "./client1.sign.crt", "specify user's cert file")
     return flags
