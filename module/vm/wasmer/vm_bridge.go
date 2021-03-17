@@ -174,7 +174,7 @@ func (s *sdkRequestCtx) PutState() int32 {
 		return s.recordMsg(err.Error())
 	}
 	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), []byte(value.(string)))
+	err := s.Sc.TxSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), value.([]byte))
 	if err != nil {
 		return s.recordMsg("method PutState put fail. " + err.Error())
 	}
