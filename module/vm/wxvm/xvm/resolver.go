@@ -1,9 +1,10 @@
 package xvm
 
 import (
-	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
+
+	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 )
 
 const (
@@ -74,50 +75,35 @@ func (s *contextServiceResolver) cCallMethod(
 	requestBuf := codec.Bytes(requestAddr, requestLen)
 	responseBuf := codec.Bytes(responseAddr, responseLen)
 
-	var respMessage proto.Message
+	var respMessage []*serialize.EasyCodecItem
 	var err error
 
 	switch method {
 	case "GetObject":
-		var req GetRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.GetObject(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+
 	case "PutObject":
-		var req PutRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.PutObject(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	case "DeleteObject":
-		var req DeleteRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.DeleteObject(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	case "NewIterator":
-		var req IteratorRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.NewIterator(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	case "GetCallArgs":
-		var req GetCallArgsRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.GetCallArgs(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	case "SetOutput":
-		var req SetOutputRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.SetOutput(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	case "ContractCall":
-		var req ContractCallRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.ContractCall(ctxId, &req, ctx.GasUsed())
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	case "LogMsg":
-		var req LogMsgRequest
-		if err = proto.Unmarshal(requestBuf, &req); err == nil {
-			respMessage, err = s.contextService.LogMsg(ctxId, &req)
-		}
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
 	default:
 		s.contextService.logger.Errorw("no such method ", method)
 	}
@@ -127,7 +113,7 @@ func (s *contextServiceResolver) cCallMethod(
 		return uint32(0)
 	}
 
-	possibleResponseBuf, err := proto.Marshal(respMessage)
+	possibleResponseBuf := serialize.EasyMarshal(respMessage)
 
 	// fast path
 	if err != nil {
