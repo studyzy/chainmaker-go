@@ -88,6 +88,8 @@ var (
 )
 
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
+	ac.orgNum = 0
+	ac.orgList = sync.Map{}
 	for _, root := range roots {
 		org := &organization{
 			id:                       root.OrgId,
@@ -181,6 +183,8 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 }
 
 func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig, localOrgId string) error {
+	ac.orgNum = 0
+	ac.orgList = sync.Map{}
 	for _, root := range roots {
 		org := &organization{
 			id:                       root.OrgId,
