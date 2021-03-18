@@ -19,6 +19,16 @@ VERSION=V1.0.0
 DATETIME=$(date "+%Y%m%d%H%M%S")
 PLATFORM=$(uname -m)
 
+function xsed() {
+    system=$(uname)
+
+    if [ "${system}" = "Linux" ]; then
+        sed -i "$@"
+    else
+        sed -i '' "$@"
+    fi
+}
+
 function check_env() {
     if  [ ! -d $BUILD_CONFIG_PATH ] ;then
         echo $BUILD_CONFIG_PATH" is missing"
@@ -60,14 +70,12 @@ function package() {
         cp $CURRENT_PATH/bin/start.sh     $chainmaker_file/bin
         cp $CURRENT_PATH/bin/stop.sh      $chainmaker_file/bin
         cp $CURRENT_PATH/bin/restart.sh   $chainmaker_file/bin
-#        cp -r $PROJECT_PATH/main/libwasmer_runtime_c_api.so     $chainmaker_file/bin/libwasmer.so
-#        chmod 644 $chainmaker_file/bin/libwasmer.so
         cp -r $PROJECT_PATH/main/libwasmer_runtime_c_api.so     $chainmaker_file/lib/libwasmer.so
         chmod 644 $chainmaker_file/lib/*
         cp -r $BUILD_CONFIG_PATH/node$c/* $chainmaker_file/config/$file
-        sed -i "s%{org_id}%$file%g"       $chainmaker_file/bin/start.sh
-        sed -i "s%{org_id}%$file%g"       $chainmaker_file/bin/stop.sh
-        sed -i "s%{org_id}%$file%g"       $chainmaker_file/bin/restart.sh
+        xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/start.sh
+        xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/stop.sh
+        xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/restart.sh
         tar -zcvf chainmaker-$VERSION-$file-$DATETIME-$PLATFORM.tar.gz $chainmaker_file
         rm -rf $chainmaker_file
     done

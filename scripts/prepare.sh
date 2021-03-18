@@ -36,6 +36,17 @@ if [ ! $# -eq 2 ] && [ ! $# -eq 3 ] && [ ! $# -eq 4 ]; then
     exit 1
 fi
 
+function xsed() {
+    system=$(uname)
+
+    if [ "${system}" = "Linux" ]; then
+        sed -i "$@"
+    else
+        sed -i '' "$@"
+    fi
+}
+
+
 function check_params() {
     echo "begin check params..."
     if  [[ ! -n $NODE_CNT ]] ;then
@@ -94,7 +105,7 @@ function generate_certs() {
 
     cp $CRYPTOGEN_TOOL_CONF crypto_config.yml
 
-    sed -i "s%count: 4%count: ${NODE_CNT}%g" crypto_config.yml
+    xsed "s%count: 4%count: ${NODE_CNT}%g" crypto_config.yml
 
     ${CRYPTOGEN_TOOL_BIN} generate -c ./crypto_config.yml 
 }
@@ -130,56 +141,55 @@ function generate_config() {
         mkdir -p ${BUILD_PATH}/config/node$i
         mkdir -p ${BUILD_PATH}/config/node$i/chainconfig
         cp $CONFIG_TPL_PATH/log.yml node$i
-        sed -i "s%{log_level}%$LOG_LEVEL%g" node$i/log.yml
+        xsed "s%{log_level}%$LOG_LEVEL%g" node$i/log.yml
         cp $CONFIG_TPL_PATH/chainmaker.yml node$i
-        sed -i "s%{log_level}%$LOG_LEVEL%g" node$i/chainmaker.yml
 
-        sed -i "s%{net_port}%$(($P2P_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
-        sed -i "s%{rpc_port}%$(($RPC_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
-        sed -i "s%{monitor_port}%$(($MONITOR_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
-        sed -i "s%{pprof_port}%$(($PPROF_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
-        sed -i "s%{trusted_port}%$(($TRUSTED_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
+        xsed "s%{net_port}%$(($P2P_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
+        xsed "s%{rpc_port}%$(($RPC_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
+        xsed "s%{monitor_port}%$(($MONITOR_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
+        xsed "s%{pprof_port}%$(($PPROF_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
+        xsed "s%{trusted_port}%$(($TRUSTED_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
-            sed -i "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
-            sed -i "s%#\(.*\)genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
+            xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
+            xsed "s%#\(.*\)genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
 
             if  [ $NODE_CNT -eq 1 ]; then
                 cp $CONFIG_TPL_PATH/chainconfig/bc_solo.yml node$i/chainconfig/bc$j.yml
-                sed -i "s%{consensus_type}%0%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{consensus_type}%0%g" node$i/chainconfig/bc$j.yml
             elif [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
                 cp $CONFIG_TPL_PATH/chainconfig/bc_4_7.yml node$i/chainconfig/bc$j.yml
-                sed -i "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
             elif [ $NODE_CNT -eq 16 ]; then
                 cp $CONFIG_TPL_PATH/chainconfig/bc_16.yml node$i/chainconfig/bc$j.yml
-                sed -i "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
             else
                 cp $CONFIG_TPL_PATH/chainconfig/bc_10_13.yml node$i/chainconfig/bc$j.yml
-                sed -i "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
             fi
 
-            sed -i "s%{chain_id}%chain$j%g" node$i/chainconfig/bc$j.yml
-            sed -i "s%{org_top_path}%$file%g" node$i/chainconfig/bc$j.yml
+            xsed "s%{chain_id}%chain$j%g" node$i/chainconfig/bc$j.yml
+            xsed "s%{org_top_path}%$file%g" node$i/chainconfig/bc$j.yml
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then
-                sed -i "s%#\(.*\)- org_id:%\1- org_id:%g" node$i/chainconfig/bc$j.yml
-                sed -i "s%#\(.*\)address:%\1address:%g" node$i/chainconfig/bc$j.yml
-                sed -i "s%#\(.*\)root:%\1root:%g" node$i/chainconfig/bc$j.yml
-                sed -i "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)- org_id:%\1- org_id:%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)address:%\1address:%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)root:%\1root:%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml
             fi
 
             for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
-                sed -i "s%{org${k}_port}%$(($P2P_PORT_PREFIX+$k))%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{org${k}_port}%$(($P2P_PORT_PREFIX+$k))%g" node$i/chainconfig/bc$j.yml
             done
 
             c=0
             for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
             do
                 c=$(($c+1))
-                sed -i "s%{org${c}_id}%$file%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{org${c}_id}%$file%g" node$i/chainconfig/bc$j.yml
 
                 peerId=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/node/consensus1/consensus1.nodeid`
-                sed -i "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
+                xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
 
                 for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
                     mkdir -p $BUILD_CONFIG_PATH/node$k/certs/ca/$file
@@ -187,13 +197,13 @@ function generate_config() {
                 done
 
                 if  [ $c -eq $i ]; then
-                    sed -i "s%{org_path}%$file%g" node$i/chainconfig/bc$j.yml
-                    sed -i "s%{node_cert_path}%node\/consensus1\/consensus1.sign%g" node$i/chainmaker.yml
-                    sed -i "s%{net_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
-                    sed -i "s%{rpc_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
-                    sed -i "s%{org_id}%$file%g" node$i/chainmaker.yml
-                    sed -i "s%{org_path}%$file%g" node$i/chainmaker.yml
-                    sed -i "s%{org_path$j}%$file%g" node$i/chainmaker.yml
+                    xsed "s%{org_path}%$file%g" node$i/chainconfig/bc$j.yml
+                    xsed "s%{node_cert_path}%node\/consensus1\/consensus1.sign%g" node$i/chainmaker.yml
+                    xsed "s%{net_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
+                    xsed "s%{rpc_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
+                    xsed "s%{org_id}%$file%g" node$i/chainmaker.yml
+                    xsed "s%{org_path}%$file%g" node$i/chainmaker.yml
+                    xsed "s%{org_path$j}%$file%g" node$i/chainmaker.yml
 
                     cp -r $BUILD_CRYPTO_CONFIG_PATH/$file/node $BUILD_CONFIG_PATH/node$i/certs
                     cp -r $BUILD_CRYPTO_CONFIG_PATH/$file/user $BUILD_CONFIG_PATH/node$i/certs
