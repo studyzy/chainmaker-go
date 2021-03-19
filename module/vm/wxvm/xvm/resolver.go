@@ -82,28 +82,27 @@ func (s *contextServiceResolver) cCallMethod(
 	case "GetObject":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
 		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
-
 	case "PutObject":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.PutObject(ctxId, reqItems)
 	case "DeleteObject":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.DeleteObject(ctxId, reqItems)
 	case "NewIterator":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.NewIterator(ctxId, reqItems)
 	case "GetCallArgs":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.GetCallArgs(ctxId, reqItems)
 	case "SetOutput":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.SetOutput(ctxId, reqItems)
 	case "ContractCall":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.ContractCall(ctxId, reqItems, ctx.GasUsed())
 	case "LogMsg":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
+		respMessage, err = s.contextService.LogMsg(ctxId, reqItems)
 	default:
 		s.contextService.logger.Errorw("no such method ", method)
 	}
