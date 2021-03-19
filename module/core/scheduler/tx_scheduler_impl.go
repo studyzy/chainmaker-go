@@ -343,8 +343,7 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 			parameterPairs = payload.Parameters
 			parameters = ts.parseParameter(parameterPairs)
 		} else {
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			return result, fmt.Errorf("failed to unmarshal query payload for tx %s", tx.Header.TxId)
+			return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Header.TxId, err))
 		}
 	case commonpb.TxType_INVOKE_USER_CONTRACT:
 		var payload commonpb.TransactPayload
@@ -354,8 +353,7 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 			parameterPairs = payload.Parameters
 			parameters = ts.parseParameter(parameterPairs)
 		} else {
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			return result, fmt.Errorf("failed to unmarshal transact payload for tx %s", tx.Header.TxId)
+			return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Header.TxId, err))
 		}
 	case commonpb.TxType_INVOKE_SYSTEM_CONTRACT:
 		var payload commonpb.SystemContractPayload
@@ -365,8 +363,7 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 			parameterPairs = payload.Parameters
 			parameters = ts.parseParameter(parameterPairs)
 		} else {
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			return result, fmt.Errorf("failed to unmarshal invoke payload for tx %s", tx.Header.TxId)
+			return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
 		}
 	case commonpb.TxType_UPDATE_CHAIN_CONFIG:
 		var payload commonpb.SystemContractPayload
@@ -379,28 +376,24 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 			sequence = payload.Sequence
 
 			if endorsements == nil {
-				result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-				return result, fmt.Errorf("endorsements not found in config update payload, tx id:%s", tx.Header.TxId)
+				return errResult(result, fmt.Errorf("endorsements not found in config update payload, tx id:%s", tx.Header.TxId))
 			}
 			payload.Endorsement = nil
 			verifyPayloadBytes, err := proto.Marshal(&payload)
 
 			if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
-				result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-				return result, err
+				return errResult(result, err)
 			}
 
 			ts.log.Debugf("chain config update [%d] [%v]", sequence, endorsements)
 		} else {
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			return result, fmt.Errorf("failed to unmarshal system contract payload for tx %s", tx.Header.TxId)
+			return errResult(result, fmt.Errorf("failed to unmarshal system contract payload for tx %s, %s", tx.Header.TxId, err.Error()))
 		}
 	case commonpb.TxType_MANAGE_USER_CONTRACT:
 		var payload commonpb.ContractMgmtPayload
 		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 			if payload.ContractId == nil {
-				result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-				return result, fmt.Errorf("param is nil")
+				return errResult(result, fmt.Errorf("param is null"))
 			}
 			contractName = payload.ContractId.ContractName
 			runtimeType = payload.ContractId.RuntimeType
@@ -412,24 +405,20 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 			endorsements = payload.Endorsement
 
 			if endorsements == nil {
-				result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-				return result, fmt.Errorf("endorsements not found in contract mgmt payload, tx id:%s", tx.Header.TxId)
+				return errResult(result, fmt.Errorf("endorsements not found in contract mgmt payload, tx id:%s", tx.Header.TxId))
 			}
 
 			payload.Endorsement = nil
 			verifyPayloadBytes, err := proto.Marshal(&payload)
 
 			if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
-				result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-				return result, err
+				return errResult(result, err)
 			}
 		} else {
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			return result, fmt.Errorf("failed to unmarshal contract mgmt payload for tx %s", tx.Header.TxId)
+			return errResult(result, fmt.Errorf("failed to unmarshal contract mgmt payload for tx %s, %s", tx.Header.TxId, err.Error()))
 		}
 	default:
-		result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-		return result, fmt.Errorf("no such tx type: %s", tx.Header.TxType)
+		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Header.TxType))
 	}
 
 	contractId = &commonpb.ContractId{
@@ -440,35 +429,19 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 
 	// verify parameters
 	if len(parameters) > protocol.ParametersKeyMaxCount {
-		msg := fmt.Sprintf("expect less than %d parameters, but get %d, tx id:%s", protocol.ParametersKeyMaxCount, len(parameters),
-			tx.Header.TxId)
-		result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-		result.ContractResult.Code = commonpb.ContractResultCode_FAIL
-		result.ContractResult.Message = msg
-		return result, errors.New(msg)
+		return errResult(result, fmt.Errorf("expect less than %d parameters, but get %d, tx id:%s", protocol.ParametersKeyMaxCount, len(parameters),
+			tx.Header.TxId))
 	}
 	for key, val := range parameters {
 		if len(key) > protocol.DefaultStateLen {
-			msg := fmt.Sprintf("expect key length less than %d, but get %d, tx id:%s", protocol.DefaultStateLen, len(key), tx.Header.TxId)
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			result.ContractResult.Code = commonpb.ContractResultCode_FAIL
-			result.ContractResult.Message = msg
-			return result, errors.New(msg)
+			return errResult(result, fmt.Errorf("expect key length less than %d, but get %d, tx id:%s", protocol.DefaultStateLen, len(key), tx.Header.TxId))
 		}
 		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {
-			msg := fmt.Sprintf("expect key no special characters, but get %s. letter, number, dot and underline are allowed, tx id:%s", key, tx.Header.TxId)
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			result.ContractResult.Code = commonpb.ContractResultCode_FAIL
-			result.ContractResult.Message = msg
-			return result, errors.New(msg)
+			return errResult(result, fmt.Errorf("expect key no special characters, but get %s. letter, number, dot and underline are allowed, tx id:%s", key, tx.Header.TxId))
 		}
 		if len(val) > protocol.ParametersValueMaxLength {
-			msg := fmt.Sprintf("expect value length less than %d, but get %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId)
-			result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-			result.ContractResult.Code = commonpb.ContractResultCode_FAIL
-			result.ContractResult.Message = msg
-			return result, errors.New(msg)
+			return errResult(result, fmt.Errorf("expect value length less than %d, but get %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId))
 		}
 	}
 	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contractId, method, byteCode, parameters, txSimContext, 0, tx.Header.TxType)
@@ -483,6 +456,12 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 	}
 }
 
+func errResult(result *commonpb.Result, err error) (*commonpb.Result, error) {
+	result.ContractResult.Message = err.Error()
+	result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
+	result.ContractResult.Code = commonpb.ContractResultCode_FAIL
+	return result, err
+}
 func (ts *TxSchedulerImpl) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string]string {
 	parameters := make(map[string]string, 16)
 	for i := 0; i < len(parameterPairs); i++ {

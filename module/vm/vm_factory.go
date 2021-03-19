@@ -86,14 +86,14 @@ func (m *ManagerImpl) RunContract(contractId *commonPb.ContractId, method string
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_OK,
+		Code:    commonPb.ContractResultCode_FAIL,
 		Result:  nil,
 		Message: "",
 	}
 
 	contractName := contractId.ContractName
 	if contractName == "" {
-		contractResult.Code = commonPb.ContractResultCode_FAIL
+		contractResult.Message = "contractName not found"
 		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_CONTRACT_NAME
 	}
 
@@ -113,7 +113,6 @@ func (m *ManagerImpl) RunContract(contractId *commonPb.ContractId, method string
 
 	if native.IsNative(contractName, refTxType) {
 		if method == "" {
-			contractResult.Code = commonPb.ContractResultCode_FAIL
 			contractResult.Message = "require param method not found."
 			return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_METHOD
 		}
