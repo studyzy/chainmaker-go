@@ -6,12 +6,14 @@ import (
     commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
     "chainmaker.org/chainmaker-go/protocol"
     "chainmaker.org/chainmaker-go/vm/test"
+    "chainmaker.org/chainmaker-go/wasmer"
     "fmt"
     "github.com/spf13/cobra"
     "github.com/spf13/pflag"
     "log"
     "net/http"
     _ "net/http/pprof"
+    "strings"
     "sync"
     "sync/atomic"
     "time"
@@ -20,6 +22,7 @@ import (
 const (
     flagTotalCallTimes = "total-call-times"
     flagVmGoroutineNum = "vm-goroutines-num"
+    flagVmType = "vm-type"
     flagWasmFilePath   = "wasm-file-path"
     flagCertFilePath   = "cert-file-path"
 )
@@ -27,6 +30,7 @@ const (
 var (
     totalCallTimes int64
     vmGoroutineNum int64
+    vmType string
     wasmFilePath   string
     certFilePath string
 )
@@ -51,7 +55,19 @@ func main()  {
 func startPerf() {
     test.WasmFile = wasmFilePath
     test.CertFilePath = certFilePath
-    contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_GASM)
+    var contractId *commonPb.ContractId
+    var txContext *test.TxContextMockTest
+    var byteCode []byte
+    var vmTypeInt int
+    if strings.ToLower(vmType) == "gasm" {
+        vmTypeInt = 0
+        contractId, txContext, byteCode = test.InitContextTest(commonPb.RuntimeType_GASM)
+    } else if strings.ToLower(vmType) == "wasmer" {
+        vmTypeInt = 1
+        contractId, txContext, byteCode = test.InitContextTest(commonPb.RuntimeType_WASMER)
+    } else {
+        log.Fatal("unknown vm type: ", vmType, ", only support gasm or wasmer")
+    }
 
     if len(byteCode) == 0 {
         panic("error byteCode==0")
@@ -68,11 +84,17 @@ func startPerf() {
         }
         i += createNum
         wg := sync.WaitGroup{}
+        pool := wasmer.NewVmPoolManager("Counter")
         for j := int64(0); j < createNum; j++ {
             wg.Add(1)
             go func() {
                 defer wg.Done()
-                invokeCallContract("increase", int32(i), contractId, txContext, byteCode)
+                if vmTypeInt == 0 {
+                    invokeContractOfGasm("increase", contractId, txContext, byteCode)
+                } else {
+                    invokeContractOfWasmer("increase", contractId, txContext, pool, byteCode)
+                }
+
                 end := time.Now().UnixNano() / 1e6
                 finished := atomic.AddInt64(&finishNum, 1)
                 //atomic.AddInt64(&finishNum, 1)
@@ -90,7 +112,7 @@ func startPerf() {
     }
 }
 
-func invokeCallContract(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) {
+func invokeContractOfGasm(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) {
    parameters := make(map[string]string)
    test.BaseParam(parameters)
    //parameters["contract_name"] = test.ContractNameTest
@@ -103,6 +125,15 @@ func invokeCallContract(method string, id int32, contractId *commonPb.ContractId
    runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
+func invokeContractOfWasmer(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+    parameters := make(map[string]string)
+    test.BaseParam(parameters)
+    //parameters["key"] = "key"
+
+    runtime, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
+    runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+}
+
 func Perf() *cobra.Command {
     perfCmd := &cobra.Command{
         Use:   "perf",
@@ -113,7 +144,7 @@ func Perf() *cobra.Command {
             return nil
         },
     }
-    attachFlags(perfCmd, []string{flagTotalCallTimes, flagVmGoroutineNum, flagWasmFilePath, flagCertFilePath})
+    attachFlags(perfCmd, []string{flagTotalCallTimes, flagVmGoroutineNum, flagVmType, flagWasmFilePath, flagCertFilePath})
     return perfCmd
 }
 
@@ -121,7 +152,8 @@ func initFlagSet() *pflag.FlagSet {
     flags := &pflag.FlagSet{}
     flags.Int64Var(&totalCallTimes, flagTotalCallTimes, 500000, "specify run times")
     flags.Int64Var(&vmGoroutineNum, flagVmGoroutineNum, 50000, "specify goroutines for vm")
-    flags.StringVar(&wasmFilePath, flagWasmFilePath, "./counter.wasm", "specify the wasm file path")
+    flags.StringVar(&vmType, flagVmType, "gasm", "specify vm type")
+    flags.StringVar(&wasmFilePath, flagWasmFilePath, "./counter-go.wasm", "specify the wasm file path")
     flags.StringVar(&certFilePath, flagCertFilePath, "./client1.sign.crt", "specify user's cert file")
     return flags
 }
