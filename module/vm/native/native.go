@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"errors"
 	"fmt"
+	"github.com/Workiva/go-datastructures/threadsafe/err"
 	"github.com/gogo/protobuf/proto"
 	"sync"
 )
@@ -61,43 +62,39 @@ func initContract(log *logger.CMLogger) map[string]Contract {
 func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName string, _ []byte, parameters map[string]string,
 	txContext protocol.TxSimContext) *commonPb.ContractResult {
 
+	result := &commonPb.ContractResult{
+		Code:    commonPb.ContractResultCode_FAIL,
+		Message: "",
+		Result:  nil,
+	}
+
 	txType := txContext.GetTx().Header.TxType
 	if txType == commonPb.TxType_UPDATE_CHAIN_CONFIG {
 		if err := r.verifySequence(txContext); err != nil {
-			return &commonPb.ContractResult{
-				Code:    commonPb.ContractResultCode_FAIL,
-				Message: fmt.Sprintf(err.Error()+",txType: %s", txType),
-				Result:  nil,
-			}
+			result.Message = fmt.Sprintf(err.Error()+",txType: %s", txType)
+			return result
 		}
 	}
 
 	f, err := r.getContractFunc(contractId, methodName)
 	if err != nil {
 		r.log.Error(err)
-		return &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
-			Message: err.Error(),
-			Result:  nil,
-		}
+		result.Message = err.Error()
+		return result
 	}
 
 	// exec
 	bytes, err := f(txContext, parameters)
 	if err != nil {
 		r.log.Error(err)
-		return &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
-			Message: err.Error(),
-			Result:  nil,
-		}
+		result.Message = err.Error()
+		return result
 	}
 
-	return &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_OK,
-		Message: commonPb.ContractResultCode_OK.String(),
-		Result:  bytes,
-	}
+	result.Code = commonPb.ContractResultCode_OK
+	result.Message = commonPb.ContractResultCode_OK.String()
+	result.Result = bytes
+	return result
 }
 
 func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error {
