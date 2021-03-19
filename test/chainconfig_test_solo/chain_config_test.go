@@ -85,7 +85,7 @@ func TestGetChainConfigAt(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_height",
-		Value: "0",
+		Value: "14",
 	})
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
@@ -136,23 +136,23 @@ func TestUpdateBlock(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timestamp_verify",
-		Value: "true",
+		Value: "false",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timeout",
-		Value: "-1",
+		Value: "660",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_tx_capacity",
-		Value: "10",
+		Value: "90",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_size",
-		Value: "10",
+		Value: "15",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_interval",
-		Value: "3000",
+		Value: "1500",
 	})
 
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_BLOCK_UPDATE.String(), pairs, chainConfig.Sequence)

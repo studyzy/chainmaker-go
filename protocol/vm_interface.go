@@ -29,7 +29,7 @@ const (
 	DefaultVersionLen   = 64                  // key & name for contract state length
 	DefaultVersionRegex = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
 
-	ParametersKeyMaxCount    = 20 //
+	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
 	ContractTxIdsKey      = ":T:"
