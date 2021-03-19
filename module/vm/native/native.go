@@ -13,7 +13,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"errors"
 	"fmt"
-	"github.com/Workiva/go-datastructures/threadsafe/err"
 	"github.com/gogo/protobuf/proto"
 	"sync"
 )
