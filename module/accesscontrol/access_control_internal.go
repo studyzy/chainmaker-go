@@ -88,8 +88,6 @@ var (
 )
 
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
-	ac.orgNum = 0
-	ac.orgList = sync.Map{}
 	for _, root := range roots {
 		org := &organization{
 			id:                       root.OrgId,
@@ -183,8 +181,6 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 }
 
 func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig, localOrgId string) error {
-	ac.orgNum = 0
-	ac.orgList = sync.Map{}
 	for _, root := range roots {
 		org := &organization{
 			id:                       root.OrgId,
@@ -728,7 +724,7 @@ func (ac *accessControl) addOrg(org *organization) {
 
 // Cache for compressed certificate
 func (ac *accessControl) lookUpCertCache(certId string) ([]byte, bool) {
-	ret, ok := ac.certCache.get(certId)
+	ret, ok := ac.certCache.Get(certId)
 	if !ok {
 		ac.log.Debugf("looking up the full certificate for the compressed one [%v]", []byte(certId))
 		if ac.dataStore == nil {
@@ -758,7 +754,7 @@ func (ac *accessControl) lookUpCertCache(certId string) ([]byte, bool) {
 }
 
 func (ac *accessControl) addCertCache(signer string, cert []byte) {
-	ac.certCache.add(signer, cert)
+	ac.certCache.Add(signer, cert)
 }
 
 // Check certificate chain against CRL and frozen list
@@ -918,7 +914,7 @@ func (ac *accessControl) checkCertFrozenList(certChain []*bcx509.Certificate) er
 
 // Local cache for signer verification
 func (ac *accessControl) lookUpSignerInCache(signer string) (*cachedSigner, bool) {
-	ret, ok := ac.memberCache.get(signer)
+	ret, ok := ac.memberCache.Get(signer)
 	if ok {
 		return ret.(*cachedSigner), true
 	}
@@ -926,7 +922,7 @@ func (ac *accessControl) lookUpSignerInCache(signer string) (*cachedSigner, bool
 }
 
 func (ac *accessControl) addSignerToCache(signer string, info *cachedSigner) {
-	ac.memberCache.add(signer, info)
+	ac.memberCache.Add(signer, info)
 }
 
 func getP11HandleId() string {
