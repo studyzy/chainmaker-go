@@ -92,7 +92,7 @@ func TestCertQueryWithCertId(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "cert_hashes",
-		Value: "b297d4e74ba0a88f9d154d63e53f2bf57116e09b6b8d2a718c24e59175f74cbe",
+		Value: "03725dc03b236f098153adea0fdf9a09dfe67fc8606a9ee1be7075c22e209a08",
 	})
 
 	sk, _ := native.GetUserSK(1)
