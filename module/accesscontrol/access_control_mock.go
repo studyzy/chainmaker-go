@@ -12,8 +12,11 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/golang/groupcache/lru"
 	"sync"
 )
+
+var mockAcLogger = logger.GetLogger(logger.MODULE_ACCESS)
 
 func MockAccessControl() protocol.AccessControlProvider {
 	ac := &accessControl{
@@ -24,8 +27,8 @@ func MockAccessControl() protocol.AccessControlProvider {
 		hashType:              "",
 		identityType:          "",
 		dataStore:             nil,
-		memberCache:           newSimpleCache(0),
-		certCache:             newSimpleCache(0),
+		memberCache:           lru.New(0),
+		certCache:             lru.New(0),
 		crl:                   sync.Map{},
 		frozenList:            sync.Map{},
 		opts: bcx509.VerifyOptions{
@@ -33,7 +36,7 @@ func MockAccessControl() protocol.AccessControlProvider {
 			Roots:         bcx509.NewCertPool(),
 		},
 		localOrg: nil,
-		log:      logger.GetLogger(logger.MODULE_ACCESS),
+		log:      mockAcLogger,
 	}
 	return ac
 }
@@ -47,8 +50,8 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 		hashType:              hashAlg,
 		identityType:          "",
 		dataStore:             nil,
-		memberCache:           newSimpleCache(0),
-		certCache:             newSimpleCache(0),
+		memberCache:           lru.New(0),
+		certCache:             lru.New(0),
 		crl:                   sync.Map{},
 		frozenList:            sync.Map{},
 		opts: bcx509.VerifyOptions{
@@ -56,7 +59,7 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 			Roots:         bcx509.NewCertPool(),
 		},
 		localOrg: nil,
-		log:      logger.GetLogger(logger.MODULE_ACCESS),
+		log:      mockAcLogger,
 	}
 	return ac
 }

@@ -24,6 +24,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
+	"github.com/golang/groupcache/lru"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -64,10 +65,10 @@ type accessControl struct {
 	dataStore protocol.BlockchainStore
 
 	// local cache for the other members on the chain
-	memberCache *simpleCache
+	memberCache *lru.Cache
 
 	// local cache for certificates (reduce the size of block)
-	certCache *simpleCache
+	certCache *lru.Cache
 
 	// local cache for certificate revocation list and frozen list
 	crl        sync.Map
@@ -102,8 +103,8 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 		hashType:              chainConfig.GetCrypto().GetHash(),
 		identityType:          "",
 		dataStore:             store,
-		memberCache:           newSimpleCache(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
-		certCache:             newSimpleCache(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
+		memberCache:           lru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
+		certCache:             lru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
 		crl:                   sync.Map{},
 		frozenList:            sync.Map{},
 		opts: bcx509.VerifyOptions{
@@ -469,8 +470,8 @@ func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
 	ac.opts.KeyUsages = make([]x509.ExtKeyUsage, 1)
 	ac.opts.KeyUsages[0] = x509.ExtKeyUsageAny
 
-	ac.memberCache.reset()
-	ac.certCache.reset()
+	ac.memberCache.Clear()
+	ac.certCache.Clear()
 
 	return nil
 }
