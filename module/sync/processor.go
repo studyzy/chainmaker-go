@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
 	"sync/atomic"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -80,7 +81,7 @@ func (pro *processor) handleProcessBlockMsg() (queue.Item, error) {
 	)
 	pendingBlockHeight := pro.lastCommitBlockHeight() + 1
 	if info, exist = pro.queue[pendingBlockHeight]; !exist {
-		pro.log.Debugf("block [%d] not find in queue [%v].", pendingBlockHeight, pro.queue)
+		//pro.log.Debugf("block [%d] not find in queue [%v].", pendingBlockHeight, pro.queue)
 		return nil, nil
 	}
 	if status = pro.validateAndCommitBlock(info.blk); status == ok {
