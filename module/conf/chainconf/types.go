@@ -18,6 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"strings"
 )
@@ -109,7 +110,13 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 
 func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfig) error {
 	// load all ca root certs
+	orgIds := make(map[string]string)
 	for _, root := range config.TrustRoots {
+		if _, ok := orgIds[root.OrgId]; ok {
+			err := fmt.Errorf("check root certificate failed, org id [%s] already exist", root.OrgId)
+			log.Error(err)
+			return err
+		}
 		// check root cert
 		if ok, err := utils.CheckRootCertificate(root.Root); err != nil && !ok {
 			log.Errorf("check root certificate failed, %s", err.Error())
@@ -120,6 +127,7 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 		if block == nil {
 			return errors.New("root is empty")
 		}
+		orgIds[root.OrgId] = ""
 	}
 	return nil
 }
