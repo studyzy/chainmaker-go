@@ -7,15 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"fmt"
+	"strconv"
+	"sync"
+
+	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/common/vmcbor"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"sync"
 )
 
 // SimContext record the contract context
@@ -61,10 +62,8 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 	runtimeSdkType := sdkType.ToI32()
 	if int32(commonPb.RuntimeType_WASMER) == runtimeSdkType {
 		sc.parameters[protocol.ContractContextPtrParam] = strconv.Itoa(int(sc.CtxPtr))
-		bytes, err = json.Marshal(sc.parameters)
-		if err != nil {
-			return err
-		}
+		easyCodeItems := serialize.ParamsMapToEasyCodecItem(sc.parameters)
+		bytes = serialize.EasyMarshal(easyCodeItems)
 	} else {
 		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d", uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
 	}

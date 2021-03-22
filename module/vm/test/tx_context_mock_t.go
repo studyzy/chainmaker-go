@@ -18,7 +18,7 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 
-var certFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
 var WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 
 var txType = commonPb.TxType_INVOKE_USER_CONTRACT
@@ -59,7 +59,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 
 	if file == nil {
 		var err error
-		file, err = ioutil.ReadFile(certFilePath)
+		file, err = ioutil.ReadFile(CertFilePath)
 		if err != nil {
 			panic("file is nil" + err.Error())
 		}
