@@ -86,6 +86,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		}
 	}
 	logStr += fmt.Sprintf("used gas %d ", gas)
+	contractResult.GasUsed = int64(gas)
 
 	if err != nil {
 		contractResult.Code = commonPb.ContractResultCode_FAIL
