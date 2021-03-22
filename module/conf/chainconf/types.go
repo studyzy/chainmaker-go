@@ -110,10 +110,9 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 
 func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfig) error {
 	// load all ca root certs
-	orgIds := make(map[string]string)
 	for _, root := range config.TrustRoots {
-		if _, ok := orgIds[root.OrgId]; ok {
-			err := fmt.Errorf("check root certificate failed, org id [%s] already exist", root.OrgId)
+		if _, ok := mConfig.CaRoots[root.OrgId]; ok {
+			err := fmt.Errorf("check root certificate failed, org id [%s] already exists", root.OrgId)
 			log.Error(err)
 			return err
 		}
@@ -127,7 +126,6 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 		if block == nil {
 			return errors.New("root is empty")
 		}
-		orgIds[root.OrgId] = ""
 	}
 	return nil
 }
