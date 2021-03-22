@@ -181,13 +181,13 @@ func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) (
 	if !ok {
 		return nil, fmt.Errorf("set output  bad ctx id:%d", ctxId)
 	}
-	code, ok := serialize.GetValueFromItems(in, "code", serialize.EasyKeyType_SYSTEM)
+	code, ok := serialize.GetValueFromItems(in, "code", serialize.EasyKeyType_USER)
 	if !ok {
 		return nil, fmt.Errorf("set out put respsonse have no code:%d", ctxId)
 	}
-	msg, _ := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_SYSTEM)
+	msg, _ := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
 
-	result, _ := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_SYSTEM)
+	result, _ := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_USER)
 
 	switch code.(int32) {
 	case 0:
