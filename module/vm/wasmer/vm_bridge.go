@@ -44,7 +44,7 @@ var log = logger.GetLogger(logger.MODULE_VM)
 // sdkRequestCtx record wasmer vm request parameter
 type sdkRequestCtx struct {
 	Sc            *SimContext
-	RequestHeader []*serialize.EasyCodecItem // sdk request common json param
+	RequestHeader []*serialize.EasyCodecItem // sdk request common easy codec param
 	RequestBody   []byte                     // sdk request param
 	Memory        []byte                     // cache call method GetStateLen value result
 }
