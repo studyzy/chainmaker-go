@@ -23,9 +23,8 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/fact-rust-0.7.2.wasm"
-	//test.WasmFile = "../../../../test/wasm/counter-rust-0.7.1.wasm"
-	//test.WasmFile = "../../../../test/wasm/fact-js-0.7.1.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-functional-verify-1.0.0.wasm"
+	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
 
@@ -36,18 +35,14 @@ func TestCallFact(t *testing.T) {
 	println("start") // 2.9m
 	start := time.Now().UnixNano() / 1e6
 	wg := sync.WaitGroup{}
-	for i := 0; i < 10; i++ {
-		for j := 0; j < 10; j++ {
+	for i := 0; i < 1; i++ {
+		for j := 0; j < 1; j++ {
 			x++
 			y := x
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				//invokeCounter2("increase", y, contractId, txContext, pool, bytes)
-				//invokeCounter2("query", y, contractId, txContext, pool, bytes)
-				invokeFact("save", y, contractId, txContext, pool, bytes)
-				invokeFact("find_by_file_hash", y, contractId, txContext, pool, bytes)
-				//invokeFact("memory_test", y, contractId, txContext, pool, bytes)
+				invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
 
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%1000 == 0 {
@@ -66,15 +61,6 @@ func TestCallFact(t *testing.T) {
 	pool.ResetAllPool()
 	//time.Sleep(time.Second * 500)
 	runtime.GC()
-}
-
-func invokeCounter2(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	parameters := make(map[string]string)
-	parameters["key"] = "key"
-
-	baseParam(parameters)
-	runtime, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
-	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
 func invokeFact(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {

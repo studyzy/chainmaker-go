@@ -1,13 +1,14 @@
 package xvm
 
 import (
+	"errors"
+	"fmt"
+	"sync"
+
+	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"errors"
-	"fmt"
-	"sort"
-	"sync"
 )
 
 const DefaultCap = 10
@@ -51,20 +52,7 @@ func (c *ContextService) MakeContext(contractId *commonPb.ContractId, txSimConte
 		ContractResult: contractResult,
 	}
 	c.ctxMap[ctx.ID] = ctx
-
-	var args []*ArgPair
-	for key, value := range parameters {
-		args = append(args, &ArgPair{
-			Key:   key,
-			Value: []byte(value),
-		})
-	}
-	sort.Slice(args, func(i, j int) bool {
-		return args[i].Key < args[j].Key
-	})
-	ctx.callArgs = &CallArgs{
-		Args: args,
-	}
+	ctx.callArgs = serialize.ParamsMapToEasyCodecItem(parameters)
 	return ctx
 }
 
@@ -75,64 +63,101 @@ func (c *ContextService) DestroyContext(ctx *Context) {
 }
 
 // PutObject implements Syscall interface
-func (c *ContextService) PutObject(ctxId int64, in *PutRequest) (*PutResponse, error) {
+func (c *ContextService) PutObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("put object encounter bad ctx id:%d", ctxId)
 	}
-	context.TxSimContext.Put(context.ContractId.ContractName, in.Key, in.Value)
-
-	return &PutResponse{}, nil
+	key, ok := serialize.GetValueFromItems(in, "key", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("put object request have no key:%d", ctxId)
+	}
+	value, ok := serialize.GetValueFromItems(in, "value", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("put object request have no value:%d", ctxId)
+	}
+	context.TxSimContext.Put(context.ContractId.ContractName, []byte(key.(string)), []byte(value.(string)))
+	items := make([]*serialize.EasyCodecItem, 0)
+	return items, nil
 }
 
 // GetObject implements Syscall interface
-func (c *ContextService) GetObject(ctxId int64, in *GetRequest) (*GetResponse, error) {
+func (c *ContextService) GetObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("get object encounter bad ctx id:%d", ctxId)
 	}
-	value, err := context.TxSimContext.Get(context.ContractId.ContractName, in.Key)
+	key, ok := serialize.GetValueFromItems(in, "key", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("get object request have no key:%d", ctxId)
+	}
+	value, err := context.TxSimContext.Get(context.ContractId.ContractName, []byte(key.(string)))
 
 	if err != nil {
 		return nil, err
 	}
-	return &GetResponse{
-		Value: value,
-	}, nil
+	items := make([]*serialize.EasyCodecItem, 0)
+	var valueItem serialize.EasyCodecItem
+	valueItem.Key = "value"
+	valueItem.KeyType = serialize.EasyKeyType_USER
+	valueItem.ValueType = serialize.EasyValueType_BYTES
+	valueItem.Value = value
+	items = append(items, &valueItem)
+	return items, nil
 }
 
 // DeleteObject implements Syscall interface
-func (c *ContextService) DeleteObject(ctxId int64, in *DeleteRequest) (*DeleteResponse, error) {
+func (c *ContextService) DeleteObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("delete object encounter bad ctx id:%d", ctxId)
 	}
-	err := context.TxSimContext.Del(context.ContractId.ContractName, in.Key)
+	key, ok := serialize.GetValueFromItems(in, "key", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("delete object request have no key:%d", ctxId)
+	}
+	err := context.TxSimContext.Del(context.ContractId.ContractName, []byte(key.(string)))
 	if err != nil {
 		return nil, err
 	}
-	return &DeleteResponse{}, nil
+	items := make([]*serialize.EasyCodecItem, 0)
+	return items, nil
 }
 
 // NewIterator implements Syscall interface
-func (c *ContextService) NewIterator(ctxId int64, in *IteratorRequest) (*IteratorResponse, error) {
+func (c *ContextService) NewIterator(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("new iterator encounter bad ctx id:%d", ctxId)
 	}
-	limit := in.Cap
-	if limit <= 0 {
-		limit = DefaultCap
+	limit, ok := serialize.GetValueFromItems(in, "limit", serialize.EasyKeyType_SYSTEM)
+	if !ok {
+		return nil, fmt.Errorf("new iterator request have no limit:%d", ctxId)
 	}
-	iter, _ := context.TxSimContext.Select(context.ContractId.ContractName, in.Start, in.Limit)
+	start, ok := serialize.GetValueFromItems(in, "start", serialize.EasyKeyType_SYSTEM)
+	if !ok {
+		return nil, fmt.Errorf("new iterator request have no start:%d", ctxId)
+	}
+	cap, ok := serialize.GetValueFromItems(in, "cap", serialize.EasyKeyType_SYSTEM)
+	if !ok {
+		return nil, fmt.Errorf("new iterator request have no cap:%d", ctxId)
+	}
+	capLimit := cap.(int32)
+	if capLimit <= 0 {
+		capLimit = DefaultCap
+	}
+	iter, _ := context.TxSimContext.Select(context.ContractId.ContractName, []byte(start.(string)), []byte(limit.(string)))
 
-	out := new(IteratorResponse)
-	for iter.Next() && limit > 0 {
-		out.Items = append(out.Items, &IteratorItem{
-			Key:   append([]byte(""), iter.Key()...), //make a copy
-			Value: append([]byte(""), iter.Value()...),
-		})
-		limit -= 1
+	//out := new(IteratorResponse)
+	out := make([]*serialize.EasyCodecItem, 0)
+	for iter.Next() && capLimit > 0 {
+		var item serialize.EasyCodecItem
+		item.Key = string(iter.Key())
+		item.KeyType = serialize.EasyKeyType_USER
+		item.ValueType = serialize.EasyValueType_BYTES
+		item.Value = iter.Value()
+		out = append(out, &item)
+		capLimit -= 1
 	}
 	if iter.Error() != nil {
 		return nil, errors.New(fmt.Sprintf("Select error, %s", iter.Error()))
@@ -142,7 +167,7 @@ func (c *ContextService) NewIterator(ctxId int64, in *IteratorRequest) (*Iterato
 }
 
 // GetCallArgs implements Syscall interface
-func (c *ContextService) GetCallArgs(ctxId int64, in *GetCallArgsRequest) (*CallArgs, error) {
+func (c *ContextService) GetCallArgs(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("get call args encounter bad ctx id:%d", ctxId)
@@ -151,57 +176,85 @@ func (c *ContextService) GetCallArgs(ctxId int64, in *GetCallArgsRequest) (*Call
 }
 
 // SetOutput implements Syscall interface
-func (c *ContextService) SetOutput(ctxId int64, in *SetOutputRequest) (*SetOutputResponse, error) {
+func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
-		return nil, fmt.Errorf("set output encounter bad ctx id:%d", ctxId)
+		return nil, fmt.Errorf("set output  bad ctx id:%d", ctxId)
 	}
-	resp := in.GetResponse()
-	switch resp.Code {
+	code, ok := serialize.GetValueFromItems(in, "code", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("set out put respsonse have no code:%d", ctxId)
+	}
+	msg, _ := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
+
+	result, _ := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_USER)
+
+	switch code.(int32) {
 	case 0:
 		context.ContractResult.Code = commonPb.ContractResultCode_OK
 	default:
 		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	}
-	context.ContractResult.Message = resp.Message
-	context.ContractResult.Result = resp.Result
-	return new(SetOutputResponse), nil
+	context.ContractResult.Message = msg.(string)
+	context.ContractResult.Result = result.([]byte)
+	items := make([]*serialize.EasyCodecItem, 0)
+	return items, nil
 }
 
 // ContractCall implements Syscall interface
-func (c *ContextService) ContractCall(ctxId int64, in *ContractCallRequest, gasUsed uint64) (*ContractCallResponse, error) {
+func (c *ContextService) ContractCall(ctxId int64, in []*serialize.EasyCodecItem, gasUsed uint64) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("contract call encounter bad ctx id:%d", ctxId)
 	}
-	paramMap := make(map[string]string, 8)
-
-	for _, arg := range in.Args {
-		paramMap[arg.Key] = string(arg.Value)
+	contract, ok := serialize.GetValueFromItems(in, "contract", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("contract call request  have no contract name:%d", ctxId)
 	}
-
-	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: in.Contract}, in.Method, nil, paramMap, gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
-
+	method, ok := serialize.GetValueFromItems(in, "method", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("contract call request  have no method name:%d", ctxId)
+	}
+	args, ok := serialize.GetValueFromItems(in, "args", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("contract call request  have no args:%d", ctxId)
+	}
+	argsItems := serialize.EasyUnmarshal(args.([]byte))
+	paramMap := serialize.EasyCodecItemToParamsMap(argsItems)
+	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contract.(string)}, method.(string), nil, paramMap, gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
+	respItems := make([]*serialize.EasyCodecItem, 0)
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
-		return &ContractCallResponse{
-			Response: &Response{
-				Code:    int32(contractResult.Code),
-				Message: contractResult.Message,
-				Result:  contractResult.Result,
-			},
-		}, fmt.Errorf(contractResult.Message)
+		var codeItem serialize.EasyCodecItem
+		codeItem.KeyType = serialize.EasyKeyType_USER
+		codeItem.Key = "code"
+		codeItem.ValueType = serialize.EasyValueType_INT32
+		codeItem.Value = contractResult.Code
+		respItems = append(respItems, &codeItem)
+		var msgItem serialize.EasyCodecItem
+		msgItem.KeyType = serialize.EasyKeyType_USER
+		msgItem.Key = "msg"
+		msgItem.ValueType = serialize.EasyValueType_STRING
+		msgItem.Value = contractResult.Message
+		respItems = append(respItems, &msgItem)
+		var resultItem serialize.EasyCodecItem
+		resultItem.KeyType = serialize.EasyKeyType_USER
+		resultItem.Key = "result"
+		resultItem.ValueType = serialize.EasyValueType_BYTES
+		resultItem.Value = contractResult.Result
+		respItems = append(respItems, &resultItem)
+		return respItems, fmt.Errorf(contractResult.Message)
 	}
-	return &ContractCallResponse{
-		Response: nil,
-	}, nil
+	return respItems, nil
 }
 
 // PostLog handle log entry from contract
-func (c *ContextService) LogMsg(ctxId int64, in *LogMsgRequest) (*LogMsgResponse, error) {
+func (c *ContextService) LogMsg(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", ctxId)
 	}
-	c.logger.Debugf("wxvm log >>[%s] [%d] %s", context.TxSimContext.GetTx().Header.TxId, ctxId, in.Msg)
-	return new(LogMsgResponse), nil
+	msg, _ := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
+	c.logger.Debugf("wxvm log >>[%s] [%d] %s", context.TxSimContext.GetTx().Header.TxId, ctxId, msg.(string))
+	msgItems := make([]*serialize.EasyCodecItem, 0)
+	return msgItems, nil
 }
