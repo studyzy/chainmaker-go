@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
 	"fmt"
 	"math"
 	"sort"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -152,7 +153,7 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 	)
 
 	if !sch.isNeedSync() {
-		sch.log.Debugf("no need to sync block")
+		//sch.log.Debugf("no need to sync block")
 		return nil, nil
 	}
 	if pendingHeight = sch.nextHeightToReq(); pendingHeight < 0 {
@@ -212,8 +213,8 @@ func (sch *scheduler) isNeedSync() bool {
 		panic(err)
 	}
 	max := sch.maxHeight()
-	sch.log.Debugf("currHeight: %d, max height:%d in peers, ret: %v", currHeight,
-		max, currHeight+1 < max || (currHeight+1 == max && time.Since(sch.lastRequest) > sch.reqTimeThreshold))
+	//sch.log.Debugf("currHeight: %d, max height:%d in peers, ret: %v", currHeight,
+	//	max, currHeight+1 < max || (currHeight+1 == max && time.Since(sch.lastRequest) > sch.reqTimeThreshold))
 	// The reason for the interval of 1 block is that the block to
 	// be synchronized is being processed by the consensus module.
 	return currHeight+1 < max || (currHeight+1 == max && time.Since(sch.lastRequest) > sch.reqTimeThreshold)
