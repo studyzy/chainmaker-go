@@ -7,16 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker-go/common/json"
-	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"fmt"
 	"regexp"
 	"strconv"
 	"sync"
 	"unsafe"
+
+	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
+	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 
 // #include <stdlib.h>
@@ -43,9 +44,9 @@ var log = logger.GetLogger(logger.MODULE_VM)
 // sdkRequestCtx record wasmer vm request parameter
 type sdkRequestCtx struct {
 	Sc            *SimContext
-	RequestHeader *RequestHeader // sdk request common json param
-	RequestBody   []byte         // sdk request param
-	Memory        []byte         // cache call method GetStateLen value result
+	RequestHeader []*serialize.EasyCodecItem // sdk request common easy codec param
+	RequestBody   []byte                     // sdk request param
+	Memory        []byte                     // cache call method GetStateLen value result
 }
 
 // LogMessage print log to file
@@ -79,25 +80,27 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 	copy(requestHeaderByte, memory[requestHeaderPtr:requestHeaderPtr+requestHeaderLen])
 	requestBody := make([]byte, requestBodyLen)
 	copy(requestBody, memory[requestBodyPtr:requestBodyPtr+requestBodyLen])
-
-	requestHeader := &RequestHeader{}
-	if err := json.Unmarshal(requestHeaderByte, requestHeader); err != nil {
-		log.Errorf("unmarshal requestHeader param fail: %s requestHeader=%s  requestBody=%s", err.Error(), string(requestHeaderByte), string(requestBody))
-		return protocol.ContractSdkSignalResultFail
+	var requestHeaderItems []*serialize.EasyCodecItem
+	requestHeaderItems = serialize.EasyUnmarshal(requestHeaderByte)
+	ctxPtr, ok := serialize.GetValueFromItems(requestHeaderItems, "ctx_ptr", serialize.EasyKeyType_SYSTEM)
+	if !ok {
+		log.Error("get ctx_ptr failed:%s requestHeader=%s requestBody=%s", "request header have no ctx_ptr", string(requestHeaderByte), string(requestBody))
 	}
-
 	vbm := GetVmBridgeManager()
-	sc := vbm.get(requestHeader.CtxPtr)
+	sc := vbm.get(ctxPtr.(int32))
 
 	s := &sdkRequestCtx{
 		Sc:            sc,
-		RequestHeader: requestHeader,
+		RequestHeader: requestHeaderItems,
 		RequestBody:   requestBody,
 		Memory:        memory,
 	}
 
-	method := requestHeader.Method
-	switch method {
+	method, ok := serialize.GetValueFromItems(requestHeaderItems, "method", serialize.EasyKeyType_SYSTEM)
+	if !ok {
+		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody))
+	}
+	switch method.(string) {
 	case protocol.ContractMethodLogMessage:
 		return s.LogMessage()
 	case protocol.ContractMethodGetStateLen:
@@ -133,29 +136,28 @@ func (s *sdkRequestCtx) GetState() int32 {
 }
 
 func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
-	req := &GetStateRequest{}
-	if err := json.Unmarshal(s.RequestBody, req); err != nil {
-		msg := fmt.Sprintf("unmarshal method getStateCore request param fail. param=%s error: %s", string(s.RequestBody), err.Error())
-		return s.recordMsg(msg)
-	}
-	if err := protocol.CheckKeyFieldStr(req.Key, req.Field); err != nil {
+	req := serialize.EasyUnmarshal(s.RequestBody)
+	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
+	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
+	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+
+	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
 		return s.recordMsg(err.Error())
 	}
 
-	valuePtr := req.ValuePtr
 	if isGetLen {
 		contractName := s.Sc.ContractId.ContractName
-		value, err := s.Sc.TxSimContext.Get(contractName, protocol.GetKeyStr(req.Key, req.Field))
+		value, err := s.Sc.TxSimContext.Get(contractName, protocol.GetKeyStr(key.(string), field.(string)))
 		if err != nil {
-			msg := fmt.Sprintf("method getStateCore get fail. key=%s, field=%s, error:%s", req.Key, req.Field, err.Error())
+			msg := fmt.Sprintf("method getStateCore get fail. key=%s, field=%s, error:%s", key.(string), field.(string), err.Error())
 			return s.recordMsg(msg)
 		}
-		copy(s.Memory[valuePtr:valuePtr+4], IntToBytes(int32(len(value))))
+		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], IntToBytes(int32(len(value))))
 		s.Sc.GetStateCache = value
 	} else {
 		len := int32(len(s.Sc.GetStateCache))
 		if len != 0 {
-			copy(s.Memory[valuePtr:valuePtr+len], s.Sc.GetStateCache)
+			copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+len], s.Sc.GetStateCache)
 			s.Sc.GetStateCache = nil
 		}
 	}
@@ -164,18 +166,15 @@ func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
 
 // PutState put state to chain
 func (s *sdkRequestCtx) PutState() int32 {
-
-	req := &PutStateRequest{}
-	if err := json.Unmarshal(s.RequestBody, req); err != nil {
-		msg := fmt.Sprintf("unmarshal method PutState request param fail. param=%s error: %s", string(s.RequestBody), err.Error())
-		return s.recordMsg(msg)
-	}
-	if err := protocol.CheckKeyFieldStr(req.Key, req.Field); err != nil {
+	req := serialize.EasyUnmarshal(s.RequestBody)
+	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
+	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
+	value, _ := serialize.GetValueFromItems(req, "value", serialize.EasyKeyType_USER)
+	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
 		return s.recordMsg(err.Error())
 	}
-
 	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Put(contractName, protocol.GetKeyStr(req.Key, req.Field), []byte(req.Value))
+	err := s.Sc.TxSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), value.([]byte))
 	if err != nil {
 		return s.recordMsg("method PutState put fail. " + err.Error())
 	}
@@ -184,17 +183,16 @@ func (s *sdkRequestCtx) PutState() int32 {
 
 // DeleteState delete state from chain
 func (s *sdkRequestCtx) DeleteState() int32 {
+	req := serialize.EasyUnmarshal(s.RequestBody)
+	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
+	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
 
-	req := &DeleteStateRequest{}
-	if err := json.Unmarshal(s.RequestBody, req); err != nil {
-		return s.recordMsg("unmarshal method DeleteState request param fail: " + err.Error())
-	}
-	if err := protocol.CheckKeyFieldStr(req.Key, req.Field); err != nil {
+	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
 		return s.recordMsg(err.Error())
 	}
 
 	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Del(contractName, protocol.GetKeyStr(req.Key, req.Field))
+	err := s.Sc.TxSimContext.Del(contractName, protocol.GetKeyStr(key.(string), field.(string)))
 	if err != nil {
 		return s.recordMsg(err.Error())
 	}
@@ -228,55 +226,53 @@ func (s *sdkRequestCtx) CallContract() int32 {
 
 func (s *sdkRequestCtx) callContractCore(isGetLen bool) int32 {
 
-	req := &CallContractRequest{}
-	if err := json.Unmarshal(s.RequestBody, req); err != nil {
-		return s.recordMsg("unmarshal method CallContract request param fail: " + err.Error())
-	}
-
-	param := req.Param
-	valuePtr := req.ValuePtr
-	contractName := req.ContractName
-	method := req.Method
+	req := serialize.EasyUnmarshal(s.RequestBody)
+	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
+	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
+	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
+	paramItem := serialize.EasyUnmarshal(param.([]byte))
 
 	if !isGetLen { // get value from cache
 		result := s.Sc.TxSimContext.GetCurrentResult()
-		copy(s.Memory[valuePtr:valuePtr+int32(len(result))], result)
+		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+(int32)(len(result))], result)
 		return protocol.ContractSdkSignalResultSuccess
 	}
 
 	// check param
-	if len(contractName) == 0 {
+	if len(contractName.(string)) == 0 {
 		return s.recordMsg("CallContract contractName is null")
 	}
-	if len(method) == 0 {
+	if len(method.(string)) == 0 {
 		return s.recordMsg("CallContract method is null")
 	}
-	if len(param) > protocol.ParametersKeyMaxCount {
-		return s.recordMsg("expect less than 20 parameters, but get " + strconv.Itoa(len(param)))
+	if len(paramItem) > protocol.ParametersKeyMaxCount {
+		return s.recordMsg("expect less than 20 parameters, but get " + strconv.Itoa(len(paramItem)))
 	}
-	for key, value := range param {
-		if len(key) > protocol.DefaultStateLen {
-			msg := fmt.Sprintf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(key))
+	for _, item := range paramItem {
+		if len(item.Key) > protocol.DefaultStateLen {
+			msg := fmt.Sprintf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(item.Key))
 			return s.recordMsg(msg)
 		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
+		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
 		if err != nil || !match {
-			msg := fmt.Sprintf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", key)
+			msg := fmt.Sprintf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", item.Key)
 			return s.recordMsg(msg)
 		}
-		if len(value) > protocol.ParametersValueMaxLength {
-			msg := fmt.Sprintf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(value))
+		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
+			msg := fmt.Sprintf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string)))
 			return s.recordMsg(msg)
 		}
 	}
-	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
+	if err := protocol.CheckKeyFieldStr(contractName.(string), method.(string)); err != nil {
 		return s.recordMsg(err.Error())
 	}
 
 	// call contract
 	usedGas := s.Sc.Instance.GetGasUsed() + protocol.CallContractGasOnce
 	s.Sc.Instance.SetGasUsed(usedGas)
-	result, code := s.Sc.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contractName}, method, nil, param, usedGas, commonPb.TxType_INVOKE_USER_CONTRACT)
+	paramMap := serialize.EasyCodecItemToParamsMap(paramItem)
+	result, code := s.Sc.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, usedGas, commonPb.TxType_INVOKE_USER_CONTRACT)
 	usedGas = s.Sc.Instance.GetGasUsed() + uint64(result.GasUsed)
 	s.Sc.Instance.SetGasUsed(usedGas)
 	if code != commonPb.TxStatusCode_SUCCESS {
@@ -284,7 +280,7 @@ func (s *sdkRequestCtx) callContractCore(isGetLen bool) int32 {
 	}
 	// set value length to memory
 	l := IntToBytes(int32(len(result.Result)))
-	copy(s.Memory[valuePtr:valuePtr+4], l)
+	copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], l)
 	return protocol.ContractSdkSignalResultSuccess
 }
 
