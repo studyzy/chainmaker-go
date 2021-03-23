@@ -196,7 +196,7 @@ func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) (
 		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	}
 	context.ContractResult.Message = msg.(string)
-	context.ContractResult.Result = result.([]byte)
+	context.ContractResult.Result = []byte(result.(string))
 	items := make([]*serialize.EasyCodecItem, 0)
 	return items, nil
 }
