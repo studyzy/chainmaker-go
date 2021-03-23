@@ -116,27 +116,61 @@ func startPerf() {
            finishNum, end-start, finishNum * 1000/(end-start), totalCallTimes, vmGoroutineNum, createNum, i, gas)
     }
     end := time.Now().UnixNano() / 1e6
-    f, err := os.OpenFile("Vm Performance Report.md", os.O_APPEND|os.O_CREATE, 0644)
+    var f *os.File
+    var err error
+    f, err = os.OpenFile("Vm Performance Report.html", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
         fmt.Println("open report file err", err)
     }
+    fileInfo, err := f.Stat()
+    if err != nil {
+        fmt.Println("file stat err: ", err)
+    }
+    if fileInfo.Size() > 4096 {
+        f.Close()
+        os.Rename("Vm Performance Report.html", "Vm Performance Report-"+time.Now().Format(time.RFC3339)+".html")
+        f, err = os.OpenFile("Vm Performance Report.html", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+        if err != nil {
+            fmt.Println("open report file again err", err)
+        }
+    }
     defer f.Close()
+    var reportStr string
+    now := time.Now()
     if vmTypeInt == 0 {
-        fmt.Printf("## Gasm VM Benchmarks\n### Contract: %s\n### Tps: %d\n### Total call times: %d\n" +
+        fmt.Printf("## Gasm VM Benchmark Test\n### Time: %d-%02d-%02d %02d:%02d:%02d\n" +
+            "### Contract: %s\n### Tps: %d\n### Total call times: %d\n" +
             "### Go routines(concurrent instances): %d\n### Spend time: %d\n### Used gas: %d\n",
+            now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
             wasmFilePath, finishNum * 1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)
-        f.Write([]byte(fmt.Sprintf("## Gasm VM Benchmarks\n###Contract: %s\n" +
-            "### Tps: %d\n### Total call times: %d\n### Go routines(concurrent instances): %d\n" +
-            "### Spend time: %d\n### Used gas: %d\n",
-            wasmFilePath, finishNum*1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)))
+        reportStr = fmt.Sprintf("<h1>Gasm VM Benchmark Test</h1>\n<h3>Time: %d-%02d-%02d %02d:%02d:%02d</h3>\n" +
+            "<h3>Contract: %s</h3>\n<h3> Tps: %d</h3>\n<h3>Total call times: %d</h3>\n<h3>Go routines(concurrent instances): %d</h3>\n" +
+            "<h3>Spend time: %dms</h3>\n<h3> Used gas: %d</h3>\n",
+            now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
+            wasmFilePath, finishNum*1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)
     } else {
-        fmt.Printf("## Wasmer VM Benchmarks\n### Contract: %s\n### Tps: %d\n### Total call times: %d\n" +
+        fmt.Printf("## Wasmer VM Benchmark Test\n### Time: %d-%02d-%02d %02d:%02d:%02d\n" +
+            "### Contract: %s\n### Tps: %d\n### Total call times: %d\n" +
             "### Go routines: %d\n### Concurrent instances: 10\n### Spend time: %d\n### Used gas: %d\n",
+            now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
             wasmFilePath, finishNum * 1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)
-        f.Write([]byte(fmt.Sprintf("## Wasmer VM Benchmarks\n### Contract: %s\n" +
-            "### Tps: %d\n### Total call times: %d\n### Go routines: %d\n### Concurrent instances: 10\n" +
-            "### Spend time: %d\n### Used gas: %d\n",
-            wasmFilePath, finishNum * 1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)))
+        //reportStr = fmt.Sprintf("## Wasmer VM Benchmark Test\n### Time: %d-%02d-%02d %02d:%02d:%02d\n" +
+        //    "### Contract: %s\n### Tps: %d\n### Total call times: %d\n### Go routines: %d\n" +
+        //    "### Concurrent instances: 10\n### Spend time: %dms\n### Used gas: %d\n",
+        //    now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
+        //    wasmFilePath, finishNum * 1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)
+        reportStr = fmt.Sprintf("<h1>Wasmer VM Benchmark Test</h1>\n<h3>Time: %d-%02d-%02d %02d:%02d:%02d</h3>\n" +
+            "<h3>Contract: %s</h3>\n<h3>Tps: %d</h3>\n<h3>Total call times: %d</h3>\n<h3>Go routines: %d</h3>\n" +
+            "<h3>Concurrent instances: 10</h3>\n<h3>Spend time: %dms</h3>\n<h3>Used gas: %d</h3>\n",
+            now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
+            wasmFilePath, finishNum * 1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)
+    }
+    writeLen, err := f.Write([]byte(reportStr))
+    if err != nil {
+        fmt.Println("write file error: ", err)
+    }
+    if writeLen != len(reportStr) {
+        fmt.Print("write file len is not equal real data len")
     }
 }
 
