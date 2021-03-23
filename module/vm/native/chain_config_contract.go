@@ -829,13 +829,13 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 
 		for i, config := range extConfig {
 			if key == config.Key {
-				chainConfig.Consensus.ExtConfig = append(extConfig[:i], extConfig[i+1:]...)
+				extConfig = append(extConfig[:i], extConfig[i+1:]...)
 				changed = true
 				break
 			}
 		}
 	}
-
+	chainConfig.Consensus.ExtConfig = extConfig
 	if !changed {
 		r.log.Error(ErrParams)
 		return nil, ErrParams
