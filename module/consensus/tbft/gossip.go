@@ -90,6 +90,9 @@ func (g *gossipService) addValidators(validators []string) error {
 
 	g.logger.Infof("[%s] gossipService, add validators: %v", g.id, validators)
 	for _, id := range validators {
+		if id == g.id {
+			continue
+		}
 		pss := NewPeerStateService(g.logger, id, g.tbftImpl)
 		g.peerStates[id] = pss
 		pss.start()
