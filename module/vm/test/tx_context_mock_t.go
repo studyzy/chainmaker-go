@@ -44,7 +44,7 @@ var file []byte
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *TxContextMockTest, []byte) {
 	if bytes == nil {
 		bytes, _ = wasm.ReadBytes(WasmFile)
-		fmt.Printf("ReadBytes len=%d", len(bytes))
+		fmt.Printf("Wasm file size=%d\n", len(bytes))
 	}
 
 	contractId := commonPb.ContractId{
