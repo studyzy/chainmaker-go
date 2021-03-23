@@ -126,11 +126,16 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 		}
 
 		ac.addOrg(org)
-
-		if localOrgId == org.id {
-			ac.localOrg = org
+	}
+	localOrg := ac.getOrgByOrgId(localOrgId)
+	if localOrg == nil {
+		localOrg = &organization{
+			id:                       localOrgId,
+			trustedRootCerts:         map[string]*bcx509.Certificate{},
+			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
 	}
+	ac.localOrg = localOrg
 	return nil
 }
 
@@ -211,11 +216,17 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 		}
 
 		ac.addOrg(org)
-
-		if localOrgId == org.id {
-			ac.localOrg = org
+	}
+	localOrg := ac.getOrgByOrgId(localOrgId)
+	if localOrg == nil {
+		localOrg = &organization{
+			id:                       localOrgId,
+			trustedRootCerts:         map[string]*bcx509.Certificate{},
+			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
 	}
+	ac.localOrg = localOrg
+
 	return nil
 }
 
