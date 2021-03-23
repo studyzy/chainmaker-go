@@ -26,6 +26,7 @@ const (
     flagVmType = "vm-type"
     flagWasmFilePath   = "wasm-file-path"
     flagCertFilePath   = "cert-file-path"
+    flagReportFilePath   = "report-file-path"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
     vmType string
     wasmFilePath   string
     certFilePath string
+    reportFilePath string
 )
 
 func main()  {
@@ -118,20 +120,23 @@ func startPerf() {
     end := time.Now().UnixNano() / 1e6
     var f *os.File
     var err error
-    f, err = os.OpenFile("Vm Performance Report.html", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    f, err = os.OpenFile(reportFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
         fmt.Println("open report file err", err)
+        return
     }
     fileInfo, err := f.Stat()
     if err != nil {
         fmt.Println("file stat err: ", err)
+        return
     }
     if fileInfo.Size() > 4096 {
         f.Close()
-        os.Rename("Vm Performance Report.html", "Vm Performance Report-"+time.Now().Format(time.RFC3339)+".html")
-        f, err = os.OpenFile("Vm Performance Report.html", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+        os.Rename(reportFilePath, reportFilePath+"-"+time.Now().Format(time.RFC3339))
+        f, err = os.OpenFile(reportFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
         if err != nil {
             fmt.Println("open report file again err", err)
+            return
         }
     }
     defer f.Close()
@@ -208,7 +213,8 @@ func Perf() *cobra.Command {
             return nil
         },
     }
-    attachFlags(perfCmd, []string{flagTotalCallTimes, flagVmGoroutineNum, flagVmType, flagWasmFilePath, flagCertFilePath})
+    attachFlags(perfCmd, []string{flagTotalCallTimes, flagVmGoroutineNum, flagVmType, flagWasmFilePath,
+        flagCertFilePath, flagReportFilePath})
     return perfCmd
 }
 
@@ -219,6 +225,7 @@ func initFlagSet() *pflag.FlagSet {
     flags.StringVar(&vmType, flagVmType, "gasm", "specify vm type")
     flags.StringVar(&wasmFilePath, flagWasmFilePath, "./counter-go.wasm", "specify the wasm file path")
     flags.StringVar(&certFilePath, flagCertFilePath, "./client1.sign.crt", "specify user's cert file")
+    flags.StringVar(&reportFilePath, flagReportFilePath, "./Vm Performance Report.html", "specify the report file")
     return flags
 }
 
