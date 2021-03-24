@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"encoding/json"
 	"fmt"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -32,7 +33,7 @@ func ChainConfigGetGovernmentContractCMD() *cobra.Command {
 func getGovernmentContract() error {
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_GOVERNMENT.String(), commonPb.QueryFunction_GET_GOVERNMENT_CONTRACT.String(), pairs)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(), commonPb.QueryFunction_GET_GOVERNANCE_CONTRACT.String(), pairs)
 	if err != nil {
 		return err
 	}
@@ -42,7 +43,7 @@ func getGovernmentContract() error {
 		return err
 	}
 
-	mbftInfo := &consensusPb.GovernmentContract{}
+	mbftInfo := &consensusPb.GovernanceContract{}
 	err = proto.Unmarshal(resp.ContractResult.Result, mbftInfo)
 	if err != nil {
 		return err
