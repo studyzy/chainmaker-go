@@ -8,6 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"strings"
+	"time"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
@@ -19,17 +26,11 @@ import (
 	discoveryPb "chainmaker.org/chainmaker-go/pb/protogo/discovery"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"context"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"io/ioutil"
-	"strings"
-	"time"
 )
 
 var (
@@ -84,7 +85,7 @@ type Result struct {
 	MultiSignInfo         *commonPb.MultiSignInfo         `json:"multiSignInfo,omitempty"`
 	PayloadHash           string                          `json:"payloadHash,omitempty"`
 	ShortCert             string                          `json:"shortCert,omitempty"`
-	GovernmentInfo        *consensusPb.GovernmentContract `json:"governmentInfo,omitempty"`
+	GovernmentInfo        *consensusPb.GovernanceContract `json:"governmentInfo,omitempty"`
 }
 
 type SimpleRPCResult struct {
