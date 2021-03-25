@@ -11,7 +11,7 @@ import (
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/dbprovider/mysqldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"fmt"
@@ -28,7 +28,7 @@ type HistoryMysqlDB struct {
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewHistoryMysqlDB(chainId string, logger protocol.Logger) (historydb.HistoryDB, error) {
-	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	db := sqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}

@@ -9,7 +9,7 @@ package leveldbprovider
 import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/types"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -25,11 +25,11 @@ func TestDBHandle_Put(t *testing.T) {
 	key1 := []byte("key1")
 	value1 := []byte("value1")
 	err := dbHandle.Put(key1, value1)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 
 	value, err := dbHandle.Get(key1)
-	assert.NilError(t, err)
-	assert.DeepEqual(t, value1, value)
+	assert.Nil(t, err)
+	assert.Equal(t, value1, value)
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
@@ -44,11 +44,11 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 	batch.Put(key1, value1)
 	batch.Put(key2, value2)
 	err := dbHandle.WriteBatch(batch, true)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 
 	value, err := dbHandle.Get(key2)
-	assert.NilError(t, err)
-	assert.DeepEqual(t, value2, value)
+	assert.Nil(t, err)
+	assert.Equal(t, value2, value)
 
 }
 
@@ -65,7 +65,7 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 	batch.Put(key1, value1)
 	batch.Put(key2, value2)
 	err := dbHandle.WriteBatch(batch, true)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 
 	iter := dbHandle.NewIteratorWithRange(key1, []byte("key3"))
 	defer iter.Release()

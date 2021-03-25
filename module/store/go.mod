@@ -16,13 +16,14 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/pkg/errors v0.8.1
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c
 	github.com/tidwall/wal v0.1.4
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gorm.io/driver/mysql v1.0.3
+	gorm.io/driver/sqlite v1.1.4 // indirect
 	gorm.io/gorm v1.20.8
-	gotest.tools v2.2.0+incompatible
 )
 
 replace (

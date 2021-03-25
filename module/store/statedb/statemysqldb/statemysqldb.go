@@ -11,7 +11,7 @@ import (
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/dbprovider/mysqldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"fmt"
 	"gorm.io/gorm"
@@ -26,7 +26,7 @@ type StateMysqlDB struct {
 
 // NewStateMysqlDB construct a new `StateDB` for given chainId
 func NewStateMysqlDB(chainId string, logger protocol.Logger) (statedb.StateDB, error) {
-	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	db := sqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}

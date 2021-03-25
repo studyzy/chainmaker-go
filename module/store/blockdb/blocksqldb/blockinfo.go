@@ -4,7 +4,7 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package blockmysqldb
+package blocksqldb
 
 import (
 	"chainmaker.org/chainmaker-go/common/json"
@@ -77,6 +77,27 @@ func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 	blockInfo.TxIds = string(txListBytes)
 
 	return blockInfo, nil
+}
+
+func ConvertHeader2BlockInfo(header *commonPb.BlockHeader) *BlockInfo {
+	blockInfo := &BlockInfo{
+		ChainId:        header.ChainId,
+		BlockHeight:    header.BlockHeight,
+		PreBlockHash:   header.PreBlockHash,
+		BlockHash:      header.BlockHash,
+		PreConfHeight:  header.PreConfHeight,
+		BlockVersion:   header.BlockVersion,
+		DagHash:        header.DagHash,
+		RwSetRoot:      header.RwSetRoot,
+		TxRoot:         header.TxRoot,
+		BlockTimestamp: header.BlockTimestamp,
+		Proposer:       header.Proposer,
+		ConsensusArgs:  header.ConsensusArgs,
+		TxCount:        header.TxCount,
+		Signature:      header.Signature,
+	}
+
+	return blockInfo
 }
 
 // GetTxList returns the txId list , or return nil if an error occurred

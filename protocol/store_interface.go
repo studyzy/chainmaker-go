@@ -84,7 +84,38 @@ type BlockchainStore interface {
 	// Close closes all the store db instances and releases any resources held by BlockchainStore
 	Close() error
 }
+type SqlDBHandle interface {
+	CreateTableIfNotExist(obj interface{}) error
+	Save(value interface{}) (int64,error)
+	ExecSql(sql string, values ...interface{}) (int64, error)
+	QuerySql(sql string, values ...interface{}) (SqlRow, error)
+	QueryTableSql(sql string, values ...interface{}) (SqlRows, error)
+	BeginDbTransaction(txName string) SqlDBTransaction
+	GetDbTransaction(txName string) (SqlDBTransaction,error)
+	CommitDbTransaction(txName string) error
+	RollbackDbTransaction(txName string) error
+}
+type SqlDBTransaction interface {
+	Save(value interface{}) (int64,error)
+	ExecSql(sql string, values ...interface{}) (int64, error)
+	QuerySql(sql string, values ...interface{}) (SqlRow, error)
+	QueryTableSql(sql string, values ...interface{}) (SqlRows, error)
+	//Commit() error
+	//Rollback() error
+	BeginDbSavePoint(savePointName string) error
+	RollbackDbSavePoint(savePointName string) error
+}
 
+type SqlRow interface {
+	ScanColumns(dest ...interface{}) error
+	ScanObject(dest interface{}) error
+}
+type SqlRows interface {
+	Next() bool
+	ScanColumns(dest ...interface{}) error
+	ScanObject(dest interface{}) error
+	Close() error
+}
 // DBHandle is an handle to a db
 type DBHandle interface {
 	// Get returns the value for the given key, or returns nil if none exists

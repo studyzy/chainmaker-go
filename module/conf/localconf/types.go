@@ -132,10 +132,12 @@ type storageConfig struct {
 	DisableHistoryDB     bool        `mapstructure:"disable_historydb"`
 	LogDBWriteAsync      bool        `mapstructure:"logdb_write_async"`
 	BlockWriteBufferSize int         `mapstructure:"block_write_buffer_size"`
-	MysqlConfig          mysqlConfig `mapstructure:"mysql"`
+	MysqlConfig          mysqlConfig `mapstructure:"sql_db"`
 }
 
 type mysqlConfig struct {
+	//mysql, sqlite, postgres, sqlserver
+	DbType             string `mapstructure:"db_type"`
 	Dsn             string `mapstructure:"dsn"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`

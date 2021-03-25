@@ -12,7 +12,7 @@ import (
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/store/blockdb/blockmysqldb"
+	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
 	"chainmaker.org/chainmaker-go/store/historydb/historymysqldb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb/statemysqldb"
@@ -21,11 +21,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
-	//"github.com/stretchr/testify/assert"
 	"testing"
-
-	"gotest.tools/assert"
 )
 
 var ledgerPath = "/tmp/leveldbprovider/unit_test_ledger"
@@ -187,14 +185,14 @@ func TestMain(m *testing.M) {
 		conf := &localconf.ChainMakerConfig.StorageConfig
 		conf.Provider = "MySQL"
 		conf.MysqlConfig.Dsn = "root:123456@tcp(127.0.0.1:3306)/"
-		db, err := blockmysqldb.NewBlockMysqlDB(chainId, log)
+		db, err := blocksqldb.NewBlockMysqlDB(chainId, log)
 		if err != nil {
 			panic("faild to open mysql")
 		}
 		// clear data
-		gormDB := db.(*blockmysqldb.BlockMysqlDB).GetDB()
-		gormDB.Migrator().DropTable(&blockmysqldb.BlockInfo{})
-		gormDB.Migrator().DropTable(&blockmysqldb.TxInfo{})
+		gormDB := db.(*blocksqldb.BlockSqlDB).GetDB()
+		gormDB.Migrator().DropTable(&blocksqldb.BlockInfo{})
+		gormDB.Migrator().DropTable(&blocksqldb.TxInfo{})
 		gormDB.Migrator().DropTable(&statemysqldb.StateInfo{})
 		gormDB.Migrator().DropTable(&historymysqldb.HistoryInfo{})
 	}
