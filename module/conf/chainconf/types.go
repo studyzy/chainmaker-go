@@ -133,16 +133,23 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig) error {
 	// verify consensus
 	if config.Consensus != nil && config.Consensus.Nodes != nil {
+		if len(config.Consensus.Nodes) == 0 {
+			err := fmt.Errorf("there is at least one consensus node")
+			log.Error(err.Error())
+			return err
+		}
 		for _, node := range config.Consensus.Nodes {
 			// org id can not be repeated
 			if _, ok := mConfig.NodeOrgIds[node.OrgId]; ok {
-				log.Errorf("org id(%s) existed", node.OrgId)
-				return errors.New("org id existed")
+				err := fmt.Errorf("org id(%s) existed", node.OrgId)
+				log.Error(err.Error())
+				return err
 			}
 			// when creating genesis, the org id of node must be exist in CaRoots.
 			if _, ok := mConfig.CaRoots[node.OrgId]; !ok {
-				log.Errorf("org id(%s) not in trust roots config", node.OrgId)
-				return errors.New("org id not in trust roots config")
+				err := fmt.Errorf("org id(%s) not in trust roots config", node.OrgId)
+				log.Error(err.Error())
+				return err
 			}
 
 			mConfig.NodeOrgIds[node.OrgId] = node.Address
