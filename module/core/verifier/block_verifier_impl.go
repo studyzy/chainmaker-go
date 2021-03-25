@@ -7,6 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
+	"fmt"
+	"sync"
+
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus"
@@ -17,9 +20,7 @@ import (
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
 )
 
 const LOCKED = "LOCKED" // LOCKED mark
@@ -41,6 +42,9 @@ type BlockVerifierImpl struct {
 	log            *logger.CMLogger               // logger
 	txPool         protocol.TxPool                // tx pool to check if tx is duplicate
 	mu             sync.Mutex                     // to avoid concurrent map modify
+
+	blockValidator *BlockValidator //block validator
+	txValidator    *TxValidator    //tx validator
 
 	metricBlockVerifyTime *prometheus.HistogramVec // metrics monitor
 }
@@ -76,8 +80,8 @@ func NewBlockVerifier(config BlockVerifierConfig) (protocol.BlockVerifier, error
 		txPool:        config.TxPool,
 	}
 
-	blockValidator = NewBlockValidator(v.chainId, v.chainConf.ChainConfig().Crypto.Hash)
-	txValidator = NewTxValidator(v.log, v.chainId, v.chainConf.ChainConfig().Crypto.Hash,
+	v.blockValidator = NewBlockValidator(v.chainId, v.chainConf.ChainConfig().Crypto.Hash)
+	v.txValidator = NewTxValidator(v.log, v.chainId, v.chainConf.ChainConfig().Crypto.Hash,
 		v.chainConf.ChainConfig().Consensus.Type, v.blockchainStore, v.txPool, v.ac)
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
@@ -96,11 +100,6 @@ type verifyStat struct {
 	othersLasts int64
 	sigCount    int
 }
-
-var (
-	blockValidator *BlockValidator
-	txValidator    *TxValidator
-)
 
 // VerifyBlock, to check if block is valid
 func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.VerifyMode) error {
@@ -204,7 +203,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 		return nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
 	}
 
-	if err = blockValidator.IsTxCountValid(block); err != nil {
+	if err = v.blockValidator.IsTxCountValid(block); err != nil {
 		return nil, timeLasts, err
 	}
 
@@ -221,7 +220,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 		return nil, timeLasts, err
 	}
 
-	if err = blockValidator.IsBlockHashValid(block); err != nil {
+	if err = v.blockValidator.IsBlockHashValid(block); err != nil {
 		return nil, timeLasts, err
 	}
 
@@ -245,7 +244,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 	}
 
 	// verify if txs are duplicate in this block
-	if blockValidator.IsTxDuplicate(block.Txs) {
+	if v.blockValidator.IsTxDuplicate(block.Txs) {
 		err := fmt.Errorf("tx duplicate")
 		return nil, timeLasts, err
 	}
@@ -266,7 +265,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 
 	// 2.transaction verify
 	startTxTick := utils.CurrentTimeMillisSeconds()
-	txHashes, _, errTxs, err := txValidator.VerifyTxs(block, txRWSetMap, txResultMap)
+	txHashes, _, errTxs, err := v.txValidator.VerifyTxs(block, txRWSetMap, txResultMap)
 	txLasts := utils.CurrentTimeMillisSeconds() - startTxTick
 	timeLasts = append(timeLasts, txLasts)
 	if err != nil {
@@ -307,17 +306,17 @@ func (v *BlockVerifierImpl) checkVacuumBlock(block *commonpb.Block) error {
 }
 
 func (v *BlockVerifierImpl) checkBlockDigests(block *commonpb.Block, txHashes [][]byte, hashType string) error {
-	if err := blockValidator.IsMerkleRootValid(block, txHashes); err != nil {
+	if err := v.blockValidator.IsMerkleRootValid(block, txHashes); err != nil {
 		v.log.Error(err)
 		return err
 	}
 	// verify DAG hash
-	if err := blockValidator.IsDagHashValid(block); err != nil {
+	if err := v.blockValidator.IsDagHashValid(block); err != nil {
 		v.log.Error(err)
 		return err
 	}
 	// verify read write set, check if simulate result is equal with rwset in block header
-	if err := blockValidator.IsRWSetHashValid(block); err != nil {
+	if err := v.blockValidator.IsRWSetHashValid(block); err != nil {
 		v.log.Error(err)
 		return err
 	}
@@ -327,15 +326,15 @@ func (v *BlockVerifierImpl) checkBlockDigests(block *commonpb.Block, txHashes []
 func (v *BlockVerifierImpl) checkPreBlock(block *commonpb.Block, lastBlock *commonpb.Block, err error,
 	lastBlockHash []byte, proposedHeight int64) error {
 	if consensuspb.ConsensusType_HOTSTUFF != v.chainConf.ChainConfig().Consensus.Type {
-		if err = blockValidator.IsHeightValid(block, proposedHeight); err != nil {
+		if err = v.blockValidator.IsHeightValid(block, proposedHeight); err != nil {
 			return err
 		}
 		// check if this block pre hash is equal with last block hash
-		return blockValidator.IsPreHashValid(block, lastBlockHash)
+		return v.blockValidator.IsPreHashValid(block, lastBlockHash)
 	}
 
 	if block.Header.BlockHeight == lastBlock.Header.BlockHeight+1 {
-		if err := blockValidator.IsPreHashValid(block, lastBlock.Header.BlockHash); err != nil {
+		if err := v.blockValidator.IsPreHashValid(block, lastBlock.Header.BlockHash); err != nil {
 			return err
 		}
 	} else {
