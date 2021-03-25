@@ -9,6 +9,7 @@ package blockmysqldb
 import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
 	"runtime"
 
@@ -27,12 +28,15 @@ import (
 type BlockMysqlDB struct {
 	db               *gorm.DB
 	workersSemaphore *semaphore.Weighted
-	Logger           *logImpl.CMLogger
+	Logger           protocol.Logger
 }
 
 // NewBlockMysqlDB constructs a new `BlockMysqlDB` given an chainId and engine type
-func NewBlockMysqlDB(chainId string) (blockdb.BlockDB, error) {
+func NewBlockMysqlDB(chainId string, logger protocol.Logger) (blockdb.BlockDB, error) {
 	nWorkers := runtime.NumCPU()
+	if logger == nil {
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
 	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
 
 	if err := db.AutoMigrate(&BlockInfo{}); err != nil {
@@ -44,7 +48,7 @@ func NewBlockMysqlDB(chainId string) (blockdb.BlockDB, error) {
 	blockDB := &BlockMysqlDB{
 		db:               db,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
-		Logger:           logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		Logger:           logger,
 	}
 	return blockDB, nil
 }

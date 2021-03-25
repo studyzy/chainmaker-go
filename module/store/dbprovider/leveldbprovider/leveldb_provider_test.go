@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package leveldbprovider
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/types"
 	"gotest.tools/assert"
 	"testing"
@@ -14,9 +15,10 @@ import (
 
 var dbPath = "/tmp/leveldbprovider/unit_test_db"
 var dbName = "db_test"
+var log = &logger.GoLogger{}
 
 func TestDBHandle_Put(t *testing.T) {
-	db := NewProvider(dbPath, "")      //dbPath：db文件的存储路径
+	db := NewProvider(dbPath, "", log) //dbPath：db文件的存储路径
 	dbHandle := db.GetDBHandle(dbName) //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 
@@ -31,7 +33,7 @@ func TestDBHandle_Put(t *testing.T) {
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
-	db := NewProvider(dbPath, "")      //dbPath：db文件的存储路径
+	db := NewProvider(dbPath, "", log) //dbPath：db文件的存储路径
 	dbHandle := db.GetDBHandle(dbName) //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 	batch := types.NewUpdateBatch()
@@ -51,7 +53,7 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
-	db := NewProvider(dbPath, "")      //dbPath：db文件的存储路径
+	db := NewProvider(dbPath, "", log) //dbPath：db文件的存储路径
 	dbHandle := db.GetDBHandle(dbName) //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 

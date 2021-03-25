@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package historymysqldb
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -18,6 +19,8 @@ import (
 	//"gotest.tools/assert"
 	"testing"
 )
+
+var log = &logger.GoLogger{}
 
 func generateBlockHash(chainId string, height int64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
@@ -150,7 +153,7 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 
 func TestMain(m *testing.M) {
 	fmt.Println("begin")
-	db, err := NewHistoryMysqlDB(testChainId)
+	db, err := NewHistoryMysqlDB(testChainId, log)
 	if err != nil {
 		panic("faild to open mysql")
 	}
@@ -162,7 +165,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestHistoryMysqlDB_CommitBlock(t *testing.T) {
-	db, err := NewHistoryMysqlDB(testChainId)
+	db, err := NewHistoryMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
@@ -171,7 +174,7 @@ func TestHistoryMysqlDB_CommitBlock(t *testing.T) {
 }
 
 func TestHistoryMysqlDB_GetTxRWSet(t *testing.T) {
-	db, err := NewHistoryMysqlDB(testChainId)
+	db, err := NewHistoryMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	for i, tx := range block1.Block.Txs {
 		rwSets, err := db.GetTxRWSet(tx.Header.TxId)
@@ -181,7 +184,7 @@ func TestHistoryMysqlDB_GetTxRWSet(t *testing.T) {
 }
 
 func TestHistoryMysqlDB_GetLastSavepoint(t *testing.T) {
-	db, err := NewHistoryMysqlDB(testChainId)
+	db, err := NewHistoryMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	height, err := db.GetLastSavepoint()
 	assert.NilError(t, err)

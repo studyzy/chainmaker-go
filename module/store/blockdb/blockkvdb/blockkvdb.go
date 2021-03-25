@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"sync"
 
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
@@ -46,7 +45,7 @@ type BlockKvDB struct {
 	WorkersSemaphore *semaphore.Weighted
 	Cache            *cache.StoreCacheMgr
 
-	Logger *logImpl.CMLogger
+	Logger protocol.Logger
 }
 
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation

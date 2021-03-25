@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package cache
 
 import (
+	logImpl "chainmaker.org/chainmaker-go/logger"
 	"context"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/emirpasic/gods/maps/treemap"
 	"golang.org/x/sync/semaphore"
@@ -27,21 +27,24 @@ type StoreCacheMgr struct {
 	cache               *storeCache
 	cacheSize           int //block size in cache, if cache size <= 0, use defalut size = 10
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // NewStoreCacheMgr construct a new `StoreCacheMgr` with given chainId
-func NewStoreCacheMgr(chainId string) *StoreCacheMgr {
+func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 	blockWriteBufferSize := localconf.ChainMakerConfig.StorageConfig.BlockWriteBufferSize
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
+	}
+	if logger == nil {
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
 	storeCacheMgr := &StoreCacheMgr{
 		pendingBlockUpdates: make(map[int64]protocol.StoreBatcher),
 		blockSizeSem:        semaphore.NewWeighted(int64(blockWriteBufferSize)),
 		cache:               newStoreCache(),
 		cacheSize:           blockWriteBufferSize,
-		logger:              logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		logger:              logger,
 	}
 	return storeCacheMgr
 }

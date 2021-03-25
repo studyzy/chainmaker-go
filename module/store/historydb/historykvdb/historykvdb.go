@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package historykvdb
 
 import (
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
@@ -31,7 +30,7 @@ type HistoryKvDB struct {
 	DbProvider dbprovider.Provider
 	Cache      *cache.StoreCacheMgr
 
-	Logger *logImpl.CMLogger
+	Logger protocol.Logger
 }
 
 // CommitBlock commits the block rwsets in an atomic operation

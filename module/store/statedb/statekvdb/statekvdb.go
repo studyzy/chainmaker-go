@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package statekvdb
 
 import (
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
@@ -29,7 +28,7 @@ const (
 type StateKvDB struct {
 	DbProvider dbprovider.Provider
 	Cache      *cache.StoreCacheMgr
-	Logger     *logImpl.CMLogger
+	Logger     protocol.Logger
 }
 
 // CommitBlock commits the state in an atomic operation

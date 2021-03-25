@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package blockmysqldb
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -17,6 +18,8 @@ import (
 	"gotest.tools/assert"
 	"testing"
 )
+
+var log = &logger.GoLogger{}
 
 func generateBlockHash(chainId string, height int64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
@@ -145,7 +148,7 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 
 func TestMain(m *testing.M) {
 	fmt.Println("begin")
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	if err != nil {
 		panic("faild to open mysql")
 	}
@@ -158,7 +161,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestBlockMysqlDB_CommitBlock(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	_, blockInfo0, err := serialization.SerializeBlock(&storePb.BlockWithRWSet{Block: block0})
 	assert.NilError(t, err)
@@ -171,7 +174,7 @@ func TestBlockMysqlDB_CommitBlock(t *testing.T) {
 }
 
 func TestBlockMysqlDB_HasBlock(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	exist, err := db.BlockExists(block1.Header.BlockHash)
 	assert.NilError(t, err)
@@ -179,7 +182,7 @@ func TestBlockMysqlDB_HasBlock(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetBlock(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	block, err := db.GetBlockByHash(block1.Header.BlockHash)
 	assert.NilError(t, err)
@@ -187,7 +190,7 @@ func TestBlockMysqlDB_GetBlock(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetBlockAt(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	block, err := db.GetBlock(block1.Header.BlockHeight)
 	assert.NilError(t, err)
@@ -195,7 +198,7 @@ func TestBlockMysqlDB_GetBlockAt(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetLastBlock(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	block, err := db.GetLastBlock()
 	assert.NilError(t, err)
@@ -216,7 +219,7 @@ func TestBlockMysqlDB_GetLastBlock(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetLastConfigBlock(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 
 	block, err := db.GetLastConfigBlock()
@@ -239,7 +242,7 @@ func TestBlockMysqlDB_GetLastConfigBlock(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetFilteredBlock(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 
 	block, err := db.GetFilteredBlock(block1.Header.BlockHeight)
@@ -250,7 +253,7 @@ func TestBlockMysqlDB_GetFilteredBlock(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetLastSavepoint(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 
 	height, err := db.GetLastSavepoint()
@@ -259,7 +262,7 @@ func TestBlockMysqlDB_GetLastSavepoint(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetBlockByTx(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 
 	block, err := db.GetBlockByTx(block5.Txs[0].Header.TxId)
@@ -268,7 +271,7 @@ func TestBlockMysqlDB_GetBlockByTx(t *testing.T) {
 }
 
 func TestBlockMysqlDB_GetTx(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 
 	tx, err := db.GetTx(block5.Txs[0].Header.TxId)
@@ -277,7 +280,7 @@ func TestBlockMysqlDB_GetTx(t *testing.T) {
 }
 
 func TestBlockMysqlDB_HasTx(t *testing.T) {
-	db, err := NewBlockMysqlDB(testChainId)
+	db, err := NewBlockMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 
 	exist, err := db.TxExists(block5.Txs[0].Header.TxId)

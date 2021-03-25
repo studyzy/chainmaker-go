@@ -38,26 +38,29 @@ type Provider struct {
 	dbHandles map[string]*LevelDBHandle
 	mutex     sync.Mutex
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // NewBlockProvider construct a new Provider for block operation with given chainId
-func NewBlockProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreBlockDBDir)
+func NewBlockProvider(chainId string, logger protocol.Logger) *Provider {
+	return NewProvider(chainId, StoreBlockDBDir, logger)
 }
 
 // NewStateProvider construct a new Provider for state operation with given chainId
-func NewStateProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreStateDBDir)
+func NewStateProvider(chainId string, logger protocol.Logger) *Provider {
+	return NewProvider(chainId, StoreStateDBDir, logger)
 }
 
 // NewStateProvider construct a new Provider for state operation with given chainId
-func NewHistoryProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreHistoryDBDir)
+func NewHistoryProvider(chainId string, logger protocol.Logger) *Provider {
+	return NewProvider(chainId, StoreHistoryDBDir, logger)
 }
 
 // NewProvider construct a new db Provider for given chainId and dir
-func NewProvider(chainId, dbDir string) *Provider {
+func NewProvider(chainId, dbDir string, logger protocol.Logger) *Provider {
+	if logger == nil {
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
 	dbOpts := &opt.Options{}
 	writeBufferSize := localconf.ChainMakerConfig.StorageConfig.BlockWriteBufferSize
 	if writeBufferSize <= 0 {
@@ -81,7 +84,7 @@ func NewProvider(chainId, dbDir string) *Provider {
 		dbHandles: make(map[string]*LevelDBHandle),
 		mutex:     sync.Mutex{},
 
-		logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		logger: logger,
 	}
 }
 

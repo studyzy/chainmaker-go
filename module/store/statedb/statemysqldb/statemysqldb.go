@@ -21,18 +21,21 @@ import (
 // This implementation provides a mysql based data model
 type StateMysqlDB struct {
 	db     *gorm.DB
-	Logger *logImpl.CMLogger
+	Logger protocol.Logger
 }
 
 // NewStateMysqlDB construct a new `StateDB` for given chainId
-func NewStateMysqlDB(chainId string) (statedb.StateDB, error) {
+func NewStateMysqlDB(chainId string, logger protocol.Logger) (statedb.StateDB, error) {
 	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	if logger == nil {
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
 	if err := db.AutoMigrate(&StateInfo{}); err != nil {
 		panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
 	}
 	stateDB := &StateMysqlDB{
 		db:     db,
-		Logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		Logger: logger,
 	}
 	return stateDB, nil
 }

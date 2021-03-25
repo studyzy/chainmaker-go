@@ -8,6 +8,7 @@ package store
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -177,6 +178,8 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
+var log = &logger.GoLogger{}
+
 func TestMain(m *testing.M) {
 	fmt.Println("begin")
 	if dbType == types.MySQL {
@@ -184,7 +187,7 @@ func TestMain(m *testing.M) {
 		conf := &localconf.ChainMakerConfig.StorageConfig
 		conf.Provider = "MySQL"
 		conf.MysqlConfig.Dsn = "root:123456@tcp(127.0.0.1:3306)/"
-		db, err := blockmysqldb.NewBlockMysqlDB(chainId)
+		db, err := blockmysqldb.NewBlockMysqlDB(chainId, log)
 		if err != nil {
 			panic("faild to open mysql")
 		}
@@ -213,7 +216,7 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 		{funcName, createBlock(defaultChainId, 4)},
 	}
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -233,7 +236,7 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 
 func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	//s, err := NewBlockStoredbTypeImpl(ledgerPath)
 
 	if err != nil {
@@ -247,7 +250,7 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 
 func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(types.LevelDb, chainId)
+	s, err := factory.NewStore(types.LevelDb, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -264,7 +267,7 @@ func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -277,7 +280,7 @@ func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetLastBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -291,7 +294,7 @@ func Test_blockchainStoreImpl_GetLastBlock(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetLastConfigBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -306,7 +309,7 @@ func Test_blockchainStoreImpl_GetLastConfigBlock(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetBlockByTx(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -330,7 +333,7 @@ func Test_blockchainStoreImpl_GetTx(t *testing.T) {
 	}
 
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -365,7 +368,7 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 		{funcName, createBlock(defaultChainId, 999999)},
 	}
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -390,7 +393,7 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 
 func Test_blockchainStoreImpl_ReadObject(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	value, err := s.ReadObject(defaultContractName, []byte("key1"))
@@ -408,7 +411,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 		return
 	}
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 
@@ -424,7 +427,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 
 func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
@@ -446,7 +449,7 @@ func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 
 func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
@@ -457,7 +460,7 @@ func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 
 func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
@@ -472,7 +475,7 @@ func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 
 func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	dbHandle := s.GetDBHandle("test")
@@ -484,7 +487,7 @@ func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	if err != nil {
 		panic(err)
 	}
@@ -514,7 +517,7 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 
 func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.NewStore(dbType, chainId, log)
 	//defer s.Close()
 	assert.Equal(t, nil, err)
 	bs, ok := s.(*BlockStoreImpl)
@@ -538,7 +541,7 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	s.Close()
 
 	//recovory
-	s, err = factory.NewStore(dbType, chainId)
+	s, err = factory.NewStore(dbType, chainId, log)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
@@ -553,7 +556,7 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	s.Close()
 
 	//check recover result
-	s, err = factory.NewStore(dbType, chainId)
+	s, err = factory.NewStore(dbType, chainId, log)
 	blockWithRWSets, err := s.GetBlockWithRWSets(8)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block8.String(), blockWithRWSets.Block.String())

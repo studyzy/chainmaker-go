@@ -162,7 +162,7 @@ func (bc *Blockchain) initStore() (err error) {
 	default:
 		return errors.New("unsupported store provider")
 	}
-	if bc.store, err = storeFactory.NewStore(storeType, bc.chainId); err != nil {
+	if bc.store, err = storeFactory.NewStore(storeType, bc.chainId, nil); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}

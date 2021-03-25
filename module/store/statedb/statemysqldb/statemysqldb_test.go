@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package statemysqldb
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -18,6 +19,8 @@ import (
 	//"gotest.tools/assert"
 	"testing"
 )
+
+var log = &logger.GoLogger{}
 
 //生成测试用的blockHash
 func generateBlockHash(chainId string, height int64) []byte {
@@ -152,7 +155,7 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 
 func TestMain(m *testing.M) {
 	fmt.Println("begin")
-	db, err := NewStateMysqlDB(testChainId)
+	db, err := NewStateMysqlDB(testChainId, log)
 	if err != nil {
 		panic("faild to open mysql")
 	}
@@ -164,7 +167,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestStateMysqlDB_CommitBlock(t *testing.T) {
-	db, err := NewStateMysqlDB(testChainId)
+	db, err := NewStateMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	err = db.CommitBlock(block1)
@@ -172,7 +175,7 @@ func TestStateMysqlDB_CommitBlock(t *testing.T) {
 }
 
 func TestStateMysqlDB_ReadObject(t *testing.T) {
-	db, err := NewStateMysqlDB(testChainId)
+	db, err := NewStateMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	value, err := db.ReadObject(block1.TxRWSets[0].TxWrites[0].ContractName, block1.TxRWSets[0].TxWrites[0].Key)
 	assert.NilError(t, err)
@@ -181,7 +184,7 @@ func TestStateMysqlDB_ReadObject(t *testing.T) {
 }
 
 func TestStateMysqlDB_GetLastSavepoint(t *testing.T) {
-	db, err := NewStateMysqlDB(testChainId)
+	db, err := NewStateMysqlDB(testChainId, log)
 	assert.NilError(t, err)
 	height, err := db.GetLastSavepoint()
 	assert.NilError(t, err)

@@ -10,6 +10,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/mysqldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -22,18 +23,21 @@ import (
 // This implementation provides a mysql based data model
 type HistoryMysqlDB struct {
 	db     *gorm.DB
-	Logger *logImpl.CMLogger
+	Logger protocol.Logger
 }
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
-func NewHistoryMysqlDB(chainId string) (historydb.HistoryDB, error) {
+func NewHistoryMysqlDB(chainId string, logger protocol.Logger) (historydb.HistoryDB, error) {
 	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	if logger == nil {
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
 	if err := db.AutoMigrate(&HistoryInfo{}); err != nil {
 		panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
 	}
 	historyDB := &HistoryMysqlDB{
 		db:     db,
-		Logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		Logger: logger,
 	}
 	return historyDB, nil
 }

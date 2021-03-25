@@ -41,7 +41,7 @@ type BlockStoreImpl struct {
 	wal              *wal.Log
 	commonDB         dbprovider.Provider
 	workersSemaphore *semaphore.Weighted
-	logger           *logImpl.CMLogger
+	logger           protocol.Logger
 }
 
 // NewBlockStoreImpl constructs new `BlockStoreImpl`
@@ -49,7 +49,8 @@ func NewBlockStoreImpl(chainId string,
 	blockDB blockdb.BlockDB,
 	stateDB statedb.StateDB,
 	historyDB historydb.HistoryDB,
-	commonDB dbprovider.Provider) (protocol.BlockchainStore, error) {
+	commonDB dbprovider.Provider,
+	logger protocol.Logger) (protocol.BlockchainStore, error) {
 
 	walPath := filepath.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainId, logPath)
 	writeAsync := localconf.ChainMakerConfig.StorageConfig.LogDBWriteAsync
@@ -61,6 +62,9 @@ func NewBlockStoreImpl(chainId string,
 		panic(fmt.Sprintf("open wal failed, path:%s, error:%s", walPath, err))
 	}
 	nWorkers := runtime.NumCPU()
+	if logger == nil { //init logger
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
 	blockStore := &BlockStoreImpl{
 		blockDB:          blockDB,
 		stateDB:          stateDB,
@@ -68,8 +72,7 @@ func NewBlockStoreImpl(chainId string,
 		wal:              writeLog,
 		commonDB:         commonDB,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
-
-		logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		logger:           logger,
 	}
 	//check savepoint and recover
 	err = blockStore.recover()
