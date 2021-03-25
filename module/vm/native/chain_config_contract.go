@@ -385,9 +385,9 @@ func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimCont
 
 	trustRoots = append(trustRoots[:index], trustRoots[index+1:]...)
 	nodes := chainConfig.Consensus.Nodes
-	for j, node := range nodes {
-		if orgId == node.OrgId {
-			nodes = append(nodes[:j], nodes[j+1:]...)
+	for i := len(nodes) - 1; i >= 0; i-- {
+		if orgId == nodes[i].OrgId {
+			nodes = append(nodes[:i], nodes[i+1:]...)
 		}
 	}
 	chainConfig.Consensus.Nodes = nodes
@@ -693,9 +693,15 @@ func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext
 	}
 
 	nodes := chainConfig.Consensus.Nodes
+	if len(nodes) == 1 {
+		err := fmt.Errorf("there is at least one org")
+		r.log.Error(err)
+		return nil, err
+	}
 	for i, node := range nodes {
 		if orgId == node.OrgId {
-			chainConfig.Consensus.Nodes = append(chainConfig.Consensus.Nodes[:i], chainConfig.Consensus.Nodes[i+1:]...)
+			nodes = append(nodes[:i], nodes[i+1:]...)
+			chainConfig.Consensus.Nodes = nodes
 			return setChainConfig(txSimContext, chainConfig)
 		}
 	}
@@ -1055,16 +1061,12 @@ func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSim
 			return false
 		}
 
-		pLen := len(resourcePolicies)
 		for i, rp := range resourcePolicies {
 			if rp.ResourceName == key {
-				if i+1 == pLen {
-					resourcePolicies = resourcePolicies[:i]
-				} else {
-					resourcePolicies = append(resourcePolicies[:i], resourcePolicies[i+1:]...)
-				}
+				resourcePolicies = append(resourcePolicies[:i], resourcePolicies[i+1:]...)
 				chainConfig.ResourcePolicies = resourcePolicies
 				changed = true
+				break
 			}
 		}
 		return true
