@@ -165,7 +165,7 @@ func initGasmTest() {
 func initWxwmTest() {
 	WasmPath = "wasm/cpp-func-verify-1.0.0.wasm"
 	WasmUpgradePath = "wasm/cpp-func-verify-1.0.0.wasm"
-	contractName = "contract20"
+	contractName = "contract01"
 	runtimeType = commonPb.RuntimeType_WXVM
 }
 
