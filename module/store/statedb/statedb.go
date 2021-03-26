@@ -25,7 +25,7 @@ type StateDB interface {
 	SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator
 
 	// GetLastSavepoint returns the last block height
-	GetLastSavepoint() (uint64, error)
+	//GetLastSavepoint() (uint64, error)
 
 	// Close is used to close database
 	Close()

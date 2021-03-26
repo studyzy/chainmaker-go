@@ -9,15 +9,27 @@ package sqldbprovider
 
 import (
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
 	"gorm.io/gorm"
 	"sync"
 )
 
 type SqlDBTx struct {
 	sync.Mutex
-	db *gorm.DB
+	dbType types.EngineType
+	db     *gorm.DB
 }
 
+func (p *SqlDBTx) ChangeContextDb(dbName string) error {
+	if dbName == "" {
+		return nil
+	}
+	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
+		return nil
+	}
+	res := p.db.Exec("use " + dbName)
+	return res.Error
+}
 func (p *SqlDBTx) Save(value interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()

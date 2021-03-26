@@ -22,7 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/historydb/historymysqldb"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
-	"chainmaker.org/chainmaker-go/store/statedb/statemysqldb"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"golang.org/x/sync/semaphore"
 	"runtime"
@@ -58,7 +58,7 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string, logger p
 		if err != nil {
 			return nil, err
 		}
-		stateDB, err := statemysqldb.NewStateMysqlDB(chainId, logger)
+		stateDB, err := statesqldb.NewStateMysqlDB(chainId, logger)
 		if err != nil {
 			return nil, err
 		}

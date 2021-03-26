@@ -85,6 +85,7 @@ type BlockchainStore interface {
 	Close() error
 }
 type SqlDBHandle interface {
+	ChangeContextDb(dbName string) error
 	CreateTableIfNotExist(obj interface{}) error
 	Save(value interface{}) (int64,error)
 	ExecSql(sql string, values ...interface{}) (int64, error)
@@ -96,6 +97,7 @@ type SqlDBHandle interface {
 	RollbackDbTransaction(txName string) error
 }
 type SqlDBTransaction interface {
+	ChangeContextDb(dbName string) error
 	Save(value interface{}) (int64,error)
 	ExecSql(sql string, values ...interface{}) (int64, error)
 	QuerySql(sql string, values ...interface{}) (SqlRow, error)

@@ -15,7 +15,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
 	"chainmaker.org/chainmaker-go/store/historydb/historymysqldb"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker-go/store/statedb/statemysqldb"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 
 	"crypto/sha256"
@@ -193,7 +193,7 @@ func TestMain(m *testing.M) {
 		gormDB := db.(*blocksqldb.BlockSqlDB).GetDB()
 		gormDB.Migrator().DropTable(&blocksqldb.BlockInfo{})
 		gormDB.Migrator().DropTable(&blocksqldb.TxInfo{})
-		gormDB.Migrator().DropTable(&statemysqldb.StateInfo{})
+		gormDB.Migrator().DropTable(&statesqldb.StateInfo{})
 		gormDB.Migrator().DropTable(&historymysqldb.HistoryInfo{})
 	}
 	os.RemoveAll(chainId)

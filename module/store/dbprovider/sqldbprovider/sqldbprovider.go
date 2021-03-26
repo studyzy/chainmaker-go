@@ -28,6 +28,7 @@ var defaultConnMaxLifeTime = 60
 type SqlDBProvider struct {
 	sync.Mutex
 	db        *gorm.DB
+	dbType    types.EngineType
 	dbTxCache map[string]*SqlDBTx
 }
 
@@ -49,6 +50,7 @@ func NewProvider(chainId string, conf *localconf.CMConfig) *SqlDBProvider {
 	if err != nil {
 		panic(err.Error())
 	}
+	provider.dbType = sqlType
 	mysqlConf := conf.StorageConfig.MysqlConfig
 	if sqlType == types.MySQL {
 		dsn := mysqlConf.Dsn + chainId + "?charset=utf8mb4&parseTime=True&loc=Local"
@@ -134,6 +136,16 @@ func (p *SqlDBProvider) GetDB() *gorm.DB {
 //		panic(fmt.Sprintf("failed to create mysql, err:%s", err))
 //	}
 //}
+func (p *SqlDBProvider) ChangeContextDb(dbName string) error {
+	if dbName == "" {
+		return nil
+	}
+	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
+		return nil
+	}
+	res := p.db.Exec("use " + dbName)
+	return res.Error
+}
 func (p *SqlDBProvider) CreateTableIfNotExist(obj interface{}) error {
 	p.Lock()
 	defer p.Unlock()
@@ -196,7 +208,7 @@ func (p *SqlDBProvider) BeginDbTransaction(txName string) protocol.SqlDBTransact
 		return tx
 	}
 	tx := p.db.Begin()
-	sqltx := &SqlDBTx{db: tx}
+	sqltx := &SqlDBTx{db: tx, dbType: p.dbType}
 	p.dbTxCache[txName] = sqltx
 	return sqltx
 }

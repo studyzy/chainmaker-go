@@ -4,19 +4,19 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package statemysqldb
+package statesqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"gotest.tools/assert"
-
-	//"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -153,47 +153,59 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
-func TestMain(m *testing.M) {
-	fmt.Println("begin")
-	db, err := NewStateMysqlDB(testChainId, log)
-	if err != nil {
-		panic("faild to open mysql")
-	}
-	// clear data
-	stateMysqlDB := db.(*StateMysqlDB)
-	stateMysqlDB.db.Migrator().DropTable(&StateInfo{})
-	m.Run()
-	fmt.Println("end")
+func initProvider() *sqldbprovider.SqlDBProvider {
+	conf := &localconf.CMConfig{}
+	conf.StorageConfig.MysqlConfig.Dsn = ":memory:"
+	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
+	p := sqldbprovider.NewProvider("chain1", conf)
+	p.CreateTableIfNotExist(&StateInfo{})
+	return p
+}
+func initStateSqlDB() *StateSqlDB {
+	return NewStateSqlDB("chain1", initProvider(), log)
 }
 
-func TestStateMysqlDB_CommitBlock(t *testing.T) {
-	db, err := NewStateMysqlDB(testChainId, log)
-	assert.NilError(t, err)
+//func TestMain(m *testing.M) {
+//	fmt.Println("begin")
+//	db, err := NewStateMysqlDB(testChainId, log)
+//	if err != nil {
+//		panic("faild to open mysql")
+//	}
+//	// clear data
+//	stateMysqlDB := db.(*StateSqlDB)
+//	stateMysqlDB.db.Migrator().DropTable(&StateInfo{})
+//	m.Run()
+//	fmt.Println("end")
+//}
+
+func TestStateSqlDB_CommitBlock(t *testing.T) {
+	db := initStateSqlDB()
+	block1.TxRWSets[0].TxWrites[0].ContractName = ""
 	block1.TxRWSets[0].TxWrites[0].Value = nil
-	err = db.CommitBlock(block1)
-	assert.NilError(t, err)
+	err := db.CommitBlock(block1)
+	assert.Nil(t, err)
 }
 
-func TestStateMysqlDB_ReadObject(t *testing.T) {
-	db, err := NewStateMysqlDB(testChainId, log)
-	assert.NilError(t, err)
+func TestStateSqlDB_ReadObject(t *testing.T) {
+	db := initStateSqlDB()
+	block1.TxRWSets[0].TxWrites[0].ContractName = ""
+	db.CommitBlock(block1)
 	value, err := db.ReadObject(block1.TxRWSets[0].TxWrites[0].ContractName, block1.TxRWSets[0].TxWrites[0].Key)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	//assert.Equal(t, block1.TxRWSets[0].TxWrites[0].Value, value)
-	fmt.Println(string(value))
+	t.Logf("%s", string(value))
 }
 
-func TestStateMysqlDB_GetLastSavepoint(t *testing.T) {
-	db, err := NewStateMysqlDB(testChainId, log)
-	assert.NilError(t, err)
-	height, err := db.GetLastSavepoint()
-	assert.NilError(t, err)
-	assert.Equal(t, uint64(block1.Block.Header.BlockHeight), height)
-
-	err = db.CommitBlock(block2)
-	assert.NilError(t, err)
-	height, err = db.GetLastSavepoint()
-	assert.NilError(t, err)
-	assert.Equal(t, uint64(block2.Block.Header.BlockHeight), height)
-
-}
+//func TestStateSqlDB_GetLastSavepoint(t *testing.T) {
+//	db:=initStateSqlDB()
+//	height, err := db.GetLastSavepoint()
+//	assert.Nil(t, err)
+//	assert.Equal(t, uint64(block1.Block.Header.BlockHeight), height)
+//
+//	err = db.CommitBlock(block2)
+//	assert.Nil(t, err)
+//	height, err = db.GetLastSavepoint()
+//	assert.Nil(t, err)
+//	assert.Equal(t, uint64(block2.Block.Header.BlockHeight), height)
+//
+//}
