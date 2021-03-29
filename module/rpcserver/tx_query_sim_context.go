@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"strings"
 )
 
 // Storage interface for smart contracts, implement TxSimContext
@@ -149,15 +148,6 @@ func (s *txQuerySimContextImpl) GetAccessControl() (protocol.AccessControlProvid
 		return nil, errors.New("access control for tx sim context is nil")
 	}
 	return s.vmManager.GetAccessControl(), nil
-}
-
-func (s *txQuerySimContextImpl) GetContractTxIds() ([]string, error) {
-	if txIdsBytes, err := s.Get(protocol.ContractTxIdsKey, nil); err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to get tx ids, error:%s", err.Error()))
-	} else {
-		txIds := strings.Split(string(txIdsBytes), ",")
-		return txIds, nil
-	}
 }
 
 // Get organization service

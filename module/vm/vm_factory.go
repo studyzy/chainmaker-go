@@ -8,14 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package vm
 
 import (
-	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	"encoding/hex"
-	"fmt"
-	"path/filepath"
-	"regexp"
-	"strconv"
-	"strings"
-
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -24,7 +16,13 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native"
 	"chainmaker.org/chainmaker-go/wasmer"
 	"chainmaker.org/chainmaker-go/wxvm"
+	"chainmaker.org/chainmaker-go/wxvm/xvm"
+	"encoding/hex"
+	"fmt"
 	"github.com/gogo/protobuf/proto"
+	"path/filepath"
+	"regexp"
+	"strconv"
 )
 
 const WxvmCodeFolder = "wxvm"
@@ -253,22 +251,6 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 			contractResult.Message = fmt.Sprintf("failed to store runtime contract:%s, error:%s", contractName, err.Error())
 			return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
 		}
-
-		// save txId
-		if txIdsBytes, err := txContext.Get(protocol.ContractTxIdsKey, nil); err != nil {
-			contractResult.Message = fmt.Sprintf("failed to get tx ids:%s, error:%s", contractName, err.Error())
-			return contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED
-		} else {
-			var txIds []string
-			if len(txIdsBytes) > 0 {
-				txIds = strings.Split(string(txIdsBytes), ",")
-			}
-			txIds = append(txIds, txContext.GetTx().Header.TxId)
-			if err = txContext.Put(protocol.ContractTxIdsKey, nil, []byte(strings.Join(txIds, ","))); err != nil {
-				contractResult.Message = fmt.Sprintf("failed to store tx ids, contract:%s, error:%s", contractName, err.Error())
-				return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-			}
-		}
 	case commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String():
 		method = protocol.ContractUpgradeMethod
 		vt := &verifyType{
@@ -308,19 +290,6 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 		if err := txContext.Put(contractName, runtimeTypeKey, []byte(strconv.Itoa(runtimeType))); err != nil {
 			contractResult.Message = fmt.Sprintf("failed to store runtime contract:%s, error:%s", contractName, err.Error())
 			return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-		}
-
-		// save txId
-		if txIdsBytes, err := txContext.Get(protocol.ContractTxIdsKey, nil); err != nil {
-			contractResult.Message = fmt.Sprintf("failed to get tx ids:%s, error:%s", contractName, err.Error())
-			return contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED
-		} else {
-			txIds := strings.Split(string(txIdsBytes), ",")
-			txIds = append(txIds, txContext.GetTx().Header.TxId)
-			if err = txContext.Put(protocol.ContractTxIdsKey, nil, []byte(strings.Join(txIds, ","))); err != nil {
-				contractResult.Message = fmt.Sprintf("failed to store tx ids, contract:%s, error:%s", contractName, err.Error())
-				return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-			}
 		}
 	case commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String():
 		vt := &verifyType{requireVersion: true}
