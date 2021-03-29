@@ -20,7 +20,7 @@ type StateSqlDB struct {
 }
 
 // NewStateMysqlDB construct a new `StateDB` for given chainId
-func NewStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) *StateSqlDB {
+func NewStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*StateSqlDB, error) {
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
@@ -31,7 +31,7 @@ func NewStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 		db:     db,
 		Logger: logger,
 	}
-	return stateDB
+	return stateDB, nil
 }
 
 // CommitBlock commits the state in an atomic operation
@@ -98,10 +98,20 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 
 // GetLastSavepoint returns the last block height
 func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
-	return 0, nil
+	sql := "select max(block_height) from state_infos"
+	row, err := s.db.QuerySql(sql)
+	if err != nil {
+		return 0, err
+	}
+	var height uint64
+	err = row.ScanColumns(&height)
+	if err != nil {
+		return 0, err
+	}
+	return height, nil
 }
 
 // Close is used to close database, there is no need for gorm to close db
 func (s *StateSqlDB) Close() {
-
+	s.db.Close()
 }

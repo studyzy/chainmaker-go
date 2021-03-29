@@ -48,6 +48,12 @@ type BlockKvDB struct {
 	Logger protocol.Logger
 }
 
+func (b *BlockKvDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
+	heightKey := constructBlockNumKey(uint64(header.BlockHeight))
+	data, _ := header.Marshal()
+	return b.DbProvider.GetDBHandle("block").Put(heightKey, data)
+}
+
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation
 func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {
 	batch := types.NewUpdateBatch()

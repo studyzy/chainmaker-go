@@ -49,21 +49,21 @@ type Provider struct {
 
 // NewBlockProvider construct a new Rocksdb Provider for block operation with given chainId
 func NewBlockProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreBlockDBDir)
+	return NewSqlDBProvider(chainId, StoreBlockDBDir)
 }
 
 // NewStateProvider construct a new Rocksdb Provider for state operation with given chainId
 func NewStateProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreStateDBDir)
+	return NewSqlDBProvider(chainId, StoreStateDBDir)
 }
 
 // NewHistoryProvider construct a new Rocksdb Provider for history operation with given chainId
 func NewHistoryProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreHistoryDBDir)
+	return NewSqlDBProvider(chainId, StoreHistoryDBDir)
 }
 
-// NewProvider construct a new db Provider for given chainId and dir
-func NewProvider(chainId string, dbDir string) *Provider {
+// NewSqlDBProvider construct a new db Provider for given chainId and dir
+func NewSqlDBProvider(chainId string, dbDir string) *Provider {
 	dbOpts := NewRocksdbConfig()
 	writeBufferSize := localconf.ChainMakerConfig.StorageConfig.WriteBufferSize
 	if writeBufferSize > 0 {

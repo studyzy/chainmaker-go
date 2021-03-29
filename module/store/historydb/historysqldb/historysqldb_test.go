@@ -173,7 +173,7 @@ func initProvider() *sqldbprovider.SqlDBProvider {
 	conf := &localconf.CMConfig{}
 	conf.StorageConfig.MysqlConfig.Dsn = ":memory:"
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := sqldbprovider.NewProvider("chain1", conf)
+	p := sqldbprovider.NewSqlDBProvider("chain1", conf)
 	p.CreateTableIfNotExist(&StateHistoryInfo{})
 	return p
 }

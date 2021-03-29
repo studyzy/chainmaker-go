@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/blockdb"
@@ -17,6 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
 	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
@@ -24,6 +26,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
+	"errors"
 	"golang.org/x/sync/semaphore"
 	"runtime"
 )
@@ -39,7 +42,7 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string, logger p
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
 	switch engineType {
-	case types.LevelDb:
+	case types.LevelDb, types.RocksDb:
 		blockDB, err := m.NewBlockKvDB(chainId, engineType, logger)
 		if err != nil {
 			return nil, err
@@ -53,23 +56,26 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string, logger p
 			return nil, err
 		}
 		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, NewKvDBProvider(chainId, types.CommonDBDir, engineType, logger), logger)
-	case types.MySQL:
-		blockDB, err := blocksqldb.NewBlockMysqlDB(chainId, logger)
+	case types.MySQL, types.Sqlite:
+		dbprovider := sqldbprovider.NewSqlDBProvider(chainId, localconf.ChainMakerConfig)
+		blockDB, err := blocksqldb.NewBlockSqlDB(chainId, dbprovider, logger)
 		if err != nil {
 			return nil, err
 		}
-		stateDB, err := statesqldb.NewStateMysqlDB(chainId, logger)
+		stateDB, err := statesqldb.NewStateSqlDB(chainId, dbprovider, logger)
 		if err != nil {
 			return nil, err
 		}
-		historyDB, err := historysqldb.NewHistoryMysqlDB(chainId, logger)
+		historyDB, err := historysqldb.NewHistorySqlDB(chainId, dbprovider, logger)
 		if err != nil {
 			return nil, err
 		}
-		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, NewKvDBProvider(chainId, types.CommonDBDir, types.LevelDb, logger), logger)
+
+		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, dbprovider, logger)
 	default:
-		return nil, nil
+		return nil, errors.New("invalid engine type")
 	}
+	return nil, errors.New("invalid engine type")
 }
 
 // NewBlockKvDB constructs new `BlockDB`
@@ -133,7 +139,7 @@ func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, lo
 func NewKvDBProvider(chainId string, dbDir string, engineType types.EngineType, logger protocol.Logger) dbprovider.Provider {
 	switch engineType {
 	case types.LevelDb:
-		return leveldbprovider.NewProvider(chainId, dbDir, logger)
+		return leveldbprovider.NewLevelDBProvider(chainId, dbDir, logger)
 	}
 	return nil
 }

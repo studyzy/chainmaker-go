@@ -12,17 +12,13 @@ import (
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
-	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
@@ -56,6 +52,16 @@ var txRWSets = []*commonPb.TxRWSet{
 			},
 		},
 	},
+}
+var config = getConfig()
+
+func getConfig() *localconf.CMConfig {
+	conf := &localconf.CMConfig{}
+	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
+	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
+	conf.StorageConfig.MysqlConfig.MaxOpenConns = 10
+	conf.StorageConfig.MysqlConfig.ConnMaxLifeTime = 60
+	return conf
 }
 
 func generateBlockHash(chainId string, height int64) []byte {
@@ -178,28 +184,28 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 
 var log = &logger.GoLogger{}
 
-func TestMain(m *testing.M) {
-	fmt.Println("begin")
-	if dbType == types.MySQL {
-		// drop mysql table
-		conf := &localconf.ChainMakerConfig.StorageConfig
-		conf.Provider = "MySQL"
-		conf.MysqlConfig.Dsn = "root:123456@tcp(127.0.0.1:3306)/"
-		db, err := blocksqldb.NewBlockMysqlDB(chainId, log)
-		if err != nil {
-			panic("faild to open mysql")
-		}
-		// clear data
-		gormDB := db.(*blocksqldb.BlockSqlDB).GetDB()
-		gormDB.Migrator().DropTable(&blocksqldb.BlockInfo{})
-		gormDB.Migrator().DropTable(&blocksqldb.TxInfo{})
-		gormDB.Migrator().DropTable(&statesqldb.StateInfo{})
-		gormDB.Migrator().DropTable(&historysqldb.HistoryInfo{})
-	}
-	os.RemoveAll(chainId)
-	m.Run()
-	fmt.Println("end")
-}
+//func TestMain(m *testing.M) {
+//	fmt.Println("begin")
+//	if dbType == types.MySQL {
+//		// drop mysql table
+//		conf := &localconf.ChainMakerConfig.StorageConfig
+//		conf.Provider = "MySQL"
+//		conf.MysqlConfig.Dsn = "root:123456@tcp(127.0.0.1:3306)/"
+//		db, err := blocksqldb.NewBlockSqlDB(chainId, log)
+//		if err != nil {
+//			panic("faild to open mysql")
+//		}
+//		// clear data
+//		gormDB := db.(*blocksqldb.BlockSqlDB).GetDB()
+//		gormDB.Migrator().DropTable(&blocksqldb.BlockInfo{})
+//		gormDB.Migrator().DropTable(&blocksqldb.TxInfo{})
+//		gormDB.Migrator().DropTable(&statesqldb.StateInfo{})
+//		gormDB.Migrator().DropTable(&historysqldb.HistoryInfo{})
+//	}
+//	os.RemoveAll(chainId)
+//	m.Run()
+//	fmt.Println("end")
+//}
 
 func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 	var funcName = "get block"
@@ -226,7 +232,8 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 				t.Errorf("blockchainStoreImpl.PutBlock(), error %v", err)
 			}
 			got, err := s.GetBlockByHash(tt.block.Header.BlockHash)
-			assert.Equal(t, err, nil)
+			assert.Nil(t, err)
+			assert.NotNil(t, got)
 			assert.Equal(t, tt.block.String(), got.String())
 		})
 	}
@@ -396,11 +403,11 @@ func Test_blockchainStoreImpl_ReadObject(t *testing.T) {
 	assert.Equal(t, nil, err)
 	value, err := s.ReadObject(defaultContractName, []byte("key1"))
 	assert.Equal(t, nil, err)
-	assert.DeepEqual(t, value, []byte("value1"))
+	assert.Equal(t, value, []byte("value1"))
 
 	value, err = s.ReadObject(defaultContractName, []byte("key2"))
 	assert.Equal(t, nil, err)
-	assert.DeepEqual(t, value, []byte("value2"))
+	assert.Equal(t, value, []byte("value2"))
 }
 
 func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
@@ -480,7 +487,7 @@ func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
 	dbHandle.Put([]byte("a"), []byte("A"))
 	value, err := dbHandle.Get([]byte("a"))
 	assert.Equal(t, nil, err)
-	assert.DeepEqual(t, []byte("A"), value)
+	assert.Equal(t, []byte("A"), value)
 }
 
 func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {

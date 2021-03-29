@@ -18,8 +18,8 @@ var dbName = "db_test"
 var log = &logger.GoLogger{}
 
 func TestDBHandle_Put(t *testing.T) {
-	db := NewProvider(dbPath, "", log) //dbPath：db文件的存储路径
-	dbHandle := db.GetDBHandle(dbName) //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
+	db := NewLevelDBProvider(dbPath, "", log) //dbPath：db文件的存储路径
+	dbHandle := db.GetDBHandle(dbName)        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 
 	key1 := []byte("key1")
@@ -33,8 +33,8 @@ func TestDBHandle_Put(t *testing.T) {
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
-	db := NewProvider(dbPath, "", log) //dbPath：db文件的存储路径
-	dbHandle := db.GetDBHandle(dbName) //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
+	db := NewLevelDBProvider(dbPath, "", log) //dbPath：db文件的存储路径
+	dbHandle := db.GetDBHandle(dbName)        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 	batch := types.NewUpdateBatch()
 	key1 := []byte("key1")
@@ -53,8 +53,8 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
-	db := NewProvider(dbPath, "", log) //dbPath：db文件的存储路径
-	dbHandle := db.GetDBHandle(dbName) //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
+	db := NewLevelDBProvider(dbPath, "", log) //dbPath：db文件的存储路径
+	dbHandle := db.GetDBHandle(dbName)        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 
 	batch := types.NewUpdateBatch()

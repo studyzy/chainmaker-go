@@ -9,17 +9,18 @@ package blockdb
 import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
 // BlockDB provides handle to block and tx instances
 type BlockDB interface {
-	//
+	//SaveBlockHeader 用于SPV节点只存储区块头的场景
 	SaveBlockHeader(header *commonPb.BlockHeader) error
 	//GetBlockHeaderByHash(blockHash []byte) (*commonPb.BlockHeader, error)
 	//GetBlockHeaderByHeight(blockHash []byte) (*commonPb.BlockHeader, error)
 
 	// CommitBlock commits the block and the corresponding rwsets in an atomic operation
-	CommitBlock(block *commonPb.Block) error
+	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 	GetBlockByHash(blockHash []byte) (*commonPb.Block, error)
@@ -28,7 +29,7 @@ type BlockDB interface {
 	BlockExists(blockHash []byte) (bool, error)
 
 	// GetBlock returns a block given it's block height, or returns nil if none exists.
-	GetBlock(height uint64) (*commonPb.Block, error)
+	GetBlock(height int64) (*commonPb.Block, error)
 
 	// GetTx retrieves a transaction by txid, or returns nil if none exists.
 	GetTx(txId string) (*commonPb.Transaction, error)
@@ -46,7 +47,7 @@ type BlockDB interface {
 	GetFilteredBlock(height int64) (*storePb.SerializedBlock, error)
 
 	// GetLastSavepoint reurns the last block height
-	//GetLastSavepoint() (uint64, error)
+	GetLastSavepoint() (uint64, error)
 
 	// GetLastConfigBlock returns the last config block.
 	GetLastConfigBlock() (*commonPb.Block, error)

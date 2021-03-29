@@ -225,7 +225,9 @@ func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, lim
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	return bs.historyDB.GetTxRWSet(txId)
+	//return bs.historyDB.GetTxRWSet(txId)
+	//TODO
+	return nil, nil
 }
 
 // GetTxRWSetsByHeight returns all the rwsets corresponding to the block,

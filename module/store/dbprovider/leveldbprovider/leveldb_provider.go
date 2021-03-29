@@ -32,8 +32,8 @@ const (
 
 var DbNameKeySep = []byte{0x00}
 
-// Provider provides handle to db instances
-type Provider struct {
+// LevelDBProvider provides handle to db instances
+type LevelDBProvider struct {
 	db        *leveldb.DB
 	dbHandles map[string]*LevelDBHandle
 	mutex     sync.Mutex
@@ -41,23 +41,23 @@ type Provider struct {
 	logger protocol.Logger
 }
 
-// NewBlockProvider construct a new Provider for block operation with given chainId
-func NewBlockProvider(chainId string, logger protocol.Logger) *Provider {
-	return NewProvider(chainId, StoreBlockDBDir, logger)
+// NewBlockProvider construct a new LevelDBProvider for block operation with given chainId
+func NewBlockProvider(chainId string, logger protocol.Logger) *LevelDBProvider {
+	return NewLevelDBProvider(chainId, StoreBlockDBDir, logger)
 }
 
-// NewStateProvider construct a new Provider for state operation with given chainId
-func NewStateProvider(chainId string, logger protocol.Logger) *Provider {
-	return NewProvider(chainId, StoreStateDBDir, logger)
+// NewStateProvider construct a new LevelDBProvider for state operation with given chainId
+func NewStateProvider(chainId string, logger protocol.Logger) *LevelDBProvider {
+	return NewLevelDBProvider(chainId, StoreStateDBDir, logger)
 }
 
-// NewStateProvider construct a new Provider for state operation with given chainId
-func NewHistoryProvider(chainId string, logger protocol.Logger) *Provider {
-	return NewProvider(chainId, StoreHistoryDBDir, logger)
+// NewStateProvider construct a new LevelDBProvider for state operation with given chainId
+func NewHistoryProvider(chainId string, logger protocol.Logger) *LevelDBProvider {
+	return NewLevelDBProvider(chainId, StoreHistoryDBDir, logger)
 }
 
-// NewProvider construct a new db Provider for given chainId and dir
-func NewProvider(chainId, dbDir string, logger protocol.Logger) *Provider {
+// NewLevelDBProvider construct a new db LevelDBProvider for given chainId and dir
+func NewLevelDBProvider(chainId, dbDir string, logger protocol.Logger) *LevelDBProvider {
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
@@ -79,7 +79,7 @@ func NewProvider(chainId, dbDir string, logger protocol.Logger) *Provider {
 	if err != nil {
 		panic(fmt.Sprintf("Error opening leveldbprovider: %s", err))
 	}
-	return &Provider{
+	return &LevelDBProvider{
 		db:        db,
 		dbHandles: make(map[string]*LevelDBHandle),
 		mutex:     sync.Mutex{},
@@ -89,7 +89,7 @@ func NewProvider(chainId, dbDir string, logger protocol.Logger) *Provider {
 }
 
 // GetDBHandle returns a DBHandle for given dbname
-func (p *Provider) GetDBHandle(dbName string) protocol.DBHandle {
+func (p *LevelDBProvider) GetDBHandle(dbName string) protocol.DBHandle {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	dbHandle := p.dbHandles[dbName]
@@ -101,7 +101,7 @@ func (p *Provider) GetDBHandle(dbName string) protocol.DBHandle {
 }
 
 // Close is used to close database
-func (p *Provider) Close() error {
+func (p *LevelDBProvider) Close() error {
 	err := p.db.Close()
 	if err != nil {
 		p.logger.Errorf("close leveldbprovider, err:%s", err.Error())

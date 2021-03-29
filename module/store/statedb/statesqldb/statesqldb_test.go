@@ -157,12 +157,13 @@ func initProvider() *sqldbprovider.SqlDBProvider {
 	conf := &localconf.CMConfig{}
 	conf.StorageConfig.MysqlConfig.Dsn = ":memory:"
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := sqldbprovider.NewProvider("chain1", conf)
+	p := sqldbprovider.NewSqlDBProvider("chain1", conf)
 	p.CreateTableIfNotExist(&StateInfo{})
 	return p
 }
 func initStateSqlDB() *StateSqlDB {
-	return NewStateSqlDB("chain1", initProvider(), log)
+	db, _ := NewStateSqlDB("chain1", initProvider(), log)
+	return db
 }
 
 //func TestMain(m *testing.M) {

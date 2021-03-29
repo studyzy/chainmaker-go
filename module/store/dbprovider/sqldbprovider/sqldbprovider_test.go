@@ -27,7 +27,7 @@ func TestProvider_ExecSql(t *testing.T) {
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
 	conf.StorageConfig.MysqlConfig.MaxOpenConns = 10
 	conf.StorageConfig.MysqlConfig.ConnMaxLifeTime = 60
-	p := NewProvider("chain1", conf)
+	p := NewSqlDBProvider("chain1", conf)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 
@@ -43,7 +43,7 @@ func TestProvider_QuerySql(t *testing.T) {
 	conf := &localconf.CMConfig{}
 	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := NewProvider("chain1", conf)
+	p := NewSqlDBProvider("chain1", conf)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
@@ -58,7 +58,7 @@ func TestProvider_QueryTableSql(t *testing.T) {
 	conf := &localconf.CMConfig{}
 	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := NewProvider("chain1", conf)
+	p := NewSqlDBProvider("chain1", conf)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
@@ -76,7 +76,7 @@ func initProvider() *SqlDBProvider {
 	conf := &localconf.CMConfig{}
 	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := NewProvider("chain1", conf)
+	p := NewSqlDBProvider("chain1", conf)
 	return p
 }
 func initData(p *SqlDBProvider) {

@@ -11,6 +11,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"golang.org/x/sync/semaphore"
@@ -51,7 +52,8 @@ func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
 }
 
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation
-func (b *BlockSqlDB) CommitBlock(block *commonPb.Block) error {
+func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedInfo) error {
+	block := blocksInfo.Block
 	blockHashStr := hex.EncodeToString(block.Header.BlockHash)
 	startCommitTxs := utils.CurrentTimeMillisSeconds()
 	//save txs
@@ -187,14 +189,19 @@ func (b *BlockSqlDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, e
 }
 
 // GetLastSavepoint reurns the last block height
-//func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
-//	var block_height uint64
-//	res := b.db.Model(&BlockInfo{}).Select("block_height").Last(&block_height)
-//	if res.Error != nil && res.Error != gorm.ErrRecordNotFound {
-//		return 0, res.Error
-//	}
-//	return block_height, nil
-//}
+func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
+	sql := "select max(block_height) from block_infos"
+	row, err := b.db.QuerySql(sql)
+	if err != nil {
+		return 0, err
+	}
+	var height uint64
+	err = row.ScanColumns(&height)
+	if err != nil {
+		return 0, err
+	}
+	return height, nil
+}
 
 // GetBlockByTx returns a block which contains a tx.
 func (b *BlockSqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
@@ -256,12 +263,7 @@ func (b *BlockSqlDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockSqlDB) Close() {
-	//sqlDB, err := b.db.DB()
-	//if err != nil {
-	//	return
-	//}
-	//sqlDB.Close()
-	//TODO Devin
+	b.db.Close()
 }
 
 //

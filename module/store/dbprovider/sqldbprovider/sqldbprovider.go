@@ -32,6 +32,13 @@ type SqlDBProvider struct {
 	dbTxCache map[string]*SqlDBTx
 }
 
+// GetDBHandle returns a DBHandle for given dbname
+func (p *SqlDBProvider) GetDBHandle(dbName string) protocol.DBHandle {
+	p.Lock()
+	defer p.Unlock()
+
+	return p
+}
 func parseSqlDbType(str string) (types.EngineType, error) {
 	switch str {
 	case "mysql":
@@ -43,8 +50,8 @@ func parseSqlDbType(str string) (types.EngineType, error) {
 	}
 }
 
-// NewProvider construct a new SqlDBProvider
-func NewProvider(chainId string, conf *localconf.CMConfig) *SqlDBProvider {
+// NewSqlDBProvider construct a new SqlDBProvider
+func NewSqlDBProvider(chainId string, conf *localconf.CMConfig) *SqlDBProvider {
 	provider := &SqlDBProvider{dbTxCache: make(map[string]*SqlDBTx)}
 	sqlType, err := parseSqlDbType(conf.StorageConfig.MysqlConfig.DbType)
 	if err != nil {

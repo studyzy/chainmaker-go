@@ -11,7 +11,9 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/serialization"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -118,12 +120,16 @@ var configBlock4 = createConfigBlock(testChainId, 4)
 var block5, _ = createBlockAndRWSets(testChainId, 5, 3)
 
 func init5Blocks(db *BlockSqlDB) {
-	db.CommitBlock(block0)
-	db.CommitBlock(block1)
-	db.CommitBlock(block2)
-	db.CommitBlock(block3)
-	db.CommitBlock(configBlock4)
-	db.CommitBlock(block5)
+	commitBlock(db, block0)
+	commitBlock(db, block1)
+	commitBlock(db, block2)
+	commitBlock(db, block3)
+	commitBlock(db, configBlock4)
+	commitBlock(db, block5)
+}
+func commitBlock(db *BlockSqlDB, block *commonPb.Block) error {
+	_, bl, _ := serialization.SerializeBlock(&storePb.BlockWithRWSet{Block: block})
+	return db.CommitBlock(bl)
 }
 func createBlock(chainId string, height int64) *commonPb.Block {
 	block := &commonPb.Block{
@@ -158,7 +164,7 @@ func initProvider() *sqldbprovider.SqlDBProvider {
 	conf := &localconf.CMConfig{}
 	conf.StorageConfig.MysqlConfig.Dsn = ":memory:"
 	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := sqldbprovider.NewProvider("chain1", conf)
+	p := sqldbprovider.NewSqlDBProvider("chain1", conf)
 	p.CreateTableIfNotExist(&BlockInfo{})
 	p.CreateTableIfNotExist(&TxInfo{})
 	return p
@@ -184,9 +190,9 @@ func initSqlDb() *BlockSqlDB {
 
 func TestBlockMysqlDB_CommitBlock(t *testing.T) {
 	db := initSqlDb()
-	err := db.CommitBlock(block0)
+	err := commitBlock(db, block0)
 	assert.Nil(t, err)
-	err = db.CommitBlock(block1)
+	err = commitBlock(db, block1)
 	assert.Nil(t, err)
 }
 
@@ -219,18 +225,18 @@ func TestBlockMysqlDB_GetBlockAt(t *testing.T) {
 
 func TestBlockMysqlDB_GetLastBlock(t *testing.T) {
 	db := initSqlDb()
-	err := db.CommitBlock(block0)
+	err := commitBlock(db, block0)
 	assert.Nil(t, err)
 	block, err := db.GetLastBlock()
 	assert.Nil(t, err)
 	assert.Equal(t, int64(0), block.Header.BlockHeight)
-	err = db.CommitBlock(block2)
+	err = commitBlock(db, block2)
 	assert.Nil(t, err)
 	block, err = db.GetLastBlock()
 	assert.Nil(t, err)
 	assert.Equal(t, block2.Header.BlockHeight, block.Header.BlockHeight)
 
-	err = db.CommitBlock(block3)
+	err = commitBlock(db, block3)
 	assert.Nil(t, err)
 	block, err = db.GetLastBlock()
 	assert.Nil(t, err)

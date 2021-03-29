@@ -104,7 +104,7 @@ func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType) (h
 func NewKvDBProvider(chainId string, dbDir string, engineType types.EngineType) dbprovider.Provider {
 	switch engineType {
 	case types.RocksDb:
-		return rocksdbprovider.NewProvider(chainId, dbDir)
+		return rocksdbprovider.NewSqlDBProvider(chainId, dbDir)
 	}
 	return nil
 }
