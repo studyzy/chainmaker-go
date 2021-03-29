@@ -59,8 +59,6 @@ type TxSimContext interface {
 	GetBlockchainStore() BlockchainStore
 	// Get access control service
 	GetAccessControl() (AccessControlProvider, error)
-	// Obtain the transaction ID list corresponding to the creation / upgrade contract of the status database
-	GetContractTxIds() ([]string, error)
 	// Get organization service
 	GetChainNodesInfoProvider() (ChainNodesInfoProvider, error)
 	// The execution sequence of the transaction, used to construct the dag,

@@ -273,10 +273,6 @@ func (*TxContextMockTest) GetAccessControl() (protocol.AccessControlProvider, er
 	panic("implement me")
 }
 
-func (*TxContextMockTest) GetContractTxIds() ([]string, error) {
-	panic("implement me")
-}
-
 func (s *TxContextMockTest) GetChainNodesInfoProvider() (protocol.ChainNodesInfoProvider, error) {
 	panic("implement me")
 }

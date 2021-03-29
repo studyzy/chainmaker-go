@@ -241,7 +241,11 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("core update success, params ", params)
+	if err != nil {
+		r.log.Errorf("core update update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("core update success, params %+v", params)
+	}
 	return result, err
 }
 
@@ -290,7 +294,11 @@ func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, para
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("block update success, param ", params)
+	if err != nil {
+		r.log.Errorf("block update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("block update success, param ", params)
+	}
 	return result, err
 }
 
@@ -321,7 +329,11 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 		Root:  rootCaCrt,
 	})
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("trust root add success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+	if err != nil {
+		r.log.Errorf("trust root add fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
+	} else {
+		r.log.Infof("trust root add success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+	}
 	return result, err
 }
 
@@ -350,7 +362,11 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 				Root:  rootCaCrt,
 			}
 			result, err = setChainConfig(txSimContext, chainConfig)
-			r.log.Infof("trust root update success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+			if err != nil {
+				r.log.Errorf("trust root update fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
+			} else {
+				r.log.Infof("trust root update success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+			}
 			return result, err
 		}
 	}
@@ -401,7 +417,11 @@ func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimCont
 	chainConfig.Consensus.Nodes = nodes
 	chainConfig.TrustRoots = trustRoots
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("trust root delete success. orgId[%s]", orgId)
+	if err != nil {
+		r.log.Errorf("trust root delete fail, %s, orgId[%s] ", err.Error(), orgId)
+	} else {
+		r.log.Infof("trust root delete success. orgId[%s]", orgId)
+	}
 	return result, err
 }
 
@@ -470,7 +490,11 @@ func (r *ChainConsensusRuntime) NodeAddrAdd(txSimContext protocol.TxSimContext, 
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("node addr add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+	if err != nil {
+		r.log.Errorf("node addr add fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+	} else {
+		r.log.Infof("node addr add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+	}
 	return result, err
 }
 
@@ -526,7 +550,11 @@ func (r *ChainConsensusRuntime) NodeAddrUpdate(txSimContext protocol.TxSimContex
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
 			result, err = setChainConfig(txSimContext, chainConfig)
-			r.log.Infof("node addr update success. orgId[%s] addr[%s] newAddr[%s]", orgId, addr, newAddr)
+			if err != nil {
+				r.log.Errorf("node addr update fail, %s, orgId[%s] addr[%s] newAddr[%s]", err.Error(), orgId, addr, newAddr)
+			} else {
+				r.log.Infof("node addr update success. orgId[%s] addr[%s] newAddr[%s]", orgId, addr, newAddr)
+			}
 			return result, err
 		}
 	}
@@ -578,7 +606,11 @@ func (r *ChainConsensusRuntime) NodeAddrDelete(txSimContext protocol.TxSimContex
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
 			result, err = setChainConfig(txSimContext, chainConfig)
-			r.log.Infof("node addr delete success. orgId[%s] addr[%s]", orgId, addr)
+			if err != nil {
+				r.log.Errorf("node addr delete fail, %s, orgId[%s] addr[%s]", err.Error(), orgId, addr)
+			} else {
+				r.log.Infof("node addr delete success. orgId[%s] addr[%s]", orgId, addr)
+			}
 			return result, err
 		}
 	}
@@ -628,7 +660,11 @@ func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, p
 		chainConfig.Consensus.Nodes = append(chainConfig.Consensus.Nodes, org)
 
 		result, err = setChainConfig(txSimContext, chainConfig)
-		r.log.Infof("node org add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+		if err != nil {
+			r.log.Errorf("node org add fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+		} else {
+			r.log.Infof("node org add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+		}
 		return result, err
 	}
 
@@ -691,7 +727,11 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("node org update success. orgId[%s] addrStr[%s]", orgId, addrStr)
+	if err != nil {
+		r.log.Errorf("node org update fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+	} else {
+		r.log.Infof("node org update success. orgId[%s] addrStr[%s]", orgId, addrStr)
+	}
 	return result, err
 }
 
@@ -725,7 +765,11 @@ func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext
 			chainConfig.Consensus.Nodes = nodes
 
 			result, err = setChainConfig(txSimContext, chainConfig)
-			r.log.Infof("node org delete success. orgId[%s]", orgId)
+			if err != nil {
+				r.log.Errorf("node org delete fail, %s, orgId[%s]", err.Error(), orgId)
+			} else {
+				r.log.Infof("node org delete success. orgId[%s]", orgId)
+			}
 			return result, err
 		}
 	}
@@ -784,7 +828,11 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("consensus ext add success. params ", params)
+	if err != nil {
+		r.log.Errorf("consensus ext add fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("consensus ext add success. params %+v", params)
+	}
 	return result, err
 }
 
@@ -832,7 +880,11 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("consensus ext update success. params ", params)
+	if err != nil {
+		r.log.Errorf("consensus ext update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("consensus ext update success. params %+v", params)
+	}
 	return result, err
 }
 
@@ -876,7 +928,11 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("consensus ext delete success. params ", params)
+	if err != nil {
+		r.log.Errorf("consensus ext delete fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("consensus ext delete success. params %+v", params)
+	}
 	return result, err
 }
 
@@ -960,7 +1016,11 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("resource policy add success. params ", params)
+	if err != nil {
+		r.log.Errorf("resource policy add fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("resource policy add success. params %+v", params)
+	}
 	return result, err
 }
 
@@ -1039,7 +1099,11 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("resource policy update success. params ", params)
+	if err != nil {
+		r.log.Errorf("resource policy update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("resource policy update success. params %+v", params)
+	}
 	return result, err
 }
 
@@ -1115,6 +1179,10 @@ func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSim
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
-	r.log.Infof("resource policy delete success. params ", params)
+	if err != nil {
+		r.log.Errorf("resource policy delete fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("resource policy delete success. params %+v", params)
+	}
 	return result, err
 }
