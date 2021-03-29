@@ -70,7 +70,13 @@ function package() {
         cp $CURRENT_PATH/bin/start.sh     $chainmaker_file/bin
         cp $CURRENT_PATH/bin/stop.sh      $chainmaker_file/bin
         cp $CURRENT_PATH/bin/restart.sh   $chainmaker_file/bin
-        cp -r $PROJECT_PATH/main/libwasmer_runtime_c_api.so     $chainmaker_file/lib/libwasmer.so
+        if [ "${system}" = "Linux" ]; then
+          cp -r $PROJECT_PATH/main/libwasmer_runtime_c_api.so     $chainmaker_file/lib/libwasmer.so
+          cp -r $PROJECT_PATH/main/prebuilt/linux/wxdec           $chainmaker_file/lib/wxdec
+        else
+          cp -r $PROJECT_PATH/main/libwasmer.dylib                $chainmaker_file/lib/libwasmer.dylib
+          cp -r $PROJECT_PATH/main/prebuilt/mac/wxdec             $chainmaker_file/lib/wxdec
+        fi
         chmod 644 $chainmaker_file/lib/*
         cp -r $BUILD_CONFIG_PATH/node$c/* $chainmaker_file/config/$file
         xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/start.sh
@@ -84,3 +90,5 @@ function package() {
 check_env
 build
 package
+
+}
