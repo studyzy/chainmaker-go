@@ -13,7 +13,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
-	"chainmaker.org/chainmaker-go/store/historydb/historymysqldb"
+	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
@@ -194,7 +194,7 @@ func TestMain(m *testing.M) {
 		gormDB.Migrator().DropTable(&blocksqldb.BlockInfo{})
 		gormDB.Migrator().DropTable(&blocksqldb.TxInfo{})
 		gormDB.Migrator().DropTable(&statesqldb.StateInfo{})
-		gormDB.Migrator().DropTable(&historymysqldb.HistoryInfo{})
+		gormDB.Migrator().DropTable(&historysqldb.HistoryInfo{})
 	}
 	os.RemoveAll(chainId)
 	m.Run()

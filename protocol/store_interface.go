@@ -95,6 +95,7 @@ type SqlDBHandle interface {
 	GetDbTransaction(txName string) (SqlDBTransaction,error)
 	CommitDbTransaction(txName string) error
 	RollbackDbTransaction(txName string) error
+	Close() error
 }
 type SqlDBTransaction interface {
 	ChangeContextDb(dbName string) error

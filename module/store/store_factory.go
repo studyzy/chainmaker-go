@@ -19,7 +19,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
-	"chainmaker.org/chainmaker-go/store/historydb/historymysqldb"
+	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
@@ -62,7 +62,7 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string, logger p
 		if err != nil {
 			return nil, err
 		}
-		historyDB, err := historymysqldb.NewHistoryMysqlDB(chainId, logger)
+		historyDB, err := historysqldb.NewHistoryMysqlDB(chainId, logger)
 		if err != nil {
 			return nil, err
 		}

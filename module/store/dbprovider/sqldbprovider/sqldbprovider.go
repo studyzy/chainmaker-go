@@ -246,3 +246,9 @@ func (p *SqlDBProvider) RollbackDbTransaction(txName string) error {
 	delete(p.dbTxCache, txName)
 	return nil
 }
+func (p *SqlDBProvider) Close() error {
+	p.Lock()
+	defer p.Unlock()
+	db, _ := p.db.DB()
+	return db.Close()
+}

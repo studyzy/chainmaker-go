@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package historydb
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
@@ -18,7 +17,7 @@ type HistoryDB interface {
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-	GetTxRWSet(txId string) (*commonPb.TxRWSet, error)
+	//GetTxRWSet(contractName string,key []byte) ([], error)
 
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)
