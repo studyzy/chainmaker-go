@@ -219,12 +219,18 @@ func verifyPolicy(policy *pbac.Policy) error {
 			for i, role := range roles {
 				role = strings.ToUpper(role)
 				roles[i] = role
+				if policy.Rule == string(protocol.RuleMajority) {
+					if role != string(protocol.RoleAdmin) {
+						err := fmt.Errorf("config rule[MAJORITY], role can only be admin or null")
+						return err
+					}
+				}
 			}
 			policy.RoleList = roles
 		}
 		if policy.Rule == string(protocol.RuleMajority) {
-			if len(policy.RoleList) > 0 || len(policy.OrgList) > 0 {
-				err := fmt.Errorf("config rule[MAJORITY], org_list and role_list not allowed")
+			if len(policy.OrgList) > 0 {
+				err := fmt.Errorf("config rule[MAJORITY], org_list param not allowed")
 				return err
 			}
 		}
