@@ -18,9 +18,9 @@ BUILD_CONFIG_PATH=${BUILD_PATH}/config
 VERSION=V1.0.0
 DATETIME=$(date "+%Y%m%d%H%M%S")
 PLATFORM=$(uname -m)
+system=$(uname)
 
 function xsed() {
-    system=$(uname)
 
     if [ "${system}" = "Linux" ]; then
         sed -i "$@"
@@ -72,10 +72,10 @@ function package() {
         cp $CURRENT_PATH/bin/restart.sh   $chainmaker_file/bin
         if [ "${system}" = "Linux" ]; then
           cp -r $PROJECT_PATH/main/libwasmer_runtime_c_api.so     $chainmaker_file/lib/libwasmer.so
-          cp -r $PROJECT_PATH/main/prebuilt/linux/wxdec           $chainmaker_file/lib/wxdec
+          cp -r $PROJECT_PATH/main/prebuilt/linux/wxdec           $chainmaker_file/lib/
         else
-          cp -r $PROJECT_PATH/main/libwasmer.dylib                $chainmaker_file/lib/libwasmer.dylib
-          cp -r $PROJECT_PATH/main/prebuilt/mac/wxdec             $chainmaker_file/lib/wxdec
+          cp -r $PROJECT_PATH/main/libwasmer.dylib                $chainmaker_file/lib/
+          cp -r $PROJECT_PATH/main/prebuilt/mac/wxdec             $chainmaker_file/lib/
         fi
         chmod 644 $chainmaker_file/lib/*
         cp -r $BUILD_CONFIG_PATH/node$c/* $chainmaker_file/config/$file
@@ -91,4 +91,3 @@ check_env
 build
 package
 
-}
