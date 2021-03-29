@@ -202,6 +202,9 @@ func (s *sdkRequestCtx) DeleteState() int32 {
 
 // SuccessResult record the results of contract execution success
 func (s *sdkRequestCtx) SuccessResult() int32 {
+	if s.Sc.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+		return protocol.ContractSdkSignalResultFail
+	}
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_OK
 	s.Sc.ContractResult.Result = s.RequestBody
 	return protocol.ContractSdkSignalResultSuccess
@@ -210,7 +213,7 @@ func (s *sdkRequestCtx) SuccessResult() int32 {
 // ErrorResult record the results of contract execution error
 func (s *sdkRequestCtx) ErrorResult() int32 {
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Sc.ContractResult.Message = string(s.RequestBody)
+	s.Sc.ContractResult.Message += string(s.RequestBody)
 	return protocol.ContractSdkSignalResultSuccess
 }
 

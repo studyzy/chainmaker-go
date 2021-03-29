@@ -187,12 +187,15 @@ func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) (
 	}
 	msg, ok := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
 	if ok {
-		context.ContractResult.Message = msg.(string)
+		context.ContractResult.Message += msg.(string)
 	}
-
 	result, ok := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_USER)
 	if ok {
 		context.ContractResult.Result = []byte(result.(string))
+	}
+	if context.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+		items := make([]*serialize.EasyCodecItem, 0)
+		return items, nil
 	}
 	switch code.(int32) {
 	case 0:
