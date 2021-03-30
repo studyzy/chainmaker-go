@@ -7,9 +7,18 @@
 
 package binlog
 
+import "errors"
+
 type MemBinlog struct {
 	mem  map[uint64][]byte
 	last uint64
+}
+
+func NewMemBinlog() *MemBinlog {
+	return &MemBinlog{
+		mem:  make(map[uint64][]byte),
+		last: 0,
+	}
 }
 
 func (l *MemBinlog) Close() error {
@@ -27,6 +36,9 @@ func (l *MemBinlog) LastIndex() (uint64, error) {
 	return l.last, nil
 }
 func (l *MemBinlog) Write(index uint64, data []byte) error {
+	if index != l.last+1 {
+		return errors.New("binlog out of order")
+	}
 	l.mem[index] = data
 	l.last = index
 	return nil

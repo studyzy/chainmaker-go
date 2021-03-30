@@ -13,6 +13,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"path/filepath"
@@ -35,6 +36,7 @@ var dbType = types.LevelDb
 
 var defaultContractName = "contract1"
 var defaultChainId = "testchainid"
+var block0 = createConfigBlock(defaultChainId, 0)
 var block5 = createBlock(chainId, 5)
 var txRWSets = []*commonPb.TxRWSet{
 	{
@@ -237,7 +239,7 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 		{funcName, createBlock(defaultChainId, 4)},
 	}
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
@@ -256,14 +258,15 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 	}
 }
 func initGenesis(s protocol.BlockchainStore) {
-	genesis := createConfigBlock(defaultChainId, 0)
+	genesis := block0
 	g := &storePb.BlockWithRWSet{Block: genesis}
 	s.InitGenesis(g)
 
 }
+
 func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	initGenesis(s)
 
 	if err != nil {
@@ -277,28 +280,36 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 
 func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
 	initGenesis(s)
-	exist, err := s.BlockExists(block5.Header.BlockHash)
-	assert.Equal(t, false, exist)
+	exist, _ := s.BlockExists(block0.Header.BlockHash)
+	assert.True(t, exist)
 
 	exist, err = s.BlockExists([]byte("not exist"))
 	assert.Equal(t, nil, err)
-	assert.Equal(t, false, exist)
+	assert.False(t, exist)
 }
-
+func init5Blocks(s protocol.BlockchainStore) {
+	genesis := &storePb.BlockWithRWSet{Block: block0}
+	s.InitGenesis(genesis)
+	s.PutBlock(createBlock(defaultChainId, 1), nil)
+	s.PutBlock(createBlock(defaultChainId, 2), nil)
+	s.PutBlock(createBlock(defaultChainId, 3), nil)
+	s.PutBlock(createBlock(defaultChainId, 4), nil)
+	s.PutBlock(createBlock(defaultChainId, 5), nil)
+}
 func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-	initGenesis(s)
+	init5Blocks(s)
 	got, err := s.GetBlock(block5.Header.BlockHeight)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block5.String(), got.String())
@@ -306,40 +317,41 @@ func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetLastBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-	initGenesis(s)
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	lastBlock, err := s.GetLastBlock()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block5.Header.BlockHeight, lastBlock.Header.BlockHeight)
 }
 
-func Test_blockchainStoreImpl_GetLastConfigBlock(t *testing.T) {
-	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
-	if err != nil {
-		panic(err)
-	}
-	defer s.Close()
-	configBlock := createConfigBlock(chainId, 6)
-	err = s.PutBlock(configBlock, txRWSets)
-	assert.Equal(t, nil, err)
-	lastBlock, err := s.GetLastConfigBlock()
-	assert.Equal(t, nil, err)
-	assert.Equal(t, int64(6), lastBlock.Header.BlockHeight)
-}
+//func Test_blockchainStoreImpl_GetLastConfigBlock(t *testing.T) {
+//	var factory Factory
+//	s, err := factory.newStore(chainId,config,binlog.NewMemBinlog(),log)
+//	if err != nil {
+//		panic(err)
+//	}
+//	defer s.Close()
+//	configBlock := createConfigBlock(chainId, 6)
+//	err = s.PutBlock(configBlock, txRWSets)
+//	assert.Equal(t, nil, err)
+//	lastBlock, err := s.GetLastConfigBlock()
+//	assert.Equal(t, nil, err)
+//	assert.Equal(t, int64(6), lastBlock.Header.BlockHeight)
+//}
 
 func Test_blockchainStoreImpl_GetBlockByTx(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
+	init5Blocks(s)
 	block, err := s.GetBlockByTx(generateTxId(defaultChainId, 3, 0))
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(3), block.Header.BlockHeight)
@@ -359,7 +371,7 @@ func Test_blockchainStoreImpl_GetTx(t *testing.T) {
 	}
 
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
@@ -394,7 +406,7 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 		{funcName, createBlock(defaultChainId, 999999)},
 	}
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
@@ -419,7 +431,7 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 
 func Test_blockchainStoreImpl_ReadObject(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	defer s.Close()
 	initGenesis(s)
 	assert.Equal(t, nil, err)
@@ -438,7 +450,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 		return
 	}
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	defer s.Close()
 	initGenesis(s)
 	assert.Equal(t, nil, err)
@@ -455,7 +467,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 
 func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
@@ -477,19 +489,21 @@ func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 
 func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	defer s.Close()
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
 	height, err := impl.getLastSavepoint()
-	assert.Equal(t, uint64(6), height)
+	assert.Equal(t, uint64(5), height)
 }
 
 func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	defer s.Close()
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
@@ -503,7 +517,7 @@ func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 
 func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	defer s.Close()
 	assert.Equal(t, nil, err)
 	dbHandle := s.GetDBHandle("test")
@@ -515,7 +529,7 @@ func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
@@ -545,7 +559,7 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 
 func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(chainId, config, log)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	//defer s.Close()
 	assert.Equal(t, nil, err)
 	bs, ok := s.(*BlockStoreImpl)
@@ -569,7 +583,7 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	s.Close()
 
 	//recovory
-	s, err = factory.NewStore(chainId, config, log)
+	s, err = factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
@@ -584,7 +598,7 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	s.Close()
 
 	//check recover result
-	s, err = factory.NewStore(chainId, config, log)
+	s, err = factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	blockWithRWSets, err := s.GetBlockWithRWSets(8)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block8.String(), blockWithRWSets.Block.String())

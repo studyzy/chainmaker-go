@@ -12,6 +12,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blockkvdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
@@ -24,7 +25,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
-	"errors"
 	"golang.org/x/sync/semaphore"
 	"runtime"
 	"strings"
@@ -37,6 +37,10 @@ type Factory struct {
 
 // NewStore constructs new BlockStore
 func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig, logger protocol.Logger) (protocol.BlockchainStore, error) {
+	return m.newStore(chainId, storeConfig, nil, logger)
+}
+
+func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig, binLog binlog.BinLoger, logger protocol.Logger) (protocol.BlockchainStore, error) {
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
@@ -84,9 +88,8 @@ func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig,
 	}
 	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB,
 		leveldbprovider.NewBlockProvider(chainId, storeConfig.HistoryDbConfig.LevelDbConfig, logger),
-		storeConfig, logger)
+		storeConfig, binLog, logger)
 
-	return nil, errors.New("invalid engine type")
 }
 
 func parseEngineType(dbType string) types.EngineType {

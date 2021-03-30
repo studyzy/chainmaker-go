@@ -129,13 +129,13 @@ type StorageConfig struct {
 	LevelDbConfig
 	//数据库模式：light只存区块头,normal存储区块头和交易以及生成的State,full存储了区块头、交易、状态和交易收据（读写集、日志等）
 	//Mode string `mapstructure:"mode"`
-	DisableHistoryDB bool `mapstructure:"disable_historydb"`
-	DisableResultDB  bool `mapstructure:"disable_resultdb"`
-
-	BlockDbConfig   DbConfig `mapstructure:"blockdb_config"`
-	StateDbConfig   DbConfig `mapstructure:"statedb_config"`
-	HistoryDbConfig DbConfig `mapstructure:"historydb_config"`
-	ResultDbConfig  DbConfig `mapstructure:"resultdb_config"`
+	DisableHistoryDB bool     `mapstructure:"disable_historydb"`
+	DisableResultDB  bool     `mapstructure:"disable_resultdb"`
+	LogDBWriteAsync  bool     `mapstructure:"logdb_write_async"`
+	BlockDbConfig    DbConfig `mapstructure:"blockdb_config"`
+	StateDbConfig    DbConfig `mapstructure:"statedb_config"`
+	HistoryDbConfig  DbConfig `mapstructure:"historydb_config"`
+	ResultDbConfig   DbConfig `mapstructure:"resultdb_config"`
 }
 type DbConfig struct{
 	//leveldb,rocksdb,sql
@@ -153,7 +153,6 @@ type LevelDbConfig struct{
 	StorePath            string    `mapstructure:"store_path"`
 	WriteBufferSize      int       `mapstructure:"write_buffer_size"`
 	BloomFilterBits      int       `mapstructure:"bloom_filter_bits"`
-	LogDBWriteAsync      bool      `mapstructure:"logdb_write_async"`
 	BlockWriteBufferSize int       `mapstructure:"block_write_buffer_size"`
 }
 type SqlDbConfig struct {

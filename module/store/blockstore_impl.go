@@ -54,16 +54,19 @@ func NewBlockStoreImpl(chainId string,
 	historyDB historydb.HistoryDB,
 	commonDB dbprovider.Provider,
 	storeConfig *localconf.StorageConfig,
-	logger protocol.Logger) (protocol.BlockchainStore, error) {
-
-	walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)
-	writeAsync := storeConfig.LogDBWriteAsync
-	walOpt := &wal.Options{
-		NoSync: writeAsync,
-	}
-	writeLog, err := wal.Open(walPath, walOpt)
-	if err != nil {
-		panic(fmt.Sprintf("open wal failed, path:%s, error:%s", walPath, err))
+	binLog binlog.BinLoger,
+	logger protocol.Logger) (*BlockStoreImpl, error) {
+	if binLog == nil {
+		walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)
+		writeAsync := storeConfig.LogDBWriteAsync
+		walOpt := &wal.Options{
+			NoSync: writeAsync,
+		}
+		writeLog, err := wal.Open(walPath, walOpt)
+		if err != nil {
+			panic(fmt.Sprintf("open wal failed, path:%s, error:%s", walPath, err))
+		}
+		binLog = writeLog
 	}
 	nWorkers := runtime.NumCPU()
 	if logger == nil { //init logger
@@ -73,13 +76,13 @@ func NewBlockStoreImpl(chainId string,
 		blockDB:          blockDB,
 		stateDB:          stateDB,
 		historyDB:        historyDB,
-		wal:              writeLog,
+		wal:              binLog,
 		commonDB:         commonDB,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		logger:           logger,
 	}
 	//有SavePoint，不是空数据库，进行数据恢复
-	_, err = blockDB.GetLastSavepoint()
+	_, err := blockDB.GetLastSavepoint()
 	if err == nil {
 		//check savepoint and recover
 		err = blockStore.recover()
