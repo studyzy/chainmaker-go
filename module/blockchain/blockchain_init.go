@@ -147,7 +147,7 @@ func (bc *Blockchain) initNetService() (err error) {
 
 func (bc *Blockchain) initStore() (err error) {
 	var storeFactory store.Factory
-	if bc.store, err = storeFactory.NewStore( bc.chainId,localconf.ChainMakerConfig.StorageConfig, nil); err != nil {
+	if bc.store, err = storeFactory.NewStore( bc.chainId,&localconf.ChainMakerConfig.StorageConfig, nil); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}

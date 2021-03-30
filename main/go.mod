@@ -12,6 +12,7 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
+	gorm.io/driver/sqlite v1.1.4 // indirect
 )
 
 replace (

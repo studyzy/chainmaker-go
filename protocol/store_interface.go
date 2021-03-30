@@ -73,7 +73,7 @@ type BlockchainStore interface {
 	SelectObject(contractName string, startKey []byte, limit []byte) Iterator
 
 	// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-	//GetTxRWSet(txId string) (*common.TxRWSet, error)
+	GetTxRWSet(txId string) (*common.TxRWSet, error)
 
 	// GetTxRWSetsByHeight returns all the rwsets corresponding to the block,
 	// or returns nil if zhe block does not exist
