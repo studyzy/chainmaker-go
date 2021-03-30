@@ -32,21 +32,14 @@ const (
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
-	ContractKey           = ":K:"
-	ContractByteCode      = ":B:"
-	ContractVersion       = ":V:"
-	ContractRuntimeType   = ":R:"
-	ContractCreator       = ":C:"
-	ContractFreeze        = ":F:"
-	ContractRevoke        = ":REVOKE:"
-	ContractStoreSeprator = "#"
-
-	// user contract must implement such method
-	ContractInitMethod        = "init_contract"
-	ContractUpgradeMethod     = "upgrade"
-	ContractAllocateMethod    = "allocate"
-	ContractDeallocateMethod  = "deallocate"
-	ContractRuntimeTypeMethod = "runtime_type"
+	ContractKey            = ":K:"
+	ContractByteCode       = ":B:"
+	ContractVersion        = ":V:"
+	ContractRuntimeType    = ":R:"
+	ContractCreator        = ":C:"
+	ContractFreeze         = ":F:"
+	ContractRevoke         = ":REVOKE:"
+	ContractStoreSeparator = "#"
 
 	// special parameters passed to contract
 	ContractCreatorOrgIdParam = "__creator_org_id__"
@@ -59,16 +52,32 @@ const (
 	ContractTxIdParam         = "__tx_id__"
 	ContractContextPtrParam   = "__context_ptr__"
 
+	// user contract must implement such method
+	ContractInitMethod        = "init_contract"
+	ContractUpgradeMethod     = "upgrade"
+	ContractAllocateMethod    = "allocate"
+	ContractDeallocateMethod  = "deallocate"
+	ContractRuntimeTypeMethod = "runtime_type"
 	// method name used by smart contract sdk
+	// common
 	ContractMethodLogMessage      = "LogMessage"
-	ContractMethodGetStateLen     = "GetStateLen"
-	ContractMethodGetState        = "GetState"
-	ContractMethodPutState        = "PutState"
-	ContractMethodDeleteState     = "DeleteState"
 	ContractMethodSuccessResult   = "SuccessResult"
 	ContractMethodErrorResult     = "ErrorResult"
 	ContractMethodCallContract    = "CallContract"
 	ContractMethodCallContractLen = "CallContractLen"
+	// kv
+	ContractMethodGetStateLen = "GetStateLen"
+	ContractMethodGetState    = "GetState"
+	ContractMethodPutState    = "PutState"
+	ContractMethodDeleteState = "DeleteState"
+	// sql
+	ContractMethodExecuteQuerySql      = "ExecuteQuerySql"
+	ContractMethodQueryIteratorNext    = "QueryIteratorNext"
+	ContractMethodQueryIteratorNextLen = "QueryIteratorNextLen"
+	ContractMethodQueryIteratorHasNext = "QueryIteratorHasNext"
+	ContractMethodQueryIteratorClose   = "QueryIteratorClose"
+	ContractMethodExecuteUpdateSql     = "ExecuteUpdateSql"
+	ContractMethodExecuteDdlSql        = "ExecuteDDLSql"
 )
 
 //VmManager manage vm runtime
@@ -92,7 +101,7 @@ func GetKey(key []byte, field []byte) []byte {
 	var buf bytes.Buffer
 	buf.Write(key)
 	if len(field) > 0 {
-		buf.Write([]byte(ContractStoreSeprator))
+		buf.Write([]byte(ContractStoreSeparator))
 		buf.Write(field)
 	}
 	return buf.Bytes()

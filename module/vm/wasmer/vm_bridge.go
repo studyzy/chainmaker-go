@@ -101,16 +101,9 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody))
 	}
 	switch method.(string) {
+	// common
 	case protocol.ContractMethodLogMessage:
 		return s.LogMessage()
-	case protocol.ContractMethodGetStateLen:
-		return s.GetStateLen()
-	case protocol.ContractMethodGetState:
-		return s.GetState()
-	case protocol.ContractMethodPutState:
-		return s.PutState()
-	case protocol.ContractMethodDeleteState:
-		return s.DeleteState()
 	case protocol.ContractMethodSuccessResult:
 		return s.SuccessResult()
 	case protocol.ContractMethodErrorResult:
@@ -119,85 +112,34 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContract()
 	case protocol.ContractMethodCallContractLen:
 		return s.CallContractLen()
+	// kv
+	case protocol.ContractMethodGetStateLen:
+		return s.GetStateLen()
+	case protocol.ContractMethodGetState:
+		return s.GetState()
+	case protocol.ContractMethodPutState:
+		return s.PutState()
+	case protocol.ContractMethodDeleteState:
+		return s.DeleteState()
+	// sql
+	case protocol.ContractMethodExecuteUpdateSql:
+		return s.ExecuteUpdateSql()
+	case protocol.ContractMethodExecuteDdlSql:
+		return s.ExecuteDDLSql()
+	case protocol.ContractMethodExecuteQuerySql:
+		return s.ExecuteQueryMulti()
+	case protocol.ContractMethodQueryIteratorHasNext:
+		return s.QueryIteratorHasNext()
+	case protocol.ContractMethodQueryIteratorNextLen:
+		return s.QueryIteratorNextLen()
+	case protocol.ContractMethodQueryIteratorNext:
+		return s.QueryIteratorNext()
+	case protocol.ContractMethodQueryIteratorClose:
+		return s.QueryIteratorClose()
 	default:
 		log.Errorf("method is %s not match.", method)
 	}
 	return protocol.ContractSdkSignalResultFail
-}
-
-// GetStateLen get state length from chain
-func (s *sdkRequestCtx) GetStateLen() int32 {
-	return s.getStateCore(true)
-}
-
-// GetStateLen get state from chain
-func (s *sdkRequestCtx) GetState() int32 {
-	return s.getStateCore(false)
-}
-
-func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	if isGetLen {
-		contractName := s.Sc.ContractId.ContractName
-		value, err := s.Sc.TxSimContext.Get(contractName, protocol.GetKeyStr(key.(string), field.(string)))
-		if err != nil {
-			msg := fmt.Sprintf("method getStateCore get fail. key=%s, field=%s, error:%s", key.(string), field.(string), err.Error())
-			return s.recordMsg(msg)
-		}
-		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], IntToBytes(int32(len(value))))
-		s.Sc.GetStateCache = value
-	} else {
-		len := int32(len(s.Sc.GetStateCache))
-		if len != 0 {
-			copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+len], s.Sc.GetStateCache)
-			s.Sc.GetStateCache = nil
-		}
-	}
-	return protocol.ContractSdkSignalResultSuccess
-}
-
-// PutState put state to chain
-func (s *sdkRequestCtx) PutState() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	value, _ := serialize.GetValueFromItems(req, "value", serialize.EasyKeyType_USER)
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), value.([]byte))
-	if err != nil {
-		return s.recordMsg("method PutState put fail. " + err.Error())
-	}
-	return protocol.ContractSdkSignalResultSuccess
-}
-
-// DeleteState delete state from chain
-func (s *sdkRequestCtx) DeleteState() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Del(contractName, protocol.GetKeyStr(key.(string), field.(string)))
-	if err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	return protocol.ContractSdkSignalResultSuccess
 }
 
 // SuccessResult record the results of contract execution success
