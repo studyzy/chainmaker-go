@@ -265,7 +265,7 @@ func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 
 //获得某个区块高度下的所有交易
 func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight int64) ([]*commonPb.Transaction, error) {
-	res, err := b.db.QueryTableSql("select * from tx_infos where block_height = ? order by offsset", blockHeight)
+	res, err := b.db.QueryTableSql("select * from tx_infos where block_height = ? order by offset", blockHeight)
 	if err != nil {
 		return nil, err
 	}

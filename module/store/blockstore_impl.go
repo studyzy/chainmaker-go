@@ -52,10 +52,11 @@ func NewBlockStoreImpl(chainId string,
 	stateDB statedb.StateDB,
 	historyDB historydb.HistoryDB,
 	commonDB dbprovider.Provider,
+	storeConfig *localconf.StorageConfig,
 	logger protocol.Logger) (protocol.BlockchainStore, error) {
 
-	walPath := filepath.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainId, logPath)
-	writeAsync := localconf.ChainMakerConfig.StorageConfig.LogDBWriteAsync
+	walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)
+	writeAsync := storeConfig.LogDBWriteAsync
 	walOpt := &wal.Options{
 		NoSync: writeAsync,
 	}
@@ -76,10 +77,14 @@ func NewBlockStoreImpl(chainId string,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		logger:           logger,
 	}
-	//check savepoint and recover
-	err = blockStore.recover()
-	if err != nil {
-		return nil, err
+	//有SavePoint，不是空数据库，进行数据恢复
+	_, err = blockDB.GetLastSavepoint()
+	if err == nil {
+		//check savepoint and recover
+		err = blockStore.recover()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return blockStore, nil
 }
@@ -91,8 +96,9 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		return err
 	}
 	//创世区块只执行一次，而且可能涉及到创建创建数据库，所以串行执行，而且无法启用事务
-	_, blockWithSerializedInfo, err := serialization.SerializeBlock(genesisBlock)
+	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(genesisBlock)
 	block := genesisBlock.Block
+	bs.writeLog(uint64(block.Header.BlockHeight), blockBytes)
 	//2.初始化BlockDB
 	err = bs.blockDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {

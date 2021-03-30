@@ -12,8 +12,10 @@ import (
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	"path/filepath"
 
 	"os"
 	"time"
@@ -25,7 +27,7 @@ import (
 	"testing"
 )
 
-var ledgerPath = os.TempDir()
+var ledgerPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 var chainId = "testchain1"
 
 //var dbType = types.MySQL
@@ -60,14 +62,13 @@ var config = getConfig()
 
 func getConfig() *localconf.StorageConfig {
 	conf := &localconf.StorageConfig{}
-	leveldbFolder := os.TempDir() + fmt.Sprintf("/lvldb%d", time.Now().Unix())
-	conf.StorePath = leveldbFolder
+	conf.StorePath = ledgerPath
 	var sqlConfig = &localconf.SqlDbConfig{
 		SqlDbType: "sqlite",
 		Dsn:       ":memory:",
 	}
 	lvlConfig := &localconf.LevelDbConfig{
-		StorePath: leveldbFolder,
+		StorePath: ledgerPath,
 	}
 	dbConfig := localconf.DbConfig{
 		DbType:        "sql",
@@ -241,9 +242,7 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-	genesis := createConfigBlock(defaultChainId, 0)
-	g := &storePb.BlockWithRWSet{Block: genesis}
-	s.InitGenesis(g)
+	initGenesis(s)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := s.PutBlock(tt.block, nil); err != nil {
@@ -256,11 +255,16 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 		})
 	}
 }
+func initGenesis(s protocol.BlockchainStore) {
+	genesis := createConfigBlock(defaultChainId, 0)
+	g := &storePb.BlockWithRWSet{Block: genesis}
+	s.InitGenesis(g)
 
+}
 func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	var factory Factory
 	s, err := factory.NewStore(chainId, config, log)
-	//s, err := NewBlockStoredbTypeImpl(ledgerPath)
+	initGenesis(s)
 
 	if err != nil {
 		panic(err)
@@ -268,7 +272,7 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	defer s.Close()
 	txRWSets[0].TxId = block5.Txs[0].Header.TxId
 	err = s.PutBlock(block5, txRWSets)
-	assert.Equal(t, nil, err)
+	assert.NotNil(t, err)
 }
 
 func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
@@ -278,10 +282,9 @@ func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-
+	initGenesis(s)
 	exist, err := s.BlockExists(block5.Header.BlockHash)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, true, exist)
+	assert.Equal(t, false, exist)
 
 	exist, err = s.BlockExists([]byte("not exist"))
 	assert.Equal(t, nil, err)
@@ -295,7 +298,7 @@ func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-
+	initGenesis(s)
 	got, err := s.GetBlock(block5.Header.BlockHeight)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block5.String(), got.String())
@@ -308,7 +311,7 @@ func Test_blockchainStoreImpl_GetLastBlock(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-
+	initGenesis(s)
 	assert.Equal(t, nil, err)
 	lastBlock, err := s.GetLastBlock()
 	assert.Equal(t, nil, err)
@@ -362,7 +365,7 @@ func Test_blockchainStoreImpl_GetTx(t *testing.T) {
 	}
 	defer s.Close()
 	//assert.DeepEqual(t, s.GetTx(tests[0].block.Txs[0].TxId, )
-
+	initGenesis(s)
 	tx, err := s.GetTx(tests[0].block.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err)
 	if tx == nil {
@@ -396,7 +399,7 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-
+	initGenesis(s)
 	exist, err := s.TxExists(tests[0].block.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, true, exist)
@@ -418,6 +421,7 @@ func Test_blockchainStoreImpl_ReadObject(t *testing.T) {
 	var factory Factory
 	s, err := factory.NewStore(chainId, config, log)
 	defer s.Close()
+	initGenesis(s)
 	assert.Equal(t, nil, err)
 	value, err := s.ReadObject(defaultContractName, []byte("key1"))
 	assert.Equal(t, nil, err)
@@ -436,6 +440,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 	var factory Factory
 	s, err := factory.NewStore(chainId, config, log)
 	defer s.Close()
+	initGenesis(s)
 	assert.Equal(t, nil, err)
 
 	iter := s.SelectObject(defaultContractName, []byte("key1"), []byte("key4"))

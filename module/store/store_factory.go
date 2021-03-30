@@ -82,7 +82,9 @@ func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig,
 			}
 		}
 	}
-	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, leveldbprovider.NewBlockProvider(chainId, storeConfig.HistoryDbConfig.LevelDbConfig, logger), logger)
+	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB,
+		leveldbprovider.NewBlockProvider(chainId, storeConfig.HistoryDbConfig.LevelDbConfig, logger),
+		storeConfig, logger)
 
 	return nil, errors.New("invalid engine type")
 }
