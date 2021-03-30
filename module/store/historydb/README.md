@@ -7,3 +7,6 @@ ContractName+StateKey+BlockHeight+TxId
 ### 账户发起交易历史
 
 ### 合约被调用历史
+
+### SQL DB
+数据库名： chainId+"_historydb"

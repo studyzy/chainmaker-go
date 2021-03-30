@@ -24,16 +24,42 @@ var defaultMaxIdleConns = 10
 var defaultMaxOpenConns = 10
 var defaultConnMaxLifeTime = 60
 
-// Porvider encapsulate the gorm.DB that providers mysql handles
 type SqlDBProvider struct {
+	dbs map[string]*SqlDBHandle
+}
+
+func NewSqlDBProvider() *SqlDBProvider {
+	return &SqlDBProvider{dbs: make(map[string]*SqlDBHandle, 1)}
+}
+func (p *SqlDBProvider) GetDBHandle(chainId string, conf *localconf.SqlDbConfig) protocol.SqlDBHandle {
+	h, exist := p.dbs[chainId]
+	if exist {
+		return h
+	}
+	h = NewSqlDBHandle(chainId, conf)
+	p.dbs[chainId] = h
+	return h
+}
+
+// Close closes database
+func (p *SqlDBProvider) Close() error {
+	for _, h := range p.dbs {
+		h.Close()
+	}
+	return nil
+}
+
+// Porvider encapsulate the gorm.DB that providers mysql handles
+type SqlDBHandle struct {
 	sync.Mutex
-	db        *gorm.DB
-	dbType    types.EngineType
-	dbTxCache map[string]*SqlDBTx
+	contextDbName string
+	db            *gorm.DB
+	dbType        types.EngineType
+	dbTxCache     map[string]*SqlDBTx
 }
 
 // GetDBHandle returns a DBHandle for given dbname
-func (p *SqlDBProvider) GetDBHandle(dbName string) protocol.DBHandle {
+func (p *SqlDBHandle) GetDBHandle(dbName string) protocol.DBHandle {
 	p.Lock()
 	defer p.Unlock()
 
@@ -50,24 +76,24 @@ func parseSqlDbType(str string) (types.EngineType, error) {
 	}
 }
 
-// NewSqlDBProvider construct a new SqlDBProvider
-func NewSqlDBProvider(chainId string, conf *localconf.CMConfig) *SqlDBProvider {
-	provider := &SqlDBProvider{dbTxCache: make(map[string]*SqlDBTx)}
-	sqlType, err := parseSqlDbType(conf.StorageConfig.MysqlConfig.DbType)
+// NewSqlDBProvider construct a new SqlDBHandle
+func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig) *SqlDBHandle {
+	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx)}
+	sqlType, err := parseSqlDbType(conf.SqlDbType)
 	if err != nil {
 		panic(err.Error())
 	}
 	provider.dbType = sqlType
-	mysqlConf := conf.StorageConfig.MysqlConfig
 	if sqlType == types.MySQL {
-		dsn := mysqlConf.Dsn + chainId + "?charset=utf8mb4&parseTime=True&loc=Local"
+		dsn := conf.Dsn + "mysql?charset=utf8mb4&parseTime=True&loc=Local"
 		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
 			panic(fmt.Sprintf("failed to open mysql:%s", err))
 		}
 		provider.db = db
+		provider.contextDbName = "mysql" //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
-		db, err := gorm.Open(sqlite.Open(mysqlConf.Dsn), &gorm.Config{})
+		db, err := gorm.Open(sqlite.Open(conf.Dsn), &gorm.Config{})
 		if err != nil {
 			panic(fmt.Sprintf("failed to open mysql:%s", err))
 		}
@@ -79,7 +105,7 @@ func NewSqlDBProvider(chainId string, conf *localconf.CMConfig) *SqlDBProvider {
 }
 
 // GetDB returns a new gorm.DB for given chainid and conf.
-func (p *SqlDBProvider) GetDB() *gorm.DB {
+func (p *SqlDBHandle) GetDB() *gorm.DB {
 	return p.db
 	//p.Lock()
 	//defer p.Unlock()
@@ -122,7 +148,7 @@ func (p *SqlDBProvider) GetDB() *gorm.DB {
 }
 
 // tryCreateDB try create mysql database if not exist
-//func (p *SqlDBProvider) tryCreateDB(dbName string, dsn string) error {
+//func (p *SqlDBHandle) tryCreateDB(dbName string, dsn string) error {
 //	db, err := sql.Open("mysql", dsn)
 //	if err != nil {
 //		return err
@@ -136,14 +162,14 @@ func (p *SqlDBProvider) GetDB() *gorm.DB {
 //}
 //
 //// CreateDB create mysql database for the given chainid and dsn
-//func (p *SqlDBProvider) CreateDB(chainId string, dsn string) {
+//func (p *SqlDBHandle) CreateDB(chainId string, dsn string) {
 //	p.Lock()
 //	defer p.Unlock()
 //	if err := p.tryCreateDB(chainId, dsn); err != nil {
 //		panic(fmt.Sprintf("failed to create mysql, err:%s", err))
 //	}
 //}
-func (p *SqlDBProvider) ChangeContextDb(dbName string) error {
+func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
 	}
@@ -151,9 +177,34 @@ func (p *SqlDBProvider) ChangeContextDb(dbName string) error {
 		return nil
 	}
 	res := p.db.Exec("use " + dbName)
-	return res.Error
+	if res.Error != nil {
+		return res.Error
+	}
+	p.contextDbName = dbName
+	return nil
 }
-func (p *SqlDBProvider) CreateTableIfNotExist(obj interface{}) error {
+func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
+	p.Lock()
+	defer p.Unlock()
+	if p.dbType == types.Sqlite {
+		return nil
+	}
+	//尝试切换数据库
+	res := p.db.Exec("use " + dbName)
+	if res.Error != nil { //切换失败，没有这个数据库，则创建
+		tx := p.db.Exec("create database " + dbName)
+		if tx.Error != nil {
+			return tx.Error //创建失败
+		}
+		//创建成功，再次切换数据库
+		res = p.db.Exec("use " + dbName)
+		return res.Error
+	}
+	p.contextDbName = dbName
+	return nil
+}
+
+func (p *SqlDBHandle) CreateTableIfNotExist(obj interface{}) error {
 	p.Lock()
 	defer p.Unlock()
 	m := p.db.Migrator()
@@ -164,7 +215,7 @@ func (p *SqlDBProvider) CreateTableIfNotExist(obj interface{}) error {
 }
 
 //ExecSql 执行SQL语句
-func (p *SqlDBProvider) ExecSql(sql string, values ...interface{}) (int64, error) {
+func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
 	tx := p.db.Exec(sql, values)
@@ -174,7 +225,7 @@ func (p *SqlDBProvider) ExecSql(sql string, values ...interface{}) (int64, error
 	return tx.RowsAffected, nil
 }
 
-func (p *SqlDBProvider) Save(value interface{}) (int64, error) {
+func (p *SqlDBHandle) Save(value interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
 	tx := p.db.Save(value)
@@ -183,7 +234,7 @@ func (p *SqlDBProvider) Save(value interface{}) (int64, error) {
 	}
 	return tx.RowsAffected, nil
 }
-func (p *SqlDBProvider) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+func (p *SqlDBHandle) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
@@ -194,7 +245,7 @@ func (p *SqlDBProvider) QuerySql(sql string, values ...interface{}) (protocol.Sq
 	return NewSqlDBRow(row), nil
 }
 
-func (p *SqlDBProvider) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+func (p *SqlDBHandle) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
@@ -208,7 +259,7 @@ func (p *SqlDBProvider) QueryTableSql(sql string, values ...interface{}) (protoc
 	}
 	return NewSqlDBRows(db, rows), nil
 }
-func (p *SqlDBProvider) BeginDbTransaction(txName string) protocol.SqlDBTransaction {
+func (p *SqlDBHandle) BeginDbTransaction(txName string) protocol.SqlDBTransaction {
 	p.Lock()
 	defer p.Unlock()
 	if tx, has := p.dbTxCache[txName]; has {
@@ -219,19 +270,19 @@ func (p *SqlDBProvider) BeginDbTransaction(txName string) protocol.SqlDBTransact
 	p.dbTxCache[txName] = sqltx
 	return sqltx
 }
-func (p *SqlDBProvider) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+func (p *SqlDBHandle) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	p.Lock()
 	defer p.Unlock()
 	return p.getDbTransaction(txName)
 }
-func (p *SqlDBProvider) getDbTransaction(txName string) (*SqlDBTx, error) {
+func (p *SqlDBHandle) getDbTransaction(txName string) (*SqlDBTx, error) {
 	tx, has := p.dbTxCache[txName]
 	if !has {
 		return nil, errors.New("transaction not found or closed")
 	}
 	return tx, nil
 }
-func (p *SqlDBProvider) CommitDbTransaction(txName string) error {
+func (p *SqlDBHandle) CommitDbTransaction(txName string) error {
 	p.Lock()
 	defer p.Unlock()
 	tx, err := p.getDbTransaction(txName)
@@ -242,7 +293,7 @@ func (p *SqlDBProvider) CommitDbTransaction(txName string) error {
 	delete(p.dbTxCache, txName)
 	return nil
 }
-func (p *SqlDBProvider) RollbackDbTransaction(txName string) error {
+func (p *SqlDBHandle) RollbackDbTransaction(txName string) error {
 	p.Lock()
 	defer p.Unlock()
 	tx, err := p.getDbTransaction(txName)
@@ -253,7 +304,7 @@ func (p *SqlDBProvider) RollbackDbTransaction(txName string) error {
 	delete(p.dbTxCache, txName)
 	return nil
 }
-func (p *SqlDBProvider) Close() error {
+func (p *SqlDBHandle) Close() error {
 	p.Lock()
 	defer p.Unlock()
 	db, _ := p.db.DB()

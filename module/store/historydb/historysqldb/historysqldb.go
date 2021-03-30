@@ -7,8 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package historysqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
@@ -20,18 +22,34 @@ type HistorySqlDB struct {
 }
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
-func NewHistorySqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
-	//db := sqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
-	//if logger == nil {
-	//	logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
-	//}
-	//if err := db.AutoMigrate(&HistoryInfo{}); err != nil {
-	//	panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
-	//}
+func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*HistorySqlDB, error) {
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	return newHistorySqlDB(chainId, db, logger)
+}
+
+//如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
+//如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
+func (db *HistorySqlDB) initDb(dbName string) {
+	err := db.db.CreateDatabaseIfNotExist(dbName)
+	if err != nil {
+		panic("init state sql db fail")
+	}
+	err = db.db.CreateTableIfNotExist(&StateHistoryInfo{})
+	if err != nil {
+		panic("init state sql db table `state_history_infos` fail")
+	}
+
+}
+func getDbName(chainId string) string {
+	return chainId + "_history"
+}
+func newHistorySqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
+
 	historyDB := &HistorySqlDB{
 		db:     db,
 		Logger: logger,
 	}
+	historyDB.initDb(getDbName(chainId))
 	return historyDB, nil
 }
 
@@ -68,12 +86,16 @@ func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var height uint64
+	var height *uint64
 	err = row.ScanColumns(&height)
 	if err != nil {
+		h.Logger.Error(err.Error())
 		return 0, err
 	}
-	return height, nil
+	if height == nil {
+		return 0, nil
+	}
+	return *height, nil
 }
 
 func (h *HistorySqlDB) Close() {

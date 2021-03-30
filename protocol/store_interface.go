@@ -86,6 +86,7 @@ type BlockchainStore interface {
 }
 type SqlDBHandle interface {
 	DBHandle
+	CreateDatabaseIfNotExist(dbName string) error
 	ChangeContextDb(dbName string) error
 	CreateTableIfNotExist(obj interface{}) error
 	Save(value interface{}) (int64,error)
@@ -96,7 +97,6 @@ type SqlDBHandle interface {
 	GetDbTransaction(txName string) (SqlDBTransaction,error)
 	CommitDbTransaction(txName string) error
 	RollbackDbTransaction(txName string) error
-	Close() error
 }
 type SqlDBTransaction interface {
 	ChangeContextDb(dbName string) error
@@ -143,6 +143,8 @@ type DBHandle interface {
 
 	// NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
 	NewIteratorWithPrefix(prefix []byte) Iterator
+	Close() error
+
 }
 
 // StoreBatcher used to cache key-values that commit in a atomic operation

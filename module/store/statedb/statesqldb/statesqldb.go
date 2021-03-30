@@ -7,9 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
@@ -19,18 +21,36 @@ type StateSqlDB struct {
 	Logger protocol.Logger
 }
 
+//如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
+//如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
+func (db *StateSqlDB) initDb(dbName string) {
+	err := db.db.CreateDatabaseIfNotExist(dbName)
+	if err != nil {
+		panic("init state sql db fail")
+	}
+	err = db.db.CreateTableIfNotExist(&StateInfo{})
+	if err != nil {
+		panic("init state sql db table fail")
+	}
+}
+
 // NewStateMysqlDB construct a new `StateDB` for given chainId
-func NewStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*StateSqlDB, error) {
+func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	return newStateSqlDB(chainId, db, logger)
+}
+func getDbName(chainId string) string {
+	return chainId + "_statedb"
+}
+func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*StateSqlDB, error) {
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
-	//if err := db.AutoMigrate(&StateInfo{}); err != nil {
-	//	panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
-	//}
 	stateDB := &StateSqlDB{
 		db:     db,
 		Logger: logger,
 	}
+	stateDB.initDb(getDbName(chainId))
 	return stateDB, nil
 }
 
@@ -103,12 +123,15 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var height uint64
+	var height *uint64
 	err = row.ScanColumns(&height)
 	if err != nil {
 		return 0, err
 	}
-	return height, nil
+	if height == nil {
+		return 0, nil
+	}
+	return *height, nil
 }
 
 // Close is used to close database, there is no need for gorm to close db

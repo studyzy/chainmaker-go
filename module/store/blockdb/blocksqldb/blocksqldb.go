@@ -7,10 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package blocksqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
@@ -27,22 +29,41 @@ type BlockSqlDB struct {
 }
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
-func NewBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*BlockSqlDB, error) {
+func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*BlockSqlDB, error) {
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	return newBlockSqlDB(chainId, db, logger)
+}
+
+//如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
+//如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
+func (db *BlockSqlDB) initDb(dbName string) {
+	err := db.db.CreateDatabaseIfNotExist(dbName)
+	if err != nil {
+		panic("init state sql db fail")
+	}
+	err = db.db.CreateTableIfNotExist(&BlockInfo{})
+	if err != nil {
+		panic("init state sql db table `block_infos` fail")
+	}
+	err = db.db.CreateTableIfNotExist(&TxInfo{})
+	if err != nil {
+		panic("init state sql db table `tx_infos` fail")
+	}
+}
+func getDbName(chainId string) string {
+	return chainId + "_blockdb"
+}
+func newBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*BlockSqlDB, error) {
 	nWorkers := runtime.NumCPU()
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
-	//if err := db.AutoMigrate(&BlockInfo{}); err != nil {
-	//	panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
-	//}
-	//if err := db.AutoMigrate(&TxInfo{}); err != nil {
-	//	panic(fmt.Sprintf("failed to migrate txinfo:%s", err))
-	//}
 	blockDB := &BlockSqlDB{
 		db:               db,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		Logger:           logger,
 	}
+	blockDB.initDb(getDbName(chainId))
 	return blockDB, nil
 }
 func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
@@ -195,12 +216,15 @@ func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var height uint64
+	var height *uint64
 	err = row.ScanColumns(&height)
 	if err != nil {
 		return 0, err
 	}
-	return height, nil
+	if height == nil {
+		return 0, nil
+	}
+	return *height, nil
 }
 
 // GetBlockByTx returns a block which contains a tx.

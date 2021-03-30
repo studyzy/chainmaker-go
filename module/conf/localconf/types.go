@@ -124,20 +124,39 @@ type blockchainConfig struct {
 	Genesis string
 }
 
-type storageConfig struct {
-	Provider             string      `mapstructure:"provider"`
-	StorePath            string      `mapstructure:"store_path"`
-	WriteBufferSize      int         `mapstructure:"write_buffer_size"`
-	BloomFilterBits      int         `mapstructure:"bloom_filter_bits"`
-	DisableHistoryDB     bool        `mapstructure:"disable_historydb"`
-	LogDBWriteAsync      bool        `mapstructure:"logdb_write_async"`
-	BlockWriteBufferSize int         `mapstructure:"block_write_buffer_size"`
-	MysqlConfig          mysqlConfig `mapstructure:"sql_db"`
-}
+type StorageConfig struct {
+	//默认的Leveldb配置，如果每个DB有不同的设置，可以在自己的DB中进行设置
+	LevelDbConfig
 
-type mysqlConfig struct {
-	//mysql, sqlite, postgres, sqlserver
+	DisableHistoryDB     bool      `mapstructure:"disable_historydb"`
+
+	BlockDbConfig        DbConfig `mapstructure:"blockdb_config"`
+	StateDbConfig        DbConfig `mapstructure:"statedb_config"`
+	HistoryDbConfig      DbConfig `mapstructure:"historydb_config"`
+	ResultDbConfig       DbConfig `mapstructure:"resultdb_config"`
+}
+type DbConfig struct{
+	//leveldb,rocksdb,sql
 	DbType             string `mapstructure:"db_type"`
+	LevelDbConfig *LevelDbConfig `mapstructure:"leveldb_config"`
+	SqlDbConfig *SqlDbConfig `mapstructure:"sqldb_config"`
+}
+func (dbc *DbConfig) IsKVDB() bool{
+	return dbc.DbType=="leveldb"|| dbc.DbType=="rocksdb"
+}
+func (dbc *DbConfig) IsSqlDB() bool{
+	return dbc.DbType=="sql"|| dbc.DbType=="mysql"
+}
+type LevelDbConfig struct{
+	StorePath            string    `mapstructure:"store_path"`
+	WriteBufferSize      int       `mapstructure:"write_buffer_size"`
+	BloomFilterBits      int       `mapstructure:"bloom_filter_bits"`
+	LogDBWriteAsync      bool      `mapstructure:"logdb_write_async"`
+	BlockWriteBufferSize int       `mapstructure:"block_write_buffer_size"`
+}
+type SqlDbConfig struct {
+	//mysql, sqlite, postgres, sqlserver
+	SqlDbType             string `mapstructure:"sqldb_type"`
 	Dsn             string `mapstructure:"dsn"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
@@ -215,7 +234,7 @@ type CMConfig struct {
 	NodeConfig       nodeConfig         `mapstructure:"node"`
 	RpcConfig        rpcConfig          `mapstructure:"rpc"`
 	BlockChainConfig []blockchainConfig `mapstructure:"blockchain"`
-	StorageConfig    storageConfig      `mapstructure:"storage"`
+	StorageConfig    StorageConfig      `mapstructure:"storage"`
 	TxPoolConfig     txPoolConfig       `mapstructure:"txpool"`
 	SyncConfig       syncConfig         `mapstructure:"sync"`
 	SpvConfig        spvConfig          `mapstructure:"spv"`

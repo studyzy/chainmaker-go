@@ -16,7 +16,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
@@ -41,7 +40,7 @@ const (
 // BlocKDvDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a key-value based data model
 type BlockKvDB struct {
-	DbProvider       dbprovider.Provider
+	DbHandle         protocol.DBHandle
 	WorkersSemaphore *semaphore.Weighted
 	Cache            *cache.StoreCacheMgr
 
@@ -51,7 +50,7 @@ type BlockKvDB struct {
 func (b *BlockKvDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
 	heightKey := constructBlockNumKey(uint64(header.BlockHeight))
 	data, _ := header.Marshal()
-	return b.DbProvider.GetDBHandle("block").Put(heightKey, data)
+	return b.DbHandle.Put(heightKey, data)
 }
 
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation
@@ -234,7 +233,7 @@ func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockKvDB) Close() {
-	b.DbProvider.Close()
+	b.DbHandle.Close()
 }
 
 func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error) {
@@ -291,7 +290,7 @@ func (b *BlockKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) e
 	b.Cache.AddBlock(blockHeight, batch)
 	go func() {
 		startWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		err := b.getDBHandle().WriteBatch(batch, false)
+		err := b.DbHandle.WriteBatch(batch, false)
 		endWriteBatchTime := utils.CurrentTimeMillisSeconds()
 		b.Logger.Infof("write block db, block[%d], time used:%d",
 			blockHeight, endWriteBatchTime-startWriteBatchTime)
@@ -313,7 +312,7 @@ func (b *BlockKvDB) get(key []byte) ([]byte, error) {
 		return value, nil
 	}
 	//get from database
-	val, err := b.getDBHandle().Get(key)
+	val, err := b.DbHandle.Get(key)
 	return val, err
 }
 
@@ -323,11 +322,7 @@ func (b *BlockKvDB) has(key []byte) (bool, error) {
 	if exist {
 		return !isDelete, nil
 	}
-	return b.getDBHandle().Has(key)
-}
-
-func (b *BlockKvDB) getDBHandle() protocol.DBHandle {
-	return b.DbProvider.GetDBHandle(blockDBName)
+	return b.DbHandle.Has(key)
 }
 
 func constructBlockNumKey(blockNum uint64) []byte {

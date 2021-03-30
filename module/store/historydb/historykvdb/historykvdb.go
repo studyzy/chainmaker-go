@@ -10,7 +10,6 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"encoding/binary"
@@ -27,8 +26,8 @@ const (
 // HistoryKvDB provider a implementation of `historydb.HistoryDB`
 // This implementation provides a key-value based data model
 type HistoryKvDB struct {
-	DbProvider dbprovider.Provider
-	Cache      *cache.StoreCacheMgr
+	DbHandle protocol.DBHandle
+	Cache    *cache.StoreCacheMgr
 
 	Logger protocol.Logger
 }
@@ -90,14 +89,14 @@ func (h *HistoryKvDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database
 func (h *HistoryKvDB) Close() {
-	h.DbProvider.Close()
+	h.DbHandle.Close()
 }
 
 func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
 	h.Cache.AddBlock(blockHeight, batch)
 	go func() {
-		err := h.getDBHandle().WriteBatch(batch, false)
+		err := h.DbHandle.WriteBatch(batch, false)
 		if err != nil {
 			panic(fmt.Sprintf("Error writting db: %s", err))
 		}
@@ -114,7 +113,7 @@ func (h *HistoryKvDB) get(key []byte) ([]byte, error) {
 		return value, nil
 	}
 	//get from database
-	return h.getDBHandle().Get(key)
+	return h.DbHandle.Get(key)
 }
 
 func (h *HistoryKvDB) has(key []byte) (bool, error) {
@@ -123,11 +122,7 @@ func (h *HistoryKvDB) has(key []byte) (bool, error) {
 	if exist {
 		return !isDelete, nil
 	}
-	return h.getDBHandle().Has(key)
-}
-
-func (h *HistoryKvDB) getDBHandle() protocol.DBHandle {
-	return h.DbProvider.GetDBHandle(historyDBName)
+	return h.DbHandle.Has(key)
 }
 
 func constructTxRWSetIDKey(txId string) []byte {

@@ -20,7 +20,7 @@ type KeyValue struct {
 }
 
 // Get returns the value for the given key, or returns nil if none exists
-func (p *SqlDBProvider) Get(key []byte) ([]byte, error) {
+func (p *SqlDBHandle) Get(key []byte) ([]byte, error) {
 	sql := "select object_value from key_values where object_key=?"
 	result, err := p.QuerySql(sql, key)
 	if err != nil {
@@ -35,7 +35,7 @@ func (p *SqlDBProvider) Get(key []byte) ([]byte, error) {
 }
 
 // Put saves the key-values
-func (p *SqlDBProvider) Put(key []byte, value []byte) error {
+func (p *SqlDBHandle) Put(key []byte, value []byte) error {
 	kv := &KeyValue{
 		ObjectKey:   key,
 		ObjectValue: value,
@@ -45,7 +45,7 @@ func (p *SqlDBProvider) Put(key []byte, value []byte) error {
 }
 
 // Has return true if the given key exist, or return false if none exists
-func (p *SqlDBProvider) Has(key []byte) (bool, error) {
+func (p *SqlDBHandle) Has(key []byte) (bool, error) {
 	sql := "select count(*) from key_values where object_key=?"
 	result, err := p.QuerySql(sql, key)
 	if err != nil {
@@ -60,7 +60,7 @@ func (p *SqlDBProvider) Has(key []byte) (bool, error) {
 }
 
 // Delete deletes the given key
-func (p *SqlDBProvider) Delete(key []byte) error {
+func (p *SqlDBHandle) Delete(key []byte) error {
 	sql := "delete from key_values where object_key=?"
 	count, err := p.ExecSql(sql, key)
 	if err != nil {
@@ -84,7 +84,7 @@ func deleteInTx(tx protocol.SqlDBTransaction, key []byte) error {
 }
 
 // WriteBatch writes a batch in an atomic operation
-func (p *SqlDBProvider) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
+func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 	txName := fmt.Sprintf("%d", time.Now().UnixNano())
 	tx := p.BeginDbTransaction(txName)
 	for k, v := range batch.KVs() {
@@ -109,7 +109,7 @@ func (p *SqlDBProvider) WriteBatch(batch protocol.StoreBatcher, sync bool) error
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (p *SqlDBProvider) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
+func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
 	sql := "select * from key_values where object_key between ? and ?"
 	rows, err := p.QueryTableSql(sql, start, limit)
 	if err != nil {
@@ -127,7 +127,7 @@ func (p *SqlDBProvider) NewIteratorWithRange(start []byte, limit []byte) protoco
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (p *SqlDBProvider) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
+func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 	sql := "select * from key_values where object_key like ?%"
 	rows, err := p.QueryTableSql(sql, prefix)
 	if err != nil {

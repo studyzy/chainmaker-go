@@ -8,13 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"encoding/hex"
-	"errors"
-	"fmt"
-	"path/filepath"
-	"strings"
-
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/helper"
@@ -23,15 +16,18 @@ import (
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
-	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/subscriber"
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm"
+	"encoding/hex"
+	"fmt"
+	"path/filepath"
 )
 
 // Init all the modules.
@@ -151,18 +147,7 @@ func (bc *Blockchain) initNetService() (err error) {
 
 func (bc *Blockchain) initStore() (err error) {
 	var storeFactory store.Factory
-	var storeType types.EngineType
-	switch strings.ToLower(localconf.ChainMakerConfig.StorageConfig.Provider) {
-	case "leveldb":
-		storeType = types.LevelDb
-	case "rocksdb":
-		storeType = types.RocksDb
-	case "mysql":
-		storeType = types.MySQL
-	default:
-		return errors.New("unsupported store provider")
-	}
-	if bc.store, err = storeFactory.NewStore(storeType, bc.chainId, nil); err != nil {
+	if bc.store, err = storeFactory.NewStore( bc.chainId,localconf.ChainMakerConfig.StorageConfig, nil); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}

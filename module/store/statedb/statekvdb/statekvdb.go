@@ -10,7 +10,6 @@ import (
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/binary"
@@ -26,9 +25,9 @@ const (
 // StateKvDB provider a implementation of `statedb.StateDB`
 // This implementation provides a key-value based data model
 type StateKvDB struct {
-	DbProvider dbprovider.Provider
-	Cache      *cache.StoreCacheMgr
-	Logger     protocol.Logger
+	DbHandle protocol.DBHandle
+	Cache    *cache.StoreCacheMgr
+	Logger   protocol.Logger
 }
 
 // CommitBlock commits the state in an atomic operation
@@ -85,7 +84,7 @@ func (s *StateKvDB) SelectObject(contractName string, startKey []byte, limit []b
 	s.Cache.LockForFlush()
 	defer s.Cache.UnLockFlush()
 	//logger.Debugf("start[%s], limit[%s]", objectStartKey, objectLimitKey)
-	return s.getDBHandle().NewIteratorWithRange(objectStartKey, objectLimitKey)
+	return s.DbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
 }
 
 // GetLastSavepoint returns the last block height
@@ -102,14 +101,14 @@ func (b *StateKvDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database
 func (s *StateKvDB) Close() {
-	s.DbProvider.Close()
+	s.DbHandle.Close()
 }
 
 func (s *StateKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
 	s.Cache.AddBlock(blockHeight, batch)
 	go func() {
-		err := s.getDBHandle().WriteBatch(batch, false)
+		err := s.DbHandle.WriteBatch(batch, false)
 		if err != nil {
 			panic(fmt.Sprintf("Error writting leveldb: %s", err))
 		}
@@ -126,7 +125,7 @@ func (s *StateKvDB) get(key []byte) ([]byte, error) {
 		return value, nil
 	}
 	//get from database
-	return s.getDBHandle().Get(key)
+	return s.DbHandle.Get(key)
 }
 
 func (s *StateKvDB) has(key []byte) (bool, error) {
@@ -135,11 +134,7 @@ func (s *StateKvDB) has(key []byte) (bool, error) {
 	if exist {
 		return !isDelete, nil
 	}
-	return s.getDBHandle().Has(key)
-}
-
-func (s *StateKvDB) getDBHandle() protocol.DBHandle {
-	return s.DbProvider.GetDBHandle(stateDBName)
+	return s.DbHandle.Has(key)
 }
 
 func constructStateKey(contractName string, key []byte) []byte {

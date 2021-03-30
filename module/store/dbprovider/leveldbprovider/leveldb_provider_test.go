@@ -7,19 +7,25 @@ SPDX-License-Identifier: Apache-2.0
 package leveldbprovider
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/types"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-var dbPath = "/tmp/leveldbprovider/unit_test_db"
+var dbPath = filepath.Join(os.TempDir(), "unit_test_db")
 var dbName = "db_test"
 var log = &logger.GoLogger{}
+var dbConfig = &localconf.LevelDbConfig{
+	StorePath: dbPath,
+}
 
 func TestDBHandle_Put(t *testing.T) {
-	db := NewLevelDBProvider(dbPath, "", log) //dbPath：db文件的存储路径
-	dbHandle := db.GetDBHandle(dbName)        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
+	db := NewLevelDBProvider("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := db.GetDBHandle(dbName)                        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 
 	key1 := []byte("key1")
@@ -33,8 +39,8 @@ func TestDBHandle_Put(t *testing.T) {
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
-	db := NewLevelDBProvider(dbPath, "", log) //dbPath：db文件的存储路径
-	dbHandle := db.GetDBHandle(dbName)        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
+	db := NewLevelDBProvider("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := db.GetDBHandle(dbName)                        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 	batch := types.NewUpdateBatch()
 	key1 := []byte("key1")
@@ -53,8 +59,8 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
-	db := NewLevelDBProvider(dbPath, "", log) //dbPath：db文件的存储路径
-	dbHandle := db.GetDBHandle(dbName)        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
+	db := NewLevelDBProvider("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := db.GetDBHandle(dbName)                        //dbName：db的逻辑表名，不同业务采用不同的dbName，其他模块使用db，定义自己的dbName,避免重复
 	defer db.Close()
 
 	batch := types.NewUpdateBatch()
@@ -74,4 +80,7 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 		count++
 	}
 	assert.Equal(t, 2, count)
+}
+func TestTempFolder(t *testing.T) {
+	t.Log(os.TempDir())
 }

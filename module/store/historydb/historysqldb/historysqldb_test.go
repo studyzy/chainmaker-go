@@ -169,18 +169,18 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 //	fmt.Println("end")
 //}
 
-func initProvider() *sqldbprovider.SqlDBProvider {
-	conf := &localconf.CMConfig{}
-	conf.StorageConfig.MysqlConfig.Dsn = ":memory:"
-	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := sqldbprovider.NewSqlDBProvider("chain1", conf)
+func initProvider() *sqldbprovider.SqlDBHandle {
+	conf := &localconf.SqlDbConfig{}
+	conf.Dsn = ":memory:"
+	conf.SqlDbType = "sqlite"
+	p := sqldbprovider.NewSqlDBHandle("chain1", conf)
 	p.CreateTableIfNotExist(&StateHistoryInfo{})
 	return p
 }
 
 //初始化DB并同时初始化创世区块
 func initSqlDb() *HistorySqlDB {
-	db, _ := NewHistorySqlDB(testChainId, initProvider(), log)
+	db, _ := newHistorySqlDB(testChainId, initProvider(), log)
 	_, blockInfo, _ := serialization.SerializeBlock(block0)
 	db.CommitBlock(blockInfo)
 	return db

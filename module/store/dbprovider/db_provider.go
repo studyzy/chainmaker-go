@@ -16,3 +16,11 @@ type Provider interface {
 	// Close closes database
 	Close() error
 }
+type SqlProvider interface {
+
+	// GetDBHandle returns db handle given dbName
+	GetDBHandle(dbName string) protocol.SqlDBHandle
+
+	// Close closes database
+	Close() error
+}

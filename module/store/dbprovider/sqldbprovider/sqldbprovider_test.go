@@ -18,16 +18,17 @@ import (
 //	conf.StorageConfig.MysqlConfig.MaxIdleConns = 10
 //	conf.StorageConfig.MysqlConfig.MaxOpenConns = 10
 //	conf.StorageConfig.MysqlConfig.ConnMaxLifeTime = 60
-//	var db SqlDBProvider
+//	var db SqlDBHandle
 //	db.GetDB("test_chain_1", conf)
 //}
+var conf = &localconf.SqlDbConfig{
+	Dsn:       "file::memory:?cache=shared",
+	SqlDbType: "sqlite",
+}
+
 func TestProvider_ExecSql(t *testing.T) {
-	conf := &localconf.CMConfig{}
-	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
-	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	conf.StorageConfig.MysqlConfig.MaxOpenConns = 10
-	conf.StorageConfig.MysqlConfig.ConnMaxLifeTime = 60
-	p := NewSqlDBProvider("chain1", conf)
+
+	p := NewSqlDBHandle("chain1", conf)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 
@@ -40,10 +41,8 @@ func TestProvider_ExecSql(t *testing.T) {
 	assert.Equal(t, int64(0), count)
 }
 func TestProvider_QuerySql(t *testing.T) {
-	conf := &localconf.CMConfig{}
-	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
-	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := NewSqlDBProvider("chain1", conf)
+
+	p := NewSqlDBHandle("chain1", conf)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
@@ -55,10 +54,8 @@ func TestProvider_QuerySql(t *testing.T) {
 	assert.Equal(t, 2, id)
 }
 func TestProvider_QueryTableSql(t *testing.T) {
-	conf := &localconf.CMConfig{}
-	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
-	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := NewSqlDBProvider("chain1", conf)
+
+	p := NewSqlDBHandle("chain1", conf)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
@@ -72,14 +69,11 @@ func TestProvider_QueryTableSql(t *testing.T) {
 		t.Log(id, name)
 	}
 }
-func initProvider() *SqlDBProvider {
-	conf := &localconf.CMConfig{}
-	conf.StorageConfig.MysqlConfig.Dsn = "file::memory:?cache=shared"
-	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := NewSqlDBProvider("chain1", conf)
+func initProvider() *SqlDBHandle {
+	p := NewSqlDBHandle("chain1", conf)
 	return p
 }
-func initData(p *SqlDBProvider) {
+func initData(p *SqlDBHandle) {
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")

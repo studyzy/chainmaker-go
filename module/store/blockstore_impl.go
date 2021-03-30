@@ -35,10 +35,11 @@ const (
 
 // BlockStoreImpl provides an implementation of `protocal.BlockchainStore`.
 type BlockStoreImpl struct {
-	blockDB          blockdb.BlockDB
-	stateDB          statedb.StateDB
-	historyDB        historydb.HistoryDB
-	wal              *wal.Log
+	blockDB   blockdb.BlockDB
+	stateDB   statedb.StateDB
+	historyDB historydb.HistoryDB
+	wal       *wal.Log
+	//一个本地数据库，用于对外提供一些本节点的数据存储服务
 	commonDB         dbprovider.Provider
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger

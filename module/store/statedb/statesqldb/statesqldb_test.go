@@ -153,16 +153,15 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
-func initProvider() *sqldbprovider.SqlDBProvider {
-	conf := &localconf.CMConfig{}
-	conf.StorageConfig.MysqlConfig.Dsn = ":memory:"
-	conf.StorageConfig.MysqlConfig.DbType = "sqlite"
-	p := sqldbprovider.NewSqlDBProvider("chain1", conf)
-	p.CreateTableIfNotExist(&StateInfo{})
+func initProvider() *sqldbprovider.SqlDBHandle {
+	conf := &localconf.SqlDbConfig{}
+	conf.Dsn = ":memory:"
+	conf.SqlDbType = "sqlite"
+	p := sqldbprovider.NewSqlDBHandle("chain1", conf)
 	return p
 }
 func initStateSqlDB() *StateSqlDB {
-	db, _ := NewStateSqlDB("chain1", initProvider(), log)
+	db, _ := newStateSqlDB("chain1", initProvider(), log)
 	return db
 }
 
