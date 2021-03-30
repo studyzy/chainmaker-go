@@ -21,10 +21,13 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"strings"
+	"sync"
 )
 
 var (
 	chainConfigVerifier = make(map[consensus.ConsensusType]protocol.Verifier, 0)
+	// for multi chain start
+	chainConfigVerifierLock = sync.RWMutex{}
 )
 
 // chainConfig chainConfig struct
@@ -254,6 +257,8 @@ func validateParams(config *config.ChainConfig) error {
 
 // RegisterVerifier register a verifier.
 func RegisterVerifier(consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
+	chainConfigVerifierLock.Lock()
+	defer chainConfigVerifierLock.Unlock()
 	if _, ok := chainConfigVerifier[consensusType]; ok {
 		return errors.New("consensusType verifier is exist")
 	}
@@ -263,6 +268,8 @@ func RegisterVerifier(consensusType consensus.ConsensusType, verifier protocol.V
 
 // GetVerifier get a verifier if exist.
 func GetVerifier(consensusType consensus.ConsensusType) protocol.Verifier {
+	chainConfigVerifierLock.RLock()
+	defer chainConfigVerifierLock.RUnlock()
 	verifier, ok := chainConfigVerifier[consensusType]
 	if !ok {
 		return nil
