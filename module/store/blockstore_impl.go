@@ -12,6 +12,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
@@ -39,7 +40,7 @@ type BlockStoreImpl struct {
 	blockDB   blockdb.BlockDB
 	stateDB   statedb.StateDB
 	historyDB historydb.HistoryDB
-	wal       *wal.Log
+	wal       binlog.BinLoger
 	//一个本地数据库，用于对外提供一些本节点的数据存储服务
 	commonDB         dbprovider.Provider
 	workersSemaphore *semaphore.Weighted
