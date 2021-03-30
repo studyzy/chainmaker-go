@@ -13,7 +13,7 @@ import (
 
 // StateDB provides handle to world state instances
 type StateDB interface {
-
+	InitGenesis(genesisBlock *storePb.BlockWithRWSet) error
 	// CommitBlock commits the state in an atomic operation
 	CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error
 

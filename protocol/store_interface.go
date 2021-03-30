@@ -29,7 +29,8 @@ type Iterator interface {
 
 // BlockchainStore provides handle to store instances
 type BlockchainStore interface {
-
+	//InitGenesis 初始化创世单元到数据库
+	InitGenesis(genesisBlock *store.BlockWithRWSet) error
 	// PutBlock commits the block and the corresponding rwsets in an atomic operation
 	PutBlock(block *common.Block, txRWSets []*common.TxRWSet) error
 

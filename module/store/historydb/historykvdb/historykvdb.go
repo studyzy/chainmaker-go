@@ -32,6 +32,10 @@ type HistoryKvDB struct {
 	Logger protocol.Logger
 }
 
+func (h *HistoryKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	return h.CommitBlock(genesisBlock)
+}
+
 // CommitBlock commits the block rwsets in an atomic operation
 func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {
 	batch := types.NewUpdateBatch()

@@ -63,13 +63,16 @@ func newBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		Logger:           logger,
 	}
-	blockDB.initDb(getDbName(chainId))
 	return blockDB, nil
 }
 func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
 	blockInfo := ConvertHeader2BlockInfo(header)
 	_, err := b.db.Save(blockInfo)
 	return err
+}
+func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	b.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	return b.CommitBlock(genesisBlock)
 }
 
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation

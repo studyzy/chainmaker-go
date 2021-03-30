@@ -52,6 +52,9 @@ func (b *BlockKvDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
 	data, _ := header.Marshal()
 	return b.DbHandle.Put(heightKey, data)
 }
+func (b *BlockKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	return b.CommitBlock(genesisBlock)
+}
 
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation
 func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {

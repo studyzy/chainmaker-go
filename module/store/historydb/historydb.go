@@ -12,7 +12,7 @@ import (
 
 // HistoryDB provides handle to rwSets instances
 type HistoryDB interface {
-
+	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
 	// CommitBlock commits the block rwsets in an atomic operation
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 

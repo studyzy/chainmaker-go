@@ -34,7 +34,7 @@ func generateTxId(chainId string, height int64, index int) string {
 	return hex.EncodeToString(txIdBytes[:32])
 }
 
-func createConfigBlock(chainId string, height int64) *commonPb.Block {
+func createConfigBlock(chainId string, height int64) *storePb.BlockWithRWSet {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -61,7 +61,26 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 
 	block.Header.BlockHash = generateBlockHash(chainId, height)
 	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
-	return block
+	var txRWSets []*commonPb.TxRWSet
+	for i := 0; i < 1; i++ {
+		key := fmt.Sprintf("key_%d", i)
+		value := fmt.Sprintf("value_%d", i)
+		txRWset := &commonPb.TxRWSet{
+			TxId: block.Txs[i].Header.TxId,
+			TxWrites: []*commonPb.TxWrite{
+				{
+					Key:          []byte(key),
+					Value:        []byte(value),
+					ContractName: "contract1",
+				},
+			},
+		}
+		txRWSets = append(txRWSets, txRWset)
+	}
+	return &storePb.BlockWithRWSet{
+		Block:    block,
+		TxRWSets: txRWSets,
+	}
 }
 
 func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.BlockWithRWSet {
@@ -162,6 +181,7 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 }
 func initStateSqlDB() *StateSqlDB {
 	db, _ := newStateSqlDB("chain1", initProvider(), log)
+	db.InitGenesis(block0)
 	return db
 }
 

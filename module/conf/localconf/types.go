@@ -127,13 +127,15 @@ type blockchainConfig struct {
 type StorageConfig struct {
 	//默认的Leveldb配置，如果每个DB有不同的设置，可以在自己的DB中进行设置
 	LevelDbConfig
+	//数据库模式：light只存区块头,normal存储区块头和交易以及生成的State,full存储了区块头、交易、状态和交易收据（读写集、日志等）
+	//Mode string `mapstructure:"mode"`
+	DisableHistoryDB bool `mapstructure:"disable_historydb"`
+	DisableResultDB  bool `mapstructure:"disable_resultdb"`
 
-	DisableHistoryDB     bool      `mapstructure:"disable_historydb"`
-
-	BlockDbConfig        DbConfig `mapstructure:"blockdb_config"`
-	StateDbConfig        DbConfig `mapstructure:"statedb_config"`
-	HistoryDbConfig      DbConfig `mapstructure:"historydb_config"`
-	ResultDbConfig       DbConfig `mapstructure:"resultdb_config"`
+	BlockDbConfig   DbConfig `mapstructure:"blockdb_config"`
+	StateDbConfig   DbConfig `mapstructure:"statedb_config"`
+	HistoryDbConfig DbConfig `mapstructure:"historydb_config"`
+	ResultDbConfig  DbConfig `mapstructure:"resultdb_config"`
 }
 type DbConfig struct{
 	//leveldb,rocksdb,sql

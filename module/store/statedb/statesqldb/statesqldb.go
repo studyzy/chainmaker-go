@@ -50,8 +50,12 @@ func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 		db:     db,
 		Logger: logger,
 	}
-	stateDB.initDb(getDbName(chainId))
+
 	return stateDB, nil
+}
+func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	s.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	return s.CommitBlock(genesisBlock)
 }
 
 // CommitBlock commits the state in an atomic operation

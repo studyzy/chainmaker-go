@@ -19,6 +19,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/utils"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
@@ -83,7 +84,45 @@ func NewBlockStoreImpl(chainId string,
 	return blockStore, nil
 }
 
+// 初始化创世区块到数据库，对应的数据库必须为空数据库，否则报错
+func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	//1.检查创世区块是否有异常
+	if err := checkGenesis(genesisBlock); err != nil {
+		return err
+	}
+	//创世区块只执行一次，而且可能涉及到创建创建数据库，所以串行执行，而且无法启用事务
+	_, blockWithSerializedInfo, err := serialization.SerializeBlock(genesisBlock)
+	block := genesisBlock.Block
+	//2.初始化BlockDB
+	err = bs.blockDB.InitGenesis(blockWithSerializedInfo)
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write blockDB, block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+
+	}
+	//3. 初始化StateDB
+	err = bs.stateDB.InitGenesis(genesisBlock)
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write stateDB, block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+	}
+	//4. 初始化历史数据库
+	err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+	}
+	return nil
+}
+func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	if genesisBlock.Block.Header.BlockHeight != 0 {
+		return errors.New("genesis block height must be 0")
+	}
+	return nil
+}
+
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
+//必须保证区块是连续的，如果是孤儿区块或者历史区块，无法插入，并报错
 func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 	//1. commit log

@@ -14,6 +14,7 @@ import (
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+
 	"os"
 	"time"
 
@@ -229,7 +230,6 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 		name  string
 		block *commonPb.Block
 	}{
-		{funcName, createBlock(defaultChainId, 0)},
 		{funcName, createBlock(defaultChainId, 1)},
 		{funcName, createBlock(defaultChainId, 2)},
 		{funcName, createBlock(defaultChainId, 3)},
@@ -241,7 +241,9 @@ func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-
+	genesis := createConfigBlock(defaultChainId, 0)
+	g := &storePb.BlockWithRWSet{Block: genesis}
+	s.InitGenesis(g)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := s.PutBlock(tt.block, nil); err != nil {

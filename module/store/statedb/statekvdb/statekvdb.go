@@ -30,6 +30,10 @@ type StateKvDB struct {
 	Logger   protocol.Logger
 }
 
+func (s *StateKvDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	return s.CommitBlock(genesisBlock)
+}
+
 // CommitBlock commits the state in an atomic operation
 func (s *StateKvDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	batch := types.NewUpdateBatch()

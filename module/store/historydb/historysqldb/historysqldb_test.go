@@ -174,7 +174,6 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 	conf.Dsn = ":memory:"
 	conf.SqlDbType = "sqlite"
 	p := sqldbprovider.NewSqlDBHandle("chain1", conf)
-	p.CreateTableIfNotExist(&StateHistoryInfo{})
 	return p
 }
 
@@ -182,7 +181,7 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 func initSqlDb() *HistorySqlDB {
 	db, _ := newHistorySqlDB(testChainId, initProvider(), log)
 	_, blockInfo, _ := serialization.SerializeBlock(block0)
-	db.CommitBlock(blockInfo)
+	db.InitGenesis(blockInfo)
 	return db
 }
 

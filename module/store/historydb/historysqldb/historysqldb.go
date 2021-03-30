@@ -49,10 +49,12 @@ func newHistorySqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Lo
 		db:     db,
 		Logger: logger,
 	}
-	historyDB.initDb(getDbName(chainId))
 	return historyDB, nil
 }
-
+func (h *HistorySqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	h.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	return h.CommitBlock(genesisBlock)
+}
 func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {
 	block := blockInfo.Block
 	txRWSets := blockInfo.TxRWSets
