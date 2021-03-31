@@ -16,6 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
+	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/utils"
@@ -40,6 +41,7 @@ type BlockStoreImpl struct {
 	blockDB   blockdb.BlockDB
 	stateDB   statedb.StateDB
 	historyDB historydb.HistoryDB
+	resultDB  resultdb.ResultDB
 	wal       binlog.BinLoger
 	//一个本地数据库，用于对外提供一些本节点的数据存储服务
 	commonDB         dbprovider.Provider
@@ -52,6 +54,7 @@ func NewBlockStoreImpl(chainId string,
 	blockDB blockdb.BlockDB,
 	stateDB statedb.StateDB,
 	historyDB historydb.HistoryDB,
+	resultDB resultdb.ResultDB,
 	commonDB dbprovider.Provider,
 	storeConfig *localconf.StorageConfig,
 	binLog binlog.BinLoger,
@@ -76,6 +79,7 @@ func NewBlockStoreImpl(chainId string,
 		blockDB:          blockDB,
 		stateDB:          stateDB,
 		historyDB:        historyDB,
+		resultDB:         resultDB,
 		wal:              binLog,
 		commonDB:         commonDB,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
@@ -122,6 +126,12 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
 	}
+	//5. 初始化Result数据库
+	err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+	}
 	return nil
 }
 func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
@@ -154,7 +164,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 
 	//commit db concurrently
 	startCommitBlock := utils.CurrentTimeMillisSeconds()
-	numBatches := 3
+	numBatches := 4
 	var batchWG sync.WaitGroup
 	batchWG.Add(numBatches)
 	errsChan := make(chan error, numBatches)
@@ -194,7 +204,20 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	} else {
 		batchWG.Done()
 	}
-
+	//5. result db
+	if !localconf.ChainMakerConfig.StorageConfig.DisableResultDB {
+		go func() {
+			defer batchWG.Done()
+			err := bs.resultDB.CommitBlock(blockWithSerializedInfo)
+			if err != nil {
+				bs.logger.Errorf("chain[%s] failed to write resultdb, block[%d]",
+					block.Header.ChainId, block.Header.BlockHeight)
+				errsChan <- err
+			}
+		}()
+	} else {
+		batchWG.Done()
+	}
 	batchWG.Wait()
 	if len(errsChan) > 0 {
 		return <-errsChan
@@ -275,9 +298,7 @@ func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, lim
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	//return bs.historyDB.GetTxRWSet(txId)
-	//TODO
-	return nil, nil
+	return bs.resultDB.GetTxRWSet(txId)
 }
 
 // GetTxRWSetsByHeight returns all the rwsets corresponding to the block,
@@ -358,6 +379,7 @@ func (bs *BlockStoreImpl) Close() error {
 	bs.blockDB.Close()
 	bs.stateDB.Close()
 	bs.historyDB.Close()
+	bs.resultDB.Close()
 	bs.wal.Close()
 	bs.commonDB.Close()
 	return nil

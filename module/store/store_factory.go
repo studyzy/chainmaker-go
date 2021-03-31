@@ -21,6 +21,9 @@ import (
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
 	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
+	"chainmaker.org/chainmaker-go/store/resultdb"
+	"chainmaker.org/chainmaker-go/store/resultdb/resultkvdb"
+	"chainmaker.org/chainmaker-go/store/resultdb/resultsqldb"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
@@ -86,7 +89,22 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 			}
 		}
 	}
-	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB,
+	var resultDB resultdb.ResultDB
+	if !storeConfig.DisableResultDB {
+		if storeConfig.ResultDbConfig.IsKVDB() {
+			resultDB, err = m.NewHistoryKvDB(chainId, parseEngineType(storeConfig.ResultDbConfig.DbType),
+				storeConfig.ResultDbConfig.LevelDbConfig, logger)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			resultDB, err = resultsqldb.NewResultSqlDB(chainId, storeConfig.ResultDbConfig.SqlDbConfig, logger)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, resultDB,
 		leveldbprovider.NewBlockProvider(chainId, storeConfig.HistoryDbConfig.LevelDbConfig, logger),
 		storeConfig, binLog, logger)
 
@@ -164,6 +182,22 @@ func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, co
 		return nil, nil
 	}
 	return historyDB, nil
+}
+func (m *Factory) NewResultKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig, logger protocol.Logger) (*resultkvdb.ResultKvDB, error) {
+	if logger == nil {
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
+	resultDB := &resultkvdb.ResultKvDB{
+		Cache:  cache.NewStoreCacheMgr(chainId, logger),
+		Logger: logger,
+	}
+	switch engineType {
+	case types.LevelDb:
+		resultDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreHistoryDBDir, config, logger)
+	default:
+		return nil, nil
+	}
+	return resultDB, nil
 }
 
 //

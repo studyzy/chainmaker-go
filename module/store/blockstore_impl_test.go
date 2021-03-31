@@ -80,6 +80,7 @@ func getConfig() *localconf.StorageConfig {
 	conf.BlockDbConfig = dbConfig
 	conf.StateDbConfig = dbConfig
 	conf.HistoryDbConfig = dbConfig
+	conf.ResultDbConfig = dbConfig
 
 	return conf
 }
