@@ -12,3 +12,6 @@ import "encoding/hex"
 func (b *Block) GetBlockHashStr() string {
 	return hex.EncodeToString(b.Header.BlockHash)
 }
+func (b *Block) IsContractMgmtBlock() bool {
+	return b.Txs[0].Header.TxType == TxType_MANAGE_USER_CONTRACT
+}

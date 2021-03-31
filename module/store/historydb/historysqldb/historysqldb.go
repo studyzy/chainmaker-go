@@ -8,7 +8,6 @@ package historysqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -23,7 +22,7 @@ type HistorySqlDB struct {
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*HistorySqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
 	return newHistorySqlDB(chainId, db, logger)
 }
 
@@ -80,10 +79,6 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 
-}
-
-func (h *HistorySqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	return nil, nil
 }
 
 func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {

@@ -164,7 +164,7 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 	conf := &localconf.SqlDbConfig{}
 	conf.Dsn = ":memory:"
 	conf.SqlDbType = "sqlite"
-	p := sqldbprovider.NewSqlDBHandle("chain1", conf)
+	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
 	p.CreateTableIfNotExist(&BlockInfo{})
 	p.CreateTableIfNotExist(&TxInfo{})
 	return p

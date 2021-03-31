@@ -92,7 +92,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	var resultDB resultdb.ResultDB
 	if !storeConfig.DisableResultDB {
 		if storeConfig.ResultDbConfig.IsKVDB() {
-			resultDB, err = m.NewHistoryKvDB(chainId, parseEngineType(storeConfig.ResultDbConfig.DbType),
+			resultDB, err = m.NewResultKvDB(chainId, parseEngineType(storeConfig.ResultDbConfig.DbType),
 				storeConfig.ResultDbConfig.LevelDbConfig, logger)
 			if err != nil {
 				return nil, err
@@ -159,7 +159,7 @@ func (m *Factory) NewStateKvDB(chainId string, engineType types.EngineType, conf
 	}
 	switch engineType {
 	case types.LevelDb:
-		stateDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreBlockDBDir, config, logger)
+		stateDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreStateDBDir, config, logger)
 	default:
 		return nil, nil
 	}
@@ -193,7 +193,7 @@ func (m *Factory) NewResultKvDB(chainId string, engineType types.EngineType, con
 	}
 	switch engineType {
 	case types.LevelDb:
-		resultDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreHistoryDBDir, config, logger)
+		resultDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreResultDBDir, config, logger)
 	default:
 		return nil, nil
 	}

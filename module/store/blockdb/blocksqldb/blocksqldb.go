@@ -16,6 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
+	"errors"
 	"golang.org/x/sync/semaphore"
 	"runtime"
 )
@@ -30,7 +31,7 @@ type BlockSqlDB struct {
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
 func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*BlockSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
 	return newBlockSqlDB(chainId, db, logger)
 }
 
@@ -245,8 +246,15 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	res.ScanObject(&txInfo)
-	return txInfo.GetTx()
+	err = res.ScanObject(&txInfo)
+	if err != nil {
+		return nil, err
+	}
+	if len(txInfo.TxId) > 0 {
+		return txInfo.GetTx()
+	}
+	b.Logger.Errorf("tx data not found by txid:%s", txId)
+	return nil, errors.New("data not found")
 }
 
 // HasTx returns true if the tx exist, or returns false if none exists.

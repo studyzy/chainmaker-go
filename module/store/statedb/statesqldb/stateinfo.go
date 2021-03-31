@@ -28,3 +28,42 @@ func NewStateInfo(contractName string, objectKey []byte, objectValue []byte, blo
 		BlockHeight:  blockHeight,
 	}
 }
+
+type kvIterator struct {
+	keyValues []*StateInfo
+	idx       int
+	count     int
+}
+
+func newKVIterator() *kvIterator {
+	return &kvIterator{
+		keyValues: make([]*StateInfo, 0),
+		idx:       0,
+		count:     0,
+	}
+}
+func (kvi *kvIterator) append(kv *StateInfo) {
+	kvi.keyValues = append(kvi.keyValues, kv)
+	kvi.count++
+}
+func (kvi *kvIterator) Next() bool {
+	kvi.idx++
+	return kvi.idx < kvi.count
+}
+func (kvi *kvIterator) First() bool {
+	return kvi.idx == 0
+}
+func (kvi *kvIterator) Error() error {
+	return nil
+}
+func (kvi *kvIterator) Key() []byte {
+	return kvi.keyValues[kvi.idx].ObjectKey
+}
+func (kvi *kvIterator) Value() []byte {
+	return kvi.keyValues[kvi.idx].ObjectValue
+}
+func (kvi *kvIterator) Release() {
+	kvi.idx = 0
+	kvi.count = 0
+	kvi.keyValues = make([]*StateInfo, 0)
+}

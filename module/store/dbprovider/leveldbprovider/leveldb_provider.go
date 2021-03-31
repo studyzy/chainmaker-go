@@ -20,6 +20,7 @@ const (
 	StoreBlockDBDir   = "store_block"
 	StoreStateDBDir   = "store_state"
 	StoreHistoryDBDir = "store_history"
+	StoreResultDBDir  = "store_result"
 )
 
 var DbNameKeySep = []byte{0x00}

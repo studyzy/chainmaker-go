@@ -7,14 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package historykvdb
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"encoding/binary"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -62,22 +60,22 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 }
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-func (h *HistoryKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	txRWSetKey := constructTxRWSetIDKey(txId)
-	bytes, err := h.get(txRWSetKey)
-	if err != nil {
-		return nil, err
-	} else if bytes == nil {
-		return nil, nil
-	}
-
-	var txRWSet commonPb.TxRWSet
-	err = proto.Unmarshal(bytes, &txRWSet)
-	if err != nil {
-		return nil, err
-	}
-	return &txRWSet, nil
-}
+//func (h *HistoryKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
+//	txRWSetKey := constructTxRWSetIDKey(txId)
+//	bytes, err := h.get(txRWSetKey)
+//	if err != nil {
+//		return nil, err
+//	} else if bytes == nil {
+//		return nil, nil
+//	}
+//
+//	var txRWSet commonPb.TxRWSet
+//	err = proto.Unmarshal(bytes, &txRWSet)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return &txRWSet, nil
+//}
 
 // GetLastSavepoint returns the last block height
 func (h *HistoryKvDB) GetLastSavepoint() (uint64, error) {

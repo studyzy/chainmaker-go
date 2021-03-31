@@ -53,6 +53,7 @@ func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.Level
 	if err != nil {
 		panic(fmt.Sprintf("Error opening %s by leveldbprovider: %s", dbPath, err))
 	}
+	logger.Debugf("open leveldb:%s", dbPath)
 	return &LevelDBHandle{
 		db:     db,
 		logger: logger,

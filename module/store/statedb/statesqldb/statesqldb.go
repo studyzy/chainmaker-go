@@ -9,6 +9,7 @@ package statesqldb
 import (
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
@@ -36,7 +37,7 @@ func (db *StateSqlDB) initDb(dbName string) {
 
 // NewStateMysqlDB construct a new `StateDB` for given chainId
 func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
 	return newStateSqlDB(chainId, db, logger)
 }
 func getDbName(chainId string) string {
@@ -57,12 +58,36 @@ func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	s.initDb(getDbName(genesisBlock.Block.Header.ChainId))
 	return s.CommitBlock(genesisBlock)
 }
+func getContractDbName(chainId, contractName string) string {
+	return chainId + "_" + contractName
+}
 
 // CommitBlock commits the state in an atomic operation
 func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
 	blockHash := block.GetBlockHashStr()
+	if len(txRWSets) == 0 {
+		s.Logger.Warnf("block[%d] don't have any read write set data", block.Header.BlockHeight)
+		return nil
+	}
+	if block.IsContractMgmtBlock() {
+		//创建对应合约的数据库
+		payload := &commonPb.ContractMgmtPayload{}
+		payload.Unmarshal(block.Txs[0].RequestPayload)
+		dbName := getContractDbName(block.Header.ChainId, payload.ContractId.ContractName)
+		s.initDb(dbName) //创建KV表
+		writes := txRWSets[0].TxWrites
+		for _, write := range writes {
+			if len(write.Key) == 0 { //这是SQL语句
+				_, err := s.db.ExecSql(string(write.Value)) //运行用户自定义的建表语句
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
 	tx, err := s.db.BeginDbTransaction(blockHash)
 	if err != nil {
 		return err
@@ -76,10 +101,18 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 			}
 			if txWrite.Key == nil { //sql
 				sql := string(txWrite.Value)
-				tx.ExecSql(sql)
+				if _, err := tx.ExecSql(sql); err != nil {
+					s.Logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
+					s.db.RollbackDbTransaction(blockHash)
+					return err
+				}
 			} else {
 				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, block.Header.BlockHeight)
-				tx.Save(stateInfo)
+				if _, err := tx.Save(stateInfo); err != nil {
+					s.Logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
+					s.db.RollbackDbTransaction(blockHash)
+					return err
+				}
 			}
 		}
 	}
@@ -119,8 +152,19 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
 func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
-	//todo
-	panic("selectObject not implemented!")
+	sql := "select * from state_infos where object_key between ? and ?"
+	rows, err := s.db.QueryTableSql(sql, startKey, limit)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	result := &kvIterator{}
+	for rows.Next() {
+		var kv StateInfo
+		rows.ScanObject(&kv)
+		result.append(&kv)
+	}
+	return result
 }
 
 // GetLastSavepoint returns the last block height

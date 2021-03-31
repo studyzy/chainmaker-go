@@ -24,7 +24,7 @@ type ResultSqlDB struct {
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewResultSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ResultSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig)
+	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
 	return newResultSqlDB(chainId, db, logger)
 }
 
@@ -42,7 +42,7 @@ func (db *ResultSqlDB) initDb(dbName string) {
 
 }
 func getDbName(chainId string) string {
-	return chainId + "_history"
+	return chainId + "_result"
 }
 func newResultSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*ResultSqlDB, error) {
 	rdb := &ResultSqlDB{
@@ -83,7 +83,7 @@ func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 }
 
 func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	sql := "select rwset from result_infos where txid=?"
+	sql := "select rwset from result_infos where tx_id=?"
 	result, err := h.db.QuerySql(sql, txId)
 	if err != nil {
 		return nil, err
