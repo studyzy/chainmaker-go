@@ -18,7 +18,9 @@ const (
 	GasLimit            = 1e10    // invoke user contract max gas
 	TimeLimit           = 1 * 1e9 // 1s
 	CallContractGasOnce = 1e5     // Gas consumed per cross call contract
-	CallContractDeep    = 5       // cross call contract stack deep, must less than vm pool min size
+	CallContractDepth   = 5       // cross call contract stack depth, must less than vm pool min size
+	EvmGasPrice         = 1
+	EvmMaxStackDepth    = 1024
 
 	ContractSdkSignalResultSuccess = 0 // sdk call chain method success result
 	ContractSdkSignalResultFail    = 1 // sdk call chain method success result
@@ -32,14 +34,15 @@ const (
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
-	ContractKey           = ":K:"
-	ContractByteCode      = ":B:"
-	ContractVersion       = ":V:"
-	ContractRuntimeType   = ":R:"
-	ContractCreator       = ":C:"
-	ContractFreeze        = ":F:"
-	ContractRevoke        = ":REVOKE:"
-	ContractStoreSeprator = "#"
+	ContractKey            = ":K:"
+	ContractByteCode       = ":B:"
+	ContractVersion        = ":V:"
+	ContractRuntimeType    = ":R:"
+	ContractCreator        = ":C:"
+	ContractFreeze         = ":F:"
+	ContractRevoke         = ":RV:"
+	ContractAddress        = ":A:"
+	ContractStoreSeparator = "#"
 
 	// user contract must implement such method
 	ContractInitMethod        = "init_contract"
@@ -47,6 +50,7 @@ const (
 	ContractAllocateMethod    = "allocate"
 	ContractDeallocateMethod  = "deallocate"
 	ContractRuntimeTypeMethod = "runtime_type"
+	ContractEvmParamKey       = "data"
 
 	// special parameters passed to contract
 	ContractCreatorOrgIdParam = "__creator_org_id__"
@@ -92,7 +96,7 @@ func GetKey(key []byte, field []byte) []byte {
 	var buf bytes.Buffer
 	buf.Write(key)
 	if len(field) > 0 {
-		buf.Write([]byte(ContractStoreSeprator))
+		buf.Write([]byte(ContractStoreSeparator))
 		buf.Write(field)
 	}
 	return buf.Bytes()

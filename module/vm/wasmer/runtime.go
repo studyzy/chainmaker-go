@@ -96,5 +96,6 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		instanceInfo.errCount++
 		return contractResult
 	}
+	contractResult.GasUsed = int64(gas)
 	return contractResult
 }
