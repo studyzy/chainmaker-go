@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package wxvm
 
 import (
+	"runtime/debug"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	"runtime/debug"
 )
 
 type RuntimeInstance struct {
@@ -66,7 +67,9 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		contractResult.Message = err.Error()
 		return
 	} else {
-		contractResult.GasUsed = int64(inst.ResourceUsed().Cpu)
+		contractResult.GasUsed = int64(inst.ExecCtx.GasUsed())
+		contractResult.ContractEvent = context.ContractEvent
 	}
+
 	return
 }

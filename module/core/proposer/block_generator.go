@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package proposer
 
 import (
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/utils"
 )
 
@@ -27,10 +27,10 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 		bp.log.Warnf("generate new block failed, block == nil")
 		return nil, timeLasts, fmt.Errorf("generate new block failed, block == nil")
 	}
-	if txBatch == nil {
-		// For ChainedBFT consensus, generate an empty block if tx batch is empty.
-		return block, timeLasts, nil
-	}
+	//if txBatch == nil {
+	//	// For ChainedBFT consensus, generate an empty block if tx batch is empty.
+	//	return block, timeLasts, nil
+	//}
 
 	// validate tx and verify ACL，split into 2 slice according to result
 	// validatedTxs are txs passed validate and should be executed by contract
@@ -46,7 +46,7 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 	snapshot := bp.snapshotManager.NewSnapshot(lastBlock, block)
 	vmStartTick := utils.CurrentTimeMillisSeconds()
 	ssLasts := vmStartTick - ssStartTick
-	txRWSetMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)
+	txRWSetMap, contractEventMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
 	timeLasts = append(timeLasts, ssLasts, vmLasts)
 
@@ -55,9 +55,9 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 			block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
 
-	if len(block.Txs) == 0 {
-		return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
-	}
+	//if len(block.Txs) == 0 {
+	//	return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
+	//}
 
 	err = bp.finalizeBlock(block, txRWSetMap, aclFailTxs)
 	if err != nil {
@@ -78,10 +78,11 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 
 	// cache proposed block
 	bp.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
-	if err = bp.proposalCache.SetProposedBlock(block, txRWSetMap, true); err != nil {
+	if err = bp.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventMap, true); err != nil {
 		return block, timeLasts, err
 	}
 	bp.proposalCache.SetProposedAt(block.Header.BlockHeight)
+
 	return block, timeLasts, nil
 }
 

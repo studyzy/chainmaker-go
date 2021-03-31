@@ -8,6 +8,9 @@ package committer
 
 import (
 	"bytes"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -18,10 +21,8 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
 )
 
 // BlockCommitterImpl implements BlockCommitter interface.
@@ -135,17 +136,19 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
 		chain.log.Errorf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
 		return err
 	}
-	lastProposed, rwSetMap := chain.proposalCache.GetProposedBlock(block)
-	if err = chain.checkLastProposedBlock(block, lastProposed, err, height, rwSetMap); err != nil {
+	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
+	if err = chain.checkLastProposedBlock(block, lastProposed, err, height, rwSetMap, conEventMap); err != nil {
 		return err
 	}
 
 	// record block
 	rwSet := chain.rearrangeRWSet(block, rwSetMap)
+	// record contract event
+	events := chain.rearrangeContractEvent(block, conEventMap)
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 	startDBTick := utils.CurrentTimeMillisSeconds()
-	if err = chain.blockchainStore.PutBlock(block, rwSet); err != nil {
+	if err = chain.blockchainStore.PutBlock(block, rwSet, events); err != nil {
 		// if put db error, then panic
 		chain.log.Error(err)
 		panic(err)
@@ -185,6 +188,19 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
 	}
 	// synchronize new block height to consensus and sync module
 	chain.msgBus.Publish(msgbus.BlockInfo, bi)
+	for _, t := range events {
+		eventInfo := &commonpb.ContractEventInfo{
+			BlockHeight:     height,
+			ChainId:         block.Header.GetChainId(),
+			Topic:           t.Topic,
+			TxId:            t.TxId,
+			ContractName:    t.ContractName,
+			ContractVersion: t.ContractVersion,
+			EventData:       t.EventData,
+		}
+		chain.msgBus.Publish(msgbus.ContractEventInfo, eventInfo)
+		chain.log.Infof("publish contractEventInfo %v", eventInfo)
+	}
 
 	if err = chain.monitorCommit(bi); err != nil {
 		return err
@@ -218,23 +234,20 @@ func (chain *BlockCommitterImpl) monitorCommit(bi *commonpb.BlockInfo) error {
 func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height int64) []*commonpb.Transaction {
 	proposedBlocks := chain.proposalCache.GetProposedBlocksAt(height)
 	txRetry := make([]*commonpb.Transaction, 0, localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize)
-	batchMap := make(map[string]interface{})
+	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
+	keepTxs := make(map[string]struct{}, len(block.Txs))
+	for _, tx := range block.Txs {
+		keepTxs[tx.Header.TxId] = struct{}{}
+	}
 	for _, b := range proposedBlocks {
 		if bytes.Equal(b.Header.BlockHash, block.Header.BlockHash) {
 			continue
 		}
-		if len(b.Txs) == 0 {
-			continue
+		for _, tx := range b.Txs {
+			if _, ok := keepTxs[tx.Header.TxId]; !ok {
+				txRetry = append(txRetry, tx)
+			}
 		}
-		if _, ok := batchMap[b.Txs[0].Header.TxId]; ok {
-			// make sure no redundant batch in txRetry
-			continue
-		}
-		if len(block.Txs) > 0 && b.Txs[0].Header.TxId == block.Txs[0].Header.TxId {
-			continue
-		}
-		batchMap[b.Txs[0].Header.TxId] = "exist"
-		txRetry = append(txRetry, b.Txs...)
 	}
 	return txRetry
 }
@@ -264,9 +277,23 @@ func (chain *BlockCommitterImpl) rearrangeRWSet(block *commonpb.Block, rwSetMap 
 	}
 	return rwSet
 }
+func (chain *BlockCommitterImpl) rearrangeContractEvent(block *commonpb.Block, conEventMap map[string][]*commonpb.ContractEvent) []*commonpb.ContractEvent {
+	conEvent := make([]*commonpb.ContractEvent, 0)
+	if conEventMap == nil {
+		return conEvent
+	}
+	for _, tx := range block.Txs {
+		if event, ok := conEventMap[tx.Header.TxId]; ok {
+			for _, e := range event {
+				conEvent = append(conEvent, e)
+			}
+		}
+	}
+	return conEvent
+}
 
 func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block, lastProposed *commonpb.Block,
-	err error, height int64, rwSetMap map[string]*commonpb.TxRWSet) error {
+	err error, height int64, rwSetMap map[string]*commonpb.TxRWSet, conEventMap map[string][]*commonpb.ContractEvent) error {
 	if lastProposed != nil {
 		return nil
 	}
@@ -275,7 +302,7 @@ func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block, l
 		chain.log.Error("block verify failed [%d](hash:%x), %s", height, block.Header.BlockHash, err)
 		return err
 	}
-	lastProposed, rwSetMap = chain.proposalCache.GetProposedBlock(block)
+	lastProposed, rwSetMap, conEventMap = chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
 		chain.log.Error("block not verified [%d](hash:%x)", height, block.Header.BlockHash)
 		return fmt.Errorf("block not verified [%d](hash:%x)", height, block.Header.BlockHash)

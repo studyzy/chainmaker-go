@@ -18,19 +18,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func ChainConfigGetGovernmentContractCMD() *cobra.Command {
+func ChainConfigGetGovernanceContractCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "getGovernmentContract",
-		Short: "getGovernmentContract",
+		Use:   "getGovernanceContract",
+		Short: "getGovernanceContract",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return getGovernmentContract()
+			return getGovernanceContract()
 		},
 	}
 
 	return cmd
 }
 
-func getGovernmentContract() error {
+func getGovernanceContract() error {
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(), commonPb.QueryFunction_GET_GOVERNANCE_CONTRACT.String(), pairs)
@@ -53,7 +53,7 @@ func getGovernmentContract() error {
 		Message:               resp.Message,
 		ContractResultCode:    resp.ContractResult.Code,
 		ContractResultMessage: resp.ContractResult.Message,
-		GovernmentInfo:        mbftInfo,
+		GovernanceInfo:        mbftInfo,
 	}
 
 	bytes, err := json.Marshal(result)

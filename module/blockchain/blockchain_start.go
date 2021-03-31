@@ -7,10 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 
 package blockchain
 
-import (
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-)
-
 // Start all the modules.
 func (bc *Blockchain) Start() error {
 	// start all module
@@ -20,26 +16,27 @@ func (bc *Blockchain) Start() error {
 	// 2、spv node
 	// 3、core engine
 	// 4、consensus module
-	// 5、sync service
-	// 6、tx pool
+	// 5、tx pool
+	// 6、sync service
 
-	var startModules []map[string]func() error
-	if bc.getConsensusType() == consensus.ConsensusType_SOLO {
-		// solo
-		startModules = []map[string]func() error{
-			{"Core": bc.startCoreEngine},
-			{"Consensus": bc.startConsensus},
-			{"txPool": bc.startTxPool},
-		}
-	} else {
-		// not solo
-		startModules = []map[string]func() error{
-			{"NetService": bc.startNetService},
-			{"Core": bc.startCoreEngine},
-			{"Consensus": bc.startConsensus},
-			{"txPool": bc.startTxPool},
-			{"Sync": bc.startSyncService},
-		}
+	var startModules = make([]map[string]func() error, 0)
+	if bc.isModuleInit(moduleNameNetService) && !bc.isModuleStartUp(moduleNameNetService) {
+		startModules = append(startModules, map[string]func() error{moduleNameNetService: bc.startNetService})
+	}
+	//if bc.isModuleInit(moduleNameSpv) {
+	//	startModules = append(startModules, map[string]func() error{moduleNameSpv: bc.startSpv})
+	//}
+	if bc.isModuleInit(moduleNameCore) && !bc.isModuleStartUp(moduleNameCore) {
+		startModules = append(startModules, map[string]func() error{moduleNameCore: bc.startCoreEngine})
+	}
+	if bc.isModuleInit(moduleNameConsensus) && !bc.isModuleStartUp(moduleNameConsensus) {
+		startModules = append(startModules, map[string]func() error{moduleNameConsensus: bc.startConsensus})
+	}
+	if bc.isModuleInit(moduleNameTxPool) && !bc.isModuleStartUp(moduleNameTxPool) {
+		startModules = append(startModules, map[string]func() error{moduleNameTxPool: bc.startTxPool})
+	}
+	if bc.isModuleInit(moduleNameSync) && !bc.isModuleStartUp(moduleNameSync) {
+		startModules = append(startModules, map[string]func() error{moduleNameSync: bc.startSyncService})
 	}
 
 	total := len(startModules)
@@ -63,6 +60,7 @@ func (bc *Blockchain) startNetService() error {
 		bc.log.Errorf("start net service failed, %s", err.Error())
 		return err
 	}
+	bc.startModules[moduleNameNetService] = struct{}{}
 	return nil
 }
 
@@ -75,12 +73,14 @@ func (bc *Blockchain) startConsensus() error {
 		bc.log.Errorf("start consensus failed, %s", err.Error())
 		return err
 	}
+	bc.startModules[moduleNameConsensus] = struct{}{}
 	return nil
 }
 
 func (bc *Blockchain) startCoreEngine() error {
 	// start core engine
 	bc.coreEngine.Start()
+	bc.startModules[moduleNameCore] = struct{}{}
 	return nil
 }
 
@@ -90,6 +90,7 @@ func (bc *Blockchain) startSyncService() error {
 		bc.log.Errorf("start sync server failed, %s", err.Error())
 		return err
 	}
+	bc.startModules[moduleNameSync] = struct{}{}
 	return nil
 }
 
@@ -98,8 +99,13 @@ func (bc *Blockchain) startTxPool() error {
 	err := bc.txPool.Start()
 	if err != nil {
 		bc.log.Errorf("start tx pool failed, %s", err)
-
 		return err
 	}
+	bc.startModules[moduleNameTxPool] = struct{}{}
 	return nil
+}
+
+func (bc *Blockchain) isModuleStartUp(moduleName string) bool {
+	_, res := bc.startModules[moduleName]
+	return res
 }

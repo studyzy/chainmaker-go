@@ -69,15 +69,17 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		snapshot:      snapshot,
 		vmManager:     vmManager,
 		gasUsed:       0,
-		currentDeep:   0,
+		currentDepth:  0,
 		hisResult:     make([]*callContractResult, 0),
 	}
 }
 
 // Schedule according to a batch of transactions, and generating DAG according to the conflict relationship
-func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, error) {
+func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, error) {
+
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
+	txRWSetMap := make(map[string]*commonpb.TxRWSet)
 	txBatchSize := len(txBatch)
 	runningTxC := make(chan *commonpb.Transaction, txBatchSize)
 	timeoutC := time.After(ScheduleTimeout * time.Second)
@@ -86,7 +88,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	var goRoutinePool *ants.Pool
 	var err error
 	if goRoutinePool, err = ants.NewPool(runtime.NumCPU()*4, ants.WithPreAlloc(true)); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer goRoutinePool.Release()
 	startTime := time.Now()
@@ -108,6 +110,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 					if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 						start = time.Now()
 					}
+					//交易结果
 					if txResult, err = ts.runVM(tx, txSimContext); err != nil {
 						runVmSuccess = false
 						tx.Result = txResult
@@ -148,8 +151,12 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	}()
 	// Put the pending transaction into the running queue
 	go func() {
-		for _, tx := range txBatch {
-			runningTxC <- tx
+		if len(txBatch) > 0 {
+			for _, tx := range txBatch {
+				runningTxC <- tx
+			}
+		} else {
+			finishC <- true
 		}
 	}()
 	// Wait for schedule finish signal
@@ -163,14 +170,18 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	ts.log.Infof("schedule tx batch end, success %d, time cost %v, time cost(dag include) %v ",
 		len(block.Dag.Vertexes), timeCostA, timeCostB)
 	txRWSetTable := snapshot.GetTxRWSetTable()
-	txRWSetMap := make(map[string]*commonpb.TxRWSet)
 	for _, txRWSet := range txRWSetTable {
 		if txRWSet != nil {
 			txRWSetMap[txRWSet.TxId] = txRWSet
 		}
 	}
+	contractEventMap := make(map[string][]*commonpb.ContractEvent)
+	for _, tx := range block.Txs {
+		event := tx.Result.ContractResult.ContractEvent
+		contractEventMap[tx.Header.TxId] = event
+	}
 	//ts.dumpDAG(block.Dag, block.Txs)
-	return txRWSetMap, nil
+	return txRWSetMap, contractEventMap, nil
 }
 
 // SimulateWithDag based on the dag in the block, perform scheduling and execution transactions
@@ -178,7 +189,14 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
 
-	startTime := time.Now()
+	var (
+		startTime  = time.Now()
+		txRWSetMap = make(map[string]*commonpb.TxRWSet)
+	)
+	if len(block.Txs) == 0 {
+		ts.log.Debugf("no txs in block[%x] when simulate", block.Header.BlockHash)
+		return txRWSetMap, snapshot.GetTxResultMap(), nil
+	}
 	ts.log.Debugf("simulate with dag start, size %d", len(block.Txs))
 	txMapping := make(map[int]*commonpb.Transaction)
 	for index, tx := range block.Txs {
@@ -252,7 +270,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 				ts.shrinkDag(doneTxIndex, dagRemain)
 
 				txIndexBatch := ts.popNextTxBatchFromDag(dagRemain)
-				ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
+				//ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
 				for _, tx := range txIndexBatch {
 					runningTxC <- tx
 				}
@@ -282,7 +300,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	ts.log.Infof("simulate with dag end, size %d, time cost %+v", len(block.Txs), time.Since(startTime))
 
 	// Return the read and write set after the scheduled execution
-	txRWSetMap := make(map[string]*commonpb.TxRWSet)
+
 	for _, txRWSet := range snapshot.GetTxRWSetTable() {
 		if txRWSet != nil {
 			txRWSetMap[txRWSet.TxId] = txRWSet

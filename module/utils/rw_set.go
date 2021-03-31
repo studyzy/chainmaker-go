@@ -9,11 +9,11 @@ package utils
 
 import (
 	"bytes"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -22,7 +22,7 @@ func CalcRWSetRoot(hashType string, txs []*commonPb.Transaction) ([]byte, error)
 	// calculate read-write set hash following the order in txs
 	// if txId does not exist in txRWSetMap, fill in a default one
 	if txs == nil || len(txs) == 0 {
-		return nil, fmt.Errorf("calc rwset root set == nil")
+		return nil, nil
 	}
 	rwSetHashes := make([][]byte, len(txs))
 	for i, tx := range txs {

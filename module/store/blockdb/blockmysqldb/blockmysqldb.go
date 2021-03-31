@@ -33,7 +33,7 @@ type BlockMysqlDB struct {
 // NewBlockMysqlDB constructs a new `BlockMysqlDB` given an chainId and engine type
 func NewBlockMysqlDB(chainId string) (blockdb.BlockDB, error) {
 	nWorkers := runtime.NumCPU()
-	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	db := mysqldbprovider.NewProvider(chainId).GetDB(chainId, localconf.ChainMakerConfig)
 
 	if err := db.AutoMigrate(&BlockInfo{}); err != nil {
 		panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))

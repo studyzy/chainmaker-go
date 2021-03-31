@@ -11,8 +11,10 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
+	"sync"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/common/linkedhashmap"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -30,17 +32,18 @@ type txList struct {
 	blockchainStore  protocol.BlockchainStore
 	metricTxPoolSize *prometheus.GaugeVec
 
-	queue        *linkedhashmap.LinkedHashMap // common transaction will be stored
-	pendingCache *linkedhashmap.LinkedHashMap // A place where transactions are stored after Fetch
+	rwLock       sync.RWMutex
+	queue        *linkedhashmap.LinkedHashMap // Orderly store TXS: txs
+	pendingCache *sync.Map                    // A place where transactions are stored after Fetch
 }
 
-func newTxList(log *logger.CMLogger, pendingCache *linkedhashmap.LinkedHashMap, blockchainStore protocol.BlockchainStore) *txList {
+func newTxList(log *logger.CMLogger, pendingCache *sync.Map, blockchainStore protocol.BlockchainStore) *txList {
 	list := &txList{
 		log:             log,
 		blockchainStore: blockchainStore,
-
-		queue:        linkedhashmap.NewLinkedHashMap(),
-		pendingCache: pendingCache,
+		rwLock:          sync.RWMutex{},
+		queue:           linkedhashmap.NewLinkedHashMap(),
+		pendingCache:    pendingCache,
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		list.metricTxPoolSize = monitor.NewGaugeVec(monitor.SUBSYSTEM_TXPOOL, "metric_tx_pool_size", "tx pool size", "chainId", "poolType")
@@ -53,12 +56,10 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	if len(txs) == 0 {
 		return
 	}
-	for _, tx := range txs {
-		if validate == nil || validate(tx, source) == nil {
-			l.queue.Add(tx.Header.TxId, tx)
-		}
-	}
 
+	for _, tx := range txs {
+		l.addTxs(tx, source, validate)
+	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if utils.IsConfigTx(txs[0]) {
 			go l.metricTxPoolSize.WithLabelValues(txs[0].Header.ChainId, "config").Set(float64(l.queue.Size()))
@@ -68,13 +69,32 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	}
 }
 
+func (l *txList) addTxs(tx *commonPb.Transaction, source protocol.TxSource, validate txValidateFunc) {
+	l.rwLock.Lock()
+	defer l.rwLock.Unlock()
+	if validate == nil || validate(tx, source) == nil {
+		if source != protocol.INTERNAL {
+			if val, ok := l.pendingCache.Load(tx.Header.TxId); ok && val != nil {
+				return
+			}
+		}
+		if l.queue.Get(tx.Header.TxId) != nil {
+			return
+		}
+		l.queue.Add(tx.Header.TxId, tx)
+	}
+}
+
 // Delete Delete transactions from TXList by the txIds
 func (l *txList) Delete(txIds []string) {
-	l.log.Debugf("remove txIds", "ids", txIds)
+	l.rwLock.Lock()
+	defer l.rwLock.Unlock()
+	l.log.Debugf("remove txIds", "idsNum", len(txIds))
 	for _, txId := range txIds {
 		l.queue.Remove(txId)
-		l.pendingCache.Remove(txId)
+		l.pendingCache.Delete(txId)
 	}
+
 }
 
 // Fetch Gets a list of stored transactions
@@ -90,9 +110,10 @@ func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
 		errKeys  []string
 		cacheKVs []*valInPendingCache
 	)
+	l.rwLock.Lock()
 	defer func() {
 		if len(txs) > 0 {
-			l.monitor(txs[0], l.Size())
+			l.monitor(txs[0], l.queue.Size())
 		}
 		begin := utils.CurrentTimeMillisSeconds()
 		for _, txId := range errKeys {
@@ -100,8 +121,9 @@ func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
 		}
 		for _, val := range cacheKVs {
 			l.queue.Remove(val.tx.Header.TxId)
-			l.pendingCache.Add(val.tx.Header.TxId, val)
+			l.pendingCache.Store(val.tx.Header.TxId, val)
 		}
+		l.rwLock.Unlock()
 		l.log.Debugf("eliminate data, elapse time: %d", utils.CurrentTimeMillisSeconds()-begin)
 	}()
 
@@ -133,7 +155,7 @@ func (l *txList) getTxsFromQueue(count int, blockHeight int64, validate func(tx 
 				tx:            tx,
 				inBlockHeight: blockHeight,
 			})
-			if val := l.pendingCache.Get(txId); val != nil {
+			if val, ok := l.pendingCache.Load(txId); ok {
 				l.log.Errorf("tx:%s duplicate to package block, txInPoolHeight: %d", txId, val.(*valInPendingCache).inBlockHeight)
 			}
 		}
@@ -159,10 +181,12 @@ func (l *txList) monitor(tx *commonPb.Transaction, len int) {
 // Has Determine if the transaction exists in the txList
 func (l *txList) Has(txId string, checkPending bool) (exist bool) {
 	if checkPending {
-		if val := l.pendingCache.Get(txId); val != nil {
+		if val, ok := l.pendingCache.Load(txId); ok && val != nil {
 			return true
 		}
 	}
+	l.rwLock.RLock()
+	defer l.rwLock.RUnlock()
 	return l.queue.Get(txId) != nil
 }
 
@@ -171,11 +195,14 @@ func (l *txList) Has(txId string, checkPending bool) (exist bool) {
 // return 0 when the transaction is in the queue to wait to be generate block,
 // return positive integer, indicating that the tx is in an unchained block.
 func (l *txList) Get(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
-	if pendingVal := l.pendingCache.Get(txId); pendingVal != nil {
+	if pendingVal, ok := l.pendingCache.Load(txId); ok && pendingVal != nil {
 		l.log.Debugw(fmt.Sprintf("txList Get Transaction by txId = %s in pendingCache", txId), "exist", true)
 		val := pendingVal.(*valInPendingCache)
 		return val.tx, val.inBlockHeight
 	}
+
+	l.rwLock.RLock()
+	defer l.rwLock.RUnlock()
 	if val := l.queue.Get(txId); val != nil {
 		l.log.Debugw(fmt.Sprintf("txList Get Transaction by txId = %s in queue", txId), "exist", true)
 		return val.(*commonPb.Transaction), 0
@@ -185,16 +212,17 @@ func (l *txList) Get(txId string) (tx *commonPb.Transaction, inBlockHeight int64
 }
 
 func (l *txList) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
+	l.rwLock.Lock()
+	defer l.rwLock.Unlock()
 	for _, tx := range txs {
-		l.pendingCache.Add(tx.Header.TxId, &valInPendingCache{
-			tx:            tx,
-			inBlockHeight: blockHeight,
-		})
+		l.pendingCache.Store(tx.Header.TxId, &valInPendingCache{tx: tx, inBlockHeight: blockHeight})
 		l.queue.Remove(tx.Header.TxId)
 	}
 }
 
 // Size Gets the number of transactions stored in the txList
 func (l *txList) Size() int {
+	l.rwLock.RLock()
+	defer l.rwLock.RUnlock()
 	return l.queue.Size()
 }

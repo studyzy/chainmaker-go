@@ -7,14 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"errors"
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/helper"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	rootLog "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -294,17 +294,11 @@ func (cw *ConfigWatcher) Module() string {
 func (cw *ConfigWatcher) Watch(chainConfig *configPb.ChainConfig) error {
 	// refresh chainConfig
 	cw.ns.logger.Infof("[NetService] refreshing chain config...")
-	// 1.refresh seed address and consensus nodeIds
-	// 1.1 get all new address
-	newSeeds := make([]string, 0)
+	// 1.refresh consensus nodeIds
+	// 1.1 get all new nodeIds
 	newConsensusNodeIds := make(map[string]struct{})
 	for _, node := range chainConfig.Consensus.Nodes {
-		for _, address := range node.Address {
-			newSeeds = append(newSeeds, address)
-			nodeId, err := helper.GetNodeUidFromAddr(address)
-			if err != nil {
-				return err
-			}
+		for _, nodeId := range node.NodeId {
 			newConsensusNodeIds[nodeId] = struct{}{}
 		}
 	}
@@ -312,12 +306,7 @@ func (cw *ConfigWatcher) Watch(chainConfig *configPb.ChainConfig) error {
 	cw.ns.consensusNodeIdsLock.Lock()
 	cw.ns.consensusNodeIds = newConsensusNodeIds
 	cw.ns.consensusNodeIdsLock.Unlock()
-	// 1.3 refresh connection supervisor peerAddrInfos
-	if err := cw.ns.localNet.RefreshSeeds(newSeeds); err != nil {
-		cw.ns.logger.Errorf("[NetService] refresh addresses of seeds failed ,%s", err.Error())
-		return err
-	}
-	cw.ns.logger.Infof("[NetService] refresh addresses of seeds ok ")
+	cw.ns.logger.Infof("[NetService] refresh ids of consensus nodes ok ")
 	// 2.refresh trust roots
 	// 2.1 get all new roots
 	newCerts := make([][]byte, 0)
@@ -398,9 +387,10 @@ func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType ne
 func handleMsgBusSubscriberOnMessageSend(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, netMsg *netPb.NetMsg) error {
 	go func() {
 		if err := netService.sendMsg(netMsg, fmt.Sprintf(msgBusMsgFlagTemplate, msgType.String())); err != nil {
-			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg failed (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), err.Error())
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg failed (size:%d) (reason:%s) (to:%s)", logMsgDescription, proto.Size(netMsg), err.Error(), netMsg.To)
+		} else {
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg ok (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), netMsg.To)
 		}
-		netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg ok (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), netMsg.To)
 	}()
 	return nil
 }

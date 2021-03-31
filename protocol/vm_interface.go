@@ -9,37 +9,40 @@ package protocol
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
 	"regexp"
+
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 )
 
 const (
 	GasLimit            = 1e10    // invoke user contract max gas
 	TimeLimit           = 1 * 1e9 // 1s
 	CallContractGasOnce = 1e5     // Gas consumed per cross call contract
-	CallContractDeep    = 5       // cross call contract stack deep, must less than vm pool min size
+	CallContractDepth   = 5       // cross call contract stack depth, must less than vm pool min size
+	EvmGasPrice         = 1
+	EvmMaxStackDepth    = 1024
 
 	ContractSdkSignalResultSuccess = 0 // sdk call chain method success result
 	ContractSdkSignalResultFail    = 1 // sdk call chain method success result
 
-	DefaultStateLen   = 64                  // key & name for contract state length
-	DefaultStateRegex = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
-
+	DefaultStateLen     = 64                  // key & name for contract state length
+	DefaultStateRegex   = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
 	DefaultVersionLen   = 64                  // key & name for contract state length
 	DefaultVersionRegex = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
 
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
-	ContractKey           = ":K:"
-	ContractByteCode      = ":B:"
-	ContractVersion       = ":V:"
-	ContractRuntimeType   = ":R:"
-	ContractCreator       = ":C:"
-	ContractFreeze        = ":F:"
-	ContractRevoke        = ":REVOKE:"
-	ContractStoreSeprator = "#"
+	ContractKey            = ":K:"
+	ContractByteCode       = ":B:"
+	ContractVersion        = ":V:"
+	ContractRuntimeType    = ":R:"
+	ContractCreator        = ":C:"
+	ContractFreeze         = ":F:"
+	ContractRevoke         = ":RV:"
+	ContractAddress        = ":A:"
+	ContractStoreSeparator = "#"
 
 	// user contract must implement such method
 	ContractInitMethod        = "init_contract"
@@ -47,6 +50,7 @@ const (
 	ContractAllocateMethod    = "allocate"
 	ContractDeallocateMethod  = "deallocate"
 	ContractRuntimeTypeMethod = "runtime_type"
+	ContractEvmParamKey       = "data"
 
 	// special parameters passed to contract
 	ContractCreatorOrgIdParam = "__creator_org_id__"
@@ -69,6 +73,7 @@ const (
 	ContractMethodErrorResult     = "ErrorResult"
 	ContractMethodCallContract    = "CallContract"
 	ContractMethodCallContractLen = "CallContractLen"
+	ContractMethodEmitEvent       = "EmitEvent"
 )
 
 //VmManager manage vm runtime
@@ -92,7 +97,7 @@ func GetKey(key []byte, field []byte) []byte {
 	var buf bytes.Buffer
 	buf.Write(key)
 	if len(field) > 0 {
-		buf.Write([]byte(ContractStoreSeprator))
+		buf.Write([]byte(ContractStoreSeparator))
 		buf.Write(field)
 	}
 	return buf.Bytes()
@@ -124,4 +129,42 @@ func CheckKeyFieldStr(key string, field string) error {
 		}
 	}
 	return nil
+}
+
+//CheckTopicStr
+func CheckTopicStr(topic string) error {
+	topicLen := len(topic)
+	if topicLen == 0 {
+		return fmt.Errorf("topic can not empty")
+	}
+	if topicLen > TopicMaxLen {
+		return fmt.Errorf("topic too long,longer than %v", TopicMaxLen)
+	}
+	return nil
+
+}
+
+//CheckEventTopicTableData  verify event data
+func CheckEventData(eventData []string) error {
+
+	eventDataNum := len(eventData)
+	if eventDataNum == 0 {
+		return fmt.Errorf("event data can not empty")
+
+	}
+	if eventDataNum > EventDataMaxCount {
+		return fmt.Errorf("too many event data")
+	}
+	for _, data := range eventData {
+		if len(data) > EventDataMaxLen {
+			return fmt.Errorf("event data too long,longer than %v", EventDataMaxLen)
+
+		}
+		err := filteredSQLInject(data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }

@@ -8,6 +8,9 @@ package mysqldbprovider
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
+	logImpl "chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol"
+	"gorm.io/gorm/logger"
 
 	"database/sql"
 	"fmt"
@@ -26,12 +29,26 @@ var defaultConnMaxLifeTime = 60
 // Porvider encapsulate the gorm.DB that providers mysql handles
 type Provider struct {
 	sync.Mutex
-	db *gorm.DB
+	db     *gorm.DB
+	Logger *logImpl.CMLogger
 }
 
 // NewProvider construct a new Provider
-func NewProvider() *Provider {
-	return &Provider{}
+func NewProvider(chainId string) *Provider {
+	return &Provider{
+		Logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+	}
+}
+
+type sqlLogger struct {
+	log protocol.Logger
+}
+
+func newSqlLogger(log protocol.Logger) *sqlLogger {
+	return &sqlLogger{log: log}
+}
+func (l *sqlLogger) Printf(f string, args ...interface{}) {
+	l.log.Debugf(f, args...)
 }
 
 // GetDB returns a new gorm.DB for given chainid and conf.
@@ -42,16 +59,25 @@ func (p *Provider) GetDB(chainId string, conf *localconf.CMConfig) *gorm.DB {
 		mysqlConf := conf.StorageConfig.MysqlConfig
 		err := p.tryCreateDB(chainId, mysqlConf.Dsn)
 		if err != nil {
+			p.Logger.Errorf("failed to open mysql:%s", err)
 			panic(fmt.Sprintf("failed to create mysql:%s", err))
 		}
 		//dsn := "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 		dsn := mysqlConf.Dsn + chainId + "?charset=utf8mb4&parseTime=True&loc=Local"
-		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+			Logger: logger.New(newSqlLogger(p.Logger), logger.Config{
+				SlowThreshold: 500 * time.Millisecond,
+				LogLevel:      logger.Warn,
+				Colorful:      false,
+			}),
+		})
 		if err != nil {
+			p.Logger.Errorf("failed to open mysql:%s", err)
 			panic(fmt.Sprintf("failed to open mysql:%s", err))
 		}
 		sqlDB, err := db.DB()
 		if err != nil {
+			p.Logger.Errorf("failed to open mysql:%s", err)
 			panic(fmt.Sprintf("failed to open mysql:%s", err))
 		}
 		maxIdleConns := mysqlConf.MaxIdleConns

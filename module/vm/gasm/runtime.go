@@ -43,7 +43,7 @@ func putContractDecodedMod(chainId string, contractId *commonPb.ContractId, mod 
 			modCache: lru.New(LruCacheSize),
 		}
 	}
-	modName := chainId + contractId.ContractName + protocol.ContractStoreSeprator + contractId.ContractVersion
+	modName := chainId + contractId.ContractName + protocol.ContractStoreSeparator + contractId.ContractVersion
 	inst.modCache.Add(modName, mod)
 }
 
@@ -57,7 +57,7 @@ func getContractDecodedMod(chainId string, contractId *commonPb.ContractId) *was
 		}
 	}
 
-	modName := chainId + contractId.ContractName + protocol.ContractStoreSeprator + contractId.ContractVersion
+	modName := chainId + contractId.ContractName + protocol.ContractStoreSeparator + contractId.ContractVersion
 	if mod, ok := inst.modCache.Get(modName); ok {
 		return mod.(*wasm.Module)
 	}
@@ -77,7 +77,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	defer func() {
 		if err := recover(); err != nil {
-			r.Log.Errorf("invoke gasm panic, tx id:%s, error:%s", tx.Header.TxId, err)
+			r.Log.Errorf("failed to invoke gasm, tx id:%s, error:%s", tx.Header.TxId, err)
 			contractResult.Code = commonPb.ContractResultCode_FAIL
 			if e, ok := err.(error); ok {
 				contractResult.Message = e.Error()
@@ -189,6 +189,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		contractResult.Message = err.Error()
 		r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", tx.GetHeader().TxId, err.Error())
 	} else {
+		contractResult.ContractEvent = waciInstance.ContractEvent
 		r.Log.Debugf("invoke gasm success, tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]", tx.GetHeader().TxId, vm.Gas, ret, retTypes)
 	}
 

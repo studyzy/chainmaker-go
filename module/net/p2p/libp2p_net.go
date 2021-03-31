@@ -265,7 +265,7 @@ func (ln *LibP2pNet) topicSubLoop(topicSub *libP2pPubSub.Subscription, topic str
 		}
 		// call handler
 		if err := handler(message.GetFrom().Pretty(), msg.GetMsg()); err != nil {
-			logger.Error("[Net] call subscribe handler failed, %s ", err)
+			logger.Errorf("[Net] call subscribe handler failed, %s ", err)
 		}
 	}
 }

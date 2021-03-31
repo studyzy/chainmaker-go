@@ -120,15 +120,23 @@ function generate_config() {
     if  [ $NODE_CNT -eq 1 ]; then
         CONSENSUS_TYPE=0
     else
-        read -p "input consensus type(default 1/tbft): " tmp
+        read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT): " tmp
         if  [ ! -z "$tmp" ] ;then
-            CONSENSUS_TYPE=$tmp
+          if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] ;then
+              CONSENSUS_TYPE=$tmp
+          else
+            echo "unknown consensus type [" $tmp "], so use default"
+          fi
         fi
     fi
 
-    read -p "input log level(default INFO): " tmp
+    read -p "input log level (DEBUG|INFO(default)|WARN|ERROR): " tmp
     if  [ ! -z "$tmp" ] ;then
-        LOG_LEVEL=$tmp
+      if  [ $tmp == "DEBUG" ] || [ $tmp == "INFO" ] || [ $tmp == "WARN" ] || [ $tmp == "ERROR" ];then
+          LOG_LEVEL=$tmp
+      else
+        echo "unknown log level [" $tmp "], so use default"
+      fi
     fi
 
     cd "${BUILD_PATH}"
@@ -153,6 +161,10 @@ function generate_config() {
         xsed "s%{monitor_port}%$(($MONITOR_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
         xsed "s%{pprof_port}%$(($PPROF_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
         xsed "s%{trusted_port}%$(($TRUSTED_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
+
+        for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+            xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
+        done
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
@@ -182,10 +194,6 @@ function generate_config() {
                 xsed "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml
             fi
 
-            for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
-                xsed "s%{org${k}_port}%$(($P2P_PORT_PREFIX+$k))%g" node$i/chainconfig/bc$j.yml
-            done
-
             c=0
             for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
             do
@@ -194,6 +202,10 @@ function generate_config() {
 
                 peerId=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/node/consensus1/consensus1.nodeid`
                 xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
+
+                if  [ $j -eq 1 ]; then
+                    xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainmaker.yml
+                fi
 
                 for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
                     mkdir -p $BUILD_CONFIG_PATH/node$k/certs/ca/$file

@@ -1,6 +1,7 @@
 package xvm
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sync"
@@ -104,6 +105,41 @@ func (c *ContextService) GetObject(ctxId int64, in []*serialize.EasyCodecItem) (
 	valueItem.Value = value
 	items = append(items, &valueItem)
 	return items, nil
+}
+func (c *ContextService) EmitEvent(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
+	context, ok := c.Context(ctxId)
+	if !ok {
+		return nil, fmt.Errorf("emit event encounter bad ctx id:%d", ctxId)
+	}
+	topic, ok := serialize.GetValueFromItems(in, "topic", serialize.EasyKeyType_USER)
+	if err := protocol.CheckTopicStr(topic.(string)); err != nil {
+		return nil, err
+	}
+	var eventData []string
+	for i := 1; i < len(in); i++ {
+		data := in[i].Value.(string)
+		eventData = append(eventData, data)
+		c.logger.Debugf("method EmitEvent eventData :%v", data)
+	}
+	if err := protocol.CheckEventData(eventData); err != nil {
+		return nil, err
+	}
+	contractEvent := &commonPb.ContractEvent{
+		ContractName:    context.ContractId.ContractName,
+		ContractVersion: context.ContractId.ContractVersion,
+		Topic:           topic.(string),
+		TxId:            context.TxSimContext.GetTx().Header.TxId,
+		EventData:       eventData,
+	}
+	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
+	count := utils.GetSqlStatementCount(ddl)
+	if count != 1 {
+		return nil, fmt.Errorf("contract event parameter error,exist sql injection")
+	}
+	context.ContractEvent = append(context.ContractEvent, contractEvent)
+	items := make([]*serialize.EasyCodecItem, 0)
+	return items, nil
+
 }
 
 // DeleteObject implements Syscall interface

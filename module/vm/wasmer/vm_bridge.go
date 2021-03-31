@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -36,6 +37,7 @@ import (
 // extern int fdRead(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdClose(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdSeek(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
+// extern int emitEvent(void *context, int ctxPtr, int topicPtr, int topicLen, int dataPtr ,int dataLen);
 // extern void procExit(void *contextfd,int exitCode);
 import "C"
 
@@ -119,6 +121,8 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContract()
 	case protocol.ContractMethodCallContractLen:
 		return s.CallContractLen()
+	case protocol.ContractMethodEmitEvent:
+		return s.EmitEvent()
 	default:
 		log.Errorf("method is %s not match.", method)
 	}
@@ -178,6 +182,40 @@ func (s *sdkRequestCtx) PutState() int32 {
 	if err != nil {
 		return s.recordMsg("method PutState put fail. " + err.Error())
 	}
+	return protocol.ContractSdkSignalResultSuccess
+}
+
+// EmitEvent emit event to chain
+func (s *sdkRequestCtx) EmitEvent() int32 {
+	req := serialize.EasyUnmarshal(s.RequestBody)
+	topic, _ := serialize.GetValueFromItems(req, "topic", serialize.EasyKeyType_USER)
+	if err := protocol.CheckTopicStr(topic.(string)); err != nil {
+		return s.recordMsg("method EmitEvent check topic  fail. " + err.Error())
+
+	}
+	var eventData []string
+	for i := 1; i < len(req); i++ {
+		data := req[i].Value.(string)
+		eventData = append(eventData, data)
+		s.Sc.Log.Debugf("method EmitEvent eventData :%v", data)
+	}
+	if err := protocol.CheckEventData(eventData); err != nil {
+		return s.recordMsg("method EmitEvent check event data fail. " + err.Error())
+	}
+	contractEvent := &commonPb.ContractEvent{
+		ContractName:    s.Sc.ContractId.ContractName,
+		ContractVersion: s.Sc.ContractId.ContractVersion,
+		Topic:           topic.(string),
+		TxId:            s.Sc.TxSimContext.GetTx().Header.TxId,
+		EventData:       eventData,
+	}
+	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
+	count := utils.GetSqlStatementCount(ddl)
+	if count != 1 {
+		s.recordMsg("contract event parameter error,exist sql injection")
+	}
+	s.Sc.ContractEvent = append(s.Sc.ContractEvent, contractEvent)
+
 	return protocol.ContractSdkSignalResultSuccess
 }
 

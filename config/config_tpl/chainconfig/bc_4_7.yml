@@ -33,26 +33,26 @@ consensus:
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   nodes:
     - org_id: "{org1_id}"
-      address:
-        - "/ip4/127.0.0.1/tcp/{org1_port}/p2p/{org1_peerid}"
+      node_id:
+        - "{org1_peerid}"
     - org_id: "{org2_id}"
-      address:
-        - "/ip4/127.0.0.1/tcp/{org2_port}/p2p/{org2_peerid}"
+      node_id:
+        - "{org2_peerid}"
     - org_id: "{org3_id}"
-      address:
-        - "/ip4/127.0.0.1/tcp/{org3_port}/p2p/{org3_peerid}"
+      node_id:
+        - "{org3_peerid}"
     - org_id: "{org4_id}"
-      address:
-        - "/ip4/127.0.0.1/tcp/{org4_port}/p2p/{org4_peerid}"
+      node_id:
+        - "{org4_peerid}"
 #    - org_id: "{org5_id}"
-#      address:
-#        - "/ip4/127.0.0.1/tcp/{org5_port}/p2p/{org5_peerid}"
+#      node_id:
+#        - "{org5_peerid}"
 #    - org_id: "{org6_id}"
-#      address:
-#        - "/ip4/127.0.0.1/tcp/{org6_port}/p2p/{org6_peerid}"
+#      node_id:
+#        - "{org6_peerid}"
 #    - org_id: "{org7_id}"
-#      address:
-#        - "/ip4/127.0.0.1/tcp/{org7_port}/p2p/{org7_peerid}"
+#      node_id:
+#        - "{org7_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -76,7 +76,7 @@ trust_roots:
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
-  - resource_name: NODE_ADDR_UPDATE
+  - resource_name: NODE_ID_UPDATE
     policy:
       rule: SELF # 规则（ANY，MAJORITY...，全部大写，自动转大写）
       org_list: # 组织名称（组织名称，区分大小写）

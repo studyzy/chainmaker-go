@@ -24,17 +24,15 @@ import (
 )
 
 const (
-	chainId     = "test"
-	org1Id      = "wx-org1"
-	org2Id      = "wx-org2"
-	org3Id      = "wx-org3"
-	org4Id      = "wx-org4"
-	org1Address = "/ip4/192.168.2.2/tcp/6666/p2p/QmQZn3pZCcuEf34FSvucqkvVJEvfzpNjQTk17HS6CYMR35"
-	org2Address = "/ip4/192.168.2.3/tcp/6666/p2p/QmeRZz3AjhzydkzpiuuSAtmqt8mU8XcRH2hynQN4tLgYg6"
-	org3Address = "/ip4/192.168.2.4/tcp/6666/p2p/QmTSMcqwp4X6oPP5WrNpsMpotQMSGcxVshkGLJUhCrqGbu"
-	org4Address = "/ip4/192.168.2.5/tcp/6666/p2p/QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27"
-	org1NetId   = "QmQZn3pZCcuEf34FSvucqkvVJEvfzpNjQTk17HS6CYMR35"
-	org2NetId   = "QmeRZz3AjhzydkzpiuuSAtmqt8mU8XcRH2hynQN4tLgYg6"
+	chainId    = "test"
+	org1Id     = "wx-org1"
+	org2Id     = "wx-org2"
+	org3Id     = "wx-org3"
+	org4Id     = "wx-org4"
+	org1NodeId = "QmQZn3pZCcuEf34FSvucqkvVJEvfzpNjQTk17HS6CYMR35"
+	org2NodeId = "QmeRZz3AjhzydkzpiuuSAtmqt8mU8XcRH2hynQN4tLgYg6"
+	org3NodeId = "QmTSMcqwp4X6oPP5WrNpsMpotQMSGcxVshkGLJUhCrqGbu"
+	org4NodeId = "QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27"
 )
 
 var cmLogger *logger.CMLogger
@@ -56,61 +54,61 @@ func TestGetValidatorListFromConfig(t *testing.T) {
 		wantErr        bool
 	}{
 		{
-			"one org with one address",
+			"one org with one node id",
 			args{
 				chainConfig: &configpb.ChainConfig{
 					Consensus: &configpb.ConsensusConfig{
 						Nodes: []*configpb.OrgConfig{
 							{
-								OrgId:   org1Id,
-								Address: []string{org1Address},
+								OrgId:  org1Id,
+								NodeId: []string{org1NodeId},
 							},
 						},
 					},
 				},
 			},
-			[]string{org1NetId},
+			[]string{org1NodeId},
 			false,
 		},
 		{
-			"two org, each with one address",
+			"two org, each with one node id",
 			args{
 				chainConfig: &configpb.ChainConfig{
 					Consensus: &configpb.ConsensusConfig{
 						Nodes: []*configpb.OrgConfig{
 							{
-								OrgId:   org1Id,
-								Address: []string{org1Address},
+								OrgId:  org1Id,
+								NodeId: []string{org1NodeId},
 							},
 							{
-								OrgId:   org2Id,
-								Address: []string{org2Address},
+								OrgId:  org2Id,
+								NodeId: []string{org2NodeId},
 							},
 						},
 					},
 				},
 			},
-			[]string{org1NetId, org2NetId},
+			[]string{org1NodeId, org2NodeId},
 			false,
 		},
 		{
-			"two org, each with two addresses",
+			"two org, each with two node ids",
 			args{
 				chainConfig: &configpb.ChainConfig{
 					Consensus: &configpb.ConsensusConfig{
 						Nodes: []*configpb.OrgConfig{
 							{
 								OrgId: org1Id,
-								Address: []string{
-									org1Address,
-									org3Address,
+								NodeId: []string{
+									org1NodeId,
+									org3NodeId,
 								},
 							},
 							{
 								OrgId: org2Id,
-								Address: []string{
-									org2Address,
-									org4Address,
+								NodeId: []string{
+									org2NodeId,
+									org4NodeId,
 								},
 							},
 						},
@@ -118,9 +116,9 @@ func TestGetValidatorListFromConfig(t *testing.T) {
 				},
 			},
 			[]string{
-				org1NetId,
+				org1NodeId,
 				"QmTSMcqwp4X6oPP5WrNpsMpotQMSGcxVshkGLJUhCrqGbu",
-				org2NetId,
+				org2NodeId,
 				"QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",
 			},
 			false,
@@ -150,8 +148,8 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 			Type: consensuspb.ConsensusType_TBFT,
 			Nodes: []*configpb.OrgConfig{
 				{
-					OrgId:   org1Id,
-					Address: []string{org1Address},
+					OrgId:  org1Id,
+					NodeId: []string{org1NodeId},
 				},
 			},
 		},
@@ -176,7 +174,7 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
 	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
-	vote := NewVote(tbftpb.VoteType_VotePrecommit, org1NetId, blockHeight, 0, blockHash[:])
+	vote := NewVote(tbftpb.VoteType_VotePrecommit, org1NodeId, blockHeight, 0, blockHash[:])
 	added, err := voteSet.AddVote(vote)
 	require.Nil(t, err)
 	require.True(t, added)
@@ -201,8 +199,8 @@ func TestVerifyBlockSignaturesOneNodeFail(t *testing.T) {
 			Type: consensuspb.ConsensusType_TBFT,
 			Nodes: []*configpb.OrgConfig{
 				{
-					OrgId:   org1Id,
-					Address: []string{org1Address},
+					OrgId:  org1Id,
+					NodeId: []string{org1NodeId},
 				},
 			},
 		},
@@ -250,20 +248,20 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 			Type: consensuspb.ConsensusType_TBFT,
 			Nodes: []*configpb.OrgConfig{
 				{
-					OrgId:   org1Id,
-					Address: []string{org1Address},
+					OrgId:  org1Id,
+					NodeId: []string{org1NodeId},
 				},
 				{
-					OrgId:   org2Id,
-					Address: []string{org2Address},
+					OrgId:  org2Id,
+					NodeId: []string{org2NodeId},
 				},
 				{
-					OrgId:   org3Id,
-					Address: []string{org3Address},
+					OrgId:  org3Id,
+					NodeId: []string{org3NodeId},
 				},
 				{
-					OrgId:   org4Id,
-					Address: []string{org4Address},
+					OrgId:  org4Id,
+					NodeId: []string{org4NodeId},
 				},
 			},
 		},
@@ -290,8 +288,8 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
 
 	nodes := []string{
-		org1NetId,
-		org2NetId,
+		org1NodeId,
+		org2NodeId,
 		"QmTSMcqwp4X6oPP5WrNpsMpotQMSGcxVshkGLJUhCrqGbu",
 		"QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",
 	}
@@ -319,20 +317,20 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 			Type: consensuspb.ConsensusType_TBFT,
 			Nodes: []*configpb.OrgConfig{
 				{
-					OrgId:   org1Id,
-					Address: []string{org1Address},
+					OrgId:  org1Id,
+					NodeId: []string{org1NodeId},
 				},
 				{
-					OrgId:   org2Id,
-					Address: []string{org2Address},
+					OrgId:  org2Id,
+					NodeId: []string{org2NodeId},
 				},
 				{
-					OrgId:   org3Id,
-					Address: []string{org3Address},
+					OrgId:  org3Id,
+					NodeId: []string{org3NodeId},
 				},
 				{
-					OrgId:   org4Id,
-					Address: []string{org4Address},
+					OrgId:  org4Id,
+					NodeId: []string{org4NodeId},
 				},
 			},
 		},
@@ -359,7 +357,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
 
 	nodes := []string{
-		org1NetId,
+		org1NodeId,
 		// org2Id,
 		// "QmTSMcqwp4X6oPP5WrNpsMpotQMSGcxVshkGLJUhCrqGbu",
 		// "QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",

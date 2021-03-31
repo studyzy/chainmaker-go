@@ -23,36 +23,36 @@ func CreateInstance(contextId int64, code exec.Code, method string, contractId *
 	execCtx.SetUserData(contextIDKey, contextId)
 	instance := &wxvmInstance{
 		method:  method,
-		execCtx: execCtx,
+		ExecCtx: execCtx,
 	}
 	return instance, nil
 }
 
 type wxvmInstance struct {
 	method  string
-	execCtx exec.Context
+	ExecCtx exec.Context
 }
 
 func (x *wxvmInstance) Exec() error {
-	mem := x.execCtx.Memory()
+	mem := x.ExecCtx.Memory()
 	if mem == nil {
 		return errors.New("bad contract, no memory")
 	}
 
 	function := "_" + x.method
-	_, err := x.execCtx.Exec(function, []int64{})
+	_, err := x.ExecCtx.Exec(function, []int64{})
 	return err
 }
 
 func (x *wxvmInstance) ResourceUsed() Limits {
 	limits := Limits{
-		Cpu: x.execCtx.GasUsed(),
+		Cpu: x.ExecCtx.GasUsed(),
 	}
 	return limits
 }
 
 func (x *wxvmInstance) Release() {
-	x.execCtx.Release()
+	x.ExecCtx.Release()
 }
 
 func (x *wxvmInstance) Abort(msg string) {

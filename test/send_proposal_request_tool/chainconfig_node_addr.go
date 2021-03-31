@@ -86,7 +86,7 @@ func nodeAddrAdd() error {
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   orgId,
+		Key:   "org_id",
 		Value: nodeAddrOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
@@ -95,7 +95,7 @@ func nodeAddrAdd() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ADDR_ADD.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ID_ADD.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func nodeAddrUpdate() error {
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   orgId,
+		Key:   "org_id",
 		Value: nodeAddrOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
@@ -134,7 +134,7 @@ func nodeAddrUpdate() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ADDR_UPDATE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ID_UPDATE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func nodeAddrDelete() error {
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   orgId,
+		Key:   "org_id",
 		Value: nodeAddrOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
@@ -169,7 +169,7 @@ func nodeAddrDelete() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ADDR_DELETE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ID_DELETE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
