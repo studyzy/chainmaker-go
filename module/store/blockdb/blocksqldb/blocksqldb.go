@@ -90,8 +90,10 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 		}
 		txInfos = append(txInfos, txinfo)
 	}
-	tx := b.db.BeginDbTransaction(blockHashStr)
-
+	tx, err := b.db.BeginDbTransaction(blockHashStr)
+	if err != nil {
+		return err
+	}
 	for _, txInfo := range txInfos {
 		//res := b.db.Clauses(clause.OnConflict{DoNothing: true}).Create(txInfo)
 		_, err := tx.Save(txInfo)

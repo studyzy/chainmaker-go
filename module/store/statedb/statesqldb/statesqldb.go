@@ -63,7 +63,10 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
 	blockHash := block.GetBlockHashStr()
-	tx := s.db.BeginDbTransaction(blockHash)
+	tx, err := s.db.BeginDbTransaction(blockHash)
+	if err != nil {
+		return err
+	}
 	currentDb := ""
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
@@ -80,7 +83,7 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 			}
 		}
 	}
-	err := s.db.CommitDbTransaction(blockHash)
+	err = s.db.CommitDbTransaction(blockHash)
 	if err != nil {
 		s.Logger.Error(err.Error())
 		return err
@@ -141,4 +144,30 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 // Close is used to close database, there is no need for gorm to close db
 func (s *StateSqlDB) Close() {
 	s.db.Close()
+}
+func (s *StateSqlDB) ExecSql(sql string, values ...interface{}) (int64, error) {
+	return s.db.ExecSql(sql, values...)
+}
+func (s *StateSqlDB) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+	return s.db.QuerySql(sql, values...)
+}
+func (s *StateSqlDB) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+	return s.db.QueryTableSql(sql, values...)
+
+}
+func (s *StateSqlDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	return s.db.BeginDbTransaction(txName)
+
+}
+func (s *StateSqlDB) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	return s.db.GetDbTransaction(txName)
+
+}
+func (s *StateSqlDB) CommitDbTransaction(txName string) error {
+	return s.db.CommitDbTransaction(txName)
+
+}
+func (s *StateSqlDB) RollbackDbTransaction(txName string) error {
+	return s.db.RollbackDbTransaction(txName)
+
 }

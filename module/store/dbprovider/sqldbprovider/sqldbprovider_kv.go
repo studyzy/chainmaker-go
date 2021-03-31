@@ -86,7 +86,10 @@ func deleteInTx(tx protocol.SqlDBTransaction, key []byte) error {
 // WriteBatch writes a batch in an atomic operation
 func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 	txName := fmt.Sprintf("%d", time.Now().UnixNano())
-	tx := p.BeginDbTransaction(txName)
+	tx, err := p.BeginDbTransaction(txName)
+	if err != nil {
+		return err
+	}
 	for k, v := range batch.KVs() {
 		key := []byte(k)
 		if v == nil {

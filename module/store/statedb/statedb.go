@@ -29,4 +29,16 @@ type StateDB interface {
 
 	// Close is used to close database
 	Close()
+	//不在事务中，直接查询状态数据库，返回一行结果
+	QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error)
+	//不在事务中，直接查询状态数据库，返回多行结果
+	QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error)
+	//启用一个事务
+	BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error)
+	//根据事务名，获得一个已经启用的事务
+	GetDbTransaction(txName string) (protocol.SqlDBTransaction, error)
+	//提交一个事务
+	CommitDbTransaction(txName string) error
+	//回滚一个事务
+	RollbackDbTransaction(txName string) error
 }

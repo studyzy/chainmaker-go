@@ -82,7 +82,7 @@ func TestProvider_DbTransaction(t *testing.T) {
 	p := initProvider()
 	initData(p)
 	txName := "Block1"
-	tx := p.BeginDbTransaction(txName)
+	tx, _ := p.BeginDbTransaction(txName)
 	tx.BeginDbSavePoint("tx0")
 	var count int64
 	var err error

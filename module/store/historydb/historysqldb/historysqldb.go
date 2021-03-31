@@ -59,7 +59,10 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	block := blockInfo.Block
 	txRWSets := blockInfo.TxRWSets
 	blockHashStr := block.GetBlockHashStr()
-	dbtx := h.db.BeginDbTransaction(blockHashStr)
+	dbtx, err := h.db.BeginDbTransaction(blockHashStr)
+	if err != nil {
+		return err
+	}
 	for _, txRWSet := range txRWSets {
 		for _, w := range txRWSet.TxWrites {
 			historyInfo := NewStateHistoryInfo(w.ContractName, txRWSet.TxId, w.Key, block.Header.BlockHeight)

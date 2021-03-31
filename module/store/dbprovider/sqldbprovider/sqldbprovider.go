@@ -259,16 +259,17 @@ func (p *SqlDBHandle) QueryTableSql(sql string, values ...interface{}) (protocol
 	}
 	return NewSqlDBRows(db, rows), nil
 }
-func (p *SqlDBHandle) BeginDbTransaction(txName string) protocol.SqlDBTransaction {
+func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	p.Lock()
 	defer p.Unlock()
-	if tx, has := p.dbTxCache[txName]; has {
-		return tx
+
+	if _, has := p.dbTxCache[txName]; has {
+		return nil, errors.New("transaction already exist, please use GetDbTransaction to get it or commit/rollback it")
 	}
 	tx := p.db.Begin()
 	sqltx := &SqlDBTx{db: tx, dbType: p.dbType}
 	p.dbTxCache[txName] = sqltx
-	return sqltx
+	return sqltx, nil
 }
 func (p *SqlDBHandle) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	p.Lock()

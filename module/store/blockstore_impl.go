@@ -506,3 +506,36 @@ func (bs *BlockStoreImpl) construcBlockNumKey(blockNum uint64) []byte {
 func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
 	return proto.EncodeVarint(blockNum)
 }
+
+//不在事务中，直接查询状态数据库，返回一行结果
+func (bs *BlockStoreImpl) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+	return bs.stateDB.QuerySql(sql, values...)
+}
+
+//不在事务中，直接查询状态数据库，返回多行结果
+func (bs *BlockStoreImpl) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+	return bs.stateDB.QueryTableSql(sql, values...)
+
+}
+
+//启用一个事务
+func (bs *BlockStoreImpl) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	return bs.stateDB.BeginDbTransaction(txName)
+}
+
+//根据事务名，获得一个已经启用的事务
+func (bs *BlockStoreImpl) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	return bs.stateDB.GetDbTransaction(txName)
+
+}
+
+//提交一个事务
+func (bs *BlockStoreImpl) CommitDbTransaction(txName string) error {
+	return bs.stateDB.CommitDbTransaction(txName)
+
+}
+
+//回滚一个事务
+func (bs *BlockStoreImpl) RollbackDbTransaction(txName string) error {
+	return bs.stateDB.RollbackDbTransaction(txName)
+}

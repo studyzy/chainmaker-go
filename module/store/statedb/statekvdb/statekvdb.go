@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/binary"
+	"errors"
 	"fmt"
 )
 
@@ -143,4 +144,33 @@ func (s *StateKvDB) has(key []byte) (bool, error) {
 
 func constructStateKey(contractName string, key []byte) []byte {
 	return append(append([]byte(contractName), contractStoreSeparator), key...)
+}
+
+var ERROR_SQLDB_ONLY = errors.New("leveldb don't support this operation, please change to sql db")
+
+func (s *StateKvDB) ExecSql(sql string, values ...interface{}) (int64, error) {
+	return 0, ERROR_SQLDB_ONLY
+}
+func (s *StateKvDB) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+	return nil, ERROR_SQLDB_ONLY
+}
+func (s *StateKvDB) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+	return nil, ERROR_SQLDB_ONLY
+
+}
+func (s *StateKvDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	return nil, ERROR_SQLDB_ONLY
+
+}
+func (s *StateKvDB) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	return nil, ERROR_SQLDB_ONLY
+
+}
+func (s *StateKvDB) CommitDbTransaction(txName string) error {
+	return ERROR_SQLDB_ONLY
+
+}
+func (s *StateKvDB) RollbackDbTransaction(txName string) error {
+	return ERROR_SQLDB_ONLY
+
 }
