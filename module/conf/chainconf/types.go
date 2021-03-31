@@ -217,10 +217,10 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 		rule := policy.Rule
 		policy.Rule = strings.ToUpper(rule)
 
-		// org root cert update and node addr update must be self rule
-		if resourceName == common.ConfigFunction_NODE_ADDR_UPDATE.String() || resourceName == common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
-			if policy.Rule != string(protocol.RuleSelf) {
-				err := fmt.Errorf("org root cert update and node addr update must be self rule")
+		// self only for NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE
+		if policy.Rule == string(protocol.RuleSelf) {
+			if resourceName != common.ConfigFunction_NODE_ADDR_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+				err := fmt.Errorf("self rule can only be used by NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}
 		}
