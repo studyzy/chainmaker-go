@@ -87,8 +87,7 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 	//有SavePoint，不是空数据库，进行数据恢复
-	_, err := blockDB.GetLastSavepoint()
-	if err == nil {
+	if _, err := blockStore.getLastSavepoint(); err != nil {
 		//check savepoint and recover
 		err = blockStore.recover()
 		if err != nil {
@@ -100,6 +99,7 @@ func NewBlockStoreImpl(chainId string,
 
 // 初始化创世区块到数据库，对应的数据库必须为空数据库，否则报错
 func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	bs.logger.Debug("start initial genesis block to database...")
 	//1.检查创世区块是否有异常
 	if err := checkGenesis(genesisBlock); err != nil {
 		return err

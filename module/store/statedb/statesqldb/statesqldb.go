@@ -41,9 +41,7 @@ func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger proto
 	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
 	return newStateSqlDB(chainId, db, logger)
 }
-func getDbName(chainId string) string {
-	return chainId + "_statedb"
-}
+
 func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*StateSqlDB, error) {
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
@@ -60,7 +58,13 @@ func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	s.initDb(getDbName(genesisBlock.Block.Header.ChainId))
 	return s.CommitBlock(genesisBlock)
 }
+func getDbName(chainId string) string {
+	return chainId + "_statedb"
+}
 func getContractDbName(chainId, contractName string) string {
+	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
+		return getDbName(chainId)
+	}
 	return chainId + "_" + contractName
 }
 

@@ -157,12 +157,12 @@ type LevelDbConfig struct{
 }
 type SqlDbConfig struct {
 	//mysql, sqlite, postgres, sqlserver
-	SqlDbType             string `mapstructure:"sqldb_type"`
+	SqlDbType       string `mapstructure:"sqldb_type"`
 	Dsn             string `mapstructure:"dsn"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
-	SqlLogMode string `mapstructure:"sqllog_mode"`//Silent,Error,Warn,Info
+	SqlLogMode      string `mapstructure:"sqllog_mode"`       //Silent,Error,Warn,Info
 }
 
 type txPoolConfig struct {
