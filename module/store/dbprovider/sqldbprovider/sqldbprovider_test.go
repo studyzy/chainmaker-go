@@ -8,9 +8,12 @@ package sqldbprovider
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+var log = &logger.GoLogger{}
 
 //func TestProvider_GetDB(t *testing.T) {
 //	conf := &localconf.CMConfig{}
@@ -28,7 +31,7 @@ var conf = &localconf.SqlDbConfig{
 
 func TestProvider_ExecSql(t *testing.T) {
 
-	p := NewSqlDBHandle("chain1", conf)
+	p := NewSqlDBHandle("chain1", conf, log)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 
@@ -42,7 +45,7 @@ func TestProvider_ExecSql(t *testing.T) {
 }
 func TestProvider_QuerySql(t *testing.T) {
 
-	p := NewSqlDBHandle("chain1", conf)
+	p := NewSqlDBHandle("chain1", conf, log)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
@@ -55,7 +58,7 @@ func TestProvider_QuerySql(t *testing.T) {
 }
 func TestProvider_QueryTableSql(t *testing.T) {
 
-	p := NewSqlDBHandle("chain1", conf)
+	p := NewSqlDBHandle("chain1", conf, log)
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
@@ -70,7 +73,7 @@ func TestProvider_QueryTableSql(t *testing.T) {
 	}
 }
 func initProvider() *SqlDBHandle {
-	p := NewSqlDBHandle("chain1", conf)
+	p := NewSqlDBHandle("chain1", conf, log)
 	return p
 }
 func initData(p *SqlDBHandle) {

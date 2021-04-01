@@ -236,6 +236,7 @@ func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockKvDB) Close() {
+	b.Logger.Debug("close block kv db")
 	b.DbHandle.Close()
 }
 

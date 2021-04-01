@@ -22,8 +22,6 @@ func NewMemBinlog() *MemBinlog {
 }
 
 func (l *MemBinlog) Close() error {
-	l.mem = make(map[uint64][]byte)
-	l.last = 0
 	return nil
 }
 func (l *MemBinlog) TruncateFront(index uint64) error {

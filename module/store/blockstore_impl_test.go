@@ -562,6 +562,14 @@ func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	assert.Equal(t, true, ok)
 	height, err := impl.getLastSavepoint()
 	assert.Equal(t, uint64(5), height)
+	height, err = impl.blockDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.stateDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.resultDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.historyDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
 }
 
 func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
@@ -627,51 +635,67 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 
 func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	var factory Factory
-	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
+	blog := binlog.NewMemBinlog()
+	ldbConfig := getlvldbConfig()
+	s, err := factory.newStore(chainId, ldbConfig, blog, log)
 	//defer s.Close()
 	assert.Equal(t, nil, err)
 	bs, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
-
-	block8, txRWSets8 := createBlockAndRWSets(chainId, 8, 100)
+	init5Blocks(s)
+	block6, txRWSets6 := createBlockAndRWSets(chainId, 6, 100)
 
 	//1. commit wal
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:    block8,
-		TxRWSets: txRWSets8,
+		Block:    block6,
+		TxRWSets: txRWSets6,
 	}
 	blockWithRWSetBytes, _, err := serialization.SerializeBlock(blockWithRWSet)
 	assert.Equal(t, nil, err)
-	err = bs.writeLog(uint64(block8.Header.BlockHeight), blockWithRWSetBytes)
+	err = bs.writeLog(uint64(block6.Header.BlockHeight), blockWithRWSetBytes)
 	if err != nil {
 		fmt.Errorf("chain[%s] Failed to write wal, block[%d]",
-			block8.Header.ChainId, block8.Header.BlockHeight)
+			block6.Header.ChainId, block6.Header.BlockHeight)
 		t.Error(err)
 	}
-	s.Close()
+	blockDBSavepoint, _ := bs.blockDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), blockDBSavepoint)
 
+	stateDBSavepoint, _ := bs.stateDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), stateDBSavepoint)
+
+	historyDBSavepoint, _ := bs.historyDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), historyDBSavepoint)
+	resultDBSavepoint, _ := bs.resultDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), resultDBSavepoint)
+
+	s.Close()
+	t.Log("start recovery db from bin log")
 	//recovory
-	s, err = factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
+	s, err = factory.newStore(chainId, ldbConfig, blog, log)
 	assert.Equal(t, nil, err)
+	t.Log("db recovered")
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
-	blockDBSavepoint, _ := impl.blockDB.GetLastSavepoint()
-	assert.Equal(t, uint64(block8.Header.BlockHeight), blockDBSavepoint)
+	blockDBSavepoint, _ = impl.blockDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, blockDBSavepoint)
 
-	stateDBSavepoint, _ := impl.stateDB.GetLastSavepoint()
-	assert.Equal(t, uint64(block8.Header.BlockHeight), stateDBSavepoint)
+	stateDBSavepoint, _ = impl.stateDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, stateDBSavepoint)
 
-	historyDBSavepoint, _ := impl.historyDB.GetLastSavepoint()
-	assert.Equal(t, uint64(block8.Header.BlockHeight), historyDBSavepoint)
+	historyDBSavepoint, _ = impl.historyDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, historyDBSavepoint)
+	resultDBSavepoint, _ = impl.resultDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, resultDBSavepoint)
 	s.Close()
 
 	//check recover result
-	s, err = factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
-	blockWithRWSets, err := s.GetBlockWithRWSets(8)
+	s, err = factory.newStore(chainId, ldbConfig, blog, log)
+	blockWithRWSets, err := s.GetBlockWithRWSets(6)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, block8.String(), blockWithRWSets.Block.String())
+	assert.Equal(t, block6.String(), blockWithRWSets.Block.String())
 	for i := 0; i < len(blockWithRWSets.TxRWSets); i++ {
-		assert.Equal(t, txRWSets8[i].String(), blockWithRWSets.TxRWSets[i].String())
+		assert.Equal(t, txRWSets6[i].String(), blockWithRWSets.TxRWSets[i].String())
 	}
 	s.Close()
 }

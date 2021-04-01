@@ -176,7 +176,7 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 	conf := &localconf.SqlDbConfig{}
 	conf.Dsn = ":memory:"
 	conf.SqlDbType = "sqlite"
-	p := sqldbprovider.NewSqlDBHandle("chain1", conf)
+	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
 	return p
 }
 func initStateSqlDB() *StateSqlDB {

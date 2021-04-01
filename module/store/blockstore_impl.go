@@ -20,7 +20,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/utils"
-	"context"
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
@@ -47,6 +46,7 @@ type BlockStoreImpl struct {
 	commonDB         dbprovider.Provider
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
+	storeConfig      *localconf.StorageConfig
 }
 
 // NewBlockStoreImpl constructs new `BlockStoreImpl`
@@ -84,6 +84,7 @@ func NewBlockStoreImpl(chainId string,
 		commonDB:         commonDB,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		logger:           logger,
+		storeConfig:      storeConfig,
 	}
 	//有SavePoint，不是空数据库，进行数据恢复
 	_, err := blockDB.GetLastSavepoint()
@@ -309,27 +310,21 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 		return nil, err
 	}
 	var txRWSets []*commonPb.TxRWSet
-	var batchWG sync.WaitGroup
-	batchWG.Add(len(blockStoreInfo.TxIds))
-	errsChan := make(chan error, len(blockStoreInfo.TxIds))
+	//var batchWG sync.WaitGroup
+	//batchWG.Add(len(blockStoreInfo.TxIds))
+	//errsChan := make(chan error, len(blockStoreInfo.TxIds))
 	txRWSets = make([]*commonPb.TxRWSet, len(blockStoreInfo.TxIds))
-	for index, txId := range blockStoreInfo.TxIds {
-		bs.workersSemaphore.Acquire(context.Background(), 1)
-		go func(i int, txId string) {
-			defer bs.workersSemaphore.Release(1)
-			defer batchWG.Done()
-			txRWSet, err := bs.GetTxRWSet(txId)
-			if err != nil {
-				errsChan <- err
-			}
-			txRWSets[i] = txRWSet
-			bs.logger.Debugf("getTxRWSetsByHeight, txid:%s", txId)
-		}(index, txId)
+	for i, txId := range blockStoreInfo.TxIds {
+
+		txRWSet, err := bs.GetTxRWSet(txId)
+		if err != nil {
+			return nil, err
+		}
+		txRWSets[i] = txRWSet
+		bs.logger.Debugf("getTxRWSetsByHeight, txid:%s", txId)
+
 	}
-	batchWG.Wait()
-	if len(errsChan) > 0 {
-		return nil, <-errsChan
-	}
+
 	return txRWSets, nil
 }
 
@@ -345,27 +340,27 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 	var blockWithRWSets storePb.BlockWithRWSet
 	blockWithRWSets.Block = block
 
-	var batchWG sync.WaitGroup
-	batchWG.Add(len(block.Txs))
-	errsChan := make(chan error, len(block.Txs))
+	//var batchWG sync.WaitGroup
+	//batchWG.Add(len(block.Txs))
+	//errsChan := make(chan error, len(block.Txs))
 	blockWithRWSets.TxRWSets = make([]*commonPb.TxRWSet, len(block.Txs))
-	for index, tx := range block.Txs {
+	for i, tx := range block.Txs {
 		//used to limit the num of concurrency goroutine
-		bs.workersSemaphore.Acquire(context.Background(), 1)
-		go func(i int, tx *commonPb.Transaction) {
-			defer bs.workersSemaphore.Release(1)
-			defer batchWG.Done()
-			txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
-			if err != nil {
-				errsChan <- err
-			}
-			blockWithRWSets.TxRWSets[i] = txRWSet
-		}(index, tx)
+		//bs.workersSemaphore.Acquire(context.Background(), 1)
+		//go func(i int, tx *commonPb.Transaction) {
+		//	defer bs.workersSemaphore.Release(1)
+		//	defer batchWG.Done()
+		txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
+		if err != nil {
+			return nil, err
+		}
+		blockWithRWSets.TxRWSets[i] = txRWSet
+		//}
 	}
-	batchWG.Wait()
-	if len(errsChan) > 0 {
-		return nil, <-errsChan
-	}
+	//batchWG.Wait()
+	//if len(errsChan) > 0 {
+	//	return nil, <-errsChan
+	//}
 	return &blockWithRWSets, nil
 }
 
@@ -382,12 +377,13 @@ func (bs *BlockStoreImpl) Close() error {
 	bs.resultDB.Close()
 	bs.wal.Close()
 	bs.commonDB.Close()
+	bs.logger.Debug("close all database and bin log")
 	return nil
 }
 
 // recover checks savepoint and recommit lost block
 func (bs *BlockStoreImpl) recover() error {
-	var logSavepoint, blockSavepoint, stateSavepoint, historySavepoint uint64
+	var logSavepoint, blockSavepoint, stateSavepoint, historySavepoint, resultSavepoint uint64
 	var err error
 	if logSavepoint, err = bs.getLastSavepoint(); err != nil {
 		return err
@@ -401,7 +397,9 @@ func (bs *BlockStoreImpl) recover() error {
 	if historySavepoint, err = bs.historyDB.GetLastSavepoint(); err != nil {
 		return err
 	}
-
+	if resultSavepoint, err = bs.resultDB.GetLastSavepoint(); err != nil {
+		return err
+	}
 	bs.logger.Debugf("recover checking, savepoint: wal[%d] blockDB[%d] stateDB[%d] historyDB[%d]",
 		logSavepoint, blockSavepoint, stateSavepoint, historySavepoint)
 	//recommit blockdb
@@ -414,9 +412,15 @@ func (bs *BlockStoreImpl) recover() error {
 		return nil
 	}
 
-	if !localconf.ChainMakerConfig.StorageConfig.DisableHistoryDB {
+	if !bs.storeConfig.DisableHistoryDB {
 		//recommit historydb
 		if err := bs.recoverHistoryDB(stateSavepoint, logSavepoint); err != nil {
+			return nil
+		}
+	}
+	if !bs.storeConfig.DisableResultDB {
+		//recommit resultdb
+		if err := bs.recoverResultDB(resultSavepoint, logSavepoint); err != nil {
 			return nil
 		}
 	}
@@ -473,10 +477,34 @@ func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint6
 			return err
 		}
 		// delete block from wal after recover
-		err = bs.deleteBlockFromLog(height)
+		//err = bs.deleteBlockFromLog(height)
+		//if err != nil {
+		//	bs.logger.Warnf("recover, failed to clean wal, block[%d]", height)
+		//}
+	}
+	return nil
+}
+
+func (bs *BlockStoreImpl) recoverResultDB(currentHeight uint64, savePoint uint64) error {
+	for height := currentHeight + 1; height <= savePoint; height++ {
+		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
+		blockWithRWSet, err := bs.getBlockFromLog(height)
 		if err != nil {
-			bs.logger.Warnf("recover, failed to clean wal, block[%d]", height)
+			return err
 		}
+		_, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
+		if err != nil {
+			return err
+		}
+		err = bs.resultDB.CommitBlock(blockWithSerializedInfo)
+		if err != nil {
+			return err
+		}
+		// delete block from wal after recover
+		//err = bs.deleteBlockFromLog(height)
+		//if err != nil {
+		//	bs.logger.Warnf("recover, failed to clean wal, block[%d]", height)
+		//}
 	}
 	return nil
 }
