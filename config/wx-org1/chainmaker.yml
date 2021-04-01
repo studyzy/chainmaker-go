@@ -69,9 +69,10 @@ storage:
     leveldb_config:
       store_path: ../data/blocks
   statedb_config:
-    db_type: leveldb
-    leveldb_config:
-      store_path: ../data/states
+    db_type: sql
+    sqldb_config:
+      sqldb_type: sqlite
+      dsn: ../data/state.db
   historydb_config:
     db_type: leveldb
     leveldb_config:

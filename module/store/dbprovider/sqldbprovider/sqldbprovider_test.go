@@ -26,8 +26,9 @@ var log = &logger.GoLogger{}
 //	db.GetDB("test_chain_1", conf)
 //}
 var conf = &localconf.SqlDbConfig{
-	Dsn:       "file::memory:?cache=shared",
-	SqlDbType: "sqlite",
+	Dsn:        "file::memory:?cache=shared",
+	SqlDbType:  "sqlite",
+	SqlLogMode: "info",
 }
 
 func TestProvider_ExecSql(t *testing.T) {

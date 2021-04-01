@@ -162,6 +162,7 @@ type SqlDbConfig struct {
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
+	SqlLogMode string `mapstructure:"sqllog_mode"`//Silent,Error,Warn,Info
 }
 
 type txPoolConfig struct {

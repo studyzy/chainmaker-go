@@ -17,6 +17,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
@@ -147,7 +148,7 @@ func (bc *Blockchain) initNetService() (err error) {
 
 func (bc *Blockchain) initStore() (err error) {
 	var storeFactory store.Factory
-	if bc.store, err = storeFactory.NewStore( bc.chainId,&localconf.ChainMakerConfig.StorageConfig, nil); err != nil {
+	if bc.store, err = storeFactory.NewStore(bc.chainId, &localconf.ChainMakerConfig.StorageConfig, nil); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -199,7 +200,7 @@ func (bc *Blockchain) initCache() (err error) {
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
 		}
-		if err = bc.store.PutBlock(genesisBlock, rwSetList); err != nil {
+		if err = bc.store.InitGenesis(&storePb.BlockWithRWSet{genesisBlock, rwSetList}); err != nil {
 			return fmt.Errorf("put chain[%s] genesis block failed, %s", bc.chainId, err.Error())
 		}
 

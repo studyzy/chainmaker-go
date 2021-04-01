@@ -13,6 +13,7 @@ import (
 	"errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/logger"
+	"strings"
 
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -88,9 +89,9 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	}
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
-		dsn := conf.Dsn + "mysql?charset=utf8mb4&parseTime=True&loc=Local"
+		dsn := conf.Dsn
 		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Warn),
+			Logger: logger.Default.LogMode(logger.Error),
 		})
 		if err != nil {
 			panic(fmt.Sprintf("failed to open mysql:%s", err))
@@ -108,7 +109,35 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	} else {
 		panic(fmt.Sprintf("unsupport db:%v", sqlType))
 	}
+	logLevel := logger.Error
+	if conf.SqlLogMode != "" {
+		switch strings.ToLower(conf.SqlLogMode) {
+		case "error":
+			logLevel = logger.Error
+		case "info":
+			logLevel = logger.Info
+		case "warn":
+			logLevel = logger.Warn
+		default:
+			logLevel = logger.Silent
+		}
+	}
+	provider.db.Logger = logger.New(&sqlLogger{log}, logger.Config{
+		LogLevel: logLevel,
+	})
 	return provider
+}
+
+type sqlLogger struct {
+	log protocol.Logger
+}
+
+func newSqlLogger(log protocol.Logger) *sqlLogger {
+	return &sqlLogger{log: log}
+}
+
+func (l *sqlLogger) Printf(f string, args ...interface{}) {
+	l.log.Debugf(f, args...)
 }
 
 // GetDB returns a new gorm.DB for given chainid and conf.
