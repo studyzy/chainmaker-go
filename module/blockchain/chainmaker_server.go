@@ -198,7 +198,7 @@ func (server *ChainMakerServer) Start() error {
 	server.blockchains.Range(func(_, value interface{}) bool {
 		chain := value.(*Blockchain)
 		go startBlockchain(chain)
-		return false
+		return true
 	})
 
 	return nil

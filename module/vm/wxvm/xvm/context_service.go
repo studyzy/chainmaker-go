@@ -179,24 +179,30 @@ func (c *ContextService) GetCallArgs(ctxId int64, in []*serialize.EasyCodecItem)
 func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
 	if !ok {
-		return nil, fmt.Errorf("set output  bad ctx id:%d", ctxId)
+		return nil, fmt.Errorf("set out put  bad ctx id:%d", ctxId)
 	}
 	code, ok := serialize.GetValueFromItems(in, "code", serialize.EasyKeyType_USER)
 	if !ok {
 		return nil, fmt.Errorf("set out put respsonse have no code:%d", ctxId)
 	}
-	msg, _ := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
-
-	result, _ := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_USER)
-
+	msg, ok := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
+	if ok {
+		context.ContractResult.Message += msg.(string)
+	}
+	result, ok := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_USER)
+	if ok {
+		context.ContractResult.Result = []byte(result.(string))
+	}
+	if context.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+		items := make([]*serialize.EasyCodecItem, 0)
+		return items, nil
+	}
 	switch code.(int32) {
 	case 0:
 		context.ContractResult.Code = commonPb.ContractResultCode_OK
 	default:
 		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	}
-	context.ContractResult.Message = msg.(string)
-	context.ContractResult.Result = []byte(result.(string))
 	items := make([]*serialize.EasyCodecItem, 0)
 	return items, nil
 }
@@ -223,27 +229,28 @@ func (c *ContextService) ContractCall(ctxId int64, in []*serialize.EasyCodecItem
 	paramMap := serialize.EasyCodecItemToParamsMap(argsItems)
 	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contract.(string)}, method.(string), nil, paramMap, gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
 	respItems := make([]*serialize.EasyCodecItem, 0)
+	var codeItem serialize.EasyCodecItem
+	codeItem.KeyType = serialize.EasyKeyType_USER
+	codeItem.Key = "code"
+	codeItem.ValueType = serialize.EasyValueType_INT32
+	codeItem.Value = int32(contractResult.Code)
+	respItems = append(respItems, &codeItem)
+	var msgItem serialize.EasyCodecItem
+	msgItem.KeyType = serialize.EasyKeyType_USER
+	msgItem.Key = "msg"
+	msgItem.ValueType = serialize.EasyValueType_STRING
+	msgItem.Value = contractResult.Message
+	respItems = append(respItems, &msgItem)
+	var resultItem serialize.EasyCodecItem
+	resultItem.KeyType = serialize.EasyKeyType_USER
+	resultItem.Key = "result"
+	resultItem.ValueType = serialize.EasyValueType_BYTES
+	resultItem.Value = contractResult.Result
+	respItems = append(respItems, &resultItem)
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
-		var codeItem serialize.EasyCodecItem
-		codeItem.KeyType = serialize.EasyKeyType_USER
-		codeItem.Key = "code"
-		codeItem.ValueType = serialize.EasyValueType_INT32
-		codeItem.Value = contractResult.Code
-		respItems = append(respItems, &codeItem)
-		var msgItem serialize.EasyCodecItem
-		msgItem.KeyType = serialize.EasyKeyType_USER
-		msgItem.Key = "msg"
-		msgItem.ValueType = serialize.EasyValueType_STRING
-		msgItem.Value = contractResult.Message
-		respItems = append(respItems, &msgItem)
-		var resultItem serialize.EasyCodecItem
-		resultItem.KeyType = serialize.EasyKeyType_USER
-		resultItem.Key = "result"
-		resultItem.ValueType = serialize.EasyValueType_BYTES
-		resultItem.Value = contractResult.Result
-		respItems = append(respItems, &resultItem)
 		return respItems, fmt.Errorf(contractResult.Message)
 	}
+
 	return respItems, nil
 }
 
@@ -253,7 +260,10 @@ func (c *ContextService) LogMsg(ctxId int64, in []*serialize.EasyCodecItem) ([]*
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", ctxId)
 	}
-	msg, _ := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
+	msg, ok := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
+	if !ok {
+		return nil, fmt.Errorf("log msg request  have no msg:%d", ctxId)
+	}
 	c.logger.Debugf("wxvm log >>[%s] [%d] %s", context.TxSimContext.GetTx().Header.TxId, ctxId, msg.(string))
 	msgItems := make([]*serialize.EasyCodecItem, 0)
 	return msgItems, nil

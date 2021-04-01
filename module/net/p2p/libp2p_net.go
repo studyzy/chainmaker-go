@@ -668,7 +668,10 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnAddC() {
 					logger.Errorf("[Net] peer decode failed, %s", err.Error())
 				}
 				logger.Debugf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
-				pubsub.pubsub.AddWhitelistPeer(pid)
+				err = pubsub.AddWhitelistPeer(pid)
+				if err != nil {
+					logger.Errorf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
+				}
 			}
 		}
 	}()
@@ -695,7 +698,10 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnRemoveC() {
 					continue
 				}
 				logger.Debugf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
-				pubsub.pubsub.RemoveWhitelistPeer(pid)
+				err = pubsub.RemoveWhitelistPeer(pid)
+				if err != nil {
+					logger.Errorf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
+				}
 			}
 		}
 	}()

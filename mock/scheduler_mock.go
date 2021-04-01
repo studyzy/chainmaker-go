@@ -313,21 +313,6 @@ func (mr *MockTxSimContextMockRecorder) GetAccessControl() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessControl", reflect.TypeOf((*MockTxSimContext)(nil).GetAccessControl))
 }
 
-// GetContractTxIds mocks base method
-func (m *MockTxSimContext) GetContractTxIds() ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContractTxIds")
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetContractTxIds indicates an expected call of GetContractTxIds
-func (mr *MockTxSimContextMockRecorder) GetContractTxIds() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractTxIds", reflect.TypeOf((*MockTxSimContext)(nil).GetContractTxIds))
-}
-
 // GetChainNodesInfoProvider mocks base method
 func (m *MockTxSimContext) GetChainNodesInfoProvider() (protocol.ChainNodesInfoProvider, error) {
 	m.ctrl.T.Helper()

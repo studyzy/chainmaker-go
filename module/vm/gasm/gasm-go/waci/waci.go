@@ -178,6 +178,9 @@ func (w *WaciInstance) DeleteState() int32 {
 
 // SuccessResult record the results of contract execution success
 func (w *WaciInstance) SuccessResult() int32 {
+	if w.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+		return protocol.ContractSdkSignalResultFail
+	}
 	w.ContractResult.Code = commonPb.ContractResultCode_OK
 	w.ContractResult.Result = w.RequestBody
 	return protocol.ContractSdkSignalResultSuccess
@@ -186,7 +189,7 @@ func (w *WaciInstance) SuccessResult() int32 {
 // ErrorResult record the results of contract execution error
 func (w *WaciInstance) ErrorResult() int32 {
 	w.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	w.ContractResult.Message = string(w.RequestBody)
+	w.ContractResult.Message += string(w.RequestBody)
 	return protocol.ContractSdkSignalResultSuccess
 }
 

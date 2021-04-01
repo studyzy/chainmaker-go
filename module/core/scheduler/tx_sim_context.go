@@ -9,13 +9,11 @@ package scheduler
 import (
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
-
-	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
+	"sort"
 )
 
 // Storage interface for smart contracts
@@ -143,16 +141,6 @@ func (s *txSimContextImpl) GetAccessControl() (protocol.AccessControlProvider, e
 		return nil, errors.New("access control for tx sim context is nil")
 	}
 	return s.vmManager.GetAccessControl(), nil
-}
-
-// GetContractTxIds
-func (s *txSimContextImpl) GetContractTxIds() ([]string, error) {
-	if txIdsBytes, err := s.Get(protocol.ContractTxIdsKey, nil); err != nil {
-		return nil, errors.New(fmt.Sprintf("failed to get tx ids, error:%s", err.Error()))
-	} else {
-		txIds := strings.Split(string(txIdsBytes), ",")
-		return txIds, nil
-	}
 }
 
 // Get organization service

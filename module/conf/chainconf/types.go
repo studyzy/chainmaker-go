@@ -21,10 +21,13 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"strings"
+	"sync"
 )
 
 var (
 	chainConfigVerifier = make(map[consensus.ConsensusType]protocol.Verifier, 0)
+	// for multi chain start
+	chainConfigVerifierLock = sync.RWMutex{}
 )
 
 // chainConfig chainConfig struct
@@ -133,16 +136,23 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig) error {
 	// verify consensus
 	if config.Consensus != nil && config.Consensus.Nodes != nil {
+		if len(config.Consensus.Nodes) == 0 {
+			err := fmt.Errorf("there is at least one consensus node")
+			log.Error(err.Error())
+			return err
+		}
 		for _, node := range config.Consensus.Nodes {
 			// org id can not be repeated
 			if _, ok := mConfig.NodeOrgIds[node.OrgId]; ok {
-				log.Errorf("org id(%s) existed", node.OrgId)
-				return errors.New("org id existed")
+				err := fmt.Errorf("org id(%s) existed", node.OrgId)
+				log.Error(err.Error())
+				return err
 			}
 			// when creating genesis, the org id of node must be exist in CaRoots.
 			if _, ok := mConfig.CaRoots[node.OrgId]; !ok {
-				log.Errorf("org id(%s) not in trust roots config", node.OrgId)
-				return errors.New("org id not in trust roots config")
+				err := fmt.Errorf("org id(%s) not in trust roots config", node.OrgId)
+				log.Error(err.Error())
+				return err
 			}
 
 			mConfig.NodeOrgIds[node.OrgId] = node.Address
@@ -189,7 +199,9 @@ func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chai
 		for _, resourcePolicy := range config.ResourcePolicies {
 			mConfig.ResourcePolicies[resourcePolicy.ResourceName] = struct{}{}
 			policy := resourcePolicy.Policy
-			verifyPolicy(policy)
+			if err := verifyPolicy(policy); err != nil {
+				return err
+			}
 		}
 		resLen := len(mConfig.ResourcePolicies)
 		if resourceLen != resLen {
@@ -199,7 +211,7 @@ func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chai
 	return nil
 }
 
-func verifyPolicy(policy *pbac.Policy) {
+func verifyPolicy(policy *pbac.Policy) error {
 	if policy != nil {
 		// to upper
 		rule := policy.Rule
@@ -210,10 +222,23 @@ func verifyPolicy(policy *pbac.Policy) {
 			for i, role := range roles {
 				role = strings.ToUpper(role)
 				roles[i] = role
+				if policy.Rule == string(protocol.RuleMajority) {
+					if role != string(protocol.RoleAdmin) {
+						err := fmt.Errorf("config rule[MAJORITY], role can only be admin or null")
+						return err
+					}
+				}
 			}
 			policy.RoleList = roles
 		}
+		if policy.Rule == string(protocol.RuleMajority) {
+			if len(policy.OrgList) > 0 {
+				err := fmt.Errorf("config rule[MAJORITY], org_list param not allowed")
+				return err
+			}
+		}
 	}
+	return nil
 }
 
 // validateParams validate the chainconfig
@@ -232,6 +257,8 @@ func validateParams(config *config.ChainConfig) error {
 
 // RegisterVerifier register a verifier.
 func RegisterVerifier(consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
+	chainConfigVerifierLock.Lock()
+	defer chainConfigVerifierLock.Unlock()
 	if _, ok := chainConfigVerifier[consensusType]; ok {
 		return errors.New("consensusType verifier is exist")
 	}
@@ -241,6 +268,8 @@ func RegisterVerifier(consensusType consensus.ConsensusType, verifier protocol.V
 
 // GetVerifier get a verifier if exist.
 func GetVerifier(consensusType consensus.ConsensusType) protocol.Verifier {
+	chainConfigVerifierLock.RLock()
+	defer chainConfigVerifierLock.RUnlock()
 	verifier, ok := chainConfigVerifier[consensusType]
 	if !ok {
 		return nil
