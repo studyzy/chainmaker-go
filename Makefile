@@ -92,7 +92,7 @@ mockgen-dep:
 	go get -u github.com/golang/mock/mockgen
 
 docker-build:
-	docker build -t chainmaker:v0.7.0 -f ./DOCKER/Dockerfile .
+	docker build -t chainmaker:v1.0.0_r -f ./DOCKER/Dockerfile .
 
 docker-compose-start: docker-compose-stop
 	docker-compose up -d
