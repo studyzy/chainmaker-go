@@ -8,8 +8,11 @@ package p2p
 
 import (
 	"errors"
+	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 // ErrorHostNotRunning
@@ -27,7 +30,7 @@ type LibP2pPubSub struct {
 	pubsubUid            string         // pubsubUid is the unique id of pubsub.
 	pubsub               *pubsub.PubSub // pubsub is a pubsub.PubSub instance.
 	pubSubMaxMessageSize int            // pubSubMaxMessageSize is the value for MaxMessageSize option.
-	startUp              bool           // startUp is the flag of the state of LibP2pPubSub.
+	startUp              int32          // startUp is the flag of the state of LibP2pPubSub. 0 not start, 1 starting, 2 started
 }
 
 //NewPubsub create a new LibP2pPubSub instance.
@@ -38,6 +41,7 @@ func NewPubsub(pubsubUid string, host *LibP2pHost, maxMessageSize int) (*LibP2pP
 		libP2pHost:           host,
 		pubsubUid:            pubsubUid,
 		pubSubMaxMessageSize: maxMessageSize,
+		startUp:              0,
 	}
 	return ps, nil
 }
@@ -50,7 +54,7 @@ func (ps *LibP2pPubSub) isSubscribed(topic string) bool {
 
 // GetTopic get a topic with the name given.
 func (ps *LibP2pPubSub) GetTopic(name string) (*pubsub.Topic, error) {
-	if !ps.startUp {
+	if atomic.LoadInt32(&ps.startUp) < 2 {
 		return nil, ErrorPubSubNotRunning
 	}
 	ps.topicLock.Lock()
@@ -93,10 +97,11 @@ func (ps *LibP2pPubSub) Start() error {
 		logger.Errorf("[PubSub] gossip-sub service can not start. start host first pls.")
 		return ErrorHostNotRunning
 	}
-	if ps.startUp {
+	if atomic.LoadInt32(&ps.startUp) > 0 {
 		logger.Warnf("[PubSub] gossip-sub service[%s] is running.", ps.pubsubUid)
 		return nil
 	}
+	atomic.StoreInt32(&ps.startUp, 1)
 	logger.Infof("[PubSub] gossip-sub service[%s] starting... ", ps.pubsubUid)
 	pss, err := pubsub.NewGossipSub(
 		ps.libP2pHost.ctx,
@@ -108,7 +113,63 @@ func (ps *LibP2pPubSub) Start() error {
 		return err
 	}
 	ps.pubsub = pss
-	ps.startUp = true
+	atomic.StoreInt32(&ps.startUp, 2)
 	logger.Infof("[PubSub] gossip-sub service[%s] started. ", ps.pubsubUid)
+	return nil
+}
+
+// AddWhitelistPeer add a peer.ID to pubsub white list.
+func (ps *LibP2pPubSub) AddWhitelistPeer(pid peer.ID) error {
+	switch atomic.LoadInt32(&ps.startUp) {
+	case 0:
+		for i := 0; i < 10; i++ {
+			time.Sleep(500 * time.Millisecond)
+			if atomic.LoadInt32(&ps.startUp) != 1 {
+				ps.pubsub.AddWhitelistPeer(pid)
+				return nil
+			}
+		}
+		return ErrorPubSubNotRunning
+	case 1:
+		for {
+			time.Sleep(500 * time.Millisecond)
+			if atomic.LoadInt32(&ps.startUp) != 1 {
+				ps.pubsub.AddWhitelistPeer(pid)
+				return nil
+			}
+		}
+	case 2:
+		ps.pubsub.AddWhitelistPeer(pid)
+	default:
+
+	}
+	return nil
+}
+
+// RemoveWhitelistPeer remove a peer.ID to pubsub white list.
+func (ps *LibP2pPubSub) RemoveWhitelistPeer(pid peer.ID) error {
+	switch atomic.LoadInt32(&ps.startUp) {
+	case 0:
+		for i := 0; i < 10; i++ {
+			time.Sleep(500 * time.Millisecond)
+			if atomic.LoadInt32(&ps.startUp) == 2 {
+				ps.pubsub.RemoveWhitelistPeer(pid)
+				return nil
+			}
+		}
+		return ErrorPubSubNotRunning
+	case 1:
+		for {
+			time.Sleep(500 * time.Millisecond)
+			if atomic.LoadInt32(&ps.startUp) != 1 {
+				ps.pubsub.RemoveWhitelistPeer(pid)
+				return nil
+			}
+		}
+	case 2:
+		ps.pubsub.RemoveWhitelistPeer(pid)
+	default:
+
+	}
 	return nil
 }
