@@ -11,6 +11,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 var log = &logger.GoLogger{}
@@ -96,17 +97,29 @@ func TestProvider_DbTransaction(t *testing.T) {
 	tx.BeginDbSavePoint("tx1")
 	count, err = tx.ExecSql("insert into t1 values(5,'e')")
 	assert.Equal(t, int64(1), count)
-	row, err := tx.QuerySql("select count(1) from t1")
+	row, err := tx.QuerySql("select count(*) from t1")
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(5), count)
 	count, err = tx.ExecSql("insert into t1 values(2,'b')") //duplicate PK error
 	assert.NotNil(t, err)
 	tx.RollbackDbSavePoint("tx1")
-	row, err = tx.QuerySql("select count(1) from t1")
+	row, err = tx.QuerySql("select count(*) from t1")
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(4), count)
 	p.RollbackDbTransaction(txName)
 	row, err = p.QuerySql("select count(1) from t1", "")
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(2), count)
+}
+func TestSqlDBHandle_QuerySql(t *testing.T) {
+	p := initProvider()
+	p.ExecSql("create table t1(id int primary key,name varchar(5),birthdate datetime,photo blob)", "")
+	var bin = []byte{1, 2, 3, 4, 0xff}
+	p.ExecSql("insert into t1 values(?,?,?,?)", 1, "Devin", time.Now(), bin)
+	result, err := p.QuerySql("select * from t1 where id=?", 1)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	t.Log(result.Data())
 }

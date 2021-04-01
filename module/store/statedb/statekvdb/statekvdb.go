@@ -174,3 +174,7 @@ func (s *StateKvDB) RollbackDbTransaction(txName string) error {
 	return ERROR_SQLDB_ONLY
 
 }
+func (s *StateKvDB) ExecDdlSql(contractName, sql string) error {
+	return ERROR_SQLDB_ONLY
+
+}

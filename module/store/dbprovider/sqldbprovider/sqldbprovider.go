@@ -227,7 +227,7 @@ func (p *SqlDBHandle) CreateTableIfNotExist(obj interface{}) error {
 func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	tx := p.db.Exec(sql, values)
+	tx := p.db.Exec(sql, values...)
 	if tx.Error != nil {
 		return 0, tx.Error
 	}
@@ -251,7 +251,14 @@ func (p *SqlDBHandle) QuerySql(sql string, values ...interface{}) (protocol.SqlR
 	if row.Error != nil {
 		return nil, row.Error
 	}
-	return NewSqlDBRow(row), nil
+	rows, err := row.Rows()
+	if err != nil {
+		return nil, err
+	}
+	if !rows.Next() {
+		return nil, errors.New("empty data")
+	}
+	return NewSqlDBRow(db, rows), nil
 }
 
 func (p *SqlDBHandle) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {

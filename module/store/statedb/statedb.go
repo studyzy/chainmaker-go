@@ -33,6 +33,8 @@ type StateDB interface {
 	QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error)
 	//不在事务中，直接查询状态数据库，返回多行结果
 	QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error)
+	//执行DDL语句
+	ExecDdlSql(contractName, sql string) error
 	//启用一个事务
 	BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error)
 	//根据事务名，获得一个已经启用的事务

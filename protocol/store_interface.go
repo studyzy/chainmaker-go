@@ -88,9 +88,11 @@ type BlockchainStore interface {
 }
 type StateSqlOperation interface {
 	//不在事务中，直接查询状态数据库，返回一行结果
-	QuerySql(sql string, values ...interface{}) ( SqlRow, error)
+	QuerySingleSql(contractName,sql string, values ...interface{}) ( SqlRow, error)
 	//不在事务中，直接查询状态数据库，返回多行结果
-	QueryTableSql(sql string, values ...interface{}) (SqlRows, error)
+	QueryMultiSql(contractName,sql string, values ...interface{}) (SqlRows, error)
+	//执行建表、修改表等DDL语句
+	ExecDdlSql(contractName,sql string) error
 	//启用一个事务
 	BeginDbTransaction(txName string) (SqlDBTransaction,error)
 	//根据事务名，获得一个已经启用的事务
@@ -130,11 +132,13 @@ type SqlDBTransaction interface {
 type SqlRow interface {
 	ScanColumns(dest ...interface{}) error
 	ScanObject(dest interface{}) error
+	Data()(map[string]string, error)
 }
 type SqlRows interface {
 	Next() bool
 	ScanColumns(dest ...interface{}) error
 	ScanObject(dest interface{}) error
+	Data()(map[string]string, error)
 	Close() error
 }
 // DBHandle is an handle to a db

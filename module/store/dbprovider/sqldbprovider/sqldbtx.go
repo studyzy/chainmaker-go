@@ -10,6 +10,7 @@ package sqldbprovider
 import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
+	"errors"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -56,7 +57,14 @@ func (p *SqlDBTx) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, 
 	if row.Error != nil {
 		return nil, row.Error
 	}
-	return NewSqlDBRow(row), nil
+	rows, err := row.Rows()
+	if err != nil {
+		return nil, err
+	}
+	if !rows.Next() {
+		return nil, errors.New("empty data")
+	}
+	return NewSqlDBRow(db, rows), nil
 }
 func (p *SqlDBTx) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()

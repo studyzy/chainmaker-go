@@ -18,8 +18,9 @@ import (
 // StateSqlDB provider a implementation of `statedb.StateDB`
 // This implementation provides a mysql based data model
 type StateSqlDB struct {
-	db     protocol.SqlDBHandle
-	Logger protocol.Logger
+	db      protocol.SqlDBHandle
+	Logger  protocol.Logger
+	chainId string
 }
 
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
@@ -48,8 +49,9 @@ func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
 	stateDB := &StateSqlDB{
-		db:     db,
-		Logger: logger,
+		db:      db,
+		Logger:  logger,
+		chainId: chainId,
 	}
 
 	return stateDB, nil
@@ -198,6 +200,15 @@ func (s *StateSqlDB) QuerySql(sql string, values ...interface{}) (protocol.SqlRo
 func (s *StateSqlDB) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	return s.db.QueryTableSql(sql, values...)
 
+}
+func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
+	dbName := getContractDbName(s.chainId, contractName)
+	err := s.db.CreateDatabaseIfNotExist(dbName)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.ExecSql(sql)
+	return err
 }
 func (s *StateSqlDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	return s.db.BeginDbTransaction(txName)
