@@ -63,9 +63,23 @@ pprof:
   port: 24321
 
 storage:
-  provider: leveldb
   store_path: ../data/ledgerData1
-
+  blockdb_config:
+    db_type: leveldb
+    leveldb_config:
+      store_path: ../data/blocks
+  statedb_config:
+    db_type: leveldb
+    leveldb_config:
+      store_path: ../data/states
+  historydb_config:
+    db_type: leveldb
+    leveldb_config:
+      store_path: ../data/history
+  resultdb_config:
+    db_type: leveldb
+    leveldb_config:
+      store_path: ../data/result
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true

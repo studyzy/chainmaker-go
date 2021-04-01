@@ -30,9 +30,9 @@ type StateDB interface {
 	// Close is used to close database
 	Close()
 	//不在事务中，直接查询状态数据库，返回一行结果
-	QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error)
+	QuerySql(contractName, sql string, values ...interface{}) (protocol.SqlRow, error)
 	//不在事务中，直接查询状态数据库，返回多行结果
-	QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error)
+	QueryTableSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error)
 	//执行DDL语句
 	ExecDdlSql(contractName, sql string) error
 	//启用一个事务

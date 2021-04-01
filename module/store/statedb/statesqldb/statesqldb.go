@@ -154,6 +154,11 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
 func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
+	if contractName != "" {
+		if err := s.db.ChangeContextDb(contractName); err != nil {
+			return nil
+		}
+	}
 	sql := "select * from state_infos where object_key between ? and ?"
 	rows, err := s.db.QueryTableSql(sql, startKey, limit)
 	if err != nil {
@@ -191,13 +196,21 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 func (s *StateSqlDB) Close() {
 	s.db.Close()
 }
-func (s *StateSqlDB) ExecSql(sql string, values ...interface{}) (int64, error) {
-	return s.db.ExecSql(sql, values...)
-}
-func (s *StateSqlDB) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+
+func (s *StateSqlDB) QuerySql(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	if contractName != "" {
+		if err := s.db.ChangeContextDb(getContractDbName(s.chainId, contractName)); err != nil {
+			return nil, err
+		}
+	}
 	return s.db.QuerySql(sql, values...)
 }
-func (s *StateSqlDB) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+func (s *StateSqlDB) QueryTableSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	if contractName != "" {
+		if err := s.db.ChangeContextDb(getContractDbName(s.chainId, contractName)); err != nil {
+			return nil, err
+		}
+	}
 	return s.db.QueryTableSql(sql, values...)
 
 }

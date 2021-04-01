@@ -180,6 +180,9 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
 	}
+	if p.contextDbName == dbName {
+		return nil
+	}
 	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
 		return nil
 	}
