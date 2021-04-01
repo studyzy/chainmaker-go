@@ -179,7 +179,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 		consensusStateProto := new(tbftpb.ConsensusState)
 		mustUnmarshal(consensusStateBytes, consensusStateProto)
 
-		consensus.logger.Infof("new ConsensusTBFTImpl with consensusStateProto [%s](%v%v%v), height: %v",
+		consensus.logger.Infof("new ConsensusTBFTImpl with consensusStateProto [%s](%v/%v/%v), height: %v",
 			consensusStateProto.Id,
 			consensusStateProto.Height,
 			consensusStateProto.Round,
@@ -216,10 +216,7 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 	consensus.msgbus.Register(msgbus.BlockInfo, consensus)
 	chainconf.RegisterVerifier(consensuspb.ConsensusType_TBFT, consensus)
 
-	consensus.timeScheduler.Start()
-	consensus.gossip.start()
 	consensus.updateChainConfig()
-	go consensus.handle()
 	consensus.metrics.SetEnterNewHeightTime()
 	if consensus.Height == 1 {
 		consensus.enterNewRound(consensus.Height, consensus.Round)
@@ -246,6 +243,9 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 		}
 	}
 
+	consensus.timeScheduler.Start()
+	consensus.gossip.start()
+	go consensus.handle()
 	consensus.logger.Infof("start ConsensusTBFTImpl[%s]", consensus.Id)
 	return nil
 }
@@ -959,6 +959,7 @@ func (consensus *ConsensusTBFTImpl) enterPropose(height int64, round int32) {
 
 	// Step into Propose
 	consensus.Step = tbftpb.Step_Propose
+	consensus.persistState()
 	consensus.metrics.SetEnterProposalTime(consensus.Round)
 	consensus.AddTimeout(consensus.ProposeTimeout(round), height, round, tbftpb.Step_Prevote)
 
