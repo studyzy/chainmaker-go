@@ -9,16 +9,13 @@ package blockkvdb
 import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"context"
-	"encoding/binary"
-	"fmt"
-	"sync"
-
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"encoding/binary"
+	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/sync/semaphore"
 )
@@ -236,7 +233,7 @@ func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockKvDB) Close() {
-	b.Logger.Debug("close block kv db")
+	b.Logger.Warn("close block kv db")
 	b.DbHandle.Close()
 }
 
@@ -263,27 +260,28 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		AdditionalData: blockStoreInfo.AdditionalData,
 	}
 
-	var batchWG sync.WaitGroup
-	batchWG.Add(len(blockStoreInfo.TxIds))
-	errsChan := make(chan error, len(blockStoreInfo.TxIds))
+	//var batchWG sync.WaitGroup
+	//batchWG.Add(len(blockStoreInfo.TxIds))
+	//errsChan := make(chan error, len(blockStoreInfo.TxIds))
 	block.Txs = make([]*commonPb.Transaction, len(blockStoreInfo.TxIds))
 	for index, txid := range blockStoreInfo.TxIds {
 		//used to limit the num of concurrency goroutine
-		b.WorkersSemaphore.Acquire(context.Background(), 1)
-		go func(i int, txid string) {
-			defer b.WorkersSemaphore.Release(1)
-			defer batchWG.Done()
-			tx, err := b.GetTx(txid)
-			if err != nil {
-				errsChan <- err
-			}
-			block.Txs[i] = tx
-		}(index, txid)
+		//b.WorkersSemaphore.Acquire(context.Background(), 1)
+		//go func(i int, txid string) {
+		//	defer b.WorkersSemaphore.Release(1)
+		//	defer batchWG.Done()
+		tx, err := b.GetTx(txid)
+		if err != nil {
+			//errsChan <- err
+			return nil, err
+		}
+		block.Txs[index] = tx
+		//}(index, txid)
 	}
-	batchWG.Wait()
-	if len(errsChan) > 0 {
-		return nil, <-errsChan
-	}
+	//batchWG.Wait()
+	//if len(errsChan) > 0 {
+	//	return nil, <-errsChan
+	//}
 	b.Logger.Debugf("chain[%s]: get block[%d] with transactions[%d]",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
 	return &block, nil
@@ -292,19 +290,19 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 func (b *BlockKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
 	b.Cache.AddBlock(blockHeight, batch)
-	go func() {
-		startWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		err := b.DbHandle.WriteBatch(batch, false)
-		endWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		b.Logger.Infof("write block db, block[%d], time used:%d",
-			blockHeight, endWriteBatchTime-startWriteBatchTime)
 
-		if err != nil {
-			panic(fmt.Sprintf("Error writting leveldb: %s", err))
-		}
-		//db committed, clean cache
-		b.Cache.DelBlock(blockHeight)
-	}()
+	startWriteBatchTime := utils.CurrentTimeMillisSeconds()
+	err := b.DbHandle.WriteBatch(batch, false)
+	endWriteBatchTime := utils.CurrentTimeMillisSeconds()
+	b.Logger.Infof("write block db, block[%d], time used:%d",
+		blockHeight, endWriteBatchTime-startWriteBatchTime)
+
+	if err != nil {
+		panic(fmt.Sprintf("Error writting leveldb: %s", err))
+	}
+	//db committed, clean cache
+	b.Cache.DelBlock(blockHeight)
+
 	return nil
 }
 

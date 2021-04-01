@@ -7,7 +7,11 @@
 
 package logger
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"runtime/debug"
+)
 
 //GoLogger is a golang system log implementation of protocol.Logger, it's for unit test
 type GoLogger struct{}
@@ -25,11 +29,12 @@ func (GoLogger) Debugw(msg string, keysAndValues ...interface{}) {
 }
 
 func (GoLogger) Error(args ...interface{}) {
-	log.Printf("ERROR: %v", args)
+	log.Printf("ERROR: %v\n%s", args,debug.Stack())
 }
 
 func (GoLogger) Errorf(format string, args ...interface{}) {
-	log.Printf("ERROR: "+format, args...)
+	str:=fmt.Sprintf(format,args...)
+	log.Printf("ERROR: "+str+"\n%s", debug.Stack())
 }
 
 func (GoLogger) Errorw(msg string, keysAndValues ...interface{}) {
@@ -73,11 +78,12 @@ func (GoLogger) Panicw(msg string, keysAndValues ...interface{}) {
 }
 
 func (GoLogger) Warn(args ...interface{}) {
-	log.Printf("WARN: %v", args)
+	log.Printf("WARN: %v\n%s", args,debug.Stack())
 }
 
 func (GoLogger) Warnf(format string, args ...interface{}) {
-	log.Printf("WARN: "+format, args...)
+	str:=fmt.Sprintf(format,args...)
+	log.Printf("WARN: "+str+"\n%s", debug.Stack())
 }
 
 func (GoLogger) Warnw(msg string, keysAndValues ...interface{}) {
