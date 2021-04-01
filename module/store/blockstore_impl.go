@@ -559,13 +559,12 @@ func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
 
 //不在事务中，直接查询状态数据库，返回一行结果
 func (bs *BlockStoreImpl) QuerySingleSql(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
-	return bs.stateDB.QuerySql(sql, values...)
+	return bs.stateDB.QuerySql(contractName, sql, values...)
 }
 
 //不在事务中，直接查询状态数据库，返回多行结果
 func (bs *BlockStoreImpl) QueryMultiSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
-	return bs.stateDB.QueryTableSql(sql, values...)
-
+	return bs.stateDB.QueryTableSql(contractName, sql, values...)
 }
 func (bs *BlockStoreImpl) ExecDdlSql(contractName, sql string) error {
 	return bs.stateDB.ExecDdlSql(contractName, sql)
