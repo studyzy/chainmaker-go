@@ -29,10 +29,12 @@ func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger pro
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *HistorySqlDB) initDb(dbName string) {
+	db.Logger.Debugf("create history database:%s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
+	db.Logger.Debug("create table[state_history_infos] to save history")
 	err = db.db.CreateTableIfNotExist(&StateHistoryInfo{})
 	if err != nil {
 		panic("init state sql db table `state_history_infos` fail")

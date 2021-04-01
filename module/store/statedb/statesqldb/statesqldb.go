@@ -26,10 +26,12 @@ type StateSqlDB struct {
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *StateSqlDB) initDb(dbName string) {
+	db.Logger.Debugf("try to create state db %s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
+	db.Logger.Debug("try to create state db table: state_infos")
 	err = db.db.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
 		panic("init state sql db table fail")

@@ -32,6 +32,7 @@ type StateKvDB struct {
 }
 
 func (s *StateKvDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	s.Logger.Debug("initial genesis state data into leveldb")
 	return s.CommitBlock(genesisBlock)
 }
 
