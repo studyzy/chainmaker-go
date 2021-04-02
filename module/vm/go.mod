@@ -14,6 +14,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
+	chainmaker.org/chainmaker-go/wasi v0.0.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/stretchr/testify v1.6.1
 )
@@ -30,4 +31,5 @@ replace (
 	chainmaker.org/chainmaker-go/utils => ../utils
 	chainmaker.org/chainmaker-go/wasmer => ./wasmer
 	chainmaker.org/chainmaker-go/wxvm => ./wxvm
+	chainmaker.org/chainmaker-go/wasi => ./wasi
 )
