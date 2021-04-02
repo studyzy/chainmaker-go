@@ -56,15 +56,28 @@ var (
 // CMLogger is an implementation of chainmaker logger.
 type CMLogger struct {
 	*zap.SugaredLogger
-	name    string
-	chainId string
-	lock    sync.RWMutex
+	name     string
+	chainId  string
+	lock     sync.RWMutex
+	logLevel log.LOG_LEVEL
 }
 
 func (l *CMLogger) Logger() *zap.SugaredLogger {
 	l.lock.RLock()
 	defer l.lock.RUnlock()
 	return l.SugaredLogger
+}
+
+func (l *CMLogger) DebugDynamic(getStr func() string) {
+	if l.logLevel == log.LEVEL_DEBUG {
+		str := getStr()
+		l.Debug(str)
+	}
+}
+func (l *CMLogger) InfoDynamic(getStr func() string) {
+	if l.logLevel == log.LEVEL_DEBUG || l.logLevel == log.LEVEL_INFO {
+		l.Info(getStr())
+	}
 }
 
 // SetLogger set logger.
@@ -75,8 +88,8 @@ func (l *CMLogger) SetLogger(logger *zap.SugaredLogger) {
 }
 
 // newCMLogger create a new CMLogger.
-func newCMLogger(name string, chainId string, logger *zap.SugaredLogger) *CMLogger {
-	return &CMLogger{name: name, chainId: chainId, SugaredLogger: logger}
+func newCMLogger(name string, chainId string, logger *zap.SugaredLogger, logLevel log.LOG_LEVEL) *CMLogger {
+	return &CMLogger{name: name, chainId: chainId, SugaredLogger: logger, logLevel: logLevel}
 }
 
 // SetLogConfig set the config of logger module, called in initialization of config module
@@ -101,8 +114,9 @@ func GetLoggerByChain(name, chainId string) *CMLogger {
 		logger, _ = loggerVal.(*CMLogger)
 		return logger
 	} else {
-		zapLogger := createLoggerByChain(name, chainId)
-		logger = newCMLogger(name, chainId, zapLogger)
+		zapLogger, logLevel := createLoggerByChain(name, chainId)
+
+		logger = newCMLogger(name, chainId, zapLogger, logLevel)
 		loggerVal, ok = cmLoggers.LoadOrStore(logHeader, logger)
 		if ok {
 			logger, _ = loggerVal.(*CMLogger)
@@ -111,7 +125,7 @@ func GetLoggerByChain(name, chainId string) *CMLogger {
 	}
 }
 
-func createLoggerByChain(name, chainId string) *zap.SugaredLogger {
+func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVEL) {
 	var config log.LogConfig
 	var pureName string
 
@@ -188,14 +202,15 @@ func createLoggerByChain(name, chainId string) *zap.SugaredLogger {
 		logHeader := name + chainId
 		loggerLevels[pureName][logHeader] = level
 	}
-	return logger
+	return logger, config.LogLevel
 }
 
 func refreshAllLoggerOfCmLoggers() {
 	cmLoggers.Range(func(_, value interface{}) bool {
 		cmLogger, _ := value.(*CMLogger)
-		newLogger := createLoggerByChain(cmLogger.name, cmLogger.chainId)
+		newLogger, logLevel := createLoggerByChain(cmLogger.name, cmLogger.chainId)
 		cmLogger.SetLogger(newLogger)
+		cmLogger.logLevel = logLevel
 		return true
 	})
 }
