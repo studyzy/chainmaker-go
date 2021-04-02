@@ -72,12 +72,12 @@ const (
 	ContractMethodDeleteState = "DeleteState"
 	// sql
 	ContractMethodExecuteQuerySql      = "ExecuteQuerySql"
-	ContractMethodQueryIteratorNext    = "QueryIteratorNext"
-	ContractMethodQueryIteratorNextLen = "QueryIteratorNextLen"
-	ContractMethodQueryIteratorHasNext = "QueryIteratorHasNext"
-	ContractMethodQueryIteratorClose   = "QueryIteratorClose"
-	ContractMethodExecuteUpdateSql     = "ExecuteUpdateSql"
-	ContractMethodExecuteDdlSql        = "ExecuteDDLSql"
+	ContractMethodQueryIteratorNext    = "RSNext"
+	ContractMethodQueryIteratorNextLen = "RSNextLen"
+	ContractMethodQueryIteratorHasNext = "RSHasNext"
+	ContractMethodQueryIteratorClose   = "RSClose"
+	ContractMethodExecuteUpdateSql     = "ExecuteUpdate"
+	ContractMethodExecuteDdlSql        = "ExecuteDDL"
 )
 
 //VmManager manage vm runtime
@@ -89,6 +89,31 @@ type VmManager interface {
 	// RunContract run native or user contract according ContractName in contractId, and call the specified function
 	RunContract(contractId *common.ContractId, method string, byteCode []byte, parameters map[string]string,
 		txContext TxSimContext, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)
+}
+
+type ContractBridgeCommon interface {
+	LogMessage() int32
+	SuccessResult() int32
+	ErrorResult() int32
+	CallContract() int32
+}
+
+type ContractBridgeKV interface {
+	ContractBridgeCommon
+	GetState() int32
+	PutState() int32
+	DeleteState() int32
+}
+
+type ContractBridgeSQL interface {
+	ContractBridgeCommon
+	ExecuteQuery() int32
+	ExecuteQueryOne() int32
+	RSHasNext() int32
+	RSNext() int32
+	RSClose() int32
+	ExecuteUpdate() int32
+	ExecuteDDL() int32
 }
 
 // GetKeyStr get state key from string

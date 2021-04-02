@@ -9,6 +9,7 @@ package wasmer
 import (
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 )
 
@@ -39,7 +40,7 @@ func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
 			msg := fmt.Sprintf("method getStateCore get fail. key=%s, field=%s, error:%s", key.(string), field.(string), err.Error())
 			return s.recordMsg(msg)
 		}
-		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], IntToBytes(int32(len(value))))
+		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], utils.IntToBytes(int32(len(value))))
 		s.Sc.GetStateCache = value
 	} else {
 		len := int32(len(s.Sc.GetStateCache))

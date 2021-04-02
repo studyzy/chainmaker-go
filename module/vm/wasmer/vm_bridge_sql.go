@@ -12,8 +12,8 @@ import (
 	"fmt"
 )
 
-// ExecuteQueryMulti execute query sql, return result set index
-func (s *sdkRequestCtx) ExecuteQueryMulti() int32 {
+// ExecuteQuery execute query sql, return result set index
+func (s *sdkRequestCtx) ExecuteQuery() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -31,8 +31,13 @@ func (s *sdkRequestCtx) ExecuteQueryMulti() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
-// QueryIteratorHasNext 1 is has next row, 0 is no next row
-func (s *sdkRequestCtx) QueryIteratorHasNext() int32 {
+// ExecuteQuery execute query sql, return result set index
+func (s *sdkRequestCtx) ExecuteQueryOne() int32 {
+	return 0
+}
+
+// RSHasNext 1 is has next row, 0 is no next row
+func (s *sdkRequestCtx) RSHasNext() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -50,17 +55,17 @@ func (s *sdkRequestCtx) QueryIteratorHasNext() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
-// QueryIteratorNextLen get result set length from chain
-func (s *sdkRequestCtx) QueryIteratorNextLen() int32 {
-	return s.queryIteratorNextCore(true)
+// RSNextLen get result set length from chain
+func (s *sdkRequestCtx) RSNextLen() int32 {
+	return s.rsNextCore(true)
 }
 
-// QueryIteratorNextLen get one row from result set
-func (s *sdkRequestCtx) QueryIteratorNext() int32 {
-	return s.queryIteratorNextCore(true)
+// RSNextLen get one row from result set
+func (s *sdkRequestCtx) RSNext() int32 {
+	return s.rsNextCore(true)
 }
 
-func (s *sdkRequestCtx) queryIteratorNextCore(isGetLen bool) int32 {
+func (s *sdkRequestCtx) rsNextCore(isGetLen bool) int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -86,8 +91,8 @@ func (s *sdkRequestCtx) queryIteratorNextCore(isGetLen bool) int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
-// QueryIteratorClose close sql statement
-func (s *sdkRequestCtx) QueryIteratorClose() int32 {
+// RSClose close sql statement
+func (s *sdkRequestCtx) RSClose() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -105,9 +110,9 @@ func (s *sdkRequestCtx) QueryIteratorClose() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
-// ExecuteUpdateSql execute update and insert sql, allow single row change
+// ExecuteUpdate execute update and insert sql, allow single row change
 // as: update table set name = 'Tom' where uniqueKey='xxx'
-func (s *sdkRequestCtx) ExecuteUpdateSql() int32 {
+func (s *sdkRequestCtx) ExecuteUpdate() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -125,7 +130,7 @@ func (s *sdkRequestCtx) ExecuteUpdateSql() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
-// ExecuteDDLSql execute DDL sql, for init_contract or upgrade method. allow table create/alter/drop/truncate
+// ExecuteDDL execute DDL sql, for init_contract or upgrade method. allow table create/alter/drop/truncate
 //
 // allow:     [CREATE TABLE tableName] [ALTER TABLE tableName]
 //            [DROP TABLE tableName]   [TRUNCATE TABLE tableName]
@@ -134,7 +139,7 @@ func (s *sdkRequestCtx) ExecuteUpdateSql() int32 {
 //			  [DROP DATABASE dbName]   [DROP TABLE dbName.tableName]   [TRUNCATE TABLE dbName.tableName]
 //
 // You must have a primary key to create a table
-func (s *sdkRequestCtx) ExecuteDDLSql() int32 {
+func (s *sdkRequestCtx) ExecuteDDL() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)

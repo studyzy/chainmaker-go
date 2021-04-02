@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -24,14 +25,6 @@ import (
 
 // extern int sysCall(void *context, int requestHeaderPtr, int requestHeaderLen, int requestBodyPtr, int requestBodyLen);
 // extern void logMessage(void *context, int pointer, int length);
-// extern int getStateLen(void *context, int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen, int valueLenPtr);
-// extern int getState(void *context, int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen, int valuePtr, int valueLen);
-// extern int putState(void *context, int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen, int valuePtr, int valueLen);
-// extern int deleteState(void *context,  int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen);
-// extern int successResult(void *context, int ctxPtr, int dataPtr, int dataLen);
-// extern int errorResult(void *context, int ctxPtr, int dataPtr, int dataLen);
-// extern int callContract(void *context, int ctxParameterPtr, int ctxParameterLen, int parameterPtr, int parameterLen);
-// extern int callContractLen(void *context, int ctxParameterPtr, int ctxParameterLen, int parameterPtr, int parameterLen);
 // extern int fdWrite(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdRead(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdClose(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
@@ -123,19 +116,19 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.DeleteState()
 	// sql
 	case protocol.ContractMethodExecuteUpdateSql:
-		return s.ExecuteUpdateSql()
+		return s.ExecuteUpdate()
 	case protocol.ContractMethodExecuteDdlSql:
-		return s.ExecuteDDLSql()
+		return s.ExecuteDDL()
 	case protocol.ContractMethodExecuteQuerySql:
-		return s.ExecuteQueryMulti()
+		return s.ExecuteQuery()
 	case protocol.ContractMethodQueryIteratorHasNext:
-		return s.QueryIteratorHasNext()
+		return s.RSHasNext()
 	case protocol.ContractMethodQueryIteratorNextLen:
-		return s.QueryIteratorNextLen()
+		return s.RSNextLen()
 	case protocol.ContractMethodQueryIteratorNext:
-		return s.QueryIteratorNext()
+		return s.RSNext()
 	case protocol.ContractMethodQueryIteratorClose:
-		return s.QueryIteratorClose()
+		return s.RSClose()
 	default:
 		log.Errorf("method is %s not match.", method)
 	}
@@ -224,7 +217,7 @@ func (s *sdkRequestCtx) callContractCore(isGetLen bool) int32 {
 		return s.recordMsg("CallContract " + code.String() + ", msg:" + result.Message)
 	}
 	// set value length to memory
-	l := IntToBytes(int32(len(result.Result)))
+	l := utils.IntToBytes(int32(len(result.Result)))
 	copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], l)
 	return protocol.ContractSdkSignalResultSuccess
 }

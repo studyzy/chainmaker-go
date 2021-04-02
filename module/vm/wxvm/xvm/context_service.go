@@ -14,11 +14,11 @@ import (
 const DefaultCap = 10
 
 type ContextService struct {
-	lock    sync.Mutex
-	chainId string
-	ctxId   int64
-	ctxMap  map[int64]*Context
-	logger  *logger.CMLogger
+	lock        sync.Mutex
+	chainId     string
+	ctxId       int64
+	ctxMap      map[int64]*Context
+	logger      *logger.CMLogger
 }
 
 // NewContextService build a ContextService
@@ -62,40 +62,40 @@ func (c *ContextService) DestroyContext(ctx *Context) {
 	delete(c.ctxMap, ctx.ID)
 }
 
-// PutObject implements Syscall interface
-func (c *ContextService) PutObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
-	if !ok {
-		return nil, fmt.Errorf("put object encounter bad ctx id:%d", ctxId)
+// PutState implements Syscall interface
+func (c *ContextService) PutState() int32 {
+	context,_ := c.Context(c.ctxId)
+
+	key, ok1 := serialize.GetValueFromItems(context.in, "key", serialize.EasyKeyType_USER)
+	value, ok2 := serialize.GetValueFromItems(context.in, "value", serialize.EasyKeyType_USER)
+	if !ok1 || !ok2 {
+		context.err = fmt.Errorf("put state param[key | value] is required:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
-	key, ok := serialize.GetValueFromItems(in, "key", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("put object request have no key:%d", ctxId)
-	}
-	value, ok := serialize.GetValueFromItems(in, "value", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("put object request have no value:%d", ctxId)
-	}
+
 	context.TxSimContext.Put(context.ContractId.ContractName, []byte(key.(string)), []byte(value.(string)))
+
 	items := make([]*serialize.EasyCodecItem, 0)
-	return items, nil
+
+	context.resp = items
+	return protocol.ContractSdkSignalResultSuccess
 }
 
-// GetObject implements Syscall interface
-func (c *ContextService) GetObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
+// GetState implements Syscall interface
+func (c *ContextService) GetState() int32 {
+	context,_ := c.Context(c.ctxId)
+	key, ok := serialize.GetValueFromItems(context.in, "key", serialize.EasyKeyType_USER)
 	if !ok {
-		return nil, fmt.Errorf("get object encounter bad ctx id:%d", ctxId)
+		context.err = fmt.Errorf("get object param[key] is required:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
-	key, ok := serialize.GetValueFromItems(in, "key", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("get object request have no key:%d", ctxId)
-	}
-	value, err := context.TxSimContext.Get(context.ContractId.ContractName, []byte(key.(string)))
 
+	value, err := context.TxSimContext.Get(context.ContractId.ContractName, []byte(key.(string)))
 	if err != nil {
-		return nil, err
+		context.err = err
+		return protocol.ContractSdkSignalResultFail
 	}
+
 	items := make([]*serialize.EasyCodecItem, 0)
 	var valueItem serialize.EasyCodecItem
 	valueItem.Key = "value"
@@ -103,45 +103,42 @@ func (c *ContextService) GetObject(ctxId int64, in []*serialize.EasyCodecItem) (
 	valueItem.ValueType = serialize.EasyValueType_BYTES
 	valueItem.Value = value
 	items = append(items, &valueItem)
-	return items, nil
+
+	context.resp = items
+	return protocol.ContractSdkSignalResultSuccess
 }
 
-// DeleteObject implements Syscall interface
-func (c *ContextService) DeleteObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
+// DeleteState implements Syscall interface
+func (c *ContextService) DeleteState() int32 {
+	context,_ := c.Context(c.ctxId)
+	key, ok := serialize.GetValueFromItems(context.in, "key", serialize.EasyKeyType_USER)
 	if !ok {
-		return nil, fmt.Errorf("delete object encounter bad ctx id:%d", ctxId)
-	}
-	key, ok := serialize.GetValueFromItems(in, "key", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("delete object request have no key:%d", ctxId)
+		context.err = fmt.Errorf("delete state request have no key:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
 	err := context.TxSimContext.Del(context.ContractId.ContractName, []byte(key.(string)))
 	if err != nil {
-		return nil, err
+		context.err = err
+		return protocol.ContractSdkSignalResultFail
 	}
 	items := make([]*serialize.EasyCodecItem, 0)
-	return items, nil
+
+	context.resp = items
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 // NewIterator implements Syscall interface
-func (c *ContextService) NewIterator(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
-	if !ok {
-		return nil, fmt.Errorf("new iterator encounter bad ctx id:%d", ctxId)
+func (c *ContextService) NewIterator() int32 {
+	context,_ := c.Context(c.ctxId)
+
+	limit, ok1 := serialize.GetValueFromItems(context.in, "limit", serialize.EasyKeyType_SYSTEM)
+	start, ok2 := serialize.GetValueFromItems(context.in, "start", serialize.EasyKeyType_SYSTEM)
+	cap, ok3 := serialize.GetValueFromItems(context.in, "cap", serialize.EasyKeyType_SYSTEM)
+	if !ok1 || !ok2 || !ok3 {
+		context.err = fmt.Errorf("new iterator param[limit | start | cap] is required:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
-	limit, ok := serialize.GetValueFromItems(in, "limit", serialize.EasyKeyType_SYSTEM)
-	if !ok {
-		return nil, fmt.Errorf("new iterator request have no limit:%d", ctxId)
-	}
-	start, ok := serialize.GetValueFromItems(in, "start", serialize.EasyKeyType_SYSTEM)
-	if !ok {
-		return nil, fmt.Errorf("new iterator request have no start:%d", ctxId)
-	}
-	cap, ok := serialize.GetValueFromItems(in, "cap", serialize.EasyKeyType_SYSTEM)
-	if !ok {
-		return nil, fmt.Errorf("new iterator request have no cap:%d", ctxId)
-	}
+
 	capLimit := cap.(int32)
 	if capLimit <= 0 {
 		capLimit = DefaultCap
@@ -160,42 +157,42 @@ func (c *ContextService) NewIterator(ctxId int64, in []*serialize.EasyCodecItem)
 		capLimit -= 1
 	}
 	if iter.Error() != nil {
-		return nil, errors.New(fmt.Sprintf("Select error, %s", iter.Error()))
+		context.err = errors.New(fmt.Sprintf("new iterator select error, %s", iter.Error()))
+		return protocol.ContractSdkSignalResultFail
 	}
 	iter.Release()
-	return out, nil
+
+	context.resp = out
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 // GetCallArgs implements Syscall interface
-func (c *ContextService) GetCallArgs(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
-	if !ok {
-		return nil, fmt.Errorf("get call args encounter bad ctx id:%d", ctxId)
-	}
-	return context.callArgs, nil
+func (c *ContextService) GetCallArgs() int32 {
+	context,_ := c.Context(c.ctxId)
+	context.resp = context.callArgs
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 // SetOutput implements Syscall interface
-func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
+func (c *ContextService) SetOutput() int32 {
+	context,_ := c.Context(c.ctxId)
+	code, ok := serialize.GetValueFromItems(context.in, "code", serialize.EasyKeyType_USER)
 	if !ok {
-		return nil, fmt.Errorf("set out put  bad ctx id:%d", ctxId)
+		context.err = fmt.Errorf("set out put param[code] is required:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
-	code, ok := serialize.GetValueFromItems(in, "code", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("set out put respsonse have no code:%d", ctxId)
-	}
-	msg, ok := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
+	msg, ok := serialize.GetValueFromItems(context.in, "msg", serialize.EasyKeyType_USER)
 	if ok {
 		context.ContractResult.Message += msg.(string)
 	}
-	result, ok := serialize.GetValueFromItems(in, "result", serialize.EasyKeyType_USER)
+	result, ok := serialize.GetValueFromItems(context.in, "result", serialize.EasyKeyType_USER)
 	if ok {
 		context.ContractResult.Result = []byte(result.(string))
 	}
 	if context.ContractResult.Code == commonPb.ContractResultCode_FAIL {
 		items := make([]*serialize.EasyCodecItem, 0)
-		return items, nil
+		context.resp = items
+		return protocol.ContractSdkSignalResultSuccess
 	}
 	switch code.(int32) {
 	case 0:
@@ -204,30 +201,24 @@ func (c *ContextService) SetOutput(ctxId int64, in []*serialize.EasyCodecItem) (
 		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	}
 	items := make([]*serialize.EasyCodecItem, 0)
-	return items, nil
+
+	context.resp = items
+	return protocol.ContractSdkSignalResultSuccess
 }
 
-// ContractCall implements Syscall interface
-func (c *ContextService) ContractCall(ctxId int64, in []*serialize.EasyCodecItem, gasUsed uint64) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
-	if !ok {
-		return nil, fmt.Errorf("contract call encounter bad ctx id:%d", ctxId)
-	}
-	contract, ok := serialize.GetValueFromItems(in, "contract", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("contract call request  have no contract name:%d", ctxId)
-	}
-	method, ok := serialize.GetValueFromItems(in, "method", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("contract call request  have no method name:%d", ctxId)
-	}
-	args, ok := serialize.GetValueFromItems(in, "args", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("contract call request  have no args:%d", ctxId)
+// CallContract implements Syscall interface
+func (c *ContextService) CallContract() int32 {
+	context,_ := c.Context(c.ctxId)
+	contract, ok1 := serialize.GetValueFromItems(context.in, "contract", serialize.EasyKeyType_USER)
+	method, ok2 := serialize.GetValueFromItems(context.in, "method", serialize.EasyKeyType_USER)
+	args, ok3 := serialize.GetValueFromItems(context.in, "args", serialize.EasyKeyType_USER)
+	if !ok1 || !ok2 || !ok3 {
+		context.err = fmt.Errorf("call contract param[contract | method | args] is required:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
 	argsItems := serialize.EasyUnmarshal(args.([]byte))
 	paramMap := serialize.EasyCodecItemToParamsMap(argsItems)
-	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contract.(string)}, method.(string), nil, paramMap, gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
+	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contract.(string)}, method.(string), nil, paramMap, context.gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
 	respItems := make([]*serialize.EasyCodecItem, 0)
 	var codeItem serialize.EasyCodecItem
 	codeItem.KeyType = serialize.EasyKeyType_USER
@@ -247,24 +238,32 @@ func (c *ContextService) ContractCall(ctxId int64, in []*serialize.EasyCodecItem
 	resultItem.ValueType = serialize.EasyValueType_BYTES
 	resultItem.Value = contractResult.Result
 	respItems = append(respItems, &resultItem)
-	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
-		return respItems, fmt.Errorf(contractResult.Message)
-	}
 
-	return respItems, nil
+	context.resp = respItems
+
+	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
+		context.err = fmt.Errorf(contractResult.Message)
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
 }
 
-// PostLog handle log entry from contract
-func (c *ContextService) LogMsg(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	context, ok := c.Context(ctxId)
+// LogMessage handle log entry from contract
+func (c *ContextService) LogMessage() int32 {
+	context,_ := c.Context(c.ctxId)
+	msg, ok := serialize.GetValueFromItems(context.in, "msg", serialize.EasyKeyType_USER)
 	if !ok {
-		return nil, fmt.Errorf("bad ctx id:%d", ctxId)
+		context.err = fmt.Errorf("log message param[msg] is required:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
 	}
-	msg, ok := serialize.GetValueFromItems(in, "msg", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("log msg request  have no msg:%d", ctxId)
-	}
-	c.logger.Debugf("wxvm log >>[%s] [%d] %s", context.TxSimContext.GetTx().Header.TxId, ctxId, msg.(string))
+	c.logger.Debugf("wxvm log >>[%s] [%d] %s", context.TxSimContext.GetTx().Header.TxId, c.ctxId, msg.(string))
 	msgItems := make([]*serialize.EasyCodecItem, 0)
-	return msgItems, nil
+	context.resp = msgItems
+	return protocol.ContractSdkSignalResultSuccess
+}
+func (c *ContextService) SuccessResult() int32 {
+	return c.SetOutput()
+}
+func (c *ContextService) ErrorResult() int32 {
+	return c.SetOutput()
 }

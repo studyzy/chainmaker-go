@@ -1,10 +1,9 @@
 package xvm
 
 import (
-	"fmt"
-
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
+	"fmt"
 )
 
 const (
@@ -72,74 +71,61 @@ func (s *contextServiceResolver) cCallMethod(
 	codec := exec.NewCodec(ctx)
 	ctxId := ctx.GetUserData(contextIDKey).(int64)
 	method := codec.String(methodAddr, methodLen)
-	requestBuf := codec.Bytes(requestAddr, requestLen)
+	requestBufTmp := codec.Bytes(requestAddr, requestLen)
 	responseBuf := codec.Bytes(responseAddr, responseLen)
+	requestBuf := make([]byte, len(requestBufTmp))
+	copy(requestBuf, requestBufTmp)
 
-	var respMessage []*serialize.EasyCodecItem
-	var err error
-
-	switch method {
-	case "GetObject":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetObject(ctxId, reqItems)
-	case "PutObject":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.PutObject(ctxId, reqItems)
-	case "DeleteObject":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.DeleteObject(ctxId, reqItems)
-	case "NewIterator":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.NewIterator(ctxId, reqItems)
-	case "GetCallArgs":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.GetCallArgs(ctxId, reqItems)
-	case "SetOutput":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.SetOutput(ctxId, reqItems)
-	case "ContractCall":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.ContractCall(ctxId, reqItems, ctx.GasUsed())
-	case "LogMsg":
-		reqItems := serialize.EasyUnmarshal(requestBuf)
-		respMessage, err = s.contextService.LogMsg(ctxId, reqItems)
-	default:
-		s.contextService.logger.Errorw("no such method ", method)
-	}
-	if err != nil {
-		s.contextService.logger.Errorw("failed to call method:", method, err)
+	context, ok := s.contextService.Context(ctxId)
+	if !ok {
+		s.contextService.logger.Errorw("encounter bad ctx id. failed to call method:", method)
 		codec.SetUint32(successAddr, 1)
 		return uint32(0)
 	}
 
-	possibleResponseBuf := serialize.EasyMarshal(respMessage)
+	reqItems := serialize.EasyUnmarshal(requestBuf)
+	s.contextService.ctxId = ctxId
+	context.in = reqItems
+	context.requestBody = requestBuf
+	context.gasUsed = ctx.GasUsed()
+	switch method {
+	case "GetObject":
+		s.contextService.GetState()
+	case "PutObject":
+		s.contextService.PutState()
+	case "DeleteObject":
+		s.contextService.DeleteState()
+	case "NewIterator":
+		s.contextService.NewIterator()
+	case "GetCallArgs":
+		s.contextService.GetCallArgs()
+	case "SetOutput":
+		s.contextService.SetOutput()
+	case "ContractCall":
+		s.contextService.CallContract()
+	case "LogMsg":
+		s.contextService.LogMessage()
+	default:
+		s.contextService.logger.Errorw("no such method ", method)
+	}
+	if context.err != nil {
+		s.contextService.logger.Errorw("failed to call method:", method, context.err)
+		codec.SetUint32(successAddr, 1)
+		return uint32(0)
+	}
+
+	possibleResponseBuf := serialize.EasyMarshal(context.resp)
 
 	// fast path
-	if err != nil {
-		s.contextService.logger.Errorw("contract syscall error", "ctxid", ctxId, "method", method, "error", err)
-		msg := err.Error()
-		if len(msg) <= len(responseBuf) {
-			copy(responseBuf, msg)
-			codec.SetUint32(successAddr, 0)
-			return uint32(len(msg))
-		}
-	} else {
-		if len(possibleResponseBuf) <= len(responseBuf) {
-			copy(responseBuf, possibleResponseBuf)
-			codec.SetUint32(successAddr, 1)
-			return uint32(len(possibleResponseBuf))
-		}
+	if len(possibleResponseBuf) <= len(responseBuf) {
+		copy(responseBuf, possibleResponseBuf)
+		codec.SetUint32(successAddr, 1)
+		return uint32(len(possibleResponseBuf))
 	}
 
 	// slow path
 	var responseDesc responseDesc
-	if err != nil {
-		s.contextService.logger.Errorw("contract service call error", "ctxid", ctxId, "method", method, "error", err)
-		responseDesc.Error = true
-		responseDesc.Body = []byte(err.Error())
-	} else {
-		responseDesc.Body = possibleResponseBuf
-	}
+	responseDesc.Body = possibleResponseBuf
 	ctx.SetUserData(responseKey, responseDesc)
 	return uint32(len(responseDesc.Body))
 }
