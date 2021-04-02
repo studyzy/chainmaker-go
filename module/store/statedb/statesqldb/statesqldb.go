@@ -86,16 +86,26 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		dbName := getContractDbName(block.Header.ChainId, payload.ContractId.ContractName)
 		s.initDb(dbName) //创建KV表
 		writes := txRWSets[0].TxWrites
-		for _, write := range writes {
-			if len(write.Key) == 0 { //这是SQL语句
-				_, err := s.db.ExecSql(string(write.Value)) //运行用户自定义的建表语句
+		for _, txWrite := range writes {
+			if len(txWrite.Key) == 0 { //这是SQL语句
+				_, err := s.db.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
 				if err != nil {
+					return err
+				}
+			} else {
+				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, block.Header.BlockHeight)
+				if _, err := s.db.Save(stateInfo); err != nil {
+					s.Logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
+					s.db.RollbackDbTransaction(blockHash)
 					return err
 				}
 			}
 		}
+		s.Logger.Debugf("chain[%s]: commit state block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
 		return nil
 	}
+	//普通交易，开启事务，进行数据写入
 	tx, err := s.db.BeginDbTransaction(blockHash)
 	if err != nil {
 		return err
