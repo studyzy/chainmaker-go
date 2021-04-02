@@ -500,7 +500,7 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	if validatorsMembersInterface == nil {
 		return fmt.Errorf("current validators is nil")
 	}
-	validatorsMembers := validatorsMembersInterface.([]*consensus.GovernmentMember)
+	validatorsMembers := validatorsMembersInterface.([]*consensus.GovernanceMember)
 	for _, v := range validatorsMembers {
 		validator := &types.Validator{
 			Index:  uint64(v.Index),

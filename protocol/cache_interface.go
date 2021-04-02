@@ -34,6 +34,8 @@ type ProposalCache interface {
 	ResetProposedAt(height int64)
 	// Remove proposed block in height except the specific block.
 	KeepProposedBlock(hash []byte, height int64) []*common.Block
+	// DiscardAboveHeight Delete blocks data greater than the baseHeight
+	DiscardAboveHeight(baseHeight int64) []*common.Block
 }
 
 // Cache the latest block in ledger(DB).

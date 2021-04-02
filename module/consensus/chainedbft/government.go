@@ -49,11 +49,11 @@ func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) err
 func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 	var (
 		validators        []*types.Validator
-		members           []*consensusPb.GovernmentMember
-		validatorsMembers []*consensusPb.GovernmentMember
+		members           []*consensusPb.GovernanceMember
+		validatorsMembers []*consensusPb.GovernanceMember
 	)
 	if validators := cbi.governmentContract.GetValidators(); validators != nil {
-		validatorsMembers = validators.([]*consensusPb.GovernmentMember)
+		validatorsMembers = validators.([]*consensusPb.GovernanceMember)
 	}
 	for _, v := range validatorsMembers {
 		validators = append(validators, &types.Validator{
@@ -77,7 +77,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 			GetGovMembersValidatorCount()), int(cbi.governmentContract.GetGovMembersValidatorMinCount())),
 	}
 	if membersInterface := cbi.governmentContract.GetMembers(); membersInterface != nil {
-		members = membersInterface.([]*consensusPb.GovernmentMember)
+		members = membersInterface.([]*consensusPb.GovernanceMember)
 	}
 	for _, v := range members {
 		if v.NodeID == cbi.id {
@@ -111,7 +111,7 @@ func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
 	if validatorsInterface == nil {
 		return 0
 	}
-	validators := validatorsInterface.([]*consensusPb.GovernmentMember)
+	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
 	validator, _ := government.GetProposer(level, cbi.governmentContract.GetNodeProposeRound(), validators)
 	if validator != nil {
 		return uint64(validator.Index)

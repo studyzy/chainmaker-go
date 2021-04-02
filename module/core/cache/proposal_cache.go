@@ -8,9 +8,10 @@ package cache
 
 import (
 	"bytes"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
 	"sync"
+
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
@@ -213,6 +214,22 @@ func (pc *ProposalCache) KeepProposedBlock(hash []byte, height int64) []*commonp
 		}
 	}
 	return blocks
+}
+
+func (pc *ProposalCache) DiscardAboveHeight(baseHeight int64) []*commonpb.Block {
+	pc.rwMu.Lock()
+	defer pc.rwMu.Unlock()
+	delBlocks := make([]*commonpb.Block, 0)
+	for height, blks := range pc.lastProposedBlock {
+		if height <= baseHeight {
+			continue
+		}
+		delete(pc.lastProposedBlock, height)
+		for _, blkInfo := range blks {
+			delBlocks = append(delBlocks, blkInfo.block)
+		}
+	}
+	return delBlocks
 }
 
 // getHashType return hash type claimed in this chain.
