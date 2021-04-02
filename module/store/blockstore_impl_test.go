@@ -658,6 +658,8 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 			block6.Header.ChainId, block6.Header.BlockHeight)
 		t.Error(err)
 	}
+	binlogSavepoint, _ := bs.getLastSavepoint()
+	assert.EqualValues(t, 6, binlogSavepoint)
 	blockDBSavepoint, _ := bs.blockDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), blockDBSavepoint)
 
@@ -677,6 +679,8 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	t.Log("db recovered")
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
+	binlogSavepoint, _ = impl.getLastSavepoint()
+	assert.EqualValues(t, 6, binlogSavepoint)
 	blockDBSavepoint, _ = impl.blockDB.GetLastSavepoint()
 	assert.EqualValues(t, 6, blockDBSavepoint)
 

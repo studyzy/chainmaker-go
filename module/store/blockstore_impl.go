@@ -88,13 +88,15 @@ func NewBlockStoreImpl(chainId string,
 		logger:           logger,
 		storeConfig:      storeConfig,
 	}
-	//有SavePoint，不是空数据库，进行数据恢复
-	if _, err := blockStore.getLastSavepoint(); err != nil {
+	//binlog 有SavePoint，不是空数据库，进行数据恢复
+	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
 		//check savepoint and recover
 		err = blockStore.recover()
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		logger.Info("binlog is empty, don't need recover")
 	}
 	return blockStore, nil
 }
