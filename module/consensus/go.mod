@@ -17,7 +17,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
-	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/viper v1.7.1
