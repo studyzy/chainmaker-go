@@ -10,11 +10,13 @@ package core
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/committer"
+	"chainmaker.org/chainmaker-go/core/helper"
 	"chainmaker.org/chainmaker-go/core/proposer"
 	"chainmaker.org/chainmaker-go/core/scheduler"
 	"chainmaker.org/chainmaker-go/core/verifier"
 	"chainmaker.org/chainmaker-go/logger"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -27,12 +29,12 @@ type CoreEngine struct {
 	chainId   string             // chainId, identity of a chain
 	chainConf protocol.ChainConf // chain config
 
+	msgBus         msgbus.MessageBus       // message bus, transfer messages with other modules
 	blockProposer  protocol.BlockProposer  // block proposer, to generate new block when node is proposer
 	BlockVerifier  protocol.BlockVerifier  // block verifier, to verify block that proposer generated
 	BlockCommitter protocol.BlockCommitter // block committer, to commit block to store after consensus
 	txScheduler    protocol.TxScheduler    // transaction scheduler, schedule transactions run in vm
-
-	msgBus msgbus.MessageBus // message bus, transfer messages with other modules
+	HotStuffHelper protocol.HotStuffHelper
 
 	txPool          protocol.TxPool          // transaction pool, cache transactions to be pack in block
 	vmMgr           protocol.VmManager       // vm manager
@@ -60,6 +62,9 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 	core.quitC = make(<-chan interface{})
 
 	var err error
+	if core.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_HOTSTUFF {
+		core.HotStuffHelper = helper.NewHotStuffHelper(cf.txPool, cf.chainConf, cf.proposalCache)
+	}
 
 	// new a bock proposer
 	proposerConfig := proposer.BlockProposerConfig{
