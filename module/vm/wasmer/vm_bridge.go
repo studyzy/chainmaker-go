@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -24,14 +25,6 @@ import (
 
 // extern int sysCall(void *context, int requestHeaderPtr, int requestHeaderLen, int requestBodyPtr, int requestBodyLen);
 // extern void logMessage(void *context, int pointer, int length);
-// extern int getStateLen(void *context, int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen, int valueLenPtr);
-// extern int getState(void *context, int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen, int valuePtr, int valueLen);
-// extern int putState(void *context, int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen, int valuePtr, int valueLen);
-// extern int deleteState(void *context,  int ctxPtr, int keyPtr, int keyLen,  int fieldPtr, int fieldLen);
-// extern int successResult(void *context, int ctxPtr, int dataPtr, int dataLen);
-// extern int errorResult(void *context, int ctxPtr, int dataPtr, int dataLen);
-// extern int callContract(void *context, int ctxParameterPtr, int ctxParameterLen, int parameterPtr, int parameterLen);
-// extern int callContractLen(void *context, int ctxParameterPtr, int ctxParameterLen, int parameterPtr, int parameterLen);
 // extern int fdWrite(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdRead(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdClose(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
@@ -101,16 +94,9 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody))
 	}
 	switch method.(string) {
+	// common
 	case protocol.ContractMethodLogMessage:
 		return s.LogMessage()
-	case protocol.ContractMethodGetStateLen:
-		return s.GetStateLen()
-	case protocol.ContractMethodGetState:
-		return s.GetState()
-	case protocol.ContractMethodPutState:
-		return s.PutState()
-	case protocol.ContractMethodDeleteState:
-		return s.DeleteState()
 	case protocol.ContractMethodSuccessResult:
 		return s.SuccessResult()
 	case protocol.ContractMethodErrorResult:
@@ -119,85 +105,38 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContract()
 	case protocol.ContractMethodCallContractLen:
 		return s.CallContractLen()
+	// kv
+	case protocol.ContractMethodGetStateLen:
+		return s.GetStateLen()
+	case protocol.ContractMethodGetState:
+		return s.GetState()
+	case protocol.ContractMethodPutState:
+		return s.PutState()
+	case protocol.ContractMethodDeleteState:
+		return s.DeleteState()
+	// sql
+	case protocol.ContractMethodExecuteUpdate:
+		return s.ExecuteUpdate()
+	case protocol.ContractMethodExecuteDdl:
+		return s.ExecuteDDL()
+	case protocol.ContractMethodExecuteQuery:
+		return s.ExecuteQuery()
+	case protocol.ContractMethodExecuteQueryOne:
+		return s.ExecuteQueryOne()
+	case protocol.ContractMethodExecuteQueryOneLen:
+		return s.ExecuteQueryOneLen()
+	case protocol.ContractMethodRSHasNext:
+		return s.RSHasNext()
+	case protocol.ContractMethodRSNextLen:
+		return s.RSNextLen()
+	case protocol.ContractMethodRSNext:
+		return s.RSNext()
+	case protocol.ContractMethodRSClose:
+		return s.RSClose()
 	default:
-		log.Errorf("method is %s not match.", method)
+		log.Errorf("method[%s] is not match.", method)
 	}
 	return protocol.ContractSdkSignalResultFail
-}
-
-// GetStateLen get state length from chain
-func (s *sdkRequestCtx) GetStateLen() int32 {
-	return s.getStateCore(true)
-}
-
-// GetStateLen get state from chain
-func (s *sdkRequestCtx) GetState() int32 {
-	return s.getStateCore(false)
-}
-
-func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	if isGetLen {
-		contractName := s.Sc.ContractId.ContractName
-		value, err := s.Sc.TxSimContext.Get(contractName, protocol.GetKeyStr(key.(string), field.(string)))
-		if err != nil {
-			msg := fmt.Sprintf("method getStateCore get fail. key=%s, field=%s, error:%s", key.(string), field.(string), err.Error())
-			return s.recordMsg(msg)
-		}
-		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], IntToBytes(int32(len(value))))
-		s.Sc.GetStateCache = value
-	} else {
-		len := int32(len(s.Sc.GetStateCache))
-		if len != 0 {
-			copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+len], s.Sc.GetStateCache)
-			s.Sc.GetStateCache = nil
-		}
-	}
-	return protocol.ContractSdkSignalResultSuccess
-}
-
-// PutState put state to chain
-func (s *sdkRequestCtx) PutState() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	value, _ := serialize.GetValueFromItems(req, "value", serialize.EasyKeyType_USER)
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), value.([]byte))
-	if err != nil {
-		return s.recordMsg("method PutState put fail. " + err.Error())
-	}
-	return protocol.ContractSdkSignalResultSuccess
-}
-
-// DeleteState delete state from chain
-func (s *sdkRequestCtx) DeleteState() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Del(contractName, protocol.GetKeyStr(key.(string), field.(string)))
-	if err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	return protocol.ContractSdkSignalResultSuccess
 }
 
 // SuccessResult record the results of contract execution success
@@ -282,7 +221,7 @@ func (s *sdkRequestCtx) callContractCore(isGetLen bool) int32 {
 		return s.recordMsg("CallContract " + code.String() + ", msg:" + result.Message)
 	}
 	// set value length to memory
-	l := IntToBytes(int32(len(result.Result)))
+	l := utils.IntToBytes(int32(len(result.Result)))
 	copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], l)
 	return protocol.ContractSdkSignalResultSuccess
 }

@@ -57,7 +57,7 @@ func (c *CodeManager) lookupMemCache(keyId string) (exec.Code, bool) {
 }
 
 func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.ContractId) (string, bool) {
-	filePath := chainId + protocol.ContractStoreSeprator + contractId.ContractName
+	filePath := chainId + protocol.ContractStoreSeparator + contractId.ContractName
 	fileName := contractId.ContractVersion + ".so"
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 	if !fileExists(libPath) {
@@ -68,7 +68,7 @@ func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contr
 
 func (c *CodeManager) makeDiskCache(chainId string, contractId *commonPb.ContractId, codebuf []byte) (string, error) {
 	startTime := time.Now()
-	filePath := chainId + protocol.ContractStoreSeprator + contractId.ContractName
+	filePath := chainId + protocol.ContractStoreSeparator + contractId.ContractName
 	fileName := contractId.ContractVersion + ".so"
 	basePath := filepath.Join(c.basedir, filePath)
 	libPath := filepath.Join(c.basedir, filePath, fileName)
@@ -99,8 +99,8 @@ func (c *CodeManager) makeMemCache(contractKeyId string, libPath string,
 func (c *CodeManager) GetExecCode(chainId string, contractId *commonPb.ContractId,
 	byteCode []byte, contextService *ContextService) (exec.Code, error) {
 
-	contractKeyId := chainId + protocol.ContractStoreSeprator +
-		contractId.ContractName + protocol.ContractStoreSeprator +
+	contractKeyId := chainId + protocol.ContractStoreSeparator +
+		contractId.ContractName + protocol.ContractStoreSeparator +
 		contractId.ContractVersion
 
 	execCode, ok := c.lookupMemCache(contractKeyId)

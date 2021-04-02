@@ -136,6 +136,8 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
 	}
+	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), ",
+		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 	return nil
 }
 func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {

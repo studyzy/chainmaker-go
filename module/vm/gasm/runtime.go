@@ -43,7 +43,7 @@ func putContractDecodedMod(chainId string, contractId *commonPb.ContractId, mod 
 			modCache: lru.New(LruCacheSize),
 		}
 	}
-	modName := chainId + contractId.ContractName + protocol.ContractStoreSeprator + contractId.ContractVersion
+	modName := chainId + contractId.ContractName + protocol.ContractStoreSeparator + contractId.ContractVersion
 	inst.modCache.Add(modName, mod)
 }
 
@@ -57,7 +57,7 @@ func getContractDecodedMod(chainId string, contractId *commonPb.ContractId) *was
 		}
 	}
 
-	modName := chainId + contractId.ContractName + protocol.ContractStoreSeprator + contractId.ContractVersion
+	modName := chainId + contractId.ContractName + protocol.ContractStoreSeparator + contractId.ContractVersion
 	if mod, ok := inst.modCache.Get(modName); ok {
 		return mod.(*wasm.Module)
 	}
@@ -216,7 +216,7 @@ func newBuilder(wasiInstance *wasi.WasiInstance, waciInstance *waci.WaciInstance
 	builder.MustSetFunction(wasi.WasiModuleName, "proc_exit", wasiInstance.ProcExit)
 
 	builder.MustSetFunction(waci.WaciModuleName, "sys_call", waciInstance.SysCall)
-	builder.MustSetFunction(waci.WaciModuleName, "log_message", waciInstance.LogMessage)
+	builder.MustSetFunction(waci.WaciModuleName, "log_message", waciInstance.LogMsg)
 
 	//builder.MustSetFunction(waci.WaciModuleName, "get_state_len_from_chain", waciInstance.GetStateLen)
 	//builder.MustSetFunction(waci.WaciModuleName, "get_state_from_chain", waciInstance.GetState)

@@ -119,17 +119,17 @@ func (sc *SimContext) removeCtxPointer() {
 	vbm.remove(sc.CtxPtr)
 }
 
-var index = int32(0)
+var ctxIndex = int32(0)
 var lock sync.Mutex
 
 // putCtxPointer save SimContext to cache
 func (sc *SimContext) putCtxPointer() {
 	lock.Lock()
-	index++
-	if index > 1e8 {
-		index = 0
+	ctxIndex++
+	if ctxIndex > 1e8 {
+		ctxIndex = 0
 	}
-	sc.CtxPtr = index
+	sc.CtxPtr = ctxIndex
 	lock.Unlock()
 	vbm := GetVmBridgeManager()
 	vbm.put(sc.CtxPtr, sc)

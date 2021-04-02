@@ -196,14 +196,11 @@ func (tv *TxValidator) validateTx(txsRet map[string]*commonpb.Transaction, tx *c
 
 // IsTxHashValid, to check if transaction hash is valid
 func (tv *TxValidator) isTxHashValid(tx *commonpb.Transaction, txInPool *commonpb.Transaction) error {
-	if txInPool == nil {
-		return fmt.Errorf("unknown tx (tx:%s)", tx.Header.TxId)
-	}
 	poolTxRawHash, err := utils.CalcTxRequestHash(tv.hashType, txInPool)
 	if err != nil {
 		return fmt.Errorf("calc pool txhash error (tx:%s), %s", tx.Header.TxId, err.Error())
 	}
-	txRawHash, err := utils.CalcTxRequestHash(tv.hashType, txInPool)
+	txRawHash, err := utils.CalcTxRequestHash(tv.hashType, tx)
 	if err != nil {
 		return fmt.Errorf("calc req txhash error (tx:%s), %s", tx.Header.TxId, err.Error())
 	}

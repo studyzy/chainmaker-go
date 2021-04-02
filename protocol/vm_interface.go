@@ -32,21 +32,14 @@ const (
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
-	ContractKey           = ":K:"
-	ContractByteCode      = ":B:"
-	ContractVersion       = ":V:"
-	ContractRuntimeType   = ":R:"
-	ContractCreator       = ":C:"
-	ContractFreeze        = ":F:"
-	ContractRevoke        = ":REVOKE:"
-	ContractStoreSeprator = "#"
-
-	// user contract must implement such method
-	ContractInitMethod        = "init_contract"
-	ContractUpgradeMethod     = "upgrade"
-	ContractAllocateMethod    = "allocate"
-	ContractDeallocateMethod  = "deallocate"
-	ContractRuntimeTypeMethod = "runtime_type"
+	ContractKey            = ":K:"
+	ContractByteCode       = ":B:"
+	ContractVersion        = ":V:"
+	ContractRuntimeType    = ":R:"
+	ContractCreator        = ":C:"
+	ContractFreeze         = ":F:"
+	ContractRevoke         = ":REVOKE:"
+	ContractStoreSeparator = "#"
 
 	// special parameters passed to contract
 	ContractCreatorOrgIdParam = "__creator_org_id__"
@@ -59,16 +52,34 @@ const (
 	ContractTxIdParam         = "__tx_id__"
 	ContractContextPtrParam   = "__context_ptr__"
 
+	// user contract must implement such method
+	ContractInitMethod        = "init_contract"
+	ContractUpgradeMethod     = "upgrade"
+	ContractAllocateMethod    = "allocate"
+	ContractDeallocateMethod  = "deallocate"
+	ContractRuntimeTypeMethod = "runtime_type"
 	// method name used by smart contract sdk
+	// common
 	ContractMethodLogMessage      = "LogMessage"
-	ContractMethodGetStateLen     = "GetStateLen"
-	ContractMethodGetState        = "GetState"
-	ContractMethodPutState        = "PutState"
-	ContractMethodDeleteState     = "DeleteState"
 	ContractMethodSuccessResult   = "SuccessResult"
 	ContractMethodErrorResult     = "ErrorResult"
 	ContractMethodCallContract    = "CallContract"
 	ContractMethodCallContractLen = "CallContractLen"
+	// kv
+	ContractMethodGetStateLen = "GetStateLen"
+	ContractMethodGetState    = "GetState"
+	ContractMethodPutState    = "PutState"
+	ContractMethodDeleteState = "DeleteState"
+	// sql
+	ContractMethodExecuteQuery       = "ExecuteQuery"
+	ContractMethodExecuteQueryOne    = "ExecuteQueryOne"
+	ContractMethodExecuteQueryOneLen = "ExecuteQueryOneLen"
+	ContractMethodRSNext             = "RSNext"
+	ContractMethodRSNextLen          = "RSNextLen"
+	ContractMethodRSHasNext          = "RSHasNext"
+	ContractMethodRSClose            = "RSClose"
+	ContractMethodExecuteUpdate      = "ExecuteUpdate"
+	ContractMethodExecuteDdl         = "ExecuteDDL"
 )
 
 //VmManager manage vm runtime
@@ -82,6 +93,31 @@ type VmManager interface {
 		txContext TxSimContext, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)
 }
 
+type ContractBridgeCommon interface {
+	LogMessage() int32
+	SuccessResult() int32
+	ErrorResult() int32
+	CallContract() int32
+}
+
+type ContractBridgeKV interface {
+	ContractBridgeCommon
+	GetState() int32
+	PutState() int32
+	DeleteState() int32
+}
+
+type ContractBridgeSQL interface {
+	ContractBridgeCommon
+	ExecuteQuery() int32
+	ExecuteQueryOne() int32
+	RSHasNext() int32
+	RSNext() int32
+	RSClose() int32
+	ExecuteUpdate() int32
+	ExecuteDDL() int32
+}
+
 // GetKeyStr get state key from string
 func GetKeyStr(key string, field string) []byte {
 	return GetKey([]byte(key), []byte(field))
@@ -92,7 +128,7 @@ func GetKey(key []byte, field []byte) []byte {
 	var buf bytes.Buffer
 	buf.Write(key)
 	if len(field) > 0 {
-		buf.Write([]byte(ContractStoreSeprator))
+		buf.Write([]byte(ContractStoreSeparator))
 		buf.Write(field)
 	}
 	return buf.Bytes()

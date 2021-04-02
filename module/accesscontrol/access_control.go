@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"chainmaker.org/chainmaker-go/common/concurrentlru"
 	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/crypto/pkcs11"
@@ -24,7 +25,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"github.com/golang/groupcache/lru"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -65,10 +65,10 @@ type accessControl struct {
 	dataStore protocol.BlockchainStore
 
 	// local cache for the other members on the chain
-	memberCache *lru.Cache
+	memberCache *concurrentlru.Cache
 
 	// local cache for certificates (reduce the size of block)
-	certCache *lru.Cache
+	certCache *concurrentlru.Cache
 
 	// local cache for certificate revocation list and frozen list
 	crl        sync.Map
@@ -103,8 +103,8 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 		hashType:              chainConfig.GetCrypto().GetHash(),
 		identityType:          "",
 		dataStore:             store,
-		memberCache:           lru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
-		certCache:             lru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
+		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
+		certCache:             concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
 		crl:                   sync.Map{},
 		frozenList:            sync.Map{},
 		opts: bcx509.VerifyOptions{

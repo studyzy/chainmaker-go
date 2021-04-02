@@ -14,4 +14,10 @@ type Context struct {
 	ContractResult *commonPb.ContractResult
 
 	callArgs []*serialize.EasyCodecItem
+
+	gasUsed     uint64
+	requestBody []byte
+	in          []*serialize.EasyCodecItem
+	resp        []*serialize.EasyCodecItem
+	err         error
 }
