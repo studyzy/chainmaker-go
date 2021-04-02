@@ -115,22 +115,26 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 	case protocol.ContractMethodDeleteState:
 		return s.DeleteState()
 	// sql
-	case protocol.ContractMethodExecuteUpdateSql:
+	case protocol.ContractMethodExecuteUpdate:
 		return s.ExecuteUpdate()
-	case protocol.ContractMethodExecuteDdlSql:
+	case protocol.ContractMethodExecuteDdl:
 		return s.ExecuteDDL()
-	case protocol.ContractMethodExecuteQuerySql:
+	case protocol.ContractMethodExecuteQuery:
 		return s.ExecuteQuery()
-	case protocol.ContractMethodQueryIteratorHasNext:
+	case protocol.ContractMethodExecuteQueryOne:
+		return s.ExecuteQueryOne()
+	case protocol.ContractMethodExecuteQueryOneLen:
+		return s.ExecuteQueryOneLen()
+	case protocol.ContractMethodRSHasNext:
 		return s.RSHasNext()
-	case protocol.ContractMethodQueryIteratorNextLen:
+	case protocol.ContractMethodRSNextLen:
 		return s.RSNextLen()
-	case protocol.ContractMethodQueryIteratorNext:
+	case protocol.ContractMethodRSNext:
 		return s.RSNext()
-	case protocol.ContractMethodQueryIteratorClose:
+	case protocol.ContractMethodRSClose:
 		return s.RSClose()
 	default:
-		log.Errorf("method is %s not match.", method)
+		log.Errorf("method[%s] is not match.", method)
 	}
 	return protocol.ContractSdkSignalResultFail
 }

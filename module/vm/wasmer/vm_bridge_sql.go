@@ -32,6 +32,11 @@ func (s *sdkRequestCtx) ExecuteQuery() int32 {
 }
 
 // ExecuteQuery execute query sql, return result set index
+func (s *sdkRequestCtx) ExecuteQueryOneLen() int32 {
+	return 0
+}
+
+// ExecuteQuery execute query sql, return result set index
 func (s *sdkRequestCtx) ExecuteQueryOne() int32 {
 	return 0
 }
@@ -140,6 +145,7 @@ func (s *sdkRequestCtx) ExecuteUpdate() int32 {
 //
 // You must have a primary key to create a table
 func (s *sdkRequestCtx) ExecuteDDL() int32 {
+	fmt.Println("=======================ExecuteDDL======================")
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -147,12 +153,13 @@ func (s *sdkRequestCtx) ExecuteDDL() int32 {
 	sql := sqlI.(string)
 	ptr := valuePtr.(int32)
 
-	// TODO get query sql result set index
 	{
-		affectedCount := 1 //
-		fmt.Println("affectedCount:", affectedCount, "ptr:", ptr, "sql:", sql)
-
-		copy(s.Memory[ptr:ptr+4], IntToBytes(int32(affectedCount)))
+		if err := s.Sc.TxSimContext.GetBlockchainStore().ExecDdlSql(s.Sc.ContractId.ContractName, sql); err != nil {
+			fmt.Println("ExecuteDDL error")
+			panic(err)
+		}
+		fmt.Println("ExecuteDDL success")
+		copy(s.Memory[ptr:ptr+4], IntToBytes(0))
 	}
 	return protocol.ContractSdkSignalResultSuccess
 }

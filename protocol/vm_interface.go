@@ -71,13 +71,15 @@ const (
 	ContractMethodPutState    = "PutState"
 	ContractMethodDeleteState = "DeleteState"
 	// sql
-	ContractMethodExecuteQuerySql      = "ExecuteQuerySql"
-	ContractMethodQueryIteratorNext    = "RSNext"
-	ContractMethodQueryIteratorNextLen = "RSNextLen"
-	ContractMethodQueryIteratorHasNext = "RSHasNext"
-	ContractMethodQueryIteratorClose   = "RSClose"
-	ContractMethodExecuteUpdateSql     = "ExecuteUpdate"
-	ContractMethodExecuteDdlSql        = "ExecuteDDL"
+	ContractMethodExecuteQuery       = "ExecuteQuery"
+	ContractMethodExecuteQueryOne    = "ExecuteQueryOne"
+	ContractMethodExecuteQueryOneLen = "ExecuteQueryOneLen"
+	ContractMethodRSNext             = "RSNext"
+	ContractMethodRSNextLen          = "RSNextLen"
+	ContractMethodRSHasNext          = "RSHasNext"
+	ContractMethodRSClose            = "RSClose"
+	ContractMethodExecuteUpdate      = "ExecuteUpdate"
+	ContractMethodExecuteDdl         = "ExecuteDDL"
 )
 
 //VmManager manage vm runtime

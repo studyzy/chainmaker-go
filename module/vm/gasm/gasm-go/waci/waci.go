@@ -95,19 +95,19 @@ func (w *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 		case protocol.ContractMethodDeleteState:
 			return w.DeleteState()
 		// sql
-		//case protocol.ContractMethodExecuteUpdateSql:
+		//case protocol.ContractMethodExecuteUpdate:
 		//	return w.ExecuteUpdate()
-		//case protocol.ContractMethodExecuteDdlSql:
+		//case protocol.ContractMethodExecuteDdl:
 		//	return w.ExecuteDDL()
-		//case protocol.ContractMethodExecuteQuerySql:
+		//case protocol.ContractMethodExecuteQuery:
 		//	return w.ExecuteQuery()
-		//case protocol.ContractMethodQueryIteratorHasNext:
+		//case protocol.ContractMethodRSHasNext:
 		//	return w.RSHasNext()
-		//case protocol.ContractMethodQueryIteratorNextLen:
+		//case protocol.ContractMethodRSNextLen:
 		//	return w.RSNextLen()
-		//case protocol.ContractMethodQueryIteratorNext:
+		//case protocol.ContractMethodRSNext:
 		//	return w.RSNext()
-		//case protocol.ContractMethodQueryIteratorClose:
+		//case protocol.ContractMethodRSClose:
 		//	return w.RSClose()
 		default:
 			w.Log.Errorf("method is %s not match.", method)
