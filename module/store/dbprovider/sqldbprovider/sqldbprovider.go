@@ -13,6 +13,7 @@ import (
 	"errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/logger"
+	"path/filepath"
 	"strings"
 
 	"fmt"
@@ -81,7 +82,7 @@ func parseSqlDbType(str string) (types.EngineType, error) {
 }
 
 // NewSqlDBProvider construct a new SqlDBHandle
-func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Logger) *SqlDBHandle {
+func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Logger) *SqlDBHandle {
 	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx), log: log}
 	sqlType, err := parseSqlDbType(conf.SqlDbType)
 	if err != nil {
@@ -99,7 +100,11 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		provider.db = db
 		provider.contextDbName = "mysql" //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
-		db, err := gorm.Open(sqlite.Open(conf.Dsn), &gorm.Config{
+		dbPath := conf.Dsn
+		if !strings.Contains(dbPath, ":memory:") { //不是内存数据库模式，则需要在路径中包含chainId
+			dbPath = filepath.Join(dbPath, chainId, "sqlite.db")
+		}
+		db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Info),
 		})
 		if err != nil {

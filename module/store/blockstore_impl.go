@@ -59,6 +59,9 @@ func NewBlockStoreImpl(chainId string,
 	storeConfig *localconf.StorageConfig,
 	binLog binlog.BinLoger,
 	logger protocol.Logger) (*BlockStoreImpl, error) {
+	if logger == nil { //init logger
+		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
+	}
 	if binLog == nil {
 		walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)
 		writeAsync := storeConfig.LogDBWriteAsync
@@ -69,12 +72,11 @@ func NewBlockStoreImpl(chainId string,
 		if err != nil {
 			panic(fmt.Sprintf("open wal failed, path:%s, error:%s", walPath, err))
 		}
+		logger.Infof("open binlog file:%s", walPath)
 		binLog = writeLog
 	}
 	nWorkers := runtime.NumCPU()
-	if logger == nil { //init logger
-		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
-	}
+
 	blockStore := &BlockStoreImpl{
 		blockDB:          blockDB,
 		stateDB:          stateDB,
