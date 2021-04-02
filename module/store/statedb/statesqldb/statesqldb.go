@@ -141,7 +141,6 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 			return nil, err
 		}
 	}
-	var stateInfo StateInfo
 	sql := "select object_value from state_infos where contract_name=? and object_key=?"
 
 	res, err := s.db.QuerySql(sql, contractName, key)
@@ -149,12 +148,17 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 		s.Logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
 	}
-	err = res.ScanObject(&stateInfo)
+	if res == nil {
+		return nil, nil
+	}
+	var stateValue []byte
+
+	err = res.ScanColumns(&stateValue)
 	if err != nil {
 		s.Logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
 	}
-	return stateInfo.ObjectValue, nil
+	return stateValue, nil
 }
 
 // SelectObject returns an iterator that contains all the key-values between given key ranges.

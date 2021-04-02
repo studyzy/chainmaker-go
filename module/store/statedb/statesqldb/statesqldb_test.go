@@ -212,8 +212,11 @@ func TestStateSqlDB_ReadObject(t *testing.T) {
 	db.CommitBlock(block1)
 	value, err := db.ReadObject(block1.TxRWSets[0].TxWrites[0].ContractName, block1.TxRWSets[0].TxWrites[0].Key)
 	assert.Nil(t, err)
-	//assert.Equal(t, block1.TxRWSets[0].TxWrites[0].Value, value)
-	t.Logf("%s", string(value))
+	assert.Equal(t, block1.TxRWSets[0].TxWrites[0].Value, value)
+	//t.Logf("%s", string(value))
+	value, err = db.ReadObject(block1.TxRWSets[0].TxWrites[0].ContractName, []byte("another key"))
+	assert.Nil(t, err)
+	assert.Nil(t, value)
 }
 
 //func TestStateSqlDB_GetLastSavepoint(t *testing.T) {
