@@ -15,6 +15,7 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"github.com/tidwall/wal"
 	"path/filepath"
 
 	"os"
@@ -702,4 +703,16 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 		assert.Equal(t, txRWSets6[i].String(), blockWithRWSets.TxRWSets[i].String())
 	}
 	s.Close()
+}
+func TestWriteBinlog(t *testing.T) {
+	walPath := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Unix()), logPath)
+	writeAsync := true
+	walOpt := &wal.Options{
+		NoSync: writeAsync,
+	}
+	writeLog, err := wal.Open(walPath, walOpt)
+	assert.Nil(t, err)
+
+	err = writeLog.Write(1, []byte("100"))
+	assert.Nil(t, err)
 }

@@ -220,17 +220,19 @@ func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
 	sql := "select max(block_height) from block_infos"
 	row, err := b.db.QuerySingle(sql)
 	if err != nil {
+		b.Logger.Errorf("get block sqldb save point error:%s", err.Error())
 		return 0, err
 	}
-	var height *uint64
+	if row == nil {
+		return 0, nil
+	}
+	var height uint64
 	err = row.ScanColumns(&height)
 	if err != nil {
 		return 0, err
 	}
-	if height == nil {
-		return 0, nil
-	}
-	return *height, nil
+
+	return height, nil
 }
 
 // GetBlockByTx returns a block which contains a tx.
