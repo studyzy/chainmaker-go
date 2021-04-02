@@ -7,8 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package waci
 
 import (
-	"bytes"
-	"encoding/binary"
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -35,7 +34,7 @@ type WaciInstance struct {
 }
 
 // LogMessage print log to file
-func (w *WaciInstance) LogMessage(vm *wasm.VirtualMachine) reflect.Value {
+func (w *WaciInstance) LogMsg(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(msgPtr int32, msgLen int32) {
 		msg := vm.Memory[msgPtr : msgPtr+msgLen]
 		w.Log.Debugf("waci log>> [%s] %s", w.TxSimContext.GetTx().Header.TxId, msg)
@@ -43,7 +42,7 @@ func (w *WaciInstance) LogMessage(vm *wasm.VirtualMachine) reflect.Value {
 }
 
 // LogMessage print log to file
-func (w *WaciInstance) LogMsg() int32 {
+func (w *WaciInstance) LogMessage() int32 {
 	w.Log.Debugf("waci log>> [%s] %s", w.TxSimContext.GetTx().Header.TxId, string(w.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
@@ -75,16 +74,9 @@ func (w *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return w.recordMsg(w.ContractResult, msg)
 		}
 		switch method.(string) {
+		// common
 		case protocol.ContractMethodLogMessage:
-			return w.LogMsg()
-		case protocol.ContractMethodGetStateLen:
-			return w.GetStateLen()
-		case protocol.ContractMethodGetState:
-			return w.GetState()
-		case protocol.ContractMethodPutState:
-			return w.PutState()
-		case protocol.ContractMethodDeleteState:
-			return w.DeleteState()
+			return w.LogMessage()
 		case protocol.ContractMethodSuccessResult:
 			return w.SuccessResult()
 		case protocol.ContractMethodErrorResult:
@@ -93,6 +85,30 @@ func (w *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return w.CallContract()
 		case protocol.ContractMethodCallContractLen:
 			return w.CallContractLen()
+		// kv
+		case protocol.ContractMethodGetStateLen:
+			return w.GetStateLen()
+		case protocol.ContractMethodGetState:
+			return w.GetState()
+		case protocol.ContractMethodPutState:
+			return w.PutState()
+		case protocol.ContractMethodDeleteState:
+			return w.DeleteState()
+		// sql
+		//case protocol.ContractMethodExecuteUpdateSql:
+		//	return w.ExecuteUpdate()
+		//case protocol.ContractMethodExecuteDdlSql:
+		//	return w.ExecuteDDL()
+		//case protocol.ContractMethodExecuteQuerySql:
+		//	return w.ExecuteQuery()
+		//case protocol.ContractMethodQueryIteratorHasNext:
+		//	return w.RSHasNext()
+		//case protocol.ContractMethodQueryIteratorNextLen:
+		//	return w.RSNextLen()
+		//case protocol.ContractMethodQueryIteratorNext:
+		//	return w.RSNext()
+		//case protocol.ContractMethodQueryIteratorClose:
+		//	return w.RSClose()
 		default:
 			w.Log.Errorf("method is %s not match.", method)
 		}
@@ -128,7 +144,7 @@ func (w *WaciInstance) getStateCore(isGetLen bool) int32 {
 			msg := fmt.Sprintf("method getStateCore get fail. key=%s, field=%s, error:%s", key.(string), field.(string), err.Error())
 			return w.recordMsg(w.ContractResult, msg)
 		}
-		copy(w.Vm.Memory[valuePtrInt:valuePtrInt+4], IntToBytes(int32(len(value))))
+		copy(w.Vm.Memory[valuePtrInt:valuePtrInt+4], utils.IntToBytes(int32(len(value))))
 		w.GetStateCache = value
 	} else {
 		len := len(w.GetStateCache)
@@ -257,15 +273,9 @@ func (w *WaciInstance) callContractCore(isGetLen bool) int32 {
 		return w.recordMsg(w.ContractResult, msg)
 	}
 	// set value length to memory
-	l := IntToBytes(int32(len(result.Result)))
+	l := utils.IntToBytes(int32(len(result.Result)))
 	copy(w.Vm.Memory[valuePtrInt:valuePtrInt+4], l)
 	return protocol.ContractSdkSignalResultSuccess
-}
-
-func IntToBytes(x int32) []byte {
-	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.LittleEndian, x)
-	return bytesBuffer.Bytes()
 }
 
 func (w *WaciInstance) recordMsg(r *commonPb.ContractResult, msg string) int32 {
