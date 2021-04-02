@@ -4,20 +4,24 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package historymysqldb
+package resultsqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"gotest.tools/assert"
-	//"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+var log = &logger.GoLogger{}
 
 func generateBlockHash(chainId string, height int64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
@@ -29,7 +33,7 @@ func generateTxId(chainId string, height int64, index int) string {
 	return hex.EncodeToString(txIdBytes[:32])
 }
 
-func createConfigBlock(chainId string, height int64) *commonPb.Block {
+func createConfigBlock(chainId string, height int64) *storePb.BlockWithRWSet {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -56,7 +60,10 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 
 	block.Header.BlockHash = generateBlockHash(chainId, height)
 	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
-	return block
+	return &storePb.BlockWithRWSet{
+		Block:    block,
+		TxRWSets: []*commonPb.TxRWSet{},
+	}
 }
 
 func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.BlockWithRWSet {
@@ -148,49 +155,57 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
-func TestMain(m *testing.M) {
-	fmt.Println("begin")
-	db, err := NewHistoryMysqlDB(testChainId)
-	if err != nil {
-		panic("faild to open mysql")
-	}
-	// clear data
-	historyMysqlDB := db.(*HistoryMysqlDB)
-	historyMysqlDB.db.Migrator().DropTable(&HistoryInfo{})
-	m.Run()
-	fmt.Println("end")
+//
+//func TestMain(m *testing.M) {
+//	fmt.Println("begin")
+//	db, err := NewHistoryMysqlDB(testChainId, log)
+//	if err != nil {
+//		panic("faild to open mysql")
+//	}
+//	// clear data
+//	historyMysqlDB := db.(*ResultSqlDB)
+//	historyMysqlDB.db.Migrator().DropTable(&HistoryInfo{})
+//	m.Run()
+//	fmt.Println("end")
+//}
+
+func initProvider() *sqldbprovider.SqlDBHandle {
+	conf := &localconf.SqlDbConfig{}
+	conf.Dsn = ":memory:"
+	conf.SqlDbType = "sqlite"
+	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
+	return p
 }
 
-func TestHistoryMysqlDB_CommitBlock(t *testing.T) {
-	db, err := NewHistoryMysqlDB(testChainId)
-	assert.NilError(t, err)
+//初始化DB并同时初始化创世区块
+func initSqlDb() *ResultSqlDB {
+	db, _ := newResultSqlDB(testChainId, initProvider(), log)
+	_, blockInfo, _ := serialization.SerializeBlock(block0)
+	db.InitGenesis(blockInfo)
+	return db
+}
+
+func TestResultSqlDB_CommitBlock(t *testing.T) {
+	db := initSqlDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
 	err = db.CommitBlock(blockInfo)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 }
 
-func TestHistoryMysqlDB_GetTxRWSet(t *testing.T) {
-	db, err := NewHistoryMysqlDB(testChainId)
-	assert.NilError(t, err)
-	for i, tx := range block1.Block.Txs {
-		rwSets, err := db.GetTxRWSet(tx.Header.TxId)
-		assert.NilError(t, err)
-		assert.Equal(t, block1.TxRWSets[i].String(), rwSets.String())
-	}
-}
-
-func TestHistoryMysqlDB_GetLastSavepoint(t *testing.T) {
-	db, err := NewHistoryMysqlDB(testChainId)
-	assert.NilError(t, err)
+func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
+	db := initSqlDb()
+	_, block1, err := serialization.SerializeBlock(block1)
+	err = db.CommitBlock(block1)
+	assert.Nil(t, err)
 	height, err := db.GetLastSavepoint()
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	assert.Equal(t, uint64(block1.Block.Header.BlockHeight), height)
 
 	_, block2, err := serialization.SerializeBlock(block2)
 	err = db.CommitBlock(block2)
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	height, err = db.GetLastSavepoint()
-	assert.NilError(t, err)
+	assert.Nil(t, err)
 	assert.Equal(t, uint64(block2.Block.Header.BlockHeight), height)
 }

@@ -29,7 +29,9 @@ type Iterator interface {
 
 // BlockchainStore provides handle to store instances
 type BlockchainStore interface {
-
+	StateSqlOperation
+	//InitGenesis 初始化创世单元到数据库
+	InitGenesis(genesisBlock *store.BlockWithRWSet) error
 	// PutBlock commits the block and the corresponding rwsets in an atomic operation
 	PutBlock(block *common.Block, txRWSets []*common.TxRWSet) error
 
@@ -84,7 +86,61 @@ type BlockchainStore interface {
 	// Close closes all the store db instances and releases any resources held by BlockchainStore
 	Close() error
 }
+type StateSqlOperation interface {
+	//不在事务中，直接查询状态数据库，返回一行结果
+	QuerySingle(contractName,sql string, values ...interface{}) ( SqlRow, error)
+	//不在事务中，直接查询状态数据库，返回多行结果
+	QueryMulti(contractName,sql string, values ...interface{}) (SqlRows, error)
+	//执行建表、修改表等DDL语句，不得在事务中运行
+	ExecDdlSql(contractName,sql string) error
+	//启用一个事务
+	BeginDbTransaction(txName string) (SqlDBTransaction,error)
+	//根据事务名，获得一个已经启用的事务
+	GetDbTransaction(txName string) (SqlDBTransaction,error)
+	//提交一个事务
+	CommitDbTransaction(txName string) error
+	//回滚一个事务
+	RollbackDbTransaction(txName string) error
+}
 
+type SqlDBHandle interface {
+	DBHandle
+	CreateDatabaseIfNotExist(dbName string) error
+	ChangeContextDb(dbName string) error
+	CreateTableIfNotExist(obj interface{}) error
+	Save(value interface{}) (int64,error)
+	ExecSql(sql string, values ...interface{}) (int64, error)
+	QuerySingle(sql string, values ...interface{}) (SqlRow, error)
+	QueryMulti(sql string, values ...interface{}) (SqlRows, error)
+	BeginDbTransaction(txName string) (SqlDBTransaction,error)
+	GetDbTransaction(txName string) (SqlDBTransaction,error)
+	CommitDbTransaction(txName string) error
+	RollbackDbTransaction(txName string) error
+}
+type SqlDBTransaction interface {
+	ChangeContextDb(dbName string) error
+	Save(value interface{}) (int64,error)
+	ExecSql(sql string, values ...interface{}) (int64, error)
+	QuerySql(sql string, values ...interface{}) (SqlRow, error)
+	QueryTableSql(sql string, values ...interface{}) (SqlRows, error)
+	//Commit() error
+	//Rollback() error
+	BeginDbSavePoint(savePointName string) error
+	RollbackDbSavePoint(savePointName string) error
+}
+
+type SqlRow interface {
+	ScanColumns(dest ...interface{}) error
+	ScanObject(dest interface{}) error
+	Data()(map[string]string, error)
+}
+type SqlRows interface {
+	Next() bool
+	ScanColumns(dest ...interface{}) error
+	ScanObject(dest interface{}) error
+	Data()(map[string]string, error)
+	Close() error
+}
 // DBHandle is an handle to a db
 type DBHandle interface {
 	// Get returns the value for the given key, or returns nil if none exists
@@ -108,6 +164,8 @@ type DBHandle interface {
 
 	// NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
 	NewIteratorWithPrefix(prefix []byte) Iterator
+	Close() error
+
 }
 
 // StoreBatcher used to cache key-values that commit in a atomic operation

@@ -4,20 +4,21 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package historydb
+package resultdb
 
 import (
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
-// HistoryDB provides handle to rwSets instances
-type HistoryDB interface {
+// ResultDB provides handle to rwSets instances
+type ResultDB interface {
 	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
 	// CommitBlock commits the block rwsets in an atomic operation
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-	//GetTxRWSet(contractName string,key []byte) ([], error)
+	GetTxRWSet(txid string) (*commonPb.TxRWSet, error)
 
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)

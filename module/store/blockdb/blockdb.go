@@ -14,9 +14,14 @@ import (
 
 // BlockDB provides handle to block and tx instances
 type BlockDB interface {
+	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
+	//SaveBlockHeader 用于SPV节点只存储区块头的场景
+	SaveBlockHeader(header *commonPb.BlockHeader) error
+	//GetBlockHeaderByHash(blockHash []byte) (*commonPb.BlockHeader, error)
+	//GetBlockHeaderByHeight(blockHash []byte) (*commonPb.BlockHeader, error)
 
 	// CommitBlock commits the block and the corresponding rwsets in an atomic operation
-	CommitBlock(block *serialization.BlockWithSerializedInfo) error
+	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 	GetBlockByHash(blockHash []byte) (*commonPb.Block, error)

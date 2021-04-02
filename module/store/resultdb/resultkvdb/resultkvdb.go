@@ -4,44 +4,46 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package historykvdb
+package resultkvdb
 
 import (
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"encoding/binary"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
-	historyDBName         = ""
-	txRWSetIdxKeyPrefix   = 'r'
-	historyDBSavepointKey = "historySavepointKey"
+	historyDBName        = ""
+	txRWSetIdxKeyPrefix  = 'r'
+	resultDBSavepointKey = "resultSavepointKey"
 )
 
-// HistoryKvDB provider a implementation of `historydb.HistoryDB`
+// ResultKvDB provider a implementation of `historydb.HistoryDB`
 // This implementation provides a key-value based data model
-type HistoryKvDB struct {
+type ResultKvDB struct {
 	DbHandle protocol.DBHandle
 	Cache    *cache.StoreCacheMgr
 
 	Logger protocol.Logger
 }
 
-func (h *HistoryKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+func (h *ResultKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	return h.CommitBlock(genesisBlock)
 }
 
 // CommitBlock commits the block rwsets in an atomic operation
-func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {
+func (h *ResultKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {
 	batch := types.NewUpdateBatch()
 	// 1. last block height
 	block := blockInfo.Block
 	lastBlockNumBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(lastBlockNumBytes, uint64(block.Header.BlockHeight))
-	batch.Put([]byte(historyDBSavepointKey), lastBlockNumBytes)
+	batch.Put([]byte(resultDBSavepointKey), lastBlockNumBytes)
 
 	txRWSets := blockInfo.TxRWSets
 	for index, txRWSet := range txRWSets {
@@ -60,26 +62,26 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 }
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-//func (h *HistoryKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-//	txRWSetKey := constructTxRWSetIDKey(txId)
-//	bytes, err := h.get(txRWSetKey)
-//	if err != nil {
-//		return nil, err
-//	} else if bytes == nil {
-//		return nil, nil
-//	}
-//
-//	var txRWSet commonPb.TxRWSet
-//	err = proto.Unmarshal(bytes, &txRWSet)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return &txRWSet, nil
-//}
+func (h *ResultKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
+	txRWSetKey := constructTxRWSetIDKey(txId)
+	bytes, err := h.get(txRWSetKey)
+	if err != nil {
+		return nil, err
+	} else if bytes == nil {
+		return nil, nil
+	}
+
+	var txRWSet commonPb.TxRWSet
+	err = proto.Unmarshal(bytes, &txRWSet)
+	if err != nil {
+		return nil, err
+	}
+	return &txRWSet, nil
+}
 
 // GetLastSavepoint returns the last block height
-func (h *HistoryKvDB) GetLastSavepoint() (uint64, error) {
-	bytes, err := h.get([]byte(historyDBSavepointKey))
+func (h *ResultKvDB) GetLastSavepoint() (uint64, error) {
+	bytes, err := h.get([]byte(resultDBSavepointKey))
 	if err != nil {
 		return 0, err
 	} else if bytes == nil {
@@ -90,12 +92,12 @@ func (h *HistoryKvDB) GetLastSavepoint() (uint64, error) {
 }
 
 // Close is used to close database
-func (h *HistoryKvDB) Close() {
-	h.Logger.Info("close history kv db")
+func (h *ResultKvDB) Close() {
+	h.Logger.Info("close result kv db")
 	h.DbHandle.Close()
 }
 
-func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (h *ResultKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
 	h.Cache.AddBlock(blockHeight, batch)
 	go func() {
@@ -109,7 +111,7 @@ func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher)
 	return nil
 }
 
-func (h *HistoryKvDB) get(key []byte) ([]byte, error) {
+func (h *ResultKvDB) get(key []byte) ([]byte, error) {
 	//get from cache
 	value, exist := h.Cache.Get(string(key))
 	if exist {
@@ -119,7 +121,7 @@ func (h *HistoryKvDB) get(key []byte) ([]byte, error) {
 	return h.DbHandle.Get(key)
 }
 
-func (h *HistoryKvDB) has(key []byte) (bool, error) {
+func (h *ResultKvDB) has(key []byte) (bool, error) {
 	//check has from cache
 	isDelete, exist := h.Cache.Has(string(key))
 	if exist {

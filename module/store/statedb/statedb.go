@@ -13,7 +13,7 @@ import (
 
 // StateDB provides handle to world state instances
 type StateDB interface {
-
+	InitGenesis(genesisBlock *storePb.BlockWithRWSet) error
 	// CommitBlock commits the state in an atomic operation
 	CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error
 
@@ -29,4 +29,18 @@ type StateDB interface {
 
 	// Close is used to close database
 	Close()
+	//不在事务中，直接查询状态数据库，返回一行结果
+	QuerySql(contractName, sql string, values ...interface{}) (protocol.SqlRow, error)
+	//不在事务中，直接查询状态数据库，返回多行结果
+	QueryTableSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error)
+	//执行DDL语句
+	ExecDdlSql(contractName, sql string) error
+	//启用一个事务
+	BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error)
+	//根据事务名，获得一个已经启用的事务
+	GetDbTransaction(txName string) (protocol.SqlDBTransaction, error)
+	//提交一个事务
+	CommitDbTransaction(txName string) error
+	//回滚一个事务
+	RollbackDbTransaction(txName string) error
 }
