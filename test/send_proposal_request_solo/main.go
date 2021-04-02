@@ -46,7 +46,7 @@ const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
 	Port           = 12301
-	certPathPrefix = "../../config"
+	certPathPrefix = "../../config-sql"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
