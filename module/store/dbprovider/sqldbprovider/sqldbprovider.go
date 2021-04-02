@@ -13,6 +13,7 @@ import (
 	"errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/logger"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -102,13 +103,15 @@ func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Lo
 	} else if sqlType == types.Sqlite {
 		dbPath := conf.Dsn
 		if !strings.Contains(dbPath, ":memory:") { //不是内存数据库模式，则需要在路径中包含chainId
-			dbPath = filepath.Join(dbPath, chainId, "sqlite.db")
+			dbPath = filepath.Join(dbPath, chainId)
+			createDirIfNotExist(dbPath)
+			dbPath = filepath.Join(dbPath, "sqlite.db")
 		}
 		db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 			Logger: logger.Default.LogMode(logger.Info),
 		})
 		if err != nil {
-			panic(fmt.Sprintf("failed to open mysql:%s", err))
+			panic(fmt.Sprintf("failed to open sqlite path:%s,get error:%s", dbPath, err))
 		}
 		provider.db = db
 	} else {
@@ -131,6 +134,20 @@ func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Lo
 		LogLevel: logLevel,
 	})
 	return provider
+}
+func createDirIfNotExist(path string) error {
+	_, err := os.Stat(path)
+	if err == nil {
+		return nil
+	}
+	if os.IsNotExist(err) {
+		// 创建文件夹
+		err := os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type sqlLogger struct {
