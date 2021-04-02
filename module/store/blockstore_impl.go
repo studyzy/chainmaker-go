@@ -14,7 +14,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
-	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -43,7 +42,7 @@ type BlockStoreImpl struct {
 	resultDB  resultdb.ResultDB
 	wal       binlog.BinLoger
 	//一个本地数据库，用于对外提供一些本节点的数据存储服务
-	commonDB         dbprovider.Provider
+	commonDB         protocol.DBHandle
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
 	storeConfig      *localconf.StorageConfig
@@ -55,7 +54,7 @@ func NewBlockStoreImpl(chainId string,
 	stateDB statedb.StateDB,
 	historyDB historydb.HistoryDB,
 	resultDB resultdb.ResultDB,
-	commonDB dbprovider.Provider,
+	commonDB protocol.DBHandle,
 	storeConfig *localconf.StorageConfig,
 	binLog binlog.BinLoger,
 	logger protocol.Logger) (*BlockStoreImpl, error) {
@@ -370,7 +369,7 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 
 // GetDBHandle returns the database handle for  given dbName(chainId)
 func (bs *BlockStoreImpl) GetDBHandle(dbName string) protocol.DBHandle {
-	return bs.commonDB.GetDBHandle(dbName)
+	return bs.commonDB
 }
 
 // Close is used to close database

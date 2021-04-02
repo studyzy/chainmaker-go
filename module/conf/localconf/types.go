@@ -126,16 +126,55 @@ type blockchainConfig struct {
 
 type StorageConfig struct {
 	//默认的Leveldb配置，如果每个DB有不同的设置，可以在自己的DB中进行设置
-	LevelDbConfig
+	StorePath            string    `mapstructure:"store_path"`
+	WriteBufferSize      int       `mapstructure:"write_buffer_size"`
+	BloomFilterBits      int       `mapstructure:"bloom_filter_bits"`
+	BlockWriteBufferSize int       `mapstructure:"block_write_buffer_size"`
 	//数据库模式：light只存区块头,normal存储区块头和交易以及生成的State,full存储了区块头、交易、状态和交易收据（读写集、日志等）
 	//Mode string `mapstructure:"mode"`
 	DisableHistoryDB bool     `mapstructure:"disable_historydb"`
 	DisableResultDB  bool     `mapstructure:"disable_resultdb"`
 	LogDBWriteAsync  bool     `mapstructure:"logdb_write_async"`
-	BlockDbConfig    DbConfig `mapstructure:"blockdb_config"`
-	StateDbConfig    DbConfig `mapstructure:"statedb_config"`
-	HistoryDbConfig  DbConfig `mapstructure:"historydb_config"`
-	ResultDbConfig   DbConfig `mapstructure:"resultdb_config"`
+	BlockDbConfig    *DbConfig `mapstructure:"blockdb_config"`
+	StateDbConfig    *DbConfig `mapstructure:"statedb_config"`
+	HistoryDbConfig  *DbConfig `mapstructure:"historydb_config"`
+	ResultDbConfig   *DbConfig `mapstructure:"resultdb_config"`
+}
+func (config *StorageConfig) GetBlockDbConfig() *DbConfig{
+	if config.BlockDbConfig==nil{
+		return config.GetDefaultDBConfig()
+	}
+	return config.BlockDbConfig
+}
+func (config *StorageConfig) GetStateDbConfig() *DbConfig{
+	if config.StateDbConfig==nil{
+		return config.GetDefaultDBConfig()
+	}
+	return config.StateDbConfig
+}
+func (config *StorageConfig) GetHistoryDbConfig() *DbConfig{
+	if config.HistoryDbConfig==nil{
+		return config.GetDefaultDBConfig()
+	}
+	return config.HistoryDbConfig
+}
+func (config *StorageConfig) GetResultDbConfig() *DbConfig{
+	if config.ResultDbConfig==nil{
+		return config.GetDefaultDBConfig()
+	}
+	return config.ResultDbConfig
+}
+func (config *StorageConfig) GetDefaultDBConfig() *DbConfig{
+	lconfig:=&LevelDbConfig{
+		StorePath:            config.StorePath,
+		WriteBufferSize:      config.WriteBufferSize,
+		BloomFilterBits:      config.BloomFilterBits,
+		BlockWriteBufferSize: config.WriteBufferSize,
+	}
+	return &DbConfig{
+		DbType:        "leveldb",
+		LevelDbConfig: lconfig,
+	}
 }
 type DbConfig struct{
 	//leveldb,rocksdb,sql

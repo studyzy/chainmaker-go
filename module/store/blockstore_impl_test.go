@@ -67,7 +67,7 @@ func getSqlConfig() *localconf.StorageConfig {
 		Dsn:       ":memory:",
 	}
 
-	dbConfig := localconf.DbConfig{
+	dbConfig := &localconf.DbConfig{
 		DbType:      "sql",
 		SqlDbConfig: sqlconfig,
 	}
@@ -86,7 +86,7 @@ func getMysqlConfig() *localconf.StorageConfig {
 		Dsn:       "root:123456@tcp(127.0.0.1)/",
 	}
 
-	dbConfig := localconf.DbConfig{
+	dbConfig := &localconf.DbConfig{
 		DbType:      "sql",
 		SqlDbConfig: sqlconfig,
 	}
@@ -105,7 +105,7 @@ func getlvldbConfig() *localconf.StorageConfig {
 	lvlConfig := &localconf.LevelDbConfig{
 		StorePath: path,
 	}
-	dbConfig := localconf.DbConfig{
+	dbConfig := &localconf.DbConfig{
 		DbType:        "leveldb",
 		LevelDbConfig: lvlConfig,
 	}
