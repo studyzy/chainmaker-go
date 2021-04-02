@@ -274,6 +274,15 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 		}
 
 		versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(version)...) // <contract name>:B:<contract version>
+		// check version exists
+		if byteCodeInContext, err := txContext.Get(contractName, versionedByteCodeKey); err != nil {
+			contractResult.Message = fmt.Sprintf("failed to get byte code in tx context for contract %s, %s", contractName, err.Error())
+			return contractResult, commonPb.TxStatusCode_INTERNAL_ERROR
+		} else if len(byteCodeInContext) > 0 {
+			contractResult.Message = fmt.Sprintf("the contract version [%s][%s] already exists.", contractName, version)
+			return contractResult, commonPb.TxStatusCode_CONTRACT_VERSION_EXIST_FAILED
+		}
+
 		// save versioned byteCode
 		if err := txContext.Put(contractName, versionKey, []byte(version)); err != nil {
 			contractResult.Message = fmt.Sprintf("failed to store byte code for contract:%s, error:%s", contractName, err.Error())
