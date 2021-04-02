@@ -135,6 +135,16 @@ func (pc *ProposalCache) SetProposedBlock(b *commonpb.Block, rwSetMap map[string
 	return nil
 }
 
+func (pc *ProposalCache) ClearTheBlock(block *commonpb.Block) {
+	pc.rwMu.Lock()
+	defer pc.rwMu.Unlock()
+
+	if proposedBlocks, ok := pc.lastProposedBlock[block.Header.BlockHeight]; ok {
+		fingerPrint := utils.CalcBlockFingerPrint(block)
+		delete(proposedBlocks, string(fingerPrint))
+	}
+}
+
 // GetSelfProposedBlockAt get proposed block that is proposed by node itself.
 func (pc *ProposalCache) GetSelfProposedBlockAt(height int64) *commonpb.Block {
 	pc.rwMu.RLock()

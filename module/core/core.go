@@ -17,6 +17,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -56,6 +57,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		blockchainStore: cf.blockchainStore,
 		snapshotManager: cf.snapshotManager,
 		proposedCache:   cf.proposalCache,
+		chainConf:       cf.chainConf,
 		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf.ChainConfig().ChainId),
 		log:             logger.GetLoggerByChain(logger.MODULE_CORE, cf.chainId),
 	}
@@ -160,7 +162,9 @@ func (c *CoreEngine) OnMessage(message *msgbus.Message) {
 			c.blockProposer.OnReceiveTxPoolSignal(signal)
 		}
 	case msgbus.BuildProposal:
-
+		if proposal, ok := message.Payload.(*chainedbft.BuildProposal); ok {
+			c.blockProposer.OnReceiveChainedBFTProposal(proposal)
+		}
 	}
 }
 
