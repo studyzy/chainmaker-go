@@ -118,5 +118,6 @@ func (h *ResultSqlDB) GetLastSavepoint() (uint64, error) {
 }
 
 func (h *ResultSqlDB) Close() {
+	h.Logger.Info("close result sql db")
 	h.db.Close()
 }

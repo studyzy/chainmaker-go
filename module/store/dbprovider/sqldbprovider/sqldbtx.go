@@ -10,7 +10,6 @@ package sqldbprovider
 import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
-	"errors"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -62,7 +61,7 @@ func (p *SqlDBTx) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, 
 		return nil, err
 	}
 	if !rows.Next() {
-		return nil, errors.New("empty data")
+		return nil, nil
 	}
 	return NewSqlDBRow(db, rows), nil
 }

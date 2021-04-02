@@ -142,9 +142,9 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 		}
 	}
 	var stateInfo StateInfo
-	sql := "select * from state_infos where object_key=?"
+	sql := "select object_value from state_infos where contract_name=? and object_key=?"
 
-	res, err := s.db.QuerySql(sql, key)
+	res, err := s.db.QuerySql(sql, contractName, key)
 	if err != nil {
 		s.Logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
@@ -200,6 +200,7 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database, there is no need for gorm to close db
 func (s *StateSqlDB) Close() {
+	s.Logger.Info("close state sql db")
 	s.db.Close()
 }
 

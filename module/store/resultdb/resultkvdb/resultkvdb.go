@@ -93,6 +93,7 @@ func (h *ResultKvDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database
 func (h *ResultKvDB) Close() {
+	h.Logger.Info("close result kv db")
 	h.DbHandle.Close()
 }
 

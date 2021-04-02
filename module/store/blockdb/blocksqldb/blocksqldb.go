@@ -300,6 +300,7 @@ func (b *BlockSqlDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockSqlDB) Close() {
+	b.Logger.Info("close block sql db")
 	b.db.Close()
 }
 

@@ -36,6 +36,9 @@ func TestDBHandle_Put(t *testing.T) {
 	value, err := dbHandle.Get(key1)
 	assert.Nil(t, err)
 	assert.Equal(t, value1, value)
+	value, err = dbHandle.Get([]byte("another key"))
+	assert.Nil(t, err)
+	assert.Nil(t, value)
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {

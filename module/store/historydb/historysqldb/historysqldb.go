@@ -101,5 +101,6 @@ func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {
 }
 
 func (h *HistorySqlDB) Close() {
+	h.Logger.Info("close history sql db")
 	h.db.Close()
 }

@@ -57,6 +57,10 @@ func TestProvider_QuerySql(t *testing.T) {
 	err = row.ScanColumns(&id)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, id)
+
+	row, err = p.QuerySql("select name from t1 where id=?", 3)
+	assert.Nil(t, err)
+	assert.Nil(t, row)
 }
 func TestProvider_QueryTableSql(t *testing.T) {
 

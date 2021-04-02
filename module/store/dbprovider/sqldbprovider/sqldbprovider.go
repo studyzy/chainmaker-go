@@ -288,7 +288,7 @@ func (p *SqlDBHandle) QuerySql(sql string, values ...interface{}) (protocol.SqlR
 		return nil, err
 	}
 	if !rows.Next() {
-		return nil, errors.New("empty data")
+		return nil, nil
 	}
 	return NewSqlDBRow(db, rows), nil
 }
