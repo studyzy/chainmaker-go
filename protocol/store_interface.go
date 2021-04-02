@@ -88,10 +88,10 @@ type BlockchainStore interface {
 }
 type StateSqlOperation interface {
 	//不在事务中，直接查询状态数据库，返回一行结果
-	QuerySingleSql(contractName,sql string, values ...interface{}) ( SqlRow, error)
+	QuerySingle(contractName,sql string, values ...interface{}) ( SqlRow, error)
 	//不在事务中，直接查询状态数据库，返回多行结果
-	QueryMultiSql(contractName,sql string, values ...interface{}) (SqlRows, error)
-	//执行建表、修改表等DDL语句
+	QueryMulti(contractName,sql string, values ...interface{}) (SqlRows, error)
+	//执行建表、修改表等DDL语句，不得在事务中运行
 	ExecDdlSql(contractName,sql string) error
 	//启用一个事务
 	BeginDbTransaction(txName string) (SqlDBTransaction,error)
@@ -110,8 +110,8 @@ type SqlDBHandle interface {
 	CreateTableIfNotExist(obj interface{}) error
 	Save(value interface{}) (int64,error)
 	ExecSql(sql string, values ...interface{}) (int64, error)
-	QuerySql(sql string, values ...interface{}) (SqlRow, error)
-	QueryTableSql(sql string, values ...interface{}) (SqlRows, error)
+	QuerySingle(sql string, values ...interface{}) (SqlRow, error)
+	QueryMulti(sql string, values ...interface{}) (SqlRows, error)
 	BeginDbTransaction(txName string) (SqlDBTransaction,error)
 	GetDbTransaction(txName string) (SqlDBTransaction,error)
 	CommitDbTransaction(txName string) error

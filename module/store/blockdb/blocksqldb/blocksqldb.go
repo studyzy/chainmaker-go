@@ -139,7 +139,7 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 func (b *BlockSqlDB) BlockExists(blockHash []byte) (bool, error) {
 	var count int64
 	sql := "select count(*) from block_infos where block_hash = ?"
-	res, err := b.db.QuerySql(sql, blockHash)
+	res, err := b.db.QuerySingle(sql, blockHash)
 	if err != nil {
 		return false, err
 	}
@@ -159,7 +159,7 @@ func (b *BlockSqlDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*BlockInfo, error) {
 	//get block info from mysql
 	var blockInfo BlockInfo
-	res, err := b.db.QuerySql(sql, values...)
+	res, err := b.db.QuerySingle(sql, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (b *BlockSqlDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, e
 // GetLastSavepoint reurns the last block height
 func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
 	sql := "select max(block_height) from block_infos"
-	row, err := b.db.QuerySql(sql)
+	row, err := b.db.QuerySingle(sql)
 	if err != nil {
 		return 0, err
 	}
@@ -242,7 +242,7 @@ func (b *BlockSqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
 func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	var txInfo TxInfo
-	res, err := b.db.QuerySql("select * from tx_infos where tx_id = ?", txId)
+	res, err := b.db.QuerySingle("select * from tx_infos where tx_id = ?", txId)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 	var count int64
 	sql := "select count(*) from tx_infos where tx_id = ?"
-	res, err := b.db.QuerySql(sql, txId)
+	res, err := b.db.QuerySingle(sql, txId)
 	if err != nil {
 		return false, err
 	}
@@ -275,7 +275,7 @@ func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 
 //获得某个区块高度下的所有交易
 func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight int64) ([]*commonPb.Transaction, error) {
-	res, err := b.db.QueryTableSql("select * from tx_infos where block_height = ? order by offset", blockHeight)
+	res, err := b.db.QueryMulti("select * from tx_infos where block_height = ? order by offset", blockHeight)
 	if err != nil {
 		return nil, err
 	}

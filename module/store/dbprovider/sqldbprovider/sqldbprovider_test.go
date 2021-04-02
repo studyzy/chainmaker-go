@@ -51,14 +51,14 @@ func TestProvider_QuerySql(t *testing.T) {
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
-	row, err := p.QuerySql("select count(*) from t1", "")
+	row, err := p.QuerySingle("select count(*) from t1", "")
 	assert.Nil(t, err)
 	var id int
 	err = row.ScanColumns(&id)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, id)
 
-	row, err = p.QuerySql("select name from t1 where id=?", 3)
+	row, err = p.QuerySingle("select name from t1 where id=?", 3)
 	assert.Nil(t, err)
 	assert.Nil(t, row)
 }
@@ -68,7 +68,7 @@ func TestProvider_QueryTableSql(t *testing.T) {
 	p.ExecSql("create table t1(id int primary key,name varchar(5))", "")
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
-	rows, err := p.QueryTableSql("select * from t1", "")
+	rows, err := p.QueryMulti("select * from t1", "")
 	assert.Nil(t, err)
 	defer rows.Close()
 	var id int
@@ -112,7 +112,7 @@ func TestProvider_DbTransaction(t *testing.T) {
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(4), count)
 	p.RollbackDbTransaction(txName)
-	row, err = p.QuerySql("select count(1) from t1", "")
+	row, err = p.QuerySingle("select count(1) from t1", "")
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(2), count)
 }
@@ -121,7 +121,7 @@ func TestSqlDBHandle_QuerySql(t *testing.T) {
 	p.ExecSql("create table t1(id int primary key,name varchar(5),birthdate datetime,photo blob)", "")
 	var bin = []byte{1, 2, 3, 4, 0xff}
 	p.ExecSql("insert into t1 values(?,?,?,?)", 1, "Devin", time.Now(), bin)
-	result, err := p.QuerySql("select * from t1 where id=?", 1)
+	result, err := p.QuerySingle("select * from t1 where id=?", 1)
 	if err != nil {
 		t.Log(err)
 		return

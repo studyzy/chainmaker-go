@@ -84,7 +84,7 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 }
 
 func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {
-	row, err := h.db.QuerySql("select max(block_height) from state_history_infos")
+	row, err := h.db.QuerySingle("select max(block_height) from state_history_infos")
 	if err != nil {
 		return 0, err
 	}

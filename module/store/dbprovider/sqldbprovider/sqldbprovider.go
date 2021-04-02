@@ -297,7 +297,7 @@ func (p *SqlDBHandle) Save(value interface{}) (int64, error) {
 	}
 	return tx.RowsAffected, nil
 }
-func (p *SqlDBHandle) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
@@ -315,7 +315,7 @@ func (p *SqlDBHandle) QuerySql(sql string, values ...interface{}) (protocol.SqlR
 	return NewSqlDBRow(db, rows), nil
 }
 
-func (p *SqlDBHandle) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db

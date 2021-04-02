@@ -22,7 +22,7 @@ type KeyValue struct {
 // Get returns the value for the given key, or returns nil if none exists
 func (p *SqlDBHandle) Get(key []byte) ([]byte, error) {
 	sql := "select object_value from key_values where object_key=?"
-	result, err := p.QuerySql(sql, key)
+	result, err := p.QuerySingle(sql, key)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (p *SqlDBHandle) Put(key []byte, value []byte) error {
 // Has return true if the given key exist, or return false if none exists
 func (p *SqlDBHandle) Has(key []byte) (bool, error) {
 	sql := "select count(*) from key_values where object_key=?"
-	result, err := p.QuerySql(sql, key)
+	result, err := p.QuerySingle(sql, key)
 	if err != nil {
 		return false, err
 	}
@@ -114,7 +114,7 @@ func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 // start is included in the results and limit is excluded.
 func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
 	sql := "select * from key_values where object_key between ? and ?"
-	rows, err := p.QueryTableSql(sql, start, limit)
+	rows, err := p.QueryMulti(sql, start, limit)
 	if err != nil {
 		return nil
 	}
@@ -132,7 +132,7 @@ func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
 func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 	sql := "select * from key_values where object_key like ?%"
-	rows, err := p.QueryTableSql(sql, prefix)
+	rows, err := p.QueryMulti(sql, prefix)
 	if err != nil {
 		return nil
 	}

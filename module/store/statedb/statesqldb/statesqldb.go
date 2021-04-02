@@ -153,7 +153,7 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 	}
 	sql := "select object_value from state_infos where contract_name=? and object_key=?"
 
-	res, err := s.db.QuerySql(sql, contractName, key)
+	res, err := s.db.QuerySingle(sql, contractName, key)
 	if err != nil {
 		s.Logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
@@ -180,7 +180,7 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 		}
 	}
 	sql := "select * from state_infos where object_key between ? and ?"
-	rows, err := s.db.QueryTableSql(sql, startKey, limit)
+	rows, err := s.db.QueryMulti(sql, startKey, limit)
 	if err != nil {
 		return nil
 	}
@@ -197,7 +197,7 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 // GetLastSavepoint returns the last block height
 func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 	sql := "select max(block_height) from state_infos"
-	row, err := s.db.QuerySql(sql)
+	row, err := s.db.QuerySingle(sql)
 	if err != nil {
 		return 0, err
 	}
@@ -224,7 +224,7 @@ func (s *StateSqlDB) QuerySql(contractName, sql string, values ...interface{}) (
 			return nil, err
 		}
 	}
-	return s.db.QuerySql(sql, values...)
+	return s.db.QuerySingle(sql, values...)
 }
 func (s *StateSqlDB) QueryTableSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
 	if contractName != "" {
@@ -232,7 +232,7 @@ func (s *StateSqlDB) QueryTableSql(contractName, sql string, values ...interface
 			return nil, err
 		}
 	}
-	return s.db.QueryTableSql(sql, values...)
+	return s.db.QueryMulti(sql, values...)
 
 }
 func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
