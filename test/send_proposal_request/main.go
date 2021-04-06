@@ -8,9 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"context"
 	"encoding/hex"
 	"flag"
@@ -28,6 +25,9 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/helper"
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/utils"
@@ -39,35 +39,35 @@ import (
 
 const (
 	CHAIN1         = "chain1"
-	certPathPrefix = "../config"
-	WasmPath       = "wasm/fact-rust-0.7.2.wasm"
-	userKeyPath    = certPathPrefix + "/wx-org1/certs/user/client1/client1.tls.key"
-	userCrtPath    = certPathPrefix + "/wx-org1/certs/user/client1/client1.tls.crt"
+	certPathPrefix = "/data/chainmaker/chainmaker-go/build/crypto-config"
+	WasmPath       = "/data/chainmaker/chainmaker-go/tools/sdk/testdata/claim-wasm-demo/fact-rust-0.7.2.wasm"
+	userKeyPath    = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+	userCrtPath    = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
 	contractName   = "ex_fact"
-	prePathFmt     = certPathPrefix + "/wx-org%s/certs/user/admin1/"
+	prePathFmt     = certPathPrefix + "/wx-org%s.chainmaker.org/user/admin1/"
 	OrgIdFormat    = "wx-org%d.chainmaker.org"
 	tps            = 10000 //
 )
 
 var (
 	caPaths = [][]string{
-		{certPathPrefix + "/wx-org1/certs/ca/wx-org1.chainmaker.org/"},
-		{certPathPrefix + "/wx-org1/certs/ca/wx-org2.chainmaker.org/"},
-		{certPathPrefix + "/wx-org1/certs/ca/wx-org3.chainmaker.org/"},
-		{certPathPrefix + "/wx-org1/certs/ca/wx-org4.chainmaker.org/"},
+		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
 	}
 	userKeyPaths = []string{
-		certPathPrefix + "/wx-org1/certs/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org2/certs/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org3/certs/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org4/certs/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
 	}
 	userCrtPaths = []string{
-		certPathPrefix + "/wx-org1/certs/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org2/certs/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org3/certs/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org4/certs/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",
@@ -76,23 +76,24 @@ var (
 		"wx-org4.chainmaker.org",
 	}
 	IPs = []string{
-		"49.233.1.182",
-		"152.136.195.93",
-		"152.136.186.128",
-		"152.136.14.203",
+		"127.0.0.1",
+		"127.0.0.1",
+		"127.0.0.1",
+		"127.0.0.1",
 	}
 	Ports = []int{
+		12301,
+		12302,
+		12303,
 		12304,
-		22302,
-		22303,
-		22304,
 	}
 )
 
 func main() {
 	var step int
 	flag.IntVar(&step, "step", 1, "STEP")
-	conn, err := initGRPCConn(false, 0)
+	flag.Parse()
+	conn, err := initGRPCConn(true, 0)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -141,7 +142,7 @@ func testMultiInvoke() {
 	for i := 0; i < 4; i++ {
 		wg.Add(1)
 		index := i % 4
-		conn, err := initGRPCConn(false, index)
+		conn, err := initGRPCConn(true, index)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -519,7 +520,7 @@ func addCerts(count int) {
 	for i := 0; i < count; i++ {
 		txId := utils.GetRandTxId()
 		sk, member := getUserSK(i+1, userKeyPaths[i], userCrtPaths[i])
-		resp, err := updateSysRequest(sk, member, false, &native.InvokeContractMsg{TxId: txId, ChainId: CHAIN1,
+		resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{TxId: txId, ChainId: CHAIN1,
 			TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERT_ADD.String()})
 		if err == nil {
 			fmt.Printf("addCerts send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
