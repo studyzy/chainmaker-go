@@ -39,8 +39,8 @@ import (
 
 const (
 	CHAIN1         = "chain1"
-	certPathPrefix = "/data/chainmaker/chainmaker-go/build/crypto-config"
-	WasmPath       = "/data/chainmaker/chainmaker-go/tools/sdk/testdata/claim-wasm-demo/fact-rust-0.7.2.wasm"
+	certPathPrefix = "/big_space/chainmaker/chainmaker-go/build/crypto-config"
+	WasmPath       = "/big_space/chainmaker/chainmaker-go/tools/sdk/testdata/claim-wasm-demo/rust-fact-1.0.0.wasm"
 	userKeyPath    = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
@@ -53,21 +53,21 @@ const (
 var (
 	caPaths = [][]string{
 		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
-		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
-		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
-		{certPathPrefix + "/wx-org1.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org2.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org3.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org4.chainmaker.org/ca"},
 	}
 	userKeyPaths = []string{
 		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.tls.key",
 	}
 	userCrtPaths = []string{
 		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.tls.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",
@@ -110,7 +110,7 @@ func main() {
 	}
 	switch step {
 	case 0: // 0) 添加个人证书上链
-		addCerts(1)
+		addCerts(4)
 		time.Sleep(1 * time.Second)
 		testCertQuery(sk3, client)
 		return
@@ -260,20 +260,27 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
 	txId := utils.GetRandTxId()
 	fmt.Printf("\n============ create contract [%s] ============\n", txId)
-	wasmBin, _ := ioutil.ReadFile(WasmPath)
-	var pairs []*commonPb.KeyValuePair
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
+	wasmBin, err := ioutil.ReadFile(WasmPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	var (
+		method = commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
+		pairs  []*commonPb.KeyValuePair
+	)
+
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
 		ContractId: &commonPb.ContractId{
 			ContractName:    contractName,
 			ContractVersion: "1.0.0",
 			RuntimeType:     commonPb.RuntimeType_WASMER,
-			//RuntimeType: commonPb.RuntimeType_GASM_CPP,
 		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   wasmBin,
+		Method:      method,
+		Parameters:  pairs,
+		ByteCode:    wasmBin,
+		Endorsement: nil,
 	}
 	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
 		payload.Endorsement = endorsement
