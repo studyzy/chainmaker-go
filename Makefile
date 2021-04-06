@@ -12,6 +12,8 @@ VERSION=V1.0.0
 
 chainmaker:
 	@cd main && go build -o ../bin/chainmaker
+
+package:
 	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
 	@mkdir -p ./release
 	@rm -rf ./tmp/chainmaker/
