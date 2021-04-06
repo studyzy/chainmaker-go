@@ -10,7 +10,7 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/government"
+	"chainmaker.org/chainmaker-go/consensus/governance"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 )
@@ -27,13 +27,13 @@ type epochManager struct {
 	msgPool            *message.MsgPool   //The msg pool associated to next epoch
 	cacheNextHeight    *message.MsgPool   //The msg pool associated to next height
 	useValidators      []*types.Validator //The peer pool associated to next epoch
-	governmentContract protocol.Government
+	governanceContract protocol.Government
 }
 
 // createNextEpochIfRequired If the conditions are met, create the next epoch
 func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) error {
 	cbi.logger.Debugf("begin createNextEpochIfRequired ...")
-	if cbi.governmentContract.GetEpochId() == cbi.smr.getEpochId() {
+	if cbi.governanceContract.GetEpochId() == cbi.smr.getEpochId() {
 		cbi.logger.Debugf("end createNextEpochIfRequired not create next epoch")
 		return nil
 	}
@@ -52,7 +52,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 		members           []*consensusPb.GovernanceMember
 		validatorsMembers []*consensusPb.GovernanceMember
 	)
-	if validators := cbi.governmentContract.GetValidators(); validators != nil {
+	if validators := cbi.governanceContract.GetValidators(); validators != nil {
 		validatorsMembers = validators.([]*consensusPb.GovernanceMember)
 	}
 	for _, v := range validatorsMembers {
@@ -66,17 +66,17 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 		index:              utils.InvalidIndex,
 		createHeight:       height,
 		useValidators:      validators,
-		governmentContract: cbi.governmentContract,
+		governanceContract: cbi.governanceContract,
 
-		epochId:           cbi.governmentContract.GetEpochId(),
-		switchHeight:      cbi.governmentContract.GetSwitchHeight(),
-		skipTimeoutCommit: cbi.governmentContract.GetSkipTimeoutCommit(),
-		msgPool: message.NewMsgPool(cbi.governmentContract.GetCachedLen(), int(cbi.governmentContract.
-			GetGovMembersValidatorCount()), int(cbi.governmentContract.GetGovMembersValidatorMinCount())),
-		cacheNextHeight: message.NewMsgPool(cbi.governmentContract.GetCachedLen(), int(cbi.governmentContract.
-			GetGovMembersValidatorCount()), int(cbi.governmentContract.GetGovMembersValidatorMinCount())),
+		epochId:           cbi.governanceContract.GetEpochId(),
+		switchHeight:      cbi.governanceContract.GetSwitchHeight(),
+		skipTimeoutCommit: cbi.governanceContract.GetSkipTimeoutCommit(),
+		msgPool: message.NewMsgPool(cbi.governanceContract.GetCachedLen(), int(cbi.governanceContract.
+			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
+		cacheNextHeight: message.NewMsgPool(cbi.governanceContract.GetCachedLen(), int(cbi.governanceContract.
+			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
 	}
-	if membersInterface := cbi.governmentContract.GetMembers(); membersInterface != nil {
+	if membersInterface := cbi.governanceContract.GetMembers(); membersInterface != nil {
 		members = membersInterface.([]*consensusPb.GovernanceMember)
 	}
 	for _, v := range members {
@@ -107,12 +107,12 @@ func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) 
 }
 
 func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
-	validatorsInterface := cbi.governmentContract.GetValidators()
+	validatorsInterface := cbi.governanceContract.GetValidators()
 	if validatorsInterface == nil {
 		return 0
 	}
 	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
-	validator, _ := government.GetProposer(level, cbi.governmentContract.GetNodeProposeRound(), validators)
+	validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
 	if validator != nil {
 		return uint64(validator.Index)
 	}

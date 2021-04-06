@@ -8,9 +8,6 @@ package utils
 
 import (
 	"fmt"
-	"strings"
-
-	"chainmaker.org/chainmaker-go/consensus/government"
 
 	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -196,14 +193,4 @@ func GetUidFromProtoSigner(signerpb *pbac.SerializedMember, netservice protocol.
 		return "", fmt.Errorf("get node uid by certid failed, err: %v", err)
 	}
 	return uid, nil
-}
-
-func GetEnableEpochFlagFromConf(chainConf protocol.ChainConf) (enable bool) {
-	config := chainConf.ChainConfig()
-	for _, kv := range config.Consensus.ExtConfig {
-		if kv.Key == government.EnableEpoch {
-			return strings.ToUpper(kv.Value) == "TRUE"
-		}
-	}
-	return false
 }

@@ -18,7 +18,7 @@ import (
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/government"
+	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -51,7 +51,7 @@ type ConsensusChainedBftImpl struct {
 	sync.RWMutex
 	nextEpoch          *epochManager       // next epoch
 	commitHeight       uint64              // The height of the latest committed block
-	governmentContract protocol.Government // The management contract on the block chain
+	governanceContract protocol.Government // The management contract on the block chain
 
 	// Services within the module
 	smr          *chainedbftSMR            // State machine replication in hotstuff
@@ -110,7 +110,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
 
 		timerService:       timeservice.NewTimerService(),
-		governmentContract: government.NewGovernmentContract(store),
+		governanceContract: governance.NewGovernanceContract(store),
 
 		quitCh:         make(chan struct{}),
 		quitSyncCh:     make(chan struct{}),
@@ -131,7 +131,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.smr = newChainedBftSMR(chainID, epoch, chainStore, service.timerService)
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
 	chainConf.AddWatch(service)
-	if err := chainconf.RegisterVerifier(consensus.ConsensusType_HOTSTUFF, service.governmentContract); err != nil {
+	if err := chainconf.RegisterVerifier(consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
 		return nil, err
 	}
 	return service, nil
@@ -489,14 +489,14 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 
 	// because the validator set has changed after the generation switch, so that validate by validators
 	// cannot be continue.
-	governmentContract := government.NewGovernmentContract(store)
-	if governmentContract.GetEpochId() == qc.EpochId+1 {
+	governanceContract := governance.NewGovernanceContract(store)
+	if governanceContract.GetEpochId() == qc.EpochId+1 {
 		return nil
 	}
 
-	//2. get validators from government contract
+	//2. get validators from governance contract
 	var curValidators []*types.Validator
-	validatorsMembersInterface := governmentContract.GetValidators()
+	validatorsMembersInterface := governanceContract.GetValidators()
 	if validatorsMembersInterface == nil {
 		return fmt.Errorf("current validators is nil")
 	}
@@ -513,7 +513,7 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	if err != nil {
 		return err
 	}
-	minQuorumForQc := governmentContract.GetGovMembersValidatorMinCount()
+	minQuorumForQc := governanceContract.GetGovMembersValidatorMinCount()
 	if qc.Level > 0 && qc.NewView && newViewNum < minQuorumForQc {
 		return fmt.Errorf(fmt.Sprintf("vote new view num [%v] less than expected [%v]",
 			newViewNum, minQuorumForQc))

@@ -4,7 +4,7 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package government
+package governance
 
 import (
 	"bytes"
@@ -463,7 +463,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block,
 	log.Debugf("CheckAndCreateGovernmentArgs start")
 
 	// 1. get GovernanceContract
-	gcr := NewGovernmentContract(store).(*GovernmentContractImp)
+	gcr := NewGovernanceContract(store).(*GovernanceContractImp)
 	GovernanceContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		log.Errorf("getGovernanceContract err!err=%v", err)

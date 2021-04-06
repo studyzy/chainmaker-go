@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/government"
+	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
@@ -467,7 +467,7 @@ func (cbi *ConsensusChainedBftImpl) validateConsensusArg(proposal *chainedbftpb.
 			" at height [%v] level [%v], err %v", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height, proposal.Level, err)
 		return false
 	}
-	if txRWSet, err = government.CheckAndCreateGovernmentArgs(proposal.Block, cbi.store, cbi.proposalCache); err != nil {
+	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(proposal.Block, cbi.store, cbi.proposalCache); err != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal: CheckAndCreateGovernmentArgs err from proposer"+
 			" %v at height [%v] level [%v], err %v", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height, proposal.Level, err)
 		return false

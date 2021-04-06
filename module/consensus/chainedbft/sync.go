@@ -13,7 +13,7 @@ import (
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/government"
+	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -290,7 +290,7 @@ func (sm *syncManager) insertBlockAndQC(fromPeer uint64, blockPair *chainedbftpb
 			"at height %v level %v, err %v", sm.server.selfIndexInEpoch, fromPeer, header.GetBlockHeight(), qc.Level, err)
 		return false
 	}
-	txRWSet, err := government.CheckAndCreateGovernmentArgs(blockPair.Block, sm.server.store, sm.server.proposalCache)
+	txRWSet, err := governance.CheckAndCreateGovernmentArgs(blockPair.Block, sm.server.store, sm.server.proposalCache)
 	if err != nil {
 		sm.logger.Errorf("service selfIndexInEpoch %v CheckAndCreateGovernmentArgs err: from peer %v at "+
 			"height %v level %v, err %v", sm.server.selfIndexInEpoch, fromPeer, header.GetBlockHeight(), qc.Level, err)

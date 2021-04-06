@@ -8,7 +8,7 @@ package chainedbft
 
 import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/government"
+	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
@@ -25,7 +25,7 @@ func (cbi *ConsensusChainedBftImpl) constructBlock(block *common.Block, level ui
 		err     error
 		txRWSet *common.TxRWSet
 	)
-	if txRWSet, err = government.CheckAndCreateGovernmentArgs(block, cbi.store, cbi.proposalCache); err != nil {
+	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(block, cbi.store, cbi.proposalCache); err != nil {
 		cbi.logger.Errorf(`CheckAndCreateGovernmentArgs err!`)
 		return nil
 	}
