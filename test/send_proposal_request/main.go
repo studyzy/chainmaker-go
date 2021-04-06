@@ -40,7 +40,7 @@ import (
 const (
 	CHAIN1         = "chain1"
 	certPathPrefix = "/big_space/chainmaker/chainmaker-go/build/crypto-config"
-	WasmPath       = "/big_space/chainmaker/chainmaker-go/tools/sdk/testdata/claim-wasm-demo/rust-fact-1.0.0.wasm"
+	WasmPath       = "/big_space/chainmaker/chainmaker-go/test/wasm/rust-fact-1.0.0.wasm"
 	userKeyPath    = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"

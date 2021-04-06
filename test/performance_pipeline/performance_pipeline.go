@@ -41,7 +41,7 @@ var (
 
 const (
 	CHAIN1         = "chain1"
-	certPathPrefix = "/data/chainmaker/chainmaker-go/build/crypto-config/wx-org1.chainmaker.org/"
+	certPathPrefix = "/big_space/chainmaker/chainmaker-go/build/crypto-config/wx-org1.chainmaker.org/"
 
 	contractNameFact = "ex_fact"
 	contractNameAcct = "ac"
@@ -235,7 +235,11 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 			},
 			{
 				Key:   "file_name",
-				Value: toSave,
+				Value: "长安链chainmaker",
+			},
+			{
+				Key:   "time",
+				Value: "1615188470000",
 			},
 		},
 	}); err != nil {
@@ -264,7 +268,7 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 	if rawTxBytes, err = utils.CalcUnsignedTxRequestBytes(req); err != nil {
 		log.Fatalf("CalcUnsignedTxRequest failed, %s", err.Error())
 	}
-	if signBytes, err = signer.Sign("SHA256", rawTxBytes); err != nil {
+	if signBytes, err = signer.Sign("SM3", rawTxBytes); err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 	}
 
