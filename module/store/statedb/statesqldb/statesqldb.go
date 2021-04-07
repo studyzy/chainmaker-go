@@ -19,19 +19,19 @@ import (
 // This implementation provides a mysql based data model
 type StateSqlDB struct {
 	db      protocol.SqlDBHandle
-	Logger  protocol.Logger
+	logger  protocol.Logger
 	chainId string
 }
 
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *StateSqlDB) initDb(dbName string) {
-	db.Logger.Debugf("try to create state db %s", dbName)
+	db.logger.Debugf("try to create state db %s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
-	db.Logger.Debug("try to create state db table: state_infos")
+	db.logger.Debug("try to create state db table: state_infos")
 	err = db.db.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
 		panic("init state sql db table fail")
@@ -50,7 +50,7 @@ func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 	}
 	stateDB := &StateSqlDB{
 		db:      db,
-		Logger:  logger,
+		logger:  logger,
 		chainId: chainId,
 	}
 
@@ -74,9 +74,14 @@ func getContractDbName(chainId, contractName string) string {
 func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
-	blockHash := block.GetBlockHashStr()
+	txKey := block.GetTxKey()
 	if len(txRWSets) == 0 {
-		s.Logger.Warnf("block[%d] don't have any read write set data", block.Header.BlockHeight)
+		s.logger.Warnf("block[%d] don't have any read write set data", block.Header.BlockHeight)
+		return nil
+	}
+	_, err := s.db.GetDbTransaction(txKey)
+	if err == nil { //外部已经开启了事务，状态数据在外部提交
+		s.logger.Debugf("db transaction[%s] already created outside, don't need process statedb in CommitBlock function", txKey)
 		return nil
 	}
 	if block.IsContractMgmtBlock() {
@@ -95,18 +100,18 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 			} else {
 				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, block.Header.BlockHeight)
 				if _, err := s.db.Save(stateInfo); err != nil {
-					s.Logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
-					s.db.RollbackDbTransaction(blockHash)
+					s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
+					s.db.RollbackDbTransaction(txKey)
 					return err
 				}
 			}
 		}
-		s.Logger.Debugf("chain[%s]: commit state block[%d]",
+		s.logger.Debugf("chain[%s]: commit state block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
 		return nil
 	}
 	//普通交易，开启事务，进行数据写入
-	tx, err := s.db.BeginDbTransaction(blockHash)
+	tx, err := s.db.BeginDbTransaction(txKey)
 	if err != nil {
 		return err
 	}
@@ -120,26 +125,26 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 			if txWrite.Key == nil { //sql
 				sql := string(txWrite.Value)
 				if _, err := tx.ExecSql(sql); err != nil {
-					s.Logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
-					s.db.RollbackDbTransaction(blockHash)
+					s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
+					s.db.RollbackDbTransaction(txKey)
 					return err
 				}
 			} else {
 				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, block.Header.BlockHeight)
 				if _, err := tx.Save(stateInfo); err != nil {
-					s.Logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
-					s.db.RollbackDbTransaction(blockHash)
+					s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
+					s.db.RollbackDbTransaction(txKey)
 					return err
 				}
 			}
 		}
 	}
-	err = s.db.CommitDbTransaction(blockHash)
+	err = s.db.CommitDbTransaction(txKey)
 	if err != nil {
-		s.Logger.Error(err.Error())
+		s.logger.Error(err.Error())
 		return err
 	}
-	s.Logger.Debugf("chain[%s]: commit state block[%d]",
+	s.logger.Debugf("chain[%s]: commit state block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 }
@@ -155,7 +160,7 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 
 	res, err := s.db.QuerySingle(sql, contractName, key)
 	if err != nil {
-		s.Logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
+		s.logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
 	}
 	if res == nil {
@@ -165,7 +170,7 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 
 	err = res.ScanColumns(&stateValue)
 	if err != nil {
-		s.Logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
+		s.logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
 	}
 	return stateValue, nil
@@ -214,7 +219,7 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database, there is no need for gorm to close db
 func (s *StateSqlDB) Close() {
-	s.Logger.Info("close state sql db")
+	s.logger.Info("close state sql db")
 	s.db.Close()
 }
 
