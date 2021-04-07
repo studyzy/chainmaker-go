@@ -100,11 +100,13 @@ func (p *Provider) GetDBHandle(dbName string) protocol.DBHandle {
 	defer p.mutex.Unlock()
 	dbHandle := p.dbHandles[dbName]
 	if dbHandle == nil {
+		wo := gorocksdb.NewDefaultWriteOptions()
+		wo.SetSync(true)
 		dbHandle = &RocksDBHandle{
 			dbName:       dbName,
 			db:           p.db,
 			readOptions:  gorocksdb.NewDefaultReadOptions(),
-			writeOptions: gorocksdb.NewDefaultWriteOptions(),
+			writeOptions: wo,
 			logger:       logImpl.GetLogger(logImpl.MODULE_STORAGE),
 		}
 		p.dbHandles[dbName] = dbHandle
@@ -236,7 +238,9 @@ func (dbHandle *RocksDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool
 		}
 	}
 
-	if err := dbHandle.db.Write(dbHandle.writeOptions, writeBatch); err != nil {
+	wo := gorocksdb.NewDefaultWriteOptions()
+	wo.SetSync(sync)
+	if err := dbHandle.db.Write(wo, writeBatch); err != nil {
 		dbHandle.logger.Errorf("write batch to rocksdbprovider failed")
 		return errors.Wrap(err, "error writing batch to rocksdbprovider")
 	}
