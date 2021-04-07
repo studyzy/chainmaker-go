@@ -102,30 +102,47 @@ type StateSqlOperation interface {
 	//回滚一个事务
 	RollbackDbTransaction(txName string) error
 }
-
+//SqlDBHandle 对SQL数据库的操作方法
 type SqlDBHandle interface {
 	DBHandle
+	//CreateDatabaseIfNotExist 如果数据库不存在则创建对应的数据库，创建后将当前数据库设置为新数据库
 	CreateDatabaseIfNotExist(dbName string) error
+	//ChangeContextDb 改变当前上下文所使用的数据库
 	ChangeContextDb(dbName string) error
+	//CreateTableIfNotExist 根据一个对象struct，自动构建对应的sql数据库表
 	CreateTableIfNotExist(obj interface{}) error
+	//Save 直接保存一个对象到SQL数据库中
 	Save(value interface{}) (int64,error)
+	//ExecSql 执行指定的SQL语句，返回受影响的行数
 	ExecSql(sql string, values ...interface{}) (int64, error)
+	//QuerySingle 执行指定的SQL语句，查询单条数据记录，如果查询到0条，则返回nil,nil，如果查询到多条，则返回第一条
 	QuerySingle(sql string, values ...interface{}) (SqlRow, error)
+	//QueryMulti 执行指定的SQL语句，查询多条数据记录，如果查询到0条，则SqlRows.Next()直接返回false
 	QueryMulti(sql string, values ...interface{}) (SqlRows, error)
+	//BeginDbTransaction 开启一个数据库事务，并指定该事务的名字，并缓存其句柄，如果之前已经开启了同名的事务，则返回错误
 	BeginDbTransaction(txName string) (SqlDBTransaction,error)
+	//GetDbTransaction 根据事务的名字，获得事务的句柄,如果事务不存在，则返回错误
 	GetDbTransaction(txName string) (SqlDBTransaction,error)
+	//CommitDbTransaction 提交一个事务，并从缓存中清除该事务，如果找不到对应的事务，则返回错误
 	CommitDbTransaction(txName string) error
+	//RollbackDbTransaction 回滚一个事务，并从缓存中清除该事务，如果找不到对应的事务，则返回错误
 	RollbackDbTransaction(txName string) error
 }
+//SqlDBTransaction开启一个事务后，能在这个事务中进行的操作
 type SqlDBTransaction interface {
+	//ChangeContextDb 改变当前上下文所使用的数据库
 	ChangeContextDb(dbName string) error
+	//Save 直接保存一个对象到SQL数据库中
 	Save(value interface{}) (int64,error)
+	//ExecSql 执行指定的SQL语句，返回受影响的行数
 	ExecSql(sql string, values ...interface{}) (int64, error)
-	QuerySql(sql string, values ...interface{}) (SqlRow, error)
-	QueryTableSql(sql string, values ...interface{}) (SqlRows, error)
-	//Commit() error
-	//Rollback() error
+	//QuerySingle 执行指定的SQL语句，查询单条数据记录，如果查询到0条，则返回nil,nil，如果查询到多条，则返回第一条
+	QuerySingle(sql string, values ...interface{}) (SqlRow, error)
+	//QueryMulti 执行指定的SQL语句，查询多条数据记录，如果查询到0条，则SqlRows.Next()直接返回false
+	QueryMulti(sql string, values ...interface{}) (SqlRows, error)
+	//BeginDbSavePoint 创建一个新的保存点
 	BeginDbSavePoint(savePointName string) error
+	//回滚事务到指定的保存点
 	RollbackDbSavePoint(savePointName string) error
 }
 

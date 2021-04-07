@@ -223,7 +223,7 @@ func (s *StateSqlDB) Close() {
 	s.db.Close()
 }
 
-func (s *StateSqlDB) QuerySql(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(getContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err
@@ -231,7 +231,7 @@ func (s *StateSqlDB) QuerySql(contractName, sql string, values ...interface{}) (
 	}
 	return s.db.QuerySingle(sql, values...)
 }
-func (s *StateSqlDB) QueryTableSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(getContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err

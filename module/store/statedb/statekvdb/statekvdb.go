@@ -150,10 +150,10 @@ func constructStateKey(contractName string, key []byte) []byte {
 
 var ERROR_SQLDB_ONLY = errors.New("leveldb don't support this operation, please change to sql db")
 
-func (s *StateKvDB) QuerySql(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+func (s *StateKvDB) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	return nil, ERROR_SQLDB_ONLY
 }
-func (s *StateKvDB) QueryTableSql(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+func (s *StateKvDB) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
 	return nil, ERROR_SQLDB_ONLY
 
 }

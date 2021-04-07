@@ -48,7 +48,7 @@ func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	}
 	return tx.RowsAffected, nil
 }
-func (p *SqlDBTx) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, error) {
+func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
@@ -65,7 +65,7 @@ func (p *SqlDBTx) QuerySql(sql string, values ...interface{}) (protocol.SqlRow, 
 	}
 	return NewSqlDBRow(db, rows), nil
 }
-func (p *SqlDBTx) QueryTableSql(sql string, values ...interface{}) (protocol.SqlRows, error) {
+func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
