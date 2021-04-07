@@ -218,29 +218,24 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 
 	consensus.updateChainConfig()
 	consensus.metrics.SetEnterNewHeightTime()
-	if consensus.Height == 1 {
-		consensus.enterNewRound(consensus.Height, consensus.Round)
-	} else {
-		// restart
-		consensus.logger.Infof("restart [%s](%d/%d/%s)",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step)
-		if consensus.Step == tbftpb.Step_NewHeight {
-			consensus.enterNewRound(consensus.Height, 0)
-		} else if consensus.Step == tbftpb.Step_Propose {
-			consensus.Step = tbftpb.Step_NewRound
-			consensus.enterPropose(consensus.Height, consensus.Round)
-		} else if consensus.Step == tbftpb.Step_Precommit || consensus.Step == tbftpb.Step_Commit {
-			voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
-			_, ok := voteSet.twoThirdsMajority()
-			if ok {
-				height := consensus.Height
-				round := consensus.Round
-				consensus.Step = tbftpb.Step_Precommit
-				consensus.enterCommit(height, round)
-			}
-			consensus.logger.Infof("restart [%s](%d/%d/%s) TwoThirdsMajority: %v",
-				consensus.Id, consensus.Height, consensus.Round, consensus.Step, ok)
+	consensus.logger.Infof("start [%s](%d/%d/%s)",
+		consensus.Id, consensus.Height, consensus.Round, consensus.Step)
+	if consensus.Step == tbftpb.Step_NewHeight {
+		consensus.enterNewRound(consensus.Height, 0)
+	} else if consensus.Step == tbftpb.Step_Propose {
+		consensus.Step = tbftpb.Step_NewRound
+		consensus.enterPropose(consensus.Height, consensus.Round)
+	} else if consensus.Step == tbftpb.Step_Precommit || consensus.Step == tbftpb.Step_Commit {
+		voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
+		_, ok := voteSet.twoThirdsMajority()
+		if ok {
+			height := consensus.Height
+			round := consensus.Round
+			consensus.Step = tbftpb.Step_Precommit
+			consensus.enterCommit(height, round)
 		}
+		consensus.logger.Infof("restart [%s](%d/%d/%s) TwoThirdsMajority: %v",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, ok)
 	}
 
 	consensus.timeScheduler.Start()
