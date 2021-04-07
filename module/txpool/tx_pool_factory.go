@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
-	batch "chainmaker.org/chainmaker-go/txpool/batchtxpool"
+	"chainmaker.org/chainmaker-go/txpool/batch"
 	"chainmaker.org/chainmaker-go/txpool/single"
 )
 
@@ -52,10 +52,7 @@ func (f TxPoolFactory) NewTxPool(txPoolType PoolType, opts ...Option) (protocol.
 	if txPoolType == SINGLE {
 		return single.NewTxPoolImpl(tf.chainId, tf.blockchainStore, tf.msgBus, tf.chainConf, tf.ac, tf.netService)
 	} else if txPoolType == BATCH {
-		batchPool, err := batch.NewBatchTxPool(tf.nodeId, tf.chainId)
-		if err != nil {
-			return nil, err
-		}
+		batchPool := batch.NewBatchTxPool(tf.nodeId, tf.chainId)
 		if err := batchPool.Apply(batch.WithMsgBus(tf.msgBus),
 			batch.WithPoolSize(int(localconf.ChainMakerConfig.TxPoolConfig.MaxTxPoolSize)),
 			batch.WithBatchMaxSize(localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize),

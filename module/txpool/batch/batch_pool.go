@@ -41,6 +41,13 @@ func (p *nodeBatchPool) currentSize() int {
 	return p.pool.Length()
 }
 
+func (p *nodeBatchPool) GetBatch(batchId int32) *txpoolPb.TxBatch {
+	if val, ok := p.pool.Get(int(batchId)); ok {
+		return val.(*txpoolPb.TxBatch)
+	}
+	return nil
+}
+
 type pendingBatchPool struct {
 	l    sync.RWMutex
 	pool map[int32]*txpoolPb.TxBatch
@@ -72,6 +79,15 @@ func (p *pendingBatchPool) RemoveIfExist(batch *txpoolPb.TxBatch) bool {
 		return true
 	}
 	return false
+}
+
+func (p *pendingBatchPool) GetBatch(batchId int32) *txpoolPb.TxBatch {
+	p.l.RLock()
+	defer p.l.RUnlock()
+	if val, ok := p.pool[batchId]; ok {
+		return val
+	}
+	return nil
 }
 
 func (p *pendingBatchPool) Range(f func(batch *txpoolPb.TxBatch) (isContinue bool)) {
@@ -116,4 +132,11 @@ func (p *cfgBatchPool) RemoveIfExist(batch *txpoolPb.TxBatch) bool {
 
 func (p *cfgBatchPool) currentSize() int {
 	return p.pool.Length()
+}
+
+func (p *cfgBatchPool) GetBatch(batchId int32) *txpoolPb.TxBatch {
+	if val, ok := p.pool.Get(int(batchId)); ok {
+		return val.(*txpoolPb.TxBatch)
+	}
+	return nil
 }
