@@ -46,7 +46,7 @@ type BatchTxPool struct {
 	txQueue           *lockfreequeue.Queue // Temporarily cache common transactions received from the network
 	commonBatchPool   *nodeBatchPool       // Stores batches of common transactions
 	cfgTxQueue        *lockfreequeue.Queue // Temporarily cache config transactions received from the network
-	configBatchPool   *cfgBatchPool        // Stores batches of configuration transactions
+	configBatchPool   *nodeBatchPool       // Stores batches of configuration transactions
 	batchTxIdRecorder *batchTxIdRecorder   // Stores transaction information within batches
 	pendingPool       *pendingBatchPool    // Stores batches to be deleted
 
@@ -71,7 +71,7 @@ func NewBatchTxPool(nodeId string, chainId string) *BatchTxPool {
 		batchMaxSize:       int32(DefaultBatchMaxSize),
 		batchCreateTimeout: DefaultBatchCreateTimeout,
 		pendingPool:        newPendingBatchPool(),
-		configBatchPool:    newCfgBatchPool(),
+		configBatchPool:    newNodeBatchPool(),
 		commonBatchPool:    newNodeBatchPool(),
 		batchTxIdRecorder:  newBatchTxIdRecorder(),
 	}
