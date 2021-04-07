@@ -57,3 +57,27 @@ func GetState(requestBody []byte, contractName string, txSimContext protocol.TxS
 	}
 	return nil, nil
 }
+
+// TODO impl me
+func VerifyDDLSql(sql string) error {
+
+	return nil
+}
+
+// TODO impl me
+func VerifyUpdateOneSql(sql string) error {
+
+	return nil
+}
+
+// TODO impl me
+func VerifyQueryOne(sql string) error {
+
+	return nil
+}
+
+// TODO impl me
+func VerifyQuery(sql string) error {
+
+	return nil
+}

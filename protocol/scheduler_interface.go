@@ -45,6 +45,8 @@ type TxSimContext interface {
 	GetTx() *common.Transaction
 	// Get related transaction
 	GetBlockHeight() int64
+	// Get current block proposer
+	GetBlockProposer() []byte
 	// Get the tx result
 	GetTxResult() *common.Result
 	// Set the tx result
@@ -67,4 +69,6 @@ type TxSimContext interface {
 	SetTxExecSeq(int)
 	// Get cross contract call deep
 	GetDepth() int
+	SetStateSqlHandle(int32, SqlRows)
+	GetStateSqlHandle(int32) (SqlRows, bool)
 }

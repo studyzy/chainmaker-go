@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package proposer
 
 import (
+	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	"chainmaker.org/chainmaker-go/localconf"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
-
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	"chainmaker.org/chainmaker-go/utils"
 )
 
 func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []byte, txBatch []*commonpb.Transaction) (*commonpb.Block, []int64, error) {
@@ -46,6 +46,9 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 	snapshot := bp.snapshotManager.NewSnapshot(lastBlock, block)
 	vmStartTick := utils.CurrentTimeMillisSeconds()
 	ssLasts := vmStartTick - ssStartTick
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
+	}
 	txRWSetMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
 	timeLasts = append(timeLasts, ssLasts, vmLasts)

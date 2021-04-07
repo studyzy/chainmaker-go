@@ -59,6 +59,10 @@ func (s *MockSimContextImpl) GetBlockHeight() int64 {
 	panic(implement_me)
 }
 
+func (s *MockSimContextImpl) GetBlockProposer() []byte {
+	panic(implement_me)
+}
+
 func (s *MockSimContextImpl) GetTxResult() *commonPb.Result {
 	panic(implement_me)
 }
@@ -113,6 +117,14 @@ func (s *MockSimContextImpl) SetTxExecSeq(txExecSeq int) {
 	s.txExecSeq = int32(txExecSeq)
 }
 
+func (s *MockSimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	panic("impl me")
+
+}
+
+func (s *MockSimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	panic("impl me")
+}
 func TestKey(t *testing.T) {
 	s0 := "你好"
 	b0 := []byte(s0)

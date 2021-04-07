@@ -28,6 +28,7 @@ type txQuerySimContextImpl struct {
 	currentDeep     int
 	currentResult   []byte
 	hisResult       []*callContractResult
+	sqlRowCache     map[int32]protocol.SqlRows
 }
 
 type callContractResult struct {
@@ -100,6 +101,14 @@ func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
 		return 0
 	} else {
 		return lastBlock.Header.BlockHeight
+	}
+}
+
+func (s *txQuerySimContextImpl) GetBlockProposer() []byte {
+	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
+		return nil
+	} else {
+		return lastBlock.Header.Proposer
 	}
 }
 
@@ -236,4 +245,13 @@ func (s *txQuerySimContextImpl) GetCurrentResult() []byte {
 
 func (s *txQuerySimContextImpl) GetDepth() int {
 	return s.currentDeep
+}
+
+func (s *txQuerySimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	s.sqlRowCache[index] = rows
+}
+
+func (s *txQuerySimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	data, ok := s.sqlRowCache[index]
+	return data, ok
 }
