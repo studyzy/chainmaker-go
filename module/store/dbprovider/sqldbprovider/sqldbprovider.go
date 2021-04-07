@@ -310,9 +310,9 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 		return nil, err
 	}
 	if !rows.Next() {
-		return nil, nil
+		return NewSqlDBRow(db, rows, true), nil
 	}
-	return NewSqlDBRow(db, rows), nil
+	return NewSqlDBRow(db, rows, false), nil
 }
 
 func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {

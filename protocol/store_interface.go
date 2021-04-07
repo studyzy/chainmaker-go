@@ -145,16 +145,26 @@ type SqlDBTransaction interface {
 	//回滚事务到指定的保存点
 	RollbackDbSavePoint(savePointName string) error
 }
-
+//运行SQL查询后返回的一行数据
 type SqlRow interface {
+	//将这个数据的每个列赋值到dest指针对应的对象中
 	ScanColumns(dest ...interface{}) error
+	//将这个数据赋值到dest对象的属性中
 	ScanObject(dest interface{}) error
+	//将这个数据转换为ColumnName为Key，Data为Value的Map中
 	Data()(map[string]string, error)
+	//判断返回的SqlRow是否为空
+	IsEmpty() bool
 }
+//运行SQL查询后返回的多行数据
 type SqlRows interface {
+	//还有下一行
 	Next() bool
+	//将当前行这个数据的每个列赋值到dest指针对应的对象中
 	ScanColumns(dest ...interface{}) error
+	//将当前行这个数据赋值到dest对象的属性中
 	ScanObject(dest interface{}) error
+	//将当前行这个数据转换为ColumnName为Key，Data为Value的Map中
 	Data()(map[string]string, error)
 	Close() error
 }

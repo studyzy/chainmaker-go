@@ -160,10 +160,11 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 
 	res, err := s.db.QuerySingle(sql, contractName, key)
 	if err != nil {
-		s.logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
+		s.logger.Errorf("failed to read state, contract:%s, key:%s,error:%s", contractName, key, err)
 		return nil, err
 	}
-	if res == nil {
+	if res.IsEmpty() {
+		s.logger.Infof(" read empty state, contract:%s, key:%s", contractName, key)
 		return nil, nil
 	}
 	var stateValue []byte

@@ -13,14 +13,16 @@ import (
 )
 
 type SqlDBRow struct {
-	db   *gorm.DB
-	rows *sql.Rows
+	isEmpty bool
+	db      *gorm.DB
+	rows    *sql.Rows
 }
 
-func NewSqlDBRow(db *gorm.DB, rows *sql.Rows) *SqlDBRow {
+func NewSqlDBRow(db *gorm.DB, rows *sql.Rows, isEmpty bool) *SqlDBRow {
 	return &SqlDBRow{
-		db:   db,
-		rows: rows,
+		db:      db,
+		rows:    rows,
+		isEmpty: isEmpty,
 	}
 }
 func (r *SqlDBRow) ScanColumns(dest ...interface{}) error {
@@ -35,6 +37,9 @@ func (row *SqlDBRow) ScanObject(dest interface{}) error {
 func (row *SqlDBRow) Data() (map[string]string, error) {
 	defer row.rows.Close()
 	return convertRows2Map(row.rows)
+}
+func (row *SqlDBRow) IsEmpty() bool {
+	return row.isEmpty
 }
 
 type SqlDBRows struct {

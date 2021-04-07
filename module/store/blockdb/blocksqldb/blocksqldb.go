@@ -17,6 +17,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"golang.org/x/sync/semaphore"
 	"runtime"
 )
@@ -163,7 +164,9 @@ func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*Bloc
 	if err != nil {
 		return nil, err
 	}
-
+	if res.IsEmpty() {
+		return nil, errors.New(fmt.Sprintf("sql[%s] %v return empty result", sql, values))
+	}
 	err = res.ScanObject(&blockInfo)
 	if err != nil {
 		return nil, err
@@ -223,7 +226,7 @@ func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
 		b.Logger.Errorf("get block sqldb save point error:%s", err.Error())
 		return 0, err
 	}
-	if row == nil {
+	if row.IsEmpty() {
 		return 0, nil
 	}
 	var height uint64
@@ -247,6 +250,10 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	res, err := b.db.QuerySingle("select * from tx_infos where tx_id = ?", txId)
 	if err != nil {
 		return nil, err
+	}
+	if res.IsEmpty() {
+		b.Logger.Infof("tx[%s] not found in db", txId)
+		return nil, nil
 	}
 	err = res.ScanObject(&txInfo)
 	if err != nil {

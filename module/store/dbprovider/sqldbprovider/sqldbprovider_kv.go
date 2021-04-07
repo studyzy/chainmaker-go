@@ -26,6 +26,10 @@ func (p *SqlDBHandle) Get(key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if result.IsEmpty() {
+		p.log.Infof("cannot query value by key=%s", string(key))
+		return nil, nil
+	}
 	var v []byte
 	err = result.ScanColumns(&v)
 	if err != nil {

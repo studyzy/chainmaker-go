@@ -61,9 +61,9 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 		return nil, err
 	}
 	if !rows.Next() {
-		return nil, nil
+		return NewSqlDBRow(db, rows, true), nil
 	}
-	return NewSqlDBRow(db, rows), nil
+	return NewSqlDBRow(db, rows, false), nil
 }
 func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()

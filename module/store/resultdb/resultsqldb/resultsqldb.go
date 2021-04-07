@@ -90,6 +90,10 @@ func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	if err != nil {
 		return nil, err
 	}
+	if result.IsEmpty() {
+		h.Logger.Infof("cannot query rwset by txid=%s", txId)
+		return nil, nil
+	}
 	var b []byte
 	err = result.ScanColumns(&b)
 	if err != nil {
