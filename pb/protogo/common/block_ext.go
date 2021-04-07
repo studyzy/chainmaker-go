@@ -7,11 +7,30 @@
 
 package common
 
-import "encoding/hex"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strconv"
+)
 
 func (b *Block) GetBlockHashStr() string {
 	return hex.EncodeToString(b.Header.BlockHash)
 }
 func (b *Block) IsContractMgmtBlock() bool {
 	return b.Txs[0].Header.TxType == TxType_MANAGE_USER_CONTRACT
+}
+
+// GetTxKey get transaction key
+func (b *Block) GetTxKey() string {
+	return GetTxKewWith(b.Header.Proposer, b.Header.BlockHeight)
+}
+
+func GetTxKewWith(propose []byte, blockHeight int64) string {
+	if propose == nil {
+		return ""
+	}
+	f := sha256.New()
+	f.Write(propose)
+	f.Write([]byte(strconv.Itoa(int(blockHeight))))
+	return hex.EncodeToString(f.Sum(nil))
 }
