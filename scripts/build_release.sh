@@ -70,6 +70,7 @@ function package() {
         cp $CURRENT_PATH/bin/start.sh     $chainmaker_file/bin
         cp $CURRENT_PATH/bin/stop.sh      $chainmaker_file/bin
         cp $CURRENT_PATH/bin/restart.sh   $chainmaker_file/bin
+        cp $CURRENT_PATH/service/*        $chainmaker_file/bin
         if [ "${system}" = "Linux" ]; then
           cp -r $PROJECT_PATH/main/libwasmer_runtime_c_api.so     $chainmaker_file/lib/libwasmer.so
           cp -r $PROJECT_PATH/main/prebuilt/linux/wxdec           $chainmaker_file/lib/
@@ -81,9 +82,10 @@ function package() {
         chmod 700 $chainmaker_file/lib/wxdec
         chmod 700 $chainmaker_file/bin/*
         cp -r $BUILD_CONFIG_PATH/node$c/* $chainmaker_file/config/$file
-        xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/start.sh
-        xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/stop.sh
-        xsed "s%{org_id}%$file%g"       $chainmaker_file/bin/restart.sh
+        xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/start.sh
+        xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/stop.sh
+        xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/restart.sh
+        xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/run.sh
         tar -zcvf chainmaker-$VERSION-$file-$DATETIME-$PLATFORM.tar.gz $chainmaker_file
         rm -rf $chainmaker_file
     done

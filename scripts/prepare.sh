@@ -117,10 +117,15 @@ function generate_config() {
     PPROF_PORT_PREFIX=24320
     TRUSTED_PORT_PREFIX=13300
 
-    read -p "input consensus type(default 1/tbft): " tmp
-    if  [ ! -z "$tmp" ] ;then
-        CONSENSUS_TYPE=$tmp
+    if  [ $NODE_CNT -eq 1 ]; then
+        CONSENSUS_TYPE=0
+    else
+        read -p "input consensus type(default 1/tbft): " tmp
+        if  [ ! -z "$tmp" ] ;then
+            CONSENSUS_TYPE=$tmp
+        fi
     fi
+
     read -p "input log level(default INFO): " tmp
     if  [ ! -z "$tmp" ] ;then
         LOG_LEVEL=$tmp
@@ -131,7 +136,6 @@ function generate_config() {
         mkdir -p backup/backup_config
         mv config  backup/backup_config/config_$(date "+%Y%m%d%H%M%S")
     fi
-
 
     mkdir -p ${BUILD_PATH}/config
     cd ${BUILD_PATH}/config
