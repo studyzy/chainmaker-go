@@ -13,3 +13,6 @@ ExecStop=/bin/bash -c "${BINPATH}/run.sh stop"
 ExecReload=/bin/bash -c "${BINPATH}/run.sh restart"
 
 Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
