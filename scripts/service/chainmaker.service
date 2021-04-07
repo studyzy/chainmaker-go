@@ -4,8 +4,8 @@ Description=chainmaker
 [Service]
 KillMode=process
 LimitNOFILE=102400
-Environment=BINPATH=/data/chainmaker/bin
-WorkingDirectory=/data/chainmaker/bin
+Environment=BINPATH=/data/chainmaker/chainmaker-go/bin
+WorkingDirectory=/data/chainmaker/chainmaker-go/bin
 Type=forking
 
 ExecStart=/bin/bash -c "${BINPATH}/run.sh start"
