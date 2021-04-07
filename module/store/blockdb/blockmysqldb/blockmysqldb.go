@@ -194,7 +194,6 @@ func (b *BlockMysqlDB) GetLastSavepoint() (uint64, error) {
 func (b *BlockMysqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 	var txInfo TxInfo
 	res := b.db.Where("tx_id = ?", txId).First(&txInfo)
-	b.Logger.Errorf("res:%+v, res.error:%s", res, res.Error)
 	if res.Error == gorm.ErrRecordNotFound {
 		return nil, nil
 	} else if res.Error != nil {
