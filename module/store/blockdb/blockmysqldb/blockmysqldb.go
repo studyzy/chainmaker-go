@@ -192,15 +192,15 @@ func (b *BlockMysqlDB) GetLastSavepoint() (uint64, error) {
 
 // GetBlockByTx returns a block which contains a tx.
 func (b *BlockMysqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
-	//var txInfo TxInfo
-	var blockHeight int64
-	res := b.db.Model(&TxInfo{}).Select("block_height").Where("tx_id = ?", txId).Find(&blockHeight)
+	var txInfo TxInfo
+	res := b.db.Where("tx_id = ?", txId).First(&txInfo)
+	b.Logger.Errorf("res:%+v, res.error:%s", res, res.Error)
 	if res.Error == gorm.ErrRecordNotFound {
 		return nil, nil
 	} else if res.Error != nil {
 		return nil, res.Error
 	}
-	return b.GetBlock(blockHeight)
+	return b.GetBlock(txInfo.BlockHeight)
 }
 
 // GetTx retrieves a transaction by txid, or returns nil if none exists.

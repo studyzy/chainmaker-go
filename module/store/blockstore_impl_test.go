@@ -316,9 +316,8 @@ func Test_blockchainStoreImpl_GetBlockByTx(t *testing.T) {
 	assert.Equal(t, int64(3), block.Header.BlockHeight)
 
 	blockNotExist, err := s.GetBlockByTx("not_exist_txid")
-	fmt.Printf("----:%v\n", blockNotExist)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, nil, blockNotExist)
+	assert.Equal(t, true, blockNotExist == nil)
 
 }
 
