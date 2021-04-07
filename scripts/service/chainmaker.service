@@ -1,0 +1,15 @@
+[Unit]
+Description=chainmaker
+
+[Service]
+KillMode=process
+LimitNOFILE=102400
+Environment=BINPATH=/data/chainmaker/bin
+WorkingDirectory=/data/chainmaker/bin
+Type=forking
+
+ExecStart=/bin/bash -c "${BINPATH}/run.sh start"
+ExecStop=/bin/bash -c "${BINPATH}/run.sh stop"
+ExecReload=/bin/bash -c "${BINPATH}/run.sh restart"
+
+Restart=on-failure
