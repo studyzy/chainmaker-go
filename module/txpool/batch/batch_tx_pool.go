@@ -49,8 +49,12 @@ type BatchTxPool struct {
 	configBatchPool   *cfgBatchPool        // Stores batches of configuration transactions
 	batchTxIdRecorder *batchTxIdRecorder   // Stores transaction information within batches
 	pendingPool       *pendingBatchPool    // Stores batches to be deleted
-	mb                msgbus.MessageBus    // Receive messages from other modules
-	log               *logger.CMLogger
+
+	mb         msgbus.MessageBus              // Receive messages from other modules
+	ac         protocol.AccessControlProvider // Verify transaction signature
+	log        *logger.CMLogger               //
+	chainStore protocol.BlockchainStore       // Access information on the chain
+	chainConf  protocol.ChainConf
 
 	fetchLock sync.Mutex    // The protection of the FETCH function allows only one FETCH at a time
 	stopCh    chan struct{} // Signal notification of service exit
