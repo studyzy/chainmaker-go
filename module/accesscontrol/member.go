@@ -159,6 +159,8 @@ type signingMember struct {
 	sk bccrypto.PrivateKey
 }
 
+// When using certificate, the signature-hash algorithm suite is from the certificate, and the input hashType is ignored.
+// When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
 func (sm *signingMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	var opts bccrypto.SignOpts
 	if sm.identityType == IdentityTypePublicKey {

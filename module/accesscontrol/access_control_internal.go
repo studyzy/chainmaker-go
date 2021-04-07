@@ -466,8 +466,9 @@ func buildOrgListRoleListOfPolicyForVerifyPrincipal(p *policy) (map[string]bool,
 }
 
 func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endorsements []*common.EndorsementEntry) (bool, error) {
+	// notice: accept admin role only, and require majority of all the organizations on the chain
 	role := protocol.RoleAdmin
-	orgList, _ := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
+	// orgList, _ := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 
 	// warning: majority keywork with non admin constraints
 	/*
@@ -476,7 +477,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endors
 		}
 	*/
 
-	numOfValid := ac.countValidEndorsements(orgList, map[protocol.Role]bool{role: true}, endorsements)
+	numOfValid := ac.countValidEndorsements(map[string]bool{}, map[protocol.Role]bool{role: true}, endorsements)
 
 	if float64(numOfValid) > float64(ac.orgNum)/2.0 {
 		return true, nil

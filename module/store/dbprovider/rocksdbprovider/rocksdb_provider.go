@@ -157,10 +157,10 @@ func (config *RocksDBConfig) ToOptions() *gorocksdb.Options {
 	blockBasedTableOptions.SetFilterPolicy(bloomFilter)
 	blockBasedTableOptions.SetBlockCacheCompressed(gorocksdb.NewLRUCache(uint64(config.blockCache)))
 	blockBasedTableOptions.SetCacheIndexAndFilterBlocks(true)
-	blockBasedTableOptions.SetIndexType(gorocksdb.KHashSearchIndexType)
+	//blockBasedTableOptions.SetIndexType(gorocksdb.KHashSearchIndexType)
 
 	options.SetBlockBasedTableFactory(blockBasedTableOptions)
-	options.SetPrefixExtractor(gorocksdb.NewFixedPrefixTransform(defaultFixedPrefixTransform))
+	//options.SetPrefixExtractor(gorocksdb.NewFixedPrefixTransform(defaultFixedPrefixTransform))
 	options.SetAllowConcurrentMemtableWrites(false)
 	return options
 }
