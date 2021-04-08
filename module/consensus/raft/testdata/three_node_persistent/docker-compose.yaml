@@ -4,11 +4,8 @@ services:
   node1:
     container_name: node1
     image: "chainmaker:v0.7.0"
-    environment:
-      - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -c ../config/wx-org1/chainmaker.yml start"
-    # command: "sleep 10000"
     ports:
       - "7988:7988"
       - "17989:17989"
@@ -18,20 +15,15 @@ services:
       - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
       - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
       - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
-      - ./volume/wx-org1/ledgerData:/chainmaker-go/testdata/wx-org1/ledgerData
-      - ./volume/wx-org1/log:/chainmaker-go/log
+      - ./data/wx-org1/ledgerData:/chainmaker-go/testdata/wx-org1/ledgerData
+      - ./data/wx-org1/log:/chainmaker-go/log
     networks:
       localnet:
         ipv4_address: 192.168.2.2
-    cap_add:
-      - SYS_PTRACE
 
   node2:
     container_name: node2
     image: "chainmaker:v0.7.0"
-    environment:
-      - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -c ../config/wx-org2/chainmaker.yml start"
     ports:
@@ -43,20 +35,15 @@ services:
       - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
       - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
       - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
-      - ./volume/wx-org2/ledgerData:/chainmaker-go/testdata/wx-org2/ledgerData
-      - ./volume/wx-org2/log:/chainmaker-go/log
+      - ./data/wx-org2/ledgerData:/chainmaker-go/testdata/wx-org2/ledgerData
+      - ./data/wx-org2/log:/chainmaker-go/log
     networks:
       localnet:
         ipv4_address: 192.168.2.3
-    cap_add:
-      - SYS_PTRACE
 
   node3:
     container_name: node3
     image: "chainmaker:v0.7.0"
-    environment:
-      - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -c ../config/wx-org3/chainmaker.yml start"
     ports:
@@ -68,39 +55,11 @@ services:
       - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
       - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
       - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
-      - ./volume/wx-org3/ledgerData:/chainmaker-go/testdata/wx-org3/ledgerData
-      - ./volume/wx-org3/log:/chainmaker-go/log
+      - ./data/wx-org3/ledgerData:/chainmaker-go/testdata/wx-org3/ledgerData
+      - ./data/wx-org3/log:/chainmaker-go/log
     networks:
       localnet:
         ipv4_address: 192.168.2.4
-    cap_add:
-      - SYS_PTRACE
-
-  node4:
-    container_name: node4
-    image: "chainmaker:v0.7.0"
-    environment:
-      - GODEBUG=madvdontneed=1
-    working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org4/chainmaker.yml start"
-    ports:
-      - "7991:7988"
-      - "17992:17989"
-      - "4324:4321"
-    volumes:
-      - ./wx-org4:/chainmaker-go/config/wx-org4
-      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
-      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
-      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
-      - ./volume/wx-org4/ledgerData:/chainmaker-go/testdata/wx-org4/ledgerData
-      - ./volume/wx-org4/log:/chainmaker-go/log
-    networks:
-      localnet:
-        ipv4_address: 192.168.2.5
-    cap_add:
-      - SYS_PTRACE
 
 networks:
   localnet:
