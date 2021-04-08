@@ -512,6 +512,7 @@ func (p *BatchTxPool) removeTxBatch(txs []*commonPb.Transaction) {
 	}
 	if remove {
 		atomic.AddInt32(&p.currentTxCount, 0-batch.GetSize_())
+		p.log.Infof("current txs num: %d", atomic.LoadInt32(&p.currentTxCount))
 		p.batchTxIdRecorder.RemoveRecordWithBatch(batch)
 		p.batchFetchHeight.Delete(batchId)
 	} else {
