@@ -372,13 +372,13 @@ func (p *BatchTxPool) fetchTxsFromCfgPool(blockHeight int64) []*commonPb.Transac
 		return false
 	})
 	if batch != nil {
-		filterTxs := p.moveBatchAndFilterPendingTxs(cfgPool, batch)
+		filterTxs := p.moveBatch(cfgPool, batch)
 		return filterTxs
 	}
 	return nil
 }
 
-func (p *BatchTxPool) moveBatchAndFilterPendingTxs(removePool *nodeBatchPool, batch *txpoolPb.TxBatch) []*commonPb.Transaction {
+func (p *BatchTxPool) moveBatch(removePool *nodeBatchPool, batch *txpoolPb.TxBatch) []*commonPb.Transaction {
 	if ok := removePool.RemoveIfExist(batch); !ok {
 		p.log.Errorf("remove batch failed, batch(batch id:%d) not exist in normal batch pool", batch.GetBatchId())
 		return nil
@@ -387,21 +387,7 @@ func (p *BatchTxPool) moveBatchAndFilterPendingTxs(removePool *nodeBatchPool, ba
 		p.log.Errorf("pending batch failed, batch(batch id:%d) exist in pending batch pool", batch.GetBatchId())
 		return nil
 	}
-	txs := p.filterTxs(batch.GetTxs())
-	if len(txs) == 0 {
-		p.pendingPool.RemoveIfExist(batch)
-	}
-	return txs
-}
-
-func (p *BatchTxPool) filterTxs(txs []*commonPb.Transaction) []*commonPb.Transaction {
-	noExistInDb := make([]*commonPb.Transaction, 0, len(txs))
-	for _, tx := range txs {
-		if !p.isTxExistInDB(tx) {
-			noExistInDb = append(noExistInDb, tx)
-		}
-	}
-	return noExistInDb
+	return batch.Txs
 }
 
 func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight int64) []*commonPb.Transaction {
@@ -417,10 +403,20 @@ func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight int64) []*commonPb.Tran
 		return false
 	})
 	if batch != nil {
-		filterTxs := p.moveBatchAndFilterPendingTxs(commonTxsPool, batch)
+		filterTxs := p.moveBatch(commonTxsPool, batch)
 		return filterTxs
 	}
 	return nil
+}
+
+func (p *BatchTxPool) filterTxs(txs []*commonPb.Transaction) []*commonPb.Transaction {
+	noExistInDb := make([]*commonPb.Transaction, 0, len(txs))
+	for _, tx := range txs {
+		if !p.isTxExistInDB(tx) {
+			noExistInDb = append(noExistInDb, tx)
+		}
+	}
+	return noExistInDb
 }
 
 func (p *BatchTxPool) RetryAndRemoveTxs(retryTxs []*commonPb.Transaction, removeTxs []*commonPb.Transaction) {
@@ -534,6 +530,24 @@ func (p *BatchTxPool) OnMessage(message *msgbus.Message) {
 			return
 		}
 
+		filterTxs := make([]*commonPb.Transaction, 0, batch.Size_)
+		for txId, index := range batch.TxIdsMap {
+			if batch.Txs[index].Header.TxId != txId {
+				p.log.Errorf("Malicious batch, %d tx's Id in"+
+					" map is %s, but actual is %s", index, txId, batch.Txs[index].Header.TxId)
+				return
+			}
+			if err := p.validate(batch.Txs[index], protocol.P2P); err == nil {
+				filterTxs = append(filterTxs, batch.Txs[index])
+			}
+		}
+		if len(filterTxs) != len(batch.Txs) {
+			batch = &txpoolPb.TxBatch{
+				Txs:      filterTxs,
+				Size_:    int32(len(filterTxs)),
+				TxIdsMap: createTxIdsMap(filterTxs),
+			}
+		}
 		p.log.Infof("receive batch from node:[%s], size:[%d], actual "+
 			"tx num:[%d], batchId:[%d]", batch.NodeId, batch.Size, len(batch.Txs), batch.BatchId)
 		if err := p.addTxBatch(batch); err != nil {

@@ -22,10 +22,10 @@ func (p *BatchTxPool) validate(tx *commonPb.Transaction, source protocol.TxSourc
 	if err := p.validateTxTime(tx); err != nil {
 		return err
 	}
-	//if _, _, ok := p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Header.TxId); ok {
-	//	p.log.Errorw("transaction exists", "txId", tx.Header.GetTxId())
-	//	return commonErrors.ErrTxIdExist
-	//}
+	if _, _, ok := p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Header.TxId); ok {
+		p.log.Errorw("transaction exists", "txId", tx.Header.GetTxId())
+		return commonErrors.ErrTxIdExist
+	}
 	if p.isTxExistInDB(tx) {
 		p.log.Errorw("transaction exists in DB", "txId", tx.Header.GetTxId())
 		return commonErrors.ErrTxIdExistDB
