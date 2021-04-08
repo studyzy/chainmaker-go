@@ -300,8 +300,8 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 	}
 	checked := make([]*commonpb.Transaction, 0, len(batch))
 	verifyBatches := utils.DispatchTxVerifyTask(batch)
-	results := make([][]*commonpb.Transaction, 0)
 	workerCount := len(verifyBatches)
+	results := make([][]*commonpb.Transaction, workerCount)
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
 	for i := 0; i < workerCount; i++ {
