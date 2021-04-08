@@ -8,6 +8,7 @@ package batch
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -120,7 +121,7 @@ func (p *BatchTxPool) AddTx(tx *commonPb.Transaction, src protocol.TxSource) err
 		return errors.New("batch tx pool not started")
 	}
 	if atomic.LoadInt32(&p.currentTxCount) >= p.maxTxCount {
-		return errors.New("batch tx pool is full")
+		return fmt.Errorf("batch tx pool is full, count: %d, maxCount: %d", p.currentTxCount, p.maxTxCount)
 	}
 	if err := p.validate(tx, src); err != nil {
 		return err
@@ -439,6 +440,7 @@ func (p *BatchTxPool) RetryAndRemoveTxs(retryTxs []*commonPb.Transaction, remove
 		return
 	}
 	defer p.publishSignal()
+	p.log.Debugf("retry txs num: %d, remove txs num: %d", len(retryTxs), len(removeTxs))
 	p.retryTxBatch(retryTxs)
 	p.removeTxBatch(removeTxs)
 	return
