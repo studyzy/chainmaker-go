@@ -145,7 +145,7 @@ type SqlDBTransaction interface {
 	//回滚事务到指定的保存点
 	RollbackDbSavePoint(savePointName string) error
 }
-//运行SQL查询后返回的一行数据
+//运行SQL查询后返回的一行数据，在获取这行数据时提供了ScanColumns，ScanObject和Data三种方法，但是三选一，调用其中一个就别再调另外一个。
 type SqlRow interface {
 	//将这个数据的每个列赋值到dest指针对应的对象中
 	ScanColumns(dest ...interface{}) error

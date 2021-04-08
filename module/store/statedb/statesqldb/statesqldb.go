@@ -79,10 +79,12 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		s.logger.Warnf("block[%d] don't have any read write set data", block.Header.BlockHeight)
 		return nil
 	}
-	_, err := s.db.GetDbTransaction(txKey)
+	dbTx, err := s.db.GetDbTransaction(txKey)
+	s.logger.Infof("GetDbTransaction db:%v,err:%s", dbTx, err)
+	processStateDbSqlOutside := false
 	if err == nil { //外部已经开启了事务，状态数据在外部提交
-		s.logger.Debugf("db transaction[%s] already created outside, don't need process statedb in CommitBlock function", txKey)
-		return nil
+		s.logger.Debugf("db transaction[%s] already created outside, don't need process statedb sql in CommitBlock function", txKey)
+		processStateDbSqlOutside = true
 	}
 	if block.IsContractMgmtBlock() {
 		//创建对应合约的数据库
@@ -111,27 +113,30 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		return nil
 	}
 	//普通交易，开启事务，进行数据写入
-	tx, err := s.db.BeginDbTransaction(txKey)
-	if err != nil {
-		return err
+	if !processStateDbSqlOutside {
+		dbTx, err = s.db.BeginDbTransaction(txKey)
+		if err != nil {
+			return err
+		}
 	}
+
 	currentDb := ""
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
 			if txWrite.ContractName != "" && (txWrite.ContractName != currentDb || currentDb == "") { //切换DB
-				tx.ChangeContextDb(txWrite.ContractName)
+				dbTx.ChangeContextDb(txWrite.ContractName)
 				currentDb = txWrite.ContractName
 			}
-			if txWrite.Key == nil { //sql
+			if len(txWrite.Key) == 0 && !processStateDbSqlOutside { //是sql,而且没有在外面处理过，则在这里进行处理
 				sql := string(txWrite.Value)
-				if _, err := tx.ExecSql(sql); err != nil {
+				if _, err := dbTx.ExecSql(sql); err != nil {
 					s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
 					s.db.RollbackDbTransaction(txKey)
 					return err
 				}
 			} else {
 				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, block.Header.BlockHeight)
-				if _, err := tx.Save(stateInfo); err != nil {
+				if _, err := dbTx.Save(stateInfo); err != nil {
 					s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
 					s.db.RollbackDbTransaction(txKey)
 					return err
