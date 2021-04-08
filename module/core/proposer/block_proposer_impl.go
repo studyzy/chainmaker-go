@@ -251,17 +251,18 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 
 	// retrieve tx batch from tx pool
 	startFetchTick := utils.CurrentTimeMillisSeconds()
-	checkedBatch := bp.txPool.FetchTxBatch(height)
+	fetchBatch := bp.txPool.FetchTxBatch(height)
 	fetchLasts := utils.CurrentTimeMillisSeconds() - startFetchTick
-	bp.log.Debugf("begin proposing block[%d], fetch tx num[%d]", height, len(checkedBatch))
+	bp.log.Debugf("begin proposing block[%d], fetch tx num[%d]", height, len(fetchBatch))
 
 	startDupTick := utils.CurrentTimeMillisSeconds()
-	//checkedBatch := bp.txDuplicateCheck(txBatch)
+	checkedBatch := bp.txDuplicateCheck(fetchBatch)
 	dupLasts := utils.CurrentTimeMillisSeconds() - startDupTick
 	if !utils.CanProposeEmptyBlock(bp.chainConf.ChainConfig().Consensus.Type) &&
 		(checkedBatch == nil || len(checkedBatch) == 0) {
 		// can not propose empty block and tx batch is empty, then yield proposing.
 		bp.log.Debugf("no txs in tx pool, proposing block stoped")
+		bp.txPool.RetryAndRemoveTxs(nil, fetchBatch)
 		return nil
 	}
 
@@ -297,10 +298,10 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 	if batch == nil || len(batch) == 0 {
 		return nil
 	}
-	checked := make([]*commonpb.Transaction, 0)
-	verifyBatchs := utils.DispatchTxVerifyTask(batch)
+	checked := make([]*commonpb.Transaction, 0, len(batch))
+	verifyBatches := utils.DispatchTxVerifyTask(batch)
 	results := make([][]*commonpb.Transaction, 0)
-	workerCount := len(verifyBatchs)
+	workerCount := len(verifyBatches)
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
 	for i := 0; i < workerCount; i++ {
@@ -314,7 +315,7 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 				}
 			}
 			results[index] = result
-		}(i, verifyBatchs[i])
+		}(i, verifyBatches[i])
 	}
 	wg.Wait()
 	for _, result := range results {
