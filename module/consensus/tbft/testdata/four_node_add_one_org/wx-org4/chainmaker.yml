@@ -1,23 +1,26 @@
+log:
+  config_file: ../config/wx-org4/log.yml          # config file of logger configuration.
+
 blockchain:
   - chainId: chain1
-    genesis: chainconfig/bc1.yml
+    genesis: ../config/wx-org4/chainconfig/bc1.yml
 
 node:
   # 节点类型：full、spv
   type: full
-
-  # node1
-  priv_key_file: ./crypto-config/wx-org4.chainmaker.org/node/consensus1/consensus1.tls.key
-  cert_file:     ./crypto-config/wx-org4.chainmaker.org/node/consensus1/consensus1.tls.crt
-  org_id: wx-org4
+  org_id:        wx-org4.chainmaker.org
+  priv_key_file: ../config/wx-org4/certs/node/consensus1/consensus1.tls.key
+  cert_file:     ../config/wx-org4/certs/node/consensus1/consensus1.tls.crt
+  signer_cache_size: 1000
+  cert_cache_size:   1000
 
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/6666
   tls:
     enabled: true
-    priv_key_file: ./crypto-config/wx-org4.chainmaker.org/node/consensus1/consensus1.tls.key
-    cert_file:     ./crypto-config/wx-org4.chainmaker.org/node/consensus1/consensus1.tls.crt
+    priv_key_file: ../config/wx-org4/certs/node/consensus1/consensus1.tls.key
+    cert_file:  ../config/wx-org4/certs/node/consensus1/consensus1.tls.crt   
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
@@ -38,11 +41,27 @@ rpc:
     #  mode: oneway
     # mode: twoway
 
+monitor:
+  enabled: true
+  port: 17989
+
+pprof:
+  enabled: true
+  port: 4321
+
 storage:
   provider: LevelDB
   store_path: ../testdata/wx-org4/ledgerData
 
 debug:
   # 是否开启CLI功能，过度期间使用
-  is_cli_open: true
+  is_cli_open: false
   is_http_open: false
+  is_propose_duplicately: false
+  is_propose_multinode_duplicately: false
+  is_proposal_old_height: false
+  is_prevote_duplicately: false
+  is_prevote_old_height: false
+  is_prevote_lost: false
+  is_precommit_duplicately: false
+  is_precommit_old_height: false

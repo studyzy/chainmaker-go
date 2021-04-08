@@ -72,7 +72,7 @@ permissions:
       org_list:
       role_list:
         - admin
-  - resource_name: BLOCK_UPDATE
+  - _esource_name: BLOCK_UPDATE
     principle:
       rule: ANY
       org_list:
@@ -84,4 +84,3 @@ permissions:
       rule: ANY
       org_list:
       role_list:
-

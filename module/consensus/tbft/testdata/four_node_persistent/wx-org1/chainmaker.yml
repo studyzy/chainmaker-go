@@ -1,13 +1,16 @@
+log:
+  config_file: ../config/wx-org1/log.yml          # config file of logger configuration.
+
 blockchain:
   - chainId: chain1
-    genesis: chainconfig/bc1.yml
+    genesis: ../config/wx-org1/chainconfig/bc1.yml
 
 node:
   # 节点类型：full、spv
   type: full
   org_id:        wx-org1.chainmaker.org
-  priv_key_file: ./certs/node/consensus1/consensus1.tls.key
-  cert_file:     ./certs/node/consensus1/consensus1.tls.crt
+  priv_key_file: ../config/wx-org1/certs/node/consensus1/consensus1.tls.key
+  cert_file:     ../config/wx-org1/certs/node/consensus1/consensus1.tls.crt
   signer_cache_size: 1000
   cert_cache_size:   1000
 
@@ -16,16 +19,13 @@ net:
   listen_addr: /ip4/0.0.0.0/tcp/6666
   tls:
     enabled: true
-    priv_key_file: ./certs/node/consensus1/consensus1.tls.key
-    cert_file:  ./certs/node/consensus1/consensus1.tls.crt   
+    priv_key_file: ../config/wx-org1/certs/node/consensus1/consensus1.tls.key
+    cert_file:  ../config/wx-org1/certs/node/consensus1/consensus1.tls.crt   
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
-
-sync:
-  broadcast_time: 10
 
 rpc:
   provider: grpc
@@ -42,11 +42,11 @@ rpc:
     # mode: twoway
 
 monitor:
-  enabled: false
+  enabled: true
   port: 17989
 
 pprof:
-  enabled: false
+  enabled: true
   port: 4321
 
 storage:
@@ -65,3 +65,4 @@ debug:
   is_prevote_lost: false
   is_precommit_duplicately: false
   is_precommit_old_height: false
+  is_trace_memory_usage: false

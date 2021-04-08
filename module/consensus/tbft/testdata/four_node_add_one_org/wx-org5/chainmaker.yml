@@ -1,16 +1,16 @@
 log:
-  config_file: ../config/wx-org2/log.yml          # config file of logger configuration.
+  config_file: ../config/wx-org5/log.yml          # config file of logger configuration.
 
 blockchain:
   - chainId: chain1
-    genesis: ../config/wx-org2/chainconfig/bc1.yml
+    genesis: ../config/wx-org5/chainconfig/bc1.yml
 
 node:
   # 节点类型：full、spv
   type: full
-  org_id:        wx-org2.chainmaker.org
-  priv_key_file: ../config/wx-org2/certs/node/consensus1/consensus1.tls.key
-  cert_file:     ../config/wx-org2/certs/node/consensus1/consensus1.tls.crt
+  org_id:        wx-org5.chainmaker.org
+  priv_key_file: ../config/wx-org5/certs/node/consensus1/consensus1.tls.key
+  cert_file:     ../config/wx-org5/certs/node/consensus1/consensus1.tls.crt
   signer_cache_size: 1000
   cert_cache_size:   1000
 
@@ -19,8 +19,8 @@ net:
   listen_addr: /ip4/0.0.0.0/tcp/6666
   tls:
     enabled: true
-    priv_key_file: ../config/wx-org2/certs/node/consensus1/consensus1.tls.key
-    cert_file:  ../config/wx-org2/certs/node/consensus1/consensus1.tls.crt   
+    priv_key_file: ../config/wx-org5/certs/node/consensus1/consensus1.tls.key
+    cert_file:  ../config/wx-org5/certs/node/consensus1/consensus1.tls.crt   
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
@@ -51,7 +51,7 @@ pprof:
 
 storage:
   provider: LevelDB
-  store_path: ../testdata/wx-org2/ledgerData
+  store_path: ../testdata/wx-org5/ledgerData
 
 debug:
   # 是否开启CLI功能，过度期间使用
