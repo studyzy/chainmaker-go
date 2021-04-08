@@ -41,7 +41,7 @@ var (
 
 const (
 	CHAIN1         = "chain1"
-	certPathPrefix = "/big_space/chainmaker/chainmaker-go/build/crypto-config/wx-org1.chainmaker.org/"
+	certPathPrefix = "/big_space/chainmaker/chainmaker-go/build/crypto-config/"
 
 	contractNameFact = "ex_fact"
 	contractNameAcct = "ac"
@@ -49,22 +49,22 @@ const (
 
 var (
 	caPaths = [][]string{
-		{certPathPrefix + "ca/"},
-		{certPathPrefix + "ca/"},
-		{certPathPrefix + "ca/"},
-		{certPathPrefix + "ca/"},
+		{certPathPrefix + "wx-org1.chainmaker.org/ca/"},
+		{certPathPrefix + "wx-org2.chainmaker.org/ca/"},
+		{certPathPrefix + "wx-org3.chainmaker.org/ca/"},
+		{certPathPrefix + "wx-org4.chainmaker.org/ca/"},
 	}
 	userKeyPaths = []string{
-		certPathPrefix + "user/client1/client1.tls.key",
-		certPathPrefix + "user/client1/client1.tls.key",
-		certPathPrefix + "user/client1/client1.tls.key",
-		certPathPrefix + "user/client1/client1.tls.key",
+		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.tls.key",
 	}
 	userCrtPaths = []string{
-		certPathPrefix + "user/client1/client1.tls.crt",
-		certPathPrefix + "user/client1/client1.tls.crt",
-		certPathPrefix + "user/client1/client1.tls.crt",
-		certPathPrefix + "user/client1/client1.tls.crt",
+		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.tls.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",
