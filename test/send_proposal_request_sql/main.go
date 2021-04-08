@@ -13,13 +13,13 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/helper"
-	"chainmaker.org/chainmaker-go/common/json"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
@@ -59,10 +59,7 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
-	//initWasmerTest()
 	initWasmerSqlTest()
-	//initGasmTest()
-	//initWxwmTest()
 
 	conn, err := initGRPCConnect(true)
 	if err != nil {
@@ -83,64 +80,97 @@ func main() {
 		panic(err)
 	}
 
+	// test
+	functionalTest(sk3, &client)
+	//performanceTest(sk3, &client)
+}
+
+func performanceTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
+
 	// 1) 合约创建
-	testCreate(sk3, &client, CHAIN1)
+	testCreate(sk3, client, CHAIN1)
+	time.Sleep(4 * time.Second)
+
+	start := utils.CurrentTimeMillisSeconds()
+	// 2) 执行合约-sql insert
+	txId := ""
+	count := 10000
+	for i := 0; i < count; i++ {
+		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
+	}
+
+	for true {
+		_, result := testQuerySqlById(sk3, client, CHAIN1, txId)
+		if result != "{}" {
+			fmt.Println(result)
+			break
+		}
+		time.Sleep(time.Millisecond * 200)
+	}
+	end := utils.CurrentTimeMillisSeconds()
+	fmt.Println("time cost", end-start)
+	fmt.Println("tps", int64(count)/((end-start)/1000))
+}
+func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
+	// 1) 合约创建
+	testCreate(sk3, client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
 	// 2) 执行合约-sql insert
 	for i := 0; i < 5; i++ {
-		testInvokeSqlInsert(sk3, &client, CHAIN1, strconv.Itoa(i))
+		testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
-	testInvokeSqlInsert(sk3, &client, CHAIN1, "11")
-	txId := testInvokeSqlInsert(sk3, &client, CHAIN1, "11")
+	testInvokeSqlInsert(sk3, client, CHAIN1, "11")
+	txId := testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 	time.Sleep(5 * time.Second)
 
 	// 3) 查询 id
-	testQuerySqlById(sk3, &client, CHAIN1, txId)
+	testQuerySqlById(sk3, client, CHAIN1, txId)
 
 	// 4) 执行合约-sql update name
-	testInvokeSqlUpdate(sk3, &client, CHAIN1, txId)
+	testInvokeSqlUpdate(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
 
 	// 5) 查询 id
-	_, result := testQuerySqlById(sk3, &client, CHAIN1, txId)
+	_, result := testQuerySqlById(sk3, client, CHAIN1, txId)
 	rs := make(map[string]string, 0)
 	json.Unmarshal([]byte(result), &rs)
 	if rs["id"] != txId {
 		panic("query by id error, id err")
 	} else {
-		fmt.Println("contract create invoke query test success")
+		fmt.Println("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
+		fmt.Println("contract create invoke query test 【success】")
 	}
 
 	// 6) 范围查询 rang age
-	testQuerySqlRangAge(sk3, &client, CHAIN1)
+	testQuerySqlRangAge(sk3, client, CHAIN1)
 
 	// 7) 执行合约-sql delete by id
-	testInvokeSqlDelete(sk3, &client, CHAIN1, txId)
+	testInvokeSqlDelete(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
 
 	// 8) 查询 id
-	_, result = testQuerySqlById(sk3, &client, CHAIN1, txId)
+	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	if result != "{}" {
 		panic("查询结果错误")
 	}
 
 	// 9) 升级合约
-	testUpgrade(sk3, &client, CHAIN1)
+	testUpgrade(sk3, client, CHAIN1)
 	time.Sleep(3 * time.Second)
 
-	txId = testInvokeSqlInsert(sk3, &client, CHAIN1, "100000")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "100000")
 	time.Sleep(3 * time.Second)
-	_, result = testQuerySqlById(sk3, &client, CHAIN1, txId)
+	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	rs = make(map[string]string, 0)
 	json.Unmarshal([]byte(result), &rs)
 	if rs["age"] != "100000" {
 		panic("query by id error, age err")
 	} else {
-		fmt.Println("testUpgrade test success")
+		fmt.Println("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
+		fmt.Println("testUpgrade test 【success】")
 	}
 }
-
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-fact-1.0.0.wasm"
 	WasmUpgradePath = "../wasm/rust-functional-verify-1.0.0.wasm"
