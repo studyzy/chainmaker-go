@@ -212,3 +212,12 @@ type StoreBatcher interface {
 	// KVs return the map of key-values
 	KVs() map[string][]byte
 }
+//SqlVerifier 在支持SQL语句操作状态数据库模式下，对合约中输入的SQL语句进行规则校验
+type SqlVerifier interface {
+	//VerifyDDLSql 验证输入语句是不是DDL语句，是DDL则返回nil，不是则返回error
+	VerifyDDLSql(sql string) error
+	//VerifyDMLSql 验证输入的SQL语句是不是更新语句（insert、update、delete），是则返回nil，不是则返回error
+	VerifyDMLSql(sql string) error
+	//VerifyDQLSql 验证输入的语句是不是查询语句，是则返回nil，不是则返回error
+	VerifyDQLSql(sql string) error
+}
