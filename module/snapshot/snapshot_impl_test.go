@@ -98,7 +98,7 @@ func (s *MockSimContextImpl) Put(contractName string, key []byte, value []byte) 
 	return nil
 }
 
-func (s *MockSimContextImpl) PutSql(contractName string, value []byte) {
+func (s *MockSimContextImpl) PutRecord(contractName string, value []byte) {
 }
 
 // 删除合约账户状态

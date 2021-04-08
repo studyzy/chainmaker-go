@@ -72,7 +72,7 @@ func (s *txQuerySimContextImpl) Put(contractName string, key []byte, value []byt
 	return nil
 }
 
-func (s *txQuerySimContextImpl) PutSql(contractName string, value []byte) {
+func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte) {
 	txWrite := &commonPb.TxWrite{
 		Key:          nil,
 		Value:        value,
