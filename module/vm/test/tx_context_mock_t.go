@@ -165,7 +165,7 @@ func (s *TxContextMockTest) Put(name string, key []byte, value []byte) error {
 	return nil
 }
 
-func (s *TxContextMockTest) PutSql(contractName string, value []byte) {
+func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
 }
 func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.lock.Lock()
