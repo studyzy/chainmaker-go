@@ -34,6 +34,7 @@ const (
 	errNews                   = "implement me"
 )
 
+// BatchTxPool Another implementation of tx pool, which can only be used in non-Hotstuff consensus algorithms
 type BatchTxPool struct {
 	stat               int32         // Identification of module service startup
 	nodeId             string        // The ID of node
@@ -43,7 +44,6 @@ type BatchTxPool struct {
 	batchMaxSize       int32         // Maximum number of transactions included in each batch
 	currentBatchId     int32         // The current batch ID
 	batchCreateTimeout time.Duration // The creation time of each batch
-	batchFetchHeight   sync.Map
 
 	txQueue           *lockfreequeue.Queue // Temporarily cache common transactions received from the network
 	commonBatchPool   *nodeBatchPool       // Stores batches of common transactions
@@ -191,7 +191,6 @@ func (p *BatchTxPool) createConfigTxBatch() {
 		return
 	}
 	p.batchTxIdRecorder.AddRecordWithBatch(batch)
-	p.batchFetchHeight.Store(batch.BatchId, int64(0))
 	// tell core engine to package
 	p.publishSignal()
 	// broadcast batch to other nodes
@@ -261,7 +260,6 @@ func (p *BatchTxPool) createCommonTxBatch() {
 		return
 	}
 	p.batchTxIdRecorder.AddRecordWithBatch(batch)
-	p.batchFetchHeight.Store(batch.BatchId, int64(0))
 	// tell core engine to package
 	p.publishSignal()
 	// broadcast batch to other nodes
@@ -315,17 +313,11 @@ func (p *BatchTxPool) getBatch(batchId int32) *txpoolPb.TxBatch {
 }
 
 func (p *BatchTxPool) generateTxsInfoFromBatch(batch *txpoolPb.TxBatch) (map[string]*commonPb.Transaction, map[string]int64) {
-	var height int64 = -1
-	heightVal, ok := p.batchFetchHeight.Load(batch.BatchId)
-	if !ok {
-		height = heightVal.(int64)
-	}
 	txsRet := make(map[string]*commonPb.Transaction, batch.Size_)
-	txsHeightInfo := make(map[string]int64, batch.Size_)
+	txsHeightInfo := make(map[string]int64)
 
 	for _, tx := range batch.Txs {
 		txsRet[tx.Header.TxId] = tx
-		txsHeightInfo[tx.Header.TxId] = height
 	}
 	return txsRet, txsHeightInfo
 }
@@ -339,15 +331,7 @@ func (p *BatchTxPool) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBloc
 	if !exist {
 		return nil, -1
 	}
-	if val, ok := p.batchFetchHeight.Load(batchId); ok {
-		inBlockHeight = val.(int64)
-	}
-	batch := p.commonBatchPool.GetBatch(batchId)
-	if batch != nil {
-		return batch.Txs[txIndex], inBlockHeight
-	}
-	batch = p.configBatchPool.GetBatch(batchId)
-	if batch != nil {
+	if batch := p.getBatch(batchId); batch != nil {
 		return batch.Txs[txIndex], inBlockHeight
 	}
 	return nil, -1
@@ -388,18 +372,26 @@ func (p *BatchTxPool) fetchTxsFromCfgPool(blockHeight int64) []*commonPb.Transac
 		return false
 	})
 	if batch != nil {
-		if pendingOk := p.pendingPool.PutIfNotExist(batch); !pendingOk {
-			p.log.Errorf("pending batch failed, batch(batch id:%d) exist in pending batch pool", batch.GetBatchId())
-			return nil
-		}
-		if ok := cfgPool.RemoveIfExist(batch); !ok {
-			p.log.Errorf("remove batch failed, batch(batch id:%d) not exist in normal batch pool", batch.GetBatchId())
-			return nil
-		}
-		p.batchFetchHeight.Store(batch.BatchId, blockHeight)
-		return p.filterTxs(batch.GetTxs())
+		filterTxs := p.moveBatchAndFilterPendingTxs(cfgPool, batch)
+		return filterTxs
 	}
 	return nil
+}
+
+func (p *BatchTxPool) moveBatchAndFilterPendingTxs(removePool *nodeBatchPool, batch *txpoolPb.TxBatch) []*commonPb.Transaction {
+	if ok := removePool.RemoveIfExist(batch); !ok {
+		p.log.Errorf("remove batch failed, batch(batch id:%d) not exist in normal batch pool", batch.GetBatchId())
+		return nil
+	}
+	if pendingOk := p.pendingPool.PutIfNotExist(batch); !pendingOk {
+		p.log.Errorf("pending batch failed, batch(batch id:%d) exist in pending batch pool", batch.GetBatchId())
+		return nil
+	}
+	txs := p.filterTxs(batch.GetTxs())
+	if len(txs) == 0 {
+		p.pendingPool.RemoveIfExist(batch)
+	}
+	return txs
 }
 
 func (p *BatchTxPool) filterTxs(txs []*commonPb.Transaction) []*commonPb.Transaction {
@@ -425,18 +417,8 @@ func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight int64) []*commonPb.Tran
 		return false
 	})
 	if batch != nil {
-		pendingOk := p.pendingPool.PutIfNotExist(batch)
-		if !pendingOk {
-			p.log.Errorf("pending batch failed, batch(batch id:%d) exist in pending batch pool", batch.GetBatchId())
-			return nil
-		}
-		ok := commonTxsPool.RemoveIfExist(batch)
-		if !ok {
-			p.log.Errorf("remove batch failed, batch(batch id:%d) not exist in normal batch pool", batch.GetBatchId())
-			return nil
-		}
-		p.batchFetchHeight.Store(batch.BatchId, blockHeight)
-		return p.filterTxs(batch.GetTxs())
+		filterTxs := p.moveBatchAndFilterPendingTxs(commonTxsPool, batch)
+		return filterTxs
 	}
 	return nil
 }
@@ -462,11 +444,11 @@ func (p *BatchTxPool) retryTxBatch(txs []*commonPb.Transaction) {
 	}
 
 	batch := &txpoolPb.TxBatch{
-		BatchId:  atomic.AddInt32(&p.currentBatchId, 1),
+		Txs:      txs,
 		NodeId:   p.nodeId,
 		Size_:    int32(len(txs)),
-		Txs:      txs,
 		TxIdsMap: createTxIdsMap(txs),
+		BatchId:  atomic.AddInt32(&p.currentBatchId, 1),
 	}
 	p.batchTxIdRecorder.AddRecordWithBatch(batch)
 	if utils.IsConfigTx(txs[0]) {
@@ -520,7 +502,6 @@ func (p *BatchTxPool) removeTxBatch(txs []*commonPb.Transaction) {
 		atomic.AddInt32(&p.currentTxCount, 0-batch.GetSize_())
 		p.log.Infof("current txs num: %d", atomic.LoadInt32(&p.currentTxCount))
 		p.batchTxIdRecorder.RemoveRecordWithBatch(batch)
-		p.batchFetchHeight.Delete(batchId)
 	} else {
 		p.log.Errorf("remove batch failed, batch(batch id:%d) not found in all batch pool", batchId)
 	}
@@ -573,7 +554,6 @@ func (p *BatchTxPool) addTxBatch(batch *txpoolPb.TxBatch) error {
 	batch.NodeId = p.nodeId
 	batch.BatchId = atomic.AddInt32(&p.currentBatchId, 1)
 	p.batchTxIdRecorder.AddRecordWithBatch(batch)
-	p.batchFetchHeight.Store(batch.BatchId, int64(0))
 	firstTx := batch.GetTxs()[0]
 	if utils.IsConfigTx(firstTx) {
 		p.configBatchPool.PutIfNotExist(batch)
@@ -589,31 +569,5 @@ func (p *BatchTxPool) OnQuit() {
 }
 
 func (p *BatchTxPool) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
-	if len(txs) == 0 {
-		return
-	}
-
-	var (
-		exist   bool
-		batchId int32 = -1
-	)
-	for _, tx := range txs {
-		if batchId, _, exist = p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Header.TxId); !exist {
-			continue
-		}
-	}
-	if !exist {
-		batchId = atomic.AddInt32(&p.currentBatchId, 1)
-		batch := &txpoolPb.TxBatch{NodeId: p.nodeId, BatchId: batchId, Txs: txs, TxIdsMap: createTxIdsMap(txs), Size_: int32(len(txs))}
-		p.pendingPool.PutIfNotExist(batch)
-		return
-	}
-
-	batch := p.getBatch(batchId)
-	if utils.IsConfigTx(txs[0]) {
-		p.configBatchPool.RemoveIfExist(batch)
-	} else {
-		p.commonBatchPool.RemoveIfExist(batch)
-	}
-	p.pendingPool.PutIfNotExist(batch)
+	// no implement, Because it's only implemented in the Hotstuff algorithm.
 }
