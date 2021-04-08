@@ -40,9 +40,9 @@ replace (
 	chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../module/txpool/batch
 	chainmaker.org/chainmaker-go/utils => ./../module/utils
 	chainmaker.org/chainmaker-go/vm => ./../module/vm
+	chainmaker.org/chainmaker-go/wasi => ../module/vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../module/vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../module/vm/wxvm
-	chainmaker.org/chainmaker-go/wasi => ../module/vm/wasi
 	github.com/libp2p/go-libp2p => ./../module/net/p2p/libp2p
 	github.com/libp2p/go-libp2p-core => ./../module/net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ./../module/net/p2p/libp2ppubsub

@@ -116,9 +116,10 @@ type TxContextMockTest struct {
 	currentResult []byte
 	hisResult     []*callContractResult
 
-	sender   *acPb.SerializedMember
-	creator  *acPb.SerializedMember
-	cacheMap map[string][]byte
+	sender      *acPb.SerializedMember
+	creator     *acPb.SerializedMember
+	cacheMap    map[string][]byte
+	sqlRowCache map[int32]protocol.SqlRows
 }
 
 type callContractResult struct {
@@ -164,6 +165,8 @@ func (s *TxContextMockTest) Put(name string, key []byte, value []byte) error {
 	return nil
 }
 
+func (s *TxContextMockTest) PutSql(contractName string, value []byte) {
+}
 func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -240,6 +243,9 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 func (*TxContextMockTest) GetBlockHeight() int64 {
 	return 0
 }
+func (*TxContextMockTest) GetBlockProposer() []byte {
+	return nil
+}
 
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {
 	panic("implement me")
@@ -287,6 +293,15 @@ func (*TxContextMockTest) SetTxExecSeq(i int) {
 
 func (s *TxContextMockTest) GetDepth() int {
 	return s.currentDeep
+}
+
+func (s *TxContextMockTest) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	s.sqlRowCache[index] = rows
+}
+
+func (s *TxContextMockTest) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	data, ok := s.sqlRowCache[index]
+	return data, ok
 }
 
 func BaseParam(parameters map[string]string) {

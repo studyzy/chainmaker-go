@@ -5,4 +5,5 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 rm -rf ../../data
-rm -rf ../../log
+rm -rf ../../log/*/*
+rm -rf ../../main/panic.log

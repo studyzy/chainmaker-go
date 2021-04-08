@@ -8,7 +8,7 @@
 export LD_LIBRARY_PATH=$(dirname $PWD)/:$LD_LIBRARY_PATH
 export PATH=$(dirname $PWD)/prebuilt/linux:$(dirname $PWD)/prebuilt/win64:$PATH
 export WASMER_BACKTRACE=1
-cd ..
+cd ../../main
 
 pid=`ps -ef | grep chainmaker | grep "\-c ../config-sql/wx-org1/chainmaker.yml local-tbft" | grep -v grep |  awk  '{print $2}'`
 if [ -z ${pid} ];then

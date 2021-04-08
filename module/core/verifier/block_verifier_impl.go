@@ -102,9 +102,9 @@ type verifyStat struct {
 }
 
 // VerifyBlock, to check if block is valid
-func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.VerifyMode) error {
+func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.VerifyMode) (err error) {
+
 	startTick := utils.CurrentTimeMillisSeconds()
-	var err error
 	if err = utils.IsEmptyBlock(block); err != nil {
 		v.log.Error(err)
 		return err
@@ -121,16 +121,19 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	var isValid bool
 	// to check if the block has verified before
-	if b, _ := v.proposalCache.GetProposedBlock(block); b != nil &&
-		consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type {
-		// the block has verified before
-		v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
-		isValid = true
-		if protocol.CONSENSUS_VERIFY == mode {
-			// consensus mode, publish verify result to message bus
-			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+	if b, _ := v.proposalCache.GetProposedBlock(block); b != nil {
+		isSqlDb := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB()
+		notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
+		if notSolo || isSqlDb {
+			// the block has verified before
+			v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
+			isValid = true
+			if protocol.CONSENSUS_VERIFY == mode {
+				// consensus mode, publish verify result to message bus
+				v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+			}
+			return nil
 		}
-		return nil
 	}
 
 	txRWSetMap, timeLasts, err := v.validateBlock(block)
@@ -139,6 +142,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, err.Error())
 		if protocol.CONSENSUS_VERIFY == mode {
 			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+		}
+		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+			_ = v.blockchainStore.RollbackDbTransaction(block.GetTxKey()) // rollback sql transaction
 		}
 		return err
 	}
@@ -252,6 +258,9 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 	// simulate with DAG, and verify read write set
 	startVMTick := utils.CurrentTimeMillisSeconds()
 	snapshot := v.snapshotManager.NewSnapshot(lastBlock, block)
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
+	}
 	txRWSetMap, txResultMap, err := v.txScheduler.SimulateWithDag(block, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - startVMTick
 	timeLasts = append(timeLasts, vmLasts)

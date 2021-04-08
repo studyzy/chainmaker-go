@@ -122,21 +122,30 @@ func (chain *BlockCommitterImpl) isBlockLegal(blk *commonpb.Block) error {
 	return nil
 }
 
-func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
+func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	startTick := utils.CurrentTimeMillisSeconds()
 	chain.log.Debugf("add block(%d,%x)=(%x,%d,%d)",
 		block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, block.Header.TxCount, len(block.Txs))
 	chain.mu.Lock()
 	defer chain.mu.Unlock()
-	var err error
 
+	var txKey string
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+		txKey = block.GetTxKey()
+	}
 	height := block.Header.BlockHeight
 	if err = chain.isBlockLegal(block); err != nil {
 		chain.log.Errorf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
+		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
+		}
 		return err
 	}
 	lastProposed, rwSetMap := chain.proposalCache.GetProposedBlock(block)
 	if err = chain.checkLastProposedBlock(block, lastProposed, err, height, rwSetMap); err != nil {
+		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
+		}
 		return err
 	}
 
@@ -148,6 +157,9 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
 	if err = chain.blockchainStore.PutBlock(block, rwSet); err != nil {
 		// if put db error, then panic
 		chain.log.Error(err)
+		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
+		}
 		panic(err)
 	}
 	dbLasts := utils.CurrentTimeMillisSeconds() - startDBTick

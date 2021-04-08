@@ -63,24 +63,24 @@ pprof:
   port: 24321
 
 storage:
-  store_path: ../data/ledgerData1
+  store_path: ../data/org1/ledgerData1
   blockdb_config:
     db_type: leveldb
     leveldb_config:
-      store_path: ../data/blocks
+      store_path: ../data/org1/blocks
   statedb_config:
     db_type: sql
     sqldb_config:
       sqldb_type: sqlite
-      dsn: ../data/state.db
+      dsn: ../data/org1/state.db
   historydb_config:
     db_type: leveldb
     leveldb_config:
-      store_path: ../data/history
+      store_path: ../data/org1/history
   resultdb_config:
     db_type: leveldb
     leveldb_config:
-      store_path: ../data/result
+      store_path: ../data/org1/result
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true

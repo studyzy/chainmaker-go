@@ -6,24 +6,24 @@
 #
 
 log:
-  config_file: ../config/wx-org5/log.yml          # config file of logger configuration.
+  config_file: ../config-sql/wx-org5/log.yml          # config file of logger configuration.
 
 blockchain:
   - chainId: chain1
-    genesis: ../config/wx-org5/chainconfig/bc1.yml
+    genesis: ../config-sql/wx-org5/chainconfig/bc1.yml
 #  - chainId: chain2
-#    genesis: ../config/wx-org5/chainconfig/bc2.yml
+#    genesis: ../config-sql/wx-org5/chainconfig/bc2.yml
 #  - chainId: chain3
-#    genesis: ../config/wx-org5/chainconfig/bc3.yml
+#    genesis: ../config-sql/wx-org5/chainconfig/bc3.yml
 #  - chainId: chain4
-#    genesis: ../config/wx-org5/chainconfig/bc4.yml
+#    genesis: ../config-sql/wx-org5/chainconfig/bc4.yml
 
 node:
   # 节点类型：full、spv
   type:              full
   org_id:            wx-org5.chainmaker.org
-  priv_key_file:     ../config/wx-org5/certs/node/consensus1/consensus1.sign.key
-  cert_file:         ../config/wx-org5/certs/node/consensus1/consensus1.sign.crt
+  priv_key_file:     ../config-sql/wx-org5/certs/node/consensus1/consensus1.sign.key
+  cert_file:         ../config-sql/wx-org5/certs/node/consensus1/consensus1.sign.crt
   signer_cache_size: 1000
   cert_cache_size:   1000
 
@@ -32,8 +32,8 @@ net:
   listen_addr: /ip4/0.0.0.0/tcp/11305
   tls:
     enabled: true
-    priv_key_file: ../config/wx-org5/certs/node/consensus1/consensus1.tls.key
-    cert_file:     ../config/wx-org5/certs/node/consensus1/consensus1.tls.crt
+    priv_key_file: ../config-sql/wx-org5/certs/node/consensus1/consensus1.tls.key
+    cert_file:     ../config-sql/wx-org5/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
@@ -51,8 +51,8 @@ rpc:
     #mode: disable
     #mode: oneway
     mode:           twoway
-    priv_key_file:  ../config/wx-org5/certs/node/consensus1/consensus1.tls.key
-    cert_file:      ../config/wx-org5/certs/node/consensus1/consensus1.tls.crt
+    priv_key_file:  ../config-sql/wx-org5/certs/node/consensus1/consensus1.tls.key
+    cert_file:      ../config-sql/wx-org5/certs/node/consensus1/consensus1.tls.crt
 
 monitor:
   enabled: false

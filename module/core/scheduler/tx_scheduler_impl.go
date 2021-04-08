@@ -66,6 +66,8 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		tx:            tx,
 		txReadKeyMap:  make(map[string]*commonpb.TxRead, 8),
 		txWriteKeyMap: make(map[string]*commonpb.TxWrite, 8),
+		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
+		txWriteKeySql: make([]*commonpb.TxWrite, 0),
 		snapshot:      snapshot,
 		vmManager:     vmManager,
 		gasUsed:       0,
@@ -218,7 +220,6 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 				err := goRoutinePool.Submit(func() {
 					ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
 					txSimContext := newTxSimContext(ts.VmManager, snapshot, tx)
-
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error

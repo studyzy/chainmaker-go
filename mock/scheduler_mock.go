@@ -367,3 +367,12 @@ func (mr *MockTxSimContextMockRecorder) GetDepth() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDepth", reflect.TypeOf((*MockTxSimContext)(nil).GetDepth))
 }
+
+func (s *MockTxSimContextMockRecorder) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	panic("impl me")
+
+}
+
+func (s *MockTxSimContextMockRecorder) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	panic("impl me")
+}

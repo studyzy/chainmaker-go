@@ -32,6 +32,8 @@ type TxSimContext interface {
 	Get(name string, key []byte) ([]byte, error)
 	// Put key into cache
 	Put(name string, key []byte, value []byte) error
+	// Put sql state into cache
+	PutSql(contractName string, value []byte)
 	// Delete key from cache
 	Del(name string, key []byte) error
 	// TODO Query a series of keys from the database, not yet implemented
@@ -45,6 +47,8 @@ type TxSimContext interface {
 	GetTx() *common.Transaction
 	// Get related transaction
 	GetBlockHeight() int64
+	// Get current block proposer
+	GetBlockProposer() []byte
 	// Get the tx result
 	GetTxResult() *common.Result
 	// Set the tx result
@@ -67,4 +71,6 @@ type TxSimContext interface {
 	SetTxExecSeq(int)
 	// Get cross contract call deep
 	GetDepth() int
+	SetStateSqlHandle(int32, SqlRows)
+	GetStateSqlHandle(int32) (SqlRows, bool)
 }

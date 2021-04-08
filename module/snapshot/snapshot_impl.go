@@ -207,6 +207,11 @@ func (s *SnapshotImpl) GetBlockHeight() int64 {
 	return s.blockHeight
 }
 
+// Get Block Proposer for current snapshot
+func (s *SnapshotImpl) GetBlockProposer() []byte {
+	return s.blockProposer
+}
+
 // seal the snapshot
 func (s *SnapshotImpl) Seal() {
 	s.lock.Lock()

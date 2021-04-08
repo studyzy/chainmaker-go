@@ -24,12 +24,14 @@ type txSimContextImpl struct {
 	tx            *commonpb.Transaction
 	txReadKeyMap  map[string]*commonpb.TxRead
 	txWriteKeyMap map[string]*commonpb.TxWrite
+	txWriteKeySql []*commonpb.TxWrite
 	snapshot      protocol.Snapshot
 	vmManager     protocol.VmManager
 	gasUsed       uint64 // only for callContract
 	currentDeep   int
 	currentResult []byte
 	hisResult     []*callContractResult
+	sqlRowCache   map[int32]protocol.SqlRows
 }
 
 type callContractResult struct {
@@ -66,6 +68,15 @@ func (s *txSimContextImpl) Get(contractName string, key []byte) ([]byte, error) 
 func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)
 	return nil
+}
+
+func (s *txSimContextImpl) PutSql(contractName string, value []byte) {
+	txWrite := &commonpb.TxWrite{
+		Key:          nil,
+		Value:        value,
+		ContractName: contractName,
+	}
+	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
 }
 
 func (s *txSimContextImpl) Del(contractName string, key []byte) error {
@@ -180,6 +191,8 @@ func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
 		for _, k := range txIds {
 			s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeyMap[k])
 		}
+		// sql nil key tx writes
+		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeySql...)
 	}
 	return s.txRWSet
 }
@@ -187,6 +200,10 @@ func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
 // Get the height of the corresponding block
 func (s *txSimContextImpl) GetBlockHeight() int64 {
 	return s.snapshot.GetBlockHeight()
+}
+
+func (s *txSimContextImpl) GetBlockProposer() []byte {
+	return s.snapshot.GetBlockProposer()
 }
 
 // Obtain the corresponding transaction execution sequence
@@ -257,4 +274,13 @@ func (s *txSimContextImpl) GetDepth() int {
 
 func constructKey(contractName string, key []byte) string {
 	return contractName + string(key)
+}
+
+func (s *txSimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	s.sqlRowCache[index] = rows
+}
+
+func (s *txSimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	data, ok := s.sqlRowCache[index]
+	return data, ok
 }
