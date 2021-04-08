@@ -32,6 +32,8 @@ type TxSimContext interface {
 	Get(name string, key []byte) ([]byte, error)
 	// Put key into cache
 	Put(name string, key []byte, value []byte) error
+	// Put sql state into cache
+	PutSql(contractName string, value []byte)
 	// Delete key from cache
 	Del(name string, key []byte) error
 	// TODO Query a series of keys from the database, not yet implemented

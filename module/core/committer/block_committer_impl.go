@@ -162,13 +162,6 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		}
 		panic(err)
 	}
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-		if err = chain.blockchainStore.CommitDbTransaction(txKey); err != nil {
-			// if put db error, then panic
-			chain.log.Error(err)
-			panic(err)
-		}
-	}
 	dbLasts := utils.CurrentTimeMillisSeconds() - startDBTick
 
 	// clear snapshot

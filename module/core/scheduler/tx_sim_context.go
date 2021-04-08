@@ -24,6 +24,7 @@ type txSimContextImpl struct {
 	tx            *commonpb.Transaction
 	txReadKeyMap  map[string]*commonpb.TxRead
 	txWriteKeyMap map[string]*commonpb.TxWrite
+	txWriteKeySql []*commonpb.TxWrite
 	snapshot      protocol.Snapshot
 	vmManager     protocol.VmManager
 	gasUsed       uint64 // only for callContract
@@ -67,6 +68,15 @@ func (s *txSimContextImpl) Get(contractName string, key []byte) ([]byte, error) 
 func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)
 	return nil
+}
+
+func (s *txSimContextImpl) PutSql(contractName string, value []byte) {
+	txWrite := &commonpb.TxWrite{
+		Key:          nil,
+		Value:        value,
+		ContractName: contractName,
+	}
+	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
 }
 
 func (s *txSimContextImpl) Del(contractName string, key []byte) error {
@@ -181,6 +191,8 @@ func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
 		for _, k := range txIds {
 			s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeyMap[k])
 		}
+		// sql nil key tx writes
+		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeySql...)
 	}
 	return s.txRWSet
 }

@@ -16,7 +16,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
 	github.com/prometheus/client_golang v1.9.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/grpc v1.36.0
 )
@@ -46,6 +46,7 @@ replace (
 	chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../txpool/batch
 	chainmaker.org/chainmaker-go/utils => ../utils
 	chainmaker.org/chainmaker-go/vm => ../vm
+	chainmaker.org/chainmaker-go/wasi => ../vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
 )

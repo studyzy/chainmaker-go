@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker-go/common/json"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -90,7 +91,7 @@ func main() {
 	for i := 0; i < 5; i++ {
 		testInvokeSqlInsert(sk3, &client, CHAIN1, strconv.Itoa(i))
 	}
-	//testInvokeSqlInsert(sk3, &client, CHAIN1, "11")
+	testInvokeSqlInsert(sk3, &client, CHAIN1, "11")
 	txId := testInvokeSqlInsert(sk3, &client, CHAIN1, "11")
 	time.Sleep(5 * time.Second)
 
@@ -98,11 +99,18 @@ func main() {
 	testQuerySqlById(sk3, &client, CHAIN1, txId)
 
 	// 4) 执行合约-sql update name
-	txId = testInvokeSqlUpdate(sk3, &client, CHAIN1, txId)
+	testInvokeSqlUpdate(sk3, &client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
-	//
+
 	// 5) 查询 id
-	testQuerySqlById(sk3, &client, CHAIN1, txId)
+	_, result := testQuerySqlById(sk3, &client, CHAIN1, txId)
+	rs := make(map[string]string, 0)
+	json.Unmarshal([]byte(result), &rs)
+	if rs["id"] != txId {
+		panic("query by id error, id err")
+	} else {
+		fmt.Println("contract create invoke query test success")
+	}
 
 	// 6) 范围查询 rang age
 	testQuerySqlRangAge(sk3, &client, CHAIN1)
@@ -112,13 +120,25 @@ func main() {
 	time.Sleep(4 * time.Second)
 
 	// 8) 查询 id
-	_, result := testQuerySqlById(sk3, &client, CHAIN1, txId)
+	_, result = testQuerySqlById(sk3, &client, CHAIN1, txId)
 	if result != "{}" {
 		panic("查询结果错误")
 	}
 
 	// 9) 升级合约
-	testCreate(sk3, &client, CHAIN1)
+	testUpgrade(sk3, &client, CHAIN1)
+	time.Sleep(3 * time.Second)
+
+	txId = testInvokeSqlInsert(sk3, &client, CHAIN1, "100000")
+	time.Sleep(3 * time.Second)
+	_, result = testQuerySqlById(sk3, &client, CHAIN1, txId)
+	rs = make(map[string]string, 0)
+	json.Unmarshal([]byte(result), &rs)
+	if rs["age"] != "100000" {
+		panic("query by id error, age err")
+	} else {
+		fmt.Println("testUpgrade test success")
+	}
 }
 
 func initWasmerTest() {
@@ -130,7 +150,7 @@ func initWasmerTest() {
 func initWasmerSqlTest() {
 	WasmPath = "../wasm/rust-sql-1.1.0.wasm"
 	WasmUpgradePath = "../wasm/rust-sql-1.1.0.wasm"
-	contractName = "contract107"
+	contractName = "contract108"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {

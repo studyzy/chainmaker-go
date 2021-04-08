@@ -22,6 +22,7 @@ type txQuerySimContextImpl struct {
 	txResult        *commonPb.Result
 	txReadKeyMap    map[string]*commonPb.TxRead
 	txWriteKeyMap   map[string]*commonPb.TxWrite
+	txWriteKeySql   []*commonPb.TxWrite
 	blockchainStore protocol.BlockchainStore
 	vmManager       protocol.VmManager
 	gasUsed         uint64 // only for callContract
@@ -69,6 +70,15 @@ func (s *txQuerySimContextImpl) Get(contractName string, key []byte) ([]byte, er
 func (s *txQuerySimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)
 	return nil
+}
+
+func (s *txQuerySimContextImpl) PutSql(contractName string, value []byte) {
+	txWrite := &commonPb.TxWrite{
+		Key:          nil,
+		Value:        value,
+		ContractName: contractName,
+	}
+	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
 }
 
 func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {

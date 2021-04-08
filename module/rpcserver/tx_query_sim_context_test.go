@@ -35,6 +35,7 @@ func TestTxQuerySimContext(t *testing.T) {
 		txReadKeyMap:  make(map[string]*commonPb.TxRead, 8),
 		txWriteKeyMap: make(map[string]*commonPb.TxWrite, 8),
 		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
+		txWriteKeySql: make([]*commonPb.TxWrite, 0),
 	}
 
 	contractName := "contract1"
