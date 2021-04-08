@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/txpool/batch"
 	"chainmaker.org/chainmaker-go/txpool/single"
@@ -52,7 +53,10 @@ func (f TxPoolFactory) NewTxPool(txPoolType PoolType, opts ...Option) (protocol.
 	if txPoolType == SINGLE {
 		return single.NewTxPoolImpl(tf.chainId, tf.blockchainStore, tf.msgBus, tf.chainConf, tf.ac, tf.netService)
 	} else if txPoolType == BATCH {
-		batchPool := batch.NewBatchTxPool(tf.nodeId, tf.chainId)
+		if tf.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_HOTSTUFF {
+			return nil, fmt.Errorf("batch txpool doesn’t match Hotstuff consensus algorithms")
+		}
+		batchPool := batch.NewBatchTxPool(tf.nodeId, tf.chainId, tf.chainConf, tf.blockchainStore, tf.ac)
 		if err := batchPool.Apply(batch.WithMsgBus(tf.msgBus),
 			batch.WithPoolSize(int(localconf.ChainMakerConfig.TxPoolConfig.MaxTxPoolSize)),
 			batch.WithBatchMaxSize(localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize),

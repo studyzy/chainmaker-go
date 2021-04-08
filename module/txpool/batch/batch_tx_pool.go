@@ -62,12 +62,18 @@ type BatchTxPool struct {
 	stopCh    chan struct{} // Signal notification of service exit
 }
 
-func NewBatchTxPool(nodeId string, chainId string) *BatchTxPool {
+func NewBatchTxPool(nodeId string, chainId string, chainConf protocol.ChainConf,
+	chainStore protocol.BlockchainStore, ac protocol.AccessControlProvider) *BatchTxPool {
+
 	return &BatchTxPool{
 		nodeId:  nodeId,
 		chainId: chainId,
-		stopCh:  make(chan struct{}),
-		log:     logger.GetLoggerByChain(logger.MODULE_TXPOOL, chainId),
+
+		ac:         ac,
+		chainConf:  chainConf,
+		chainStore: chainStore,
+		stopCh:     make(chan struct{}),
+		log:        logger.GetLoggerByChain(logger.MODULE_TXPOOL, chainId),
 
 		maxTxCount:         int32(DefaultPoolSize),
 		batchMaxSize:       int32(DefaultBatchMaxSize),
