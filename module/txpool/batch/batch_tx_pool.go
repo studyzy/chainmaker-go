@@ -216,7 +216,7 @@ func (p *BatchTxPool) popTxsFromQueue() ([]*commonPb.Transaction, map[string]int
 		}
 		select {
 		case <-timer.C:
-			break
+			return txs, txIdToIndex
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}
