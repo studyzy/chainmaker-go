@@ -201,16 +201,17 @@ func (p *BatchTxPool) createConfigTxBatch() {
 
 func (p *BatchTxPool) popTxsFromQueue() ([]*commonPb.Transaction, map[string]int32) {
 	var (
-		txs         = make([]*commonPb.Transaction, 0, 1)
-		txIdToIndex = make(map[string]int32)
+		txs         = make([]*commonPb.Transaction, 0, p.batchMaxSize/2)
+		txIdToIndex = make(map[string]int32, p.batchMaxSize/2)
 		timer       = time.NewTimer(p.batchCreateTimeout)
 	)
 	defer timer.Stop()
-	for i := 0; i < int(p.batchMaxSize); i++ {
+	for i := 0; i < int(p.batchMaxSize); {
 		if val, ok, _ := p.txQueue.Pull(); ok {
 			tx := val.(*commonPb.Transaction)
 			txs = append(txs, tx)
 			txIdToIndex[tx.GetHeader().GetTxId()] = int32(i)
+			i++
 			continue
 		}
 		select {
