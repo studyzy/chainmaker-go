@@ -230,15 +230,6 @@ func (p *BatchTxPool) createCommonTxBatch() {
 	}
 
 	txs, txIds := p.popTxsFromQueue()
-	for txId, index := range txIds {
-		if txs[index].Header.TxId != txId {
-			for i, tx := range txs {
-				p.log.Infof("%d txId: %s", i, tx.Header.TxId)
-			}
-			p.log.Infof("txsMap: %v", txIds)
-			panic(fmt.Sprintf("index: %d, txId: %s should be equal", index, txId))
-		}
-	}
 	batchId := atomic.AddInt32(&p.currentBatchId, 1)
 	batch := &txpoolPb.TxBatch{
 		BatchId: batchId,
