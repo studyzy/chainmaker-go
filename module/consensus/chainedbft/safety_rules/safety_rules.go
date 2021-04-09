@@ -161,8 +161,6 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.B
 		return false, nil, 0
 	}
 	if parentBlock = sr.blockPool.GetBlockByID(string(qcBlock.Header.PreBlockHash)); parentBlock == nil {
-		rootBlock := sr.blockPool.GetRootBlock()
-		sr.logger.Debugf("rootBlock: %x, height: %d", rootBlock.Header.BlockHash, rootBlock.Header.BlockHeight)
 		sr.logger.Debugf("commit rules failed, qc's parent[%x] block is nil", qc.BlockID)
 		return false, nil, 0
 	}
@@ -185,8 +183,7 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.B
 		return true, grandBlock, grandQC.Level
 	}
 	sr.logger.Debugf("commit rules failed, qc not satisfy three-chain, qc level [%v], "+
-		"parent level [%v], grand level [%v]", curQC.Level, parentQC.Level,
-		grandQC.Level)
+		"parent level [%v], grand level [%v]", curQC.Level, parentQC.Level, grandQC.Level)
 	return false, nil, 0
 }
 
