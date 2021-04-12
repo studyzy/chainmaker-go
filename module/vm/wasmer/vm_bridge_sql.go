@@ -10,12 +10,13 @@ import (
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/wasi"
+	"chainmaker.org/chainmaker-go/store/types"
 	"strconv"
 	"sync/atomic"
 )
 
 var rowIndex int32 = 0
+var verifySql = &types.StandardSqlVerify{}
 
 // ExecuteQuery execute query sql, return result set index
 func (s *sdkRequestCtx) ExecuteQuery() int32 {
@@ -26,7 +27,7 @@ func (s *sdkRequestCtx) ExecuteQuery() int32 {
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := wasi.VerifyQuery(sql); err != nil {
+	if err := verifySql.VerifyDQLSql(sql); err != nil {
 		s.recordMsg("verify query sql error, " + err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
@@ -62,7 +63,7 @@ func (s *sdkRequestCtx) executeQueryOneCore(isGetLen bool) int32 {
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := wasi.VerifyQueryOne(sql); err != nil {
+	if err := verifySql.VerifyDQLSql(sql); err != nil {
 		s.recordMsg("verify query one sql error, " + err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
@@ -206,7 +207,7 @@ func (s *sdkRequestCtx) ExecuteUpdate() int32 {
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := wasi.VerifyUpdateOneSql(sql); err != nil {
+	if err := verifySql.VerifyDMLSql(sql); err != nil {
 		s.recordMsg("verify update sql error, " + err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
@@ -246,7 +247,7 @@ func (s *sdkRequestCtx) ExecuteDDL() int32 {
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := wasi.VerifyDDLSql(sql); err != nil {
+	if err := verifySql.VerifyDDLSql(sql); err != nil {
 		s.recordMsg("ExecuteDDL error, " + err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}

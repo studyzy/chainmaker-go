@@ -87,7 +87,11 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
 	var goRoutinePool *ants.Pool
 	var err error
-	if goRoutinePool, err = ants.NewPool(runtime.NumCPU()*4, ants.WithPreAlloc(true)); err != nil {
+	poolCapacity := runtime.NumCPU() * 4
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+		poolCapacity = 1
+	}
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
 		return nil, err
 	}
 	defer goRoutinePool.Release()
@@ -207,7 +211,11 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 
 	var goRoutinePool *ants.Pool
 	var err error
-	if goRoutinePool, err = ants.NewPool(runtime.NumCPU()*4, ants.WithPreAlloc(true)); err != nil {
+	poolCapacity := runtime.NumCPU() * 4
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+		poolCapacity = 1
+	}
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
 		return nil, nil, err
 	}
 	defer goRoutinePool.Release()
@@ -439,7 +447,7 @@ func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol
 		}
 		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {
-			return errResult(result, fmt.Errorf("expect key no special characters, but get %s. letter, number, dot and underline are allowed, tx id:%s", key, tx.Header.TxId))
+			return errResult(result, fmt.Errorf("expect key no special characters, but get key:[%s]. letter, number, dot and underline are allowed, tx id:[%s]", key, tx.Header.TxId))
 		}
 		if len(val) > protocol.ParametersValueMaxLength {
 			return errResult(result, fmt.Errorf("expect value length less than %d, but get %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId))

@@ -1,0 +1,32 @@
+#
+# Copyright (C) BABEC. All rights reserved.
+# Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+log:
+  system:
+    log_level_default: INFO
+    log_levels:
+      core: INFO
+      net: INFO
+    file_path: ../log/system.log
+    max_age: 365                  # 日志最长保存时间，单位：天
+    rotation_time: 1              # 日志滚动时间，单位：小时
+    log_in_console: false         # 是否展示日志到终端，仅限于调试使用
+    show_color: true              # 是否打印颜色日志
+  brief:
+    log_level_default: INFO
+    file_path: ../log/brief.log
+    max_age: 365                  # 日志最长保存时间，单位：天
+    rotation_time: 1              # 日志滚动时间，单位：小时
+    log_in_console: false         # 是否展示日志到终端，仅限于调试使用
+    show_color: true              # 是否打印颜色日志
+  event:
+    log_level_default: INFO
+    file_path: ../log/event.log
+    max_age: 365                  # 日志最长保存时间，单位：天
+    rotation_time: 1              # 日志滚动间隔，单位：小时
+    log_in_console: false         # 是否展示日志到终端，仅限于调试使用
+    show_color: true              # 是否打印颜色日志

@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package tbft
 
 import (
-	netpb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"sync"
+
+	netpb "chainmaker.org/chainmaker-go/pb/protogo/net"
 
 	"chainmaker.org/chainmaker-go/logger"
 
@@ -144,9 +145,9 @@ func (pcs *PeerStateService) sendStateChange() {
 	defer pcs.tbftImpl.RUnlock()
 
 	if pcs.tbftImpl.Height != pcs.Height || pcs.tbftImpl.Round < pcs.Round {
-		pcs.logger.Debugf("[%s](%d/%d/%s) receive invalid state (%d/%d/%s)",
+		pcs.logger.Debugf("[%s](%d/%d/%s) skip send state to [%s](%d/%d/%s)",
 			pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-			pcs.Height, pcs.Round, pcs.Step,
+			pcs.Id, pcs.Height, pcs.Round, pcs.Step,
 		)
 		return
 	}
