@@ -8,9 +8,9 @@
 package types
 
 import (
-	_ "chainmaker.org/chainmaker-go/store/types/parser_driver"
 	"github.com/pingcap/parser"
 	"github.com/pingcap/parser/ast"
+	_ "github.com/pingcap/tidb/types/parser_driver"
 )
 
 type colX struct {
