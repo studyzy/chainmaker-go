@@ -120,10 +120,12 @@ func TestProvider_DbTransaction(t *testing.T) {
 }
 func TestSqlDBHandle_QuerySql(t *testing.T) {
 	p := initProvider()
-	p.ExecSql("create table t1(id int primary key,name varchar(5),birthdate datetime,photo blob)", "")
+	p.ExecSql("create table t1(id int primary key,name varchar(50),birthdate datetime,photo blob)", "")
 	var bin = []byte{1, 2, 3, 4, 0xff}
 	p.ExecSql("insert into t1 values(?,?,?,?)", 1, "Devin", time.Now(), bin)
-	result, err := p.QuerySingle("select * from t1 where id=?", 1)
+	p.ExecSql("insert into t1 values(?,?,?,?)", 2, "Edward", time.Now(), bin)
+	p.ExecSql("insert into t1 values(?,?,?,?)", 3, "Devin", time.Now(), bin)
+	result, err := p.QuerySingle("select * from t1 where name=?", "Devin")
 	if err != nil {
 		t.Log(err)
 		return

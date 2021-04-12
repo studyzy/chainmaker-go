@@ -130,6 +130,7 @@ func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Lo
 			logLevel = logger.Silent
 		}
 	}
+	log.Debug("inject ChainMaker logger into gorm db logger.")
 	provider.db.Logger = logger.New(&sqlLogger{log}, logger.Config{
 		LogLevel: logLevel,
 	})

@@ -39,14 +39,14 @@ type Factory struct {
 }
 
 // NewStore constructs new BlockStore
-func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig, logger protocol.Logger) (protocol.BlockchainStore, error) {
+func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig) (protocol.BlockchainStore, error) {
+	//为存储模块初始化专用的StorageLogger
+	logger := logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	return m.newStore(chainId, storeConfig, nil, logger)
 }
 
 func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig, binLog binlog.BinLoger, logger protocol.Logger) (protocol.BlockchainStore, error) {
-	if logger == nil {
-		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
-	}
+
 	var blockDB blockdb.BlockDB
 	var err error
 	blocDBConfig := storeConfig.GetBlockDbConfig()
