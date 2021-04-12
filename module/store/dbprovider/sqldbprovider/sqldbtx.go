@@ -24,6 +24,8 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
 	}
+	p.Lock()
+	defer p.Unlock()
 	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
 		return nil
 	}
@@ -80,6 +82,8 @@ func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRow
 	return NewSqlDBRows(db, rows), nil
 }
 func (p *SqlDBTx) Commit() error {
+	p.Lock()
+	defer p.Unlock()
 	result := p.db.Commit()
 	if result.Error != nil {
 		return result.Error
@@ -87,6 +91,8 @@ func (p *SqlDBTx) Commit() error {
 	return nil
 }
 func (p *SqlDBTx) Rollback() error {
+	p.Lock()
+	defer p.Unlock()
 	result := p.db.Rollback()
 	if result.Error != nil {
 		return result.Error

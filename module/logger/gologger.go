@@ -89,3 +89,9 @@ func (GoLogger) Warnf(format string, args ...interface{}) {
 func (GoLogger) Warnw(msg string, keysAndValues ...interface{}) {
 	log.Printf("WARN: "+msg+" %v", keysAndValues...)
 }
+func (GoLogger)DebugDynamic(l func() string){
+	log.Print("DEBUG:",l())
+}
+func (GoLogger)InfoDynamic(l func()string){
+	log.Print("INFO:",l())
+}
