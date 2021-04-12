@@ -26,4 +26,6 @@ type Logger interface {
 	Warn(args ...interface{})
 	Warnf(format string, args ...interface{})
 	Warnw(msg string, keysAndValues ...interface{})
+	DebugDynamic(getStr func() string)
+	InfoDynamic(getStr func() string)
 }
