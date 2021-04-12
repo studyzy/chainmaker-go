@@ -89,6 +89,7 @@ func initData(p *SqlDBHandle) {
 	p.ExecSql("insert into t1 values(1,'a')", "")
 	p.ExecSql("insert into t1 values(2,'b')", "")
 }
+
 func TestProvider_DbTransaction(t *testing.T) {
 	p := initProvider()
 	initData(p)
@@ -118,6 +119,27 @@ func TestProvider_DbTransaction(t *testing.T) {
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(2), count)
 }
+
+func TestProvider_RollbackEmptyTx(t *testing.T) {
+	p := initProvider()
+	initData(p)
+	txName := "Block1"
+	tx, _ := p.BeginDbTransaction(txName)
+	tx.BeginDbSavePoint("tx0")
+	var count int64
+	var err error
+	count, err = tx.ExecSql("insert into t1 values(3,'c','error')")
+	assert.NotNil(t, err)
+	tx.RollbackDbSavePoint("tx0")
+	row, err := tx.QuerySingle("select count(*) from t1")
+	row.ScanColumns(&count)
+	assert.Equal(t, int64(2), count)
+	p.RollbackDbTransaction(txName)
+	row, err = p.QuerySingle("select count(1) from t1")
+	row.ScanColumns(&count)
+	assert.Equal(t, int64(2), count)
+}
+
 func TestSqlDBHandle_QuerySql(t *testing.T) {
 	p := initProvider()
 	p.ExecSql("create table t1(id int primary key,name varchar(50),birthdate datetime,photo blob)", "")
