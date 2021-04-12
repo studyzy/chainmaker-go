@@ -10,7 +10,6 @@ import (
 	"chainmaker.org/chainmaker-go/common/random/uuid"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"fmt"
@@ -92,9 +91,8 @@ func NewVmPoolManager(chainId string) *VmPoolManager {
 	return vmPoolManager
 }
 
-// FIXME: 多余参数，看是否可删？ @taifu
 // NewRuntimeInstance init vm pool and check byteCode correctness
-func (m *VmPoolManager) NewRuntimeInstance(contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) (*RuntimeInstance, error) {
+func (m *VmPoolManager) NewRuntimeInstance(contractId *commonPb.ContractId, byteCode []byte) (*RuntimeInstance, error) {
 	var err error
 	if contractId == nil || contractId.ContractName == "" || contractId.ContractVersion == "" {
 		err = fmt.Errorf("contract id is nil")

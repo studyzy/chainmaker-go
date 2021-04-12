@@ -211,7 +211,11 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 
 	var goRoutinePool *ants.Pool
 	var err error
-	if goRoutinePool, err = ants.NewPool(runtime.NumCPU()*4, ants.WithPreAlloc(true)); err != nil {
+	poolCapacity := runtime.NumCPU() * 4
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+		poolCapacity = 1
+	}
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
 		return nil, nil, err
 	}
 	defer goRoutinePool.Release()

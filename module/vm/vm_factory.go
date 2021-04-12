@@ -9,6 +9,7 @@ package vm
 
 import (
 	"chainmaker.org/chainmaker-go/gasm"
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -139,20 +140,19 @@ func (m *ManagerImpl) runNativeContract(contractId *commonPb.ContractId, method 
 
 // runUserContract invoke user contract
 func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
-	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
 
-	contractName := contractId.ContractName
-
-	var runtimeType int
-	var version = contractId.ContractVersion
-
-	versionKey := []byte(protocol.ContractVersion)
-	creatorKey := []byte(protocol.ContractCreator)
-	freezeKey := []byte(protocol.ContractFreeze)
-	revokeKey := []byte(protocol.ContractRevoke)
-	runtimeTypeKey := []byte(protocol.ContractRuntimeType)
-
-	contractResult := &commonPb.ContractResult{Code: commonPb.ContractResultCode_FAIL}
+	var (
+		contractName   = contractId.ContractName
+		runtimeType    = 0
+		version        = contractId.ContractVersion
+		versionKey     = []byte(protocol.ContractVersion)
+		creatorKey     = []byte(protocol.ContractCreator)
+		freezeKey      = []byte(protocol.ContractFreeze)
+		revokeKey      = []byte(protocol.ContractRevoke)
+		runtimeTypeKey = []byte(protocol.ContractRuntimeType)
+	)
+	contractResult = &commonPb.ContractResult{Code: commonPb.ContractResultCode_FAIL}
 
 	// return msg if contract has been frozen
 	if refTxType == commonPb.TxType_MANAGE_USER_CONTRACT &&
@@ -459,12 +459,14 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 	txContext protocol.TxSimContext, runtimeType int, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{Code: commonPb.ContractResultCode_FAIL}
+	txId := txContext.GetTx().Header.TxId
+	txType := txContext.GetTx().Header.TxType
 
 	var runtimeInstance RuntimeInstance
 	var err error
 	switch commonPb.RuntimeType(runtimeType) {
 	case commonPb.RuntimeType_WASMER:
-		runtimeInstance, err = m.WasmerVmPoolManager.NewRuntimeInstance(contractId, txContext, byteCode)
+		runtimeInstance, err = m.WasmerVmPoolManager.NewRuntimeInstance(contractId, byteCode)
 		if err != nil {
 			contractResult.Message = fmt.Sprintf("failed to create vm runtime, contract: %s, %s", contractId.ContractName, err.Error())
 			return contractResult, commonPb.TxStatusCode_CREATE_RUNTIME_INSTANCE_FAILED
@@ -524,22 +526,37 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 		parameters[protocol.ContractCreatorPkParam] = hex.EncodeToString(creatorMember.GetSKI())
 	}
 
-	parameters[protocol.ContractTxIdParam] = txContext.GetTx().Header.TxId
+	parameters[protocol.ContractTxIdParam] = txId
 	parameters[protocol.ContractBlockHeightParam] = strconv.FormatInt(txContext.GetBlockHeight(), 10)
 
 	// calc the gas used by byte code
 	// gasUsed := uint64(GasPerByte * len(byteCode))
 
-	tx := txContext.GetTx()
-	//m.Log.Debugf("invoke vm, tx id:%s, tx type:%+v, contractId:%+v, method:%+v, runtime type:%+v, byte code len:%+v, params:%+v, sender:%s",
-	//	tx.Header.TxId, tx.Header.TxType, contractId, method, runtimeType, len(byteCode), parameters, hex.EncodeToString(tx.Header.Sender.MemberInfo))
-	m.Log.Debugf("invoke vm, tx id:%s, tx type:%+v, contractId:%+v, method:%+v, runtime type:%+v, byte code len:%+v",
-		tx.Header.TxId, tx.Header.TxType, contractId, method, runtimeType, len(byteCode))
+	m.Log.Debugf("invoke vm, tx id:%s, tx type:%+v, contractId:%+v, method:%+v, runtime type:%+v, byte code len:%+v, params:%+v",
+		txId, txType, contractId, method, runtimeType, len(byteCode), len(parameters))
+
+	// begin save point for sql
+	var dbTransaction protocol.SqlDBTransaction
+	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() && txType != commonPb.TxType_QUERY_USER_CONTRACT {
+		txKey := commonPb.GetTxKewWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
+		dbTransaction, err = txContext.GetBlockchainStore().GetDbTransaction(txKey)
+		if err != nil {
+			contractResult.Message = fmt.Sprintf("get db transaction error %+v", err)
+			return contractResult, commonPb.TxStatusCode_INTERNAL_ERROR
+		}
+		err := dbTransaction.BeginDbSavePoint(txId)
+		fmt.Println("txId========================1", txId, txKey, "error,", err)
+	}
 
 	runtimeContractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, gasUsed)
 	if runtimeContractResult.Code == commonPb.ContractResultCode_OK {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	} else {
+		txKey := commonPb.GetTxKewWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
+		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() && txType != commonPb.TxType_QUERY_USER_CONTRACT {
+			err := dbTransaction.RollbackDbSavePoint(txId)
+			fmt.Println("txId========================2", txId, txKey, "error,", err)
+		}
 		return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
 }
