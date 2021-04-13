@@ -144,7 +144,7 @@ func (pcs *PeerStateService) sendStateChange() {
 	pcs.tbftImpl.RLock()
 	defer pcs.tbftImpl.RUnlock()
 
-	if pcs.tbftImpl.Height != pcs.Height || pcs.tbftImpl.Round < pcs.Round {
+	if pcs.tbftImpl.Height != pcs.Height {
 		pcs.logger.Debugf("[%s](%d/%d/%s) skip send state to [%s](%d/%d/%s)",
 			pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
 			pcs.Id, pcs.Height, pcs.Round, pcs.Step,
@@ -154,10 +154,8 @@ func (pcs *PeerStateService) sendStateChange() {
 
 	if pcs.tbftImpl.Round == pcs.Round {
 		pcs.sendStateChangeInSameRound()
-	} else if pcs.tbftImpl.Round > pcs.Round {
-		pcs.sendStateChangeInDifferentRound()
 	} else {
-		panic("this should not happen")
+		pcs.sendStateChangeInDifferentRound()
 	}
 }
 
