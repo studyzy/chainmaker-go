@@ -3,6 +3,7 @@ version: '2'
 services:
   prometheus:
     image: prom/prometheus:v2.20.1
+    restart: always
     hostname: prometheus
     container_name: prom
     volumes:
@@ -29,6 +30,7 @@ services:
 
   grafana:
     image: grafana/grafana:7.1.2
+    restart: always
     hostname: grafana
     container_name: grafana
     volumes:
@@ -42,7 +44,6 @@ services:
       - mysql
     ports:
       - '3000:3000'
-    restart: always
     networks:
       prometheus:
         aliases:
@@ -56,6 +57,7 @@ services:
 
   influxdb:
     image: influxdb:1.8.1
+    restart: always
     hostname: influxdb
     container_name: influxdb
     volumes:
@@ -80,6 +82,7 @@ services:
 
   mysql:
     image: mysql:8.0.22
+    restart: always
     hostname: mysql
     container_name: mysql
     environment:
