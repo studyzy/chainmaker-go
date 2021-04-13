@@ -3,11 +3,11 @@ version: '3'
 services:
   node1:
     container_name: node1
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     environment:
       - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org1/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org1/chainmaker.yml start"
     # command: "sleep 10000"
     ports:
       - "7988:7988"
@@ -29,11 +29,11 @@ services:
 
   node2:
     container_name: node2
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     environment:
       - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org2/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org2/chainmaker.yml start"
     ports:
       - "7989:7988"
       - "17990:17989"
@@ -54,11 +54,11 @@ services:
 
   node3:
     container_name: node3
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     environment:
       - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org3/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org3/chainmaker.yml start"
     ports:
       - "7990:7988"
       - "17991:17989"
@@ -79,11 +79,11 @@ services:
 
   node4:
     container_name: node4
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     environment:
       - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org4/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org4/chainmaker.yml start"
     ports:
       - "7991:7988"
       - "17992:17989"
