@@ -46,7 +46,7 @@ const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
 	Port           = 12301
-	certPathPrefix = "../../config-sql"
+	certPathPrefix = "../../config"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
@@ -96,59 +96,59 @@ func main() {
 		time.Sleep(4 * time.Second)
 	}
 
-	//// 2) 执行合约
-	//testUpgradeInvokeSum(sk3, &client, CHAIN1) // method [sum] not export, 合约升级后则有
-	//
-	//txId := testInvokeFactSave(sk3, &client, CHAIN1)
-	//time.Sleep(4 * time.Second)
-	//
-	//// 3) 合约查询
-	//testQueryFindByHash(sk3, &client, CHAIN1)
-	//
-	//// 4) 根据TxId查交易
-	//testGetTxByTxId(sk3, &client, txId, CHAIN1)
-	//
-	//// 5) 根据区块高度查区块，若height为-1，表示查当前区块
-	//hash := testGetBlockByHeight(sk3, &client, CHAIN1, -1)
-	//
-	//// 6) 根据区块高度查区块（包含读写集），若height为-1，表示查当前区块
-	//testGetBlockWithTxRWSetsByHeight(sk3, &client, CHAIN1, -1)
-	//
-	//// 7) 根据区块哈希查区块
-	//testGetBlockByHash(sk3, &client, CHAIN1, hash)
-	//
-	//// 8) 根据区块哈希查区块（包含读写集）
-	//testGetBlockWithTxRWSetsByHash(sk3, &client, CHAIN1, hash)
-	//
-	//// 9) 根据TxId查区块
-	//testGetBlockByTxId(sk3, &client, txId, CHAIN1)
-	//
-	//// 10) 查询最新配置块
-	//testGetLastConfigBlock(sk3, &client, CHAIN1)
-	//
-	//// 11) 查询最新区块
-	//testGetLastBlock(sk3, &client, CHAIN1)
-	//
-	//// 12) 查询链信息
-	//testGetChainInfo(sk3, &client, CHAIN1)
-	//
-	//// 13) 合约升级
-	//testUpgrade(sk3, &client, CHAIN1)
-	//time.Sleep(4 * time.Second)
-	//
-	//// 14) 合约执行
-	//testUpgradeInvokeSum(sk3, &client, CHAIN1)
-	//
-	//// 15) 批量执行
-	//testPerformanceModeTransfer(sk3, &client, CHAIN1)
-	//time.Sleep(10 * time.Second)
-	//
-	//// 16) 功能测试
-	//testInvokeFunctionalVerify(sk3, &client, CHAIN1)
-	//time.Sleep(5 * time.Second)
-	//
-	//// 17) 冻结、解冻、吊销用户合约功能测试
-	//testFreezeOrUnfreezeOrRevokeFlow(sk3, client)
+	// 2) 执行合约
+	testUpgradeInvokeSum(sk3, &client, CHAIN1) // method [sum] not export, 合约升级后则有
+
+	txId := testInvokeFactSave(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
+
+	// 3) 合约查询
+	testQueryFindByHash(sk3, &client, CHAIN1)
+
+	// 4) 根据TxId查交易
+	testGetTxByTxId(sk3, &client, txId, CHAIN1)
+
+	// 5) 根据区块高度查区块，若height为-1，表示查当前区块
+	hash := testGetBlockByHeight(sk3, &client, CHAIN1, -1)
+
+	// 6) 根据区块高度查区块（包含读写集），若height为-1，表示查当前区块
+	testGetBlockWithTxRWSetsByHeight(sk3, &client, CHAIN1, -1)
+
+	// 7) 根据区块哈希查区块
+	testGetBlockByHash(sk3, &client, CHAIN1, hash)
+
+	// 8) 根据区块哈希查区块（包含读写集）
+	testGetBlockWithTxRWSetsByHash(sk3, &client, CHAIN1, hash)
+
+	// 9) 根据TxId查区块
+	testGetBlockByTxId(sk3, &client, txId, CHAIN1)
+
+	// 10) 查询最新配置块
+	testGetLastConfigBlock(sk3, &client, CHAIN1)
+
+	// 11) 查询最新区块
+	testGetLastBlock(sk3, &client, CHAIN1)
+
+	// 12) 查询链信息
+	testGetChainInfo(sk3, &client, CHAIN1)
+
+	// 13) 合约升级
+	testUpgrade(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
+
+	// 14) 合约执行
+	testUpgradeInvokeSum(sk3, &client, CHAIN1)
+
+	// 15) 批量执行
+	testPerformanceModeTransfer(sk3, &client, CHAIN1)
+	time.Sleep(10 * time.Second)
+
+	// 16) 功能测试
+	testInvokeFunctionalVerify(sk3, &client, CHAIN1)
+	time.Sleep(5 * time.Second)
+
+	// 17) 冻结、解冻、吊销用户合约功能测试
+	testFreezeOrUnfreezeOrRevokeFlow(sk3, client)
 }
 
 func initWasmerTest() {

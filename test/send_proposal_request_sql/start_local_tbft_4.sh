@@ -46,3 +46,6 @@ else
 fi
 
 # nohup ./chainmaker start -c ../config-sql/wx-org5/chainmaker.yml local-tbft > panic.log &
+
+sleep 4
+ps -ef|grep chainmaker
