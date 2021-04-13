@@ -51,7 +51,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	var err error
 	blocDBConfig := storeConfig.GetBlockDbConfig()
 	if blocDBConfig.IsKVDB() {
-		blockDB, err = m.NewBlockKvDB(chainId, parseEngineType(blocDBConfig.DbType),
+		blockDB, err = m.NewBlockKvDB(chainId, parseEngineType(blocDBConfig.Provider),
 			blocDBConfig.LevelDbConfig, logger)
 		if err != nil {
 			return nil, err
@@ -65,7 +65,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	var stateDB statedb.StateDB
 	stateDBConfig := storeConfig.GetStateDbConfig()
 	if stateDBConfig.IsKVDB() {
-		stateDB, err = m.NewStateKvDB(chainId, parseEngineType(stateDBConfig.DbType),
+		stateDB, err = m.NewStateKvDB(chainId, parseEngineType(stateDBConfig.Provider),
 			stateDBConfig.LevelDbConfig, logger)
 		if err != nil {
 			return nil, err
@@ -80,7 +80,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	historyDBConfig := storeConfig.GetHistoryDbConfig()
 	if !storeConfig.DisableHistoryDB {
 		if historyDBConfig.IsKVDB() {
-			historyDB, err = m.NewHistoryKvDB(chainId, parseEngineType(historyDBConfig.DbType),
+			historyDB, err = m.NewHistoryKvDB(chainId, parseEngineType(historyDBConfig.Provider),
 				historyDBConfig.LevelDbConfig, logger)
 			if err != nil {
 				return nil, err
@@ -96,7 +96,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	resultDBConfig := storeConfig.GetResultDbConfig()
 	if !storeConfig.DisableResultDB {
 		if resultDBConfig.IsKVDB() {
-			resultDB, err = m.NewResultKvDB(chainId, parseEngineType(resultDBConfig.DbType),
+			resultDB, err = m.NewResultKvDB(chainId, parseEngineType(resultDBConfig.Provider),
 				resultDBConfig.LevelDbConfig, logger)
 			if err != nil {
 				return nil, err

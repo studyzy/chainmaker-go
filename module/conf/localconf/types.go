@@ -172,21 +172,21 @@ func (config *StorageConfig) GetDefaultDBConfig() *DbConfig{
 		BlockWriteBufferSize: config.WriteBufferSize,
 	}
 	return &DbConfig{
-		DbType:        "leveldb",
+		Provider:        "leveldb",
 		LevelDbConfig: lconfig,
 	}
 }
 type DbConfig struct{
 	//leveldb,rocksdb,sql
-	DbType             string `mapstructure:"db_type"`
+	Provider             string      `mapstructure:"provider"`
 	LevelDbConfig *LevelDbConfig `mapstructure:"leveldb_config"`
 	SqlDbConfig *SqlDbConfig `mapstructure:"sqldb_config"`
 }
 func (dbc *DbConfig) IsKVDB() bool{
-	return dbc.DbType=="leveldb"|| dbc.DbType=="rocksdb"
+	return dbc.Provider=="leveldb"|| dbc.Provider=="rocksdb"
 }
 func (dbc *DbConfig) IsSqlDB() bool{
-	return dbc.DbType=="sql"|| dbc.DbType=="mysql"
+	return dbc.Provider=="sql"|| dbc.Provider=="mysql"|| dbc.Provider=="rdbms"
 }
 type LevelDbConfig struct{
 	StorePath            string    `mapstructure:"store_path"`
@@ -202,6 +202,7 @@ type SqlDbConfig struct {
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
 	SqlLogMode      string `mapstructure:"sqllog_mode"`       //Silent,Error,Warn,Info
+	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
 }
 
 type txPoolConfig struct {

@@ -21,6 +21,14 @@ import (
 	"path/filepath"
 )
 
+const defaultBloomFilterBits = 10
+const (
+	StoreBlockDBDir   = "store_block"
+	StoreStateDBDir   = "store_state"
+	StoreHistoryDBDir = "store_history"
+	StoreResultDBDir  = "store_result"
+)
+
 // LevelDBHandle encapsulated handle to leveldb
 type LevelDBHandle struct {
 	db     *leveldb.DB
