@@ -154,7 +154,6 @@ func (bp *BlockProposerImpl) startProposingLoop() {
 				break
 			}
 			go bp.proposeBlock()
-			bp.log.Infof("trigger proposal from signal, height[%d], signal %d", bp.ledgerCache.GetLastCommittedBlock().Header.BlockHeight, signal.SignalType)
 
 		case <-bp.exitC:
 			bp.proposeTimer.Stop()
