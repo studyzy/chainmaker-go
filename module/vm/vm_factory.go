@@ -183,12 +183,12 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 			currentMethod:        method,
 		}
 
-		result, code, byteCodeTmp, runtimeTypeTmp := vt.commonVerify(txContext, contractId, contractResult)
+		result, code, byteCodeTmp, versionTmp, runtimeTypeTmp := vt.commonVerify(txContext, contractId, contractResult)
 		if code != commonPb.TxStatusCode_SUCCESS {
 			return result, code
 		}
-
-		version = contractId.ContractVersion
+		contractId.ContractVersion = versionTmp
+		version = versionTmp
 		byteCode = byteCodeTmp
 		runtimeType = runtimeTypeTmp
 	}
@@ -204,7 +204,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 			currentMethod:        method,
 			requireFormatVersion: true,
 		}
-		result, code, _, _ := vt.commonVerify(txContext, contractId, contractResult)
+		result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
 		if code != commonPb.TxStatusCode_SUCCESS {
 			return result, code
 		}
@@ -251,6 +251,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 			contractResult.Message = fmt.Sprintf("failed to store runtime contract:%s, error:%s", contractName, err.Error())
 			return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
 		}
+		m.Log.Infof("create contract begin %+v, %+v, byte code len %d", contractId, parameters, len(byteCode))
 	case commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String():
 		method = protocol.ContractUpgradeMethod
 		vt := &verifyType{
@@ -261,7 +262,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 			currentMethod:        method,
 			requireFormatVersion: true,
 		}
-		result, code, _, runtimeTypeTmp := vt.commonVerify(txContext, contractId, contractResult)
+		result, code, _, _, runtimeTypeTmp := vt.commonVerify(txContext, contractId, contractResult)
 		if code != commonPb.TxStatusCode_SUCCESS {
 			return result, code
 		}
@@ -300,9 +301,10 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 			contractResult.Message = fmt.Sprintf("failed to store runtime contract:%s, error:%s", contractName, err.Error())
 			return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
 		}
+		m.Log.Infof("upgrade contract begin %+v, %+v, byte code len %d", contractId, parameters, len(byteCode))
 	case commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String():
 		vt := &verifyType{requireVersion: true}
-		result, code, _, _ := vt.commonVerify(txContext, contractId, contractResult)
+		result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
 		if code != commonPb.TxStatusCode_SUCCESS {
 			return result, code
 		}
@@ -317,7 +319,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 		return contractResult, commonPb.TxStatusCode_SUCCESS
 	case commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String():
 		vt := &verifyType{requireVersion: true}
-		result, code, _, _ := vt.commonVerify(txContext, contractId, contractResult)
+		result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
 		if code != commonPb.TxStatusCode_SUCCESS {
 			return result, code
 		}
@@ -332,7 +334,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 		return contractResult, commonPb.TxStatusCode_SUCCESS
 	case commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String():
 		vt := &verifyType{requireVersion: true}
-		result, code, _, _ := vt.commonVerify(txContext, contractId, contractResult)
+		result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
 		if code != commonPb.TxStatusCode_SUCCESS {
 			return result, code
 		}
@@ -362,108 +364,95 @@ type verifyType struct {
 	excludeMethodList    []string // for requireExcludeMethod
 }
 
-// commonVerify verify version、method、byteCode、runtimeType, return (result, code, byteCode, runtimeType)
-func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *commonPb.ContractId, contractResult *commonPb.ContractResult) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, int) {
+// commonVerify verify version、method、byteCode、runtimeType, return (result, code, byteCode, version, runtimeType)
+func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *commonPb.ContractId, contractResult *commonPb.ContractResult) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, string, int) {
 	contractName := contractId.ContractName
 	versionKey := []byte(protocol.ContractVersion)
-	version := contractId.ContractVersion
-	var byteCode []byte
-	runtimeType := 0
-	msgPre := "verify fail, "
+	var resultVersion string
+	msgPre := "verify fail,"
 
 	if v.requireVersion {
 		if versionInContext, err := txContext.Get(contractName, versionKey); err != nil {
-			contractResult.Message = fmt.Sprintf("%sunable to find latest version for contract:%s,  error:%s",
-				msgPre, contractName, err.Error())
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			contractResult.Message = fmt.Sprintf("%s unable to find latest version for contract[%s], system error:%s", msgPre, contractName, err.Error())
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if len(versionInContext) == 0 {
-			contractResult.Message = fmt.Sprintf("%sthe contract does not exist. contract:%s, version is nil",
-				msgPre, contractName)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			contractResult.Message = fmt.Sprintf("%s the contract does not exist. contract[%s], please create a contract ", msgPre, contractName)
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else {
-			contractId.ContractVersion = string(versionInContext)
-			version = string(versionInContext)
+			resultVersion = string(versionInContext)
 		}
 	}
 
 	if v.requireNullVersion {
 		if versionInContext, err := txContext.Get(contractName, versionKey); err != nil {
-			contractResult.Message = fmt.Sprintf("%sunable to find latest version for contract:%s,  error:%s",
-				msgPre, contractName, err.Error())
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			contractResult.Message = fmt.Sprintf("%s unable to find latest version for contract[%s], system error:%s", msgPre, contractName, err.Error())
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if versionInContext != nil {
-			contractResult.Message = fmt.Sprintf("%sthe contract already exists. contract:%s, version:%s",
-				msgPre, contractName, string(versionInContext))
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			contractResult.Message = fmt.Sprintf("%s the contract already exists. contract[%s], version[%s]", msgPre, contractName, string(versionInContext))
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		}
 	}
 
 	if v.requireExcludeMethod {
 		for i := range v.excludeMethodList {
 			if v.currentMethod == v.excludeMethodList[i] {
-				contractResult.Message = fmt.Sprintf("%scontract:%s, %s method is not allowed to be called",
-					msgPre, contractName, v.excludeMethodList[i])
-				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+				contractResult.Message = fmt.Sprintf("%s contract[%s], method[%s] is not allowed to be called, it's the retention method", msgPre, contractName, v.excludeMethodList[i])
+				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 			}
 		}
 	}
 
 	if v.requireFormatVersion {
-		if contractId.ContractVersion != "" {
-			if len(version) > protocol.DefaultVersionLen {
-				contractResult.Message = fmt.Sprintf("%sversion string of the contract:%+v too long while creating contract, "+
-					"should be less than %d", msgPre, contractId, protocol.DefaultVersionLen)
-				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
-			}
-
-			match, err := regexp.MatchString(protocol.DefaultVersionRegex, version)
-			if err != nil || !match {
-				contractResult.Message = fmt.Sprintf("%sversion string of the contract:%+v invalid while invoke user contract, "+
-					"should match [%s]", msgPre, contractId, protocol.DefaultVersionRegex)
-				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
-			}
-
+		if contractId.ContractVersion == "" {
+			contractResult.Message = fmt.Sprintf("%s please provide the param[version] of the contract[%s]", msgPre, contractId.ContractName)
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else {
-			contractResult.Message = fmt.Sprintf("%splease provide the version of the contract:%+v while creating contract ",
-				msgPre, contractId)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			if len(contractId.ContractVersion) > protocol.DefaultVersionLen {
+				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] too long, should be less than %d", msgPre, contractId, protocol.DefaultVersionLen)
+				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+			}
+
+			match, err := regexp.MatchString(protocol.DefaultVersionRegex, contractId.ContractVersion)
+			if err != nil || !match {
+				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", msgPre, contractId, protocol.DefaultVersionRegex)
+				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+			}
 		}
 	}
 
+	var byteCode []byte
 	if v.requireByteCode {
-		versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(version)...)
+		versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(resultVersion)...)
 		if byteCodeInContext, err := txContext.Get(contractName, versionedByteCodeKey); err != nil {
-			contractResult.Message = fmt.Sprintf("%sfailed to check byte code in tx context for contract %s, %s",
-				msgPre, contractName, err.Error())
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			contractResult.Message = fmt.Sprintf("%s failed to check byte code in tx context for contract[%s], %s", msgPre, contractName, err.Error())
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if len(byteCodeInContext) == 0 {
-			contractResult.Message = fmt.Sprintf("%sno contract byte code found in the database. "+
-				"please create the contract:%s with correct byte code", msgPre, contractName)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_BYTE_CODE)
+			contractResult.Message = fmt.Sprintf("%s the contract byte code not found from db. contract[%s], please create a contract ", msgPre, contractName)
+			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_BYTE_CODE, resultVersion)
 		} else {
 			byteCode = byteCodeInContext
 		}
 	}
 
+	runtimeType := 0
 	if v.requireRuntimeType {
 		runtimeTypeKey := []byte(protocol.ContractRuntimeType)
 		if runtimeTypeBytes, err := txContext.Get(contractName, runtimeTypeKey); err != nil {
-			contractResult.Message = fmt.Sprintf("%sfailed to find runtime type %s, error: %s", msgPre, contractName, err.Error())
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED)
+			contractResult.Message = fmt.Sprintf("%s failed to find runtime type %s, system error: %s", msgPre, contractName, err.Error())
+			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if runtimeTypeTmp, err := strconv.Atoi(string(runtimeTypeBytes)); err != nil {
-			contractResult.Message = fmt.Sprintf("%sfailed to convert runtime type for %s, error: %s. "+
-				"please create the contract:%s with correct runtime type", msgPre, contractName, err.Error(), contractName)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_RUNTIME_TYPE)
+			contractResult.Message = fmt.Sprintf("%s the contract runtime type not found from db. contract[%s], please create a contract ", msgPre, contractName)
+			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_RUNTIME_TYPE, resultVersion)
 		} else {
 			runtimeType = runtimeTypeTmp
 		}
 	}
 
-	return nil, commonPb.TxStatusCode_SUCCESS, byteCode, runtimeType
+	return nil, commonPb.TxStatusCode_SUCCESS, byteCode, resultVersion, runtimeType
 }
 
-func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, int) {
-	return contractResult, code, nil, 0
+func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code commonPb.TxStatusCode, version string) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, string, int) {
+	return contractResult, code, nil, version, 0
 }
 
 func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractId, method string, parameters map[string]string,
