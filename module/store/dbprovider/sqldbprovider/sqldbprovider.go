@@ -339,7 +339,7 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 		return nil, errors.New("transaction already exist, please use GetDbTransaction to get it or commit/rollback it")
 	}
 	tx := p.db.Begin()
-	sqltx := &SqlDBTx{db: tx, dbType: p.dbType}
+	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
 	p.dbTxCache[txName] = sqltx
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
