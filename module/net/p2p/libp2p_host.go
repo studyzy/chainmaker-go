@@ -28,6 +28,10 @@ var networkNotify = func(host *LibP2pHost) network.Notifiee {
 				times--
 				time.Sleep(time.Second)
 			}
+			if times == 0 {
+				logger.Errorf("[Host][BUG] nil peer stream manager or nil connection manager err")
+				return
+			}
 			host.peerStreamManager.initPeerStream(c.RemotePeer())
 			pid := c.RemotePeer()
 			host.connManager.AddConn(pid, c)
@@ -39,6 +43,10 @@ var networkNotify = func(host *LibP2pHost) network.Notifiee {
 			for (host.peerStreamManager == nil || host.connManager == nil) && times > 0 {
 				times--
 				time.Sleep(time.Second)
+			}
+			if times == 0 {
+				logger.Errorf("[Host][BUG] nil peer stream manager or nil connection manager err")
+				return
 			}
 			logger.Infof("[Host] connection disconnected(remote peer-id:%s, remote multi-addr:%s)", c.RemotePeer().Pretty(), c.RemoteMultiaddr().String())
 			host.connManager.RemoveConn(c.RemotePeer())
