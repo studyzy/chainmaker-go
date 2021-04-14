@@ -123,9 +123,10 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	currentDb := ""
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
-			if txWrite.ContractName != "" && (txWrite.ContractName != currentDb || currentDb == "") { //切换DB
-				dbTx.ChangeContextDb(txWrite.ContractName)
-				currentDb = txWrite.ContractName
+			contractDbName := getContractDbName(s.chainId, txWrite.ContractName)
+			if txWrite.ContractName != "" && (contractDbName != currentDb || currentDb == "") { //切换DB
+				dbTx.ChangeContextDb(contractDbName)
+				currentDb = contractDbName
 			}
 			if len(txWrite.Key) == 0 && !processStateDbSqlOutside { //是sql,而且没有在外面处理过，则在这里进行处理
 				sql := string(txWrite.Value)
