@@ -86,6 +86,13 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		s.logger.Debugf("db transaction[%s] already created outside, don't need process statedb sql in CommitBlock function", txKey)
 		processStateDbSqlOutside = true
 	}
+	//没有在外部开启事务，则开启事务，进行数据写入
+	if !processStateDbSqlOutside {
+		dbTx, err = s.db.BeginDbTransaction(txKey)
+		if err != nil {
+			return err
+		}
+	}
 	if block.IsContractMgmtBlock() {
 		//创建对应合约的数据库
 		payload := &commonPb.ContractMgmtPayload{}
@@ -97,6 +104,7 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 			if len(txWrite.Key) == 0 { //这是SQL语句
 				_, err := s.db.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
 				if err != nil {
+					s.db.RollbackDbTransaction(txKey)
 					return err
 				}
 			} else {
@@ -108,16 +116,13 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 				}
 			}
 		}
-		s.logger.Debugf("chain[%s]: commit state block[%d]",
-			block.Header.ChainId, block.Header.BlockHeight)
-		return nil
-	}
-	//普通交易，开启事务，进行数据写入
-	if !processStateDbSqlOutside {
-		dbTx, err = s.db.BeginDbTransaction(txKey)
+		err = s.db.CommitDbTransaction(txKey)
 		if err != nil {
 			return err
 		}
+		s.logger.Debugf("chain[%s]: commit state block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+		return nil
 	}
 
 	currentDb := ""
