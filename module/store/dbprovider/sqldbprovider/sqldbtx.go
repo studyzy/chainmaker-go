@@ -103,12 +103,12 @@ func (p *SqlDBTx) Rollback() error {
 func (p *SqlDBTx) BeginDbSavePoint(savePointName string) error {
 	p.Lock()
 	defer p.Unlock()
-	p.db.SavePoint(savePointName)
-	return nil
+	db := p.db.SavePoint(savePointName)
+	return db.Error
 }
 func (p *SqlDBTx) RollbackDbSavePoint(savePointName string) error {
 	p.Lock()
 	defer p.Unlock()
-	p.db.RollbackTo(savePointName)
-	return nil
+	db := p.db.RollbackTo(savePointName)
+	return db.Error
 }
