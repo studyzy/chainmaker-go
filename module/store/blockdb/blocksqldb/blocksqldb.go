@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"golang.org/x/sync/semaphore"
 	"runtime"
 )
@@ -27,7 +26,7 @@ import (
 type BlockSqlDB struct {
 	db               protocol.SqlDBHandle
 	workersSemaphore *semaphore.Weighted
-	Logger           protocol.Logger
+	logger           protocol.Logger
 }
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
@@ -63,7 +62,7 @@ func newBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 	blockDB := &BlockSqlDB{
 		db:               db,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
-		Logger:           logger,
+		logger:           logger,
 	}
 	return blockDB, nil
 }
@@ -87,7 +86,7 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 	for index, tx := range block.Txs {
 		txinfo, err := NewTxInfo(tx, block.Header.BlockHeight, int32(index))
 		if err != nil {
-			b.Logger.Errorf("failed to init txinfo, err:%s", err)
+			b.logger.Errorf("failed to init txinfo, err:%s", err)
 			return err
 		}
 		txInfos = append(txInfos, txinfo)
@@ -100,7 +99,7 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 		//res := b.db.Clauses(clause.OnConflict{DoNothing: true}).Create(txInfo)
 		_, err := tx.Save(txInfo)
 		if err != nil {
-			b.Logger.Errorf("faield to commit txinfo info, height:%d, tx:%s,err:%s",
+			b.logger.Errorf("faield to commit txinfo info, height:%d, tx:%s,err:%s",
 				block.Header.BlockHeight, txInfo.TxId, err)
 			b.db.RollbackDbTransaction(blockHashStr) //rollback tx
 			return err
@@ -113,23 +112,23 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 	startCommitBlockInfo := utils.CurrentTimeMillisSeconds()
 	blockInfo, err := NewBlockInfo(block)
 	if err != nil {
-		b.Logger.Errorf("failed to init blockinfo, err:%s", err)
+		b.logger.Errorf("failed to init blockinfo, err:%s", err)
 		return err
 	}
 	_, err = tx.Save(blockInfo)
 	if err != nil {
-		b.Logger.Errorf("faield to commit block info, height:%d, err:%s",
+		b.logger.Errorf("faield to commit block info, height:%d, err:%s",
 			block.Header.BlockHeight, err)
 		b.db.RollbackDbTransaction(blockHashStr) //rollback tx
 		return err
 	}
 	err = b.db.CommitDbTransaction(blockHashStr)
 	if err != nil {
-		b.Logger.Errorf("failed to commit tx, err:%s", err)
+		b.logger.Errorf("failed to commit tx, err:%s", err)
 		return err
 	}
 	elapsedCommitBlockInfos := utils.CurrentTimeMillisSeconds() - startCommitBlockInfo
-	b.Logger.Infof("chain[%s]: commit block[%d] time used (commit_txs:%d commit_block:%d, total:%d)",
+	b.logger.Infof("chain[%s]: commit block[%d] time used (commit_txs:%d commit_block:%d, total:%d)",
 		block.Header.ChainId, block.Header.BlockHeight,
 		elapsedCommitTxs, elapsedCommitBlockInfos,
 		utils.CurrentTimeMillisSeconds()-startCommitTxs)
@@ -165,7 +164,8 @@ func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*Bloc
 		return nil, err
 	}
 	if res.IsEmpty() {
-		return nil, errors.New(fmt.Sprintf("sql[%s] %v return empty result", sql, values))
+		b.logger.Infof("sql[%s] %v return empty result", sql, values)
+		return nil, nil
 	}
 	err = res.ScanObject(&blockInfo)
 	if err != nil {
@@ -177,6 +177,9 @@ func (b *BlockSqlDB) getFullBlockBySql(sql string, values ...interface{}) (*comm
 	blockInfo, err := b.getBlockInfoBySql(sql, values...)
 	if err != nil {
 		return nil, err
+	}
+	if blockInfo == nil && err == nil {
+		return nil, nil
 	}
 	block, err := blockInfo.GetBlock()
 	if err != nil {
@@ -215,6 +218,9 @@ func (b *BlockSqlDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, e
 	if err != nil {
 		return nil, err
 	}
+	if blockInfo == nil && err == nil {
+		return nil, nil
+	}
 	return blockInfo.GetFilterdBlock()
 }
 
@@ -223,7 +229,7 @@ func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
 	sql := "select max(block_height) from block_infos"
 	row, err := b.db.QuerySingle(sql)
 	if err != nil {
-		b.Logger.Errorf("get block sqldb save point error:%s", err.Error())
+		b.logger.Errorf("get block sqldb save point error:%s", err.Error())
 		return 0, err
 	}
 	if row.IsEmpty() {
@@ -252,7 +258,7 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 		return nil, err
 	}
 	if res.IsEmpty() {
-		b.Logger.Infof("tx[%s] not found in db", txId)
+		b.logger.Infof("tx[%s] not found in db", txId)
 		return nil, nil
 	}
 	err = res.ScanObject(&txInfo)
@@ -262,7 +268,7 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	if len(txInfo.TxId) > 0 {
 		return txInfo.GetTx()
 	}
-	b.Logger.Errorf("tx data not found by txid:%s", txId)
+	b.logger.Errorf("tx data not found by txid:%s", txId)
 	return nil, errors.New("data not found")
 }
 
@@ -309,7 +315,7 @@ func (b *BlockSqlDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockSqlDB) Close() {
-	b.Logger.Info("close block sql db")
+	b.logger.Info("close block sql db")
 	b.db.Close()
 }
 
@@ -323,20 +329,20 @@ func (b *BlockSqlDB) Close() {
 //	if res.Error == gorm.ErrRecordNotFound {
 //		return nil, nil
 //	} else if res.Error != nil {
-//		b.Logger.Errorf("failed to get tx from tx_info, height:%s, err:%s", blockInfo.BlockHeight, res.Error)
+//		b.logger.Errorf("failed to get tx from tx_info, height:%s, err:%s", blockInfo.BlockHeight, res.Error)
 //		return nil, res.Error
 //	}
 //
 //	block, err := blockInfo.GetBlock()
 //	if err != nil {
-//		b.Logger.Errorf("failed to transform blockinfo to block, chain:%s, block:%d, err:%s",
+//		b.logger.Errorf("failed to transform blockinfo to block, chain:%s, block:%d, err:%s",
 //			blockInfo.ChainId, blockInfo.BlockHeight, err)
 //		return nil, err
 //	}
 //	for _, txInfo := range txInfos {
 //		tx, err := txInfo.GetTx()
 //		if err != nil {
-//			b.Logger.Errorf("failed to transform txinfo to tx, chain:%s, txid:%s, err:%s",
+//			b.logger.Errorf("failed to transform txinfo to tx, chain:%s, txid:%s, err:%s",
 //				block.Header.ChainId, txInfo.TxId, err)
 //		}
 //		block.Txs = append(block.Txs, tx)

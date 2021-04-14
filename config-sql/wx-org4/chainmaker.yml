@@ -65,20 +65,20 @@ pprof:
 storage:
   store_path: ../data/org4/ledgerData1
   blockdb_config:
-    db_type: leveldb
+    provider: leveldb
     leveldb_config:
       store_path: ../data/org4/blocks
   statedb_config:
-    db_type: sql
+    provider: sql
     sqldb_config:
       sqldb_type: sqlite
       dsn: ../data/org4/state.db
   historydb_config:
-    db_type: leveldb
+    provider: leveldb
     leveldb_config:
       store_path: ../data/org4/history
   resultdb_config:
-    db_type: leveldb
+    provider: leveldb
     leveldb_config:
       store_path: ../data/org4/result
 debug:

@@ -69,7 +69,7 @@ func getSqlConfig() *localconf.StorageConfig {
 	}
 
 	dbConfig := &localconf.DbConfig{
-		DbType:      "sql",
+		Provider:    "sql",
 		SqlDbConfig: sqlconfig,
 	}
 	conf.BlockDbConfig = dbConfig
@@ -88,7 +88,7 @@ func getMysqlConfig() *localconf.StorageConfig {
 	}
 
 	dbConfig := &localconf.DbConfig{
-		DbType:      "sql",
+		Provider:    "sql",
 		SqlDbConfig: sqlconfig,
 	}
 	conf.BlockDbConfig = dbConfig
@@ -107,7 +107,7 @@ func getlvldbConfig() *localconf.StorageConfig {
 		StorePath: path,
 	}
 	dbConfig := &localconf.DbConfig{
-		DbType:        "leveldb",
+		Provider:      "leveldb",
 		LevelDbConfig: lvlConfig,
 	}
 	conf.BlockDbConfig = dbConfig

@@ -8,18 +8,10 @@ package dbprovider
 
 import "chainmaker.org/chainmaker-go/protocol"
 
-type Provider interface {
+type DbProvider interface {
 
 	// GetDBHandle returns db handle given dbName
-	GetDBHandle(dbName string) protocol.DBHandle
-
-	// Close closes database
-	Close() error
-}
-type SqlProvider interface {
-
-	// GetDBHandle returns db handle given dbName
-	GetDBHandle(dbName string) protocol.SqlDBHandle
+	GetDBHandle(dbName string,config interface{}) protocol.SqlDBHandle
 
 	// Close closes database
 	Close() error

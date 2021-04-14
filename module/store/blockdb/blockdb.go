@@ -53,7 +53,7 @@ type BlockDB interface {
 	// GetLastConfigBlock returns the last config block.
 	GetLastConfigBlock() (*commonPb.Block, error)
 
-	// GetBlockByTx returns a block which contains a tx.
+	// GetBlockByTx returns a block which contains a tx.如果查询不到，则返回nil,nil
 	GetBlockByTx(txId string) (*commonPb.Block, error)
 
 	// Close is used to close database

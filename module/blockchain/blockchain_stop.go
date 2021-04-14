@@ -16,7 +16,7 @@ import (
 func (bc *Blockchain) Stop() {
 	// stop all module
 
-	// stop sequence：
+	// stop sequence： //TODO current use map, it cannot make sequence!!!
 	// 1、tx pool
 	// 2、sync service
 	// 3、core engine
@@ -29,6 +29,7 @@ func (bc *Blockchain) Stop() {
 		stopModules = []map[string]func() error{
 			{"NetService": bc.stopNetService},
 			{"Spv": bc.stopSpv},
+			{"Store": bc.stopStoreService},
 		}
 	} else {
 		if bc.getConsensusType() == consensus.ConsensusType_SOLO {
@@ -37,6 +38,7 @@ func (bc *Blockchain) Stop() {
 				{"Consensus": bc.stopConsensus},
 				{"Core": bc.stopCoreEngine},
 				{"txPool": bc.stopTxPool},
+				{"Store": bc.stopStoreService},
 			}
 
 		} else {
@@ -47,6 +49,7 @@ func (bc *Blockchain) Stop() {
 				{"Core": bc.stopCoreEngine},
 				{"Sync": bc.stopSyncService},
 				{"txPool": bc.stopTxPool},
+				{"Store": bc.stopStoreService},
 			}
 		}
 	}
@@ -111,4 +114,8 @@ func (bc *Blockchain) stopTxPool() error {
 		return err
 	}
 	return nil
+}
+
+func (bc *Blockchain) stopStoreService() error {
+	return bc.store.Close()
 }

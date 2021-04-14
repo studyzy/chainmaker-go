@@ -28,31 +28,32 @@ var defaultMaxIdleConns = 10
 var defaultMaxOpenConns = 10
 var defaultConnMaxLifeTime = 60
 
-type SqlDBProvider struct {
-	dbs map[string]*SqlDBHandle
-	log protocol.Logger
-}
-
-func NewSqlDBProvider(log protocol.Logger) *SqlDBProvider {
-	return &SqlDBProvider{dbs: make(map[string]*SqlDBHandle, 1), log: log}
-}
-func (p *SqlDBProvider) GetDBHandle(chainId string, conf *localconf.SqlDbConfig) protocol.SqlDBHandle {
-	h, exist := p.dbs[chainId]
-	if exist {
-		return h
-	}
-	h = NewSqlDBHandle(chainId, conf, p.log)
-	p.dbs[chainId] = h
-	return h
-}
-
-// Close closes database
-func (p *SqlDBProvider) Close() error {
-	for _, h := range p.dbs {
-		h.Close()
-	}
-	return nil
-}
+//
+//type SqlDBProvider struct {
+//	dbs map[string]*SqlDBHandle
+//	log protocol.Logger
+//}
+//
+//func NewSqlDBProvider(log protocol.Logger) *SqlDBProvider {
+//	return &SqlDBProvider{dbs: make(map[string]*SqlDBHandle, 1), log: log}
+//}
+//func (p *SqlDBProvider) GetDBHandle(chainId string, conf *localconf.SqlDbConfig) protocol.SqlDBHandle {
+//	h, exist := p.dbs[chainId]
+//	if exist {
+//		return h
+//	}
+//	h = NewSqlDBHandle(chainId, conf, p.log)
+//	p.dbs[chainId] = h
+//	return h
+//}
+//
+//// Close closes database
+//func (p *SqlDBProvider) Close() error {
+//	for _, h := range p.dbs {
+//		h.Close()
+//	}
+//	return nil
+//}
 
 // Porvider encapsulate the gorm.DB that providers mysql handles
 type SqlDBHandle struct {
