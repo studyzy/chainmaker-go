@@ -531,11 +531,11 @@ func testQuerySqlRangAge(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "max_age",
-			Value: "1",
+			Value: "10",
 		},
 		{
 			Key:   "min_age",
-			Value: "10",
+			Value: "1",
 		},
 	}
 
