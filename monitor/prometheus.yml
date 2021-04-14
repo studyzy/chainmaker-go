@@ -3,19 +3,19 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'wx-org1'
+  - job_name: 'wx-org1.chainmaker.org'
     scrape_interval: 1s
     static_configs:
       - targets: ['172.29.0.1:14321']
-  - job_name: 'wx-org2'
+  - job_name: 'wx-org2.chainmaker.org'
     scrape_interval: 1s
     static_configs:
       - targets: ['172.29.0.1:14322']
-  - job_name: 'wx-org3'
+  - job_name: 'wx-org3.chainmaker.org'
     scrape_interval: 1s
     static_configs:
       - targets: ['172.29.0.1:14323']
-  - job_name: 'wx-org4'
+  - job_name: 'wx-org4.chainmaker.org'
     scrape_interval: 1s
     static_configs:
       - targets: ['172.29.0.1:14324']
