@@ -23,7 +23,9 @@ import (
 var networkNotify = func(host *LibP2pHost) network.Notifiee {
 	return &network.NotifyBundle{
 		ConnectedF: func(_ network.Network, c network.Conn) {
-			for host.peerStreamManager == nil || host.connManager == nil {
+			times := 10
+			for (host.peerStreamManager == nil || host.connManager == nil) && times > 0 {
+				times--
 				time.Sleep(time.Second)
 			}
 			host.peerStreamManager.initPeerStream(c.RemotePeer())
@@ -33,7 +35,9 @@ var networkNotify = func(host *LibP2pHost) network.Notifiee {
 
 		},
 		DisconnectedF: func(_ network.Network, c network.Conn) {
-			for host.peerStreamManager == nil || host.connManager == nil {
+			times := 10
+			for (host.peerStreamManager == nil || host.connManager == nil) && times > 0 {
+				times--
 				time.Sleep(time.Second)
 			}
 			logger.Infof("[Host] connection disconnected(remote peer-id:%s, remote multi-addr:%s)", c.RemotePeer().Pretty(), c.RemoteMultiaddr().String())
