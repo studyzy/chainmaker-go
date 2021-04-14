@@ -31,7 +31,7 @@ type SimContext struct {
 	Ctx           *vmcbor.RuntimeContext
 	parameters    map[string]string
 	CtxPtr        int32
-	GetStateCache []byte // cache call method GetStateLen value result, No concurrency
+	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
 }
 
 // NewSimContext for every transaction

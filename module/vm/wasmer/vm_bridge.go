@@ -39,7 +39,7 @@ type sdkRequestCtx struct {
 	Sc            *SimContext
 	RequestHeader []*serialize.EasyCodecItem // sdk request common easy codec param
 	RequestBody   []byte                     // sdk request param
-	Memory        []byte                     // cache call method GetStateLen value result
+	Memory        []byte                     // vm memory
 }
 
 // LogMessage print log to file
@@ -167,7 +167,6 @@ func (s *sdkRequestCtx) CallContract() int32 {
 }
 
 func (s *sdkRequestCtx) callContractCore(isGetLen bool) int32 {
-
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
 	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
@@ -255,8 +254,7 @@ func procExit(context unsafe.Pointer, exitCode int32) {
 func (s *sdkRequestCtx) recordMsg(msg string) int32 {
 	s.Sc.ContractResult.Message += msg
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	msg = s.Sc.ContractId.ContractName + ":" + msg
-	s.Sc.Log.Errorf("wasm log>> " + msg)
+	s.Sc.Log.Errorf("wasm log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }
 

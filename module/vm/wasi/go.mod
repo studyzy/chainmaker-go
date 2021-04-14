@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gopkg.in/yaml.v2 v2.2.4 // indirect
+	chainmaker.org/chainmaker-go/store v0.0.0
 )
 
 replace (
@@ -19,4 +20,5 @@ replace (
 	chainmaker.org/chainmaker-go/pb/protogo => ../../../pb/protogo
 	chainmaker.org/chainmaker-go/protocol => ../../../protocol
 	chainmaker.org/chainmaker-go/utils => ../../utils
+	chainmaker.org/chainmaker-go/store => ../../store
 )

@@ -11,8 +11,8 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker-go/wasi"
 	"strconv"
-	"sync/atomic"
 )
 
 var rowIndex int32 = 0
@@ -20,107 +20,90 @@ var verifySql = &types.StandardSqlVerify{}
 
 // ExecuteQuery execute query sql, return result set index
 func (s *sdkRequestCtx) ExecuteQuery() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
-
-	// verify
-	if err := verifySql.VerifyDQLSql(sql); err != nil {
-		s.recordMsg("verify query sql error, " + err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-
-	// execute query
-	rows, err := s.Sc.TxSimContext.GetBlockchainStore().QueryMulti(s.Sc.ContractId.ContractName, sql)
+	err := wasi.ExecuteQuery(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
 	if err != nil {
-		s.recordMsg("ctx query error, " + err.Error())
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-
-	index := atomic.AddInt32(&rowIndex, 1)
-	s.Sc.TxSimContext.SetStateSqlHandle(index, rows)
-	copy(s.Memory[ptr:ptr+4], IntToBytes(index))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
 // ExecuteQuery execute query sql, return result set index
 func (s *sdkRequestCtx) ExecuteQueryOneLen() int32 {
-	return s.executeQueryOneCore(true)
+	data, err := wasi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
+	s.Sc.GetStateCache = data // reset data
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 // ExecuteQuery execute query sql, return result set index
 func (s *sdkRequestCtx) ExecuteQueryOne() int32 {
-	return s.executeQueryOneCore(false)
-}
-
-func (s *sdkRequestCtx) executeQueryOneCore(isGetLen bool) int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
-
-	// verify
-	if err := verifySql.VerifyDQLSql(sql); err != nil {
-		s.recordMsg("verify query one sql error, " + err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-
-	if !isGetLen {
-		data := s.Sc.GetStateCache
-		if data != nil && len(data) > 0 {
-			copy(s.Memory[ptr:ptr+int32(len(data))], data)
-		}
-		s.Sc.GetStateCache = nil
-		return protocol.ContractSdkSignalResultSuccess
-	}
-
-	// execute
-	row, err := s.Sc.TxSimContext.GetBlockchainStore().QuerySingle(s.Sc.ContractId.ContractName, sql)
+	data, err := wasi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
+	s.Sc.GetStateCache = data // reset data
 	if err != nil {
-		s.recordMsg("ctx query error, " + err.Error())
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-
-	var data map[string]string
-	if row.IsEmpty() {
-		data = make(map[string]string, 0)
-	} else {
-		data, err = row.Data()
-		if err != nil {
-			s.recordMsg("ctx query get data to map error, " + err.Error())
-			return protocol.ContractSdkSignalResultFail
-		}
-	}
-	ec := serialize.NewEasyCodecWithMap(data)
-	bytes := ec.Marshal()
-	copy(s.Memory[ptr:ptr+4], IntToBytes(int32(len(bytes))))
-	s.Sc.GetStateCache = bytes
-
 	return protocol.ContractSdkSignalResultSuccess
 }
 
+//func (s *sdkRequestCtx) executeQueryOneCore(isGetLen bool) int32 {
+//	req := serialize.EasyUnmarshal(s.RequestBody)
+//	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
+//	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+//	sql := sqlI.(string)
+//	ptr := valuePtr.(int32)
+//
+//	// verify
+//	if err := verifySql.VerifyDQLSql(sql); err != nil {
+//		s.recordMsg("verify query one sql error, " + err.Error())
+//		return protocol.ContractSdkSignalResultFail
+//	}
+//
+//	if !isGetLen {
+//		data := s.Sc.GetStateCache
+//		if data != nil && len(data) > 0 {
+//			copy(s.Memory[ptr:ptr+int32(len(data))], data)
+//		}
+//		s.Sc.GetStateCache = nil
+//		return protocol.ContractSdkSignalResultSuccess
+//	}
+//
+//	// execute
+//	row, err := s.Sc.TxSimContext.GetBlockchainStore().QuerySingle(s.Sc.ContractId.ContractName, sql)
+//	if err != nil {
+//		s.recordMsg("ctx query error, " + err.Error())
+//		return protocol.ContractSdkSignalResultFail
+//	}
+//
+//	var data map[string]string
+//	if row.IsEmpty() {
+//		data = make(map[string]string, 0)
+//	} else {
+//		data, err = row.Data()
+//		if err != nil {
+//			s.recordMsg("ctx query get data to map error, " + err.Error())
+//			return protocol.ContractSdkSignalResultFail
+//		}
+//	}
+//	ec := serialize.NewEasyCodecWithMap(data)
+//	bytes := ec.Marshal()
+//	copy(s.Memory[ptr:ptr+4], IntToBytes(int32(len(bytes))))
+//	s.Sc.GetStateCache = bytes
+//
+//	return protocol.ContractSdkSignalResultSuccess
+//}
+
 // RSHasNext 1 is has next row, 0 is no next row
 func (s *sdkRequestCtx) RSHasNext() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
-	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	rsIndex := rsIndexI.(int32)
-	valuePtr := valuePtrI.(int32)
-
-	// get
-	rows, ok := s.Sc.TxSimContext.GetStateSqlHandle(rsIndex)
-	if !ok {
-		s.recordMsg("ctx can not found rs_index[" + strconv.Itoa(int(rsIndex)) + "]")
+	err := wasi.RSHasNext(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
+	if err != nil {
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-	var index int32 = 0
-	if rows.Next() {
-		index = 1
-	}
-	copy(s.Memory[valuePtr:valuePtr+4], IntToBytes(index))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
