@@ -93,22 +93,22 @@ type VmManager interface {
 		txContext TxSimContext, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)
 }
 
-type ContractBridgeCommon interface {
+type ContractWasiCommon interface {
 	LogMessage() int32
 	SuccessResult() int32
 	ErrorResult() int32
 	CallContract() int32
 }
 
-type ContractBridgeKV interface {
-	ContractBridgeCommon
+type ContractWasiKV interface {
+	ContractWasiCommon
 	GetState() int32
 	PutState() int32
 	DeleteState() int32
 }
 
-type ContractBridgeSQL interface {
-	ContractBridgeCommon
+type ContractWasiSQL interface {
+	ContractWasiCommon
 	ExecuteQuery() int32
 	ExecuteQueryOne() int32
 	RSHasNext() int32

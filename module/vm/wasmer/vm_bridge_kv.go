@@ -14,16 +14,16 @@ import (
 )
 
 // GetStateLen get state length from chain
-func (s *sdkRequestCtx) GetStateLen() int32 {
+func (s *WaciInstance) GetStateLen() int32 {
 	return s.getStateCore(true)
 }
 
 // GetStateLen get state from chain
-func (s *sdkRequestCtx) GetState() int32 {
+func (s *WaciInstance) GetState() int32 {
 	return s.getStateCore(false)
 }
 
-func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
+func (s *WaciInstance) getStateCore(isGetLen bool) int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
 	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
@@ -53,7 +53,7 @@ func (s *sdkRequestCtx) getStateCore(isGetLen bool) int32 {
 }
 
 // PutState put state to chain
-func (s *sdkRequestCtx) PutState() int32 {
+func (s *WaciInstance) PutState() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
 	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
@@ -70,7 +70,7 @@ func (s *sdkRequestCtx) PutState() int32 {
 }
 
 // DeleteState delete state from chain
-func (s *sdkRequestCtx) DeleteState() int32 {
+func (s *WaciInstance) DeleteState() int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
 	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)

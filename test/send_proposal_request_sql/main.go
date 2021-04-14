@@ -59,9 +59,6 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
-	initWasmerSqlTest()
-	//initGasmTest()
-
 	conn, err := initGRPCConnect(true)
 	if err != nil {
 		fmt.Println(err)
@@ -82,6 +79,9 @@ func main() {
 	}
 
 	// test
+	initWasmerSqlTest()
+	//initGasmTest()
+
 	functionalTest(sk3, &client)
 	//performanceTest(sk3, &client)
 }
@@ -123,22 +123,22 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	testCreate(sk3, client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
-	// 2) 执行合约-sql insert
+	//2) 执行合约-sql insert
 	for i := 0; i < 10; i++ {
 		testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
-	//testInvokeSqlInsert(sk3, client, CHAIN1, "11")
+	testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 	time.Sleep(5 * time.Second)
 
 	// 3) 查询 id
 	testQuerySqlById(sk3, client, CHAIN1, txId)
 
-	// 4) 执行合约-sql update name
+	//4) 执行合约-sql update name
 	testInvokeSqlUpdate(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
 
-	// 5) 查询 id
+	//5) 查询 id
 	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	json.Unmarshal([]byte(result), &rs)
 	fmt.Println("testInvokeSqlUpdate query", rs)
@@ -166,7 +166,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	time.Sleep(4 * time.Second)
 
 	// 10) 交易回退
-	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "200000")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "2000")
 	time.Sleep(4 * time.Second)
 	testInvokeSqlUpdateRollbackDbSavePoint(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
@@ -218,7 +218,7 @@ func initWasmerSqlTest() {
 func initGasmTest() {
 	WasmPath = "../wasm/go-sql-1.1.0.wasm"
 	WasmUpgradePath = "../wasm/go-sql-1.1.0.wasm"
-	contractName = "contract112"
+	contractName = "contract216"
 	runtimeType = commonPb.RuntimeType_GASM
 }
 func initWxwmTest() {
@@ -733,4 +733,34 @@ func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.End
 	}
 
 	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
+}
+
+func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[functional_verify] [%s] [functional_verify] ============\n", contractName, txId)
+
+	// 构造Payload
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+		{
+			Key:   "contract_name",
+			Value: contractName,
+		},
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "functional_verify",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
 }

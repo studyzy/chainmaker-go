@@ -7,19 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker-go/common/serialize"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/wasi"
-	"strconv"
 )
 
 var rowIndex int32 = 0
 var verifySql = &types.StandardSqlVerify{}
 
 // ExecuteQuery execute query sql, return result set index
-func (s *sdkRequestCtx) ExecuteQuery() int32 {
+func (s *WaciInstance) ExecuteQuery() int32 {
 	err := wasi.ExecuteQuery(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
 	if err != nil {
 		s.recordMsg(err.Error())
@@ -29,7 +26,7 @@ func (s *sdkRequestCtx) ExecuteQuery() int32 {
 }
 
 // ExecuteQuery execute query sql, return result set index
-func (s *sdkRequestCtx) ExecuteQueryOneLen() int32 {
+func (s *WaciInstance) ExecuteQueryOneLen() int32 {
 	data, err := wasi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
 	s.Sc.GetStateCache = data // reset data
 	if err != nil {
@@ -40,17 +37,11 @@ func (s *sdkRequestCtx) ExecuteQueryOneLen() int32 {
 }
 
 // ExecuteQuery execute query sql, return result set index
-func (s *sdkRequestCtx) ExecuteQueryOne() int32 {
-	data, err := wasi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
-	s.Sc.GetStateCache = data // reset data
-	if err != nil {
-		s.recordMsg(err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-	return protocol.ContractSdkSignalResultSuccess
+func (s *WaciInstance) ExecuteQueryOne() int32 {
+	return s.ExecuteQueryOneLen()
 }
 
-//func (s *sdkRequestCtx) executeQueryOneCore(isGetLen bool) int32 {
+//func (s *WaciInstance) executeQueryOneCore(isGetLen bool) int32 {
 //	req := serialize.EasyUnmarshal(s.RequestBody)
 //	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 //	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -97,9 +88,9 @@ func (s *sdkRequestCtx) ExecuteQueryOne() int32 {
 //	return protocol.ContractSdkSignalResultSuccess
 //}
 
-// RSHasNext 1 is has next row, 0 is no next row
-func (s *sdkRequestCtx) RSHasNext() int32 {
-	err := wasi.RSHasNext(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
+// RSHasNext return is there a next line, 1 is has next row, 0 is no next row
+func (s *WaciInstance) RSHasNext() int32 {
+	err := wasi.RSHasNext(s.RequestBody, s.Sc.TxSimContext, s.Memory)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -108,108 +99,79 @@ func (s *sdkRequestCtx) RSHasNext() int32 {
 }
 
 // RSNextLen get result set length from chain
-func (s *sdkRequestCtx) RSNextLen() int32 {
-	return s.rsNextCore(true)
-}
-
-// RSNextLen get one row from result set
-func (s *sdkRequestCtx) RSNext() int32 {
-	return s.rsNextCore(false)
-}
-
-func (s *sdkRequestCtx) rsNextCore(isGetLen bool) int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
-	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-
-	rsIndex := rsIndexI.(int32)
-	ptr := valuePtrI.(int32)
-
-	// get handle
-	rows, ok := s.Sc.TxSimContext.GetStateSqlHandle(rsIndex)
-	if !ok {
-		s.recordMsg("ctx can not found rs_index[" + strconv.Itoa(int(rsIndex)) + "]")
-		return protocol.ContractSdkSignalResultFail
-	}
-
-	// get data
-	if !isGetLen {
-		data := s.Sc.GetStateCache
-		if data != nil && len(data) > 0 {
-			copy(s.Memory[ptr:ptr+int32(len(data))], data)
-		}
-		s.Sc.GetStateCache = nil
-		return protocol.ContractSdkSignalResultSuccess
-	}
-
-	// get len
-	data, err := rows.Data()
+func (s *WaciInstance) RSNextLen() int32 {
+	data, err := wasi.RSNext(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
+	s.Sc.GetStateCache = data // reset data
 	if err != nil {
-		s.recordMsg("ctx query next data error, " + err.Error())
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-
-	ec := serialize.NewEasyCodecWithMap(data)
-	bytes := ec.Marshal()
-	copy(s.Memory[ptr:ptr+4], IntToBytes(int32(len(bytes))))
-	s.Sc.GetStateCache = bytes
-
 	return protocol.ContractSdkSignalResultSuccess
 }
 
-// RSClose close sql statement
-func (s *sdkRequestCtx) RSClose() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
-	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	rsIndex := rsIndexI.(int32)
-	valuePtr := valuePtrI.(int32)
+// RSNextLen get one row from result set
+func (s *WaciInstance) RSNext() int32 {
+	return s.RSNextLen()
+}
 
-	// get
-	rows, ok := s.Sc.TxSimContext.GetStateSqlHandle(rsIndex)
-	if !ok {
-		s.recordMsg("ctx can not found rs_index[" + strconv.Itoa(int(rsIndex)) + "]")
+//func (s *WaciInstance) rsNextCore(isGetLen bool) int32 {
+//	req := serialize.EasyUnmarshal(s.RequestBody)
+//	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
+//	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+//
+//	rsIndex := rsIndexI.(int32)
+//	ptr := valuePtrI.(int32)
+//
+//	// get handle
+//	rows, ok := s.Sc.TxSimContext.GetStateSqlHandle(rsIndex)
+//	if !ok {
+//		s.recordMsg("ctx can not found rs_index[" + strconv.Itoa(int(rsIndex)) + "]")
+//		return protocol.ContractSdkSignalResultFail
+//	}
+//
+//	// get data
+//	if !isGetLen {
+//		data := s.Sc.GetStateCache
+//		if data != nil && len(data) > 0 {
+//			copy(s.Memory[ptr:ptr+int32(len(data))], data)
+//		}
+//		s.Sc.GetStateCache = nil
+//		return protocol.ContractSdkSignalResultSuccess
+//	}
+//
+//	// get len
+//	data, err := rows.Data()
+//	if err != nil {
+//		s.recordMsg("ctx query next data error, " + err.Error())
+//		return protocol.ContractSdkSignalResultFail
+//	}
+//
+//	ec := serialize.NewEasyCodecWithMap(data)
+//	bytes := ec.Marshal()
+//	copy(s.Memory[ptr:ptr+4], IntToBytes(int32(len(bytes))))
+//	s.Sc.GetStateCache = bytes
+//
+//	return protocol.ContractSdkSignalResultSuccess
+//}
+
+// RSClose close sql statement
+func (s *WaciInstance) RSClose() int32 {
+	err := wasi.RSClose(s.RequestBody, s.Sc.TxSimContext, s.Memory)
+	if err != nil {
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-	var index int32 = 1
-	if err := rows.Close(); err != nil {
-		s.recordMsg("ctx close rows error, " + err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-	copy(s.Memory[valuePtr:valuePtr+4], IntToBytes(index))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
 // ExecuteUpdate execute update and insert sql, allow single row change
 // as: update table set name = 'Tom' where uniqueKey='xxx'
-func (s *sdkRequestCtx) ExecuteUpdate() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
-
-	// verify
-	if err := verifySql.VerifyDMLSql(sql); err != nil {
-		s.recordMsg("verify update sql error, " + err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-
-	txKey := common.GetTxKewWith(s.Sc.TxSimContext.GetBlockProposer(), s.Sc.TxSimContext.GetBlockHeight())
-	transaction, err := s.Sc.TxSimContext.GetBlockchainStore().GetDbTransaction(txKey)
+func (s *WaciInstance) ExecuteUpdate() int32 {
+	err := wasi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.ChainId)
 	if err != nil {
-		s.recordMsg("ctx get db transaction error, " + err.Error())
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-
-	// execute
-	affectedCount, err := transaction.ExecSql(sql)
-	if err != nil {
-		s.recordMsg("ctx execute sql error, " + err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-	copy(s.Memory[ptr:ptr+4], IntToBytes(int32(affectedCount)))
-
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -222,25 +184,11 @@ func (s *sdkRequestCtx) ExecuteUpdate() int32 {
 //			  [DROP DATABASE dbName]   [DROP TABLE dbName.tableName]   [TRUNCATE TABLE dbName.tableName]
 //
 // You must have a primary key to create a table
-func (s *sdkRequestCtx) ExecuteDDL() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
-
-	// verify
-	if err := verifySql.VerifyDDLSql(sql); err != nil {
-		s.recordMsg("ExecuteDDL error, " + err.Error())
+func (s *WaciInstance) ExecuteDDL() int32 {
+	err := wasi.ExecuteDDL(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
+	if err != nil {
+		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
-
-	// execute
-	if err := s.Sc.TxSimContext.GetBlockchainStore().ExecDdlSql(s.Sc.ContractId.ContractName, sql); err != nil {
-		s.recordMsg("ctx ExecDdlSql error, " + err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-
-	copy(s.Memory[ptr:ptr+4], IntToBytes(0))
 	return protocol.ContractSdkSignalResultSuccess
 }
