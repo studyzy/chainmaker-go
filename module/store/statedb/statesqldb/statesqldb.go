@@ -129,7 +129,7 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	currentDb := ""
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
-			contractDbName := getContractDbName(s.chainId, txWrite.ContractName)
+			contractDbName := GetContractDbName(s.chainId, txWrite.ContractName)
 			if txWrite.ContractName != "" && (contractDbName != currentDb || currentDb == "") { //切换DB
 				dbTx.ChangeContextDb(contractDbName)
 				currentDb = contractDbName

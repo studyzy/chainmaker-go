@@ -14,7 +14,7 @@ import (
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
 	err := wasi.ExecuteQuery(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory)
-	if err == nil {
+	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
@@ -40,7 +40,7 @@ func (s *WaciInstance) ExecuteQueryOne() int32 {
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) RSHasNext() int32 {
 	err := wasi.RSHasNext(s.RequestBody, s.TxSimContext, s.Vm.Memory)
-	if err == nil {
+	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
