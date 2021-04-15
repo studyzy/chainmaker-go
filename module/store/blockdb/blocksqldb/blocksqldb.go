@@ -52,7 +52,7 @@ func (db *BlockSqlDB) initDb(dbName string) {
 	}
 }
 func getDbName(chainId string) string {
-	return chainId + "_blockdb"
+	return "blockdb_" + chainId
 }
 func newBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*BlockSqlDB, error) {
 	nWorkers := runtime.NumCPU()

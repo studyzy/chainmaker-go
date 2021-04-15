@@ -42,7 +42,7 @@ func (db *HistorySqlDB) initDb(dbName string) {
 
 }
 func getDbName(chainId string) string {
-	return chainId + "_history"
+	return "historydb_" + chainId
 }
 func newHistorySqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
 
