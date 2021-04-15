@@ -44,7 +44,7 @@ func (db *ResultSqlDB) initDb(dbName string) {
 
 }
 func getDbName(chainId string) string {
-	return chainId + "_result"
+	return "resultdb_" + chainId
 }
 func newResultSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*ResultSqlDB, error) {
 	rdb := &ResultSqlDB{

@@ -61,14 +61,14 @@ func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	return s.CommitBlock(genesisBlock)
 }
 func getDbName(chainId string) string {
-	return chainId + "_statedb"
+	return "statedb_" + chainId
 }
 
 func GetContractDbName(chainId, contractName string) string {
 	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(chainId)
 	}
-	return chainId + "_state_" + contractName
+	return "statedb_" + chainId + "_" + contractName
 }
 
 // CommitBlock commits the state in an atomic operation
