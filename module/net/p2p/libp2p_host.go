@@ -16,12 +16,22 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"sync"
+	"time"
 )
 
 // networkNotify is an implementation of network.Notifiee.
 var networkNotify = func(host *LibP2pHost) network.Notifiee {
 	return &network.NotifyBundle{
 		ConnectedF: func(_ network.Network, c network.Conn) {
+			times := 10
+			for (host.peerStreamManager == nil || host.connManager == nil) && times > 0 {
+				times--
+				time.Sleep(time.Second)
+			}
+			if times == 0 {
+				logger.Errorf("[Host][BUG] nil peer stream manager or nil connection manager err")
+				return
+			}
 			host.peerStreamManager.initPeerStream(c.RemotePeer())
 			pid := c.RemotePeer()
 			host.connManager.AddConn(pid, c)
@@ -29,6 +39,15 @@ var networkNotify = func(host *LibP2pHost) network.Notifiee {
 
 		},
 		DisconnectedF: func(_ network.Network, c network.Conn) {
+			times := 10
+			for (host.peerStreamManager == nil || host.connManager == nil) && times > 0 {
+				times--
+				time.Sleep(time.Second)
+			}
+			if times == 0 {
+				logger.Errorf("[Host][BUG] nil peer stream manager or nil connection manager err")
+				return
+			}
 			logger.Infof("[Host] connection disconnected(remote peer-id:%s, remote multi-addr:%s)", c.RemotePeer().Pretty(), c.RemoteMultiaddr().String())
 			host.connManager.RemoveConn(c.RemotePeer())
 			pid := c.RemotePeer().Pretty()
