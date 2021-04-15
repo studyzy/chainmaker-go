@@ -85,8 +85,15 @@ func main() {
 
 	//functionalTest(sk3, &client)
 	performanceTest(sk3, &client)
+	//otherTest(sk3, &client)
 }
 
+func otherTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
+	id := "0316bcb62c4644f5925bc294a6d8a7f3c863b5d2153d4080b7edf3d2f78fb136"
+	for {
+		testQuerySqlById(sk3, client, CHAIN1, id)
+	}
+}
 func performanceTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 
 	// 1) 合约创建
@@ -97,12 +104,11 @@ func performanceTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	// 2) 执行合约-sql insert
 	txId := ""
 	var txIds = make([]string, 0)
-	count := 20000
+	count := 5000
 	for i := 0; i < count; i++ {
 		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
-		testInvokeSqlUpdate(sk3, client, CHAIN1, txId)
 		txIds = append(txIds, txId)
-		time.Sleep(time.Millisecond)
+		//time.Sleep(time.Millisecond)
 	}
 	// wait
 	for {
@@ -111,24 +117,33 @@ func performanceTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 			fmt.Println(result)
 			break
 		}
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 200)
 	}
 	end1 := utils.CurrentTimeMillisSeconds()
 	fmt.Println("time cost", end1-start)
-	fmt.Println("tps", int64(count)/((end1-start)/100000*4))
+	fmt.Println("tps", int64(count*1000)/(end1-start))
 
+	time.Sleep(time.Second * 20)
 	for _, id := range txIds {
 		testQuerySqlById(sk3, client, CHAIN1, id)
-		testInvokeSqlDelete(sk3, client, CHAIN1, txId)
+		testInvokeSqlUpdate(sk3, client, CHAIN1, id)
+		testInvokeSqlDelete(sk3, client, CHAIN1, id)
+		time.Sleep(time.Millisecond)
+	}
+	for _, id := range txIds {
+		testQuerySqlById(sk3, client, CHAIN1, id)
+		testInvokeSqlUpdate(sk3, client, CHAIN1, id)
+		testInvokeSqlDelete(sk3, client, CHAIN1, id)
+		time.Sleep(time.Millisecond)
 	}
 
 	end2 := utils.CurrentTimeMillisSeconds()
 
 	fmt.Println("time cost1", end1-start)
-	fmt.Println("tps1", int64(count)/((end1-start)/100000*4))
+	fmt.Println("tps", int64(count)/((end1-start)/int64(count)*2))
 
 	fmt.Println("time cost2", end2-start)
-	fmt.Println("tps2", int64(count)/((end2-start)/100000*4))
+	fmt.Println("tps", int64(count)/((end1-start)/int64(count)*4))
 }
 func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	var (
@@ -596,7 +611,7 @@ func testQuerySqlRangAge(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payloadBytes []byte) *commonPb.TxResponse {
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(5*time.Second)))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 	defer cancel()
 
 	if txId == "" {

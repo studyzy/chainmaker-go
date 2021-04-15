@@ -234,9 +234,7 @@ func ExecuteUpdate(requestBody []byte, contractName string, txSimContext protoco
 	}
 
 	// execute
-	// todo 优化缓存currentDB  module map[chainId]?
-	dbName := statesqldb.GetContractDbName(chainId, contractName)
-	transaction.ChangeContextDb(dbName)
+	changeCurrentDB(chainId, contractName, transaction)
 	affectedCount, err := transaction.ExecSql(sql)
 	if err != nil {
 		return fmt.Errorf("ctx execute update sql error, [%s], sql[%s]", err.Error(), sql)
@@ -263,4 +261,13 @@ func ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.T
 	}
 	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
 	return nil
+}
+
+func changeCurrentDB(chainId string, contractName string, transaction protocol.SqlDBTransaction) {
+	dbName := statesqldb.GetContractDbName(chainId, contractName)
+	currentDbName := getCurrentDb(chainId)
+	if contractName != "" && dbName != currentDbName {
+		transaction.ChangeContextDb(dbName)
+		setCurrentDb(chainId, dbName)
+	}
 }

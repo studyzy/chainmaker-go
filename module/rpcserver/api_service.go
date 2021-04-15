@@ -225,7 +225,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	}
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
-		errMsg = fmt.Sprintf("%d, %d, %s", txStatusCode, txResult.Code, txResult.Message)
+		errMsg = fmt.Sprintf("%d, %d, contractName[%s] method[%s] txType[%s], %s", txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
 		s.log.Error(errMsg)
 		resp.Code = txStatusCode
 		resp.Message = errMsg
