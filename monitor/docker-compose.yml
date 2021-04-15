@@ -37,6 +37,7 @@ services:
       #- /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
       - ./grafana.ini:/etc/grafana/grafana.ini
       - grafana_data:/var/lib/grafana
+      - ./index.html:/usr/share/grafana/public/views/index.html
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=chainmaker
     depends_on:
