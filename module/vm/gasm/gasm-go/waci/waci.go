@@ -2,6 +2,8 @@
 Copyright (C) BABEC. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
+
+waci: WebAssembly Chainmaker Interface
 */
 
 package waci
@@ -31,6 +33,7 @@ type WaciInstance struct {
 	RequestHeader  []*serialize.EasyCodecItem
 	RequestBody    []byte // sdk request param
 	GetStateCache  []byte // cache call method GetStateLen value result, one cache per transaction
+	ChainId        string
 }
 
 // LogMessage print log to file
@@ -94,21 +97,25 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.PutState()
 		case protocol.ContractMethodDeleteState:
 			return s.DeleteState()
-		// sql
-		//case protocol.ContractMethodExecuteUpdate:
-		//	return w.ExecuteUpdate()
-		//case protocol.ContractMethodExecuteDdl:
-		//	return w.ExecuteDDL()
-		//case protocol.ContractMethodExecuteQuery:
-		//	return w.ExecuteQuery()
-		//case protocol.ContractMethodRSHasNext:
-		//	return w.RSHasNext()
-		//case protocol.ContractMethodRSNextLen:
-		//	return w.RSNextLen()
-		//case protocol.ContractMethodRSNext:
-		//	return w.RSNext()
-		//case protocol.ContractMethodRSClose:
-		//	return w.RSClose()
+		//sql
+		case protocol.ContractMethodExecuteUpdate:
+			return s.ExecuteUpdate()
+		case protocol.ContractMethodExecuteDdl:
+			return s.ExecuteDDL()
+		case protocol.ContractMethodExecuteQueryOneLen:
+			return s.ExecuteQueryOneLen()
+		case protocol.ContractMethodExecuteQueryOne:
+			return s.ExecuteQueryOne()
+		case protocol.ContractMethodExecuteQuery:
+			return s.ExecuteQuery()
+		case protocol.ContractMethodRSHasNext:
+			return s.RSHasNext()
+		case protocol.ContractMethodRSNextLen:
+			return s.RSNextLen()
+		case protocol.ContractMethodRSNext:
+			return s.RSNext()
+		case protocol.ContractMethodRSClose:
+			return s.RSClose()
 		default:
 			s.Log.Errorf("method is %s not match.", method)
 		}
@@ -135,7 +142,7 @@ func (s *WaciInstance) getStateCore(isGetLen bool) int32 {
 		return s.recordMsg(err.Error())
 	}
 
-	valuePtrInt, _ := strconv.Atoi(valuePtr.(string))
+	valuePtrInt := int(valuePtr.(int32))
 
 	if isGetLen {
 		contractName := s.ContractId.ContractName
@@ -226,7 +233,7 @@ func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
 	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
 	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
 	paramItem := serialize.EasyUnmarshal(param.([]byte))
-	valuePtrInt, _ := strconv.Atoi(valuePtr.(string))
+	valuePtrInt := int(valuePtr.(int32))
 
 	if !isGetLen { // get value from cache
 		result := s.TxSimContext.GetCurrentResult()
@@ -281,7 +288,6 @@ func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
 func (s *WaciInstance) recordMsg(msg string) int32 {
 	s.ContractResult.Message += msg
 	s.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	//w.Log.Errorf("gasm log>> [%s] %s:%s", w.TxSimContext.GetTx().GetHeader().GetTxId(), w.ContractId.ContractName, msg)
 	s.Log.Errorf("gasm log>> [%s] %s", s.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }

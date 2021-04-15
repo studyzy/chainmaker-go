@@ -34,16 +34,17 @@ import "C"
 
 var log = logger.GetLogger(logger.MODULE_VM)
 
-// sdkRequestCtx record wasmer vm request parameter
-type sdkRequestCtx struct {
+// WaciInstance record wasmer vm request parameter
+type WaciInstance struct {
 	Sc            *SimContext
 	RequestHeader []*serialize.EasyCodecItem // sdk request common easy codec param
 	RequestBody   []byte                     // sdk request param
 	Memory        []byte                     // vm memory
+	ChainId       string
 }
 
 // LogMessage print log to file
-func (s *sdkRequestCtx) LogMessage() int32 {
+func (s *WaciInstance) LogMessage() int32 {
 	s.Sc.Log.Debugf("waci log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
@@ -82,11 +83,12 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 	vbm := GetVmBridgeManager()
 	sc := vbm.get(ctxPtr.(int32))
 
-	s := &sdkRequestCtx{
+	s := &WaciInstance{
 		Sc:            sc,
 		RequestHeader: requestHeaderItems,
 		RequestBody:   requestBody,
 		Memory:        memory,
+		ChainId:       sc.ChainId,
 	}
 
 	method, ok := serialize.GetValueFromItems(requestHeaderItems, "method", serialize.EasyKeyType_SYSTEM)
@@ -140,7 +142,7 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 }
 
 // SuccessResult record the results of contract execution success
-func (s *sdkRequestCtx) SuccessResult() int32 {
+func (s *WaciInstance) SuccessResult() int32 {
 	if s.Sc.ContractResult.Code == commonPb.ContractResultCode_FAIL {
 		return protocol.ContractSdkSignalResultFail
 	}
@@ -150,23 +152,23 @@ func (s *sdkRequestCtx) SuccessResult() int32 {
 }
 
 // ErrorResult record the results of contract execution error
-func (s *sdkRequestCtx) ErrorResult() int32 {
+func (s *WaciInstance) ErrorResult() int32 {
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	s.Sc.ContractResult.Message += string(s.RequestBody)
 	return protocol.ContractSdkSignalResultSuccess
 }
 
 //  CallContractLen invoke cross contract calls, save result to cache and putout result length
-func (s *sdkRequestCtx) CallContractLen() int32 {
+func (s *WaciInstance) CallContractLen() int32 {
 	return s.callContractCore(true)
 }
 
 //  CallContractLen get cross contract call result from cache
-func (s *sdkRequestCtx) CallContract() int32 {
+func (s *WaciInstance) CallContract() int32 {
 	return s.callContractCore(false)
 }
 
-func (s *sdkRequestCtx) callContractCore(isGetLen bool) int32 {
+func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
 	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
@@ -251,7 +253,7 @@ func procExit(context unsafe.Pointer, exitCode int32) {
 	panic("exit called by contract, code:" + strconv.Itoa(int(exitCode)))
 }
 
-func (s *sdkRequestCtx) recordMsg(msg string) int32 {
+func (s *WaciInstance) recordMsg(msg string) int32 {
 	s.Sc.ContractResult.Message += msg
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	s.Sc.Log.Errorf("wasm log>> [%s] %s", s.Sc.ContractId.ContractName, msg)

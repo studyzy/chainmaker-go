@@ -32,13 +32,15 @@ type SimContext struct {
 	parameters    map[string]string
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
+	ChainId       string
 }
 
 // NewSimContext for every transaction
-func NewSimContext(method string, log *logger.CMLogger) *SimContext {
+func NewSimContext(method string, log *logger.CMLogger, chainId string) *SimContext {
 	sc := SimContext{
-		method: method,
-		Log:    log,
+		method:  method,
+		Log:     log,
+		ChainId: chainId,
 	}
 
 	sc.putCtxPointer()

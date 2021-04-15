@@ -1,8 +1,17 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+
+wasi: WebAssembly System Interface
+*/
 package wasi
 
 import (
 	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
@@ -107,16 +116,16 @@ func ExecuteQueryOne(requestBody []byte, contractName string, txSimContext proto
 			return nil, fmt.Errorf("ctx query error, %s", err.Error())
 		}
 
-		var data map[string]string
+		var dataRow map[string]string
 		if row.IsEmpty() {
-			data = make(map[string]string, 0)
+			dataRow = make(map[string]string, 0)
 		} else {
-			data, err = row.Data()
+			dataRow, err = row.Data()
 			if err != nil {
 				return nil, fmt.Errorf("ctx query get data to map error, %s", err.Error())
 			}
 		}
-		ec := serialize.NewEasyCodecWithMap(data)
+		ec := serialize.NewEasyCodecWithMap(dataRow)
 		rsBytes := ec.Marshal()
 		copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(rsBytes))))
 		return rsBytes, nil
@@ -128,7 +137,7 @@ func ExecuteQueryOne(requestBody []byte, contractName string, txSimContext proto
 	}
 }
 
-func RSHasNext(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+func RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
 	req := serialize.EasyUnmarshal(requestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -146,4 +155,119 @@ func RSHasNext(requestBody []byte, contractName string, txSimContext protocol.Tx
 	}
 	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(index))
 	return nil
+}
+
+func RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+	req := serialize.EasyUnmarshal(requestBody)
+	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
+	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+
+	rsIndex := rsIndexI.(int32)
+	ptr := valuePtrI.(int32)
+
+	// get handle
+	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
+	if !ok {
+		return nil, fmt.Errorf("ctx can not found rs_index[%d]", rsIndex)
+	}
+
+	// get len
+	if data == nil {
+		var dataRow map[string]string
+		var err error
+		if rows == nil {
+			dataRow = make(map[string]string, 0)
+		} else {
+			dataRow, err = rows.Data()
+			if err != nil {
+				return nil, fmt.Errorf("ctx query next data error, %s", err.Error())
+			}
+		}
+		ec := serialize.NewEasyCodecWithMap(dataRow)
+		rsBytes := ec.Marshal()
+		copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(rsBytes))))
+		return rsBytes, nil
+	} else { // get data
+		if len(data) > 0 {
+			copy(memory[ptr:ptr+int32(len(data))], data)
+		}
+		return nil, nil
+	}
+}
+
+func RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+	req := serialize.EasyUnmarshal(requestBody)
+	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
+	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+	rsIndex := rsIndexI.(int32)
+	valuePtr := valuePtrI.(int32)
+
+	// get
+	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
+	if !ok {
+		return fmt.Errorf("ctx can not found rs_index[%d]", rsIndex)
+	}
+	var index int32 = 1
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("ctx close rows error, [%s]", err.Error())
+	}
+	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(index))
+	return nil
+}
+
+func ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+	req := serialize.EasyUnmarshal(requestBody)
+	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
+	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+	sql := sqlI.(string)
+	ptr := valuePtr.(int32)
+
+	// verify
+	if err := verifySql.VerifyDMLSql(sql); err != nil {
+		return fmt.Errorf("verify update sql error, [%s]", err.Error())
+	}
+
+	txKey := common.GetTxKewWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+	transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
+	if err != nil {
+		return fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
+	}
+
+	// execute
+	changeCurrentDB(chainId, contractName, transaction)
+	affectedCount, err := transaction.ExecSql(sql)
+	if err != nil {
+		return fmt.Errorf("ctx execute update sql error, [%s], sql[%s]", err.Error(), sql)
+	}
+	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(affectedCount)))
+	return nil
+}
+
+func ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+	req := serialize.EasyUnmarshal(requestBody)
+	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
+	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+	sql := sqlI.(string)
+	ptr := valuePtr.(int32)
+
+	// verify
+	if err := verifySql.VerifyDDLSql(sql); err != nil {
+		return fmt.Errorf("verify ddl sql error,  [%s], sql[%s]", err.Error(), sql)
+	}
+
+	// execute
+	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql); err != nil {
+		return fmt.Errorf("ctx ExecDdlSql error, %s, sql[%s]", err.Error(), sql)
+	}
+	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
+	return nil
+}
+
+func changeCurrentDB(chainId string, contractName string, transaction protocol.SqlDBTransaction) {
+	dbName := statesqldb.GetContractDbName(chainId, contractName)
+	currentDbName := getCurrentDb(chainId)
+	if contractName != "" && dbName != currentDbName {
+		transaction.ChangeContextDb(dbName)
+		setCurrentDb(chainId, dbName)
+	}
 }

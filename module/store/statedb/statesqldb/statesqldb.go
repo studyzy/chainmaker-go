@@ -63,7 +63,8 @@ func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 func getDbName(chainId string) string {
 	return "statedb_" + chainId
 }
-func getContractDbName(chainId, contractName string) string {
+
+func GetContractDbName(chainId, contractName string) string {
 	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(chainId)
 	}
@@ -97,7 +98,7 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		//创建对应合约的数据库
 		payload := &commonPb.ContractMgmtPayload{}
 		payload.Unmarshal(block.Txs[0].RequestPayload)
-		dbName := getContractDbName(block.Header.ChainId, payload.ContractId.ContractName)
+		dbName := GetContractDbName(block.Header.ChainId, payload.ContractId.ContractName)
 		s.initDb(dbName) //创建KV表
 		writes := txRWSets[0].TxWrites
 		for _, txWrite := range writes {
@@ -128,7 +129,7 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	currentDb := ""
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
-			contractDbName := getContractDbName(s.chainId, txWrite.ContractName)
+			contractDbName := GetContractDbName(s.chainId, txWrite.ContractName)
 			if txWrite.ContractName != "" && (contractDbName != currentDb || currentDb == "") { //切换DB
 				dbTx.ChangeContextDb(contractDbName)
 				currentDb = contractDbName
@@ -237,7 +238,7 @@ func (s *StateSqlDB) Close() {
 
 func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	if contractName != "" {
-		if err := s.db.ChangeContextDb(getContractDbName(s.chainId, contractName)); err != nil {
+		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err
 		}
 	}
@@ -245,7 +246,7 @@ func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}
 }
 func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
 	if contractName != "" {
-		if err := s.db.ChangeContextDb(getContractDbName(s.chainId, contractName)); err != nil {
+		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err
 		}
 	}
@@ -253,7 +254,7 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 
 }
 func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
-	dbName := getContractDbName(s.chainId, contractName)
+	dbName := GetContractDbName(s.chainId, contractName)
 	err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err

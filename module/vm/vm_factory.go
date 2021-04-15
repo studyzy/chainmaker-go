@@ -541,21 +541,24 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 		txKey := commonPb.GetTxKewWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
 		dbTransaction, err = txContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
-			contractResult.Message = fmt.Sprintf("get db transaction error %+v", err)
+			contractResult.Message = fmt.Sprintf("get db transaction from [%s] error %+v", txKey, err)
 			return contractResult, commonPb.TxStatusCode_INTERNAL_ERROR
 		}
 		err := dbTransaction.BeginDbSavePoint(txId)
-		fmt.Println("txId========================1", txId, txKey, "error,", err)
+		if err != nil {
+			m.Log.Warn("[%s] begin db save point error, %s", txId, err.Error())
+		}
 	}
 
 	runtimeContractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, gasUsed)
 	if runtimeContractResult.Code == commonPb.ContractResultCode_OK {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	} else {
-		txKey := commonPb.GetTxKewWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
 		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() && txType != commonPb.TxType_QUERY_USER_CONTRACT {
 			err := dbTransaction.RollbackDbSavePoint(txId)
-			fmt.Println("txId========================2", txId, txKey, "error,", err)
+			if err != nil {
+				m.Log.Warn("[%s] rollback db save point error, %s", txId, err.Error())
+			}
 		}
 		return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
