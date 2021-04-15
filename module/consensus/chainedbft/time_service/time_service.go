@@ -22,8 +22,6 @@ const (
 	PROPOSAL_BLOCK_TIMEOUT TimerEventType = iota
 	VOTE_BLOCK_TIMEOUT
 	ROUND_TIMEOUT
-	COMMIT_TIMEOUT
-	HEARTBEAT_TIMEOUT
 )
 
 var (
@@ -31,10 +29,6 @@ var (
 	roundTimeoutInterval    = 500 * time.Millisecond
 	proposerTimeout         = 2000 * time.Millisecond
 	proposerTimeoutInterval = 500 * time.Millisecond
-	voteTimeout             = 2000 * time.Millisecond
-	voteTimeoutInterval     = 500 * time.Millisecond
-	commitTimeout           = 500 * time.Millisecond
-	heartbeatTimeout        = 5 * time.Second
 )
 
 //GetEventTimeout returns the time duration per event type and consensus roundIndex
@@ -43,16 +37,9 @@ func GetEventTimeout(evtType TimerEventType, roundIndex int32) time.Duration {
 	case PROPOSAL_BLOCK_TIMEOUT:
 		return time.Duration(proposerTimeout.Nanoseconds()+
 			proposerTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
-	case VOTE_BLOCK_TIMEOUT:
-		return time.Duration(voteTimeout.Nanoseconds()+
-			voteTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
 	case ROUND_TIMEOUT:
 		return time.Duration(roundTimeout.Nanoseconds()+
 			roundTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
-	case COMMIT_TIMEOUT:
-		return commitTimeout
-	case HEARTBEAT_TIMEOUT:
-		return heartbeatTimeout
 	default:
 		return 0
 	}
