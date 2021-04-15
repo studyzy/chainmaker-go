@@ -11,3 +11,5 @@ do
     kill -9 $p
     echo "kill $p"
 done
+
+ps -ef|grep chainmaker
