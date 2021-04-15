@@ -734,10 +734,10 @@ func (ln *LibP2pNet) Start() error {
 	if err := ln.libP2pHost.Start(); err != nil {
 		return err
 	}
+	ln.initPeerStreamManager()
 	if err := ln.registerMsgHandle(); err != nil {
 		return err
 	}
-	ln.initPeerStreamManager()
 	ln.startUp = true
 
 	// start handling NewTlsPeerChainIdsNotifyC
