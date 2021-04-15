@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
+	"crypto/x509/pkix"
+
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -15,7 +17,6 @@ import (
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	"crypto/x509/pkix"
 )
 
 var errStr = "implement me"
@@ -26,6 +27,38 @@ type mockBlockChainStore struct {
 
 func newMockBlockChainStore() *mockBlockChainStore {
 	return &mockBlockChainStore{txs: make(map[string]*commonPb.Transaction)}
+}
+
+func (m *mockBlockChainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) ExecDdlSql(contractName, sql string) error {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) CommitDbTransaction(txName string) error {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) RollbackDbTransaction(txName string) error {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	panic(errStr)
 }
 
 func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {

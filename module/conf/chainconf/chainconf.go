@@ -9,10 +9,11 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
 
 	"chainmaker.org/chainmaker-go/common/json"
 	"chainmaker.org/chainmaker-go/logger"
@@ -44,8 +45,8 @@ var blockEmptyError = errors.New(blockEmptyErrorTemplate)
 type ChainConf struct {
 	log *logger.CMLogger // logger
 
-	options                         // extends options
-	chainConfig *config.ChainConfig // chain config
+	options                       // extends options
+	ChainConf *config.ChainConfig // chain config
 
 	wLock      sync.RWMutex                             // lock
 	watchers   map[string]protocol.Watcher              // config watchers, all watcher will be invoked when chain config changing.
@@ -140,7 +141,7 @@ func (c *ChainConf) latestChainConfig() error {
 	if err != nil {
 		return err
 	}
-	c.chainConfig = &chainConfig
+	c.ChainConf = &chainConfig
 
 	return nil
 }
@@ -240,13 +241,13 @@ func getBlockFromStore(blockchainStore protocol.BlockchainStore, blockHeight int
 
 // ChainConfig return the chain config.
 func (c *ChainConf) ChainConfig() *config.ChainConfig {
-	return c.chainConfig
+	return c.ChainConf
 }
 
 // GetConsensusNodeIdList return the node id list of all consensus node.
 func (c *ChainConf) GetConsensusNodeIdList() ([]string, error) {
 	chainNodeList := make([]string, 0)
-	for _, node := range c.chainConfig.Consensus.Nodes {
+	for _, node := range c.ChainConf.Consensus.Nodes {
 		for _, addr := range node.Address {
 			nodeUid, err := utils.GetNodeUidFromAddr(addr)
 			if err != nil {
@@ -302,7 +303,7 @@ func (c *ChainConf) callbackChainConfigWatcher() error {
 	}
 	// callback the watcher by sync
 	for m, w := range c.watchers {
-		err = w.Watch(c.chainConfig)
+		err = w.Watch(c.ChainConf)
 		if err != nil {
 			c.log.Errorw("chainConf notify err", "module", m, "err", err)
 			return err

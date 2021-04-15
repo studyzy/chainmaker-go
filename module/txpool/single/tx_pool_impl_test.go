@@ -7,14 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
+	"fmt"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestNewTxPoolImpl(t *testing.T) {
@@ -29,12 +31,17 @@ func TestNewTxPoolImpl(t *testing.T) {
 }
 
 func newTestPool() protocol.TxPool {
-	chainConf, _ := chainconf.NewChainConf(nil)
+	chainConfig, _ := chainconf.NewChainConf()
+	chainConfig.ChainConf = &config.ChainConfig{
+		Contract: &config.ContractConfig{EnableSqlSupport: false},
+		Block:    &config.BlockConfig{},
+	}
+	fmt.Println(chainConfig.ChainConfig())
 	localconf.ChainMakerConfig.TxPoolConfig.MaxTxPoolSize = 20
 	localconf.ChainMakerConfig.TxPoolConfig.MaxConfigTxPoolSize = 10
 	localconf.ChainMakerConfig.TxPoolConfig.CacheFlushTicker = 1
 	localconf.ChainMakerConfig.TxPoolConfig.CacheThresholdCount = 1000
-	txPool, _ := NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet())
+	txPool, _ := NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConfig, newMockAccessControlProvider(), newMockNet())
 	_ = txPool.Start()
 	return txPool
 }
