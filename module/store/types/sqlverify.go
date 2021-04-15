@@ -15,6 +15,7 @@ import (
 
 var ERROR_INVALID_SQL = errors.New("invalid sql")
 var ERROR_FORBIDDEN_SQL = errors.New("forbidden sql")
+var ERROR_FORBIDDEN_MULTI_SQL = errors.New("forbidden multi sql statement in one function call")
 var ERROR_FORBIDDEN_DOT_IN_TABLE = errors.New("forbidden dot in table name")
 
 //如果状态数据库是标准SQL语句，对标准SQL的SQL语句进行语法检查，不关心具体的SQL DB类型的语法差异
@@ -65,7 +66,7 @@ func (s *StandardSqlVerify) VerifyDQLSql(sql string) error {
 //禁用use database,禁用 select * from anotherdb.table形式
 func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 	SQL := strings.ToUpper(sql)
-	reg := regexp.MustCompile(`^USE\s+`)
+	reg := regexp.MustCompile(`^\s*USE\s+`)
 	match := reg.MatchString(SQL)
 	if match {
 		return ERROR_FORBIDDEN_SQL
@@ -75,6 +76,10 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 		if strings.Contains(tableName, ".") {
 			return ERROR_FORBIDDEN_DOT_IN_TABLE
 		}
+	}
+	count := s.getSqlStatementCount(sql)
+	if count > 1 {
+		return ERROR_FORBIDDEN_MULTI_SQL
 	}
 	return nil
 }

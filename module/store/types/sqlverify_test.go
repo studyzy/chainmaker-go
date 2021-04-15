@@ -81,3 +81,22 @@ func TestStandardSqlVerify_VerifyDQLSql(t *testing.T) {
 		})
 	}
 }
+func TestStandardSqlVerify_ForbiddenCheck(t *testing.T) {
+	table := map[string]bool{}
+	table["SElect id,name from t1 where x=333"] = true
+	table["SElect id,name from t1 where x='a';drop table student;--"] = false
+	table["SElect id,name from db3.t1 where x=333"] = false
+	table[" use db2;select * from t1 inner join t2 where t1.id=t2.id"] = false
+	v := &StandardSqlVerify{}
+	for sql, result := range table {
+		t.Run(sql, func(t *testing.T) {
+			err := v.checkForbiddenSql(sql)
+			if result {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+				t.Log(sql, err)
+			}
+		})
+	}
+}

@@ -140,6 +140,30 @@ func TestProvider_RollbackEmptyTx(t *testing.T) {
 	assert.Equal(t, int64(2), count)
 }
 
+func TestProvider_RollbackSavepointByInvalidSql(t *testing.T) {
+	p := initProvider()
+	initData(p)
+	txName := "Block1"
+	tx, _ := p.BeginDbTransaction(txName)
+	tx.BeginDbSavePoint("tx0")
+	var count int64
+	var err error
+	count, err = tx.ExecSql("insert into t1 values(3,'c')")
+	assert.Nil(t, err)
+	row, err := tx.QuerySingle("select count(*) from t1")
+	row.ScanColumns(&count)
+	assert.Equal(t, int64(3), count)
+	count, err = tx.ExecSql("insert into t1 values(4,'cc")
+	assert.NotNil(t, err)
+	tx.RollbackDbSavePoint("tx0")
+	row, err = tx.QuerySingle("select count(*) from t1")
+	row.ScanColumns(&count)
+	assert.Equal(t, int64(2), count)
+	p.RollbackDbTransaction(txName)
+	row, err = p.QuerySingle("select count(1) from t1")
+	row.ScanColumns(&count)
+	assert.Equal(t, int64(2), count)
+}
 func TestSqlDBHandle_QuerySql(t *testing.T) {
 	p := initProvider()
 	p.ExecSql("create table t1(id int primary key,name varchar(50),birthdate datetime,photo blob)", "")

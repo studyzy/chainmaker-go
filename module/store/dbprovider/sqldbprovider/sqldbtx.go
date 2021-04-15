@@ -16,8 +16,10 @@ import (
 
 type SqlDBTx struct {
 	sync.Mutex
+	name   string
 	dbType types.EngineType
 	db     *gorm.DB
+	logger protocol.Logger
 }
 
 func (p *SqlDBTx) ChangeContextDb(dbName string) error {
@@ -45,6 +47,7 @@ func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
 	tx := p.db.Exec(sql, values)
+	p.logger.Debugf("db tx[%s] exec sql[%s],result:%s", p.name, sql, tx.Error)
 	if tx.Error != nil {
 		return 0, tx.Error
 	}
@@ -100,15 +103,22 @@ func (p *SqlDBTx) Rollback() error {
 	return nil
 }
 
-func (p *SqlDBTx) BeginDbSavePoint(savePointName string) error {
+func (p *SqlDBTx) BeginDbSavePoint(spName string) error {
 	p.Lock()
 	defer p.Unlock()
-	p.db.SavePoint(savePointName)
-	return nil
+	savePointName := getSavePointName(spName)
+	db := p.db.SavePoint(savePointName)
+	p.logger.Debugf("db tx[%s] new savepoint[%s],result:%s", p.name, savePointName, db.Error)
+	return db.Error
 }
-func (p *SqlDBTx) RollbackDbSavePoint(savePointName string) error {
+func (p *SqlDBTx) RollbackDbSavePoint(spName string) error {
 	p.Lock()
 	defer p.Unlock()
-	p.db.RollbackTo(savePointName)
-	return nil
+	savePointName := getSavePointName(spName)
+	db := p.db.RollbackTo(savePointName)
+	p.logger.Debugf("db tx[%s] rollback savepoint[%s],result:%s", p.name, savePointName, db.Error)
+	return db.Error
+}
+func getSavePointName(spName string) string {
+	return "SP_" + spName
 }

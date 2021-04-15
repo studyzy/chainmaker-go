@@ -119,26 +119,26 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		rs     = make(map[string]string, 0)
 	)
 
-	//1) 合约创建
+	fmt.Println("//1) 合约创建")
 	testCreate(sk3, client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
-	//2) 执行合约-sql insert
+	fmt.Println("// 2) 执行合约-sql insert")
 	for i := 0; i < 10; i++ {
 		testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
-	testInvokeSqlInsert(sk3, client, CHAIN1, "11")
+	//testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 	time.Sleep(5 * time.Second)
 
-	// 3) 查询 id
+	fmt.Println("// 3) 查询 age11的 txid:" + txId)
 	testQuerySqlById(sk3, client, CHAIN1, txId)
 
-	//4) 执行合约-sql update name
+	fmt.Println("// 4) 执行合约-sql update name=长安链chainmaker2222222 where txid=" + txId)
 	testInvokeSqlUpdate(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
 
-	//5) 查询 id
+	fmt.Println("// 5) 查询 txid=" + txId + " 看name是不是更新成了长安链chainmaker2222222：")
 	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	json.Unmarshal([]byte(result), &rs)
 	fmt.Println("testInvokeSqlUpdate query", rs)
@@ -149,14 +149,14 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("testInvokeSqlUpdate contract create invoke query test 【success】")
 	}
 
-	// 6) 范围查询 rang age
+	fmt.Println("// 6) 范围查询 rang age 1~10")
 	testQuerySqlRangAge(sk3, client, CHAIN1)
 
-	// 7) 执行合约-sql delete by id
+	fmt.Println("// 7) 执行合约-sql delete by id age=11")
 	testInvokeSqlDelete(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
 
-	// 8) 查询 id
+	fmt.Println("// 8) 再次查询 id age=11，应该查不到")
 	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	if result != "{}" {
 		panic("查询结果错误")
@@ -166,10 +166,12 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	time.Sleep(4 * time.Second)
 
 	// 10) 交易回退
-	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "2000")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "200000")
 	time.Sleep(4 * time.Second)
+	fmt.Println("试图将txid=" + txId + " 的name改为长安链chainmaker333333333，但是发生了错误，所以修改不会成功")
 	testInvokeSqlUpdateRollbackDbSavePoint(sk3, client, CHAIN1, txId)
 	time.Sleep(4 * time.Second)
+	fmt.Println("// 11 再次查询age=200000的这条数据，如果name被更新了，那么说明savepoint Rollback失败了")
 	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	rs = make(map[string]string, 0)
 	json.Unmarshal([]byte(result), &rs)
@@ -218,7 +220,7 @@ func initWasmerSqlTest() {
 func initGasmTest() {
 	WasmPath = "../wasm/go-sql-1.1.0.wasm"
 	WasmUpgradePath = "../wasm/go-sql-1.1.0.wasm"
-	contractName = "contract216"
+	contractName = "contract112"
 	runtimeType = commonPb.RuntimeType_GASM
 }
 func initWxwmTest() {
@@ -733,34 +735,4 @@ func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.End
 	}
 
 	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
-}
-
-func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
-	txId := utils.GetRandTxId()
-	fmt.Printf("\n============ invoke contract %s[functional_verify] [%s] [functional_verify] ============\n", contractName, txId)
-
-	// 构造Payload
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "contract_name",
-			Value: contractName,
-		},
-	}
-	payload := &commonPb.TransactPayload{
-		ContractName: contractName,
-		Method:       "functional_verify",
-		Parameters:   pairs,
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
-		chainId, txId, payloadBytes)
-
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
-	return txId
 }
