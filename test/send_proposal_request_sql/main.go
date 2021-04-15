@@ -83,8 +83,8 @@ func main() {
 	initWasmerSqlTest()
 	//initGasmTest()
 
-	//functionalTest(sk3, &client)
-	performanceTest(sk3, &client)
+	functionalTest(sk3, &client)
+	//performanceTest(sk3, &client)
 	//otherTest(sk3, &client)
 }
 
@@ -108,7 +108,7 @@ func performanceTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	for i := 0; i < count; i++ {
 		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 		txIds = append(txIds, txId)
-		//time.Sleep(time.Millisecond)
+		time.Sleep(time.Millisecond)
 	}
 	// wait
 	for {
