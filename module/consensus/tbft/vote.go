@@ -8,10 +8,11 @@ package tbft
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/base64"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/logger"
 
@@ -516,7 +517,7 @@ func (hvs *heightRoundVoteSet) addVote(vote *Vote) (added bool, err error) {
 	return
 }
 
-func createProposalMsg(proposal *Proposal) (*tbftpb.TBFTMsg, error) {
+func createProposalMsg(proposal *Proposal) *tbftpb.TBFTMsg {
 	proposalProto := proposal.ToProto()
 	data := mustMarshal(proposalProto)
 
@@ -525,7 +526,7 @@ func createProposalMsg(proposal *Proposal) (*tbftpb.TBFTMsg, error) {
 		Msg:  data,
 	}
 
-	return tbftMsg, nil
+	return tbftMsg
 }
 
 func createPrevoteMsg(prevote *Vote) *tbftpb.TBFTMsg {
