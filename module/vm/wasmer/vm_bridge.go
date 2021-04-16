@@ -7,9 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
-	"regexp"
+	"chainmaker.org/chainmaker-go/wasi"
 	"strconv"
 	"sync"
 	"unsafe"
@@ -34,6 +32,9 @@ import "C"
 
 var log = logger.GetLogger(logger.MODULE_VM)
 
+// Wacsi WebAssembly chainmaker system interface
+var wacsi = wasi.NewWacsi()
+
 // WaciInstance record wasmer vm request parameter
 type WaciInstance struct {
 	Sc            *SimContext
@@ -45,7 +46,7 @@ type WaciInstance struct {
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Sc.Log.Debugf("waci log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Sc.Log.Debugf("wacsi log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -143,89 +144,90 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 
 // SuccessResult record the results of contract execution success
 func (s *WaciInstance) SuccessResult() int32 {
-	if s.Sc.ContractResult.Code == commonPb.ContractResultCode_FAIL {
-		return protocol.ContractSdkSignalResultFail
-	}
-	s.Sc.ContractResult.Code = commonPb.ContractResultCode_OK
-	s.Sc.ContractResult.Result = s.RequestBody
-	return protocol.ContractSdkSignalResultSuccess
+	return wacsi.SuccessResult(s.Sc.ContractResult, s.RequestBody)
 }
 
 // ErrorResult record the results of contract execution error
 func (s *WaciInstance) ErrorResult() int32 {
-	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Sc.ContractResult.Message += string(s.RequestBody)
-	return protocol.ContractSdkSignalResultSuccess
+	return wacsi.ErrorResult(s.Sc.ContractResult, s.RequestBody)
 }
 
 //  CallContractLen invoke cross contract calls, save result to cache and putout result length
 func (s *WaciInstance) CallContractLen() int32 {
-	return s.callContractCore(true)
+	data, err, gas := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed())
+	s.Sc.GetStateCache = data // reset data
+	s.Sc.Instance.SetGasUsed(gas)
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 //  CallContractLen get cross contract call result from cache
 func (s *WaciInstance) CallContract() int32 {
-	return s.callContractCore(false)
+	return s.CallContractLen()
 }
 
-func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
-	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
-	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
-	paramItem := serialize.EasyUnmarshal(param.([]byte))
-
-	if !isGetLen { // get value from cache
-		result := s.Sc.TxSimContext.GetCurrentResult()
-		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+(int32)(len(result))], result)
-		return protocol.ContractSdkSignalResultSuccess
-	}
-
-	// check param
-	if len(contractName.(string)) == 0 {
-		return s.recordMsg("CallContract contractName is null")
-	}
-	if len(method.(string)) == 0 {
-		return s.recordMsg("CallContract method is null")
-	}
-	if len(paramItem) > protocol.ParametersKeyMaxCount {
-		return s.recordMsg("expect less than 20 parameters, but get " + strconv.Itoa(len(paramItem)))
-	}
-	for _, item := range paramItem {
-		if len(item.Key) > protocol.DefaultStateLen {
-			msg := fmt.Sprintf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(item.Key))
-			return s.recordMsg(msg)
-		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
-		if err != nil || !match {
-			msg := fmt.Sprintf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", item.Key)
-			return s.recordMsg(msg)
-		}
-		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
-			msg := fmt.Sprintf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string)))
-			return s.recordMsg(msg)
-		}
-	}
-	if err := protocol.CheckKeyFieldStr(contractName.(string), method.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	// call contract
-	usedGas := s.Sc.Instance.GetGasUsed() + protocol.CallContractGasOnce
-	s.Sc.Instance.SetGasUsed(usedGas)
-	paramMap := serialize.EasyCodecItemToParamsMap(paramItem)
-	result, code := s.Sc.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, usedGas, commonPb.TxType_INVOKE_USER_CONTRACT)
-	usedGas = s.Sc.Instance.GetGasUsed() + uint64(result.GasUsed)
-	s.Sc.Instance.SetGasUsed(usedGas)
-	if code != commonPb.TxStatusCode_SUCCESS {
-		return s.recordMsg("CallContract " + code.String() + ", msg:" + result.Message)
-	}
-	// set value length to memory
-	l := utils.IntToBytes(int32(len(result.Result)))
-	copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], l)
-	return protocol.ContractSdkSignalResultSuccess
-}
+//
+//func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
+//	req := serialize.EasyUnmarshal(s.RequestBody)
+//	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+//	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
+//	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
+//	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
+//	paramItem := serialize.EasyUnmarshal(param.([]byte))
+//
+//	if !isGetLen { // get value from cache
+//		result := s.Sc.TxSimContext.GetCurrentResult()
+//		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+(int32)(len(result))], result)
+//		return protocol.ContractSdkSignalResultSuccess
+//	}
+//
+//	// check param
+//	if len(contractName.(string)) == 0 {
+//		return s.recordMsg("CallContract contractName is null")
+//	}
+//	if len(method.(string)) == 0 {
+//		return s.recordMsg("CallContract method is null")
+//	}
+//	if len(paramItem) > protocol.ParametersKeyMaxCount {
+//		return s.recordMsg("expect less than 20 parameters, but get " + strconv.Itoa(len(paramItem)))
+//	}
+//	for _, item := range paramItem {
+//		if len(item.Key) > protocol.DefaultStateLen {
+//			msg := fmt.Sprintf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(item.Key))
+//			return s.recordMsg(msg)
+//		}
+//		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
+//		if err != nil || !match {
+//			msg := fmt.Sprintf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", item.Key)
+//			return s.recordMsg(msg)
+//		}
+//		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
+//			msg := fmt.Sprintf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string)))
+//			return s.recordMsg(msg)
+//		}
+//	}
+//	if err := protocol.CheckKeyFieldStr(contractName.(string), method.(string)); err != nil {
+//		return s.recordMsg(err.Error())
+//	}
+//
+//	// call contract
+//	usedGas := s.Sc.Instance.GetGasUsed() + protocol.CallContractGasOnce
+//	s.Sc.Instance.SetGasUsed(usedGas)
+//	paramMap := serialize.EasyCodecItemToParamsMap(paramItem)
+//	result, code := s.Sc.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, usedGas, commonPb.TxType_INVOKE_USER_CONTRACT)
+//	usedGas = s.Sc.Instance.GetGasUsed() + uint64(result.GasUsed)
+//	s.Sc.Instance.SetGasUsed(usedGas)
+//	if code != commonPb.TxStatusCode_SUCCESS {
+//		return s.recordMsg("CallContract " + code.String() + ", msg:" + result.Message)
+//	}
+//	// set value length to memory
+//	l := utils.IntToBytes(int32(len(result.Result)))
+//	copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], l)
+//	return protocol.ContractSdkSignalResultSuccess
+//}
 
 // wasi
 //export fdWrite
@@ -318,7 +320,7 @@ func (b *vmBridgeManager) GetImports() *wasm.Imports {
 	// parameter explain:  1、["log_message"]: rust extern "C" method name 2、[logMessage] go method ptr 3、[C.logMessage] cgo function pointer.
 	imports.Append("sys_call", sysCall, C.sysCall)
 	imports.Append("log_message", logMessage, C.logMessage)
-	// for waci empty interface
+	// for wacsi empty interface
 	imports.Namespace("wasi_unstable")
 	imports.Append("fd_write", fdWrite, C.fdWrite)
 	imports.Append("fd_read", fdRead, C.fdRead)

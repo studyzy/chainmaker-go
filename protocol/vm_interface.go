@@ -93,22 +93,22 @@ type VmManager interface {
 		txContext TxSimContext, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)
 }
 
-type ContractWasiCommon interface {
+type ContractWacsiCommon interface {
 	LogMessage() int32
 	SuccessResult() int32
 	ErrorResult() int32
 	CallContract() int32
 }
 
-type ContractWasiKV interface {
-	ContractWasiCommon
+type ContractWacsiKV interface {
+	ContractWacsiCommon
 	GetState() int32
 	PutState() int32
 	DeleteState() int32
 }
 
-type ContractWasiSQL interface {
-	ContractWasiCommon
+type ContractWacsiSQL interface {
+	ContractWacsiCommon
 	ExecuteQuery() int32
 	ExecuteQueryOne() int32
 	RSHasNext() int32
