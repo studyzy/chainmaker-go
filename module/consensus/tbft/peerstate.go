@@ -61,16 +61,25 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	fmt.Fprintf(&builder, "[%s] update with proto to (%d/%d/%s)",
 		pcs.Id, pcsProto.Height, pcsProto.Round, pcsProto.Step)
 
-	fmt.Fprintf(&builder, " prevote: [")
-	for k := range pcsProto.RoundVoteSet.Prevotes.Votes {
-		fmt.Fprintf(&builder, "%s, ", k)
+	if pcsProto.RoundVoteSet != nil &&
+		pcsProto.RoundVoteSet.Prevotes != nil &&
+		pcsProto.RoundVoteSet.Prevotes.Votes != nil {
+		fmt.Fprintf(&builder, " prevote: [")
+		for k := range pcsProto.RoundVoteSet.Prevotes.Votes {
+			fmt.Fprintf(&builder, "%s, ", k)
+		}
+		fmt.Fprintf(&builder, "]")
 	}
 
-	fmt.Fprintf(&builder, "], precommit: [")
-	for k := range pcsProto.RoundVoteSet.Precommits.Votes {
-		fmt.Fprintf(&builder, "%s, ", k)
+	if pcsProto.RoundVoteSet != nil &&
+		pcsProto.RoundVoteSet.Precommits != nil &&
+		pcsProto.RoundVoteSet.Precommits.Votes != nil {
+		fmt.Fprintf(&builder, " precommit: [")
+		for k := range pcsProto.RoundVoteSet.Precommits.Votes {
+			fmt.Fprintf(&builder, "%s, ", k)
+		}
+		fmt.Fprintf(&builder, "]")
 	}
-	fmt.Fprintf(&builder, "]")
 
 	pcs.logger.Debugf(builder.String())
 
