@@ -3,7 +3,7 @@ Copyright (C) BABEC. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 
-wasi: WebAssembly System Interface
+Wacsi WebAssembly chainmaker system interface
 */
 package wasi
 
@@ -15,10 +15,43 @@ import (
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
+	"regexp"
 	"sync/atomic"
 )
 
-func PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
+var ErrorNotManageContract = fmt.Errorf("method not init_contract or upgrade")
+
+// Wacsi WebAssembly chainmaker system interface
+type Wacsi interface {
+	PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
+	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64)
+	SuccessResult(contractResult *common.ContractResult, data []byte) int32
+	ErrorResult(contractResult *common.ContractResult, data []byte) int32
+
+	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
+	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
+	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error
+
+	RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
+	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
+}
+
+type WacsiImpl struct {
+	verifySql *types.StandardSqlVerify
+	rowIndex  int32
+}
+
+func NewWacsi() Wacsi {
+	return &WacsiImpl{
+		verifySql: &types.StandardSqlVerify{},
+		rowIndex:  0,
+	}
+}
+
+func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
 	req := serialize.EasyUnmarshal(requestBody)
 	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
 	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
@@ -30,13 +63,10 @@ func PutState(requestBody []byte, contractName string, txSimContext protocol.TxS
 		return err
 	}
 	err := txSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), value.([]byte))
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
 	req := serialize.EasyUnmarshal(requestBody)
 	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
 	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
@@ -69,10 +99,76 @@ func GetState(requestBody []byte, contractName string, txSimContext protocol.TxS
 	return nil, nil
 }
 
-var verifySql = &types.StandardSqlVerify{}
-var rowIndex int32 = 0
+func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64) {
+	req := serialize.EasyUnmarshal(requestBody)
+	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
+	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
+	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
+	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
+	paramItem := serialize.EasyUnmarshal(param.([]byte))
 
-func ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+	if data != nil { // get value from cache
+		result := txSimContext.GetCurrentResult()
+		copy(memory[valuePtr.(int32):valuePtr.(int32)+(int32)(len(result))], result)
+		return nil, nil, gasUsed
+	}
+
+	// check param
+	if len(contractName.(string)) == 0 {
+		return nil, fmt.Errorf("CallContract contractName is null"), gasUsed
+	}
+	if len(method.(string)) == 0 {
+		return nil, fmt.Errorf("CallContract method is null"), gasUsed
+	}
+	if len(paramItem) > protocol.ParametersKeyMaxCount {
+		return nil, fmt.Errorf("expect less than %d parameters, but get %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
+	}
+	for _, item := range paramItem {
+		if len(item.Key) > protocol.DefaultStateLen {
+			return nil, fmt.Errorf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(item.Key)), gasUsed
+		}
+		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
+		if err != nil || !match {
+			return nil, fmt.Errorf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", item.Key), gasUsed
+		}
+		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
+			return nil, fmt.Errorf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string))), gasUsed
+		}
+	}
+	if err := protocol.CheckKeyFieldStr(contractName.(string), method.(string)); err != nil {
+		return nil, err, gasUsed
+	}
+
+	// call contract
+	gasUsed += protocol.CallContractGasOnce
+	paramMap := serialize.EasyCodecItemToParamsMap(paramItem)
+	result, code := txSimContext.CallContract(&common.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, gasUsed, common.TxType_INVOKE_USER_CONTRACT)
+	gasUsed += uint64(result.GasUsed)
+	if code != common.TxStatusCode_SUCCESS {
+		return nil, fmt.Errorf("CallContract %s, , msg: %s", code.String(), result.Message), gasUsed
+	}
+	// set value length to memory
+	l := utils.IntToBytes(int32(len(result.Result)))
+	copy(memory[valuePtr.(int32):valuePtr.(int32)+4], l)
+	return result.Result, nil, gasUsed
+}
+
+func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []byte) int32 {
+	if contractResult.Code == common.ContractResultCode_FAIL {
+		return protocol.ContractSdkSignalResultFail
+	}
+	contractResult.Code = common.ContractResultCode_OK
+	contractResult.Result = data
+	return protocol.ContractSdkSignalResultSuccess
+}
+
+func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte) int32 {
+	contractResult.Code = common.ContractResultCode_FAIL
+	contractResult.Message += string(data)
+	return protocol.ContractSdkSignalResultSuccess
+}
+
+func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
 	req := serialize.EasyUnmarshal(requestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -80,7 +176,7 @@ func ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := verifySql.VerifyDQLSql(sql); err != nil {
+	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
 		return fmt.Errorf("verify query sql error, %s", err.Error())
 	}
 
@@ -90,13 +186,13 @@ func ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol
 		return fmt.Errorf("ctx query error, %s", err.Error())
 	}
 
-	index := atomic.AddInt32(&rowIndex, 1)
+	index := atomic.AddInt32(&w.rowIndex, 1)
 	txSimContext.SetStateSqlHandle(index, rows)
 	copy(memory[ptr:ptr+4], utils.IntToBytes(index))
 	return nil
 }
 
-func ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
 	req := serialize.EasyUnmarshal(requestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -104,7 +200,7 @@ func ExecuteQueryOne(requestBody []byte, contractName string, txSimContext proto
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := verifySql.VerifyDQLSql(sql); err != nil {
+	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
 		return nil, fmt.Errorf("verify query one sql error, %s", err.Error())
 	}
 
@@ -137,7 +233,7 @@ func ExecuteQueryOne(requestBody []byte, contractName string, txSimContext proto
 	}
 }
 
-func RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
 	req := serialize.EasyUnmarshal(requestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -157,7 +253,7 @@ func RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []
 	return nil
 }
 
-func RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
 	req := serialize.EasyUnmarshal(requestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -195,7 +291,7 @@ func RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byt
 	}
 }
 
-func RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
 	req := serialize.EasyUnmarshal(requestBody)
 	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
 	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -215,7 +311,7 @@ func RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []by
 	return nil
 }
 
-func ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
 	req := serialize.EasyUnmarshal(requestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -223,7 +319,7 @@ func ExecuteUpdate(requestBody []byte, contractName string, txSimContext protoco
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := verifySql.VerifyDMLSql(sql); err != nil {
+	if err := w.verifySql.VerifyDMLSql(sql); err != nil {
 		return fmt.Errorf("verify update sql error, [%s]", err.Error())
 	}
 
@@ -243,7 +339,10 @@ func ExecuteUpdate(requestBody []byte, contractName string, txSimContext protoco
 	return nil
 }
 
-func ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error {
+	if !w.isManageContract(method) {
+		return ErrorNotManageContract
+	}
 	req := serialize.EasyUnmarshal(requestBody)
 	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
 	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
@@ -251,7 +350,7 @@ func ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.T
 	ptr := valuePtr.(int32)
 
 	// verify
-	if err := verifySql.VerifyDDLSql(sql); err != nil {
+	if err := w.verifySql.VerifyDDLSql(sql); err != nil {
 		return fmt.Errorf("verify ddl sql error,  [%s], sql[%s]", err.Error(), sql)
 	}
 
@@ -261,6 +360,9 @@ func ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.T
 	}
 	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
 	return nil
+}
+func (w *WacsiImpl) isManageContract(method string) bool {
+	return method == protocol.ContractInitMethod || method == protocol.ContractUpgradeMethod
 }
 
 func changeCurrentDB(chainId string, contractName string, transaction protocol.SqlDBTransaction) {

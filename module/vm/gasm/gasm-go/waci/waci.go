@@ -10,6 +10,7 @@ package waci
 
 import (
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/wasi"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -24,6 +25,9 @@ import (
 
 const WaciModuleName = "env"
 
+// Wacsi WebAssembly chainmaker system interface
+var wacsi = wasi.NewWacsi()
+
 type WaciInstance struct {
 	TxSimContext   protocol.TxSimContext
 	ContractId     *commonPb.ContractId
@@ -34,6 +38,7 @@ type WaciInstance struct {
 	RequestBody    []byte // sdk request param
 	GetStateCache  []byte // cache call method GetStateLen value result, one cache per transaction
 	ChainId        string
+	Method         string
 }
 
 // LogMessage print log to file
@@ -165,18 +170,10 @@ func (s *WaciInstance) getStateCore(isGetLen bool) int32 {
 
 // PutState put state to chain
 func (s *WaciInstance) PutState() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	value, _ := serialize.GetValueFromItems(req, "value", serialize.EasyKeyType_USER)
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	contractName := s.ContractId.ContractName
-	err := s.TxSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), []byte(value.(string)))
+	err := wacsi.PutState(s.RequestBody, s.ContractId.ContractName, s.TxSimContext)
 	if err != nil {
-		return s.recordMsg("PutState put fail. " + err.Error())
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
 	}
 	return protocol.ContractSdkSignalResultSuccess
 }

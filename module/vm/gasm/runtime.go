@@ -104,6 +104,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		ContractResult: contractResult,
 		Log:            r.Log,
 		ChainId:        r.ChainId,
+		Method:         method,
 	}
 	wasiInstance := &wasi.WasiInstance{}
 	builder := newBuilder(wasiInstance, waciInstance)

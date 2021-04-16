@@ -9,7 +9,6 @@ package wasmer
 import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker-go/wasi"
 )
 
 var rowIndex int32 = 0
@@ -17,7 +16,7 @@ var verifySql = &types.StandardSqlVerify{}
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
-	err := wasi.ExecuteQuery(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
+	err := wacsi.ExecuteQuery(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -27,7 +26,7 @@ func (s *WaciInstance) ExecuteQuery() int32 {
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQueryOneLen() int32 {
-	data, err := wasi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
+	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
 	s.Sc.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
@@ -90,7 +89,7 @@ func (s *WaciInstance) ExecuteQueryOne() int32 {
 
 // RSHasNext return is there a next line, 1 is has next row, 0 is no next row
 func (s *WaciInstance) RSHasNext() int32 {
-	err := wasi.RSHasNext(s.RequestBody, s.Sc.TxSimContext, s.Memory)
+	err := wacsi.RSHasNext(s.RequestBody, s.Sc.TxSimContext, s.Memory)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -100,7 +99,7 @@ func (s *WaciInstance) RSHasNext() int32 {
 
 // RSNextLen get result set length from chain
 func (s *WaciInstance) RSNextLen() int32 {
-	data, err := wasi.RSNext(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
+	data, err := wacsi.RSNext(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache)
 	s.Sc.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
@@ -156,7 +155,7 @@ func (s *WaciInstance) RSNext() int32 {
 
 // RSClose close sql statement
 func (s *WaciInstance) RSClose() int32 {
-	err := wasi.RSClose(s.RequestBody, s.Sc.TxSimContext, s.Memory)
+	err := wacsi.RSClose(s.RequestBody, s.Sc.TxSimContext, s.Memory)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -167,7 +166,7 @@ func (s *WaciInstance) RSClose() int32 {
 // ExecuteUpdate execute update and insert sql, allow single row change
 // as: update table set name = 'Tom' where uniqueKey='xxx'
 func (s *WaciInstance) ExecuteUpdate() int32 {
-	err := wasi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.ChainId)
+	err := wacsi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -185,7 +184,7 @@ func (s *WaciInstance) ExecuteUpdate() int32 {
 //
 // You must have a primary key to create a table
 func (s *WaciInstance) ExecuteDDL() int32 {
-	err := wasi.ExecuteDDL(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
+	err := wacsi.ExecuteDDL(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.method)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail

@@ -80,10 +80,15 @@ func main() {
 	}
 
 	// test
+	fmt.Println("\n\n\n\n======wasmer test=====\n\n\n\n")
 	initWasmerSqlTest()
-	//initGasmTest()
-
 	functionalTest(sk3, &client)
+
+	fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
+	time.Sleep(time.Second * 10)
+	initGasmTest()
+	functionalTest(sk3, &client)
+
 	//performanceTest(sk3, &client)
 	//otherTest(sk3, &client)
 }
