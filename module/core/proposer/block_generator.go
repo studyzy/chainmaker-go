@@ -8,7 +8,6 @@ package proposer
 
 import (
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	"chainmaker.org/chainmaker-go/localconf"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
@@ -46,7 +45,7 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 	snapshot := bp.snapshotManager.NewSnapshot(lastBlock, block)
 	vmStartTick := utils.CurrentTimeMillisSeconds()
 	ssLasts := vmStartTick - ssStartTick
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+	if bp.chainConf.ChainConfig().Contract.EnableSqlSupport {
 		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
 	}
 	txRWSetMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)

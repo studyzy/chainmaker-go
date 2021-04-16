@@ -9,7 +9,6 @@ package vm
 
 import (
 	"chainmaker.org/chainmaker-go/gasm"
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -32,9 +31,10 @@ type Factory struct {
 }
 
 // NewVmManager get vm runtime manager
-func (f *Factory) NewVmManager(wxvmCodePathPrefix string, snapshotManager protocol.SnapshotManager, chainId string, AccessControl protocol.AccessControlProvider,
-	provider protocol.ChainNodesInfoProvider) protocol.VmManager {
+func (f *Factory) NewVmManager(wxvmCodePathPrefix string, snapshotManager protocol.SnapshotManager, AccessControl protocol.AccessControlProvider,
+	provider protocol.ChainNodesInfoProvider, chainConf protocol.ChainConf) protocol.VmManager {
 
+	chainId := chainConf.ChainConfig().ChainId
 	log := logger.GetLoggerByChain(logger.MODULE_VM, chainId)
 
 	wxvmCodeDir := filepath.Join(wxvmCodePathPrefix, chainId, WxvmCodeFolder)
@@ -52,6 +52,7 @@ func (f *Factory) NewVmManager(wxvmCodePathPrefix string, snapshotManager protoc
 		AccessControl:          AccessControl,
 		ChainNodesInfoProvider: provider,
 		Log:                    log,
+		chainConf:              chainConf,
 	}
 }
 
@@ -71,6 +72,7 @@ type ManagerImpl struct {
 	ChainNodesInfoProvider protocol.ChainNodesInfoProvider
 	ChainId                string
 	Log                    *logger.CMLogger
+	chainConf              protocol.ChainConf // chain config
 }
 
 func (m *ManagerImpl) GetAccessControl() protocol.AccessControlProvider {
@@ -537,7 +539,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 
 	// begin save point for sql
 	var dbTransaction protocol.SqlDBTransaction
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() && txType != commonPb.TxType_QUERY_USER_CONTRACT {
+	if m.chainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
 		txKey := commonPb.GetTxKewWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
 		dbTransaction, err = txContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
@@ -554,7 +556,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 	if runtimeContractResult.Code == commonPb.ContractResultCode_OK {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	} else {
-		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() && txType != commonPb.TxType_QUERY_USER_CONTRACT {
+		if m.chainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
 			err := dbTransaction.RollbackDbSavePoint(txId)
 			if err != nil {
 				m.Log.Warn("[%s] rollback db save point error, %s", txId, err.Error())
