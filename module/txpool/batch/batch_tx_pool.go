@@ -9,7 +9,6 @@ package batch
 import (
 	"errors"
 	"fmt"
-	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -200,45 +199,37 @@ func (p *BatchTxPool) createConfigTxBatch() {
 	}
 }
 
-func (p *BatchTxPool) createCommonTxBatch() {
-	val, ok, _ := p.txQueue.Pull()
-	if !ok {
-		return
-	}
-
+func (p *BatchTxPool) popTxsFromQueue() ([]*commonPb.Transaction, map[string]int32) {
 	var (
-		err      error
-		timeout  bool
-		batchMsg []byte
-
-		tx    = val.(*commonPb.Transaction)
-		txs   = make([]*commonPb.Transaction, 1)
-		txIds = make(map[string]int32)
-		timer = time.NewTimer(p.batchCreateTimeout)
+		txs         = make([]*commonPb.Transaction, 0, p.batchMaxSize/2)
+		txIdToIndex = make(map[string]int32, p.batchMaxSize/2)
+		timer       = time.NewTimer(p.batchCreateTimeout)
 	)
-	txs[0] = tx
-	txIds[tx.GetHeader().GetTxId()] = 0
 	defer timer.Stop()
-
-	for i := 1; i < int(p.batchMaxSize); i++ {
-		if val, ok, _ = p.txQueue.Pull(); ok {
+	for i := 0; i < int(p.batchMaxSize); {
+		if val, ok, _ := p.txQueue.Pull(); ok {
 			tx := val.(*commonPb.Transaction)
 			txs = append(txs, tx)
-			txIds[tx.GetHeader().GetTxId()] = int32(i)
+			txIdToIndex[tx.GetHeader().GetTxId()] = int32(i)
+			i++
 			continue
 		}
 		select {
 		case <-timer.C:
-			timeout = true
+			return txs, txIdToIndex
 		default:
-			runtime.Gosched()
-			time.Sleep(500 * time.Millisecond)
-		}
-		if timeout {
-			break
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
+	return txs, txIdToIndex
+}
 
+func (p *BatchTxPool) createCommonTxBatch() {
+	if p.txQueue.Quantity() < 1 {
+		return
+	}
+
+	txs, txIds := p.popTxsFromQueue()
 	batchId := atomic.AddInt32(&p.currentBatchId, 1)
 	batch := &txpoolPb.TxBatch{
 		BatchId: batchId,
@@ -249,6 +240,11 @@ func (p *BatchTxPool) createCommonTxBatch() {
 		Size_:    int32(len(txs)),
 	}
 	p.log.Infof("create txBatch size: %d, batchId: %d, txMapLen: %d, txsLen: %d", batch.Size(), batch.BatchId, len(batch.TxIdsMap), len(batch.Txs))
+
+	var (
+		err      error
+		batchMsg []byte
+	)
 	if batchMsg, err = proto.Marshal(batch); err != nil {
 		p.log.Errorf("marshal batch failed, %s", err.Error())
 		return
