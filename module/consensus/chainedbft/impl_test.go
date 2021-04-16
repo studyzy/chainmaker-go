@@ -15,6 +15,11 @@ import (
 	"testing"
 	"time"
 
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	"github.com/stretchr/testify/require"
+
+	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -219,24 +224,10 @@ func createNode(t *testing.T, index int, chainid string,
 	ce := consensus_mock.NewMockCoreEngine(t, nodeLists[index], chainid, msgBus[nodeLists[index]], ledger, store, isCreateBlock)
 	net := consensus_mock.NewMockProtocolNetService(certnodes)
 
-	node, _ := New(
-		chainid,
-		nodeLists[index],
-		nodeLists,
-		signer,
-		ac,
-		ce.Ledger,
-		ce.Proposer,
-		ce.Verifer,
-		ce.Committer,
-		net,
-		store,
-		msgBus[nodeLists[index]],
-		cf)
-
+	node, _ := New(chainid, nodeLists[index], signer, ac, ce.Ledger,
+		ce.Proposer, ce.Verifer, ce.Committer, net, store, msgBus[nodeLists[index]], cf, nil)
 	coreNode = append(coreNode, ce)
 	chainedBftNode = append(chainedBftNode, node)
-
 	consensus_mock.NewMockNet(nodeLists[index], msgBus)
 }
 
@@ -268,9 +259,7 @@ func startNode(t *testing.T) {
 	for _, core := range coreNode {
 		go core.Loop()
 	}
-
 	time.Sleep(1 * time.Second)
-
 	t.Log("start chainedBft...")
 	for _, chainedBft := range chainedBftNode {
 		chainedBft.Start()
@@ -293,7 +282,6 @@ func TestConsensusChainedBftImpl_FourNode(t *testing.T) {
 				case <-timer.C:
 					t.Logf("ce %v got to timeout, ce height %v", ce.GetID(), ce.GetHeight()-1)
 					return
-
 				}
 			}
 		}(ce)
@@ -326,22 +314,18 @@ func cfgChainedBftNode(t *testing.T) {
 	for _, cbi := range chainedBftNode {
 		cbi.logger.Infof("service selfIndexInEpoch %v started consensus.chainedbft", cbi.selfIndexInEpoch)
 		var err error
-		cbi.chainStore, err = openChainStore(cbi.ledgerCache, cbi.blockCommitter,
-			cbi.consBlockCh, cbi.store, cbi, cbi.logger)
+		cbi.chainStore, err = openChainStore(cbi.ledgerCache, cbi.blockCommitter, cbi.store, cbi, cbi.logger)
 		if err != nil {
 			cbi.logger.Errorf("failed to new consensus service, err %v", err)
 		}
 		cbi.smr.safetyRules = safetyrules.NewSafetyRules(cbi.logger, cbi.chainStore.blockPool)
 		cbi.commitHeight = cbi.chainStore.getCommitHeight()
 		epoch := cbi.createEpoch(cbi.commitHeight)
-		err = cbi.smr.initCommittee(epoch.useValidators)
-		if err != nil {
-			cbi.logger.Errorf("failed to init peer pool, err %v", err)
-		}
+		cbi.smr.initCommittee(epoch.useValidators)
 		cbi.msgPool = epoch.msgPool
 		cbi.selfIndexInEpoch = epoch.index
 		cbi.smr.paceMaker = liveness.NewPacemaker(cbi.logger, cbi.selfIndexInEpoch, 0, epoch.epochId, cbi.timerService)
-		cbi.smr.forwardNewHeightIfNeed(cbi.chainStore)
+		cbi.smr.forwardNewHeightIfNeed()
 
 		cbi.msgbus.Register(msgbus.ProposedBlock, cbi)
 		cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)
@@ -516,12 +500,11 @@ func TestConsState(t *testing.T) {
 
 	var err error
 	chainedBftNode[0].chainStore, err = openChainStore(chainedBftNode[0].ledgerCache,
-		chainedBftNode[0].blockCommitter, chainedBftNode[0].consBlockCh,
-		chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
+		chainedBftNode[0].blockCommitter, chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
 	if err != nil {
 		panic(err)
 	}
-	chainedBftNode[0].smr.forwardNewHeightIfNeed(chainedBftNode[0].chainStore)
+	chainedBftNode[0].smr.forwardNewHeightIfNeed()
 	assert.Equal(t, chainedbft.ConsStateType_NewHeight, chainedBftNode[0].smr.state)
 
 	chainedBftNode[0].processNewHeight(chainedBftNode[0].smr.getHeight(), chainedBftNode[0].smr.getCurrentLevel())
@@ -556,11 +539,11 @@ func TestValidProposal(t *testing.T) {
 	assert.Nil(t, err)
 
 	chainedBftNode[1].chainStore, err = openChainStore(chainedBftNode[1].ledgerCache,
-		chainedBftNode[1].blockCommitter, chainedBftNode[1].consBlockCh, chainedBftNode[1].store, chainedBftNode[1], chainedBftNode[1].logger)
+		chainedBftNode[1].blockCommitter, chainedBftNode[1].store, chainedBftNode[1], chainedBftNode[1].logger)
 	if err != nil {
 		panic(err)
 	}
-	chainedBftNode[1].smr.forwardNewHeightIfNeed(chainedBftNode[1].chainStore)
+	chainedBftNode[1].smr.forwardNewHeightIfNeed()
 
 	//init proposedblock
 	proposalBlock := coreNode[1].Proposer.CreateBlock(1, nil)
@@ -583,12 +566,11 @@ func TestInvalidValidator(t *testing.T) {
 
 	var err error
 	chainedBftNode[0].chainStore, err = openChainStore(chainedBftNode[0].ledgerCache,
-		chainedBftNode[0].blockCommitter, chainedBftNode[0].consBlockCh,
-		chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
+		chainedBftNode[0].blockCommitter, chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
 	if err != nil {
 		panic(err)
 	}
-	chainedBftNode[0].smr.forwardNewHeightIfNeed(chainedBftNode[0].chainStore)
+	chainedBftNode[0].smr.forwardNewHeightIfNeed()
 
 	origin := chainedBftNode[0].selfIndexInEpoch
 	chainedBftNode[0].selfIndexInEpoch = math.MaxInt32
@@ -604,12 +586,11 @@ func TestProcessNewHeight(t *testing.T) {
 
 	var err error
 	chainedBftNode[0].chainStore, err = openChainStore(chainedBftNode[0].ledgerCache,
-		chainedBftNode[0].blockCommitter, chainedBftNode[0].consBlockCh,
-		chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
+		chainedBftNode[0].blockCommitter, chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
 	if err != nil {
 		panic(err)
 	}
-	chainedBftNode[0].smr.forwardNewHeightIfNeed(chainedBftNode[0].chainStore)
+	chainedBftNode[0].smr.forwardNewHeightIfNeed()
 
 	assert.Equal(t, chainedbft.ConsStateType_NewHeight, chainedBftNode[0].smr.state)
 
@@ -626,12 +607,11 @@ func TestProcessNewLevel(t *testing.T) {
 
 	var err error
 	chainedBftNode[0].chainStore, err = openChainStore(chainedBftNode[0].ledgerCache,
-		chainedBftNode[0].blockCommitter, chainedBftNode[0].consBlockCh,
-		chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
+		chainedBftNode[0].blockCommitter, chainedBftNode[0].store, chainedBftNode[0], chainedBftNode[0].logger)
 	if err != nil {
 		panic(err)
 	}
-	chainedBftNode[0].smr.forwardNewHeightIfNeed(chainedBftNode[0].chainStore)
+	chainedBftNode[0].smr.forwardNewHeightIfNeed()
 
 	cs := chainedBftNode[0]
 	assert.Equal(t, chainedbft.ConsStateType_NewHeight, cs.smr.state)
@@ -640,4 +620,32 @@ func TestProcessNewLevel(t *testing.T) {
 	//mismatch height
 	cs.processNewLevel(cs.smr.getHeight()+1, cs.smr.getCurrentLevel())
 	assert.Equal(t, chainedbft.ConsStateType_NewLevel, cs.smr.state)
+}
+
+func TestInitTimeOutConfig(t *testing.T) {
+	config := &configpb.ChainConfig{
+		Consensus: &configpb.ConsensusConfig{
+			Type:      consensuspb.ConsensusType_HOTSTUFF,
+			ExtConfig: nil,
+		},
+	}
+	impl := &ConsensusChainedBftImpl{}
+
+	// 1. no content in config
+	impl.initTimeOutConfig(config)
+	require.EqualValues(t, timeservice.RoundTimeout, 6000*time.Millisecond)
+	require.EqualValues(t, timeservice.RoundTimeoutInterval, 500*time.Millisecond)
+	require.EqualValues(t, timeservice.ProposerTimeout, 2000*time.Millisecond)
+	require.EqualValues(t, timeservice.ProposerTimeoutInterval, 500*time.Millisecond)
+
+	// 2. update chainConfig
+	config.Consensus.ExtConfig = append(config.Consensus.ExtConfig, &commonPb.KeyValuePair{Key: timeservice.RoundTimeoutMill, Value: "10"})
+	config.Consensus.ExtConfig = append(config.Consensus.ExtConfig, &commonPb.KeyValuePair{Key: timeservice.RoundTimeoutIntervalMill, Value: "100"})
+	config.Consensus.ExtConfig = append(config.Consensus.ExtConfig, &commonPb.KeyValuePair{Key: timeservice.ProposerTimeoutMill, Value: "1000"})
+	config.Consensus.ExtConfig = append(config.Consensus.ExtConfig, &commonPb.KeyValuePair{Key: timeservice.ProposerTimeoutIntervalMill, Value: "10000"})
+	impl.initTimeOutConfig(config)
+	require.EqualValues(t, timeservice.RoundTimeout, 10*time.Millisecond)
+	require.EqualValues(t, timeservice.RoundTimeoutInterval, 100*time.Millisecond)
+	require.EqualValues(t, timeservice.ProposerTimeout, 1000*time.Millisecond)
+	require.EqualValues(t, timeservice.ProposerTimeoutInterval, 10000*time.Millisecond)
 }

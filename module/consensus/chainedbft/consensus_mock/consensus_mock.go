@@ -7,10 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package consensus_mock
 
 import (
-	"chainmaker.org/chainmaker-go/consensus/government"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -21,9 +17,14 @@ import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
+	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"chainmaker.org/chainmaker-go/protocol"
+
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -136,7 +137,7 @@ func (cm *MockCommitter) AddBlock(block *commonPb.Block) error {
 		return errors.New("consensusArgs.ConsensusData is nil")
 	}
 	rwset, _ := proto.Marshal(consensusArgs.ConsensusData)
-	cm.store.WriteObject(government.GovernmentContractName, rwset)
+	cm.store.WriteObject(governance.GovernanceContractName, rwset)
 	// chain.proposedCache.ClearProposedBlock(block.Header.BlockHeight)
 	// chain.proposedCache.ResetProposedThisRound()
 	cm.msgBus.Publish(msgbus.BlockInfo, block) // synchronize new block height to consensus and sync module
@@ -148,15 +149,21 @@ func (cm *MockCommitter) AddBlock(block *commonPb.Block) error {
 type MockProposer struct {
 	sync.Mutex
 
-	chainid string
-	id      string
-	// proposer    protocol.SigningMember
-	ledgerCache protocol.LedgerCache
-	msgBus      msgbus.MessageBus
-	log         *logger.CMLogger
-	isProposer  bool // whether current node can propose block now
-	// idle         bool        // whether current node is proposing or not
+	id         string
+	chainid    string
+	isProposer bool // whether current node can propose block now
 
+	log         *logger.CMLogger
+	msgBus      msgbus.MessageBus
+	ledgerCache protocol.LedgerCache
+}
+
+func (p *MockProposer) DiscardAboveHeight(baseHeight int64) []*commonPb.Block {
+	panic("implement me")
+}
+
+func (p *MockProposer) ClearTheBlock(block *commonPb.Block) {
+	panic("implement me")
 }
 
 func (p *MockProposer) ClearProposedBlockAt(height int64) {
