@@ -24,22 +24,29 @@ const (
 	ROUND_TIMEOUT
 )
 
+const (
+	RoundTimeoutMill            = "RoundTimeoutMill"
+	RoundTimeoutIntervalMill    = "RoundTimeoutIntervalMill"
+	ProposerTimeoutMill         = "ProposerTimeoutMill"
+	ProposerTimeoutIntervalMill = "proposerTimeoutIntervalMill"
+)
+
 var (
-	roundTimeout            = 6000 * time.Millisecond
-	roundTimeoutInterval    = 500 * time.Millisecond
-	proposerTimeout         = 2000 * time.Millisecond
-	proposerTimeoutInterval = 500 * time.Millisecond
+	RoundTimeout            = 6000 * time.Millisecond
+	RoundTimeoutInterval    = 500 * time.Millisecond
+	ProposerTimeout         = 2000 * time.Millisecond
+	ProposerTimeoutInterval = 500 * time.Millisecond
 )
 
 //GetEventTimeout returns the time duration per event type and consensus roundIndex
 func GetEventTimeout(evtType TimerEventType, roundIndex int32) time.Duration {
 	switch evtType {
 	case PROPOSAL_BLOCK_TIMEOUT:
-		return time.Duration(proposerTimeout.Nanoseconds()+
-			proposerTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
+		return time.Duration(ProposerTimeout.Nanoseconds()+
+			ProposerTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
 	case ROUND_TIMEOUT:
-		return time.Duration(roundTimeout.Nanoseconds()+
-			roundTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
+		return time.Duration(RoundTimeout.Nanoseconds()+
+			RoundTimeoutInterval.Nanoseconds()*int64(roundIndex)) * time.Nanosecond
 	default:
 		return 0
 	}
@@ -74,7 +81,7 @@ type TimerService struct {
 func NewTimerService() *TimerService {
 	ts := &TimerService{
 		timer:          time.NewTimer(0),
-		pacemakerTimer: time.NewTimer(roundTimeout),
+		pacemakerTimer: time.NewTimer(RoundTimeout),
 
 		eventCh: make(chan *TimerEvent, 10),
 		firedCh: make(chan *TimerEvent, 10),

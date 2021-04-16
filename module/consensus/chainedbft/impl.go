@@ -10,7 +10,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
+	"time"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -134,7 +136,31 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	if err := chainconf.RegisterVerifier(consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
 		return nil, err
 	}
+	service.initTimeOutConfig(chainConf.(*chainconf.ChainConf).ChainConfig())
 	return service, nil
+}
+
+func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(chainConfig *config.ChainConfig) {
+	for _, kv := range chainConfig.Consensus.ExtConfig {
+		switch kv.Key {
+		case timeservice.ProposerTimeoutMill:
+			if proposerTimeOut, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+				timeservice.ProposerTimeout = time.Duration(proposerTimeOut) * time.Millisecond
+			}
+		case timeservice.ProposerTimeoutIntervalMill:
+			if proposerTimeOutInterval, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+				timeservice.ProposerTimeoutInterval = time.Duration(proposerTimeOutInterval) * time.Millisecond
+			}
+		case timeservice.RoundTimeoutMill:
+			if roundTimeOut, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+				timeservice.RoundTimeout = time.Duration(roundTimeOut) * time.Millisecond
+			}
+		case timeservice.RoundTimeoutIntervalMill:
+			if roundTimeOutInterval, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+				timeservice.RoundTimeoutInterval = time.Duration(roundTimeOutInterval) * time.Millisecond
+			}
+		}
+	}
 }
 
 //Start start consensus
@@ -274,6 +300,7 @@ func (cbi *ConsensusChainedBftImpl) Module() string {
 //Watch implement watch interface
 func (cbi *ConsensusChainedBftImpl) Watch(chainConfig *config.ChainConfig) error {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] watch chain config updated %v", cbi.selfIndexInEpoch)
+	cbi.initTimeOutConfig(chainConfig)
 	return nil
 }
 
