@@ -5,36 +5,37 @@
 package mock
 
 import (
+	reflect "reflect"
+
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockVmManager is a mock of VmManager interface
+// MockVmManager is a mock of VmManager interface.
 type MockVmManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockVmManagerMockRecorder
 }
 
-// MockVmManagerMockRecorder is the mock recorder for MockVmManager
+// MockVmManagerMockRecorder is the mock recorder for MockVmManager.
 type MockVmManagerMockRecorder struct {
 	mock *MockVmManager
 }
 
-// NewMockVmManager creates a new mock instance
+// NewMockVmManager creates a new mock instance.
 func NewMockVmManager(ctrl *gomock.Controller) *MockVmManager {
 	mock := &MockVmManager{ctrl: ctrl}
 	mock.recorder = &MockVmManagerMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockVmManager) EXPECT() *MockVmManagerMockRecorder {
 	return m.recorder
 }
 
-// GetAccessControl mocks base method
+// GetAccessControl mocks base method.
 func (m *MockVmManager) GetAccessControl() protocol.AccessControlProvider {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccessControl")
@@ -42,13 +43,13 @@ func (m *MockVmManager) GetAccessControl() protocol.AccessControlProvider {
 	return ret0
 }
 
-// GetAccessControl indicates an expected call of GetAccessControl
+// GetAccessControl indicates an expected call of GetAccessControl.
 func (mr *MockVmManagerMockRecorder) GetAccessControl() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessControl", reflect.TypeOf((*MockVmManager)(nil).GetAccessControl))
 }
 
-// GetChainNodesInfoProvider mocks base method
+// GetChainNodesInfoProvider mocks base method.
 func (m *MockVmManager) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvider {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChainNodesInfoProvider")
@@ -56,13 +57,13 @@ func (m *MockVmManager) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvi
 	return ret0
 }
 
-// GetChainNodesInfoProvider indicates an expected call of GetChainNodesInfoProvider
+// GetChainNodesInfoProvider indicates an expected call of GetChainNodesInfoProvider.
 func (mr *MockVmManagerMockRecorder) GetChainNodesInfoProvider() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChainNodesInfoProvider", reflect.TypeOf((*MockVmManager)(nil).GetChainNodesInfoProvider))
 }
 
-// RunContract mocks base method
+// RunContract mocks base method.
 func (m *MockVmManager) RunContract(contractId *common.ContractId, method string, byteCode []byte, parameters map[string]string, txContext protocol.TxSimContext, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RunContract", contractId, method, byteCode, parameters, txContext, gasUsed, refTxType)
@@ -71,7 +72,7 @@ func (m *MockVmManager) RunContract(contractId *common.ContractId, method string
 	return ret0, ret1
 }
 
-// RunContract indicates an expected call of RunContract
+// RunContract indicates an expected call of RunContract.
 func (mr *MockVmManagerMockRecorder) RunContract(contractId, method, byteCode, parameters, txContext, gasUsed, refTxType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunContract", reflect.TypeOf((*MockVmManager)(nil).RunContract), contractId, method, byteCode, parameters, txContext, gasUsed, refTxType)

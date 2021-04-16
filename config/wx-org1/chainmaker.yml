@@ -63,8 +63,18 @@ pprof:
   port: 24321
 
 storage:
-  provider: leveldb
+  provider: levelDB
   store_path: ../data/ledgerData1
+  write_buffer_size: 4    #LevelDB、RocksDB的write_buffer_size， 单位为MB，默认为4M
+  bloom_filter_bits: 10    #LevelDB、RocksDB的布隆过滤器参数，为每个key分配的额外bit空间，默认为10，如果少于或等于0，则不开启布隆过滤。
+  disable_historydb: false    #是否禁用历史读写集的存储功能， 默认为false，也就是保存历史读写集。
+  disable_contract_eventdb: true #是否禁用合约事件存储功能， 默认为false，如果设置为true,需要配置mysql
+  mysql:    #MySQL相关配置，只有provider选择MySQL时才需要配置
+    dsn: root:B1ockch@in@tcp(42.192.47.37:3306)/    #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin?@tcp(127.0.0.1:3306)
+    max_idle_conns: 10    #连接池中维持的最大的空闲连接数，默认为10
+    max_open_conns: 10    #最大的可用连接数，默认为10
+    conn_max_lifetime: 60    #连接维持的最长时间，单位秒，默认为60
+
 
 debug:
   # 是否开启CLI功能，过度期间使用

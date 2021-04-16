@@ -5,65 +5,38 @@
 package mock
 
 import (
+	reflect "reflect"
+
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
 	store "chainmaker.org/chainmaker-go/pb/protogo/store"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockIterator is a mock of Iterator interface
+// MockIterator is a mock of Iterator interface.
 type MockIterator struct {
 	ctrl     *gomock.Controller
 	recorder *MockIteratorMockRecorder
 }
 
-// MockIteratorMockRecorder is the mock recorder for MockIterator
+// MockIteratorMockRecorder is the mock recorder for MockIterator.
 type MockIteratorMockRecorder struct {
 	mock *MockIterator
 }
 
-// NewMockIterator creates a new mock instance
+// NewMockIterator creates a new mock instance.
 func NewMockIterator(ctrl *gomock.Controller) *MockIterator {
 	mock := &MockIterator{ctrl: ctrl}
 	mock.recorder = &MockIteratorMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIterator) EXPECT() *MockIteratorMockRecorder {
 	return m.recorder
 }
 
-// Next mocks base method
-func (m *MockIterator) Next() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Next")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// Next indicates an expected call of Next
-func (mr *MockIteratorMockRecorder) Next() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockIterator)(nil).Next))
-}
-
-// First mocks base method
-func (m *MockIterator) First() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "First")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// First indicates an expected call of First
-func (mr *MockIteratorMockRecorder) First() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "First", reflect.TypeOf((*MockIterator)(nil).First))
-}
-
-// Error mocks base method
+// Error mocks base method.
 func (m *MockIterator) Error() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Error")
@@ -71,13 +44,27 @@ func (m *MockIterator) Error() error {
 	return ret0
 }
 
-// Error indicates an expected call of Error
+// Error indicates an expected call of Error.
 func (mr *MockIteratorMockRecorder) Error() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Error", reflect.TypeOf((*MockIterator)(nil).Error))
 }
 
-// Key mocks base method
+// First mocks base method.
+func (m *MockIterator) First() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "First")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// First indicates an expected call of First.
+func (mr *MockIteratorMockRecorder) First() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "First", reflect.TypeOf((*MockIterator)(nil).First))
+}
+
+// Key mocks base method.
 func (m *MockIterator) Key() []byte {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Key")
@@ -85,13 +72,39 @@ func (m *MockIterator) Key() []byte {
 	return ret0
 }
 
-// Key indicates an expected call of Key
+// Key indicates an expected call of Key.
 func (mr *MockIteratorMockRecorder) Key() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Key", reflect.TypeOf((*MockIterator)(nil).Key))
 }
 
-// Value mocks base method
+// Next mocks base method.
+func (m *MockIterator) Next() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Next")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Next indicates an expected call of Next.
+func (mr *MockIteratorMockRecorder) Next() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockIterator)(nil).Next))
+}
+
+// Release mocks base method.
+func (m *MockIterator) Release() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Release")
+}
+
+// Release indicates an expected call of Release.
+func (mr *MockIteratorMockRecorder) Release() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockIterator)(nil).Release))
+}
+
+// Value mocks base method.
 func (m *MockIterator) Value() []byte {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Value")
@@ -99,77 +112,36 @@ func (m *MockIterator) Value() []byte {
 	return ret0
 }
 
-// Value indicates an expected call of Value
+// Value indicates an expected call of Value.
 func (mr *MockIteratorMockRecorder) Value() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Value", reflect.TypeOf((*MockIterator)(nil).Value))
 }
 
-// Release mocks base method
-func (m *MockIterator) Release() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Release")
-}
-
-// Release indicates an expected call of Release
-func (mr *MockIteratorMockRecorder) Release() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockIterator)(nil).Release))
-}
-
-// MockBlockchainStore is a mock of BlockchainStore interface
+// MockBlockchainStore is a mock of BlockchainStore interface.
 type MockBlockchainStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockBlockchainStoreMockRecorder
 }
 
-// MockBlockchainStoreMockRecorder is the mock recorder for MockBlockchainStore
+// MockBlockchainStoreMockRecorder is the mock recorder for MockBlockchainStore.
 type MockBlockchainStoreMockRecorder struct {
 	mock *MockBlockchainStore
 }
 
-// NewMockBlockchainStore creates a new mock instance
+// NewMockBlockchainStore creates a new mock instance.
 func NewMockBlockchainStore(ctrl *gomock.Controller) *MockBlockchainStore {
 	mock := &MockBlockchainStore{ctrl: ctrl}
 	mock.recorder = &MockBlockchainStoreMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBlockchainStore) EXPECT() *MockBlockchainStoreMockRecorder {
 	return m.recorder
 }
 
-// PutBlock mocks base method
-func (m *MockBlockchainStore) PutBlock(block *common.Block, txRWSets []*common.TxRWSet) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutBlock", block, txRWSets)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PutBlock indicates an expected call of PutBlock
-func (mr *MockBlockchainStoreMockRecorder) PutBlock(block, txRWSets interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutBlock", reflect.TypeOf((*MockBlockchainStore)(nil).PutBlock), block, txRWSets)
-}
-
-// GetBlockByHash mocks base method
-func (m *MockBlockchainStore) GetBlockByHash(blockHash []byte) (*common.Block, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBlockByHash", blockHash)
-	ret0, _ := ret[0].(*common.Block)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBlockByHash indicates an expected call of GetBlockByHash
-func (mr *MockBlockchainStoreMockRecorder) GetBlockByHash(blockHash interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByHash", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockByHash), blockHash)
-}
-
-// BlockExists mocks base method
+// BlockExists mocks base method.
 func (m *MockBlockchainStore) BlockExists(blockHash []byte) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BlockExists", blockHash)
@@ -178,13 +150,27 @@ func (m *MockBlockchainStore) BlockExists(blockHash []byte) (bool, error) {
 	return ret0, ret1
 }
 
-// BlockExists indicates an expected call of BlockExists
+// BlockExists indicates an expected call of BlockExists.
 func (mr *MockBlockchainStoreMockRecorder) BlockExists(blockHash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockExists", reflect.TypeOf((*MockBlockchainStore)(nil).BlockExists), blockHash)
 }
 
-// GetBlock mocks base method
+// Close mocks base method.
+func (m *MockBlockchainStore) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockBlockchainStoreMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockBlockchainStore)(nil).Close))
+}
+
+// GetBlock mocks base method.
 func (m *MockBlockchainStore) GetBlock(height int64) (*common.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlock", height)
@@ -193,28 +179,28 @@ func (m *MockBlockchainStore) GetBlock(height int64) (*common.Block, error) {
 	return ret0, ret1
 }
 
-// GetBlock indicates an expected call of GetBlock
+// GetBlock indicates an expected call of GetBlock.
 func (mr *MockBlockchainStoreMockRecorder) GetBlock(height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlock", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlock), height)
 }
 
-// GetLastConfigBlock mocks base method
-func (m *MockBlockchainStore) GetLastConfigBlock() (*common.Block, error) {
+// GetBlockByHash mocks base method.
+func (m *MockBlockchainStore) GetBlockByHash(blockHash []byte) (*common.Block, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLastConfigBlock")
+	ret := m.ctrl.Call(m, "GetBlockByHash", blockHash)
 	ret0, _ := ret[0].(*common.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetLastConfigBlock indicates an expected call of GetLastConfigBlock
-func (mr *MockBlockchainStoreMockRecorder) GetLastConfigBlock() *gomock.Call {
+// GetBlockByHash indicates an expected call of GetBlockByHash.
+func (mr *MockBlockchainStoreMockRecorder) GetBlockByHash(blockHash interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastConfigBlock", reflect.TypeOf((*MockBlockchainStore)(nil).GetLastConfigBlock))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByHash", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockByHash), blockHash)
 }
 
-// GetBlockByTx mocks base method
+// GetBlockByTx mocks base method.
 func (m *MockBlockchainStore) GetBlockByTx(txId string) (*common.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlockByTx", txId)
@@ -223,13 +209,13 @@ func (m *MockBlockchainStore) GetBlockByTx(txId string) (*common.Block, error) {
 	return ret0, ret1
 }
 
-// GetBlockByTx indicates an expected call of GetBlockByTx
+// GetBlockByTx indicates an expected call of GetBlockByTx.
 func (mr *MockBlockchainStoreMockRecorder) GetBlockByTx(txId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByTx", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockByTx), txId)
 }
 
-// GetBlockWithRWSets mocks base method
+// GetBlockWithRWSets mocks base method.
 func (m *MockBlockchainStore) GetBlockWithRWSets(height int64) (*store.BlockWithRWSet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlockWithRWSets", height)
@@ -238,58 +224,27 @@ func (m *MockBlockchainStore) GetBlockWithRWSets(height int64) (*store.BlockWith
 	return ret0, ret1
 }
 
-// GetBlockWithRWSets indicates an expected call of GetBlockWithRWSets
+// GetBlockWithRWSets indicates an expected call of GetBlockWithRWSets.
 func (mr *MockBlockchainStoreMockRecorder) GetBlockWithRWSets(height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockWithRWSets", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockWithRWSets), height)
 }
 
-// GetTx mocks base method
-func (m *MockBlockchainStore) GetTx(txId string) (*common.Transaction, error) {
+// GetDBHandle mocks base method.
+func (m *MockBlockchainStore) GetDBHandle(dbName string) protocol.DBHandle {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTx", txId)
-	ret0, _ := ret[0].(*common.Transaction)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetDBHandle", dbName)
+	ret0, _ := ret[0].(protocol.DBHandle)
+	return ret0
 }
 
-// GetTx indicates an expected call of GetTx
-func (mr *MockBlockchainStoreMockRecorder) GetTx(txId interface{}) *gomock.Call {
+// GetDBHandle indicates an expected call of GetDBHandle.
+func (mr *MockBlockchainStoreMockRecorder) GetDBHandle(dbName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTx", reflect.TypeOf((*MockBlockchainStore)(nil).GetTx), txId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDBHandle", reflect.TypeOf((*MockBlockchainStore)(nil).GetDBHandle), dbName)
 }
 
-// TxExists mocks base method
-func (m *MockBlockchainStore) TxExists(txId string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TxExists", txId)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// TxExists indicates an expected call of TxExists
-func (mr *MockBlockchainStoreMockRecorder) TxExists(txId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TxExists", reflect.TypeOf((*MockBlockchainStore)(nil).TxExists), txId)
-}
-
-// GetTxConfirmedTime mocks base method
-func (m *MockBlockchainStore) GetTxConfirmedTime(txId string) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTxConfirmedTime", txId)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTxConfirmedTime indicates an expected call of GetTxConfirmedTime
-func (mr *MockBlockchainStoreMockRecorder) GetTxConfirmedTime(txId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxConfirmedTime", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxConfirmedTime), txId)
-}
-
-// GetLastBlock mocks base method
+// GetLastBlock mocks base method.
 func (m *MockBlockchainStore) GetLastBlock() (*common.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLastBlock")
@@ -298,42 +253,58 @@ func (m *MockBlockchainStore) GetLastBlock() (*common.Block, error) {
 	return ret0, ret1
 }
 
-// GetLastBlock indicates an expected call of GetLastBlock
+// GetLastBlock indicates an expected call of GetLastBlock.
 func (mr *MockBlockchainStoreMockRecorder) GetLastBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastBlock", reflect.TypeOf((*MockBlockchainStore)(nil).GetLastBlock))
 }
 
-// ReadObject mocks base method
-func (m *MockBlockchainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
+// GetLastConfigBlock mocks base method.
+func (m *MockBlockchainStore) GetLastConfigBlock() (*common.Block, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadObject", contractName, key)
-	ret0, _ := ret[0].([]byte)
+	ret := m.ctrl.Call(m, "GetLastConfigBlock")
+	ret0, _ := ret[0].(*common.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ReadObject indicates an expected call of ReadObject
-func (mr *MockBlockchainStoreMockRecorder) ReadObject(contractName, key interface{}) *gomock.Call {
+// GetLastConfigBlock indicates an expected call of GetLastConfigBlock.
+func (mr *MockBlockchainStoreMockRecorder) GetLastConfigBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadObject", reflect.TypeOf((*MockBlockchainStore)(nil).ReadObject), contractName, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastConfigBlock", reflect.TypeOf((*MockBlockchainStore)(nil).GetLastConfigBlock))
 }
 
-// SelectObject mocks base method
-func (m *MockBlockchainStore) SelectObject(contractName string, startKey, limit []byte) protocol.Iterator {
+// GetTx mocks base method.
+func (m *MockBlockchainStore) GetTx(txId string) (*common.Transaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectObject", contractName, startKey, limit)
-	ret0, _ := ret[0].(protocol.Iterator)
-	return ret0
+	ret := m.ctrl.Call(m, "GetTx", txId)
+	ret0, _ := ret[0].(*common.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// SelectObject indicates an expected call of SelectObject
-func (mr *MockBlockchainStoreMockRecorder) SelectObject(contractName, startKey, limit interface{}) *gomock.Call {
+// GetTx indicates an expected call of GetTx.
+func (mr *MockBlockchainStoreMockRecorder) GetTx(txId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectObject", reflect.TypeOf((*MockBlockchainStore)(nil).SelectObject), contractName, startKey, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTx", reflect.TypeOf((*MockBlockchainStore)(nil).GetTx), txId)
 }
 
-// GetTxRWSet mocks base method
+// GetTxConfirmedTime mocks base method.
+func (m *MockBlockchainStore) GetTxConfirmedTime(txId string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTxConfirmedTime", txId)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTxConfirmedTime indicates an expected call of GetTxConfirmedTime.
+func (mr *MockBlockchainStoreMockRecorder) GetTxConfirmedTime(txId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxConfirmedTime", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxConfirmedTime), txId)
+}
+
+// GetTxRWSet mocks base method.
 func (m *MockBlockchainStore) GetTxRWSet(txId string) (*common.TxRWSet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTxRWSet", txId)
@@ -342,13 +313,13 @@ func (m *MockBlockchainStore) GetTxRWSet(txId string) (*common.TxRWSet, error) {
 	return ret0, ret1
 }
 
-// GetTxRWSet indicates an expected call of GetTxRWSet
+// GetTxRWSet indicates an expected call of GetTxRWSet.
 func (mr *MockBlockchainStoreMockRecorder) GetTxRWSet(txId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxRWSet", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxRWSet), txId)
 }
 
-// GetTxRWSetsByHeight mocks base method
+// GetTxRWSetsByHeight mocks base method.
 func (m *MockBlockchainStore) GetTxRWSetsByHeight(height int64) ([]*common.TxRWSet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTxRWSetsByHeight", height)
@@ -357,64 +328,108 @@ func (m *MockBlockchainStore) GetTxRWSetsByHeight(height int64) ([]*common.TxRWS
 	return ret0, ret1
 }
 
-// GetTxRWSetsByHeight indicates an expected call of GetTxRWSetsByHeight
+// GetTxRWSetsByHeight indicates an expected call of GetTxRWSetsByHeight.
 func (mr *MockBlockchainStoreMockRecorder) GetTxRWSetsByHeight(height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxRWSetsByHeight", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxRWSetsByHeight), height)
 }
 
-// GetDBHandle mocks base method
-func (m *MockBlockchainStore) GetDBHandle(dbName string) protocol.DBHandle {
+// PutBlock mocks base method.
+func (m *MockBlockchainStore) PutBlock(block *common.Block, txRWSets []*common.TxRWSet, contractEventInfo []*common.ContractEvent) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDBHandle", dbName)
-	ret0, _ := ret[0].(protocol.DBHandle)
-	return ret0
-}
-
-// GetDBHandle indicates an expected call of GetDBHandle
-func (mr *MockBlockchainStoreMockRecorder) GetDBHandle(dbName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDBHandle", reflect.TypeOf((*MockBlockchainStore)(nil).GetDBHandle), dbName)
-}
-
-// Close mocks base method
-func (m *MockBlockchainStore) Close() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close")
+	ret := m.ctrl.Call(m, "PutBlock", block, txRWSets, contractEventInfo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Close indicates an expected call of Close
-func (mr *MockBlockchainStoreMockRecorder) Close() *gomock.Call {
+// PutBlock indicates an expected call of PutBlock.
+func (mr *MockBlockchainStoreMockRecorder) PutBlock(block, txRWSets, contractEventInfo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockBlockchainStore)(nil).Close))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutBlock", reflect.TypeOf((*MockBlockchainStore)(nil).PutBlock), block, txRWSets, contractEventInfo)
 }
 
-// MockDBHandle is a mock of DBHandle interface
+// ReadObject mocks base method.
+func (m *MockBlockchainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadObject", contractName, key)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadObject indicates an expected call of ReadObject.
+func (mr *MockBlockchainStoreMockRecorder) ReadObject(contractName, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadObject", reflect.TypeOf((*MockBlockchainStore)(nil).ReadObject), contractName, key)
+}
+
+// SelectObject mocks base method.
+func (m *MockBlockchainStore) SelectObject(contractName string, startKey, limit []byte) protocol.Iterator {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectObject", contractName, startKey, limit)
+	ret0, _ := ret[0].(protocol.Iterator)
+	return ret0
+}
+
+// SelectObject indicates an expected call of SelectObject.
+func (mr *MockBlockchainStoreMockRecorder) SelectObject(contractName, startKey, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectObject", reflect.TypeOf((*MockBlockchainStore)(nil).SelectObject), contractName, startKey, limit)
+}
+
+// TxExists mocks base method.
+func (m *MockBlockchainStore) TxExists(txId string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TxExists", txId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TxExists indicates an expected call of TxExists.
+func (mr *MockBlockchainStoreMockRecorder) TxExists(txId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TxExists", reflect.TypeOf((*MockBlockchainStore)(nil).TxExists), txId)
+}
+
+// MockDBHandle is a mock of DBHandle interface.
 type MockDBHandle struct {
 	ctrl     *gomock.Controller
 	recorder *MockDBHandleMockRecorder
 }
 
-// MockDBHandleMockRecorder is the mock recorder for MockDBHandle
+// MockDBHandleMockRecorder is the mock recorder for MockDBHandle.
 type MockDBHandleMockRecorder struct {
 	mock *MockDBHandle
 }
 
-// NewMockDBHandle creates a new mock instance
+// NewMockDBHandle creates a new mock instance.
 func NewMockDBHandle(ctrl *gomock.Controller) *MockDBHandle {
 	mock := &MockDBHandle{ctrl: ctrl}
 	mock.recorder = &MockDBHandleMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDBHandle) EXPECT() *MockDBHandleMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method
+// Delete mocks base method.
+func (m *MockDBHandle) Delete(key []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockDBHandleMockRecorder) Delete(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDBHandle)(nil).Delete), key)
+}
+
+// Get mocks base method.
 func (m *MockDBHandle) Get(key []byte) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", key)
@@ -423,27 +438,13 @@ func (m *MockDBHandle) Get(key []byte) ([]byte, error) {
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get
+// Get indicates an expected call of Get.
 func (mr *MockDBHandleMockRecorder) Get(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockDBHandle)(nil).Get), key)
 }
 
-// Put mocks base method
-func (m *MockDBHandle) Put(key, value []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", key, value)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Put indicates an expected call of Put
-func (mr *MockDBHandleMockRecorder) Put(key, value interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockDBHandle)(nil).Put), key, value)
-}
-
-// Has mocks base method
+// Has mocks base method.
 func (m *MockDBHandle) Has(key []byte) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Has", key)
@@ -452,55 +453,13 @@ func (m *MockDBHandle) Has(key []byte) (bool, error) {
 	return ret0, ret1
 }
 
-// Has indicates an expected call of Has
+// Has indicates an expected call of Has.
 func (mr *MockDBHandleMockRecorder) Has(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Has", reflect.TypeOf((*MockDBHandle)(nil).Has), key)
 }
 
-// Delete mocks base method
-func (m *MockDBHandle) Delete(key []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", key)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete
-func (mr *MockDBHandleMockRecorder) Delete(key interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDBHandle)(nil).Delete), key)
-}
-
-// WriteBatch mocks base method
-func (m *MockDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WriteBatch", batch, sync)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WriteBatch indicates an expected call of WriteBatch
-func (mr *MockDBHandleMockRecorder) WriteBatch(batch, sync interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBatch", reflect.TypeOf((*MockDBHandle)(nil).WriteBatch), batch, sync)
-}
-
-// NewIteratorWithRange mocks base method
-func (m *MockDBHandle) NewIteratorWithRange(start, limit []byte) protocol.Iterator {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewIteratorWithRange", start, limit)
-	ret0, _ := ret[0].(protocol.Iterator)
-	return ret0
-}
-
-// NewIteratorWithRange indicates an expected call of NewIteratorWithRange
-func (mr *MockDBHandleMockRecorder) NewIteratorWithRange(start, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIteratorWithRange", reflect.TypeOf((*MockDBHandle)(nil).NewIteratorWithRange), start, limit)
-}
-
-// NewIteratorWithPrefix mocks base method
+// NewIteratorWithPrefix mocks base method.
 func (m *MockDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewIteratorWithPrefix", prefix)
@@ -508,86 +467,90 @@ func (m *MockDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 	return ret0
 }
 
-// NewIteratorWithPrefix indicates an expected call of NewIteratorWithPrefix
+// NewIteratorWithPrefix indicates an expected call of NewIteratorWithPrefix.
 func (mr *MockDBHandleMockRecorder) NewIteratorWithPrefix(prefix interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIteratorWithPrefix", reflect.TypeOf((*MockDBHandle)(nil).NewIteratorWithPrefix), prefix)
 }
 
-// MockStoreBatcher is a mock of StoreBatcher interface
+// NewIteratorWithRange mocks base method.
+func (m *MockDBHandle) NewIteratorWithRange(start, limit []byte) protocol.Iterator {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewIteratorWithRange", start, limit)
+	ret0, _ := ret[0].(protocol.Iterator)
+	return ret0
+}
+
+// NewIteratorWithRange indicates an expected call of NewIteratorWithRange.
+func (mr *MockDBHandleMockRecorder) NewIteratorWithRange(start, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIteratorWithRange", reflect.TypeOf((*MockDBHandle)(nil).NewIteratorWithRange), start, limit)
+}
+
+// Put mocks base method.
+func (m *MockDBHandle) Put(key, value []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", key, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Put indicates an expected call of Put.
+func (mr *MockDBHandleMockRecorder) Put(key, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockDBHandle)(nil).Put), key, value)
+}
+
+// WriteBatch mocks base method.
+func (m *MockDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteBatch", batch, sync)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteBatch indicates an expected call of WriteBatch.
+func (mr *MockDBHandleMockRecorder) WriteBatch(batch, sync interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBatch", reflect.TypeOf((*MockDBHandle)(nil).WriteBatch), batch, sync)
+}
+
+// MockStoreBatcher is a mock of StoreBatcher interface.
 type MockStoreBatcher struct {
 	ctrl     *gomock.Controller
 	recorder *MockStoreBatcherMockRecorder
 }
 
-// MockStoreBatcherMockRecorder is the mock recorder for MockStoreBatcher
+// MockStoreBatcherMockRecorder is the mock recorder for MockStoreBatcher.
 type MockStoreBatcherMockRecorder struct {
 	mock *MockStoreBatcher
 }
 
-// NewMockStoreBatcher creates a new mock instance
+// NewMockStoreBatcher creates a new mock instance.
 func NewMockStoreBatcher(ctrl *gomock.Controller) *MockStoreBatcher {
 	mock := &MockStoreBatcher{ctrl: ctrl}
 	mock.recorder = &MockStoreBatcherMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStoreBatcher) EXPECT() *MockStoreBatcherMockRecorder {
 	return m.recorder
 }
 
-// Put mocks base method
-func (m *MockStoreBatcher) Put(key, value []byte) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Put", key, value)
-}
-
-// Put indicates an expected call of Put
-func (mr *MockStoreBatcherMockRecorder) Put(key, value interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStoreBatcher)(nil).Put), key, value)
-}
-
-// Delete mocks base method
+// Delete mocks base method.
 func (m *MockStoreBatcher) Delete(key []byte) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Delete", key)
 }
 
-// Delete indicates an expected call of Delete
+// Delete indicates an expected call of Delete.
 func (mr *MockStoreBatcherMockRecorder) Delete(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStoreBatcher)(nil).Delete), key)
 }
 
-// Len mocks base method
-func (m *MockStoreBatcher) Len() int {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Len")
-	ret0, _ := ret[0].(int)
-	return ret0
-}
-
-// Len indicates an expected call of Len
-func (mr *MockStoreBatcherMockRecorder) Len() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Len", reflect.TypeOf((*MockStoreBatcher)(nil).Len))
-}
-
-// Merge mocks base method
-func (m *MockStoreBatcher) Merge(batcher protocol.StoreBatcher) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Merge", batcher)
-}
-
-// Merge indicates an expected call of Merge
-func (mr *MockStoreBatcherMockRecorder) Merge(batcher interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Merge", reflect.TypeOf((*MockStoreBatcher)(nil).Merge), batcher)
-}
-
-// KVs mocks base method
+// KVs mocks base method.
 func (m *MockStoreBatcher) KVs() map[string][]byte {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "KVs")
@@ -595,8 +558,46 @@ func (m *MockStoreBatcher) KVs() map[string][]byte {
 	return ret0
 }
 
-// KVs indicates an expected call of KVs
+// KVs indicates an expected call of KVs.
 func (mr *MockStoreBatcherMockRecorder) KVs() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KVs", reflect.TypeOf((*MockStoreBatcher)(nil).KVs))
+}
+
+// Len mocks base method.
+func (m *MockStoreBatcher) Len() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Len")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Len indicates an expected call of Len.
+func (mr *MockStoreBatcherMockRecorder) Len() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Len", reflect.TypeOf((*MockStoreBatcher)(nil).Len))
+}
+
+// Merge mocks base method.
+func (m *MockStoreBatcher) Merge(batcher protocol.StoreBatcher) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Merge", batcher)
+}
+
+// Merge indicates an expected call of Merge.
+func (mr *MockStoreBatcherMockRecorder) Merge(batcher interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Merge", reflect.TypeOf((*MockStoreBatcher)(nil).Merge), batcher)
+}
+
+// Put mocks base method.
+func (m *MockStoreBatcher) Put(key, value []byte) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Put", key, value)
+}
+
+// Put indicates an expected call of Put.
+func (mr *MockStoreBatcherMockRecorder) Put(key, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStoreBatcher)(nil).Put), key, value)
 }

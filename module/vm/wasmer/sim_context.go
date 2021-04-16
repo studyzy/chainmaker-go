@@ -32,6 +32,7 @@ type SimContext struct {
 	parameters    map[string]string
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result
+	Event         [][]byte // contract event data
 }
 
 // NewSimContext for every transaction

@@ -62,7 +62,6 @@ func (s *txSimContextImpl) Get(contractName string, key []byte) ([]byte, error) 
 		return value, nil
 	}
 }
-
 func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)
 	return nil
