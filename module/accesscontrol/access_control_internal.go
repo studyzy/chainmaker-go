@@ -57,14 +57,15 @@ var restrainedResourceList = map[string]bool{
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_USER_CONTRACT:    protocol.ResourceNameReadData,
-	common.TxType_QUERY_SYSTEM_CONTRACT:  protocol.ResourceNameReadData,
-	common.TxType_INVOKE_USER_CONTRACT:   protocol.ResourceNameWriteData,
-	common.TxType_UPDATE_CHAIN_CONFIG:    protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_BLOCK_INFO:   protocol.ResourceNameReadData,
-	common.TxType_SUBSCRIBE_TX_INFO:      protocol.ResourceNameReadData,
-	common.TxType_INVOKE_SYSTEM_CONTRACT: protocol.ResourceNameWriteData,
-	common.TxType_MANAGE_USER_CONTRACT:   protocol.ResourceNameWriteData,
+	common.TxType_QUERY_USER_CONTRACT:           protocol.ResourceNameReadData,
+	common.TxType_QUERY_SYSTEM_CONTRACT:         protocol.ResourceNameReadData,
+	common.TxType_INVOKE_USER_CONTRACT:          protocol.ResourceNameWriteData,
+	common.TxType_UPDATE_CHAIN_CONFIG:           protocol.ResourceNameWriteData,
+	common.TxType_SUBSCRIBE_BLOCK_INFO:          protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE_TX_INFO:             protocol.ResourceNameReadData,
+	common.TxType_INVOKE_SYSTEM_CONTRACT:        protocol.ResourceNameWriteData,
+	common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
+	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
 }
 
 var (

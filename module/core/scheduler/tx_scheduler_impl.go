@@ -75,7 +75,8 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 }
 
 // Schedule according to a batch of transactions, and generating DAG according to the conflict relationship
-func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, error) {
+func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[int64][]*commonpb.ContractEvent, error) {
+
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
 	txBatchSize := len(txBatch)
@@ -86,7 +87,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	var goRoutinePool *ants.Pool
 	var err error
 	if goRoutinePool, err = ants.NewPool(runtime.NumCPU()*4, ants.WithPreAlloc(true)); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer goRoutinePool.Release()
 	startTime := time.Now()
@@ -108,6 +109,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 					if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 						start = time.Now()
 					}
+					//交易结果
 					if txResult, err = ts.runVM(tx, txSimContext); err != nil {
 						runVmSuccess = false
 						tx.Result = txResult
@@ -169,8 +171,18 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 			txRWSetMap[txRWSet.TxId] = txRWSet
 		}
 	}
+	contractEvent := make([]*commonpb.ContractEvent, 0)
+	for _, tx := range block.Txs {
+		event := tx.Result.ContractResult.ContractEvent
+		for _, value := range event {
+			contractEvent = append(contractEvent, value)
+			ts.log.Debugf("contractEvent :%v", value)
+		}
+	}
+	contractEventMap := make(map[int64][]*commonpb.ContractEvent)
+	contractEventMap[block.Header.BlockHeight] = contractEvent
 	//ts.dumpDAG(block.Dag, block.Txs)
-	return txRWSetMap, nil
+	return txRWSetMap, contractEventMap, nil
 }
 
 // SimulateWithDag based on the dag in the block, perform scheduling and execution transactions

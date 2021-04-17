@@ -78,6 +78,8 @@ func (s *contextServiceResolver) cCallMethod(
 	var respMessage []*serialize.EasyCodecItem
 	var err error
 
+
+
 	switch method {
 	case "GetObject":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
@@ -103,6 +105,9 @@ func (s *contextServiceResolver) cCallMethod(
 	case "LogMsg":
 		reqItems := serialize.EasyUnmarshal(requestBuf)
 		respMessage, err = s.contextService.LogMsg(ctxId, reqItems)
+	case "EmitEvent":
+		reqItems := serialize.EasyUnmarshal(requestBuf)
+		respMessage, err = s.contextService.EmitEvent(ctxId, reqItems)
 	default:
 		s.contextService.logger.Errorw("no such method ", method)
 	}

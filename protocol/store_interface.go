@@ -31,7 +31,7 @@ type Iterator interface {
 type BlockchainStore interface {
 
 	// PutBlock commits the block and the corresponding rwsets in an atomic operation
-	PutBlock(block *common.Block, txRWSets []*common.TxRWSet) error
+	PutBlock(block *common.Block, txRWSets []*common.TxRWSet, contractEventInfo []*common.ContractEvent) error
 
 	// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 	GetBlockByHash(blockHash []byte) (*common.Block, error)

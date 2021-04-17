@@ -35,6 +35,7 @@ const (
 	MODULE_SPV        = "[Spv]"
 	MODULE_MONITOR    = "[Monitor]"
 	MODULE_SYNC       = "[Sync]"
+	MODULE_Subscribe  = "[Subscribe]"
 
 	// output brief.log
 	MODULE_BRIEF = "[Brief]"

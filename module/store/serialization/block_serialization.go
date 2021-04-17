@@ -16,13 +16,15 @@ import (
 
 // BlockWithSerializedInfo contains block,txs and corresponding serialized data
 type BlockWithSerializedInfo struct {
-	Block              *commonPb.Block
-	Meta               *storePb.SerializedBlock //Block without Txs
-	SerializedMeta     []byte
-	Txs                []*commonPb.Transaction
-	SerializedTxs      [][]byte
-	TxRWSets           []*commonPb.TxRWSet
-	SerializedTxRWSets [][]byte
+	Block                     *commonPb.Block
+	Meta                      *storePb.SerializedBlock //Block without Txs
+	SerializedMeta            []byte
+	Txs                       []*commonPb.Transaction
+	SerializedTxs             [][]byte
+	TxRWSets                  []*commonPb.TxRWSet
+	SerializedTxRWSets        [][]byte
+	EventTopicTable           []*commonPb.ContractEvent
+	SerializedEventTopicTable [][]byte
 }
 
 // SerializeBlock serialized a BlockWithRWSet and return serialized data
@@ -31,6 +33,7 @@ func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithS
 	buf := proto.NewBuffer(nil)
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
+	events:=blockWithRWSet.EventTopicTable
 	info := &BlockWithSerializedInfo{}
 	info.Block = block
 	meta := &storePb.SerializedBlock{
@@ -47,6 +50,7 @@ func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithS
 		info.TxRWSets = append(info.TxRWSets, txRWSet)
 	}
 	info.Meta = meta
+	info.EventTopicTable=events
 
 	if err := info.serializeMeta(buf); err != nil {
 		return nil, nil, err
@@ -57,6 +61,10 @@ func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithS
 	}
 
 	if err := info.serializeTxRWSets(buf); err != nil {
+		return nil, nil, err
+	}
+
+	if err := info.serializeEventTopicTable(buf); err != nil {
 		return nil, nil, err
 	}
 
@@ -77,6 +85,9 @@ func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
 	if info.TxRWSets, err = info.deserializeRWSets(buf); err != nil {
 		return nil, err
 	}
+	if info.EventTopicTable, err = info.deserializeEventTopicTable(buf); err != nil {
+		return nil, err
+	}
 	block := &commonPb.Block{
 		Header:         info.Meta.Header,
 		Dag:            info.Meta.Dag,
@@ -86,6 +97,7 @@ func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
 	blockWithRWSet := &storePb.BlockWithRWSet{
 		Block:    block,
 		TxRWSets: info.TxRWSets,
+		EventTopicTable:info.EventTopicTable,
 	}
 	return blockWithRWSet, nil
 }
@@ -99,6 +111,45 @@ func (b *BlockWithSerializedInfo) serializeMeta(buf *proto.Buffer) error {
 		return err
 	}
 	b.SerializedMeta = metaBytes
+	return nil
+}
+func (b *BlockWithSerializedInfo) serializeEventTopicTable(buf *proto.Buffer) error {
+	if err := buf.EncodeVarint(uint64(len(b.EventTopicTable))); err != nil {
+		return err
+	}
+	serializedEventList := make([][]byte, len(b.EventTopicTable))
+	batchSize := 1000
+	taskNum := len(b.EventTopicTable)/batchSize + 1
+	errsChan := make(chan error, taskNum)
+	wg := sync.WaitGroup{}
+	wg.Add(taskNum)
+	for taskId := 0; taskId < taskNum; taskId++ {
+		startIndex := taskId * batchSize
+		endIndex := (taskId + 1) * batchSize
+		if endIndex > len(b.EventTopicTable) {
+			endIndex = len(b.EventTopicTable)
+		}
+		go func(start int, end int) {
+			defer wg.Done()
+			for offset, et := range b.EventTopicTable[start:end] {
+				txBytes, err := proto.Marshal(et)
+				if err != nil {
+					errsChan <- err
+				}
+				serializedEventList[start+offset] = txBytes
+			}
+		}(startIndex, endIndex)
+	}
+	wg.Wait()
+	if len(errsChan) > 0 {
+		return <-errsChan
+	}
+	for _, txBytes := range serializedEventList {
+		b.SerializedEventTopicTable = append(b.SerializedEventTopicTable, txBytes)
+		if err := buf.EncodeRawBytes(txBytes); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -235,4 +286,23 @@ func (b *BlockWithSerializedInfo) deserializeRWSets(buf *proto.Buffer) ([]*commo
 		txRWSets = append(txRWSets, rwSet)
 	}
 	return txRWSets, nil
+}
+func (b *BlockWithSerializedInfo) deserializeEventTopicTable(buf *proto.Buffer) ([]*commonPb.ContractEvent, error) {
+	var ets []*commonPb.ContractEvent
+	txNum, err := buf.DecodeVarint()
+	if err != nil {
+		return nil, err
+	}
+	for i := uint64(0); i < txNum; i++ {
+		txBytes, err := buf.DecodeRawBytes(false)
+		if err != nil {
+			return nil, err
+		}
+		et := &commonPb.ContractEvent{}
+		if err = proto.Unmarshal(txBytes, et); err != nil {
+			return nil, err
+		}
+		ets = append(ets, et)
+	}
+	return ets, nil
 }

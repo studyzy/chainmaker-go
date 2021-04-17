@@ -18,7 +18,7 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 
-var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+var CertFilePath = "/Users/boom/projects/chainMaker-go-inner/chainmaker-go/config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
 var WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 
 var txType = commonPb.TxType_INVOKE_USER_CONTRACT
@@ -201,7 +201,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter,s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		deep:         s.currentDeep,
@@ -240,7 +240,9 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 func (*TxContextMockTest) GetBlockHeight() int64 {
 	return 0
 }
-
+func (s *TxContextMockTest) GetTopicTableColumn(tableName string) ([]string, error) {
+	return nil,nil
+}
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {
 	panic("implement me")
 }

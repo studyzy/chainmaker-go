@@ -36,6 +36,7 @@ func TestAddBlock(t *testing.T) {
 	lastBlock := cache.CreateNewTestBlock(0)
 	ledgerCache.SetLastCommittedBlock(lastBlock)
 	rwSetMap := make(map[string]*commonpb.TxRWSet)
+	contractEventMap :=make(map[int64][][]byte)
 	msgbus := mock.NewMockMessageBus(ctl)
 	msgbus.EXPECT().Publish(gomock.Any(), gomock.Any()).Return().Times(2)
 
@@ -49,7 +50,7 @@ func TestAddBlock(t *testing.T) {
 	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(2)
 
 	block := createNewBlock(lastBlock)
-	proposedCache.SetProposedBlock(&block, rwSetMap, true)
+	proposedCache.SetProposedBlock(&block, rwSetMap, contractEventMap,true)
 
 	log.Infof("init block(%d,%s)", block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash))
 	blockchainStoreImpl.EXPECT().PutBlock(&block, make([]*commonpb.TxRWSet, 0)).Return(nil)

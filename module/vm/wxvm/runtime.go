@@ -66,7 +66,15 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		contractResult.Message = err.Error()
 		return
 	} else {
+
 		contractResult.GasUsed = int64(inst.ResourceUsed().Cpu)
+		eventData:=context.Event
+		if len(eventData)!=0{
+			for _, value := range eventData {
+				r.Log.Debugf("envetData: %v",string(value))
+
+			}
+		}
 	}
 	return
 }

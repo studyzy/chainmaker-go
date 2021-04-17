@@ -13,6 +13,7 @@ import (
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/blockdb"
+	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -38,6 +39,7 @@ type BlockStoreImpl struct {
 	blockDB          blockdb.BlockDB
 	stateDB          statedb.StateDB
 	historyDB        historydb.HistoryDB
+	contractEventDB  contracteventdb.ContractEventDB
 	wal              *wal.Log
 	commonDB         dbprovider.Provider
 	workersSemaphore *semaphore.Weighted
@@ -49,6 +51,7 @@ func NewBlockStoreImpl(chainId string,
 	blockDB blockdb.BlockDB,
 	stateDB statedb.StateDB,
 	historyDB historydb.HistoryDB,
+	contractEventDB contracteventdb.ContractEventDB,
 	commonDB dbprovider.Provider) (protocol.BlockchainStore, error) {
 
 	walPath := filepath.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainId, logPath)
@@ -65,6 +68,7 @@ func NewBlockStoreImpl(chainId string,
 		blockDB:          blockDB,
 		stateDB:          stateDB,
 		historyDB:        historyDB,
+		contractEventDB:  contractEventDB,
 		wal:              writeLog,
 		commonDB:         commonDB,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
@@ -80,12 +84,14 @@ func NewBlockStoreImpl(chainId string,
 }
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
-func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEventInfo []*commonPb.ContractEvent) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
+
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:    block,
-		TxRWSets: txRWSets,
+		Block:           block,
+		TxRWSets:        txRWSets,
+		EventTopicTable: contractEventInfo,
 	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock
@@ -101,7 +107,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 
 	//commit db concurrently
 	startCommitBlock := utils.CurrentTimeMillisSeconds()
-	numBatches := 3
+	numBatches := 4
 	var batchWG sync.WaitGroup
 	batchWG.Add(numBatches)
 	errsChan := make(chan error, numBatches)
@@ -141,6 +147,21 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	} else {
 		batchWG.Done()
 	}
+	//5.commit contractEventDB
+	if !localconf.ChainMakerConfig.StorageConfig.DisableHistoryDB {
+
+		go func() {
+			defer batchWG.Done()
+			err := bs.contractEventDB.CommitBlock(blockWithSerializedInfo)
+			if err != nil {
+				bs.logger.Errorf("chain[%s] failed to write contractEventDB, block[%d]",
+					block.Header.ChainId, block.Header.BlockHeight)
+				errsChan <- err
+			}
+		}()
+	}else {
+		batchWG.Done()
+	}
 
 	batchWG.Wait()
 	if len(errsChan) > 0 {
@@ -148,7 +169,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	}
 	elapsedCommitBlock := utils.CurrentTimeMillisSeconds() - startCommitBlock
 
-	// 5. clean wal, delete block and rwset after commit
+	// 6. clean wal, delete block and rwset after commit
 	go func() {
 		err := bs.deleteBlockFromLog(uint64(block.Header.BlockHeight))
 		if err != nil {
@@ -303,6 +324,7 @@ func (bs *BlockStoreImpl) Close() error {
 	bs.blockDB.Close()
 	bs.stateDB.Close()
 	bs.historyDB.Close()
+	bs.contractEventDB.Close()
 	bs.wal.Close()
 	bs.commonDB.Close()
 	return nil
@@ -310,7 +332,7 @@ func (bs *BlockStoreImpl) Close() error {
 
 // recover checks savepoint and recommit lost block
 func (bs *BlockStoreImpl) recover() error {
-	var logSavepoint, blockSavepoint, stateSavepoint, historySavepoint uint64
+	var logSavepoint, blockSavepoint, stateSavepoint, historySavepoint, contractEventSavepoint uint64
 	var err error
 	if logSavepoint, err = bs.getLastSavepoint(); err != nil {
 		return err
@@ -324,9 +346,14 @@ func (bs *BlockStoreImpl) recover() error {
 	if historySavepoint, err = bs.historyDB.GetLastSavepoint(); err != nil {
 		return err
 	}
+	if localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
+		if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
+			return err
+		}
+	}
 
-	bs.logger.Debugf("recover checking, savepoint: wal[%d] blockDB[%d] stateDB[%d] historyDB[%d]",
-		logSavepoint, blockSavepoint, stateSavepoint, historySavepoint)
+	bs.logger.Debugf("recover checking, savepoint: wal[%d] blockDB[%d] stateDB[%d] historyDB[%d] contractEventDB[%d]",
+		logSavepoint, blockSavepoint, stateSavepoint, historySavepoint, contractEventSavepoint)
 	//recommit blockdb
 	if err := bs.recoverBlockDB(blockSavepoint, logSavepoint); err != nil {
 		return nil
@@ -340,6 +367,12 @@ func (bs *BlockStoreImpl) recover() error {
 	if !localconf.ChainMakerConfig.StorageConfig.DisableHistoryDB {
 		//recommit historydb
 		if err := bs.recoverHistoryDB(stateSavepoint, logSavepoint); err != nil {
+			return nil
+		}
+	}
+	//recommit contract event db
+	if localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB{
+		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
 			return nil
 		}
 	}
@@ -379,7 +412,24 @@ func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64)
 	}
 	return nil
 }
-
+func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint uint64) error {
+	for height := currentHeight + 1; height <= savePoint; height++ {
+		bs.logger.Infof("[ContractEventDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
+		blockWithRWSet, err := bs.getBlockFromLog(height)
+		if err != nil {
+			return err
+		}
+		_, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
+		if err != nil {
+			return err
+		}
+		err = bs.contractEventDB.CommitBlock(blockWithSerializedInfo)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)

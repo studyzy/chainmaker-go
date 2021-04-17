@@ -30,8 +30,9 @@ type WaciInstance struct {
 	Log            *logger.CMLogger
 	Vm             *wasm.VirtualMachine
 	RequestHeader  []*serialize.EasyCodecItem
-	RequestBody    []byte // sdk request param
-	GetStateCache  []byte // cache call method GetStateLen value result
+	RequestBody    []byte   // sdk request param
+	GetStateCache  []byte   // cache call method GetStateLen value result
+	ContractEvent []*commonPb.ContractEvent
 }
 
 // LogMessage print log to file
@@ -93,6 +94,9 @@ func (w *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return w.CallContract()
 		case protocol.ContractMethodCallContractLen:
 			return w.CallContractLen()
+		case protocol.ContractMethodEmitEvent:
+			return w.EmitEvent()
+
 		default:
 			w.Log.Errorf("method is %s not match.", method)
 		}
@@ -158,6 +162,38 @@ func (w *WaciInstance) PutState() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
+// EmitEvent emit event to chain
+func (w *WaciInstance) EmitEvent() int32 {
+	req := serialize.EasyUnmarshal(w.RequestBody)
+	topic, _ := serialize.GetValueFromItems(req, "topic", serialize.EasyKeyType_USER)
+	if err := protocol.CheckTopicStr(topic.(string)); err != nil {
+		return w.recordMsg(w.ContractResult, err.Error())
+
+	}
+	var eventData []string
+	for i := 1; i < len(req); i++ {
+		data := req[i].Value.(string)
+		eventData = append(eventData, data)
+		w.Log.Debugf("EmitEvent EventData :%v", data)
+	}
+	if err := protocol.CheckEventData(eventData); err != nil {
+		return w.recordMsg(w.ContractResult, err.Error())
+	}
+
+	w.ContractEvent = append(w.ContractEvent, &commonPb.ContractEvent{
+		ChainId:         w.TxSimContext.GetTx().Header.ChainId,
+		BlockHeight:     w.TxSimContext.GetBlockHeight(),
+		ContractName:    w.ContractId.ContractName,
+		ContractVersion: w.ContractId.ContractVersion,
+		Topic:           topic.(string),
+		TxId:            w.TxSimContext.GetTx().Header.TxId,
+		EventData:       eventData,
+	})
+
+	return protocol.ContractSdkSignalResultSuccess
+
+}
+
 // DeleteState delete state from chain
 func (w *WaciInstance) DeleteState() int32 {
 	req := serialize.EasyUnmarshal(w.RequestBody)
@@ -178,9 +214,6 @@ func (w *WaciInstance) DeleteState() int32 {
 
 // SuccessResult record the results of contract execution success
 func (w *WaciInstance) SuccessResult() int32 {
-	if w.ContractResult.Code == commonPb.ContractResultCode_FAIL {
-		return protocol.ContractSdkSignalResultFail
-	}
 	w.ContractResult.Code = commonPb.ContractResultCode_OK
 	w.ContractResult.Result = w.RequestBody
 	return protocol.ContractSdkSignalResultSuccess

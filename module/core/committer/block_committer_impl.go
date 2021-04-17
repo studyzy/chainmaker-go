@@ -135,7 +135,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
 		chain.log.Errorf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
 		return err
 	}
-	lastProposed, rwSetMap := chain.proposalCache.GetProposedBlock(block)
+	lastProposed, rwSetMap, eventInfoMap := chain.proposalCache.GetProposedBlock(block)
 	if err = chain.checkLastProposedBlock(block, lastProposed, err, height, rwSetMap); err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 	startDBTick := utils.CurrentTimeMillisSeconds()
-	if err = chain.blockchainStore.PutBlock(block, rwSet); err != nil {
+	if err = chain.blockchainStore.PutBlock(block, rwSet, eventInfoMap[height]); err != nil {
 		// if put db error, then panic
 		chain.log.Error(err)
 		panic(err)
@@ -185,6 +185,12 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
 	}
 	// synchronize new block height to consensus and sync module
 	chain.msgBus.Publish(msgbus.BlockInfo, bi)
+	ets := eventInfoMap[block.Header.BlockHeight]
+	for _, t := range ets {
+		chain.msgBus.Publish(msgbus.ContractEventInfo,t)
+		chain.log.Infof("publish contractEventInfo %v", t)
+
+	}
 
 	if err = chain.monitorCommit(bi); err != nil {
 		return err
@@ -275,7 +281,7 @@ func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block, l
 		chain.log.Error("block verify failed [%d](hash:%x), %s", height, block.Header.BlockHash, err)
 		return err
 	}
-	lastProposed, rwSetMap = chain.proposalCache.GetProposedBlock(block)
+	lastProposed, rwSetMap, _ = chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
 		chain.log.Error("block not verified [%d](hash:%x)", height, block.Header.BlockHash)
 		return fmt.Errorf("block not verified [%d](hash:%x)", height, block.Header.BlockHash)
