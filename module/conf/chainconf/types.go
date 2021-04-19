@@ -10,7 +10,6 @@ package chainconf
 import (
 	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
@@ -198,8 +197,7 @@ func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chai
 		resourceLen := len(config.ResourcePolicies)
 		for _, resourcePolicy := range config.ResourcePolicies {
 			mConfig.ResourcePolicies[resourcePolicy.ResourceName] = struct{}{}
-			policy := resourcePolicy.Policy
-			if err := verifyPolicy(policy); err != nil {
+			if err := verifyPolicy(resourcePolicy); err != nil {
 				return err
 			}
 		}
@@ -211,19 +209,31 @@ func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chai
 	return nil
 }
 
-func verifyPolicy(policy *pbac.Policy) error {
+func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
+	policy := resourcePolicy.Policy
+	resourceName := resourcePolicy.ResourceName
 	if policy != nil {
 		// to upper
 		rule := policy.Rule
 		policy.Rule = strings.ToUpper(rule)
+
+		// self only for NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE
+		if policy.Rule == string(protocol.RuleSelf) {
+			if resourceName != common.ConfigFunction_NODE_ADDR_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+				err := fmt.Errorf("self rule can only be used by NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE")
+				return err
+			}
+		}
+
 		roles := policy.RoleList
 		if roles != nil {
 			// to upper
 			for i, role := range roles {
 				role = strings.ToUpper(role)
 				roles[i] = role
+				// MAJORITY role allow admin or null
 				if policy.Rule == string(protocol.RuleMajority) {
-					if role != string(protocol.RoleAdmin) {
+					if len(role) > 0 && role != string(protocol.RoleAdmin) {
 						err := fmt.Errorf("config rule[MAJORITY], role can only be admin or null")
 						return err
 					}
@@ -231,11 +241,10 @@ func verifyPolicy(policy *pbac.Policy) error {
 			}
 			policy.RoleList = roles
 		}
-		if policy.Rule == string(protocol.RuleMajority) {
-			if len(policy.OrgList) > 0 {
-				err := fmt.Errorf("config rule[MAJORITY], org_list param not allowed")
-				return err
-			}
+		// MAJORITY  not allowed org_list
+		if policy.Rule == string(protocol.RuleMajority) && len(policy.OrgList) > 0 {
+			err := fmt.Errorf("config rule[MAJORITY], org_list param not allowed")
+			return err
 		}
 	}
 	return nil
