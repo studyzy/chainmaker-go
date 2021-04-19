@@ -64,8 +64,8 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 	runtimeSdkType := sdkType.ToI32()
 	if int32(commonPb.RuntimeType_WASMER) == runtimeSdkType {
 		sc.parameters[protocol.ContractContextPtrParam] = strconv.Itoa(int(sc.CtxPtr))
-		easyCodeItems := serialize.ParamsMapToEasyCodecItem(sc.parameters)
-		bytes = serialize.EasyMarshal(easyCodeItems)
+		ec := serialize.NewEasyCodecWithMap(sc.parameters)
+		bytes = ec.Marshal()
 	} else {
 		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d", uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
 	}

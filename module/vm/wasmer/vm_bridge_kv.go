@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 
@@ -69,19 +68,10 @@ func (s *WaciInstance) PutState() int32 {
 
 // DeleteState delete state from chain
 func (s *WaciInstance) DeleteState() int32 {
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
-		return s.recordMsg(err.Error())
-	}
-
-	contractName := s.Sc.ContractId.ContractName
-	err := s.Sc.TxSimContext.Del(contractName, protocol.GetKeyStr(key.(string), field.(string)))
+	err := wacsi.DeleteState(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext)
 	if err != nil {
-		return s.recordMsg(err.Error())
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
 	}
-
 	return protocol.ContractSdkSignalResultSuccess
 }

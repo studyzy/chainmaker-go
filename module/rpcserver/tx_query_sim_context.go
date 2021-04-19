@@ -91,7 +91,7 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {
-	if creatorByte, err := s.Get(contractName, []byte(protocol.ContractCreator)); err != nil {
+	if creatorByte, err := s.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
 		return nil
 	} else {
 		creator := &acPb.SerializedMember{}

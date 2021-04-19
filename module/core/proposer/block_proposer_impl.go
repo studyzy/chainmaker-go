@@ -9,6 +9,7 @@ package proposer
 import (
 	"bytes"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"sync"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/gogo/protobuf/proto"
 )
 
 // BlockProposerImpl implements BlockProposer interface.
@@ -264,8 +266,19 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 
 	block, timeLasts, err := bp.generateNewBlock(height, preHash, checkedBatch)
 	if err != nil {
-		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-			_ = bp.blockchainStore.RollbackDbTransaction(block.GetTxKey()) // rollback sql transaction
+		// rollback sql
+		if bp.chainConf.ChainConfig().Contract.EnableSqlSupport {
+			_ = bp.blockchainStore.RollbackDbTransaction(block.GetTxKey())
+			// drop database if create contract fail
+			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+				var payload commonpb.ContractMgmtPayload
+				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
+					if payload.ContractId != nil {
+						dbName := statesqldb.GetContractDbName(bp.chainId, payload.ContractId.ContractName)
+						bp.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
+					}
+				}
+			}
 		}
 		bp.txPool.RetryAndRemoveTxs(checkedBatch, nil) // put txs back to txpool
 		bp.log.Warnf("generate new block failed, %s", err.Error())

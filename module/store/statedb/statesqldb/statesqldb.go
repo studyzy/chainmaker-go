@@ -193,7 +193,7 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 // startKey is included in the results and limit is excluded.
 func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
 	if contractName != "" {
-		if err := s.db.ChangeContextDb(contractName); err != nil {
+		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil
 		}
 	}

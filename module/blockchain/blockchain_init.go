@@ -282,9 +282,9 @@ func (bc *Blockchain) initVM() (err error) {
 	var vmFactory vm.Factory
 	bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.chainId, bc.ac, nil)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, nil, bc.chainConf)
 	} else {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.chainId, bc.ac, bc.netService.GetChainNodesInfoProvider())
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	return
 }

@@ -166,8 +166,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	parameters[protocol.ContractContextPtrParam] = "0" // 兼容rust
 	if uint64(commonPb.RuntimeType_GASM) == runtimeSdkType[0] {
-		easyCodecItems := serialize.ParamsMapToEasyCodecItem(parameters)
-		paramMarshalBytes = serialize.EasyMarshal(easyCodecItems)
+		ec := serialize.NewEasyCodecWithMap(parameters)
+		paramMarshalBytes = ec.Marshal()
 	} else {
 		msg := fmt.Sprintf("runtime type error, expect gasm:%d, but got %d", uint64(commonPb.RuntimeType_GASM), runtimeSdkType[0])
 		contractResult.Code = commonPb.ContractResultCode_FAIL

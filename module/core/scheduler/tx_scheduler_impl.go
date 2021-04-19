@@ -38,6 +38,7 @@ type TxSchedulerImpl struct {
 	VmManager       protocol.VmManager
 	scheduleFinishC chan bool
 	log             *logger.CMLogger
+	chainConf       protocol.ChainConf // chain config
 
 	metricVMRunTime *prometheus.HistogramVec
 }
@@ -46,12 +47,13 @@ type TxSchedulerImpl struct {
 type dagNeighbors map[int]bool
 
 // NewTxScheduler building a transaction scheduler
-func NewTxScheduler(vmMgr protocol.VmManager, chainId string) *TxSchedulerImpl {
+func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxSchedulerImpl {
 	txSchedulerImpl := &TxSchedulerImpl{
 		lock:            sync.Mutex{},
 		VmManager:       vmMgr,
 		scheduleFinishC: make(chan bool),
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainConf.ChainConfig().ChainId),
+		chainConf:       chainConf,
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		txSchedulerImpl.metricVMRunTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER_SCHEDULER, "metric_vm_run_time",
@@ -88,7 +90,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	var goRoutinePool *ants.Pool
 	var err error
 	poolCapacity := runtime.NumCPU() * 4
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+	if ts.chainConf.ChainConfig().Contract.EnableSqlSupport {
 		poolCapacity = 1
 	}
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
@@ -212,7 +214,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	var goRoutinePool *ants.Pool
 	var err error
 	poolCapacity := runtime.NumCPU() * 4
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+	if ts.chainConf.ChainConfig().Contract.EnableSqlSupport {
 		poolCapacity = 1
 	}
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {

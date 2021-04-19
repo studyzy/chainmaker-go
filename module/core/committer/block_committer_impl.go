@@ -16,6 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
@@ -123,29 +124,41 @@ func (chain *BlockCommitterImpl) isBlockLegal(blk *commonpb.Block) error {
 }
 
 func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
+	defer func() {
+		if err == nil {
+			return
+		}
+		// rollback sql
+		chain.log.Error(err)
+		if chain.chainConf.ChainConfig().Contract.EnableSqlSupport {
+			txKey := block.GetTxKey()
+			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
+			// drop database if create contract fail
+			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+				var payload commonpb.ContractMgmtPayload
+				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
+					if payload.ContractId != nil {
+						dbName := statesqldb.GetContractDbName(chain.chainId, payload.ContractId.ContractName)
+						chain.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
+					}
+				}
+			}
+		}
+	}()
+
 	startTick := utils.CurrentTimeMillisSeconds()
 	chain.log.Debugf("add block(%d,%x)=(%x,%d,%d)",
 		block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, block.Header.TxCount, len(block.Txs))
 	chain.mu.Lock()
 	defer chain.mu.Unlock()
 
-	var txKey string
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-		txKey = block.GetTxKey()
-	}
 	height := block.Header.BlockHeight
 	if err = chain.isBlockLegal(block); err != nil {
 		chain.log.Errorf("block illegal [%d](hash:%x), %s", height, block.Header.BlockHash, err)
-		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
-		}
 		return err
 	}
 	lastProposed, rwSetMap := chain.proposalCache.GetProposedBlock(block)
 	if err = chain.checkLastProposedBlock(block, lastProposed, err, height, rwSetMap); err != nil {
-		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
-		}
 		return err
 	}
 
@@ -157,9 +170,6 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	if err = chain.blockchainStore.PutBlock(block, rwSet); err != nil {
 		// if put db error, then panic
 		chain.log.Error(err)
-		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
-		}
 		panic(err)
 	}
 	dbLasts := utils.CurrentTimeMillisSeconds() - startDBTick
