@@ -28,7 +28,6 @@ require (
 )
 
 replace (
-	chainmaker.org/chainmaker-go/accesscontrol => ./../../module/accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
 	chainmaker.org/chainmaker-go/common => ../../common
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf

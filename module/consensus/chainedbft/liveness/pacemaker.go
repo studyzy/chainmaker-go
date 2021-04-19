@@ -25,7 +25,7 @@ type Pacemaker struct {
 	highestQCLevel        uint64                   // The highest QC in local node
 	highestTCLevel        uint64                   // The tc level in incoming msg(proposal or vote)
 	highestCommittedLevel uint64                   // The latest committed level in local node
-	timeoutCertificate    *chainedbftpb.QuorumCert //
+	timeoutCertificate    *chainedbftpb.QuorumCert // The latest timeout QC info
 
 	ts               *timeservice.TimerService // Timer service
 	logger           *logger.CMLogger
