@@ -69,7 +69,7 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		snapshot:      snapshot,
 		vmManager:     vmManager,
 		gasUsed:       0,
-		currentDeep:   0,
+		currentDepth:  0,
 		hisResult:     make([]*callContractResult, 0),
 	}
 }
