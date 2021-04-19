@@ -25,6 +25,7 @@ var ErrorNotManageContract = fmt.Errorf("method not init_contract or upgrade")
 type Wacsi interface {
 	PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
 	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
 	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64)
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
@@ -52,72 +53,81 @@ func NewWacsi() Wacsi {
 }
 
 func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
-	req := serialize.EasyUnmarshal(requestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	value, _ := serialize.GetValueFromItems(req, "value", serialize.EasyKeyType_USER)
-	if field == nil {
-		field = ""
-	}
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	key, _ := ec.GetString("key")
+	field, _ := ec.GetString("field")
+	value, _ := ec.GetBytes("value")
+	if err := protocol.CheckKeyFieldStr(key, field); err != nil {
 		return err
 	}
-	err := txSimContext.Put(contractName, protocol.GetKeyStr(key.(string), field.(string)), value.([]byte))
+	err := txSimContext.Put(contractName, protocol.GetKeyStr(key, field), value)
 	return err
 }
 
 func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
-	req := serialize.EasyUnmarshal(requestBody)
-	key, _ := serialize.GetValueFromItems(req, "key", serialize.EasyKeyType_USER)
-	field, _ := serialize.GetValueFromItems(req, "field", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	if field == nil {
-		field = ""
-	}
-
-	if err := protocol.CheckKeyFieldStr(key.(string), field.(string)); err != nil {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	key, _ := ec.GetString("key")
+	field, _ := ec.GetString("field")
+	valuePtr, _ := ec.GetInt32("value_ptr")
+	if err := protocol.CheckKeyFieldStr(key, field); err != nil {
 		return nil, err
 	}
 
 	if data == nil {
-		value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key.(string), field.(string)))
+		value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key, field))
 		if err != nil {
-			msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key.(string), field.(string), err.Error())
+			msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key, field, err.Error())
 			return nil, msg
 		}
 		if value == nil {
 			value = make([]byte, 0)
 		}
-		copy(memory[valuePtr.(int32):valuePtr.(int32)+4], utils.IntToBytes(int32(len(value))))
+		copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(value))))
 		return value, nil
 	} else {
 		len := int32(len(data))
 		if len != 0 {
-			copy(memory[valuePtr.(int32):valuePtr.(int32)+len], data)
+			copy(memory[valuePtr:valuePtr+len], data)
 		}
 	}
 	return nil, nil
 }
 
+func (*WacsiImpl) DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	key, _ := ec.GetString("key")
+	field, _ := ec.GetString("field")
+	if err := protocol.CheckKeyFieldStr(key, field); err != nil {
+		return err
+	}
+
+	err := txSimContext.Del(contractName, protocol.GetKeyStr(key, field))
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64) {
-	req := serialize.EasyUnmarshal(requestBody)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
-	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
-	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
-	paramItem := serialize.EasyUnmarshal(param.([]byte))
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	valuePtr, _ := ec.GetInt32("value_ptr")
+	contractName, _ := ec.GetString("contract_name")
+	method, _ := ec.GetString("method")
+	param, _ := ec.GetBytes("param")
+
+	ecData := serialize.NewEasyCodecWithBytes(param)
+	paramItem := ecData.GetItems()
 
 	if data != nil { // get value from cache
 		result := txSimContext.GetCurrentResult()
-		copy(memory[valuePtr.(int32):valuePtr.(int32)+(int32)(len(result))], result)
+		copy(memory[valuePtr:valuePtr+int32(len(result))], result)
 		return nil, nil, gasUsed
 	}
 
 	// check param
-	if len(contractName.(string)) == 0 {
+	if len(contractName) == 0 {
 		return nil, fmt.Errorf("CallContract contractName is null"), gasUsed
 	}
-	if len(method.(string)) == 0 {
+	if len(method) == 0 {
 		return nil, fmt.Errorf("CallContract method is null"), gasUsed
 	}
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
@@ -135,21 +145,21 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 			return nil, fmt.Errorf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string))), gasUsed
 		}
 	}
-	if err := protocol.CheckKeyFieldStr(contractName.(string), method.(string)); err != nil {
+	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
 		return nil, err, gasUsed
 	}
 
 	// call contract
 	gasUsed += protocol.CallContractGasOnce
-	paramMap := serialize.EasyCodecItemToParamsMap(paramItem)
-	result, code := txSimContext.CallContract(&common.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, gasUsed, common.TxType_INVOKE_USER_CONTRACT)
+	paramMap := ecData.ToMap()
+	result, code := txSimContext.CallContract(&common.ContractId{ContractName: contractName}, method, nil, paramMap, gasUsed, common.TxType_INVOKE_USER_CONTRACT)
 	gasUsed += uint64(result.GasUsed)
 	if code != common.TxStatusCode_SUCCESS {
 		return nil, fmt.Errorf("CallContract %s, , msg: %s", code.String(), result.Message), gasUsed
 	}
 	// set value length to memory
 	l := utils.IntToBytes(int32(len(result.Result)))
-	copy(memory[valuePtr.(int32):valuePtr.(int32)+4], l)
+	copy(memory[valuePtr:valuePtr+4], l)
 	return result.Result, nil, gasUsed
 }
 
@@ -169,11 +179,9 @@ func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte
 }
 
 func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
-	req := serialize.EasyUnmarshal(requestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	sql, _ := ec.GetString("sql")
+	ptr, _ := ec.GetInt32("value_ptr")
 
 	// verify
 	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
@@ -193,11 +201,9 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 }
 
 func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
-	req := serialize.EasyUnmarshal(requestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	sql, _ := ec.GetString("sql")
+	ptr, _ := ec.GetInt32("value_ptr")
 
 	// verify
 	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
@@ -234,11 +240,9 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 }
 
 func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
-	req := serialize.EasyUnmarshal(requestBody)
-	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
-	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	rsIndex := rsIndexI.(int32)
-	valuePtr := valuePtrI.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	rsIndex, _ := ec.GetInt32("rs_index")
+	valuePtr, _ := ec.GetInt32("value_ptr")
 
 	// get
 	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
@@ -254,12 +258,9 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 }
 
 func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
-	req := serialize.EasyUnmarshal(requestBody)
-	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
-	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-
-	rsIndex := rsIndexI.(int32)
-	ptr := valuePtrI.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	rsIndex, _ := ec.GetInt32("rs_index")
+	ptr, _ := ec.GetInt32("value_ptr")
 
 	// get handle
 	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
@@ -292,11 +293,9 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 }
 
 func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
-	req := serialize.EasyUnmarshal(requestBody)
-	rsIndexI, _ := serialize.GetValueFromItems(req, "rs_index", serialize.EasyKeyType_USER)
-	valuePtrI, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	rsIndex := rsIndexI.(int32)
-	valuePtr := valuePtrI.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	rsIndex, _ := ec.GetInt32("rs_index")
+	valuePtr, _ := ec.GetInt32("value_ptr")
 
 	// get
 	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
@@ -312,11 +311,9 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 }
 
 func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
-	req := serialize.EasyUnmarshal(requestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	sql, _ := ec.GetString("sql")
+	ptr, _ := ec.GetInt32("value_ptr")
 
 	// verify
 	if err := w.verifySql.VerifyDMLSql(sql); err != nil {
@@ -343,11 +340,9 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 	if !w.isManageContract(method) {
 		return ErrorNotManageContract
 	}
-	req := serialize.EasyUnmarshal(requestBody)
-	sqlI, _ := serialize.GetValueFromItems(req, "sql", serialize.EasyKeyType_USER)
-	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-	sql := sqlI.(string)
-	ptr := valuePtr.(int32)
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	sql, _ := ec.GetString("sql")
+	ptr, _ := ec.GetInt32("value_ptr")
 
 	// verify
 	if err := w.verifySql.VerifyDDLSql(sql); err != nil {
