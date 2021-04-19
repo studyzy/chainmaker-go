@@ -99,6 +99,7 @@ func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Lo
 		if err != nil {
 			panic(fmt.Sprintf("failed to open mysql:%s", err))
 		}
+		log.Debug("open new gorm db connection for " + conf.SqlDbType)
 		provider.db = db
 		provider.contextDbName = "mysql" //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
