@@ -16,6 +16,7 @@ import (
 var ERROR_NULL_SQL = errors.New("null sql")
 var ERROR_INVALID_SQL = errors.New("invalid sql")
 var ERROR_FORBIDDEN_SQL = errors.New("forbidden sql")
+var ERROR_FORBIDDEN_SQL_KEYWORD = errors.New("forbidden sql keyword")
 var ERROR_FORBIDDEN_MULTI_SQL = errors.New("forbidden multi sql statement in one function call")
 var ERROR_FORBIDDEN_DOT_IN_TABLE = errors.New("forbidden dot in table name")
 var ERROR_STATE_INFOS = errors.New("you can't change table state_infos")
@@ -85,7 +86,7 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 	if match {
 		return ERROR_FORBIDDEN_SQL
 	}
-	tableNames := s.getSqlTableName(sql)
+	tableNames := s.getSqlTableName(SQL)
 	for _, tableName := range tableNames {
 		if strings.Contains(tableName, ".") {
 			return ERROR_FORBIDDEN_DOT_IN_TABLE
@@ -94,11 +95,65 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 			return ERROR_STATE_INFOS
 		}
 	}
-	count := s.getSqlStatementCount(sql)
+	count := s.getSqlStatementCount(SQL)
 	if count > 1 {
 		return ERROR_FORBIDDEN_MULTI_SQL
 	}
+	if err := s.checkHasForbiddenKeyword(SQL); err != nil {
+		return err
+	}
 	return nil
+}
+func (s *StandardSqlVerify) checkHasForbiddenKeyword(sql string) error {
+	stringRanges := findStringRange(sql)
+	reg := regexp.MustCompile(`(NOW|SYSDATE|RAND|NEWID|UUID)\s*\(`)
+	result := reg.FindAllIndex([]byte(sql), -1)
+	reg2 := regexp.MustCompile(`\s+(AUTO_INCREMENT|IDENTITY)[^\w]+`)
+	result2 := reg2.FindAllIndex([]byte(sql), -1)
+	for _, r2 := range result2 {
+		result = append(result, r2)
+	}
+	for _, match := range result {
+		if !isInString(match, stringRanges) {
+			return ERROR_FORBIDDEN_SQL_KEYWORD
+		}
+	}
+	return nil
+}
+func isInString(match []int, strRange [][2]int) bool {
+	for _, strR := range strRange {
+		if match[0] > strR[0] && match[0] < strR[1] {
+			return true
+		}
+	}
+	return false
+}
+func findStringRange(sql string) [][2]int {
+	inString := false
+	stringRange := [][2]int{}
+	var range1 [2]int
+	skipNext := false
+	for i, c := range sql {
+		if skipNext {
+			skipNext = false
+			continue
+		}
+		if c == '\'' {
+			if i != len(sql)-1 && sql[i+1] == '\'' {
+				skipNext = true
+				continue
+			}
+			inString = !inString
+			if inString {
+				range1[0] = i
+			} else {
+				range1[1] = i
+				stringRange = append(stringRange, range1)
+				range1 = [2]int{}
+			}
+		}
+	}
+	return stringRange
 }
 
 func (s *StandardSqlVerify) getFmtSql(sql string) (string, error) {

@@ -100,3 +100,39 @@ func TestStandardSqlVerify_ForbiddenCheck(t *testing.T) {
 		})
 	}
 }
+func TestFindStringRange(t *testing.T) {
+	table := map[string][][2]int{}
+	table["'abc'"] = [][2]int{{0, 4}}
+	table["'a''b''c'"] = [][2]int{{0, 8}}
+	table["'ab','c'd"] = [][2]int{{0, 3}, {5, 7}}
+	for sql, result := range table {
+		t.Run(sql, func(t *testing.T) {
+			r := findStringRange(sql)
+			t.Log(sql, r)
+			assert.Equal(t, result, r)
+		})
+	}
+}
+func TestStandardSqlVerify_checkHasForbiddenKeyword(t *testing.T) {
+	table := map[string]bool{}
+	table["SElect id,name from t1 where x=newid()"] = false
+	table["SElect id,name from t1 where x='select * from rand()'"] = true
+	table["SElect * from t1 where x=333 and y='select 'xx' a,sysdate()'"] = true
+	table[" update t2 set time=now()"] = false
+	table[" update t2 set now1=now2"] = true
+	table[" create table t1 (id int primary key identity ,name varchar(10))"] = false
+	table["create table t2 (identity1 int primary key,name varchar(10))"] = true
+	v := &StandardSqlVerify{}
+	for sql, result := range table {
+		t.Run(sql, func(t *testing.T) {
+			SQL, _ := v.getFmtSql(sql)
+			err := v.checkHasForbiddenKeyword(SQL)
+			if result {
+				assert.Nil(t, err)
+			} else {
+				assert.NotNil(t, err)
+				t.Log(sql, err)
+			}
+		})
+	}
+}
