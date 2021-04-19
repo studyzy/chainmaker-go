@@ -17,6 +17,7 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/memory"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
@@ -86,7 +87,7 @@ type instructionsContext struct {
 	readOnly     bool
 	gasSetting   *GasSetting
 	lastReturn   []byte
-	gasRemaining *utils.Int
+	gasRemaining *evmutils.Int
 	closureExec  ClosureExecute
 	exitOpCode   opcodes.OpCode
 }
@@ -117,7 +118,7 @@ type IInstructions interface {
 var instructionTable [opcodes.MaxOpCodesCount]opCodeInstruction
 
 //returns offset, size in type uint64
-func (i *instructionsContext) memoryGasCostAndMalloc(offset *utils.Int, size *utils.Int) (uint64, uint64, uint64, error) {
+func (i *instructionsContext) memoryGasCostAndMalloc(offset *evmutils.Int, size *evmutils.Int) (uint64, uint64, uint64, error) {
 	gasLeft := i.gasRemaining.Uint64()
 	o, s, increased, err := i.memory.WillIncrease(offset, size)
 	if err != nil {
@@ -284,7 +285,7 @@ func New(
 		closureExec: closureExecute,
 	}
 
-	is.gasRemaining = utils.FromBigInt(context.Transaction.GasLimit.Int)
+	is.gasRemaining = evmutils.FromBigInt(context.Transaction.GasLimit.Int)
 
 	if gasSetting != nil {
 		is.gasSetting = gasSetting

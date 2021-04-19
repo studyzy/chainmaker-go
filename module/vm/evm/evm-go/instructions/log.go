@@ -17,6 +17,7 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
@@ -46,7 +47,7 @@ func loadLog() {
 
 				for t := 0; t < topicCount; t++ {
 					topic := ctx.stack.Pop()
-					topicBytes := utils.EVMIntToHashBytes(topic)
+					topicBytes := evmutils.EVMIntToHashBytes(topic)
 					topics = append(topics, topicBytes[:])
 				}
 

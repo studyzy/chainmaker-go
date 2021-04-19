@@ -17,14 +17,15 @@
 package environment
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 type Contract struct {
-	Address *utils.Int
+	Address *evmutils.Int
 	Code    []byte
-	Hash    *utils.Int
+	Hash    *evmutils.Int
 
 	codeDataFlag map[uint64]bool
 }

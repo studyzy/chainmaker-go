@@ -17,7 +17,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/crypto/ripemd160"
 )
@@ -36,5 +36,5 @@ func (c *ripemd160hash) GasCost(input []byte) uint64 {
 func (c *ripemd160hash) Execute(input []byte) ([]byte, error) {
 	ripemd := ripemd160.New()
 	ripemd.Write(input)
-	return utils.LeftPadBytes(ripemd.Sum(nil), 32), nil
+	return evmutils.LeftPadBytes(ripemd.Sum(nil), 32), nil
 }

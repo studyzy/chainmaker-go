@@ -16,6 +16,7 @@
 package evm_go
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/instructions"
 	"chainmaker.org/chainmaker-go/evm/evm-go/memory"
@@ -62,7 +63,7 @@ func Load() {
 
 func New(param EVMParam) *EVM {
 	if param.Context.Block.GasLimit.Cmp(param.Context.Transaction.GasLimit.Int) < 0 {
-		param.Context.Transaction.GasLimit = utils.FromBigInt(param.Context.Block.GasLimit.Int)
+		param.Context.Transaction.GasLimit = evmutils.FromBigInt(param.Context.Block.GasLimit.Int)
 	}
 
 	evm := &EVM{

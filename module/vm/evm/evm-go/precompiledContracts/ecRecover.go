@@ -17,7 +17,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"math/big"
@@ -43,7 +43,7 @@ func allZero(src []byte) bool {
 func (e ecRecover) Execute(input []byte) ([]byte, error) {
 	const ecRecoverInputLength = 128
 
-	input = utils.RightPaddingSlice(input, ecRecoverInputLength)
+	input = evmutils.RightPaddingSlice(input, ecRecoverInputLength)
 	// "input" is (hash, v, r, s), each 32 bytes
 	// but for ecrecover we want (r, s, v)
 
@@ -68,5 +68,5 @@ func (e ecRecover) Execute(input []byte) ([]byte, error) {
 	}
 
 	// the first byte of pubkey is bitcoin heritage
-	return utils.LeftPaddingSlice(crypto.Keccak256(pubKey[1:])[12:], 32), nil
+	return evmutils.LeftPaddingSlice(crypto.Keccak256(pubKey[1:])[12:], 32), nil
 }

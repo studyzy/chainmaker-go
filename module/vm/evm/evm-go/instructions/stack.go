@@ -17,8 +17,8 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 func loadStack() {
@@ -44,9 +44,9 @@ func setPushActions() {
 			action: func(ctx *instructionsContext) ([]byte, error) {
 				start := ctx.pc + 1
 
-				codeBytes := utils.GetDataFrom(ctx.environment.Contract.Code, start, bytesSize)
+				codeBytes := evmutils.GetDataFrom(ctx.environment.Contract.Code, start, bytesSize)
 
-				i := utils.New(0)
+				i := evmutils.New(0)
 				i.SetBytes(codeBytes)
 				ctx.stack.Push(i)
 				ctx.pc += bytesSize

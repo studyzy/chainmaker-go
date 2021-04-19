@@ -17,6 +17,7 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/precompiledContracts"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
@@ -197,14 +198,14 @@ func callValueAction(ctx *instructionsContext) ([]byte, error) {
 
 func callDataLoadAction(ctx *instructionsContext) ([]byte, error) {
 	i := ctx.stack.Peek()
-	data := utils.GetDataFrom(ctx.environment.Message.Data, i.Uint64(), 32)
+	data := evmutils.GetDataFrom(ctx.environment.Message.Data, i.Uint64(), 32)
 
 	i.SetBytes(data)
 	return nil, nil
 }
 
 func callDataSizeAction(ctx *instructionsContext) ([]byte, error) {
-	i := utils.New(0)
+	i := evmutils.New(0)
 	s := ctx.environment.Message.DataSize()
 
 	i.SetUint64(s)
@@ -223,13 +224,13 @@ func callDataCopyAction(ctx *instructionsContext) ([]byte, error) {
 		return nil, err
 	}
 
-	data := utils.GetDataFrom(ctx.environment.Message.Data, dOffset.Uint64(), size.Uint64())
+	data := evmutils.GetDataFrom(ctx.environment.Message.Data, dOffset.Uint64(), size.Uint64())
 	err = ctx.memory.Store(offset, data)
 	return nil, err
 }
 
 func codeSizeAction(ctx *instructionsContext) ([]byte, error) {
-	s := utils.New(int64(len(ctx.environment.Contract.Code)))
+	s := evmutils.New(int64(len(ctx.environment.Contract.Code)))
 	ctx.stack.Push(s)
 	return nil, nil
 }
@@ -245,7 +246,7 @@ func codeCopyAction(ctx *instructionsContext) ([]byte, error) {
 		return nil, err
 	}
 
-	data := utils.GetDataFrom(ctx.environment.Contract.Code, dOffset.Uint64(), size.Uint64())
+	data := evmutils.GetDataFrom(ctx.environment.Contract.Code, dOffset.Uint64(), size.Uint64())
 	err = ctx.memory.Store(offset, data)
 	return nil, err
 }
@@ -292,13 +293,13 @@ func extCodeCopyAction(ctx *instructionsContext) ([]byte, error) {
 		return nil, err
 	}
 
-	data := utils.GetDataFrom(code, dOffset.Uint64(), size.Uint64())
+	data := evmutils.GetDataFrom(code, dOffset.Uint64(), size.Uint64())
 	err = ctx.memory.Store(offset, data)
 	return nil, err
 }
 
 func returnDataSizeAction(ctx *instructionsContext) ([]byte, error) {
-	ctx.stack.Push(utils.New(int64(len(ctx.lastReturn))))
+	ctx.stack.Push(evmutils.New(int64(len(ctx.lastReturn))))
 	return nil, nil
 }
 
@@ -326,7 +327,7 @@ func extCodeHashAction(ctx *instructionsContext) ([]byte, error) {
 	addr := ctx.stack.Peek()
 
 	if precompiledContracts.IsPrecompiledContract(addr) {
-		addr.SetBytes(utils.ZeroHash)
+		addr.SetBytes(evmutils.ZeroHash)
 		return nil, nil
 	}
 

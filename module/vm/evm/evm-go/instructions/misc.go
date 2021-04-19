@@ -17,6 +17,7 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
@@ -75,9 +76,9 @@ func sha3Action(ctx *instructionsContext) ([]byte, error) {
 		return nil, err
 	}
 
-	hash := utils.Keccak256(bytes)
+	hash := evmutils.Keccak256(bytes)
 
-	i := utils.New(0)
+	i := evmutils.New(0)
 	i.SetBytes(hash)
 	ctx.stack.Push(i)
 	return nil, nil

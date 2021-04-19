@@ -16,7 +16,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 )
 
 type PrecompiledContract interface {
@@ -45,7 +45,7 @@ var Contracts = [ContractsMaxAddress]PrecompiledContract{
 	15: &creatorPk{},
 }
 
-func IsPrecompiledContract(address *utils.Int) bool {
+func IsPrecompiledContract(address *evmutils.Int) bool {
 	if address.IsUint64() {
 		addr := address.Uint64()
 		return addr < ContractsMaxAddress

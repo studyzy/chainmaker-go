@@ -17,8 +17,8 @@
 package storage
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 )
@@ -30,7 +30,7 @@ type ContractStorage struct {
 	ExternalStorage IExternalStorage
 	readOnlyCache   readOnlyCache
 	Ctx             protocol.TxSimContext
-	BlockHash       *utils.Int
+	BlockHash       *evmutils.Int
 }
 
 func NewStorage(extStorage IExternalStorage) *ContractStorage {
@@ -53,15 +53,15 @@ func NewStorage(extStorage IExternalStorage) *ContractStorage {
 	return s
 }
 
-func (c *ContractStorage) GetBalance(address *utils.Int) (*utils.Int, error) {
-	return utils.New(0), nil
+func (c *ContractStorage) GetBalance(address *evmutils.Int) (*evmutils.Int, error) {
+	return evmutils.New(0), nil
 }
 
-func (c *ContractStorage) CanTransfer(from, to, val *utils.Int) bool {
+func (c *ContractStorage) CanTransfer(from, to, val *evmutils.Int) bool {
 	return false
 }
 
-func (c *ContractStorage) GetCode(address *utils.Int) (code []byte, err error) {
+func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error) {
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 		if contractVersion, err := c.Ctx.Get(address.String(), []byte(protocol.ContractVersion)); err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractVersion...)
@@ -73,25 +73,25 @@ func (c *ContractStorage) GetCode(address *utils.Int) (code []byte, err error) {
 	return nil, err
 }
 
-func (c *ContractStorage) GetCodeSize(address *utils.Int) (size *utils.Int, err error) {
+func (c *ContractStorage) GetCodeSize(address *evmutils.Int) (size *evmutils.Int, err error) {
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 		if contractVersion, err := c.Ctx.Get(address.String(), []byte(protocol.ContractVersion)); err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractVersion...)
 			code, err := c.Ctx.Get(string(contractName), versionedByteCodeKey)
-			return utils.New(int64(len(code))), err
+			return evmutils.New(int64(len(code))), err
 		}
 	}
 	log.Error("failed to get other conteact  code size :", err.Error())
 	return nil, err
 }
 
-func (c *ContractStorage) GetCodeHash(address *utils.Int) (codeHase *utils.Int, err error) {
+func (c *ContractStorage) GetCodeHash(address *evmutils.Int) (codeHase *evmutils.Int, err error) {
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 		if contractVersion, err := c.Ctx.Get(address.String(), []byte(protocol.ContractVersion)); err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractVersion...)
 			code, err := c.Ctx.Get(string(contractName), versionedByteCodeKey)
-			hash := utils.Keccak256(code)
-			i := utils.New(0)
+			hash := evmutils.Keccak256(code)
+			i := evmutils.New(0)
 			i.SetBytes(hash)
 			return i, err
 		}
@@ -100,38 +100,38 @@ func (c *ContractStorage) GetCodeHash(address *utils.Int) (codeHase *utils.Int, 
 	return nil, err
 }
 
-func (c *ContractStorage) GetBlockHash(block *utils.Int) (*utils.Int, error) {
+func (c *ContractStorage) GetBlockHash(block *evmutils.Int) (*evmutils.Int, error) {
 	currentHight := c.Ctx.GetBlockHeight() - 1
-	high := utils.MinI(currentHight, block.Int64())
+	high := evmutils.MinI(currentHight, block.Int64())
 	Block, err := c.Ctx.GetBlockchainStore().GetBlock(high)
 	if err != nil {
-		return utils.New(0), err
+		return evmutils.New(0), err
 	}
-	hash, err := utils.HashBytesToEVMInt(Block.GetHeader().GetBlockHash())
+	hash, err := evmutils.HashBytesToEVMInt(Block.GetHeader().GetBlockHash())
 	if err != nil {
-		return utils.New(0), err
+		return evmutils.New(0), err
 	}
 	return hash, nil
 }
 
-func (c *ContractStorage) CreateAddress(caller *utils.Int, tx environment.Transaction) *utils.Int {
+func (c *ContractStorage) CreateAddress(caller *evmutils.Int, tx environment.Transaction) *evmutils.Int {
 	//in seal abc smart assets application, we always create fixed contract address.
 	return c.CreateFixedAddress(caller, nil, tx)
 }
 
-func (c *ContractStorage) CreateFixedAddress(caller *utils.Int, salt *utils.Int, tx environment.Transaction) *utils.Int {
+func (c *ContractStorage) CreateFixedAddress(caller *evmutils.Int, salt *evmutils.Int, tx environment.Transaction) *evmutils.Int {
 	data := append(caller.Bytes(), tx.TxHash...)
 	if salt != nil {
 		data = append(data, salt.Bytes()...)
 	}
-	return utils.MakeAddress(data)
+	return evmutils.MakeAddress(data)
 }
-func (c *ContractStorage) Load(n string, k string) (*utils.Int, error) {
+func (c *ContractStorage) Load(n string, k string) (*evmutils.Int, error) {
 	val, err := c.Ctx.Get(n, []byte(k))
 	if err != nil {
 		return nil, err
 	}
-	r := utils.New(0)
+	r := evmutils.New(0)
 	r.SetBytes(val)
 	return r, err
 }

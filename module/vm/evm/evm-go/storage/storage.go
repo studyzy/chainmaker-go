@@ -17,6 +17,7 @@
 package storage
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
@@ -48,7 +49,7 @@ func New(extStorage IExternalStorage) *Storage {
 	return s
 }
 
-func (s *Storage) SLoad(n *utils.Int, k *utils.Int) (*utils.Int, error) {
+func (s *Storage) SLoad(n *evmutils.Int, k *evmutils.Int) (*evmutils.Int, error) {
 	//fmt.Println("SLoad", n.String(), "k", k.String())
 	if s.ResultCache.OriginalData == nil || s.ResultCache.CachedData == nil || s.ExternalStorage == nil {
 		return nil, utils.ErrStorageNotInitialized
@@ -72,19 +73,19 @@ func (s *Storage) SLoad(n *utils.Int, k *utils.Int) (*utils.Int, error) {
 	return i, nil
 }
 
-func (s *Storage) SStore(n *utils.Int, k *utils.Int, v *utils.Int) {
+func (s *Storage) SStore(n *evmutils.Int, k *evmutils.Int, v *evmutils.Int) {
 	s.ResultCache.CachedData.Set(n.String(), k.String(), v)
 	//fmt.Println("SStore", n.String(), "k", k.String(), "v", v.String())
 }
 
-func (s *Storage) BalanceModify(address *utils.Int, value *utils.Int, neg bool) {
+func (s *Storage) BalanceModify(address *evmutils.Int, value *evmutils.Int, neg bool) {
 	kString := address.String()
 
 	b, exist := s.ResultCache.Balance[kString]
 	if !exist {
 		b = &balance{
-			Address: utils.FromBigInt(address.Int),
-			Balance: utils.New(0),
+			Address: evmutils.FromBigInt(address.Int),
+			Balance: evmutils.New(0),
 		}
 
 		s.ResultCache.Balance[kString] = b
@@ -97,7 +98,7 @@ func (s *Storage) BalanceModify(address *utils.Int, value *utils.Int, neg bool) 
 	}
 }
 
-func (s *Storage) Log(address *utils.Int, topics [][]byte, data []byte, context environment.Context) {
+func (s *Storage) Log(address *evmutils.Int, topics [][]byte, data []byte, context environment.Context) {
 	kString := address.String()
 
 	var theLog = Log{
@@ -111,16 +112,16 @@ func (s *Storage) Log(address *utils.Int, topics [][]byte, data []byte, context 
 	return
 }
 
-func (s *Storage) Destruct(address *utils.Int) {
+func (s *Storage) Destruct(address *evmutils.Int) {
 	s.ResultCache.Destructs[address.String()] = address
 }
 
-type commonGetterFunc func(*utils.Int) (*utils.Int, error)
+type commonGetterFunc func(*evmutils.Int) (*evmutils.Int, error)
 
-func (s *Storage) commonGetter(key *utils.Int, cache Cache, getterFunc commonGetterFunc) (*utils.Int, error) {
+func (s *Storage) commonGetter(key *evmutils.Int, cache Cache, getterFunc commonGetterFunc) (*evmutils.Int, error) {
 	keyStr := key.String()
 	if b, exists := cache[keyStr]; exists {
-		return utils.FromBigInt(b.Int), nil
+		return evmutils.FromBigInt(b.Int), nil
 	}
 
 	b, err := getterFunc(key)
@@ -131,14 +132,14 @@ func (s *Storage) commonGetter(key *utils.Int, cache Cache, getterFunc commonGet
 	return b, err
 }
 
-func (s *Storage) Balance(address *utils.Int) (*utils.Int, error) {
+func (s *Storage) Balance(address *evmutils.Int) (*evmutils.Int, error) {
 	return s.ExternalStorage.GetBalance(address)
 }
-func (s *Storage) SetCode(address *utils.Int, code []byte) {
+func (s *Storage) SetCode(address *evmutils.Int, code []byte) {
 	keyStr := address.String()
 	s.readOnlyCache.Code[keyStr] = code
 }
-func (s *Storage) GetCode(address *utils.Int) ([]byte, error) {
+func (s *Storage) GetCode(address *evmutils.Int) ([]byte, error) {
 	keyStr := address.String()
 	if b, exists := s.readOnlyCache.Code[keyStr]; exists {
 		return b, nil
@@ -151,11 +152,11 @@ func (s *Storage) GetCode(address *utils.Int) ([]byte, error) {
 
 	return b, err
 }
-func (s *Storage) SetCodeSize(address *utils.Int, size *utils.Int) {
+func (s *Storage) SetCodeSize(address *evmutils.Int, size *evmutils.Int) {
 	keyStr := address.String()
 	s.readOnlyCache.CodeSize[keyStr] = size
 }
-func (s *Storage) GetCodeSize(address *utils.Int) (*utils.Int, error) {
+func (s *Storage) GetCodeSize(address *evmutils.Int) (*evmutils.Int, error) {
 	keyStr := address.String()
 	if size, exists := s.readOnlyCache.CodeSize[keyStr]; exists {
 		return size, nil
@@ -168,11 +169,11 @@ func (s *Storage) GetCodeSize(address *utils.Int) (*utils.Int, error) {
 
 	return size, err
 }
-func (s *Storage) SetCodeHash(address *utils.Int, codeHash *utils.Int) {
+func (s *Storage) SetCodeHash(address *evmutils.Int, codeHash *evmutils.Int) {
 	keyStr := address.String()
 	s.readOnlyCache.CodeHash[keyStr] = codeHash
 }
-func (s *Storage) GetCodeHash(address *utils.Int) (*utils.Int, error) {
+func (s *Storage) GetCodeHash(address *evmutils.Int) (*evmutils.Int, error) {
 	keyStr := address.String()
 	if hash, exists := s.readOnlyCache.CodeHash[keyStr]; exists {
 		return hash, nil
@@ -186,7 +187,7 @@ func (s *Storage) GetCodeHash(address *utils.Int) (*utils.Int, error) {
 	return hash, err
 }
 
-func (s *Storage) GetBlockHash(block *utils.Int) (*utils.Int, error) {
+func (s *Storage) GetBlockHash(block *evmutils.Int) (*evmutils.Int, error) {
 	keyStr := block.String()
 	if hash, exists := s.readOnlyCache.BlockHash[keyStr]; exists {
 		return hash, nil
@@ -199,10 +200,10 @@ func (s *Storage) GetBlockHash(block *utils.Int) (*utils.Int, error) {
 
 	return hash, err
 }
-func (s *Storage) CreateAddress(caller *utils.Int, tx environment.Transaction) *utils.Int {
+func (s *Storage) CreateAddress(caller *evmutils.Int, tx environment.Transaction) *evmutils.Int {
 	return s.ExternalStorage.CreateAddress(caller, tx)
 }
 
-func (s *Storage) CreateFixedAddress(caller *utils.Int, salt *utils.Int, tx environment.Transaction) *utils.Int {
+func (s *Storage) CreateFixedAddress(caller *evmutils.Int, salt *evmutils.Int, tx environment.Transaction) *evmutils.Int {
 	return s.ExternalStorage.CreateFixedAddress(caller, salt, tx)
 }

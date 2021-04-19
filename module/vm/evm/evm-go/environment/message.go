@@ -17,12 +17,12 @@
 package environment
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 )
 
 type Message struct {
-	Caller *utils.Int // caller address
-	Value  *utils.Int
+	Caller *evmutils.Int // caller address
+	Value  *evmutils.Int
 	Data   []byte // func & param
 }
 

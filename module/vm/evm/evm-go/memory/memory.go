@@ -17,6 +17,7 @@
 package memory
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
@@ -28,9 +29,9 @@ func New() *Memory {
 	return &Memory{}
 }
 
-func (m *Memory) WillIncrease(offset *utils.Int, size *utils.Int) (o uint64, s uint64, i uint64, err error) {
+func (m *Memory) WillIncrease(offset *evmutils.Int, size *evmutils.Int) (o uint64, s uint64, i uint64, err error) {
 	mLen := uint64(len(m.cell))
-	bound := utils.FromBigInt(offset.Int)
+	bound := evmutils.FromBigInt(offset.Int)
 	bound.Add(size)
 
 	if !bound.IsUint64() {

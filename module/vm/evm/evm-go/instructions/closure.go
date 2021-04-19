@@ -17,8 +17,8 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 type ClosureExecute func(ClosureParam) ([]byte, error)
@@ -26,15 +26,15 @@ type ClosureExecute func(ClosureParam) ([]byte, error)
 type ClosureParam struct {
 	VM           interface{}
 	OpCode       opcodes.OpCode
-	GasRemaining *utils.Int
+	GasRemaining *evmutils.Int
 
-	ContractAddress *utils.Int
-	ContractHash    *utils.Int
+	ContractAddress *evmutils.Int
+	ContractHash    *evmutils.Int
 	ContractCode    []byte
 
 	CallData   []byte
-	CallValue  *utils.Int
-	CreateSalt *utils.Int
+	CallValue  *evmutils.Int
+	CreateSalt *evmutils.Int
 }
 
 func loadClosure() {
@@ -86,7 +86,7 @@ func loadClosure() {
 func commonCall(ctx *instructionsContext, opCode opcodes.OpCode) ([]byte, error) {
 	_ = ctx.stack.Pop()
 	addr := ctx.stack.Pop()
-	var v *utils.Int = nil
+	var v *evmutils.Int = nil
 	if opCode != opcodes.DELEGATECALL && opCode != opcodes.STATICCALL {
 		v = ctx.stack.Pop()
 	}
@@ -140,9 +140,9 @@ func commonCall(ctx *instructionsContext, opCode opcodes.OpCode) ([]byte, error)
 
 	err = ctx.memory.StoreNBytes(offset, size, callRet)
 	if err != nil {
-		ctx.stack.Push(utils.New(0))
+		ctx.stack.Push(evmutils.New(0))
 	} else {
-		ctx.stack.Push(utils.New(1))
+		ctx.stack.Push(evmutils.New(1))
 	}
 	return callRet, err
 }
@@ -168,13 +168,13 @@ func commonCreate(ctx *instructionsContext, opCode opcodes.OpCode) ([]byte, erro
 	mOffset := ctx.stack.Pop()
 	mSize := ctx.stack.Pop()
 	//rand.Seed(time.Now().UnixNano())
-	var salt *utils.Int = utils.New(0)
+	var salt *evmutils.Int = evmutils.New(0)
 
 	if opCode == opcodes.CREATE2 {
 		salt = salt.Add(ctx.stack.Pop())
 	}
-	solt0 := utils.New(0).SetBytes(ctx.environment.Contract.Code[0:ctx.pc])
-	salt.Add(utils.FromBigInt(solt0))
+	solt0 := evmutils.New(0).SetBytes(ctx.environment.Contract.Code[0:ctx.pc])
+	salt.Add(evmutils.FromBigInt(solt0))
 	//gas check
 	offset, size, _, err := ctx.memoryGasCostAndMalloc(mOffset, mSize)
 	if err != nil {
@@ -187,11 +187,11 @@ func commonCreate(ctx *instructionsContext, opCode opcodes.OpCode) ([]byte, erro
 	}
 	addr := ctx.storage.CreateFixedAddress(ctx.environment.Message.Caller, salt, ctx.environment.Transaction)
 	ctx.storage.SetCode(addr, code)
-	hash := utils.Keccak256(code)
-	i := utils.New(0)
+	hash := evmutils.Keccak256(code)
+	i := evmutils.New(0)
 	i.SetBytes(hash)
 	ctx.storage.SetCodeHash(addr, i)
-	ctx.storage.SetCodeSize(addr, utils.New(int64(len(code))))
+	ctx.storage.SetCodeSize(addr, evmutils.New(int64(len(code))))
 	cParam := ClosureParam{
 		VM:              ctx.vm,
 		OpCode:          opCode,
@@ -205,7 +205,7 @@ func commonCreate(ctx *instructionsContext, opCode opcodes.OpCode) ([]byte, erro
 
 	ret, err := ctx.closureExec(cParam)
 	if err != nil {
-		ctx.stack.Push(utils.New(0))
+		ctx.stack.Push(evmutils.New(0))
 	} else {
 		//addr:=ctx.storage.CreateFixedAddress(ctx.environment.Message.Caller,salt,ctx.environment.Transaction)
 		ctx.stack.Push(addr)

@@ -1,10 +1,10 @@
 package evm
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 	"chainmaker.org/chainmaker-go/pb"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"encoding/hex"
@@ -21,42 +21,42 @@ func Test_main(t *testing.T) {
 	invoke()
 }
 
-var blockGasLimit = utils.New(1e10)
+var blockGasLimit = evmutils.New(1e10)
 
-func constTransactionGasPrice() *utils.Int {
-	return utils.New(1)
+func constTransactionGasPrice() *evmutils.Int {
+	return evmutils.New(1)
 }
-func constTransactionGasLimit() *utils.Int {
-	return utils.New(100000000)
+func constTransactionGasLimit() *evmutils.Int {
+	return evmutils.New(100000000)
 }
 
-func contractAddress() *utils.Int {
-	address := utils.Keccak256([]byte("contract1"))
+func contractAddress() *evmutils.Int {
+	address := evmutils.Keccak256([]byte("contract1"))
 	addr := hex.EncodeToString(address)[24:]
 	fmt.Println("contract addr1 =", addr)
-	return utils.FromHexString(addr)
+	return evmutils.FromHexString(addr)
 }
 
-func contractHash() *utils.Int {
-	return utils.New(100000000)
+func contractHash() *evmutils.Int {
+	return evmutils.New(100000000)
 }
 
-func accountAddress1() *utils.Int {
+func accountAddress1() *evmutils.Int {
 	// fc12ad814631ba689f7abe671016f75c54c607f082ae6b0881fac0abeda21781
 	// 1016f75c54c607f082ae6b0881fac0abeda21781
 	pubKeyByte, _ := hex.DecodeString(pubKey1)
-	address := utils.Keccak256(pubKeyByte)
+	address := evmutils.Keccak256(pubKeyByte)
 	addr := hex.EncodeToString(address)[24:]
 	fmt.Println("addr1 =", addr)
-	return utils.FromHexString(addr)
+	return evmutils.FromHexString(addr)
 }
 
-func accountAddress2() *utils.Int {
+func accountAddress2() *evmutils.Int {
 	pubKeyByte, _ := hex.DecodeString(pubKey2)
-	address := utils.Keccak256(pubKeyByte)
+	address := evmutils.Keccak256(pubKeyByte)
 	addr := hex.EncodeToString(address)[24:]
 	fmt.Println("addr2 =", addr)
-	return utils.FromHexString(addr)
+	return evmutils.FromHexString(addr)
 }
 
 //topic0=hash("Transfer(address,uint256,uint256);")
@@ -96,7 +96,7 @@ func invoke() {
 
 	evmTransaction := environment.Transaction{
 		TxHash:   []byte("0x1"),
-		Origin:   utils.New(0), // creator address
+		Origin:   evmutils.New(0), // creator address
 		GasPrice: constTransactionGasPrice(),
 		GasLimit: constTransactionGasLimit(),
 	}
@@ -121,17 +121,17 @@ func invoke() {
 		ResultCallback: callback,
 		Context: &environment.Context{
 			Block: environment.Block{
-				Coinbase:   utils.BytesDataToEVMIntHash([]byte("0x1")), //proposer ski
-				Timestamp:  utils.New(0),
-				Number:     utils.New(0), // height
-				Difficulty: utils.New(0),
+				Coinbase:   evmutils.BytesDataToEVMIntHash([]byte("0x1")), //proposer ski
+				Timestamp:  evmutils.New(0),
+				Number:     evmutils.New(0), // height
+				Difficulty: evmutils.New(0),
 				GasLimit:   blockGasLimit,
 			},
 			Contract:    contract,
 			Transaction: evmTransaction,
 			Message: environment.Message{
 				Caller: accountAddress1(),
-				Value:  utils.New(0),
+				Value:  evmutils.New(0),
 				Data:   data,
 				//Data:   nil,
 			},
@@ -146,7 +146,7 @@ func invoke() {
 func install() {
 	evmTransaction := environment.Transaction{
 		TxHash:   []byte("0x1"),
-		Origin:   utils.New(0),
+		Origin:   evmutils.New(0),
 		GasPrice: constTransactionGasPrice(),
 		GasLimit: constTransactionGasLimit(),
 	}
@@ -174,17 +174,17 @@ func install() {
 		ResultCallback: callback,
 		Context: &environment.Context{
 			Block: environment.Block{
-				Coinbase:   utils.BytesDataToEVMIntHash([]byte("0x1")),
-				Timestamp:  utils.New(0),
-				Number:     utils.New(0),
-				Difficulty: utils.New(0),
+				Coinbase:   evmutils.BytesDataToEVMIntHash([]byte("0x1")),
+				Timestamp:  evmutils.New(0),
+				Number:     evmutils.New(0),
+				Difficulty: evmutils.New(0),
 				GasLimit:   blockGasLimit,
 			},
 			Contract:    contract,
 			Transaction: evmTransaction,
 			Message: environment.Message{
 				Caller: accountAddress1(),
-				Value:  utils.New(0),
+				Value:  evmutils.New(0),
 				//Data:   data,
 				Data: nil,
 			},

@@ -17,23 +17,23 @@
 package storage
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 //Teh External Storage,provding a Storage for touching out of current evm
 type IExternalStorage interface {
-	GetBalance(address *utils.Int) (*utils.Int, error)
-	GetCode(address *utils.Int) ([]byte, error)
-	GetCodeSize(address *utils.Int) (*utils.Int, error)
-	GetCodeHash(address *utils.Int) (*utils.Int, error)
-	GetBlockHash(block *utils.Int) (*utils.Int, error)
+	GetBalance(address *evmutils.Int) (*evmutils.Int, error)
+	GetCode(address *evmutils.Int) ([]byte, error)
+	GetCodeSize(address *evmutils.Int) (*evmutils.Int, error)
+	GetCodeHash(address *evmutils.Int) (*evmutils.Int, error)
+	GetBlockHash(block *evmutils.Int) (*evmutils.Int, error)
 
-	CreateAddress(caller *utils.Int, tx environment.Transaction) *utils.Int
-	CreateFixedAddress(caller *utils.Int, salt *utils.Int, tx environment.Transaction) *utils.Int
+	CreateAddress(caller *evmutils.Int, tx environment.Transaction) *evmutils.Int
+	CreateFixedAddress(caller *evmutils.Int, salt *evmutils.Int, tx environment.Transaction) *evmutils.Int
 
-	CanTransfer(from *utils.Int, to *utils.Int, amount *utils.Int) bool
+	CanTransfer(from *evmutils.Int, to *evmutils.Int, amount *evmutils.Int) bool
 
-	Load(n string, k string) (*utils.Int, error)
+	Load(n string, k string) (*evmutils.Int, error)
 	Store(address string, key string, val []byte)
 }

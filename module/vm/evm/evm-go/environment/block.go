@@ -17,14 +17,14 @@
 package environment
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 )
 
 type Block struct {
-	Coinbase   *utils.Int // create address
-	Timestamp  *utils.Int // MillisSeconds
-	Number     *utils.Int // block height
-	Difficulty *utils.Int
-	GasLimit   *utils.Int
+	Coinbase   *evmutils.Int // create address
+	Timestamp  *evmutils.Int // MillisSeconds
+	Number     *evmutils.Int // block height
+	Difficulty *evmutils.Int
+	GasLimit   *evmutils.Int
 	//Hash       *utils.Int
 }

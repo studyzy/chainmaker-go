@@ -17,11 +17,11 @@
 package evm
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
-	tools "chainmaker.org/chainmaker-go/evm/evm-go/utils"
 	"chainmaker.org/chainmaker-go/logger"
 	pb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -34,7 +34,7 @@ import (
 type RuntimeInstance struct {
 	Method       string         // invoke contract method
 	ChainId      string         // chain id
-	Address      *tools.Int     //address
+	Address      *evmutils.Int  //address
 	ContractId   *pb.ContractId // contract info
 	Log          *logger.CMLogger
 	TxSimContext protocol.TxSimContext
@@ -73,14 +73,14 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 	if method == protocol.ContractInitMethod || method == protocol.ContractUpgradeMethod {
 		isDeploy = true
 	} else {
-		if tools.Has0xPrefix(method) {
+		if evmutils.Has0xPrefix(method) {
 			method = method[2:]
 		}
 		if len(method) != 8 {
 			return r.errorResult(contractResult, nil, "contract verify failed, method length is not 8")
 		}
 	}
-	if tools.Has0xPrefix(params) {
+	if evmutils.Has0xPrefix(params) {
 		params = params[2:]
 	}
 	if len(params)%2 == 1 {
@@ -88,11 +88,11 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 	}
 
 	// evmTransaction
-	creatorAddress, err := tools.MakeAddressFromHex(parameters[protocol.ContractCreatorPkParam])
+	creatorAddress, err := evmutils.MakeAddressFromHex(parameters[protocol.ContractCreatorPkParam])
 	if err != nil {
 		return r.errorResult(contractResult, err, "get creator pk fail")
 	}
-	senderAddress, err := tools.MakeAddressFromHex(parameters[protocol.ContractSenderPkParam])
+	senderAddress, err := evmutils.MakeAddressFromHex(parameters[protocol.ContractSenderPkParam])
 	if err != nil {
 		return r.errorResult(contractResult, err, "get sender pk fail")
 	}
@@ -101,18 +101,18 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 	evmTransaction := environment.Transaction{
 		TxHash:   []byte(txId),
 		Origin:   senderAddress,
-		GasPrice: tools.New(protocol.EvmGasPrice),
-		GasLimit: tools.New(int64(gasLeft)),
+		GasPrice: evmutils.New(protocol.EvmGasPrice),
+		GasLimit: evmutils.New(int64(gasLeft)),
 	}
 
 	// contract
-	address, err := tools.MakeAddressFromString(contractId.ContractName) // reference vm_factory.go RunContract
+	address, err := evmutils.MakeAddressFromString(contractId.ContractName) // reference vm_factory.go RunContract
 	logStr = logStr + " address->" + address.String() + " name ->" + contractId.ContractName
 
 	if err != nil {
 		return r.errorResult(contractResult, err, "make address fail")
 	}
-	codeHash := tools.BytesDataToEVMIntHash(byteCode)
+	codeHash := evmutils.BytesDataToEVMIntHash(byteCode)
 	contract := environment.Contract{
 		Address: address,
 		Code:    byteCode,
@@ -137,16 +137,16 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 		Context: &environment.Context{
 			Block: environment.Block{
 				Coinbase:   creatorAddress, //proposer ski
-				Timestamp:  tools.New(startTime),
-				Number:     tools.New(txSimContext.GetBlockHeight()), // height
-				Difficulty: tools.New(0),
-				GasLimit:   tools.New(protocol.GasLimit),
+				Timestamp:  evmutils.New(startTime),
+				Number:     evmutils.New(txSimContext.GetBlockHeight()), // height
+				Difficulty: evmutils.New(0),
+				GasLimit:   evmutils.New(protocol.GasLimit),
 			},
 			Contract:    contract,
 			Transaction: evmTransaction,
 			Message: environment.Message{
 				Caller: senderAddress,
-				Value:  tools.New(0),
+				Value:  evmutils.New(0),
 				Data:   messageData,
 			},
 			Parameters: parameters,

@@ -17,14 +17,14 @@
 package storage
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
-type Cache map[string]*utils.Int
+type Cache map[string]*evmutils.Int
 type CacheUnderAddress map[string]Cache
 
-func (c CacheUnderAddress) Get(address string, key string) *utils.Int {
+func (c CacheUnderAddress) Get(address string, key string) *evmutils.Int {
 	if c[address] == nil {
 		return nil
 	} else {
@@ -32,7 +32,7 @@ func (c CacheUnderAddress) Get(address string, key string) *utils.Int {
 	}
 }
 
-func (c CacheUnderAddress) Set(address string, key string, v *utils.Int) {
+func (c CacheUnderAddress) Set(address string, key string, v *evmutils.Int) {
 	if c[address] == nil {
 		c[address] = Cache{}
 	}
@@ -41,8 +41,8 @@ func (c CacheUnderAddress) Set(address string, key string, v *utils.Int) {
 }
 
 type balance struct {
-	Address *utils.Int
-	Balance *utils.Int
+	Address *evmutils.Int
+	Balance *evmutils.Int
 }
 
 type BalanceCache map[string]*balance

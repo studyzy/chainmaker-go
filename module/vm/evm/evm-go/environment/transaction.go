@@ -17,12 +17,12 @@
 package environment
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 )
 
 type Transaction struct {
 	TxHash   []byte
-	Origin   *utils.Int
-	GasPrice *utils.Int
-	GasLimit *utils.Int
+	Origin   *evmutils.Int
+	GasPrice *evmutils.Int
+	GasLimit *evmutils.Int
 }

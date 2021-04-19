@@ -17,8 +17,8 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 func loadMemory() {
@@ -51,7 +51,7 @@ func mLoadAction(ctx *instructionsContext) ([]byte, error) {
 	mOffset := ctx.stack.Peek()
 
 	//gas check
-	offset, _, _, err := ctx.memoryGasCostAndMalloc(mOffset, utils.New(32))
+	offset, _, _, err := ctx.memoryGasCostAndMalloc(mOffset, evmutils.New(32))
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +70,12 @@ func mStoreAction(ctx *instructionsContext) ([]byte, error) {
 	v := ctx.stack.Pop()
 
 	//gas check
-	offset, _, _, err := ctx.memoryGasCostAndMalloc(mOffset, utils.New(32))
+	offset, _, _, err := ctx.memoryGasCostAndMalloc(mOffset, evmutils.New(32))
 	if err != nil {
 		return nil, err
 	}
 
-	valBytes := utils.EVMIntToHashBytes(v)
+	valBytes := evmutils.EVMIntToHashBytes(v)
 	err = ctx.memory.Store(offset, valBytes[:])
 	return nil, err
 }
@@ -86,7 +86,7 @@ func mStore8Action(ctx *instructionsContext) ([]byte, error) {
 	valBytes := v.Uint64()
 
 	//gas check
-	offset, _, _, err := ctx.memoryGasCostAndMalloc(mOffset, utils.New(1))
+	offset, _, _, err := ctx.memoryGasCostAndMalloc(mOffset, evmutils.New(1))
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +96,6 @@ func mStore8Action(ctx *instructionsContext) ([]byte, error) {
 }
 
 func mSizeAction(ctx *instructionsContext) ([]byte, error) {
-	ctx.stack.Push(utils.New(ctx.memory.Size()))
+	ctx.stack.Push(evmutils.New(ctx.memory.Size()))
 	return nil, nil
 }

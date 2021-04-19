@@ -17,8 +17,8 @@
 package instructions
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 func loadPC() {
@@ -82,7 +82,7 @@ func jumpDestAction(_ *instructionsContext) ([]byte, error) {
 }
 
 func pcAction(ctx *instructionsContext) ([]byte, error) {
-	i := utils.New(0)
+	i := evmutils.New(0)
 	i.SetUint64(ctx.pc)
 
 	ctx.stack.Push(i)

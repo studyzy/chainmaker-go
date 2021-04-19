@@ -17,11 +17,12 @@
 package stack
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )
 
 type Stack struct {
-	data []*utils.Int
+	data []*evmutils.Int
 	max  int
 }
 
@@ -35,7 +36,7 @@ func New(max int) *Stack {
 	}
 }
 
-func (s *Stack) GetData() []*utils.Int {
+func (s *Stack) GetData() []*evmutils.Int {
 	return s.data
 }
 func (s *Stack) CheckStackDepth(minRequire int, willAdd int) error {
@@ -53,26 +54,26 @@ func (s *Stack) Len() int {
 	return len(s.data)
 }
 
-func (s *Stack) Push(i *utils.Int) {
+func (s *Stack) Push(i *evmutils.Int) {
 	s.data = append(s.data, i)
 	return
 }
 
-func (s *Stack) PushN(i []*utils.Int) {
+func (s *Stack) PushN(i []*evmutils.Int) {
 	s.data = append(s.data, i...)
 	return
 }
 
-func (s *Stack) Pop() *utils.Int {
+func (s *Stack) Pop() *evmutils.Int {
 	sLen := len(s.data)
 	i := s.data[sLen-1]
 	s.data = s.data[:sLen-1]
 	return i
 }
 
-func (s *Stack) PopN(n int) []*utils.Int {
+func (s *Stack) PopN(n int) []*evmutils.Int {
 	sLen := len(s.data)
-	var el []*utils.Int
+	var el []*evmutils.Int
 	el = s.data[sLen-n:]
 	s.data = s.data[:sLen-n]
 
@@ -83,7 +84,7 @@ func (s *Stack) PopN(n int) []*utils.Int {
 	return el
 }
 
-func (s *Stack) Peek() *utils.Int {
+func (s *Stack) Peek() *evmutils.Int {
 	sLen := len(s.data)
 	if sLen == 0 {
 		return nil
@@ -93,9 +94,9 @@ func (s *Stack) Peek() *utils.Int {
 	return i
 }
 
-func (s *Stack) PeekN(n int) []*utils.Int {
+func (s *Stack) PeekN(n int) []*evmutils.Int {
 	sLen := len(s.data)
-	var el []*utils.Int = nil
+	var el []*evmutils.Int = nil
 	if sLen >= n {
 		el = s.data[sLen-n:]
 	}
@@ -116,7 +117,7 @@ func (s *Stack) Dup(n int) {
 	sLen := len(s.data)
 
 	i := s.data[sLen-n]
-	newI := utils.FromBigInt(i.Int)
+	newI := evmutils.FromBigInt(i.Int)
 	s.Push(newI)
 
 	return

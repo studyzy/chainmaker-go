@@ -17,7 +17,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"github.com/ethereum/go-ethereum/common/math"
 	"math/big"
 )
@@ -45,9 +45,9 @@ var (
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (c *bigModExp) GasCost(input []byte) uint64 {
 	var (
-		baseLen = new(big.Int).SetBytes(utils.GetDataFrom(input, 0, 32))
-		expLen  = new(big.Int).SetBytes(utils.GetDataFrom(input, 32, 32))
-		modLen  = new(big.Int).SetBytes(utils.GetDataFrom(input, 64, 32))
+		baseLen = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 0, 32))
+		expLen  = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 32, 32))
+		modLen  = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 64, 32))
 	)
 	if len(input) > 96 {
 		input = input[96:]
@@ -60,9 +60,9 @@ func (c *bigModExp) GasCost(input []byte) uint64 {
 		expHead = new(big.Int)
 	} else {
 		if expLen.Cmp(big32) > 0 {
-			expHead = new(big.Int).SetBytes(utils.GetDataFrom(input, baseLen.Uint64(), 32))
+			expHead = new(big.Int).SetBytes(evmutils.GetDataFrom(input, baseLen.Uint64(), 32))
 		} else {
-			expHead = new(big.Int).SetBytes(utils.GetDataFrom(input, baseLen.Uint64(), expLen.Uint64()))
+			expHead = new(big.Int).SetBytes(evmutils.GetDataFrom(input, baseLen.Uint64(), expLen.Uint64()))
 		}
 	}
 	// Calculate the adjusted exponent length
@@ -104,9 +104,9 @@ func (c *bigModExp) GasCost(input []byte) uint64 {
 
 func (c *bigModExp) Execute(input []byte) ([]byte, error) {
 	var (
-		baseLen = new(big.Int).SetBytes(utils.GetDataFrom(input, 0, 32)).Uint64()
-		expLen  = new(big.Int).SetBytes(utils.GetDataFrom(input, 32, 32)).Uint64()
-		modLen  = new(big.Int).SetBytes(utils.GetDataFrom(input, 64, 32)).Uint64()
+		baseLen = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 0, 32)).Uint64()
+		expLen  = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 32, 32)).Uint64()
+		modLen  = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 64, 32)).Uint64()
 	)
 	if len(input) > 96 {
 		input = input[96:]
@@ -119,13 +119,13 @@ func (c *bigModExp) Execute(input []byte) ([]byte, error) {
 	}
 	// Retrieve the operands and execute the exponentiation
 	var (
-		base = new(big.Int).SetBytes(utils.GetDataFrom(input, 0, baseLen))
-		exp  = new(big.Int).SetBytes(utils.GetDataFrom(input, baseLen, expLen))
-		mod  = new(big.Int).SetBytes(utils.GetDataFrom(input, baseLen+expLen, modLen))
+		base = new(big.Int).SetBytes(evmutils.GetDataFrom(input, 0, baseLen))
+		exp  = new(big.Int).SetBytes(evmutils.GetDataFrom(input, baseLen, expLen))
+		mod  = new(big.Int).SetBytes(evmutils.GetDataFrom(input, baseLen+expLen, modLen))
 	)
 	if mod.BitLen() == 0 {
 		// Modulo 0 is undefined, return zero
-		return utils.LeftPaddingSlice([]byte{}, int(modLen)), nil
+		return evmutils.LeftPaddingSlice([]byte{}, int(modLen)), nil
 	}
-	return utils.LeftPaddingSlice(base.Exp(base, exp, mod).Bytes(), int(modLen)), nil
+	return evmutils.LeftPaddingSlice(base.Exp(base, exp, mod).Bytes(), int(modLen)), nil
 }
