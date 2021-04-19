@@ -83,7 +83,7 @@ func (s *contextServiceResolver) cCallMethod(
 		return uint32(0)
 	}
 
-	reqItems := serialize.EasyUnmarshal(requestBuf)
+	reqItems := serialize.NewEasyCodecWithBytes(requestBuf).GetItems()
 	s.contextService.ctxId = ctxId
 	context.in = reqItems
 	context.requestBody = requestBuf
@@ -114,7 +114,7 @@ func (s *contextServiceResolver) cCallMethod(
 		return uint32(0)
 	}
 
-	possibleResponseBuf := serialize.EasyMarshal(context.resp)
+	possibleResponseBuf := serialize.NewEasyCodecWithItems(context.resp).Marshal()
 
 	// fast path
 	if len(possibleResponseBuf) <= len(responseBuf) {

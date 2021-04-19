@@ -37,11 +37,10 @@ var wacsi = wasi.NewWacsi()
 
 // WaciInstance record wasmer vm request parameter
 type WaciInstance struct {
-	Sc            *SimContext
-	RequestHeader []*serialize.EasyCodecItem // sdk request common easy codec param
-	RequestBody   []byte                     // sdk request param
-	Memory        []byte                     // vm memory
-	ChainId       string
+	Sc          *SimContext
+	RequestBody []byte // sdk request param
+	Memory      []byte // vm memory
+	ChainId     string
 }
 
 // LogMessage print log to file
@@ -75,26 +74,24 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 	copy(requestHeaderByte, memory[requestHeaderPtr:requestHeaderPtr+requestHeaderLen])
 	requestBody := make([]byte, requestBodyLen)
 	copy(requestBody, memory[requestBodyPtr:requestBodyPtr+requestBodyLen])
-	var requestHeaderItems []*serialize.EasyCodecItem
-	requestHeaderItems = serialize.EasyUnmarshal(requestHeaderByte)
-	ctxPtr, ok := serialize.GetValueFromItems(requestHeaderItems, "ctx_ptr", serialize.EasyKeyType_SYSTEM)
-	if !ok {
-		log.Error("get ctx_ptr failed:%s requestHeader=%s requestBody=%s", "request header have no ctx_ptr", string(requestHeaderByte), string(requestBody))
+	ec := serialize.NewEasyCodecWithBytes(requestHeaderByte)
+	ctxPtr, err := ec.GetValue("ctx_ptr", serialize.EasyKeyType_SYSTEM)
+	if err != nil {
+		log.Error("get ctx_ptr failed:%s requestHeader=%s requestBody=%s", "request header have no ctx_ptr", string(requestHeaderByte), string(requestBody), err)
 	}
 	vbm := GetVmBridgeManager()
 	sc := vbm.get(ctxPtr.(int32))
 
 	s := &WaciInstance{
-		Sc:            sc,
-		RequestHeader: requestHeaderItems,
-		RequestBody:   requestBody,
-		Memory:        memory,
-		ChainId:       sc.ChainId,
+		Sc:          sc,
+		RequestBody: requestBody,
+		Memory:      memory,
+		ChainId:     sc.ChainId,
 	}
 
-	method, ok := serialize.GetValueFromItems(requestHeaderItems, "method", serialize.EasyKeyType_SYSTEM)
-	if !ok {
-		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody))
+	method, err := ec.GetValue("method", serialize.EasyKeyType_SYSTEM)
+	if err != nil {
+		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody), err)
 	}
 	switch method.(string) {
 	// common
@@ -171,12 +168,12 @@ func (s *WaciInstance) CallContract() int32 {
 
 //
 //func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
-//	req := serialize.EasyUnmarshal(s.RequestBody)
+//	req := serialize.easyUnmarshal(s.RequestBody)
 //	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
 //	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
 //	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
 //	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
-//	paramItem := serialize.EasyUnmarshal(param.([]byte))
+//	paramItem := serialize.easyUnmarshal(param.([]byte))
 //
 //	if !isGetLen { // get value from cache
 //		result := s.Sc.TxSimContext.GetCurrentResult()
@@ -216,7 +213,7 @@ func (s *WaciInstance) CallContract() int32 {
 //	// call contract
 //	usedGas := s.Sc.Instance.GetGasUsed() + protocol.CallContractGasOnce
 //	s.Sc.Instance.SetGasUsed(usedGas)
-//	paramMap := serialize.EasyCodecItemToParamsMap(paramItem)
+//	paramMap := serialize.easyCodecItemToParamsMap(paramItem)
 //	result, code := s.Sc.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, usedGas, commonPb.TxType_INVOKE_USER_CONTRACT)
 //	usedGas = s.Sc.Instance.GetGasUsed() + uint64(result.GasUsed)
 //	s.Sc.Instance.SetGasUsed(usedGas)

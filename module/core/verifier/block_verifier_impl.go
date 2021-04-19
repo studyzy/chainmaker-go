@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"sync"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
@@ -122,7 +124,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	var isValid bool
 	// to check if the block has verified before
 	if b, _ := v.proposalCache.GetProposedBlock(block); b != nil {
-		isSqlDb := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB()
+		isSqlDb := v.chainConf.ChainConfig().Contract.EnableSqlSupport
 		notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
 		if notSolo || isSqlDb {
 			// the block has verified before
@@ -143,8 +145,20 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		if protocol.CONSENSUS_VERIFY == mode {
 			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
 		}
-		if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-			_ = v.blockchainStore.RollbackDbTransaction(block.GetTxKey()) // rollback sql transaction
+
+		// rollback sql
+		if v.chainConf.ChainConfig().Contract.EnableSqlSupport {
+			_ = v.blockchainStore.RollbackDbTransaction(block.GetTxKey())
+			// drop database if create contract fail
+			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+				var payload commonpb.ContractMgmtPayload
+				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
+					if payload.ContractId != nil {
+						dbName := statesqldb.GetContractDbName(v.chainId, payload.ContractId.ContractName)
+						v.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
+					}
+				}
+			}
 		}
 		return err
 	}
@@ -258,7 +272,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 	// simulate with DAG, and verify read write set
 	startVMTick := utils.CurrentTimeMillisSeconds()
 	snapshot := v.snapshotManager.NewSnapshot(lastBlock, block)
-	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+	if v.chainConf.ChainConfig().Contract.EnableSqlSupport {
 		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
 	}
 	txRWSetMap, txResultMap, err := v.txScheduler.SimulateWithDag(block, snapshot)
