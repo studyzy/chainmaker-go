@@ -315,7 +315,7 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 
 	cbi.logger.Infof("service selfIndexInEpoch [%v] processProposal step0. proposal.ProposerIdx [%v] ,proposal.Height[%v],"+
 		" proposal.Level[%v],proposal.EpochId [%v],expected [%v:%v:%v]", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height,
-		proposal.Level, proposal.EpochId, cbi.smr.getHeight()+1, cbi.smr.getCurrentLevel()+1, cbi.smr.getEpochId())
+		proposal.Level, proposal.EpochId, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId())
 	validateMsgStart := chainUtils.CurrentTimeMillisSeconds()
 	//step0: validate proposal
 	if err := cbi.validateProposalMsg(msg); err != nil {
@@ -442,6 +442,7 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) (b
 	usedValidateJustifyQC := validateJustifyQCEnd - validateJustifyQCStart
 	usedTimes = append(usedTimes, usedValidateJustifyQC)
 
+	cbi.logger.Debugf("insert proposal.JustifyQC")
 	if !proposal.JustifyQC.NewView {
 		if err := cbi.chainStore.insertQC(proposal.JustifyQC); err != nil {
 			cbi.logger.Errorf("insert qc to chainStore failed: %s, qc info: %s", err, proposal.JustifyQC.String())
@@ -452,6 +453,7 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) (b
 	usedInsertJustifyQCTime := insertJustifyQCEnd - validateJustifyQCEnd
 	usedTimes = append(usedTimes, usedInsertJustifyQCTime)
 
+	cbi.logger.Debugf("begin process qc and tc")
 	if proposal.ProposerIdx != cbi.selfIndexInEpoch {
 		//local already handle it when aggregating qc
 		cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
