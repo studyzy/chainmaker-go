@@ -7,10 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
+	"sync"
 
-	"chainmaker.org/chainmaker-go/common/linkedhashmap"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
@@ -22,19 +23,19 @@ type txQueue struct {
 	log      *logger.CMLogger
 	validate txValidateFunc
 
-	pendingCache  *linkedhashmap.LinkedHashMap
-	commonTxQueue *txList // common transaction queue
-	configTxQueue *txList // config transaction queue
+	commonTxQueue *txList   // common transaction queue
+	configTxQueue *txList   // config transaction queue
+	pendingCache  *sync.Map // Caches transactions that are already in the block to be deleted
 }
 
 func newQueue(blockStore protocol.BlockchainStore, log *logger.CMLogger, validate txValidateFunc) *txQueue {
-	pendingCache := linkedhashmap.NewLinkedHashMap()
+	pendingCache := sync.Map{}
 	queue := txQueue{
 		log:           log,
 		validate:      validate,
-		pendingCache:  pendingCache,
-		commonTxQueue: newTxList(log, pendingCache, blockStore),
-		configTxQueue: newTxList(log, pendingCache, blockStore),
+		pendingCache:  &pendingCache,
+		commonTxQueue: newTxList(log, &pendingCache, blockStore),
+		configTxQueue: newTxList(log, &pendingCache, blockStore),
 	}
 	return &queue
 }
@@ -49,7 +50,7 @@ func (queue *txQueue) addTxsToCommonQueue(memTxs *mempoolTxs) {
 
 func (queue *txQueue) deleteTxsInPending(txIds []*commonPb.Transaction) {
 	for _, tx := range txIds {
-		queue.pendingCache.Remove(tx.Header.TxId)
+		queue.pendingCache.Delete(tx.Header.TxId)
 	}
 }
 
