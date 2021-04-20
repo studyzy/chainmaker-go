@@ -103,12 +103,14 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		writes := txRWSets[0].TxWrites
 		for _, txWrite := range writes {
 			if len(txWrite.Key) == 0 { //这是SQL语句
+				s.db.ChangeContextDb(dbName)
 				_, err := s.db.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
 				if err != nil {
 					s.db.RollbackDbTransaction(txKey)
 					return err
 				}
-			} else {
+			} else { //是KV数据，直接存储到StateInfo表
+				s.db.ChangeContextDb(GetContractDbName(block.Header.ChainId, txWrite.ContractName))
 				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, block.Header.BlockHeight)
 				if _, err := s.db.Save(stateInfo); err != nil {
 					s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
