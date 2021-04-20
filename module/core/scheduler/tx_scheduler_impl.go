@@ -126,7 +126,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 							elapsed := time.Since(start)
 							ts.metricVMRunTime.WithLabelValues(tx.Header.ChainId).Observe(elapsed.Seconds())
 						}
-						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
+						//ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
 					}
 					// If all transactions have been successfully added to dag
 					if applySize >= txBatchSize {
@@ -227,7 +227,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 			case txIndex := <-runningTxC:
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
-					ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
+					//ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
 					txSimContext := newTxSimContext(ts.VmManager, snapshot, tx)
 
 					runVmSuccess := true
@@ -248,7 +248,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 						ts.log.Debugf("failed to apply according to dag with tx %s ", tx.Header.TxId)
 						runningTxC <- txIndex
 					} else {
-						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
+						//ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
 						doneTxC <- txIndex
 					}
 					// If all transactions in current batch have been successfully added to dag
@@ -263,7 +263,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 				ts.shrinkDag(doneTxIndex, dagRemain)
 
 				txIndexBatch := ts.popNextTxBatchFromDag(dagRemain)
-				ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
+				//ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
 				for _, tx := range txIndexBatch {
 					runningTxC <- tx
 				}
