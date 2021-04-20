@@ -67,7 +67,7 @@ func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64)
 
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewLevel at height [%v] level [%v], smr height [%v] level [%v] state %v",
 		cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
-	checkLevelStart := chainUtils.CurrentTimeMillisSeconds()
+	start := chainUtils.CurrentTimeMillisSeconds()
 	hqcBlock := cbi.chainStore.getCurrentCertifiedBlock()
 	hqcLevel, err := utils.GetLevelFromBlock(hqcBlock)
 	if err != nil {
@@ -78,14 +78,9 @@ func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64)
 		cbi.logger.Errorf("given level [%v] too low than certified %v", level, hqcLevel)
 		return
 	}
-	checkLevelEnd := chainUtils.CurrentTimeMillisSeconds()
-	usedCheckTime := checkLevelEnd - checkLevelStart
 
 	nextProposerIndex := cbi.getProposer(level)
-	getNextProposerEnd := chainUtils.CurrentTimeMillisSeconds()
-	usedGetNextProposerTime := getNextProposerEnd - checkLevelEnd
-	usedAddTimerEvent := int64(0)
-	if nextProposerIndex == cbi.selfIndexInEpoch {
+	if cbi.isValidProposer(level, cbi.selfIndexInEpoch) {
 		event := &timeservice.TimerEvent{
 			Level:    level,
 			Height:   height,
@@ -94,10 +89,7 @@ func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64)
 			EpochId:  cbi.smr.getEpochId(),
 			Duration: timeservice.GetEventTimeout(timeservice.PROPOSAL_BLOCK_TIMEOUT, 0),
 		}
-
-		cbi.timerService.AddEvent(event)
-		addTimerEventEnd := chainUtils.CurrentTimeMillisSeconds()
-		usedAddTimerEvent = addTimerEventEnd - getNextProposerEnd
+		cbi.startTimer(event)
 		cbi.logger.Infof("service selfIndexInEpoch [%v], build proposal, height: [%v], level [%v]", cbi.selfIndexInEpoch, height, level)
 		go cbi.msgbus.Publish(msgbus.BuildProposal, &chainedbftpb.BuildProposal{
 			Height:     height,
@@ -109,9 +101,7 @@ func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64)
 	cbi.logger.Infof("service selfIndexInEpoch [%v], waiting proposal, "+
 		"height: [%v], level [%v], nextProposerIndex [%d]", cbi.selfIndexInEpoch, height, level, nextProposerIndex)
 	cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
-	cbi.logger.Debugf("time costs in processNewLevel, checkLevelTime: %d, getNextProposerTime: %d, "+
-		"addTimerEventTime: %d, totalTime: %d", usedCheckTime, usedGetNextProposerTime, usedAddTimerEvent,
-		chainUtils.CurrentTimeMillisSeconds()-checkLevelStart)
+	cbi.logger.Debugf("processNewLevel total used time: %d", chainUtils.CurrentTimeMillisSeconds()-start)
 }
 
 //processProposedBlock receive proposed block form core module, then go to new level
@@ -388,8 +378,6 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	insertProposalBlockEnd := chainUtils.CurrentTimeMillisSeconds()
 	usedInsertProposalBlockTime := insertProposalBlockEnd - insertProposalMsgEnd
 	//step5: vote it and send vote to next proposer in the epoch
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step5 construct vote and "+
-		"send vote to next proposer start", cbi.selfIndexInEpoch)
 	cbi.generateVoteAndSend(proposal)
 	voteProposalEnd := chainUtils.CurrentTimeMillisSeconds()
 	usedVoteProposalTime := voteProposalEnd - insertProposalBlockEnd
@@ -402,12 +390,15 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 
 func (cbi *ConsensusChainedBftImpl) generateVoteAndSend(proposal *chainedbftpb.ProposalData) bool {
 	cbi.smr.updateState(chainedbftpb.ConsStateType_Vote)
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step5 construct vote and "+
+		"send vote to next proposer start", cbi.selfIndexInEpoch)
 	level, err := utils.GetLevelFromBlock(proposal.GetBlock())
 	if err != nil {
 		cbi.logger.Errorf("GetLevelFromBlock failed, reason: %s, block: %d:%x", err, proposal.Height, proposal.GetBlock().Header.BlockHash)
 		return false
 	}
 	vote := cbi.constructVote(uint64(proposal.GetBlock().GetHeader().GetBlockHeight()), level, cbi.smr.getEpochId(), proposal.GetBlock())
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step6 send vote msg to next leader start", cbi.selfIndexInEpoch)
 	cbi.sendVote2Next(proposal, vote)
 	return true
 }
@@ -536,6 +527,7 @@ func (cbi *ConsensusChainedBftImpl) sendVote2Next(proposal *chainedbftpb.Proposa
 
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal send vote to next leader [%v]",
 		cbi.selfIndexInEpoch, nextLeaderIndex)
+
 	cbi.smr.setLastVote(vote, proposal.Level)
 	if nextLeaderIndex == cbi.selfIndexInEpoch {
 		consensusMessage := &chainedbftpb.ConsensusMsg{Payload: vote}
@@ -692,9 +684,8 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		usedFetchAndHandleQcTime = chainUtils.CurrentTimeMillisSeconds() - insertVoteMsgEnd
 	}
 	cbi.logger.Debugf("time cost in processVote: validateVoteMsgTime: %d,"+
-		" needFetchTime: %d, insertVoteMsgTime: %d, needFetch: %v, handleQCTime: %d, totalUsedTime: %d.",
-		usedValidateVoteTime, usedNeedFetchTime, usedInsertVoteMsgTime, need, usedFetchAndHandleQcTime,
-		chainUtils.CurrentTimeMillisSeconds()-validateVoteMsgBegin)
+		" needFetchTime: %d, insertVoteMsgTime: %d, needFetch: %v, handleQCTime: %d.",
+		usedValidateVoteTime, usedNeedFetchTime, usedInsertVoteMsgTime, need, usedFetchAndHandleQcTime)
 }
 
 //fetchAndHandleQc Fetch the missing block data and the  process the received QC until the data is all fetched.
@@ -997,6 +988,10 @@ func (cbi *ConsensusChainedBftImpl) validateBlockFetchRsp(msg *chainedbftpb.Cons
 	cbi.logger.Infof("service selfIndexInEpoch [%v] from %v validateBlockFetchRsp success %v"+
 		" fetch rsp %v ", cbi.selfIndexInEpoch, rsp.AuthorIdx, rsp)
 	return nil
+}
+
+func (cbi *ConsensusChainedBftImpl) startTimer(event *timeservice.TimerEvent) {
+	cbi.timerService.AddEvent(event)
 }
 
 //validateSignerAndSignature validate msg signer and signatures
