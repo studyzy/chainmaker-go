@@ -234,9 +234,10 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
 	}
-	if p.contextDbName == dbName {
-		return nil
-	}
+	//if p.contextDbName == dbName {
+	//	return nil
+	//}
+	//TODO Devin
 	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
 		return nil
 	}
@@ -250,6 +251,9 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 	p.Lock()
 	defer p.Unlock()
+	if p.contextDbName == dbName {
+		return nil
+	}
 	if p.dbType == types.Sqlite {
 		return nil
 	}
@@ -342,6 +346,8 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	tx := p.db.Begin()
 	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
 	p.dbTxCache[txName] = sqltx
+	p.contextDbName = ""
+
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
 }
