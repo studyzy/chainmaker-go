@@ -3,6 +3,7 @@ module chainmaker.org/chainmaker-go/consensus
 go 1.15
 
 require (
+	chainmaker.org/chainmaker-go/accesscontrol v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/chainconf v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/common v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
@@ -19,6 +20,7 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/prometheus/client_golang v1.9.0 // indirect
+	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 	go.uber.org/multierr v1.6.0 // indirect
@@ -28,6 +30,7 @@ require (
 )
 
 replace (
+	chainmaker.org/chainmaker-go/accesscontrol => ./../../module/accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
 	chainmaker.org/chainmaker-go/common => ../../common
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf

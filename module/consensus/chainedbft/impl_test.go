@@ -648,4 +648,11 @@ func TestInitTimeOutConfig(t *testing.T) {
 	require.EqualValues(t, timeservice.RoundTimeoutInterval, 100*time.Millisecond)
 	require.EqualValues(t, timeservice.ProposerTimeout, 1000*time.Millisecond)
 	require.EqualValues(t, timeservice.ProposerTimeoutInterval, 10000*time.Millisecond)
+
+	// 3. invalid config
+	config.Consensus.ExtConfig = append(config.Consensus.ExtConfig, &commonPb.KeyValuePair{Key: timeservice.RoundTimeoutMill, Value: "-1"})
+	config.Consensus.ExtConfig = append(config.Consensus.ExtConfig, &commonPb.KeyValuePair{Key: timeservice.RoundTimeoutIntervalMill, Value: fmt.Sprintf("%d", math.MaxInt64/time.Millisecond+1)})
+	impl.initTimeOutConfig(config)
+	require.EqualValues(t, timeservice.RoundTimeout, 10*time.Millisecond)
+	require.EqualValues(t, timeservice.RoundTimeoutInterval, 100*time.Millisecond)
 }
