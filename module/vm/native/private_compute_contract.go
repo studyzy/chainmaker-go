@@ -47,14 +47,31 @@ type PrivateComputeRuntime struct {
 }
 
 func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //var resultVersion string
-    //versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(resultVersion)...)
+    //name := params["contract_name"]
+    //versionKey := []byte(protocol.ContractVersion)
 
-    //name := params["ContractName"]
-    //code, err := context.Get(name, versionedByteCodeKey)
+    //var resultVersion string
+    //if versionInContext, err := context.Get(name, versionKey); err != nil {
+    //    r.log.Errorf("Unable to find latest version for contract[%s], system error:%s.", name, err.Error())
+    //    return nil, err
+    //} else if len(versionInContext) == 0 {
+    //    r.log.Errorf("The contract does not exist. contract[%s].", name)
+    //    return nil, err
+    //} else {
+    //    resultVersion = string(versionInContext)
+    //}
+
+    //var code []byte
+    //versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(resultVersion)...)
+    //byteCodeInContext, err := context.Get(name, versionedByteCodeKey)
     //if err != nil {
-    //    r.log.Errorf("Read contract(name:%s) failed.", name)
-    //    return nil, nil
+    //    r.log.Errorf("Read contract[%s] failed.", name)
+    //    return nil, err
+    //} else if len(byteCodeInContext) == 0 {
+    //    r.log.Errorf("Contract[%s] byte code is empty.", name)
+    //    return nil, err
+    //} else {
+    //    code = byteCodeInContext
     //}
 
     //TEMPORARY CODE JUST FOR TEST
@@ -62,14 +79,14 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
     fh, err:= os.Open(pathname)
     if err != nil {
         r.log.Errorf("Open contract code file(%s) failed.", pathname)
-        return nil, nil
+        return nil, err
     }
     defer fh.Close()
 
     code, err := ioutil.ReadAll(fh)
     if err != nil {
         r.log.Errorf("Read contract code file(%s) failed.", pathname)
-        return nil, nil
+        return nil, err
     }
 
     r.log.Infof("Read contract success，code:%s.", code)
