@@ -21,7 +21,8 @@ func IsNativeContract(contractName string) bool {
 		commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(),
 		commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
-		commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String():
+		commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
+		commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
 		return true
 	default:
 		return false
