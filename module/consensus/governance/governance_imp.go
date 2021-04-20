@@ -13,6 +13,7 @@ import (
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
+	chainUtils "chainmaker.org/chainmaker-go/utils"
 )
 
 type GovernanceContractImp struct {
@@ -20,7 +21,7 @@ type GovernanceContractImp struct {
 	Height             int64 //Cache height
 	store              protocol.BlockchainStore
 	governmentContract *consensusPb.GovernanceContract //Cache government data
-	sync.RWMutex
+	rwLock             sync.RWMutex
 }
 
 func NewGovernanceContract(store protocol.BlockchainStore) protocol.Government {
@@ -35,6 +36,7 @@ func NewGovernanceContract(store protocol.BlockchainStore) protocol.Government {
 
 //Get Government data from cache,ChainStore,chainConfig
 func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.GovernanceContract, error) {
+	getContractInfobegin := chainUtils.CurrentTimeMillisSeconds()
 	//if cached height is latest,use cache
 	block, err := gcr.store.GetLastBlock()
 	if err != nil {
@@ -65,13 +67,16 @@ func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.Governan
 		}
 	}
 	log.Debugf("government contract: %v", governmentContract.String())
+	getContractInfoEnd := chainUtils.CurrentTimeMillisSeconds()
+	usedGetContractTime := getContractInfoEnd - getContractInfobegin
 	//save as cache
-	gcr.Lock()
-	log.Debugf("enter lock in government contract")
+	gcr.rwLock.Lock()
 	gcr.governmentContract = governmentContract
 	gcr.Height = block.Header.GetBlockHeight()
-	gcr.Unlock()
-	log.Debugf("out lock in government contract")
+	gcr.rwLock.Unlock()
+	updateContractInfoEnd := chainUtils.CurrentTimeMillisSeconds()
+	gcr.log.Debugf("time costs in GetGovernmentContract, getContractState: %d, "+
+		"updateContractInfo: %d", usedGetContractTime, updateContractInfoEnd-getContractInfoEnd)
 	return governmentContract, nil
 }
 
