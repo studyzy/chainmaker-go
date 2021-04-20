@@ -315,14 +315,14 @@ func (cbi *ConsensusChainedBftImpl) onReceivedMsg(msg *net.NetMsg) {
 		return
 	}
 
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] received a consensus msg from remote peer "+
-		"id %v addr %v", cbi.selfIndexInEpoch, msg.Type, msg.To)
 	consensusMsg := new(chainedbftpb.ConsensusMsg)
 	if err := proto.Unmarshal(msg.Payload, consensusMsg); err != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] failed to unmarshal consensus data %v, err %v",
 			cbi.selfIndexInEpoch, msg.Payload, err)
 		return
 	}
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] received a consensus msg from remote"+
+		" peer, msgType %s", cbi.selfIndexInEpoch, consensusMsg.Payload.Type.String())
 	if consensusMsg.Payload == nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] received invalid consensus msg with nil payload "+
 			"from remote peer id [%v] add %v", cbi.selfIndexInEpoch, msg.Type, msg.To)
