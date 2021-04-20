@@ -234,10 +234,9 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
 	}
-	//if p.contextDbName == dbName {
-	//	return nil
-	//}
-	//TODO Devin
+	if p.contextDbName == dbName {
+		return nil
+	}
 	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
 		return nil
 	}
@@ -260,6 +259,7 @@ func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 	//尝试切换数据库
 	res := p.db.Exec("use " + dbName)
 	if res.Error != nil { //切换失败，没有这个数据库，则创建
+		p.log.Debugf("try to run 'use %s' get an error, it means database not exist, create it!", dbName)
 		tx := p.db.Exec("create database " + dbName)
 		if tx.Error != nil {
 			return tx.Error //创建失败
