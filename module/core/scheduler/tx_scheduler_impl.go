@@ -78,6 +78,7 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, error) {
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
+	txRWSetMap := make(map[string]*commonpb.TxRWSet)
 	txBatchSize := len(txBatch)
 	runningTxC := make(chan *commonpb.Transaction, txBatchSize)
 	timeoutC := time.After(ScheduleTimeout * time.Second)
@@ -125,7 +126,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 							elapsed := time.Since(start)
 							ts.metricVMRunTime.WithLabelValues(tx.Header.ChainId).Observe(elapsed.Seconds())
 						}
-						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
+						//ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
 					}
 					// If all transactions have been successfully added to dag
 					if applySize >= txBatchSize {
@@ -148,8 +149,12 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	}()
 	// Put the pending transaction into the running queue
 	go func() {
-		for _, tx := range txBatch {
-			runningTxC <- tx
+		if len(txBatch) > 0 {
+			for _, tx := range txBatch {
+				runningTxC <- tx
+			}
+		} else {
+			finishC <- true
 		}
 	}()
 	// Wait for schedule finish signal
@@ -163,7 +168,6 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	ts.log.Infof("schedule tx batch end, success %d, time cost %v, time cost(dag include) %v ",
 		len(block.Dag.Vertexes), timeCostA, timeCostB)
 	txRWSetTable := snapshot.GetTxRWSetTable()
-	txRWSetMap := make(map[string]*commonpb.TxRWSet)
 	for _, txRWSet := range txRWSetTable {
 		if txRWSet != nil {
 			txRWSetMap[txRWSet.TxId] = txRWSet
@@ -178,7 +182,14 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
 
-	startTime := time.Now()
+	var (
+		startTime  = time.Now()
+		txRWSetMap = make(map[string]*commonpb.TxRWSet)
+	)
+	if len(block.Txs) == 0 {
+		ts.log.Debugf("no txs in block[%x] when simulate", block.Header.BlockHash)
+		return txRWSetMap, snapshot.GetTxResultMap(), nil
+	}
 	ts.log.Debugf("simulate with dag start, size %d", len(block.Txs))
 	txMapping := make(map[int]*commonpb.Transaction)
 	for index, tx := range block.Txs {
@@ -216,7 +227,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 			case txIndex := <-runningTxC:
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
-					ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
+					//ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
 					txSimContext := newTxSimContext(ts.VmManager, snapshot, tx)
 
 					runVmSuccess := true
@@ -237,7 +248,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 						ts.log.Debugf("failed to apply according to dag with tx %s ", tx.Header.TxId)
 						runningTxC <- txIndex
 					} else {
-						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
+						//ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
 						doneTxC <- txIndex
 					}
 					// If all transactions in current batch have been successfully added to dag
@@ -252,7 +263,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 				ts.shrinkDag(doneTxIndex, dagRemain)
 
 				txIndexBatch := ts.popNextTxBatchFromDag(dagRemain)
-				ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
+				//ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
 				for _, tx := range txIndexBatch {
 					runningTxC <- tx
 				}
@@ -282,7 +293,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	ts.log.Infof("simulate with dag end, size %d, time cost %+v", len(block.Txs), time.Since(startTime))
 
 	// Return the read and write set after the scheduled execution
-	txRWSetMap := make(map[string]*commonpb.TxRWSet)
+
 	for _, txRWSet := range snapshot.GetTxRWSetTable() {
 		if txRWSet != nil {
 			txRWSetMap[txRWSet.TxId] = txRWSet

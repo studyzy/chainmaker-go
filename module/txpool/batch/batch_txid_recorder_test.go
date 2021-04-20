@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package batch
 
 import (
+	"testing"
+
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -19,27 +20,56 @@ import (
 func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	recorder := newBatchTxIdRecorder()
 
-	batch := txpoolPb.TxBatch{
+	// 1. add batch to recorder
+	batch9 := txpoolPb.TxBatch{
 		BatchId:  9,
+		Txs:      make([]*commonPb.Transaction, 1000),
 		TxIdsMap: make(map[string]int32),
 	}
 	for i := 0; i < 1000; i++ {
-		txid := utils.GetRandTxId()
-		batch.Txs = append(batch.Txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txid}})
-		batch.TxIdsMap[txid] = int32(i)
+		txId := utils.GetRandTxId()
+		batch9.TxIdsMap[txId] = int32(i)
+		batch9.Txs[i] = &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txId}}
 	}
+	recorder.AddRecordWithBatch(&batch9)
 
-	recorder.AddRecordWithBatch(&batch)
-	for _, tx := range batch.Txs {
-		batchId, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
-		require.EqualValues(t, 9, batchId)
+	batch10 := txpoolPb.TxBatch{
+		BatchId:  10,
+		Txs:      make([]*commonPb.Transaction, 1000),
+		TxIdsMap: make(map[string]int32, 1000),
+	}
+	for i := 0; i < 1000; i++ {
+		txId := utils.GetRandTxId()
+		batch10.TxIdsMap[txId] = int32(i)
+		batch10.Txs[i] = &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txId}}
+	}
+	recorder.AddRecordWithBatch(&batch10)
+
+	// 2. check existence in recorder
+	for i, tx := range batch9.Txs {
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
 		require.True(t, ok)
+		require.EqualValues(t, i, txIndex)
+		require.EqualValues(t, 9, batchId)
+	}
+	for i, tx := range batch10.Txs {
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		require.True(t, ok)
+		require.EqualValues(t, i, txIndex)
+		require.EqualValues(t, 10, batchId)
 	}
 
-	recorder.RemoveRecordWithBatch(&batch)
-	for _, tx := range batch.Txs {
-		_, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+	// 3. remove batch from recorder and check existence
+	recorder.RemoveRecordWithBatch(&batch9)
+	for _, tx := range batch9.Txs {
+		batchId, _, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
 		require.False(t, ok)
+		require.EqualValues(t, -1, batchId)
 	}
-
+	for i, tx := range batch10.Txs {
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		require.True(t, ok)
+		require.EqualValues(t, i, txIndex)
+		require.EqualValues(t, 10, batchId)
+	}
 }
