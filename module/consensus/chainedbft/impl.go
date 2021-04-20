@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -144,23 +145,37 @@ func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(chainConfig *config.ChainC
 	for _, kv := range chainConfig.Consensus.ExtConfig {
 		switch kv.Key {
 		case timeservice.ProposerTimeoutMill:
-			if proposerTimeOut, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+			if proposerTimeOut, err := parseInt(kv.Key, kv.Value); err == nil {
 				timeservice.ProposerTimeout = time.Duration(proposerTimeOut) * time.Millisecond
 			}
 		case timeservice.ProposerTimeoutIntervalMill:
-			if proposerTimeOutInterval, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+			if proposerTimeOutInterval, err := parseInt(kv.Key, kv.Value); err == nil {
 				timeservice.ProposerTimeoutInterval = time.Duration(proposerTimeOutInterval) * time.Millisecond
 			}
 		case timeservice.RoundTimeoutMill:
-			if roundTimeOut, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+			if roundTimeOut, err := parseInt(kv.Key, kv.Value); err == nil {
 				timeservice.RoundTimeout = time.Duration(roundTimeOut) * time.Millisecond
 			}
 		case timeservice.RoundTimeoutIntervalMill:
-			if roundTimeOutInterval, err := strconv.ParseUint(kv.Value, 10, 64); err == nil {
+			if roundTimeOutInterval, err := parseInt(kv.Key, kv.Value); err == nil {
 				timeservice.RoundTimeoutInterval = time.Duration(roundTimeOutInterval) * time.Millisecond
 			}
 		}
 	}
+}
+
+func parseInt(key, val string) (int64, error) {
+	t, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	if t <= 0 {
+		return 0, fmt.Errorf("invalid config[%s] value: %d <= 0", key, t)
+	}
+	if t > int64(math.MaxInt64)/int64(time.Millisecond) {
+		return 0, fmt.Errorf("invalid config[%s] value: %d > maxInt64/time.Millisecond ", key, t)
+	}
+	return t, nil
 }
 
 //Start start consensus
@@ -315,14 +330,14 @@ func (cbi *ConsensusChainedBftImpl) onReceivedMsg(msg *net.NetMsg) {
 		return
 	}
 
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] received a consensus msg from remote peer "+
+		"id %v addr %v", cbi.selfIndexInEpoch, msg.Type, msg.To)
 	consensusMsg := new(chainedbftpb.ConsensusMsg)
 	if err := proto.Unmarshal(msg.Payload, consensusMsg); err != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] failed to unmarshal consensus data %v, err %v",
 			cbi.selfIndexInEpoch, msg.Payload, err)
 		return
 	}
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] received a consensus msg from remote"+
-		" peer, msgType %s", cbi.selfIndexInEpoch, consensusMsg.Payload.Type.String())
 	if consensusMsg.Payload == nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] received invalid consensus msg with nil payload "+
 			"from remote peer id [%v] add %v", cbi.selfIndexInEpoch, msg.Type, msg.To)
