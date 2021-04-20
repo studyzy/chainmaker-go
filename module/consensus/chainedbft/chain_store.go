@@ -247,21 +247,16 @@ func (cs *chainStore) insertCompletedBlock(block *common.Block) error {
 	if block.GetHeader().GetBlockHeight() <= int64(cs.getCommitHeight()) {
 		return nil
 	}
-	cs.logger.Debugf("update commit cache info begin")
 	if err := cs.updateCommitCacheInfo(block); err != nil {
 		return fmt.Errorf("insertCompleteBlock failed, update store commit cache info err %v", err)
 	}
-	cs.logger.Debugf("insert block")
 	if err := cs.blockPool.InsertBlock(block); err != nil {
 		return err
 	}
-	cs.logger.Debugf("insert qc")
 	if err := cs.blockPool.InsertQC(cs.getCommitQC()); err != nil {
 		return err
 	}
-	cs.logger.Debugf("prune blocks")
 	err := cs.pruneBlockStore(string(block.GetHeader().GetBlockHash()))
-	cs.logger.Debugf("prune end")
 	return err
 }
 
