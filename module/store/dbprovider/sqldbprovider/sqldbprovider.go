@@ -235,7 +235,7 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 		return nil
 	}
 	if p.contextDbName == dbName {
-		return nil
+		//return nil
 	}
 	if p.dbType == types.Sqlite || p.dbType == types.LevelDb { //不支持切换数据库
 		return nil
@@ -245,6 +245,7 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 		return res.Error
 	}
 	p.contextDbName = dbName
+	p.log.Debugf("execute sql: use %s", dbName)
 	return nil
 }
 func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {

@@ -199,6 +199,7 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 		s.logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
 	}
+	s.logger.Infof(" read right state, contract:%s, key:%s valLen:%d", contractName, key, len(stateValue))
 	return stateValue, nil
 }
 
