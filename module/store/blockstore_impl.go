@@ -87,6 +87,12 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		Block:    block,
 		TxRWSets: txRWSets,
 	}
+	//try to add consensusArgs
+	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
+	if err == nil && consensusArgs.ConsensusData != nil {
+		bs.logger.Debugf("add consensusArgs ConsensusData!")
+		txRWSets = append(txRWSets, consensusArgs.ConsensusData)
+	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock
 
