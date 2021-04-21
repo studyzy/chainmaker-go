@@ -8,6 +8,7 @@ package single
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -330,69 +331,66 @@ func TestPoolImplConcurrencyInvoke(t *testing.T) {
 		wg.Add(1)
 		go func(i int, txs []*common.Transaction) {
 			for _, tx := range txs {
-				fmt.Printf("%d worker to add tx begin", i)
-				//require.NoError(t, )
 				txPool.AddTx(tx, protocol.RPC)
-				fmt.Printf("%d worker to add tx success", i)
 			}
 			wg.Done()
-			fmt.Println("add txs done")
+			imlPool.log.Debugf("add txs done")
 		}(i, commonTxs[i*peerWorkerTxNum:(i+1)*peerWorkerTxNum])
 	}
 
 	// 2. Simulate the logic for generating blocks
-	//fetchTimes := make([]int64, 0, 100)
-	//go func() {
-	//	height := int64(100)
-	//	fetchTicker := time.NewTicker(time.Millisecond * 100)
-	//	fetchTimer := time.NewTimer(2 * time.Minute)
-	//	defer func() {
-	//		fetchTimer.Stop()
-	//		fetchTicker.Stop()
-	//	}()
-	//
-	//Loop:
-	//	for {
-	//		select {
-	//		case <-fetchTicker.C:
-	//			begin := utils.CurrentTimeMillisSeconds()
-	//			txs := txPool.FetchTxBatch(height)
-	//			fetchTimes = append(fetchTimes, utils.CurrentTimeMillisSeconds()-begin)
-	//			fmt.Println("fetch txs num: ", len(txs))
-	//		case <-fetchTimer.C:
-	//			break Loop
-	//		}
-	//	}
-	//	imlPool.log.Debugf("time costs: fetch txs: %v ", fetchTimes)
-	//}()
+	fetchTimes := make([]int64, 0, 100)
+	go func() {
+		height := int64(100)
+		fetchTicker := time.NewTicker(time.Millisecond * 100)
+		fetchTimer := time.NewTimer(2 * time.Minute)
+		defer func() {
+			fetchTimer.Stop()
+			fetchTicker.Stop()
+		}()
+
+	Loop:
+		for {
+			select {
+			case <-fetchTicker.C:
+				begin := utils.CurrentTimeMillisSeconds()
+				txs := txPool.FetchTxBatch(height)
+				fetchTimes = append(fetchTimes, utils.CurrentTimeMillisSeconds()-begin)
+				imlPool.log.Debugf("fetch txs num: ", len(txs))
+			case <-fetchTimer.C:
+				break Loop
+			}
+		}
+		imlPool.log.Debugf("time costs: fetch txs: %v ", fetchTimes)
+	}()
 
 	// 3. Simulation validates the logic of the block
-	//getTimes := make([]int64, 0, 100)
-	//go func() {
-	//	getTicker := time.NewTicker(time.Millisecond * 80)
-	//	getTimer := time.NewTimer(2 * time.Minute)
-	//	defer func() {
-	//		getTimer.Stop()
-	//		getTicker.Stop()
-	//	}()
-	//
-	//Loop:
-	//	for {
-	//		select {
-	//		case <-getTicker.C:
-	//			start := rand.Intn(len(txIds) - 1000)
-	//			begin := utils.CurrentTimeMillisSeconds()
-	//			getTxs, _ := txPool.GetTxsByTxIds(txIds[start : start+1000])
-	//			getTimes = append(getTimes, utils.CurrentTimeMillisSeconds()-begin)
-	//			fmt.Println("get txs num: ", len(getTxs))
-	//		case <-getTimer.C:
-	//			break Loop
-	//		}
-	//	}
-	//	imlPool.log.Debugf("time costs: get txs: %v ", getTimes)
-	//}()
+	getTimes := make([]int64, 0, 100)
+	go func() {
+		getTicker := time.NewTicker(time.Millisecond * 80)
+		getTimer := time.NewTimer(2 * time.Minute)
+		defer func() {
+			getTimer.Stop()
+			getTicker.Stop()
+		}()
+
+	Loop:
+		for {
+			select {
+			case <-getTicker.C:
+				start := rand.Intn(len(txIds) - 1000)
+				begin := utils.CurrentTimeMillisSeconds()
+				getTxs, _ := txPool.GetTxsByTxIds(txIds[start : start+1000])
+				getTimes = append(getTimes, utils.CurrentTimeMillisSeconds()-begin)
+				imlPool.log.Debugf("get txs num: ", len(getTxs))
+			case <-getTimer.C:
+				break Loop
+			}
+		}
+		imlPool.log.Debugf("time costs: get txs: %v ", getTimes)
+	}()
 
 	wg.Wait()
 	addEnd := utils.CurrentTimeMillisSeconds()
-	fmt.Printf("time costs: add txs: %d, txPool state: %s\n", addEnd-addBegin, imlPool.queue.status())
+	imlPool.log.Debugf("time costs: add txs: %d, txPool state: %s\n", addEnd-addBegin, imlPool.queue.status())
 }
