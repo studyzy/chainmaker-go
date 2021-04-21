@@ -91,7 +91,9 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.Step = pcsProto.Step
 	pcs.Proposal = pcsProto.Proposal
 	pcs.VerifingProposal = pcsProto.VerifingProposal
-	pcs.RoundVoteSet = NewRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, nil)
+	validatorSet := pcs.tbftImpl.getValidatorSet()
+	pcs.RoundVoteSet = NewRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
 func (pcs *PeerStateService) start() {
@@ -195,11 +197,21 @@ func (pcs *PeerStateService) sendProposalOfRound() {
 }
 
 func (pcs *PeerStateService) sendPrevoteOfRound(round int32) {
+	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 	// Send prevote
 	prevoteVs := pcs.tbftImpl.heightRoundVoteSet.prevotes(round)
 	if prevoteVs != nil {
 		vote, ok := prevoteVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
+
+			var builder strings.Builder
+			fmt.Fprintf(&builder, " prevote: [")
+			for k := range pcs.RoundVoteSet.Prevotes.Votes {
+				fmt.Fprintf(&builder, "%s, ", k)
+			}
+			fmt.Fprintf(&builder, "]")
+			pcs.logger.Debugf(builder.String())
+
 			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrevote(vote)
 			}
@@ -208,11 +220,21 @@ func (pcs *PeerStateService) sendPrevoteOfRound(round int32) {
 }
 
 func (pcs *PeerStateService) sendPrecommitOfRound(round int32) {
+	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 	// Send precommit
 	precommitVs := pcs.tbftImpl.heightRoundVoteSet.precommits(round)
 	if precommitVs != nil {
 		vote, ok := precommitVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
+
+			var builder strings.Builder
+			fmt.Fprintf(&builder, " precommit: [")
+			for k := range pcs.RoundVoteSet.Precommits.Votes {
+				fmt.Fprintf(&builder, "%s, ", k)
+			}
+			fmt.Fprintf(&builder, "]")
+			pcs.logger.Debugf(builder.String())
+
 			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
 				pcs.sendPrecommit(vote)
 			}

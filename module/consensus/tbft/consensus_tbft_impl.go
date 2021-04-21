@@ -1370,3 +1370,9 @@ func (consensus *ConsensusTBFTImpl) persistState() {
 	d := time.Since(begin)
 	consensus.metrics.AppendPersistStateDuration(consensus.Round, consensus.Step.String(), d)
 }
+
+func (consensus *ConsensusTBFTImpl) getValidatorSet() *validatorSet {
+	consensus.Lock()
+	defer consensus.Unlock()
+	return consensus.validatorSet
+}

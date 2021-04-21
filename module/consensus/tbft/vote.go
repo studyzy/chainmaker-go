@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 
@@ -217,7 +218,10 @@ func NewVoteSetFromProto(logger *logger.CMLogger, vsProto *tbftpb.VoteSet, valid
 
 	for _, v := range vsProto.Votes {
 		vote := NewVoteFromProto(v)
-		vs.AddVote(vote)
+		added, err := vs.AddVote(vote)
+		if !added || err != nil {
+			logger.Errorf("validators: %s, vote: %s", validators, vote)
+		}
 	}
 
 	return vs
@@ -248,6 +252,20 @@ func (vs *VoteSet) ToProto() *tbftpb.VoteSet {
 	}
 
 	return vsProto
+}
+
+func (vs *VoteSet) String() string {
+	if vs == nil {
+		return ""
+	}
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "{Type: %s, Height: %d, Round: %d, Votes: [",
+		vs.Type, vs.Height, vs.Round)
+	for k := range vs.Votes {
+		fmt.Fprintf(&builder, " %s,", k)
+	}
+	fmt.Fprintf(&builder, "]}")
+	return builder.String()
 }
 
 // Size returns the size of the VoteSet
@@ -410,6 +428,14 @@ func (rvs *roundVoteSet) ToProto() *tbftpb.RoundVoteSet {
 		Precommits: rvs.Precommits.ToProto(),
 	}
 	return rvsProto
+}
+
+func (rvs *roundVoteSet) String() string {
+	if rvs == nil {
+		return ""
+	}
+	return fmt.Sprintf("Height: %d, Round: %d, Prevotes: %s, Precommits: %s",
+		rvs.Height, rvs.Round, rvs.Prevotes, rvs.Precommits)
 }
 
 type heightRoundVoteSet struct {
