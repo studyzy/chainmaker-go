@@ -13,6 +13,7 @@ import (
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"sync"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
@@ -21,6 +22,7 @@ type StateSqlDB struct {
 	db      protocol.SqlDBHandle
 	logger  protocol.Logger
 	chainId string
+	sync.Mutex
 }
 
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
@@ -57,8 +59,10 @@ func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 	return stateDB, nil
 }
 func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	s.Lock()
+	defer s.Unlock()
 	s.initDb(getDbName(genesisBlock.Block.Header.ChainId))
-	return s.CommitBlock(genesisBlock)
+	return s.commitBlock(genesisBlock)
 }
 func getDbName(chainId string) string {
 	return "statedb_" + chainId
@@ -73,6 +77,11 @@ func GetContractDbName(chainId, contractName string) string {
 
 // CommitBlock commits the state in an atomic operation
 func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
+	s.Lock()
+	defer s.Unlock()
+	return s.commitBlock(blockWithRWSet)
+}
+func (s *StateSqlDB) commitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
 	txKey := block.GetTxKey()
@@ -165,6 +174,8 @@ func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 
 // ReadObject returns the state value for given contract name and key, or returns nil if none exists.
 func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error) {
+	s.Lock()
+	defer s.Unlock()
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err
@@ -194,6 +205,8 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
 func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
+	s.Lock()
+	defer s.Unlock()
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil
@@ -216,6 +229,8 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 
 // GetLastSavepoint returns the last block height
 func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
+	s.Lock()
+	defer s.Unlock()
 	sql := "select max(block_height) from state_infos"
 	row, err := s.db.QuerySingle(sql)
 	if err != nil {
@@ -234,11 +249,15 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database, there is no need for gorm to close db
 func (s *StateSqlDB) Close() {
+	s.Lock()
+	defer s.Unlock()
 	s.logger.Info("close state sql db")
 	s.db.Close()
 }
 
 func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	s.Lock()
+	defer s.Unlock()
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err
@@ -247,6 +266,8 @@ func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}
 	return s.db.QuerySingle(sql, values...)
 }
 func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	s.Lock()
+	defer s.Unlock()
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
 			return nil, err
@@ -256,6 +277,8 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 
 }
 func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
+	s.Lock()
+	defer s.Unlock()
 	dbName := GetContractDbName(s.chainId, contractName)
 	err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
@@ -266,18 +289,25 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
 	return err
 }
 func (s *StateSqlDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	s.Lock()
+	defer s.Unlock()
 	return s.db.BeginDbTransaction(txName)
 
 }
 func (s *StateSqlDB) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	s.Lock()
+	defer s.Unlock()
 	return s.db.GetDbTransaction(txName)
 
 }
 func (s *StateSqlDB) CommitDbTransaction(txName string) error {
+	s.Lock()
+	defer s.Unlock()
 	return s.db.CommitDbTransaction(txName)
 
 }
 func (s *StateSqlDB) RollbackDbTransaction(txName string) error {
+	s.Lock()
+	defer s.Unlock()
 	return s.db.RollbackDbTransaction(txName)
-
 }
