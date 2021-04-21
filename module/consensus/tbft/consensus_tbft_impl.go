@@ -1406,7 +1406,7 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 
 	height := entry.Height
 	if currentHeight < height-1 {
-		consensus.logger.Fatalf("[%s] currentHeight: %v < height-1: %v, this should not happen",
+		consensus.logger.Fatalf("[%s] replay currentHeight: %v < height-1: %v, this should not happen",
 			consensus.Id, currentHeight, height-1)
 	}
 
@@ -1418,11 +1418,11 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 		// replay wal log
 		consensus.enterNewHeight(height)
 		for i := entry.HeightFirstIndex; i <= lastIndex; i++ {
+			consensus.logger.Debugf("[%d] replay entry type: %s, Data.len: %d", consensus.Id, entry.Type, len(entry.Data))
 			switch entry.Type {
 			case tbftpb.WalEntryType_TimeoutEntry:
 				timeoutInfoProto := new(tbftpb.TimeoutInfo)
 				mustUnmarshal(entry.Data, timeoutInfoProto)
-				consensus.logger.Debugf("entry.Data.len: %d, timeoutInfoProto: %v", len(entry.Data), timeoutInfoProto)
 				timeoutInfo := newTimeoutInfoFromProto(timeoutInfoProto)
 				consensus.handleTimeout(timeoutInfo, true)
 			case tbftpb.WalEntryType_ProposalEntry:
