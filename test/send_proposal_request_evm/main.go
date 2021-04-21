@@ -39,8 +39,8 @@ const (
 	Port           = 12301
 	certPathPrefix = "../../config"
 	WasmPath       = "../../test/wasm/fact-rust-0.7.2.wasm"
-	AbiJson        = "[{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	AbiJson1       = "[{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	AbiJson        = "[{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	AbiJson1       = "[{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	ByteCodePath   = "../../test/wasm/evm-token.bin"
 	ByteCodePath1  = "../../test/wasm/evm-token.bin"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
@@ -49,8 +49,8 @@ const (
 	adminCrtPath   = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.crt"
 
 	orgId         = "wx-org1.chainmaker.org"
-	contractName  = "contract88"
-	contractName1 = "contract88"
+	contractName  = "contract90"
+	contractName1 = "contract90"
 	runtimeType   = commonPb.RuntimeType_EVM
 	prePathFmt    = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
@@ -92,6 +92,12 @@ func main() {
 	testSet2(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
 	testQuery2(sk3, &client, CHAIN1)
+
+	testTransfer(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
+	testQuery(sk3, &client, CHAIN1)
+	testQuery2(sk3, &client, CHAIN1)
+
 }
 
 func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
@@ -1009,6 +1015,68 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		dataByte, err := myAbi.Pack(method, big.NewInt(1000004))
 
 		//dataByte, err := myAbi.Pack(method,test1,big.NewInt(99999999999999))
+		checkErr(err)
+
+		data := hex.EncodeToString(dataByte)
+		fmt.Println("data 1 :", data)
+		method = data[0:8]
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "data",
+				Value: data,
+			},
+		}
+
+	} else {
+		method = "find_by_file_hash"
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "file_hash",
+				Value: "counter1",
+			},
+			{
+				Key:   "file_name",
+				Value: "counter1",
+			},
+		}
+	}
+
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf("marshal payload failed, %s", err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+	if resp.ContractResult != nil {
+		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
+		fmt.Println(method0, "->", v)
+	}
+	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+
+}
+func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract [%s] ============\n", txId)
+
+	// 构造Payload
+	var pairs []*commonPb.KeyValuePair
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	method0 := "transfer"
+	var method string
+	if runtimeType == commonPb.RuntimeType_EVM {
+		method = method0
+		myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		checkErr(err)
+
+		addr := evm.BigToAddress(evm.FromDecimalString(client1Addr))
+		dataByte, err := myAbi.Pack(method, addr, big.NewInt(10))
 		checkErr(err)
 
 		data := hex.EncodeToString(dataByte)
