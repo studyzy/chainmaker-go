@@ -53,7 +53,9 @@ func getAddr() error {
 		return fmt.Errorf("make address from cert SKI failed, %s", err)
 	}
 
-	fmt.Printf("addr: 0x%x\n", addrInt.AsStringKey())
+	fmt.Printf("ski:       %s\n", ski)
+	fmt.Printf("addr(Int): %s\n", addrInt.String())
+	fmt.Printf("addr:      0x%x\n", addrInt.AsStringKey())
 	return nil
 }
 
