@@ -261,6 +261,7 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
 	if err != nil {
 		return err
 	}
+	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
 	_, err = s.db.ExecSql(sql)
 	return err
 }

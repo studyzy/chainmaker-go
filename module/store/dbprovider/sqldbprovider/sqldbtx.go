@@ -47,7 +47,7 @@ func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
 	tx := p.db.Exec(sql, values)
-	p.logger.Debugf("db tx[%s] exec sql[%s],result:%s", p.name, sql, tx.Error)
+	p.logger.Debugf("db tx[%s] exec sql[%s],result:%v", p.name, sql, tx.Error)
 	if tx.Error != nil {
 		return 0, tx.Error
 	}
