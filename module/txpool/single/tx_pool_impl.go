@@ -184,7 +184,7 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	if utils.IsConfigTx(tx) {
 		memTx.isConfigTxs = true
 	}
-	t := time.NewTimer(time.Millisecond)
+	t := time.NewTimer(time.Second)
 	defer t.Stop()
 	select {
 	case pool.addTxsCh <- memTx:
