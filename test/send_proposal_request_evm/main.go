@@ -39,8 +39,8 @@ const (
 	Port           = 12301
 	certPathPrefix = "../../config"
 	WasmPath       = "../../test/wasm/fact-rust-0.7.2.wasm"
-	AbiJson        = "[{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"balanceOfAddress\",\"outputs\":[{\"name\":\"_value\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"burn\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_name\",\"type\":\"string\"}],\"name\":\"setName\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"start\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"stop\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_addressFounder\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stopped\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	AbiJson1       = "[{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"balanceOfAddress\",\"outputs\":[{\"name\":\"_value\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"burn\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_name\",\"type\":\"string\"}],\"name\":\"setName\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"start\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"stop\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_addressFounder\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"stopped\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	AbiJson        = "[{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	AbiJson1       = "[{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 	ByteCodePath   = "../../test/wasm/evm-token.bin"
 	ByteCodePath1  = "../../test/wasm/evm-token.bin"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
@@ -49,8 +49,8 @@ const (
 	adminCrtPath   = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.crt"
 
 	orgId         = "wx-org1.chainmaker.org"
-	contractName  = "contract87"
-	contractName1 = "contract87"
+	contractName  = "contract88"
+	contractName1 = "contract88"
 	runtimeType   = commonPb.RuntimeType_EVM
 	prePathFmt    = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
@@ -82,97 +82,16 @@ func main() {
 		panic(err)
 	}
 
-	//adminFile,_ := ioutil.ReadFile(adminKeyPath)
-	//sk2, err := asym.PrivateKeyFromPEM(adminFile, nil)
-	//if err != nil {
-	//	panic(err)
-	//}
-	// 1) 合约创建
-	//if *createContract {
 	testCreate(sk3, &client, CHAIN1)
-	time.Sleep(10 * time.Second)
-	//}
-	//testInvoke(sk3, &client, CHAIN1)
-
-	//testInvoke(sk2, &client, CHAIN1)
-
-	//time.Sleep(30 * time.Second)
-	//testQuery(sk3, &client, CHAIN1)
-	// 冻结、解冻、吊销用户合约功能测试/
-	//testFreezeOrUnfreezeOrRevokeFlow(sk3, client)
-
-	//////
-	//////// 2)
-	//txId := testInvoke(sk3, &client, CHAIN1)
-	//time.Sleep(5 * time.Second)
-	////////
-	//////// 3) 合约查询
-	//testSet(sk3, &client, CHAIN1)
-	//time.Sleep(4 * time.Second)
+	time.Sleep(4 * time.Second)
+	testSet(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
 	testQuery(sk3, &client, CHAIN1)
-	////////
-	////////// 4) 根据TxId查交易
-	//testGetTxByTxId(sk3, &client, txId, CHAIN1)
-	//
-	// 5) 根据区块高度查区块，若height为-1，表示查当前区块1
-	//hash := testGetBlockByHeight(sk3, &client, CHAIN1, -1)
-	//
-	//// 6) 根据区块高度查区块（包含读写集），若height为-1，表示查当前区块
-	//testGetBlockWithTxRWSetsByHeight(sk3, &client, CHAIN1, -1)
-	//
-	//// 7) 根据区块哈希查区块
-	//testGetBlockByHash(sk3, &client, CHAIN1, hash)
-	//
-	//// 8) 根据区块哈希查区块（包含读写集）
-	//testGetBlockWithTxRWSetsByHash(sk3, &client, CHAIN1, hash)
-	//
-	//// 9) 根据TxId查区块
-	//testGetBlockByTxId(sk3, &client, txId, CHAIN1)
-	//
-	//// 10) 查询最新配置块
-	//testGetLastConfigBlock(sk3, &client, CHAIN1)
-	//
-	//// 11) 查询最新区块
-	//testGetLastBlock(sk3, &client, CHAIN1)
-	//
-	//// 12) 查询链信息
-	//testGetChainInfo(sk3, &client, CHAIN1)
-	//
-	//// 12) 批量调用
-	//if false {
-	//	var wg sync.WaitGroup
-	//	for i := 0; i < 1; i++ {
-	//		wg.Add(1)
-	//		go func() {
-	//			for j := 0; j < 10; j++ {
-	//				var txId string
-	//				txId = testInvoke(sk3, &client, CHAIN1)
-	//				fmt.Printf("txId: %s\n", txId)
-	//				time.Sleep(time.Millisecond * 100)
-	//			}
-	//			wg.Done()
-	//		}()
-	//	}
-	//	wg.Wait()
-	//}
-	//
-	////testCreate(sk3, &client, CHAIN1)
-	////time.Sleep(5 * time.Second)
-	//
-	////// 5) 合约调用
-	//for i := 0; i < 100; i++ {
-	//	testInvoke(sk3, &client, CHAIN1)
-	//}
-	//
-	////// 6) 合约查询
-	////testQuery(sk3, &client, CHAIN1)
-	//
-	////7) 合约升级
-	//testUpgrade(sk3, &client, CHAIN1)
-	// 性能测试
-	//testPerformanceModeTransfer(sk3, &client, CHAIN1)
-	//time.Sleep(time.Second * 10)
-	//testPerformanceModeBalance(sk3, &client, CHAIN1)
+	time.Sleep(1 * time.Second)
+
+	testSet2(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
+	testQuery2(sk3, &client, CHAIN1)
 }
 
 func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
@@ -533,7 +452,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		bc := string(byteCodeTmp)
 		checkErr(err)
 		data := ""
-		hasParam := true
+		hasParam := false
 		if hasParam {
 			method := ""
 			myAbi, err := abi.JSON(strings.NewReader(AbiJson))
@@ -550,7 +469,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 			},
 		}
 		fmt.Println(data)
-		bc += data
+		//bc += data
 		byteCodeBin, err = hex.DecodeString(bc)
 	} else {
 		var err error
@@ -836,7 +755,7 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 	//test1Addr, _ := myAbi.Pack("",big.NewInt(100000000),"test","test")
 	//fmt.Println("test1Addr : ", hex.EncodeToString(test1Addr))
 	//method0 := "balanceOfAddress"
-	method0 := "balanceOf"
+	method0 := "balances"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
 		//method = "setAndMul"
@@ -904,14 +823,97 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 
 }
-func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+
+func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
 	txId := utils.GetRandTxId()
 	fmt.Printf("\n============ query contract [%s] ============\n", txId)
 
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
 	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
-	method0 := "balanceOfAddress"
+	//test1Addr, _ := myAbi.Pack("",big.NewInt(100000000),"test","test")
+	//fmt.Println("test1Addr : ", hex.EncodeToString(test1Addr))
+	//method0 := "balanceOfAddress"
+	method0 := "balances"
+	var method string
+	if runtimeType == commonPb.RuntimeType_EVM {
+		//method = "setAndMul"
+		//myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		//checkErr(err)
+		//dataByte, err := myAbi.Pack(method, big.NewInt(3), big.NewInt(4))
+		//checkErr(err)
+
+		method = method0
+		//test1 := evm.StringToAddress("test1")
+		//test2 := evm.StringToAddress("test2")
+		//test3:=evm.StringToAddress("test3")
+		//test1, _ := evm.MakeAddressFromHex("aaaa1")
+		//test2,_ := evm.MakeAddressFromHex("aaaa2")
+		//test3,_ := evm.MakeAddressFromHex("aaaa3")
+		myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		checkErr(err)
+		senderSki := "9dbf916da9f5ae892e0991d82b30e1366fe7aa76a6e18767783c9fa3c0921f3b"
+		addr, err := evm.MakeAddressFromHex(senderSki)
+
+		checkErr(err)
+		dataByte, err := myAbi.Pack(method, evm.BigToAddress(addr))
+
+		//dataByte, err := myAbi.Pack(method,test1,big.NewInt(99999999999999))
+		checkErr(err)
+
+		data := hex.EncodeToString(dataByte)
+		fmt.Println("data 1 :", data)
+		method = data[0:8]
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "data",
+				Value: data,
+			},
+		}
+
+	} else {
+		method = "find_by_file_hash"
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "file_hash",
+				Value: "counter1",
+			},
+			{
+				Key:   "file_name",
+				Value: "counter1",
+			},
+		}
+	}
+
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf("marshal payload failed, %s", err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+	if resp.ContractResult != nil {
+		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
+		fmt.Println(method0, "->", v)
+	}
+	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+
+}
+
+func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract [%s] ============\n", txId)
+
+	// 构造Payload
+	var pairs []*commonPb.KeyValuePair
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	method0 := "updateBalance"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
 		//method = "setAndMul"
@@ -930,7 +932,81 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		myAbi, err := abi.JSON(strings.NewReader(AbiJson))
 		checkErr(err)
 		addr := evm.BigToAddress(evm.FromDecimalString(client1Addr))
-		dataByte, err := myAbi.Pack(method, addr)
+		dataByte, err := myAbi.Pack(method, big.NewInt(100000002), addr)
+
+		//dataByte, err := myAbi.Pack(method,test1,big.NewInt(99999999999999))
+		checkErr(err)
+
+		data := hex.EncodeToString(dataByte)
+		fmt.Println("data 1 :", data)
+		method = data[0:8]
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "data",
+				Value: data,
+			},
+		}
+
+	} else {
+		method = "find_by_file_hash"
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "file_hash",
+				Value: "counter1",
+			},
+			{
+				Key:   "file_name",
+				Value: "counter1",
+			},
+		}
+	}
+
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf("marshal payload failed, %s", err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+	if resp.ContractResult != nil {
+		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
+		fmt.Println(method0, "->", v)
+	}
+	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+
+}
+func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract [%s] ============\n", txId)
+
+	// 构造Payload
+	var pairs []*commonPb.KeyValuePair
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	method0 := "updateMyBalance"
+	var method string
+	if runtimeType == commonPb.RuntimeType_EVM {
+		//method = "setAndMul"
+		//myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		//checkErr(err)
+		//dataByte, err := myAbi.Pack(method, big.NewInt(3), big.NewInt(4))
+		//checkErr(err)
+
+		method = method0
+		//test1 := evm.StringToAddress("test1")
+		//test2 := evm.StringToAddress("test2")
+		//test3:=evm.StringToAddress("test3")
+		//test1, _ := evm.MakeAddressFromHex("aaaa1")
+		//test2,_ := evm.MakeAddressFromHex("aaaa2")
+		//test3,_ := evm.MakeAddressFromHex("aaaa3")
+		myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		checkErr(err)
+		dataByte, err := myAbi.Pack(method, big.NewInt(1000004))
 
 		//dataByte, err := myAbi.Pack(method,test1,big.NewInt(99999999999999))
 		checkErr(err)

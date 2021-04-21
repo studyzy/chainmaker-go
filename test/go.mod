@@ -18,6 +18,7 @@ require (
 	golang.org/x/sys v0.0.0-20210305034016-7844c3c200c3 // indirect
 	google.golang.org/genproto v0.0.0-20210303154014-9728d6b83eeb // indirect
 	google.golang.org/grpc v1.36.0
+	github.com/ethereum/go-ethereum v1.9.25
 )
 
 replace (
