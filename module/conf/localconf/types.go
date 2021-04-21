@@ -114,7 +114,6 @@ type debugConfig struct {
 
 	IsModifyTxPayload    bool `mapstructure:"is_modify_tx_payload"`
 	IsExtreme            bool `mapstructure:"is_extreme"` //extreme fast mode
-	UseBatchTxPool       bool `mapstructure:"use_batch_tx_pool"`
 	UseNetMsgCompression bool `mapstructure:"use_net_msg_compression"`
 	IsNetInsecurity      bool `mapstructure:"is_net_insecurity"`
 }
@@ -143,6 +142,7 @@ type mysqlConfig struct {
 }
 
 type txPoolConfig struct {
+	PoolType            string `mapstructure:"pool_type"`
 	MaxTxPoolSize       uint32 `mapstructure:"max_txpool_size"`
 	MaxConfigTxPoolSize uint32 `mapstructure:"max_config_txpool_size"`
 	FullNotifyAgainTime uint32 `mapstructure:"full_notify_again_time"`

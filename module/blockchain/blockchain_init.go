@@ -269,7 +269,7 @@ func (bc *Blockchain) initTxPool() (err error) {
 		txPoolFactory txpool.TxPoolFactory
 		txType        = txpool.SINGLE
 	)
-	if localconf.ChainMakerConfig.DebugConfig.UseBatchTxPool {
+	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
 	}
 	bc.txPool, err = txPoolFactory.NewTxPool(
