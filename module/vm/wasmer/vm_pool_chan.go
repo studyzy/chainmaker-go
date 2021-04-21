@@ -87,6 +87,7 @@ func NewVmPoolManager(chainId string) *VmPoolManager {
 	vmPoolManager := &VmPoolManager{
 		instanceMap: make(map[string]*vmPool),
 		log:         logger.GetLoggerByChain(logger.MODULE_VM, chainId),
+		chainId:     chainId,
 	}
 	return vmPoolManager
 }

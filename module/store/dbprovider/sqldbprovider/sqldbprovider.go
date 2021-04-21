@@ -97,7 +97,7 @@ func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Lo
 			Logger: logger.Default.LogMode(logger.Error),
 		})
 		if err != nil {
-			panic(fmt.Sprintf("failed to open mysql:%s", err))
+			panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
 		}
 		log.Debug("open new gorm db connection for " + conf.SqlDbType)
 		provider.db = db
