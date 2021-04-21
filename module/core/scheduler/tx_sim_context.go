@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"errors"
+	"fmt"
+	"sort"
+
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"sort"
 )
 
 // Storage interface for smart contracts

@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
+	"fmt"
+	"math"
+
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
-	"math"
 )
 
 // validate verify the validity of the transaction
@@ -46,10 +48,10 @@ func (pool *txPoolImpl) validate(tx *commonPb.Transaction, source protocol.TxSou
 }
 
 func (pool *txPoolImpl) validateTxTime(tx *commonPb.Transaction) error {
-	if pool.isTxTimeVerify() {
+	if poolconf.IsTxTimeVerify(pool.chainConf) {
 		txTimestamp := tx.Header.Timestamp
 		chainTime := utils.CurrentTimeSeconds()
-		if math.Abs(float64(chainTime-txTimestamp)) > pool.maxTxTimeTimeout() {
+		if math.Abs(float64(chainTime-txTimestamp)) > poolconf.MaxTxTimeTimeout(pool.chainConf) {
 			pool.log.Errorw("the txId timestamp is error", "txId", tx.Header.GetTxId(), "txTimestamp", txTimestamp, "chainTimestamp", chainTime)
 			return commonErrors.ErrTxTimeout
 		}
