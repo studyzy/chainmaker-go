@@ -47,12 +47,12 @@ func (mr *MockProposalCacheMockRecorder) ClearProposedBlockAt(height interface{}
 }
 
 // GetProposedBlock mocks base method.
-func (m *MockProposalCache) GetProposedBlock(b *common.Block) (*common.Block, map[string]*common.TxRWSet, map[int64][]*common.ContractEvent) {
+func (m *MockProposalCache) GetProposedBlock(b *common.Block) (*common.Block, map[string]*common.TxRWSet, map[string][]*common.ContractEvent) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProposedBlock", b)
 	ret0, _ := ret[0].(*common.Block)
 	ret1, _ := ret[1].(map[string]*common.TxRWSet)
-	ret2, _ := ret[2].(map[int64][]*common.ContractEvent)
+	ret2, _ := ret[2].(map[string][]*common.ContractEvent)
 	return ret0, ret1, ret2
 }
 
@@ -172,7 +172,7 @@ func (mr *MockProposalCacheMockRecorder) SetProposedAt(height interface{}) *gomo
 }
 
 // SetProposedBlock mocks base method.
-func (m *MockProposalCache) SetProposedBlock(b *common.Block, rwSetMap map[string]*common.TxRWSet, contractEventMap map[int64][]*common.ContractEvent, selfProposed bool) error {
+func (m *MockProposalCache) SetProposedBlock(b *common.Block, rwSetMap map[string]*common.TxRWSet, contractEventMap map[string][]*common.ContractEvent, selfProposed bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetProposedBlock", b, rwSetMap, contractEventMap, selfProposed)
 	ret0, _ := ret[0].(error)

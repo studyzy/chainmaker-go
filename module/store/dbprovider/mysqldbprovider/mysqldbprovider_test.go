@@ -20,4 +20,3 @@ func TestProvider_GetDB(t *testing.T) {
 	var db Provider
 	db.GetDB("test_chain_1", conf)
 }
-

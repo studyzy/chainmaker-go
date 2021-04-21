@@ -84,14 +84,14 @@ func NewBlockStoreImpl(chainId string,
 }
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
-func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEventInfo []*commonPb.ContractEvent) error {
+func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:           block,
-		TxRWSets:        txRWSets,
-		EventTopicTable: contractEventInfo,
+		Block:          block,
+		TxRWSets:       txRWSets,
+		ContractEvents: contractEvents,
 	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock
@@ -107,6 +107,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 
 	//commit db concurrently
 	startCommitBlock := utils.CurrentTimeMillisSeconds()
+	//the amount of commit db work
 	numBatches := 4
 	var batchWG sync.WaitGroup
 	batchWG.Add(numBatches)
@@ -148,7 +149,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		batchWG.Done()
 	}
 	//5.commit contractEventDB
-	if !localconf.ChainMakerConfig.StorageConfig.DisableHistoryDB {
+	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
 
 		go func() {
 			defer batchWG.Done()
@@ -159,7 +160,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 				errsChan <- err
 			}
 		}()
-	}else {
+	} else {
 		batchWG.Done()
 	}
 
@@ -346,7 +347,7 @@ func (bs *BlockStoreImpl) recover() error {
 	if historySavepoint, err = bs.historyDB.GetLastSavepoint(); err != nil {
 		return err
 	}
-	if localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
+	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
 		if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
 			return err
 		}
@@ -371,7 +372,7 @@ func (bs *BlockStoreImpl) recover() error {
 		}
 	}
 	//recommit contract event db
-	if localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB{
+	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
 		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
 			return nil
 		}

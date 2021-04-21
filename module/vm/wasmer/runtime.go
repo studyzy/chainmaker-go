@@ -73,7 +73,9 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	sc.ContractResult = contractResult
 	sc.parameters = parameters
 	sc.Instance = instance
+
 	err := sc.CallMethod(instance)
+
 	// gas Log
 	gas := instance.GetGasUsed()
 	if gas > protocol.GasLimit {
@@ -86,10 +88,6 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	logStr += fmt.Sprintf("used gas %d ", gas)
 	contractResult.GasUsed = int64(gas)
 
-	//todo rustCnotractEvent
-	for _, value := range sc.Event {
-		r.log.Debugf("rustConotractEvent:%s",string(value))
-	}
 	if err != nil {
 		contractResult.Code = commonPb.ContractResultCode_FAIL
 		msg := fmt.Sprintf("contract invoke failed, %s", err.Error())

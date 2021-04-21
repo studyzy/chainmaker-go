@@ -81,42 +81,6 @@ func (c *ContextService) PutObject(ctxId int64, in []*serialize.EasyCodecItem) (
 	return items, nil
 }
 
-func (c *ContextService)EmitEvent(ctxId int64, in []*serialize.EasyCodecItem)([]*serialize.EasyCodecItem, error)   {
-	context, ok := c.Context(ctxId)
-	if  !ok{
-		return nil, fmt.Errorf("emit event encounter bad ctx id:%d", ctxId)
-	}
-	topic, ok := serialize.GetValueFromItems(in, "topic", serialize.EasyKeyType_USER)
-
-	if !ok {
-		return nil, fmt.Errorf("emit event request have no topic:%d", ctxId)
-	}
-	data, ok := serialize.GetValueFromItems(in, "data", serialize.EasyKeyType_USER)
-	if !ok {
-		return nil, fmt.Errorf("emit event request have no data:%d", ctxId)
-	}
-
-	var items []*serialize.EasyCodecItem
-	items=make([]*serialize.EasyCodecItem,0)
-	items=append(items, &serialize.EasyCodecItem{
-		KeyType:serialize.EasyKeyType_USER,
-		Key:"topic\\0",
-		ValueType:serialize.EasyValueType_STRING,
-		Value:topic.(string),
-	})
-	items=append(items, &serialize.EasyCodecItem{
-		KeyType:serialize.EasyKeyType_USER,
-		Key:"data\\0",
-		ValueType:serialize.EasyValueType_STRING,
-		Value:data.(string),
-	})
-	b := serialize.EasyCodecItemToJsonStr(items)
-	c.logger.Debugf("cppContract Event data: %v",b)
-	context.Event=append(context.Event,[]byte(b))
-	return items,nil
-
-
-}
 // GetObject implements Syscall interface
 func (c *ContextService) GetObject(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
 	context, ok := c.Context(ctxId)
@@ -286,6 +250,7 @@ func (c *ContextService) ContractCall(ctxId int64, in []*serialize.EasyCodecItem
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
 		return respItems, fmt.Errorf(contractResult.Message)
 	}
+
 	return respItems, nil
 }
 

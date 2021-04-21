@@ -49,11 +49,11 @@ func (mr *MockTxSchedulerMockRecorder) Halt() *gomock.Call {
 }
 
 // Schedule mocks base method.
-func (m *MockTxScheduler) Schedule(block *common.Block, txBatch []*common.Transaction, snapshot protocol.Snapshot) (map[string]*common.TxRWSet, map[int64][]*common.ContractEvent, error) {
+func (m *MockTxScheduler) Schedule(block *common.Block, txBatch []*common.Transaction, snapshot protocol.Snapshot) (map[string]*common.TxRWSet, map[string][]*common.ContractEvent, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Schedule", block, txBatch, snapshot)
 	ret0, _ := ret[0].(map[string]*common.TxRWSet)
-	ret1, _ := ret[1].(map[int64][]*common.ContractEvent)
+	ret1, _ := ret[1].(map[string][]*common.ContractEvent)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }

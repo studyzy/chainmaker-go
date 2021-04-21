@@ -19,7 +19,7 @@ type TxScheduler interface {
 	// schedule a transaction batch into a block with DAG
 	// Return result(and read write set) of each transaction, no matter it is executed OK, or fail, or timeout.
 	// For cross-contracts invoke, result(and read write set) include all contract relative.
-	Schedule(block *common.Block, txBatch []*common.Transaction, snapshot Snapshot) (map[string]*common.TxRWSet,map[int64][]*common.ContractEvent, error)
+	Schedule(block *common.Block, txBatch []*common.Transaction, snapshot Snapshot) (map[string]*common.TxRWSet,map[string][]*common.ContractEvent, error)
 	// Run VM with a given DAG, and return results.
 	SimulateWithDag(block *common.Block, snapshot Snapshot) (map[string]*common.TxRWSet, map[string]*common.Result, error)
 	// To halt scheduler and release VM resources.

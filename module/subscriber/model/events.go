@@ -17,5 +17,5 @@ type NewBlockEvent struct {
 }
 
 type NewContractEvent struct {
-	ContractEvent *commonPb.ContractEvent
+	ContractEvent *commonPb.ContractEventInfo
 }

@@ -95,7 +95,6 @@ func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
 	return s.tx.Header.Sender
 }
 
-
 func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
 	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
 		return 0
@@ -158,9 +157,7 @@ func (s *txQuerySimContextImpl) GetChainNodesInfoProvider() (protocol.ChainNodes
 	}
 	return s.vmManager.GetChainNodesInfoProvider(), nil
 }
-func (s *txQuerySimContextImpl) GetTopicTableColumn(tableName string) ([]string, error) {
-	return nil, nil
-}
+
 func (s *txQuerySimContextImpl) GetTxRWSet() *commonPb.TxRWSet {
 	txRwSet := &commonPb.TxRWSet{
 		TxId:     s.tx.Header.TxId,

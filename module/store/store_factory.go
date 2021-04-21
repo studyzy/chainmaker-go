@@ -50,11 +50,11 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string) (protoco
 		if err != nil {
 			return nil, err
 		}
-		contractEventDB,err:=eventmysqldb.NewContractEventMysqlDB(chainId)
+		contractEventDB, err := eventmysqldb.NewContractEventMysqlDB(chainId)
 		if err != nil {
 			return nil, err
 		}
-		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB,contractEventDB, NewKvDBProvider(chainId, types.CommonDBDir, engineType))
+		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB, NewKvDBProvider(chainId, types.CommonDBDir, engineType))
 	case types.MySQL:
 		blockDB, err := blockmysqldb.NewBlockMysqlDB(chainId)
 		if err != nil {
@@ -68,11 +68,11 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string) (protoco
 		if err != nil {
 			return nil, err
 		}
-		contractEventDB,err:=eventmysqldb.NewContractEventMysqlDB(chainId)
+		contractEventDB, err := eventmysqldb.NewContractEventMysqlDB(chainId)
 		if err != nil {
 			return nil, err
 		}
-		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB,NewKvDBProvider(chainId, types.CommonDBDir, types.LevelDb))
+		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB, NewKvDBProvider(chainId, types.CommonDBDir, types.LevelDb))
 	default:
 		return nil, nil
 	}
@@ -134,5 +134,3 @@ func NewKvDBProvider(chainId string, dbDir string, engineType types.EngineType) 
 	}
 	return nil
 }
-
-

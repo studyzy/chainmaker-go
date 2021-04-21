@@ -120,10 +120,10 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	defer v.reentrantLocks.unlock(string(block.Header.BlockHash))
 
 	var isValid bool
-	var contractEventTopicMap map[int64][]*commonpb.ContractEvent
+	var contractEventMap map[string][]*commonpb.ContractEvent
 	// to check if the block has verified before
-	b, _, EventTopicMap := v.proposalCache.GetProposedBlock(block)
-	contractEventTopicMap = EventTopicMap
+	b, _, EventMap := v.proposalCache.GetProposedBlock(block)
+	contractEventMap = EventMap
 	if b != nil && consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type {
 		// the block has verified before
 		v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
@@ -156,7 +156,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	// verify success, cache block and read write set
 	v.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
-	if err = v.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventTopicMap, false); err != nil {
+	if err = v.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventMap, false); err != nil {
 		return err
 	}
 

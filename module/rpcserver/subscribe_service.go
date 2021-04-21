@@ -51,6 +51,7 @@ func (s *ApiService) Subscribe(req *commonPb.TxRequest, server apiPb.RpcNode_Sub
 
 	return nil
 }
+
 //dealContractEventSubscription - deal contract event subscribe request
 func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
 	var (
@@ -69,7 +70,7 @@ func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, ser
 	}
 
 	if err = s.checkSubscribeContractEventPayload(&payload); err != nil {
-		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_TX //todo
+		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_TX
 		errMsg = s.getErrMsg(errCode, err)
 		s.log.Error(errMsg)
 		return status.Error(codes.InvalidArgument, errMsg)
@@ -90,7 +91,7 @@ func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, ser
 }
 
 func (s *ApiService) checkSubscribeContractEventPayload(payload *commonPb.SubscribeContractEventPayload) error {
-	if payload.Topic == ""  || payload.ContractName == "" {
+	if payload.Topic == "" || payload.ContractName == "" {
 		return errors.New("invalid start block height or end block height")
 	}
 	return nil
@@ -103,7 +104,7 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 		err             error
 		errMsg          string
 		eventSubscriber *subscriber.EventSubscriber
-		result *commonPb.SubscribeResult
+		result          *commonPb.SubscribeResult
 	)
 
 	eventCh := make(chan model.NewContractEvent)
@@ -116,7 +117,6 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 		return status.Error(codes.Internal, errMsg)
 	}
 
-
 	sub := eventSubscriber.SubscribeContractEvent(eventCh)
 	defer sub.Unsubscribe()
 	for {
@@ -124,21 +124,21 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 		case ev := <-eventCh:
 			contractEventInfo := ev.ContractEvent
 
-			if contractEventInfo.ContractName!=payload.ContractName||contractEventInfo.Topic!=payload.Topic {
+			if contractEventInfo.ContractName != payload.ContractName || contractEventInfo.Topic != payload.Topic {
 
 				continue
 			}
 
-			if result,err = s.getContractEventSubscribeResult(contractEventInfo); err != nil {
+			if result, err = s.getContractEventSubscribeResult(contractEventInfo); err != nil {
 				s.log.Error(err.Error())
 				return status.Error(codes.Internal, err.Error())
 			}
 			if err := server.Send(result); err != nil {
-				err= fmt.Errorf("send block info by realtime failed, %s", err)
+				err = fmt.Errorf("send block info by realtime failed, %s", err)
 				s.log.Error(err.Error())
 				return status.Error(codes.Internal, err.Error())
 			}
-			s.log.Infof("send contractEvetnInfo to subscriber %v",string(result.Data))
+			s.log.Infof("send contractEvetnInfo to subscriber %v", string(result.Data))
 
 		case <-server.Context().Done():
 			return nil
@@ -147,6 +147,7 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 		}
 	}
 }
+
 // dealTxSubscription - deal tx subscribe request
 func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
 	var (
@@ -701,7 +702,7 @@ func (s *ApiService) getBlockSubscribeResult(blockInfo *commonPb.BlockInfo) (*co
 	return result, nil
 }
 
-func (s *ApiService) getContractEventSubscribeResult(contractEventInfo *commonPb.ContractEvent) (*commonPb.SubscribeResult, error) {
+func (s *ApiService) getContractEventSubscribeResult(contractEventInfo *commonPb.ContractEventInfo) (*commonPb.SubscribeResult, error) {
 
 	eventBytes, err := proto.Marshal(contractEventInfo)
 	if err != nil {

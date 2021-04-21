@@ -36,7 +36,6 @@ import (
 // extern int fdRead(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdClose(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
 // extern int fdSeek(void *contextfd,int iovs,int iovsPtr ,int iovsLen,int nwrittenPtr);
-//extern  int emitEvent(void *context, int ctxPtr, int topicPtr, int topicLen, int dataPtr ,int dataLen);
 // extern void procExit(void *contextfd,int exitCode);
 import "C"
 
@@ -120,10 +119,6 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContract()
 	case protocol.ContractMethodCallContractLen:
 		return s.CallContractLen()
-	case protocol.ContractMethodEmitEvent:
-		return s.EmitEvent()
-
-
 	default:
 		log.Errorf("method is %s not match.", method)
 	}
@@ -183,33 +178,6 @@ func (s *sdkRequestCtx) PutState() int32 {
 	if err != nil {
 		return s.recordMsg("method PutState put fail. " + err.Error())
 	}
-	return protocol.ContractSdkSignalResultSuccess
-}
-
-// EmitEvetn emit event to chain
-func (s *sdkRequestCtx) EmitEvent() int32 {
-	s.Sc.Log.Debugf("this is EmitEvent")
-
-	req := serialize.EasyUnmarshal(s.RequestBody)
-	topic, _ := serialize.GetValueFromItems(req, "topic\\0", serialize.EasyKeyType_USER)
-	data, _ := serialize.GetValueFromItems(req, "data\\0", serialize.EasyKeyType_USER)
-	var items []*serialize.EasyCodecItem
-	items = make([]*serialize.EasyCodecItem, 0)
-	items = append(items, &serialize.EasyCodecItem{
-		KeyType:   serialize.EasyKeyType_USER,
-		Key:       "topic\\0",
-		ValueType: serialize.EasyValueType_STRING,
-		Value:     topic,
-	})
-	items = append(items, &serialize.EasyCodecItem{
-		KeyType:   serialize.EasyKeyType_USER,
-		Key:       "data\\0",
-		ValueType: serialize.EasyValueType_STRING,
-		Value:     data,
-	})
-	b := serialize.EasyMarshal(items)
-	s.Sc.Event = append(s.Sc.Event, b)
-	s.Sc.Log.Debugf("rustContractEvent :%s", string(b))
 	return protocol.ContractSdkSignalResultSuccess
 }
 

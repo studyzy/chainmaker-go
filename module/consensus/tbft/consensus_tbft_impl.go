@@ -758,7 +758,6 @@ func (consensus *ConsensusTBFTImpl) commitBlock(block *common.Block) {
 			block.Header.BlockHeight, block.Header.BlockHash,
 		)
 		consensus.msgbus.Publish(msgbus.CommitBlock, block)
-		//todo  publishEvent
 	}
 
 	consensus.persistState()

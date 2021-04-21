@@ -30,9 +30,9 @@ type WaciInstance struct {
 	Log            *logger.CMLogger
 	Vm             *wasm.VirtualMachine
 	RequestHeader  []*serialize.EasyCodecItem
-	RequestBody    []byte   // sdk request param
-	GetStateCache  []byte   // cache call method GetStateLen value result
-	ContractEvent []*commonPb.ContractEvent
+	RequestBody    []byte // sdk request param
+	GetStateCache  []byte // cache call method GetStateLen value result
+	ContractEvent  []*commonPb.ContractEvent
 }
 
 // LogMessage print log to file
@@ -181,8 +181,6 @@ func (w *WaciInstance) EmitEvent() int32 {
 	}
 
 	w.ContractEvent = append(w.ContractEvent, &commonPb.ContractEvent{
-		ChainId:         w.TxSimContext.GetTx().Header.ChainId,
-		BlockHeight:     w.TxSimContext.GetBlockHeight(),
 		ContractName:    w.ContractId.ContractName,
 		ContractVersion: w.ContractId.ContractVersion,
 		Topic:           topic.(string),
@@ -214,6 +212,9 @@ func (w *WaciInstance) DeleteState() int32 {
 
 // SuccessResult record the results of contract execution success
 func (w *WaciInstance) SuccessResult() int32 {
+	if w.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+		return protocol.ContractSdkSignalResultFail
+	}
 	w.ContractResult.Code = commonPb.ContractResultCode_OK
 	w.ContractResult.Result = w.RequestBody
 	return protocol.ContractSdkSignalResultSuccess

@@ -75,7 +75,7 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 }
 
 // Schedule according to a batch of transactions, and generating DAG according to the conflict relationship
-func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[int64][]*commonpb.ContractEvent, error) {
+func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, error) {
 
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
@@ -171,16 +171,11 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 			txRWSetMap[txRWSet.TxId] = txRWSet
 		}
 	}
-	contractEvent := make([]*commonpb.ContractEvent, 0)
+	contractEventMap := make(map[string][]*commonpb.ContractEvent)
 	for _, tx := range block.Txs {
 		event := tx.Result.ContractResult.ContractEvent
-		for _, value := range event {
-			contractEvent = append(contractEvent, value)
-			ts.log.Debugf("contractEvent :%v", value)
-		}
+		contractEventMap[tx.Header.TxId] = event
 	}
-	contractEventMap := make(map[int64][]*commonpb.ContractEvent)
-	contractEventMap[block.Header.BlockHeight] = contractEvent
 	//ts.dumpDAG(block.Dag, block.Txs)
 	return txRWSetMap, contractEventMap, nil
 }

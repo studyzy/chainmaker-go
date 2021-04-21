@@ -16,15 +16,15 @@ import (
 
 // BlockWithSerializedInfo contains block,txs and corresponding serialized data
 type BlockWithSerializedInfo struct {
-	Block                     *commonPb.Block
-	Meta                      *storePb.SerializedBlock //Block without Txs
-	SerializedMeta            []byte
-	Txs                       []*commonPb.Transaction
-	SerializedTxs             [][]byte
-	TxRWSets                  []*commonPb.TxRWSet
-	SerializedTxRWSets        [][]byte
-	EventTopicTable           []*commonPb.ContractEvent
-	SerializedEventTopicTable [][]byte
+	Block                    *commonPb.Block
+	Meta                     *storePb.SerializedBlock //Block without Txs
+	SerializedMeta           []byte
+	Txs                      []*commonPb.Transaction
+	SerializedTxs            [][]byte
+	TxRWSets                 []*commonPb.TxRWSet
+	SerializedTxRWSets       [][]byte
+	ContractEvents           []*commonPb.ContractEvent
+	SerializedContractEvents [][]byte
 }
 
 // SerializeBlock serialized a BlockWithRWSet and return serialized data
@@ -33,7 +33,7 @@ func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithS
 	buf := proto.NewBuffer(nil)
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
-	events:=blockWithRWSet.EventTopicTable
+	events := blockWithRWSet.ContractEvents
 	info := &BlockWithSerializedInfo{}
 	info.Block = block
 	meta := &storePb.SerializedBlock{
@@ -50,7 +50,7 @@ func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithS
 		info.TxRWSets = append(info.TxRWSets, txRWSet)
 	}
 	info.Meta = meta
-	info.EventTopicTable=events
+	info.ContractEvents = events
 
 	if err := info.serializeMeta(buf); err != nil {
 		return nil, nil, err
@@ -85,7 +85,7 @@ func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
 	if info.TxRWSets, err = info.deserializeRWSets(buf); err != nil {
 		return nil, err
 	}
-	if info.EventTopicTable, err = info.deserializeEventTopicTable(buf); err != nil {
+	if info.ContractEvents, err = info.deserializeEventTopicTable(buf); err != nil {
 		return nil, err
 	}
 	block := &commonPb.Block{
@@ -95,9 +95,9 @@ func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
 		AdditionalData: info.Meta.AdditionalData,
 	}
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:    block,
-		TxRWSets: info.TxRWSets,
-		EventTopicTable:info.EventTopicTable,
+		Block:         block,
+		TxRWSets:      info.TxRWSets,
+		ContractEvents: info.ContractEvents,
 	}
 	return blockWithRWSet, nil
 }
@@ -114,24 +114,24 @@ func (b *BlockWithSerializedInfo) serializeMeta(buf *proto.Buffer) error {
 	return nil
 }
 func (b *BlockWithSerializedInfo) serializeEventTopicTable(buf *proto.Buffer) error {
-	if err := buf.EncodeVarint(uint64(len(b.EventTopicTable))); err != nil {
+	if err := buf.EncodeVarint(uint64(len(b.ContractEvents))); err != nil {
 		return err
 	}
-	serializedEventList := make([][]byte, len(b.EventTopicTable))
+	serializedEventList := make([][]byte, len(b.ContractEvents))
 	batchSize := 1000
-	taskNum := len(b.EventTopicTable)/batchSize + 1
+	taskNum := len(b.ContractEvents)/batchSize + 1
 	errsChan := make(chan error, taskNum)
 	wg := sync.WaitGroup{}
 	wg.Add(taskNum)
 	for taskId := 0; taskId < taskNum; taskId++ {
 		startIndex := taskId * batchSize
 		endIndex := (taskId + 1) * batchSize
-		if endIndex > len(b.EventTopicTable) {
-			endIndex = len(b.EventTopicTable)
+		if endIndex > len(b.ContractEvents) {
+			endIndex = len(b.ContractEvents)
 		}
 		go func(start int, end int) {
 			defer wg.Done()
-			for offset, et := range b.EventTopicTable[start:end] {
+			for offset, et := range b.ContractEvents[start:end] {
 				txBytes, err := proto.Marshal(et)
 				if err != nil {
 					errsChan <- err
@@ -145,7 +145,7 @@ func (b *BlockWithSerializedInfo) serializeEventTopicTable(buf *proto.Buffer) er
 		return <-errsChan
 	}
 	for _, txBytes := range serializedEventList {
-		b.SerializedEventTopicTable = append(b.SerializedEventTopicTable, txBytes)
+		b.SerializedContractEvents = append(b.SerializedContractEvents, txBytes)
 		if err := buf.EncodeRawBytes(txBytes); err != nil {
 			return err
 		}

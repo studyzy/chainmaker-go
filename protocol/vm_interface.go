@@ -137,9 +137,9 @@ func CheckTopicStr(topic string) error {
 		return fmt.Errorf("topic can not empty")
 	}
 	if topicLen > TopicMaxLen {
-		return fmt.Errorf("topic too long,longer than %v",TopicMaxLen)
+		return fmt.Errorf("topic too long,longer than %v", TopicMaxLen)
 	}
-	return filteredSQLInject(topic)
+	return nil
 
 }
 
@@ -153,34 +153,11 @@ func CheckEventData(eventData []string) error {
 	}
 	if eventDataNum > EventDataMaxCount {
 		return fmt.Errorf("too many event data")
-
 	}
 	for _, data := range eventData {
 		if len(data) > EventDataMaxLen {
-			return fmt.Errorf("event data too long,longer than %v",EventDataMaxLen)
-
+			return fmt.Errorf("event data too long,longer than %v", EventDataMaxLen)
 		}
-		err := filteredSQLInject(data)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-
-}
-
-//FilteredSQLInject
-func filteredSQLInject(toMatchStr string) error {
-
-	str := `(?:')|(?:--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\b(select|update|and|or|delete|insert|trancate|char|chr|into|substr|ascii|declare|exec|count|master|into|drop|execute)\b)`
-
-	re, err := regexp.Compile(str)
-	if err != nil {
-		return err
-	}
-	if re.MatchString(toMatchStr) {
-		return fmt.Errorf("str[%s] Inject error", toMatchStr)
-
 	}
 	return nil
 

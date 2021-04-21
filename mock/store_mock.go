@@ -335,17 +335,17 @@ func (mr *MockBlockchainStoreMockRecorder) GetTxRWSetsByHeight(height interface{
 }
 
 // PutBlock mocks base method.
-func (m *MockBlockchainStore) PutBlock(block *common.Block, txRWSets []*common.TxRWSet, contractEventInfo []*common.ContractEvent) error {
+func (m *MockBlockchainStore) PutBlock(block *common.Block, txRWSets []*common.TxRWSet, contractEvents []*common.ContractEvent) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutBlock", block, txRWSets, contractEventInfo)
+	ret := m.ctrl.Call(m, "PutBlock", block, txRWSets, contractEvents)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PutBlock indicates an expected call of PutBlock.
-func (mr *MockBlockchainStoreMockRecorder) PutBlock(block, txRWSets, contractEventInfo interface{}) *gomock.Call {
+func (mr *MockBlockchainStoreMockRecorder) PutBlock(block, txRWSets, contractEvents interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutBlock", reflect.TypeOf((*MockBlockchainStore)(nil).PutBlock), block, txRWSets, contractEventInfo)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutBlock", reflect.TypeOf((*MockBlockchainStore)(nil).PutBlock), block, txRWSets, contractEvents)
 }
 
 // ReadObject mocks base method.

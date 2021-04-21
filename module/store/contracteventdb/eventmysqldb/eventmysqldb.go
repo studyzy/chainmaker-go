@@ -21,7 +21,7 @@ type ContractEventMysqlDB struct {
 // NewContractEventMysqlDB construct a new `ContractEventDB` for given chainId
 func NewContractEventMysqlDB(chainId string) (contracteventdb.ContractEventDB, error) {
 	var contractEventDb *ContractEventMysqlDB
-	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
+	if !localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
 		contractEventDb = &ContractEventMysqlDB{
 			db:     nil,
 			Logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
@@ -34,12 +34,17 @@ func NewContractEventMysqlDB(chainId string) (contracteventdb.ContractEventDB, e
 		}
 		err := contractEventDb.CreateTable(CreateBlockHeightWithTopicTableDdl)
 		if err != nil {
-			panic(fmt.Sprintf("failed to create blockheight_topictable db:%s", err))
+			panic(fmt.Sprintf("failed to create %s db:%s", BlockHeightWithTopicTableName, err))
 		}
 		err = contractEventDb.CreateTable(CreateBlockHeightIndexTableDDL)
 		if err != nil {
-			panic(fmt.Sprintf("failed to create blockheight_topictable db:%s", err))
+			panic(fmt.Sprintf("failed to create %s db:%s", BlockHeightIndexTableName, err))
 		}
+		err = contractEventDb.initBlockHeightIndexTable()
+		if err != nil {
+			panic(fmt.Sprintf("failed to init %s db:%s", BlockHeightIndexTableName, err))
+		}
+
 	}
 	return contractEventDb, nil
 }
@@ -51,16 +56,18 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 		return nil
 	}
 	block := blockInfo.Block
-	contractEventInfo := blockInfo.EventTopicTable
-	blockIndexDdl := utils.GenerateSaveBlockHeightIndexDdl(block.Header.BlockHeight)
+	chanId := block.Header.ChainId
+	blockHeight := block.Header.BlockHeight
+	contractEventInfo := blockInfo.ContractEvents
+	blockIndexDdl := utils.GenerateUpdateBlockHeightIndexDdl(block.Header.BlockHeight)
 	return c.db.Transaction(func(tx *gorm.DB) error {
 		var res *gorm.DB
 		for _, event := range contractEventInfo {
 
-			saveDdl := utils.GenerateSaveContractEventDdl(event)
-			createDdl := utils.GenerateCreateTopicTableDdl(event)
-			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event)
-			topicTableName := event.ChainId + "_" + event.ContractName + "_" + event.Topic
+			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight)
+			createDdl := utils.GenerateCreateTopicTableDdl(event, chanId)
+			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
+			topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic
 
 			if createDdl != "" {
 				res = tx.Debug().Exec(createDdl)
@@ -88,7 +95,7 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 
 		res = tx.Debug().Exec(blockIndexDdl)
 		if res.Error != nil {
-			c.Logger.Errorf("failed to save block height index, height:%s err:%s", block.Header.BlockHeight, res.Error)
+			c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, res.Error)
 			return res.Error
 		}
 		c.Logger.Debugf("chain[%s]: commit contract event block[%d]",
@@ -96,19 +103,26 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 		return nil
 	})
 }
+
 // GetLastSavepoint returns the last block height
 func (c *ContractEventMysqlDB) GetLastSavepoint() (uint64, error) {
 	var blockHeight int64
 	err := c.CreateTable(CreateBlockHeightIndexTableDDL)
-	if err!=nil{
-		c.Logger.Errorf("GetLastSavepoint: try to create "+BlockHeightWithTopicTableName+" table fail")
+	if err != nil {
+		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightWithTopicTableName + " table fail")
+		return 0, err
+	}
+	err = c.initBlockHeightIndexTable()
+	if err != nil {
+		c.Logger.Errorf("GetLastSavepoint: init " + BlockHeightWithTopicTableName + " table fail")
 		return 0, err
 	}
 	err = c.CreateTable(CreateBlockHeightWithTopicTableDdl)
-	if err!=nil{
-		c.Logger.Errorf("GetLastSavepoint: try to create "+BlockHeightIndexTableName+" table fail")
+	if err != nil {
+		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightIndexTableName + " table fail")
 		return 0, err
 	}
+
 	row := c.db.Raw("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1").Row()
 	row.Scan(&blockHeight)
 	if row.Err() != nil && row.Err() != gorm.ErrRecordNotFound {
@@ -117,6 +131,13 @@ func (c *ContractEventMysqlDB) GetLastSavepoint() (uint64, error) {
 	}
 	return uint64(blockHeight), row.Err()
 }
+
+// insert a record to init block height index table
+func (c *ContractEventMysqlDB) initBlockHeightIndexTable() error {
+	exec := c.db.Debug().Exec(InitBlockHeightIndexTableDDL)
+	return exec.Error
+}
+
 // Close is used to close database, there is no need for gorm to close db
 func (c *ContractEventMysqlDB) Close() {
 	sqlDB, err := c.db.DB()
@@ -125,6 +146,7 @@ func (c *ContractEventMysqlDB) Close() {
 	}
 	sqlDB.Close()
 }
+
 // CreateTable create a contract event topic table
 func (c *ContractEventMysqlDB) CreateTable(ddl string) error {
 	exec := c.db.Debug().Exec(ddl)
