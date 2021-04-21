@@ -258,12 +258,17 @@ func (s *StateSqlDB) Close() {
 func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	s.Lock()
 	defer s.Unlock()
+	dbName := GetContractDbName(s.chainId, contractName)
 	if contractName != "" {
-		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
+		if err := s.db.ChangeContextDb(dbName); err != nil {
 			return nil, err
 		}
 	}
-	return s.db.QuerySingle(sql, values...)
+	row, err := s.db.QuerySingle(sql, values...)
+	if row.IsEmpty() {
+		s.logger.Infof("query single return empty row. sql:%s,db name:%s", sql, dbName)
+	}
+	return row, err
 }
 func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
 	s.Lock()
