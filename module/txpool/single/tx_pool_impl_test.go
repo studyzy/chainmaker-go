@@ -8,13 +8,17 @@ package single
 
 import (
 	"fmt"
+	"math/rand"
+	"sync"
 	"testing"
 	"time"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -303,4 +307,84 @@ func TestTxPoolImpl_RetryAndRemoveTxs(t *testing.T) {
 	txPool.RetryAndRemoveTxs(commonTxs[:50], nil)
 	require.EqualValues(t, 80, imlPool.queue.commonTxsCount())
 	//require.EqualValues(t, 0, imlPool.queue.pendingCache.Size())
+}
+
+func TestPoolImplConcurrencyInvoke(t *testing.T) {
+	txPool := newTestPool()
+	defer txPool.Stop()
+	//imlPool := txPool.(*txPoolImpl)
+	commonTxs := generateTxs(500000, false)
+	txIds := make([]string, 0, len(commonTxs))
+	for _, tx := range commonTxs {
+		txIds = append(txIds, tx.Header.TxId)
+	}
+
+	// 1. Concurrent Adding Transactions to txPool
+	addBegin := utils.CurrentTimeMillisSeconds()
+	workerNum := 100
+	peerWorkerTxNum := len(commonTxs) / workerNum
+	wg := sync.WaitGroup{}
+	for i := 0; i < workerNum; i++ {
+		wg.Add(1)
+		go func(txs []*common.Transaction) {
+			for _, tx := range txs {
+				require.NoError(t, txPool.AddTx(tx, protocol.RPC))
+			}
+			wg.Done()
+		}(commonTxs[i*peerWorkerTxNum : (i+1)*peerWorkerTxNum])
+	}
+	addEnd := utils.CurrentTimeMillisSeconds()
+
+	// 2. Simulate the logic for generating blocks
+	fetchTimes := make([]int64, 0, 100)
+	go func() {
+		height := int64(100)
+		fetchTicker := time.NewTicker(time.Millisecond * 100)
+		fetchTimer := time.NewTimer(2 * time.Minute)
+		defer func() {
+			fetchTimer.Stop()
+			fetchTicker.Stop()
+		}()
+
+	Loop:
+		for {
+			select {
+			case <-fetchTicker.C:
+				begin := utils.CurrentTimeMillisSeconds()
+				txs := txPool.FetchTxBatch(height)
+				fetchTimes = append(fetchTimes, utils.CurrentTimeMillisSeconds()-begin)
+				fmt.Println("fetch txs num: ", len(txs))
+			case <-fetchTimer.C:
+				break Loop
+			}
+		}
+	}()
+
+	// 3. Simulation validates the logic of the block
+	getTimes := make([]int64, 0, 100)
+	go func() {
+		getTicker := time.NewTicker(time.Millisecond * 80)
+		getTimer := time.NewTimer(2 * time.Minute)
+		defer func() {
+			getTimer.Stop()
+			getTicker.Stop()
+		}()
+
+	Loop:
+		for {
+			select {
+			case <-getTicker.C:
+				start := rand.Intn(len(txIds) - 1000)
+				begin := utils.CurrentTimeMillisSeconds()
+				getTxs, _ := txPool.GetTxsByTxIds(txIds[start : start+1000])
+				getTimes = append(getTimes, utils.CurrentTimeMillisSeconds()-begin)
+				fmt.Println("get txs num: ", len(getTxs))
+			case <-getTimer.C:
+				break Loop
+			}
+		}
+	}()
+
+	wg.Wait()
+	fmt.Printf("time costs: add txs: %d, \n fetch txs: %v, \n get txs: %v ", addEnd-addBegin, fetchTimes, getTimes)
 }

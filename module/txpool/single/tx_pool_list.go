@@ -105,7 +105,7 @@ func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
 	l.rwLock.Lock()
 	defer func() {
 		if len(txs) > 0 {
-			l.monitor(txs[0], l.Size())
+			l.monitor(txs[0], l.queue.Size())
 		}
 		begin := utils.CurrentTimeMillisSeconds()
 		for _, txId := range errKeys {
