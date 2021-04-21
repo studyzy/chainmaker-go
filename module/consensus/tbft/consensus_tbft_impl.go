@@ -367,7 +367,7 @@ func (consensus *ConsensusTBFTImpl) handle() {
 		case block := <-consensus.proposedBlockC:
 			consensus.handleProposedBlock(block)
 		case result := <-consensus.verifyResultC:
-			consensus.handleVerifyResult(result)
+			consensus.handleVerifyResult(result, false)
 		case height := <-consensus.blockHeightC:
 			consensus.handleBlockHeight(height)
 		case msg := <-consensus.externalMsgC:
@@ -377,7 +377,7 @@ func (consensus *ConsensusTBFTImpl) handle() {
 			consensus.logger.Debugf("[%s] receive from internalMsgC %s, size: %d", consensus.Id, msg.Type, proto.Size(msg))
 			consensus.handleConsensusMsg(msg)
 		case ti := <-consensus.timeScheduler.GetTimeoutC():
-			consensus.handleTimeout(ti)
+			consensus.handleTimeout(ti, false)
 		case <-consensus.closeC:
 			loop = false
 			break
@@ -433,7 +433,7 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
 	consensus.enterPrevote(consensus.Height, consensus.Round)
 }
 
-func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb.VerifyResult) {
+func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb.VerifyResult, replayMode bool) {
 	consensus.Lock()
 	defer consensus.Unlock()
 
@@ -471,7 +471,9 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 	}
 
 	consensus.Proposal = consensus.VerifingProposal
-	consensus.saveWalEntry(consensus.Proposal)
+	if !replayMode {
+		consensus.saveWalEntry(consensus.Proposal)
+	}
 	// Prevote
 	consensus.enterPrevote(consensus.Height, consensus.Round)
 }
@@ -610,7 +612,7 @@ func (consensus *ConsensusTBFTImpl) procPrevote(msg *tbftpb.TBFTMsg) {
 	}
 
 	vote := NewVoteFromProto(prevote)
-	err := consensus.addVote(vote)
+	err := consensus.addVote(vote, false)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%s) addVote %s(%d/%d/%s) failed, %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
@@ -651,7 +653,7 @@ func (consensus *ConsensusTBFTImpl) procPrecommit(msg *tbftpb.TBFTMsg) {
 	}
 
 	vote := NewVoteFromProto(precommit)
-	err := consensus.addVote(vote)
+	err := consensus.addVote(vote, false)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%s) addVote %s(%d/%d/%s) failed, %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
@@ -679,13 +681,15 @@ func (consensus *ConsensusTBFTImpl) handleConsensusMsg(msg *tbftpb.TBFTMsg) {
 }
 
 // handleTimeout handles timeout event
-func (consensus *ConsensusTBFTImpl) handleTimeout(ti timeoutInfo) {
+func (consensus *ConsensusTBFTImpl) handleTimeout(ti timeoutInfo, replayMode bool) {
 	consensus.Lock()
 	defer consensus.Unlock()
 
 	consensus.logger.Infof("[%s](%d/%d/%s) handleTimeout ti: %v",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, ti)
-	consensus.saveWalEntry(ti)
+	if !replayMode {
+		consensus.saveWalEntry(ti)
+	}
 	switch ti.Step {
 	case tbftpb.Step_Prevote:
 		consensus.enterPrevote(ti.Height, ti.Round)
@@ -742,7 +746,7 @@ func (consensus *ConsensusTBFTImpl) AddTimeout(duration time.Duration, height in
 }
 
 // addVote adds `vote` to heightVoteSet
-func (consensus *ConsensusTBFTImpl) addVote(vote *Vote) error {
+func (consensus *ConsensusTBFTImpl) addVote(vote *Vote, replayMode bool) error {
 	consensus.logger.Debugf("[%s](%d/%d/%s) addVote %v",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 
@@ -753,7 +757,9 @@ func (consensus *ConsensusTBFTImpl) addVote(vote *Vote) error {
 		return err
 	}
 
-	consensus.saveWalEntry(vote)
+	if !replayMode {
+		consensus.saveWalEntry(vote)
+	}
 
 	switch vote.Type {
 	case tbftpb.VoteType_VotePrevote:
@@ -1418,7 +1424,7 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 				mustUnmarshal(entry.Data, timeoutInfoProto)
 				consensus.logger.Debugf("entry.Data.len: %d, timeoutInfoProto: %v", len(entry.Data), timeoutInfoProto)
 				timeoutInfo := newTimeoutInfoFromProto(timeoutInfoProto)
-				consensus.handleTimeout(timeoutInfo)
+				consensus.handleTimeout(timeoutInfo, true)
 			case tbftpb.WalEntryType_ProposalEntry:
 				proposalProto := new(tbftpb.Proposal)
 				mustUnmarshal(entry.Data, proposalProto)
@@ -1428,12 +1434,12 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 					VerifiedBlock: proposal.Block,
 					Code:          consensuspb.VerifyResult_SUCCESS,
 				}
-				consensus.handleVerifyResult(verifyResult)
+				consensus.handleVerifyResult(verifyResult, true)
 			case tbftpb.WalEntryType_VoteEntry:
 				voteProto := new(tbftpb.Vote)
 				mustUnmarshal(entry.Data, voteProto)
 				vote := NewVoteFromProto(voteProto)
-				err := consensus.addVote(vote)
+				err := consensus.addVote(vote, true)
 				if err != nil {
 					errMsg := fmt.Sprintf("[%s](%d/%d/%s) addVote %s(%d/%d) failed, %v",
 						consensus.Id, consensus.Height, consensus.Round, consensus.Step,
