@@ -24,11 +24,11 @@ import (
 )
 
 const (
-	ConstMinQuorumForQc    = 3  //default min vote num
-	ConstTransitBlock      = 0  //default epoch switch block buff
-	ConstBlockNumPerEpoch  = 10 //default epoch change height
-	ConstValidatorNum      = 4  //default actual consensus node num
-	ConstNodeProposeRound  = 1  //default continuity propose round
+	ConstMinQuorumForQc    = 3     //default min vote num
+	ConstTransitBlock      = 0     //default epoch switch block buff
+	ConstBlockNumPerEpoch  = 10000 //default epoch change height
+	ConstValidatorNum      = 4     //default actual consensus node num
+	ConstNodeProposeRound  = 1     //default continuity propose round
 	GovernanceContractName = "government_contract"
 
 	SkipTimeoutCommit = "SkipTimeoutCommit"
