@@ -517,7 +517,7 @@ func getChainConfigFromBlock(block *commonPb.Block, proposalCache protocol.Propo
 		return nil, fmt.Errorf("block is not conf block")
 	}
 
-	_, rwSetMap := proposalCache.GetProposedBlock(block)
+	_, rwSetMap, _ := proposalCache.GetProposedBlock(block)
 	if len(rwSetMap) == 0 {
 		log.Errorf("rwSetMap is nil")
 		return nil, fmt.Errorf("rwSetMap is nil")

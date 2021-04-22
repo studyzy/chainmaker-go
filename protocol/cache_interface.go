@@ -17,9 +17,9 @@ type ProposalCache interface {
 	// Get all proposed blocks at a specific height
 	GetProposedBlocksAt(height int64) []*common.Block
 	// Get proposed block with specific block hash in current consensus height.
-	GetProposedBlock(b *common.Block) (*common.Block, map[string]*common.TxRWSet)
+	GetProposedBlock(b *common.Block) (*common.Block, map[string]*common.TxRWSet, map[string][]*common.ContractEvent)
 	// Set porposed block in current consensus height, after it's generated or verified.
-	SetProposedBlock(b *common.Block, rwSetMap map[string]*common.TxRWSet, selfProposed bool) error
+	SetProposedBlock(b *common.Block, rwSetMap map[string]*common.TxRWSet,contractEventMap map[string][]*common.ContractEvent, selfProposed bool) error
 	// Get proposed block that is proposed by node itself.
 	GetSelfProposedBlockAt(height int64) *common.Block
 	// Get proposed block by block hash and block height

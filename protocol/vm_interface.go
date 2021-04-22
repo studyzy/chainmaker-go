@@ -34,6 +34,10 @@ const (
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
+	TopicMaxLen       = 255
+	EventDataMaxLen   = 65535
+	EventDataMaxCount = 16
+
 	ContractKey            = ":K:"
 	ContractByteCode       = ":B:"
 	ContractVersion        = ":V:"
@@ -73,6 +77,7 @@ const (
 	ContractMethodErrorResult     = "ErrorResult"
 	ContractMethodCallContract    = "CallContract"
 	ContractMethodCallContractLen = "CallContractLen"
+	ContractMethodEmitEvent       = "EmitEvent"
 )
 
 //VmManager manage vm runtime
@@ -128,4 +133,37 @@ func CheckKeyFieldStr(key string, field string) error {
 		}
 	}
 	return nil
+}
+
+//CheckTopicStr
+func CheckTopicStr(topic string) error {
+	topicLen := len(topic)
+	if topicLen == 0 {
+		return fmt.Errorf("topic can not empty")
+	}
+	if topicLen > TopicMaxLen {
+		return fmt.Errorf("topic too long,longer than %v", TopicMaxLen)
+	}
+	return nil
+
+}
+
+//CheckEventTopicTableData  verify event data
+func CheckEventData(eventData []string) error {
+
+	eventDataNum := len(eventData)
+	if eventDataNum == 0 {
+		return fmt.Errorf("event data can not empty")
+
+	}
+	if eventDataNum > EventDataMaxCount {
+		return fmt.Errorf("too many event data")
+	}
+	for _, data := range eventData {
+		if len(data) > EventDataMaxLen {
+			return fmt.Errorf("event data too long,longer than %v", EventDataMaxLen)
+		}
+	}
+	return nil
+
 }
