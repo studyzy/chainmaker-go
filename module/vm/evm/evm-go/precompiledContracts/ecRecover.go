@@ -17,10 +17,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
-	"math/big"
+	"chainmaker.org/chainmaker-go/evm/evm-go/params"
 )
 
 type ecRecover struct{}
@@ -41,32 +38,33 @@ func allZero(src []byte) bool {
 }
 
 func (e ecRecover) Execute(input []byte) ([]byte, error) {
-	const ecRecoverInputLength = 128
-
-	input = evmutils.RightPaddingSlice(input, ecRecoverInputLength)
-	// "input" is (hash, v, r, s), each 32 bytes
-	// but for ecrecover we want (r, s, v)
-
-	r := new(big.Int).SetBytes(input[64:96])
-	s := new(big.Int).SetBytes(input[96:128])
-	v := input[63] - 27
-
-	// tighter sig s values input homestead only apply to tx sigs
-	if !allZero(input[32:63]) || !crypto.ValidateSignatureValues(v, r, s, false) {
-		return nil, nil
-	}
-	// We must make sure not to modify the 'input', so placing the 'v' along with
-	// the signature needs to be done on a new allocation
-	sig := make([]byte, 65)
-	copy(sig, input[64:128])
-	sig[64] = v
-	// v needs to be at the end for libsecp256k1
-	pubKey, err := crypto.Ecrecover(input[:32], sig)
-	// make sure the public key is a valid one
-	if err != nil {
-		return nil, nil
-	}
-
-	// the first byte of pubkey is bitcoin heritage
-	return evmutils.LeftPaddingSlice(crypto.Keccak256(pubKey[1:])[12:], 32), nil
+	//const ecRecoverInputLength = 128
+	//
+	//input = evmutils.RightPaddingSlice(input, ecRecoverInputLength)
+	//// "input" is (hash, v, r, s), each 32 bytes
+	//// but for ecrecover we want (r, s, v)
+	//
+	//r := new(big.Int).SetBytes(input[64:96])
+	//s := new(big.Int).SetBytes(input[96:128])
+	//v := input[63] - 27
+	//
+	//// tighter sig s values input homestead only apply to tx sigs
+	//if !allZero(input[32:63]) || !crypto.ValidateSignatureValues(v, r, s, false) {
+	//	return nil, nil
+	//}
+	//// We must make sure not to modify the 'input', so placing the 'v' along with
+	//// the signature needs to be done on a new allocation
+	//sig := make([]byte, 65)
+	//copy(sig, input[64:128])
+	//sig[64] = v
+	//// v needs to be at the end for libsecp256k1
+	//pubKey, err := crypto.Ecrecover(input[:32], sig)
+	//// make sure the public key is a valid one
+	//if err != nil {
+	//	return nil, nil
+	//}
+	//
+	//// the first byte of pubkey is bitcoin heritage
+	//return evmutils.LeftPaddingSlice(crypto.Keccak256(pubKey[1:])[12:], 32), nil
+	return nil, nil
 }

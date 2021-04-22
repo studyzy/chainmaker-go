@@ -16,7 +16,7 @@
 
 package precompiledContracts
 
-import "github.com/ethereum/go-ethereum/params"
+import "chainmaker.org/chainmaker-go/evm/evm-go/params"
 
 // data copy implemented as a native contract.
 type dataCopy struct{}
