@@ -240,9 +240,6 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 func (*TxContextMockTest) GetBlockHeight() int64 {
 	return 0
 }
-func (s *TxContextMockTest) GetTopicTableColumn(tableName string) ([]string, error) {
-	return nil,nil
-}
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {
 	panic("implement me")
 }

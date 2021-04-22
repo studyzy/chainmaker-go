@@ -215,7 +215,7 @@ func (bc *Blockchain) initCache() (err error) {
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
 		}
-		if err = bc.store.PutBlock(genesisBlock, rwSetList,nil); err != nil {
+		if err = bc.store.PutBlock(genesisBlock, rwSetList, nil); err != nil {
 			return fmt.Errorf("put chain[%s] genesis block failed, %s", bc.chainId, err.Error())
 		}
 

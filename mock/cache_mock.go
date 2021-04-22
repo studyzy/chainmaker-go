@@ -46,6 +46,32 @@ func (mr *MockProposalCacheMockRecorder) ClearProposedBlockAt(height interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearProposedBlockAt", reflect.TypeOf((*MockProposalCache)(nil).ClearProposedBlockAt), height)
 }
 
+// ClearTheBlock mocks base method.
+func (m *MockProposalCache) ClearTheBlock(block *common.Block) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ClearTheBlock", block)
+}
+
+// ClearTheBlock indicates an expected call of ClearTheBlock.
+func (mr *MockProposalCacheMockRecorder) ClearTheBlock(block interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearTheBlock", reflect.TypeOf((*MockProposalCache)(nil).ClearTheBlock), block)
+}
+
+// DiscardAboveHeight mocks base method.
+func (m *MockProposalCache) DiscardAboveHeight(baseHeight int64) []*common.Block {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DiscardAboveHeight", baseHeight)
+	ret0, _ := ret[0].([]*common.Block)
+	return ret0
+}
+
+// DiscardAboveHeight indicates an expected call of DiscardAboveHeight.
+func (mr *MockProposalCacheMockRecorder) DiscardAboveHeight(baseHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiscardAboveHeight", reflect.TypeOf((*MockProposalCache)(nil).DiscardAboveHeight), baseHeight)
+}
+
 // GetProposedBlock mocks base method.
 func (m *MockProposalCache) GetProposedBlock(b *common.Block) (*common.Block, map[string]*common.TxRWSet, map[string][]*common.ContractEvent) {
 	m.ctrl.T.Helper()
