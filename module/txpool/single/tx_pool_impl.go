@@ -116,7 +116,7 @@ func (pool *txPoolImpl) flushOrAddTxsToCache(memTxs *mempoolTxs) {
 		return
 	}
 	defer func() {
-		pool.log.Debugf("txs length", "queue state", pool.queue.status(), "cache txs len", pool.cache.txCount())
+		pool.log.Debugf("txPool status: %s, cache txs num: %d", pool.queue.status(), pool.cache.txCount())
 	}()
 
 	if memTxs.isConfigTxs {
@@ -190,7 +190,6 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	defer t.Stop()
 	select {
 	case pool.addTxsCh <- memTx:
-		fmt.Println("add success")
 	case <-t.C:
 		pool.log.Warnf("add transaction timeout")
 		return fmt.Errorf("add transaction timeout")

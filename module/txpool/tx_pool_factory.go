@@ -19,11 +19,11 @@ import (
 	"chainmaker.org/chainmaker-go/txpool/single"
 )
 
-type PoolType int64
+type PoolType string
 
 const (
-	SINGLE PoolType = iota
-	BATCH
+	SINGLE PoolType = "SINGLE"
+	BATCH  PoolType = "BATCH"
 )
 
 // TxPoolFactory the factory to create the txPool.

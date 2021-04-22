@@ -25,10 +25,10 @@ const (
 )
 
 const (
-	RoundTimeoutMill            = "RoundTimeoutMill"
-	RoundTimeoutIntervalMill    = "RoundTimeoutIntervalMill"
-	ProposerTimeoutMill         = "ProposerTimeoutMill"
-	ProposerTimeoutIntervalMill = "proposerTimeoutIntervalMill"
+	RoundTimeoutMill            = "HOTSTUFF_round_timeout_milli"
+	RoundTimeoutIntervalMill    = "HOTSTUFF_round_timeout_delta_milli"
+	ProposerTimeoutMill         = "HOTSTUFF_proposer_timeout_milli"
+	ProposerTimeoutIntervalMill = "HOTSTUFF_proposer_timeout_delta_milli"
 )
 
 var (
