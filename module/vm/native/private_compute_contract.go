@@ -18,8 +18,8 @@ type PrivateComputeContract struct {
     log     *logger.CMLogger
 }
 
-func newPrivateComputeContact(log *logger.CMLogger) *BlockContact {
-    return &BlockContact{
+func newPrivateComputeContact(log *logger.CMLogger) *PrivateComputeContract {
+    return &PrivateComputeContract{
         log:     log,
         methods: registerPrivateComputeContractMethods(log),
     }
