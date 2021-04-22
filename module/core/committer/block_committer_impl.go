@@ -8,6 +8,9 @@ package committer
 
 import (
 	"bytes"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -18,10 +21,8 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
 )
 
 // BlockCommitterImpl implements BlockCommitter interface.
@@ -233,23 +234,20 @@ func (chain *BlockCommitterImpl) monitorCommit(bi *commonpb.BlockInfo) error {
 func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height int64) []*commonpb.Transaction {
 	proposedBlocks := chain.proposalCache.GetProposedBlocksAt(height)
 	txRetry := make([]*commonpb.Transaction, 0, localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize)
-	batchMap := make(map[string]interface{})
+	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
+	keepTxs := make(map[string]struct{}, len(block.Txs))
+	for _, tx := range block.Txs {
+		keepTxs[tx.Header.TxId] = struct{}{}
+	}
 	for _, b := range proposedBlocks {
 		if bytes.Equal(b.Header.BlockHash, block.Header.BlockHash) {
 			continue
 		}
-		if len(b.Txs) == 0 {
-			continue
+		for _, tx := range b.Txs {
+			if _, ok := keepTxs[tx.Header.TxId]; !ok {
+				txRetry = append(txRetry, tx)
+			}
 		}
-		if _, ok := batchMap[b.Txs[0].Header.TxId]; ok {
-			// make sure no redundant batch in txRetry
-			continue
-		}
-		if len(block.Txs) > 0 && b.Txs[0].Header.TxId == block.Txs[0].Header.TxId {
-			continue
-		}
-		batchMap[b.Txs[0].Header.TxId] = "exist"
-		txRetry = append(txRetry, b.Txs...)
 	}
 	return txRetry
 }

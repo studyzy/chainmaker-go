@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package batch
 
 import (
-	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"sync"
+
+	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 )
 
 type batchTxIdRecorder struct {
@@ -20,12 +21,9 @@ func newBatchTxIdRecorder() *batchTxIdRecorder {
 }
 
 func (r *batchTxIdRecorder) AddRecordWithBatch(batch *txpoolPb.TxBatch) {
-	batchId := batch.GetBatchId()
-	txIdMap := sync.Map{}
 	if txsMap := batch.GetTxIdsMap(); len(txsMap) > 0 {
-		txIdMap.Store(batchId, txsMap)
+		r.m.Store(batch.GetBatchId(), txsMap)
 	}
-	r.m.Store(batchId, &txIdMap)
 }
 
 func (r *batchTxIdRecorder) RemoveRecordWithBatch(batch *txpoolPb.TxBatch) {
@@ -33,18 +31,36 @@ func (r *batchTxIdRecorder) RemoveRecordWithBatch(batch *txpoolPb.TxBatch) {
 	r.m.Delete(batchId)
 }
 
-func (r *batchTxIdRecorder) FindBatchIdWithTxId(txId string) (batchId int32, ok bool) {
+func (r *batchTxIdRecorder) FindBatchIdWithTxId(txId string) (batchId int32, txIndex int32, ok bool) {
+	batchId = -1
 	r.m.Range(func(key, value interface{}) bool {
-		batchId = key.(int32)
-		m := value.(*sync.Map)
-		if val, exist := m.Load(batchId); exist {
-			if txsMap, exist := val.(map[string]int32); exist {
-				if _, ok = txsMap[txId]; ok {
-					return false
-				}
-			}
+		txsMapInfo := value.(map[string]int32)
+		if index, exist := txsMapInfo[txId]; exist {
+			ok = true
+			txIndex = index
+			batchId = key.(int32)
+			return false
 		}
 		return true
 	})
 	return
 }
+
+//type txInfo struct {
+//	batchId int32
+//	txIndex int32
+//}
+//
+//func (r *batchTxIdRecorder) FindBatchIdWithTxIds(txIds []string) map[string]txInfo {
+//	r.m.Range(func(key, value interface{}) bool {
+//		txsMapInfo := value.(map[string]int32)
+//		if index, exist := txsMapInfo[txId]; exist {
+//			ok = true
+//			txIndex = index
+//			batchId = key.(int32)
+//			return false
+//		}
+//		return true
+//	})
+//	return
+//}

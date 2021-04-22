@@ -7,6 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
+	"errors"
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -15,13 +21,10 @@ import (
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
-	"errors"
-	"fmt"
+
 	"github.com/gogo/protobuf/proto"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 var _ protocol.TxPool = (*txPoolImpl)(nil)
@@ -45,8 +48,6 @@ type txPoolImpl struct {
 	chainConf       protocol.ChainConf       // chainConfig
 	netService      protocol.NetService      // P2P module implementation
 	blockchainStore protocol.BlockchainStore // Store module implementation
-
-	lock sync.RWMutex
 }
 
 func NewTxPoolImpl(chainId string, blockStore protocol.BlockchainStore, msgBus msgbus.MessageBus,
@@ -131,18 +132,14 @@ func (pool *txPoolImpl) flushOrAddTxsToCache(memTxs *mempoolTxs) {
 }
 
 func (pool *txPoolImpl) flushConfigTxToQueue(memTxs *mempoolTxs) {
-	pool.lock.Lock()
 	defer func() {
-		pool.lock.Unlock()
 		pool.updateAndPublishSignal()
 	}()
 	pool.queue.addTxsToConfigQueue(memTxs)
 }
 
 func (pool *txPoolImpl) flushCommonTxToQueue(memTxs *mempoolTxs) {
-	pool.lock.Lock()
 	defer func() {
-		pool.lock.Unlock()
 		pool.updateAndPublishSignal()
 		pool.cache.reset()
 	}()
@@ -185,12 +182,19 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	}
 
 	// 2. store the transaction
+	memTx := &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
 	if utils.IsConfigTx(tx) {
-		pool.addTxsCh <- &mempoolTxs{isConfigTxs: true, txs: []*commonPb.Transaction{tx}, source: source}
-	} else {
-		pool.addTxsCh <- &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
+		memTx.isConfigTxs = true
 	}
-
+	t := time.NewTimer(time.Second)
+	defer t.Stop()
+	select {
+	case pool.addTxsCh <- memTx:
+		fmt.Println("add success")
+	case <-t.C:
+		pool.log.Warnf("add transaction timeout")
+		return fmt.Errorf("add transaction timeout")
+	}
 	// 3. broadcast the transaction
 	if source == protocol.RPC {
 		pool.broadcastTx(tx)
@@ -200,11 +204,11 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 
 // isFull Check whether the transaction pool is fullnal
 func (pool *txPoolImpl) isFull(tx *commonPb.Transaction) bool {
-	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= pool.maxConfigTxPoolSize() {
+	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= poolconf.MaxConfigTxPoolSize() {
 		pool.log.Errorw("AddTx configTxPool is full", "txId", tx.Header.GetTxId(), "configQueueSize", pool.queue.configTxsCount())
 		return true
 	}
-	if pool.queue.commonTxsCount() >= pool.maxCommonTxPoolSize() {
+	if pool.queue.commonTxsCount() >= poolconf.MaxCommonTxPoolSize() {
 		pool.log.Errorw("AddTx txPool is full", "txId", tx.Header.GetTxId(), "txQueueSize", pool.queue.commonTxsCount())
 		return true
 	}
@@ -250,24 +254,19 @@ func (pool *txPoolImpl) updateAndPublishSignal() {
 		pool.setSignalStatus(signalType)
 	}()
 
-	if pool.queue.configTxsCount() > 0 || pool.queue.commonTxsCount() >= pool.maxTxCount() {
+	if pool.queue.configTxsCount() > 0 || pool.queue.commonTxsCount() >= poolconf.MaxTxCount(pool.chainConf) {
 		signalType = txpoolPb.SignalType_BLOCK_PROPOSE
-	} else if pool.queue.commonTxsCount() < pool.maxTxCount() {
+	} else {
 		signalType = txpoolPb.SignalType_TRANSACTION_INCOME
 	}
 }
 
 func (pool *txPoolImpl) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
-	pool.lock.RLock()
-	defer pool.lock.RUnlock()
 	return pool.queue.get(txId)
 }
 
 func (pool *txPoolImpl) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]int64) {
 	start := utils.CurrentTimeMillisSeconds()
-	pool.lock.RLock()
-	defer pool.lock.RUnlock()
-
 	var (
 		txsRet       = make(map[string]*commonPb.Transaction, len(txIds))
 		txsHeightRet = make(map[string]int64, len(txIds))
@@ -312,8 +311,6 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		}
 	}
 
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
 	if len(configTxs) > 0 {
 		pool.log.Debugw("retryTxBatch config txs", "count", len(configTxs), "txIds", configTxIds)
 		pool.queue.addTxsToConfigQueue(&mempoolTxs{txs: configTxs, source: protocol.INTERNAL})
@@ -333,8 +330,8 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	}
 	defer pool.updateAndPublishSignal()
 	start := utils.CurrentTimeMillisSeconds()
-	configTxIds := make([]string, 0)
-	commonTxIds := make([]string, 0)
+	configTxIds := make([]string, 0, 1)
+	commonTxIds := make([]string, 0, len(txs)/2)
 	for _, tx := range txs {
 		if utils.IsConfigTx(tx) {
 			configTxIds = append(configTxIds, tx.Header.TxId)
@@ -343,8 +340,6 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 		}
 	}
 
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
 	if len(configTxIds) > 0 {
 		pool.log.Debugw("removeTxBatch config txs", "count", len(configTxIds), "txIds", configTxIds)
 		pool.queue.deleteConfigTxs(configTxIds)
@@ -358,9 +353,7 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 
 func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
 	start := utils.CurrentTimeMillisSeconds()
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
-	txs := pool.queue.fetch(pool.maxTxCount(), blockHeight, pool.validateTxTime)
+	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
 		pool.log.Infof("fetch txs from txpool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs), blockHeight, utils.CurrentTimeMillisSeconds()-start)
 	}
@@ -368,13 +361,11 @@ func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction 
 }
 
 func (pool *txPoolImpl) TxExists(tx *commonPb.Transaction) bool {
-	pool.lock.RLock()
-	defer pool.lock.RUnlock()
 	return pool.queue.has(tx, true)
 }
 
 func (pool *txPoolImpl) metrics(msg string, startTime int64, endTime int64) {
-	if isMetrics() {
+	if poolconf.IsMetrics() {
 		pool.log.Infow(msg, "internal", endTime-startTime, "startTime", startTime, "endTime", endTime)
 	}
 }
@@ -383,9 +374,6 @@ func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockH
 	if len(txs) == 0 {
 		return
 	}
-
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
 	pool.log.Infof("add tx to pendingCache, (txs num:%d), blockHeight:%d", len(txs), blockHeight)
 	pool.queue.appendTxsToPendingCache(txs, blockHeight)
 }
@@ -412,7 +400,7 @@ func (pool *txPoolImpl) OnMessage(msg *msgbus.Message) {
 	if err := pool.AddTx(&tx, protocol.P2P); err != nil {
 		pool.log.Debugw("receiveOnMessage", "txId", tx.Header.TxId, "add failed", err.Error())
 	}
-	pool.log.Debugw("receiveOnMessage", "txId", tx.Header.TxId, "add success")
+	pool.log.Debugw("receiveOnMessage", "txId", tx.Header.TxId, "add success", true)
 }
 
 func (pool *txPoolImpl) OnQuit() {
