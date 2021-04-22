@@ -87,6 +87,15 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 		params = "0" + params
 	}
 
+	messageData, err := hex.DecodeString(params)
+	if err != nil {
+		return r.errorResult(contractResult, err, "params is not hex encode string")
+	}
+	if isDeploy {
+		messageData = append(byteCode, messageData...)
+		byteCode = messageData
+	}
+
 	// evmTransaction
 	creatorAddress, err := evmutils.MakeAddressFromHex(parameters[protocol.ContractCreatorPkParam])
 	if err != nil {
@@ -119,15 +128,6 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 		Hash:    codeHash,
 	}
 	r.Address = address
-
-	messageData, err := hex.DecodeString(params)
-	if err != nil {
-		return r.errorResult(contractResult, err, "params is not hex encode string")
-	}
-	if isDeploy {
-		messageData = append(byteCode, messageData...)
-		byteCode = messageData
-	}
 	// new evm instance
 	externalStore := &storage.ContractStorage{Ctx: txSimContext}
 	evm := evm_go.New(evm_go.EVMParam{
