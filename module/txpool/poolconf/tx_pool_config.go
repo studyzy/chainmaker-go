@@ -14,7 +14,6 @@ const (
 	DefaultMaxTxCount          = 1000         // Maximum number of transactions in a block
 	DefaultMaxTxPoolSize       = 5120         // Maximum number of common transaction in the pool
 	DefaultMaxConfigTxPoolSize = 100          // Maximum number of config transaction in the pool
-	DefaultFullNotifyAgainTime = int64(30)    // The unit is in seconds
 	DefaultMaxTxTimeTimeout    = float64(600) // The unit is in seconds
 )
 
@@ -69,15 +68,6 @@ func MaxConfigTxPoolSize() int {
 		return int(config.MaxConfigTxPoolSize)
 	}
 	return DefaultMaxConfigTxPoolSize
-}
-
-// NotifyCycle The time to notify again when the trading pool is full
-func NotifyCycle() int64 {
-	config := localconf.ChainMakerConfig.TxPoolConfig
-	if config.FullNotifyAgainTime != 0 {
-		return int64(config.FullNotifyAgainTime)
-	}
-	return DefaultFullNotifyAgainTime
 }
 
 // IsMetrics Whether to log operation time
