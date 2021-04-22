@@ -51,7 +51,7 @@ type ConsensusChainedBftImpl struct {
 	internalMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit the own proposals, voting information by the local node
 	protocolMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit Hotstuff protocol information: proposal, vote
 
-	sync.RWMutex
+	mtx                sync.RWMutex
 	nextEpoch          *epochManager       // next epoch
 	commitHeight       uint64              // The height of the latest committed block
 	governanceContract protocol.Government // The management contract on the block chain

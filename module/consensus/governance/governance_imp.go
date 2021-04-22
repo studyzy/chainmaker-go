@@ -46,13 +46,13 @@ func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.Governan
 	}
 	var governmentContract *consensusPb.GovernanceContract = nil
 	//get from chainStore
-	if block.Header.GetBlockHeight() != 0 {
+	if block.Header.GetBlockHeight() > 0 {
 		if governmentContract, err = getGovernanceContractFromChainStore(gcr.store); err != nil {
-			gcr.log.Errorw("GetLastBlock err,", "err", err)
+			gcr.log.Errorw("getGovernanceContractFromChainStore err,", "err", err)
 			return nil, err
 		}
 	} else {
-		//if genesis block,create government from gensis config
+		//if genesis block,create government from genesis config
 		chainConfig, err := getChainConfigFromChainStore(gcr.store)
 		if err != nil {
 			gcr.log.Errorw("getChainConfigFromChainStore err,", "err", err)
@@ -60,18 +60,16 @@ func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.Governan
 		}
 		governmentContract, err = getGovernanceContractFromConfig(chainConfig)
 		if err != nil {
-			gcr.log.Errorw("getGovernmentContractFromConfig err,", "err", err)
+			gcr.log.Errorw("getGovernanceContractFromConfig err,", "err", err)
 			return nil, err
 		}
 	}
 	log.Debugf("government contract configuration: %v", governmentContract.String())
 	//save as cache
 	gcr.Lock()
-	log.Debugf("enter lock in government contract")
 	gcr.governmentContract = governmentContract
 	gcr.Height = block.Header.GetBlockHeight()
 	gcr.Unlock()
-	log.Debugf("out lock in government contract")
 	return governmentContract, nil
 }
 

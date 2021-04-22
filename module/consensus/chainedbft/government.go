@@ -38,9 +38,9 @@ func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) err
 		return nil
 	}
 	curEpoch := cbi.createEpoch(height)
-	cbi.Lock()
+	cbi.mtx.Lock()
 	cbi.nextEpoch = curEpoch
-	cbi.Unlock()
+	cbi.mtx.Unlock()
 	cbi.logger.Debugf("ChainConf change! height [%d]", height)
 	return nil
 }
@@ -88,13 +88,6 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 	cbi.logger.Debugf("createEpoch useValidators len [%d]",
 		len(epoch.useValidators))
 	return epoch
-}
-
-func (cbi *ConsensusChainedBftImpl) TryEpochSwitch() bool {
-	if cbi.nextEpoch == nil {
-		return false
-	}
-	return cbi.nextEpoch.force
 }
 
 //isValidProposer checks whether given index is valid at level
