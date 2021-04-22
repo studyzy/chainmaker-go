@@ -270,6 +270,7 @@ func validateParams(config *config.ChainConfig) error {
 func RegisterVerifier(chainId string, consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
 	chainConfigVerifierLock.Lock()
 	defer chainConfigVerifierLock.Unlock()
+	initChainConsensusVerifier(chainId)
 	if _, ok := chainConsensusVerifier[chainId][consensusType]; ok {
 		return errors.New("consensusType verifier is exist")
 	}
@@ -281,11 +282,18 @@ func RegisterVerifier(chainId string, consensusType consensus.ConsensusType, ver
 func GetVerifier(chainId string, consensusType consensus.ConsensusType) protocol.Verifier {
 	chainConfigVerifierLock.RLock()
 	defer chainConfigVerifierLock.RUnlock()
+	initChainConsensusVerifier(chainId)
 	verifier, ok := chainConsensusVerifier[chainId][consensusType]
 	if !ok {
 		return nil
 	}
 	return verifier
+}
+
+func initChainConsensusVerifier(chainId string) {
+	if _, ok := chainConsensusVerifier[chainId]; !ok {
+		chainConsensusVerifier[chainId] = make(consensusVerifier, 0)
+	}
 }
 
 // IsNative whether the contractName is a native
