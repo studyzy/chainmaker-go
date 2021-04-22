@@ -8,6 +8,7 @@
 package types
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"regexp"
 	"strings"
@@ -86,7 +87,7 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 	if match {
 		return ERROR_FORBIDDEN_SQL
 	}
-	tableNames := s.getSqlTableName(SQL)
+	tableNames := utils.GetSqlTableName(SQL)
 	for _, tableName := range tableNames {
 		if strings.Contains(tableName, ".") {
 			return ERROR_FORBIDDEN_DOT_IN_TABLE
@@ -95,7 +96,7 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 			return ERROR_STATE_INFOS
 		}
 	}
-	count := s.getSqlStatementCount(SQL)
+	count := utils.GetSqlStatementCount(SQL)
 	if count > 1 {
 		return ERROR_FORBIDDEN_MULTI_SQL
 	}

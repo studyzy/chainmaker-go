@@ -10,6 +10,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
@@ -17,7 +18,7 @@ import (
 // This implementation provides a mysql based data model
 type HistorySqlDB struct {
 	db     protocol.SqlDBHandle
-	Logger protocol.Logger
+	logger protocol.Logger
 }
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
@@ -29,17 +30,24 @@ func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger pro
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *HistorySqlDB) initDb(dbName string) {
-	db.Logger.Debugf("create history database:%s", dbName)
+	db.logger.Debugf("create history database:%s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
-	db.Logger.Debug("create table[state_history_infos] to save history")
+	db.logger.Debug("create table[state_history_infos] to save history")
 	err = db.db.CreateTableIfNotExist(&StateHistoryInfo{})
 	if err != nil {
 		panic("init state sql db table `state_history_infos` fail")
 	}
-
+	err = db.db.CreateTableIfNotExist(&AccountTxHistoryInfo{})
+	if err != nil {
+		panic("init state sql db table `account_tx_history_infos` fail")
+	}
+	err = db.db.CreateTableIfNotExist(&ContractTxHistoryInfo{})
+	if err != nil {
+		panic("init state sql db table `contract_tx_history_infos` fail")
+	}
 }
 func getDbName(chainId string) string {
 	return "historydb_" + chainId
@@ -48,7 +56,7 @@ func newHistorySqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Lo
 
 	historyDB := &HistorySqlDB{
 		db:     db,
-		Logger: logger,
+		logger: logger,
 	}
 	return historyDB, nil
 }
@@ -66,18 +74,50 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	}
 	for _, txRWSet := range txRWSets {
 		for _, w := range txRWSet.TxWrites {
-			historyInfo := NewStateHistoryInfo(w.ContractName, txRWSet.TxId, w.Key, block.Header.BlockHeight)
+			historyInfo := NewStateHistoryInfo(w.ContractName, txRWSet.TxId, w.Key, uint64(block.Header.BlockHeight))
 			_, err := dbtx.Save(historyInfo)
 			if err != nil {
+				h.logger.Errorf("save tx[%s] state key[%s] history info fail,rollback history save transaction,%s", txRWSet.TxId, w.Key, err.Error())
 				h.db.RollbackDbTransaction(blockHashStr)
 				return err
 			}
-		}
 
+		}
+	}
+	for _, tx := range blockInfo.Txs {
+		txSender := tx.GetSenderAccountId()
+		accountTxInfo := &AccountTxHistoryInfo{
+			AccountId:   txSender,
+			BlockHeight: uint64(block.Header.BlockHeight),
+			TxId:        tx.Header.TxId,
+		}
+		_, err := dbtx.Save(accountTxInfo)
+		if err != nil {
+			h.logger.Errorf("save account[%s] and tx[%s] info fail,rollback history save transaction,%s", txSender, tx.Header.TxId, err.Error())
+			h.db.RollbackDbTransaction(blockHashStr)
+			return err
+		}
+		contractName, err := tx.GetContractName()
+		if err != nil {
+			h.logger.Warnf("Tx[%s] don't have contract name since:%s", tx.Header.TxId, err.Error())
+			continue
+		}
+		contractTxInfo := &ContractTxHistoryInfo{
+			ContractName: contractName,
+			BlockHeight:  uint64(block.Header.BlockHeight),
+			TxId:         tx.Header.TxId,
+			AccountId:    txSender,
+		}
+		_, err = dbtx.Save(contractTxInfo)
+		if err != nil {
+			h.logger.Errorf("save contract[%s] and tx[%s] history info fail,rollback history save transaction,%s", contractName, tx.Header.TxId, err.Error())
+			h.db.RollbackDbTransaction(blockHashStr)
+			return err
+		}
 	}
 	h.db.CommitDbTransaction(blockHashStr)
 
-	h.Logger.Debugf("chain[%s]: commit history db, block[%d]",
+	h.logger.Debugf("chain[%s]: commit history db, block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 
@@ -91,7 +131,7 @@ func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {
 	var height *uint64
 	err = row.ScanColumns(&height)
 	if err != nil {
-		h.Logger.Error(err.Error())
+		h.logger.Error(err.Error())
 		return 0, err
 	}
 	if height == nil {
@@ -101,6 +141,63 @@ func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {
 }
 
 func (h *HistorySqlDB) Close() {
-	h.Logger.Info("close history sql db")
+	h.logger.Info("close history sql db")
 	h.db.Close()
+}
+func (h *HistorySqlDB) GetHistoryForKey(contractName string, key []byte) ([]*historydb.BlockHeightTxId, error) {
+	sql := "select tx_id,block_height from state_history_infos where contract_name=? and state_key=? order by block_height desc"
+	rows, err := h.db.QueryMulti(sql, contractName, key)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	result := []*historydb.BlockHeightTxId{}
+	for rows.Next() {
+		var txId string
+		var blockHeight uint64
+		err = rows.ScanColumns(&txId, &blockHeight)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight})
+	}
+	return result, nil
+}
+func (h *HistorySqlDB) GetAccountTxHistory(account []byte) ([]*historydb.BlockHeightTxId, error) {
+	sql := "select tx_id,block_height from account_tx_history_infos where account_id=? order by block_height desc"
+	rows, err := h.db.QueryMulti(sql, account)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	result := []*historydb.BlockHeightTxId{}
+	for rows.Next() {
+		var txId string
+		var blockHeight uint64
+		err = rows.ScanColumns(&txId, &blockHeight)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight})
+	}
+	return result, nil
+}
+func (h *HistorySqlDB) GetContractTxHistory(contractName string) ([]*historydb.BlockHeightTxId, error) {
+	sql := "select tx_id,block_height from contract_tx_history_infos where contract_name=? order by block_height desc"
+	rows, err := h.db.QueryMulti(sql, contractName)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	result := []*historydb.BlockHeightTxId{}
+	for rows.Next() {
+		var txId string
+		var blockHeight uint64
+		err = rows.ScanColumns(&txId, &blockHeight)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight})
+	}
+	return result, nil
 }

@@ -11,11 +11,11 @@ type StateHistoryInfo struct {
 	ContractName string `gorm:"size:128;primaryKey"`
 	StateKey     []byte `gorm:"size:128;primaryKey"`
 	TxId         string `gorm:"size:128;primaryKey"`
-	BlockHeight  int64  `gorm:"primaryKey"`
+	BlockHeight  uint64 `gorm:"primaryKey"`
 }
 
 // NewHistoryInfo construct a new HistoryInfo
-func NewStateHistoryInfo(contractName, txid string, StateKey []byte, blockHeight int64) *StateHistoryInfo {
+func NewStateHistoryInfo(contractName, txid string, StateKey []byte, blockHeight uint64) *StateHistoryInfo {
 	return &StateHistoryInfo{
 		TxId:         txid,
 		ContractName: contractName,
@@ -26,12 +26,12 @@ func NewStateHistoryInfo(contractName, txid string, StateKey []byte, blockHeight
 
 type AccountTxHistoryInfo struct {
 	AccountId   []byte `gorm:"size:128;primaryKey"`
-	BlockHeight int64  `gorm:"primaryKey"`
+	BlockHeight uint64 `gorm:"primaryKey"`
 	TxId        string `gorm:"size:128;primaryKey"`
 }
 type ContractTxHistoryInfo struct {
 	ContractName string `gorm:"size:128;primaryKey"`
-	BlockHeight  int64  `gorm:"primaryKey"`
+	BlockHeight  uint64 `gorm:"primaryKey"`
 	TxId         string `gorm:"size:128;primaryKey"`
 	AccountId    []byte `gorm:"size:128"`
 }
