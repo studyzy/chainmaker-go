@@ -7,6 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"context"
+	"fmt"
+	"path/filepath"
+	"runtime"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -18,14 +24,9 @@ import (
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/utils"
-	"context"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
-	"path/filepath"
-	"runtime"
-	"sync"
 )
 
 const (
@@ -91,7 +92,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
 	if err == nil && consensusArgs.ConsensusData != nil {
 		bs.logger.Debugf("add consensusArgs ConsensusData!")
-		txRWSets = append(txRWSets, consensusArgs.ConsensusData)
+		blockWithRWSet.TxRWSets = append(blockWithRWSet.TxRWSets, consensusArgs.ConsensusData)
 	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock
