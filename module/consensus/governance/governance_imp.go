@@ -64,7 +64,7 @@ func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.Governan
 			return nil, err
 		}
 	}
-	log.Debugf("government contract: %v", governmentContract.String())
+	log.Debugf("government contract configuration: %v", governmentContract.String())
 	//save as cache
 	gcr.Lock()
 	log.Debugf("enter lock in government contract")

@@ -378,7 +378,7 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 		return
 	}
 
-	cbi.logger.Infof("receive time out event, state: %d, height: %d, level: %d", te.State, te.Height, te.Level)
+	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d", te.State.String(), te.Height, te.Level)
 	switch te.State {
 	case chainedbftpb.ConsStateType_NewLevel:
 		cbi.processNewLevel(te.Height, te.Level)
