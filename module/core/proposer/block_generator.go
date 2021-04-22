@@ -46,7 +46,7 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 	snapshot := bp.snapshotManager.NewSnapshot(lastBlock, block)
 	vmStartTick := utils.CurrentTimeMillisSeconds()
 	ssLasts := vmStartTick - ssStartTick
-	txRWSetMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)
+	txRWSetMap, contractEventMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
 	timeLasts = append(timeLasts, ssLasts, vmLasts)
 
@@ -78,10 +78,11 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 
 	// cache proposed block
 	bp.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
-	if err = bp.proposalCache.SetProposedBlock(block, txRWSetMap, true); err != nil {
+	if err = bp.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventMap, true); err != nil {
 		return block, timeLasts, err
 	}
 	bp.proposalCache.SetProposedAt(block.Header.BlockHeight)
+
 	return block, timeLasts, nil
 }
 

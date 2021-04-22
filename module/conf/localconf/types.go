@@ -125,14 +125,15 @@ type blockchainConfig struct {
 }
 
 type storageConfig struct {
-	Provider             string      `mapstructure:"provider"`
-	StorePath            string      `mapstructure:"store_path"`
-	WriteBufferSize      int         `mapstructure:"write_buffer_size"`
-	BloomFilterBits      int         `mapstructure:"bloom_filter_bits"`
-	DisableHistoryDB     bool        `mapstructure:"disable_historydb"`
-	LogDBWriteAsync      bool        `mapstructure:"logdb_write_async"`
-	BlockWriteBufferSize int         `mapstructure:"block_write_buffer_size"`
-	MysqlConfig          mysqlConfig `mapstructure:"mysql"`
+	Provider              string      `mapstructure:"provider"`
+	StorePath             string      `mapstructure:"store_path"`
+	WriteBufferSize       int         `mapstructure:"write_buffer_size"`
+	BloomFilterBits       int         `mapstructure:"bloom_filter_bits"`
+	DisableHistoryDB      bool        `mapstructure:"disable_historydb"`
+	EnableContractEventDB bool        `mapstructure:"Enable_contract_eventdb"`
+	LogDBWriteAsync       bool        `mapstructure:"logdb_write_async"`
+	BlockWriteBufferSize  int         `mapstructure:"block_write_buffer_size"`
+	MysqlConfig           mysqlConfig `mapstructure:"mysql"`
 }
 
 type mysqlConfig struct {

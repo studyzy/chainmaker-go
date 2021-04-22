@@ -5,52 +5,63 @@
 package mock
 
 import (
+	reflect "reflect"
+
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
 	config "chainmaker.org/chainmaker-go/pb/protogo/config"
 	consensus "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockChainConf is a mock of ChainConf interface
+// MockChainConf is a mock of ChainConf interface.
 type MockChainConf struct {
 	ctrl     *gomock.Controller
 	recorder *MockChainConfMockRecorder
 }
 
-// MockChainConfMockRecorder is the mock recorder for MockChainConf
+// MockChainConfMockRecorder is the mock recorder for MockChainConf.
 type MockChainConfMockRecorder struct {
 	mock *MockChainConf
 }
 
-// NewMockChainConf creates a new mock instance
+// NewMockChainConf creates a new mock instance.
 func NewMockChainConf(ctrl *gomock.Controller) *MockChainConf {
 	mock := &MockChainConf{ctrl: ctrl}
 	mock.recorder = &MockChainConfMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockChainConf) EXPECT() *MockChainConfMockRecorder {
 	return m.recorder
 }
 
-// Init mocks base method
-func (m *MockChainConf) Init() error {
+// AddVmWatch mocks base method.
+func (m *MockChainConf) AddVmWatch(w protocol.VmWatcher) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Init")
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "AddVmWatch", w)
 }
 
-// Init indicates an expected call of Init
-func (mr *MockChainConfMockRecorder) Init() *gomock.Call {
+// AddVmWatch indicates an expected call of AddVmWatch.
+func (mr *MockChainConfMockRecorder) AddVmWatch(w interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockChainConf)(nil).Init))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVmWatch", reflect.TypeOf((*MockChainConf)(nil).AddVmWatch), w)
 }
 
-// ChainConfig mocks base method
+// AddWatch mocks base method.
+func (m *MockChainConf) AddWatch(w protocol.Watcher) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddWatch", w)
+}
+
+// AddWatch indicates an expected call of AddWatch.
+func (mr *MockChainConfMockRecorder) AddWatch(w interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWatch", reflect.TypeOf((*MockChainConf)(nil).AddWatch), w)
+}
+
+// ChainConfig mocks base method.
 func (m *MockChainConf) ChainConfig() *config.ChainConfig {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ChainConfig")
@@ -58,28 +69,27 @@ func (m *MockChainConf) ChainConfig() *config.ChainConfig {
 	return ret0
 }
 
-// ChainConfig indicates an expected call of ChainConfig
+// ChainConfig indicates an expected call of ChainConfig.
 func (mr *MockChainConfMockRecorder) ChainConfig() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChainConfig", reflect.TypeOf((*MockChainConf)(nil).ChainConfig))
 }
 
-// GetChainConfigFromFuture mocks base method
-func (m *MockChainConf) GetChainConfigFromFuture(blockHeight int64) (*config.ChainConfig, error) {
+// CompleteBlock mocks base method.
+func (m *MockChainConf) CompleteBlock(block *common.Block) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChainConfigFromFuture", blockHeight)
-	ret0, _ := ret[0].(*config.ChainConfig)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "CompleteBlock", block)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GetChainConfigFromFuture indicates an expected call of GetChainConfigFromFuture
-func (mr *MockChainConfMockRecorder) GetChainConfigFromFuture(blockHeight interface{}) *gomock.Call {
+// CompleteBlock indicates an expected call of CompleteBlock.
+func (mr *MockChainConfMockRecorder) CompleteBlock(block interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChainConfigFromFuture", reflect.TypeOf((*MockChainConf)(nil).GetChainConfigFromFuture), blockHeight)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteBlock", reflect.TypeOf((*MockChainConf)(nil).CompleteBlock), block)
 }
 
-// GetChainConfigAt mocks base method
+// GetChainConfigAt mocks base method.
 func (m *MockChainConf) GetChainConfigAt(blockHeight int64) (*config.ChainConfig, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChainConfigAt", blockHeight)
@@ -88,13 +98,28 @@ func (m *MockChainConf) GetChainConfigAt(blockHeight int64) (*config.ChainConfig
 	return ret0, ret1
 }
 
-// GetChainConfigAt indicates an expected call of GetChainConfigAt
+// GetChainConfigAt indicates an expected call of GetChainConfigAt.
 func (mr *MockChainConfMockRecorder) GetChainConfigAt(blockHeight interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChainConfigAt", reflect.TypeOf((*MockChainConf)(nil).GetChainConfigAt), blockHeight)
 }
 
-// GetConsensusNodeIdList mocks base method
+// GetChainConfigFromFuture mocks base method.
+func (m *MockChainConf) GetChainConfigFromFuture(blockHeight int64) (*config.ChainConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChainConfigFromFuture", blockHeight)
+	ret0, _ := ret[0].(*config.ChainConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetChainConfigFromFuture indicates an expected call of GetChainConfigFromFuture.
+func (mr *MockChainConfMockRecorder) GetChainConfigFromFuture(blockHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChainConfigFromFuture", reflect.TypeOf((*MockChainConf)(nil).GetChainConfigFromFuture), blockHeight)
+}
+
+// GetConsensusNodeIdList mocks base method.
 func (m *MockChainConf) GetConsensusNodeIdList() ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConsensusNodeIdList")
@@ -103,74 +128,50 @@ func (m *MockChainConf) GetConsensusNodeIdList() ([]string, error) {
 	return ret0, ret1
 }
 
-// GetConsensusNodeIdList indicates an expected call of GetConsensusNodeIdList
+// GetConsensusNodeIdList indicates an expected call of GetConsensusNodeIdList.
 func (mr *MockChainConfMockRecorder) GetConsensusNodeIdList() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsensusNodeIdList", reflect.TypeOf((*MockChainConf)(nil).GetConsensusNodeIdList))
 }
 
-// CompleteBlock mocks base method
-func (m *MockChainConf) CompleteBlock(block *common.Block) error {
+// Init mocks base method.
+func (m *MockChainConf) Init() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CompleteBlock", block)
+	ret := m.ctrl.Call(m, "Init")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CompleteBlock indicates an expected call of CompleteBlock
-func (mr *MockChainConfMockRecorder) CompleteBlock(block interface{}) *gomock.Call {
+// Init indicates an expected call of Init.
+func (mr *MockChainConfMockRecorder) Init() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteBlock", reflect.TypeOf((*MockChainConf)(nil).CompleteBlock), block)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockChainConf)(nil).Init))
 }
 
-// AddWatch mocks base method
-func (m *MockChainConf) AddWatch(w protocol.Watcher) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddWatch", w)
-}
-
-// AddWatch indicates an expected call of AddWatch
-func (mr *MockChainConfMockRecorder) AddWatch(w interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWatch", reflect.TypeOf((*MockChainConf)(nil).AddWatch), w)
-}
-
-// AddVmWatch mocks base method
-func (m *MockChainConf) AddVmWatch(w protocol.VmWatcher) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddVmWatch", w)
-}
-
-// AddVmWatch indicates an expected call of AddVmWatch
-func (mr *MockChainConfMockRecorder) AddVmWatch(w interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVmWatch", reflect.TypeOf((*MockChainConf)(nil).AddVmWatch), w)
-}
-
-// MockWatcher is a mock of Watcher interface
+// MockWatcher is a mock of Watcher interface.
 type MockWatcher struct {
 	ctrl     *gomock.Controller
 	recorder *MockWatcherMockRecorder
 }
 
-// MockWatcherMockRecorder is the mock recorder for MockWatcher
+// MockWatcherMockRecorder is the mock recorder for MockWatcher.
 type MockWatcherMockRecorder struct {
 	mock *MockWatcher
 }
 
-// NewMockWatcher creates a new mock instance
+// NewMockWatcher creates a new mock instance.
 func NewMockWatcher(ctrl *gomock.Controller) *MockWatcher {
 	mock := &MockWatcher{ctrl: ctrl}
 	mock.recorder = &MockWatcherMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockWatcher) EXPECT() *MockWatcherMockRecorder {
 	return m.recorder
 }
 
-// Module mocks base method
+// Module mocks base method.
 func (m *MockWatcher) Module() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Module")
@@ -178,13 +179,13 @@ func (m *MockWatcher) Module() string {
 	return ret0
 }
 
-// Module indicates an expected call of Module
+// Module indicates an expected call of Module.
 func (mr *MockWatcherMockRecorder) Module() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Module", reflect.TypeOf((*MockWatcher)(nil).Module))
 }
 
-// Watch mocks base method
+// Watch mocks base method.
 func (m *MockWatcher) Watch(chainConfig *config.ChainConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Watch", chainConfig)
@@ -192,36 +193,36 @@ func (m *MockWatcher) Watch(chainConfig *config.ChainConfig) error {
 	return ret0
 }
 
-// Watch indicates an expected call of Watch
+// Watch indicates an expected call of Watch.
 func (mr *MockWatcherMockRecorder) Watch(chainConfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Watch", reflect.TypeOf((*MockWatcher)(nil).Watch), chainConfig)
 }
 
-// MockVerifier is a mock of Verifier interface
+// MockVerifier is a mock of Verifier interface.
 type MockVerifier struct {
 	ctrl     *gomock.Controller
 	recorder *MockVerifierMockRecorder
 }
 
-// MockVerifierMockRecorder is the mock recorder for MockVerifier
+// MockVerifierMockRecorder is the mock recorder for MockVerifier.
 type MockVerifierMockRecorder struct {
 	mock *MockVerifier
 }
 
-// NewMockVerifier creates a new mock instance
+// NewMockVerifier creates a new mock instance.
 func NewMockVerifier(ctrl *gomock.Controller) *MockVerifier {
 	mock := &MockVerifier{ctrl: ctrl}
 	mock.recorder = &MockVerifierMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockVerifier) EXPECT() *MockVerifierMockRecorder {
 	return m.recorder
 }
 
-// Verify mocks base method
+// Verify mocks base method.
 func (m *MockVerifier) Verify(consensusType consensus.ConsensusType, chainConfig *config.ChainConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Verify", consensusType, chainConfig)
@@ -229,64 +230,36 @@ func (m *MockVerifier) Verify(consensusType consensus.ConsensusType, chainConfig
 	return ret0
 }
 
-// Verify indicates an expected call of Verify
+// Verify indicates an expected call of Verify.
 func (mr *MockVerifierMockRecorder) Verify(consensusType, chainConfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Verify", reflect.TypeOf((*MockVerifier)(nil).Verify), consensusType, chainConfig)
 }
 
-// MockVmWatcher is a mock of VmWatcher interface
+// MockVmWatcher is a mock of VmWatcher interface.
 type MockVmWatcher struct {
 	ctrl     *gomock.Controller
 	recorder *MockVmWatcherMockRecorder
 }
 
-// MockVmWatcherMockRecorder is the mock recorder for MockVmWatcher
+// MockVmWatcherMockRecorder is the mock recorder for MockVmWatcher.
 type MockVmWatcherMockRecorder struct {
 	mock *MockVmWatcher
 }
 
-// NewMockVmWatcher creates a new mock instance
+// NewMockVmWatcher creates a new mock instance.
 func NewMockVmWatcher(ctrl *gomock.Controller) *MockVmWatcher {
 	mock := &MockVmWatcher{ctrl: ctrl}
 	mock.recorder = &MockVmWatcherMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockVmWatcher) EXPECT() *MockVmWatcherMockRecorder {
 	return m.recorder
 }
 
-// Module mocks base method
-func (m *MockVmWatcher) Module() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Module")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// Module indicates an expected call of Module
-func (mr *MockVmWatcherMockRecorder) Module() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Module", reflect.TypeOf((*MockVmWatcher)(nil).Module))
-}
-
-// ContractNames mocks base method
-func (m *MockVmWatcher) ContractNames() []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ContractNames")
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// ContractNames indicates an expected call of ContractNames
-func (mr *MockVmWatcherMockRecorder) ContractNames() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ContractNames", reflect.TypeOf((*MockVmWatcher)(nil).ContractNames))
-}
-
-// Callback mocks base method
+// Callback mocks base method.
 func (m *MockVmWatcher) Callback(contractName string, payloadBytes []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Callback", contractName, payloadBytes)
@@ -294,8 +267,36 @@ func (m *MockVmWatcher) Callback(contractName string, payloadBytes []byte) error
 	return ret0
 }
 
-// Callback indicates an expected call of Callback
+// Callback indicates an expected call of Callback.
 func (mr *MockVmWatcherMockRecorder) Callback(contractName, payloadBytes interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Callback", reflect.TypeOf((*MockVmWatcher)(nil).Callback), contractName, payloadBytes)
+}
+
+// ContractNames mocks base method.
+func (m *MockVmWatcher) ContractNames() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ContractNames")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// ContractNames indicates an expected call of ContractNames.
+func (mr *MockVmWatcherMockRecorder) ContractNames() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ContractNames", reflect.TypeOf((*MockVmWatcher)(nil).ContractNames))
+}
+
+// Module mocks base method.
+func (m *MockVmWatcher) Module() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Module")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Module indicates an expected call of Module.
+func (mr *MockVmWatcherMockRecorder) Module() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Module", reflect.TypeOf((*MockVmWatcher)(nil).Module))
 }
