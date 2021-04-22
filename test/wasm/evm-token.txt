@@ -1,9 +1,12 @@
-
 pragma solidity ^0.4.11;
 
 contract LedgerBalance {
     mapping(address => uint) public balances;
 
+    constructor (address _addressFounder) public {
+        balances[msg.sender] = 100000000000000001;
+        balances[_addressFounder] = 100000000000000002;
+    }
     function updateMyBalance(uint newBalance) public {
         balances[msg.sender] = newBalance;
     }
