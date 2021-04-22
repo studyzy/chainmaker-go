@@ -21,6 +21,7 @@ import (
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"
@@ -30,7 +31,6 @@ const (
 	DefaultBatchMaxSize       = 50000
 	DefaultBatchCreateTimeout = 1000 * time.Millisecond
 	DefaultPoolSize           = 10000
-	errNews                   = "implement me"
 )
 
 // BatchTxPool Another implementation of tx pool, which can only be used in non-Hotstuff consensus algorithms
@@ -74,7 +74,7 @@ func NewBatchTxPool(nodeId string, chainId string, chainConf protocol.ChainConf,
 		stopCh:     make(chan struct{}),
 		log:        logger.GetLoggerByChain(logger.MODULE_TXPOOL, chainId),
 
-		maxTxCount:         int32(DefaultPoolSize),
+		maxTxCount:         int32(poolconf.DefaultMaxTxPoolSize),
 		batchMaxSize:       int32(DefaultBatchMaxSize),
 		batchCreateTimeout: DefaultBatchCreateTimeout,
 		pendingPool:        newPendingBatchPool(),

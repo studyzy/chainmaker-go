@@ -51,7 +51,7 @@ type ConsensusChainedBftImpl struct {
 	internalMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit the own proposals, voting information by the local node
 	protocolMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit Hotstuff protocol information: proposal, vote
 
-	sync.RWMutex
+	mtx                sync.RWMutex
 	nextEpoch          *epochManager       // next epoch
 	commitHeight       uint64              // The height of the latest committed block
 	governanceContract protocol.Government // The management contract on the block chain
@@ -378,7 +378,7 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 		return
 	}
 
-	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d", te.State.String(), te.Height, te.Level)
+	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s", te.State.String(), te.Height, te.Level, te.Duration.String())
 	switch te.State {
 	case chainedbftpb.ConsStateType_NewLevel:
 		cbi.processNewLevel(te.Height, te.Level)

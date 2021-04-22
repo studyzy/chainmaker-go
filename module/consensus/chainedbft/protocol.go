@@ -821,8 +821,8 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 		return err
 	}
 
-	cbi.Lock()
-	defer cbi.Unlock()
+	cbi.mtx.Lock()
+	defer cbi.mtx.Unlock()
 	if cbi.timerService != nil {
 		cbi.timerService.Stop()
 	}
