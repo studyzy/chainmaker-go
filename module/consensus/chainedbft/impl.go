@@ -134,7 +134,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.smr = newChainedBftSMR(chainID, epoch, chainStore, service.timerService)
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
 	chainConf.AddWatch(service)
-	if err := chainconf.RegisterVerifier(consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
+	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
 		return nil, err
 	}
 	service.initTimeOutConfig(chainConf.(*chainconf.ChainConf).ChainConfig())
