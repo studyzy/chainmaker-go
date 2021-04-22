@@ -13,7 +13,7 @@ import (
 )
 
 type batchTxIdRecorder struct {
-	m sync.Map // key为batchId,value为sync.Map(txId,struct{})
+	m sync.Map // format: key:batchId, value: map[txId]txIndex
 }
 
 func newBatchTxIdRecorder() *batchTxIdRecorder {
@@ -45,22 +45,3 @@ func (r *batchTxIdRecorder) FindBatchIdWithTxId(txId string) (batchId int32, txI
 	})
 	return
 }
-
-//type txInfo struct {
-//	batchId int32
-//	txIndex int32
-//}
-//
-//func (r *batchTxIdRecorder) FindBatchIdWithTxIds(txIds []string) map[string]txInfo {
-//	r.m.Range(func(key, value interface{}) bool {
-//		txsMapInfo := value.(map[string]int32)
-//		if index, exist := txsMapInfo[txId]; exist {
-//			ok = true
-//			txIndex = index
-//			batchId = key.(int32)
-//			return false
-//		}
-//		return true
-//	})
-//	return
-//}
