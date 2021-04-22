@@ -37,7 +37,6 @@ const (
 	TransitBlock      = "TransitBlock"
 	ValidatorNum      = "ValidatorNum"
 	NodeProposeRound  = "NodeProposeRound"
-	EnableEpoch       = "EnableEpoch"
 
 	UnmarshalErrFmt        = "proto.Unmarshal err!err=%v"
 	CreateValidatorsErrFmt = "createValidators err!err=%v"
@@ -91,7 +90,6 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	conConf := chainConfig.Consensus
 
 	newCachedLen := uint64(0)
-	newEnableEpoch := false
 	newSkipTimeoutCommit := false
 	newTransitBlock := uint64(ConstTransitBlock)
 	newValidatorNum := uint64(ConstValidatorNum)
@@ -152,8 +150,6 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 				continue
 			}
 			newNodeProposeRound = nodeProposeRound
-		case EnableEpoch:
-			newEnableEpoch = strings.ToUpper(oneConf.Value) == "TRUE"
 		}
 	}
 	if GovernanceContract.SkipTimeoutCommit != newSkipTimeoutCommit {
@@ -170,10 +166,6 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	}
 	if GovernanceContract.CachedLen != newCachedLen {
 		GovernanceContract.CachedLen = newCachedLen
-		isChg = true
-	}
-	if GovernanceContract.EnableEpoch != newEnableEpoch {
-		GovernanceContract.EnableEpoch = newEnableEpoch
 		isChg = true
 	}
 	if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
@@ -421,7 +413,7 @@ func createValidators(GovernanceContract *consensusPb.GovernanceContract, seedBy
 }
 
 func TryCreateNextValidators(block *commonPb.Block, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
-	if GovernanceContract.BlockNumPerEpoch <= 0 || !GovernanceContract.EnableEpoch {
+	if GovernanceContract.BlockNumPerEpoch <= 0 {
 		return false, nil
 	}
 
@@ -448,7 +440,7 @@ func TrySwitchNextValidator(block *commonPb.Block, GovernanceContract *consensus
 		return false
 	}
 	height := block.GetHeader().GetBlockHeight()
-	if GovernanceContract.NextSwitchHeight == uint64(height) && GovernanceContract.EnableEpoch {
+	if GovernanceContract.NextSwitchHeight == uint64(height) {
 		GovernanceContract.Validators = GovernanceContract.NextValidators
 		GovernanceContract.NextValidators = nil
 		return true
@@ -507,7 +499,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block,
 	}
 
 	// 4. if chain config change or switch to next epoch, change the GovernanceContract epochId
-	if (IsValidatorChg || IsConfigChg) && GovernanceContract.EnableEpoch {
+	if IsValidatorChg || IsConfigChg {
 		log.Debugf("EpochId change! height[%v] old epochId[%v] now epochId[%v]",
 			block.Header.GetBlockHeight(), GovernanceContract.EpochId, (GovernanceContract.EpochId + 1))
 		GovernanceContract.EpochId++

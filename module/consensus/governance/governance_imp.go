@@ -117,14 +117,6 @@ func (gcr *GovernanceContractImp) GetMembers() interface{} {
 	return members
 }
 
-func (gcr *GovernanceContractImp) GetEnableEpoch() bool {
-	governmentContract, err := gcr.GetGovernmentContract()
-	if err != nil {
-		return false
-	}
-	return governmentContract.EnableEpoch
-}
-
 //get cur actual consensus node
 func (gcr *GovernanceContractImp) GetValidators() interface{} {
 	governmentContract, err := gcr.GetGovernmentContract()
