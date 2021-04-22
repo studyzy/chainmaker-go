@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"errors"
+	"fmt"
+	"sort"
+
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"sort"
 )
 
 // Storage interface for smart contracts
@@ -27,7 +28,7 @@ type txSimContextImpl struct {
 	snapshot      protocol.Snapshot
 	vmManager     protocol.VmManager
 	gasUsed       uint64 // only for callContract
-	currentDeep   int
+	currentDepth  int
 	currentResult []byte
 	hisResult     []*callContractResult
 }
@@ -36,7 +37,7 @@ type callContractResult struct {
 	contractName string
 	method       string
 	param        map[string]string
-	deep         int
+	depth        int
 	gasUsed      uint64
 	result       []byte
 }
@@ -212,12 +213,12 @@ func (s *txSimContextImpl) SetTxResult(txResult *commonpb.Result) {
 // Cross contract call
 func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonpb.TxType) (*commonpb.ContractResult, commonpb.TxStatusCode) {
 	s.gasUsed = gasUsed
-	s.currentDeep = s.currentDeep + 1
-	if s.currentDeep > protocol.CallContractDeep {
+	s.currentDepth = s.currentDepth + 1
+	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonpb.ContractResult{
 			Code:    commonpb.ContractResultCode_FAIL,
 			Result:  nil,
-			Message: fmt.Sprintf("CallContract too deep %d", s.currentDeep),
+			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
 		return contractResult, commonpb.TxStatusCode_CONTRACT_TOO_DEEP_FAILED
 	}
@@ -232,7 +233,7 @@ func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method 
 	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
-		deep:         s.currentDeep,
+		depth:        s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
 		contractName: contractId.ContractName,
@@ -241,7 +242,7 @@ func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method 
 	}
 	s.hisResult = append(s.hisResult, &result)
 	s.currentResult = r.Result
-	s.currentDeep = s.currentDeep - 1
+	s.currentDepth = s.currentDepth - 1
 	return r, code
 }
 
@@ -252,7 +253,7 @@ func (s *txSimContextImpl) GetCurrentResult() []byte {
 
 // Get contract call depth
 func (s *txSimContextImpl) GetDepth() int {
-	return s.currentDeep
+	return s.currentDepth
 }
 
 func constructKey(contractName string, key []byte) string {

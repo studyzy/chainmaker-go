@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -267,7 +268,7 @@ func (bc *Blockchain) initTxPool() (err error) {
 		txPoolFactory txpool.TxPoolFactory
 		txType        = txpool.SINGLE
 	)
-	if localconf.ChainMakerConfig.DebugConfig.UseBatchTxPool {
+	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
 	}
 	bc.txPool, err = txPoolFactory.NewTxPool(
@@ -352,7 +353,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 		bc.netService,
 		bc.msgBus,
 		bc.chainConf,
-		bc.store)
+		bc.store,
+		bc.coreEngine.HotStuffHelper)
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
 		return err

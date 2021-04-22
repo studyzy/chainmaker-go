@@ -22,8 +22,10 @@ import (
 	"sync"
 )
 
+type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
+
 var (
-	chainConfigVerifier = make(map[consensus.ConsensusType]protocol.Verifier, 0)
+	chainConsensusVerifier = make(map[string]consensusVerifier, 0)
 	// for multi chain start
 	chainConfigVerifierLock = sync.RWMutex{}
 )
@@ -95,7 +97,7 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 		return nil, errors.New("blockInterval is low")
 	}
 	// verify
-	verifier := GetVerifier(config.Consensus.Type)
+	verifier := GetVerifier(config.ChainId, config.Consensus.Type)
 	if verifier != nil {
 		err := verifier.Verify(config.Consensus.Type, config)
 		if err != nil {
@@ -245,21 +247,21 @@ func validateParams(config *config.ChainConfig) error {
 }
 
 // RegisterVerifier register a verifier.
-func RegisterVerifier(consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
+func RegisterVerifier(chainId string, consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
 	chainConfigVerifierLock.Lock()
 	defer chainConfigVerifierLock.Unlock()
-	if _, ok := chainConfigVerifier[consensusType]; ok {
+	if _, ok := chainConsensusVerifier[chainId][consensusType]; ok {
 		return errors.New("consensusType verifier is exist")
 	}
-	chainConfigVerifier[consensusType] = verifier
+	chainConsensusVerifier[chainId][consensusType] = verifier
 	return nil
 }
 
 // GetVerifier get a verifier if exist.
-func GetVerifier(consensusType consensus.ConsensusType) protocol.Verifier {
+func GetVerifier(chainId string, consensusType consensus.ConsensusType) protocol.Verifier {
 	chainConfigVerifierLock.RLock()
 	defer chainConfigVerifierLock.RUnlock()
-	verifier, ok := chainConfigVerifier[consensusType]
+	verifier, ok := chainConsensusVerifier[chainId][consensusType]
 	if !ok {
 		return nil
 	}

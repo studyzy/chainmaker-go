@@ -66,7 +66,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		contractResult.Message = err.Error()
 		return
 	} else {
-		contractResult.GasUsed = int64(inst.ResourceUsed().Cpu)
+		contractResult.GasUsed = int64(inst.ExecCtx.GasUsed())
 	}
+
 	return
 }
