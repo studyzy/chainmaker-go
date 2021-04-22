@@ -154,6 +154,10 @@ function generate_config() {
         xsed "s%{pprof_port}%$(($PPROF_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
         xsed "s%{trusted_port}%$(($TRUSTED_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
 
+        for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+            xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
+        done
+
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
             xsed "s%#\(.*\)genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
@@ -182,10 +186,6 @@ function generate_config() {
                 xsed "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml
             fi
 
-            for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
-                xsed "s%{org${k}_port}%$(($P2P_PORT_PREFIX+$k))%g" node$i/chainconfig/bc$j.yml
-            done
-
             c=0
             for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
             do
@@ -194,6 +194,10 @@ function generate_config() {
 
                 peerId=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/node/consensus1/consensus1.nodeid`
                 xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
+
+                if  [ $j -eq 1 ]; then
+                    xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainmaker.yml
+                fi
 
                 for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
                     mkdir -p $BUILD_CONFIG_PATH/node$k/certs/ca/$file

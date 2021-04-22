@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -194,9 +193,9 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 	tempMap := map[string]int{}
 
 	for _, node := range nodes {
-		for _, addr := range node.Address {
-			if _, ok := tempMap[addr]; !ok {
-				tempMap[addr] = 1
+		for _, nid := range node.NodeId {
+			if _, ok := tempMap[nid]; !ok {
+				tempMap[nid] = 1
 			}
 		}
 	}
@@ -272,25 +271,21 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 	consensusType := chainConfig.Consensus.Type
 
 	tempMap := map[string]int{}
-	var addrs []string
+	var nodeIds []string
 	for _, node := range nodes {
-		for _, addr := range node.Address {
-			if _, ok := tempMap[addr]; !ok {
-				tempMap[addr] = 1
-				addrs = append(addrs, addr)
+		for _, nid := range node.NodeId {
+			if _, ok := tempMap[nid]; !ok {
+				tempMap[nid] = 1
+				nodeIds = append(nodeIds, nid)
 			}
 		}
 	}
-	sort.Sort(sort.StringSlice(addrs))
+	sort.Sort(sort.StringSlice(nodeIds))
 
-	for _, addr := range addrs {
-		uid, err := helper.GetNodeUidFromAddr(addr)
-		if err != nil {
-			continue
-		}
+	for _, nid := range nodeIds {
 		member := &consensusPb.GovernanceMember{
 			Index:  int64(index),
-			NodeID: uid,
+			NodeID: nid,
 		}
 		members = append(members, member)
 		index++
@@ -515,30 +510,26 @@ func checkConfigChange(chainConfig *configPb.ChainConfig, GovernanceContract *co
 		nodes := chainConfig.Consensus.Nodes
 
 		tempMap := map[string]int{}
-		var addrs []string
+		var nodeIds []string
 		for _, node := range nodes {
-			for _, addr := range node.Address {
-				if _, ok := tempMap[addr]; !ok {
-					tempMap[addr] = 1
-					addrs = append(addrs, addr)
+			for _, nid := range node.NodeId {
+				if _, ok := tempMap[nid]; !ok {
+					tempMap[nid] = 1
+					nodeIds = append(nodeIds, nid)
 				}
 			}
 		}
-		sort.Sort(sort.StringSlice(addrs))
+		sort.Sort(sort.StringSlice(nodeIds))
 
-		for _, addr := range addrs {
-			uid, err := helper.GetNodeUidFromAddr(addr)
-			if err != nil {
-				continue
-			}
+		for _, nid := range nodeIds {
 			//reuse old index
-			if member, ok := oldMembersMap[uid]; ok {
+			if member, ok := oldMembersMap[nid]; ok {
 				members = append(members, member)
 			} else {
 				//use new index
 				member := &consensusPb.GovernanceMember{
 					Index:  int64(index),
-					NodeID: uid,
+					NodeID: nid,
 				}
 				members = append(members, member)
 				index++
