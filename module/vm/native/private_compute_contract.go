@@ -11,6 +11,7 @@ import (
     "chainmaker.org/chainmaker-go/protocol"
     "io/ioutil"
     "os"
+    "strings"
 )
 
 type PrivateComputeContract struct {
@@ -77,7 +78,11 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
     //}
 
     //TEMPORARY CODE JUST FOR TEST
-    pathname := "/Users/moses/Workspace/chainmaker-go/test/wasm/go-fact-1.0.0.wasm"
+    curDir, _ := os.Getwd()
+    pathname := curDir + "../test/wasm/go-fact-1.0.0.wasm"
+    if strings.Contains(curDir, "release") {
+        pathname = curDir + "../../../test/wasm/go-fact-1.0.0.wasm"
+    }
     fh, err:= os.Open(pathname)
     if err != nil {
         r.log.Errorf("Open contract code file(%s) failed.", pathname)
