@@ -102,14 +102,16 @@ func other(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("查询成功")
 	}
 }
+
+var count = 30000
+var goroutineNumber = 5
+
 func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	fmt.Println("执行插入一条数据")
 	txId := ""
 	txPreId := ""
 	start := utils.CurrentTimeMillisSeconds()
 	// 2) 执行合约-sql insert
-	count := 100000
-	goroutineNumber := 3
 	totalCount := count * goroutineNumber
 	wg := sync.WaitGroup{}
 	wg.Add(goroutineNumber)
@@ -121,7 +123,7 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				time.Sleep(time.Millisecond)
 			}
 			wg.Done()
-			time.Sleep(time.Millisecond * 1)
+			time.Sleep(time.Millisecond * 4)
 		}()
 	}
 	wg.Wait()
@@ -146,8 +148,6 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	txPreId := ""
 	start := utils.CurrentTimeMillisSeconds()
 	// 2) 执行合约-sql insert
-	count := 100000
-	goroutineNumber := 3
 	totalCount := count * goroutineNumber
 	wg := sync.WaitGroup{}
 	wg.Add(goroutineNumber)
@@ -160,7 +160,7 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				time.Sleep(time.Millisecond)
 			}
 			wg.Done()
-			time.Sleep(time.Millisecond * 1)
+			time.Sleep(time.Millisecond * 4)
 		}()
 	}
 	wg.Wait()
@@ -188,8 +188,6 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 
 	start := utils.CurrentTimeMillisSeconds()
 	// 2) 执行合约-sql insert
-	count := 100000
-	goroutineNumber := 3
 	totalCount := count * goroutineNumber
 	wg := sync.WaitGroup{}
 	wg.Add(goroutineNumber)
@@ -203,7 +201,7 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				time.Sleep(time.Millisecond)
 			}
 			wg.Done()
-			time.Sleep(time.Millisecond * 1)
+			time.Sleep(time.Millisecond * 4)
 		}()
 	}
 	wg.Wait()
