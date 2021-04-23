@@ -120,10 +120,9 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 			for i := 0; i < count; i++ {
 				txPreId = txId
 				txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
-				time.Sleep(time.Millisecond)
+				time.Sleep(time.Millisecond * 4)
 			}
 			wg.Done()
-			time.Sleep(time.Millisecond * 4)
 		}()
 	}
 	wg.Wait()
@@ -156,11 +155,9 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 			for i := 0; i < count; i++ {
 				txPreId = txId
 				txId = testInvokeSqlBlank(sk3, client, CHAIN1, strconv.Itoa(i))
-				//txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
-				time.Sleep(time.Millisecond)
+				time.Sleep(time.Millisecond * 4)
 			}
 			wg.Done()
-			time.Sleep(time.Millisecond * 4)
 		}()
 	}
 	wg.Wait()
@@ -195,13 +192,10 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		go func() {
 			for i := 0; i < count; i++ {
 				txPreId = txId
-				//txId = testInvokeSqlBlank(sk3, client, CHAIN1, strconv.Itoa(i))
-				//txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 				testInvokeSqlUpdate(sk3, client, CHAIN1, strconv.Itoa(i), txId)
-				time.Sleep(time.Millisecond)
+				time.Sleep(time.Millisecond * 4)
 			}
 			wg.Done()
-			time.Sleep(time.Millisecond * 4)
 		}()
 	}
 	wg.Wait()
