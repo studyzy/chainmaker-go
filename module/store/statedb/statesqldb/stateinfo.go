@@ -6,7 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 package statesqldb
 
-import "time"
+import (
+	"chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/protocol"
+	"time"
+)
 
 // StateInfo defines mysql orm model, used to create mysql table 'state_infos'
 type StateInfo struct {
@@ -30,40 +34,30 @@ func NewStateInfo(contractName string, objectKey []byte, objectValue []byte, blo
 }
 
 type kvIterator struct {
-	keyValues []*StateInfo
-	idx       int
-	count     int
+	rows protocol.SqlRows
 }
 
-func newKVIterator() *kvIterator {
+func newKVIterator(rows protocol.SqlRows) *kvIterator {
 	return &kvIterator{
-		keyValues: make([]*StateInfo, 0),
-		idx:       0,
-		count:     0,
+		rows: rows,
 	}
 }
-func (kvi *kvIterator) append(kv *StateInfo) {
-	kvi.keyValues = append(kvi.keyValues, kv)
-	kvi.count++
-}
 func (kvi *kvIterator) Next() bool {
-	kvi.idx++
-	return kvi.idx < kvi.count
+	return kvi.rows.Next()
 }
-func (kvi *kvIterator) First() bool {
-	return kvi.idx == 0
-}
-func (kvi *kvIterator) Error() error {
-	return nil
-}
-func (kvi *kvIterator) Key() []byte {
-	return kvi.keyValues[kvi.idx].ObjectKey
-}
-func (kvi *kvIterator) Value() []byte {
-	return kvi.keyValues[kvi.idx].ObjectValue
+
+func (kvi *kvIterator) Value() (*store.KV, error) {
+	var kv StateInfo
+	err := kvi.rows.ScanObject(&kv)
+	if err != nil {
+		return nil, err
+	}
+	return &store.KV{
+		ContractName: kv.ContractName,
+		Key:          kv.ObjectKey,
+		Value:        kv.ObjectValue,
+	}, nil
 }
 func (kvi *kvIterator) Release() {
-	kvi.idx = 0
-	kvi.count = 0
-	kvi.keyValues = make([]*StateInfo, 0)
+	kvi.rows.Close()
 }

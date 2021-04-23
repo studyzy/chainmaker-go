@@ -37,7 +37,7 @@ type TxSimContext interface {
 	// Delete key from cache
 	Del(name string, key []byte) error
 	// TODO Query a series of keys from the database, not yet implemented
-	Select(name string, startKey []byte, limit []byte) (Iterator, error)
+	Select(name string, startKey []byte, limit []byte) (StateIterator, error)
 	// Cross contract call, return (contract result, gas used)
 	CallContract(contractId *common.ContractId, method string, byteCode []byte,
 		parameter map[string]string, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)

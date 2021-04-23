@@ -13,6 +13,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"crypto/sha256"
 	"encoding/hex"
@@ -212,8 +213,16 @@ func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
 	assert.Nil(t, err)
 	result, err := db.GetHistoryForKey("contract1", []byte("key_1"))
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(result))
-	t.Logf("%v", result[0])
+
+	assert.Equal(t, 1, getCount(result))
+
+}
+func getCount(i historydb.HistoryIterator) int {
+	count := 0
+	for i.Next() {
+		count++
+	}
+	return count
 }
 func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
 	db := initSqlDb()
@@ -223,9 +232,10 @@ func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
 	assert.Nil(t, err)
 	result, err := db.GetAccountTxHistory([]byte("User1"))
 	assert.Nil(t, err)
-	assert.Equal(t, 1, len(result))
-	for _, r := range result {
-		t.Logf("%#v", r)
+	assert.Equal(t, 1, getCount(result))
+	for result.Next() {
+		v, _ := result.Value()
+		t.Logf("%#v", v)
 	}
 }
 func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
@@ -236,8 +246,9 @@ func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
 	assert.Nil(t, err)
 	result, err := db.GetContractTxHistory("contract1")
 	assert.Nil(t, err)
-	assert.Equal(t, 10, len(result))
-	for _, r := range result {
-		t.Logf("%#v", r)
+	assert.Equal(t, 10, getCount(result))
+	for result.Next() {
+		v, _ := result.Value()
+		t.Logf("%#v", v)
 	}
 }
