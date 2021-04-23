@@ -68,7 +68,9 @@ func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*common
 func (m *mockBlockChainStore) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 	panic(errStr)
 }
-
+func (m *mockBlockChainStore) GetTopicTableColumn(tableName string) ([]string, error) {
+	panic(errStr)
+}
 func (m *mockBlockChainStore) BlockExists(blockHash []byte) (bool, error) {
 	panic(errStr)
 }

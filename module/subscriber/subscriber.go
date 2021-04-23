@@ -16,13 +16,17 @@ import (
 
 // EventSubscriber - new EventSubscriber struct
 type EventSubscriber struct {
-	blockFeed feed.Feed
+	blockFeed         feed.Feed
+	contractEventFeed feed.Feed
 }
 
 // OnMessage - deal msgbus.BlockInfo message
 func (s *EventSubscriber) OnMessage(msg *msgbus.Message) {
 	if blockInfo, ok := msg.Payload.(*commonPb.BlockInfo); ok {
 		go s.blockFeed.Send(model.NewBlockEvent{BlockInfo: blockInfo})
+	}
+	if conEventInfo, ok := msg.Payload.(*commonPb.ContractEventInfo); ok {
+		go s.contractEventFeed.Send(model.NewContractEvent{ContractEvent: conEventInfo})
 	}
 }
 
@@ -35,10 +39,17 @@ func (s *EventSubscriber) OnQuit() {
 func NewSubscriber(msgBus msgbus.MessageBus) *EventSubscriber {
 	subscriber := &EventSubscriber{}
 	msgBus.Register(msgbus.BlockInfo, subscriber)
+
+	msgBus.Register(msgbus.ContractEventInfo, subscriber)
 	return subscriber
 }
 
 // SubscribeBlockEvent - subscribe block event
 func (s *EventSubscriber) SubscribeBlockEvent(ch chan<- model.NewBlockEvent) feed.Subscription {
 	return s.blockFeed.Subscribe(ch)
+}
+
+// SubscribeContractEvent - subscribe contract event
+func (s *EventSubscriber) SubscribeContractEvent(ch chan<- model.NewContractEvent) feed.Subscription {
+	return s.contractEventFeed.Subscribe(ch)
 }

@@ -30,6 +30,7 @@ var (
 	crlPath      string
 	crtPath      string
 	nodeCertPath string
+	certPath     string
 )
 
 const (
@@ -38,6 +39,7 @@ const (
 	flagCrlPath      = "crl-path"
 	flagCrtPath      = "crt-path"
 	flagNodeCertPath = "node-cert-path"
+	flagCertPath     = "cert-path"
 )
 
 var requiredFlags = map[string]bool{
@@ -65,6 +67,7 @@ func init() {
 	flags.StringVar(&crlPath, flagCrlPath, "", "specify crl file path")
 	flags.StringVar(&crtPath, flagCrtPath, "", "specify crt file path")
 	flags.StringVar(&nodeCertPath, flagNodeCertPath, "", "specify node cert path")
+	flags.StringVar(&certPath, flagCertPath, "", "specify cert path")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

@@ -98,9 +98,12 @@ func NewMockStore() *MockStore {
 func (m MockStore) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 	panic(errStr)
 }
-
+func (m MockStore) GetTopicTableColumn(tableName string) ([]string, error) {
+	panic(errStr)
+}
 func (m MockStore) BlockExists(blockHash []byte) (bool, error) {
 	panic(errStr)
+
 }
 
 func (m MockStore) GetBlock(height int64) (*commonPb.Block, error) {
@@ -122,7 +125,7 @@ func (m MockStore) GetTxConfirmedTime(txId string) (int64, error) {
 	panic(errStr)
 }
 
-func (m *MockStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+func (m *MockStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEventInfo []*commonPb.ContractEvent) error {
 	m.blocks[block.Header.BlockHeight] = block
 	return nil
 }

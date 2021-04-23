@@ -11,7 +11,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker-go/utils"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -46,14 +45,6 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 	batch.Put([]byte(stateDBSavepointKey), lastBlockNumBytes)
 
 	txRWSets := blockWithRWSet.TxRWSets
-
-	//try to add consensusArgs
-	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
-	if err == nil && consensusArgs.ConsensusData != nil {
-		s.Logger.Debugf("add consensusArgs ConsensusData!")
-		txRWSets = append(txRWSets, consensusArgs.ConsensusData)
-	}
-
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
 			// 5. state: contractID + stateKey
@@ -66,7 +57,7 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
 		}
 	}
 
-	err = s.writeBatch(block.Header.BlockHeight, batch)
+	err := s.writeBatch(block.Header.BlockHeight, batch)
 	if err != nil {
 		return err
 	}

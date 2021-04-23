@@ -17,6 +17,8 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb/blockkvdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
 	"chainmaker.org/chainmaker-go/store/cache"
+	"chainmaker.org/chainmaker-go/store/contracteventdb"
+	"chainmaker.org/chainmaker-go/store/contracteventdb/eventmysqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
@@ -108,11 +110,20 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 			}
 		}
 	}
-	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, resultDB,
+	var contractEventDB contracteventdb.ContractEventDB
+	contractEventDBConfig := storeConfig.GetContractEventDbConfig()
+	if !storeConfig.DisableContractEventDB {
+		contractEventDB, err = eventmysqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB, resultDB,
 		getLocalCommonDB(chainId, storeConfig, logger),
 		storeConfig, binLog, logger)
 
 }
+
 func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log protocol.Logger) protocol.DBHandle {
 	return leveldbprovider.NewLevelDBHandle(chainId, "localdb", config.GetDefaultDBConfig().LevelDbConfig, log)
 }

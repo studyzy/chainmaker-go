@@ -81,6 +81,12 @@ storage:
     provider: leveldb
     leveldb_config:
       store_path: ../data/org1/result
+  contract_eventdb_config:
+    provider: sql
+    sqldb_config:
+      sqldb_type: sqlite
+      dsn: ../data/org1/event.db
+  disable_contract_eventdb: false
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true

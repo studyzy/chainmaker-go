@@ -191,6 +191,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		contractResult.Message = err.Error()
 		r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", tx.GetHeader().TxId, err.Error())
 	} else {
+		contractResult.ContractEvent = waciInstance.ContractEvent
 		r.Log.Debugf("invoke gasm success, tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]", tx.GetHeader().TxId, vm.Gas, ret, retTypes)
 	}
 

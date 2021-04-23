@@ -8,6 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"path/filepath"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/helper"
@@ -26,9 +32,6 @@ import (
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm"
-	"encoding/hex"
-	"fmt"
-	"path/filepath"
 )
 
 // Init all the modules.
@@ -178,8 +181,7 @@ func (bc *Blockchain) initChainConf() (err error) {
 	return
 }
 
-func (bc *Blockchain) initCache() error {
-	var err error
+func (bc *Blockchain) initCache() (err error) {
 	// create genesis block
 	// 1) if not exist on chain, create it
 	// 2) if exist on chain, load the config in genesis, it will be changed to load the config in config transactions in the future
@@ -255,7 +257,7 @@ func (bc *Blockchain) initTxPool() (err error) {
 		txPoolFactory txpool.TxPoolFactory
 		txType        = txpool.SINGLE
 	)
-	if localconf.ChainMakerConfig.DebugConfig.UseBatchTxPool {
+	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
 	}
 	bc.txPool, err = txPoolFactory.NewTxPool(
@@ -344,7 +346,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 		bc.netService,
 		bc.msgBus,
 		bc.chainConf,
-		bc.store)
+		bc.store,
+		bc.coreEngine.HotStuffHelper)
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
 		return err

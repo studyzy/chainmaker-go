@@ -6,6 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/chainconf v0.0.0
 	chainmaker.org/chainmaker-go/common v0.0.0
+	chainmaker.org/chainmaker-go/evm v0.0.0
 	chainmaker.org/chainmaker-go/gasm v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
@@ -15,6 +16,7 @@ require (
 	chainmaker.org/chainmaker-go/wasi v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
+	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
 	github.com/stretchr/testify v1.7.0
 )
@@ -23,6 +25,7 @@ replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ../conf/chainconf
 	chainmaker.org/chainmaker-go/common => ../../common
+	chainmaker.org/chainmaker-go/evm => ./evm
 	chainmaker.org/chainmaker-go/gasm => ./gasm
 	chainmaker.org/chainmaker-go/localconf => ../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger

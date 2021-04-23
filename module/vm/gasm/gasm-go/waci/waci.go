@@ -34,6 +34,7 @@ type WaciInstance struct {
 	GetStateCache  []byte // cache call method GetStateLen value result, one cache per transaction
 	ChainId        string
 	Method         string
+	ContractEvent  []*commonPb.ContractEvent
 }
 
 // LogMessage print log to file
@@ -85,6 +86,8 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.CallContract()
 		case protocol.ContractMethodCallContractLen:
 			return s.CallContractLen()
+		case protocol.ContractMethodEmitEvent:
+			return s.EmitEvent()
 		// kv
 		case protocol.ContractMethodGetStateLen:
 			return s.GetStateLen()
@@ -179,6 +182,17 @@ func (s *WaciInstance) PutState() int32 {
 // DeleteState delete state from chain
 func (s *WaciInstance) DeleteState() int32 {
 	err := wacsi.DeleteState(s.RequestBody, s.ContractId.ContractName, s.TxSimContext)
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
+}
+
+// EmitEvent emit event to chain
+func (s *WaciInstance) EmitEvent() int32 {
+	contractEvent, err := wacsi.EmitEvent(s.RequestBody, s.TxSimContext, s.ContractId, s.Log)
+	s.ContractEvent = append(s.ContractEvent, contractEvent)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail

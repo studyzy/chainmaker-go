@@ -168,7 +168,7 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	go consensus.serve()
 	consensus.msgbus.Register(msgbus.ProposedBlock, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
-	chainconf.RegisterVerifier(consensuspb.ConsensusType_RAFT, consensus)
+	chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_RAFT, consensus)
 
 	return nil
 }

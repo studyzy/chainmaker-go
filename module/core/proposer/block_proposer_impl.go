@@ -15,6 +15,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -231,27 +232,38 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 
 	selfProposedBlock := bp.proposalCache.GetSelfProposedBlockAt(height)
 	if selfProposedBlock != nil {
-		// Repeat propose block if node has proposed before at the same height
-		bp.proposalCache.SetProposedAt(height)
-		bp.msgBus.Publish(msgbus.ProposedBlock, selfProposedBlock)
-		bp.log.Infof("proposer success repeat [%d](txs:%d,hash:%x)",
-			selfProposedBlock.Header.BlockHeight, selfProposedBlock.Header.TxCount, selfProposedBlock.Header.BlockHash)
-		return nil
+		if bytes.Equal(selfProposedBlock.Header.PreBlockHash, preHash) {
+			// Repeat propose block if node has proposed before at the same height
+			bp.proposalCache.SetProposedAt(height)
+			bp.msgBus.Publish(msgbus.ProposedBlock, selfProposedBlock)
+			bp.log.Infof("proposer success repeat [%d](txs:%d,hash:%x)",
+				selfProposedBlock.Header.BlockHeight, selfProposedBlock.Header.TxCount, selfProposedBlock.Header.BlockHash)
+			return nil
+		} else {
+			bp.proposalCache.ClearTheBlock(selfProposedBlock)
+			// Note: It is not possible to re-add the transactions in the deleted block to txpool; because some transactions may
+			// be included in other blocks to be confirmed, and it is impossible to quickly exclude these pending transactions
+			// that have been entered into the block. Comprehensive considerations, directly discard this block is the optimal
+			// choice. This processing method may only cause partial transaction loss at the current node, but it can be solved
+			// by rebroadcasting on the client side.
+			bp.txPool.RetryAndRemoveTxs(nil, selfProposedBlock.Txs)
+		}
 	}
 
 	// retrieve tx batch from tx pool
 	startFetchTick := utils.CurrentTimeMillisSeconds()
-	checkedBatch := bp.txPool.FetchTxBatch(height)
+	fetchBatch := bp.txPool.FetchTxBatch(height)
 	fetchLasts := utils.CurrentTimeMillisSeconds() - startFetchTick
-	bp.log.Debugf("begin proposing block[%d], fetch tx num[%d]", height, len(checkedBatch))
+	bp.log.Debugf("begin proposing block[%d], fetch tx num[%d]", height, len(fetchBatch))
 
 	startDupTick := utils.CurrentTimeMillisSeconds()
-	//checkedBatch := bp.txDuplicateCheck(txBatch)
+	checkedBatch := bp.txDuplicateCheck(fetchBatch)
 	dupLasts := utils.CurrentTimeMillisSeconds() - startDupTick
 	if !utils.CanProposeEmptyBlock(bp.chainConf.ChainConfig().Consensus.Type) &&
 		(checkedBatch == nil || len(checkedBatch) == 0) {
 		// can not propose empty block and tx batch is empty, then yield proposing.
 		bp.log.Debugf("no txs in tx pool, proposing block stoped")
+		bp.txPool.RetryAndRemoveTxs(nil, fetchBatch)
 		return nil
 	}
 
@@ -301,10 +313,10 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 	if batch == nil || len(batch) == 0 {
 		return nil
 	}
-	checked := make([]*commonpb.Transaction, 0)
-	verifyBatchs := utils.DispatchTxVerifyTask(batch)
-	results := make([][]*commonpb.Transaction, 0)
-	workerCount := len(verifyBatchs)
+	checked := make([]*commonpb.Transaction, 0, len(batch))
+	verifyBatches := utils.DispatchTxVerifyTask(batch)
+	workerCount := len(verifyBatches)
+	results := make([][]*commonpb.Transaction, workerCount)
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
 	for i := 0; i < workerCount; i++ {
@@ -318,7 +330,7 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 				}
 			}
 			results[index] = result
-		}(i, verifyBatchs[i])
+		}(i, verifyBatches[i])
 	}
 	wg.Wait()
 	for _, result := range results {
@@ -359,8 +371,23 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 
 // OnReceiveChainedBFTProposal, to check if this proposer should propose a new block
 // Only for chained bft consensus
-func (bp *BlockProposerImpl) OnReceiveChainedBFTProposal(_ *interface{}) {
+func (bp *BlockProposerImpl) OnReceiveChainedBFTProposal(proposal *chainedbft.BuildProposal) {
+	proposingHeight := int64(proposal.Height)
+	preHash := proposal.PreHash
+	if !bp.shouldProposeByChainedBFT(proposingHeight, preHash) {
+		bp.log.Infof("not a legal proposal request [%d](%x)", proposingHeight, preHash)
+		return
+	}
 
+	if !bp.setNotIdle() {
+		bp.log.Warnf("concurrent propose block [%d](%x), yield!", proposingHeight, preHash)
+		return
+	}
+	defer bp.setIdle()
+
+	bp.log.Infof("trigger proposal from chainedBFT, height[%d]", proposal.Height)
+	go bp.proposing(proposingHeight, preHash)
+	<-bp.finishProposeC
 }
 
 // OnReceiveYieldProposeSignal, receive yield propose signal

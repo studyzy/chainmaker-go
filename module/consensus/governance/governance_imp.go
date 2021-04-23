@@ -7,34 +7,34 @@ SPDX-License-Identifier: Apache-2.0
 package governance
 
 import (
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/logger"
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 
-type GovernmentContractImp struct {
+type GovernanceContractImp struct {
 	log                *logger.CMLogger
+	Height             int64 //Cache height
 	store              protocol.BlockchainStore
-	governmentContract *consensusPb.GovernmentContract //Cache governance data
-	Height             int64                           //Cache height
+	governmentContract *consensusPb.GovernanceContract //Cache government data
 	sync.RWMutex
 }
 
-func NewGovernmentContract(store protocol.BlockchainStore) protocol.Government {
-	governmentContract := &GovernmentContractImp{
+func NewGovernanceContract(store protocol.BlockchainStore) protocol.Government {
+	governmentContract := &GovernanceContractImp{
 		log:                logger.GetLogger(logger.MODULE_CONSENSUS),
+		Height:             0,
 		store:              store,
 		governmentContract: nil,
-		Height:             0,
 	}
 	return governmentContract
 }
 
 //Get Government data from cache,ChainStore,chainConfig
-func (gcr *GovernmentContractImp) GetGovernmentContract() (*consensusPb.GovernmentContract, error) {
+func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.GovernanceContract, error) {
 	//if cached height is latest,use cache
 	block, err := gcr.store.GetLastBlock()
 	if err != nil {
@@ -44,27 +44,27 @@ func (gcr *GovernmentContractImp) GetGovernmentContract() (*consensusPb.Governme
 	if gcr.governmentContract != nil && block.Header.GetBlockHeight() == gcr.Height {
 		return gcr.governmentContract, nil
 	}
-	var governmentContract *consensusPb.GovernmentContract = nil
+	var governmentContract *consensusPb.GovernanceContract = nil
 	//get from chainStore
-	if block.Header.GetBlockHeight() != 0 {
-		governmentContract, err = getGovernmentContractFromChainStore(gcr.store)
-		if err != nil {
-			gcr.log.Errorw("GetLastBlock err,", "err", err)
+	if block.Header.GetBlockHeight() > 0 {
+		if governmentContract, err = getGovernanceContractFromChainStore(gcr.store); err != nil {
+			gcr.log.Errorw("getGovernanceContractFromChainStore err,", "err", err)
 			return nil, err
 		}
 	} else {
-		//if genesis block,create governance from gensis config
+		//if genesis block,create government from genesis config
 		chainConfig, err := getChainConfigFromChainStore(gcr.store)
 		if err != nil {
 			gcr.log.Errorw("getChainConfigFromChainStore err,", "err", err)
 			return nil, err
 		}
-		governmentContract, err = getGovernmentContractFromConfig(chainConfig)
+		governmentContract, err = getGovernanceContractFromConfig(chainConfig)
 		if err != nil {
-			gcr.log.Errorw("getGovernmentContractFromConfig err,", "err", err)
+			gcr.log.Errorw("getGovernanceContractFromConfig err,", "err", err)
 			return nil, err
 		}
 	}
+	log.Debugf("government contract configuration: %v", governmentContract.String())
 	//save as cache
 	gcr.Lock()
 	gcr.governmentContract = governmentContract
@@ -74,7 +74,7 @@ func (gcr *GovernmentContractImp) GetGovernmentContract() (*consensusPb.Governme
 }
 
 //get actual consensus node num
-func (gcr *GovernmentContractImp) GetGovMembersValidatorCount() uint64 {
+func (gcr *GovernanceContractImp) GetGovMembersValidatorCount() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
@@ -84,7 +84,7 @@ func (gcr *GovernmentContractImp) GetGovMembersValidatorCount() uint64 {
 }
 
 // actual consensus node num at least
-func (gcr *GovernmentContractImp) GetGovMembersValidatorMinCount() uint64 {
+func (gcr *GovernanceContractImp) GetGovMembersValidatorMinCount() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
@@ -93,7 +93,7 @@ func (gcr *GovernmentContractImp) GetGovMembersValidatorMinCount() uint64 {
 	return governmentContract.MinQuorumForQc
 }
 
-func (gcr *GovernmentContractImp) GetCachedLen() uint64 {
+func (gcr *GovernanceContractImp) GetCachedLen() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
@@ -103,53 +103,45 @@ func (gcr *GovernmentContractImp) GetCachedLen() uint64 {
 }
 
 //get consensus node list
-func (gcr *GovernmentContractImp) GetMembers() interface{} {
+func (gcr *GovernanceContractImp) GetMembers() interface{} {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
-		//log.Errorw("getGovernmentContract err,", "err", err)
 		return nil
 	}
-	var members []*consensusPb.GovernmentMember
+	var members []*consensusPb.GovernanceMember
 	for _, member := range governmentContract.Members {
-		newMember := &consensusPb.GovernmentMember{
-			Index:  member.Index,
-			NodeID: member.NodeID,
-		}
-		members = append(members, newMember)
+		members = append(members, &consensusPb.GovernanceMember{
+			Index: member.Index, NodeID: member.NodeID,
+		})
 	}
-
 	return members
 }
 
 //get cur actual consensus node
-func (gcr *GovernmentContractImp) GetValidators() interface{} {
+func (gcr *GovernanceContractImp) GetValidators() interface{} {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
-		//log.Errorw("getGovernmentContract err,", "err", err)
 		return nil
 	}
-	//gcr.log.Errorw("GetValidators len,", "len", len(governmentContract.Validators))
-	var members []*consensusPb.GovernmentMember
+	var members []*consensusPb.GovernanceMember
 	for _, member := range governmentContract.Validators {
-		newMember := &consensusPb.GovernmentMember{
-			Index:  member.Index,
-			NodeID: member.NodeID,
-		}
-		members = append(members, newMember)
+		members = append(members, &consensusPb.GovernanceMember{
+			Index: member.Index, NodeID: member.NodeID,
+		})
 	}
 	return members
 }
 
 //get next epoch consensus node
-func (gcr *GovernmentContractImp) GetNextValidators() interface{} {
+func (gcr *GovernanceContractImp) GetNextValidators() interface{} {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
 		return nil
 	}
-	var members []*consensusPb.GovernmentMember
+	var members []*consensusPb.GovernanceMember
 	for _, member := range governmentContract.NextValidators {
-		newMember := &consensusPb.GovernmentMember{
+		newMember := &consensusPb.GovernanceMember{
 			Index:  member.Index,
 			NodeID: member.NodeID,
 		}
@@ -159,7 +151,7 @@ func (gcr *GovernmentContractImp) GetNextValidators() interface{} {
 }
 
 //get next epoch switch heigh
-func (gcr *GovernmentContractImp) GetSwitchHeight() uint64 {
+func (gcr *GovernanceContractImp) GetSwitchHeight() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
@@ -168,7 +160,7 @@ func (gcr *GovernmentContractImp) GetSwitchHeight() uint64 {
 	return governmentContract.NextSwitchHeight
 }
 
-func (gcr *GovernmentContractImp) GetSkipTimeoutCommit() bool {
+func (gcr *GovernanceContractImp) GetSkipTimeoutCommit() bool {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
@@ -177,7 +169,7 @@ func (gcr *GovernmentContractImp) GetSkipTimeoutCommit() bool {
 	return governmentContract.SkipTimeoutCommit
 }
 
-func (gcr *GovernmentContractImp) GetNodeProposeRound() uint64 {
+func (gcr *GovernanceContractImp) GetNodeProposeRound() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		//log.Errorw("getGovernmentContract err,", "err", err)
@@ -186,23 +178,22 @@ func (gcr *GovernmentContractImp) GetNodeProposeRound() uint64 {
 	return governmentContract.NodeProposeRound
 }
 
-func (gcr *GovernmentContractImp) GetEpochId() uint64 {
+func (gcr *GovernanceContractImp) GetEpochId() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
-		//log.Errorw("getGovernmentContract err,", "err", err)
 		return 0
 	}
 	return governmentContract.EpochId
 }
 
 //use by chainconf,check chain config before chain_config_contract run
-func (gcr *GovernmentContractImp) Verify(consensusType consensusPb.ConsensusType, chainConfig *configPb.ChainConfig) error {
+func (gcr *GovernanceContractImp) Verify(consensusType consensusPb.ConsensusType, chainConfig *configPb.ChainConfig) error {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		gcr.log.Warnw("GetGovernmentContract err,", "err", err)
+		return err
 	}
-	_, err = checkChainConfig(chainConfig, governmentContract)
-	if err != nil {
+	if _, err = checkChainConfig(chainConfig, governmentContract); err != nil {
 		gcr.log.Warnw("checkChainConfig err,", "err", err)
 	}
 	return err

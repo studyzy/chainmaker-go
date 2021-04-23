@@ -6,6 +6,7 @@ main/__debug_bin
 main/main
 module/store/store
 ./log
+module/vm/main
 .idea
 **/*.exe
 **/*.log

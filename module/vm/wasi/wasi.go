@@ -9,6 +9,7 @@ package wasi
 
 import (
 	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
@@ -29,6 +30,7 @@ type Wacsi interface {
 	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64)
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
+	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
 
 	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
 	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
@@ -176,6 +178,38 @@ func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte
 	contractResult.Code = common.ContractResultCode_FAIL
 	contractResult.Message += string(data)
 	return protocol.ContractSdkSignalResultSuccess
+}
+
+// EmitEvent emit event to chain
+func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error) {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	topic, _ := ec.GetString("topic")
+
+	if err := protocol.CheckTopicStr(topic); err != nil {
+		return nil, err
+	}
+
+	req := ec.GetItems()
+	var eventData []string
+	for i := 1; i < len(req); i++ {
+		data := req[i].Value.(string)
+		eventData = append(eventData, data)
+		log.Debugf("EmitEvent EventData :%v", data)
+	}
+
+	if err := protocol.CheckEventData(eventData); err != nil {
+		return nil, err
+	}
+
+	contractEvent := &common.ContractEvent{
+		ContractName:    contractId.ContractName,
+		ContractVersion: contractId.ContractVersion,
+		Topic:           topic,
+		TxId:            txSimContext.GetTx().Header.TxId,
+		EventData:       eventData,
+	}
+
+	return contractEvent, nil
 }
 
 func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {

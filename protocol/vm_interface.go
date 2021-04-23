@@ -18,7 +18,9 @@ const (
 	GasLimit            = 1e10    // invoke user contract max gas
 	TimeLimit           = 1 * 1e9 // 1s
 	CallContractGasOnce = 1e5     // Gas consumed per cross call contract
-	CallContractDeep    = 5       // cross call contract stack deep, must less than vm pool min size
+	CallContractDepth   = 5       // cross call contract stack depth, must less than vm pool min size
+	EvmGasPrice         = 1
+	EvmMaxStackDepth    = 1024
 
 	ContractSdkSignalResultSuccess = 0 // sdk call chain method success result
 	ContractSdkSignalResultFail    = 1 // sdk call chain method success result
@@ -32,13 +34,18 @@ const (
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
+	TopicMaxLen       = 255
+	EventDataMaxLen   = 65535
+	EventDataMaxCount = 16
+
 	ContractKey            = ":K:"
 	ContractByteCode       = ":B:"
 	ContractVersion        = ":V:"
 	ContractRuntimeType    = ":R:"
 	ContractCreator        = ":C:"
 	ContractFreeze         = ":F:"
-	ContractRevoke         = ":REVOKE:"
+	ContractRevoke         = ":RV:"
+	ContractAddress        = ":A:"
 	ContractStoreSeparator = "#"
 
 	// special parameters passed to contract
@@ -80,6 +87,7 @@ const (
 	ContractMethodRSClose            = "RSClose"
 	ContractMethodExecuteUpdate      = "ExecuteUpdate"
 	ContractMethodExecuteDdl         = "ExecuteDDL"
+	ContractMethodEmitEvent          = "EmitEvent"
 )
 
 //VmManager manage vm runtime
@@ -160,4 +168,37 @@ func CheckKeyFieldStr(key string, field string) error {
 		}
 	}
 	return nil
+}
+
+//CheckTopicStr
+func CheckTopicStr(topic string) error {
+	topicLen := len(topic)
+	if topicLen == 0 {
+		return fmt.Errorf("topic can not empty")
+	}
+	if topicLen > TopicMaxLen {
+		return fmt.Errorf("topic too long,longer than %v", TopicMaxLen)
+	}
+	return nil
+
+}
+
+//CheckEventTopicTableData  verify event data
+func CheckEventData(eventData []string) error {
+
+	eventDataNum := len(eventData)
+	if eventDataNum == 0 {
+		return fmt.Errorf("event data can not empty")
+
+	}
+	if eventDataNum > EventDataMaxCount {
+		return fmt.Errorf("too many event data")
+	}
+	for _, data := range eventData {
+		if len(data) > EventDataMaxLen {
+			return fmt.Errorf("event data too long,longer than %v", EventDataMaxLen)
+		}
+	}
+	return nil
+
 }
