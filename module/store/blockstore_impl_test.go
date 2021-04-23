@@ -524,14 +524,16 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 	init5Blocks(s)
 	assert.Equal(t, nil, err)
 
-	iter := s.SelectObject(defaultContractName, []byte("key_2"), []byte("key_4"))
+	iter, err := s.SelectObject(defaultContractName, []byte("key_2"), []byte("key_4"))
+	assert.Nil(t, err)
 	defer iter.Release()
-	var count int
+	var count int = 0
 	for iter.Next() {
 		count++
-		t.Logf("key:%s, value:%s\n", string(iter.Key()), string(iter.Value()))
+		kv, _ := iter.Value()
+		t.Logf("key:%s, value:%s\n", string(kv.Key), string(kv.Value))
 	}
-	assert.Equal(t, 2, count)
+	assert.Equal(t, 3, count)
 }
 
 func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {

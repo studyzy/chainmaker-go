@@ -86,8 +86,8 @@ func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {
 	return nil
 }
 
-func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.Iterator, error) {
-	return s.blockchainStore.SelectObject(contractName, startKey, limit), nil
+func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	return s.blockchainStore.SelectObject(contractName, startKey, limit)
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {

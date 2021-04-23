@@ -205,27 +205,20 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
-func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
+func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	s.Lock()
 	defer s.Unlock()
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
-			return nil
+			return nil, err
 		}
 	}
 	sql := "select * from state_infos where object_key between ? and ?"
 	rows, err := s.db.QueryMulti(sql, startKey, limit)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	defer rows.Close()
-	result := &kvIterator{}
-	for rows.Next() {
-		var kv StateInfo
-		rows.ScanObject(&kv)
-		result.append(&kv)
-	}
-	return result
+	return newKVIterator(rows), nil
 }
 
 // GetLastSavepoint returns the last block height

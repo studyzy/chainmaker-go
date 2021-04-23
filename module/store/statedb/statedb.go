@@ -22,7 +22,7 @@ type StateDB interface {
 
 	// SelectObject returns an iterator that contains all the key-values between given key ranges.
 	// startKey is included in the results and limit is excluded.
-	SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator
+	SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error)
 
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)
