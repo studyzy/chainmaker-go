@@ -121,6 +121,9 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				txPreId = txId
 				txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 				time.Sleep(time.Millisecond * 4)
+				if i%(totalCount/10) == 0 {
+					fmt.Println("this goroutine count =", i, "/", totalCount)
+				}
 			}
 			wg.Done()
 		}()
@@ -134,7 +137,7 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		if code == commonPb.ContractResultCode_OK && code2 == commonPb.ContractResultCode_OK {
 			break
 		}
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 2000)
 	}
 	end1 := utils.CurrentTimeMillisSeconds()
 	fmt.Println("time cost \t", end1-start, "  start", start, "  end", end1, "  count", totalCount)
@@ -156,6 +159,9 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				txPreId = txId
 				txId = testInvokeSqlBlank(sk3, client, CHAIN1, strconv.Itoa(i))
 				time.Sleep(time.Millisecond * 4)
+				if i%(totalCount/10) == 0 {
+					fmt.Println("this goroutine count =", i, "/", totalCount)
+				}
 			}
 			wg.Done()
 		}()
@@ -169,7 +175,7 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		if code == commonPb.ContractResultCode_OK && code2 == commonPb.ContractResultCode_OK {
 			break
 		}
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 2000)
 	}
 	end1 := utils.CurrentTimeMillisSeconds()
 	fmt.Println("time cost \t", end1-start, "  start", start, "  end", end1, "  count", totalCount)
@@ -194,6 +200,9 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				txPreId = txId
 				testInvokeSqlUpdate(sk3, client, CHAIN1, strconv.Itoa(i), txId)
 				time.Sleep(time.Millisecond * 4)
+				if i%(totalCount/10) == 0 {
+					fmt.Println("this goroutine count =", i, "/", totalCount)
+				}
 			}
 			wg.Done()
 		}()
@@ -207,7 +216,7 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		if code == commonPb.ContractResultCode_OK && code2 == commonPb.ContractResultCode_OK {
 			break
 		}
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(time.Millisecond * 2000)
 	}
 	end1 := utils.CurrentTimeMillisSeconds()
 	fmt.Println("time cost \t", end1-start, "  start", start, "  end", end1, "  count", totalCount)
