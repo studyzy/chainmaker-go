@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 
@@ -23,7 +22,7 @@ func (nsf *NetServiceFactory) NewNetService(net Net, chainId string, ac protocol
 		return nil, err
 	}
 	if chainConf != nil {
-		if err := nsf.addAllSeedsAndSetAllConsensusNodeIds(ns, chainConf); err != nil {
+		if err := nsf.setAllConsensusNodeIds(ns, chainConf); err != nil {
 			return nil, err
 		}
 		if err := nsf.setAllTlsTrustRoots(ns, chainConf); err != nil {
@@ -37,22 +36,14 @@ func (nsf *NetServiceFactory) NewNetService(net Net, chainId string, ac protocol
 	return ns, nil
 }
 
-func (nsf *NetServiceFactory) addAllSeedsAndSetAllConsensusNodeIds(ns *NetService, chainConf protocol.ChainConf) error {
+func (nsf *NetServiceFactory) setAllConsensusNodeIds(ns *NetService, chainConf protocol.ChainConf) error {
 	consensusNodeUidList := make([]string, 0)
 	// add all the seeds
 	for _, node := range chainConf.ChainConfig().Consensus.Nodes {
-		for _, address := range node.Address {
-			if err := ns.localNet.AddSeed(address); err != nil {
-				return err
-			}
-			nodeUid, err := helper.GetNodeUidFromAddr(address)
-			if err != nil {
-				return err
-			}
+		for _, nodeUid := range node.NodeId {
 			consensusNodeUidList = append(consensusNodeUidList, nodeUid)
 		}
 	}
-	ns.logger.Infof("[NetServiceFactory] add seeds ok(chain-id:%s)", ns.chainId)
 	// set all consensus node id for net service
 	err := ns.Apply(WithConsensusNodeUid(consensusNodeUidList...))
 	if err != nil {
@@ -70,5 +61,7 @@ func (nsf *NetServiceFactory) setAllTlsTrustRoots(ns *NetService, chainConf prot
 		}
 	}
 	ns.logger.Infof("[NetServiceFactory] add trust root certs ok(chain-id:%s)", ns.chainId)
+	// check whether peers already connected contains to this chain
+	ns.localNet.ReVerifyTrustRoots(chainConf.ChainConfig().ChainId)
 	return nil
 }
