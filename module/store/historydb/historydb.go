@@ -16,12 +16,17 @@ type HistoryDB interface {
 	// CommitBlock commits the block rwsets in an atomic operation
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
-	// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-	//GetTxRWSet(contractName string,key []byte) ([], error)
-
+	//GetHistoryForKey 获得Key的交易历史
+	GetHistoryForKey(contractName string, key []byte) ([]*BlockHeightTxId, error)
+	GetAccountTxHistory(account []byte) ([]*BlockHeightTxId, error)
+	GetContractTxHistory(contractName string) ([]*BlockHeightTxId, error)
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)
 
 	// Close is used to close database
 	Close()
+}
+type BlockHeightTxId struct {
+	BlockHeight uint64
+	TxId        string
 }

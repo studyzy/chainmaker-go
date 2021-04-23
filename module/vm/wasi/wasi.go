@@ -362,9 +362,9 @@ func (w *WacsiImpl) isManageContract(method string) bool {
 
 func changeCurrentDB(chainId string, contractName string, transaction protocol.SqlDBTransaction) {
 	dbName := statesqldb.GetContractDbName(chainId, contractName)
-	currentDbName := getCurrentDb(chainId)
-	if contractName != "" && dbName != currentDbName {
-		transaction.ChangeContextDb(dbName)
-		setCurrentDb(chainId, dbName)
-	}
+	//currentDbName := getCurrentDb(chainId)
+	//if contractName != "" && dbName != currentDbName {
+	transaction.ChangeContextDb(dbName)
+	//setCurrentDb(chainId, dbName)
+	//}
 }

@@ -18,6 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb"
+	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
@@ -280,6 +281,9 @@ func (bs *BlockStoreImpl) GetBlockByTx(txId string) (*commonPb.Block, error) {
 func (bs *BlockStoreImpl) GetTx(txId string) (*commonPb.Transaction, error) {
 	return bs.blockDB.GetTx(txId)
 }
+func (bs *BlockStoreImpl) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
+	return bs.blockDB.GetTxWithBlockInfo(txId)
+}
 
 // GetTxConfirmedTime returns the confirmed time of a given tx
 func (bs *BlockStoreImpl) GetTxConfirmedTime(txId string) (int64, error) {
@@ -300,6 +304,13 @@ func (bs *BlockStoreImpl) ReadObject(contractName string, key []byte) ([]byte, e
 // startKey is included in the results and limit is excluded.
 func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
 	return bs.stateDB.SelectObject(contractName, startKey, limit)
+}
+func (bs *BlockStoreImpl) GetHistoryForKey(contractName string, key []byte) (protocol.HistoryIterator, error) {
+	txs, err := bs.historyDB.GetHistoryForKey(contractName, key)
+	if err != nil {
+		return nil, err
+	}
+	return types.NewHistoryIterator(contractName, key, txs, bs.resultDB, bs.blockDB), nil
 }
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.

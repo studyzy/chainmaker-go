@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package types
+package utils
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -23,10 +23,9 @@ func TestGetTableName(t *testing.T) {
 	table["truncate table db3.t1"] = false
 	table["select * from t1 where id in (SELECT * from db4.view1 ) "] = false
 
-	v := &StandardSqlVerify{}
 	for sql, result := range table {
 		t.Run(sql, func(t *testing.T) {
-			tableNames := v.getSqlTableName(sql)
+			tableNames := GetSqlTableName(sql)
 			t.Log(sql, tableNames)
 			assert.Equal(t, result, !containDot(tableNames))
 		})
@@ -50,10 +49,9 @@ func TestMultiStatement(t *testing.T) {
 	table["insert into t1 values(1,'a');update t1 set a=b"] = 2
 	table["select * from t1 where id in (SELECT * from db4.view1 ) "] = 1
 
-	v := &StandardSqlVerify{}
 	for sql, result := range table {
 		t.Run(sql, func(t *testing.T) {
-			count := v.getSqlStatementCount(sql)
+			count := GetSqlStatementCount(sql)
 			t.Log(sql, count)
 			assert.Equal(t, result, count)
 		})

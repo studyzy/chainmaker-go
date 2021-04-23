@@ -18,6 +18,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"strconv"
 	"testing"
 )
 
@@ -75,14 +76,21 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 	}
 
 	for i := 0; i < txNum; i++ {
+		payload, _ := (&commonPb.TransactPayload{
+			ContractName: "contract1",
+			Method:       "Function1",
+			Parameters:   nil,
+		}).Marshal()
 		tx := &commonPb.Transaction{
 			Header: &commonPb.TxHeader{
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
 				Sender: &acPb.SerializedMember{
-					OrgId: "org1",
+					OrgId:      "org1",
+					MemberInfo: []byte("User" + strconv.Itoa(i)),
 				},
 			},
+			RequestPayload: payload,
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{
@@ -155,24 +163,11 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
-//
-//func TestMain(m *testing.M) {
-//	fmt.Println("begin")
-//	db, err := NewHistoryMysqlDB(testChainId, log)
-//	if err != nil {
-//		panic("faild to open mysql")
-//	}
-//	// clear data
-//	historyMysqlDB := db.(*HistorySqlDB)
-//	historyMysqlDB.db.Migrator().DropTable(&HistoryInfo{})
-//	m.Run()
-//	fmt.Println("end")
-//}
-
 func initProvider() *sqldbprovider.SqlDBHandle {
 	conf := &localconf.SqlDbConfig{}
 	conf.Dsn = ":memory:"
 	conf.SqlDbType = "sqlite"
+	conf.SqlLogMode = "Info"
 	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
 	return p
 }
@@ -208,4 +203,41 @@ func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
 	height, err = db.GetLastSavepoint()
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(block2.Block.Header.BlockHeight), height)
+}
+func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
+	db := initSqlDb()
+	block1.TxRWSets[0].TxWrites[0].Value = nil
+	_, blockInfo, err := serialization.SerializeBlock(block1)
+	err = db.CommitBlock(blockInfo)
+	assert.Nil(t, err)
+	result, err := db.GetHistoryForKey("contract1", []byte("key_1"))
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(result))
+	t.Logf("%v", result[0])
+}
+func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
+	db := initSqlDb()
+	block1.TxRWSets[0].TxWrites[0].Value = nil
+	_, blockInfo, err := serialization.SerializeBlock(block1)
+	err = db.CommitBlock(blockInfo)
+	assert.Nil(t, err)
+	result, err := db.GetAccountTxHistory([]byte("User1"))
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(result))
+	for _, r := range result {
+		t.Logf("%#v", r)
+	}
+}
+func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
+	db := initSqlDb()
+	block1.TxRWSets[0].TxWrites[0].Value = nil
+	_, blockInfo, err := serialization.SerializeBlock(block1)
+	err = db.CommitBlock(blockInfo)
+	assert.Nil(t, err)
+	result, err := db.GetContractTxHistory("contract1")
+	assert.Nil(t, err)
+	assert.Equal(t, 10, len(result))
+	for _, r := range result {
+		t.Logf("%#v", r)
+	}
 }

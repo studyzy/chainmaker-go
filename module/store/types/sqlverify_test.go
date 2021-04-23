@@ -103,6 +103,9 @@ func TestStandardSqlVerify_ForbiddenCheck(t *testing.T) {
 func TestFindStringRange(t *testing.T) {
 	table := map[string][][2]int{}
 	table["'abc'"] = [][2]int{{0, 4}}
+	table["\"abc\""] = [][2]int{{0, 4}}
+	table["'a\"b\"c'"] = [][2]int{{0, 6}}
+	table["\"'abc'\""] = [][2]int{{0, 6}}
 	table["'a''b''c'"] = [][2]int{{0, 8}}
 	table["'ab','c'd"] = [][2]int{{0, 3}, {5, 7}}
 	for sql, result := range table {

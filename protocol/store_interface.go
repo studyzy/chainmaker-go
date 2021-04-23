@@ -26,6 +26,11 @@ type Iterator interface {
 	Value() []byte
 	Release()
 }
+type HistoryIterator interface {
+	Next() bool
+	Value() (*store.KeyModification, error)
+	Release()
+}
 
 // BlockchainStore provides handle to store instances
 type BlockchainStore interface {
@@ -88,20 +93,21 @@ type BlockchainStore interface {
 }
 type StateSqlOperation interface {
 	//不在事务中，直接查询状态数据库，返回一行结果
-	QuerySingle(contractName,sql string, values ...interface{}) ( SqlRow, error)
+	QuerySingle(contractName, sql string, values ...interface{}) (SqlRow, error)
 	//不在事务中，直接查询状态数据库，返回多行结果
-	QueryMulti(contractName,sql string, values ...interface{}) (SqlRows, error)
+	QueryMulti(contractName, sql string, values ...interface{}) (SqlRows, error)
 	//执行建表、修改表等DDL语句，不得在事务中运行
-	ExecDdlSql(contractName,sql string) error
+	ExecDdlSql(contractName, sql string) error
 	//启用一个事务
-	BeginDbTransaction(txName string) (SqlDBTransaction,error)
+	BeginDbTransaction(txName string) (SqlDBTransaction, error)
 	//根据事务名，获得一个已经启用的事务
-	GetDbTransaction(txName string) (SqlDBTransaction,error)
+	GetDbTransaction(txName string) (SqlDBTransaction, error)
 	//提交一个事务
 	CommitDbTransaction(txName string) error
 	//回滚一个事务
 	RollbackDbTransaction(txName string) error
 }
+
 //SqlDBHandle 对SQL数据库的操作方法
 type SqlDBHandle interface {
 	DBHandle
@@ -112,7 +118,7 @@ type SqlDBHandle interface {
 	//CreateTableIfNotExist 根据一个对象struct，自动构建对应的sql数据库表
 	CreateTableIfNotExist(obj interface{}) error
 	//Save 直接保存一个对象到SQL数据库中
-	Save(value interface{}) (int64,error)
+	Save(value interface{}) (int64, error)
 	//ExecSql 执行指定的SQL语句，返回受影响的行数
 	ExecSql(sql string, values ...interface{}) (int64, error)
 	//QuerySingle 执行指定的SQL语句，查询单条数据记录，如果查询到0条，则返回nil,nil，如果查询到多条，则返回第一条
@@ -120,20 +126,21 @@ type SqlDBHandle interface {
 	//QueryMulti 执行指定的SQL语句，查询多条数据记录，如果查询到0条，则SqlRows.Next()直接返回false
 	QueryMulti(sql string, values ...interface{}) (SqlRows, error)
 	//BeginDbTransaction 开启一个数据库事务，并指定该事务的名字，并缓存其句柄，如果之前已经开启了同名的事务，则返回错误
-	BeginDbTransaction(txName string) (SqlDBTransaction,error)
+	BeginDbTransaction(txName string) (SqlDBTransaction, error)
 	//GetDbTransaction 根据事务的名字，获得事务的句柄,如果事务不存在，则返回错误
-	GetDbTransaction(txName string) (SqlDBTransaction,error)
+	GetDbTransaction(txName string) (SqlDBTransaction, error)
 	//CommitDbTransaction 提交一个事务，并从缓存中清除该事务，如果找不到对应的事务，则返回错误
 	CommitDbTransaction(txName string) error
 	//RollbackDbTransaction 回滚一个事务，并从缓存中清除该事务，如果找不到对应的事务，则返回错误
 	RollbackDbTransaction(txName string) error
 }
+
 //SqlDBTransaction开启一个事务后，能在这个事务中进行的操作
 type SqlDBTransaction interface {
 	//ChangeContextDb 改变当前上下文所使用的数据库
 	ChangeContextDb(dbName string) error
 	//Save 直接保存一个对象到SQL数据库中
-	Save(value interface{}) (int64,error)
+	Save(value interface{}) (int64, error)
 	//ExecSql 执行指定的SQL语句，返回受影响的行数
 	ExecSql(sql string, values ...interface{}) (int64, error)
 	//QuerySingle 执行指定的SQL语句，查询单条数据记录，如果查询到0条，则返回nil,nil，如果查询到多条，则返回第一条
@@ -145,6 +152,7 @@ type SqlDBTransaction interface {
 	//回滚事务到指定的保存点
 	RollbackDbSavePoint(savePointName string) error
 }
+
 //运行SQL查询后返回的一行数据，在获取这行数据时提供了ScanColumns，ScanObject和Data三种方法，但是三选一，调用其中一个就别再调另外一个。
 type SqlRow interface {
 	//将这个数据的每个列赋值到dest指针对应的对象中
@@ -152,10 +160,11 @@ type SqlRow interface {
 	//将这个数据赋值到dest对象的属性中
 	ScanObject(dest interface{}) error
 	//将这个数据转换为ColumnName为Key，Data为Value的Map中
-	Data()(map[string]string, error)
+	Data() (map[string]string, error)
 	//判断返回的SqlRow是否为空
 	IsEmpty() bool
 }
+
 //运行SQL查询后返回的多行数据
 type SqlRows interface {
 	//还有下一行
@@ -165,9 +174,10 @@ type SqlRows interface {
 	//将当前行这个数据赋值到dest对象的属性中
 	ScanObject(dest interface{}) error
 	//将当前行这个数据转换为ColumnName为Key，Data为Value的Map中
-	Data()(map[string]string, error)
+	Data() (map[string]string, error)
 	Close() error
 }
+
 // DBHandle is an handle to a db
 type DBHandle interface {
 	// Get returns the value for the given key, or returns nil if none exists
@@ -192,7 +202,6 @@ type DBHandle interface {
 	// NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
 	NewIteratorWithPrefix(prefix []byte) Iterator
 	Close() error
-
 }
 
 // StoreBatcher used to cache key-values that commit in a atomic operation
@@ -212,6 +221,7 @@ type StoreBatcher interface {
 	// KVs return the map of key-values
 	KVs() map[string][]byte
 }
+
 //SqlVerifier 在支持SQL语句操作状态数据库模式下，对合约中输入的SQL语句进行规则校验
 type SqlVerifier interface {
 	//VerifyDDLSql 验证输入语句是不是DDL语句，是DDL则返回nil，不是则返回error
