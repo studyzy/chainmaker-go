@@ -108,7 +108,7 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	txPreId := ""
 	start := utils.CurrentTimeMillisSeconds()
 	// 2) 执行合约-sql insert
-	count := 10000
+	count := 100000
 	goroutineNumber := 3
 	totalCount := count * goroutineNumber
 	wg := sync.WaitGroup{}
@@ -146,7 +146,7 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	txPreId := ""
 	start := utils.CurrentTimeMillisSeconds()
 	// 2) 执行合约-sql insert
-	count := 10000
+	count := 100000
 	goroutineNumber := 3
 	totalCount := count * goroutineNumber
 	wg := sync.WaitGroup{}
@@ -188,7 +188,7 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 
 	start := utils.CurrentTimeMillisSeconds()
 	// 2) 执行合约-sql insert
-	count := 10000
+	count := 100000
 	goroutineNumber := 3
 	totalCount := count * goroutineNumber
 	wg := sync.WaitGroup{}
@@ -551,8 +551,8 @@ func panicNotEqual(a string, b string) {
 }
 
 func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) commonPb.ContractResultCode {
-	now := time.Now()
-	fmt.Printf("\n%d-%d-%dT %d:%d:%d============ get tx by txId [%s] ============\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), txId)
+	//now := time.Now()
+	//fmt.Printf("\n%d-%d-%dT %d:%d:%d============ get tx by txId [%s] ============\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), txId)
 
 	// 构造Payload
 	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
