@@ -81,6 +81,18 @@ storage:
     provider: leveldb
     leveldb_config:
       store_path: ../data/org1/result
+
+  disable_contract_eventdb: true
+  contract_event_config:
+    provider: leveldb
+      sqldb_config:
+        sqldb_type: mysql
+        dsn: root:password@tcp(127.0.0.1:3306)/    #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)
+        max_idle_conns: 10    #连接池中维持的最大的空闲连接数，默认为10
+        max_open_conns: 10    #最大的可用连接数，默认为10
+        conn_max_lifetime: 60    #连接维持的最长时间，单位秒，默认为60
+
+
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true

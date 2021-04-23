@@ -140,7 +140,6 @@ type StorageConfig struct {
 	HistoryDbConfig        *DbConfig `mapstructure:"historydb_config"`
 	ResultDbConfig         *DbConfig `mapstructure:"resultdb_config"`
 	ContractEventDbConfig  *DbConfig `mapstructure:"contract_eventdb_config"`
-	EnableContractEventDB  bool      `mapstructure:"Enable_contract_eventdb"`
 }
 
 func (config *StorageConfig) GetBlockDbConfig() *DbConfig {

@@ -9,7 +9,6 @@ package blockchain
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -203,7 +202,7 @@ func (bc *Blockchain) initCache() (err error) {
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
 		}
-		if err = bc.store.InitGenesis(&storePb.BlockWithRWSet{genesisBlock, rwSetList}); err != nil {
+		if err = bc.store.InitGenesis(&storePb.BlockWithRWSet{Block: genesisBlock, TxRWSets: rwSetList, ContractEvents: nil}); err != nil {
 			return fmt.Errorf("put chain[%s] genesis block failed, %s", bc.chainId, err.Error())
 		}
 

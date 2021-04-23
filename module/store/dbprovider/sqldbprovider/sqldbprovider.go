@@ -72,7 +72,7 @@ func (p *SqlDBHandle) GetDBHandle(dbName string) protocol.DBHandle {
 
 	return p
 }
-func parseSqlDbType(str string) (types.EngineType, error) {
+func ParseSqlDbType(str string) (types.EngineType, error) {
 	switch str {
 	case "mysql":
 		return types.MySQL, nil
@@ -86,7 +86,7 @@ func parseSqlDbType(str string) (types.EngineType, error) {
 // NewSqlDBProvider construct a new SqlDBHandle
 func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Logger) *SqlDBHandle {
 	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx), log: log}
-	sqlType, err := parseSqlDbType(conf.SqlDbType)
+	sqlType, err := ParseSqlDbType(conf.SqlDbType)
 	if err != nil {
 		panic(err.Error())
 	}

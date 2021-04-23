@@ -6,4 +6,5 @@ const (
 	CreateBlockHeightIndexTableDDL     string = `CREATE TABLE IF NOT EXISTS block_height_index ( id bigint unsigned NOT NULL AUTO_INCREMENT,block_height bigint,PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
 	InitBlockHeightIndexTableDDL       string = `INSERT IGNORE INTO block_height_index (id,block_height) VALUES('1','0')`
 	BlockHeightIndexTableName          string = `block_height_index`
+
 )

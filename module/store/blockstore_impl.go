@@ -18,6 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/statedb"
+	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
@@ -132,6 +133,11 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
 	}
+	//6. init contract event db
+	if !bs.storeConfig.DisableContractEventDB && parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+		bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
+		bs.contractEventDB.InitGenesis(block.Header.GetChainId())
+	}
 	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), ",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 	return nil
@@ -230,7 +236,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		batchWG.Done()
 	}
 	//6.commit contractEventDB
-	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
+	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
 
 		go func() {
 			defer batchWG.Done()
@@ -427,7 +433,9 @@ func (bs *BlockStoreImpl) recover() error {
 	if resultSavepoint, err = bs.resultDB.GetLastSavepoint(); err != nil {
 		return err
 	}
-	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
+	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB &&
+		parseEngineType(localconf.ChainMakerConfig.StorageConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+		localconf.ChainMakerConfig.StorageConfig.ContractEventDbConfig.Provider == "sql" {
 		if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
 			return err
 		}
@@ -458,7 +466,7 @@ func (bs *BlockStoreImpl) recover() error {
 		}
 	}
 	//recommit contract event db
-	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
+	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
 		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
 			return nil
 		}
