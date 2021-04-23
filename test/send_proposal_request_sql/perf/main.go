@@ -27,7 +27,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -41,7 +40,7 @@ const (
 const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
-	Port           = 12351
+	Port           = 12301
 	certPathPrefix = "../../../config-sql"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
@@ -117,17 +116,17 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	wg := sync.WaitGroup{}
 	wg.Add(goroutineNumber)
 	for j := 0; j < goroutineNumber; j++ {
-		go func() {
+		go func(id int) {
 			for i := 0; i < count; i++ {
 				txPreId = txId
 				txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 				time.Sleep(time.Millisecond * 4)
 				if i%(count/10) == 0 {
-					fmt.Println(runtime.NumGoroutine(), "this goroutine count =", i, "/", totalCount)
+					fmt.Println(id, "this goroutine count =", i, "/", count, totalCount)
 				}
 			}
 			wg.Done()
-		}()
+		}(j)
 	}
 	wg.Wait()
 	time.Sleep(time.Second * 4)
@@ -155,17 +154,17 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	wg := sync.WaitGroup{}
 	wg.Add(goroutineNumber)
 	for j := 0; j < goroutineNumber; j++ {
-		go func() {
+		go func(id int) {
 			for i := 0; i < count; i++ {
 				txPreId = txId
 				txId = testInvokeSqlBlank(sk3, client, CHAIN1, strconv.Itoa(i))
 				time.Sleep(time.Millisecond * 4)
 				if i%(count/10) == 0 {
-					fmt.Println(runtime.NumGoroutine(), "this goroutine count =", i, "/", totalCount)
+					fmt.Println(id, "this goroutine count =", i, "/", count, totalCount)
 				}
 			}
 			wg.Done()
-		}()
+		}(j)
 	}
 	wg.Wait()
 	time.Sleep(time.Second * 4)
@@ -196,17 +195,17 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	wg := sync.WaitGroup{}
 	wg.Add(goroutineNumber)
 	for j := 0; j < goroutineNumber; j++ {
-		go func() {
+		go func(id int) {
 			for i := 0; i < count; i++ {
 				txPreId = txId
 				testInvokeSqlUpdate(sk3, client, CHAIN1, strconv.Itoa(i), txId)
 				time.Sleep(time.Millisecond * 4)
 				if i%(count/10) == 0 {
-					fmt.Println(runtime.NumGoroutine(), "this goroutine count =", i, "/", totalCount)
+					fmt.Println(id, "this goroutine count =", i, "/", count, totalCount)
 				}
 			}
 			wg.Done()
-		}()
+		}(j)
 	}
 	wg.Wait()
 	time.Sleep(time.Second * 4)
