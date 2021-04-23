@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -121,8 +122,8 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				txPreId = txId
 				txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 				time.Sleep(time.Millisecond * 4)
-				if i%(totalCount/10) == 0 {
-					fmt.Println("this goroutine count =", i, "/", totalCount)
+				if i%(count/10) == 0 {
+					fmt.Println(runtime.NumGoroutine(), "this goroutine count =", i, "/", totalCount)
 				}
 			}
 			wg.Done()
@@ -159,8 +160,8 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				txPreId = txId
 				txId = testInvokeSqlBlank(sk3, client, CHAIN1, strconv.Itoa(i))
 				time.Sleep(time.Millisecond * 4)
-				if i%(totalCount/10) == 0 {
-					fmt.Println("this goroutine count =", i, "/", totalCount)
+				if i%(count/10) == 0 {
+					fmt.Println(runtime.NumGoroutine(), "this goroutine count =", i, "/", totalCount)
 				}
 			}
 			wg.Done()
@@ -200,8 +201,8 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 				txPreId = txId
 				testInvokeSqlUpdate(sk3, client, CHAIN1, strconv.Itoa(i), txId)
 				time.Sleep(time.Millisecond * 4)
-				if i%(totalCount/10) == 0 {
-					fmt.Println("this goroutine count =", i, "/", totalCount)
+				if i%(count/10) == 0 {
+					fmt.Println(runtime.NumGoroutine(), "this goroutine count =", i, "/", totalCount)
 				}
 			}
 			wg.Done()
