@@ -18,7 +18,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/core/cache"
@@ -334,12 +333,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
 	for i, node := range nodes {
-		for _, addr := range node.Address {
-			uid, err := helper.GetNodeUidFromAddr(addr)
-			if err != nil {
-				return err
-			}
-			nodeIds[i] = uid
+		for _, nid := range node.NodeId {
+			nodeIds[i] = nid
 		}
 	}
 	dbHandle := bc.store.GetDBHandle(protocol.ConsensusDBName)
