@@ -84,7 +84,7 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 	//save txs
 	txInfos := make([]*TxInfo, 0, len(block.Txs))
 	for index, tx := range block.Txs {
-		txinfo, err := NewTxInfo(tx, block.Header.BlockHeight, int32(index))
+		txinfo, err := NewTxInfo(tx, uint64(block.Header.BlockHeight), block.Header.BlockHash, uint32(index))
 		if err != nil {
 			b.logger.Errorf("failed to init txinfo, err:%s", err)
 			return err
@@ -271,6 +271,26 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	b.logger.Errorf("tx data not found by txid:%s", txId)
 	return nil, errors.New("data not found")
 }
+func (b *BlockSqlDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
+	var txInfo TxInfo
+	res, err := b.db.QuerySingle("select * from tx_infos where tx_id = ?", txId)
+	if err != nil {
+		return nil, err
+	}
+	if res.IsEmpty() {
+		b.logger.Infof("tx[%s] not found in db", txId)
+		return nil, nil
+	}
+	err = res.ScanObject(&txInfo)
+	if err != nil {
+		return nil, err
+	}
+	if len(txInfo.TxId) > 0 {
+		return txInfo.GetTxInfo()
+	}
+	b.logger.Errorf("tx data not found by txid:%s", txId)
+	return nil, errors.New("data not found")
+}
 
 // HasTx returns true if the tx exist, or returns false if none exists.
 func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
@@ -318,34 +338,3 @@ func (b *BlockSqlDB) Close() {
 	b.logger.Info("close block sql db")
 	b.db.Close()
 }
-
-//
-//func (b *BlockSqlDB) getBlockByInfo(blockInfo *BlockInfo) (*commonPb.Block, error) {
-//	//get txinfos form mysql
-//	var txInfos []TxInfo
-//	//res = b.db.Debug().Find(&txInfos, txList)
-//	res := b.db.Where("block_height = ?",
-//		blockInfo.BlockHeight).Order("offset asc").Find(&txInfos)
-//	if res.Error == gorm.ErrRecordNotFound {
-//		return nil, nil
-//	} else if res.Error != nil {
-//		b.logger.Errorf("failed to get tx from tx_info, height:%s, err:%s", blockInfo.BlockHeight, res.Error)
-//		return nil, res.Error
-//	}
-//
-//	block, err := blockInfo.GetBlock()
-//	if err != nil {
-//		b.logger.Errorf("failed to transform blockinfo to block, chain:%s, block:%d, err:%s",
-//			blockInfo.ChainId, blockInfo.BlockHeight, err)
-//		return nil, err
-//	}
-//	for _, txInfo := range txInfos {
-//		tx, err := txInfo.GetTx()
-//		if err != nil {
-//			b.logger.Errorf("failed to transform txinfo to tx, chain:%s, txid:%s, err:%s",
-//				block.Header.ChainId, txInfo.TxId, err)
-//		}
-//		block.Txs = append(block.Txs, tx)
-//	}
-//	return block, nil
-//}
