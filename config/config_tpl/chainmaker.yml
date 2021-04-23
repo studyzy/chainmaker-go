@@ -53,6 +53,11 @@ net:
 #    node_ids:
 #      - "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
 #      - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+#  custom_chain_trust_roots:
+#    - chain_id: "chain1"
+#      trust_roots:
+#        - org_id: "{org_id}"
+#          root: "../config/{org_path}/certs/ca/{org_id}/ca.crt"
 
 
 txpool:

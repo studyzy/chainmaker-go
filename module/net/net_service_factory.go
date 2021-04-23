@@ -61,5 +61,7 @@ func (nsf *NetServiceFactory) setAllTlsTrustRoots(ns *NetService, chainConf prot
 		}
 	}
 	ns.logger.Infof("[NetServiceFactory] add trust root certs ok(chain-id:%s)", ns.chainId)
+	// check whether peers already connected contains to this chain
+	ns.localNet.ReVerifyTrustRoots(chainConf.ChainConfig().ChainId)
 	return nil
 }

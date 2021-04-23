@@ -73,7 +73,7 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 	}
 	if len(mConfig.NodeIds) < 1 {
 		log.Errorw("nodeIds len is low", "nodeIds len", len(mConfig.NodeIds))
-		return nil, errors.New("node address len is low")
+		return nil, errors.New("node ids len is low")
 	}
 	// block
 	if config.Block.TxTimeout < 600 {
