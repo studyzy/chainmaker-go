@@ -40,7 +40,7 @@ const (
 const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
-	Port           = 12301
+	Port           = 12351
 	certPathPrefix = "../../../config-sql"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
@@ -318,10 +318,9 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
 		chainId, txId, payloadBytes)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
 }
 
@@ -349,10 +348,9 @@ func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	}
 
 	txId = utils.GetRandTxId()
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
 		chainId, txId, payloadBytes)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
 }
 

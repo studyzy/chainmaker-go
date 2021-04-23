@@ -17,9 +17,9 @@ crypto:
 block:
   tx_timestamp_verify: true # 是否需要开启交易时间戳校验
   tx_timeout: 600  # 交易时间戳的过期时间(秒)
-  block_tx_capacity: 100  # 区块中最大交易数
+  block_tx_capacity: 5000  # 区块中最大交易数
   block_size: 10  # 区块最大限制，单位MB
-  block_interval: 2000 # 出块间隔，单位:ms
+  block_interval: 200 # 出块间隔，单位:ms
 
 # core模块
 core:
