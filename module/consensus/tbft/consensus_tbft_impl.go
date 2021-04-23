@@ -214,7 +214,7 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 	consensus.msgbus.Register(msgbus.VerifyResult, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
 	consensus.msgbus.Register(msgbus.BlockInfo, consensus)
-	chainconf.RegisterVerifier(consensuspb.ConsensusType_TBFT, consensus)
+	chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
 
 	consensus.updateChainConfig()
 	consensus.metrics.SetEnterNewHeightTime()
