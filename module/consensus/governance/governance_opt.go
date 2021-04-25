@@ -451,11 +451,11 @@ func TrySwitchNextValidator(block *commonPb.Block, GovernanceContract *consensus
 //CheckAndCreateGovernmentArgs execute after block propose,create government txRWSet,wait to add to block header
 //when block commit,government txRWSet take effect
 func CheckAndCreateGovernmentArgs(block *commonPb.Block,
-	store protocol.BlockchainStore, proposalCache protocol.ProposalCache) (*commonPb.TxRWSet, error) {
+	store protocol.BlockchainStore, proposalCache protocol.ProposalCache, ledger protocol.LedgerCache) (*commonPb.TxRWSet, error) {
 	log.Debugf("CheckAndCreateGovernmentArgs start")
 
 	// 1. get GovernanceContract
-	gcr := NewGovernanceContract(store).(*GovernanceContractImp)
+	gcr := NewGovernanceContract(store, ledger).(*GovernanceContractImp)
 	GovernanceContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		log.Errorf("getGovernanceContract err!err=%v", err)

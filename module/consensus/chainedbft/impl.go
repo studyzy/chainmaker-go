@@ -113,7 +113,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
 
 		timerService:       timeservice.NewTimerService(),
-		governanceContract: governance.NewGovernanceContract(store),
+		governanceContract: governance.NewGovernanceContract(store, ledgerCache),
 
 		quitCh:         make(chan struct{}),
 		quitSyncCh:     make(chan struct{}),
@@ -507,7 +507,8 @@ func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCer
 
 //VerifyBlockSignatures verify consensus qc at incoming block and chainconf
 //now, only implement check commit in all validator, not in selected committee
-func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessControlProvider, store protocol.BlockchainStore, block *common.Block) error {
+func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessControlProvider,
+	store protocol.BlockchainStore, block *common.Block, ledger protocol.LedgerCache) error {
 	if block == nil || block.AdditionalData == nil ||
 		len(block.AdditionalData.ExtraData) <= 0 {
 		return errors.New("nil block or nil additionalData or empty extraData")
@@ -531,7 +532,7 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 
 	// because the validator set has changed after the generation switch, so that validate by validators
 	// cannot be continue.
-	governanceContract := governance.NewGovernanceContract(store)
+	governanceContract := governance.NewGovernanceContract(store, ledger)
 	if governanceContract.GetEpochId() == qc.EpochId+1 {
 		return nil
 	}

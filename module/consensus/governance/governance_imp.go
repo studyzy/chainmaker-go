@@ -19,15 +19,17 @@ type GovernanceContractImp struct {
 	log                *logger.CMLogger
 	Height             int64 //Cache height
 	store              protocol.BlockchainStore
+	ledger             protocol.LedgerCache
 	governmentContract *consensusPb.GovernanceContract //Cache government data
 	sync.RWMutex
 }
 
-func NewGovernanceContract(store protocol.BlockchainStore) protocol.Government {
+func NewGovernanceContract(store protocol.BlockchainStore, ledger protocol.LedgerCache) protocol.Government {
 	governmentContract := &GovernanceContractImp{
 		log:                logger.GetLogger(logger.MODULE_CONSENSUS),
 		Height:             0,
 		store:              store,
+		ledger:             ledger,
 		governmentContract: nil,
 	}
 	return governmentContract
@@ -36,15 +38,14 @@ func NewGovernanceContract(store protocol.BlockchainStore) protocol.Government {
 //Get Government data from cache,ChainStore,chainConfig
 func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.GovernanceContract, error) {
 	//if cached height is latest,use cache
-	block, err := gcr.store.GetLastBlock()
-	if err != nil {
-		gcr.log.Errorw("GetLastBlock err,", "err", err)
-		return nil, err
-	}
+	block := gcr.ledger.GetLastCommittedBlock()
 	if gcr.governmentContract != nil && block.Header.GetBlockHeight() == gcr.Height {
 		return gcr.governmentContract, nil
 	}
-	var governmentContract *consensusPb.GovernanceContract = nil
+	var (
+		err                error
+		governmentContract *consensusPb.GovernanceContract = nil
+	)
 	//get from chainStore
 	if block.Header.GetBlockHeight() > 0 {
 		if governmentContract, err = getGovernanceContractFromChainStore(gcr.store); err != nil {
