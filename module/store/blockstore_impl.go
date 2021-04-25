@@ -61,14 +61,17 @@ func NewBlockStoreImpl(chainId string,
 	storeConfig *localconf.StorageConfig,
 	binLog binlog.BinLoger,
 	logger protocol.Logger) (*BlockStoreImpl, error) {
-	walPath := filepath.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainId, logPath)
-	writeAsync := localconf.ChainMakerConfig.StorageConfig.LogDBWriteAsync
+	walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)
+	writeAsync := storeConfig.LogDBWriteAsync
 	walOpt := &wal.Options{
 		NoSync: writeAsync,
 	}
-	writeLog, err := wal.Open(walPath, walOpt)
-	if err != nil {
-		panic(fmt.Sprintf("open wal failed, path:%s, error:%s", walPath, err))
+	if binLog == nil {
+		writeLog, err := wal.Open(walPath, walOpt)
+		if err != nil {
+			panic(fmt.Sprintf("open wal failed, path:%s, error:%s", walPath, err))
+		}
+		binLog = writeLog
 	}
 	nWorkers := runtime.NumCPU()
 
@@ -78,7 +81,7 @@ func NewBlockStoreImpl(chainId string,
 		historyDB:        historyDB,
 		contractEventDB:  contractEventDB,
 		resultDB:         resultDB,
-		wal:              writeLog,
+		wal:              binLog,
 		commonDB:         commonDB,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		logger:           logger,
@@ -207,7 +210,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	}()
 
 	// 4.commit historyDB
-	if !localconf.ChainMakerConfig.StorageConfig.DisableHistoryDB {
+	if !bs.storeConfig.DisableHistoryDB {
 		go func() {
 			defer batchWG.Done()
 			err := bs.historyDB.CommitBlock(blockWithSerializedInfo)
@@ -221,7 +224,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		batchWG.Done()
 	}
 	//5. result db
-	if !localconf.ChainMakerConfig.StorageConfig.DisableResultDB {
+	if !bs.storeConfig.DisableResultDB {
 		go func() {
 			defer batchWG.Done()
 			err := bs.resultDB.CommitBlock(blockWithSerializedInfo)
@@ -235,7 +238,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		batchWG.Done()
 	}
 	//6.commit contractEventDB
-	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
+	if !bs.storeConfig.DisableContractEventDB {
 
 		go func() {
 			defer batchWG.Done()
@@ -404,9 +407,15 @@ func (bs *BlockStoreImpl) GetDBHandle(dbName string) protocol.DBHandle {
 func (bs *BlockStoreImpl) Close() error {
 	bs.blockDB.Close()
 	bs.stateDB.Close()
-	bs.historyDB.Close()
-	bs.contractEventDB.Close()
-	bs.resultDB.Close()
+	if !bs.storeConfig.DisableHistoryDB {
+		bs.historyDB.Close()
+	}
+	if !bs.storeConfig.DisableContractEventDB {
+		bs.contractEventDB.Close()
+	}
+	if !bs.storeConfig.DisableResultDB {
+		bs.resultDB.Close()
+	}
 	bs.wal.Close()
 	bs.commonDB.Close()
 	bs.logger.Debug("close all database and bin log")
@@ -426,15 +435,17 @@ func (bs *BlockStoreImpl) recover() error {
 	if stateSavepoint, err = bs.stateDB.GetLastSavepoint(); err != nil {
 		return err
 	}
-	if historySavepoint, err = bs.historyDB.GetLastSavepoint(); err != nil {
-		return err
+	if !bs.storeConfig.DisableHistoryDB {
+		if historySavepoint, err = bs.historyDB.GetLastSavepoint(); err != nil {
+			return err
+		}
 	}
-	if resultSavepoint, err = bs.resultDB.GetLastSavepoint(); err != nil {
-		return err
+	if !bs.storeConfig.DisableResultDB {
+		if resultSavepoint, err = bs.resultDB.GetLastSavepoint(); err != nil {
+			return err
+		}
 	}
-	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB &&
-		parseEngineType(localconf.ChainMakerConfig.StorageConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-		localconf.ChainMakerConfig.StorageConfig.ContractEventDbConfig.Provider == "sql" {
+	if !bs.storeConfig.DisableContractEventDB {
 		if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
 			return err
 		}
@@ -465,7 +476,7 @@ func (bs *BlockStoreImpl) recover() error {
 		}
 	}
 	//recommit contract event db
-	if !localconf.ChainMakerConfig.StorageConfig.DisableContractEventDB {
+	if !bs.storeConfig.DisableContractEventDB {
 		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
 			return nil
 		}

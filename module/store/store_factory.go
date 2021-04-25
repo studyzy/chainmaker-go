@@ -112,8 +112,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	}
 	var contractEventDB contracteventdb.ContractEventDB
 	contractEventDBConfig := storeConfig.GetContractEventDbConfig()
-	if !storeConfig.DisableContractEventDB && parseEngineType(storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-		storeConfig.ContractEventDbConfig.Provider == "sql" {
+	if !storeConfig.DisableContractEventDB && storeConfig.ContractEventDbConfig.Provider == "sql" {
 		contractEventDB, err = eventsqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
 		if err != nil {
 			return nil, err

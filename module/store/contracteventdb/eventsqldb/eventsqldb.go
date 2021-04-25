@@ -38,17 +38,17 @@ func (c *ContractEventMysqlDB) initDb(dbName string) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create database %s db:%s", dbName, err))
 	}
-	err = c.db.CreateTableIfNotExist(BlockHeightWithTopicTableName)
+	err = c.db.CreateTableIfNotExist(&BlockHeightTopicTableIndex{})
 	if err != nil {
-		panic(fmt.Sprintf("failed to create table %s db:%s", BlockHeightWithTopicTableName, err))
+		panic(fmt.Sprintf("failed to create table BlockHeightTopicTableIndex db:%s", err))
 	}
-	err = c.db.CreateTableIfNotExist(BlockHeightIndexTableName)
+	err = c.db.CreateTableIfNotExist(&BlockHeightIndex{})
 	if err != nil {
-		panic(fmt.Sprintf("failed to create table %s db:%s", BlockHeightIndexTableName, err))
+		panic(fmt.Sprintf("failed to create table BlockHeightIndexTableName db:%s", err))
 	}
 	err = c.initBlockHeightIndexTable()
 	if err != nil {
-		panic(fmt.Sprintf("failed to init %s db:%s", BlockHeightIndexTableName, err))
+		panic(fmt.Sprintf("failed to init BlockHeightIndexTableName db:%s", err))
 	}
 
 }
@@ -128,23 +128,7 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 // GetLastSavepoint returns the last block height
 func (c *ContractEventMysqlDB) GetLastSavepoint() (uint64, error) {
 	var blockHeight int64
-	_, err := c.db.ExecSql(CreateBlockHeightIndexTableDDL)
-	if err != nil {
-		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightWithTopicTableName + " table fail")
-		return 0, err
-	}
-	err = c.initBlockHeightIndexTable()
-	if err != nil {
-		c.Logger.Errorf("GetLastSavepoint: init " + BlockHeightWithTopicTableName + " table fail")
-		return 0, err
-	}
-	err = c.createTable(CreateBlockHeightWithTopicTableDdl)
-	if err != nil {
-		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightIndexTableName + " table fail")
-		return 0, err
-	}
-
-	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	single, err := c.db.QuerySingle("select max(block_height) from block_height_indexs")
 	single.ScanColumns(&blockHeight)
 	if err != nil {
 		c.Logger.Errorf("failed to get last savepoint")
@@ -155,13 +139,16 @@ func (c *ContractEventMysqlDB) GetLastSavepoint() (uint64, error) {
 
 // insert a record to init block height index table
 func (c *ContractEventMysqlDB) initBlockHeightIndexTable() error {
-	_, err := c.db.ExecSql(InitBlockHeightIndexTableDDL)
+	data := &BlockHeightIndex{
+		BlockHeight: 0,
+	}
+	_, err := c.db.Save(data)
 	return err
 }
 
 // Close is used to close database, there is no need for gorm to close db
 func (c *ContractEventMysqlDB) Close() {
-	c.Logger.Info("close result sql db")
+	c.Logger.Info("close contract event sql db")
 	c.db.Close()
 
 }
