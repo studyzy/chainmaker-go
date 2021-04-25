@@ -166,11 +166,13 @@ func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params ma
     name := params["contract_name"]
     key := params["private_key"]
     extKey := append([]byte(name), []byte(key)...)
-    if value, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), extKey); err != nil {
-        return value, err
+    value, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), extKey)
+    if err != nil {
+        r.log.Errorf("Get key: %s from context failed, err: %s", key, err.Error())
+        return nil, err
     }
 
-    return nil, nil
+    return value, nil
 }
 
 func (r *PrivateComputeRuntime) SaveCert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
