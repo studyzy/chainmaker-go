@@ -1,7 +1,6 @@
 package evm
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb"
@@ -148,16 +147,4 @@ func TestY2(t *testing.T) {
 			}
 		}
 	}
-}
-
-func TestAddress(t *testing.T) {
-	test := "test1"
-	ti, _ := evmutils.MakeAddressFromString(test)
-	tb := evmutils.StringToAddress(test)
-	tbi := evmutils.MakeAddress([]byte{1})
-	//tbi := tools.MakeAddress([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 116, 101, 115, 116, 49})
-
-	t.Log(ti)
-	t.Log(tb)
-	t.Log(tbi)
 }

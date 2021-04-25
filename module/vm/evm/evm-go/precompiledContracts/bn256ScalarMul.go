@@ -17,10 +17,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
-	"github.com/ethereum/go-ethereum/crypto/bn256"
-	"github.com/ethereum/go-ethereum/params"
-	"math/big"
+	"chainmaker.org/chainmaker-go/evm/evm-go/params"
 )
 
 // bn256ScalarMulIstanbul implements a native elliptic curve scalar
@@ -41,11 +38,12 @@ func (c *bn256ScalarMulIstanbul) Execute(input []byte) ([]byte, error) {
 // runBn256ScalarMul implements the Bn256ScalarMul precompile, referenced by
 // both Byzantium and Istanbul operations.
 func runBn256ScalarMul(input []byte) ([]byte, error) {
-	p, err := newCurvePoint(evmutils.GetDataFrom(input, 0, 64))
-	if err != nil {
-		return nil, err
-	}
-	res := new(bn256.G1)
-	res.ScalarMult(p, new(big.Int).SetBytes(evmutils.GetDataFrom(input, 64, 32)))
-	return res.Marshal(), nil
+	//p, err := newCurvePoint(evmutils.GetDataFrom(input, 0, 64))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//res := new(bn256.G1)
+	//res.ScalarMult(p, new(big.Int).SetBytes(evmutils.GetDataFrom(input, 64, 32)))
+	//return res.Marshal(), nil
+	return nil, nil
 }
