@@ -10,7 +10,7 @@ package common
 import "errors"
 
 func (m *Transaction) GetSenderAccountId() []byte {
-	if m != nil && m.Header != nil {
+	if m != nil && m.Header != nil && m.Header.Sender != nil {
 		return m.Header.Sender.MemberInfo
 	}
 	return nil
