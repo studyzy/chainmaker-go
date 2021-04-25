@@ -76,7 +76,7 @@ func getSqlConfig() *localconf.StorageConfig {
 	conf.StateDbConfig = dbConfig
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
-
+	conf.ContractEventDbConfig = dbConfig
 	return conf
 }
 func getMysqlConfig() *localconf.StorageConfig {
@@ -114,7 +114,7 @@ func getlvldbConfig() *localconf.StorageConfig {
 	conf.StateDbConfig = dbConfig
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
-
+	conf.DisableContractEventDB = true
 	return conf
 }
 func generateBlockHash(chainId string, height int64) []byte {

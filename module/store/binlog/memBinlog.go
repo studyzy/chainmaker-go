@@ -7,7 +7,10 @@
 
 package binlog
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type MemBinlog struct {
 	mem  map[uint64][]byte
@@ -31,13 +34,16 @@ func (l *MemBinlog) Read(index uint64) ([]byte, error) {
 	return l.mem[index], nil
 }
 func (l *MemBinlog) LastIndex() (uint64, error) {
+	fmt.Printf("get last index %d", l.last)
 	return l.last, nil
 }
 func (l *MemBinlog) Write(index uint64, data []byte) error {
+
 	if index != l.last+1 {
 		return errors.New("binlog out of order")
 	}
 	l.mem[index] = data
 	l.last = index
+	fmt.Printf("write binlog index=%d\n", index)
 	return nil
 }

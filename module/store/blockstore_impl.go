@@ -151,14 +151,13 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
 //必须保证区块是连续的，如果是孤儿区块或者历史区块，无法插入，并报错
-func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
+func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:          block,
-		TxRWSets:       txRWSets,
-		ContractEvents: contractEvents,
+		Block:    block,
+		TxRWSets: txRWSets,
 	}
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)

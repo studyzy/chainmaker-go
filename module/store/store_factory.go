@@ -18,7 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
-	"chainmaker.org/chainmaker-go/store/contracteventdb/eventmysqldb"
+	"chainmaker.org/chainmaker-go/store/contracteventdb/eventsqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
@@ -114,7 +114,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	contractEventDBConfig := storeConfig.GetContractEventDbConfig()
 	if !storeConfig.DisableContractEventDB && parseEngineType(storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
 		storeConfig.ContractEventDbConfig.Provider == "sql" {
-		contractEventDB, err = eventmysqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
+		contractEventDB, err = eventsqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
 		if err != nil {
 			return nil, err
 		}
