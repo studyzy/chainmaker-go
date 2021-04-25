@@ -17,9 +17,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
-	"github.com/ethereum/go-ethereum/crypto/bn256"
-	"github.com/ethereum/go-ethereum/params"
+	"chainmaker.org/chainmaker-go/evm/evm-go/params"
 )
 
 // bn256Add implements a native elliptic curve point addition conforming to
@@ -40,15 +38,16 @@ func (c *bn256AddIstanbul) Execute(input []byte) ([]byte, error) {
 // runBn256Add implements the Bn256Add precompile, referenced by both
 // Byzantium and Istanbul operations.
 func runBn256Add(input []byte) ([]byte, error) {
-	x, err := newCurvePoint(evmutils.GetDataFrom(input, 0, 64))
-	if err != nil {
-		return nil, err
-	}
-	y, err := newCurvePoint(evmutils.GetDataFrom(input, 64, 64))
-	if err != nil {
-		return nil, err
-	}
-	res := new(bn256.G1)
-	res.Add(x, y)
-	return res.Marshal(), nil
+	//x, err := newCurvePoint(evmutils.GetDataFrom(input, 0, 64))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//y, err := newCurvePoint(evmutils.GetDataFrom(input, 64, 64))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//res := new(bn256.G1)
+	//res.Add(x, y)
+	//return res.Marshal(), nil
+	return nil, nil
 }
