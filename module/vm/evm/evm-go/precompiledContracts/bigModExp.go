@@ -18,7 +18,7 @@ package precompiledContracts
 
 import (
 	"chainmaker.org/chainmaker-go/common/evmutils"
-	"github.com/ethereum/go-ethereum/common/math"
+	"chainmaker.org/chainmaker-go/evm/evm-go/math"
 	"math/big"
 )
 
