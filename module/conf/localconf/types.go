@@ -140,7 +140,7 @@ type storageConfig struct {
 	WriteBufferSize       int         `mapstructure:"write_buffer_size"`
 	BloomFilterBits       int         `mapstructure:"bloom_filter_bits"`
 	DisableHistoryDB      bool        `mapstructure:"disable_historydb"`
-	EnableContractEventDB bool        `mapstructure:"Enable_contract_eventdb"`
+	EnableContractEventDB bool        `mapstructure:"enable_contract_eventdb"`
 	LogDBWriteAsync       bool        `mapstructure:"logdb_write_async"`
 	BlockWriteBufferSize  int         `mapstructure:"block_write_buffer_size"`
 	MysqlConfig           mysqlConfig `mapstructure:"mysql"`
