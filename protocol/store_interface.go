@@ -33,7 +33,7 @@ type BlockchainStore interface {
 	//InitGenesis 初始化创世单元到数据库
 	InitGenesis(genesisBlock *store.BlockWithRWSet) error
 	// PutBlock commits the block and the corresponding rwsets in an atomic operation
-	PutBlock(block *common.Block, txRWSets []*common.TxRWSet) error
+	PutBlock(block *common.Block, txRWSets []*common.TxRWSet, contractEvents []*common.ContractEvent) error
 
 	// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 	GetBlockByHash(blockHash []byte) (*common.Block, error)

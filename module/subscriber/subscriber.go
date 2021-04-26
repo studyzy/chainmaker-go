@@ -37,7 +37,7 @@ func (s *EventSubscriber) OnQuit() {
 
 // NewSubscriber - new and register msgbus.BlockInfo object
 func NewSubscriber(msgBus msgbus.MessageBus) *EventSubscriber {
-	subscriber := &EventSubscriber{}
+1	subscriber := &EventSubscriber{}
 	msgBus.Register(msgbus.BlockInfo, subscriber)
 
 	msgBus.Register(msgbus.ContractEventInfo, subscriber)
