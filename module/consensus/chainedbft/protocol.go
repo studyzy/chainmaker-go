@@ -436,10 +436,7 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) bo
 	if proposal.ProposerIdx != cbi.selfIndexInEpoch {
 		cbi.smr.updateLockedQC(proposal.JustifyQC)
 		cbi.commitBlocksByQC(proposal.JustifyQC)
-		if enterNewLevel := cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC); enterNewLevel {
-			cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
-			cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
-		}
+		cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
 	}
 	if proposal.Level != cbi.smr.getCurrentLevel() {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
@@ -695,7 +692,7 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: new qc "+
 		"aggregated for height [%v] level [%v]", cbi.selfIndexInEpoch, vote.Height, vote.Level)
 
-	qc, err := cbi.aggregateQCAndUpdate(vote.Height, vote.Level, blockID, newView)
+	qc, err := cbi.aggregateQCAndInsert(vote.Height, vote.Level, blockID, newView)
 	if err != nil {
 		cbi.logger.Errorf("service index [%v] processVote: new qc aggregated for height [%v] "+
 			"level [%v] blockId [%x], err=%v", cbi.selfIndexInEpoch, vote.Height, vote.Level, blockID, err)
@@ -706,17 +703,14 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 		// If the newly generated QC type is NewView, it means that majority agree on the timeout and assign QC to TC
 		tc = qc
 	}
-	if enterNewLevel := cbi.processCertificates(qc, tc); enterNewLevel {
-		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
-		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
-	}
+	cbi.processCertificates(qc, tc)
 	if len(blockID) > 0 {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
 		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), blockID)
 	}
 }
 
-func (cbi *ConsensusChainedBftImpl) aggregateQCAndUpdate(height, level uint64, blockID []byte, isNewView bool) (*chainedbftpb.QuorumCert, error) {
+func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, blockID []byte, isNewView bool) (*chainedbftpb.QuorumCert, error) {
 	votes := cbi.msgPool.GetVotes(height, level)
 	qc := &chainedbftpb.QuorumCert{
 		BlockID: blockID,
@@ -730,7 +724,6 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndUpdate(height, level uint64, b
 		if err := cbi.chainStore.insertQC(qc); err != nil {
 			return nil, err
 		}
-		cbi.smr.updateLockedQC(qc)
 	}
 	return qc, nil
 }
@@ -740,7 +733,7 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndUpdate(height, level uint64, b
 // in other cases, the parameter is currentQC in local node.
 // tc When processing a proposalMsg or voteMsg, the tc information is contained in the incoming message;
 // in other cases, the parameter is nil.
-func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) (enterNewLevel bool) {
+func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start:, height [%v], level [%v],qc.Height "+
 		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
 
@@ -754,8 +747,11 @@ func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumC
 		cbi.smr.updateTC(tc)
 		currentQC = cbi.chainStore.getCurrentQC()
 	}
-	enterNewLevel = cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel)
-	return enterNewLevel
+	cbi.smr.updateLockedQC(qc)
+	if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
+		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
+		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+	}
 }
 
 func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert) {

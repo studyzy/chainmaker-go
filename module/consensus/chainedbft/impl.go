@@ -193,8 +193,18 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	go cbi.loop()
 	go cbi.protocolLoop()
 	go cbi.syncLoop()
-	go cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
+	cbi.startConsensus()
 	return nil
+}
+
+func (cbi *ConsensusChainedBftImpl) startConsensus() {
+	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
+	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
+		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
+		// todo. will replace with highQCBlock
+		bestBlock := cbi.ledgerCache.GetLastCommittedBlock()
+		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), bestBlock.Header.BlockHash)
+	}
 }
 
 //Stop stop consensus
