@@ -692,7 +692,8 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	}
 	//aggregate qc
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: new qc "+
-		"aggregated for height [%v] level [%v]", cbi.selfIndexInEpoch, vote.Height, vote.Level)
+		"aggregated for height [%v] level [%v], newView: %v, blockID: %x", cbi.selfIndexInEpoch,
+		vote.Height, vote.Level, newView, blockID)
 
 	qc, err := cbi.aggregateQCAndInsert(vote.Height, vote.Level, blockID, newView)
 	if err != nil {
