@@ -46,7 +46,7 @@ func upgradeContract() error {
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := "upgrade"
+	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,

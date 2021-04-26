@@ -68,6 +68,16 @@ var (
 	orgIds        string // 组织列表(多个用逗号隔开)
 	adminSignKeys string // 管理员私钥列表(多个用逗号隔开)
 	adminSignCrts string // 管理员证书列表(多个用逗号隔开)
+
+	hibeLocalParams string
+	localId         string
+	hibePrvKey      string
+	symKeyType      string
+	hibeMsg         string
+
+	hibePlaintext           string
+	hibeReceiverIdsFilePath string
+	hibeParamsFilePath      string
 )
 
 type Result struct {
@@ -85,7 +95,8 @@ type Result struct {
 	MultiSignInfo         *commonPb.MultiSignInfo         `json:"multiSignInfo,omitempty"`
 	PayloadHash           string                          `json:"payloadHash,omitempty"`
 	ShortCert             string                          `json:"shortCert,omitempty"`
-	GovernmentInfo        *consensusPb.GovernanceContract `json:"governmentInfo,omitempty"`
+	GovernanceInfo        *consensusPb.GovernanceContract `json:"governanceInfo,omitempty"`
+	HibeExecMsg           string                          `json:"hibe_exec_msg,omitempty"`
 }
 
 type SimpleRPCResult struct {
@@ -194,7 +205,10 @@ func main() {
 	mainCmd.AddCommand(GetShortCertBase64())
 
 	mainCmd.AddCommand(FreezeContractCMD())
-	mainCmd.AddCommand(ChainConfigGetGovernmentContractCMD())
+	mainCmd.AddCommand(UnfreezeContractCMD())
+	mainCmd.AddCommand(RevokeContractCMD())
+
+	mainCmd.AddCommand(ChainConfigGetGovernanceContractCMD())
 
 	mainCmd.AddCommand(MultiSignReqCMD())
 	mainCmd.AddCommand(MultiSignVoteCMD())
@@ -344,8 +358,8 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 
 	payload := &commonPb.SystemContractPayload{
 		ChainId:      chainId,
-		ContractName: contractName,
-		Method:       method,
+		ContractName: msg.contractName,
+		Method:       msg.method,
 		Parameters:   msg.pairs,
 		Sequence:     msg.oldSeq + 1,
 	}
