@@ -8,6 +8,7 @@ package tbft
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 
@@ -47,6 +48,17 @@ func (valSet *validatorSet) isNilOrEmpty() bool {
 	valSet.Lock()
 	defer valSet.Unlock()
 	return len(valSet.Validators) == 0
+}
+
+func (valSet *validatorSet) String() string {
+	if valSet == nil {
+		return ""
+	}
+	valSet.Lock()
+	defer valSet.Unlock()
+
+	return fmt.Sprintf("%v", valSet.Validators)
+
 }
 
 func (valSet *validatorSet) Size() int32 {
