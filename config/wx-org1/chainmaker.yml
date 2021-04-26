@@ -77,10 +77,9 @@ storage:
     leveldb_config:
       store_path: ../data/org1/blocks
   statedb_config:
-    provider: sql
-    sqldb_config:
-      sqldb_type: sqlite
-      dsn: ../data/org1/state.db
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org1/state
   historydb_config:
     provider: leveldb
     leveldb_config:
