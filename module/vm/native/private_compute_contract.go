@@ -38,7 +38,7 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
     queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DATA.String()] = privateComputeRuntime.GetData
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CERT.String()] = privateComputeRuntime.SaveCert
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
-    queryMethodMap[commonPb.PrivateComputeContractFunction_SAVA_DATA.String()] = privateComputeRuntime.SaveData
+    queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
 
     return queryMethodMap
 }
