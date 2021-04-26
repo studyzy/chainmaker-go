@@ -211,6 +211,8 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 		cs.logger.Errorf("commit block failed, prunning block store err, %v", err)
 		return lastCommitted, lastCommittedLevel, err
 	}
+	cs.logger.Debugf("end commit block, lastCommitBlock:[%d:%x], lastCommitLevel: %d",
+		lastCommitted.Header.BlockHeight, lastCommitted.Header.BlockHash, lastCommittedLevel)
 	return lastCommitted, lastCommittedLevel, nil
 }
 
