@@ -170,23 +170,23 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 		qc     *chainedbftpb.QuorumCert
 	)
 	if blocks = cs.blockPool.BranchFromRoot(block); blocks == nil {
-		return nil, -1, fmt.Errorf("commit block failed, no block to be committed")
+		return nil, 0, fmt.Errorf("commit block failed, no block to be committed")
 	}
 	cs.logger.Infof("commit BranchFromRoot blocks contains [%v:%v]", blocks[0].Header.BlockHeight, blocks[len(blocks)-1].Header.BlockHeight)
 
 	for _, blk := range blocks {
 		if qc = cs.blockPool.GetQCByID(string(blk.GetHeader().GetBlockHash())); qc == nil {
-			return lastCommitted, -1, fmt.Errorf("commit block failed, get qc for block is nil")
+			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, get qc for block is nil")
 		}
 		if qcData, err = proto.Marshal(qc); err != nil {
-			return lastCommitted, -1, fmt.Errorf("commit block failed, marshal qc at height [%v], err %v",
+			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, marshal qc at height [%v], err %v",
 				blk.GetHeader().GetBlockHeight(), err)
 		}
 
 		newBlock := proto.Clone(blk).(*common.Block)
 		if err = utils.AddQCtoBlock(newBlock, qcData); err != nil {
 			cs.logger.Errorf("commit block failed, add qc to block err, %v", err)
-			return lastCommitted, -1, err
+			return lastCommitted, lastCommittedLevel, err
 		}
 		if err = cs.blockCommitter.AddBlock(newBlock); err == commonErrors.ErrBlockHadBeenCommited {
 			hadCommitBlock, getBlockErr := cs.blockChainStore.GetBlock(newBlock.GetHeader().GetBlockHeight())
