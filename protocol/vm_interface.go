@@ -65,6 +65,8 @@ const (
 	ContractAllocateMethod    = "allocate"
 	ContractDeallocateMethod  = "deallocate"
 	ContractRuntimeTypeMethod = "runtime_type"
+	ContractEvmParamKey       = "data"
+
 	// method name used by smart contract sdk
 	// common
 	ContractMethodLogMessage      = "LogMessage"
