@@ -435,11 +435,9 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) bo
 	}
 
 	//local already handle it when aggregating qc
-	if proposal.ProposerIdx != cbi.selfIndexInEpoch {
-		cbi.smr.updateLockedQC(proposal.JustifyQC)
-		cbi.commitBlocksByQC(proposal.JustifyQC)
-		cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
-	}
+	cbi.smr.updateLockedQC(proposal.JustifyQC)
+	cbi.commitBlocksByQC(proposal.JustifyQC)
+	cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
 	if proposal.Level != cbi.smr.getCurrentLevel() {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
 			"smr level [%v:%v], ignore proposal", cbi.selfIndexInEpoch, proposal.Height, proposal.Level,
@@ -778,7 +776,6 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 			cbi.logger.Errorf("commit block to the chain failed, reason: %s", err)
 		}
 	}
-	cbi.logger.Debugf("commit block end")
 }
 
 func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
