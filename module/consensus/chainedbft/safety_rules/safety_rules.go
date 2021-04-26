@@ -97,12 +97,10 @@ func (sr *SafetyRules) SetLastVote(vote *chainedbftpb.ConsensusPayload, level ui
 
 //SetLastCommittedBlock set last committed blcok
 func (sr *SafetyRules) SetLastCommittedBlock(block *common.Block, level uint64) {
-	sr.logger.Debugf("enter SetLastCommittedBlock")
 	sr.Lock()
 	defer sr.Unlock()
-	sr.logger.Debugf("get SetLastCommittedBlock locker")
-	if level <= sr.lastCommittedLevel ||
-		block.Header.BlockHeight <= sr.lastCommittedBlock.Header.BlockHeight {
+	if level <= sr.lastCommittedLevel || (sr.lastCommittedBlock != nil &&
+		block.Header.BlockHeight <= sr.lastCommittedBlock.Header.BlockHeight) {
 		return
 	}
 	sr.lastCommittedBlock = block
