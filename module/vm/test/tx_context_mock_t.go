@@ -112,7 +112,7 @@ type TxContextMockTest struct {
 	lock          *sync.Mutex
 	vmManager     protocol.VmManager
 	gasUsed       uint64 // only for callContract
-	currentDeep   int
+	currentDepth  int
 	currentResult []byte
 	hisResult     []*callContractResult
 
@@ -184,12 +184,12 @@ func (*TxContextMockTest) Select(name string, startKey []byte, limit []byte) (pr
 func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte,
 	parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
-	s.currentDeep = s.currentDeep + 1
-	if s.currentDeep > protocol.CallContractDeep {
+	s.currentDepth = s.currentDepth + 1
+	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
 			Code:    commonPb.ContractResultCode_FAIL,
 			Result:  nil,
-			Message: fmt.Sprintf("CallContract too deep %d", s.currentDeep),
+			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_TOO_DEEP_FAILED
 	}
@@ -201,10 +201,10 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter,s, s.gasUsed, refTxType)
 
 	result := callContractResult{
-		deep:         s.currentDeep,
+		deep:         s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
 		contractName: contractId.ContractName,
@@ -213,7 +213,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 	}
 	s.hisResult = append(s.hisResult, &result)
 	s.currentResult = r.Result
-	s.currentDeep = s.currentDeep - 1
+	s.currentDepth = s.currentDepth - 1
 	return r, code
 }
 
@@ -240,7 +240,6 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 func (*TxContextMockTest) GetBlockHeight() int64 {
 	return 0
 }
-
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {
 	panic("implement me")
 }
@@ -286,7 +285,7 @@ func (*TxContextMockTest) SetTxExecSeq(i int) {
 }
 
 func (s *TxContextMockTest) GetDepth() int {
-	return s.currentDeep
+	return s.currentDepth
 }
 
 func BaseParam(parameters map[string]string) {

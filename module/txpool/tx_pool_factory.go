@@ -13,16 +13,17 @@ import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
-	batch "chainmaker.org/chainmaker-go/txpool/batchtxpool"
+	"chainmaker.org/chainmaker-go/txpool/batch"
 	"chainmaker.org/chainmaker-go/txpool/single"
 )
 
-type PoolType int64
+type PoolType string
 
 const (
-	SINGLE PoolType = iota
-	BATCH
+	SINGLE PoolType = "SINGLE"
+	BATCH  PoolType = "BATCH"
 )
 
 // TxPoolFactory the factory to create the txPool.
@@ -52,10 +53,10 @@ func (f TxPoolFactory) NewTxPool(txPoolType PoolType, opts ...Option) (protocol.
 	if txPoolType == SINGLE {
 		return single.NewTxPoolImpl(tf.chainId, tf.blockchainStore, tf.msgBus, tf.chainConf, tf.ac, tf.netService)
 	} else if txPoolType == BATCH {
-		batchPool, err := batch.NewBatchTxPool(tf.nodeId, tf.chainId)
-		if err != nil {
-			return nil, err
+		if tf.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_HOTSTUFF {
+			return nil, fmt.Errorf("batch txpool doesn’t match Hotstuff consensus algorithms")
 		}
+		batchPool := batch.NewBatchTxPool(tf.nodeId, tf.chainId, tf.chainConf, tf.blockchainStore, tf.ac)
 		if err := batchPool.Apply(batch.WithMsgBus(tf.msgBus),
 			batch.WithPoolSize(int(localconf.ChainMakerConfig.TxPoolConfig.MaxTxPoolSize)),
 			batch.WithBatchMaxSize(localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize),
@@ -63,8 +64,9 @@ func (f TxPoolFactory) NewTxPool(txPoolType PoolType, opts ...Option) (protocol.
 		); err != nil {
 			return nil, err
 		}
+		return batchPool, nil
 	}
-	return nil, fmt.Errorf("incorrect transaction pool type")
+	return nil, fmt.Errorf("incorrect transaction pool type: %d", txPoolType)
 }
 
 // Apply add the extra configurations to the factory

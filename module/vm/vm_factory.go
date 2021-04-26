@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package vm
 
 import (
+	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -480,6 +481,14 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 			CodeManager: m.WxvmCodeManager,
 			CtxService:  m.WxvmContextService,
 			Log:         m.Log,
+		}
+	case commonPb.RuntimeType_EVM:
+		runtimeInstance = &evm.RuntimeInstance{
+			Log:          m.Log,
+			ChainId:      m.ChainId,
+			TxSimContext: txContext,
+			Method:       method,
+			ContractId:   contractId,
 		}
 	default:
 		contractResult.Message = fmt.Sprintf("no such vm runtime %q", runtimeType)

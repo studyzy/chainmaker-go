@@ -57,14 +57,15 @@ var restrainedResourceList = map[string]bool{
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_USER_CONTRACT:    protocol.ResourceNameReadData,
-	common.TxType_QUERY_SYSTEM_CONTRACT:  protocol.ResourceNameReadData,
-	common.TxType_INVOKE_USER_CONTRACT:   protocol.ResourceNameWriteData,
-	common.TxType_UPDATE_CHAIN_CONFIG:    protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_BLOCK_INFO:   protocol.ResourceNameReadData,
-	common.TxType_SUBSCRIBE_TX_INFO:      protocol.ResourceNameReadData,
-	common.TxType_INVOKE_SYSTEM_CONTRACT: protocol.ResourceNameWriteData,
-	common.TxType_MANAGE_USER_CONTRACT:   protocol.ResourceNameWriteData,
+	common.TxType_QUERY_USER_CONTRACT:           protocol.ResourceNameReadData,
+	common.TxType_QUERY_SYSTEM_CONTRACT:         protocol.ResourceNameReadData,
+	common.TxType_INVOKE_USER_CONTRACT:          protocol.ResourceNameWriteData,
+	common.TxType_UPDATE_CHAIN_CONFIG:           protocol.ResourceNameWriteData,
+	common.TxType_SUBSCRIBE_BLOCK_INFO:          protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE_TX_INFO:             protocol.ResourceNameReadData,
+	common.TxType_INVOKE_SYSTEM_CONTRACT:        protocol.ResourceNameWriteData,
+	common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
+	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
 }
 
 var (
@@ -295,8 +296,8 @@ func (ac *accessControl) resetResourcePolicy() {
 	ac.resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
 	ac.resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ADDR_ADD.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ADDR_DELETE.String(), policyConfig)
+	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
 	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_ADD.String(), policyConfig)
 	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
@@ -311,7 +312,7 @@ func (ac *accessControl) resetResourcePolicy() {
 	ac.resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
 	ac.resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ADDR_UPDATE.String(), policySelfConfig)
+	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
 	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_INIT_CONTRACT.String(), policyConfig)
 	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_UPGRADE_CONTRACT.String(), policyConfig)
@@ -372,7 +373,7 @@ func (ac *accessControl) checkResourcePolicyRule(resourcePolicy *config.Resource
 
 func (ac *accessControl) checkResourcePolicyRuleSelfCase(resourcePolicy *config.ResourcePolicy) bool {
 	switch resourcePolicy.ResourceName {
-	case common.ConfigFunction_TRUST_ROOT_UPDATE.String(), common.ConfigFunction_NODE_ADDR_UPDATE.String():
+	case common.ConfigFunction_TRUST_ROOT_UPDATE.String(), common.ConfigFunction_NODE_ID_UPDATE.String():
 		return true
 	default:
 		ac.log.Errorf("bad configuration: the access rule of [%s] should not be [%s]", resourcePolicy.ResourceName, resourcePolicy.Policy.Rule)

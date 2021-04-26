@@ -112,20 +112,20 @@ func TestShouldPropose(t *testing.T) {
 	require.True(t, blockProposer.shouldProposeByBFT(b0.Header.BlockHeight+1))
 
 	b := cache.CreateNewTestBlock(1)
-	proposedCache.SetProposedBlock(b, nil, false)
+	proposedCache.SetProposedBlock(b, nil, nil, false)
 	require.Nil(t, proposedCache.GetSelfProposedBlockAt(1))
-	b1, _ := proposedCache.GetProposedBlock(b)
+	b1, _, _ := proposedCache.GetProposedBlock(b)
 	require.NotNil(t, b1)
 
 	b2 := cache.CreateNewTestBlock(1)
 	b2.Header.BlockHash = nil
-	proposedCache.SetProposedBlock(b2, nil, true)
+	proposedCache.SetProposedBlock(b2, nil, nil, true)
 	require.False(t, blockProposer.shouldProposeByBFT(b2.Header.BlockHeight))
 	require.NotNil(t, proposedCache.GetSelfProposedBlockAt(1))
 	ledgerCache.SetLastCommittedBlock(b2)
 	require.True(t, blockProposer.shouldProposeByBFT(b2.Header.BlockHeight+1))
 
-	b3, _ := proposedCache.GetProposedBlock(b2)
+	b3, _, _ := proposedCache.GetProposedBlock(b2)
 	require.NotNil(t, b3)
 
 	proposedCache.SetProposedAt(b3.Header.BlockHeight)
@@ -169,18 +169,18 @@ func TestShouldProposeChainedBFT(t *testing.T) {
 	require.False(t, blockProposer.shouldProposeByChainedBFT(b0.Header.BlockHeight, b0.Header.PreBlockHash))
 
 	b := cache.CreateNewTestBlock(1)
-	proposedCache.SetProposedBlock(b, nil, false)
+	proposedCache.SetProposedBlock(b, nil, nil, false)
 	require.Nil(t, proposedCache.GetSelfProposedBlockAt(1))
-	b1, _ := proposedCache.GetProposedBlock(b)
+	b1, _, _ := proposedCache.GetProposedBlock(b)
 	require.NotNil(t, b1)
 
 	b2 := cache.CreateNewTestBlock(1)
 	b2.Header.BlockHash = nil
-	proposedCache.SetProposedBlock(b2, nil, true)
+	proposedCache.SetProposedBlock(b2, nil, nil, true)
 	require.NotNil(t, proposedCache.GetSelfProposedBlockAt(1))
 	require.True(t, blockProposer.shouldProposeByChainedBFT(b2.Header.BlockHeight, b0.Header.BlockHash))
 
-	b3, _ := proposedCache.GetProposedBlock(b2)
+	b3, _, _ := proposedCache.GetProposedBlock(b2)
 	require.NotNil(t, b3)
 
 }

@@ -158,14 +158,14 @@ func (tv *TxValidator) txVerifyResultsMerge(resultTasks map[int]verifyBlockBatch
 	return txHashes, txNewAdd, nil, nil
 }
 
-func (tv *TxValidator) validateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transaction, txsHeightRet map[string]int64,
+func (tv *TxValidator) validateTx(txsRetInPool map[string]*commonpb.Transaction, tx *commonpb.Transaction, txsHeightInPool map[string]int64,
 	stat *verifyStat, newAddTxs []*commonpb.Transaction, block *commonpb.Block) error {
-	txInPool, existTx := txsRet[tx.Header.TxId]
-	blockHeight := txsHeightRet[tx.Header.TxId]
+	txInPool, existTx := txsRetInPool[tx.Header.TxId]
+	blockHeightInPool := txsHeightInPool[tx.Header.TxId]
 	if existTx {
-		if consensuspb.ConsensusType_HOTSTUFF == tv.consensusType && blockHeight != block.Header.BlockHeight && blockHeight > 0 {
+		if consensuspb.ConsensusType_HOTSTUFF == tv.consensusType && blockHeightInPool < block.Header.BlockHeight && blockHeightInPool > 0 {
 			err := fmt.Errorf("tx duplicate in pending (tx:%s), txInPoolHeight:%d, txInBlockHeight:%d",
-				tx.Header.TxId, blockHeight, block.Header.BlockHeight)
+				tx.Header.TxId, blockHeightInPool, block.Header.BlockHeight)
 			return err
 		}
 		if err := tv.isTxHashValid(tx, txInPool); err != nil {
@@ -196,6 +196,9 @@ func (tv *TxValidator) validateTx(txsRet map[string]*commonpb.Transaction, tx *c
 
 // IsTxHashValid, to check if transaction hash is valid
 func (tv *TxValidator) isTxHashValid(tx *commonpb.Transaction, txInPool *commonpb.Transaction) error {
+	if txInPool == nil {
+		return fmt.Errorf("unknown tx (tx:%s)", tx.Header.TxId)
+	}
 	poolTxRawHash, err := utils.CalcTxRequestHash(tv.hashType, txInPool)
 	if err != nil {
 		return fmt.Errorf("calc pool txhash error (tx:%s), %s", tx.Header.TxId, err.Error())

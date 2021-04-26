@@ -21,6 +21,7 @@ import (
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )
@@ -114,7 +115,7 @@ func (pool *txPoolImpl) flushOrAddTxsToCache(memTxs *mempoolTxs) {
 		return
 	}
 	defer func() {
-		pool.log.Debugf("txs length", "queue state", pool.queue.status(), "cache txs len", pool.cache.txCount())
+		pool.log.Debugf("txPool status: %s, cache txs num: %d", pool.queue.status(), pool.cache.txCount())
 	}()
 
 	if memTxs.isConfigTxs {
@@ -188,7 +189,6 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	defer t.Stop()
 	select {
 	case pool.addTxsCh <- memTx:
-		fmt.Println("add success")
 	case <-t.C:
 		pool.log.Warnf("add transaction timeout")
 		return fmt.Errorf("add transaction timeout")
@@ -202,11 +202,11 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 
 // isFull Check whether the transaction pool is fullnal
 func (pool *txPoolImpl) isFull(tx *commonPb.Transaction) bool {
-	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= pool.maxConfigTxPoolSize() {
+	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= poolconf.MaxConfigTxPoolSize() {
 		pool.log.Errorw("AddTx configTxPool is full", "txId", tx.Header.GetTxId(), "configQueueSize", pool.queue.configTxsCount())
 		return true
 	}
-	if pool.queue.commonTxsCount() >= pool.maxCommonTxPoolSize() {
+	if pool.queue.commonTxsCount() >= poolconf.MaxCommonTxPoolSize() {
 		pool.log.Errorw("AddTx txPool is full", "txId", tx.Header.GetTxId(), "txQueueSize", pool.queue.commonTxsCount())
 		return true
 	}
@@ -252,7 +252,7 @@ func (pool *txPoolImpl) updateAndPublishSignal() {
 		pool.setSignalStatus(signalType)
 	}()
 
-	if pool.queue.configTxsCount() > 0 || pool.queue.commonTxsCount() >= pool.maxTxCount() {
+	if pool.queue.configTxsCount() > 0 || pool.queue.commonTxsCount() >= poolconf.MaxTxCount(pool.chainConf) {
 		signalType = txpoolPb.SignalType_BLOCK_PROPOSE
 	} else {
 		signalType = txpoolPb.SignalType_TRANSACTION_INCOME
@@ -351,7 +351,7 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 
 func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
 	start := utils.CurrentTimeMillisSeconds()
-	txs := pool.queue.fetch(pool.maxTxCount(), blockHeight, pool.validateTxTime)
+	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
 		pool.log.Infof("fetch txs from txpool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs), blockHeight, utils.CurrentTimeMillisSeconds()-start)
 	}
@@ -363,7 +363,7 @@ func (pool *txPoolImpl) TxExists(tx *commonPb.Transaction) bool {
 }
 
 func (pool *txPoolImpl) metrics(msg string, startTime int64, endTime int64) {
-	if isMetrics() {
+	if poolconf.IsMetrics() {
 		pool.log.Infow(msg, "internal", endTime-startTime, "startTime", startTime, "endTime", endTime)
 	}
 }

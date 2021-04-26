@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -120,9 +121,11 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	defer v.reentrantLocks.unlock(string(block.Header.BlockHash))
 
 	var isValid bool
+	var contractEventMap map[string][]*commonpb.ContractEvent
 	// to check if the block has verified before
-	if b, _ := v.proposalCache.GetProposedBlock(block); b != nil &&
-		consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type {
+	b, txRwSet, EventMap := v.proposalCache.GetProposedBlock(block)
+	contractEventMap = EventMap
+	if b != nil && consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type {
 		// the block has verified before
 		v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
 		isValid = true
@@ -130,7 +133,18 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			// consensus mode, publish verify result to message bus
 			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
 		}
-		return nil
+		lastBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
+		if lastBlock == nil {
+			v.log.Debugf("no pre-block be found, preHeight:%d, preBlockHash:%x", block.Header.BlockHeight-1, block.Header.PreBlockHash)
+			return nil
+		}
+		cutBlocks := v.proposalCache.KeepProposedBlock(lastBlock.Header.BlockHash, lastBlock.Header.BlockHeight)
+		if len(cutBlocks) > 0 {
+			v.log.Infof("cut block block hash: %s, height: %v", hex.EncodeToString(lastBlock.Header.BlockHash), lastBlock.Header.BlockHeight)
+			v.cutBlocks(cutBlocks, lastBlock)
+		}
+		err := v.proposalCache.SetProposedBlock(block, txRwSet, EventMap, v.proposalCache.IsProposedAt(block.Header.BlockHeight))
+		return err
 	}
 
 	txRWSetMap, timeLasts, err := v.validateBlock(block)
@@ -154,7 +168,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	// verify success, cache block and read write set
 	v.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
-	if err = v.proposalCache.SetProposedBlock(block, txRWSetMap, false); err != nil {
+	if err = v.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventMap, false); err != nil {
 		return err
 	}
 
@@ -348,13 +362,32 @@ func (v *BlockVerifierImpl) checkPreBlock(block *commonpb.Block, lastBlock *comm
 	// remove unconfirmed block from proposal cache and txpool
 	cutBlocks := v.proposalCache.KeepProposedBlock(lastBlockHash, lastBlock.Header.BlockHeight)
 	if len(cutBlocks) > 0 {
-		cutTxs := make([]*commonpb.Transaction, 0)
-		for _, cutBlock := range cutBlocks {
-			cutTxs = append(cutTxs, cutBlock.Txs...)
-		}
-		v.txPool.RetryAndRemoveTxs(cutTxs, nil)
+		v.log.Infof("cut block block hash: %s, height: %v", hex.EncodeToString(lastBlockHash), lastBlock.Header.BlockHeight)
+		v.cutBlocks(cutBlocks, lastBlock)
 	}
 	return nil
+}
+
+func (v *BlockVerifierImpl) cutBlocks(blocksToCut []*commonpb.Block, blockToKeep *commonpb.Block) {
+	cutTxs := make([]*commonpb.Transaction, 0)
+	txMap := make(map[string]interface{})
+	for _, tx := range blockToKeep.Txs {
+		txMap[tx.Header.TxId] = struct{}{}
+	}
+	for _, blockToCut := range blocksToCut {
+		v.log.Infof("cut block block hash: %s, height: %v", blockToCut.Header.BlockHash, blockToCut.Header.BlockHeight)
+		for _, txToCut := range blockToCut.Txs {
+			if _, ok := txMap[txToCut.Header.TxId]; ok {
+				// this transaction is kept, do NOT cut it.
+				continue
+			}
+			v.log.Infof("cut tx hash: %s", txToCut.Header.TxId)
+			cutTxs = append(cutTxs, txToCut)
+		}
+	}
+	if len(cutTxs) > 0 {
+		v.txPool.RetryAndRemoveTxs(cutTxs, nil)
+	}
 }
 
 func (v *BlockVerifierImpl) fetchLastBlock(block *commonpb.Block, lastBlock *commonpb.Block) (*commonpb.Block, error) {

@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -34,9 +33,8 @@ var (
 // chainConfig chainConfig struct
 type chainConfig struct {
 	*config.ChainConfig
-	NodeOrgIds       map[string][]string // NodeOrgIds is a map mapped org with consensus nodes addresses.
-	NodeAddresses    map[string]string   // NodeAddresses is a map mapped node address with org.
-	Ips              map[string]string   // Ips is a map mapped ip with address.
+	NodeOrgIds       map[string][]string // NodeOrgIds is a map mapped org with consensus nodes ids.
+	NodeIds          map[string]string   // NodeIds is a map mapped node id with org.
 	CaRoots          map[string]struct{} // CaRoots is a map stored org ids.
 	ResourcePolicies map[string]struct{} // ResourcePolicies is a map stored resource.
 }
@@ -52,8 +50,7 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 	mConfig := &chainConfig{
 		ChainConfig:      config,
 		NodeOrgIds:       make(map[string][]string),
-		NodeAddresses:    make(map[string]string),
-		Ips:              make(map[string]string),
+		NodeIds:          make(map[string]string),
 		CaRoots:          make(map[string]struct{}),
 		ResourcePolicies: make(map[string]struct{}),
 	}
@@ -74,9 +71,9 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 		log.Errorw("trust roots len is low", "trustRoots len", len(mConfig.TrustRoots))
 		return nil, errors.New("trust roots len is low")
 	}
-	if len(mConfig.NodeAddresses) < 1 {
-		log.Errorw("nodeAddresses len is low", "nodeAddresses len", len(mConfig.NodeAddresses))
-		return nil, errors.New("node address len is low")
+	if len(mConfig.NodeIds) < 1 {
+		log.Errorw("nodeIds len is low", "nodeIds len", len(mConfig.NodeIds))
+		return nil, errors.New("node ids len is low")
 	}
 	// block
 	if config.Block.TxTimeout < 600 {
@@ -156,8 +153,8 @@ func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig
 				return err
 			}
 
-			mConfig.NodeOrgIds[node.OrgId] = node.Address
-			if err := verifyChainConfigConsensusNodesAddress(mConfig, node); err != nil {
+			mConfig.NodeOrgIds[node.OrgId] = node.NodeId
+			if err := verifyChainConfigConsensusNodesIds(mConfig, node); err != nil {
 				return err
 			}
 		}
@@ -165,31 +162,14 @@ func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig
 	return nil
 }
 
-func verifyChainConfigConsensusNodesAddress(mConfig *chainConfig, node *config.OrgConfig) error {
-	for _, address := range node.Address {
-		b := helper.P2pAddressFormatVerify(address)
-		if !b {
-			return errors.New("node address format is error")
-		}
-		splitAfter := strings.Split(address, "/")
-		if splitAfter == nil || len(splitAfter) != 7 {
-			log.Errorf("wrong address(%s)", address)
-			return errors.New("wrong address")
-		}
-		realAddr := splitAfter[6]
-		ip := splitAfter[2] + ":" + splitAfter[4]
-		// node address can not be repeated
-		if _, ok := mConfig.NodeAddresses[realAddr]; ok {
-			log.Errorf("address(%s) existed", realAddr)
+func verifyChainConfigConsensusNodesIds(mConfig *chainConfig, node *config.OrgConfig) error {
+	for _, nid := range node.NodeId {
+		// node id can not be repeated
+		if _, ok := mConfig.NodeIds[nid]; ok {
+			log.Errorf("node id(%s) existed", nid)
 			return errors.New("address existed")
 		}
-		mConfig.NodeAddresses[realAddr] = node.OrgId
-		// ip + port can not be repeated
-		if _, ok := mConfig.Ips[ip]; ok {
-			log.Errorf("ip(%s) existed", ip)
-			return errors.New("ip existed")
-		}
-		mConfig.Ips[ip] = realAddr
+		mConfig.NodeIds[nid] = node.OrgId
 	}
 	return nil
 }
@@ -219,10 +199,10 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 		rule := policy.Rule
 		policy.Rule = strings.ToUpper(rule)
 
-		// self only for NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE
+		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
-			if resourceName != common.ConfigFunction_NODE_ADDR_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
-				err := fmt.Errorf("self rule can only be used by NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE")
+			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}
 		}

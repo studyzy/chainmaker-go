@@ -8,16 +8,16 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/core/cache"
@@ -214,7 +214,7 @@ func (bc *Blockchain) initCache() (err error) {
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
 		}
-		if err = bc.store.PutBlock(genesisBlock, rwSetList); err != nil {
+		if err = bc.store.PutBlock(genesisBlock, rwSetList, nil); err != nil {
 			return fmt.Errorf("put chain[%s] genesis block failed, %s", bc.chainId, err.Error())
 		}
 
@@ -268,7 +268,7 @@ func (bc *Blockchain) initTxPool() (err error) {
 		txPoolFactory txpool.TxPoolFactory
 		txType        = txpool.SINGLE
 	)
-	if localconf.ChainMakerConfig.DebugConfig.UseBatchTxPool {
+	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
 	}
 	bc.txPool, err = txPoolFactory.NewTxPool(
@@ -333,12 +333,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
 	for i, node := range nodes {
-		for _, addr := range node.Address {
-			uid, err := helper.GetNodeUidFromAddr(addr)
-			if err != nil {
-				return err
-			}
-			nodeIds[i] = uid
+		for _, nid := range node.NodeId {
+			nodeIds[i] = nid
 		}
 	}
 	dbHandle := bc.store.GetDBHandle(protocol.ConsensusDBName)
@@ -357,7 +353,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 		bc.netService,
 		bc.msgBus,
 		bc.chainConf,
-		bc.store)
+		bc.store,
+		bc.coreEngine.HotStuffHelper)
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
 		return err

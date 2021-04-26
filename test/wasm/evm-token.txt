@@ -1,0 +1,25 @@
+pragma solidity ^0.4.11;
+
+contract LedgerBalance {
+    mapping(address => uint) public balances;
+
+    constructor (address _addressFounder) public {
+        balances[msg.sender] = 100000000000000001;
+        balances[_addressFounder] = 100000000000000002;
+    }
+    function updateMyBalance(uint newBalance) public {
+        balances[msg.sender] = newBalance;
+    }
+    function updateBalance(uint _newBalance, address _to) public {
+        balances[_to] = _newBalance;
+    }
+
+    function transfer(address _to, uint256 _value) public  returns (bool success) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+}

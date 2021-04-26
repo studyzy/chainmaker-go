@@ -15,6 +15,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb/blockkvdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blockmysqldb"
 	"chainmaker.org/chainmaker-go/store/cache"
+	"chainmaker.org/chainmaker-go/store/contracteventdb/eventmysqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
@@ -49,7 +50,11 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string) (protoco
 		if err != nil {
 			return nil, err
 		}
-		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, NewKvDBProvider(chainId, types.CommonDBDir, engineType))
+		contractEventDB, err := eventmysqldb.NewContractEventMysqlDB(chainId)
+		if err != nil {
+			return nil, err
+		}
+		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB, NewKvDBProvider(chainId, types.CommonDBDir, engineType))
 	case types.MySQL:
 		blockDB, err := blockmysqldb.NewBlockMysqlDB(chainId)
 		if err != nil {
@@ -63,7 +68,11 @@ func (m *Factory) NewStore(engineType types.EngineType, chainId string) (protoco
 		if err != nil {
 			return nil, err
 		}
-		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, NewKvDBProvider(chainId, types.CommonDBDir, types.LevelDb))
+		contractEventDB, err := eventmysqldb.NewContractEventMysqlDB(chainId)
+		if err != nil {
+			return nil, err
+		}
+		return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB, NewKvDBProvider(chainId, types.CommonDBDir, types.LevelDb))
 	default:
 		return nil, nil
 	}

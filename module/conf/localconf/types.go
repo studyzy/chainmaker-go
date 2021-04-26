@@ -25,14 +25,15 @@ type nodeConfig struct {
 }
 
 type netConfig struct {
-	Provider                string       `mapstructure:"provider"`
-	ListenAddr              string       `mapstructure:"listen_addr"`
-	PeerStreamPoolSize      int          `mapstructure:"peer_stream_pool_size"`
-	MaxPeerCountAllow       int          `mapstructure:"max_peer_count_allow"`
-	PeerEliminationStrategy int          `mapstructure:"peer_elimination_strategy"`
-	Seeds                   []string     `mapstructure:"seeds"`
-	TLSConfig               netTlsConfig `mapstructure:"tls"`
-	BlackList               blackList    `mapstructure:"blacklist"`
+	Provider                string            `mapstructure:"provider"`
+	ListenAddr              string            `mapstructure:"listen_addr"`
+	PeerStreamPoolSize      int               `mapstructure:"peer_stream_pool_size"`
+	MaxPeerCountAllow       int               `mapstructure:"max_peer_count_allow"`
+	PeerEliminationStrategy int               `mapstructure:"peer_elimination_strategy"`
+	Seeds                   []string          `mapstructure:"seeds"`
+	TLSConfig               netTlsConfig      `mapstructure:"tls"`
+	BlackList               blackList         `mapstructure:"blacklist"`
+	CustomChainTrustRoots   []chainTrustRoots `mapstructure:"custom_chain_trust_roots"`
 }
 
 type netTlsConfig struct {
@@ -53,6 +54,16 @@ type pkcs11Config struct {
 type blackList struct {
 	Addresses []string `mapstructure:"addresses"`
 	NodeIds   []string `mapstructure:"node_ids"`
+}
+
+type chainTrustRoots struct {
+	ChainId    string       `mapstructure:"chain_id"`
+	TrustRoots []trustRoots `mapstructure:"trust_roots"`
+}
+
+type trustRoots struct {
+	OrgId string `mapstructure:"org_id"`
+	Root  string `mapstructure:"root"`
 }
 
 type rpcConfig struct {
@@ -114,7 +125,6 @@ type debugConfig struct {
 
 	IsModifyTxPayload    bool `mapstructure:"is_modify_tx_payload"`
 	IsExtreme            bool `mapstructure:"is_extreme"` //extreme fast mode
-	UseBatchTxPool       bool `mapstructure:"use_batch_tx_pool"`
 	UseNetMsgCompression bool `mapstructure:"use_net_msg_compression"`
 	IsNetInsecurity      bool `mapstructure:"is_net_insecurity"`
 }
@@ -125,14 +135,15 @@ type blockchainConfig struct {
 }
 
 type storageConfig struct {
-	Provider             string      `mapstructure:"provider"`
-	StorePath            string      `mapstructure:"store_path"`
-	WriteBufferSize      int         `mapstructure:"write_buffer_size"`
-	BloomFilterBits      int         `mapstructure:"bloom_filter_bits"`
-	DisableHistoryDB     bool        `mapstructure:"disable_historydb"`
-	LogDBWriteAsync      bool        `mapstructure:"logdb_write_async"`
-	BlockWriteBufferSize int         `mapstructure:"block_write_buffer_size"`
-	MysqlConfig          mysqlConfig `mapstructure:"mysql"`
+	Provider              string      `mapstructure:"provider"`
+	StorePath             string      `mapstructure:"store_path"`
+	WriteBufferSize       int         `mapstructure:"write_buffer_size"`
+	BloomFilterBits       int         `mapstructure:"bloom_filter_bits"`
+	DisableHistoryDB      bool        `mapstructure:"disable_historydb"`
+	EnableContractEventDB bool        `mapstructure:"Enable_contract_eventdb"`
+	LogDBWriteAsync       bool        `mapstructure:"logdb_write_async"`
+	BlockWriteBufferSize  int         `mapstructure:"block_write_buffer_size"`
+	MysqlConfig           mysqlConfig `mapstructure:"mysql"`
 }
 
 type mysqlConfig struct {
@@ -143,9 +154,9 @@ type mysqlConfig struct {
 }
 
 type txPoolConfig struct {
+	PoolType            string `mapstructure:"pool_type"`
 	MaxTxPoolSize       uint32 `mapstructure:"max_txpool_size"`
 	MaxConfigTxPoolSize uint32 `mapstructure:"max_config_txpool_size"`
-	FullNotifyAgainTime uint32 `mapstructure:"full_notify_again_time"`
 	IsMetrics           bool   `mapstructure:"is_metrics"`
 	Performance         bool   `mapstructure:"performance"`
 	BatchMaxSize        int    `mapstructure:"batch_max_size"`

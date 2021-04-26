@@ -15,3 +15,7 @@ import (
 type NewBlockEvent struct {
 	BlockInfo *commonPb.BlockInfo
 }
+
+type NewContractEvent struct {
+	ContractEvent *commonPb.ContractEventInfo
+}

@@ -28,14 +28,16 @@ func newMockBlockChainStore() *mockBlockChainStore {
 	return &mockBlockChainStore{txs: make(map[string]*commonPb.Transaction)}
 }
 
-func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet,contractEventInfo []*commonPb.ContractEvent) error {
 	panic(errStr)
 }
 
 func (m *mockBlockChainStore) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 	panic(errStr)
 }
-
+func (m *mockBlockChainStore)GetTopicTableColumn(tableName string) ([]string, error){
+	panic(errStr)
+}
 func (m *mockBlockChainStore) BlockExists(blockHash []byte) (bool, error) {
 	panic(errStr)
 }

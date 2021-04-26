@@ -1,17 +1,13 @@
-module chainmaker.org/chainmaker-go/txpool/batchtxpool
+module chainmaker.org/chainmaker-go/evm
 
 go 1.15
 
 require (
-	chainmaker.org/chainmaker-go/common v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
-	chainmaker.org/chainmaker-go/utils v0.0.0-00010101000000-000000000000
-	github.com/gogo/protobuf v1.3.2
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/stretchr/testify v1.6.1
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	chainmaker.org/chainmaker-go/utils v0.0.0
+	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 )
 
 replace (
