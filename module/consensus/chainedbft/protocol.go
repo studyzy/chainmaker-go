@@ -708,7 +708,8 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	cbi.processCertificates(qc, tc)
 	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
-		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), blockID)
+		qcBlk := cbi.chainStore.getCurrentCertifiedBlock()
+		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qcBlk.Header.BlockHash)
 	}
 }
 
