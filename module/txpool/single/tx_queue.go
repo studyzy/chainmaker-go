@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
