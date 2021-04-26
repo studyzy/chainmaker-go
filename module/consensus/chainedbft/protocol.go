@@ -769,7 +769,9 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 			cbi.selfIndexInEpoch, block.Header.BlockHash, block.Header.BlockHeight, level)
 		lastCommittedBlock, lastCommitLevel, err := cbi.chainStore.commitBlock(block)
 		if lastCommittedBlock != nil {
+			cbi.logger.Debugf("setCommit block status")
 			cbi.smr.setLastCommittedBlock(lastCommittedBlock, lastCommitLevel)
+			cbi.logger.Debugf("on block sealed, blockHeight: %d", lastCommittedBlock.Header.BlockHeight)
 			cbi.msgPool.OnBlockSealed(uint64(lastCommittedBlock.Header.BlockHeight))
 		}
 		if err != nil {
