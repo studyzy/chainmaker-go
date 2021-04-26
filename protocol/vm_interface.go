@@ -89,7 +89,6 @@ const (
 	ContractMethodExecuteUpdate      = "ExecuteUpdate"
 	ContractMethodExecuteDdl         = "ExecuteDDL"
 	ContractMethodEmitEvent          = "EmitEvent"
-	ContractMethodEmitEvent       = "EmitEvent"
 )
 
 //VmManager manage vm runtime

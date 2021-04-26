@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb/blockkvdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/contracteventdb/eventmysqldb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb/eventsqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"

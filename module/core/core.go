@@ -58,7 +58,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		snapshotManager: cf.snapshotManager,
 		proposedCache:   cf.proposalCache,
 		chainConf:       cf.chainConf,
-		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf.ChainConfig().ChainId),
+		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf),
 		log:             logger.GetLoggerByChain(logger.MODULE_CORE, cf.chainId),
 	}
 	core.quitC = make(<-chan interface{})

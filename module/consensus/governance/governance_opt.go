@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
