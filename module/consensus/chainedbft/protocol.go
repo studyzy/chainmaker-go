@@ -706,7 +706,7 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 		tc = qc
 	}
 	cbi.processCertificates(qc, tc)
-	if len(blockID) > 0 {
+	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
 		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), blockID)
 	}
