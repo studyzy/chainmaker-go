@@ -91,6 +91,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 //isValidProposer checks whether given index is valid at level
 func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) bool {
 	proposerIndex := cbi.getProposer(level)
+	cbi.logger.Debugf("level: %d, actual proposer index: %d, input index: %d", level, proposerIndex, index)
 	if proposerIndex == index {
 		return true
 	}
@@ -107,9 +108,9 @@ func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
 	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
 	validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
 	endCalValidators := chainUtils.CurrentTimeMillisSeconds()
-	cbi.logger.Debugf("time cost in getProposer, getContractTime: %d, calValidatorTime: %d",
-		endGetContract-beginGetContract, endCalValidators-endGetContract)
 	if validator != nil {
+		cbi.logger.Debugf("time cost in getProposer, level: %d, validatorIndex:%d, getContractTime: %d,"+
+			" calValidatorTime: %d", level, validator.Index, endGetContract-beginGetContract, endCalValidators-endGetContract)
 		return uint64(validator.Index)
 	}
 	return utils.InvalidIndex

@@ -67,7 +67,7 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 		ProposalData: proposalData,
 	}
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] constructProposal, proposal: [%v:%v:%v], JustifyQC: %v, HighestTC: %v",
-		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc, syncInfo.HighestTC)
+		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc.String(), syncInfo.HighestTC.String())
 
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_ProposalMessage,
