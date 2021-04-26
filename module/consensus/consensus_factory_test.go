@@ -44,8 +44,8 @@ func TestNewConsensusEngine(t *testing.T) {
 			Type: consensuspb.ConsensusType_TBFT,
 			Nodes: []*configpb.OrgConfig{
 				{
-					OrgId:   org1Id,
-					Address: []string{org1Address},
+					OrgId:  org1Id,
+					NodeId: []string{id},
 				},
 			},
 		},

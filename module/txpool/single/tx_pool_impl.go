@@ -182,11 +182,6 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	}
 
 	// 2. store the transaction
-	if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, pool.chainConf.ChainConfig().Contract.EnableSqlSupport) {
-		pool.addTxsCh <- &mempoolTxs{isConfigTxs: true, txs: []*commonPb.Transaction{tx}, source: source}
-	} else {
-		pool.addTxsCh <- &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
-	}
 	memTx := &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
 	if utils.IsConfigTx(tx) {
 		memTx.isConfigTxs = true

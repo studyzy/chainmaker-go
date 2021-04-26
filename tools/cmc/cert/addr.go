@@ -58,3 +58,4 @@ func getAddr() error {
 	fmt.Printf("addr:      0x%x\n", addrInt.AsStringKey())
 	return nil
 }
+

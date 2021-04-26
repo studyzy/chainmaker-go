@@ -109,7 +109,7 @@ func CheckNewCmBlockChainConfig() error {
 		return err
 	}
 	// 3. compare new CMConfig with the current
-	compareNewCMConfigWithCurrent(newCmConfig)
+	compareThenSetNewCMConfigWithCurrent(newCmConfig)
 	return nil
 }
 
@@ -138,7 +138,7 @@ func loadConfigFile(cmViper *viper.Viper) error {
 	return nil
 }
 
-func compareNewCMConfigWithCurrent(newCmConfig *CMConfig) {
+func compareThenSetNewCMConfigWithCurrent(newCmConfig *CMConfig) {
 	// 3.1 load existed chains.
 	existedChain := make(map[string]struct{})
 	for idx := range ChainMakerConfig.BlockChainConfig {
@@ -156,6 +156,9 @@ func compareNewCMConfigWithCurrent(newCmConfig *CMConfig) {
 	}
 	if len(newChainIdsFound) > 0 {
 		// 3.3 set new chain config
+		if newCmConfig.NodeConfig.NodeId == "" {
+			newCmConfig.SetNodeId(ChainMakerConfig.NodeConfig.NodeId)
+		}
 		ChainMakerConfig = newCmConfig
 		// 3.4 send new block chain found notify
 		for idx := range newChainIdsFound {

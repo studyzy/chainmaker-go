@@ -27,10 +27,10 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 		bp.log.Warnf("generate new block failed, block == nil")
 		return nil, timeLasts, fmt.Errorf("generate new block failed, block == nil")
 	}
-	if txBatch == nil {
-		// For ChainedBFT consensus, generate an empty block if tx batch is empty.
-		return block, timeLasts, nil
-	}
+	//if txBatch == nil {
+	//	// For ChainedBFT consensus, generate an empty block if tx batch is empty.
+	//	return block, timeLasts, nil
+	//}
 
 	// validate tx and verify ACL，split into 2 slice according to result
 	// validatedTxs are txs passed validate and should be executed by contract
@@ -85,7 +85,6 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 		return block, timeLasts, err
 	}
 	bp.proposalCache.SetProposedAt(block.Header.BlockHeight)
-
 	return block, timeLasts, nil
 }
 

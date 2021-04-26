@@ -37,26 +37,26 @@ consensus:
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   nodes:
     - org_id: "wx-org1.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11301/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
+      node_id:
+        - "QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
     - org_id: "wx-org2.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11302/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+      node_id:
+        - "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
     - org_id: "wx-org3.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11303/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
+      node_id:
+        - "QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
     - org_id: "wx-org4.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11304/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
+      node_id:
+        - "QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
     - org_id: "wx-org5.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11305/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+      node_id:
+        - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
     - org_id: "wx-org6.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11306/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+      node_id:
+        - "QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
     - org_id: "wx-org7.chainmaker.org"
-      address:
-        - "/ip4/127.0.0.1/tcp/11307/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+      node_id:
+        - "QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -80,7 +80,7 @@ trust_roots:
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
-  - resource_name: NODE_ADDR_UPDATE
+  - resource_name: NODE_ID_UPDATE
     policy:
       rule: SELF # 规则（ANY，MAJORITY...，全部大写，自动转大写）
       org_list: # 组织名称（组织名称，区分大小写）

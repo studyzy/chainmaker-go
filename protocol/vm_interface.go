@@ -65,6 +65,7 @@ const (
 	ContractAllocateMethod    = "allocate"
 	ContractDeallocateMethod  = "deallocate"
 	ContractRuntimeTypeMethod = "runtime_type"
+	ContractEvmParamKey       = "data"
 	// method name used by smart contract sdk
 	// common
 	ContractMethodLogMessage      = "LogMessage"
@@ -88,6 +89,7 @@ const (
 	ContractMethodExecuteUpdate      = "ExecuteUpdate"
 	ContractMethodExecuteDdl         = "ExecuteDDL"
 	ContractMethodEmitEvent          = "EmitEvent"
+	ContractMethodEmitEvent       = "EmitEvent"
 )
 
 //VmManager manage vm runtime

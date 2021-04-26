@@ -248,16 +248,11 @@ func (c *ChainConf) ChainConfig() *config.ChainConfig {
 func (c *ChainConf) GetConsensusNodeIdList() ([]string, error) {
 	chainNodeList := make([]string, 0)
 	for _, node := range c.ChainConf.Consensus.Nodes {
-		for _, addr := range node.Address {
-			nodeUid, err := utils.GetNodeUidFromAddr(addr)
-			if err != nil {
-				c.log.Errorw("get node uid from trustRoot addr err ", "err", err)
-				return nil, err
-			}
-			chainNodeList = append(chainNodeList, nodeUid)
+		for _, nid := range node.NodeId {
+			chainNodeList = append(chainNodeList, nid)
 		}
 	}
-	c.log.Debugw("nodeList", "nodeList", chainNodeList)
+	c.log.Debugf("consensus node id list: %v", chainNodeList)
 	return chainNodeList, nil
 }
 

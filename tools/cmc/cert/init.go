@@ -30,7 +30,7 @@ var (
 	crlPath      string
 	crtPath      string
 	nodeCertPath string
-	certPath     string
+	certPath string
 )
 
 const (

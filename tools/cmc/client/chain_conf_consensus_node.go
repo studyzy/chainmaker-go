@@ -119,11 +119,11 @@ func configConsensusNode(op int) error {
 	var payloadBytes []byte
 	switch op {
 	case addNode:
-		payloadBytes, err = client.CreateChainConfigConsensusNodeAddrAddPayload(nodeOrgId, []string{nodeAddress})
+		payloadBytes, err = client.CreateChainConfigConsensusNodeIdAddPayload(nodeOrgId, []string{nodeAddress})
 	case removeNode:
-		payloadBytes, err = client.CreateChainConfigConsensusNodeAddrDeletePayload(nodeOrgId, nodeAddress)
+		payloadBytes, err = client.CreateChainConfigConsensusNodeIdDeletePayload(nodeOrgId, nodeAddress)
 	case updateNode:
-		payloadBytes, err = client.CreateChainConfigConsensusNodeAddrUpdatePayload(nodeOrgId, nodeOldAddress, nodeAddress)
+		payloadBytes, err = client.CreateChainConfigConsensusNodeIdUpdatePayload(nodeOrgId, nodeOldAddress, nodeAddress)
 	default:
 		err = fmt.Errorf("invalid node addres operation")
 	}

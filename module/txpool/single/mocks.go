@@ -61,7 +61,7 @@ func (m *mockBlockChainStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) 
 	panic(errStr)
 }
 
-func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet,contractEventInfo []*commonPb.ContractEvent) error {
 	panic(errStr)
 }
 

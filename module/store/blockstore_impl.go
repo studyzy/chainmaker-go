@@ -7,12 +7,19 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"context"
+	"fmt"
+	"path/filepath"
+	"runtime"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
+	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
@@ -25,9 +32,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
-	"path/filepath"
-	"runtime"
-	"sync"
 )
 
 const (
@@ -477,6 +481,12 @@ func (bs *BlockStoreImpl) recover() error {
 	}
 	//recommit contract event db
 	if !bs.storeConfig.DisableContractEventDB {
+		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
+			return nil
+		}
+	}
+	//recommit contract event db
+	if localconf.ChainMakerConfig.StorageConfig.EnableContractEventDB {
 		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
 			return nil
 		}

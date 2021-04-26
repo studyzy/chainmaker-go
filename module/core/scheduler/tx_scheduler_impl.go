@@ -96,7 +96,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 		poolCapacity = 1
 	}
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer goRoutinePool.Release()
 	startTime := time.Now()

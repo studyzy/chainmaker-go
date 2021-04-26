@@ -179,6 +179,36 @@ func (s *WaciInstance) PutState() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
+// EmitEvent emit event to chain
+func (w *WaciInstance) EmitEvent() int32 {
+	req := serialize.EasyUnmarshal(w.RequestBody)
+	topic, _ := serialize.GetValueFromItems(req, "topic", serialize.EasyKeyType_USER)
+	if err := protocol.CheckTopicStr(topic.(string)); err != nil {
+		return w.recordMsg(w.ContractResult, err.Error())
+
+	}
+	var eventData []string
+	for i := 1; i < len(req); i++ {
+		data := req[i].Value.(string)
+		eventData = append(eventData, data)
+		w.Log.Debugf("EmitEvent EventData :%v", data)
+	}
+	if err := protocol.CheckEventData(eventData); err != nil {
+		return w.recordMsg(w.ContractResult, err.Error())
+	}
+
+	w.ContractEvent = append(w.ContractEvent, &commonPb.ContractEvent{
+		ContractName:    w.ContractId.ContractName,
+		ContractVersion: w.ContractId.ContractVersion,
+		Topic:           topic.(string),
+		TxId:            w.TxSimContext.GetTx().Header.TxId,
+		EventData:       eventData,
+	})
+
+	return protocol.ContractSdkSignalResultSuccess
+
+}
+
 // DeleteState delete state from chain
 func (s *WaciInstance) DeleteState() int32 {
 	err := wacsi.DeleteState(s.RequestBody, s.ContractId.ContractName, s.TxSimContext)
