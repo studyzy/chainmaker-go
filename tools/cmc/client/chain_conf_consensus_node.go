@@ -42,7 +42,7 @@ func addConsensusNodeCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeAddress,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -50,7 +50,7 @@ func addConsensusNodeCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
-	cmd.MarkFlagRequired(flagNodeAddress)
+	cmd.MarkFlagRequired(flagNodeId)
 
 	return cmd
 }
@@ -66,7 +66,7 @@ func removeConsensusNodeCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeAddress,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -74,7 +74,7 @@ func removeConsensusNodeCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
-	cmd.MarkFlagRequired(flagNodeAddress)
+	cmd.MarkFlagRequired(flagNodeId)
 
 	return cmd
 }
@@ -90,7 +90,7 @@ func updateConsensusNodeCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeOldAddress, flagNodeAddress,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeIdOld, flagNodeId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -98,8 +98,8 @@ func updateConsensusNodeCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
-	cmd.MarkFlagRequired(flagNodeOldAddress)
-	cmd.MarkFlagRequired(flagNodeAddress)
+	cmd.MarkFlagRequired(flagNodeIdOld)
+	cmd.MarkFlagRequired(flagNodeId)
 
 	return cmd
 }
@@ -119,11 +119,11 @@ func configConsensusNode(op int) error {
 	var payloadBytes []byte
 	switch op {
 	case addNode:
-		payloadBytes, err = client.CreateChainConfigConsensusNodeIdAddPayload(nodeOrgId, []string{nodeAddress})
+		payloadBytes, err = client.CreateChainConfigConsensusNodeIdAddPayload(nodeOrgId, []string{nodeId})
 	case removeNode:
-		payloadBytes, err = client.CreateChainConfigConsensusNodeIdDeletePayload(nodeOrgId, nodeAddress)
+		payloadBytes, err = client.CreateChainConfigConsensusNodeIdDeletePayload(nodeOrgId, nodeId)
 	case updateNode:
-		payloadBytes, err = client.CreateChainConfigConsensusNodeIdUpdatePayload(nodeOrgId, nodeOldAddress, nodeAddress)
+		payloadBytes, err = client.CreateChainConfigConsensusNodeIdUpdatePayload(nodeOrgId, nodeIdOld, nodeId)
 	default:
 		err = fmt.Errorf("invalid node addres operation")
 	}
