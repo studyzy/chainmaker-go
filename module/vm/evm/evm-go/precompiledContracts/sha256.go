@@ -17,8 +17,8 @@
 package precompiledContracts
 
 import (
+	"chainmaker.org/chainmaker-go/evm/evm-go/params"
 	"crypto/sha256"
-	"github.com/ethereum/go-ethereum/params"
 )
 
 // SHA256 implemented as a native contract.
