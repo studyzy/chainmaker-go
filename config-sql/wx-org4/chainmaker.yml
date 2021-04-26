@@ -6,34 +6,42 @@
 #
 
 log:
-  config_file: ../config-sql/wx-org4/log.yml          # config file of logger configuration.
+  config_file: ../config/wx-org4/log.yml          # config file of logger configuration.
 
 blockchain:
   - chainId: chain1
-    genesis: ../config-sql/wx-org4/chainconfig/bc1.yml
+    genesis: ../config/wx-org4/chainconfig/bc1.yml
 #  - chainId: chain2
-#    genesis: ../config-sql/wx-org4/chainconfig/bc2.yml
+#    genesis: ../config/wx-org4/chainconfig/bc2.yml
 #  - chainId: chain3
-#    genesis: ../config-sql/wx-org4/chainconfig/bc3.yml
+#    genesis: ../config/wx-org4/chainconfig/bc3.yml
 #  - chainId: chain4
-#    genesis: ../config-sql/wx-org4/chainconfig/bc4.yml
+#    genesis: ../config/wx-org4/chainconfig/bc4.yml
 
 node:
   # 节点类型：full、spv
   type:              full
   org_id:            wx-org4.chainmaker.org
-  priv_key_file:     ../config-sql/wx-org4/certs/node/consensus1/consensus1.sign.key
-  cert_file:         ../config-sql/wx-org4/certs/node/consensus1/consensus1.sign.crt
+  priv_key_file:     ../config/wx-org4/certs/node/consensus1/consensus1.sign.key
+  cert_file:         ../config/wx-org4/certs/node/consensus1/consensus1.sign.crt
   signer_cache_size: 1000
   cert_cache_size:   1000
 
 net:
   provider: LibP2P
-  listen_addr: /ip4/0.0.0.0/tcp/11304
+  listen_addr: /ip4/0.0.0.0/tcp/11354
+  seeds:
+    - "/ip4/127.0.0.1/tcp/11351/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
+    - "/ip4/127.0.0.1/tcp/11352/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+    - "/ip4/127.0.0.1/tcp/11353/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
+    - "/ip4/127.0.0.1/tcp/11354/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
+#    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+#    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+#    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   tls:
     enabled: true
-    priv_key_file: ../config-sql/wx-org4/certs/node/consensus1/consensus1.tls.key
-    cert_file:     ../config-sql/wx-org4/certs/node/consensus1/consensus1.tls.crt
+    priv_key_file: ../config/wx-org4/certs/node/consensus1/consensus1.tls.key
+    cert_file:     ../config/wx-org4/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
@@ -42,7 +50,7 @@ txpool:
 
 rpc:
   provider: grpc
-  port: 12304
+  port: 12354
   tls:
     # TLS模式:
     #   disable - 不启用TLS
@@ -51,8 +59,8 @@ rpc:
     #mode: disable
     #mode: oneway
     mode:           twoway
-    priv_key_file:  ../config-sql/wx-org4/certs/node/consensus1/consensus1.tls.key
-    cert_file:      ../config-sql/wx-org4/certs/node/consensus1/consensus1.tls.crt
+    priv_key_file:  ../config/wx-org4/certs/node/consensus1/consensus1.tls.key
+    cert_file:      ../config/wx-org4/certs/node/consensus1/consensus1.tls.crt
 
 monitor:
   enabled: false
@@ -63,24 +71,16 @@ pprof:
   port: 24321
 
 storage:
-  store_path: ../data/org4/ledgerData1
-  blockdb_config:
-    provider: leveldb
-    leveldb_config:
-      store_path: ../data/org4/blocks
-  statedb_config:
-    provider: sql
-    sqldb_config:
-      sqldb_type: sqlite
-      dsn: ../data/org4/state.db
-  historydb_config:
-    provider: leveldb
-    leveldb_config:
-      store_path: ../data/org4/history
-  resultdb_config:
-    provider: leveldb
-    leveldb_config:
-      store_path: ../data/org4/result
+  provider: LevelDB
+  store_path: ../data/ledgerData4
+  enable_contract_eventdb: false #是否开启合约事件存储功能， 默认为false，如果设置为true,需要配置mysql
+  mysql:    #MySQL相关配置，只有provider选择MySQL时才需要配置
+    dsn: root:password@tcp(127.0.0.1:3306)/    #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)
+    max_idle_conns: 10    #连接池中维持的最大的空闲连接数，默认为10
+    max_open_conns: 10    #最大的可用连接数，默认为10
+    conn_max_lifetime: 60    #连接维持的最长时间，单位秒，默认为60
+
+
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true
