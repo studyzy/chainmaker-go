@@ -290,7 +290,7 @@ func (sm *syncManager) insertBlockAndQC(fromPeer uint64, blockPair *chainedbftpb
 			"at height %v level %v, err %v", sm.server.selfIndexInEpoch, fromPeer, header.GetBlockHeight(), qc.Level, err)
 		return false
 	}
-	txRWSet, err := governance.CheckAndCreateGovernmentArgs(blockPair.Block, sm.server.store, sm.server.proposalCache)
+	txRWSet, err := governance.CheckAndCreateGovernmentArgs(blockPair.Block, sm.server.store, sm.server.proposalCache, sm.server.ledgerCache)
 	if err != nil {
 		sm.logger.Errorf("service selfIndexInEpoch %v CheckAndCreateGovernmentArgs err: from peer %v at "+
 			"height %v level %v, err %v", sm.server.selfIndexInEpoch, fromPeer, header.GetBlockHeight(), qc.Level, err)
