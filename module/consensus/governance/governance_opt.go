@@ -657,7 +657,7 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	if err = proto.Unmarshal(oldBytes, &oldGovernanceContract); err != nil {
 		return nil, err
 	}
-	log.Debugf("GovernanceContract change!older:[%v]", oldGovernanceContract.String())
+	log.Debugf("GovernanceContract change older contract:[%s]", oldGovernanceContract.String())
 	txWrite := &commonPb.TxWrite{
 		Key:          []byte(contractName),
 		Value:        pbccPayload,

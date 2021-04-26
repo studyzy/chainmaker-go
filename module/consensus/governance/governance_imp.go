@@ -187,7 +187,7 @@ func (gcr *GovernanceContractImp) GetEpochId() uint64 {
 	return governmentContract.EpochId
 }
 
-//use by chainconf,check chain config before chain_config_contract run
+//use by chainConf, check chain config before chain_config_contract run
 func (gcr *GovernanceContractImp) Verify(consensusType consensusPb.ConsensusType, chainConfig *configPb.ChainConfig) error {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/protocol"
+	chainUtils "chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -31,39 +32,33 @@ var (
 //processNewHeight If the local node is one of the validators in current epoch, update SMR state to ConsStateType_NewLevel
 //and prepare to generate a new block if local node is proposer in the current level
 func (cbi *ConsensusChainedBftImpl) processNewHeight(height uint64, level uint64) {
-	if cbi.smr.getHeight() != height || cbi.smr.getCurrentLevel() > level ||
-		(cbi.smr.getCurrentLevel() == level && cbi.smr.state != chainedbftpb.ConsStateType_NewHeight) {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewHeight: invalid input[%v:%v], smr height [%v] level [%v] state %v",
-			cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
+	if cbi.smr.state != chainedbftpb.ConsStateType_NewHeight {
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewHeight: "+
+			"height [%v] level [%v] state %v", cbi.selfIndexInEpoch, height, level, cbi.smr.state.String())
 		return
 	}
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewHeight at height [%v] level [%v], smr height [%v] level [%v] state %v epoch %v",
-		cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state, cbi.smr.getEpochId())
-
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewHeight at "+
+		"height [%v] level [%v],  state %v epoch %v", cbi.selfIndexInEpoch, height, level, cbi.smr.state, cbi.smr.getEpochId())
 	if !cbi.smr.isValidIdx(cbi.selfIndexInEpoch) {
 		cbi.logger.Infof("self selfIndexInEpoch [%v] is not in current consensus epoch", cbi.selfIndexInEpoch)
 		return
 	}
-
 	cbi.smr.updateState(chainedbftpb.ConsStateType_NewLevel)
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewRound at height [%v] level [%v], smr height [%v] level [%v] state %v",
-		cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
-
 	cbi.processNewLevel(height, level)
 }
 
 //processNewLevel update state to ConsStateType_Propose and prepare to generate a new block if local node is proposer in the current level
 func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64) {
 	if cbi.smr.getHeight() != height || cbi.smr.getCurrentLevel() > level ||
-		(cbi.smr.getCurrentLevel() == level && cbi.smr.state >= chainedbftpb.ConsStateType_Propose) {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewLevel: invalid input [%v:%v], smr height [%v] level [%v] state %v",
-			cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
+		cbi.smr.state != chainedbftpb.ConsStateType_NewLevel {
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewLevel: "+
+			"invalid input [%v:%v], smr height [%v] level [%v] state %v", cbi.selfIndexInEpoch,
+			height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
 		return
 	}
 
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewLevel at height [%v] level [%v], smr height [%v] level [%v] state %v",
-		cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
-
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processNewLevel at height [%v] level [%v], smr height [%v] "+
+		"level [%v] state %v", cbi.selfIndexInEpoch, height, level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state)
 	hqcBlock := cbi.chainStore.getCurrentCertifiedBlock()
 	hqcLevel, err := utils.GetLevelFromBlock(hqcBlock)
 	if err != nil {
@@ -74,50 +69,59 @@ func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64)
 		cbi.logger.Errorf("given level [%v] too low than certified %v", level, hqcLevel)
 		return
 	}
+}
 
+func (cbi *ConsensusChainedBftImpl) processNewPropose(height, level uint64, preBlkHash []byte) {
+	if cbi.smr.state != chainedbftpb.ConsStateType_Propose {
+		return
+	}
 	nextProposerIndex := cbi.getProposer(level)
 	if cbi.isValidProposer(level, cbi.selfIndexInEpoch) {
 		event := &timeservice.TimerEvent{
-			Level:    level,
-			Height:   height,
-			State:    cbi.smr.state,
-			Index:    cbi.selfIndexInEpoch,
-			EpochId:  cbi.smr.getEpochId(),
-			Duration: timeservice.GetEventTimeout(timeservice.PROPOSAL_BLOCK_TIMEOUT, 0),
+			Level:      level,
+			Height:     height,
+			State:      cbi.smr.state,
+			Index:      cbi.selfIndexInEpoch,
+			EpochId:    cbi.smr.getEpochId(),
+			PreBlkHash: preBlkHash,
+			Duration:   timeservice.GetEventTimeout(timeservice.PROPOSAL_BLOCK_TIMEOUT, 0),
 		}
-		cbi.startTimer(event)
+		cbi.addTimerEvent(event)
 		cbi.logger.Infof("service selfIndexInEpoch [%v], build proposal, height: [%v], level [%v]", cbi.selfIndexInEpoch, height, level)
-		go cbi.msgbus.Publish(msgbus.BuildProposal, &chainedbftpb.BuildProposal{
+		cbi.msgbus.Publish(msgbus.BuildProposal, &chainedbftpb.BuildProposal{
 			Height:     height,
 			IsProposer: true,
-			PreHash:    hqcBlock.Header.BlockHash,
+			PreHash:    preBlkHash,
 		})
 	}
-
 	cbi.logger.Infof("service selfIndexInEpoch [%v], waiting proposal, "+
 		"height: [%v], level [%v], nextProposerIndex [%d]", cbi.selfIndexInEpoch, height, level, nextProposerIndex)
-	cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
 }
 
 //processProposedBlock receive proposed block form core module, then go to new level
 func (cbi *ConsensusChainedBftImpl) processProposedBlock(block *common.Block) {
+	cbi.mtx.Lock()
+	defer cbi.mtx.Unlock()
+
 	height := cbi.smr.getHeight()
 	level := cbi.smr.getCurrentLevel()
 	cbi.logger.Debugf(`processProposedBlock start, block height: [%v], level: [%v]`, block.Header.BlockHeight, level)
-
 	if !cbi.isValidProposer(level, cbi.selfIndexInEpoch) {
 		return
 	}
-	cbi.logger.Infof("receive proposed block by self at height: %d, level: %d, proposer: %s", block.Header.BlockHeight, level, block.Header.Proposer)
 	if int64(height) != block.Header.BlockHeight {
-		cbi.logger.Errorf(`service id [%v] selfIndexInEpoch [%v] recieve proposed block height [%v]
-		 not equal to smr.height [%v]`, cbi.id, cbi.selfIndexInEpoch, block.Header.BlockHeight,
-			height)
+		cbi.logger.Warnf(`service id [%v] selfIndexInEpoch [%v] receive proposed block height [%v]
+		 not equal to smr.height [%v]`, cbi.id, cbi.selfIndexInEpoch, block.Header.BlockHeight, height)
 		return
 	}
 
+	beginConstruct := chainUtils.CurrentTimeMillisSeconds()
 	proposal := cbi.constructProposal(block, height, level, cbi.smr.getEpochId())
+	endConstruct := chainUtils.CurrentTimeMillisSeconds()
 	cbi.signAndBroadcast(proposal)
+	endSignAndBroad := chainUtils.CurrentTimeMillisSeconds()
+	cbi.logger.Debugf("time cost in processProposedBlock, constructProposalTime: %d, "+
+		"signAndBroadTime: %d", endConstruct-beginConstruct, endSignAndBroad-endConstruct)
 }
 
 func (cbi *ConsensusChainedBftImpl) processLocalTimeout(height uint64, level uint64) {
@@ -301,48 +305,48 @@ func (cbi *ConsensusChainedBftImpl) validateProposer(msg *chainedbftpb.Consensus
 }
 
 func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusMsg) {
+	cbi.mtx.Lock()
+	defer cbi.mtx.Unlock()
+
 	var (
-		err         error
-		isFetch     bool
 		proposalMsg = msg.Payload.GetProposalMsg()
 		proposal    = proposalMsg.ProposalData
 	)
-
 	cbi.logger.Infof("service selfIndexInEpoch [%v] processProposal step0. proposal.ProposerIdx [%v] ,proposal.Height[%v],"+
 		" proposal.Level[%v],proposal.EpochId [%v],expected [%v:%v:%v]", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height,
 		proposal.Level, proposal.EpochId, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId())
 	//step0: validate proposal
 	if err := cbi.validateProposalMsg(msg); err != nil {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] onReceivedProposal validate proposal failed, err %v",
+		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal validate proposal failed, err %v",
 			cbi.selfIndexInEpoch, err)
 		return
 	}
 	cbi.logger.Debugf("validate proposal msg success [%d:%d:%d]", proposal.ProposerIdx, proposal.Height, proposal.Level)
 
-	if isFetch, err = cbi.needFetch(proposalMsg.SyncInfo); err != nil {
-		cbi.logger.Errorf("needFetch err %v", err)
+	//step1: fetch data
+	if err := cbi.fetchDataIfRequire(proposalMsg); err != nil {
+		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal fetch data failed, err %v",
+			cbi.selfIndexInEpoch, err)
 		return
-	} else if isFetch {
-		cbi.fetchData(proposal)
 	}
 
-	//step1: validate and process new qc from proposal
+	//step2: validate and process new qc from proposal
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step1 process qc start", cbi.selfIndexInEpoch)
 	if ok := cbi.processQC(msg); !ok {
 		return
 	}
 
-	//step2: validate new block from proposal
+	//step3: validate new block from proposal
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step2 validate new block from proposal start", cbi.selfIndexInEpoch)
 	if ok := cbi.validateBlock(proposal); !ok {
 		return
 	}
 
-	//step3: validate consensus args
+	//step4: validate consensus args
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step3 validate consensus args", cbi.selfIndexInEpoch)
 	cbi.validateConsensusArg(proposal)
 
-	//step4: add proposal to msg pool and add block to chainStore
+	//step5: add proposal to msg pool and add block to chainStore
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step4 add proposal to msg pool and "+
 		"add proposal block to chainStore start", cbi.selfIndexInEpoch)
 	if inserted, err := cbi.msgPool.InsertProposal(proposal.Height, proposal.Level, msg); err != nil || !inserted {
@@ -356,8 +360,22 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 		return
 	}
 
-	//step5: vote it and send vote to next proposer in the epoch
+	//step6: vote it and send vote to next proposer in the epoch
 	cbi.generateVoteAndSend(proposal)
+}
+
+func (cbi *ConsensusChainedBftImpl) fetchDataIfRequire(proposalMsg *chainedbftpb.ProposalMsg) error {
+	var (
+		err     error
+		isFetch bool
+	)
+	if isFetch, err = cbi.needFetch(proposalMsg.SyncInfo); err != nil {
+		return err
+	}
+	if isFetch {
+		cbi.fetchData(proposalMsg.ProposalData)
+	}
+	return nil
 }
 
 func (cbi *ConsensusChainedBftImpl) generateVoteAndSend(proposal *chainedbftpb.ProposalData) bool {
@@ -402,25 +420,27 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) bo
 	syncInfo := msg.Payload.GetProposalMsg().SyncInfo
 	cbi.logger.Debugf("processQC start. height: [%d], level: [%d], blockHash: [%x], "+
 		"JustifyQC.NewView: [%v]", proposal.Height, proposal.Height, proposal.Block.Header.BlockHash, proposal.JustifyQC.NewView)
-	//step1: validate and process qc
 	if !cbi.smr.voteRules(proposal.Level, proposal.JustifyQC) {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal block [%v:%v] pass "+
 			"safety rules check failed", cbi.selfIndexInEpoch, proposal.Height, proposal.Level)
 		return false
 	}
-	cbi.logger.Debugf("insert proposal.JustifyQC")
 	if !proposal.JustifyQC.NewView {
 		if err := cbi.chainStore.insertQC(proposal.JustifyQC); err != nil {
 			cbi.logger.Errorf("insert qc to chainStore failed: %s, qc info: %s", err, proposal.JustifyQC.String())
 			return false
 		}
 	}
-	cbi.logger.Debugf("begin process qc and tc")
+
+	//local already handle it when aggregating qc
 	if proposal.ProposerIdx != cbi.selfIndexInEpoch {
-		//local already handle it when aggregating qc
-		cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
+		cbi.smr.updateLockedQC(proposal.JustifyQC)
+		cbi.commitBlocksByQC(proposal.JustifyQC)
+		if enterNewLevel := cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC); enterNewLevel {
+			cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
+			cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+		}
 	}
-	cbi.logger.Debugf("check proposal.Level[%d] < currentLevel[%d]", proposal.Level, cbi.smr.getCurrentLevel())
 	if proposal.Level != cbi.smr.getCurrentLevel() {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
 			"smr level [%v:%v], ignore proposal", cbi.selfIndexInEpoch, proposal.Height, proposal.Level,
@@ -435,13 +455,14 @@ func (cbi *ConsensusChainedBftImpl) validateBlock(proposal *chainedbftpb.Proposa
 		err      error
 		preBlock *common.Block
 	)
-	if preBlock, err = cbi.chainStore.getBlock(string(proposal.Block.Header.PreBlockHash), proposal.Height-1); err != nil || preBlock == nil {
+	if preBlock, err = cbi.chainStore.getBlock(string(
+		proposal.Block.Header.PreBlockHash), proposal.Height-1); err != nil || preBlock == nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal failed to get preBlock [%v], err %v",
 			cbi.selfIndexInEpoch, proposal.Height-1, err)
 		return false
 	}
 	if !bytes.Equal(preBlock.Header.BlockHash, proposal.JustifyQC.BlockID) {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal failed, qc'block not equal to block's prehash",
+		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal failed, qc'block not equal to block's preHash",
 			cbi.selfIndexInEpoch)
 		return false
 	}
@@ -577,25 +598,27 @@ func (cbi *ConsensusChainedBftImpl) validateVoteMsg(msg *chainedbftpb.ConsensusM
 
 func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) {
 	// 1. base check vote msg
-	voteMsg := msg.Payload.GetVoteMsg()
-	vote := voteMsg.VoteData
-	authorIdx := vote.GetAuthorIdx()
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: height [%v] level [%v] epoch [%v] authorIdx [%v],expected [%v:%v:%v]",
+	var (
+		voteMsg   = msg.Payload.GetVoteMsg()
+		vote      = voteMsg.VoteData
+		authorIdx = vote.GetAuthorIdx()
+	)
+	cbi.mtx.Lock()
+	defer cbi.mtx.Unlock()
+
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: authorIdx:[%v] voteBaseInfo:[%d:%d:%d], expected:[%v:%v:%v]",
 		cbi.selfIndexInEpoch, vote.Height, vote.Level, vote.EpochId, authorIdx, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId())
 	if vote.Height < cbi.smr.getHeight() || vote.Level < cbi.smr.getCurrentLevel() || vote.EpochId != cbi.smr.getEpochId() {
-		cbi.logger.Infof("service selfIndexInEpoch [%v] processVote: received vote "+
-			"at wrong height [%v] level [%v] epoch [%v], expected [%v:%v:%v] authorIdx [%v]", cbi.selfIndexInEpoch, vote.Height,
-			vote.Level, vote.EpochId, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId(), authorIdx)
+		cbi.logger.Warnf("service selfIndexInEpoch [%v] processVote: received vote at wrong height or level or epoch")
 		return
 	}
-	cbi.logger.Debugf("process vote step 1 validate base vote info, voteHeight:%d, voteLevel:%d, voteBlockID:%x, authorIndex:%d",
-		vote.Height, vote.Level, vote.BlockID, vote.AuthorIdx)
+	// 1. validate vote msg info
 	if err := cbi.validateVoteMsg(msg); err != nil {
 		return
 	}
 
 	// 2. only proposer could handle proposal’s vote
-	cbi.logger.Debugf("process vote step 2 only proposer will process vote with Proposal type or all peer can process vote with NewView type")
+	cbi.logger.Debugf("process vote step 1 only proposer will process vote with Proposal type or all peer can process vote with NewView type")
 	if !vote.NewView {
 		//regular votes are sent to the leaders of the next round only.
 		if nextLeaderIndex := cbi.getProposer(vote.Level + 1); nextLeaderIndex != cbi.selfIndexInEpoch {
@@ -611,12 +634,12 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		inserted bool
 	)
 	// 3. Add vote to msgPool
-	cbi.logger.Debugf("process vote step 3 check whether need sync from other peer")
+	cbi.logger.Debugf("process vote step 2 check whether need sync from other peer")
 	if need, err = cbi.needFetch(voteMsg.SyncInfo); err != nil {
 		cbi.logger.Errorf("processVote: needFetch failed, reason: %s", err)
 		return
 	}
-	cbi.logger.Debugf("process vote step 4 inserted the vote ")
+	cbi.logger.Debugf("process vote step 3 inserted the vote ")
 	if inserted, err = cbi.msgPool.InsertVote(vote.Height, vote.Level, msg); err != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processVote: insert vote msg failed, err %v ",
 			cbi.selfIndexInEpoch, err)
@@ -628,14 +651,14 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 	}
 
 	// 4. fetch data from peers and handle qc in voteInfo
-	cbi.logger.Debugf("process vote step 5 whether need fetch info: [%v] and process", need)
+	cbi.logger.Debugf("process vote step 4 whether need fetch info: [%v] and process", need)
 	if need {
 		cbi.fetchAndHandleQc(authorIdx, voteMsg)
 		return
 	}
 
 	// 5. generate QC if majority are voted and process the new QC if don't need sync data from peers
-	cbi.logger.Debugf("process vote step 6 no need fetch info and process vote")
+	cbi.logger.Debugf("process vote step 5 no need fetch info and process vote")
 	cbi.processVotes(vote)
 }
 
@@ -659,7 +682,7 @@ func (cbi *ConsensusChainedBftImpl) fetchAndHandleQc(authorIdx uint64, voteMsg *
 			cbi.selfIndexInEpoch, cbi.smr.getCurrentLevel(), req.targetLevel)
 		return
 	}
-	cbi.processCertificates(voteMsg.SyncInfo.HighestQC, voteMsg.SyncInfo.HighestTC)
+	cbi.processVotes(voteMsg.VoteData)
 }
 
 //processVotes QC is generated if a majority are voted for the special Height and Level.
@@ -669,30 +692,47 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 		return
 	}
 	//aggregate qc
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: new qc aggregated for height [%v] level [%v]",
-		cbi.selfIndexInEpoch, vote.Height, vote.Level)
-	votes := cbi.msgPool.GetVotes(vote.Height, vote.Level)
-	qc := &chainedbftpb.QuorumCert{
-		BlockID: blockID,
-		Height:  vote.Height,
-		Level:   vote.Level,
-		Votes:   votes,
-		NewView: newView,
-		EpochId: cbi.smr.getEpochId(),
-	}
-	if blockID != nil {
-		if err := cbi.chainStore.insertQC(qc); err != nil {
-			cbi.logger.Errorf("service index [%v] processVote: new qc aggregated for height [%v] level [%v] blockId [%x], err=%v",
-				cbi.selfIndexInEpoch, vote.Height, vote.Level, blockID, err)
-			return
-		}
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: new qc "+
+		"aggregated for height [%v] level [%v]", cbi.selfIndexInEpoch, vote.Height, vote.Level)
+
+	qc, err := cbi.aggregateQCAndUpdate(vote.Height, vote.Level, blockID, newView)
+	if err != nil {
+		cbi.logger.Errorf("service index [%v] processVote: new qc aggregated for height [%v] "+
+			"level [%v] blockId [%x], err=%v", cbi.selfIndexInEpoch, vote.Height, vote.Level, blockID, err)
+		return
 	}
 	var tc *chainedbftpb.QuorumCert
 	if qc.NewView {
 		// If the newly generated QC type is NewView, it means that majority agree on the timeout and assign QC to TC
 		tc = qc
 	}
-	cbi.processCertificates(qc, tc)
+	if enterNewLevel := cbi.processCertificates(qc, tc); enterNewLevel {
+		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
+		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+	}
+	if len(blockID) > 0 {
+		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
+		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), blockID)
+	}
+}
+
+func (cbi *ConsensusChainedBftImpl) aggregateQCAndUpdate(height, level uint64, blockID []byte, isNewView bool) (*chainedbftpb.QuorumCert, error) {
+	votes := cbi.msgPool.GetVotes(height, level)
+	qc := &chainedbftpb.QuorumCert{
+		BlockID: blockID,
+		Height:  height,
+		Level:   level,
+		Votes:   votes,
+		NewView: isNewView,
+		EpochId: cbi.smr.getEpochId(),
+	}
+	if blockID != nil {
+		if err := cbi.chainStore.insertQC(qc); err != nil {
+			return nil, err
+		}
+		cbi.smr.updateLockedQC(qc)
+	}
+	return qc, nil
 }
 
 // processCertificates
@@ -700,11 +740,10 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 // in other cases, the parameter is currentQC in local node.
 // tc When processing a proposalMsg or voteMsg, the tc information is contained in the incoming message;
 // in other cases, the parameter is nil.
-func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) {
+func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) (enterNewLevel bool) {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start:, height [%v], level [%v],qc.Height "+
 		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
-	cbi.smr.updateLockedQC(qc)
-	cbi.commitBlocksByQC(qc)
+
 	var (
 		tcLevel        = uint64(0)
 		currentQC      = qc
@@ -715,10 +754,8 @@ func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumC
 		cbi.smr.updateTC(tc)
 		currentQC = cbi.chainStore.getCurrentQC()
 	}
-	if newLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); newLevel {
-		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
-		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
-	}
+	enterNewLevel = cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel)
+	return enterNewLevel
 }
 
 func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert) {
@@ -732,18 +769,10 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 	if level > cbi.chainStore.getCommitLevel() {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates: try committing a block %v on [%x:%v]",
 			cbi.selfIndexInEpoch, block.Header.BlockHash, block.Header.BlockHeight, level)
-		lastCommitted, err := cbi.chainStore.commitBlock(block)
-		if lastCommitted != nil {
-			level, err := utils.GetLevelFromBlock(lastCommitted)
-			if err != nil {
-				cbi.logger.Errorf("GetLevelFromBlock failed, reason: %s", err)
-				return
-			}
-			cbi.logger.Debugf("setLastCommittedBlock ...")
-			cbi.smr.setLastCommittedBlock(lastCommitted, level)
-			cbi.logger.Debugf("OnBlockSealed ...")
-			cbi.msgPool.OnBlockSealed(uint64(lastCommitted.Header.BlockHeight))
-			cbi.logger.Debugf("OnBlockSealed end...")
+		lastCommittedBlock, lastCommitLevel, err := cbi.chainStore.commitBlock(block)
+		if lastCommittedBlock != nil {
+			cbi.smr.setLastCommittedBlock(lastCommittedBlock, lastCommitLevel)
+			cbi.msgPool.OnBlockSealed(uint64(lastCommittedBlock.Header.BlockHeight))
 		}
 		if err != nil {
 			cbi.logger.Errorf("commit block to the chain failed, reason: %s", err)
@@ -755,48 +784,40 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.logger.Debugf("processBlockCommitted received has committed block, height:%d, hash:%x",
 		block.Header.BlockHeight, block.Header.BlockHash)
+	cbi.mtx.Lock()
+	defer cbi.mtx.Unlock()
 	// 1. check base commit block info
 	if int64(cbi.commitHeight) >= block.Header.BlockHeight {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] persisted block [%v] vs commit height [%v]",
-			cbi.selfIndexInEpoch, block.Header.BlockHeight, cbi.commitHeight)
+		cbi.logger.Warnf("service selfIndexInEpoch [%v] block:[%d:%x] has been committed",
+			cbi.selfIndexInEpoch, block.Header.BlockHeight, block.Header.BlockHash)
 		return
 	}
 	// 2. insert committed block to chainStore
 	cbi.logger.Debugf("processBlockCommitted step 1 insert complete block")
 	if err := cbi.chainStore.insertCompletedBlock(block); err != nil {
-		cbi.logger.Errorf("insert block[%d: %x] to chainStore failed", block.Header.BlockHeight, block.Header.BlockHash)
-		return
-	}
-	committedBlock, err := cbi.chainStore.getBlock(string(block.Header.BlockHash), uint64(block.Header.BlockHeight))
-	if err != nil {
-		cbi.logger.Errorf("get block[%d: %x] from chainStore failed, reason: %s", block.Header.BlockHeight, block.Header.BlockHash, err)
+		cbi.logger.Errorf("insert block[%d:%x] to chainStore failed", block.Header.BlockHeight, block.Header.BlockHash)
 		return
 	}
 	// 3. update commit info in the consensus
 	cbi.logger.Debugf("processBlockCommitted step 2 update the last committed block info")
-	cbi.smr.setLastCommittedBlock(committedBlock, cbi.chainStore.getCommitLevel())
 	cbi.commitHeight = uint64(block.Header.BlockHeight)
-	height := uint64(block.Header.BlockHeight)
+	cbi.msgPool.OnBlockSealed(uint64(block.Header.BlockHeight))
+	cbi.smr.setLastCommittedBlock(block, cbi.chainStore.getCommitLevel())
 	// 4. create next epoch if meet the condition
 	cbi.logger.Debugf("processBlockCommitted step 3 create epoch if meet the condition")
-	if err := cbi.createNextEpochIfRequired(height); err != nil {
-		cbi.logger.Errorf("failed to createNextEpochIfRequired, err %v", err)
-		return
-	}
-
+	cbi.createNextEpochIfRequired(cbi.commitHeight)
 	// 5. check if need to switch with the epoch
-	if cbi.nextEpoch == nil || (cbi.nextEpoch != nil && cbi.nextEpoch.switchHeight > height) {
+	if cbi.nextEpoch == nil || (cbi.nextEpoch != nil && cbi.nextEpoch.switchHeight > cbi.commitHeight) {
 		cbi.logger.Debugf("processBlockCommitted step 4 no switch epoch and process qc")
 		return
 	}
-
 	// 6. switch epoch and update field state in consensus
 	oldIndex := cbi.selfIndexInEpoch
 	cbi.logger.Debugf("processBlockCommitted step 5 switch epoch and process qc")
-	if err := cbi.switchNextEpoch(height); err != nil {
+	if err := cbi.switchNextEpoch(cbi.commitHeight); err != nil {
 		return
 	}
-	if oldIndex == cbi.selfIndexInEpoch && cbi.smr.isValidIdx(cbi.selfIndexInEpoch) {
+	if cbi.smr.isValidIdx(cbi.selfIndexInEpoch) {
 		cbi.logger.Infof("service selfIndexInEpoch [%v] start processCertificates,"+
 			"height [%v],level [%v]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
 	} else if oldIndex != cbi.selfIndexInEpoch {
@@ -807,9 +828,10 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 				oldIndex, cbi.selfIndexInEpoch)
 		}
 	}
-	// 7. process qc: commitHeight+1
-	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
-	cbi.logger.Infof("processBlockCommitted end, blockHeight: [%d], hash: [%x] ...", height, block.Header.BlockHash)
+	//7. process qc: commitHeight+1
+	// todo. may be delete later.
+	//cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
+	cbi.logger.Infof("processBlockCommitted end, block: [%d:%x].", cbi.commitHeight, block.Header.BlockHash)
 }
 
 func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
@@ -821,8 +843,6 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 		return err
 	}
 
-	cbi.mtx.Lock()
-	defer cbi.mtx.Unlock()
 	if cbi.timerService != nil {
 		cbi.timerService.Stop()
 	}
@@ -836,7 +856,6 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 	cbi.selfIndexInEpoch = cbi.nextEpoch.index
 	cbi.smr = newChainedBftSMR(cbi.chainID, cbi.nextEpoch, cbi.chainStore, cbi.timerService)
 	cbi.nextEpoch = nil
-	cbi.logger.Debugf("create epoch height: [%d], SMR height: [%d]", blockHeight, cbi.smr.getHeight())
 	go cbi.timerService.Start()
 	go cbi.syncer.start()
 	cbi.helper.DiscardAboveHeight(int64(blockHeight))
@@ -925,7 +944,7 @@ func (cbi *ConsensusChainedBftImpl) validateBlockFetchRsp(msg *chainedbftpb.Cons
 	return nil
 }
 
-func (cbi *ConsensusChainedBftImpl) startTimer(event *timeservice.TimerEvent) {
+func (cbi *ConsensusChainedBftImpl) addTimerEvent(event *timeservice.TimerEvent) {
 	cbi.timerService.AddEvent(event)
 }
 

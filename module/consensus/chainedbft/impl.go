@@ -125,13 +125,16 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		service.logger.Errorf("new consensus service failed, err %v", err)
 		return nil, err
 	}
+
 	service.chainStore = chainStore
 	service.syncer = newSyncManager(service)
 	service.commitHeight = service.chainStore.getCommitHeight()
-	epoch := service.createEpoch(service.commitHeight)
-	service.msgPool = epoch.msgPool
-	service.selfIndexInEpoch = epoch.index
-	service.smr = newChainedBftSMR(chainID, epoch, chainStore, service.timerService)
+	service.createEpoch(service.commitHeight)
+	service.msgPool = service.nextEpoch.msgPool
+	service.selfIndexInEpoch = service.nextEpoch.index
+	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService)
+	epoch := service.nextEpoch
+	service.nextEpoch = nil
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
 	chainConf.AddWatch(service)
 	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
@@ -380,8 +383,8 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 
 	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s", te.State.String(), te.Height, te.Level, te.Duration.String())
 	switch te.State {
-	case chainedbftpb.ConsStateType_NewLevel:
-		cbi.processNewLevel(te.Height, te.Level)
+	case chainedbftpb.ConsStateType_Propose:
+		cbi.processNewPropose(te.Height, te.Level, te.PreBlkHash)
 	case chainedbftpb.ConsStateType_PaceMaker:
 		cbi.processLocalTimeout(te.Height, te.Level)
 	default:

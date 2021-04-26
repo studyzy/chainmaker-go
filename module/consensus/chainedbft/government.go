@@ -32,22 +32,19 @@ type epochManager struct {
 }
 
 // createNextEpochIfRequired If the conditions are met, create the next epoch
-func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) error {
-	cbi.logger.Debugf("begin createNextEpochIfRequired ...")
+func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) {
+	cbi.logger.Debugf("begin createNextEpochIfRequired, "+
+		"contractEpoch:%d, nodeEpoch:%d", cbi.governanceContract.GetEpochId(), cbi.smr.getEpochId())
+
 	if cbi.governanceContract.GetEpochId() == cbi.smr.getEpochId() {
-		cbi.logger.Debugf("end createNextEpochIfRequired not create next epoch")
-		return nil
+		return
 	}
-	curEpoch := cbi.createEpoch(height)
-	cbi.mtx.Lock()
-	cbi.nextEpoch = curEpoch
-	cbi.mtx.Unlock()
-	cbi.logger.Debugf("ChainConf change! height [%d]", height)
-	return nil
+	cbi.createEpoch(height)
+	cbi.logger.Debugf("end createNextEpochIfRequired")
 }
 
 // createEpoch create the epoch in the block height
-func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
+func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 	var (
 		validators        []*types.Validator
 		members           []*consensusPb.GovernanceMember
@@ -88,7 +85,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 	}
 	cbi.logger.Debugf("createEpoch useValidators len [%d]",
 		len(epoch.useValidators))
-	return epoch
+	cbi.nextEpoch = epoch
 }
 
 //isValidProposer checks whether given index is valid at level
