@@ -110,6 +110,44 @@ func (c *ContextService) GetState() int32 {
 	context.resp = items
 	return protocol.ContractSdkSignalResultSuccess
 }
+func (c *ContextService) EmitEvent() int32 {
+	context, _ := c.Context(c.ctxId)
+	ec := serialize.NewEasyCodecWithItems(context.in)
+	topic, err := ec.GetString("topic")
+	if err != nil {
+		context.err = fmt.Errorf("emit event encounter bad ctx id:%d", c.ctxId)
+		return protocol.ContractSdkSignalResultFail
+	}
+
+	if err := protocol.CheckTopicStr(topic); err != nil {
+		context.err = err
+		return protocol.ContractSdkSignalResultFail
+	}
+	in := ec.GetItems()
+	var eventData []string
+	for i := 1; i < len(in); i++ {
+		data := in[i].Value.(string)
+		eventData = append(eventData, data)
+		c.logger.Debugf("method EmitEvent eventData :%v", data)
+	}
+	if err := protocol.CheckEventData(eventData); err != nil {
+		context.err = err
+		return protocol.ContractSdkSignalResultFail
+	}
+
+	context.ContractEvent = append(context.ContractEvent, &commonPb.ContractEvent{
+		ContractName:    context.ContractId.ContractName,
+		ContractVersion: context.ContractId.ContractVersion,
+		Topic:           topic,
+		TxId:            context.TxSimContext.GetTx().Header.TxId,
+		EventData:       eventData,
+	})
+
+	items := make([]*serialize.EasyCodecItem, 0)
+
+	context.resp = items
+	return protocol.ContractSdkSignalResultSuccess
+}
 
 // DeleteState implements Syscall interface
 func (c *ContextService) DeleteState() int32 {

@@ -105,6 +105,8 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContract()
 	case protocol.ContractMethodCallContractLen:
 		return s.CallContractLen()
+	case protocol.ContractMethodEmitEvent:
+		return s.EmitEvent()
 	// kv
 	case protocol.ContractMethodGetStateLen:
 		return s.GetStateLen()
@@ -164,6 +166,17 @@ func (s *WaciInstance) CallContractLen() int32 {
 //  CallContractLen get cross contract call result from cache
 func (s *WaciInstance) CallContract() int32 {
 	return s.CallContractLen()
+}
+
+// EmitEvent emit event to chain
+func (s *WaciInstance) EmitEvent() int32 {
+	contractEvent, err := wacsi.EmitEvent(s.RequestBody, s.Sc.TxSimContext, s.Sc.ContractId, s.Sc.Log)
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	s.Sc.ContractEvent = append(s.Sc.ContractEvent, contractEvent)
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 //

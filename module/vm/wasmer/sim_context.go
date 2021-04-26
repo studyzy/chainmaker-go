@@ -33,6 +33,7 @@ type SimContext struct {
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
 	ChainId       string
+	ContractEvent []*commonPb.ContractEvent
 }
 
 // NewSimContext for every transaction

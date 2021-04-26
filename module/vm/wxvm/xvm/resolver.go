@@ -105,6 +105,8 @@ func (s *contextServiceResolver) cCallMethod(
 		s.contextService.CallContract()
 	case "LogMsg":
 		s.contextService.LogMessage()
+	case "EmitEvent":
+		s.contextService.EmitEvent()
 	default:
 		s.contextService.logger.Errorw("no such method ", method)
 	}
