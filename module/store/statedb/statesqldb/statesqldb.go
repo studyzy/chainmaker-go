@@ -189,7 +189,7 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 		return nil, err
 	}
 	if res.IsEmpty() {
-		s.logger.Infof(" read empty state, contract:%s, key:%s", contractName, key)
+		s.logger.Debugf(" read empty state, contract:%s, key:%s", contractName, key)
 		return nil, nil
 	}
 	var stateValue []byte
@@ -199,33 +199,26 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 		s.logger.Errorf("failed to read state, contract:%s, key:%s", contractName, key)
 		return nil, err
 	}
-	s.logger.Infof(" read right state, contract:%s, key:%s valLen:%d", contractName, key, len(stateValue))
+	//s.logger.Debugf(" read right state, contract:%s, key:%s valLen:%d", contractName, key, len(stateValue))
 	return stateValue, nil
 }
 
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
-func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
+func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	s.Lock()
 	defer s.Unlock()
 	if contractName != "" {
 		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
-			return nil
+			return nil, err
 		}
 	}
 	sql := "select * from state_infos where object_key between ? and ?"
 	rows, err := s.db.QueryMulti(sql, startKey, limit)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	defer rows.Close()
-	result := &kvIterator{}
-	for rows.Next() {
-		var kv StateInfo
-		rows.ScanObject(&kv)
-		result.append(&kv)
-	}
-	return result
+	return newKVIterator(rows), nil
 }
 
 // GetLastSavepoint returns the last block height

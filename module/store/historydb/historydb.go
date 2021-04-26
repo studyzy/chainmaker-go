@@ -17,9 +17,9 @@ type HistoryDB interface {
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	//GetHistoryForKey 获得Key的交易历史
-	GetHistoryForKey(contractName string, key []byte) ([]*BlockHeightTxId, error)
-	GetAccountTxHistory(account []byte) ([]*BlockHeightTxId, error)
-	GetContractTxHistory(contractName string) ([]*BlockHeightTxId, error)
+	GetHistoryForKey(contractName string, key []byte) (HistoryIterator, error)
+	GetAccountTxHistory(account []byte) (HistoryIterator, error)
+	GetContractTxHistory(contractName string) (HistoryIterator, error)
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)
 
@@ -29,4 +29,9 @@ type HistoryDB interface {
 type BlockHeightTxId struct {
 	BlockHeight uint64
 	TxId        string
+}
+type HistoryIterator interface {
+	Next() bool
+	Value() (*BlockHeightTxId, error)
+	Release()
 }

@@ -26,9 +26,20 @@ type Iterator interface {
 	Value() []byte
 	Release()
 }
-type HistoryIterator interface {
+
+type StateIterator interface {
+	Next() bool
+	Value() (*store.KV, error)
+	Release()
+}
+type KeyHistoryIterator interface {
 	Next() bool
 	Value() (*store.KeyModification, error)
+	Release()
+}
+type TxHistoryIterator interface {
+	Next() bool
+	Value() (*store.TxHistory, error)
 	Release()
 }
 
@@ -76,7 +87,7 @@ type BlockchainStore interface {
 
 	// SelectObject returns an iterator that contains all the key-values between given key ranges.
 	// startKey is included in the results and limit is excluded.
-	SelectObject(contractName string, startKey []byte, limit []byte) Iterator
+	SelectObject(contractName string, startKey []byte, limit []byte) (StateIterator, error)
 
 	// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 	GetTxRWSet(txId string) (*common.TxRWSet, error)
@@ -90,6 +101,10 @@ type BlockchainStore interface {
 
 	// Close closes all the store db instances and releases any resources held by BlockchainStore
 	Close() error
+	//GetHistoryForKey 查询某合约中某个Key的变更历史
+	GetHistoryForKey(contractName string, key []byte) (KeyHistoryIterator, error)
+	GetAccountTxHistory(accountId []byte) (TxHistoryIterator, error)
+	GetContractTxHistory(contractName string) (TxHistoryIterator, error)
 }
 type StateSqlOperation interface {
 	//不在事务中，直接查询状态数据库，返回一行结果

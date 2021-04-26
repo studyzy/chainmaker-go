@@ -33,8 +33,8 @@ consensus:
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   nodes:
     - org_id: "{org1_id}"
-      address:
-        - "/ip4/127.0.0.1/tcp/{org1_port}/p2p/{org1_peerid}"
+      node_id:
+        - "{org1_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -42,11 +42,11 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "{org1_id}"
-    root: "../config-sql/{org_path}/certs/ca/{org1_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
-  - resource_name: NODE_ADDR_UPDATE
+  - resource_name: NODE_ID_UPDATE
     policy:
       rule: SELF # 规则（ANY，MAJORITY...，全部大写，自动转大写）
       org_list: # 组织名称（组织名称，区分大小写）

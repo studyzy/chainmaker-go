@@ -18,39 +18,32 @@ import (
 type HistoryIteratorImpl struct {
 	contractName string
 	key          []byte
-	dbItr        []*historydb.BlockHeightTxId
+	dbItr        historydb.HistoryIterator
 	resultStore  resultdb.ResultDB
 	blockStore   blockdb.BlockDB
-	current      int
 }
 
-func NewHistoryIterator(contractName string, key []byte, dbItr []*historydb.BlockHeightTxId, resultStore resultdb.ResultDB, blockStore blockdb.BlockDB) *HistoryIteratorImpl {
+func NewHistoryIterator(contractName string, key []byte, dbItr historydb.HistoryIterator, resultStore resultdb.ResultDB, blockStore blockdb.BlockDB) *HistoryIteratorImpl {
 	return &HistoryIteratorImpl{
 		contractName: contractName,
 		key:          key,
 		dbItr:        dbItr,
 		resultStore:  resultStore,
 		blockStore:   blockStore,
-		current:      0,
 	}
 }
 func (hs *HistoryIteratorImpl) Next() bool {
-	hs.current++
-	return hs.current < len(hs.dbItr)
+	return hs.dbItr.Next()
 }
 
-//func (hs *HistoryIteratorImpl)Key() []byte{
-//	return []byte(hs.contractName+"_"+string(hs.key)+"_"+hs.dbItr[hs.current].TxId)
-//}
-//
 func (hs *HistoryIteratorImpl) Value() (*storePb.KeyModification, error) {
 
-	txId := hs.dbItr[hs.current].TxId
+	txId, _ := hs.dbItr.Value()
 	result := storePb.KeyModification{
-		TxId:     txId,
+		TxId:     txId.TxId,
 		IsDelete: false,
 	}
-	rwset, _ := hs.resultStore.GetTxRWSet(txId)
+	rwset, _ := hs.resultStore.GetTxRWSet(txId.TxId)
 	for _, wset := range rwset.TxWrites {
 		if bytes.Equal(wset.Key, hs.key) && wset.ContractName == hs.contractName {
 			result.Value = wset.Value
@@ -59,10 +52,40 @@ func (hs *HistoryIteratorImpl) Value() (*storePb.KeyModification, error) {
 	if len(result.Value) == 0 {
 		result.IsDelete = true
 	}
-	tx, _ := hs.blockStore.GetTxWithBlockInfo(txId)
+	tx, _ := hs.blockStore.GetTxWithBlockInfo(txId.TxId)
 	result.Timestamp = tx.Transaction.Header.Timestamp
 	return &result, nil
 }
 func (hs *HistoryIteratorImpl) Release() {
+	hs.dbItr.Release()
+}
 
+type TxHistoryIteratorImpl struct {
+	dbItr      historydb.HistoryIterator
+	blockStore blockdb.BlockDB
+}
+
+func NewTxHistoryIterator(dbItr historydb.HistoryIterator, blockStore blockdb.BlockDB) *TxHistoryIteratorImpl {
+	return &TxHistoryIteratorImpl{
+		dbItr:      dbItr,
+		blockStore: blockStore,
+	}
+}
+func (hs *TxHistoryIteratorImpl) Next() bool {
+	return hs.dbItr.Next()
+}
+
+func (hs *TxHistoryIteratorImpl) Value() (*storePb.TxHistory, error) {
+	txId, _ := hs.dbItr.Value()
+	result := storePb.TxHistory{
+		TxId:        txId.TxId,
+		BlockHeight: txId.BlockHeight,
+	}
+	tx, _ := hs.blockStore.GetTxWithBlockInfo(txId.TxId)
+	result.Timestamp = tx.Transaction.Header.Timestamp
+	result.BlockHash = tx.BlockHash
+	return &result, nil
+}
+func (hs *TxHistoryIteratorImpl) Release() {
+	hs.dbItr.Release()
 }

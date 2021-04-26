@@ -74,14 +74,41 @@ func (s *StateKvDB) ReadObject(contractName string, key []byte) ([]byte, error) 
 
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
-func (s *StateKvDB) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
+func (s *StateKvDB) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	objectStartKey := constructStateKey(contractName, startKey)
 	objectLimitKey := constructStateKey(contractName, limit)
 	//todo combine cache and database
 	s.Cache.LockForFlush()
 	defer s.Cache.UnLockFlush()
 	//logger.Debugf("start[%s], limit[%s]", objectStartKey, objectLimitKey)
-	return s.DbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
+	iter := s.DbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
+	return &kvi{
+		iter:         iter,
+		contractName: contractName,
+	}, nil
+}
+
+type kvi struct {
+	iter         protocol.Iterator
+	contractName string
+}
+
+func (i *kvi) Next() bool {
+	return i.iter.Next()
+}
+func (i *kvi) Value() (*storePb.KV, error) {
+	err := i.iter.Error()
+	if err != nil {
+		return nil, err
+	}
+	return &storePb.KV{
+		ContractName: i.contractName,
+		Key:          i.iter.Key(),
+		Value:        i.iter.Value(),
+	}, nil
+}
+func (i *kvi) Release() {
+	i.iter.Release()
 }
 
 // GetLastSavepoint returns the last block height

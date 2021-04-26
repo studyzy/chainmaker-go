@@ -153,18 +153,20 @@ func (c *ContextService) NewIterator() int32 {
 	//out := new(IteratorResponse)
 	out := make([]*serialize.EasyCodecItem, 0)
 	for iter.Next() && capLimit > 0 {
+		kv, err := iter.Value()
+		if err != nil {
+			context.err = errors.New(fmt.Sprintf("new iterator select error, %s", err))
+			return protocol.ContractSdkSignalResultFail
+		}
 		var item serialize.EasyCodecItem
-		item.Key = string(iter.Key())
+		item.Key = string(kv.Key)
 		item.KeyType = serialize.EasyKeyType_USER
 		item.ValueType = serialize.EasyValueType_BYTES
-		item.Value = iter.Value()
+		item.Value = kv.Value
 		out = append(out, &item)
 		capLimit -= 1
 	}
-	if iter.Error() != nil {
-		context.err = errors.New(fmt.Sprintf("new iterator select error, %s", iter.Error()))
-		return protocol.ContractSdkSignalResultFail
-	}
+
 	iter.Release()
 
 	context.resp = out

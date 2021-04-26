@@ -331,15 +331,29 @@ func (bs *BlockStoreImpl) ReadObject(contractName string, key []byte) ([]byte, e
 
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
-func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
+func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	return bs.stateDB.SelectObject(contractName, startKey, limit)
 }
-func (bs *BlockStoreImpl) GetHistoryForKey(contractName string, key []byte) (protocol.HistoryIterator, error) {
+func (bs *BlockStoreImpl) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
 	txs, err := bs.historyDB.GetHistoryForKey(contractName, key)
 	if err != nil {
 		return nil, err
 	}
 	return types.NewHistoryIterator(contractName, key, txs, bs.resultDB, bs.blockDB), nil
+}
+func (bs *BlockStoreImpl) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	txs, err := bs.historyDB.GetAccountTxHistory(accountId)
+	if err != nil {
+		return nil, err
+	}
+	return types.NewTxHistoryIterator(txs, bs.blockDB), nil
+}
+func (bs *BlockStoreImpl) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
+	txs, err := bs.historyDB.GetContractTxHistory(contractName)
+	if err != nil {
+		return nil, err
+	}
+	return types.NewTxHistoryIterator(txs, bs.blockDB), nil
 }
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.

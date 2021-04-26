@@ -189,16 +189,8 @@ func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, co
 	if logger == nil {
 		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
-	historyDB := &historykvdb.HistoryKvDB{
-		Cache:  cache.NewStoreCacheMgr(chainId, logger),
-		Logger: logger,
-	}
-	switch engineType {
-	case types.LevelDb:
-		historyDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreHistoryDBDir, config, logger)
-	default:
-		return nil, nil
-	}
+	db := leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreHistoryDBDir, config, logger)
+	historyDB := historykvdb.NewHistoryKvDB(db, cache.NewStoreCacheMgr(chainId, logger), logger)
 	return historyDB, nil
 }
 func (m *Factory) NewResultKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig, logger protocol.Logger) (*resultkvdb.ResultKvDB, error) {

@@ -40,7 +40,7 @@ const (
 const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
-	Port           = 12301
+	Port           = 12351
 	certPathPrefix = "../../config-sql"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
@@ -83,11 +83,11 @@ func main() {
 	fmt.Println("\n\n\n\n======wasmer test=====\n\n\n\n")
 	initWasmerSqlTest()
 	functionalTest(sk3, &client)
+	time.Sleep(time.Second * 5)
 	//
-	//fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
-	//time.Sleep(time.Second * 10)
-	//initGasmTest()
-	//functionalTest(sk3, &client)
+	fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
+	initGasmTest()
+	functionalTest(sk3, &client)
 
 	//performanceTest(sk3, &client)
 	//otherTest(sk3, &client)
@@ -163,6 +163,8 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 
 	fmt.Println("// 2) 执行合约-sql insert")
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
+	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
+
 	for i := 0; i < 10; i++ {
 		testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
@@ -252,30 +254,32 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	}
 
 	// 异常功能测试
-	fmt.Println("\n// 1、建表、索引、视图等DDL语句只能在合约安装init_contract 和合约升级upgrade中使用。")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_execute_ddl", CHAIN1, txId)
-	panicNotEqual(result, "")
-	fmt.Println("\n// 2、SQL中，禁止跨数据库操作，无需指定数据库名。比如select * from db.table 是禁止的； use db;是禁止的。")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_dbname_table_name", CHAIN1, txId)
-	panicNotEqual(result, "")
-	fmt.Println("\n// 3、SQL中，禁止使用事务相关操作的语句，比如commit 、rollback等，事务由ChainMaker框架自动控制。")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_execute_commit", CHAIN1, txId)
-	panicNotEqual(result, "")
-	fmt.Println("\n// 4、SQL中，禁止使用随机数、获得系统时间等不确定性函数，这些函数在不同节点产生的结果可能不一样，导致合约执行结果无法达成共识。")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_random_key", CHAIN1, txId)
-	panicNotEqual(result, "")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_random_str", CHAIN1, txId)
-	panicNotEqual(result, "")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_random_query_str", CHAIN1, txId)
-	panicNotEqual(result, "ok")
-	fmt.Println("\n// 5、SQL中，禁止多条SQL拼接成一个SQL字符串传入。")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_multi_sql", CHAIN1, txId)
-	panicNotEqual(result, "")
-	fmt.Println("\n// 7、禁止建立、修改或删除表名为“state_infos”的表，这是系统自带的提供KV数据存储的表，用于存放PutState函数对应的数据。")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_update_state_info", CHAIN1, txId)
-	panicNotEqual(result, "")
-	_, result = testInvokeSqlCommon(sk3, client, "sql_query_state_info", CHAIN1, txId)
-	panicNotEqual(result, "")
+	if runtimeType == commonPb.RuntimeType_WASMER {
+		fmt.Println("\n// 1、建表、索引、视图等DDL语句只能在合约安装init_contract 和合约升级upgrade中使用。")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_execute_ddl", CHAIN1, txId)
+		panicNotEqual(result, "")
+		fmt.Println("\n// 2、SQL中，禁止跨数据库操作，无需指定数据库名。比如select * from db.table 是禁止的； use db;是禁止的。")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_dbname_table_name", CHAIN1, txId)
+		panicNotEqual(result, "")
+		fmt.Println("\n// 3、SQL中，禁止使用事务相关操作的语句，比如commit 、rollback等，事务由ChainMaker框架自动控制。")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_execute_commit", CHAIN1, txId)
+		panicNotEqual(result, "")
+		fmt.Println("\n// 4、SQL中，禁止使用随机数、获得系统时间等不确定性函数，这些函数在不同节点产生的结果可能不一样，导致合约执行结果无法达成共识。")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_random_key", CHAIN1, txId)
+		panicNotEqual(result, "")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_random_str", CHAIN1, txId)
+		panicNotEqual(result, "")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_random_query_str", CHAIN1, txId)
+		panicNotEqual(result, "ok")
+		fmt.Println("\n// 5、SQL中，禁止多条SQL拼接成一个SQL字符串传入。")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_multi_sql", CHAIN1, txId)
+		panicNotEqual(result, "")
+		fmt.Println("\n// 7、禁止建立、修改或删除表名为“state_infos”的表，这是系统自带的提供KV数据存储的表，用于存放PutState函数对应的数据。")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_update_state_info", CHAIN1, txId)
+		panicNotEqual(result, "")
+		_, result = testInvokeSqlCommon(sk3, client, "sql_query_state_info", CHAIN1, txId)
+		panicNotEqual(result, "")
+	}
 
 	fmt.Println("\nfinal result: ", txId, result, rs)
 }

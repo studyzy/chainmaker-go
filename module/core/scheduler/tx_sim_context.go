@@ -84,9 +84,9 @@ func (s *txSimContextImpl) Del(contractName string, key []byte) error {
 	return nil
 }
 
-func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.Iterator, error) {
+func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	// 将来需要把txRwSet的最新状态填充到Iter中去，覆盖或者替换，才是完整的最新的Iter，否则就只是数据库的状态
-	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit), nil
+	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {

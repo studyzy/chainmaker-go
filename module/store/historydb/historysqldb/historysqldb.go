@@ -144,60 +144,50 @@ func (h *HistorySqlDB) Close() {
 	h.logger.Info("close history sql db")
 	h.db.Close()
 }
-func (h *HistorySqlDB) GetHistoryForKey(contractName string, key []byte) ([]*historydb.BlockHeightTxId, error) {
+
+type hisIter struct {
+	rows protocol.SqlRows
+}
+
+func (hi *hisIter) Next() bool {
+	return hi.rows.Next()
+}
+func (hi *hisIter) Value() (*historydb.BlockHeightTxId, error) {
+	var txId string
+	var blockHeight uint64
+	err := hi.rows.ScanColumns(&txId, &blockHeight)
+	if err != nil {
+		return nil, err
+	}
+	return &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight}, nil
+}
+func (hi *hisIter) Release() {
+	hi.rows.Close()
+}
+func NewHisIter(rows protocol.SqlRows) *hisIter {
+	return &hisIter{rows: rows}
+}
+func (h *HistorySqlDB) GetHistoryForKey(contractName string, key []byte) (historydb.HistoryIterator, error) {
 	sql := "select tx_id,block_height from state_history_infos where contract_name=? and state_key=? order by block_height desc"
 	rows, err := h.db.QueryMulti(sql, contractName, key)
-	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
-	result := []*historydb.BlockHeightTxId{}
-	for rows.Next() {
-		var txId string
-		var blockHeight uint64
-		err = rows.ScanColumns(&txId, &blockHeight)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight})
-	}
-	return result, nil
+	return NewHisIter(rows), nil
 }
-func (h *HistorySqlDB) GetAccountTxHistory(account []byte) ([]*historydb.BlockHeightTxId, error) {
+func (h *HistorySqlDB) GetAccountTxHistory(account []byte) (historydb.HistoryIterator, error) {
 	sql := "select tx_id,block_height from account_tx_history_infos where account_id=? order by block_height desc"
 	rows, err := h.db.QueryMulti(sql, account)
-	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
-	result := []*historydb.BlockHeightTxId{}
-	for rows.Next() {
-		var txId string
-		var blockHeight uint64
-		err = rows.ScanColumns(&txId, &blockHeight)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight})
-	}
-	return result, nil
+	return NewHisIter(rows), nil
 }
-func (h *HistorySqlDB) GetContractTxHistory(contractName string) ([]*historydb.BlockHeightTxId, error) {
+func (h *HistorySqlDB) GetContractTxHistory(contractName string) (historydb.HistoryIterator, error) {
 	sql := "select tx_id,block_height from contract_tx_history_infos where contract_name=? order by block_height desc"
 	rows, err := h.db.QueryMulti(sql, contractName)
-	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
-	result := []*historydb.BlockHeightTxId{}
-	for rows.Next() {
-		var txId string
-		var blockHeight uint64
-		err = rows.ScanColumns(&txId, &blockHeight)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, &historydb.BlockHeightTxId{TxId: txId, BlockHeight: blockHeight})
-	}
-	return result, nil
+	return NewHisIter(rows), nil
 }
