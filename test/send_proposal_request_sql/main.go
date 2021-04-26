@@ -40,8 +40,8 @@ const (
 const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
-	Port           = 12351
-	certPathPrefix = "../../config-sql"
+	Port           = 12301
+	certPathPrefix = "../../config"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
@@ -80,10 +80,10 @@ func main() {
 	}
 
 	// test
-	fmt.Println("\n\n\n\n======wasmer test=====\n\n\n\n")
-	initWasmerSqlTest()
-	functionalTest(sk3, &client)
-	time.Sleep(time.Second * 5)
+	//fmt.Println("\n\n\n\n======wasmer test=====\n\n\n\n")
+	//initWasmerSqlTest()
+	//functionalTest(sk3, &client)
+	//time.Sleep(time.Second * 5)
 	//
 	fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
 	initGasmTest()
