@@ -63,6 +63,6 @@ func GenerateCreateTopicTableDdl(t *commonPb.ContractEvent, chainId string) stri
 	tableName := fmt.Sprintf("%s_%s_%s", chainId, t.ContractName, t.Topic)
 	topicTableNameHash := sha256.Sum256([]byte(tableName))
 	topicTableNameHex := fmt.Sprintf("event%s", hex.EncodeToString(topicTableNameHash[:20])[5:])
-	createTopicTableSql = fmt.Sprintf("CREATE TABLE IF NOT EXISTS  %s (%s PRIMARY KEY (id) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;", topicTableNameHex, TopicTableColumnDdl)
+	createTopicTableSql = fmt.Sprintf("CREATE TABLE IF NOT EXISTS  %s (%s PRIMARY KEY (id) );", topicTableNameHex, TopicTableColumnDdl)
 	return createTopicTableSql
 }

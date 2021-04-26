@@ -1,4 +1,4 @@
-package eventmysqldb
+package eventsqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
@@ -38,11 +38,11 @@ func (c *ContractEventMysqlDB) initDb(dbName string) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create database %s db:%s", dbName, err))
 	}
-	err = c.db.CreateTableIfNotExist(BlockHeightWithTopicTableName)
+	err = c.createTable(CreateBlockHeightWithTopicTableDdl)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create table %s db:%s", BlockHeightWithTopicTableName, err))
 	}
-	err = c.db.CreateTableIfNotExist(BlockHeightIndexTableName)
+	err = c.createTable(CreateBlockHeightIndexTableDDL)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create table %s db:%s", BlockHeightIndexTableName, err))
 	}
@@ -59,7 +59,7 @@ func (c *ContractEventMysqlDB) InitGenesis(chainId string) {
 }
 
 func getDbName(chainId string) string {
-	return "contractdb" + chainId
+	return "contract_eventdb" + chainId
 }
 
 // CommitBlock commits the event in an atomic operation
@@ -77,47 +77,48 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 
 	dbTx, err := c.db.BeginDbTransaction(blockHashStr)
 	if err != nil {
-		for _, event := range contractEventInfo {
-			createDdl := utils.GenerateCreateTopicTableDdl(event, chanId)
-			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight)
-			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
-			topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic
-
-			if createDdl != "" {
-				_, err := dbTx.ExecSql(createDdl)
-				if err != nil {
-					c.Logger.Errorf("failed to create contract event topic table, contract:%s, topic:%s, err:%s", event.ContractName, event.Topic, err.Error)
-					c.db.RollbackDbTransaction(blockHashStr)
-					return err
-				}
-			}
-
-			if saveDdl != "" {
-				_, err := dbTx.ExecSql(saveDdl)
-				if err != nil {
-					c.Logger.Errorf("failed to save contract event, contract:%s, topic:%s, err:%s", event.ContractName, event.Topic, err.Error)
-					c.db.RollbackDbTransaction(blockHashStr)
-					return err
-				}
-			}
-
-			if heightWithTopicDdl != "" {
-				_, err := dbTx.ExecSql(heightWithTopicDdl)
-				if err != nil {
-					c.Logger.Errorf("failed to save block height with topic table, height:%s, topicTableName:%s, err:%s", block.Header.BlockHeight, topicTableName, err.Error())
-					c.db.RollbackDbTransaction(blockHashStr)
-					return err
-				}
-			}
-		}
-		_, err := dbTx.ExecSql(blockIndexDdl)
-		if err != nil {
-			c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, err.Error())
-			c.db.RollbackDbTransaction(blockHashStr)
-			return err
-		}
-
+		return err
 	}
+	for _, event := range contractEventInfo {
+		createDdl := utils.GenerateCreateTopicTableDdl(event, chanId)
+		saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight)
+		heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
+		topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic
+
+		if createDdl != "" {
+			_, err := dbTx.ExecSql(createDdl)
+			if err != nil {
+				c.Logger.Errorf("failed to create contract event topic table, contract:%s, topic:%s, err:%s", event.ContractName, event.Topic, err.Error)
+				c.db.RollbackDbTransaction(blockHashStr)
+				return err
+			}
+		}
+
+		if saveDdl != "" {
+			_, err := dbTx.ExecSql(saveDdl)
+			if err != nil {
+				c.Logger.Errorf("failed to save contract event, contract:%s, topic:%s, err:%s", event.ContractName, event.Topic, err.Error)
+				c.db.RollbackDbTransaction(blockHashStr)
+				return err
+			}
+		}
+
+		if heightWithTopicDdl != "" {
+			_, err := dbTx.ExecSql(heightWithTopicDdl)
+			if err != nil {
+				c.Logger.Errorf("failed to save block height with topic table, height:%s, topicTableName:%s, err:%s", block.Header.BlockHeight, topicTableName, err.Error())
+				c.db.RollbackDbTransaction(blockHashStr)
+				return err
+			}
+		}
+	}
+	_, err = dbTx.ExecSql(blockIndexDdl)
+	if err != nil {
+		c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, err.Error())
+		c.db.RollbackDbTransaction(blockHashStr)
+		return err
+	}
+
 	c.db.CommitDbTransaction(blockHashStr)
 	c.Logger.Debugf("chain[%s]: commit contract event block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
