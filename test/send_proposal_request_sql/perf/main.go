@@ -40,7 +40,7 @@ const (
 const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
-	Port           = 12301
+	Port           = 12351
 	certPathPrefix = "../../../config-sql"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
@@ -80,15 +80,17 @@ func main() {
 
 	// test
 	fmt.Println("\n\n\n\n======wasmer test=====\n\n\n\n")
-	initWasmerSqlTest()
+	//initWasmerSqlTest()
+	initGasmSqlTest()
 
 	performanceTestCreate(sk3, &client)
-
-	performanceTestUpdate(sk3, &client)
 	time.Sleep(4 * time.Second)
 
-	performanceTestBlank(sk3, &client)
-	time.Sleep(4 * time.Second)
+	//performanceTestUpdate(sk3, &client)
+	//time.Sleep(4 * time.Second)
+	//
+	//performanceTestBlank(sk3, &client)
+	//time.Sleep(4 * time.Second)
 
 	performanceTestInsert(sk3, &client)
 }
@@ -103,7 +105,7 @@ func other(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	}
 }
 
-var count = 30000
+var count = 10000
 var goroutineNumber = 5
 
 func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
@@ -236,16 +238,10 @@ func initWasmerSqlTest() {
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmSqlTest() {
-	WasmPath = "../../wasm/go-sql-1.1.0.wasm"
-	WasmUpgradePath = "../../wasm/go-sql-1.1.0.wasm"
-	contractName = "contract2001"
+	WasmPath = "go-sql-perf-1.1.0.wasm"
+	WasmUpgradePath = "go-sql-perf-1.1.0.wasm"
+	contractName = "contract10002"
 	runtimeType = commonPb.RuntimeType_GASM
-}
-func initWxwmSqlTest() {
-	WasmPath = "../../wasm/cpp-func-verify-1.0.0.wasm"
-	WasmUpgradePath = "../../wasm/cpp-func-verify-1.0.0.wasm"
-	contractName = "contract300"
-	runtimeType = commonPb.RuntimeType_WXVM
 }
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
 
