@@ -207,6 +207,23 @@ func (b *BlockKvDB) GetTx(txId string) (*commonPb.Transaction, error) {
 
 	return &tx, nil
 }
+func (b *BlockKvDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
+	txIdKey := constructTxIDKey(txId)
+	bytes, err := b.get(txIdKey)
+	if err != nil {
+		return nil, err
+	} else if len(bytes) == 0 {
+		return nil, nil
+	}
+
+	var tx commonPb.Transaction
+	err = proto.Unmarshal(bytes, &tx)
+	if err != nil {
+		return nil, err
+	}
+	//TODO devin add block info
+	return &commonPb.TransactionInfo{Transaction: &tx}, nil
+}
 
 // TxExists returns true if the tx exist, or returns false if none exists.
 func (b *BlockKvDB) TxExists(txId string) (bool, error) {

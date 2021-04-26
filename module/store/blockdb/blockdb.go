@@ -34,6 +34,7 @@ type BlockDB interface {
 
 	// GetTx retrieves a transaction by txid, or returns nil if none exists.
 	GetTx(txId string) (*commonPb.Transaction, error)
+	GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error)
 
 	// TxExists returns true if the tx exist, or returns false if none exists.
 	TxExists(txId string) (bool, error)

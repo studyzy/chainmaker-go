@@ -13,6 +13,9 @@ import (
 	"strconv"
 )
 
+func (b *Block) Hash() []byte {
+	return b.Header.BlockHash
+}
 func (b *Block) GetBlockHashStr() string {
 	return hex.EncodeToString(b.Header.BlockHash)
 }

@@ -8,6 +8,7 @@
 package types
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"regexp"
 	"strings"
@@ -86,7 +87,7 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 	if match {
 		return ERROR_FORBIDDEN_SQL
 	}
-	tableNames := s.getSqlTableName(SQL)
+	tableNames := utils.GetSqlTableName(SQL)
 	for _, tableName := range tableNames {
 		if strings.Contains(tableName, ".") {
 			return ERROR_FORBIDDEN_DOT_IN_TABLE
@@ -95,7 +96,7 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 			return ERROR_STATE_INFOS
 		}
 	}
-	count := s.getSqlStatementCount(SQL)
+	count := utils.GetSqlStatementCount(SQL)
 	if count > 1 {
 		return ERROR_FORBIDDEN_MULTI_SQL
 	}
@@ -133,23 +134,26 @@ func findStringRange(sql string) [][2]int {
 	stringRange := [][2]int{}
 	var range1 [2]int
 	skipNext := false
+	splitChar := int32(0)
 	for i, c := range sql {
 		if skipNext {
 			skipNext = false
 			continue
 		}
-		if c == '\'' {
-			if i != len(sql)-1 && sql[i+1] == '\'' {
+		if (c == '\'' || c == '"') && (splitChar == 0 || c == splitChar) {
+			if i != len(sql)-1 && int32(sql[i+1]) == c {
 				skipNext = true
 				continue
 			}
 			inString = !inString
 			if inString {
 				range1[0] = i
+				splitChar = c
 			} else {
 				range1[1] = i
 				stringRange = append(stringRange, range1)
 				range1 = [2]int{}
+				splitChar = 0
 			}
 		}
 	}

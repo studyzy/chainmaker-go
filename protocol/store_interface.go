@@ -26,6 +26,11 @@ type Iterator interface {
 	Value() []byte
 	Release()
 }
+type HistoryIterator interface {
+	Next() bool
+	Value() (*store.KeyModification, error)
+	Release()
+}
 
 // BlockchainStore provides handle to store instances
 type BlockchainStore interface {

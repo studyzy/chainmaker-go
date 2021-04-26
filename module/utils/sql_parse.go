@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package types
+package utils
 
 import (
 	"github.com/pingcap/parser"
@@ -38,7 +38,7 @@ func extract(rootNode *ast.StmtNode) []string {
 }
 
 //获得SQL中使用到的表名，如果带有dbName.tableName，那么返回完整的dbName.tableName
-func (s *StandardSqlVerify) getSqlTableName(sql string) []string {
+func GetSqlTableName(sql string) []string {
 	p := parser.New()
 	stmtNodes, _, err := p.Parse(sql, "", "")
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *StandardSqlVerify) getSqlTableName(sql string) []string {
 }
 
 //判断一个sql字符串是由多少条独立的SQL语句组成
-func (s *StandardSqlVerify) getSqlStatementCount(sql string) int {
+func GetSqlStatementCount(sql string) int {
 	p := parser.New()
 	stmtNodes, _, err := p.Parse(sql, "", "")
 	if err != nil {

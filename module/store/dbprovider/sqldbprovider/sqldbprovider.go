@@ -97,8 +97,9 @@ func NewSqlDBHandle(chainId string, conf *localconf.SqlDbConfig, log protocol.Lo
 			Logger: logger.Default.LogMode(logger.Error),
 		})
 		if err != nil {
-			panic(fmt.Sprintf("failed to open mysql:%s", err))
+			panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
 		}
+		log.Debug("open new gorm db connection for " + conf.SqlDbType)
 		provider.db = db
 		provider.contextDbName = "mysql" //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
@@ -244,17 +245,22 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 		return res.Error
 	}
 	p.contextDbName = dbName
+	p.log.Debugf("execute sql: use %s", dbName)
 	return nil
 }
 func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 	p.Lock()
 	defer p.Unlock()
+	if p.contextDbName == dbName {
+		return nil
+	}
 	if p.dbType == types.Sqlite {
 		return nil
 	}
 	//尝试切换数据库
 	res := p.db.Exec("use " + dbName)
 	if res.Error != nil { //切换失败，没有这个数据库，则创建
+		p.log.Debugf("try to run 'use %s' get an error, it means database not exist, create it!", dbName)
 		tx := p.db.Exec("create database " + dbName)
 		if tx.Error != nil {
 			return tx.Error //创建失败
@@ -341,6 +347,8 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	tx := p.db.Begin()
 	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
 	p.dbTxCache[txName] = sqltx
+	p.contextDbName = ""
+
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
 }

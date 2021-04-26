@@ -9,9 +9,11 @@ package historykvdb
 import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
+	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"encoding/binary"
+	"errors"
 	"fmt"
 )
 
@@ -130,4 +132,13 @@ func (h *HistoryKvDB) has(key []byte) (bool, error) {
 
 func constructTxRWSetIDKey(txId string) []byte {
 	return append([]byte{txRWSetIdxKeyPrefix}, txId...)
+}
+func (h *HistoryKvDB) GetHistoryForKey(contractName string, key []byte) ([]*historydb.BlockHeightTxId, error) {
+	return nil, errors.New("not implement") //TODO
+}
+func (h *HistoryKvDB) GetAccountTxHistory(account []byte) ([]*historydb.BlockHeightTxId, error) {
+	return nil, errors.New("not implement") //TODO
+}
+func (h *HistoryKvDB) GetContractTxHistory(contractName string) ([]*historydb.BlockHeightTxId, error) {
+	return nil, errors.New("not implement") //TODO
 }

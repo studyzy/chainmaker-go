@@ -18,8 +18,9 @@ type TxInfo struct {
 	Sender           []byte `gorm:"type:blob;size:65535"`
 	TxId             string `gorm:"primaryKey;size:128"`
 	TxType           int32
-	BlockHeight      int64  `gorm:"index:idx_height_offset"`
-	Offset           int32  `gorm:"index:idx_height_offset"`
+	BlockHeight      uint64 `gorm:"index:idx_height_offset"`
+	BlockHash        []byte `gorm:"size:128"`
+	Offset           uint32 `gorm:"index:idx_height_offset"`
 	Timestamp        int64  `gorm:"default:0"`
 	ExpirationTime   int64  `gorm:"default:0"`
 	RequestPayload   []byte `gorm:"type:longblob"`
@@ -30,12 +31,13 @@ type TxInfo struct {
 }
 
 // NewTxInfo construct new `TxInfo`
-func NewTxInfo(tx *commonPb.Transaction, blockHeight int64, offset int32) (*TxInfo, error) {
+func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, offset uint32) (*TxInfo, error) {
 	txInfo := &TxInfo{
 		ChainId:          tx.Header.ChainId,
 		TxId:             tx.Header.TxId,
 		TxType:           int32(tx.Header.TxType),
 		BlockHeight:      blockHeight,
+		BlockHash:        blockHash,
 		Offset:           offset,
 		Timestamp:        tx.Header.Timestamp,
 		ExpirationTime:   tx.Header.ExpirationTime,
@@ -96,4 +98,14 @@ func (t *TxInfo) GetTx() (*commonPb.Transaction, error) {
 		tx.Result.ContractResult = &contractResult
 	}
 	return tx, nil
+}
+func (t *TxInfo) GetTxInfo() (*commonPb.TransactionInfo, error) {
+	txInfo := &commonPb.TransactionInfo{
+		BlockHeight: t.BlockHeight,
+		BlockHash:   t.BlockHash,
+		TxIndex:     t.Offset,
+	}
+	var err error
+	txInfo.Transaction, err = t.GetTx()
+	return txInfo, err
 }

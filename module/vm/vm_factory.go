@@ -380,7 +380,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if len(versionInContext) == 0 {
 			contractResult.Message = fmt.Sprintf("%s the contract does not exist. contract[%s], please create a contract ", msgPre, contractName)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+			return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_VERSION_NOT_EXIST_FAILED, resultVersion)
 		} else {
 			resultVersion = string(versionInContext)
 		}
@@ -392,7 +392,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if versionInContext != nil {
 			contractResult.Message = fmt.Sprintf("%s the contract already exists. contract[%s], version[%s]", msgPre, contractName, string(versionInContext))
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+			return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_VERSION_EXIST_FAILED, resultVersion)
 		}
 	}
 
@@ -400,7 +400,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 		for i := range v.excludeMethodList {
 			if v.currentMethod == v.excludeMethodList[i] {
 				contractResult.Message = fmt.Sprintf("%s contract[%s], method[%s] is not allowed to be called, it's the retention method", msgPre, contractName, v.excludeMethodList[i])
-				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+				return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_INVOKE_METHOD_FAILED, resultVersion)
 			}
 		}
 	}
@@ -412,13 +412,13 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 		} else {
 			if len(contractId.ContractVersion) > protocol.DefaultVersionLen {
 				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] too long, should be less than %d", msgPre, contractId, protocol.DefaultVersionLen)
-				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+				return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION, resultVersion)
 			}
 
 			match, err := regexp.MatchString(protocol.DefaultVersionRegex, contractId.ContractVersion)
 			if err != nil || !match {
 				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", msgPre, contractId, protocol.DefaultVersionRegex)
-				return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+				return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION, resultVersion)
 			}
 		}
 	}
