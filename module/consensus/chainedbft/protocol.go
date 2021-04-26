@@ -72,6 +72,8 @@ func (cbi *ConsensusChainedBftImpl) processNewLevel(height uint64, level uint64)
 }
 
 func (cbi *ConsensusChainedBftImpl) processNewPropose(height, level uint64, preBlkHash []byte) {
+	cbi.logger.Debugf("begin processNewPropose block:[%d:%d], preHash:%x, "+
+		"nodeStatus: %s", height, level, preBlkHash, cbi.smr.state.String())
 	if cbi.smr.state != chainedbftpb.ConsStateType_Propose {
 		return
 	}
