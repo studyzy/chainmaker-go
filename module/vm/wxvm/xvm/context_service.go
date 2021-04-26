@@ -106,12 +106,10 @@ func (c *ContextService) GetObject(ctxId int64, in []*serialize.EasyCodecItem) (
 	return items, nil
 }
 func (c *ContextService) EmitEvent(ctxId int64, in []*serialize.EasyCodecItem) ([]*serialize.EasyCodecItem, error) {
-	c.logger.Debugf("this Emit Event")
 	context, ok := c.Context(ctxId)
 	if !ok {
 		return nil, fmt.Errorf("emit event encounter bad ctx id:%d", ctxId)
 	}
-	c.logger.Debugf("this Emit Event")
 	topic, ok := serialize.GetValueFromItems(in, "topic", serialize.EasyKeyType_USER)
 	if err := protocol.CheckTopicStr(topic.(string)); err != nil {
 		return nil, err
@@ -120,7 +118,7 @@ func (c *ContextService) EmitEvent(ctxId int64, in []*serialize.EasyCodecItem) (
 	for i := 1; i < len(in); i++ {
 		data := in[i].Value.(string)
 		eventData = append(eventData, data)
-		c.logger.Debugf("EmitEvent EventData :%v", data)
+		c.logger.Debugf("method EmitEvent eventData :%v", data)
 	}
 	if err := protocol.CheckEventData(eventData); err != nil {
 		return nil, err
