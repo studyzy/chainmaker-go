@@ -10,6 +10,7 @@ require (
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	github.com/gogo/protobuf v1.3.2
+	github.com/samkumar/hibe v0.0.0-20171013061409-c1cd171b6178
 	github.com/spf13/cobra v1.1.1
 	google.golang.org/grpc v1.36.0
 )

@@ -45,7 +45,7 @@ func createContract() error {
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := "init"
+	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,

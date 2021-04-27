@@ -90,6 +90,7 @@ func VerifyBlockSignatures(
 	ac protocol.AccessControlProvider,
 	store protocol.BlockchainStore,
 	block *commonpb.Block,
+	ledger protocol.LedgerCache,
 ) error {
 	consensusType := chainConf.ChainConfig().Consensus.Type
 	switch consensusType {
@@ -98,7 +99,7 @@ func VerifyBlockSignatures(
 	case consensuspb.ConsensusType_RAFT:
 		return raft.VerifyBlockSignatures(block)
 	case consensuspb.ConsensusType_HOTSTUFF:
-		return chainedbft.VerifyBlockSignatures(chainConf, ac, store, block)
+		return chainedbft.VerifyBlockSignatures(chainConf, ac, store, block, ledger)
 	case consensuspb.ConsensusType_SOLO:
 		fallthrough
 	default:

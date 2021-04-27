@@ -212,7 +212,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 }
 
 func (v *BlockVerifierImpl) verifyVoteSig(block *commonpb.Block) error {
-	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block)
+	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block, v.ledgerCache)
 }
 
 func parseVerifyResult(block *commonpb.Block, isValid bool) *consensuspb.VerifyResult {

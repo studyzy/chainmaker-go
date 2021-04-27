@@ -57,6 +57,9 @@ var (
 	orgIDs       []string
 
 	nodeNum int
+
+	fileCache FileCacheReader     = NewFileCacheReader()
+	certCache CertFileCacheReader = NewCertFileCacheReader()
 )
 
 type KeyValuePair struct {
@@ -387,7 +390,8 @@ func (s *Statistician) PrintDetails(all bool) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(bytes), "\n")
+	fmt.Println(string(bytes))
+	fmt.Println()
 }
 
 type numberResults struct {
@@ -663,7 +667,7 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := "init"
+	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
@@ -716,7 +720,7 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := "upgrade"
+	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
@@ -761,16 +765,28 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
 
-	file, err := ioutil.ReadFile(userCrtPath)
-	if err != nil {
-		return nil, err
-	}
+	file := fileCache.Read(userCrtPath)
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	senderFull := &acPb.SerializedMember{
 		OrgId:      orgId,
-		MemberInfo: file,
+		MemberInfo: *file,
 		IsFullCert: true,
+	}
+
+	var sender *acPb.SerializedMember
+	if useShortCrt {
+		certId, err := certCache.Read(userCrtPath, senderFull.MemberInfo, hashAlgo)
+		if err != nil {
+			return nil, fmt.Errorf("fail to compute the identity for certificate [%v]", err)
+		}
+		sender = &acPb.SerializedMember{
+			OrgId:      senderFull.OrgId,
+			MemberInfo: *certId,
+			IsFullCert: false,
+		}
+	} else {
+		sender = senderFull
 	}
 
 	// 构造Header
@@ -795,7 +811,7 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 		return nil, err
 	}
 
-	signer, err := getSigner(sk3, sender)
+	signer, err := getSigner(sk3, senderFull)
 	if err != nil {
 		return nil, err
 	}
