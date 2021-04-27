@@ -8,7 +8,6 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/common/sortedmap"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -522,12 +521,6 @@ func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext,
 	nodes := chainConfig.Consensus.Nodes
 	nodeId = strings.TrimSpace(nodeId)
 	newNodeId = strings.TrimSpace(newNodeId)
-
-	if !helper.P2pAddressFormatVerify(newNodeId) {
-		err = fmt.Errorf("update node id failed, address[%s] format error", newNodeId)
-		r.log.Error(err)
-		return nil, err
-	}
 
 	index := -1
 	var nodeConf *configPb.OrgConfig
