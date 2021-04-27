@@ -284,7 +284,7 @@ func (pool *txPoolImpl) RetryAndRemoveTxs(retryTxs []*commonPb.Transaction, remo
 	start := utils.CurrentTimeMillisSeconds()
 	pool.retryTxs(retryTxs)
 	pool.removeTxs(removeTxs)
-	pool.log.Infof("RetryAndRemoveTxs elapse time: %d, retry txs:%d, remove txs:%d "+
+	pool.log.Debugf("RetryAndRemoveTxs elapse time: %d, retry txs:%d, remove txs:%d "+
 		"", utils.CurrentTimeMillisSeconds()-start, len(retryTxs), len(removeTxs))
 }
 
