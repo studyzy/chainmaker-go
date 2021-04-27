@@ -781,10 +781,10 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 }
 
 func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
-	cbi.logger.Debugf("processBlockCommitted received has committed block, height:%d, hash:%x",
-		block.Header.BlockHeight, block.Header.BlockHash)
 	cbi.mtx.Lock()
 	defer cbi.mtx.Unlock()
+	cbi.logger.Debugf("processBlockCommitted received has committed block, height:%d, hash:%x",
+		block.Header.BlockHeight, block.Header.BlockHash)
 	// 1. check base commit block info
 	if int64(cbi.commitHeight) >= block.Header.BlockHeight {
 		cbi.logger.Warnf("service selfIndexInEpoch [%v] block:[%d:%x] has been committed",

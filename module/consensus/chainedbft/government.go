@@ -91,7 +91,6 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 //isValidProposer checks whether given index is valid at level
 func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) bool {
 	proposerIndex := cbi.getProposer(level)
-	cbi.logger.Debugf("level: %d, actual proposer index: %d, input index: %d", level, proposerIndex, index)
 	if proposerIndex == index {
 		return true
 	}
