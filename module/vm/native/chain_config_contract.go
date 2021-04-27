@@ -158,14 +158,13 @@ type ChainConfigRuntime struct {
 
 // GetChainConfig get newest chain config
 func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
-	if params == nil {
-		r.log.Error(ErrParamsEmpty)
-		return nil, ErrParamsEmpty
-	}
-	bytes, err := txSimContext.Get(chainConfigContractName, []byte(keyChainConfig))
+	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
-		r.log.Errorf("txSimContext get failed, name[%s] key[%s] err: %s", chainConfigContractName, keyChainConfig, err)
 		return nil, err
+	}
+	bytes, err := proto.Marshal(chainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("proto marshal chain config failed, err: %s", err.Error())
 	}
 	return bytes, nil
 }

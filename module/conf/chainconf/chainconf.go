@@ -251,6 +251,11 @@ func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache
 	if err != nil {
 		return nil, err
 	}
+
+	err = HandleCompatibility(chainConfig)
+	if err != nil {
+		return nil, err
+	}
 	return chainConfig, nil
 }
 
