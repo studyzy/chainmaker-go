@@ -328,7 +328,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 		}
 
 		// del freeze target
-		if err := txContext.Del(contractName, freezeKey); err != nil {
+		if err := txContext.Del(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), freezeKey); err != nil {
 			contractResult.Message = fmt.Sprintf("failed to store unfreeze target for contract:%s, error:%s", contractName, err.Error())
 			return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
 		}
