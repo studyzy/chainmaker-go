@@ -3,7 +3,7 @@ version: '3'
 services:
   node1:
     container_name: node1
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org1 start"
     ports:
@@ -17,7 +17,7 @@ services:
 
   node2:
     container_name: node2
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org2 start"
     ports:
@@ -31,7 +31,7 @@ services:
 
   node3:
    container_name: node3
-   image: "chainmaker:v0.7.0"
+   image: "chainmaker"
    working_dir: "/chainmaker-go/bin"
    command: "chainmaker -e wx-org3 start"
    ports:
@@ -45,7 +45,7 @@ services:
 
   node4:
    container_name: node4
-   image: "chainmaker:v0.7.0"
+   image: "chainmaker"
    working_dir: "/chainmaker-go/bin"
    command: "chainmaker -e wx-org4 start"
    ports:
@@ -59,7 +59,7 @@ services:
 
   node5:
     container_name: node5
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org5 start"
     ports:
@@ -73,7 +73,7 @@ services:
 
   node6:
     container_name: node6
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org6 start"
     ports:
@@ -87,7 +87,7 @@ services:
 
   node7:
     container_name: node7
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org7 start"
     ports:
@@ -101,7 +101,7 @@ services:
 
   node8:
     container_name: node8
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org8 start"
     ports:
@@ -115,7 +115,7 @@ services:
 
   node9:
     container_name: node9
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org9 start"
     ports:
@@ -129,7 +129,7 @@ services:
 
   node10:
     container_name: node10
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org10 start"
     ports:
