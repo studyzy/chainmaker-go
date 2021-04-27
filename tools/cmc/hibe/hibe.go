@@ -247,7 +247,7 @@ func genPrivateKey() error {
 		if i == 0 {
 			fileName = fmt.Sprintf("%s%s", fileName, item)
 		} else {
-			fileName = fmt.Sprintf("%s_%s", fileName, item)
+			fileName = fmt.Sprintf("%s#%s", fileName, item)
 		}
 	}
 
@@ -306,7 +306,7 @@ func genPrivateKey() error {
 		pathSlice := strings.Split(keyFilePath, "/")
 		parentFileName := pathSlice[len(pathSlice)-1]
 		parentFileName = strings.TrimSuffix(parentFileName, ".privateKey")
-		parentIdStr := strings.ReplaceAll(parentFileName, "_", "/")
+		parentIdStr := strings.ReplaceAll(parentFileName, "#", "/")
 
 		if !strings.HasPrefix(id, parentIdStr) {
 			return fmt.Errorf("no permission, the input ID [ %s ] is not your subordinate level", id)
@@ -334,11 +334,6 @@ func genPrivateKey() error {
 			}
 		}
 		privateKey = parentKey
-
-		//privateKey, err = hibe.KeyGenFromParent(rand.Reader, params, parentKey, hibeId)
-		//if err != nil {
-		//	return err
-		//}
 	}
 
 	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
