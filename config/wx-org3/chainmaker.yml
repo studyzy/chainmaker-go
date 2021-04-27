@@ -71,24 +71,23 @@ pprof:
   port: 24321
 
 storage:
-  store_path: ../data/org1/ledgerData1
+  store_path: ../data/org3/ledgerData1
   blockdb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/blocks
+      store_path: ../data/org3/blocks
   statedb_config:
-    provider: sql
-    sqldb_config:
-      sqldb_type: sqlite
-      dsn: ../data/org1/state.db
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org3/state
   historydb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/history
+      store_path: ../data/org3/history
   resultdb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/org1/result
+      store_path: ../data/org3/result
   disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
   contract_eventdb_config:
     provider: sql                 #如果开启contract event db 功能，需要指定provider为sql

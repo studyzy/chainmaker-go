@@ -15,7 +15,7 @@ crypto:
 
 # 合约支持类型的配置
 contract:
-  enable_sql_support: true
+  enable_sql_support: false
   
 # 交易、区块相关配置
 block:
