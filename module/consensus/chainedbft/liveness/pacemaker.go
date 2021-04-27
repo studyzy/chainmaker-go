@@ -135,8 +135,8 @@ func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint
 		p.height = height + 1
 	}
 	newLevel := maxLevel + 1
-	p.logger.Debugf("process certificates (currentLevel [%v] highestTCLevel [%v] newLevel [%v] hqcLevel [%v] htcLevel [%v] hcLevel [%v])\n",
-		p.currentLevel, p.highestTCLevel, newLevel, hqcLevel, htcLevel, hcLevel)
+	p.logger.Debugf("process certificates (currentLevel [%v] highestTCLevel [%v] newLevel [%v] hqcLevel"+
+		" [%v] htcLevel [%v] hcLevel [%v], height: %d)\n", p.currentLevel, p.highestTCLevel, newLevel, hqcLevel, htcLevel, hcLevel, p.height)
 	if newLevel > p.currentLevel {
 		p.currentLevel = newLevel
 		p.setupTimeout()

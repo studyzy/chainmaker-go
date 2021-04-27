@@ -73,6 +73,10 @@ func (bp *BlockPool) InsertQC(qc *chainedbftpb.QuorumCert) error {
 	return nil
 }
 
+func (bp *BlockPool) GetBlocks(height int64) []*common.Block {
+	return bp.blockTree.GetBlocks(height)
+}
+
 //GetRootBlock get root block
 func (bp *BlockPool) GetRootBlock() *common.Block {
 	bp.mtx.RLock()

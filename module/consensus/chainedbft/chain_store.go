@@ -163,6 +163,10 @@ func (cs *chainStore) insertBlock(block *common.Block) error {
 	return nil
 }
 
+func (cs *chainStore) getBlocks(height int64) []*common.Block {
+	return cs.blockPool.GetBlocks(height)
+}
+
 func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
 	var (
 		qcData []byte
