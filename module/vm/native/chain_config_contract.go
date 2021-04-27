@@ -123,6 +123,12 @@ func getChainConfig(txSimContext protocol.TxSimContext, params map[string]string
 		return nil, msg
 	}
 
+	err = chainconf.HandleCompatibility(&chainConfig)
+	if err != nil {
+		msg := fmt.Errorf("compatibility handle failed, contractName %s err: %+v", chainConfigContractName, err)
+		return nil, msg
+	}
+
 	return &chainConfig, nil
 }
 
