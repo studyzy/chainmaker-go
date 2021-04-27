@@ -180,12 +180,13 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	return nil
 }
 
-func (*TxContextMockTest) Select(name string, startKey []byte, limit []byte) (protocol.Iterator, error) {
+func (*TxContextMockTest) Select(name string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	panic("implement me")
 }
 
 func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte,
 	parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
@@ -204,7 +205,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter,s, s.gasUsed, refTxType)
+	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		deep:         s.currentDepth,
@@ -218,10 +219,6 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 	s.currentResult = r.Result
 	s.currentDepth = s.currentDepth - 1
 	return r, code
-}
-
-func (s *TxContextMockTest) GetCurrentResult() []byte {
-	return s.currentResult
 }
 
 func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
@@ -302,6 +299,10 @@ func (s *TxContextMockTest) SetStateSqlHandle(index int32, rows protocol.SqlRows
 func (s *TxContextMockTest) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
 	data, ok := s.sqlRowCache[index]
 	return data, ok
+}
+
+func (s *TxContextMockTest) GetCurrentResult() []byte {
+	return s.currentResult
 }
 
 func BaseParam(parameters map[string]string) {
