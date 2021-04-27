@@ -172,7 +172,9 @@ func (bt *BlockTree) findBlockToPrune(newRootID string) []string {
 func (bt *BlockTree) cleanBlock(blockId string) {
 	blk := bt.idToNode[blockId]
 	delete(bt.idToNode, blockId)
-	delete(bt.heightToBlocks, blk.block.Header.BlockHeight)
+	if blk != nil {
+		delete(bt.heightToBlocks, blk.block.Header.BlockHeight)
+	}
 }
 
 func (bt *BlockTree) GetBlocks(height int64) []*common.Block {
