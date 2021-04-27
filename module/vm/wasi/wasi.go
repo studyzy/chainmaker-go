@@ -71,14 +71,12 @@ func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext
 	key, _ := ec.GetString("key")
 	field, _ := ec.GetString("field")
 	valuePtr, _ := ec.GetInt32("value_ptr")
-	fmt.Println("ptr is ", key, field, valuePtr)
 	if err := protocol.CheckKeyFieldStr(key, field); err != nil {
 		return nil, err
 	}
 
 	if data == nil {
 		value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key, field))
-		fmt.Println("get data", string(value))
 		if err != nil {
 			msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key, field, err.Error())
 			return nil, msg
