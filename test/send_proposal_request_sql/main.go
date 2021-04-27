@@ -285,7 +285,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 }
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-fact-1.0.0.wasm"
-	WasmUpgradePath = "../wasm/rust-functional-verify-1.0.0.wasm"
+	WasmUpgradePath = "../wasm/rust-func-verify-1.0.0.wasm"
 	contractName = "contract0001"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
