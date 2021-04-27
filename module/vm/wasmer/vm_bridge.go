@@ -186,8 +186,6 @@ func (s *sdkRequestCtx) PutState() int32 {
 
 // EmitEvent emit event to chain
 func (s *sdkRequestCtx) EmitEvent() int32 {
-	s.Sc.Log.Debugf("this is wasmer EmitEvent")
-
 	req := serialize.EasyUnmarshal(s.RequestBody)
 	topic, _ := serialize.GetValueFromItems(req, "topic", serialize.EasyKeyType_USER)
 	if err := protocol.CheckTopicStr(topic.(string)); err != nil {
