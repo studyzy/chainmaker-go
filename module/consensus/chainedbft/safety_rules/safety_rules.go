@@ -113,11 +113,11 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 	defer sr.RUnlock()
 
 	// Node will only vote once for each level
-	if level <= sr.lastVoteLevel {
-		sr.logger.Debugf("vote rules failed,"+
-			" proposalLevel <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
-		return false
-	}
+	//if level <= sr.lastVoteLevel {
+	//	sr.logger.Debugf("vote rules failed,"+
+	//		" proposalLevel <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
+	//	return false
+	//}
 	var (
 		err     error
 		qcLevel uint64
