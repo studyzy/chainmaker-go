@@ -23,7 +23,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
-
 	"github.com/gogo/protobuf/proto"
 )
 

@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
+	chainUtils "chainmaker.org/chainmaker-go/utils"
 )
 
 //epochManager manages the components that shared across epoch
@@ -100,12 +101,17 @@ func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) 
 }
 
 func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
+	beginGetContract := chainUtils.CurrentTimeMillisSeconds()
 	validatorsInterface := cbi.governanceContract.GetValidators()
 	if validatorsInterface == nil {
 		return 0
 	}
+	endGetContract := chainUtils.CurrentTimeMillisSeconds()
 	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
 	validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
+	endCalValidators := chainUtils.CurrentTimeMillisSeconds()
+	cbi.logger.Debugf("time cost in getProposer, getContractTime: %d, calValidatorTime: %d",
+		endGetContract-beginGetContract, endCalValidators-endGetContract)
 	if validator != nil {
 		return uint64(validator.Index)
 	}
