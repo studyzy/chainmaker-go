@@ -382,6 +382,8 @@ func (cbi *ConsensusChainedBftImpl) onConsensusMsg(msg *chainedbftpb.ConsensusMs
 
 //onFiredEvent dispatches timer event to handler
 func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
+	cbi.mtx.Lock()
+	defer cbi.mtx.Unlock()
 	if te.Height != cbi.smr.getHeight() ||
 		te.Level < cbi.smr.getCurrentLevel() || te.EpochId != cbi.smr.getEpochId() ||
 		(te.Level == cbi.smr.getCurrentLevel() && te.State < cbi.smr.state) {
