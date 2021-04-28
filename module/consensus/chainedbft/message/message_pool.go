@@ -49,20 +49,6 @@ func (mp *MsgPool) InsertVote(height uint64, round uint64, voteMsg *chainedbft.C
 	return mp.msgs[height].insertVote(round, voteMsg, mp.minVotesForQc)
 }
 
-//InsertVoteData is an external api to cache a vote msg with given height and round
-func (mp *MsgPool) InsertVoteData(height uint64, round uint64, vote *chainedbft.VoteData) (bool, error) {
-	if vote == nil {
-		return false, fmt.Errorf("nil vote")
-	}
-
-	mp.Lock()
-	defer mp.Unlock()
-	if _, ok := mp.msgs[height]; !ok {
-		mp.msgs[height] = newConsensusRound(mp.size, height)
-	}
-	return mp.msgs[height].insertVoteData(round, vote, mp.minVotesForQc)
-}
-
 //InsertProposal is an external api to cache a proposal msg with given height and round
 func (mp *MsgPool) InsertProposal(height uint64, round uint64, msg *chainedbft.ConsensusMsg) (bool, error) {
 	if msg == nil || msg.Payload == nil {

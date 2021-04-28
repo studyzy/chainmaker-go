@@ -13,7 +13,6 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
-	chainUtils "chainmaker.org/chainmaker-go/utils"
 )
 
 //epochManager manages the components that shared across epoch
@@ -26,7 +25,6 @@ type epochManager struct {
 	skipTimeoutCommit bool
 
 	msgPool            *message.MsgPool   //The msg pool associated to next epoch
-	cacheNextHeight    *message.MsgPool   //The msg pool associated to next height
 	useValidators      []*types.Validator //The peer pool associated to next epoch
 	governanceContract protocol.Government
 }
@@ -71,8 +69,6 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 		skipTimeoutCommit: cbi.governanceContract.GetSkipTimeoutCommit(),
 		msgPool: message.NewMsgPool(cbi.governanceContract.GetCachedLen(), int(cbi.governanceContract.
 			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
-		cacheNextHeight: message.NewMsgPool(cbi.governanceContract.GetCachedLen(), int(cbi.governanceContract.
-			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
 	}
 	if membersInterface := cbi.governanceContract.GetMembers(); membersInterface != nil {
 		members = membersInterface.([]*consensusPb.GovernanceMember)
@@ -83,9 +79,8 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 			break
 		}
 	}
-	cbi.logger.Debugf("createEpoch useValidators len [%d]",
-		len(epoch.useValidators))
 	cbi.nextEpoch = epoch
+	cbi.logger.Debugf("createEpoch useValidators len [%d]", len(epoch.useValidators))
 }
 
 //isValidProposer checks whether given index is valid at level
@@ -98,18 +93,13 @@ func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) 
 }
 
 func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
-	beginGetContract := chainUtils.CurrentTimeMillisSeconds()
 	validatorsInterface := cbi.governanceContract.GetValidators()
 	if validatorsInterface == nil {
 		return 0
 	}
-	endGetContract := chainUtils.CurrentTimeMillisSeconds()
 	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
 	validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
-	endCalValidators := chainUtils.CurrentTimeMillisSeconds()
 	if validator != nil {
-		cbi.logger.Debugf("time cost in getProposer, level: %d, validatorIndex:%d, getContractTime: %d,"+
-			" calValidatorTime: %d", level, validator.Index, endGetContract-beginGetContract, endCalValidators-endGetContract)
 		return uint64(validator.Index)
 	}
 	return utils.InvalidIndex

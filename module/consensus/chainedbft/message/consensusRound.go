@@ -47,18 +47,6 @@ func (cr *consensusRound) insertVote(round uint64, msg *chainedbft.ConsensusMsg,
 	return roundMsgs[msg.Payload.Type].insertVote(msg, minVotesForQc)
 }
 
-//insertVote inserts a vote data to vote pool
-func (cr *consensusRound) insertVoteData(round uint64, vote *chainedbft.VoteData,
-	minVotesForQc int) (bool, error) {
-	if _, ok := cr.msgs[round]; !ok {
-		cr.msgs[round] = make(map[chainedbft.MessageType]*votePool)
-		cr.msgs[round][chainedbft.MessageType_VoteMessage] = newVotePool(cr.size)
-	}
-
-	roundMsgs := cr.msgs[round]
-	return roundMsgs[chainedbft.MessageType_VoteMessage].insertVoteData(vote, minVotesForQc)
-}
-
 //insertProposal inserts a proposal to proposal list
 func (cr *consensusRound) insertProposal(round uint64, msg *chainedbft.ConsensusMsg) (bool, error) {
 	if _, ok := cr.proposals[round]; ok {
