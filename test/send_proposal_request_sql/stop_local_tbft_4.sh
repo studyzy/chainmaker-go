@@ -8,7 +8,7 @@
 pid=`ps -ef | grep chainmaker | grep "local-tbft" | grep -v grep |  awk  '{print $2}'`
 for p in $pid
 do
-    kill -9 $p
+    kill $p
     echo "kill $p"
 done
 
