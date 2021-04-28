@@ -178,7 +178,7 @@ func (bc *Blockchain) initChainConf() (err error) {
 		return err
 	}
 	if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
-		panic("init chain conf fail. sql the future feature")
+		//panic("init chain conf fail. sql the future feature")
 	}
 	return
 }
