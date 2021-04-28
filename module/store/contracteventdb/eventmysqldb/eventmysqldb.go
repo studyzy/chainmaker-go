@@ -36,7 +36,7 @@ func NewContractEventMysqlDB(chainId string) (contracteventdb.ContractEventDB, e
 		if err != nil {
 			panic(fmt.Sprintf("failed to create %s db:%s", BlockHeightWithTopicTableName, err))
 		}
-		err = contractEventDb.CreateTable(CreateBlockHeightIndexTableDDL)
+		err = contractEventDb.CreateTable(CreateBlockHeightIndexTableDdl)
 		if err != nil {
 			panic(fmt.Sprintf("failed to create %s db:%s", BlockHeightIndexTableName, err))
 		}
@@ -107,7 +107,7 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 // GetLastSavepoint returns the last block height
 func (c *ContractEventMysqlDB) GetLastSavepoint() (uint64, error) {
 	var blockHeight int64
-	err := c.CreateTable(CreateBlockHeightIndexTableDDL)
+	err := c.CreateTable(CreateBlockHeightIndexTableDdl)
 	if err != nil {
 		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightWithTopicTableName + " table fail")
 		return 0, err
@@ -134,7 +134,7 @@ func (c *ContractEventMysqlDB) GetLastSavepoint() (uint64, error) {
 
 // insert a record to init block height index table
 func (c *ContractEventMysqlDB) initBlockHeightIndexTable() error {
-	exec := c.db.Debug().Exec(InitBlockHeightIndexTableDDL)
+	exec := c.db.Debug().Exec(InitBlockHeightIndexTableDdl)
 	return exec.Error
 }
 
