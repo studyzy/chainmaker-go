@@ -127,20 +127,18 @@ func (cbi *ConsensusChainedBftImpl) processProposedBlock(block *common.Block) {
 }
 
 func (cbi *ConsensusChainedBftImpl) processLocalTimeout(height uint64, level uint64) {
-	if !cbi.smr.processLocalTimeout(level) {
+	if level != cbi.smr.getCurrentLevel() {
 		return
 	}
-	var vote *chainedbftpb.ConsensusPayload
-	if lastVotedLevel, lastVote := cbi.smr.getLastVote(); lastVotedLevel == level {
+	if lastVotedLevel, _ := cbi.smr.getLastVote(); lastVotedLevel != level {
 		// retry send last vote
-		vote = cbi.retryVote(lastVote)
-	} else {
-		vote = cbi.constructVote(height, level, cbi.smr.getEpochId(), nil)
+		vote := cbi.constructVote(height, level, cbi.smr.getEpochId(), nil)
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] processLocalTimeout: broadcasts timeout "+
+			"vote [%v:%v] to other validators", cbi.selfIndexInEpoch, height, level)
+		cbi.smr.setLastVote(vote, level)
+		cbi.signAndBroadcast(vote)
 	}
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processLocalTimeout: broadcasts timeout "+
-		"vote [%v:%v] to other validators", cbi.selfIndexInEpoch, height, level)
-	cbi.smr.setLastVote(vote, level)
-	cbi.signAndBroadcast(vote)
+	cbi.smr.paceMaker.IncreaseLevelAndSetTimeout()
 }
 
 func (cbi *ConsensusChainedBftImpl) retryVote(lastVote *chainedbftpb.ConsensusPayload) *chainedbftpb.ConsensusPayload {
