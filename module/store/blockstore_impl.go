@@ -388,7 +388,8 @@ func (bs *BlockStoreImpl) recover() error {
 }
 
 func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[BlockDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithRWSet, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -407,7 +408,8 @@ func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64)
 }
 
 func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[StateDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithRWSet, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -421,7 +423,8 @@ func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64)
 	return nil
 }
 func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[ContractEventDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithRWSet, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -439,7 +442,8 @@ func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint
 	return nil
 }
 func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithRWSet, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -508,4 +512,16 @@ func (bs *BlockStoreImpl) construcBlockNumKey(blockNum uint64) []byte {
 
 func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
 	return proto.EncodeVarint(blockNum)
+}
+
+func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint uint64) uint64 {
+	height := currentHeight + 1
+	if savePoint == 0 && currentHeight == 0 {
+		//check whether has genesis block
+		if data, _ := bs.wal.Read(1); data != nil && len(data) > 0 {
+			height = height - 1
+		}
+	}
+
+	return height
 }
