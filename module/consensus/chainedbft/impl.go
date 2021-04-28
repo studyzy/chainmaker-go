@@ -385,8 +385,7 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 	cbi.mtx.Lock()
 	defer cbi.mtx.Unlock()
 	if te.Height != cbi.smr.getHeight() ||
-		te.Level < cbi.smr.getCurrentLevel() || te.EpochId != cbi.smr.getEpochId() ||
-		(te.Level == cbi.smr.getCurrentLevel() && te.State < cbi.smr.state) {
+		te.Level < cbi.smr.getCurrentLevel() || te.EpochId != cbi.smr.getEpochId() {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] onFiredEvent: fired event %v, smr:"+
 			" height [%v], level [%v], state [%v], epoch [%v]", cbi.selfIndexInEpoch, te,
 			cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state, cbi.smr.getEpochId())

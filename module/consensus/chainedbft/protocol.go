@@ -153,12 +153,13 @@ func (cbi *ConsensusChainedBftImpl) retryVote(lastVote *chainedbftpb.ConsensusPa
 	)
 	cbi.logger.Debugf("service index [%v] processLocalTimeout: "+
 		"get last vote [%v:%v] to other validators, blockId [%x]", cbi.selfIndexInEpoch, voteData.Height, voteData.Level, voteData.BlockID)
+	// when a node timeouts at the same consensus level, it needs to change the vote type for the current level to a timeout.
 	tempVoteData := &chainedbftpb.VoteData{
 		NewView:   true,
 		Level:     voteData.Level,
 		Author:    voteData.Author,
 		Height:    voteData.Height,
-		BlockID:   voteData.BlockID,
+		BlockID:   nil,
 		EpochId:   cbi.smr.getEpochId(),
 		AuthorIdx: voteData.AuthorIdx,
 	}
