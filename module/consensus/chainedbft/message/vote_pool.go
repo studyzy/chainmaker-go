@@ -97,14 +97,13 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) error {
 		return nil
 	}
 
-	if lastVote.NewView != vote.NewView {
-		return fmt.Errorf("authorIdx[%d] has different types of votes for the same level %d, lastVote: %s, newVote: %s",
-			vote.AuthorIdx, vote.Level, lastVote, vote)
-	} else if len(lastVote.BlockID) > 0 && len(vote.BlockID) > 0 && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
-		return fmt.Errorf("authorIdx[%d] has different proposal vote for the same level %d, lastVoteBlockID: %x, "+
-			"newVoteBlockID: %x", vote.AuthorIdx, vote.Level, lastVote.BlockID, vote.BlockID)
+	if lastVote.NewView && vote.NewView {
+		return fmt.Errorf("duplicate vote new view on same level %v", vote.Level)
+	} else if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
+		return fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
+			vote.Level, lastVote.BlockID, vote.BlockID)
 	}
-	return fmt.Errorf("duplicate vote for the newView")
+	return nil
 }
 
 //checkVoteDone checks whether a valid block or nil block voted by +2/3 nodes
