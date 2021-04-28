@@ -317,7 +317,6 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	cbi.logger.Infof("service selfIndexInEpoch [%v] processProposal step0. proposal.ProposerIdx [%v] ,proposal.Height[%v],"+
 		" proposal.Level[%v],proposal.EpochId [%v],expected [%v:%v:%v]", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height,
 		proposal.Level, proposal.EpochId, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId())
-	hasReceivedSameHeightBlk := len(cbi.chainStore.getBlocks(proposal.Block.Header.BlockHeight)) != 0
 	//step0: validate proposal
 	if err := cbi.validateProposalMsg(msg); err != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal validate proposal failed, err %v",
@@ -364,9 +363,7 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	}
 
 	//step6: vote it and send vote to next proposer in the epoch
-	if !hasReceivedSameHeightBlk {
-		cbi.generateVoteAndSend(proposal)
-	}
+	cbi.generateVoteAndSend(proposal)
 }
 
 func (cbi *ConsensusChainedBftImpl) fetchDataIfRequire(proposalMsg *chainedbftpb.ProposalMsg) error {
@@ -745,13 +742,12 @@ func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumC
 
 	var (
 		tcLevel        = uint64(0)
-		currentQC      = qc
+		currentQC      = cbi.chainStore.getCurrentQC()
 		committedLevel = cbi.smr.getLastCommittedLevel()
 	)
 	if tc != nil {
 		tcLevel = tc.Level
 		cbi.smr.updateTC(tc)
-		currentQC = cbi.chainStore.getCurrentQC()
 	}
 	cbi.smr.updateLockedQC(qc)
 	if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
