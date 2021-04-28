@@ -690,16 +690,16 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 		return
 	}
 	//aggregate qc
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: new qc "+
-		"aggregated for height [%v] level [%v], newView: %v, blockID: %x", cbi.selfIndexInEpoch,
-		vote.Height, vote.Level, newView, blockID)
-
 	qc, err := cbi.aggregateQCAndInsert(vote.Height, vote.Level, blockID, newView)
 	if err != nil {
 		cbi.logger.Errorf("service index [%v] processVote: new qc aggregated for height [%v] "+
 			"level [%v] blockId [%x], err=%v", cbi.selfIndexInEpoch, vote.Height, vote.Level, blockID, err)
 		return
 	}
+
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVotes: aggregated for height [%v]"+
+		" level [%v], newView: %v, qcInfo: %s", cbi.selfIndexInEpoch, vote.Height, vote.Level, newView, qc.String())
+
 	var tc *chainedbftpb.QuorumCert
 	if qc.NewView {
 		// If the newly generated QC type is NewView, it means that majority agree on the timeout and assign QC to TC
