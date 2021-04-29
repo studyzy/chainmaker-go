@@ -162,8 +162,8 @@ func (sm *syncManager) respLoop() {
 
 //new peerSyncer and start a go coroutine
 func (sm *syncManager) constructReqMsg(req *blockSyncReq) (bool, *chainedbftpb.ConsensusPayload) {
-	sm.logger.Debugf("server selfIndexInEpoch [%d], got sync req[%d:%d] to [%v]",
-		sm.server.selfIndexInEpoch, req.startLevel, req.targetLevel, req.targetPeer)
+	sm.logger.Debugf("server selfIndexInEpoch [%d], got sync req.height:%d:%x to [%v]",
+		sm.server.selfIndexInEpoch, req.height, req.blockID, req.targetPeer)
 	//currentQC := sm.server.chainStore.getCurrentQC()
 	//if req.startLevel <= currentQC.Level {
 	//	req.startLevel = currentQC.Level + 1

@@ -895,7 +895,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 		authorIdx = req.GetAuthorIdx()
 	)
 
-	cbi.logger.Debugf("processBlockFetch receive req msg:%s", req.String())
+	cbi.logger.Debugf("processBlockFetch receive req msg:%s, authorIDx: %d", req.String(), authorIdx)
 	if err := cbi.validateBlockFetch(msg); err != nil {
 		cbi.logger.Errorf("processBlockFetch verify msg failed: %s", err)
 		return
