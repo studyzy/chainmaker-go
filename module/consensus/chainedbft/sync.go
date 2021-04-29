@@ -123,7 +123,8 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		select {
 		case <-t.C:
 			if len(haveReqPeer) == sm.server.smr.committee.peerCount() {
-				haveReqPeer = make(map[uint64]struct{})
+				<-sm.reqDone
+				return false
 			}
 		case <-sm.syncDone:
 			return true

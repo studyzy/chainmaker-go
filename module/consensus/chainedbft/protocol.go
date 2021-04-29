@@ -239,9 +239,9 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, rootLevel)
 		return false, fmt.Errorf("sync info has a highest quorum certificate with level older than root level")
 	}
-	hasQc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height)
+	//hasQc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height)
 	hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height)
-	if hasQc != nil && hasBlk != nil {
+	if hasBlk != nil {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc and block [%v:%v %x]",
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
 		return false, nil
