@@ -332,10 +332,18 @@ func (bc *Blockchain) initConsensus() (err error) {
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
+	isConsensusNode := false
 	for i, node := range nodes {
 		for _, nid := range node.NodeId {
 			nodeIds[i] = nid
+			if nid == id {
+				isConsensusNode = true
+			}
 		}
+	}
+	if !isConsensusNode {
+		// this node is a sync node rather than a consensus node
+		return nil
 	}
 	dbHandle := bc.store.GetDBHandle(protocol.ConsensusDBName)
 	bc.consensus, err = consensusFactory.NewConsensusEngine(
