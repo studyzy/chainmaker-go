@@ -272,6 +272,11 @@ func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.Consen
 	if proposal.EpochId != cbi.smr.getEpochId() {
 		return fmt.Errorf("err epochId, ignore it")
 	}
+	if hasMsg := cbi.msgPool.GetProposal(proposal.Height, proposal.Level); hasMsg != nil {
+		return fmt.Errorf("specify consensus"+
+			" rounds that already have proposals, has proposal: %s", hasMsg.Payload.String())
+	}
+
 	if !cbi.validateProposer(msg) {
 		return fmt.Errorf("invalid proposer")
 	}
@@ -313,6 +318,7 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 		proposalMsg = msg.Payload.GetProposalMsg()
 		proposal    = proposalMsg.ProposalData
 	)
+
 	cbi.logger.Infof("service selfIndexInEpoch [%v] processProposal step0. proposal.ProposerIdx [%v] ,proposal.Height[%v],"+
 		" proposal.Level[%v],proposal.EpochId [%v],expected [%v:%v:%v]", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height,
 		proposal.Level, proposal.EpochId, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId())
@@ -362,7 +368,10 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	}
 
 	//step6: vote it and send vote to next proposer in the epoch
-	cbi.generateVoteAndSend(proposal)
+	// 当提案level小于节点的最新投票level时，表示当前节点已经在前述level上进行过投票，可能为赞成票或者超时票。
+	if lastVoteLevel, _ := cbi.smr.getLastVote(); lastVoteLevel < proposal.Level {
+		cbi.generateVoteAndSend(proposal)
+	}
 }
 
 func (cbi *ConsensusChainedBftImpl) fetchDataIfRequire(proposalMsg *chainedbftpb.ProposalMsg) error {
