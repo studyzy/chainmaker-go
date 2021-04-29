@@ -19,5 +19,5 @@ else
 fi
 
 
-sleep 4
+sleep 2
 ps -ef|grep chainmaker

@@ -282,6 +282,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	}
 
 	fmt.Println("\nfinal result: ", txId, result, rs)
+	fmt.Println("test success!!!")
 }
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-fact-1.0.0.wasm"
