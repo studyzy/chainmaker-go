@@ -40,7 +40,7 @@ const (
 const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
-	Port           = 12301
+	Port           = 12351
 	certPathPrefix = "../../config"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
@@ -85,9 +85,9 @@ func main() {
 	functionalTest(sk3, &client)
 	time.Sleep(time.Second * 5)
 	//
-	fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
-	initGasmTest()
-	functionalTest(sk3, &client)
+	//fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
+	//initGasmTest()
+	//functionalTest(sk3, &client)
 
 	//performanceTest(sk3, &client)
 	//otherTest(sk3, &client)
