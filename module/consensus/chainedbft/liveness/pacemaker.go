@@ -74,8 +74,8 @@ func (p *Pacemaker) GetHighestTCLevel() uint64 {
 
 //ProcessLocalTimeout process local timeout, setup pacemaker ticker
 func (p *Pacemaker) ProcessLocalTimeout(level uint64) bool {
-	//p.rwMtx.RLock()
-	//defer p.rwMtx.RUnlock()
+	p.rwMtx.RLock()
+	defer p.rwMtx.RUnlock()
 	if level != p.currentLevel {
 		return false
 	}
@@ -146,11 +146,6 @@ func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint
 		return true
 	}
 	return false
-}
-
-func (p *Pacemaker) IncreaseLevelAndSetTimeout() {
-	p.currentLevel++
-	p.setupTimeout()
 }
 
 func (p *Pacemaker) setupTimeout() {
