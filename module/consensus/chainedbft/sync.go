@@ -52,8 +52,8 @@ type syncMsg struct {
 
 // syncManager Synchronize block data from other peers
 type syncManager struct {
-	nextReqHeight int64 // lack of start level now
-	targetHeight  int64 // need to fetch level
+	nextReqHeight int64  // lack of start level now
+	targetHeight  uint64 // need to fetch level
 
 	quitC         chan struct{}
 	reqDone       chan struct{}      // responsible for synchronization with the consensus main process;
@@ -119,9 +119,12 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		} else {
 			return true
 		}
-		index = getReqPeer(peers, haveReqPeer)
+		req.targetPeer = getReqPeer(peers, haveReqPeer)
 		select {
 		case <-t.C:
+			if len(haveReqPeer) == sm.server.smr.committee.peerCount() {
+				haveReqPeer = make(map[uint64]struct{})
+			}
 		case <-sm.syncDone:
 			return true
 		case <-sm.quitC:
@@ -161,57 +164,44 @@ func (sm *syncManager) respLoop() {
 func (sm *syncManager) constructReqMsg(req *blockSyncReq) (bool, *chainedbftpb.ConsensusPayload) {
 	sm.logger.Debugf("server selfIndexInEpoch [%d], got sync req[%d:%d] to [%v]",
 		sm.server.selfIndexInEpoch, req.startLevel, req.targetLevel, req.targetPeer)
-	currentQC := sm.server.chainStore.getCurrentQC()
-	if req.startLevel <= currentQC.Level {
-		req.startLevel = currentQC.Level + 1
-		sm.logger.Debugf("server selfIndexInEpoch [%d], sync req start change to [%d]",
-			sm.server.selfIndexInEpoch, req.startLevel)
-	}
-	if req.startLevel > req.targetLevel {
-		return false, nil
-	}
+	//currentQC := sm.server.chainStore.getCurrentQC()
+	//if req.startLevel <= currentQC.Level {
+	//	req.startLevel = currentQC.Level + 1
+	//	sm.logger.Debugf("server selfIndexInEpoch [%d], sync req start change to [%d]",
+	//		sm.server.selfIndexInEpoch, req.startLevel)
+	//}
+	//if req.startLevel > req.targetLevel {
+	//	sm.logger.Debugf("no need send sync request, startLevel: %d, req.targetLevel: %d", req.startLevel, req.targetLevel)
+	//	return false, nil
+	//}
 
-	//if request's block and qc exist, return
-	blockID := string(req.blockID)
-	blk, _ := sm.server.chainStore.getBlock(blockID, req.height)
-	qc, _ := sm.server.chainStore.getQC(blockID, req.height)
-	if blk != nil && qc != nil {
-		sm.logger.Infof("server index [%d], has req[%d:%d] to [%v]",
-			sm.server.selfIndexInEpoch, req.startLevel, req.targetLevel, req.targetPeer)
-		return false, nil
-	}
-
-	if int64(req.height) < sm.nextReqHeight {
-		sm.logger.Errorf("server selfIndexInEpoch [%d] new blockSyncReq startLevel [%d:%d]",
-			sm.server.selfIndexInEpoch, req.startLevel, sm.nextReqHeight)
-		return false, nil
-	}
-	if sm.nextReqHeight == 1 {
-		sm.nextReqHeight = int64(req.startLevel)
-	}
-	if sm.targetHeight < int64(req.height) {
-		sm.targetHeight = int64(req.height)
-	}
-	num := sm.targetHeight - sm.nextReqHeight + 1
-	if num > MaxSyncBlockNum {
-		num = MaxSyncBlockNum
-	}
-	msg := sm.server.constructBlockFetchMsg(req.blockID, req.height, uint64(num))
+	//if int64(req.height) < sm.nextReqHeight {
+	//	sm.logger.Errorf("server selfIndexInEpoch [%d] new blockSyncReq startLevel [%d:%d]",
+	//		sm.server.selfIndexInEpoch, req.startLevel, sm.nextReqHeight)
+	//	return false, nil
+	//}
+	sm.targetHeight = req.height
+	startHeight := sm.server.chainStore.getCurrentQC().Height
+	num := sm.targetHeight - startHeight
+	//if num > MaxSyncBlockNum {
+	//	num = MaxSyncBlockNum
+	//}
+	msg := sm.server.constructBlockFetchMsg(startHeight, req.blockID, req.height, num)
 	return true, msg
 }
 
-func (sm *syncManager) processBlocks(msg *syncMsg) int64 {
+func (sm *syncManager) processBlocks(msg *syncMsg) uint64 {
 	blockFetchMsg := msg.msg.GetBlockFetchRespMsg()
-	sm.logger.Infof("server selfIndexInEpoch [%v] processBlocks, status: %d, count: %d",
-		sm.server.selfIndexInEpoch, blockFetchMsg.Status, len(blockFetchMsg.Blocks))
+	sm.logger.Infof("server selfIndexInEpoch [%d] processBlocks, status: %s, count: %d, authorIdx: %d",
+		sm.server.selfIndexInEpoch, blockFetchMsg.Status, len(blockFetchMsg.Blocks), blockFetchMsg.AuthorIdx)
 	if blockFetchMsg.Status != chainedbftpb.BlockFetchStatus_Succeeded {
-		return -1
+		return 0
 	}
 
 	var (
-		blockPairs            = blockFetchMsg.Blocks
-		blocks                = make(map[string]bool, len(blockPairs))
-		lastBlockHeight int64 = -1
+		blockPairs      = blockFetchMsg.Blocks
+		blocks          = make(map[string]bool, len(blockPairs))
+		lastBlockHeight uint64
 	)
 	sort.Sort(orderBlocks(blockPairs))
 	for _, blockPair := range blockPairs {
@@ -224,8 +214,9 @@ func (sm *syncManager) processBlocks(msg *syncMsg) int64 {
 			return lastBlockHeight
 		}
 		sm.nextReqHeight = blockPair.Block.Header.BlockHeight + 1
-		lastBlockHeight = blockPair.Block.Header.BlockHeight
+		lastBlockHeight = uint64(blockPair.Block.Header.BlockHeight)
 	}
+	sm.logger.Debugf("process block height: %d", lastBlockHeight)
 	return lastBlockHeight
 }
 

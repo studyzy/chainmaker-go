@@ -239,31 +239,28 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, rootLevel)
 		return false, fmt.Errorf("sync info has a highest quorum certificate with level older than root level")
 	}
-	if qc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height); qc != nil {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc [%v:%v %x]",
+	hasQc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height)
+	hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height)
+	if hasQc != nil && hasBlk != nil {
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc and block [%v:%v %x]",
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
 		return false, nil
-	}
-	if blk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height); blk != nil {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc block [%v:%v %x]",
-			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
-		return false, nil
-	}
-
-	var (
-		currentQC      = cbi.chainStore.getCurrentQC()
-		currentTCLevel = cbi.smr.getHighestTCLevel()
-		level          = currentQC.Level
-	)
-	if currentQC.Level < currentTCLevel {
-		level = currentTCLevel
-	}
-	if qc.Level >= level+3 {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local received sync info from a future level [%v], local qc [%v] tc [%v]",
-			cbi.selfIndexInEpoch, qc.Level, currentQC.Level, currentTCLevel)
-		return false, fmt.Errorf("received sync info from a future level")
 	}
 	return true, nil
+
+	//var (
+	//	currentQC      = cbi.chainStore.getCurrentQC()
+	//	currentTCLevel = cbi.smr.getHighestTCLevel()
+	//	level          = currentQC.Level
+	//)
+	//if currentQC.Level < currentTCLevel {
+	//	level = currentTCLevel
+	//}
+	//if qc.Level >= level+3 {
+	//	cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local received sync info from a future level [%v], local qc [%v] tc [%v]",
+	//		cbi.selfIndexInEpoch, qc.Level, currentQC.Level, currentTCLevel)
+	//	return false, fmt.Errorf("received sync info from a future level")
+	//}
 }
 
 func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.ConsensusMsg) error {
@@ -876,29 +873,18 @@ func (cbi *ConsensusChainedBftImpl) validateBlockFetch(msg *chainedbftpb.Consens
 	authorIdx := req.GetAuthorIdx()
 	peer := cbi.smr.getPeerByIndex(authorIdx)
 	if peer == nil {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateBlockFetch: received a vote msg from invalid peer", cbi.selfIndexInEpoch)
-		return InvalidPeerErr
+		return fmt.Errorf("validateBlockFetch: received a vote msg from invalid peer: %d", authorIdx)
 	}
-
-	err := cbi.validateSignerAndSignature(msg, peer)
-	if err != nil {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateBlockFetch failed, err %v"+
-			" fetch req %v, err %v", cbi.selfIndexInEpoch, req, err)
-		return ValidateSignErr
+	if err := cbi.validateSignerAndSignature(msg, peer); err != nil {
+		return fmt.Errorf("validateBlockFetch verify signature failed, err %v", err)
 	}
-
-	if req.NumBlocks > MaxSyncBlockNum {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateBlockFetch: fetch too many blocks %v",
-			cbi.selfIndexInEpoch, req.NumBlocks)
-		return fmt.Errorf("fetch too many blocks")
-	}
+	//if req.NumBlocks > MaxSyncBlockNum {
+	//	return fmt.Errorf("validateBlockFetch: fetch too many blocks %v", req.NumBlocks)
+	//}
 	return nil
 }
 
 func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.ConsensusMsg) {
-	if err := cbi.validateBlockFetch(msg); err != nil {
-		return
-	}
 	var (
 		req    = msg.Payload.GetBlockFetchMsg()
 		blocks = make([]*chainedbftpb.BlockPair, 0, req.NumBlocks)
@@ -909,10 +895,17 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 		authorIdx = req.GetAuthorIdx()
 	)
 
+	cbi.logger.Debugf("processBlockFetch receive req msg:%s", req.String())
+	if err := cbi.validateBlockFetch(msg); err != nil {
+		cbi.logger.Errorf("processBlockFetch verify msg failed: %s", err)
+		return
+	}
+
 	for i := 0; i < int(req.NumBlocks); i++ {
 		block, _ := cbi.chainStore.getBlock(id, height)
 		qc, _ := cbi.chainStore.getQC(id, height)
 		if block == nil || qc == nil {
+			cbi.logger.Debugf("not found block:[%v] or qc info:[%v] in [%d:%x]", block, qc)
 			status = chainedbftpb.BlockFetchStatus_NotEnoughBlocks
 			break
 		}
@@ -927,11 +920,15 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 		id = string(newBlock.Header.PreBlockHash)
 		blocks = append(blocks, blockPair)
 	}
-	if len(blocks) == 0 {
-		status = chainedbftpb.BlockFetchStatus_IdNotFound
+	cbi.logger.Debugf("response blocks num: %d", len(blocks))
+	count := len(blocks) / MaxSyncBlockNum
+	if len(blocks)%MaxSyncBlockNum > 0 {
+		count++
 	}
-	rsp := cbi.constructBlockFetchRespMsg(blocks, status)
-	cbi.signAndSendToPeer(rsp, authorIdx)
+	for i := 0; i < count; i++ {
+		rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:(i+1)*MaxSyncBlockNum], status)
+		cbi.signAndSendToPeer(rsp, authorIdx)
+	}
 }
 
 func (cbi *ConsensusChainedBftImpl) validateBlockFetchRsp(msg *chainedbftpb.ConsensusMsg) error {
@@ -948,7 +945,7 @@ func (cbi *ConsensusChainedBftImpl) validateBlockFetchRsp(msg *chainedbftpb.Cons
 			" fetch rsp %v, err %v", cbi.selfIndexInEpoch, rsp.AuthorIdx, rsp, err)
 		return ValidateSignErr
 	}
-	cbi.logger.Infof("service selfIndexInEpoch [%v] from %v validateBlockFetchRsp success %v"+
+	cbi.logger.Infof("service selfIndexInEpoch [%v] from %v validateBlockFetchRsp success,"+
 		" fetch rsp %v ", cbi.selfIndexInEpoch, rsp.AuthorIdx, rsp)
 	return nil
 }
