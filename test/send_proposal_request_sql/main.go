@@ -83,9 +83,9 @@ func main() {
 	fmt.Println("\n\n\n\n======wasmer test=====\n\n\n\n")
 	initWasmerSqlTest()
 	functionalTest(sk3, &client)
-	time.Sleep(time.Second * 5)
 
 	fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
+	time.Sleep(time.Second * 4)
 	initGasmTest()
 	functionalTest(sk3, &client)
 
@@ -99,57 +99,6 @@ func otherTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	testQuerySqlById(sk3, client, CHAIN1, id)
 	//}
 }
-func performanceTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
-
-	// 1) 合约创建
-	testCreate(sk3, client, CHAIN1)
-	time.Sleep(4 * time.Second)
-
-	start := utils.CurrentTimeMillisSeconds()
-	// 2) 执行合约-sql insert
-	txId := ""
-	var txIds = make([]string, 0)
-	count := 5000
-	for i := 0; i < count; i++ {
-		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
-		txIds = append(txIds, txId)
-		time.Sleep(time.Millisecond)
-	}
-	// wait
-	for {
-		_, result := testQuerySqlById(sk3, client, CHAIN1, txId)
-		if result != "{}" {
-			fmt.Println(result)
-			break
-		}
-		time.Sleep(time.Millisecond * 200)
-	}
-	end1 := utils.CurrentTimeMillisSeconds()
-	fmt.Println("time cost", end1-start)
-	fmt.Println("tps", int64(count*1000)/(end1-start))
-
-	time.Sleep(time.Second * 20)
-	for _, id := range txIds {
-		testQuerySqlById(sk3, client, CHAIN1, id)
-		testInvokeSqlUpdate(sk3, client, CHAIN1, id)
-		testInvokeSqlDelete(sk3, client, CHAIN1, id)
-		time.Sleep(time.Millisecond)
-	}
-	for _, id := range txIds {
-		testQuerySqlById(sk3, client, CHAIN1, id)
-		testInvokeSqlUpdate(sk3, client, CHAIN1, id)
-		testInvokeSqlDelete(sk3, client, CHAIN1, id)
-		time.Sleep(time.Millisecond)
-	}
-
-	end2 := utils.CurrentTimeMillisSeconds()
-
-	fmt.Println("time cost1", end1-start)
-	fmt.Println("tps", int64(count)/((end1-start)/int64(count)*2))
-
-	fmt.Println("time cost2", end2-start)
-	fmt.Println("tps", int64(count)/((end1-start)/int64(count)*4))
-}
 func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	var (
 		txId   string
@@ -160,6 +109,9 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	fmt.Println("//1) 合约创建")
 	testCreate(sk3, client, CHAIN1)
 	time.Sleep(4 * time.Second)
+	InvokePrintHello(sk3, client, CHAIN1)
+
+	//
 
 	fmt.Println("// 2) 执行合约-sql insert")
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
@@ -286,6 +238,54 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		panicNotEqual(result, "")
 	}
 
+	if runtimeType == commonPb.RuntimeType_GASM {
+		type FuncWithTxid struct {
+			txIdMyself string
+			funcName   string
+		}
+		txIds := []FuncWithTxid{}
+		txIds = append(txIds, FuncWithTxid{
+			InvokeCreatetable(sk3, client, CHAIN1), //1.创建表
+			"InvokeCreatetable",
+		})
+		txIds = append(txIds, FuncWithTxid{
+			InvokeCreatedb(sk3, client, CHAIN1), //2.跨库操作，初始函数
+			"InvokeCreatedb",
+		})
+		txIds = append(txIds, FuncWithTxid{
+			InvokeCommit(sk3, client, CHAIN1), //3.commit，rollback
+			"InvokeCommit",
+		})
+		txIds = append(txIds, FuncWithTxid{
+			InvokeUnpredictableSql(sk3, client, CHAIN1), //4.随机数
+			"InvokeUnpredictableSql",
+		})
+		txIds = append(txIds, FuncWithTxid{
+			InvokeDoubleSql(sk3, client, CHAIN1), //5.多条sql
+			"InvokeDoubleSql",
+		})
+		txIds = append(txIds, FuncWithTxid{
+			InvokeAuoIncrement(sk3, client, CHAIN1), //6。自增主键,在初始化函数执行
+			"InvokeAuoIncrement",
+		})
+		txIds = append(txIds, FuncWithTxid{
+			InvokeCreateuesr(sk3, client, CHAIN1), //8。禁止DCL语句，GRANT，REVOKE，初始函数
+			"InvokeCreateuesr",
+		})
+
+		for _, testFunc := range txIds {
+			txId = testFunc.txIdMyself
+			//testCreate(sk3, client, CHAIN1)
+			time.Sleep(3 * time.Second) //异步，得等待完成
+			resultInfo := testGetTxByTxId(sk3, client, txId, CHAIN1)
+			if resultInfo.Transaction.Result.Code == commonPb.TxStatusCode_SUCCESS {
+				fmt.Printf("%s", testFunc.funcName)
+				panic("执行%s成功，但该方法是被禁止的，发生错误")
+			} else {
+				fmt.Printf("%s-校验成功,%s\n", testFunc.funcName, resultInfo.Transaction.Result.ContractResult.Message)
+			}
+		}
+	}
 	fmt.Println("\nfinal result: ", txId, result, rs)
 	fmt.Println("test success!!!")
 	fmt.Println("test success!!!")
@@ -305,7 +305,7 @@ func initWasmerSqlTest() {
 func initGasmTest() {
 	WasmPath = "../wasm/go-sql-1.1.0.wasm"
 	WasmUpgradePath = "../wasm/go-sql-1.1.0.wasm"
-	contractName = "contract2001"
+	contractName = "contract200"
 	runtimeType = commonPb.RuntimeType_GASM
 }
 func initWxwmTest() {
@@ -443,6 +443,232 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
+}
+
+func InvokePrintHello(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "printhello",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeDoubleSql(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "doubleSql",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeUnpredictableSql(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "unpredictableSql",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeCreatetable(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "createTable",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeCreatedb(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "createDb",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeCreateuesr(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "createUser",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeAuoIncrement(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[auoIncrement] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "autoIncrementSql",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func InvokeCommit(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
+
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+	}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       "commitSql",
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
+func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) *commonPb.TransactionInfo{
+	fmt.Println("========================================================================================================")
+	fmt.Println("========================================================================================================")
+	fmt.Println("========get tx by txId ", txId, "===============")
+	fmt.Println("========================================================================================================")
+	fmt.Println("========================================================================================================")
+	fmt.Printf("\n============ get tx by txId [%s] ============\n", txId)
+
+	// 构造Payload
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, pair)
+
+	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		chainId, txId, payloadBytes)
+
+	result := &commonPb.TransactionInfo{}
+	err := proto.Unmarshal(resp.ContractResult.Result, result)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }
 
 func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, id string) string {
