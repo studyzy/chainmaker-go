@@ -199,8 +199,8 @@ func TestInsertVote(t *testing.T) {
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock},
 		},
 	}, 3)
-	require.False(t, add, "add vote failed")
-	require.Error(t, err, "shouldn be add vote error")
+	require.True(t, add, "add vote failed")
+	require.NoError(t, err, "shouldn be add vote error")
 }
 
 func TestInsertProposal(t *testing.T) {

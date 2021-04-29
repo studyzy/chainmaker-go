@@ -355,9 +355,8 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	//step5: add proposal to msg pool and add block to chainStore
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step4 add proposal to msg pool and "+
 		"add proposal block to chainStore start", cbi.selfIndexInEpoch)
-	if inserted, err := cbi.msgPool.InsertProposal(proposal.Height, proposal.Level, msg); err != nil || !inserted {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal insert "+
-			"a proposal failed, err %v, insert %v", cbi.selfIndexInEpoch, err, inserted)
+	if err := cbi.insertProposal(msg); err != nil {
+		cbi.logger.Errorf("err %s", err)
 		return
 	}
 	if executorErr := cbi.chainStore.insertBlock(proposal.GetBlock()); executorErr != nil {
@@ -634,37 +633,54 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 	}
 
 	var (
-		err      error
-		need     bool
-		inserted bool
+		err  error
+		need bool
 	)
-	// 3. Add vote to msgPool
+	// 3. Whether need fetch data
 	cbi.logger.Debugf("process vote step 2 check whether need sync from other peer")
 	if need, err = cbi.needFetch(voteMsg.SyncInfo); err != nil {
 		cbi.logger.Errorf("processVote: needFetch failed, reason: %s", err)
 		return
 	}
-	cbi.logger.Debugf("process vote step 3 inserted the vote ")
-	if inserted, err = cbi.msgPool.InsertVote(vote.Height, vote.Level, msg); err != nil {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] processVote: insert vote msg failed, err %v ",
-			cbi.selfIndexInEpoch, err)
-		return
-	} else if !inserted {
-		cbi.logger.Warnf("service selfIndexInEpoch [%v] processVote: inserted"+
-			" vote msg from validator failed, %v", cbi.selfIndexInEpoch, authorIdx)
-		return
-	}
-
-	// 4. fetch data from peers and handle qc in voteInfo
-	cbi.logger.Debugf("process vote step 4 whether need fetch info: [%v] and process", need)
 	if need {
 		cbi.fetchAndHandleQc(authorIdx, voteMsg)
+	}
+
+	// 4. Add vote to msgPool
+	cbi.logger.Debugf("process vote step 3 inserted the vote ")
+	if err = cbi.insertVote(msg); err != nil {
+		cbi.logger.Errorf("%s", err)
 		return
 	}
 
 	// 5. generate QC if majority are voted and process the new QC if don't need sync data from peers
-	cbi.logger.Debugf("process vote step 5 no need fetch info and process vote")
+	cbi.logger.Debugf("process vote step 4 no need fetch info and process vote")
 	cbi.processVotes(vote)
+}
+
+func (cbi *ConsensusChainedBftImpl) insertVote(msg *chainedbftpb.ConsensusMsg) error {
+	var (
+		voteMsg = msg.Payload.GetVoteMsg()
+		vote    = voteMsg.VoteData
+	)
+	if inserted, err := cbi.msgPool.InsertVote(vote.Height, vote.Level, msg); err != nil || !inserted {
+		return fmt.Errorf("insert vote msg failed, err %v, "+
+			"insert %v, authorIdx: %d ", err, inserted, vote.AuthorIdx)
+	}
+	cbi.saveWalEntry(chainedbftpb.MessageType_VoteMessage, msg)
+	return nil
+}
+
+func (cbi *ConsensusChainedBftImpl) insertProposal(msg *chainedbftpb.ConsensusMsg) error {
+	var proposal = msg.Payload.GetProposalMsg().ProposalData
+	if inserted, err := cbi.msgPool.InsertProposal(proposal.Height, proposal.Level, msg); err != nil || !inserted {
+		return fmt.Errorf("insert proposal to msgPool failed,"+
+			" reason: %s, insert %v, authorIdx: %d", err, inserted, proposal.ProposerIdx)
+	}
+
+	cbi.addProposalWalIndex(proposal.Height)
+	cbi.saveWalEntry(chainedbftpb.MessageType_ProposalMessage, msg)
+	return nil
 }
 
 //fetchAndHandleQc Fetch the missing block data and the  process the received QC until the data is all fetched.
@@ -687,7 +703,6 @@ func (cbi *ConsensusChainedBftImpl) fetchAndHandleQc(authorIdx uint64, voteMsg *
 			cbi.selfIndexInEpoch, cbi.smr.getCurrentLevel(), req.targetLevel)
 		return
 	}
-	cbi.processVotes(voteMsg.VoteData)
 }
 
 //processVotes QC is generated if a majority are voted for the special Height and Level.
@@ -834,9 +849,10 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 				oldIndex, cbi.selfIndexInEpoch)
 		}
 	}
-	//7. process qc: commitHeight+1
+	// 7. update walIndex
+	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
+
 	// todo. may be delete later.
-	//cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
 	cbi.logger.Infof("processBlockCommitted end, block: [%d:%x].", cbi.commitHeight, block.Header.BlockHash)
 }
 
