@@ -507,7 +507,7 @@ func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCer
 				vote.AuthorIdx, vote.Height, vote.Level)
 		}
 		voteIdxs[vote.AuthorIdx] = true
-		if vote.NewView {
+		if vote.NewView && vote.BlockID == nil {
 			newViewNum++
 			continue
 		}
@@ -648,7 +648,7 @@ func countNumFromVotes(qc *chainedbftpb.QuorumCert, curvalidators []*types.Valid
 				vote.AuthorIdx, vote.Height, vote.Level)
 		}
 		voteIdxes[vote.AuthorIdx] = true
-		if vote.NewView {
+		if vote.NewView && vote.BlockID == nil {
 			newViewNum++
 			continue
 		}
