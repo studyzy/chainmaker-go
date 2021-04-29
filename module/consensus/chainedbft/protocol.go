@@ -920,14 +920,22 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 		id = string(newBlock.Header.PreBlockHash)
 		blocks = append(blocks, blockPair)
 	}
+	if len(blocks) == 0 {
+		return
+	}
 	cbi.logger.Debugf("response blocks num: %d", len(blocks))
 	count := len(blocks) / MaxSyncBlockNum
 	if len(blocks)%MaxSyncBlockNum > 0 {
 		count++
 	}
-	for i := 0; i < count; i++ {
-		rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:(i+1)*MaxSyncBlockNum], status)
-		cbi.signAndSendToPeer(rsp, authorIdx)
+	for i := 0; i <= count-1; i++ {
+		if i == count-1 {
+			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:], status)
+			cbi.signAndSendToPeer(rsp, authorIdx)
+		} else {
+			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:(i+1)*MaxSyncBlockNum], status)
+			cbi.signAndSendToPeer(rsp, authorIdx)
+		}
 	}
 }
 
