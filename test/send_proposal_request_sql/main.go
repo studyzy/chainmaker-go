@@ -84,10 +84,10 @@ func main() {
 	initWasmerSqlTest()
 	functionalTest(sk3, &client)
 	time.Sleep(time.Second * 5)
-	//
-	//fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
-	//initGasmTest()
-	//functionalTest(sk3, &client)
+
+	fmt.Println("\n\n\n\n======gasm test=====\n\n\n\n")
+	initGasmTest()
+	functionalTest(sk3, &client)
 
 	//performanceTest(sk3, &client)
 	//otherTest(sk3, &client)
@@ -208,7 +208,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("result", result)
 		panic("查询结果错误")
 	}
-	// 9) 跨合约调用
+	//// 9) 跨合约调用
 	testCrossCall(sk3, client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
@@ -258,12 +258,15 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("\n// 1、建表、索引、视图等DDL语句只能在合约安装init_contract 和合约升级upgrade中使用。")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_execute_ddl", CHAIN1, txId)
 		panicNotEqual(result, "")
+		time.Sleep(time.Millisecond * 500)
 		fmt.Println("\n// 2、SQL中，禁止跨数据库操作，无需指定数据库名。比如select * from db.table 是禁止的； use db;是禁止的。")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_dbname_table_name", CHAIN1, txId)
 		panicNotEqual(result, "")
+		time.Sleep(time.Millisecond * 500)
 		fmt.Println("\n// 3、SQL中，禁止使用事务相关操作的语句，比如commit 、rollback等，事务由ChainMaker框架自动控制。")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_execute_commit", CHAIN1, txId)
 		panicNotEqual(result, "")
+		time.Sleep(time.Millisecond * 500)
 		fmt.Println("\n// 4、SQL中，禁止使用随机数、获得系统时间等不确定性函数，这些函数在不同节点产生的结果可能不一样，导致合约执行结果无法达成共识。")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_random_key", CHAIN1, txId)
 		panicNotEqual(result, "")
@@ -271,9 +274,11 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		panicNotEqual(result, "")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_random_query_str", CHAIN1, txId)
 		panicNotEqual(result, "ok")
+		time.Sleep(time.Millisecond * 500)
 		fmt.Println("\n// 5、SQL中，禁止多条SQL拼接成一个SQL字符串传入。")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_multi_sql", CHAIN1, txId)
 		panicNotEqual(result, "")
+		time.Sleep(time.Millisecond * 500)
 		fmt.Println("\n// 7、禁止建立、修改或删除表名为“state_infos”的表，这是系统自带的提供KV数据存储的表，用于存放PutState函数对应的数据。")
 		_, result = testInvokeSqlCommon(sk3, client, "sql_update_state_info", CHAIN1, txId)
 		panicNotEqual(result, "")
@@ -282,6 +287,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	}
 
 	fmt.Println("\nfinal result: ", txId, result, rs)
+	fmt.Println("test success!!!")
 	fmt.Println("test success!!!")
 }
 func initWasmerTest() {
@@ -548,11 +554,11 @@ func testCrossCall(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId s
 		},
 		{
 			Key:   "min_age",
-			Value: "1",
+			Value: "4",
 		},
 		{
 			Key:   "max_age",
-			Value: "15",
+			Value: "7",
 		},
 	}
 	payload := &commonPb.TransactPayload{
@@ -645,7 +651,7 @@ func testQuerySqlRangAge(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "max_age",
-			Value: "10",
+			Value: "4",
 		},
 		{
 			Key:   "min_age",
