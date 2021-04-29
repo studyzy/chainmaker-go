@@ -159,7 +159,7 @@ func (cbi *ConsensusChainedBftImpl) retryVote(lastVote *chainedbftpb.ConsensusPa
 		Level:     voteData.Level,
 		Author:    voteData.Author,
 		Height:    voteData.Height,
-		BlockID:   nil,
+		BlockID:   voteData.BlockID,
 		EpochId:   cbi.smr.getEpochId(),
 		AuthorIdx: voteData.AuthorIdx,
 	}
