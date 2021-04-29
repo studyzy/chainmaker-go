@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -163,14 +164,31 @@ func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig
 }
 
 func verifyChainConfigConsensusNodesIds(mConfig *chainConfig, node *config.OrgConfig) error {
-	for _, nid := range node.NodeId {
-		// node id can not be repeated
-		if _, ok := mConfig.NodeIds[nid]; ok {
-			log.Errorf("node id(%s) existed", nid)
-			return errors.New("address existed")
+	if len(node.NodeId) > 0 {
+		for _, nid := range node.NodeId {
+			// node id can not be repeated
+			if _, ok := mConfig.NodeIds[nid]; ok {
+				log.Errorf("node id(%s) existed", nid)
+				return errors.New("node id existed")
+			}
+			mConfig.NodeIds[nid] = node.OrgId
 		}
-		mConfig.NodeIds[nid] = node.OrgId
+	} else {
+		for _, addr := range node.Address {
+			nid, err := helper.GetNodeUidFromAddr(addr)
+			if err != nil {
+				log.Errorf("get node id from addr(%s) failed", addr)
+				return err
+			}
+			// node id can not be repeated
+			if _, ok := mConfig.NodeIds[nid]; ok {
+				log.Errorf("node id(%s) existed", nid)
+				return errors.New("node id existed")
+			}
+			mConfig.NodeIds[nid] = node.OrgId
+		}
 	}
+
 	return nil
 }
 

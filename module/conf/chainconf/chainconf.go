@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"errors"
@@ -111,6 +112,7 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 		}
 		root.Root = string(entry)
 	}
+
 	// verify
 	_, err = VerifyChainConfig(chainConfig)
 	if err != nil {
@@ -123,6 +125,40 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 // Init chain config.
 func (c *ChainConf) Init() error {
 	return c.latestChainConfig()
+}
+
+// HandleCompatibility will make new version to be compatible with old version
+func HandleCompatibility(chainConfig *config.ChainConfig) error {
+	// For v1.1 to be compatible with v1.0, check consensus config
+	for _, orgConfig := range chainConfig.Consensus.Nodes {
+		if orgConfig.NodeId == nil {
+			orgConfig.NodeId = make([]string, 0)
+		}
+		if len(orgConfig.NodeId) == 0 {
+			for _, addr := range orgConfig.Address {
+				nid, err := helper.GetNodeUidFromAddr(addr)
+				if err != nil {
+					return err
+				}
+				orgConfig.NodeId = append(orgConfig.NodeId, nid)
+			}
+			orgConfig.Address = nil
+		}
+	}
+	// For v1.1 to be compatible with v1.0, check resource policies
+	for _, rp := range chainConfig.ResourcePolicies {
+		switch rp.ResourceName {
+		case common.ConfigFunction_NODE_ADDR_ADD.String():
+			rp.ResourceName = common.ConfigFunction_NODE_ID_ADD.String()
+		case common.ConfigFunction_NODE_ADDR_UPDATE.String():
+			rp.ResourceName = common.ConfigFunction_NODE_ID_UPDATE.String()
+		case common.ConfigFunction_NODE_ADDR_DELETE.String():
+			rp.ResourceName = common.ConfigFunction_NODE_ID_DELETE.String()
+		default:
+			continue
+		}
+	}
+	return nil
 }
 
 // latestChainConfig load latest chainConfig
@@ -140,6 +176,12 @@ func (c *ChainConf) latestChainConfig() error {
 	if err != nil {
 		return err
 	}
+
+	err = HandleCompatibility(&chainConfig)
+	if err != nil {
+		return err
+	}
+
 	c.chainConfig = &chainConfig
 
 	return nil
@@ -206,6 +248,11 @@ func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache
 	result := txConfig.Result.ContractResult.Result
 	chainConfig := &config.ChainConfig{}
 	err = proto.Unmarshal(result, chainConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	err = HandleCompatibility(chainConfig)
 	if err != nil {
 		return nil, err
 	}
