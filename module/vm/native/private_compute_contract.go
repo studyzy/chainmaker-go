@@ -9,6 +9,9 @@ import (
     "chainmaker.org/chainmaker-go/logger"
     commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
     "chainmaker.org/chainmaker-go/protocol"
+    "chainmaker.org/chainmaker-go/utils"
+    "crypto/sha256"
+    "fmt"
 )
 
 type PrivateComputeContract struct {
@@ -50,9 +53,32 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
     //byteCert := []byte(params["user_cert"])
 
     name := params["contract_name"]
+    if utils.IsAnyBlank(name) {
+        err := fmt.Errorf("%s, param[contract_name] of save contract  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
     code := params["contract_code"]
-    //TODO:check code hash
-    //hash, err := params["code_hash"]
+    if utils.IsAnyBlank(code) {
+        err := fmt.Errorf("%s, param[contract_code] of save contract  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    hash := params["code_hash"]
+    if utils.IsAnyBlank(hash) {
+        err := fmt.Errorf("%s, param[code_hash] of save contract  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    calHash := sha256.Sum256([]byte(code))
+    if string(calHash[:]) != hash {
+        err := fmt.Errorf("%s, param[code_hash] != hash of param[contract_code] in save contract interface", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
 
     combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
     version, err := params["version"]
@@ -84,9 +110,22 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
     //TODO:check user permission
     //byteCert := []byte(params["user_cert"])
 
-    //TODO: verify hash and sign
-
     name := params["contract_name"]
+    if utils.IsAnyBlank(name) {
+        err := fmt.Errorf("%s, param[contract_name] of get contract not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    hash := params["code_hash"]
+    if utils.IsAnyBlank(hash) {
+        err := fmt.Errorf("%s, param[code_hash] of get contract not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+    //TODO: verify hash and sign
+    //hashSign := params["hash_sign"]
+
     combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
     version, err := context.Get(combinationName, []byte(protocol.ContractVersion))
     if  err != nil {
@@ -117,12 +156,23 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
     //TODO:check user permission
     //byteCert := []byte(params["user_cert"])
-    key := []byte(params["private_dir"])
-    value := []byte(params["order_id"])
+    key := params["order_id"]
+    if utils.IsAnyBlank(key) {
+        err := fmt.Errorf("%s, param[order_id] of save dir  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    value := params["private_dir"]
+    if utils.IsAnyBlank(value) {
+        err := fmt.Errorf("%s, param[private_key] of save dir not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
 
     //TODO: verify hash and sign
 
-    if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), key, value); err != nil {
+    if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(key), []byte(value)); err != nil {
         r.log.Errorf("Put private dir failed, err: %s", err.Error())
         return nil, err
     }
@@ -136,12 +186,20 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 
     //TODO: verify hash and sign
     if params["compute_result"] != "true" {
+        err := fmt.Errorf("params[compute_result] is false, need not save")
+        r.log.Errorf(err.Error())
     	return nil, nil
     }
 
-    byteRWSet := []byte(params["rw_set"])
+    rwSetStr := params["rw_set"]
+    if utils.IsAnyBlank(rwSetStr) {
+        err := fmt.Errorf("%s, param[rw_set] of save data not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
     var rwSet commonPb.TxRWSet
-    if err := rwSet.Unmarshal(byteRWSet); err != nil{
+    if err := rwSet.Unmarshal([]byte(rwSetStr)); err != nil{
         r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
         return nil, err
     }
@@ -174,8 +232,18 @@ func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params ma
 
     //TODO: verify hash and sign
     key := []byte(params["private_key"])
-    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + params["contract_name"]
+    if utils.IsAnyBlank(params["private_key"]) {
+        err := fmt.Errorf("%s,param[private_key] of get data  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
 
+    name, res := params["contract_name"]
+    if res!= true {
+       name = ""
+    }
+
+    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
     value, err := context.Get(combinationName, key)
     if err != nil {
         r.log.Errorf("Get key: %s from context failed, err: %s", key, err.Error())
@@ -189,11 +257,23 @@ func (r *PrivateComputeRuntime) SaveCert(context protocol.TxSimContext, params m
     //TODO:check user permission
     //byteCert := []byte(params["user_cert"])
 
-    teeId := []byte(params["enclave_id"])
-    teeCert := []byte(params["enclave_cert"])
+    teeId := params["enclave_id"]
+    if utils.IsAnyBlank(teeId) {
+        err := fmt.Errorf("%s,param[enclave_id] of save cert  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    teeCert := params["enclave_cert"]
+    if utils.IsAnyBlank(teeCert) {
+        err := fmt.Errorf("%s,param[enclave_cert] of save cert  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
     //TODO: verify tee cert
 
-    if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), teeId, teeCert); err != nil {
+    if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(teeId), []byte(teeCert)); err != nil {
         r.log.Errorf("Put enclave:%s cert into chain DB failed, err: %s", teeId, err.Error())
     }
 
