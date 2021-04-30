@@ -27,7 +27,7 @@ func NewContractEventMysqlDB(chainId string) (contracteventdb.ContractEventDB, e
 			Logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
 		}
 	} else {
-		db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+		db := mysqldbprovider.NewProvider(chainId).GetDB(chainId, localconf.ChainMakerConfig)
 		contractEventDb = &ContractEventMysqlDB{
 			db:     db,
 			Logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
@@ -62,9 +62,19 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 	blockIndexDdl := utils.GenerateUpdateBlockHeightIndexDdl(block.Header.BlockHeight)
 	return c.db.Transaction(func(tx *gorm.DB) error {
 		var res *gorm.DB
+		var txIndex int
+		var preTxId string
 		for _, event := range contractEventInfo {
-
-			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight)
+			if preTxId == "" {
+				preTxId = event.TxId
+				txIndex = 0
+			} else if preTxId == event.TxId {
+				txIndex++
+			} else {
+				preTxId = event.TxId
+				txIndex = 0
+			}
+			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight, txIndex)
 			createDdl := utils.GenerateCreateTopicTableDdl(event, chanId)
 			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
 			topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic

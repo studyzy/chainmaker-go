@@ -139,7 +139,7 @@ func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType 
 	req := generateReq(sk3, txType, payloadBytes)
 	res, err := client.Subscribe(context.Background(), req)
 	if err != nil {
-		log.Fatalf("subscribe block failed, %s", err.Error())
+		log.Fatalf("subscribe contract event failed, %s", err.Error())
 	}
 
 	f, err := os.OpenFile(dataFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)

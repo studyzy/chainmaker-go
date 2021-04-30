@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -201,14 +202,19 @@ func (s *sdkRequestCtx) EmitEvent() int32 {
 	if err := protocol.CheckEventData(eventData); err != nil {
 		return s.recordMsg("method EmitEvent check event data fail. " + err.Error())
 	}
-
-	s.Sc.ContractEvent = append(s.Sc.ContractEvent, &commonPb.ContractEvent{
+	contractEvent := &commonPb.ContractEvent{
 		ContractName:    s.Sc.ContractId.ContractName,
 		ContractVersion: s.Sc.ContractId.ContractVersion,
 		Topic:           topic.(string),
 		TxId:            s.Sc.TxSimContext.GetTx().Header.TxId,
 		EventData:       eventData,
-	})
+	}
+	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
+	count := utils.GetSqlStatementCount(ddl)
+	if count != 1 {
+		s.recordMsg("contract event parameter error,exist sql injection")
+	}
+	s.Sc.ContractEvent = append(s.Sc.ContractEvent, contractEvent)
 
 	return protocol.ContractSdkSignalResultSuccess
 }
