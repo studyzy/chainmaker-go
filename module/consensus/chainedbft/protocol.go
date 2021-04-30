@@ -239,28 +239,15 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, rootLevel)
 		return false, fmt.Errorf("sync info has a highest quorum certificate with level older than root level")
 	}
-	//hasQc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height)
-	hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height)
-	if hasBlk != nil {
+	if len(qc.BlockID) == 0 {
+		return false, nil
+	}
+	if hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height); hasBlk != nil {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc and block [%v:%v %x]",
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
 		return false, nil
 	}
 	return true, nil
-
-	//var (
-	//	currentQC      = cbi.chainStore.getCurrentQC()
-	//	currentTCLevel = cbi.smr.getHighestTCLevel()
-	//	level          = currentQC.Level
-	//)
-	//if currentQC.Level < currentTCLevel {
-	//	level = currentTCLevel
-	//}
-	//if qc.Level >= level+3 {
-	//	cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local received sync info from a future level [%v], local qc [%v] tc [%v]",
-	//		cbi.selfIndexInEpoch, qc.Level, currentQC.Level, currentTCLevel)
-	//	return false, fmt.Errorf("received sync info from a future level")
-	//}
 }
 
 func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.ConsensusMsg) error {
@@ -696,7 +683,7 @@ func (cbi *ConsensusChainedBftImpl) fetchAndHandleQc(authorIdx uint64, voteMsg *
 	}
 	cbi.syncer.blockSyncReqC <- req
 	<-cbi.syncer.reqDone
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: finish sync startlevel [%v] targetlevel [%v]",
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: finish sync startLevel [%v] targetLevel [%v]",
 		cbi.selfIndexInEpoch, req.startLevel, req.targetLevel)
 	if cbi.smr.getCurrentLevel() < req.targetLevel {
 		cbi.logger.Infof("service index [%v] processVote: sync currentLevel [%v] not catch targetLevel [%v]",
