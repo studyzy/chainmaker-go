@@ -99,7 +99,8 @@ func (sr *SafetyRules) SetLastVote(vote *chainedbftpb.ConsensusPayload, level ui
 func (sr *SafetyRules) SetLastCommittedBlock(block *common.Block, level uint64) {
 	sr.Lock()
 	defer sr.Unlock()
-	if level <= sr.lastCommittedLevel {
+	if level <= sr.lastCommittedLevel || (sr.lastCommittedBlock != nil &&
+		block.Header.BlockHeight <= sr.lastCommittedBlock.Header.BlockHeight) {
 		return
 	}
 	sr.lastCommittedBlock = block
@@ -111,11 +112,12 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 	sr.RLock()
 	defer sr.RUnlock()
 
-	if level <= sr.lastVoteLevel {
-		sr.logger.Debugf("vote rules failed,"+
-			" level <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
-		return false
-	}
+	// Node will only vote once for each level
+	//if level <= sr.lastVoteLevel {
+	//	sr.logger.Debugf("vote rules failed,"+
+	//		" proposalLevel <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
+	//	return false
+	//}
 	var (
 		err     error
 		qcLevel uint64
@@ -136,7 +138,7 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 		return false
 	}
 	if qcLevel < sr.lockedLevel {
-		sr.logger.Debugf("vote rules failed, preLevel <= locked Level, preLevel [%v], locked level [%v]",
+		sr.logger.Debugf("vote rules failed, qcLevel <= locked Level, preLevel [%v], locked level [%v]",
 			qcLevel, sr.lockedLevel)
 		return false
 	}

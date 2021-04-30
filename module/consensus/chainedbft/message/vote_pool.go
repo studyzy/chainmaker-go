@@ -25,7 +25,7 @@ func (oi orderIndexes) Swap(i, j int) { oi[i], oi[j] = oi[j], oi[i] }
 //Less checks the ith object's index < the jth object's index
 func (oi orderIndexes) Less(i, j int) bool { return oi[i] < oi[j] }
 
-//votePool caches the consensus msg
+//votePool caches the vote msg with all validators for one level
 type votePool struct {
 	newViewNum    int    //The number of new view voted
 	lockedNewView bool   //Indicates whether move to new view
@@ -98,9 +98,10 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) error {
 	}
 
 	if lastVote.NewView && vote.NewView {
-		return fmt.Errorf("duplicate vote new view on level %v", vote.Level)
+		return fmt.Errorf("duplicate vote new view on same level %v", vote.Level)
 	} else if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
-		return fmt.Errorf("different votes from same level %v", vote.Level)
+		return fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
+			vote.Level, lastVote.BlockID, vote.BlockID)
 	}
 	return nil
 }

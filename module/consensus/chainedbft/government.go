@@ -13,7 +13,6 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
-	chainUtils "chainmaker.org/chainmaker-go/utils"
 )
 
 //epochManager manages the components that shared across epoch
@@ -26,28 +25,24 @@ type epochManager struct {
 	skipTimeoutCommit bool
 
 	msgPool            *message.MsgPool   //The msg pool associated to next epoch
-	cacheNextHeight    *message.MsgPool   //The msg pool associated to next height
 	useValidators      []*types.Validator //The peer pool associated to next epoch
 	governanceContract protocol.Government
 }
 
 // createNextEpochIfRequired If the conditions are met, create the next epoch
-func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) error {
-	cbi.logger.Debugf("begin createNextEpochIfRequired ...")
+func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) {
+	cbi.logger.Debugf("begin createNextEpochIfRequired, "+
+		"contractEpoch:%d, nodeEpoch:%d", cbi.governanceContract.GetEpochId(), cbi.smr.getEpochId())
+
 	if cbi.governanceContract.GetEpochId() == cbi.smr.getEpochId() {
-		cbi.logger.Debugf("end createNextEpochIfRequired not create next epoch")
-		return nil
+		return
 	}
-	curEpoch := cbi.createEpoch(height)
-	cbi.mtx.Lock()
-	cbi.nextEpoch = curEpoch
-	cbi.mtx.Unlock()
-	cbi.logger.Debugf("ChainConf change! height [%d]", height)
-	return nil
+	cbi.createEpoch(height)
+	cbi.logger.Debugf("end createNextEpochIfRequired")
 }
 
 // createEpoch create the epoch in the block height
-func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
+func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 	var (
 		validators        []*types.Validator
 		members           []*consensusPb.GovernanceMember
@@ -74,8 +69,6 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 		skipTimeoutCommit: cbi.governanceContract.GetSkipTimeoutCommit(),
 		msgPool: message.NewMsgPool(cbi.governanceContract.GetCachedLen(), int(cbi.governanceContract.
 			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
-		cacheNextHeight: message.NewMsgPool(cbi.governanceContract.GetCachedLen(), int(cbi.governanceContract.
-			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
 	}
 	if membersInterface := cbi.governanceContract.GetMembers(); membersInterface != nil {
 		members = membersInterface.([]*consensusPb.GovernanceMember)
@@ -86,9 +79,8 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) *epochManager {
 			break
 		}
 	}
-	cbi.logger.Debugf("createEpoch useValidators len [%d]",
-		len(epoch.useValidators))
-	return epoch
+	cbi.nextEpoch = epoch
+	cbi.logger.Debugf("createEpoch useValidators len [%d]", len(epoch.useValidators))
 }
 
 //isValidProposer checks whether given index is valid at level
@@ -101,17 +93,12 @@ func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) 
 }
 
 func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
-	beginGetContract := chainUtils.CurrentTimeMillisSeconds()
 	validatorsInterface := cbi.governanceContract.GetValidators()
 	if validatorsInterface == nil {
 		return 0
 	}
-	endGetContract := chainUtils.CurrentTimeMillisSeconds()
 	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
 	validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
-	endCalValidators := chainUtils.CurrentTimeMillisSeconds()
-	cbi.logger.Debugf("time cost in getProposer, getContractTime: %d, calValidatorTime: %d",
-		endGetContract-beginGetContract, endCalValidators-endGetContract)
 	if validator != nil {
 		return uint64(validator.Index)
 	}

@@ -114,7 +114,12 @@ func (p *Pacemaker) UpdateTC(tc *chainedbftpb.QuorumCert) {
 // When the consensus enters the next level, return true, otherwise return false.
 func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
 	p.rwMtx.Lock()
-	defer p.rwMtx.Unlock()
+	defer func() {
+		p.logger.Debugf("process certificates (height:%d, smrHeight:%d, hqcLevel:%d, "+
+			"smrCurrentLevel:%d, htcLevel:%d, smrHtcLevel:%d, hcLevel:%d, smrHCLevel:%d", height,
+			p.height, hqcLevel, p.currentLevel, htcLevel, p.highestTCLevel, hcLevel, p.highestCommittedLevel)
+		p.rwMtx.Unlock()
+	}()
 	if hcLevel > p.highestCommittedLevel {
 		p.highestCommittedLevel = hcLevel
 	}
@@ -128,15 +133,13 @@ func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint
 		p.height = height
 	}
 
-	maxLevel := htcLevel
+	maxLevel := p.highestTCLevel
 	// When htcLevel> hqcLevel, it means consensus has timeout, otherwise, it means height +1
-	if hqcLevel >= htcLevel {
+	if hqcLevel >= p.highestTCLevel {
 		maxLevel = hqcLevel
 		p.height = height + 1
 	}
 	newLevel := maxLevel + 1
-	p.logger.Debugf("process certificates (currentLevel [%v] highestTCLevel [%v] newLevel [%v] hqcLevel [%v] htcLevel [%v] hcLevel [%v])\n",
-		p.currentLevel, p.highestTCLevel, newLevel, hqcLevel, htcLevel, hcLevel)
 	if newLevel > p.currentLevel {
 		p.currentLevel = newLevel
 		p.setupTimeout()

@@ -163,58 +163,61 @@ func (cs *chainStore) insertBlock(block *common.Block) error {
 	return nil
 }
 
-func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block, err error) {
+func (cs *chainStore) getBlocks(height int64) []*common.Block {
+	return cs.blockPool.GetBlocks(height)
+}
+
+func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
 	var (
 		qcData []byte
 		blocks []*common.Block
 		qc     *chainedbftpb.QuorumCert
 	)
 	if blocks = cs.blockPool.BranchFromRoot(block); blocks == nil {
-		return nil, fmt.Errorf("commit block failed, no block to be committed")
+		return nil, 0, fmt.Errorf("commit block failed, no block to be committed")
 	}
 	cs.logger.Infof("commit BranchFromRoot blocks contains [%v:%v]", blocks[0].Header.BlockHeight, blocks[len(blocks)-1].Header.BlockHeight)
 
 	for _, blk := range blocks {
 		if qc = cs.blockPool.GetQCByID(string(blk.GetHeader().GetBlockHash())); qc == nil {
-			return lastCommitted, fmt.Errorf("commit block failed, get qc for block is nil")
+			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, get qc for block is nil")
 		}
 		if qcData, err = proto.Marshal(qc); err != nil {
-			return lastCommitted, fmt.Errorf("commit block failed, marshal qc at height [%v], err %v",
+			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, marshal qc at height [%v], err %v",
 				blk.GetHeader().GetBlockHeight(), err)
 		}
 
 		newBlock := proto.Clone(blk).(*common.Block)
 		if err = utils.AddQCtoBlock(newBlock, qcData); err != nil {
 			cs.logger.Errorf("commit block failed, add qc to block err, %v", err)
-			return lastCommitted, err
+			return lastCommitted, lastCommittedLevel, err
 		}
 		if err = cs.blockCommitter.AddBlock(newBlock); err == commonErrors.ErrBlockHadBeenCommited {
 			hadCommitBlock, getBlockErr := cs.blockChainStore.GetBlock(newBlock.GetHeader().GetBlockHeight())
 			if getBlockErr != nil {
 				cs.logger.Errorf("commit block failed, block had been committed, get block err, %v",
 					getBlockErr)
-				return lastCommitted, getBlockErr
+				return lastCommitted, lastCommittedLevel, getBlockErr
 			}
 			if !bytes.Equal(hadCommitBlock.GetHeader().GetBlockHash(), newBlock.GetHeader().GetBlockHash()) {
 				cs.logger.Errorf("commit block failed, block had been committed, hash unequal err, %v",
 					getBlockErr)
-				return lastCommitted, fmt.Errorf("commit block failed, block had been commited, hash unequal")
+				return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, block had been commited, hash unequal")
 			}
 		} else if err != nil {
 			cs.logger.Errorf("commit block failed, add block err, %v", err)
-			return lastCommitted, err
+			return lastCommitted, lastCommittedLevel, err
 		}
 		lastCommitted = newBlock
+		lastCommittedLevel = qc.Level
 	}
-	cs.logger.Debugf("begin prunning block store to next root %v",
-		block.GetHeader().GetBlockHash())
 	if err = cs.pruneBlockStore(string(block.GetHeader().GetBlockHash())); err != nil {
 		cs.logger.Errorf("commit block failed, prunning block store err, %v", err)
-		return lastCommitted, err
+		return lastCommitted, lastCommittedLevel, err
 	}
-	cs.logger.Debugf("end prunning block store to next root %v",
-		block.GetHeader().GetBlockHash())
-	return lastCommitted, nil
+	cs.logger.Debugf("end commit block, lastCommitBlock:[%d:%x], lastCommitLevel: %d",
+		lastCommitted.Header.BlockHeight, lastCommitted.Header.BlockHash, lastCommittedLevel)
+	return lastCommitted, lastCommittedLevel, nil
 }
 
 func (cs *chainStore) pruneBlockStore(nextRootID string) error {

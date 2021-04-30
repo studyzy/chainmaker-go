@@ -40,10 +40,18 @@ func NewBlockPool(rootBlock *common.Block,
 func (bp *BlockPool) InsertBlock(block *common.Block) error {
 	bp.mtx.Lock()
 	defer bp.mtx.Unlock()
-	return bp.blockTree.InsertBlock(block)
+	if err := bp.blockTree.InsertBlock(block); err != nil {
+		return err
+	}
+	if _, exist := bp.idToQC[string(block.Header.BlockHash)]; exist {
+		if bp.highestCertifiedBlock.Header.BlockHeight < block.Header.BlockHeight {
+			bp.highestCertifiedBlock = block
+		}
+	}
+	return nil
 }
 
-//InsertQC Only the QC that has received block data will be stored
+//InsertQC store qc
 func (bp *BlockPool) InsertQC(qc *chainedbftpb.QuorumCert) error {
 	if qc == nil {
 		return errors.New("qc is nil")
@@ -53,17 +61,20 @@ func (bp *BlockPool) InsertQC(qc *chainedbftpb.QuorumCert) error {
 	if _, exist := bp.idToQC[string(qc.BlockID)]; exist {
 		return nil
 	}
-
-	block := bp.blockTree.GetBlockByID(string(qc.BlockID))
-	if block == nil {
-		return errors.New("qc' block not exist")
-	}
-	if qc.Level > bp.highestQC.Level {
-		bp.highestQC = qc
-		bp.highestCertifiedBlock = block
-	}
 	bp.idToQC[string(qc.BlockID)] = qc
+
+	if qc.Level <= bp.highestQC.Level {
+		return nil
+	}
+	bp.highestQC = qc
+	if blk := bp.blockTree.GetBlockByID(string(qc.BlockID)); blk != nil {
+		bp.highestCertifiedBlock = blk
+	}
 	return nil
+}
+
+func (bp *BlockPool) GetBlocks(height int64) []*common.Block {
+	return bp.blockTree.GetBlocks(height)
 }
 
 //GetRootBlock get root block

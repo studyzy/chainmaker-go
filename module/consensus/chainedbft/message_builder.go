@@ -67,7 +67,7 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 		ProposalData: proposalData,
 	}
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] constructProposal, proposal: [%v:%v:%v], JustifyQC: %v, HighestTC: %v",
-		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc, syncInfo.HighestTC)
+		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc.String(), syncInfo.HighestTC.String())
 
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_ProposalMessage,
@@ -126,11 +126,11 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 }
 
 //constructBlockFetchMsg builds a block fetch request msg at given height
-func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(blockID []byte,
-	height uint64, num uint64) *chainedbftpb.ConsensusPayload {
+func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(startHeight uint64, endBlockID []byte,
+	endHeight uint64, num uint64) *chainedbftpb.ConsensusPayload {
 	msg := &chainedbft.BlockFetchMsg{
-		Height:    height,
-		BlockID:   blockID,
+		Height:    endHeight,
+		BlockID:   endBlockID,
 		NumBlocks: num,
 		AuthorIdx: cbi.selfIndexInEpoch,
 	}
