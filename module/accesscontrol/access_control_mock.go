@@ -21,9 +21,9 @@ var mockAcLogger = logger.GetLogger(logger.MODULE_ACCESS)
 func MockAccessControl() protocol.AccessControlProvider {
 	ac := &accessControl{
 		authMode:              IdentityMode,
-		orgList:               sync.Map{},
+		orgList:               &sync.Map{},
 		orgNum:                0,
-		resourceNamePolicyMap: sync.Map{},
+		resourceNamePolicyMap: &sync.Map{},
 		hashType:              "",
 		identityType:          "",
 		dataStore:             nil,
@@ -44,9 +44,9 @@ func MockAccessControl() protocol.AccessControlProvider {
 func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 	ac := &accessControl{
 		authMode:              IdentityMode,
-		orgList:               sync.Map{},
+		orgList:               &sync.Map{},
 		orgNum:                0,
-		resourceNamePolicyMap: sync.Map{},
+		resourceNamePolicyMap: &sync.Map{},
 		hashType:              hashAlg,
 		identityType:          "",
 		dataStore:             nil,
