@@ -176,12 +176,13 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error) {
 	s.Lock()
 	defer s.Unlock()
+	dbName := GetContractDbName(s.chainId, contractName)
 	if contractName != "" {
-		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
+		if err := s.db.ChangeContextDb(dbName); err != nil {
 			return nil, err
 		}
 	}
-	sql := "select object_value from state_infos where contract_name=? and object_key=?"
+	sql := "select object_value from " + dbName + ".state_infos where contract_name=? and object_key=?"
 
 	res, err := s.db.QuerySingle(sql, contractName, key)
 	if err != nil {
@@ -208,12 +209,13 @@ func (s *StateSqlDB) ReadObject(contractName string, key []byte) ([]byte, error)
 func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	s.Lock()
 	defer s.Unlock()
+	dbName := GetContractDbName(s.chainId, contractName)
 	if contractName != "" {
-		if err := s.db.ChangeContextDb(GetContractDbName(s.chainId, contractName)); err != nil {
+		if err := s.db.ChangeContextDb(dbName); err != nil {
 			return nil, err
 		}
 	}
-	sql := "select * from state_infos where object_key between ? and ?"
+	sql := "select * from " + dbName + ".state_infos where object_key between ? and ?"
 	rows, err := s.db.QueryMulti(sql, startKey, limit)
 	if err != nil {
 		return nil, err
