@@ -117,6 +117,22 @@ func (server *ChainMakerServer) initNet() error {
 	}
 	nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
 	localconf.ChainMakerConfig.SetNodeId(nodeId)
+
+	// load custom chain trust roots
+	for _, chainTrustRoots := range localconf.ChainMakerConfig.NetConfig.CustomChainTrustRoots {
+		for _, roots := range chainTrustRoots.TrustRoots {
+			rootBytes, err := ioutil.ReadFile(roots.Root)
+			if err != nil {
+				log.Errorf("load custom chain trust roots failed, %s", err.Error())
+				return err
+			}
+			err = server.net.AddTrustRoot(chainTrustRoots.ChainId, rootBytes)
+			if err != nil {
+				log.Errorf("add custom chain trust roots failed, %s", err.Error())
+				return err
+			}
+		}
+	}
 	return nil
 }
 

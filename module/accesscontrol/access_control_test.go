@@ -53,17 +53,17 @@ var chainConf = &config.ChainConfig{
 	Consensus: &config.ConsensusConfig{
 		Type: 0,
 		Nodes: []*config.OrgConfig{{
-			OrgId:   org1Name,
-			Address: nil,
+			OrgId:  org1Name,
+			NodeId: nil,
 		}, {
-			OrgId:   org2Name,
-			Address: nil,
+			OrgId:  org2Name,
+			NodeId: nil,
 		}, {
-			OrgId:   org3Name,
-			Address: nil,
+			OrgId:  org3Name,
+			NodeId: nil,
 		}, {
-			OrgId:   org4Name,
-			Address: nil,
+			OrgId:  org4Name,
+			NodeId: nil,
 		},
 		},
 		ExtConfig: nil,

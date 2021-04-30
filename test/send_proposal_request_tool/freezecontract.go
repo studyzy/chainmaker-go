@@ -33,15 +33,128 @@ func FreezeContractCMD() *cobra.Command {
 func freezeContract() error {
 	txId := utils.GetRandTxId()
 
+	method := commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String()
+
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
 		ContractId: &commonPb.ContractId{
 			ContractName: contractName,
 		},
-		Method:      "",
-		Parameters:  nil,
-		ByteCode:    nil,
-		Endorsement: nil,
+		Method: method,
+	}
+
+	if endorsement, err := acSign(payload); err == nil {
+		payload.Endorsement = endorsement
+	} else {
+		return err
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+	if err != nil {
+		return err
+	}
+
+	result := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+
+	return nil
+}
+
+func UnfreezeContractCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unfreezeContract",
+		Short: "Unfreeze Contract",
+		Long:  "Unfreeze Contract",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return unfreezeContract()
+		},
+	}
+
+	return cmd
+}
+
+func unfreezeContract() error {
+	txId := utils.GetRandTxId()
+
+	method := commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String()
+
+	payload := &commonPb.ContractMgmtPayload{
+		ChainId: chainId,
+		ContractId: &commonPb.ContractId{
+			ContractName: contractName,
+		},
+		Method: method,
+	}
+
+	if endorsement, err := acSign(payload); err == nil {
+		payload.Endorsement = endorsement
+	} else {
+		return err
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+	if err != nil {
+		return err
+	}
+
+	result := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+
+	return nil
+}
+
+func RevokeContractCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "revokeContract",
+		Short: "Revoke Contract",
+		Long:  "Revoke Contract",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return RevokeContract()
+		},
+	}
+
+	return cmd
+}
+
+func RevokeContract() error {
+	txId := utils.GetRandTxId()
+
+	method := commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String()
+
+	payload := &commonPb.ContractMgmtPayload{
+		ChainId: chainId,
+		ContractId: &commonPb.ContractId{
+			ContractName: contractName,
+		},
+		Method: method,
 	}
 
 	if endorsement, err := acSign(payload); err == nil {

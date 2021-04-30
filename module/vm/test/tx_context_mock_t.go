@@ -201,7 +201,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter,s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		deep:         s.currentDepth,
@@ -240,7 +240,6 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 func (*TxContextMockTest) GetBlockHeight() int64 {
 	return 0
 }
-
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {
 	panic("implement me")
 }

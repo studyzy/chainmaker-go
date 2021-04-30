@@ -16,27 +16,26 @@
 
 package precompiledContracts
 
-import "github.com/ethereum/go-ethereum/crypto/bn256"
-
 // newTwistPoint unmarshals a binary blob into a bn256 elliptic curve point,
 // returning it, or an error if the point is invalid.
-func newTwistPoint(blob []byte) (*bn256.G2, error) {
-	p := new(bn256.G2)
-	if _, err := p.Unmarshal(blob); err != nil {
-		return nil, err
-	}
-	return p, nil
-}
+//func newTwistPoint(blob []byte) (*bn256.G2, error) {
+//	p := new(bn256.G2)
+//	if _, err := p.Unmarshal(blob); err != nil {
+//		return nil, err
+//	}
+//	return p, nil
+//}
 
 // newCurvePoint unmarshals a binary blob into a bn256 elliptic curve point,
 // returning it, or an error if the point is invalid.
-func newCurvePoint(blob []byte) (*bn256.G1, error) {
-	p := new(bn256.G1)
-	if _, err := p.Unmarshal(blob); err != nil {
-		return nil, err
-	}
-	return p, nil
-}
+//func newCurvePoint(blob []byte) (*bn256.G1, error) {
+//p := new(bn256.G1)
+//if _, err := p.Unmarshal(blob); err != nil {
+//	return nil, err
+//}
+//return p, nil
+//return nil, nil
+//}
 
 var (
 	// true32Byte is returned if the bn256 pairing check succeeds.

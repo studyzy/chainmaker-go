@@ -10,6 +10,7 @@ package main
 import (
 	"chainmaker.org/chainmaker-go/tools/cmc/cert"
 	"chainmaker.org/chainmaker-go/tools/cmc/client"
+	"chainmaker.org/chainmaker-go/tools/cmc/hibe"
 	"chainmaker.org/chainmaker-go/tools/cmc/key"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ func main() {
 	mainCmd.AddCommand(key.KeyCMD())
 	mainCmd.AddCommand(cert.CertCMD())
 	mainCmd.AddCommand(client.ClientCMD())
+	mainCmd.AddCommand(hibe.HibeCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

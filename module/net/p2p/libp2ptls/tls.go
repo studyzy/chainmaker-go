@@ -74,6 +74,11 @@ func BuildTlsTrustRoots(chainTrustRoots map[string][][]byte) (*ChainTrustRoots, 
 	return tlsTrustRoots, nil
 }
 
+// AppendNewCertsToTrustRoots add a new cert to ChainTrustRoots.
+func AppendNewCertsToTrustRoots(tlsTrustRoots *ChainTrustRoots, chainId string, certPemBytes []byte) (bool, error) {
+	return loadAllCertsFromCertBytes(certPemBytes, chainId, tlsTrustRoots)
+}
+
 func loadAllCertsFromCertBytes(certByte []byte, chainId string, tlsTrustRoots *ChainTrustRoots) (ok bool, err error) {
 	// 1. read all certs from bytes
 	allCertsBytes := getAllCertsBytes(certByte)

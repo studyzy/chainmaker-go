@@ -83,16 +83,12 @@ func NewRPCServer(chainMakerServer *blockchain.ChainMakerServer) (*RPCServer, er
 			"grpc_service", "grpc_method")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	var log = logger.GetLogger(logger.MODULE_RPC)
 
 	return &RPCServer{
 		grpcServer:       server,
 		chainMakerServer: chainMakerServer,
 		log:              log,
-		ctx:              ctx,
-		cancel:           cancel,
 	}, nil
 }
 
@@ -101,6 +97,8 @@ func (s *RPCServer) Start() error {
 	var (
 		err error
 	)
+
+	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	s.isShutdown = false
 

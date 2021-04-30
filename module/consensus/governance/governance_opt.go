@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -188,9 +187,9 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 	tempMap := map[string]int{}
 
 	for _, node := range nodes {
-		for _, addr := range node.Address {
-			if _, ok := tempMap[addr]; !ok {
-				tempMap[addr] = 1
+		for _, nid := range node.NodeId {
+			if _, ok := tempMap[nid]; !ok {
+				tempMap[nid] = 1
 			}
 		}
 	}
@@ -255,7 +254,7 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 
 	var (
 		index         = 0
-		addrs         []string
+		nodeIds       []string
 		tempMap       = make(map[string]int)
 		nodes         = chainConfig.Consensus.Nodes
 		consensusType = chainConfig.Consensus.Type
@@ -263,23 +262,19 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 	)
 	// 1. Initializes the members who have the right to participate in the consensus
 	for _, node := range nodes {
-		for _, addr := range node.Address {
-			if _, ok := tempMap[addr]; !ok {
-				tempMap[addr] = 1
-				addrs = append(addrs, addr)
+		for _, nid := range node.NodeId {
+			if _, ok := tempMap[nid]; !ok {
+				tempMap[nid] = 1
+				nodeIds = append(nodeIds, nid)
 			}
 		}
 	}
-	sort.Sort(sort.StringSlice(addrs))
+	sort.Sort(sort.StringSlice(nodeIds))
 
-	for _, addr := range addrs {
-		uid, err := helper.GetNodeUidFromAddr(addr)
-		if err != nil {
-			continue
-		}
+	for _, nid := range nodeIds {
 		member := &consensusPb.GovernanceMember{
 			Index:  int64(index),
-			NodeID: uid,
+			NodeID: nid,
 		}
 		members = append(members, member)
 		index++
@@ -517,7 +512,7 @@ func getChainConfigFromBlock(block *commonPb.Block, proposalCache protocol.Propo
 		return nil, fmt.Errorf("block is not conf block")
 	}
 
-	_, rwSetMap := proposalCache.GetProposedBlock(block)
+	_, rwSetMap, _ := proposalCache.GetProposedBlock(block)
 	if len(rwSetMap) == 0 {
 		log.Errorf("rwSetMap is nil")
 		return nil, fmt.Errorf("rwSetMap is nil")
@@ -560,7 +555,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 	}
 
 	var (
-		addrs   []string
+		nodeIds []string
 		tempMap = make(map[string]int)
 		nodes   = chainConfig.Consensus.Nodes
 		index   = GovernanceContract.CurMaxIndex
@@ -568,27 +563,23 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 	)
 	// 1. Initializes the members who have the right to participate in the consensus
 	for _, node := range nodes {
-		for _, addr := range node.Address {
-			if _, ok := tempMap[addr]; !ok {
-				tempMap[addr] = 1
-				addrs = append(addrs, addr)
+		for _, nid := range node.NodeId {
+			if _, ok := tempMap[nid]; !ok {
+				tempMap[nid] = 1
+				nodeIds = append(nodeIds, nid)
 			}
 		}
 	}
-	sort.Sort(sort.StringSlice(addrs))
-	for _, addr := range addrs {
-		uid, err := helper.GetNodeUidFromAddr(addr)
-		if err != nil {
-			continue
-		}
+	sort.Sort(sort.StringSlice(nodeIds))
+	for _, nid := range nodeIds {
 		//reuse old index
-		if member, ok := oldMembersMap[uid]; ok {
+		if member, ok := oldMembersMap[nid]; ok {
 			members = append(members, member)
 		} else {
 			//use new index
 			member := &consensusPb.GovernanceMember{
 				Index:  index,
-				NodeID: uid,
+				NodeID: nid,
 			}
 			members = append(members, member)
 			index++
