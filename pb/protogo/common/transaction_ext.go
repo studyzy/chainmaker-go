@@ -7,13 +7,22 @@
 
 package common
 
-import "errors"
+import (
+	"crypto/sha256"
+	"errors"
+)
 
+//GetSenderAccountId 获得交易的发起人的唯一账户标识，这个标识如果大于2048字节，则返回的是SHA256 Hash
 func (m *Transaction) GetSenderAccountId() []byte {
+	var accountId []byte
 	if m != nil && m.Header != nil && m.Header.Sender != nil {
-		return m.Header.Sender.MemberInfo
+		accountId = m.Header.Sender.MemberInfo
 	}
-	return nil
+	if len(accountId) > 2048 {
+		hash := sha256.Sum256(accountId)
+		accountId = hash[:]
+	}
+	return accountId
 }
 
 func (m *Transaction) GetContractName() (string, error) {
