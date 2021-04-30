@@ -61,7 +61,7 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	if vote == nil {
 		return false, fmt.Errorf("nil vote data")
 	}
-	if err := vp.checkDuplicationVote(vote); err != nil {
+	if isDup, err := vp.checkDuplicationVote(vote); err != nil || isDup {
 		return false, err
 	}
 
@@ -91,19 +91,19 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	return true, nil
 }
 
-func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) error {
+func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (bool, error) {
 	lastVote, ok := vp.votes[vote.AuthorIdx]
 	if !ok {
-		return nil
+		return true, nil
 	}
 
 	if lastVote.NewView && vote.NewView {
-		return fmt.Errorf("duplicate vote new view on same level %v", vote.Level)
+		return false, nil
 	} else if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
-		return fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
+		return false, fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
 			vote.Level, lastVote.BlockID, vote.BlockID)
 	}
-	return nil
+	return true, nil
 }
 
 //checkVoteDone checks whether a valid block or nil block voted by +2/3 nodes
