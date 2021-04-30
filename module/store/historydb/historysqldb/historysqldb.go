@@ -86,6 +86,9 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	}
 	for _, tx := range blockInfo.Block.Txs {
 		txSender := tx.GetSenderAccountId()
+		if len(txSender) == 0 {
+			continue //genesis block tx don't have sender
+		}
 		accountTxInfo := &AccountTxHistoryInfo{
 			AccountId:   txSender,
 			BlockHeight: uint64(block.Header.BlockHeight),
