@@ -53,9 +53,9 @@ var _ protocol.AccessControlProvider = (*accessControl)(nil)
 
 type accessControl struct {
 	authMode              AuthMode
-	orgList               sync.Map // map[string]*organization , orgId -> *organization
+	orgList               *sync.Map // map[string]*organization , orgId -> *organization
 	orgNum                int32
-	resourceNamePolicyMap sync.Map // map[string]*policy , resourceName -> *policy
+	resourceNamePolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
 	// hash algorithm configured for this chain
 	hashType string
 	// authentication type: x509 certificate or plain public key
@@ -80,8 +80,6 @@ type accessControl struct {
 	localOrg           *organization
 	localSigningMember protocol.SigningMember
 
-	mu sync.RWMutex
-
 	log *logger.CMLogger
 }
 
@@ -99,9 +97,9 @@ func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCer
 func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig *config.ChainConfig, localOrgId string, store protocol.BlockchainStore) (*accessControl, error) {
 	ac := &accessControl{
 		authMode:              AuthMode(chainConfig.AuthType),
-		orgList:               sync.Map{},
+		orgList:               &sync.Map{},
 		orgNum:                0,
-		resourceNamePolicyMap: sync.Map{},
+		resourceNamePolicyMap: &sync.Map{},
 		hashType:              chainConfig.GetCrypto().GetHash(),
 		identityType:          "",
 		dataStore:             store,
@@ -146,8 +144,6 @@ func (ac *accessControl) GetHashAlg() string {
 
 // ValidateResourcePolicy checks whether the given resource principal is valid
 func (ac *accessControl) ValidateResourcePolicy(resourcePolicy *config.ResourcePolicy) bool {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
 	if _, ok := restrainedResourceList[resourcePolicy.ResourceName]; ok {
 		ac.log.Errorf("bad configuration: should not modify the access policy of the resource: %s", resourcePolicy.ResourceName)
 		return false
@@ -194,8 +190,6 @@ func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*co
 
 // VerifyPrincipal verifies if the principal for the resource is met
 func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, error) {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
 		return false, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
 	}
@@ -229,8 +223,6 @@ func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (strin
 
 // GetValidEndorsements filters all endorsement entries and returns all valid ones
 func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
 		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
 	}
@@ -261,8 +253,6 @@ func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*
 
 // ValidateCRL validates whether the CRL is issued by a trusted CA
 func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, error) {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
 	crlPEM, rest := pem.Decode(crlBytes)
 	if crlPEM == nil {
 		return nil, fmt.Errorf("empty CRL")
@@ -295,8 +285,6 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 
 // IsCertRevoked verify whether cert chain is revoked by a trusted CA.
 func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
-	ac.mu.RLock()
-	defer ac.mu.RUnlock()
 	err := ac.checkCRL(certChain)
 	if err != nil && err.Error() == "certificate is revoked" {
 		return true
@@ -466,14 +454,7 @@ func (ac *accessControl) Module() string {
 }
 
 func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
 	ac.hashType = chainConfig.GetCrypto().GetHash()
-	ac.opts = bcx509.VerifyOptions{
-		Intermediates: bcx509.NewCertPool(),
-		Roots:         bcx509.NewCertPool(),
-	}
-	ac.orgList = sync.Map{}
 	err := ac.initTrustRootsForUpdatingChainConfig(chainConfig.TrustRoots, ac.localOrg.id)
 	if err != nil {
 		return err
