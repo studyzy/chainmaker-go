@@ -35,6 +35,7 @@ func (cbi *ConsensusChainedBftImpl) replayWal() {
 	if err := proto.Unmarshal(data, &msg); err != nil {
 		cbi.logger.Fatalf("json unmarshal failed, reason: %s", err)
 	}
+	cbi.logger.Infof("lastCommitIndex: %d", msg.LastSnapshotIndex)
 	cbi.lastCommitWalIndex = msg.LastSnapshotIndex
 	for index := msg.LastSnapshotIndex; index <= lastIndex; index++ {
 		data, err := cbi.wal.Read(index)
@@ -53,6 +54,8 @@ func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight int6
 	if val, exist := cbi.proposalWalIndex.Load(commitHeight + 1); exist {
 		nextProposalIndex = val.(uint64)
 	}
+	cbi.proposalWalIndex.Delete(commitHeight)
+	cbi.logger.Infof("commit block height: %d, nextProposalIndex: %d", commitHeight, nextProposalIndex)
 	cbi.lastCommitWalIndex = nextProposalIndex
 	if commitHeight%5 == 0 {
 		if err := cbi.wal.TruncateFront(cbi.lastCommitWalIndex); err != nil {
