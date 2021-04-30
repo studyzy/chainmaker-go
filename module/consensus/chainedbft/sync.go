@@ -123,7 +123,7 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		select {
 		case <-t.C:
 			if len(haveReqPeer) == sm.server.smr.committee.peerCount() {
-				<-sm.reqDone
+				sm.reqDone <- struct{}{}
 				return false
 			}
 		case <-sm.syncDone:
@@ -165,28 +165,9 @@ func (sm *syncManager) respLoop() {
 func (sm *syncManager) constructReqMsg(req *blockSyncReq) (bool, *chainedbftpb.ConsensusPayload) {
 	sm.logger.Debugf("server selfIndexInEpoch [%d], got sync req.height:%d:%x to [%v]",
 		sm.server.selfIndexInEpoch, req.height, req.blockID, req.targetPeer)
-	//currentQC := sm.server.chainStore.getCurrentQC()
-	//if req.startLevel <= currentQC.Level {
-	//	req.startLevel = currentQC.Level + 1
-	//	sm.logger.Debugf("server selfIndexInEpoch [%d], sync req start change to [%d]",
-	//		sm.server.selfIndexInEpoch, req.startLevel)
-	//}
-	//if req.startLevel > req.targetLevel {
-	//	sm.logger.Debugf("no need send sync request, startLevel: %d, req.targetLevel: %d", req.startLevel, req.targetLevel)
-	//	return false, nil
-	//}
-
-	//if int64(req.height) < sm.nextReqHeight {
-	//	sm.logger.Errorf("server selfIndexInEpoch [%d] new blockSyncReq startLevel [%d:%d]",
-	//		sm.server.selfIndexInEpoch, req.startLevel, sm.nextReqHeight)
-	//	return false, nil
-	//}
 	sm.targetHeight = req.height
 	startHeight := sm.server.chainStore.getCurrentQC().Height
 	num := sm.targetHeight - startHeight
-	//if num > MaxSyncBlockNum {
-	//	num = MaxSyncBlockNum
-	//}
 	msg := sm.server.constructBlockFetchMsg(startHeight, req.blockID, req.height, num)
 	return true, msg
 }
@@ -240,7 +221,7 @@ func (sm *syncManager) validateBlockPair(fromPeer uint64, blockPair *chainedbftp
 		return false
 	}
 	if bytes.Compare(header.GetBlockHash(), qc.BlockID) != 0 {
-		sm.logger.Errorf("server selfIndexInEpoch [%v] mismatch block id [%v], epxected [%v]",
+		sm.logger.Errorf("server selfIndexInEpoch [%v] mismatch block id [%v], expected [%v]",
 			qc.BlockID, header.GetBlockHash())
 		return false
 	}
