@@ -68,6 +68,9 @@ func (bc *Blockchain) startNetService() error {
 
 func (bc *Blockchain) startConsensus() error {
 	// start consensus module
+	if bc.consensus == nil {
+		return nil
+	}
 	if err := bc.consensus.Start(); err != nil {
 		bc.log.Errorf("start consensus failed, %s", err.Error())
 		return err
