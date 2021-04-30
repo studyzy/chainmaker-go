@@ -492,7 +492,7 @@ func (consensus *ConsensusTBFTImpl) handleBlockHeight(height int64) {
 
 	consensus.logger.Infof("[%s](%d/%d/%s) enterNewHeight because receiving block height %d",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, height)
-	consensus.enterNewHeight(height + 1)
+	consensus.enterNewHeight(height+1, false)
 }
 
 func (consensus *ConsensusTBFTImpl) procPropose(msg *tbftpb.TBFTMsg) {
@@ -850,7 +850,7 @@ func (consensus *ConsensusTBFTImpl) addPrecommitVote(vote *Vote) {
 }
 
 // enterNewHeight enter `height`
-func (consensus *ConsensusTBFTImpl) enterNewHeight(height int64) {
+func (consensus *ConsensusTBFTImpl) enterNewHeight(height int64, replayMode bool) {
 	consensus.logger.Infof("[%s]attempt enter new height to (%d)", consensus.Id, height)
 	if consensus.Height >= height {
 		consensus.logger.Errorf("[%s](%v/%v/%v) invalid enter invalid new height to (%v)",
@@ -862,6 +862,27 @@ func (consensus *ConsensusTBFTImpl) enterNewHeight(height int64) {
 		consensus.logger.Errorf("[%s](%v/%v/%v) update chain config failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
 	}
+
+	if !replayMode {
+		lastIndex, err := consensus.wal.LastIndex()
+		if err != nil {
+			consensus.logger.Fatalf("[%s](%d/%d/%s) get last index error: %v",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+		}
+
+		consensus.logger.Infof("consensus.Id:[%s] consensus.Height:%d walLastIndex:%d ",
+			consensus.Id, consensus.Height, lastIndex)
+
+		consensus.heightFirstIndex = lastIndex
+
+		err = consensus.deleteWalEntry(height, lastIndex)
+		if err != nil {
+			consensus.logger.Infof("[%s](%d/%d/%s) failed to delete wal log %v",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+		}
+
+	}
+
 	consensus.gossip.addValidators(addedValidators)
 	consensus.gossip.removeValidators(removedValidators)
 	consensus.consensusStateCache.addConsensusState(consensus.ConsensusState)
@@ -1065,7 +1086,7 @@ func (consensus *ConsensusTBFTImpl) enterCommit(height int64, round int32) {
 	// Enter StepCommit
 	consensus.Step = tbftpb.Step_Commit
 	consensus.metrics.SetEnterCommitTime(consensus.Round)
-	consensus.logger.Infof("[%s] consensus cost: %s", consensus.Id, consensus.metrics.String())
+	consensus.logger.Infof("[%s] consensus cost: %s", consensus.Id, consensus.metrics.roundString(consensus.Round))
 
 	voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
 	hash, ok := voteSet.twoThirdsMajority()
@@ -1394,7 +1415,7 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 	data, err := consensus.wal.Read(lastIndex)
 	if err == wal.ErrNotFound {
 		consensus.logger.Infof("[%s] replayWal can't found log entry in wal", consensus.Id)
-		consensus.enterNewHeight(currentHeight + 1)
+		consensus.enterNewHeight(currentHeight+1, true)
 		return nil
 	}
 	if err != nil {
@@ -1412,11 +1433,11 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 
 	if currentHeight >= height {
 		// consensus is slower than ledger
-		consensus.enterNewHeight(currentHeight + 1)
+		consensus.enterNewHeight(currentHeight+1, true)
 		return nil
 	} else {
 		// replay wal log
-		consensus.enterNewHeight(height)
+		consensus.enterNewHeight(height, true)
 		for i := entry.HeightFirstIndex; i <= lastIndex; i++ {
 			consensus.logger.Debugf("[%d] replay entry type: %s, Data.len: %d", consensus.Id, entry.Type, len(entry.Data))
 			switch entry.Type {
@@ -1450,6 +1471,24 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 			}
 		}
 	}
+
+	return nil
+}
+
+func (consensus *ConsensusTBFTImpl) deleteWalEntry(num int64, index uint64) error {
+
+	//Block height is begin from zero,Delete the block data every 10 blocks. If the block height is 10, there are 11 blocks in total and delete the consensus state data of the first 10 blocks
+	i := num % 10
+	if i != 0 {
+		return nil
+	}
+
+	err := consensus.wal.TruncateFront(index)
+	if err != nil {
+		return err
+	}
+
+	consensus.logger.Infof("deleteWalEntry success! walLastIndex:%d consensus.height:%d", index, consensus.Height)
 
 	return nil
 }
