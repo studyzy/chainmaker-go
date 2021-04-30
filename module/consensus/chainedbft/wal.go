@@ -53,6 +53,8 @@ func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight int6
 	var nextProposalIndex uint64
 	if val, exist := cbi.proposalWalIndex.Load(commitHeight + 1); exist {
 		nextProposalIndex = val.(uint64)
+	} else {
+		return
 	}
 	cbi.proposalWalIndex.Delete(commitHeight)
 	cbi.logger.Infof("commit block height: %d, nextProposalIndex: %d", commitHeight, nextProposalIndex)
