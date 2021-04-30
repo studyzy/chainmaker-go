@@ -221,12 +221,8 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 			return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", root.OrgId)
 		}
 
-		_, loaded := ac.orgList.Load(org.id)
-		if loaded {
-			orgList.Store(org.id, org)
-		} else {
-			orgNum++
-		}
+		orgList.Store(org.id, org)
+		orgNum++
 	}
 	atomic.StoreInt32(&ac.orgNum, orgNum)
 	ac.orgList = orgList
