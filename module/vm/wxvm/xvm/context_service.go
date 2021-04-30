@@ -1,6 +1,7 @@
 package xvm
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sync"
@@ -123,14 +124,19 @@ func (c *ContextService) EmitEvent(ctxId int64, in []*serialize.EasyCodecItem) (
 	if err := protocol.CheckEventData(eventData); err != nil {
 		return nil, err
 	}
-
-	context.ContractEvent = append(context.ContractEvent, &commonPb.ContractEvent{
+	contractEvent := &commonPb.ContractEvent{
 		ContractName:    context.ContractId.ContractName,
 		ContractVersion: context.ContractId.ContractVersion,
 		Topic:           topic.(string),
 		TxId:            context.TxSimContext.GetTx().Header.TxId,
 		EventData:       eventData,
-	})
+	}
+	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
+	count := utils.GetSqlStatementCount(ddl)
+	if count != 1 {
+		return nil, fmt.Errorf("contract event parameter error,exist sql injection")
+	}
+	context.ContractEvent = append(context.ContractEvent, contractEvent)
 	items := make([]*serialize.EasyCodecItem, 0)
 	return items, nil
 

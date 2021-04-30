@@ -8,6 +8,7 @@ package waci
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/utils"
 	"encoding/binary"
 	"fmt"
 	"reflect"
@@ -180,13 +181,19 @@ func (w *WaciInstance) EmitEvent() int32 {
 		return w.recordMsg(w.ContractResult, err.Error())
 	}
 
-	w.ContractEvent = append(w.ContractEvent, &commonPb.ContractEvent{
+	contractEvent := &commonPb.ContractEvent{
 		ContractName:    w.ContractId.ContractName,
 		ContractVersion: w.ContractId.ContractVersion,
 		Topic:           topic.(string),
 		TxId:            w.TxSimContext.GetTx().Header.TxId,
 		EventData:       eventData,
-	})
+	}
+	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
+	count := utils.GetSqlStatementCount(ddl)
+	if count != 1 {
+		w.recordMsg(w.ContractResult, "contract event parameter error,exist sql injection")
+	}
+	w.ContractEvent = append(w.ContractEvent, contractEvent)
 
 	return protocol.ContractSdkSignalResultSuccess
 
