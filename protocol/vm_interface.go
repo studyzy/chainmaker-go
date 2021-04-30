@@ -161,11 +161,11 @@ func CheckKeyFieldStr(key string, field string) error {
 			return nil
 		}
 		if len(s) > DefaultStateLen {
-			return fmt.Errorf("field[%s] too long", s)
+			return fmt.Errorf("key field[%s] too long", s)
 		}
 		match, err := regexp.MatchString(DefaultStateRegex, s)
 		if err != nil || !match {
-			return fmt.Errorf("field[%s] can only consist of numbers, dot, letters and underscores", s)
+			return fmt.Errorf("key field[%s] can only consist of numbers, dot, letters and underscores", s)
 		}
 	}
 	return nil
