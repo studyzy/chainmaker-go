@@ -623,7 +623,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 
 func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceContract, oldBytes []byte) (*commonPb.TxRWSet, error) {
 	txRWSet := &commonPb.TxRWSet{
-		TxId:     "",
+		TxId:     GovernanceContractName,
 		TxReads:  make([]*commonPb.TxRead, 0, 0),
 		TxWrites: make([]*commonPb.TxWrite, 0, 1),
 	}

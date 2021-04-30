@@ -289,7 +289,7 @@ func (cbi *ConsensusChainedBftImpl) validateProposer(msg *chainedbftpb.Consensus
 		return false
 	}
 	if err := cbi.validateSignerAndSignature(msg, cbi.smr.getPeerByIndex(proposal.ProposerIdx)); err != nil {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposer failed, err %v"+
+		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposer failed,"+
 			" proposal %v, err %v", cbi.selfIndexInEpoch, proposal, err)
 		return false
 	}
