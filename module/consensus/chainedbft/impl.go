@@ -99,15 +99,16 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	msgBus msgbus.MessageBus, chainConf protocol.ChainConf, helper protocol.HotStuffHelper) (*ConsensusChainedBftImpl, error) {
 
 	service := &ConsensusChainedBftImpl{
-		id:               id,
-		chainID:          chainID,
-		msgCh:            make(chan *net.NetMsg, CONSENSUSCAPABILITY),
-		syncMsgCh:        make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
-		internalMsgCh:    make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
-		protocolMsgCh:    make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
-		consBlockCh:      make(chan *common.Block, INTERNALCAPABILITY),
-		proposedBlockCh:  make(chan *common.Block, INTERNALCAPABILITY),
-		proposalWalIndex: sync.Map{},
+		id:                 id,
+		chainID:            chainID,
+		msgCh:              make(chan *net.NetMsg, CONSENSUSCAPABILITY),
+		syncMsgCh:          make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
+		internalMsgCh:      make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
+		protocolMsgCh:      make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
+		consBlockCh:        make(chan *common.Block, INTERNALCAPABILITY),
+		proposedBlockCh:    make(chan *common.Block, INTERNALCAPABILITY),
+		proposalWalIndex:   sync.Map{},
+		lastCommitWalIndex: 1,
 
 		store:                 store,
 		singer:                singer,

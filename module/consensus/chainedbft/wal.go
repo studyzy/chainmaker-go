@@ -1,8 +1,6 @@
 package chainedbft
 
 import (
-	"fmt"
-
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
@@ -33,7 +31,6 @@ func (cbi *ConsensusChainedBftImpl) replayWal() {
 		cbi.logger.Info("no content in wal file")
 		return
 	}
-	fmt.Println(string(data))
 	msg := chainedbftpb.WalEntry{}
 	if err := proto.Unmarshal(data, &msg); err != nil {
 		cbi.logger.Fatalf("json unmarshal failed, reason: %s", err)
