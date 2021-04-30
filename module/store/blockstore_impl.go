@@ -183,7 +183,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	//commit db concurrently
 	startCommitBlock := utils.CurrentTimeMillisSeconds()
 	//the amount of commit db work
-	numBatches := bs.storeConfig.GetActiveDBCount()
+	numBatches := 5
 	var batchWG sync.WaitGroup
 	batchWG.Add(numBatches)
 	errsChan := make(chan error, numBatches)
