@@ -66,7 +66,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 
 	// 2. height-> blockInfo
 	heightKey := constructBlockNumKey(uint64(block.Header.BlockHeight))
-	batch.Put(heightKey, blockInfo.SerializedMeta)
+	batch.Put(heightKey, blockInfo.GetSerializedMeta())
 
 	// 3. hash-> height
 	hashKey := constructBlockHashKey(block.Header.BlockHash)
@@ -76,8 +76,8 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	txConfirmedTime := make([]byte, 8)
 	binary.BigEndian.PutUint64(txConfirmedTime, uint64(block.Header.BlockTimestamp))
 	startPrepareTxs := utils.CurrentTimeMillisSeconds()
-	for index, txBytes := range blockInfo.SerializedTxs {
-		tx := blockInfo.Txs[index]
+	for index, txBytes := range blockInfo.GetSerializedTxs() {
+		tx := blockInfo.Block.Txs[index]
 		txIdKey := constructTxIDKey(tx.Header.TxId)
 		batch.Put(txIdKey, txBytes)
 

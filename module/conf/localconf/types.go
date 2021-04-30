@@ -196,6 +196,21 @@ func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
 	}
 }
 
+//根据配置的DisableDB的情况，确定当前配置活跃的数据库数量
+func (config *StorageConfig) GetActiveDBCount() int {
+	count := 5
+	if config.DisableContractEventDB {
+		count--
+	}
+	if config.DisableHistoryDB {
+		count--
+	}
+	if config.DisableResultDB {
+		count--
+	}
+	return count
+}
+
 type DbConfig struct {
 	//leveldb,rocksdb,sql
 	Provider      string         `mapstructure:"provider"`

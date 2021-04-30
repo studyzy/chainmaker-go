@@ -46,9 +46,10 @@ func (h *ResultKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInf
 	batch.Put([]byte(resultDBSavepointKey), lastBlockNumBytes)
 
 	txRWSets := blockInfo.TxRWSets
+	rwsetData := blockInfo.GetSerializedTxRWSets()
 	for index, txRWSet := range txRWSets {
 		// 6. rwset: txID -> txRWSet
-		txRWSetBytes := blockInfo.SerializedTxRWSets[index]
+		txRWSetBytes := rwsetData[index]
 		txRWSetKey := constructTxRWSetIDKey(txRWSet.TxId)
 		batch.Put(txRWSetKey, txRWSetBytes)
 	}

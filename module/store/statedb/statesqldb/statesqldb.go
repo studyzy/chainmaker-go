@@ -10,9 +10,9 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/serialization"
 	"sync"
 )
 
@@ -58,7 +58,7 @@ func newStateSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 
 	return stateDB, nil
 }
-func (s *StateSqlDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+func (s *StateSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	s.Lock()
 	defer s.Unlock()
 	s.initDb(getDbName(genesisBlock.Block.Header.ChainId))
@@ -76,12 +76,12 @@ func GetContractDbName(chainId, contractName string) string {
 }
 
 // CommitBlock commits the state in an atomic operation
-func (s *StateSqlDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
+func (s *StateSqlDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerializedInfo) error {
 	s.Lock()
 	defer s.Unlock()
 	return s.commitBlock(blockWithRWSet)
 }
-func (s *StateSqlDB) commitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
+func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializedInfo) error {
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
 	txKey := block.GetTxKey()

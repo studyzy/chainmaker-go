@@ -13,6 +13,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/serialization"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -181,7 +182,8 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 }
 func initStateSqlDB() *StateSqlDB {
 	db, _ := newStateSqlDB("chain1", initProvider(), log)
-	db.InitGenesis(block0)
+	_, blockInfo0, _ := serialization.SerializeBlock(block0)
+	db.InitGenesis(blockInfo0)
 	return db
 }
 
@@ -202,14 +204,16 @@ func TestStateSqlDB_CommitBlock(t *testing.T) {
 	db := initStateSqlDB()
 	block1.TxRWSets[0].TxWrites[0].ContractName = ""
 	block1.TxRWSets[0].TxWrites[0].Value = nil
-	err := db.CommitBlock(block1)
+	_, blockInfo1, _ := serialization.SerializeBlock(block1)
+	err := db.CommitBlock(blockInfo1)
 	assert.Nil(t, err)
 }
 
 func TestStateSqlDB_ReadObject(t *testing.T) {
 	db := initStateSqlDB()
 	block1.TxRWSets[0].TxWrites[0].ContractName = ""
-	db.CommitBlock(block1)
+	_, blockInfo1, _ := serialization.SerializeBlock(block1)
+	db.CommitBlock(blockInfo1)
 	value, err := db.ReadObject(block1.TxRWSets[0].TxWrites[0].ContractName, block1.TxRWSets[0].TxWrites[0].Key)
 	assert.Nil(t, err)
 	assert.Equal(t, block1.TxRWSets[0].TxWrites[0].Value, value)

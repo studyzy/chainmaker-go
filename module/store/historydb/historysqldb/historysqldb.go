@@ -84,7 +84,7 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 
 		}
 	}
-	for _, tx := range blockInfo.Txs {
+	for _, tx := range blockInfo.Block.Txs {
 		txSender := tx.GetSenderAccountId()
 		accountTxInfo := &AccountTxHistoryInfo{
 			AccountId:   txSender,
