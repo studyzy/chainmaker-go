@@ -62,19 +62,16 @@ func (c *ContractEventMysqlDB) CommitBlock(blockInfo *serialization.BlockWithSer
 	blockIndexDdl := utils.GenerateUpdateBlockHeightIndexDdl(block.Header.BlockHeight)
 	return c.db.Transaction(func(tx *gorm.DB) error {
 		var res *gorm.DB
-		var txIndex int
+		var eventIndex int
 		var preTxId string
 		for _, event := range contractEventInfo {
-			if preTxId == "" {
-				preTxId = event.TxId
-				txIndex = 0
-			} else if preTxId == event.TxId {
-				txIndex++
+			if preTxId == event.TxId {
+				eventIndex++
 			} else {
 				preTxId = event.TxId
-				txIndex = 0
+				eventIndex = 0
 			}
-			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight, txIndex)
+			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight, eventIndex)
 			createDdl := utils.GenerateCreateTopicTableDdl(event, chanId)
 			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
 			topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic
