@@ -108,8 +108,9 @@ func (sm *syncManager) reqLoop() {
 }
 
 func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
-	index := req.targetPeer
 	t := time.NewTimer(2 * time.Second)
+	defer t.Stop()
+	index := req.targetPeer
 	peers := sm.server.smr.getPeers()
 	haveReqPeer := make(map[uint64]struct{})
 	for {
@@ -122,6 +123,7 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		req.targetPeer = getReqPeer(peers, haveReqPeer)
 		select {
 		case <-t.C:
+			t.Reset(2 * time.Second)
 			if len(haveReqPeer) == sm.server.smr.committee.peerCount() {
 				sm.reqDone <- struct{}{}
 				return false
