@@ -262,7 +262,6 @@ func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.Consen
 		return fmt.Errorf("specify consensus"+
 			" rounds that already have proposals, has proposal: %s", hasMsg.Payload.String())
 	}
-
 	if !cbi.validateProposer(msg) {
 		return fmt.Errorf("invalid proposer")
 	}
@@ -635,8 +634,10 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 
 	// 4. Add vote to msgPool
 	cbi.logger.Debugf("process vote step 3 inserted the vote ")
-	if err = cbi.insertVote(msg); err != nil {
+	if insert, err := cbi.insertVote(msg); err != nil {
 		cbi.logger.Errorf("%s", err)
+		return
+	} else if !insert {
 		return
 	}
 
@@ -645,17 +646,19 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 	cbi.processVotes(vote)
 }
 
-func (cbi *ConsensusChainedBftImpl) insertVote(msg *chainedbftpb.ConsensusMsg) error {
+func (cbi *ConsensusChainedBftImpl) insertVote(msg *chainedbftpb.ConsensusMsg) (insert bool, err error) {
 	var (
 		voteMsg = msg.Payload.GetVoteMsg()
 		vote    = voteMsg.VoteData
 	)
-	if inserted, err := cbi.msgPool.InsertVote(vote.Height, vote.Level, msg); err != nil || !inserted {
-		return fmt.Errorf("insert vote msg failed, err %v, "+
+	if inserted, err := cbi.msgPool.InsertVote(vote.Height, vote.Level, msg); err != nil {
+		return false, fmt.Errorf("insert vote msg failed, err %v, "+
 			"insert %v, authorIdx: %d ", err, inserted, vote.AuthorIdx)
+	} else if !inserted {
+		return false, nil
 	}
 	cbi.saveWalEntry(chainedbftpb.MessageType_VoteMessage, msg)
-	return nil
+	return true, nil
 }
 
 func (cbi *ConsensusChainedBftImpl) insertProposal(msg *chainedbftpb.ConsensusMsg) error {

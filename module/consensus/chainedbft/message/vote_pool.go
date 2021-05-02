@@ -61,7 +61,7 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	if vote == nil {
 		return false, fmt.Errorf("nil vote data")
 	}
-	if isDup, err := vp.checkDuplicationVote(vote); err != nil || !isDup {
+	if isValid, err := vp.checkDuplicationVote(vote); err != nil || !isValid {
 		return false, err
 	}
 
