@@ -843,6 +843,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	}
 	// 7. update walIndex
 	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
+	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
 
 	// todo. may be delete later.
 	cbi.logger.Infof("processBlockCommitted end, block: [%d:%x].", cbi.commitHeight, block.Header.BlockHash)
