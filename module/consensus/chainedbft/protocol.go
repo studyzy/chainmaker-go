@@ -242,7 +242,7 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 	if len(qc.BlockID) == 0 {
 		return false, nil
 	}
-	if qc.Height-cbi.smr.getHeight() > MaxSyncBlockNum {
+	if qc.Height > cbi.smr.getHeight()+MaxSyncBlockNum {
 		return false, fmt.Errorf("receive data info from future. qc.Height:%d, smrHeight:%d", qc.Height, cbi.smr.getHeight())
 	}
 	if hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height); hasBlk != nil {
