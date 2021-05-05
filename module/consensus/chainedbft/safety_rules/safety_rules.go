@@ -148,11 +148,11 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 //CommitRules validate incoming qc to commit by three-chain
 func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.Block, uint64) {
 	if qc == nil {
-		sr.logger.Debugf("commit rules failed, qc is nil")
+		sr.logger.Debugf("commit rules, qc is nil")
 		return false, nil, 0
 	}
 	if qc.NewView {
-		sr.logger.Debugf("commit rules failed, qc is new view tc")
+		sr.logger.Debugf("commit rules, qc is new view tc")
 		return false, nil, 0
 	}
 

@@ -253,7 +253,8 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.ConsensusMsg) error {
 	proposal := msg.Payload.GetProposalMsg().ProposalData
 	if proposal.Level < cbi.smr.getCurrentLevel() {
-		return fmt.Errorf("old proposal, ignore it")
+		return fmt.Errorf("old proposal, ignore it. proposalInfo:[%d:%d], smrInfo:[%d:%d]",
+			proposal.Height, proposal.Level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
 	}
 	if proposal.EpochId != cbi.smr.getEpochId() {
 		return fmt.Errorf("err epochId, ignore it")
@@ -281,7 +282,7 @@ func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.Consen
 
 func (cbi *ConsensusChainedBftImpl) validateProposer(msg *chainedbftpb.ConsensusMsg) bool {
 	proposal := msg.Payload.GetProposalMsg().ProposalData
-	if !cbi.smr.isValidIdx(proposal.ProposerIdx) || !cbi.isValidProposer(proposal.Level, proposal.ProposerIdx) {
+	if !cbi.isValidProposer(proposal.Level, proposal.ProposerIdx) {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal: received a proposal "+
 			"at height [%v] level [%v] from invalid selfIndexInEpoch [%v] addr [%v]",
 			cbi.selfIndexInEpoch, proposal.Height, proposal.Level, proposal.ProposerIdx, proposal.Proposer)
@@ -322,12 +323,6 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 		return
 	}
 
-	//step2: validate and process new qc from proposal
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step1 process qc start", cbi.selfIndexInEpoch)
-	if ok := cbi.processQC(msg); !ok {
-		return
-	}
-
 	//step3: validate new block from proposal
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step2 validate new block from proposal start", cbi.selfIndexInEpoch)
 	if ok := cbi.validateBlock(proposal); !ok {
@@ -336,7 +331,15 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 
 	//step4: validate consensus args
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step3 validate consensus args", cbi.selfIndexInEpoch)
-	cbi.validateConsensusArg(proposal)
+	if ok := cbi.validateConsensusArg(proposal); !ok {
+		return
+	}
+
+	//step2: validate and process new qc from proposal
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step1 process qc start", cbi.selfIndexInEpoch)
+	if ok := cbi.processQC(msg); !ok {
+		return
+	}
 
 	//step5: add proposal to msg pool and add block to chainStore
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step4 add proposal to msg pool and "+
