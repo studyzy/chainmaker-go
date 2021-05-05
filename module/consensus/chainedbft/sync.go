@@ -12,6 +12,7 @@ import (
 	"time"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
+	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
@@ -56,7 +57,7 @@ type syncManager struct {
 	targetHeight  uint64 // need to fetch level
 
 	quitC         chan struct{}
-	reqDone       chan struct{}      // responsible for synchronization with the consensus main process;
+	reqDone       chan bool          // responsible for synchronization with the consensus main process;
 	syncDone      chan struct{}      // responsible for synchronization of request and reply processes
 	syncMsgC      chan *syncMsg      // receive resp from server
 	blockSyncReqC chan *blockSyncReq // receive req from local node
@@ -69,7 +70,7 @@ func newSyncManager(server *ConsensusChainedBftImpl) *syncManager {
 	return &syncManager{
 		nextReqHeight: 1,
 		quitC:         make(chan struct{}),
-		reqDone:       make(chan struct{}),
+		reqDone:       make(chan bool),
 		syncDone:      make(chan struct{}),
 		syncMsgC:      make(chan *syncMsg, 256),
 		blockSyncReqC: make(chan *blockSyncReq),
@@ -98,9 +99,10 @@ func (sm *syncManager) reqLoop() {
 				continue
 			}
 			if sm.startSyncReq(req) {
+				sm.logger.Debugf("receive all response that was met the condition from peer: %d", req.targetPeer)
 				continue
 			}
-			sm.logger.Errorf("No request reply was received from all peers")
+			sm.logger.Errorf("No response was received that met the condition from peer:%d", req.targetPeer)
 		case <-sm.quitC:
 			return
 		}
@@ -108,41 +110,20 @@ func (sm *syncManager) reqLoop() {
 }
 
 func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
-	t := time.NewTimer(2 * time.Second)
+	t := time.NewTimer(timeservice.RoundTimeout * 2)
 	defer t.Stop()
-	index := req.targetPeer
-	peers := sm.server.smr.getPeers()
-	haveReqPeer := make(map[uint64]struct{})
-	for {
-		haveReqPeer[index] = struct{}{}
-		if ok, msg := sm.constructReqMsg(req); ok {
-			sm.server.signAndSendToPeer(msg, index)
-		} else {
-			return true
-		}
-		req.targetPeer = getReqPeer(peers, haveReqPeer)
-		select {
-		case <-t.C:
-			t.Reset(2 * time.Second)
-			if len(haveReqPeer) == sm.server.smr.committee.peerCount() {
-				sm.reqDone <- struct{}{}
-				return false
-			}
-		case <-sm.syncDone:
-			return true
-		case <-sm.quitC:
-			return true
-		}
-	}
-}
 
-func getReqPeer(peers []*peer, haveReqPeer map[uint64]struct{}) uint64 {
-	for _, p := range peers {
-		if _, ok := haveReqPeer[p.index]; !ok {
-			return p.index
-		}
+	msg := sm.constructReqMsg(req)
+	sm.server.signAndSendToPeer(msg, req.targetPeer)
+	select {
+	case <-t.C:
+		sm.reqDone <- false
+		return false
+	case <-sm.syncDone:
+		return true
+	case <-sm.quitC:
+		return true
 	}
-	return utils.InvalidIndex
 }
 
 func (sm *syncManager) respLoop() {
@@ -157,21 +138,21 @@ func (sm *syncManager) respLoop() {
 			lastRecvHeight := sm.processBlocks(syncMsg)
 			if sm.targetHeight == lastRecvHeight {
 				sm.syncDone <- struct{}{}
-				sm.reqDone <- struct{}{}
+				sm.reqDone <- true
 			}
 		}
 	}
 }
 
 //new peerSyncer and start a go coroutine
-func (sm *syncManager) constructReqMsg(req *blockSyncReq) (bool, *chainedbftpb.ConsensusPayload) {
+func (sm *syncManager) constructReqMsg(req *blockSyncReq) *chainedbftpb.ConsensusPayload {
 	sm.logger.Debugf("server selfIndexInEpoch [%d], got sync req.height:%d:%x to [%v]",
 		sm.server.selfIndexInEpoch, req.height, req.blockID, req.targetPeer)
 	sm.targetHeight = req.height
 	startHeight := sm.server.chainStore.getCurrentQC().Height
 	num := sm.targetHeight - startHeight
 	msg := sm.server.constructBlockFetchMsg(startHeight, req.blockID, req.height, num)
-	return true, msg
+	return msg
 }
 
 func (sm *syncManager) processBlocks(msg *syncMsg) uint64 {

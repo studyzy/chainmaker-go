@@ -270,7 +270,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 				ts.shrinkDag(doneTxIndex, dagRemain)
 
 				txIndexBatch := ts.popNextTxBatchFromDag(dagRemain)
-				ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
+				//ts.log.Debugf("pop next tx index batch %v", txIndexBatch)
 				for _, tx := range txIndexBatch {
 					runningTxC <- tx
 				}
