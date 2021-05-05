@@ -367,15 +367,30 @@ func (cbi *ConsensusChainedBftImpl) onReceivedMsg(msg *net.NetMsg) {
 func (cbi *ConsensusChainedBftImpl) onConsensusMsg(msg *chainedbftpb.ConsensusMsg) {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] dispatch msg %v to related channel",
 		cbi.selfIndexInEpoch, msg.Payload.Type)
+	t := time.NewTimer(timeservice.RoundTimeout)
+	defer t.Stop()
+
 	switch msg.Payload.Type {
 	case chainedbftpb.MessageType_ProposalMessage:
-		cbi.protocolMsgCh <- msg
+		select {
+		case cbi.protocolMsgCh <- msg:
+		case <-t.C:
+		}
 	case chainedbftpb.MessageType_VoteMessage:
-		cbi.protocolMsgCh <- msg
+		select {
+		case cbi.protocolMsgCh <- msg:
+		case <-t.C:
+		}
 	case chainedbftpb.MessageType_BlockFetchMessage:
-		cbi.syncMsgCh <- msg
+		select {
+		case cbi.syncMsgCh <- msg:
+		case <-t.C:
+		}
 	case chainedbftpb.MessageType_BlockFetchRespMessage:
-		cbi.syncMsgCh <- msg
+		select {
+		case cbi.syncMsgCh <- msg:
+		case <-t.C:
+		}
 	}
 }
 
