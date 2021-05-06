@@ -71,6 +71,7 @@ func (cbi *ConsensusChainedBftImpl) addProposalWalIndex(proposalHeight uint64) {
 		if lastIndex, err := cbi.wal.LastIndex(); err != nil {
 			cbi.logger.Fatalf("get lastIndex from walFile failed, reason: %s", err)
 		} else {
+			cbi.logger.Debugf("set proposalHeight walIndex: %d", lastIndex+1)
 			cbi.proposalWalIndex.Store(proposalHeight, lastIndex+1)
 		}
 	}

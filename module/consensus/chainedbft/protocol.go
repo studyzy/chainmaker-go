@@ -697,10 +697,6 @@ func (cbi *ConsensusChainedBftImpl) fetch(authorIdx uint64, voteMsg *chainedbftp
 	fetchOk := <-cbi.syncer.reqDone
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: finish sync startLevel [%v] "+
 		"targetLevel [%v], targetBlock:[%d:%x]", cbi.selfIndexInEpoch, req.startLevel, req.targetLevel, req.height, req.blockID)
-	//if cbi.smr.getCurrentLevel() < req.targetLevel {
-	//	cbi.logger.Infof("service index [%v] processVote: sync currentLevel [%v] not catch targetLevel [%v]",
-	//		cbi.selfIndexInEpoch, cbi.smr.getCurrentLevel(), req.targetLevel)
-	//}
 	return fetchOk
 }
 
@@ -720,7 +716,6 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVotes: aggregated for height [%v]"+
 		" level [%v], newView: %v, qcInfo: %s", cbi.selfIndexInEpoch, vote.Height, vote.Level, newView, qc.String())
-
 	var tc *chainedbftpb.QuorumCert
 	if qc.NewView {
 		// If the newly generated QC type is NewView, it means that majority agree on the timeout and assign QC to TC
