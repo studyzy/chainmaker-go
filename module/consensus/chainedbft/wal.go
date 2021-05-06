@@ -48,11 +48,11 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 		data, err := cbi.wal.Read(index)
 		if err != nil {
 			cbi.logger.Errorf("read content from wal file failed, readIndex: %d, reason: %s", index, err)
-			return true
+			continue
 		}
 		if err := proto.Unmarshal(data, &msg); err != nil {
 			cbi.logger.Errorf("proto unmarshal failed, reason: %s", err)
-			return true
+			continue
 		}
 		switch msg.Msg.Payload.Type {
 		case chainedbftpb.MessageType_ProposalMessage:
@@ -72,10 +72,6 @@ func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight int6
 	if val, exist := cbi.proposalWalIndex.Load(uint64(commitHeight + 1)); exist {
 		nextProposalIndex = val.(uint64)
 	} else {
-		cbi.proposalWalIndex.Range(func(key, value interface{}) bool {
-			cbi.logger.Debugf("updateWalIndexAndTruncFile proposalHeight: %v, walIndex: %v", key, value)
-			return true
-		})
 		return
 	}
 	cbi.proposalWalIndex.Delete(commitHeight)
