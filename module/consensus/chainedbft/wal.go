@@ -46,7 +46,7 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 	for index := msg.LastSnapshotIndex; index <= lastIndex; index++ {
 		data, err := cbi.wal.Read(index)
 		if err != nil {
-			cbi.logger.Fatalf("read content from wal file failed, reason: %s", err)
+			cbi.logger.Fatalf("read content from wal file failed, readIndex: %d, reason: %s", index, err)
 		}
 		if err := proto.Unmarshal(data, &msg); err != nil {
 			cbi.logger.Fatalf("json unmarshal failed, reason: %s", err)
