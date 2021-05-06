@@ -451,10 +451,8 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) er
 		// 这种设计会导致，不同的level的区块，把节点推进到相同的共识状态：qcHeight+1:qcLevel+1, 等待其它对height中的某个区块投票，生成
 		// 新的QC'，将所有节点状态推进至QC'+1
 		// Note: 这种设计，会导致在相同的level出现不同的高度的区块，因为接收的提案level存在 > qcLevel + 1的可能(超时情况下)；此时依据该qc
-		// 节点进入的状态为 qcHeight:qcLevel+1，如果
-		return fmt.Errorf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
-			"smr level [%v:%v], ignore proposal", cbi.selfIndexInEpoch, proposal.Height, proposal.Level,
-			cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+		// 节点只能推进到 qcHeight:qcLevel+1状态，但如果在该proposal高度有过超时，则节点的currLevel必定大于 qcLevel+1
+		return nil
 	}
 	return nil
 }
@@ -766,19 +764,19 @@ func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumC
 		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
 
 	var (
-		tcLevel        = uint64(0)
-		currentQC      = qc
+		tcLevel = uint64(0)
+		//currentQC      = qc
 		committedLevel = cbi.smr.getLastCommittedLevel()
 	)
 	if tc != nil {
 		tcLevel = tc.Level
 		cbi.smr.updateTC(tc)
 		// todo. will understand why?
-		currentQC = cbi.chainStore.getCurrentQC()
+		//currentQC = cbi.chainStore.getCurrentQC()
 	}
 	cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC())
 	cbi.smr.updateLockedQC(qc)
-	if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
+	if enterNewLevel := cbi.smr.processCertificates(qc.Height, qc.Level, tcLevel, committedLevel); enterNewLevel {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
 		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
 	}
