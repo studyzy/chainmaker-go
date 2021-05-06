@@ -762,21 +762,20 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, b
 func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start: smrHeight [%v], smrLevel [%v], qc.Height "+
 		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
-
 	var (
-		tcLevel = uint64(0)
-		//currentQC      = qc
+		tcLevel        = uint64(0)
+		currentQC      = qc
 		committedLevel = cbi.smr.getLastCommittedLevel()
 	)
 	if tc != nil {
 		tcLevel = tc.Level
 		cbi.smr.updateTC(tc)
-		// todo. will understand why?
-		//currentQC = cbi.chainStore.getCurrentQC()
+		// 因为当收集到超时QC时，此时参数上 qc == tc，所以应从节点获取实际的QC信息
+		currentQC = cbi.chainStore.getCurrentQC()
 	}
-	cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC())
+	cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC().String())
 	cbi.smr.updateLockedQC(qc)
-	if enterNewLevel := cbi.smr.processCertificates(qc.Height, qc.Level, tcLevel, committedLevel); enterNewLevel {
+	if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
 		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
 	}
