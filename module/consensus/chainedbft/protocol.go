@@ -358,7 +358,7 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	}
 
 	//step6: vote it and send vote to next proposer in the epoch
-	// 当提案level小于节点的最新投票level时，表示当前节点已经在前述level上进行过投票，可能为赞成票或者超时票。
+	// 当提案level小于等于节点的最新投票level时，表示当前节点已经在前述level上进行过投票，可能为赞成票或者超时票。
 	if lastVoteLevel, _ := cbi.smr.getLastVote(); lastVoteLevel < proposal.Level {
 		cbi.generateVoteAndSend(proposal)
 	}
@@ -375,6 +375,9 @@ func (cbi *ConsensusChainedBftImpl) fetchDataIfRequire(proposalMsg *chainedbftpb
 }
 
 func (cbi *ConsensusChainedBftImpl) generateVoteAndSend(proposal *chainedbftpb.ProposalData) bool {
+	if !cbi.doneReplayWal {
+		return true
+	}
 	cbi.smr.updateState(chainedbftpb.ConsStateType_Vote)
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step5 construct vote and "+
 		"send vote to next proposer start", cbi.selfIndexInEpoch)
@@ -723,6 +726,9 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	}
 	cbi.processCertificates(qc, tc)
 	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
+		if !cbi.doneReplayWal {
+			return
+		}
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
 		qcBlk := cbi.chainStore.getCurrentCertifiedBlock()
 		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qcBlk.Header.BlockHash)

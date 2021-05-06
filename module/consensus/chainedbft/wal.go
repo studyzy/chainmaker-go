@@ -21,7 +21,12 @@ func (cbi *ConsensusChainedBftImpl) saveWalEntry(msgType chainedbftpb.MessageTyp
 	}
 }
 
-func (cbi *ConsensusChainedBftImpl) replayWal() {
+func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
+	defer func() {
+		cbi.doneReplayWal = true
+	}()
+
+	cbi.logger.Infof("start replay wal")
 	lastIndex, err := cbi.wal.LastIndex()
 	if err != nil {
 		cbi.logger.Fatalf("get lastWrite index from walFile failed, reason: %s", err)
@@ -30,7 +35,7 @@ func (cbi *ConsensusChainedBftImpl) replayWal() {
 	data, err := cbi.wal.Read(lastIndex)
 	if err == wal.ErrNotFound {
 		cbi.logger.Info("no content in wal file")
-		return
+		return false
 	}
 	msg := chainedbftpb.WalEntry{}
 	if err := proto.Unmarshal(data, &msg); err != nil {
@@ -46,8 +51,17 @@ func (cbi *ConsensusChainedBftImpl) replayWal() {
 		if err := proto.Unmarshal(data, &msg); err != nil {
 			cbi.logger.Fatalf("json unmarshal failed, reason: %s", err)
 		}
-		cbi.onConsensusMsg(msg.Msg)
+		switch msg.Msg.Payload.Type {
+		case chainedbftpb.MessageType_ProposalMessage:
+			cbi.processProposal(msg.Msg)
+		case chainedbftpb.MessageType_VoteMessage:
+			cbi.processVote(msg.Msg)
+			//case :
+			//	cbi.processProposedBlock()
+		}
 	}
+	cbi.logger.Infof("end replay wal")
+	return true
 }
 
 func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight int64) {

@@ -64,6 +64,7 @@ type ConsensusChainedBftImpl struct {
 	// wal info
 	wal              *wal.Log
 	proposalWalIndex sync.Map
+	doneReplayWal    bool
 
 	// Services within the module
 	smr          *chainedbftSMR            // State machine replication in hotstuff
@@ -198,7 +199,10 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 }
 
 func (cbi *ConsensusChainedBftImpl) startConsensus() {
-	cbi.replayWal()
+	hasWalEntry := cbi.replayWal()
+	if hasWalEntry {
+		return
+	}
 	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
 	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
