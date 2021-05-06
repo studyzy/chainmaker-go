@@ -12,7 +12,7 @@ type ContractEventDB interface {
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	//init contract event db
-	InitGenesis(chainId string)
+	InitGenesis(genesis *serialization.BlockWithSerializedInfo) error
 
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)

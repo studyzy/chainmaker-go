@@ -25,7 +25,7 @@ func NewStateHistoryInfo(contractName, txid string, StateKey []byte, blockHeight
 }
 
 type AccountTxHistoryInfo struct {
-	AccountId   []byte `gorm:"size:128;primaryKey"`
+	AccountId   []byte `gorm:"size:2048;primaryKey"` //primary key size max=3072
 	BlockHeight uint64 `gorm:"primaryKey"`
 	TxId        string `gorm:"size:128;primaryKey"`
 }
@@ -33,5 +33,5 @@ type ContractTxHistoryInfo struct {
 	ContractName string `gorm:"size:128;primaryKey"`
 	BlockHeight  uint64 `gorm:"primaryKey"`
 	TxId         string `gorm:"size:128;primaryKey"`
-	AccountId    []byte `gorm:"size:128"`
+	AccountId    []byte `gorm:"size:2048"`
 }

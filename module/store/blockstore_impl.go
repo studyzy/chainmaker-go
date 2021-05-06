@@ -120,7 +120,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 
 	}
 	//3. 初始化StateDB
-	err = bs.stateDB.InitGenesis(genesisBlock)
+	err = bs.stateDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write stateDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
@@ -140,7 +140,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB && parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
 		bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
-		bs.contractEventDB.InitGenesis(block.Header.GetChainId())
+		bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
 	}
 	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), ",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
@@ -154,14 +154,13 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 }
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
-func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
+func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:          block,
-		TxRWSets:       txRWSets,
-		ContractEvents: contractEvents,
+		Block:    block,
+		TxRWSets: txRWSets,
 	}
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
@@ -202,7 +201,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	// 3.commit stateDB
 	go func() {
 		defer batchWG.Done()
-		err := bs.stateDB.CommitBlock(blockWithRWSet)
+		err := bs.stateDB.CommitBlock(blockWithSerializedInfo)
 		if err != nil {
 			bs.logger.Errorf("chain[%s] failed to write stateDB, block[%d]",
 				block.Header.ChainId, block.Header.BlockHeight)
@@ -512,11 +511,7 @@ func (bs *BlockStoreImpl) recover() error {
 func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[BlockDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
-		blockWithRWSet, err := bs.getBlockFromLog(height)
-		if err != nil {
-			return err
-		}
-		_, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
+		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
 			return err
 		}
@@ -531,11 +526,11 @@ func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64)
 func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[StateDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
-		blockWithRWSet, err := bs.getBlockFromLog(height)
+		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
 			return err
 		}
-		err = bs.stateDB.CommitBlock(blockWithRWSet)
+		err = bs.stateDB.CommitBlock(blockWithSerializedInfo)
 		if err != nil {
 			return err
 		}
@@ -545,14 +540,11 @@ func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64)
 func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[ContractEventDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
-		blockWithRWSet, err := bs.getBlockFromLog(height)
+		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
 			return err
 		}
-		_, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
-		if err != nil {
-			return err
-		}
+
 		err = bs.contractEventDB.CommitBlock(blockWithSerializedInfo)
 		if err != nil {
 			return err
@@ -563,14 +555,11 @@ func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint
 func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
-		blockWithRWSet, err := bs.getBlockFromLog(height)
+		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
 			return err
 		}
-		_, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
-		if err != nil {
-			return err
-		}
+
 		err = bs.historyDB.CommitBlock(blockWithSerializedInfo)
 		if err != nil {
 			return err
@@ -587,11 +576,7 @@ func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint6
 func (bs *BlockStoreImpl) recoverResultDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
-		blockWithRWSet, err := bs.getBlockFromLog(height)
-		if err != nil {
-			return err
-		}
-		_, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
+		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
 			return err
 		}
@@ -624,7 +609,7 @@ func (bs *BlockStoreImpl) getLastSavepoint() (uint64, error) {
 	return lastIndex - 1, nil
 }
 
-func (bs *BlockStoreImpl) getBlockFromLog(num uint64) (*storePb.BlockWithRWSet, error) {
+func (bs *BlockStoreImpl) getBlockFromLog(num uint64) (*serialization.BlockWithSerializedInfo, error) {
 	index := num + 1
 	bytes, err := bs.wal.Read(index)
 	if err != nil {

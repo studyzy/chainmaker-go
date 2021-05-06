@@ -7,15 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package statedb
 
 import (
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
 // StateDB provides handle to world state instances
 type StateDB interface {
-	InitGenesis(genesisBlock *storePb.BlockWithRWSet) error
+	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
 	// CommitBlock commits the state in an atomic operation
-	CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error
+	CommitBlock(blockWithRWSet *serialization.BlockWithSerializedInfo) error
 
 	// ReadObject returns the state value for given contract name and key, or returns nil if none exists.
 	ReadObject(contractName string, key []byte) ([]byte, error)

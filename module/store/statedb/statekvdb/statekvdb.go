@@ -10,6 +10,7 @@ import (
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
+	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"encoding/binary"
 	"errors"
@@ -30,13 +31,13 @@ type StateKvDB struct {
 	Logger   protocol.Logger
 }
 
-func (s *StateKvDB) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+func (s *StateKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	s.Logger.Debug("initial genesis state data into leveldb")
 	return s.CommitBlock(genesisBlock)
 }
 
 // CommitBlock commits the state in an atomic operation
-func (s *StateKvDB) CommitBlock(blockWithRWSet *storePb.BlockWithRWSet) error {
+func (s *StateKvDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerializedInfo) error {
 	batch := types.NewUpdateBatch()
 	// 1. last block height
 	block := blockWithRWSet.Block

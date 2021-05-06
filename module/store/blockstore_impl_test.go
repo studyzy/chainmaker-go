@@ -80,6 +80,7 @@ func getSqlConfig() *localconf.StorageConfig {
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
 	conf.ContractEventDbConfig = dbConfig
+	conf.DisableContractEventDB = true
 	return conf
 }
 func getMysqlConfig() *localconf.StorageConfig {
@@ -98,6 +99,7 @@ func getMysqlConfig() *localconf.StorageConfig {
 	conf.StateDbConfig = dbConfig
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
+	conf.DisableContractEventDB = true
 
 	return conf
 }
@@ -400,21 +402,6 @@ func Test_blockchainStoreImpl_GetLastBlock(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block5.Header.BlockHeight, lastBlock.Header.BlockHeight)
 }
-
-//func Test_blockchainStoreImpl_GetLastConfigBlock(t *testing.T) {
-//	var factory Factory
-//	s, err := factory.newStore(chainId,config1,binlog.NewMemBinlog(),log)
-//	if err != nil {
-//		panic(err)
-//	}
-//	defer s.Close()
-//	configBlock := createConfigBlock(chainId, 6)
-//	err = s.PutBlock(configBlock, txRWSets)
-//	assert.Equal(t, nil, err)
-//	lastBlock, err := s.GetLastConfigBlock()
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(6), lastBlock.Header.BlockHeight)
-//}
 
 func Test_blockchainStoreImpl_GetBlockByTx(t *testing.T) {
 	var factory Factory

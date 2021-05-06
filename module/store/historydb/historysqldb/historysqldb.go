@@ -35,16 +35,18 @@ func (db *HistorySqlDB) initDb(dbName string) {
 	if err != nil {
 		panic("init state sql db fail")
 	}
+	dbSession := db.db.NewDBSession()
+	dbSession.ChangeContextDb(dbName)
 	db.logger.Debug("create table[state_history_infos] to save history")
-	err = db.db.CreateTableIfNotExist(&StateHistoryInfo{})
+	err = dbSession.CreateTableIfNotExist(&StateHistoryInfo{})
 	if err != nil {
 		panic("init state sql db table `state_history_infos` fail")
 	}
-	err = db.db.CreateTableIfNotExist(&AccountTxHistoryInfo{})
+	err = dbSession.CreateTableIfNotExist(&AccountTxHistoryInfo{})
 	if err != nil {
 		panic("init state sql db table `account_tx_history_infos` fail")
 	}
-	err = db.db.CreateTableIfNotExist(&ContractTxHistoryInfo{})
+	err = dbSession.CreateTableIfNotExist(&ContractTxHistoryInfo{})
 	if err != nil {
 		panic("init state sql db table `contract_tx_history_infos` fail")
 	}
@@ -84,8 +86,11 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 
 		}
 	}
-	for _, tx := range blockInfo.Txs {
+	for _, tx := range blockInfo.Block.Txs {
 		txSender := tx.GetSenderAccountId()
+		if len(txSender) == 0 {
+			continue //genesis block tx don't have sender
+		}
 		accountTxInfo := &AccountTxHistoryInfo{
 			AccountId:   txSender,
 			BlockHeight: uint64(block.Header.BlockHeight),
@@ -124,7 +129,7 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 }
 
 func (h *HistorySqlDB) GetLastSavepoint() (uint64, error) {
-	row, err := h.db.QuerySingle("select max(block_height) from state_history_infos")
+	row, err := h.db.NewDBSession().QuerySingle("select max(block_height) from state_history_infos")
 	if err != nil {
 		return 0, err
 	}
@@ -168,24 +173,30 @@ func NewHisIter(rows protocol.SqlRows) *hisIter {
 	return &hisIter{rows: rows}
 }
 func (h *HistorySqlDB) GetHistoryForKey(contractName string, key []byte) (historydb.HistoryIterator, error) {
+	dbSession := h.db.NewDBSession()
+
 	sql := "select tx_id,block_height from state_history_infos where contract_name=? and state_key=? order by block_height desc"
-	rows, err := h.db.QueryMulti(sql, contractName, key)
+	rows, err := dbSession.QueryMulti(sql, contractName, key)
 	if err != nil {
 		return nil, err
 	}
 	return NewHisIter(rows), nil
 }
 func (h *HistorySqlDB) GetAccountTxHistory(account []byte) (historydb.HistoryIterator, error) {
+	dbSession := h.db.NewDBSession()
+
 	sql := "select tx_id,block_height from account_tx_history_infos where account_id=? order by block_height desc"
-	rows, err := h.db.QueryMulti(sql, account)
+	rows, err := dbSession.QueryMulti(sql, account)
 	if err != nil {
 		return nil, err
 	}
 	return NewHisIter(rows), nil
 }
 func (h *HistorySqlDB) GetContractTxHistory(contractName string) (historydb.HistoryIterator, error) {
+	dbSession := h.db.NewDBSession()
+
 	sql := "select tx_id,block_height from contract_tx_history_infos where contract_name=? order by block_height desc"
-	rows, err := h.db.QueryMulti(sql, contractName)
+	rows, err := dbSession.QueryMulti(sql, contractName)
 	if err != nil {
 		return nil, err
 	}

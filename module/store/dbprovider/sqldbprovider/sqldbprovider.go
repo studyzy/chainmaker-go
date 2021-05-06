@@ -244,10 +244,12 @@ func (p *SqlDBHandle) ChangeContextDb(dbName string) error {
 	if res.Error != nil {
 		return res.Error
 	}
+	p.db = res
 	p.contextDbName = dbName
 	p.log.Debugf("execute sql: use %s", dbName)
 	return nil
 }
+
 func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 	p.Lock()
 	defer p.Unlock()
@@ -336,6 +338,16 @@ func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.Sq
 		return nil, err
 	}
 	return NewSqlDBRows(db, rows), nil
+}
+func (p *SqlDBHandle) NewDBSession() protocol.SqlDBSession {
+	p.Lock()
+	defer p.Unlock()
+	session := &SqlDBSession{
+		dbType: p.dbType,
+		db:     p.db.Session(&gorm.Session{}),
+		logger: p.log,
+	}
+	return session
 }
 func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	p.Lock()
