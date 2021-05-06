@@ -36,8 +36,10 @@ func (db *ResultSqlDB) initDb(dbName string) {
 	if err != nil {
 		panic("init state sql db fail")
 	}
+	dbSession := db.db.NewDBSession()
+	dbSession.ChangeContextDb(dbName)
 	db.Logger.Debug("create table result_infos")
-	err = db.db.CreateTableIfNotExist(&ResultInfo{})
+	err = dbSession.CreateTableIfNotExist(&ResultInfo{})
 	if err != nil {
 		panic("init state sql db table `state_history_infos` fail")
 	}
@@ -86,7 +88,7 @@ func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 
 func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	sql := "select rwset from result_infos where tx_id=?"
-	result, err := h.db.QuerySingle(sql, txId)
+	result, err := h.db.NewDBSession().QuerySingle(sql, txId)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +107,7 @@ func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 }
 
 func (h *ResultSqlDB) GetLastSavepoint() (uint64, error) {
-	row, err := h.db.QuerySingle("select max(block_height) from result_infos")
+	row, err := h.db.NewDBSession().QuerySingle("select max(block_height) from result_infos")
 	if err != nil {
 		return 0, err
 	}

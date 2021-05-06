@@ -129,7 +129,7 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 // GetLastSavepoint returns the last block height
 func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 	var blockHeight int64
-	_, err := c.db.ExecSql(CreateBlockHeightIndexTableDDL)
+	_, err := c.db.NewDBSession().ExecSql(CreateBlockHeightIndexTableDDL)
 	if err != nil {
 		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightWithTopicTableName + " table fail")
 		return 0, err
@@ -145,7 +145,7 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 		return 0, err
 	}
 
-	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	single, err := c.db.NewDBSession().QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
 	single.ScanColumns(&blockHeight)
 	if err != nil {
 		c.Logger.Errorf("failed to get last savepoint")
@@ -156,7 +156,7 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 
 // insert a record to init block height index table
 func (c *ContractEventSqlDB) initBlockHeightIndexTable() error {
-	_, err := c.db.ExecSql(InitBlockHeightIndexTableDDL)
+	_, err := c.db.NewDBSession().ExecSql(InitBlockHeightIndexTableDDL)
 	return err
 }
 
@@ -169,6 +169,6 @@ func (c *ContractEventSqlDB) Close() {
 
 // CreateTable create a contract event topic table
 func (c *ContractEventSqlDB) createTable(ddl string) error {
-	_, err := c.db.ExecSql(ddl)
+	_, err := c.db.NewDBSession().ExecSql(ddl)
 	return err
 }
