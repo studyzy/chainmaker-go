@@ -711,6 +711,7 @@ func (cbi *ConsensusChainedBftImpl) fetch(authorIdx uint64, voteMsg *chainedbftp
 func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	blockID, newView, done := cbi.msgPool.CheckVotesDone(vote.Height, vote.Level)
 	if !done {
+		cbi.logger.Debugf("not done for vote:[%d:%d]", vote.Height, vote.Level)
 		return
 	}
 	//aggregate qc
