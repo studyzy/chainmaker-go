@@ -634,14 +634,14 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 
 	// 4. Add vote to msgPool
 	cbi.logger.Debugf("process vote step 3 inserted the vote ")
-	if _, err := cbi.insertVote(msg); err != nil {
+	if insert, err := cbi.insertVote(msg); err != nil {
 		cbi.logger.Errorf("%s", err)
 		return
+	} else if !insert {
+		// Repeat add same voteMsg
+		cbi.logger.Debugf("repeat add same vote: [%d:%d:%d]", vote.AuthorIdx, vote.Height, vote.Level)
+		return
 	}
-	//else if !insert {
-	//	cbi.logger.Debugf("repeat add same vote: [%d:%d:%d]", vote.AuthorIdx, vote.Height, vote.Level)
-	//	return
-	//}
 
 	// 5. generate QC if majority are voted and process the new QC if don't need sync data from peers
 	cbi.logger.Debugf("process vote step 4 no need fetch info and process vote")
