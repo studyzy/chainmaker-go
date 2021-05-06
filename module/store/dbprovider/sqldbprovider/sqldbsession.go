@@ -41,7 +41,11 @@ func (p *SqlDBSession) ChangeContextDb(dbName string) error {
 		return nil
 	}
 	res := p.db.Exec("use " + dbName)
-	return res.Error
+	if res.Error != nil {
+		return res.Error
+	}
+	p.db = res
+	return nil
 }
 func (p *SqlDBSession) Save(value interface{}) (int64, error) {
 	p.Lock()
