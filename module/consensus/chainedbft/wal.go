@@ -11,7 +11,6 @@ func (cbi *ConsensusChainedBftImpl) saveWalEntry(msgType chainedbftpb.MessageTyp
 	if err != nil {
 		cbi.logger.Fatalf("get lastWrite index from walFile failed, reason: %s", err)
 	}
-	cbi.logger.Debugf("save walEntry index: %d", lastIndex+1)
 	bz, err := proto.Marshal(&chainedbftpb.WalEntry{MsgType: msgType, Msg: msg, LastSnapshotIndex: cbi.lastCommitWalIndex})
 	if err != nil {
 		cbi.logger.Fatalf("json marshal msg failed, reason: %s, msgType: %s, msgContent:%v", err, msgType, msg)
@@ -90,13 +89,12 @@ func (cbi *ConsensusChainedBftImpl) addProposalWalIndex(proposalHeight uint64) {
 		lastIndex uint64
 	)
 	defer func() {
-		cbi.logger.Debugf("store proposal: %d walIndex: %d", proposalHeight, lastIndex)
+		cbi.logger.Debugf("store proposal: %d walIndex: %d", proposalHeight, lastIndex+1)
 	}()
 	if _, exist := cbi.proposalWalIndex.Load(proposalHeight); !exist {
 		if lastIndex, err = cbi.wal.LastIndex(); err != nil {
 			cbi.logger.Fatalf("get lastIndex from walFile failed, reason: %s", err)
 		} else {
-			cbi.logger.Debugf("set proposalHeight walIndex: %d", lastIndex+1)
 			cbi.proposalWalIndex.Store(proposalHeight, lastIndex+1)
 		}
 	}
