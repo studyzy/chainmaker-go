@@ -42,7 +42,7 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 		cbi.logger.Errorf("proto unmarshal failed, reason: %s", err)
 		return false
 	}
-	cbi.logger.Infof("lastCommitIndex: %d", msg.LastSnapshotIndex)
+	cbi.logger.Infof("lastIndex: %d,lastCommitIndex: %d", lastIndex, msg.LastSnapshotIndex)
 	cbi.lastCommitWalIndex = msg.LastSnapshotIndex
 	for index := msg.LastSnapshotIndex; index <= lastIndex; index++ {
 		data, err := cbi.wal.Read(index)
