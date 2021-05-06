@@ -821,6 +821,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.commitHeight = uint64(block.Header.BlockHeight)
 	cbi.msgPool.OnBlockSealed(uint64(block.Header.BlockHeight))
 	cbi.smr.setLastCommittedBlock(block, cbi.chainStore.getCommitLevel())
+	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
 	// 4. create next epoch if meet the condition
 	cbi.logger.Debugf("processBlockCommitted step 3 create epoch if meet the condition")
 	cbi.createNextEpochIfRequired(cbi.commitHeight)
@@ -846,8 +847,6 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 				oldIndex, cbi.selfIndexInEpoch)
 		}
 	}
-	// 7. update walIndex
-	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
 	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
 
 	// todo. may be delete later.
