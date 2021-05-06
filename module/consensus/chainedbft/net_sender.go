@@ -46,6 +46,7 @@ func (cbi *ConsensusChainedBftImpl) signAndBroadcast(payload *chainedbftpb.Conse
 		return
 	}
 	peers := cbi.smr.peers()
+	cbi.logger.Debugf("peers count: %d in signAndBroadcast", len(peers))
 	for _, peer := range peers {
 		if peer.index == cbi.selfIndexInEpoch {
 			continue
@@ -55,6 +56,7 @@ func (cbi *ConsensusChainedBftImpl) signAndBroadcast(payload *chainedbftpb.Conse
 			Type:    net.NetMsg_CONSENSUS_MSG,
 			To:      peer.id,
 		}
+		cbi.logger.Debugf("broadcast proposal msg ...")
 		go cbi.msgbus.Publish(msgbus.SendConsensusMsg, msg)
 	}
 }
