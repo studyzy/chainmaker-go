@@ -15,6 +15,9 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"github.com/tidwall/wal"
 	"path/filepath"
 
@@ -300,7 +303,7 @@ func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageCon
 	initGenesis(s)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := s.PutBlock(tt.block, nil); err != nil {
+			if err := s.PutBlock(tt.block, nil, nil); err != nil {
 				t.Errorf("blockchainStoreImpl.PutBlock(), error %v", err)
 			}
 			got, err := s.GetBlockByHash(tt.block.Header.BlockHash)
@@ -326,7 +329,7 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	}
 	defer s.Close()
 	txRWSets[0].TxId = block5.Txs[0].Header.TxId
-	err = s.PutBlock(block5, txRWSets)
+	err = s.PutBlock(block5, txRWSets, nil)
 	assert.NotNil(t, err)
 }
 
@@ -349,29 +352,29 @@ func init5Blocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
 	b, rw := createBlockAndRWSets(chainId, 1, 1)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 3, 3)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 5, 1)
-	s.PutBlock(b, txRWSets)
+	s.PutBlock(b, txRWSets, nil)
 }
 func init5ContractBlocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
 	b, rw := createInitContractBlockAndRWSets(chainId, 1)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 3, 3)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 	b, rw = createBlockAndRWSets(chainId, 5, 1)
-	s.PutBlock(b, rw)
+	s.PutBlock(b, rw, nil)
 }
 func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 	var factory Factory
@@ -604,9 +607,9 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 	defer s.Close()
 	init5Blocks(s)
 	block, txRWSets := createBlockAndRWSets(chainId, 6, 1)
-	err = s.PutBlock(block, txRWSets)
+	err = s.PutBlock(block, txRWSets, nil)
 	block, txRWSets = createBlockAndRWSets(chainId, 7, 100)
-	err = s.PutBlock(block, txRWSets)
+	err = s.PutBlock(block, txRWSets, nil)
 
 	assert.Equal(t, nil, err)
 	blockFromDB, err := s.GetBlock(7)
@@ -709,4 +712,30 @@ func TestWriteBinlog(t *testing.T) {
 
 	err = writeLog.Write(1, []byte("100"))
 	assert.Nil(t, err)
+}
+
+func TestLeveldbRange(t *testing.T) {
+	db, err := leveldb.OpenFile("gossip.db", nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	wo := &opt.WriteOptions{Sync: true}
+	db.Put([]byte("key-1a"), []byte("value-1"), wo)
+	db.Put([]byte("key-3c"), []byte("value-3"), wo)
+	db.Put([]byte("key-4d"), []byte("value-4"), wo)
+	db.Put([]byte("key-5eff"), []byte("value-5"), wo)
+	db.Put([]byte("key-2b"), []byte("value-2"), wo)
+	iter := db.NewIterator(&util.Range{Start: []byte("key-1a"), Limit: []byte("key-3d")}, nil)
+	for iter.Next() {
+		fmt.Println(string(iter.Key()), string(iter.Value()))
+	}
+	iter.Release()
+	err = iter.Error()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
 }
