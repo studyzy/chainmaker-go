@@ -53,11 +53,11 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 		}
 		switch msg.Msg.Payload.Type {
 		case chainedbftpb.MessageType_ProposalMessage:
-			cbi.processProposal(msg.Msg)
+			if err := cbi.processProposal(msg.Msg); err == nil {
+				cbi.addProposalWalIndexByReplay(msg.Msg.Payload.GetProposalMsg().ProposalData.Height, index)
+			}
 		case chainedbftpb.MessageType_VoteMessage:
 			cbi.processVote(msg.Msg)
-			//case :
-			//	cbi.processProposedBlock()
 		}
 	}
 	cbi.logger.Infof("end replay wal")
@@ -100,5 +100,11 @@ func (cbi *ConsensusChainedBftImpl) addProposalWalIndex(proposalHeight uint64) {
 			cbi.logger.Debugf("set proposalHeight walIndex: %d", lastIndex+1)
 			cbi.proposalWalIndex.Store(proposalHeight, lastIndex+1)
 		}
+	}
+}
+
+func (cbi *ConsensusChainedBftImpl) addProposalWalIndexByReplay(proposalHeight, walIndex uint64) {
+	if _, exist := cbi.proposalWalIndex.Load(proposalHeight); !exist {
+		cbi.proposalWalIndex.Store(proposalHeight, walIndex)
 	}
 }

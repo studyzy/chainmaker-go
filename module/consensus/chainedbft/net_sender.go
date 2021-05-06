@@ -45,7 +45,6 @@ func (cbi *ConsensusChainedBftImpl) signAndBroadcast(payload *chainedbftpb.Conse
 		cbi.logger.Errorf("sign payload failed, err %v", err)
 		return
 	}
-
 	peers := cbi.smr.peers()
 	for _, peer := range peers {
 		if peer.index == cbi.selfIndexInEpoch {

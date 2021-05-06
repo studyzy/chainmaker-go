@@ -78,7 +78,7 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 
 //constructVote builds a vote msg with given params
 func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, epochId uint64,
-	block *common.Block) *chainedbftpb.ConsensusPayload {
+	block *common.Block) (*chainedbftpb.ConsensusPayload, error) {
 	voteData := &chainedbftpb.VoteData{
 		Level:     level,
 		Height:    height,
@@ -98,11 +98,11 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 		sign []byte
 	)
 	if data, err = proto.Marshal(voteData); err != nil {
-		return nil
+		return nil, err
 	}
 	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash, data); err != nil {
 		cbi.logger.Errorf("sign data failed, err %v data %v", err, data)
-		return nil
+		return nil, err
 	}
 
 	voteData.Signature = &common.EndorsementEntry{
@@ -122,7 +122,7 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 		Type: chainedbftpb.MessageType_VoteMessage,
 		Data: &chainedbftpb.ConsensusPayload_VoteMsg{vote},
 	}
-	return consensusPayload
+	return consensusPayload, nil
 }
 
 //constructBlockFetchMsg builds a block fetch request msg at given height
