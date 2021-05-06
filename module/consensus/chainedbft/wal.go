@@ -39,17 +39,20 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 	}
 	msg := chainedbftpb.WalEntry{}
 	if err := proto.Unmarshal(data, &msg); err != nil {
-		cbi.logger.Fatalf("json unmarshal failed, reason: %s", err)
+		cbi.logger.Errorf("proto unmarshal failed, reason: %s", err)
+		return false
 	}
 	cbi.logger.Infof("lastCommitIndex: %d", msg.LastSnapshotIndex)
 	cbi.lastCommitWalIndex = msg.LastSnapshotIndex
 	for index := msg.LastSnapshotIndex; index <= lastIndex; index++ {
 		data, err := cbi.wal.Read(index)
 		if err != nil {
-			cbi.logger.Fatalf("read content from wal file failed, readIndex: %d, reason: %s", index, err)
+			cbi.logger.Errorf("read content from wal file failed, readIndex: %d, reason: %s", index, err)
+			return true
 		}
 		if err := proto.Unmarshal(data, &msg); err != nil {
-			cbi.logger.Fatalf("json unmarshal failed, reason: %s", err)
+			cbi.logger.Errorf("proto unmarshal failed, reason: %s", err)
+			return true
 		}
 		switch msg.Msg.Payload.Type {
 		case chainedbftpb.MessageType_ProposalMessage:
