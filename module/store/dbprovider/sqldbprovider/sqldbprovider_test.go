@@ -178,3 +178,16 @@ func TestSqlDBHandle_QuerySql(t *testing.T) {
 	}
 	t.Log(result.Data())
 }
+func TestReplaceDsn(t *testing.T) {
+	tb := make(map[string]string)
+	dbName := "blockdb_chain1"
+	tb["root:123@456@tcp(127.0.0.1)/mysql?charset=utf8mb4&parseTime=True&loc=Local"] = "root:123@456@tcp(127.0.0.1)/blockdb_chain1?charset=utf8mb4&parseTime=True&loc=Local"
+	tb["root:123@456@tcp(127.0.0.1)/{0}"] = "root:123@456@tcp(127.0.0.1)/blockdb_chain1"
+	tb["root:123@456@tcp(127.0.0.1)/"] = "root:123@456@tcp(127.0.0.1)/blockdb_chain1"
+	tb["root:123@mysql@tcp(127.0.0.1)/mysql"] = "root:123@mysql@tcp(127.0.0.1)/blockdb_chain1"
+	tb["root:123@mysql@tcp(127.0.0.1)mysql"] = "root:123@mysql@tcp(127.0.0.1)mysql"
+	for dsn, result := range tb {
+		replaced := replaceMySqlDsn(dsn, dbName)
+		assert.Equal(t, result, replaced)
+	}
+}

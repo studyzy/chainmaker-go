@@ -11,6 +11,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
+type SavePoint struct {
+	BlockHeight uint64 `gorm:"primarykey"`
+}
+
 // StateHistoryInfo defines mysql orm model, used to create mysql table 'state_history_infos'
 type ResultInfo struct {
 	TxId        string `gorm:"size:128;primaryKey"`

@@ -6,6 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 package historysqldb
 
+type SavePoint struct {
+	BlockHeight uint64 `gorm:"primarykey"`
+}
+
 // StateHistoryInfo defines mysql orm model, used to create mysql table 'state_history_infos'
 type StateHistoryInfo struct {
 	ContractName string `gorm:"size:128;primaryKey"`

@@ -173,15 +173,18 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
+var conf = &localconf.SqlDbConfig{
+	Dsn:        ":memory:",
+	SqlDbType:  "sqlite",
+	SqlLogMode: "Info",
+}
+
 func initProvider() *sqldbprovider.SqlDBHandle {
-	conf := &localconf.SqlDbConfig{}
-	conf.Dsn = ":memory:"
-	conf.SqlDbType = "sqlite"
 	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
 	return p
 }
 func initStateSqlDB() *StateSqlDB {
-	db, _ := newStateSqlDB("chain1", initProvider(), log)
+	db, _ := newStateSqlDB("chain1", initProvider(), conf, log)
 	_, blockInfo0, _ := serialization.SerializeBlock(block0)
 	db.InitGenesis(blockInfo0)
 	return db

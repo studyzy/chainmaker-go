@@ -13,26 +13,37 @@ import (
 )
 
 type SqlDBRow struct {
-	db   *gorm.DB
-	rows *sql.Rows
+	db    *gorm.DB
+	rows  *sql.Rows
+	close func() error
 }
 
-func NewSqlDBRow(db *gorm.DB, rows *sql.Rows) *SqlDBRow {
+func NewSqlDBRow(db *gorm.DB, rows *sql.Rows, close func() error) *SqlDBRow {
 	return &SqlDBRow{
-		db:   db,
-		rows: rows,
+		db:    db,
+		rows:  rows,
+		close: close,
 	}
 }
 func (r *SqlDBRow) ScanColumns(dest ...interface{}) error {
+	if r.close != nil {
+		defer r.close()
+	}
 	defer r.rows.Close()
 	return r.rows.Scan(dest...)
 
 }
 func (row *SqlDBRow) ScanObject(dest interface{}) error {
+	if row.close != nil {
+		defer row.close()
+	}
 	defer row.rows.Close()
 	return row.db.ScanRows(row.rows, dest)
 }
 func (row *SqlDBRow) Data() (map[string]string, error) {
+	if row.close != nil {
+		defer row.close()
+	}
 	defer row.rows.Close()
 	return convertRows2Map(row.rows)
 }
@@ -57,21 +68,30 @@ func (row *emptyRow) IsEmpty() bool {
 }
 
 type SqlDBRows struct {
-	db   *gorm.DB
-	rows *sql.Rows
+	db    *gorm.DB
+	rows  *sql.Rows
+	close func() error
 }
 
-func NewSqlDBRows(db *gorm.DB, rows *sql.Rows) *SqlDBRows {
+func NewSqlDBRows(db *gorm.DB, rows *sql.Rows, close func() error) *SqlDBRows {
 	return &SqlDBRows{
-		db:   db,
-		rows: rows,
+		db:    db,
+		rows:  rows,
+		close: close,
 	}
 }
 func (r *SqlDBRows) Next() bool {
 	return r.rows.Next()
 }
 func (r *SqlDBRows) Close() error {
-	return r.rows.Close()
+	rClose := r.rows.Close()
+	if rClose != nil {
+		return rClose
+	}
+	if r.close != nil {
+		return r.close()
+	}
+	return nil
 }
 func (r *SqlDBRows) ScanColumns(dest ...interface{}) error {
 	return r.rows.Scan(dest...)

@@ -15,7 +15,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/hex"
 	"errors"
 	"golang.org/x/sync/semaphore"
 	"runtime"
@@ -27,11 +26,12 @@ type BlockSqlDB struct {
 	db               protocol.SqlDBHandle
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
+	dbName           string
 }
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
 func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*BlockSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
+	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
 	return newBlockSqlDB(chainId, db, logger)
 }
 
@@ -42,13 +42,12 @@ func (db *BlockSqlDB) initDb(dbName string) {
 	if err != nil {
 		panic("init state sql db fail")
 	}
-	dbSession := db.db.NewDBSession()
-	dbSession.ChangeContextDb(dbName)
-	err = dbSession.CreateTableIfNotExist(&BlockInfo{})
+
+	err = db.db.CreateTableIfNotExist(&BlockInfo{})
 	if err != nil {
 		panic("init state sql db table `block_infos` fail")
 	}
-	err = dbSession.CreateTableIfNotExist(&TxInfo{})
+	err = db.db.CreateTableIfNotExist(&TxInfo{})
 	if err != nil {
 		panic("init state sql db table `tx_infos` fail")
 	}
@@ -65,12 +64,13 @@ func newBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logg
 		db:               db,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		logger:           logger,
+		dbName:           getDbName(chainId),
 	}
 	return blockDB, nil
 }
 func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
 	blockInfo := ConvertHeader2BlockInfo(header)
-	_, err := b.db.NewDBSession().Save(blockInfo)
+	_, err := b.db.Save(blockInfo)
 	return err
 }
 func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
@@ -81,50 +81,46 @@ func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerialized
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation
 func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedInfo) error {
 	block := blocksInfo.Block
-	blockHashStr := hex.EncodeToString(block.Header.BlockHash)
+	dbTxKey := block.GetTxKey()
 	startCommitTxs := utils.CurrentTimeMillisSeconds()
-	//save txs
-	txInfos := make([]*TxInfo, 0, len(block.Txs))
-	for index, tx := range block.Txs {
-		txinfo, err := NewTxInfo(tx, uint64(block.Header.BlockHeight), block.Header.BlockHash, uint32(index))
-		if err != nil {
-			b.logger.Errorf("failed to init txinfo, err:%s", err)
-			return err
-		}
-		txInfos = append(txInfos, txinfo)
-	}
-	tx, err := b.db.BeginDbTransaction(blockHashStr)
+	dbtx, err := b.db.BeginDbTransaction(dbTxKey)
 	if err != nil {
 		return err
 	}
-	for _, txInfo := range txInfos {
-		//res := b.db.Clauses(clause.OnConflict{DoNothing: true}).Create(txInfo)
-		_, err := tx.Save(txInfo)
+	//save txs
+	for index, tx := range block.Txs {
+		txInfo, err := NewTxInfo(tx, uint64(block.Header.BlockHeight), block.Header.BlockHash, uint32(index))
+		if err != nil {
+			b.logger.Errorf("failed to init txinfo, err:%s", err)
+			b.db.RollbackDbTransaction(dbTxKey)
+			return err
+		}
+		_, err = dbtx.Save(txInfo)
 		if err != nil {
 			b.logger.Errorf("faield to commit txinfo info, height:%d, tx:%s,err:%s",
 				block.Header.BlockHeight, txInfo.TxId, err)
-			b.db.RollbackDbTransaction(blockHashStr) //rollback tx
+			b.db.RollbackDbTransaction(dbTxKey) //rollback tx
 			return err
 		}
 	}
 
 	elapsedCommitTxs := utils.CurrentTimeMillisSeconds() - startCommitTxs
-
 	//save block info
 	startCommitBlockInfo := utils.CurrentTimeMillisSeconds()
 	blockInfo, err := NewBlockInfo(block)
 	if err != nil {
 		b.logger.Errorf("failed to init blockinfo, err:%s", err)
+		b.db.RollbackDbTransaction(dbTxKey)
 		return err
 	}
-	_, err = tx.Save(blockInfo)
+	_, err = dbtx.Save(blockInfo)
 	if err != nil {
 		b.logger.Errorf("faield to commit block info, height:%d, err:%s",
 			block.Header.BlockHeight, err)
-		b.db.RollbackDbTransaction(blockHashStr) //rollback tx
+		b.db.RollbackDbTransaction(dbTxKey) //rollback tx
 		return err
 	}
-	err = b.db.CommitDbTransaction(blockHashStr)
+	err = b.db.CommitDbTransaction(dbTxKey)
 	if err != nil {
 		b.logger.Errorf("failed to commit tx, err:%s", err)
 		return err
@@ -139,10 +135,9 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 
 // HasBlock returns true if the block hash exist, or returns false if none exists.
 func (b *BlockSqlDB) BlockExists(blockHash []byte) (bool, error) {
-	dbSession := b.db.NewDBSession()
 	var count int64
 	sql := "select count(*) from block_infos where block_hash = ?"
-	res, err := dbSession.QuerySingle(sql, blockHash)
+	res, err := b.db.QuerySingle(sql, blockHash)
 	if err != nil {
 		return false, err
 	}
@@ -160,11 +155,9 @@ func (b *BlockSqlDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 	return b.getFullBlockBySql("select * from block_infos where block_hash = ?", blockHash)
 }
 func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*BlockInfo, error) {
-	dbSession := b.db.NewDBSession()
-
 	//get block info from mysql
 	var blockInfo BlockInfo
-	res, err := dbSession.QuerySingle(sql, values...)
+	res, err := b.db.QuerySingle(sql, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +225,7 @@ func (b *BlockSqlDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, e
 // GetLastSavepoint reurns the last block height
 func (b *BlockSqlDB) GetLastSavepoint() (uint64, error) {
 	sql := "select max(block_height) from block_infos"
-	row, err := b.db.NewDBSession().QuerySingle(sql)
+	row, err := b.db.QuerySingle(sql)
 	if err != nil {
 		b.logger.Errorf("get block sqldb save point error:%s", err.Error())
 		return 0, err
@@ -258,7 +251,7 @@ func (b *BlockSqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
 func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	var txInfo TxInfo
-	res, err := b.db.NewDBSession().QuerySingle("select * from tx_infos where tx_id = ?", txId)
+	res, err := b.db.QuerySingle("select * from tx_infos where tx_id = ?", txId)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +271,7 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 }
 func (b *BlockSqlDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
 	var txInfo TxInfo
-	res, err := b.db.NewDBSession().QuerySingle("select * from tx_infos where tx_id = ?", txId)
+	res, err := b.db.QuerySingle("select * from tx_infos where tx_id = ?", txId)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +294,7 @@ func (b *BlockSqlDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo,
 func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 	var count int64
 	sql := "select count(*) from tx_infos where tx_id = ?"
-	res, err := b.db.NewDBSession().QuerySingle(sql, txId)
+	res, err := b.db.QuerySingle(sql, txId)
 	if err != nil {
 		return false, err
 	}
@@ -315,7 +308,7 @@ func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 
 //获得某个区块高度下的所有交易
 func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight int64) ([]*commonPb.Transaction, error) {
-	res, err := b.db.NewDBSession().QueryMulti("select * from tx_infos where block_height = ? order by offset", blockHeight)
+	res, err := b.db.QueryMulti("select * from tx_infos where block_height = ? order by offset", blockHeight)
 	if err != nil {
 		return nil, err
 	}

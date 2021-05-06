@@ -20,11 +20,12 @@ import (
 type ResultSqlDB struct {
 	db     protocol.SqlDBHandle
 	Logger protocol.Logger
+	dbName string
 }
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewResultSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ResultSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(chainId, dbConfig, logger)
+	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
 	return newResultSqlDB(chainId, db, logger)
 }
 
@@ -36,14 +37,16 @@ func (db *ResultSqlDB) initDb(dbName string) {
 	if err != nil {
 		panic("init state sql db fail")
 	}
-	dbSession := db.db.NewDBSession()
-	dbSession.ChangeContextDb(dbName)
 	db.Logger.Debug("create table result_infos")
-	err = dbSession.CreateTableIfNotExist(&ResultInfo{})
+	err = db.db.CreateTableIfNotExist(&ResultInfo{})
 	if err != nil {
 		panic("init state sql db table `state_history_infos` fail")
 	}
-
+	err = db.db.CreateTableIfNotExist(&SavePoint{})
+	if err != nil {
+		panic("init state sql db table `save_points` fail")
+	}
+	db.db.Save(&SavePoint{0})
 }
 func getDbName(chainId string) string {
 	return "resultdb_" + chainId
@@ -52,6 +55,7 @@ func newResultSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Log
 	rdb := &ResultSqlDB{
 		db:     db,
 		Logger: logger,
+		dbName: getDbName(chainId),
 	}
 	return rdb, nil
 }
@@ -78,6 +82,12 @@ func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 		}
 
 	}
+	_, err = dbtx.ExecSql("update save_points set block_height=?", block.Header.BlockHeight)
+	if err != nil {
+		h.Logger.Errorf("update save point error:%s", err)
+		h.db.RollbackDbTransaction(blockHashStr)
+		return err
+	}
 	h.db.CommitDbTransaction(blockHashStr)
 
 	h.Logger.Debugf("chain[%s]: commit result db, block[%d]",
@@ -88,7 +98,7 @@ func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 
 func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	sql := "select rwset from result_infos where tx_id=?"
-	result, err := h.db.NewDBSession().QuerySingle(sql, txId)
+	result, err := h.db.QuerySingle(sql, txId)
 	if err != nil {
 		return nil, err
 	}
@@ -106,15 +116,15 @@ func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	return &rwSet, nil
 }
 
-func (h *ResultSqlDB) GetLastSavepoint() (uint64, error) {
-	row, err := h.db.NewDBSession().QuerySingle("select max(block_height) from result_infos")
+func (s *ResultSqlDB) GetLastSavepoint() (uint64, error) {
+	sql := "select block_height from save_points"
+	row, err := s.db.QuerySingle(sql)
 	if err != nil {
 		return 0, err
 	}
 	var height *uint64
 	err = row.ScanColumns(&height)
 	if err != nil {
-		h.Logger.Error(err.Error())
 		return 0, err
 	}
 	if height == nil {

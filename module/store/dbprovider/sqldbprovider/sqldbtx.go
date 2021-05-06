@@ -32,6 +32,7 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 		return nil
 	}
 	res := p.db.Exec("use " + dbName)
+	p.logger.Debugf("change context db to %s,err:%v", dbName, res.Error)
 	return res.Error
 }
 func (p *SqlDBTx) Save(value interface{}) (int64, error) {
@@ -46,7 +47,7 @@ func (p *SqlDBTx) Save(value interface{}) (int64, error) {
 func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	tx := p.db.Exec(sql, values)
+	tx := p.db.Exec(sql, values...)
 	p.logger.Debugf("db tx[%s] exec sql[%s],result:%v", p.name, sql, tx.Error)
 	if tx.Error != nil {
 		return 0, tx.Error
@@ -68,7 +69,7 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 	if !rows.Next() {
 		return &emptyRow{}, nil
 	}
-	return NewSqlDBRow(db, rows), nil
+	return NewSqlDBRow(db, rows, nil), nil
 }
 func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
@@ -82,7 +83,7 @@ func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRow
 	if err != nil {
 		return nil, err
 	}
-	return NewSqlDBRows(db, rows), nil
+	return NewSqlDBRows(db, rows, nil), nil
 }
 func (p *SqlDBTx) Commit() error {
 	p.Lock()

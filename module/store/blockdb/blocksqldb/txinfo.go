@@ -14,9 +14,9 @@ import (
 
 // TxInfo defines mysql orm model, used to create mysql table 'tx_infos'
 type TxInfo struct {
+	TxId             string `gorm:"primaryKey;size:128"`
 	ChainId          string `gorm:"size:128"`
 	Sender           []byte `gorm:"type:blob;size:65535"`
-	TxId             string `gorm:"primaryKey;size:128"`
 	TxType           int32
 	BlockHeight      uint64 `gorm:"index:idx_height_offset"`
 	BlockHash        []byte `gorm:"size:128"`

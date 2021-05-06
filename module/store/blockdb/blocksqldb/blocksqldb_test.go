@@ -164,6 +164,7 @@ func initProvider() *sqldbprovider.SqlDBHandle {
 	conf := &localconf.SqlDbConfig{}
 	conf.Dsn = ":memory:"
 	conf.SqlDbType = "sqlite"
+	conf.SqlLogMode = "Info"
 	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
 	p.CreateTableIfNotExist(&BlockInfo{})
 	p.CreateTableIfNotExist(&TxInfo{})
@@ -223,13 +224,16 @@ func TestBlockMysqlDB_GetBlockAt(t *testing.T) {
 	assert.Equal(t, block2.Header.BlockHeight, block.Header.BlockHeight)
 }
 
-func TestBlockMysqlDB_GetLastBlock(t *testing.T) {
+func TestBlockSqlDB_GetLastBlock(t *testing.T) {
 	db := initSqlDb()
-	err := commitBlock(db, block0)
+	_, genesis, _ := serialization.SerializeBlock(&storePb.BlockWithRWSet{Block: block0})
+	err := db.InitGenesis(genesis)
 	assert.Nil(t, err)
 	block, err := db.GetLastBlock()
 	assert.Nil(t, err)
 	assert.Equal(t, int64(0), block.Header.BlockHeight)
+	err = commitBlock(db, block1)
+	assert.Nil(t, err)
 	err = commitBlock(db, block2)
 	assert.Nil(t, err)
 	block, err = db.GetLastBlock()

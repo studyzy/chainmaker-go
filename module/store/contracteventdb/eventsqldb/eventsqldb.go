@@ -14,12 +14,12 @@ import (
 type ContractEventSqlDB struct {
 	db     protocol.SqlDBHandle
 	Logger protocol.Logger
+	dbName string
 }
 
 // NewContractEventMysqlDB construct a new `ContractEventDB` for given chainId
 func NewContractEventMysqlDB(chainId string, sqlDbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ContractEventSqlDB, error) {
-
-	db := sqldbprovider.NewSqlDBHandle(chainId, sqlDbConfig, logger)
+	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), sqlDbConfig, logger)
 	return newContractEventDB(chainId, db, logger)
 }
 
@@ -27,6 +27,7 @@ func newContractEventDB(chainId string, db protocol.SqlDBHandle, logger protocol
 	cdb := &ContractEventSqlDB{
 		db:     db,
 		Logger: logger,
+		dbName: getDbName(chainId),
 	}
 	cdb.initDb(getDbName(chainId))
 	return cdb, nil
@@ -129,7 +130,7 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 // GetLastSavepoint returns the last block height
 func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 	var blockHeight int64
-	_, err := c.db.NewDBSession().ExecSql(CreateBlockHeightIndexTableDDL)
+	_, err := c.db.ExecSql(CreateBlockHeightIndexTableDDL)
 	if err != nil {
 		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightWithTopicTableName + " table fail")
 		return 0, err
@@ -145,7 +146,7 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 		return 0, err
 	}
 
-	single, err := c.db.NewDBSession().QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
 	single.ScanColumns(&blockHeight)
 	if err != nil {
 		c.Logger.Errorf("failed to get last savepoint")
@@ -156,7 +157,7 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 
 // insert a record to init block height index table
 func (c *ContractEventSqlDB) initBlockHeightIndexTable() error {
-	_, err := c.db.NewDBSession().ExecSql(InitBlockHeightIndexTableDDL)
+	_, err := c.db.ExecSql(InitBlockHeightIndexTableDDL)
 	return err
 }
 
@@ -169,6 +170,6 @@ func (c *ContractEventSqlDB) Close() {
 
 // CreateTable create a contract event topic table
 func (c *ContractEventSqlDB) createTable(ddl string) error {
-	_, err := c.db.NewDBSession().ExecSql(ddl)
+	_, err := c.db.ExecSql(ddl)
 	return err
 }
