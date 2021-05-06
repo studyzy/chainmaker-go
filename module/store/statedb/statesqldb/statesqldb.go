@@ -287,6 +287,10 @@ func (s *StateSqlDB) QuerySingle(contractName, sql string, values ...interface{}
 		}
 	}
 	row, err := dbSession.QuerySingle(sql, values...)
+	if err != nil {
+		s.logger.Errorf("execute sql[%s] in statedb[%s] get an error:%s", sql, dbName, err)
+		return nil, err
+	}
 	if row.IsEmpty() {
 		s.logger.Infof("query single return empty row. sql:%s,db name:%s", sql, dbName)
 	}
