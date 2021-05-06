@@ -327,19 +327,19 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 	}
 
 	//step2: validate new block from proposal
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step2 validate new block from proposal start", cbi.selfIndexInEpoch)
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step1 validate new block from proposal start", cbi.selfIndexInEpoch)
 	if ok := cbi.validateBlock(proposal); !ok {
 		return
 	}
 
 	//step3: validate consensus args
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step3 validate consensus args", cbi.selfIndexInEpoch)
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step2 validate consensus args", cbi.selfIndexInEpoch)
 	if ok := cbi.validateConsensusArg(proposal); !ok {
 		return
 	}
 
 	//step4: validate and process new qc from proposal
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step1 process qc start", cbi.selfIndexInEpoch)
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step3 process qc start", cbi.selfIndexInEpoch)
 	if ok := cbi.processQC(msg); !ok {
 		return
 	}
@@ -416,8 +416,8 @@ func (cbi *ConsensusChainedBftImpl) fetchData(proposal *chainedbftpb.ProposalDat
 func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) bool {
 	proposal := msg.Payload.GetProposalMsg().ProposalData
 	syncInfo := msg.Payload.GetProposalMsg().SyncInfo
-	cbi.logger.Debugf("processQC start. height: [%d], level: [%d], blockHash: [%x], "+
-		"JustifyQC.NewView: [%v]", proposal.Height, proposal.Level, proposal.Block.Header.BlockHash, proposal.JustifyQC.NewView)
+	cbi.logger.Debugf("processQC start. height: [%d], level: [%d], blockHash: [%x], JustifyQC.NewView:"+
+		" [%v]", proposal.JustifyQC.Height, proposal.JustifyQC.Level, proposal.JustifyQC.BlockID, proposal.JustifyQC.NewView)
 	if !cbi.smr.voteRules(proposal.Level, proposal.JustifyQC) {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal block [%v:%v] pass "+
 			"safety rules check failed", cbi.selfIndexInEpoch, proposal.Height, proposal.Level)
@@ -435,9 +435,15 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) bo
 	cbi.commitBlocksByQC(proposal.JustifyQC)
 	cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
 	if proposal.Level != cbi.smr.getCurrentLevel() {
-		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
 			"smr level [%v:%v], ignore proposal", cbi.selfIndexInEpoch, proposal.Height, proposal.Level,
 			cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+		// remove the return value,
+		// 因为每个高度可以有多个不同level的区块，<block - timeOut - block' - timeOut - block''> 但不同level的区块包含的QC相同，
+		// 这种设计会导致，不同的level的区块，把节点推进到相同的共识状态：qcHeight+1:qcLevel+1, 等待其它对height中的某个区块投票，生成
+		// 新的QC'，将所有节点状态推进至QC'+1
+		// Note: 这种设计，会导致在相同的level出现不同的高度的区块，因为接收的提案level存在 > qcLevel + 1的可能(超时情况下)；此时依据该qc
+		// 节点进入的状态为 qcHeight:qcLevel+1，如果
 		return false
 	}
 	return true
@@ -630,6 +636,7 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		return
 	} else if !insert {
 		// Repeat add same voteMsg
+		cbi.logger.Debugf("repeat add same vote: [%d:%d:%x]", vote.AuthorIdx, vote.Height, vote.Level)
 		return
 	}
 
@@ -751,18 +758,21 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, b
 // tc When processing a proposalMsg or voteMsg, the tc information is contained in the incoming message;
 // in other cases, the parameter is nil.
 func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) {
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start:, height [%v], level [%v],qc.Height "+
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start: smrHeight [%v], smrLevel [%v], qc.Height "+
 		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
 
 	var (
 		tcLevel        = uint64(0)
-		currentQC      = cbi.chainStore.getCurrentQC()
+		currentQC      = qc
 		committedLevel = cbi.smr.getLastCommittedLevel()
 	)
 	if tc != nil {
 		tcLevel = tc.Level
 		cbi.smr.updateTC(tc)
+		// todo. will understand why?
+		currentQC = cbi.chainStore.getCurrentQC()
 	}
+	cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC())
 	cbi.smr.updateLockedQC(qc)
 	if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
