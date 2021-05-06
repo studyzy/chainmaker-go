@@ -249,7 +249,9 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 	if qc.Height > cbi.smr.getHeight()+MaxSyncBlockNum {
 		return false, fmt.Errorf("receive data info from future. qc.Height:%d, smrHeight:%d", qc.Height, cbi.smr.getHeight())
 	}
-	if hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height); hasBlk != nil {
+	hasQc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height)
+	hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height)
+	if hasQc != nil && hasBlk != nil {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc and block [%v:%v %x]",
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
 		return false, nil
