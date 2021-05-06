@@ -53,9 +53,9 @@ var _ protocol.AccessControlProvider = (*accessControl)(nil)
 
 type accessControl struct {
 	authMode              AuthMode
-	orgList               sync.Map // map[string]*organization , orgId -> *organization
+	orgList               *sync.Map // map[string]*organization , orgId -> *organization
 	orgNum                int32
-	resourceNamePolicyMap sync.Map // map[string]*policy , resourceName -> *policy
+	resourceNamePolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
 	// hash algorithm configured for this chain
 	hashType string
 	// authentication type: x509 certificate or plain public key
@@ -97,9 +97,9 @@ func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCer
 func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig *config.ChainConfig, localOrgId string, store protocol.BlockchainStore) (*accessControl, error) {
 	ac := &accessControl{
 		authMode:              AuthMode(chainConfig.AuthType),
-		orgList:               sync.Map{},
+		orgList:               &sync.Map{},
 		orgNum:                0,
-		resourceNamePolicyMap: sync.Map{},
+		resourceNamePolicyMap: &sync.Map{},
 		hashType:              chainConfig.GetCrypto().GetHash(),
 		identityType:          "",
 		dataStore:             store,
@@ -190,7 +190,7 @@ func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*co
 
 // VerifyPrincipal verifies if the principal for the resource is met
 func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, error) {
-	if ac.orgNum <= 0 {
+	if atomic.LoadInt32(&ac.orgNum) <= 0 {
 		return false, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
 	}
 
@@ -455,11 +455,6 @@ func (ac *accessControl) Module() string {
 
 func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
 	ac.hashType = chainConfig.GetCrypto().GetHash()
-	ac.opts = bcx509.VerifyOptions{
-		Intermediates: bcx509.NewCertPool(),
-		Roots:         bcx509.NewCertPool(),
-	}
-	ac.orgList = sync.Map{}
 	err := ac.initTrustRootsForUpdatingChainConfig(chainConfig.TrustRoots, ac.localOrg.id)
 	if err != nil {
 		return err

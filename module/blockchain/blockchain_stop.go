@@ -7,48 +7,36 @@ SPDX-License-Identifier: Apache-2.0
 
 package blockchain
 
-import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-)
-
 // Stop all the modules.
 func (bc *Blockchain) Stop() {
 	// stop all module
 
 	// stop sequence：
-	// 1、tx pool
-	// 2、sync service
-	// 3、core engine
-	// 4、consensus module
-	// 5、spv node
-	// 6、net service
+	// 1、sync service
+	// 2、core engine
+	// 3、consensus module
+	// 4、spv node
+	// 5、net service
+	// 6、tx pool
 
-	var stopModules []map[string]func() error
-	if localconf.ChainMakerConfig.NodeConfig.Type == "spv" {
-		stopModules = []map[string]func() error{
-			{"NetService": bc.stopNetService},
-			{"Spv": bc.stopSpv},
-		}
-	} else {
-		if bc.getConsensusType() == consensus.ConsensusType_SOLO {
-			// solo
-			stopModules = []map[string]func() error{
-				{"Consensus": bc.stopConsensus},
-				{"Core": bc.stopCoreEngine},
-				{"txPool": bc.stopTxPool},
-			}
-
-		} else {
-			// not solo
-			stopModules = []map[string]func() error{
-				{"NetService": bc.stopNetService},
-				{"Consensus": bc.stopConsensus},
-				{"Core": bc.stopCoreEngine},
-				{"Sync": bc.stopSyncService},
-				{"txPool": bc.stopTxPool},
-			}
-		}
+	var stopModules = make([]map[string]func() error, 0)
+	if bc.isModuleStartUp(moduleNameNetService) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameNetService: bc.stopNetService})
+	}
+	if bc.isModuleStartUp(moduleNameConsensus) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameConsensus: bc.stopConsensus})
+	}
+	if bc.isModuleStartUp(moduleNameCore) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameCore: bc.stopCoreEngine})
+	}
+	if bc.isModuleStartUp(moduleNameSync) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameSync: bc.stopSyncService})
+	}
+	if bc.isModuleStartUp(moduleNameSpv) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameSpv: bc.stopSpv})
+	}
+	if bc.isModuleStartUp(moduleNameTxPool) {
+		stopModules = append(stopModules, map[string]func() error{moduleNameTxPool: bc.stopTxPool})
 	}
 
 	total := len(stopModules)
@@ -61,8 +49,61 @@ func (bc *Blockchain) Stop() {
 				bc.log.Errorf("stop module[%s] failed, %s", name, err)
 				continue
 			}
-			bc.log.Infof("START STEP (%d/%d) => stop module[%s] success :)", total-idx, total, name)
+			bc.log.Infof("STOP STEP (%d/%d) => stop module[%s] success :)", total-idx, total, name)
 		}
+	}
+}
+
+// StopOnRequirements close the module instance which is required to shut down when chain configuration updating.
+func (bc *Blockchain) StopOnRequirements() {
+	stopMethodMap := map[string]func() error{
+		moduleNameNetService: bc.stopNetService,
+		moduleNameSync:       bc.stopSyncService,
+		moduleNameCore:       bc.stopCoreEngine,
+		moduleNameConsensus:  bc.stopConsensus,
+		moduleNameSpv:        bc.stopSpv,
+		moduleNameTxPool:     bc.stopTxPool,
+	}
+
+	// stop sequence：
+	// 1、sync service
+	// 2、core engine
+	// 3、consensus module
+	// 4、spv node
+	// 5、net service
+	// 6、tx pool
+	sequence := map[string]int{
+		moduleNameSync:       0,
+		moduleNameCore:       1,
+		moduleNameConsensus:  2,
+		moduleNameSpv:        3,
+		moduleNameNetService: 4,
+		moduleNameTxPool:     5,
+	}
+	closeFlagArray := [6]string{}
+	for moduleName := range bc.startModules {
+		_, ok := bc.initModules[moduleName]
+		if ok {
+			continue
+		}
+		seq, canStop := sequence[moduleName]
+		if canStop {
+			closeFlagArray[seq] = moduleName
+		}
+	}
+	// stop modules
+	for i := range closeFlagArray {
+		moduleName := closeFlagArray[i]
+		if moduleName == "" {
+			continue
+		}
+		stopFunc := stopMethodMap[moduleName]
+		err := stopFunc()
+		if err != nil {
+			bc.log.Errorf("stop module[%s] failed, %s", moduleName, err)
+			continue
+		}
+		bc.log.Infof("stop module[%s] success :)", moduleName)
 	}
 }
 
@@ -72,12 +113,14 @@ func (bc *Blockchain) stopNetService() error {
 		bc.log.Errorf("stop net service failed, %s", err.Error())
 		return err
 	}
+	delete(bc.startModules, moduleNameNetService)
 	return nil
 }
 
 func (bc *Blockchain) stopSpv() error {
 	// stop spv node
 	bc.spv.Stop()
+	delete(bc.startModules, moduleNameSpv)
 	return nil
 }
 
@@ -87,18 +130,21 @@ func (bc *Blockchain) stopConsensus() error {
 		bc.log.Errorf("stop consensus failed, %s", err.Error())
 		return err
 	}
+	delete(bc.startModules, moduleNameConsensus)
 	return nil
 }
 
 func (bc *Blockchain) stopCoreEngine() error {
 	// stop core engine
 	bc.coreEngine.Stop()
+	delete(bc.startModules, moduleNameCore)
 	return nil
 }
 
 func (bc *Blockchain) stopSyncService() error {
 	// stop sync
 	bc.syncServer.Stop()
+	delete(bc.startModules, moduleNameSync)
 	return nil
 }
 
@@ -110,5 +156,6 @@ func (bc *Blockchain) stopTxPool() error {
 
 		return err
 	}
+	delete(bc.startModules, moduleNameTxPool)
 	return nil
 }

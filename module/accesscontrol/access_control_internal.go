@@ -90,7 +90,7 @@ var (
 
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
 	ac.orgNum = 0
-	ac.orgList = sync.Map{}
+	ac.orgList = &sync.Map{}
 	for _, root := range roots {
 		org := &organization{
 			id:                       root.OrgId,
@@ -189,8 +189,13 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 }
 
 func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig, localOrgId string) error {
-	ac.orgNum = 0
-	ac.orgList = sync.Map{}
+	var orgNum int32 = 0
+	orgList := &sync.Map{}
+
+	opts := bcx509.VerifyOptions{
+		Intermediates: bcx509.NewCertPool(),
+		Roots:         bcx509.NewCertPool(),
+	}
 	for _, root := range roots {
 		org := &organization{
 			id:                       root.OrgId,
@@ -205,10 +210,10 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 		for _, certificate := range certificateChain {
 			if certificate.IsCA {
 				org.trustedRootCerts[string(certificate.Raw)] = certificate
-				ac.opts.Roots.AddCert(certificate)
+				opts.Roots.AddCert(certificate)
 			} else {
 				org.trustedIntermediateCerts[string(certificate.Raw)] = certificate
-				ac.opts.Intermediates.AddCert(certificate)
+				opts.Intermediates.AddCert(certificate)
 			}
 		}
 
@@ -216,8 +221,13 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 			return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", root.OrgId)
 		}
 
-		ac.addOrg(org)
+		orgList.Store(org.id, org)
+		orgNum++
 	}
+	atomic.StoreInt32(&ac.orgNum, orgNum)
+	ac.orgList = orgList
+	ac.opts = opts
+
 	localOrg := ac.getOrgByOrgId(localOrgId)
 	if localOrg == nil {
 		localOrg = &organization{
@@ -264,79 +274,81 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *confi
 	return certificateChain, nil
 }
 
-func (ac *accessControl) resetResourcePolicy() {
-	ac.resourceNamePolicyMap = sync.Map{}
+func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
+	resourceNamePolicyMap := &sync.Map{}
 
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameReadData, policyRead)
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameAdmin, policyAdmin)
+	resourceNamePolicyMap.Store(protocol.ResourceNameReadData, policyRead)
+	resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
+	resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
+	resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
+	resourceNamePolicyMap.Store(protocol.ResourceNameAdmin, policyAdmin)
 
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
+	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
+	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
 
 	// only used for test
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameAllTest, policyAllTest)
-	ac.resourceNamePolicyMap.Store("test_2", policyLimitTestAny)
-	ac.resourceNamePolicyMap.Store("test_2_admin", policyLimitTestAdmin)
-	ac.resourceNamePolicyMap.Store("test_3/4", policyPortionTestAny)
-	ac.resourceNamePolicyMap.Store("test_3/4_admin", policyPortionTestAnyAdmin)
+	resourceNamePolicyMap.Store(protocol.ResourceNameAllTest, policyAllTest)
+	resourceNamePolicyMap.Store("test_2", policyLimitTestAny)
+	resourceNamePolicyMap.Store("test_2_admin", policyLimitTestAdmin)
+	resourceNamePolicyMap.Store("test_3/4", policyPortionTestAny)
+	resourceNamePolicyMap.Store("test_3/4_admin", policyPortionTestAnyAdmin)
 
 	// transaction resource definitions
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
-	ac.resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
+	resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
+	resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
 
 	// system contract interface resource definitions
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
+	resourceNamePolicyMap.Store(common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_CORE_UPDATE.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_BLOCK_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_CORE_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_BLOCK_UPDATE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_ADD.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_ADD.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_ADD.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	ac.resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
-	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_INIT_CONTRACT.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_UPGRADE_CONTRACT.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_FREEZE_CONTRACT.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_UNFREEZE_CONTRACT.String(), policyConfig)
-	ac.resourceNamePolicyMap.Store(common.ManageUserContractFunction_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ManageUserContractFunction_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ManageUserContractFunction_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ManageUserContractFunction_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ManageUserContractFunction_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ManageUserContractFunction_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	ac.resourceNamePolicyMap.Store(common.CertManageFunction_CERT_ADD.String(), policyWrite)
-	ac.resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_QUERY.String(), policyRead)
-	ac.resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
-	ac.resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
-	ac.resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
-	ac.resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.CertManageFunction_CERT_ADD.String(), policyWrite)
+	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_QUERY.String(), policyRead)
+	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+	return resourceNamePolicyMap
 }
 
 func (ac *accessControl) initResourcePolicy(resourcePolicies []*config.ResourcePolicy) {
-	ac.resetResourcePolicy()
+	resourceNamePolicyMap := ac.createDefaultResourcePolicy()
 	for _, resourcePolicy := range resourcePolicies {
 		if ac.ValidateResourcePolicy(resourcePolicy) {
 			policy := NewPolicyFromPb(resourcePolicy.Policy)
-			ac.resourceNamePolicyMap.Store(resourcePolicy.ResourceName, policy)
+			resourceNamePolicyMap.Store(resourcePolicy.ResourceName, policy)
 		}
 	}
+	ac.resourceNamePolicyMap = resourceNamePolicyMap
 }
 
 func (ac *accessControl) checkResourcePolicyOrgList(policy *pbac.Policy) bool {

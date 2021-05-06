@@ -26,7 +26,7 @@ type StateMysqlDB struct {
 
 // NewStateMysqlDB construct a new `StateDB` for given chainId
 func NewStateMysqlDB(chainId string) (statedb.StateDB, error) {
-	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	db := mysqldbprovider.NewProvider(chainId).GetDB(chainId, localconf.ChainMakerConfig)
 	if err := db.AutoMigrate(&StateInfo{}); err != nil {
 		panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
 	}

@@ -27,7 +27,7 @@ type HistoryMysqlDB struct {
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewHistoryMysqlDB(chainId string) (historydb.HistoryDB, error) {
-	db := mysqldbprovider.NewProvider().GetDB(chainId, localconf.ChainMakerConfig)
+	db := mysqldbprovider.NewProvider(chainId).GetDB(chainId, localconf.ChainMakerConfig)
 	if err := db.AutoMigrate(&HistoryInfo{}); err != nil {
 		panic(fmt.Sprintf("failed to migrate blockinfo:%s", err))
 	}
