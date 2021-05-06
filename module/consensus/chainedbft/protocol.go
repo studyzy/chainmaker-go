@@ -670,6 +670,7 @@ func (cbi *ConsensusChainedBftImpl) insertVote(msg *chainedbftpb.ConsensusMsg) (
 		return false, nil
 	}
 	if cbi.doneReplayWal {
+		cbi.addProposalWalIndex(vote.Height)
 		cbi.saveWalEntry(chainedbftpb.MessageType_VoteMessage, msg)
 	}
 	return true, nil
