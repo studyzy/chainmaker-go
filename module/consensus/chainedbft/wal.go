@@ -55,6 +55,10 @@ func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight int6
 	if val, exist := cbi.proposalWalIndex.Load(commitHeight + 1); exist {
 		nextProposalIndex = val.(uint64)
 	} else {
+		cbi.proposalWalIndex.Range(func(key, value interface{}) bool {
+			cbi.logger.Debugf("updateWalIndexAndTruncFile proposalHeight: %d, walIndex: %d", key.(int64), value.(uint64))
+			return true
+		})
 		return
 	}
 	cbi.proposalWalIndex.Delete(commitHeight)
