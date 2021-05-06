@@ -20,22 +20,22 @@ func (bc *Blockchain) Start() error {
 	// 6、sync service
 
 	var startModules = make([]map[string]func() error, 0)
-	if bc.isModuleInit(moduleNameNetService) {
+	if bc.isModuleInit(moduleNameNetService) && !bc.isModuleStartUp(moduleNameNetService) {
 		startModules = append(startModules, map[string]func() error{moduleNameNetService: bc.startNetService})
 	}
 	//if bc.isModuleInit(moduleNameSpv) {
 	//	startModules = append(startModules, map[string]func() error{moduleNameSpv: bc.startSpv})
 	//}
-	if bc.isModuleInit(moduleNameCore) {
+	if bc.isModuleInit(moduleNameCore) && !bc.isModuleStartUp(moduleNameCore) {
 		startModules = append(startModules, map[string]func() error{moduleNameCore: bc.startCoreEngine})
 	}
-	if bc.isModuleInit(moduleNameConsensus) {
+	if bc.isModuleInit(moduleNameConsensus) && !bc.isModuleStartUp(moduleNameConsensus) {
 		startModules = append(startModules, map[string]func() error{moduleNameConsensus: bc.startConsensus})
 	}
-	if bc.isModuleInit(moduleNameTxPool) {
+	if bc.isModuleInit(moduleNameTxPool) && !bc.isModuleStartUp(moduleNameTxPool) {
 		startModules = append(startModules, map[string]func() error{moduleNameTxPool: bc.startTxPool})
 	}
-	if bc.isModuleInit(moduleNameSync) {
+	if bc.isModuleInit(moduleNameSync) && !bc.isModuleStartUp(moduleNameSync) {
 		startModules = append(startModules, map[string]func() error{moduleNameSync: bc.startSyncService})
 	}
 
