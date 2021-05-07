@@ -118,7 +118,11 @@ func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint
 	p.logger.Debugf("process certificates begin (smrHeight:%d,"+
 		"smrCurrentLevel:%d, smrHtcLevel:%d, smrHCLevel:%d, smrHQCLevel: %d",
 		p.height, p.currentLevel, p.highestTCLevel, p.highestCommittedLevel, p.highestQCLevel)
-
+	defer func() {
+		p.logger.Debugf("process certificates end (height:%d, smrHeight:%d, hqcLevel:%d, "+
+			"smrCurrentLevel:%d, htcLevel:%d, smrHtcLevel:%d, hcLevel:%d, smrHCLevel:%d, smrHQCLevel: %d", height,
+			p.height, hqcLevel, p.currentLevel, htcLevel, p.highestTCLevel, hcLevel, p.highestCommittedLevel, p.highestQCLevel)
+	}()
 	if hcLevel > p.highestCommittedLevel {
 		p.highestCommittedLevel = hcLevel
 	}
@@ -142,9 +146,6 @@ func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint
 	if newLevel > p.currentLevel {
 		p.currentLevel = newLevel
 		p.setupTimeout()
-		p.logger.Debugf("process certificates end (height:%d, smrHeight:%d, hqcLevel:%d, "+
-			"smrCurrentLevel:%d, htcLevel:%d, smrHtcLevel:%d, hcLevel:%d, smrHCLevel:%d, smrHQCLevel: %d", height,
-			p.height, hqcLevel, p.currentLevel, htcLevel, p.highestTCLevel, hcLevel, p.highestCommittedLevel, p.highestQCLevel)
 		return true
 	}
 	return false
