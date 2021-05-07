@@ -7,12 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"errors"
 	"fmt"
 	"sync"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	rootLog "chainmaker.org/chainmaker-go/logger"
@@ -386,9 +387,10 @@ func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType ne
 func handleMsgBusSubscriberOnMessageSend(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, netMsg *netPb.NetMsg) error {
 	go func() {
 		if err := netService.sendMsg(netMsg, fmt.Sprintf(msgBusMsgFlagTemplate, msgType.String())); err != nil {
-			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg failed (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), err.Error())
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg failed (size:%d) (reason:%s) (to:%s)", logMsgDescription, proto.Size(netMsg), err.Error(), netMsg.To)
+		} else {
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg ok (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), netMsg.To)
 		}
-		netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg ok (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), netMsg.To)
 	}()
 	return nil
 }
