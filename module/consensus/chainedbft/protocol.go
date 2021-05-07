@@ -846,6 +846,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 5. check if need to switch with the epoch
 	if cbi.nextEpoch == nil || (cbi.nextEpoch != nil && cbi.nextEpoch.switchHeight > cbi.commitHeight) {
 		cbi.logger.Debugf("processBlockCommitted step 4 no switch epoch and process qc")
+		cbi.processCertificates(cbi.chainStore.getCommitQC(), nil)
 		return
 	}
 	// 6. switch epoch and update field state in consensus
