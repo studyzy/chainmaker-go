@@ -255,6 +255,9 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
 		return true, nil
 	}
+	if qc.Height == 0 {
+		return false, nil
+	}
 	hasPreQC, _ := cbi.chainStore.getQC(string(hasQCBlk.Header.PreBlockHash), qc.Height-1)
 	if hasPreQC == nil {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local not have preQC [%v:%x]",
