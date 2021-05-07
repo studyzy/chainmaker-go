@@ -249,14 +249,19 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 	if qc.Height > cbi.smr.getHeight()+MaxSyncBlockNum {
 		return false, fmt.Errorf("receive data info from future. qc.Height:%d, smrHeight:%d", qc.Height, cbi.smr.getHeight())
 	}
-	hasQc, _ := cbi.chainStore.getQC(string(qc.BlockID), qc.Height)
-	hasBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height)
-	if hasQc != nil && hasBlk != nil {
-		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local already has a qc and block [%v:%v %x]",
+	hasQCBlk, _ := cbi.chainStore.getBlock(string(qc.BlockID), qc.Height)
+	if hasQCBlk == nil {
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local not have block [%v:%v:%x]",
 			cbi.selfIndexInEpoch, qc.Height, qc.Level, qc.BlockID)
-		return false, nil
+		return true, nil
 	}
-	return true, nil
+	hasPreQC, _ := cbi.chainStore.getQC(string(hasQCBlk.Header.PreBlockHash), qc.Height-1)
+	if hasPreQC == nil {
+		cbi.logger.Debugf("service selfIndexInEpoch [%v] needFetch: local not have preQC [%v:%x]",
+			cbi.selfIndexInEpoch, qc.Height-1, hasQCBlk.Header.PreBlockHash)
+		return true, nil
+	}
+	return false, nil
 }
 
 func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.ConsensusMsg) error {
