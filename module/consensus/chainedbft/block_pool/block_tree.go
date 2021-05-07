@@ -9,10 +9,10 @@ package blockpool
 import (
 	"bytes"
 	"errors"
-
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/queue"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 )
 
 //BlockNode save one block and its children
@@ -179,4 +179,14 @@ func (bt *BlockTree) cleanBlock(blockId string) {
 
 func (bt *BlockTree) GetBlocks(height int64) []*common.Block {
 	return bt.heightToBlocks[height]
+}
+
+func (bt *BlockTree) Details() string {
+	blkContents := bytes.NewBufferString(fmt.Sprintf("BlockTree blockNum: %d\n", len(bt.idToNode)))
+	for _, blks := range bt.heightToBlocks {
+		for _, blk := range blks {
+			blkContents.WriteString(fmt.Sprintf("blkID: %x, blockHeight:%d\n", blk.Header.BlockHash, blk.Header.BlockHeight))
+		}
+	}
+	return blkContents.String()
 }

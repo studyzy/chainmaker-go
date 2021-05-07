@@ -1,6 +1,7 @@
 package message
 
 import (
+	"bytes"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
@@ -87,4 +88,13 @@ func (cr *consensusRound) checkVoteDone(round uint64, voteType chainedbft.Messag
 		return nil, false, false
 	}
 	return cr.msgs[round][voteType].checkVoteDone()
+}
+
+func (cr *consensusRound) details() string {
+	buf := bytes.NewBufferString(fmt.Sprintf("have %d round msg", len(cr.msgs)))
+	for roundLevel, roundMsgs := range cr.msgs {
+		_ = roundMsgs
+		buf.WriteString(fmt.Sprintf("%d", roundLevel))
+	}
+	return buf.String()
 }

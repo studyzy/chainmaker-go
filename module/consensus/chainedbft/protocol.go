@@ -651,6 +651,7 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		return
 	}
 
+	cbi.processCertificates(voteMsg.SyncInfo.HighestQC, voteMsg.SyncInfo.HighestTC)
 	// 5. generate QC if majority are voted and process the new QC if don't need sync data from peers
 	cbi.logger.Debugf("process vote step 4 no need fetch info and process vote")
 	cbi.processVotes(vote)

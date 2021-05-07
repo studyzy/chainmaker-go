@@ -7,7 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package blockpool
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -137,4 +139,17 @@ func (bp *BlockPool) PruneBlock(newRootID string) error {
 		delete(bp.idToQC, block)
 	}
 	return nil
+}
+
+func (bp *BlockPool) Details() string {
+	bp.mtx.RLock()
+	defer bp.mtx.RUnlock()
+
+	qcCount := len(bp.idToQC)
+	qcContents := bytes.NewBufferString(fmt.Sprintf("BlockPool qcCount: %d\n", qcCount))
+	for blkID, qc := range bp.idToQC {
+		qcContents.WriteString(fmt.Sprintf("blkID: %s, height: %d, level: %d\n", blkID, qc.Height, qc.Level))
+	}
+	qcContents.WriteString(bp.blockTree.Details())
+	return qcContents.String()
 }

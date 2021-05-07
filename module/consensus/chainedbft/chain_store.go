@@ -221,7 +221,9 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 }
 
 func (cs *chainStore) pruneBlockStore(nextRootID string) error {
-	return cs.blockPool.PruneBlock(nextRootID)
+	err := cs.blockPool.PruneBlock(nextRootID)
+	cs.logger.Debugf("chainStore blockPool content: %s", cs.blockPool.Details())
+	return err
 }
 
 // insertQC Only the QC that has received block data will be stored

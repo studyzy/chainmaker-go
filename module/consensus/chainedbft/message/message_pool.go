@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package message
 
 import (
+	"bytes"
 	"fmt"
 	"sync"
 
@@ -132,6 +133,14 @@ func (mp *MsgPool) OnBlockSealed(height uint64) {
 	for _, h := range toFreeHeight {
 		delete(mp.msgs, h)
 	}
+}
+
+func (mp *MsgPool) details() string {
+	msgPoolContent := bytes.NewBufferString(fmt.Sprintf("MsgPool contents, %d heights blockInfo to cache %d\n", len(mp.msgs)))
+	for _, heightMsgs := range mp.msgs {
+		msgPoolContent.WriteString(fmt.Sprintf("%d", heightMsgs.height))
+	}
+	return ""
 }
 
 //Cleanup cleans up the cached messages
