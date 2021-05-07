@@ -79,10 +79,6 @@ func (s *MockSimContextImpl) GetAccessControl() (protocol.AccessControlProvider,
 	panic(implement_me)
 }
 
-func (s *MockSimContextImpl) GetContractTxIds() ([]string, error) {
-	panic(implement_me)
-}
-
 func (s *MockSimContextImpl) GetChainNodesInfoProvider() (protocol.ChainNodesInfoProvider, error) {
 	panic(implement_me)
 }

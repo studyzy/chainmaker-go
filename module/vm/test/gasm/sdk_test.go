@@ -1,4 +1,4 @@
-package examples
+package gasmtest
 
 import (
 	"chainmaker.org/chainmaker-go/gasm"

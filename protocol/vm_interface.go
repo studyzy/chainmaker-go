@@ -32,7 +32,6 @@ const (
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
 
-	ContractTxIdsKey      = ":T:"
 	ContractKey           = ":K:"
 	ContractByteCode      = ":B:"
 	ContractVersion       = ":V:"

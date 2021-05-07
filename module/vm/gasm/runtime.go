@@ -187,7 +187,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	if ret, retTypes, err := vm.ExecExportedFunction(method); err != nil {
 		contractResult.Code = commonPb.ContractResultCode_FAIL
 		contractResult.Message = err.Error()
-		r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", err.Error())
+		r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", tx.GetHeader().TxId, err.Error())
 	} else {
 		r.Log.Debugf("invoke gasm success, tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]", tx.GetHeader().TxId, vm.Gas, ret, retTypes)
 	}
@@ -197,7 +197,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		if ret, retTypes, err := vm.ExecExportedFunction(protocol.ContractDeallocateMethod); err != nil {
 			contractResult.Code = commonPb.ContractResultCode_FAIL
 			contractResult.Message = err.Error()
-			r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", err.Error())
+			r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", tx.GetHeader().TxId, err.Error())
 		} else {
 			r.Log.Debugf("invoke gasm deallocate success,tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]", tx.GetHeader().TxId, vm.Gas, ret, retTypes)
 		}

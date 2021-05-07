@@ -107,7 +107,10 @@ func CalcResultBytes(result *commonPb.Result) ([]byte, error) {
 	if result == nil {
 		return nil, errors.New("calculate result bytes error, result == nil")
 	}
+	tmpGas := result.ContractResult.GasUsed
+	result.ContractResult.GasUsed = 0
 	resultBytes, err := proto.Marshal(result)
+	result.ContractResult.GasUsed = tmpGas
 	if err != nil {
 		return nil, err
 	}

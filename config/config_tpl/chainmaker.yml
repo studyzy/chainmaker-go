@@ -88,12 +88,3 @@ pprof:
 storage:
   provider: LevelDB
   store_path: ../data/ledgerData
-
-debug:
-  # 是否开启CLI功能，过度期间使用
-  is_cli_open: true
-  is_http_open: false
-  use_batch_tx_pool: false
-  is_extreme: false
-  use_net_msg_compression: false
-  is_net_insecurity: false

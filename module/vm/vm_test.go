@@ -56,10 +56,6 @@ func (m *mockMemCache) GetAccessControl() (protocol.AccessControlProvider, error
 	panic(implement_me)
 }
 
-func (m *mockMemCache) GetContractTxIds() ([]string, error) {
-	panic(implement_me)
-}
-
 func getFinalKey(contractName string, key []byte) []byte {
 	return append(append([]byte(contractName), protocol.ContractKey...), key...)
 }

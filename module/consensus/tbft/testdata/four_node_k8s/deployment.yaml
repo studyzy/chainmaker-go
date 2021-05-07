@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: node1
-          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          image: "172.21.16.17:5000/chainmaker"
           imagePullPolicy: Always
           workingDir: "/chainmaker-go/bin"
           command: 
@@ -101,7 +101,7 @@ spec:
     spec:
       containers:
         - name: node2
-          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          image: "172.21.16.17:5000/chainmaker"
           imagePullPolicy: Always
           workingDir: "/chainmaker-go/bin"
           command: 
@@ -184,7 +184,7 @@ spec:
     spec:
       containers:
         - name: node3
-          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          image: "172.21.16.17:5000/chainmaker"
           imagePullPolicy: Always
           workingDir: "/chainmaker-go/bin"
           command: 
@@ -267,7 +267,7 @@ spec:
     spec:
       containers:
         - name: node4
-          image: "172.21.16.17:5000/chainmaker:v0.7.0"
+          image: "172.21.16.17:5000/chainmaker"
           imagePullPolicy: Always
           workingDir: "/chainmaker-go/bin"
           command: 

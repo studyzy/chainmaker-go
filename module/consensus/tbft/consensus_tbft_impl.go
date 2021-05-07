@@ -38,9 +38,10 @@ import (
 var clog *zap.SugaredLogger = zap.S()
 
 var (
-	defaultChanCap    = 1000
-	nilHash           = []byte("NilHash")
-	consensusStateKey = []byte("ConsensusStateKey")
+	defaultChanCap                 = 1000
+	nilHash                        = []byte("NilHash")
+	consensusStateKey              = []byte("ConsensusStateKey")
+	defaultConsensusStateCacheSize = int64(10)
 )
 
 const (
@@ -88,17 +89,8 @@ type ConsensusTBFTImpl struct {
 
 	validatorSet *validatorSet
 
-	Height                 int64
-	Round                  int32
-	Step                   tbftpb.Step
-	Proposal               *Proposal // proposal
-	VerifingProposal       *Proposal // verifing proposal
-	LockedRound            int32
-	LockedProposal         *Proposal // locked proposal
-	ValidRound             int32
-	ValidProposal          *Proposal // valid proposal
-	heightRoundVoteSet     *heightRoundVoteSet
-	LastHeightRoundVoteSet *heightRoundVoteSet
+	*ConsensusState
+	consensusStateCache *consensusStateCache
 
 	gossip        *gossipService
 	timeScheduler *timeScheduler
@@ -162,6 +154,8 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 		return nil, err
 	}
 	consensus.validatorSet = newValidatorSet(consensus.logger, validators, DefaultBlocksPerProposer)
+	consensus.ConsensusState = NewConsensusState(consensus.logger, consensus.Id)
+	consensus.consensusStateCache = newConsensusStateCache(defaultConsensusStateCacheSize)
 
 	consensusStateBytes, err := consensus.dbHandle.Get(consensusStateKey)
 	if err != nil {
@@ -179,13 +173,13 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 		consensusStateProto := new(tbftpb.ConsensusState)
 		mustUnmarshal(consensusStateBytes, consensusStateProto)
 
-		consensus.logger.Infof("new ConsensusTBFTImpl with consensusStateProto [%s](%v%v%v), height: %v",
+		consensus.logger.Infof("new ConsensusTBFTImpl with consensusStateProto [%s](%v/%v/%v), height: %v",
 			consensusStateProto.Id,
 			consensusStateProto.Height,
 			consensusStateProto.Round,
 			consensusStateProto.Step,
 			height)
-		consensus.resetFromProto(consensusStateProto)
+		consensus.resetFromProto(consensusStateProto, consensus.validatorSet)
 
 		if height >= consensus.Height {
 			consensus.Height = height + 1
@@ -214,38 +208,33 @@ func (consensus *ConsensusTBFTImpl) Start() error {
 	consensus.msgbus.Register(msgbus.VerifyResult, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
 	consensus.msgbus.Register(msgbus.BlockInfo, consensus)
-	chainconf.RegisterVerifier(consensuspb.ConsensusType_TBFT, consensus)
+	chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_TBFT, consensus)
+
+	consensus.updateChainConfig()
+	consensus.metrics.SetEnterNewHeightTime()
+	consensus.logger.Infof("start [%s](%d/%d/%s)",
+		consensus.Id, consensus.Height, consensus.Round, consensus.Step)
+	if consensus.Step == tbftpb.Step_NewHeight {
+		consensus.enterNewRound(consensus.Height, 0)
+	} else if consensus.Step == tbftpb.Step_Propose {
+		consensus.Step = tbftpb.Step_NewRound
+		consensus.enterPropose(consensus.Height, consensus.Round)
+	} else if consensus.Step == tbftpb.Step_Precommit || consensus.Step == tbftpb.Step_Commit {
+		voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
+		_, ok := voteSet.twoThirdsMajority()
+		if ok {
+			height := consensus.Height
+			round := consensus.Round
+			consensus.Step = tbftpb.Step_Precommit
+			consensus.enterCommit(height, round)
+		}
+		consensus.logger.Infof("restart [%s](%d/%d/%s) TwoThirdsMajority: %v",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, ok)
+	}
 
 	consensus.timeScheduler.Start()
 	consensus.gossip.start()
-	consensus.updateChainConfig()
 	go consensus.handle()
-	consensus.metrics.SetEnterNewHeightTime()
-	if consensus.Height == 1 {
-		consensus.enterNewRound(consensus.Height, consensus.Round)
-	} else {
-		// restart
-		consensus.logger.Infof("restart [%s](%d/%d/%s)",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step)
-		if consensus.Step == tbftpb.Step_NewHeight {
-			consensus.enterNewRound(consensus.Height, 0)
-		} else if consensus.Step == tbftpb.Step_Propose {
-			consensus.Step = tbftpb.Step_NewRound
-			consensus.enterPropose(consensus.Height, consensus.Round)
-		} else if consensus.Step == tbftpb.Step_Precommit || consensus.Step == tbftpb.Step_Commit {
-			voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
-			_, ok := voteSet.twoThirdsMajority()
-			if ok {
-				height := consensus.Height
-				round := consensus.Round
-				consensus.Step = tbftpb.Step_Precommit
-				consensus.enterCommit(height, round)
-			}
-			consensus.logger.Infof("restart [%s](%d/%d/%s) TwoThirdsMajority: %v",
-				consensus.Id, consensus.Height, consensus.Round, consensus.Step, ok)
-		}
-	}
-
 	consensus.logger.Infof("start ConsensusTBFTImpl[%s]", consensus.Id)
 	return nil
 }
@@ -348,6 +337,7 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 	consensus.TimeoutPropose = timeoutPropose
 	consensus.TimeoutProposeDelta = timeoutProposeDelta
 	consensus.validatorSet.updateBlocksPerProposer(tbftBlocksPerProposer)
+
 	return consensus.validatorSet.updateValidators(validators)
 }
 
@@ -916,10 +906,11 @@ func (consensus *ConsensusTBFTImpl) enterNewHeight(height int64) {
 	}
 	consensus.gossip.addValidators(addedValidators)
 	consensus.gossip.removeValidators(removedValidators)
+	consensus.consensusStateCache.addConsensusState(consensus.ConsensusState)
+	consensus.ConsensusState = NewConsensusState(consensus.logger, consensus.Id)
 	consensus.Height = height
 	consensus.Round = 0
 	consensus.Step = tbftpb.Step_NewHeight
-	// consensus.LastHeightRoundVoteSet = consensus.heightRoundVoteSet
 	consensus.heightRoundVoteSet = newHeightRoundVoteSet(
 		consensus.logger, consensus.Height, consensus.Round, consensus.validatorSet)
 	consensus.metrics = NewHeightMetrics(consensus.Height)
@@ -959,6 +950,7 @@ func (consensus *ConsensusTBFTImpl) enterPropose(height int64, round int32) {
 
 	// Step into Propose
 	consensus.Step = tbftpb.Step_Propose
+	consensus.persistState()
 	consensus.metrics.SetEnterProposalTime(consensus.Round)
 	consensus.AddTimeout(consensus.ProposeTimeout(round), height, round, tbftpb.Step_Prevote)
 
@@ -1164,28 +1156,6 @@ func (consensus *ConsensusTBFTImpl) isProposer(height int64, round int32) bool {
 	return false
 }
 
-func (consensus *ConsensusTBFTImpl) resetFromProto(csProto *tbftpb.ConsensusState) {
-	consensus.Height = csProto.Height
-	consensus.Round = csProto.Round
-	consensus.Step = csProto.Step
-	consensus.Proposal = NewProposalFromProto(csProto.Proposal)
-	consensus.VerifingProposal = NewProposalFromProto(csProto.VerifingProposal)
-	consensus.heightRoundVoteSet = newHeightRoundVoteSetFromProto(consensus.logger, csProto.HeightRoundVoteSet, consensus.validatorSet)
-}
-
-func (consensus *ConsensusTBFTImpl) toProto() *tbftpb.ConsensusState {
-	csProto := &tbftpb.ConsensusState{
-		Id:                 consensus.Id,
-		Height:             consensus.Height,
-		Round:              consensus.Round,
-		Step:               consensus.Step,
-		Proposal:           consensus.Proposal.ToProto(),
-		VerifingProposal:   consensus.VerifingProposal.ToProto(),
-		HeightRoundVoteSet: consensus.heightRoundVoteSet.ToProto(),
-	}
-	return csProto
-}
-
 func (consensus *ConsensusTBFTImpl) ToProto() *tbftpb.ConsensusState {
 	consensus.RLock()
 	defer consensus.RUnlock()
@@ -1270,6 +1240,7 @@ func (consensus *ConsensusTBFTImpl) verifyProposal(proposal *tbftpb.Proposal) er
 	// Verified by idmgmt
 	proposalCopy := proto.Clone(proposal)
 	proposalCopy.(*tbftpb.Proposal).Endorsement = nil
+	proposalCopy.(*tbftpb.Proposal).Block.AdditionalData = nil
 	message := mustMarshal(proposalCopy)
 	principal, err := consensus.ac.CreatePrincipal(
 		protocol.ResourceNameConsensusNode,
@@ -1295,26 +1266,6 @@ func (consensus *ConsensusTBFTImpl) verifyProposal(proposal *tbftpb.Proposal) er
 		return fmt.Errorf("VerifyPolicy result: %v", result)
 	}
 
-	member, err := consensus.ac.NewMemberFromProto(proposal.Endorsement.Signer)
-	if err != nil {
-		consensus.logger.Errorf("[%s](%d/%d/%s) receive proposal new member failed, %v",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
-		return err
-	}
-	certId := member.GetMemberId()
-	uid, err := consensus.netService.GetNodeUidByCertId(certId)
-	if err != nil {
-		consensus.logger.Errorf("[%s](%d/%d/%s) receive proposal GetNodeUidByCertId failed, %v",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
-		return err
-	}
-
-	if uid != proposal.Voter {
-		consensus.logger.Errorf("[%s](%d/%d/%s) receive proposal failed, uid %s is not equal with voter %s",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			uid, proposal.Voter)
-		return fmt.Errorf("unmatch voter, uid: %v, voter: %v", uid, proposal.Voter)
-	}
 	return nil
 }
 
@@ -1418,4 +1369,10 @@ func (consensus *ConsensusTBFTImpl) persistState() {
 	}
 	d := time.Since(begin)
 	consensus.metrics.AppendPersistStateDuration(consensus.Round, consensus.Step.String(), d)
+}
+
+func (consensus *ConsensusTBFTImpl) getValidatorSet() *validatorSet {
+	consensus.Lock()
+	defer consensus.Unlock()
+	return consensus.validatorSet
 }

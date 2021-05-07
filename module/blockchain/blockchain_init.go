@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -332,6 +333,7 @@ func (bc *Blockchain) initConsensus() (err error) {
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
+	isConsensusNode := false
 	for i, node := range nodes {
 		for _, addr := range node.Address {
 			uid, err := helper.GetNodeUidFromAddr(addr)
@@ -339,7 +341,14 @@ func (bc *Blockchain) initConsensus() (err error) {
 				return err
 			}
 			nodeIds[i] = uid
+			if uid == id {
+				isConsensusNode = true
+			}
 		}
+	}
+	if !isConsensusNode {
+		// this node is a sync node rather than a consensus node
+		return nil
 	}
 	dbHandle := bc.store.GetDBHandle(protocol.ConsensusDBName)
 	bc.consensus, err = consensusFactory.NewConsensusEngine(

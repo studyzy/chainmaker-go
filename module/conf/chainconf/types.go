@@ -10,7 +10,6 @@ package chainconf
 import (
 	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
@@ -21,10 +20,15 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"strings"
+	"sync"
 )
 
+type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
+
 var (
-	chainConfigVerifier = make(map[consensus.ConsensusType]protocol.Verifier, 0)
+	chainConsensusVerifier = make(map[string]consensusVerifier, 0)
+	// for multi chain start
+	chainConfigVerifierLock = sync.RWMutex{}
 )
 
 // chainConfig chainConfig struct
@@ -96,7 +100,7 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 		return nil, errors.New("blockInterval is low")
 	}
 	// verify
-	verifier := GetVerifier(config.Consensus.Type)
+	verifier := GetVerifier(config.ChainId, config.Consensus.Type)
 	if verifier != nil {
 		err := verifier.Verify(config.Consensus.Type, config)
 		if err != nil {
@@ -133,16 +137,23 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig) error {
 	// verify consensus
 	if config.Consensus != nil && config.Consensus.Nodes != nil {
+		if len(config.Consensus.Nodes) == 0 {
+			err := fmt.Errorf("there is at least one consensus node")
+			log.Error(err.Error())
+			return err
+		}
 		for _, node := range config.Consensus.Nodes {
 			// org id can not be repeated
 			if _, ok := mConfig.NodeOrgIds[node.OrgId]; ok {
-				log.Errorf("org id(%s) existed", node.OrgId)
-				return errors.New("org id existed")
+				err := fmt.Errorf("org id(%s) existed", node.OrgId)
+				log.Error(err.Error())
+				return err
 			}
 			// when creating genesis, the org id of node must be exist in CaRoots.
 			if _, ok := mConfig.CaRoots[node.OrgId]; !ok {
-				log.Errorf("org id(%s) not in trust roots config", node.OrgId)
-				return errors.New("org id not in trust roots config")
+				err := fmt.Errorf("org id(%s) not in trust roots config", node.OrgId)
+				log.Error(err.Error())
+				return err
 			}
 
 			mConfig.NodeOrgIds[node.OrgId] = node.Address
@@ -188,8 +199,9 @@ func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chai
 		resourceLen := len(config.ResourcePolicies)
 		for _, resourcePolicy := range config.ResourcePolicies {
 			mConfig.ResourcePolicies[resourcePolicy.ResourceName] = struct{}{}
-			policy := resourcePolicy.Policy
-			verifyPolicy(policy)
+			if err := verifyPolicy(resourcePolicy); err != nil {
+				return err
+			}
 		}
 		resLen := len(mConfig.ResourcePolicies)
 		if resourceLen != resLen {
@@ -199,21 +211,45 @@ func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chai
 	return nil
 }
 
-func verifyPolicy(policy *pbac.Policy) {
+func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
+	policy := resourcePolicy.Policy
+	resourceName := resourcePolicy.ResourceName
 	if policy != nil {
 		// to upper
 		rule := policy.Rule
 		policy.Rule = strings.ToUpper(rule)
+
+		// self only for NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE
+		if policy.Rule == string(protocol.RuleSelf) {
+			if resourceName != common.ConfigFunction_NODE_ADDR_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+				err := fmt.Errorf("self rule can only be used by NODE_ADDR_UPDATE or TRUST_ROOT_UPDATE")
+				return err
+			}
+		}
+
 		roles := policy.RoleList
 		if roles != nil {
 			// to upper
 			for i, role := range roles {
 				role = strings.ToUpper(role)
 				roles[i] = role
+				// MAJORITY role allow admin or null
+				if policy.Rule == string(protocol.RuleMajority) {
+					if len(role) > 0 && role != string(protocol.RoleAdmin) {
+						err := fmt.Errorf("config rule[MAJORITY], role can only be admin or null")
+						return err
+					}
+				}
 			}
 			policy.RoleList = roles
 		}
+		// MAJORITY  not allowed org_list
+		if policy.Rule == string(protocol.RuleMajority) && len(policy.OrgList) > 0 {
+			err := fmt.Errorf("config rule[MAJORITY], org_list param not allowed")
+			return err
+		}
 	}
+	return nil
 }
 
 // validateParams validate the chainconfig
@@ -231,21 +267,33 @@ func validateParams(config *config.ChainConfig) error {
 }
 
 // RegisterVerifier register a verifier.
-func RegisterVerifier(consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
-	if _, ok := chainConfigVerifier[consensusType]; ok {
+func RegisterVerifier(chainId string, consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
+	chainConfigVerifierLock.Lock()
+	defer chainConfigVerifierLock.Unlock()
+	initChainConsensusVerifier(chainId)
+	if _, ok := chainConsensusVerifier[chainId][consensusType]; ok {
 		return errors.New("consensusType verifier is exist")
 	}
-	chainConfigVerifier[consensusType] = verifier
+	chainConsensusVerifier[chainId][consensusType] = verifier
 	return nil
 }
 
 // GetVerifier get a verifier if exist.
-func GetVerifier(consensusType consensus.ConsensusType) protocol.Verifier {
-	verifier, ok := chainConfigVerifier[consensusType]
+func GetVerifier(chainId string, consensusType consensus.ConsensusType) protocol.Verifier {
+	chainConfigVerifierLock.RLock()
+	defer chainConfigVerifierLock.RUnlock()
+	initChainConsensusVerifier(chainId)
+	verifier, ok := chainConsensusVerifier[chainId][consensusType]
 	if !ok {
 		return nil
 	}
 	return verifier
+}
+
+func initChainConsensusVerifier(chainId string) {
+	if _, ok := chainConsensusVerifier[chainId]; !ok {
+		chainConsensusVerifier[chainId] = make(consensusVerifier, 0)
+	}
 }
 
 // IsNative whether the contractName is a native

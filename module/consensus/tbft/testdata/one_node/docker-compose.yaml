@@ -3,15 +3,19 @@ version: '3'
 services:
   node1:
     container_name: node1
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -e wx-org1 start"
+    command: "./chainmaker -c ../config/wx-org1/chainmaker.yml start"
     ports:
-      - "6666:6666"
-      - "17988:7988"
+      - "7988:7988"
+      - "17989:17989"
+      - "4321:4321"
     volumes:
       - ./wx-org1:/chainmaker-go/config/wx-org1
-      - ../../../../../config/crypto-config:/chainmaker-go/config/wx-org1/crypto-config
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
     networks:
       localnet:
         ipv4_address: 192.168.2.2

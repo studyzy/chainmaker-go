@@ -6,7 +6,6 @@ package mock
 
 import (
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
-	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpool "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
@@ -126,7 +125,7 @@ func (mr *MockBlockProposerMockRecorder) OnReceiveProposeStatusChange(proposeSta
 }
 
 // OnReceiveChainedBFTProposal mocks base method
-func (m *MockBlockProposer) OnReceiveChainedBFTProposal(proposal *chainedbft.BuildProposal) {
+func (m *MockBlockProposer) OnReceiveChainedBFTProposal(proposal *interface{}) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "OnReceiveChainedBFTProposal", proposal)
 }

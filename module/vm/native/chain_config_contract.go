@@ -240,7 +240,13 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("core update update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("core update success, params %+v", params)
+	}
+	return result, err
 }
 
 // [block]
@@ -287,7 +293,13 @@ func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, para
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("block update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("block update success, param ", params)
+	}
+	return result, err
 }
 
 // [trust_root]
@@ -316,7 +328,13 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 		OrgId: orgId,
 		Root:  rootCaCrt,
 	})
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("trust root add fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
+	} else {
+		r.log.Infof("trust root add success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+	}
+	return result, err
 }
 
 // TrustRootUpdate update the trustRoot
@@ -343,7 +361,13 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 				OrgId: orgId,
 				Root:  rootCaCrt,
 			}
-			return setChainConfig(txSimContext, chainConfig)
+			result, err = setChainConfig(txSimContext, chainConfig)
+			if err != nil {
+				r.log.Errorf("trust root update fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
+			} else {
+				r.log.Infof("trust root update success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+			}
+			return result, err
 		}
 	}
 
@@ -385,14 +409,20 @@ func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimCont
 
 	trustRoots = append(trustRoots[:index], trustRoots[index+1:]...)
 	nodes := chainConfig.Consensus.Nodes
-	for j, node := range nodes {
-		if orgId == node.OrgId {
-			nodes = append(nodes[:j], nodes[j+1:]...)
+	for i := len(nodes) - 1; i >= 0; i-- {
+		if orgId == nodes[i].OrgId {
+			nodes = append(nodes[:i], nodes[i+1:]...)
 		}
 	}
 	chainConfig.Consensus.Nodes = nodes
 	chainConfig.TrustRoots = trustRoots
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("trust root delete fail, %s, orgId[%s] ", err.Error(), orgId)
+	} else {
+		r.log.Infof("trust root delete success. orgId[%s]", orgId)
+	}
+	return result, err
 }
 
 // [consensus]
@@ -459,7 +489,13 @@ func (r *ChainConsensusRuntime) NodeAddrAdd(txSimContext protocol.TxSimContext, 
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("node addr add fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+	} else {
+		r.log.Infof("node addr add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+	}
+	return result, err
 }
 
 // NodeAddrUpdate update nodeAddr
@@ -513,7 +549,13 @@ func (r *ChainConsensusRuntime) NodeAddrUpdate(txSimContext protocol.TxSimContex
 			nodeConf.Address[j] = newAddr
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
-			return setChainConfig(txSimContext, chainConfig)
+			result, err = setChainConfig(txSimContext, chainConfig)
+			if err != nil {
+				r.log.Errorf("node addr update fail, %s, orgId[%s] addr[%s] newAddr[%s]", err.Error(), orgId, addr, newAddr)
+			} else {
+				r.log.Infof("node addr update success. orgId[%s] addr[%s] newAddr[%s]", orgId, addr, newAddr)
+			}
+			return result, err
 		}
 	}
 
@@ -563,7 +605,13 @@ func (r *ChainConsensusRuntime) NodeAddrDelete(txSimContext protocol.TxSimContex
 			nodeConf.Address = append(addresses[:j], addresses[j+1:]...)
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
-			return setChainConfig(txSimContext, chainConfig)
+			result, err = setChainConfig(txSimContext, chainConfig)
+			if err != nil {
+				r.log.Errorf("node addr delete fail, %s, orgId[%s] addr[%s]", err.Error(), orgId, addr)
+			} else {
+				r.log.Infof("node addr delete success. orgId[%s] addr[%s]", orgId, addr)
+			}
+			return result, err
 		}
 	}
 
@@ -610,7 +658,14 @@ func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, p
 	}
 	if len(org.Address) > 0 {
 		chainConfig.Consensus.Nodes = append(chainConfig.Consensus.Nodes, org)
-		return setChainConfig(txSimContext, chainConfig)
+
+		result, err = setChainConfig(txSimContext, chainConfig)
+		if err != nil {
+			r.log.Errorf("node org add fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+		} else {
+			r.log.Infof("node org add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+		}
+		return result, err
 	}
 
 	r.log.Error(ErrParams)
@@ -671,7 +726,13 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("node org update fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+	} else {
+		r.log.Infof("node org update success. orgId[%s] addrStr[%s]", orgId, addrStr)
+	}
+	return result, err
 }
 
 // NodeOrgDelete delete nodeOrg
@@ -693,10 +754,23 @@ func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext
 	}
 
 	nodes := chainConfig.Consensus.Nodes
+	if len(nodes) == 1 {
+		err := fmt.Errorf("there is at least one org")
+		r.log.Error(err)
+		return nil, err
+	}
 	for i, node := range nodes {
 		if orgId == node.OrgId {
-			chainConfig.Consensus.Nodes = append(chainConfig.Consensus.Nodes[:i], chainConfig.Consensus.Nodes[i+1:]...)
-			return setChainConfig(txSimContext, chainConfig)
+			nodes = append(nodes[:i], nodes[i+1:]...)
+			chainConfig.Consensus.Nodes = nodes
+
+			result, err = setChainConfig(txSimContext, chainConfig)
+			if err != nil {
+				r.log.Errorf("node org delete fail, %s, orgId[%s]", err.Error(), orgId)
+			} else {
+				r.log.Infof("node org delete success. orgId[%s]", orgId)
+			}
+			return result, err
 		}
 	}
 
@@ -753,7 +827,13 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("consensus ext add fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("consensus ext add success. params %+v", params)
+	}
+	return result, err
 }
 
 // ConsensusExtUpdate update consensus extra
@@ -799,7 +879,13 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("consensus ext update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("consensus ext update success. params %+v", params)
+	}
+	return result, err
 }
 
 // ConsensusExtDelete delete consensus extra
@@ -841,7 +927,13 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("consensus ext delete fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("consensus ext delete success. params %+v", params)
+	}
+	return result, err
 }
 
 // [permissions]
@@ -923,7 +1015,13 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("resource policy add fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("resource policy add success. params %+v", params)
+	}
+	return result, err
 }
 
 // ResourcePolicyUpdate update resource policy
@@ -1000,7 +1098,13 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("resource policy update fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("resource policy update success. params %+v", params)
+	}
+	return result, err
 }
 
 // ResourcePolicyDelete delete permission
@@ -1055,16 +1159,12 @@ func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSim
 			return false
 		}
 
-		pLen := len(resourcePolicies)
 		for i, rp := range resourcePolicies {
 			if rp.ResourceName == key {
-				if i+1 == pLen {
-					resourcePolicies = resourcePolicies[:i]
-				} else {
-					resourcePolicies = append(resourcePolicies[:i], resourcePolicies[i+1:]...)
-				}
+				resourcePolicies = append(resourcePolicies[:i], resourcePolicies[i+1:]...)
 				chainConfig.ResourcePolicies = resourcePolicies
 				changed = true
+				break
 			}
 		}
 		return true
@@ -1078,5 +1178,11 @@ func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSim
 		return nil, ErrParams
 	}
 	// [end]
-	return setChainConfig(txSimContext, chainConfig)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("resource policy delete fail, %s, params %+v", err.Error(), params)
+	} else {
+		r.log.Infof("resource policy delete success. params %+v", params)
+	}
+	return result, err
 }

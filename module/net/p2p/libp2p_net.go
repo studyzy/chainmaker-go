@@ -8,13 +8,17 @@ package p2p
 
 import (
 	"bufio"
+	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
+	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"chainmaker.org/chainmaker-go/utils"
 	"context"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
+	"github.com/tjfoc/gmsm/sm2"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -561,11 +565,59 @@ func (ln *LibP2pNet) RefreshSeeds(seeds []string) error {
 // AddTrustRoot add a root cert for chain.
 func (ln *LibP2pNet) AddTrustRoot(chainId string, rootCertByte []byte) error {
 	if ln.startUp {
-		logger.Warn("[Net] net is running. ignored.")
+		if ln.libP2pHost.isGmTls {
+			_, err := libp2pgmtls.AppendNewCertsToTrustRoots(ln.libP2pHost.gmTlsChainTrustRoots, chainId, rootCertByte)
+			if err != nil {
+				logger.Errorf("[Net] add trust root failed. %s", err.Error())
+				return err
+			}
+		} else if ln.libP2pHost.isTls {
+			_, err := libp2ptls.AppendNewCertsToTrustRoots(ln.libP2pHost.tlsChainTrustRoots, chainId, rootCertByte)
+			if err != nil {
+				logger.Errorf("[Net] add trust root failed. %s", err.Error())
+				return err
+			}
+		}
 		return nil
 	}
 	ln.prepare.AddTrustRootCert(chainId, rootCertByte)
 	return nil
+}
+
+func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
+	if ln.startUp {
+		peerIdTlsCertMap := ln.libP2pHost.peerIdTlsCertStore.storeCopy()
+		if len(peerIdTlsCertMap) == 0 {
+			return
+		}
+		if ln.libP2pHost.isGmTls {
+			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
+			for pid, bytes := range peerIdTlsCertMap {
+				cert, err := sm2.ParseCertificate(bytes)
+				if err != nil {
+					logger.Errorf("[Net] parse tls cert failed. %s", err.Error())
+					continue
+				}
+				if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+					ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
+					logger.Infof("[Net] add peer to chain, (pid: %s, chain id: %s)", pid, chainId)
+				}
+			}
+		} else if ln.libP2pHost.isTls {
+			chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
+			for pid, bytes := range peerIdTlsCertMap {
+				cert, err := x509.ParseCertificate(bytes)
+				if err != nil {
+					logger.Errorf("[Net] parse tls cert failed. %s", err.Error())
+					continue
+				}
+				if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+					ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
+					logger.Infof("[Net] add peer to chain, (pid: %s, chain id: %s)", pid, chainId)
+				}
+			}
+		}
+	}
 }
 
 // RefreshTrustRoots reset all root certs for chain.
@@ -668,7 +720,10 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnAddC() {
 					logger.Errorf("[Net] peer decode failed, %s", err.Error())
 				}
 				logger.Debugf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
-				pubsub.pubsub.AddWhitelistPeer(pid)
+				err = pubsub.AddWhitelistPeer(pid)
+				if err != nil {
+					logger.Errorf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
+				}
 			}
 		}
 	}()
@@ -695,7 +750,10 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnRemoveC() {
 					continue
 				}
 				logger.Debugf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
-				pubsub.pubsub.RemoveWhitelistPeer(pid)
+				err = pubsub.RemoveWhitelistPeer(pid)
+				if err != nil {
+					logger.Errorf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
+				}
 			}
 		}
 	}()
@@ -728,10 +786,10 @@ func (ln *LibP2pNet) Start() error {
 	if err := ln.libP2pHost.Start(); err != nil {
 		return err
 	}
+	ln.initPeerStreamManager()
 	if err := ln.registerMsgHandle(); err != nil {
 		return err
 	}
-	ln.initPeerStreamManager()
 	ln.startUp = true
 
 	// start handling NewTlsPeerChainIdsNotifyC
