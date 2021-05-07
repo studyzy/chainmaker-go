@@ -234,7 +234,7 @@ func (cs *chainStore) insertQC(qc *chainedbftpb.QuorumCert) error {
 		// When the generation switches, the QC of the rootBlock is added again,
 		// and the rootQC is not consistent with the current generation ID of the node
 		if hasQC, _ := cs.getQC(string(qc.BlockID), qc.Height); hasQC != nil {
-			cs.logger.Debugf("not find qc:[%x], height:[%d]", qc.BlockID, qc.Height)
+			cs.logger.Debugf("find qc:[%x], height:[%d]", qc.BlockID, qc.Height)
 			return nil
 		}
 		return fmt.Errorf("insert qc failed, input err qc.epochid: [%v], node epochID: [%v]",

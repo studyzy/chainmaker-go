@@ -270,5 +270,8 @@ func (sm *syncManager) insertBlockAndQC(fromPeer uint64, blockPair *chainedbftpb
 			sm.server.selfIndexInEpoch, header.GetBlockHeight(), executorErr)
 		return false
 	}
+	sm.server.smr.updateLockedQC(qc)
+	sm.server.commitBlocksByQC(qc)
+	sm.server.processCertificates(qc, nil)
 	return true
 }
