@@ -13,10 +13,10 @@ func (cbi *ConsensusChainedBftImpl) saveWalEntry(msgType chainedbftpb.MessageTyp
 	}
 	bz, err := proto.Marshal(&chainedbftpb.WalEntry{MsgType: msgType, Msg: msg, LastSnapshotIndex: cbi.lastCommitWalIndex})
 	if err != nil {
-		cbi.logger.Fatalf("json marshal msg failed, reason: %s, msgType: %s, msgContent:%v", err, msgType, msg)
+		cbi.logger.Fatalf("proto marshal msg failed, reason: %s, msgType: %s, msgContent:%v", err, msgType, msg)
 	}
 	if err := cbi.wal.Write(lastIndex+1, bz); err != nil {
-		cbi.logger.Fatalf("json marshal msg failed, reason: %s, msgType: %s, msgContent:%v", err, msgType, msg)
+		cbi.logger.Fatalf("write msg failed, reason: %s, msgType: %s, msgContent:%v", err, msgType, msg)
 	}
 }
 
