@@ -73,6 +73,14 @@ func (l *txList) addTxs(tx *commonPb.Transaction, source protocol.TxSource, vali
 	l.rwLock.Lock()
 	defer l.rwLock.Unlock()
 	if validate == nil || validate(tx, source) == nil {
+		if source != protocol.INTERNAL {
+			if val, ok := l.pendingCache.Load(tx.Header.TxId); ok && val != nil {
+				return
+			}
+		}
+		if l.queue.Get(tx.Header.TxId) != nil {
+			return
+		}
 		l.queue.Add(tx.Header.TxId, tx)
 	}
 }
@@ -177,8 +185,8 @@ func (l *txList) Has(txId string, checkPending bool) (exist bool) {
 			return true
 		}
 	}
-	l.rwLock.Lock()
-	defer l.rwLock.Unlock()
+	l.rwLock.RLock()
+	defer l.rwLock.RUnlock()
 	return l.queue.Get(txId) != nil
 }
 
