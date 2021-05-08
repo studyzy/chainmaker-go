@@ -69,8 +69,7 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	// process NewView vote
 	if vote.NewView {
 		vp.votedNewView[vote.AuthorIdx] = vote
-		vp.newViewNum++
-		if !vp.lockedNewView && vp.newViewNum >= minVotesForQc {
+		if !vp.lockedNewView && len(vp.votedNewView) >= minVotesForQc {
 			vp.lockedNewView = true
 		}
 	}
@@ -103,6 +102,9 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (isValid boo
 		return false, fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
 			vote.Level, lastVote.BlockID, vote.BlockID)
 	}
+
+	//blk -> view
+	//view ->
 	return true, nil
 }
 

@@ -10,6 +10,105 @@ import (
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 )
 
+func TestCheckVoteDoneWithBlock2(t *testing.T) {
+	levelVotes := newConsensusRound(4, 1)
+
+	// add two votes by node1;
+	// node1 first vote block; second vote newView
+	blkID := []byte(utils.GetRandTxId())
+	node1VoteBlk := chainedbftpb.VoteMsg{
+		VoteData: &chainedbftpb.VoteData{
+			Level:     1,
+			Height:    1,
+			BlockID:   blkID,
+			AuthorIdx: 1,
+		},
+	}
+	node2VoteBlkAndTimeOut := chainedbftpb.VoteMsg{
+		VoteData: &chainedbftpb.VoteData{
+			Level:     1,
+			Height:    1,
+			NewView:   true,
+			BlockID:   blkID,
+			AuthorIdx: 2,
+		},
+	}
+	node1VoteBlkAndTimeOut := chainedbftpb.VoteMsg{
+		VoteData: &chainedbftpb.VoteData{
+			Level:     1,
+			Height:    1,
+			BlockID:   blkID,
+			NewView:   true,
+			AuthorIdx: 1,
+		},
+	}
+	node2VoteBlk := chainedbftpb.VoteMsg{
+		VoteData: &chainedbftpb.VoteData{
+			Level:     1,
+			Height:    1,
+			BlockID:   blkID,
+			AuthorIdx: 2,
+		},
+	}
+	node2VoteBlkAndTimeOut2 := chainedbftpb.VoteMsg{
+		VoteData: &chainedbftpb.VoteData{
+			Level:     1,
+			Height:    1,
+			BlockID:   blkID,
+			NewView:   true,
+			AuthorIdx: 2,
+		},
+	}
+	add, err := levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
+		Payload: &chainedbftpb.ConsensusPayload{
+			Type: chainedbftpb.MessageType_VoteMessage,
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node1VoteBlk},
+		},
+	}, 3)
+	require.True(t, add, "add vote success")
+	require.NoError(t, err, "shouldn't error")
+
+	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
+		Payload: &chainedbftpb.ConsensusPayload{
+			Type: chainedbftpb.MessageType_VoteMessage,
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node2VoteBlkAndTimeOut},
+		},
+	}, 3)
+	require.True(t, add, "add vote success")
+	require.NoError(t, err, "shouldn't error")
+
+	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
+		Payload: &chainedbftpb.ConsensusPayload{
+			Type: chainedbftpb.MessageType_VoteMessage,
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node1VoteBlkAndTimeOut},
+		},
+	}, 3)
+	require.True(t, add, "add vote success")
+	require.NoError(t, err, "shouldn't error")
+
+	// add two votes by node2;
+	// node2 first vote block; second vote newView
+	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
+		Payload: &chainedbftpb.ConsensusPayload{
+			Type: chainedbftpb.MessageType_VoteMessage,
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node2VoteBlk},
+		},
+	}, 3)
+	require.True(t, add, "add vote success")
+	require.NoError(t, err, "shouldn't error")
+	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
+		Payload: &chainedbftpb.ConsensusPayload{
+			Type: chainedbftpb.MessageType_VoteMessage,
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node2VoteBlkAndTimeOut2},
+		},
+	}, 3)
+	require.True(t, add, "add vote success")
+	require.NoError(t, err, "shouldn't error")
+
+	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	require.False(t, done)
+}
+
 func TestCheckVoteDoneWithBlock(t *testing.T) {
 	levelVotes := newConsensusRound(4, 1)
 
@@ -185,7 +284,7 @@ func TestInsertVote(t *testing.T) {
 		},
 	}, 3)
 	require.False(t, add, "add vote failed")
-	require.Error(t, err, "shouldn be add  error")
+	require.NoError(t, err, "shouldn be add  error")
 
 	// add different vote in same level and same author
 	voteBlock := chainedbftpb.VoteMsg{

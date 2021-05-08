@@ -136,7 +136,7 @@ func (mp *MsgPool) OnBlockSealed(height uint64) {
 }
 
 func (mp *MsgPool) details() string {
-	msgPoolContent := bytes.NewBufferString(fmt.Sprintf("MsgPool contents, %d heights blockInfo to cache %d\n", len(mp.msgs)))
+	msgPoolContent := bytes.NewBufferString(fmt.Sprintf("MsgPool contents, %d heights blockInfo to cache \n", len(mp.msgs)))
 	for _, heightMsgs := range mp.msgs {
 		msgPoolContent.WriteString(fmt.Sprintf("%d", heightMsgs.height))
 	}
