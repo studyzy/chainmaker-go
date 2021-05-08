@@ -58,9 +58,7 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	}
 
 	for _, tx := range txs {
-		if validate == nil || validate(tx, source) == nil {
-			l.addTxs(tx)
-		}
+		l.addTxs(tx, source, validate)
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if utils.IsConfigTx(txs[0]) {
@@ -71,10 +69,12 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	}
 }
 
-func (l *txList) addTxs(tx *commonPb.Transaction) {
+func (l *txList) addTxs(tx *commonPb.Transaction, source protocol.TxSource, validate txValidateFunc) {
 	l.rwLock.Lock()
 	defer l.rwLock.Unlock()
-	l.queue.Add(tx.Header.TxId, tx)
+	if validate == nil || validate(tx, source) == nil {
+		l.queue.Add(tx.Header.TxId, tx)
+	}
 }
 
 // Delete Delete transactions from TXList by the txIds
