@@ -750,7 +750,7 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 }
 
 func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, blockID []byte, isNewView bool) (*chainedbftpb.QuorumCert, error) {
-	votes := cbi.msgPool.GetVotes(height, level)
+	votes := cbi.msgPool.GetQCVotes(height, level)
 	qc := &chainedbftpb.QuorumCert{
 		BlockID: blockID,
 		Height:  height,

@@ -57,6 +57,20 @@ func (vp *votePool) insertVote(msg *chainedbft.ConsensusMsg, minVotesForQc int) 
 	return vp.insertVoteData(voteMsg.VoteData, minVotesForQc)
 }
 
+func (vp *votePool) addVoteIfNeed(vote *chainedbft.VoteData) {
+	lastVote := vp.votes[vote.AuthorIdx]
+	if lastVote == nil {
+		vp.votes[vote.AuthorIdx] = vote
+		return
+	}
+	if vote.NewView && !lastVote.NewView {
+		lastVote.NewView = vote.NewView
+	}
+	if len(vote.BlockID) > 0 && len(lastVote.BlockID) == 0 {
+		lastVote.BlockID = vote.BlockID
+	}
+}
+
 func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int) (bool, error) {
 	if vote == nil {
 		return false, fmt.Errorf("nil vote data")
@@ -65,7 +79,7 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 		return false, err
 	}
 
-	vp.votes[vote.AuthorIdx] = vote
+	vp.addVoteIfNeed(vote)
 	// process NewView vote
 	if vote.NewView {
 		vp.votedNewView[vote.AuthorIdx] = vote
@@ -121,16 +135,27 @@ func (vp *votePool) checkVoteDone() ([]byte, bool, bool) {
 }
 
 //getVotes returns all of cached votes
-func (vp *votePool) getVotes() []*chainedbft.VoteData {
-	votes := make([]*chainedbft.VoteData, 0, len(vp.votes))
+func (vp *votePool) getQCVotes() []*chainedbft.VoteData {
 	indexes := make([]uint64, 0, len(vp.votes))
-	for index := range vp.votes {
-		indexes = append(indexes, index)
+	votes := make([]*chainedbft.VoteData, 0, len(vp.votes))
+	if len(vp.lockedBlockID) > 0 {
+		blkVotes := vp.votedBlockID[string(vp.lockedBlockID)]
+		for index := range blkVotes {
+			indexes = append(indexes, index)
+		}
+		sort.Sort(orderIndexes(indexes))
+		for _, index := range indexes {
+			votes = append(votes, blkVotes[index])
+		}
 	}
-	sort.Sort(orderIndexes(indexes))
-	for _, index := range indexes {
-		votes = append(votes, vp.votes[index])
+	if vp.lockedNewView {
+		for index := range vp.votedNewView {
+			indexes = append(indexes, index)
+		}
+		sort.Sort(orderIndexes(indexes))
+		for _, index := range indexes {
+			votes = append(votes, vp.votedNewView[index])
+		}
 	}
-
 	return votes
 }
