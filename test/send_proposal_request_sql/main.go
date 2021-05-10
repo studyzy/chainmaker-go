@@ -29,6 +29,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -90,53 +91,50 @@ func main() {
 	functionalTest(sk3, &client)
 
 	//performanceTest(sk3, &client)
-	//otherTest(sk3, &client)
+	//testWaitTx(sk3, &client, CHAIN1, "20fa21fcff774cef96bcf6294306caa8d30fb9d27dac4484b5ffceaaf018ef79")
+
 }
 
-func otherTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
-	id := "a684f9edf5e342db9e4554c513ce76f56da3fe92ede54ca8af62f20b14fa2992"
-	//for {
-	testQuerySqlById(sk3, client, CHAIN1, id)
-	//}
-}
 func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	var (
 		txId   string
+		id     string
 		result string
 		rs     = make(map[string]string, 0)
 	)
 
 	fmt.Println("//1) 合约创建")
-	testCreate(sk3, client, CHAIN1)
-	time.Sleep(4 * time.Second)
-	InvokePrintHello(sk3, client, CHAIN1)
-
-	//
+	txId = testCreate(sk3, client, CHAIN1)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	fmt.Println("// 2) 执行合约-sql insert")
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "11")
 
 	for i := 0; i < 10; i++ {
-		testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
+		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
+	id = txId
 
-	fmt.Println("// 3) 查询 age11的 txId:" + txId)
-	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
+	fmt.Println("// 3) 查询 age11的 id:" + id)
+	_, result = testQuerySqlById(sk3, client, CHAIN1, id)
 	json.Unmarshal([]byte(result), &rs)
 	fmt.Println("testInvokeSqlUpdate query", rs)
-	if rs["id"] != txId {
+	if rs["id"] != id {
 		fmt.Println("result", rs)
 		panic("query by id error, id err")
 	}
 
-	fmt.Println("// 4) 执行合约-sql update name=长安链chainmaker_update where id=" + txId)
-	testInvokeSqlUpdate(sk3, client, CHAIN1, txId)
-	time.Sleep(4 * time.Second)
+	fmt.Println("// 4) 执行合约-sql update name=长安链chainmaker_update where id=" + id)
+	txId = testInvokeSqlUpdate(sk3, client, CHAIN1, id)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
-	fmt.Println("// 5) 查询 txId=" + txId + " 看name是不是更新成了长安链chainmaker_update：")
-	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
+	fmt.Println("// 5) 查询 id=" + id + " 看name是不是更新成了长安链chainmaker_update：")
+	_, result = testQuerySqlById(sk3, client, CHAIN1, id)
 	json.Unmarshal([]byte(result), &rs)
 	fmt.Println("testInvokeSqlUpdate query", rs)
 	if rs["name"] != "长安链chainmaker_update" {
@@ -151,29 +149,34 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	testQuerySqlRangAge(sk3, client, CHAIN1)
 
 	fmt.Println("// 7) 执行合约-sql delete by id age=11")
-	testInvokeSqlDelete(sk3, client, CHAIN1, txId)
-	time.Sleep(4 * time.Second)
+	txId = testInvokeSqlDelete(sk3, client, CHAIN1, id)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	fmt.Println("// 8) 再次查询 id age=11，应该查不到")
-	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
+	_, result = testQuerySqlById(sk3, client, CHAIN1, id)
 	if result != "{}" {
 		fmt.Println("result", result)
 		panic("查询结果错误")
 	}
 	//// 9) 跨合约调用
 	testCrossCall(sk3, client, CHAIN1)
-	time.Sleep(4 * time.Second)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 10) 交易回退
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "2000")
-	time.Sleep(4 * time.Second)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
+	id = txId
 	for i := 0; i < 3; i++ {
-		fmt.Println("试图将txid=" + txId + " 的name改为长安链chainmaker_save_point，但是发生了错误，所以修改不会成功")
-		testInvokeSqlUpdateRollbackDbSavePoint(sk3, client, CHAIN1, txId)
-		time.Sleep(4 * time.Second)
+		fmt.Println("试图将id=" + id + " 的name改为长安链chainmaker_save_point，但是发生了错误，所以修改不会成功")
+		txId = testInvokeSqlUpdateRollbackDbSavePoint(sk3, client, CHAIN1, id)
+		time.Sleep(2 * time.Second)
+		testWaitTx(sk3, client, CHAIN1, txId)
 
 		fmt.Println("// 11 再次查询age=2000的这条数据，如果name被更新了，那么说明savepoint Rollback失败了")
-		_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
+		_, result = testQuerySqlById(sk3, client, CHAIN1, id)
 		rs = make(map[string]string, 0)
 		json.Unmarshal([]byte(result), &rs)
 		fmt.Println("testInvokeSqlUpdateRollbackDbSavePoint query", rs)
@@ -189,11 +192,13 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 
 	// 9) 升级合约
 	testUpgrade(sk3, client, CHAIN1)
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
 
 	// 10) 升级合约后执行插入
 	txId = testInvokeSqlInsert(sk3, client, CHAIN1, "100000")
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
+	testWaitTx(sk3, client, CHAIN1, txId)
 	_, result = testQuerySqlById(sk3, client, CHAIN1, txId)
 	rs = make(map[string]string, 0)
 	json.Unmarshal([]byte(result), &rs)
@@ -273,10 +278,12 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 			"InvokeCreateuesr",
 		})
 
+		time.Sleep(2 * time.Second)
 		for _, testFunc := range txIds {
 			txId = testFunc.txIdMyself
+			time.Sleep(time.Millisecond * 500)
+			testWaitTx(sk3, client, CHAIN1, txId)
 			//testCreate(sk3, client, CHAIN1)
-			time.Sleep(3 * time.Second) //异步，得等待完成
 			resultInfo := testGetTxByTxId(sk3, client, txId, CHAIN1)
 			if resultInfo.Transaction.Result.Code == commonPb.TxStatusCode_SUCCESS {
 				fmt.Printf("%s", testFunc.funcName)
@@ -286,7 +293,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 			}
 		}
 	}
-	fmt.Println("\nfinal result: ", txId, result, rs)
+	fmt.Println("\nfinal result: ", txId, result, rs, id)
 	fmt.Println("test success!!!")
 	fmt.Println("test success!!!")
 }
@@ -314,7 +321,7 @@ func initWxwmTest() {
 	contractName = "contract300"
 	runtimeType = commonPb.RuntimeType_WXVM
 }
-func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 
 	txId := utils.GetRandTxId()
 
@@ -359,6 +366,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	if resp.Code != 0 {
 		panic(resp.Message)
 	}
+	return txId
 }
 
 func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
@@ -450,8 +458,7 @@ func InvokePrintHello(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "printhello",
@@ -475,8 +482,7 @@ func InvokeDoubleSql(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "doubleSql",
@@ -500,8 +506,7 @@ func InvokeUnpredictableSql(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "unpredictableSql",
@@ -525,8 +530,7 @@ func InvokeCreatetable(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chain
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "createTable",
@@ -550,8 +554,7 @@ func InvokeCreatedb(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "createDb",
@@ -575,8 +578,7 @@ func InvokeCreateuesr(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "createUser",
@@ -600,8 +602,7 @@ func InvokeAuoIncrement(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	fmt.Printf("\n============ invoke contract %s[auoIncrement] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "autoIncrementSql",
@@ -625,8 +626,7 @@ func InvokeCommit(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 	fmt.Printf("\n============ invoke contract %s[sql_insert] [%s] ============\n", contractName, txId)
 
 	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-	}
+	pairs := []*commonPb.KeyValuePair{}
 	payload := &commonPb.TransactPayload{
 		ContractName: contractName,
 		Method:       "commitSql",
@@ -645,7 +645,7 @@ func InvokeCommit(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 	return txId
 }
 
-func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) *commonPb.TransactionInfo{
+func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) *commonPb.TransactionInfo {
 	fmt.Println("========================================================================================================")
 	fmt.Println("========================================================================================================")
 	fmt.Println("========get tx by txId ", txId, "===============")
@@ -669,6 +669,25 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 		panic(err)
 	}
 	return result
+}
+
+func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, txId string) {
+	fmt.Printf("\n============ testWaitTx [%s] ============\n", txId)
+	// 构造Payload
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, pair)
+
+	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		chainId, txId, payloadBytes)
+	if resp == nil || resp.ContractResult == nil || strings.Contains(resp.Message, "no such transaction") {
+		time.Sleep(time.Second * 2)
+		testWaitTx(sk3, client, chainId, txId)
+	} else if resp != nil && len(resp.Message) != 0 {
+		fmt.Println(resp.Message)
+	}
 }
 
 func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, id string) string {
@@ -860,8 +879,8 @@ func testQuerySqlById(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
 		chainId, txId, payloadBytes)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
-	fmt.Println(string(resp.ContractResult.Result))
+	//fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	//fmt.Println(string(resp.ContractResult.Result))
 	//items := serialize.EasyUnmarshal(resp.ContractResult.Result)
 	//for _, item := range items {
 	//	fmt.Println(item.Key, item.Value)
