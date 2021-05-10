@@ -351,7 +351,7 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 
 func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
 	start := utils.CurrentTimeMillisSeconds()
-	txs := pool.queue.fetch(pool.maxTxCount(), blockHeight, pool.validateTxTime)
+	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
 		pool.log.Infof("fetch txs from txpool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs), blockHeight, utils.CurrentTimeMillisSeconds()-start)
 	}

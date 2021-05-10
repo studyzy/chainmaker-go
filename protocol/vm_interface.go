@@ -26,13 +26,18 @@ const (
 	ContractSdkSignalResultSuccess = 0 // sdk call chain method success result
 	ContractSdkSignalResultFail    = 1 // sdk call chain method success result
 
-	DefaultStateLen     = 64                  // key & name for contract state length
-	DefaultStateRegex   = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
+	DefaultStateLen   = 64                  // key & name for contract state length
+	DefaultStateRegex = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
+
 	DefaultVersionLen   = 64                  // key & name for contract state length
 	DefaultVersionRegex = "^[a-zA-Z0-9._-]+$" // key & name for contract state regex
 
 	ParametersKeyMaxCount    = 50 //
 	ParametersValueMaxLength = 1024 * 1024
+
+	TopicMaxLen       = 255
+	EventDataMaxLen   = 65535
+	EventDataMaxCount = 16
 
 	ContractKey            = ":K:"
 	ContractByteCode       = ":B:"
@@ -158,11 +163,6 @@ func CheckEventData(eventData []string) error {
 	for _, data := range eventData {
 		if len(data) > EventDataMaxLen {
 			return fmt.Errorf("event data too long,longer than %v", EventDataMaxLen)
-
-		}
-		err := filteredSQLInject(data)
-		if err != nil {
-			return err
 		}
 	}
 	return nil

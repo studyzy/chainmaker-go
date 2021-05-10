@@ -371,13 +371,9 @@ func (bc *Blockchain) initConsensus() (err error) {
 	nodeIds := make([]string, len(nodes))
 	isConsensusNode := false
 	for i, node := range nodes {
-		for _, addr := range node.Address {
-			uid, err := helper.GetNodeUidFromAddr(addr)
-			if err != nil {
-				return err
-			}
-			nodeIds[i] = uid
-			if uid == id {
+		for _, nid := range node.NodeId {
+			nodeIds[i] = nid
+			if nid == id {
 				isConsensusNode = true
 			}
 		}
