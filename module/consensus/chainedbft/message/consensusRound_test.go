@@ -255,6 +255,10 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	require.Nil(t, voteBlockID, "should blockId is null")
 }
 
+func TestInsertWithNet(t *testing.T) {
+
+}
+
 func TestInsertVote(t *testing.T) {
 	levelVotes := newConsensusRound(4, 1)
 

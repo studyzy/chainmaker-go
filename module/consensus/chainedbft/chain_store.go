@@ -222,7 +222,7 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 
 func (cs *chainStore) pruneBlockStore(nextRootID string) error {
 	err := cs.blockPool.PruneBlock(nextRootID)
-	cs.logger.Debugf("chainStore blockPool content: %s", cs.blockPool.Details())
+	//cs.logger.Debugf("chainStore blockPool content: %s", cs.blockPool.Details())
 	return err
 }
 

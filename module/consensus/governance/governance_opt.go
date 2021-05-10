@@ -63,7 +63,6 @@ func (s IntSlice64) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s IntSlice64) Less(i, j int) bool { return s[i] < s[j] }
 
 func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*consensusPb.GovernanceContract, error) {
-	log.Debugf("get government contract from chainStore")
 	contractName := GovernanceContractName
 	bz, err := store.ReadObject(contractName, []byte(contractName))
 	if err != nil {
