@@ -9,6 +9,7 @@ package chainedbft
 import (
 	"bytes"
 	"sort"
+	"sync/atomic"
 	"time"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
@@ -53,6 +54,7 @@ type syncMsg struct {
 
 // syncManager Synchronize block data from other peers
 type syncManager struct {
+	currReqID     uint64 // The ID of the current request
 	nextReqHeight int64  // lack of start level now
 	targetHeight  uint64 // need to fetch level
 
@@ -68,6 +70,7 @@ type syncManager struct {
 
 func newSyncManager(server *ConsensusChainedBftImpl) *syncManager {
 	return &syncManager{
+		currReqID:     1,
 		nextReqHeight: 1,
 		quitC:         make(chan struct{}),
 		reqDone:       make(chan bool),
@@ -111,7 +114,10 @@ func (sm *syncManager) reqLoop() {
 
 func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 	t := time.NewTimer(timeservice.RoundTimeout * 2)
-	defer t.Stop()
+	defer func() {
+		t.Stop()
+		atomic.AddUint64(&sm.currReqID, 1)
+	}()
 
 	msg := sm.constructReqMsg(req)
 	sm.server.signAndSendToPeer(msg, req.targetPeer)
@@ -120,6 +126,7 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		sm.reqDone <- false
 		return false
 	case <-sm.syncDone:
+		sm.reqDone <- true
 		return true
 	case <-sm.quitC:
 		return true
@@ -135,10 +142,10 @@ func (sm *syncManager) respLoop() {
 			if !ok {
 				continue
 			}
+			respID := syncMsg.msg.GetBlockFetchRespMsg().RespID
 			lastRecvHeight := sm.processBlocks(syncMsg)
-			if sm.targetHeight == lastRecvHeight {
+			if atomic.LoadUint64(&sm.currReqID) == respID && atomic.LoadUint64(&sm.targetHeight) == lastRecvHeight {
 				sm.syncDone <- struct{}{}
-				sm.reqDone <- true
 			}
 		}
 	}
@@ -148,10 +155,9 @@ func (sm *syncManager) respLoop() {
 func (sm *syncManager) constructReqMsg(req *blockSyncReq) *chainedbftpb.ConsensusPayload {
 	sm.logger.Debugf("server selfIndexInEpoch [%d], got sync req.height:%d:%x to [%v]",
 		sm.server.selfIndexInEpoch, req.height, req.blockID, req.targetPeer)
-	sm.targetHeight = req.height
+	atomic.StoreUint64(&sm.targetHeight, req.height)
 	startHeight := sm.server.chainStore.getCurrentQC().Height
-	num := sm.targetHeight - startHeight
-	msg := sm.server.constructBlockFetchMsg(startHeight, req.blockID, req.height, num)
+	msg := sm.server.constructBlockFetchMsg(sm.currReqID, req.blockID, req.height, req.height-startHeight)
 	return msg
 }
 

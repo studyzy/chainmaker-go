@@ -61,8 +61,7 @@ func GetQCFromBlock(block *common.Block) []byte {
 //GetLevelFromQc get level from qc
 func GetLevelFromQc(block *common.Block) (uint64, error) {
 	qc := new(chainedbftpb.QuorumCert)
-	err := proto.Unmarshal(GetQCFromBlock(block), qc)
-	if err != nil || qc == nil {
+	if err := proto.Unmarshal(GetQCFromBlock(block), qc); err != nil {
 		return 0, err
 	}
 	return qc.Level, nil

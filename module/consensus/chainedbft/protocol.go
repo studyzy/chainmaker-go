@@ -922,6 +922,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 
 		id        = string(req.BlockID)
 		height    = req.Height
+		reqID     = req.ReqID
 		status    = chainedbftpb.BlockFetchStatus_Succeeded
 		authorIdx = req.GetAuthorIdx()
 	)
@@ -961,10 +962,10 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 	}
 	for i := 0; i <= count-1; i++ {
 		if i == count-1 {
-			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:], status)
+			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:], status, reqID)
 			cbi.signAndSendToPeer(rsp, authorIdx)
 		} else {
-			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:(i+1)*MaxSyncBlockNum], status)
+			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:(i+1)*MaxSyncBlockNum], status, reqID)
 			cbi.signAndSendToPeer(rsp, authorIdx)
 		}
 	}
