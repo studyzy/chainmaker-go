@@ -8,6 +8,7 @@ package chainedbft
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 
@@ -997,6 +998,8 @@ func (cbi *ConsensusChainedBftImpl) addTimerEvent(event *timeservice.TimerEvent)
 //validateSignerAndSignature validate msg signer and signatures
 func (cbi *ConsensusChainedBftImpl) validateSignerAndSignature(msg *chainedbftpb.ConsensusMsg, peer *peer) error {
 	//check sign
+	data, _ := proto.Marshal(msg.Payload)
+	cbi.logger.Debugf("The hash of the unsigned raw data when verify data：%x", sha256.Sum256(data))
 	if err := utils.VerifyConsensusMsgSign(msg, cbi.accessControlProvider); err != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateSignerAndSignature failed,: verify "+
 			" msg, err %v", cbi.selfIndexInEpoch, err)

@@ -93,7 +93,6 @@ func SignBlock(block *common.Block, hashType string, signer protocol.SigningMemb
 	}
 	block.Header.BlockHash = hash[:]
 	block.Header.Signature = sig
-
 	return nil
 }
 
