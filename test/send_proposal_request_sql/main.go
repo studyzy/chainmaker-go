@@ -306,7 +306,7 @@ func initWasmerTest() {
 func initWasmerSqlTest() {
 	WasmPath = "../wasm/rust-sql-1.1.0.wasm"
 	WasmUpgradePath = "../wasm/rust-sql-1.1.0.wasm"
-	contractName = "contract1003"
+	contractName = "contract100"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
