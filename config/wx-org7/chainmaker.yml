@@ -74,7 +74,7 @@ storage:
   provider: LevelDB
   store_path: ../data/ledgerData7
   enable_contract_eventdb: false #是否开启合约事件存储功能， 默认为false，如果设置为true,需要配置mysql
-  mysql:    #MySQL相关配置，只有provider选择MySQL时才需要配置
+  mysql:    #MySQL相关配置，只有provider选择MySQL或者enable_contract_eventdb为true时才需要配置
     dsn: root:password@tcp(127.0.0.1:3306)/    #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)
     max_idle_conns: 10    #连接池中维持的最大的空闲连接数，默认为10
     max_open_conns: 10    #最大的可用连接数，默认为10
