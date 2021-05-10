@@ -1,6 +1,17 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"strconv"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -11,10 +22,6 @@ import (
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	"fmt"
-	"io/ioutil"
-	"strconv"
-	"sync"
 )
 
 var testOrgId = "wx-org1.chainmaker.org"

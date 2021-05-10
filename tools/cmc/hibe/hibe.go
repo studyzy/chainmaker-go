@@ -1,16 +1,23 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package hibe
 
 import (
-	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
 	"errors"
 	"fmt"
-	"github.com/samkumar/hibe"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
+	"github.com/samkumar/hibe"
+	"github.com/spf13/cobra"
 	"vuvuzela.io/crypto/bn256"
 	"vuvuzela.io/crypto/rand"
 )

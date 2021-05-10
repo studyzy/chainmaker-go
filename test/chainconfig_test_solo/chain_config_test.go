@@ -4,17 +4,13 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
-
-// description: chainmaker-go
-//
-// @author: xwc1125
-// @date: 2020/11/3
 package native_test
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"fmt"
 	"testing"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"

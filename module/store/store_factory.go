@@ -1,5 +1,3 @@
-// +build !rocksdb
-
 /*
 Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
@@ -9,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"runtime"
+
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/blockdb"
@@ -26,7 +26,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statemysqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"golang.org/x/sync/semaphore"
-	"runtime"
 )
 
 // Factory is a factory function to create an instance of the block store

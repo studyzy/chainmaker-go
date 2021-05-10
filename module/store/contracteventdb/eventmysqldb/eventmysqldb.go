@@ -1,13 +1,19 @@
+/*
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package eventmysqldb
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/dbprovider/mysqldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"gorm.io/gorm"
 )
 

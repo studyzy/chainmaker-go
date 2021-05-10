@@ -1,15 +1,21 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package evm
 
 import (
+	"math/big"
+	"math/rand"
+	"sync"
+	"time"
+
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
-	"math/big"
-	"math/rand"
-	"sync"
-	"time"
 
 	"encoding/hex"
 	"fmt"
