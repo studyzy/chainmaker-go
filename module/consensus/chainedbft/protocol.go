@@ -382,6 +382,9 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 			cbi.logger.Errorf("%s", err)
 			return err
 		}
+	} else {
+		cbi.logger.Debugf("don't vote for proposal: [%d:%d:%x], lastVoteLevel: %d",
+			proposal.Height, proposal.Level, proposal.Block.Header.BlockHash, lastVoteLevel)
 	}
 	return nil
 }
