@@ -14,6 +14,9 @@ import (
     "fmt"
 )
 
+const(
+    COMPUTE_RESULT = "private_compute_result"
+)
 type PrivateComputeContract struct {
     methods map[string]ContractFunc
     log     *logger.CMLogger
@@ -49,9 +52,6 @@ type PrivateComputeRuntime struct {
 }
 
 func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //TODO:check user permission
-    //byteCert := []byte(params["user_cert"])
-
     name := params["contract_name"]
     if utils.IsAnyBlank(name) {
         err := fmt.Errorf("%s, param[contract_name] of save contract  not found", ErrParams.Error())
@@ -65,6 +65,7 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
         r.log.Errorf(err.Error())
         return nil, err
     }
+    //TODO: contract code check
 
     hash := params["code_hash"]
     if utils.IsAnyBlank(hash) {
@@ -81,13 +82,17 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
     }
 
     combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
-    version, err := params["version"]
-    if err != true {
+    version, ok := params["version"]
+    if ok != true {
         v, err := context.Get(combinationName, []byte(protocol.ContractVersion))
         if err == nil && len(v) > 0 {
-            version = string(v)
+            if string(v) == version {
+                err := fmt.Errorf("%s, param[code_hash] != hash of param[contract_code] in save contract interface", ErrParams.Error())
+                r.log.Errorf(err.Error())
+                return nil, err
+            }
         } else {
-            version = "0"
+            version = "1"
         }
     }
 
@@ -107,9 +112,6 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
 }
 
 func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //TODO:check user permission
-    //byteCert := []byte(params["user_cert"])
-
     name := params["contract_name"]
     if utils.IsAnyBlank(name) {
         err := fmt.Errorf("%s, param[contract_name] of get contract not found", ErrParams.Error())
@@ -123,15 +125,15 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
         r.log.Errorf(err.Error())
         return nil, err
     }
-    //TODO: verify hash and sign
-    //hashSign := params["hash_sign"]
 
     combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
     version, err := context.Get(combinationName, []byte(protocol.ContractVersion))
     if  err != nil {
         r.log.Errorf("Unable to find latest version for contract[%s], system error:%s.", name, err.Error())
         return nil, err
-    } else if len(version) == 0 {
+    }
+
+    if len(version) == 0 {
         r.log.Errorf("The contract does not exist. contract[%s].", name)
         return nil, err
     }
@@ -142,20 +144,27 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
     if err != nil {
         r.log.Errorf("Read contract[%s] failed.", name)
         return nil, err
-    } else if len(contractCode) == 0 {
+    }
+
+    if len(contractCode) == 0 {
         r.log.Errorf("Contract[%s] byte code is empty.", name)
         return nil, err
-    } else {
-        result.ContractCode = contractCode
-        result. GasLimit = protocol.GasLimit
+    }
+
+    result.ContractCode = contractCode
+    result. GasLimit = protocol.GasLimit
+
+    calHash := sha256.Sum256(result.ContractCode)
+    if string(calHash[:]) != hash {
+        err := fmt.Errorf("%s, param[code_hash] != hash of contract code in get contract interface", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
     }
 
     return result.Marshal()
 }
 
 func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //TODO:check user permission
-    //byteCert := []byte(params["user_cert"])
     key := params["order_id"]
     if utils.IsAnyBlank(key) {
         err := fmt.Errorf("%s, param[order_id] of save dir  not found", ErrParams.Error())
@@ -170,8 +179,6 @@ func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params ma
         return nil, err
     }
 
-    //TODO: verify hash and sign
-
     if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(key), []byte(value)); err != nil {
         r.log.Errorf("Put private dir failed, err: %s", err.Error())
         return nil, err
@@ -181,14 +188,31 @@ func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params ma
 }
 
 func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //TODO:check user permission
-    //byteCert := []byte(params["user_cert"])
+    var result commonPb.ContractResult
+    cRes := []byte(params["result"])
+    if err := result.Unmarshal(cRes); err != nil {
+        r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
+        return nil, err
+    }
 
-    //TODO: verify hash and sign
-    if params["compute_result"] != "true" {
-        err := fmt.Errorf("params[compute_result] is false, need not save")
+    if result.GasUsed > protocol.GasLimit {
+        err := fmt.Errorf("gas[%d] expend the limit[%f]", result.GasUsed, protocol.GasLimit)
         r.log.Errorf(err.Error())
-    	return nil, nil
+        return nil, err
+    }
+
+    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + params["contract_name"]
+    if err := context.Put(combinationName, []byte(COMPUTE_RESULT), cRes); err != nil {
+        r.log.Errorf("Write compute result:%s failed, err: %s", cRes, err.Error())
+        return nil, err
+    }
+
+    //reportSign := []byte(params["report_sign"])
+    //TODO:check report sign
+
+    if result.Code != commonPb.ContractResultCode_OK {
+        r.log.Infof("Compute result code != ok, return")
+        return nil, nil
     }
 
     rwSetStr := params["rw_set"]
@@ -204,7 +228,6 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
         return nil, err
     }
 
-    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + params["contract_name"]
     for i := 0; i < len(rwSet.TxReads); i++ {
         key := rwSet.TxReads[i].Key
         val := rwSet.TxReads[i].Value
@@ -227,12 +250,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 }
 
 func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //TODO:check user permission
-    //byteCert := []byte(params["user_cert"])
-
-    //TODO: verify hash and sign
-    key := []byte(params["private_key"])
-    if utils.IsAnyBlank(params["private_key"]) {
+    key := []byte(params["key"])
+    if utils.IsAnyBlank(params["key"]) {
         err := fmt.Errorf("%s,param[private_key] of get data  not found", ErrParams.Error())
         r.log.Errorf(err.Error())
         return nil, err
@@ -254,9 +273,6 @@ func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params ma
 }
 
 func (r *PrivateComputeRuntime) SaveCert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-    //TODO:check user permission
-    //byteCert := []byte(params["user_cert"])
-
     teeId := params["enclave_id"]
     if utils.IsAnyBlank(teeId) {
         err := fmt.Errorf("%s,param[enclave_id] of save cert  not found", ErrParams.Error())
@@ -270,8 +286,6 @@ func (r *PrivateComputeRuntime) SaveCert(context protocol.TxSimContext, params m
         r.log.Errorf(err.Error())
         return nil, err
     }
-
-    //TODO: verify tee cert
 
     if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(teeId), []byte(teeCert)); err != nil {
         r.log.Errorf("Put enclave:%s cert into chain DB failed, err: %s", teeId, err.Error())
