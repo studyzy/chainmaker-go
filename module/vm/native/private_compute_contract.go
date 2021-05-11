@@ -15,7 +15,7 @@ import (
 )
 
 const(
-    COMPUTE_RESULT = "private_compute_result"
+    ComputeResult = "private_compute_result"
 )
 type PrivateComputeContract struct {
     methods map[string]ContractFunc
@@ -43,12 +43,52 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CONTRACT.String()] = privateComputeRuntime.SaveContract
+    queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_QUOTE.String()] = privateComputeRuntime.SaveQuote
 
     return queryMethodMap
 }
 
 type PrivateComputeRuntime struct {
     log *logger.CMLogger
+}
+
+func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+    sign      := params["sign"]
+    quote     := params["quote"]
+    quoteId   := params["quote_id"]
+    enclaveId := params["enclave_id"]
+    if utils.IsAllBlank(enclaveId, quoteId, quote, sign) {
+        err := fmt.Errorf("%s, param[enclave_id]%s, param[quote_id]%s, param[quote]%s, param[sign]%s ",
+            ErrParams.Error(), enclaveId, quoteId, quote, sign)
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    enclaveCert, err:= context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(enclaveId))
+    if  err != nil {
+        r.log.Errorf("%s, get enclave cert[%s] failed, can't verify the quote[%s]", err.Error(), enclaveId, quoteId)
+        return nil, err
+    }
+
+    cert, err := utils.ParseCert(enclaveCert)
+    if  err != nil {
+        r.log.Errorf("%s, parse enclave certificate failed, enclave id[%s], cert bytes[%s]", err.Error(), enclaveId, enclaveCert)
+        return nil, err
+    }
+
+    //hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+    ok, err := cert.PublicKey.Verify([]byte(quote), []byte(sign))
+    if !ok {
+        r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
+        return nil, err
+    }
+
+    if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(quoteId), []byte(quote)); err != nil{
+        r.log.Errorf("%s, save quote[%s] failed", err.Error(), quoteId)
+        return nil, err
+    }
+
+    return nil, nil
 }
 
 func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -201,7 +241,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
     }
 
     combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + params["contract_name"]
-    if err := context.Put(combinationName, []byte(COMPUTE_RESULT), cRes); err != nil {
+    if err := context.Put(combinationName, []byte(ComputeResult), cRes); err != nil {
         r.log.Errorf("Write compute result:%s failed, err: %s", cRes, err.Error())
         return nil, err
     }
