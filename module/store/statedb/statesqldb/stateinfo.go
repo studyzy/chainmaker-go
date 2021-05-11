@@ -48,12 +48,13 @@ func (b *StateInfo) GetUpdateSql() (string, []interface{}) {
 }
 
 // NewStateInfo construct a new StateInfo
-func NewStateInfo(contractName string, objectKey []byte, objectValue []byte, blockHeight uint64) *StateInfo {
+func NewStateInfo(contractName string, objectKey []byte, objectValue []byte, blockHeight uint64, t time.Time) *StateInfo {
 	return &StateInfo{
 		ContractName: contractName,
 		ObjectKey:    objectKey,
 		ObjectValue:  objectValue,
 		BlockHeight:  blockHeight,
+		UpdatedAt:    t,
 	}
 }
 

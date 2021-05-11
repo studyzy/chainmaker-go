@@ -152,7 +152,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 					return err
 				}
 			} else {
-				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight))
+				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight), block.GetTimestamp())
 				if _, err := dbTx.Save(stateInfo); err != nil {
 					s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
 					s.db.RollbackDbTransaction(txKey)
@@ -207,7 +207,7 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, payload *
 				return err
 			}
 		} else { //是KV数据，直接存储到StateInfo表
-			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight))
+			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight), block.GetTimestamp())
 			writeDbName := GetContractDbName(block.Header.ChainId, txWrite.ContractName)
 			dbTx.ChangeContextDb(writeDbName)
 			s.logger.Debugf("try save state key[%s] to db[%s]", txWrite.Key, writeDbName)
