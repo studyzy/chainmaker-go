@@ -73,6 +73,10 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
+			panic("connect to mysql error:" + err.Error())
+		}
+		_, err = db.Query("SELECT DATABASE()")
+		if err != nil {
 			if strings.Contains(err.Error(), "Unknown database") {
 				log.Infof("first time connect to a new database,create database %s", dbName)
 				err = createDatabase(conf.Dsn, dbName)

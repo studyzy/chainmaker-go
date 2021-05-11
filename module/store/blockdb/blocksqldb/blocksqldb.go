@@ -45,7 +45,7 @@ func (db *BlockSqlDB) initDb(dbName string) {
 
 	err = db.db.CreateTableIfNotExist(&BlockInfo{})
 	if err != nil {
-		panic("init state sql db table `block_infos` fail")
+		panic("init state sql db table `block_infos` fail" + err.Error())
 	}
 	err = db.db.CreateTableIfNotExist(&TxInfo{})
 	if err != nil {
