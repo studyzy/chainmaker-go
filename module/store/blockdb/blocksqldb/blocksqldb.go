@@ -12,7 +12,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
 	"errors"
@@ -31,7 +31,7 @@ type BlockSqlDB struct {
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
 func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*BlockSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
+	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
 	return newBlockSqlDB(chainId, db, logger)
 }
 
@@ -165,7 +165,7 @@ func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*Bloc
 		b.logger.Infof("sql[%s] %v return empty result", sql, values)
 		return nil, nil
 	}
-	err = res.ScanObject(&blockInfo)
+	err = blockInfo.ScanObject(res.ScanColumns)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +259,8 @@ func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
 		b.logger.Infof("tx[%s] not found in db", txId)
 		return nil, nil
 	}
-	err = res.ScanObject(&txInfo)
+
+	err = txInfo.ScanObject(res.ScanColumns)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +280,7 @@ func (b *BlockSqlDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo,
 		b.logger.Infof("tx[%s] not found in db", txId)
 		return nil, nil
 	}
-	err = res.ScanObject(&txInfo)
+	err = txInfo.ScanObject(res.ScanColumns)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +316,7 @@ func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight int64) ([]*commonPb.Transac
 	result := []*commonPb.Transaction{}
 	for res.Next() {
 		var txInfo TxInfo
-		res.ScanObject(&txInfo)
+		err = txInfo.ScanObject(res.ScanColumns)
 		if err != nil {
 			return nil, err
 		}

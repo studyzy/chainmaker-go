@@ -12,7 +12,8 @@ import (
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"crypto/sha256"
@@ -164,12 +165,12 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
-func initProvider() *sqldbprovider.SqlDBHandle {
+func initProvider() protocol.SqlDBHandle {
 	conf := &localconf.SqlDbConfig{}
 	conf.Dsn = ":memory:"
 	conf.SqlDbType = "sqlite"
 	conf.SqlLogMode = "Info"
-	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
+	p := rawsqlprovider.NewSqlDBHandle("chain1", conf, log)
 	return p
 }
 

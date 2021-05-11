@@ -11,8 +11,9 @@ import (
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker-go/store/types"
 	"fmt"
 	"sync"
 )
@@ -49,17 +50,17 @@ func (db *StateSqlDB) initChainStateDb(dbName string) error {
 	if err != nil {
 		return err
 	}
-	err = db.db.CreateTableIfNotExist(&SavePoint{})
+	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
 		panic("init state sql db table fail:" + err.Error())
 	}
-	_, err = db.db.Save(&SavePoint{BlockHeight: 0})
+	_, err = db.db.Save(&types.SavePoint{BlockHeight: 0})
 	return err
 }
 
 // NewStateMysqlDB construct a new `StateDB` for given chainId
 func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
+	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
 	return newStateSqlDB(chainId, db, dbConfig, logger)
 }
 
@@ -306,7 +307,7 @@ func (s *StateSqlDB) getContractDbHandle(contractName string) protocol.SqlDBHand
 		return s.db
 	}
 	dbName := GetContractDbName(s.chainId, contractName)
-	db := sqldbprovider.NewSqlDBHandle(dbName, s.dbConfig, s.logger)
+	db := rawsqlprovider.NewSqlDBHandle(dbName, s.dbConfig, s.logger)
 	s.contractDbs[contractName] = db
 	s.logger.Infof("create new sql db handle[%p] database[%s] for contract[%s]", db, dbName, contractName)
 	return db

@@ -147,21 +147,6 @@ type SqlDBHandle interface {
 	//RollbackDbTransaction 回滚一个事务，并从缓存中清除该事务，如果找不到对应的事务，则返回错误
 	RollbackDbTransaction(txName string) error
 }
-type SqlDBSession interface {
-	//ChangeContextDb 改变当前上下文所使用的数据库
-	ChangeContextDb(dbName string) error
-	//CreateTableIfNotExist 根据一个对象struct，自动构建对应的sql数据库表
-	CreateTableIfNotExist(obj interface{}) error
-	//Save 直接保存一个对象到SQL数据库中
-	Save(value interface{}) (int64, error)
-	//ExecSql 执行指定的SQL语句，返回受影响的行数
-	ExecSql(sql string, values ...interface{}) (int64, error)
-	//QuerySingle 执行指定的SQL语句，查询单条数据记录，如果查询到0条，则返回nil,nil，如果查询到多条，则返回第一条
-	QuerySingle(sql string, values ...interface{}) (SqlRow, error)
-	//QueryMulti 执行指定的SQL语句，查询多条数据记录，如果查询到0条，则SqlRows.Next()直接返回false
-	QueryMulti(sql string, values ...interface{}) (SqlRows, error)
-	Close() error
-}
 
 //SqlDBTransaction开启一个事务后，能在这个事务中进行的操作
 type SqlDBTransaction interface {
@@ -186,7 +171,7 @@ type SqlRow interface {
 	//将这个数据的每个列赋值到dest指针对应的对象中
 	ScanColumns(dest ...interface{}) error
 	//将这个数据赋值到dest对象的属性中
-	ScanObject(dest interface{}) error
+	//ScanObject(dest interface{}) error
 	//将这个数据转换为ColumnName为Key，Data为Value的Map中
 	Data() (map[string]string, error)
 	//判断返回的SqlRow是否为空
@@ -200,7 +185,7 @@ type SqlRows interface {
 	//将当前行这个数据的每个列赋值到dest指针对应的对象中
 	ScanColumns(dest ...interface{}) error
 	//将当前行这个数据赋值到dest对象的属性中
-	ScanObject(dest interface{}) error
+	//ScanObject(dest interface{}) error
 	//将当前行这个数据转换为ColumnName为Key，Data为Value的Map中
 	Data() (map[string]string, error)
 	Close() error
