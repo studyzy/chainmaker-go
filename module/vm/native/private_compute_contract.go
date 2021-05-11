@@ -81,28 +81,27 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
         return nil, err
     }
 
-    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
-    version, ok := params["version"]
-    if ok != true {
-        v, err := context.Get(combinationName, []byte(protocol.ContractVersion))
-        if err == nil && len(v) > 0 {
-            if string(v) == version {
-                err := fmt.Errorf("%s, param[code_hash] != hash of param[contract_code] in save contract interface", ErrParams.Error())
-                r.log.Errorf(err.Error())
-                return nil, err
-            }
-        } else {
-            version = "1"
-        }
+    version := params["version"]
+    if utils.IsAnyBlank(version) {
+        err := fmt.Errorf("%s, param[version] of save contract  not found", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
     }
 
-    // save versioned byteCode
+    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
+    key := append([]byte(protocol.ContractByteCode), []byte(version)...)
+    codeInCtx, err := context.Get(combinationName, key)
+    if err == nil && len(codeInCtx) > 0 {
+        err := fmt.Errorf("the contract version[%s] and code[%s] is already exist", version, codeInCtx)
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
     if err := context.Put(combinationName, []byte(protocol.ContractVersion), []byte(version)); err != nil {
         r.log.Errorf("Put contract version into DB failed while save contract, err: %s", err.Error())
         return nil, err
     }
 
-    key := append([]byte(protocol.ContractByteCode), version...)
     if err := context.Put(combinationName, key, []byte(code)); err != nil {
         r.log.Errorf("Put private dir failed, err: %s", err.Error())
         return nil, err
