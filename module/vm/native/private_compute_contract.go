@@ -6,6 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+    "chainmaker.org/chainmaker-go/common/crypto/hash"
+    bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
     "chainmaker.org/chainmaker-go/logger"
     commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
     "chainmaker.org/chainmaker-go/protocol"
@@ -76,8 +78,14 @@ func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params 
         return nil, err
     }
 
-    //hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
-    ok, err := cert.PublicKey.Verify([]byte(quote), []byte(sign))
+    hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+    digest, err := hash.Get(hashAlgo, []byte(quote))
+    if err != nil {
+        r.log.Errorf("%s, calculate hash of quote[%s] failed", err.Error(), quoteId)
+        return nil, err
+    }
+
+    ok, err := cert.PublicKey.Verify(digest, []byte(sign))
     if !ok {
         r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
         return nil, err
