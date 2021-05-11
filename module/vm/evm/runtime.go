@@ -12,6 +12,7 @@ import (
 	"runtime/debug"
 
 	"chainmaker.org/chainmaker-go/common/evmutils"
+	evm_go "chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
