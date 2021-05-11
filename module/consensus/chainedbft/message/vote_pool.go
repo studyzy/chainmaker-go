@@ -109,21 +109,17 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (isValid boo
 	if !ok {
 		return true, nil
 	}
-
-	if lastVote.NewView && vote.NewView {
-		return false, nil
-	} else if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
+	if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
 		return false, fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
 			vote.Level, lastVote.BlockID, vote.BlockID)
+	} else if lastVote.NewView == vote.NewView && bytes.Equal(lastVote.BlockID, vote.BlockID) {
+		return false, nil
 	}
-
-	//blk -> view
-	//view ->
 	return true, nil
 }
 
 //checkVoteDone checks whether a valid block or nil block voted by +2/3 nodes
-func (vp *votePool) checkVoteDone() ([]byte, bool, bool) {
+func (vp *votePool) checkVoteDone() (blkID []byte, isNewView bool, done bool) {
 	if vp.lockedBlockID != nil {
 		return vp.lockedBlockID, false, true
 	}
@@ -147,6 +143,7 @@ func (vp *votePool) getQCVotes() []*chainedbft.VoteData {
 		for _, index := range indexes {
 			votes = append(votes, blkVotes[index])
 		}
+		return votes
 	}
 	if vp.lockedNewView {
 		for index := range vp.votedNewView {
@@ -156,6 +153,7 @@ func (vp *votePool) getQCVotes() []*chainedbft.VoteData {
 		for _, index := range indexes {
 			votes = append(votes, vp.votedNewView[index])
 		}
+		return votes
 	}
-	return votes
+	return nil
 }
