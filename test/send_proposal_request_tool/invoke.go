@@ -74,7 +74,6 @@ func invoke() error {
 		testMessage = resp.Message
 	}
 
-
 	////暂时不支持传参
 	//if commonPb.RuntimeType(runTime) == commonPb.RuntimeType_EVM {
 	//	abiJsonData, err := ioutil.ReadFile(abiPath)
@@ -94,8 +93,6 @@ func invoke() error {
 	//		},
 	//	}
 	//}
-
-
 
 	result := &Result{
 		Code:    testCode,

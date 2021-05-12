@@ -1,3 +1,10 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
@@ -73,7 +80,7 @@ func decryptHibeMessageExec() (string, commonPb.TxStatusCode, string) {
 		return result_output, 1, fmt.Sprintf("DecryptHibeMsg failure, err: %s", err)
 	}
 
-	return  string(message), 0, ""
+	return string(message), 0, ""
 }
 
 // Returns the serialized byte array of hibeParams
@@ -95,8 +102,6 @@ func readHibePrvKeysWithFilePath(hibePrvKeyFilePath string) ([]byte, error) {
 
 	return prvKeyBytes, nil
 }
-
-
 
 func decryptHibeMessage() error {
 	var result Result

@@ -80,8 +80,8 @@ var (
 	hibeReceiverIdsFilePath string
 	hibeParamsFilePath      string
 
-	abiPath       string
-	initParams	  string
+	abiPath    string
+	initParams string
 )
 
 type Result struct {
@@ -101,7 +101,7 @@ type Result struct {
 	ShortCert             string                          `json:"shortCert,omitempty"`
 	GovernanceInfo        *consensusPb.GovernanceContract `json:"governanceInfo,omitempty"`
 	HibeExecMsg           string                          `json:"hibe_exec_msg,omitempty"`
-	CertAddress			  *evm.Address					  `json:"certAddress,omitempty"`
+	CertAddress           *evm.Address                    `json:"certAddress,omitempty"`
 }
 
 type SimpleRPCResult struct {

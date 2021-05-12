@@ -13,7 +13,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -78,15 +78,15 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 }
 
 func TestSerializeBlock(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		block := createBlockAndRWSets(chainId, int64(i), 5000)
 		bytes, blockInfo, err := SerializeBlock(block)
-		assert.NilError(t, err)
+		assert.Nil(t, err)
 		assert.Equal(t, blockInfo.Block.String(), block.Block.String())
-		assert.Equal(t, len(block.Block.Txs), len(blockInfo.Txs))
+		assert.Equal(t, len(block.Block.Txs), len(blockInfo.GetSerializedTxs()))
 		assert.Equal(t, len(block.TxRWSets), len(blockInfo.TxRWSets))
 		result, err := DeserializeBlock(bytes)
-		assert.NilError(t, err)
-		assert.Equal(t, block.String(), result.String())
+		assert.Nil(t, err)
+		assert.Equal(t, block.Block.String(), result.Block.String())
 	}
 }

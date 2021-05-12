@@ -39,7 +39,6 @@ func QueryCMD() *cobra.Command {
 	return cmd
 }
 
-
 func returnResult(code commonPb.TxStatusCode, message string, contractCode commonPb.ContractResultCode, contractMessage string, data string) error {
 	var result *Result
 	result = &Result{
@@ -126,7 +125,7 @@ func query() error {
 			dataByte, _ = myAbi.Unpack(method_bck, resp.ContractResult.Result)
 			//fmt.Println("resp.ContractResult.Result: ", resp.ContractResult.Result, "dataByte: ", dataByte, "type(dataByte): ", reflect.TypeOf(dataByte), "dataByte[0]:", dataByte[0])
 		}
-		var datas [] string
+		var datas []string
 		for _, data := range dataByte {
 			datas = append(datas, getStrval(data))
 		}
@@ -147,7 +146,7 @@ func query() error {
 			err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, "")
 		}
 		return err
-	}else {
+	} else {
 		err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, string(resp.ContractResult.Result))
 		return err
 	}

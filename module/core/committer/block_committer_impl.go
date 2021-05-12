@@ -19,6 +19,7 @@ import (
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
@@ -123,13 +124,34 @@ func (chain *BlockCommitterImpl) isBlockLegal(blk *commonpb.Block) error {
 	return nil
 }
 
-func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) error {
+func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
+	defer func() {
+		if err == nil {
+			return
+		}
+		// rollback sql
+		chain.log.Error(err)
+		if chain.chainConf.ChainConfig().Contract.EnableSqlSupport {
+			txKey := block.GetTxKey()
+			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
+			// drop database if create contract fail
+			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+				var payload commonpb.ContractMgmtPayload
+				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
+					if payload.ContractId != nil {
+						dbName := statesqldb.GetContractDbName(chain.chainId, payload.ContractId.ContractName)
+						chain.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
+					}
+				}
+			}
+		}
+	}()
+
 	startTick := utils.CurrentTimeMillisSeconds()
 	chain.log.Debugf("add block(%d,%x)=(%x,%d,%d)",
 		block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, block.Header.TxCount, len(block.Txs))
 	chain.mu.Lock()
 	defer chain.mu.Unlock()
-	var err error
 
 	height := block.Header.BlockHeight
 	if err = chain.isBlockLegal(block); err != nil {

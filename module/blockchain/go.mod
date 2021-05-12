@@ -20,6 +20,7 @@ require (
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
+	chainmaker.org/chainmaker-go/wasi v0.0.0
 )
 
 replace (
@@ -46,5 +47,4 @@ replace (
 	chainmaker.org/chainmaker-go/vm => ../vm
 	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
-	chainmaker.org/chainmaker-go/evm => ../vm/evm
 )

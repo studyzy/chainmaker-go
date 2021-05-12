@@ -13,11 +13,12 @@ require (
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
+	chainmaker.org/chainmaker-go/wasi v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 )
 
 replace (
@@ -30,7 +31,9 @@ replace (
 	chainmaker.org/chainmaker-go/logger => ../logger
 	chainmaker.org/chainmaker-go/pb/protogo => ../../pb/protogo
 	chainmaker.org/chainmaker-go/protocol => ../../protocol
+	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/utils => ../utils
+	chainmaker.org/chainmaker-go/wasi => ./wasi
 	chainmaker.org/chainmaker-go/wasmer => ./wasmer
 	chainmaker.org/chainmaker-go/wxvm => ./wxvm
 )

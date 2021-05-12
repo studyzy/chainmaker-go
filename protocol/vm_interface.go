@@ -9,10 +9,9 @@ package protocol
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
 	"regexp"
-
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
 )
 
 const (
@@ -49,14 +48,6 @@ const (
 	ContractAddress        = ":A:"
 	ContractStoreSeparator = "#"
 
-	// user contract must implement such method
-	ContractInitMethod        = "init_contract"
-	ContractUpgradeMethod     = "upgrade"
-	ContractAllocateMethod    = "allocate"
-	ContractDeallocateMethod  = "deallocate"
-	ContractRuntimeTypeMethod = "runtime_type"
-	ContractEvmParamKey       = "data"
-
 	// special parameters passed to contract
 	ContractCreatorOrgIdParam = "__creator_org_id__"
 	ContractCreatorRoleParam  = "__creator_role__"
@@ -68,17 +59,36 @@ const (
 	ContractTxIdParam         = "__tx_id__"
 	ContractContextPtrParam   = "__context_ptr__"
 
+	// user contract must implement such method
+	ContractInitMethod        = "init_contract"
+	ContractUpgradeMethod     = "upgrade"
+	ContractAllocateMethod    = "allocate"
+	ContractDeallocateMethod  = "deallocate"
+	ContractRuntimeTypeMethod = "runtime_type"
+	ContractEvmParamKey       = "data"
 	// method name used by smart contract sdk
+	// common
 	ContractMethodLogMessage      = "LogMessage"
-	ContractMethodGetStateLen     = "GetStateLen"
-	ContractMethodGetState        = "GetState"
-	ContractMethodPutState        = "PutState"
-	ContractMethodDeleteState     = "DeleteState"
 	ContractMethodSuccessResult   = "SuccessResult"
 	ContractMethodErrorResult     = "ErrorResult"
 	ContractMethodCallContract    = "CallContract"
 	ContractMethodCallContractLen = "CallContractLen"
-	ContractMethodEmitEvent       = "EmitEvent"
+	// kv
+	ContractMethodGetStateLen = "GetStateLen"
+	ContractMethodGetState    = "GetState"
+	ContractMethodPutState    = "PutState"
+	ContractMethodDeleteState = "DeleteState"
+	// sql
+	ContractMethodExecuteQuery       = "ExecuteQuery"
+	ContractMethodExecuteQueryOne    = "ExecuteQueryOne"
+	ContractMethodExecuteQueryOneLen = "ExecuteQueryOneLen"
+	ContractMethodRSNext             = "RSNext"
+	ContractMethodRSNextLen          = "RSNextLen"
+	ContractMethodRSHasNext          = "RSHasNext"
+	ContractMethodRSClose            = "RSClose"
+	ContractMethodExecuteUpdate      = "ExecuteUpdate"
+	ContractMethodExecuteDdl         = "ExecuteDDL"
+	ContractMethodEmitEvent          = "EmitEvent"
 )
 
 //VmManager manage vm runtime
@@ -90,6 +100,31 @@ type VmManager interface {
 	// RunContract run native or user contract according ContractName in contractId, and call the specified function
 	RunContract(contractId *common.ContractId, method string, byteCode []byte, parameters map[string]string,
 		txContext TxSimContext, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)
+}
+
+type ContractWacsiCommon interface {
+	LogMessage() int32
+	SuccessResult() int32
+	ErrorResult() int32
+	CallContract() int32
+}
+
+type ContractWacsiKV interface {
+	ContractWacsiCommon
+	GetState() int32
+	PutState() int32
+	DeleteState() int32
+}
+
+type ContractWacsiSQL interface {
+	ContractWacsiCommon
+	ExecuteQuery() int32
+	ExecuteQueryOne() int32
+	RSHasNext() int32
+	RSNext() int32
+	RSClose() int32
+	ExecuteUpdate() int32
+	ExecuteDDL() int32
 }
 
 // GetKeyStr get state key from string
@@ -126,11 +161,11 @@ func CheckKeyFieldStr(key string, field string) error {
 			return nil
 		}
 		if len(s) > DefaultStateLen {
-			return fmt.Errorf("field[%s] too long", s)
+			return fmt.Errorf("key field[%s] too long", s)
 		}
 		match, err := regexp.MatchString(DefaultStateRegex, s)
 		if err != nil || !match {
-			return fmt.Errorf("field[%s] can only consist of numbers, dot, letters and underscores", s)
+			return fmt.Errorf("key field[%s] can only consist of numbers, dot, letters and underscores", s)
 		}
 	}
 	return nil

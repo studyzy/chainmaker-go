@@ -23,6 +23,7 @@ import (
 //}
 
 var printEnable bool = true
+
 type EvmAbi struct {
 	anonymous       bool         `json:"anonymous"`
 	constant        bool         `json:"constant"`
@@ -173,7 +174,7 @@ func getStrval(value interface{}) string {
 }
 
 func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, runtime commonPb.RuntimeType) (string, []*commonPb.KeyValuePair, error) {
-	if runtime != commonPb.RuntimeType_EVM  {
+	if runtime != commonPb.RuntimeType_EVM {
 		return method, pairs, nil
 	}
 	data := ""
@@ -328,7 +329,7 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 }
 
 func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, runtime commonPb.RuntimeType) (string, []*commonPb.KeyValuePair, error) {
-	if runtime != commonPb.RuntimeType_EVM  {
+	if runtime != commonPb.RuntimeType_EVM {
 		return method, pairs, nil
 	}
 	data := ""

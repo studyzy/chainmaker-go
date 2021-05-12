@@ -8,34 +8,34 @@ package store
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/store/blockdb/blockmysqldb"
-	"chainmaker.org/chainmaker-go/store/historydb/historymysqldb"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker-go/store/statedb/statemysqldb"
-	"chainmaker.org/chainmaker-go/store/types"
+	"github.com/tidwall/wal"
+	"path/filepath"
+
+	"os"
+	"time"
 
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
-	//"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
-
-	"gotest.tools/assert"
 )
 
-var ledgerPath = "/tmp/leveldbprovider/unit_test_ledger"
 var chainId = "testchain1"
 
 //var dbType = types.MySQL
-var dbType = types.LevelDb
+//var dbType = types.LevelDb
 
 var defaultContractName = "contract1"
-var defaultChainId = "testchainid"
-var block5 = createBlock(chainId, 5)
+var block0 = createConfigBlock(chainId, 0)
+var block5 = createBlock(chainId, 5, 1)
 var txRWSets = []*commonPb.TxRWSet{
 	{
 		//TxId: "abcdefg",
@@ -58,7 +58,67 @@ var txRWSets = []*commonPb.TxRWSet{
 		},
 	},
 }
+var config1 = getSqlConfig()
 
+func getSqlConfig() *localconf.StorageConfig {
+	conf := &localconf.StorageConfig{}
+	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	var sqlconfig = &localconf.SqlDbConfig{
+		SqlDbType: "sqlite",
+		Dsn:       ":memory:",
+	}
+
+	dbConfig := &localconf.DbConfig{
+		Provider:    "sql",
+		SqlDbConfig: sqlconfig,
+	}
+	conf.BlockDbConfig = dbConfig
+	conf.StateDbConfig = dbConfig
+	conf.HistoryDbConfig = dbConfig
+	conf.ResultDbConfig = dbConfig
+	conf.ContractEventDbConfig = dbConfig
+	conf.DisableContractEventDB = true
+	return conf
+}
+func getMysqlConfig() *localconf.StorageConfig {
+	conf := &localconf.StorageConfig{}
+	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	var sqlconfig = &localconf.SqlDbConfig{
+		SqlDbType: "mysql",
+		Dsn:       "root:123456@tcp(127.0.0.1)/",
+	}
+
+	dbConfig := &localconf.DbConfig{
+		Provider:    "sql",
+		SqlDbConfig: sqlconfig,
+	}
+	conf.BlockDbConfig = dbConfig
+	conf.StateDbConfig = dbConfig
+	conf.HistoryDbConfig = dbConfig
+	conf.ResultDbConfig = dbConfig
+	conf.DisableContractEventDB = true
+
+	return conf
+}
+func getlvldbConfig() *localconf.StorageConfig {
+	conf := &localconf.StorageConfig{}
+	path := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	conf.StorePath = path
+
+	lvlConfig := &localconf.LevelDbConfig{
+		StorePath: path,
+	}
+	dbConfig := &localconf.DbConfig{
+		Provider:      "leveldb",
+		LevelDbConfig: lvlConfig,
+	}
+	conf.BlockDbConfig = dbConfig
+	conf.StateDbConfig = dbConfig
+	conf.HistoryDbConfig = dbConfig
+	conf.ResultDbConfig = dbConfig
+	conf.DisableContractEventDB = true
+	return conf
+}
 func generateBlockHash(chainId string, height int64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
 	return blockHash[:]
@@ -99,48 +159,19 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
-func createBlock(chainId string, height int64) *commonPb.Block {
+func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
 		},
-		Txs: []*commonPb.Transaction{
-			{
-				Header: &commonPb.TxHeader{
-					ChainId: chainId,
-					TxId:    generateTxId(chainId, height, 0),
-					Sender: &acPb.SerializedMember{
-						OrgId: "org1",
-					},
-				},
-				Result: &commonPb.Result{
-					Code: commonPb.TxStatusCode_SUCCESS,
-					ContractResult: &commonPb.ContractResult{
-						Result: []byte("ok"),
-					},
-				},
-			},
-		},
+		Txs: []*commonPb.Transaction{},
 	}
-
-	block.Header.BlockHash = generateBlockHash(chainId, height)
-	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
-	return block
-}
-
-func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
-	block := &commonPb.Block{
-		Header: &commonPb.BlockHeader{
-			ChainId:     chainId,
-			BlockHeight: height,
-		},
-	}
-
 	for i := 0; i < txNum; i++ {
 		tx := &commonPb.Transaction{
 			Header: &commonPb.TxHeader{
 				ChainId: chainId,
+				TxType:  commonPb.TxType_INVOKE_USER_CONTRACT,
 				TxId:    generateTxId(chainId, height, i),
 				Sender: &acPb.SerializedMember{
 					OrgId: "org1",
@@ -155,9 +186,51 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 		}
 		block.Txs = append(block.Txs, tx)
 	}
-
 	block.Header.BlockHash = generateBlockHash(chainId, height)
+	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+
+	return block
+}
+func createContractMgrPayload() []byte {
+	p := commonPb.ContractMgmtPayload{
+		ChainId: chainId,
+		ContractId: &commonPb.ContractId{
+			ContractName:    defaultContractName,
+			ContractVersion: "1.0",
+			RuntimeType:     commonPb.RuntimeType_EVM,
+		},
+		Method:      "create",
+		Parameters:  nil,
+		ByteCode:    nil,
+		Endorsement: nil,
+	}
+	d, _ := p.Marshal()
+	return d
+}
+func createInitContractBlockAndRWSets(chainId string, height int64) (*commonPb.Block, []*commonPb.TxRWSet) {
+	block := createBlock(chainId, height, 1)
+	block.Txs[0].Header.TxType = commonPb.TxType_MANAGE_USER_CONTRACT
+	block.Txs[0].RequestPayload = createContractMgrPayload()
 	var txRWSets []*commonPb.TxRWSet
+	//建表脚本在写集
+	txRWset := &commonPb.TxRWSet{
+		TxId: block.Txs[0].Header.TxId,
+		TxWrites: []*commonPb.TxWrite{
+			{
+				Key:          nil,
+				Value:        []byte("create table t1(name varchar(50) primary key,amount int)"),
+				ContractName: defaultContractName,
+			},
+		},
+	}
+	txRWSets = append(txRWSets, txRWset)
+	return block, txRWSets
+}
+
+func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
+	block := createBlock(chainId, height, txNum)
+	var txRWSets []*commonPb.TxRWSet
+
 	for i := 0; i < txNum; i++ {
 		key := fmt.Sprintf("key_%d", i)
 		value := fmt.Sprintf("value_%d", i)
@@ -177,64 +250,76 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
-func TestMain(m *testing.M) {
-	fmt.Println("begin")
-	if dbType == types.MySQL {
-		// drop mysql table
-		conf := &localconf.ChainMakerConfig.StorageConfig
-		conf.Provider = "MySQL"
-		conf.MysqlConfig.Dsn = "root:123456@tcp(127.0.0.1:3306)/"
-		db, err := blockmysqldb.NewBlockMysqlDB(chainId)
-		if err != nil {
-			panic("faild to open mysql")
-		}
-		// clear data
-		gormDB := db.(*blockmysqldb.BlockMysqlDB).GetDB()
-		gormDB.Migrator().DropTable(&blockmysqldb.BlockInfo{})
-		gormDB.Migrator().DropTable(&blockmysqldb.TxInfo{})
-		gormDB.Migrator().DropTable(&statemysqldb.StateInfo{})
-		gormDB.Migrator().DropTable(&historymysqldb.HistoryInfo{})
-	}
-	os.RemoveAll(chainId)
-	m.Run()
-	fmt.Println("end")
-}
+var log = &logger.GoLogger{}
 
-func Test_blockchainStoreImpl_GetBlock(t *testing.T) {
+//func TestMain(m *testing.M) {
+//	fmt.Println("begin")
+//	if dbType == types.MySQL {
+//		// drop mysql table
+//		conf := &localconf.ChainMakerConfig.StorageConfig
+//		conf.Provider = "MySQL"
+//		conf.MysqlConfig.Dsn = "root:123456@tcp(127.0.0.1:3306)/"
+//		db, err := blocksqldb.NewBlockSqlDB(chainId, log)
+//		if err != nil {
+//			panic("faild to open mysql")
+//		}
+//		// clear data
+//		gormDB := db.(*blocksqldb.BlockSqlDB).GetDB()
+//		gormDB.Migrator().DropTable(&blocksqldb.BlockInfo{})
+//		gormDB.Migrator().DropTable(&blocksqldb.TxInfo{})
+//		gormDB.Migrator().DropTable(&statesqldb.StateInfo{})
+//		gormDB.Migrator().DropTable(&historysqldb.HistoryInfo{})
+//	}
+//	os.RemoveAll(chainId)
+//	m.Run()
+//	fmt.Println("end")
+//}
+func Test_blockchainStoreImpl_GetBlockSqlDb(t *testing.T) {
+	testBlockchainStoreImpl_GetBlock(t, config1)
+}
+func Test_blockchainStoreImpl_GetBlockLevledb(t *testing.T) {
+	testBlockchainStoreImpl_GetBlock(t, getlvldbConfig())
+}
+func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
 	var funcName = "get block"
 	tests := []struct {
 		name  string
 		block *commonPb.Block
 	}{
-		{funcName, createBlock(defaultChainId, 0)},
-		{funcName, createBlock(defaultChainId, 1)},
-		{funcName, createBlock(defaultChainId, 2)},
-		{funcName, createBlock(defaultChainId, 3)},
-		{funcName, createBlock(defaultChainId, 4)},
+		{funcName, createBlock(chainId, 1, 1)},
+		{funcName, createBlock(chainId, 2, 1)},
+		{funcName, createBlock(chainId, 3, 1)},
+		{funcName, createBlock(chainId, 4, 1)},
 	}
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-
+	initGenesis(s)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := s.PutBlock(tt.block, nil); err != nil {
 				t.Errorf("blockchainStoreImpl.PutBlock(), error %v", err)
 			}
 			got, err := s.GetBlockByHash(tt.block.Header.BlockHash)
-			assert.Equal(t, err, nil)
+			assert.Nil(t, err)
+			assert.NotNil(t, got)
 			assert.Equal(t, tt.block.String(), got.String())
 		})
 	}
 }
+func initGenesis(s protocol.BlockchainStore) {
+	genesis := block0
+	g := &storePb.BlockWithRWSet{Block: genesis, TxRWSets: txRWSets}
+	s.InitGenesis(g)
+}
 
 func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
-	//s, err := NewBlockStoredbTypeImpl(ledgerPath)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
+	initGenesis(s)
 
 	if err != nil {
 		panic(err)
@@ -242,34 +327,60 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	defer s.Close()
 	txRWSets[0].TxId = block5.Txs[0].Header.TxId
 	err = s.PutBlock(block5, txRWSets)
-	assert.Equal(t, nil, err)
+	assert.NotNil(t, err)
 }
 
 func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(types.LevelDb, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-
-	exist, err := s.BlockExists(block5.Header.BlockHash)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, true, exist)
+	initGenesis(s)
+	exist, _ := s.BlockExists(block0.Header.BlockHash)
+	assert.True(t, exist)
 
 	exist, err = s.BlockExists([]byte("not exist"))
 	assert.Equal(t, nil, err)
-	assert.Equal(t, false, exist)
+	assert.False(t, exist)
 }
-
+func init5Blocks(s protocol.BlockchainStore) {
+	genesis := &storePb.BlockWithRWSet{Block: block0}
+	s.InitGenesis(genesis)
+	b, rw := createBlockAndRWSets(chainId, 1, 1)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 2, 2)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 3, 3)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 4, 10)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 5, 1)
+	s.PutBlock(b, txRWSets)
+}
+func init5ContractBlocks(s protocol.BlockchainStore) {
+	genesis := &storePb.BlockWithRWSet{Block: block0}
+	s.InitGenesis(genesis)
+	b, rw := createInitContractBlockAndRWSets(chainId, 1)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 2, 2)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 3, 3)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 4, 10)
+	s.PutBlock(b, rw)
+	b, rw = createBlockAndRWSets(chainId, 5, 1)
+	s.PutBlock(b, rw)
+}
 func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-
+	init5Blocks(s)
 	got, err := s.GetBlock(block5.Header.BlockHeight)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block5.String(), got.String())
@@ -277,41 +388,27 @@ func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 
 func Test_blockchainStoreImpl_GetLastBlock(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	lastBlock, err := s.GetLastBlock()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, block5.Header.BlockHeight, lastBlock.Header.BlockHeight)
 }
 
-func Test_blockchainStoreImpl_GetLastConfigBlock(t *testing.T) {
-	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
-	if err != nil {
-		panic(err)
-	}
-	defer s.Close()
-	configBlock := createConfigBlock(chainId, 6)
-	err = s.PutBlock(configBlock, txRWSets)
-	assert.Equal(t, nil, err)
-	lastBlock, err := s.GetLastConfigBlock()
-	assert.Equal(t, nil, err)
-	assert.Equal(t, int64(6), lastBlock.Header.BlockHeight)
-}
-
 func Test_blockchainStoreImpl_GetBlockByTx(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-	block, err := s.GetBlockByTx(generateTxId(defaultChainId, 3, 0))
+	init5Blocks(s)
+	block, err := s.GetBlockByTx(generateTxId(chainId, 3, 0))
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(3), block.Header.BlockHeight)
 
@@ -327,34 +424,33 @@ func Test_blockchainStoreImpl_GetTx(t *testing.T) {
 		name  string
 		block *commonPb.Block
 	}{
-		{funcName, createBlock(defaultChainId, 1)},
-		{funcName, createBlock(defaultChainId, 2)},
-		{funcName, createBlock(defaultChainId, 3)},
-		{funcName, createBlock(defaultChainId, 4)},
-		{funcName, createBlock(defaultChainId, 999999)},
+		{funcName, createBlock(chainId, 1, 1)},
+		{funcName, createBlock(chainId, 2, 1)},
+		{funcName, createBlock(chainId, 3, 1)},
+		{funcName, createBlock(chainId, 4, 1)},
+		{funcName, createBlock(chainId, 999999, 2)},
 	}
 
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, getSqlConfig(), binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
 	//assert.DeepEqual(t, s.GetTx(tests[0].block.Txs[0].TxId, )
-
+	init5ContractBlocks(s)
 	tx, err := s.GetTx(tests[0].block.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err)
 	if tx == nil {
 		t.Error("Error, GetTx")
 	}
-	assert.Equal(t, tx.Header.TxId, generateTxId(defaultChainId, 1, 0))
+	//assert.Equal(t, tx.Header.TxId, generateTxId(chainId, 1, 0))
+	//
+	////chain not exist
+	//tx, err = s.GetTx(generateTxId("not exist chain", 1, 0))
+	//t.Log(tx)
+	//assert.NotNil(t,  err)
 
-	//chain not exist
-	tx, err = s.GetTx(generateTxId("not exist chain", 1, 0))
-	assert.Equal(t, nil, err)
-	if tx != nil {
-		t.Error("Error, GetTx, expect nil")
-	}
 }
 
 func Test_blockchainStoreImpl_HasTx(t *testing.T) {
@@ -363,19 +459,19 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 		name  string
 		block *commonPb.Block
 	}{
-		{funcName, createBlock(defaultChainId, 1)},
-		{funcName, createBlock(defaultChainId, 2)},
-		{funcName, createBlock(defaultChainId, 3)},
-		{funcName, createBlock(defaultChainId, 4)},
-		{funcName, createBlock(defaultChainId, 999999)},
+		{funcName, createBlock(chainId, 1, 1)},
+		{funcName, createBlock(chainId, 2, 1)},
+		{funcName, createBlock(chainId, 3, 1)},
+		{funcName, createBlock(chainId, 4, 1)},
+		{funcName, createBlock(chainId, 999999, 1)},
 	}
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-
+	init5Blocks(s)
 	exist, err := s.TxExists(tests[0].block.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, true, exist)
@@ -395,48 +491,50 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 
 func Test_blockchainStoreImpl_ReadObject(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	defer s.Close()
+	initGenesis(s)
 	assert.Equal(t, nil, err)
 	value, err := s.ReadObject(defaultContractName, []byte("key1"))
 	assert.Equal(t, nil, err)
-	assert.DeepEqual(t, value, []byte("value1"))
+	assert.Equal(t, value, []byte("value1"))
 
 	value, err = s.ReadObject(defaultContractName, []byte("key2"))
 	assert.Equal(t, nil, err)
-	assert.DeepEqual(t, value, []byte("value2"))
+	assert.Equal(t, value, []byte("value2"))
 }
 
 func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
-	if dbType == types.MySQL {
-		//not supported
-		return
-	}
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, getSqlConfig(), binlog.NewMemBinlog(), log)
 	defer s.Close()
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 
-	iter := s.SelectObject(defaultContractName, []byte("key1"), []byte("key4"))
+	iter, err := s.SelectObject(defaultContractName, []byte("key_2"), []byte("key_4"))
+	assert.Nil(t, err)
 	defer iter.Release()
-	var count int
+	var count int = 0
 	for iter.Next() {
 		count++
-		//fmt.Printf("key:%s, value:%s\n", string(iter.Key()), string(iter.Value()))
+		kv, _ := iter.Value()
+		t.Logf("key:%s, value:%s\n", string(kv.Key), string(kv.Value))
 	}
-	assert.Equal(t, 2, count)
+	assert.Equal(t, 3, count)
 }
 
 func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	defer s.Close()
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
 	txid := block5.Txs[0].Header.TxId
 	txRWSetFromDB, err := impl.GetTxRWSet(txid)
 	assert.Equal(t, nil, err)
+	t.Log(txRWSetFromDB)
 	assert.Equal(t, txRWSets[0].String(), txRWSetFromDB.String())
 }
 
@@ -451,19 +549,29 @@ func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 
 func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	defer s.Close()
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
 	height, err := impl.getLastSavepoint()
-	assert.Equal(t, uint64(6), height)
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.blockDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.stateDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.resultDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
+	height, err = impl.historyDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), height)
 }
 
 func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	defer s.Close()
+	init5Blocks(s)
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
@@ -475,26 +583,29 @@ func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 	}
 }
 
-func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
-	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
-	defer s.Close()
-	assert.Equal(t, nil, err)
-	dbHandle := s.GetDBHandle("test")
-	dbHandle.Put([]byte("a"), []byte("A"))
-	value, err := dbHandle.Get([]byte("a"))
-	assert.Equal(t, nil, err)
-	assert.DeepEqual(t, []byte("A"), value)
-}
+//func TestBlockStoreImpl_GetDBHandle(t *testing.T) {
+//	var factory Factory
+//	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
+//	defer s.Close()
+//	assert.Equal(t, nil, err)
+//	dbHandle := s.GetDBHandle("test")
+//	dbHandle.Put([]byte("a"), []byte("A"))
+//	value, err := dbHandle.Get([]byte("a"))
+//	assert.Equal(t, nil, err)
+//	assert.Equal(t, []byte("A"), value)
+//}
 
 func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	if err != nil {
 		panic(err)
 	}
 	defer s.Close()
-	block, txRWSets := createBlockAndRWSets(chainId, 7, 100)
+	init5Blocks(s)
+	block, txRWSets := createBlockAndRWSets(chainId, 6, 1)
+	err = s.PutBlock(block, txRWSets)
+	block, txRWSets = createBlockAndRWSets(chainId, 7, 100)
 	err = s.PutBlock(block, txRWSets)
 
 	assert.Equal(t, nil, err)
@@ -519,51 +630,110 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 
 func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	var factory Factory
-	s, err := factory.NewStore(dbType, chainId)
+	blog := binlog.NewMemBinlog()
+	ldbConfig := getlvldbConfig()
+	s, err := factory.newStore(chainId, ldbConfig, blog, log)
 	//defer s.Close()
 	assert.Equal(t, nil, err)
 	bs, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
-
-	block8, txRWSets8 := createBlockAndRWSets(chainId, 8, 100)
+	init5Blocks(s)
+	block6, txRWSets6 := createBlockAndRWSets(chainId, 6, 100)
 
 	//1. commit wal
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:    block8,
-		TxRWSets: txRWSets8,
+		Block:    block6,
+		TxRWSets: txRWSets6,
 	}
 	blockWithRWSetBytes, _, err := serialization.SerializeBlock(blockWithRWSet)
 	assert.Equal(t, nil, err)
-	err = bs.writeLog(uint64(block8.Header.BlockHeight), blockWithRWSetBytes)
+	err = bs.writeLog(uint64(block6.Header.BlockHeight), blockWithRWSetBytes)
 	if err != nil {
 		fmt.Errorf("chain[%s] Failed to write wal, block[%d]",
-			block8.Header.ChainId, block8.Header.BlockHeight)
+			block6.Header.ChainId, block6.Header.BlockHeight)
 		t.Error(err)
 	}
-	s.Close()
+	binlogSavepoint, _ := bs.getLastSavepoint()
+	assert.EqualValues(t, 6, binlogSavepoint)
+	blockDBSavepoint, _ := bs.blockDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), blockDBSavepoint)
 
+	stateDBSavepoint, _ := bs.stateDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), stateDBSavepoint)
+
+	historyDBSavepoint, _ := bs.historyDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), historyDBSavepoint)
+	resultDBSavepoint, _ := bs.resultDB.GetLastSavepoint()
+	assert.Equal(t, uint64(5), resultDBSavepoint)
+
+	s.Close()
+	t.Log("start recovery db from bin log")
 	//recovory
-	s, err = factory.NewStore(dbType, chainId)
+	s, err = factory.newStore(chainId, ldbConfig, blog, log)
 	assert.Equal(t, nil, err)
+	t.Log("db recovered")
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
-	blockDBSavepoint, _ := impl.blockDB.GetLastSavepoint()
-	assert.Equal(t, uint64(block8.Header.BlockHeight), blockDBSavepoint)
+	binlogSavepoint, _ = impl.getLastSavepoint()
+	assert.EqualValues(t, 6, binlogSavepoint)
+	blockDBSavepoint, _ = impl.blockDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, blockDBSavepoint)
 
-	stateDBSavepoint, _ := impl.stateDB.GetLastSavepoint()
-	assert.Equal(t, uint64(block8.Header.BlockHeight), stateDBSavepoint)
+	stateDBSavepoint, _ = impl.stateDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, stateDBSavepoint)
 
-	historyDBSavepoint, _ := impl.historyDB.GetLastSavepoint()
-	assert.Equal(t, uint64(block8.Header.BlockHeight), historyDBSavepoint)
+	historyDBSavepoint, _ = impl.historyDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, historyDBSavepoint)
+	resultDBSavepoint, _ = impl.resultDB.GetLastSavepoint()
+	assert.EqualValues(t, 6, resultDBSavepoint)
 	s.Close()
 
 	//check recover result
-	s, err = factory.NewStore(dbType, chainId)
-	blockWithRWSets, err := s.GetBlockWithRWSets(8)
+	s, err = factory.newStore(chainId, ldbConfig, blog, log)
+	blockWithRWSets, err := s.GetBlockWithRWSets(6)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, block8.String(), blockWithRWSets.Block.String())
+	assert.Equal(t, block6.String(), blockWithRWSets.Block.String())
 	for i := 0; i < len(blockWithRWSets.TxRWSets); i++ {
-		assert.Equal(t, txRWSets8[i].String(), blockWithRWSets.TxRWSets[i].String())
+		assert.Equal(t, txRWSets6[i].String(), blockWithRWSets.TxRWSets[i].String())
 	}
 	s.Close()
 }
+func TestWriteBinlog(t *testing.T) {
+	walPath := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Unix()), logPath)
+	writeAsync := true
+	walOpt := &wal.Options{
+		NoSync: writeAsync,
+	}
+	writeLog, err := wal.Open(walPath, walOpt)
+	assert.Nil(t, err)
+
+	err = writeLog.Write(1, []byte("100"))
+	assert.Nil(t, err)
+}
+
+//
+//func TestLeveldbRange(t *testing.T) {
+//	db, err := leveldb.OpenFile("gossip.db", nil)
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//
+//	wo := &opt.WriteOptions{Sync: true}
+//	db.Put([]byte("key-1a"), []byte("value-1"), wo)
+//	db.Put([]byte("key-3c"), []byte("value-3"), wo)
+//	db.Put([]byte("key-4d"), []byte("value-4"), wo)
+//	db.Put([]byte("key-5eff"), []byte("value-5"), wo)
+//	db.Put([]byte("key-2b"), []byte("value-2"), wo)
+//	iter := db.NewIterator(&util.Range{Start: []byte("key-1a"), Limit: []byte("key-3d")}, nil)
+//	for iter.Next() {
+//		fmt.Println(string(iter.Key()), string(iter.Value()))
+//	}
+//	iter.Release()
+//	err = iter.Error()
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//	defer db.Close()
+//}

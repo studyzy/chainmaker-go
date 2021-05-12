@@ -484,7 +484,7 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 	transactionInfo := &commonPb.TransactionInfo{
 		Transaction: tx,
-		BlockHeight: block.Header.BlockHeight,
+		BlockHeight: uint64(block.Header.BlockHeight),
 	}
 	transactionInfoBytes, err := proto.Marshal(transactionInfo)
 	if err != nil {

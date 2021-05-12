@@ -27,7 +27,6 @@ func ContractNameToAddressCMD() *cobra.Command {
 	return cmd
 }
 
-
 func contractNameToAddress() error {
 
 	var nulAddr *evm.Address

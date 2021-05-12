@@ -28,7 +28,6 @@ func CertToAddressCMD() *cobra.Command {
 	return cmd
 }
 
-
 func certReturnResult(code commonPb.TxStatusCode, message string, addr *evm.Address) error {
 	var result *Result
 	result = &Result{
@@ -37,12 +36,10 @@ func certReturnResult(code commonPb.TxStatusCode, message string, addr *evm.Addr
 		ContractResultCode:    0,
 		ContractResultMessage: "",
 		ContractQueryResult:   "",
-		CertAddress: 		   addr,
-
+		CertAddress:           addr,
 	}
 
 	fmt.Println("addr: ", addr, "result: ", result)
-
 
 	bytes, err := json.Marshal(result)
 	if err != nil {

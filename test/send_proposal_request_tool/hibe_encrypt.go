@@ -1,3 +1,10 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
@@ -85,9 +92,8 @@ func constructHibeTxPayloadPairsExc() (string, commonPb.TxStatusCode, string) {
 		return result_output, 1, fmt.Sprintf("Marshal failure!, err: %s", err)
 	}
 
-	return  string(hibeMsgBytes), 0, ""
+	return string(hibeMsgBytes), 0, ""
 }
-
 
 func constructHibeTxPayloadPairs() error {
 
