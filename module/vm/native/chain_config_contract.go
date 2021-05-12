@@ -8,7 +8,6 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/common/sortedmap"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -153,14 +152,13 @@ type ChainConfigRuntime struct {
 
 // GetChainConfig get newest chain config
 func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
-	if params == nil {
-		r.log.Error(ErrParamsEmpty)
-		return nil, ErrParamsEmpty
-	}
-	bytes, err := txSimContext.Get(chainConfigContractName, []byte(keyChainConfig))
+	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
-		r.log.Errorf("txSimContext get failed, name[%s] key[%s] err: %s", chainConfigContractName, keyChainConfig, err)
 		return nil, err
+	}
+	bytes, err := proto.Marshal(chainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("proto marshal chain config failed, err: %s", err.Error())
 	}
 	return bytes, nil
 }
@@ -516,12 +514,6 @@ func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext,
 	nodes := chainConfig.Consensus.Nodes
 	nodeId = strings.TrimSpace(nodeId)
 	newNodeId = strings.TrimSpace(newNodeId)
-
-	if !helper.P2pAddressFormatVerify(newNodeId) {
-		err = fmt.Errorf("update node id failed, address[%s] format error", newNodeId)
-		r.log.Error(err)
-		return nil, err
-	}
 
 	index := -1
 	var nodeConf *configPb.OrgConfig
