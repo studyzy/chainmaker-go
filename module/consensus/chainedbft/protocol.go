@@ -25,9 +25,8 @@ import (
 )
 
 var (
-	InvalidPeerErr        = errors.New("invalid peer")
-	ValidateSignErr       = errors.New("validate sign error")
-	VerifySignerFailedErr = errors.New("verify signer failed")
+	InvalidPeerErr  = errors.New("invalid peer")
+	ValidateSignErr = errors.New("validate sign error")
 )
 
 //processNewHeight If the local node is one of the validators in current epoch, update SMR state to ConsStateType_NewLevel
@@ -265,6 +264,7 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 			cbi.selfIndexInEpoch, qc.Height-1, hasQCBlk.Header.PreBlockHash)
 		return true, nil
 	}
+	cbi.logger.Debugf("There are no lost block")
 	return false, nil
 }
 
@@ -294,6 +294,10 @@ func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.Consen
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validateProposal: mismatch pre hash [%x] in block, justifyQC %x",
 			cbi.selfIndexInEpoch, proposal.Block.GetHeader().PreBlockHash, proposal.JustifyQC.BlockID)
 		return fmt.Errorf("mismatch pre hash in block header and justify qc")
+	}
+	if err := cbi.smr.safeNode(proposal); err != nil {
+		return fmt.Errorf("verify proposal [%v:%v:%x] by satety rules failed: %s",
+			proposal.Height, proposal.Level, proposal.Block.Header.BlockHash, err)
 	}
 	return nil
 }
@@ -443,9 +447,6 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) er
 	syncInfo := msg.Payload.GetProposalMsg().SyncInfo
 	cbi.logger.Debugf("processQC start. height: [%d], level: [%d], blockHash: [%x], JustifyQC.NewView:"+
 		" [%v]", proposal.JustifyQC.Height, proposal.JustifyQC.Level, proposal.JustifyQC.BlockID, proposal.JustifyQC.NewView)
-	if !cbi.smr.voteRules(proposal.Level, proposal.JustifyQC) {
-		return fmt.Errorf("block[%v:%v] JustifyQC pass safety rules check failed", proposal.Height, proposal.Level)
-	}
 	if !proposal.JustifyQC.NewView {
 		if err := cbi.chainStore.insertQC(proposal.JustifyQC); err != nil {
 			return fmt.Errorf("insert qc to chainStore failed: %s, qc info: %s", err, proposal.JustifyQC.String())
@@ -453,7 +454,6 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) er
 	}
 
 	//local already handle it when aggregating qc
-	cbi.smr.updateLockedQC(proposal.JustifyQC)
 	cbi.commitBlocksByQC(proposal.JustifyQC)
 	cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
 	if proposal.Level != cbi.smr.getCurrentLevel() {
@@ -485,11 +485,11 @@ func (cbi *ConsensusChainedBftImpl) validateBlock(proposal *chainedbftpb.Proposa
 		return fmt.Errorf("service selfIndexInEpoch [%v] validateProposal failed, qc'block not equal to block's preHash",
 			cbi.selfIndexInEpoch)
 	}
-
 	if err = cbi.blockVerifier.VerifyBlock(proposal.Block, protocol.CONSENSUS_VERIFY); err != nil {
 		return fmt.Errorf("service selfIndexInEpoch [%v] validateProposal failed, validate "+
 			"block[%d:%d:%d] failed: %s", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height, proposal.Level, err)
 	}
+	cbi.logger.Debugf("verify proposal block[%d:%d:%x] success", proposal.Height, proposal.Level, proposal.Block.Header.BlockHash)
 	return nil
 }
 
@@ -508,7 +508,6 @@ func (cbi *ConsensusChainedBftImpl) validateConsensusArg(proposal *chainedbftpb.
 		return fmt.Errorf("service selfIndexInEpoch [%v] validateConsensusArg: CheckAndCreateGovernmentArgs err from proposer"+
 			" %v at height [%v] level [%v], err %v", cbi.selfIndexInEpoch, proposal.ProposerIdx, proposal.Height, proposal.Level, err)
 	}
-
 	txRWSetBytes, _ := proto.Marshal(txRWSet)
 	consensusDataBytes, _ := proto.Marshal(consensusArgs.ConsensusData)
 	if !bytes.Equal(txRWSetBytes, consensusDataBytes) {
@@ -516,6 +515,7 @@ func (cbi *ConsensusChainedBftImpl) validateConsensusArg(proposal *chainedbftpb.
 			"from proposer %v at height [%v] level [%v], proposal data:[%v] local data:[%v]", cbi.selfIndexInEpoch,
 			proposal.ProposerIdx, proposal.Height, proposal.Level, txRWSet, consensusArgs.ConsensusData)
 	}
+	cbi.logger.Debugf("validateConsensusArg success")
 	return nil
 }
 

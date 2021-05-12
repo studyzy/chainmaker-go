@@ -41,7 +41,7 @@ func newChainedBftSMR(chainID string,
 		chainStore: chainStore,
 		logger:     logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainID),
 	}
-	smr.safetyRules = safetyrules.NewSafetyRules(smr.logger, chainStore.blockPool)
+	smr.safetyRules = safetyrules.NewSafetyRules(smr.logger, chainStore.blockPool, chainStore.blockChainStore)
 	smr.initByEpoch(epoch, ts)
 	return smr
 }
@@ -144,15 +144,15 @@ func (cs *chainedbftSMR) setLastVote(vote *chainedbftpb.ConsensusPayload, level 
 	cs.safetyRules.SetLastVote(vote, level)
 }
 
-func (cs *chainedbftSMR) voteRules(level uint64, qc *chainedbftpb.QuorumCert) bool {
-	return cs.safetyRules.VoteRules(level, qc)
+func (cs *chainedbftSMR) safeNode(proposal *chainedbftpb.ProposalData) error {
+	return cs.safetyRules.SafeNode(proposal)
 }
 
 func (cs *chainedbftSMR) updateLockedQC(qc *chainedbftpb.QuorumCert) {
 	cs.safetyRules.UpdateLockedQC(qc)
 }
 
-func (cs *chainedbftSMR) commitRules(qc *chainedbftpb.QuorumCert) (bool, *common.Block, uint64) {
+func (cs *chainedbftSMR) commitRules(qc *chainedbftpb.QuorumCert) (commit bool, commitBlock *common.Block, commitLevel uint64) {
 	return cs.safetyRules.CommitRules(qc)
 }
 
