@@ -12,7 +12,8 @@ import (
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"crypto/sha256"
 	"encoding/hex"
@@ -179,8 +180,8 @@ var conf = &localconf.SqlDbConfig{
 	SqlLogMode: "Info",
 }
 
-func initProvider() *sqldbprovider.SqlDBHandle {
-	p := sqldbprovider.NewSqlDBHandle("chain1", conf, log)
+func initProvider() protocol.SqlDBHandle {
+	p := rawsqlprovider.NewSqlDBHandle("chain1", conf, log)
 	return p
 }
 func initStateSqlDB() *StateSqlDB {

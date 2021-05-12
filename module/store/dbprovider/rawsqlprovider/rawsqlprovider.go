@@ -4,24 +4,21 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package sqldbprovider
+package rawsqlprovider
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
+	"database/sql"
 	"errors"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm/logger"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"sync"
 )
 
@@ -29,50 +26,16 @@ var defaultMaxIdleConns = 10
 var defaultMaxOpenConns = 10
 var defaultConnMaxLifeTime = 60
 
-//
-//type SqlDBProvider struct {
-//	dbs map[string]*SqlDBHandle
-//	log protocol.Logger
-//}
-//
-//func NewSqlDBProvider(log protocol.Logger) *SqlDBProvider {
-//	return &SqlDBProvider{dbs: make(map[string]*SqlDBHandle, 1), log: log}
-//}
-//func (p *SqlDBProvider) GetDBHandle(chainId string, conf *localconf.SqlDbConfig) protocol.SqlDBHandle {
-//	h, exist := p.dbs[chainId]
-//	if exist {
-//		return h
-//	}
-//	h = NewSqlDBHandle(chainId, conf, p.log)
-//	p.dbs[chainId] = h
-//	return h
-//}
-//
-//// Close closes database
-//func (p *SqlDBProvider) Close() error {
-//	for _, h := range p.dbs {
-//		h.Close()
-//	}
-//	return nil
-//}
-
 // Porvider encapsulate the gorm.DB that providers mysql handles
 type SqlDBHandle struct {
 	sync.Mutex
 	contextDbName string
-	db            *gorm.DB
+	db            *sql.DB
 	dbType        types.EngineType
 	dbTxCache     map[string]*SqlDBTx
 	log           protocol.Logger
 }
 
-// GetDBHandle returns a DBHandle for given dbname
-func (p *SqlDBHandle) GetDBHandle(dbName string) protocol.DBHandle {
-	p.Lock()
-	defer p.Unlock()
-
-	return p
-}
 func ParseSqlDbType(str string) (types.EngineType, error) {
 	switch str {
 	case "mysql":
@@ -108,9 +71,11 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)
-		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Error),
-		})
+		db, err := sql.Open("mysql", dsn)
+		if err != nil {
+			panic("connect to mysql error:" + err.Error())
+		}
+		_, err = db.Query("SELECT DATABASE()")
 		if err != nil {
 			if strings.Contains(err.Error(), "Unknown database") {
 				log.Infof("first time connect to a new database,create database %s", dbName)
@@ -118,9 +83,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 				if err != nil {
 					panic(fmt.Sprintf("failed to open mysql[%s] and create database %s, %s", dsn, dbName, err))
 				}
-				db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-					Logger: logger.Default.LogMode(logger.Error),
-				})
+				db, err = sql.Open("mysql", dsn)
 				if err != nil {
 					panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
 				}
@@ -138,9 +101,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 			createDirIfNotExist(dbPath)
 			dbPath = filepath.Join(dbPath, "sqlite.db")
 		}
-		db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Info),
-		})
+		db, err := sql.Open("sqlite3", dbPath)
 		if err != nil {
 			panic(fmt.Sprintf("failed to open sqlite path:%s,get error:%s", dbPath, err))
 		}
@@ -148,38 +109,19 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	} else {
 		panic(fmt.Sprintf("unsupport db:%v", sqlType))
 	}
-	logLevel := logger.Error
-	if conf.SqlLogMode != "" {
-		switch strings.ToLower(conf.SqlLogMode) {
-		case "error":
-			logLevel = logger.Error
-		case "info":
-			logLevel = logger.Info
-		case "warn":
-			logLevel = logger.Warn
-		default:
-			logLevel = logger.Silent
-		}
-	}
+
 	log.Debug("inject ChainMaker logger into gorm db logger.")
-	provider.db.Logger = NewSqlLogger(log, logger.Config{
-		LogLevel: logLevel,
-	})
+	provider.log = log
 	return provider
 }
 func createDatabase(dsn string, dbName string) error {
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
-	})
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return err
 	}
-	result := db.Exec("create database " + dbName)
-	defer func() {
-		d, _ := db.DB()
-		d.Close()
-	}()
-	return result.Error
+	_, err = db.Exec("create database " + dbName)
+	defer db.Close()
+	return err
 }
 
 func createDirIfNotExist(path string) error {
@@ -207,84 +149,113 @@ func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 		return nil
 	}
 	//尝试切换数据库
-	res := p.db.Exec("use " + dbName)
-	if res.Error != nil { //切换失败，没有这个数据库，则创建
+	_, err := p.db.Exec("use " + dbName)
+	if err != nil { //切换失败，没有这个数据库，则创建
 		p.log.Debugf("try to run 'use %s' get an error, it means database not exist, create it!", dbName)
-		tx := p.db.Exec("create database " + dbName)
-		if tx.Error != nil {
-			return tx.Error //创建失败
+		_, err = p.db.Exec("create database " + dbName)
+		if err != nil {
+			return err //创建失败
 		}
 		p.log.Debugf("create database %s", dbName)
 		//创建成功，再次切换数据库
-		res = p.db.Exec("use " + dbName)
-		return res.Error
+		_, err = p.db.Exec("use " + dbName)
+		return err
 	}
 	p.log.Debugf("use database %s", dbName)
 	p.contextDbName = dbName
 	return nil
 }
 
-func (p *SqlDBHandle) CreateTableIfNotExist(obj interface{}) error {
+func (p *SqlDBHandle) CreateTableIfNotExist(objI interface{}) error {
 	p.Lock()
 	defer p.Unlock()
-	m := p.db.Migrator()
-	if !m.HasTable(obj) {
-		return m.CreateTable(obj)
+	obj := objI.(TableDDLGenerator)
+	if !p.HasTable(obj) {
+		return p.CreateTable(obj)
 	}
 	return nil
+}
+func (p *SqlDBHandle) HasTable(obj TableDDLGenerator) bool {
+	//obj:=objI.(TableDDLGenerator)
+	sql := ""
+	if p.dbType == types.MySQL {
+		sql = fmt.Sprintf("SELECT count(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'", p.contextDbName, obj.GetTableName())
+	}
+	if p.dbType == types.Sqlite {
+		sql = fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=\"%s\"", obj.GetTableName())
+	}
+	p.log.Debug("Query sql:", sql)
+	row := p.db.QueryRow(sql)
+	count := 0
+	row.Scan(&count)
+	return count > 0
+}
+func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
+	sql := obj.GetCreateTableSql(p.dbType.LowerString())
+	_, err := p.db.Exec(sql)
+	return err
 }
 
 //ExecSql 执行SQL语句
 func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	tx := p.db.Exec(sql, values...)
-	if tx.Error != nil {
-		return 0, tx.Error
+	p.log.Debug("Exec sql:", sql)
+	tx, err := p.db.Exec(sql, values...)
+	if err != nil {
+		return 0, err
 	}
-	return tx.RowsAffected, nil
+	return tx.RowsAffected()
 }
 
-func (p *SqlDBHandle) Save(value interface{}) (int64, error) {
+func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	tx := p.db.Save(value)
-	if tx.Error != nil {
-		return 0, tx.Error
+	value := val.(TableDMLGenerator)
+	update, args := value.GetUpdateSql()
+	p.log.Debug("Exec sql:", update)
+	effect, err := p.db.Exec(update, args...)
+
+	rowCount, err := effect.RowsAffected()
+	if err != nil {
+		return 0, err
 	}
-	return tx.RowsAffected, nil
+	if rowCount != 0 {
+		return rowCount, nil
+	}
+	insert, args := value.GetInsertSql()
+	p.log.Debug("Exec sql:", insert)
+	result, err := p.db.Exec(insert, args...)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
-	row := db.Raw(sql, values...)
-	if row.Error != nil {
-		return nil, row.Error
-	}
-	rows, err := row.Rows()
+	p.log.Debug("Query sql:", sql)
+	rows, err := db.Query(sql, values...)
 	if err != nil {
 		return nil, err
 	}
+
 	if !rows.Next() {
 		return &emptyRow{}, nil
 	}
-	return NewSqlDBRow(db, rows, nil), nil
+	return NewSqlDBRow(rows, nil), nil
 }
 
 func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
-	db := p.db
-	row := db.Raw(sql, values...)
-	if row.Error != nil {
-		return nil, row.Error
-	}
-	rows, err := row.Rows()
+	p.log.Debug("Query sql:", sql)
+	rows, err := p.db.Query(sql, values...)
 	if err != nil {
 		return nil, err
 	}
-	return NewSqlDBRows(db, rows, nil), nil
+	return NewSqlDBRows(rows, nil), nil
 }
 
 func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
@@ -294,7 +265,10 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	if _, has := p.dbTxCache[txName]; has {
 		return nil, errors.New("transaction already exist, please use GetDbTransaction to get it or commit/rollback it")
 	}
-	tx := p.db.Begin()
+	tx, err := p.db.Begin()
+	if err != nil {
+		return nil, err
+	}
 	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
 	p.dbTxCache[txName] = sqltx
 	p.contextDbName = ""
@@ -348,6 +322,5 @@ func (p *SqlDBHandle) Close() error {
 		}
 		p.log.Warnf("these db tx[%s] don't commit or rollback, close them.", txNames)
 	}
-	db, _ := p.db.DB()
-	return db.Close()
+	return p.db.Close()
 }

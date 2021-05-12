@@ -3,7 +3,7 @@ package eventsqldb
 import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
@@ -19,7 +19,7 @@ type ContractEventSqlDB struct {
 
 // NewContractEventMysqlDB construct a new `ContractEventDB` for given chainId
 func NewContractEventMysqlDB(chainId string, sqlDbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ContractEventSqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), sqlDbConfig, logger)
+	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), sqlDbConfig, logger)
 	return newContractEventDB(chainId, db, logger)
 }
 

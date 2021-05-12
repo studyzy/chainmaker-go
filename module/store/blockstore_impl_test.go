@@ -15,9 +15,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"github.com/tidwall/wal"
 	"path/filepath"
 
@@ -714,28 +711,29 @@ func TestWriteBinlog(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestLeveldbRange(t *testing.T) {
-	db, err := leveldb.OpenFile("gossip.db", nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	wo := &opt.WriteOptions{Sync: true}
-	db.Put([]byte("key-1a"), []byte("value-1"), wo)
-	db.Put([]byte("key-3c"), []byte("value-3"), wo)
-	db.Put([]byte("key-4d"), []byte("value-4"), wo)
-	db.Put([]byte("key-5eff"), []byte("value-5"), wo)
-	db.Put([]byte("key-2b"), []byte("value-2"), wo)
-	iter := db.NewIterator(&util.Range{Start: []byte("key-1a"), Limit: []byte("key-3d")}, nil)
-	for iter.Next() {
-		fmt.Println(string(iter.Key()), string(iter.Value()))
-	}
-	iter.Release()
-	err = iter.Error()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer db.Close()
-}
+//
+//func TestLeveldbRange(t *testing.T) {
+//	db, err := leveldb.OpenFile("gossip.db", nil)
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//
+//	wo := &opt.WriteOptions{Sync: true}
+//	db.Put([]byte("key-1a"), []byte("value-1"), wo)
+//	db.Put([]byte("key-3c"), []byte("value-3"), wo)
+//	db.Put([]byte("key-4d"), []byte("value-4"), wo)
+//	db.Put([]byte("key-5eff"), []byte("value-5"), wo)
+//	db.Put([]byte("key-2b"), []byte("value-2"), wo)
+//	iter := db.NewIterator(&util.Range{Start: []byte("key-1a"), Limit: []byte("key-3d")}, nil)
+//	for iter.Next() {
+//		fmt.Println(string(iter.Key()), string(iter.Value()))
+//	}
+//	iter.Release()
+//	err = iter.Error()
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//	defer db.Close()
+//}

@@ -11,6 +11,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"strconv"
+	"time"
 )
 
 func (b *Block) Hash() []byte {
@@ -21,6 +22,9 @@ func (b *Block) GetBlockHashStr() string {
 }
 func (b *Block) IsContractMgmtBlock() bool {
 	return b.Txs[0].Header.TxType == TxType_MANAGE_USER_CONTRACT
+}
+func (b *Block) GetTimestamp() time.Time {
+	return time.Unix(b.Header.BlockTimestamp, 0)
 }
 
 // GetTxKey get transaction key

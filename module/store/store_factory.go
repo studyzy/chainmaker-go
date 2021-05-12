@@ -140,7 +140,7 @@ func parseEngineType(dbType string) types.EngineType {
 	case "sqlite":
 		storeType = types.Sqlite
 	default:
-		return types.UnknowDb
+		return types.UnknownDb
 	}
 	return storeType
 }

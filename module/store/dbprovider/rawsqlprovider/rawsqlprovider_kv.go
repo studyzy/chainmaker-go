@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package sqldbprovider
+package rawsqlprovider
 
 import (
 	"chainmaker.org/chainmaker-go/protocol"
@@ -17,6 +17,13 @@ import (
 type KeyValue struct {
 	ObjectKey   []byte `gorm:"size:128;primaryKey;default:''"`
 	ObjectValue []byte `gorm:"type:longblob"`
+}
+
+func (kv *KeyValue) GetInsertSql() string {
+	return "TODO"
+}
+func (kv *KeyValue) GetUpdateSql() string {
+	return "TODO"
 }
 
 // Get returns the value for the given key, or returns nil if none exists

@@ -9,9 +9,10 @@ package historysqldb
 import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/dbprovider/sqldbprovider"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker-go/store/types"
 )
 
 // HistorySqlDB provider a implementation of `history.HistoryDB`
@@ -24,7 +25,7 @@ type HistorySqlDB struct {
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*HistorySqlDB, error) {
-	db := sqldbprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
+	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
 	return newHistorySqlDB(chainId, db, logger)
 }
 
@@ -49,11 +50,11 @@ func (db *HistorySqlDB) initDb(dbName string) {
 	if err != nil {
 		panic("init state sql db table `contract_tx_history_infos` fail")
 	}
-	err = db.db.CreateTableIfNotExist(&SavePoint{})
+	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
 		panic("init state sql db table `save_points` fail")
 	}
-	db.db.Save(&SavePoint{0})
+	db.db.Save(&types.SavePoint{0})
 
 }
 func getDbName(chainId string) string {
