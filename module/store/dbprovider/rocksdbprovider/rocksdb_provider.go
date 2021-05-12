@@ -1,3 +1,5 @@
+// +build rocksdb
+
 /*
 Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
@@ -49,21 +51,21 @@ type Provider struct {
 
 // NewBlockProvider construct a new Rocksdb Provider for block operation with given chainId
 func NewBlockProvider(chainId string) *Provider {
-	return NewSqlDBProvider(chainId, StoreBlockDBDir)
+	return NewProvider(chainId, StoreBlockDBDir)
 }
 
 // NewStateProvider construct a new Rocksdb Provider for state operation with given chainId
 func NewStateProvider(chainId string) *Provider {
-	return NewSqlDBProvider(chainId, StoreStateDBDir)
+	return NewProvider(chainId, StoreStateDBDir)
 }
 
 // NewHistoryProvider construct a new Rocksdb Provider for history operation with given chainId
 func NewHistoryProvider(chainId string) *Provider {
-	return NewSqlDBProvider(chainId, StoreHistoryDBDir)
+	return NewProvider(chainId, StoreHistoryDBDir)
 }
 
-// NewSqlDBProvider construct a new db Provider for given chainId and dir
-func NewSqlDBProvider(chainId string, dbDir string) *Provider {
+// NewProvider construct a new db Provider for given chainId and dir
+func NewProvider(chainId string, dbDir string) *Provider {
 	dbOpts := NewRocksdbConfig()
 	writeBufferSize := localconf.ChainMakerConfig.StorageConfig.WriteBufferSize
 	if writeBufferSize > 0 {
@@ -100,13 +102,11 @@ func (p *Provider) GetDBHandle(dbName string) protocol.DBHandle {
 	defer p.mutex.Unlock()
 	dbHandle := p.dbHandles[dbName]
 	if dbHandle == nil {
-		wo := gorocksdb.NewDefaultWriteOptions()
-		wo.SetSync(true)
 		dbHandle = &RocksDBHandle{
 			dbName:       dbName,
 			db:           p.db,
 			readOptions:  gorocksdb.NewDefaultReadOptions(),
-			writeOptions: wo,
+			writeOptions: gorocksdb.NewDefaultWriteOptions(),
 			logger:       logImpl.GetLogger(logImpl.MODULE_STORAGE),
 		}
 		p.dbHandles[dbName] = dbHandle
@@ -157,10 +157,10 @@ func (config *RocksDBConfig) ToOptions() *gorocksdb.Options {
 	blockBasedTableOptions.SetFilterPolicy(bloomFilter)
 	blockBasedTableOptions.SetBlockCacheCompressed(gorocksdb.NewLRUCache(uint64(config.blockCache)))
 	blockBasedTableOptions.SetCacheIndexAndFilterBlocks(true)
-	//blockBasedTableOptions.SetIndexType(gorocksdb.KHashSearchIndexType)
+	blockBasedTableOptions.SetIndexType(gorocksdb.KHashSearchIndexType)
 
 	options.SetBlockBasedTableFactory(blockBasedTableOptions)
-	//options.SetPrefixExtractor(gorocksdb.NewFixedPrefixTransform(defaultFixedPrefixTransform))
+	options.SetPrefixExtractor(gorocksdb.NewFixedPrefixTransform(defaultFixedPrefixTransform))
 	options.SetAllowConcurrentMemtableWrites(false)
 	return options
 }
@@ -238,9 +238,7 @@ func (dbHandle *RocksDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool
 		}
 	}
 
-	wo := gorocksdb.NewDefaultWriteOptions()
-	wo.SetSync(sync)
-	if err := dbHandle.db.Write(wo, writeBatch); err != nil {
+	if err := dbHandle.db.Write(dbHandle.writeOptions, writeBatch); err != nil {
 		dbHandle.logger.Errorf("write batch to rocksdbprovider failed")
 		return errors.Wrap(err, "error writing batch to rocksdbprovider")
 	}
