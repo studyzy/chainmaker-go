@@ -11,7 +11,9 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
+	"strings"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/spf13/cobra"
@@ -31,8 +33,28 @@ func QueryCMD() *cobra.Command {
 	flags.StringVarP(&pairsString, "pairs", "a", "[{\"key\":\"key\",\"value\":\"counter1\"}]", "specify pairs")
 	flags.StringVarP(&pairsFile, "pairs-file", "A", "./pairs.json", "specify pairs file, if used, set --pairs=\"\"")
 	flags.StringVarP(&method, "method", "m", "increase", "specify contract method")
+	flags.Int32VarP(&runTime, "run-time", "", int32(commonPb.RuntimeType_GASM), "run-time")
+	flags.StringVarP(&abiPath, "api-path", "", "", "specify wasm path")
 
 	return cmd
+}
+
+
+func returnResult(code commonPb.TxStatusCode, message string, contractCode commonPb.ContractResultCode, contractMessage string, data string) error {
+	var result *Result
+	result = &Result{
+		Code:                  code,
+		Message:               message,
+		ContractResultCode:    contractCode,
+		ContractResultMessage: contractMessage,
+		ContractQueryResult:   data,
+	}
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+	return nil
 }
 
 func query() error {
@@ -52,6 +74,32 @@ func query() error {
 		return err
 	}
 
+	method_bck := method
+	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime))
+	if err != nil {
+		err = returnResult(1, "make pairs filure!", 0, "error", "")
+		return err
+	}
+	////暂时不支持传参
+	//if commonPb.RuntimeType(runTime) == commonPb.RuntimeType_EVM {
+	//	abiJsonData, err := ioutil.ReadFile(abiPath)
+	//	//fmt.Println("abiPath : ", abiPath, " ---> abiJsonData: ", abiJsonData)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	myAbi, _ := abi.JSON(strings.NewReader(string(abiJsonData)))
+	//
+	//	dataByte, err := myAbi.Pack(method)
+	//	data := hex.EncodeToString(dataByte)
+	//	method = data[0:8]
+	//	pairs = []*commonPb.KeyValuePair{
+	//		{
+	//			Key:   "data",
+	//			Value: data,
+	//		},
+	//	}
+	//}
+
 	payloadBytes, err := constructPayload(contractName, method, pairs)
 	if err != nil {
 		return err
@@ -59,22 +107,49 @@ func query() error {
 
 	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
 		chainId, txId, payloadBytes)
+	fmt.Println("resp: ", resp, "err:", err)
 	if err != nil {
 		return err
 	}
 
-	result := &Result{
-		Code:                  resp.Code,
-		Message:               resp.Message,
-		ContractResultCode:    resp.ContractResult.Code,
-		ContractResultMessage: resp.ContractResult.Message,
-		ContractQueryResult:   string(resp.ContractResult.Result),
-	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
+	var dataByte []interface{}
+	//var result *Result
+	//暂时不支持传参
+	if commonPb.RuntimeType(runTime) == commonPb.RuntimeType_EVM {
+		abiJsonData, err := ioutil.ReadFile(abiPath)
+		//fmt.Println("abiPath : ", abiPath, " ---> abiJsonData: ", abiJsonData)
+		if err != nil {
+			return err
+		}
+		myAbi, _ := abi.JSON(strings.NewReader(string(abiJsonData)))
+		if resp.ContractResult != nil {
+			dataByte, _ = myAbi.Unpack(method_bck, resp.ContractResult.Result)
+			//fmt.Println("resp.ContractResult.Result: ", resp.ContractResult.Result, "dataByte: ", dataByte, "type(dataByte): ", reflect.TypeOf(dataByte), "dataByte[0]:", dataByte[0])
+		}
+		var datas [] string
+		for _, data := range dataByte {
+			datas = append(datas, getStrval(data))
+		}
+
+		if resp.Code == commonPb.TxStatusCode_SUCCESS {
+			if len(datas) == 0 {
+				err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, "")
+			} else if len(datas) == 1 {
+				err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, datas[0])
+			} else {
+				jsonStr, err := json.Marshal(datas)
+				if err != nil {
+					return err
+				}
+				err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, string(jsonStr))
+			}
+		} else {
+			err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, "")
+		}
+		return err
+	}else {
+		err = returnResult(resp.Code, resp.Message, resp.ContractResult.Code, resp.ContractResult.Message, string(resp.ContractResult.Result))
 		return err
 	}
-	fmt.Println(string(bytes))
-
 	return nil
 }
