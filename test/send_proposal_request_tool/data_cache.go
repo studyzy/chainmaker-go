@@ -8,11 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"io/ioutil"
 	"sync"
-
-	"chainmaker.org/chainmaker-go/utils"
 )
 
 //FileCacheReader read file data and cache to memory,when invoke read method, if file has read,get from memory cache

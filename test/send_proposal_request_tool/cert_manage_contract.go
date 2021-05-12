@@ -4,14 +4,18 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
+
+// description: chainmaker-go
+//
+// @author: xwc1125
+// @date: 2020/11/24
 package main
 
 import (
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"

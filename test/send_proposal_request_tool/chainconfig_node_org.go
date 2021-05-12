@@ -87,7 +87,7 @@ func nodeOrgAdd() error {
 		Value: nodeOrgOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
+		Key:   "node_ids",
 		Value: nodeOrgAddresses,
 	})
 
@@ -122,7 +122,7 @@ func nodeOrgUpdate() error {
 		Value: nodeOrgOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
+		Key:   "node_ids",
 		Value: nodeOrgAddresses,
 	})
 

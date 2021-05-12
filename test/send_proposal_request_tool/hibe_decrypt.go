@@ -8,18 +8,17 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
-
 	"chainmaker.org/chainmaker-go/common/crypto"
 	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
+	"fmt"
 	"github.com/samkumar/hibe"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 )
 
-func HibeDecrypt() *cobra.Command {
+func HibeDecryptCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hibeDecrypt",
 		Short: "get hibe transaction by transaction Id, and decrypt",
@@ -38,33 +37,33 @@ func HibeDecrypt() *cobra.Command {
 	return cmd
 }
 
-func decryptHibeMessage() error {
-	var result Result
+func decryptHibeMessageExec() (string, commonPb.TxStatusCode, string) {
+	var result_output string
 
 	hibeParamsBytes, err := readHibeParamsWithFilePath(hibeLocalParams)
 	if err != nil {
-		return err
+		return result_output, 1, fmt.Sprintf("readHibeParamsWithFilePath, %s, err: %s", hibeLocalParams, err)
 	}
 
 	localParams, ok := new(hibe.Params).Unmarshal(hibeParamsBytes)
 	if !ok {
-		return errors.New("hibe.Params.Unmarshal failed, please check your file")
+		return result_output, 1, fmt.Sprintf("hibe.Params.Unmarshal failed, please check your file, err: %s", ok)
 	}
 
 	hibePrvKeyBytes, err := readHibePrvKeysWithFilePath(hibePrvKey)
 	if err != nil {
-		return err
+		return result_output, 1, fmt.Sprintf("readHibePrvKeysWithFilePath, %s, err: %s", hibePrvKey, err)
 	}
 
 	prvKey, ok := new(hibe.PrivateKey).Unmarshal(hibePrvKeyBytes)
 	if !ok {
-		return errors.New("hibe.PrivateKey.Unmarshal failed, please check your file")
+		return result_output, 1, fmt.Sprintf("hibe.PrivateKey.Unmarshal failed, please check your file, err: %s", ok)
 	}
 
 	hibeMsgMap := make(map[string]string)
 	err = json.Unmarshal([]byte(hibeMsg), &hibeMsgMap)
 	if err != nil {
-		return err
+		return result_output, 1, fmt.Sprintf("Unmarshal failed, please check your file, err: %s", err)
 	}
 
 	var keyType crypto.KeyType
@@ -72,30 +71,16 @@ func decryptHibeMessage() error {
 		keyType = crypto.AES
 	} else if symKeyType == "sm4" {
 		keyType = crypto.SM4
-
 	} else {
-		return fmt.Errorf("invalid symKeyType, %s", symKeyType)
+		return result_output, 1, fmt.Sprintf("invalid symKeyType, %s", symKeyType)
 	}
 
 	message, err := localhibe.DecryptHibeMsg(localId, localParams, prvKey, hibeMsgMap, keyType)
 	if err != nil {
-		result.Code = 1
-		result.Message = err.Error()
-		return err
+		return result_output, 1, fmt.Sprintf("DecryptHibeMsg failure, err: %s", err)
 	}
 
-	result.Code = 0
-	result.Message = "SUCCESS"
-	result.ContractResultCode = 0
-	result.ContractResultMessage = "OK"
-	result.HibeExecMsg = string(message)
-
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
-	return nil
+	return string(message), 0, ""
 }
 
 // Returns the serialized byte array of hibeParams
@@ -116,4 +101,26 @@ func readHibePrvKeysWithFilePath(hibePrvKeyFilePath string) ([]byte, error) {
 	}
 
 	return prvKeyBytes, nil
+}
+
+func decryptHibeMessage() error {
+	var result Result
+	hibeMessage, result_code, result_err := decryptHibeMessageExec()
+	result_msg := "SUCCESS"
+	if result_err != "" {
+		result_msg = result_err
+	}
+
+	result.Code = result_code
+	result.Message = result_msg
+	result.ContractResultCode = 0
+	result.ContractResultMessage = "OK"
+	result.HibeExecMsg = hibeMessage
+
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+	return nil
 }

@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	evm "chainmaker.org/chainmaker-go/common/evmutils"
 	"context"
 	"errors"
 	"fmt"
@@ -78,6 +79,9 @@ var (
 	hibePlaintext           string
 	hibeReceiverIdsFilePath string
 	hibeParamsFilePath      string
+
+	abiPath    string
+	initParams string
 )
 
 type Result struct {
@@ -97,6 +101,7 @@ type Result struct {
 	ShortCert             string                          `json:"shortCert,omitempty"`
 	GovernanceInfo        *consensusPb.GovernanceContract `json:"governanceInfo,omitempty"`
 	HibeExecMsg           string                          `json:"hibe_exec_msg,omitempty"`
+	CertAddress           *evm.Address                    `json:"certAddress,omitempty"`
 }
 
 type SimpleRPCResult struct {
@@ -213,6 +218,11 @@ func main() {
 	mainCmd.AddCommand(MultiSignReqCMD())
 	mainCmd.AddCommand(MultiSignVoteCMD())
 	mainCmd.AddCommand(MultiSignQueryCMD())
+
+	mainCmd.AddCommand(HibeDecryptCMD())
+	mainCmd.AddCommand(HibeEncryptCMD())
+	mainCmd.AddCommand(CertToAddressCMD())
+	mainCmd.AddCommand(ContractNameToAddressCMD())
 
 	mainCmd.Execute()
 
