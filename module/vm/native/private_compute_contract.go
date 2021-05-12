@@ -54,6 +54,35 @@ type PrivateComputeRuntime struct {
     log *logger.CMLogger
 }
 
+func (r *PrivateComputeRuntime) VerifyByEnclaveCert(context protocol.TxSimContext, enclaveId []byte, data []byte, sign []byte) (bool, error){
+    enclaveCert, err:= context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), enclaveId)
+    if  err != nil {
+        r.log.Errorf("%s, get enclave cert[%s] failed", err.Error(), enclaveId)
+        return false, err
+    }
+
+    cert, err := utils.ParseCert(enclaveCert)
+    if  err != nil {
+        r.log.Errorf("%s, parse enclave certificate failed, enclave id[%s], cert bytes[%s]", err.Error(), enclaveId, enclaveCert)
+        return false, err
+    }
+
+    hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+    digest, err := hash.Get(hashAlgo, data)
+    if err != nil {
+        r.log.Errorf("%s, calculate hash of data[%s] failed", err.Error(), data)
+        return false, err
+    }
+
+    ok, err := cert.PublicKey.Verify(digest, sign)
+    if !ok {
+        r.log.Errorf("%s, enclave certificate[%s] verify data[%s] failed", err.Error(), enclaveId, data)
+        return false, err
+    }
+
+    return true,  nil
+}
+
 func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
     sign      := params["sign"]
     quote     := params["quote"]
@@ -66,27 +95,32 @@ func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params 
         return nil, err
     }
 
-    enclaveCert, err:= context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(enclaveId))
-    if  err != nil {
-        r.log.Errorf("%s, get enclave cert[%s] failed, can't verify the quote[%s]", err.Error(), enclaveId, quoteId)
-        return nil, err
-    }
+    //enclaveCert, err:= context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(enclaveId))
+    //if  err != nil {
+    //    r.log.Errorf("%s, get enclave cert[%s] failed, can't verify the quote[%s]", err.Error(), enclaveId, quoteId)
+    //    return nil, err
+    //}
 
-    cert, err := utils.ParseCert(enclaveCert)
-    if  err != nil {
-        r.log.Errorf("%s, parse enclave certificate failed, enclave id[%s], cert bytes[%s]", err.Error(), enclaveId, enclaveCert)
-        return nil, err
-    }
+    //cert, err := utils.ParseCert(enclaveCert)
+    //if  err != nil {
+    //    r.log.Errorf("%s, parse enclave certificate failed, enclave id[%s], cert bytes[%s]", err.Error(), enclaveId, enclaveCert)
+    //    return nil, err
+    //}
 
-    hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
-    digest, err := hash.Get(hashAlgo, []byte(quote))
-    if err != nil {
-        r.log.Errorf("%s, calculate hash of quote[%s] failed", err.Error(), quoteId)
-        return nil, err
-    }
+    //hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+    //digest, err := hash.Get(hashAlgo, []byte(quote))
+    //if err != nil {
+    //    r.log.Errorf("%s, calculate hash of quote[%s] failed", err.Error(), quoteId)
+    //    return nil, err
+    //}
 
-    ok, err := cert.PublicKey.Verify(digest, []byte(sign))
-    if !ok {
+    //ok, err := cert.PublicKey.Verify(digest, []byte(sign))
+    //if !ok {
+    //    r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
+    //    return nil, err
+    //}
+
+    if ok, err := r.VerifyByEnclaveCert(context, []byte(enclaveId), []byte(quote), []byte(sign)); !ok {
         r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
         return nil, err
     }
@@ -254,23 +288,20 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
         return nil, err
     }
 
-    //reportSign := []byte(params["report_sign"])
-    //TODO:check report sign
+    //report := bytes.Join([][]byte{cRes, []byte(params["rw_set"]), []byte(params["events"])}, []byte{})
+    //ok, err := r.VerifyByEnclaveCert(context, []byte(params["enclave_id"]), report, []byte(params["report_sign"]))
+    //if !ok{
+    //    r.log.Errorf("%s, enclave certificate[%s] verify quote of save data failed", err.Error(), params["enclave_id"])
+    //    return nil, err
+    //}
 
     if result.Code != commonPb.ContractResultCode_OK {
         r.log.Infof("Compute result code != ok, return")
         return nil, nil
     }
 
-    rwSetStr := params["rw_set"]
-    if utils.IsAnyBlank(rwSetStr) {
-        err := fmt.Errorf("%s, param[rw_set] of save data not found", ErrParams.Error())
-        r.log.Errorf(err.Error())
-        return nil, err
-    }
-
     var rwSet commonPb.TxRWSet
-    if err := rwSet.Unmarshal([]byte(rwSetStr)); err != nil{
+    if err := rwSet.Unmarshal([]byte(params["rw_set"])); err != nil{
         r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
         return nil, err
     }
