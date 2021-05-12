@@ -79,8 +79,8 @@ storage:
   statedb_config:
     provider: sql
     sqldb_config:
-      sqldb_type: sqlite
-      dsn: ../data/org2/state.db
+      sqldb_type:  mysql
+      dsn:  root:passw0rd@tcp(192.168.1.89:3308)/mysql
   historydb_config:
     provider: leveldb
     leveldb_config:

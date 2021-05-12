@@ -21,9 +21,9 @@ contract:
 block:
   tx_timestamp_verify: true # 是否需要开启交易时间戳校验
   tx_timeout: 600  # 交易时间戳的过期时间(秒)
-  block_tx_capacity: 100  # 区块中最大交易数
+  block_tx_capacity: 1000  # 区块中最大交易数
   block_size: 10  # 区块最大限制，单位MB
-  block_interval: 2000 # 出块间隔，单位:ms
+  block_interval: 1000 # 出块间隔，单位:ms
 
 # core模块
 core:
@@ -48,15 +48,15 @@ consensus:
     - org_id: "wx-org4.chainmaker.org"
       node_id:
         - "QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
-    - org_id: "wx-org5.chainmaker.org"
-      node_id:
-        - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
-    - org_id: "wx-org6.chainmaker.org"
-      node_id:
-        - "QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
-    - org_id: "wx-org7.chainmaker.org"
-      node_id:
-        - "QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+  #    - org_id: "wx-org5.chainmaker.org"
+  #      node_id:
+  #        - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+  #    - org_id: "wx-org6.chainmaker.org"
+  #      node_id:
+  #        - "QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+  #    - org_id: "wx-org7.chainmaker.org"
+  #      node_id:
+  #        - "QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11

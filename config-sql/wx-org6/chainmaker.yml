@@ -35,9 +35,9 @@ net:
     - "/ip4/127.0.0.1/tcp/11352/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
     - "/ip4/127.0.0.1/tcp/11353/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
     - "/ip4/127.0.0.1/tcp/11354/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
-    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
-    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
-    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+#    - "/ip4/127.0.0.1/tcp/11355/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+#    - "/ip4/127.0.0.1/tcp/11356/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+#    - "/ip4/127.0.0.1/tcp/11357/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   tls:
     enabled: true
     priv_key_file: ../config-sql/wx-org6/certs/node/consensus1/consensus1.tls.key
@@ -77,9 +77,10 @@ storage:
     leveldb_config:
       store_path: ../data/org6/blocks
   statedb_config:
-    provider: leveldb
-    leveldb_config:
-      store_path: ../data/org6/state
+    provider: sql
+    sqldb_config:
+      sqldb_type:  mysql
+      dsn:  root:passw0rd@tcp(192.168.1.89:3312)/mysql
   historydb_config:
     provider: leveldb
     leveldb_config:
