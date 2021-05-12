@@ -369,12 +369,3 @@ func (mr *MockTxSimContextMockRecorder) SetTxResult(arg0 interface{}) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTxResult", reflect.TypeOf((*MockTxSimContext)(nil).SetTxResult), arg0)
 }
-
-func (s *MockTxSimContextMockRecorder) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
-	panic("impl me")
-
-}
-
-func (s *MockTxSimContextMockRecorder) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
-	panic("impl me")
-}

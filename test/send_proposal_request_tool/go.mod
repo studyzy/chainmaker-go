@@ -12,7 +12,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/samkumar/hibe v0.0.0-20171013061409-c1cd171b6178
 	github.com/spf13/cobra v1.1.1
-	google.golang.org/grpc v1.36.0
+	google.golang.org/grpc v1.37.0
 )
 
 replace (

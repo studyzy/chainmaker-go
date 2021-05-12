@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package message
 
 import (
+	"bytes"
 	"fmt"
 	"sync"
 
@@ -47,20 +48,6 @@ func (mp *MsgPool) InsertVote(height uint64, round uint64, voteMsg *chainedbft.C
 		mp.msgs[height] = newConsensusRound(mp.size, height)
 	}
 	return mp.msgs[height].insertVote(round, voteMsg, mp.minVotesForQc)
-}
-
-//InsertVoteData is an external api to cache a vote msg with given height and round
-func (mp *MsgPool) InsertVoteData(height uint64, round uint64, vote *chainedbft.VoteData) (bool, error) {
-	if vote == nil {
-		return false, fmt.Errorf("nil vote")
-	}
-
-	mp.Lock()
-	defer mp.Unlock()
-	if _, ok := mp.msgs[height]; !ok {
-		mp.msgs[height] = newConsensusRound(mp.size, height)
-	}
-	return mp.msgs[height].insertVoteData(round, vote, mp.minVotesForQc)
 }
 
 //InsertProposal is an external api to cache a proposal msg with given height and round
@@ -146,6 +133,14 @@ func (mp *MsgPool) OnBlockSealed(height uint64) {
 	for _, h := range toFreeHeight {
 		delete(mp.msgs, h)
 	}
+}
+
+func (mp *MsgPool) details() string {
+	msgPoolContent := bytes.NewBufferString(fmt.Sprintf("MsgPool contents, %d heights blockInfo to cache \n", len(mp.msgs)))
+	for _, heightMsgs := range mp.msgs {
+		msgPoolContent.WriteString(fmt.Sprintf("%d", heightMsgs.height))
+	}
+	return ""
 }
 
 //Cleanup cleans up the cached messages

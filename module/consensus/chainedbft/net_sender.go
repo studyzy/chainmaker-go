@@ -26,7 +26,7 @@ func (cbi *ConsensusChainedBftImpl) signAndMarshal(payload *chainedbftpb.Consens
 	if err := utils.SignConsensusMsg(consensusMessage, cbi.chainConf.ChainConfig().Crypto.Hash, cbi.singer); err != nil {
 		return nil, fmt.Errorf("sign consensus message failed, err %v", err)
 	}
-	cbi.logger.Debugf("signAndMarshal, consensus msg %v", consensusMessage.String())
+	cbi.logger.Debugf("signAndMarshal, consensus msg %v", payload.String())
 	if internal {
 		//send it to self, no need to marshal
 		cbi.internalMsgCh <- consensusMessage
@@ -45,7 +45,6 @@ func (cbi *ConsensusChainedBftImpl) signAndBroadcast(payload *chainedbftpb.Conse
 		cbi.logger.Errorf("sign payload failed, err %v", err)
 		return
 	}
-
 	peers := cbi.smr.peers()
 	for _, peer := range peers {
 		if peer.index == cbi.selfIndexInEpoch {

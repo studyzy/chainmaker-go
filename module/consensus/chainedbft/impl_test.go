@@ -320,12 +320,14 @@ func cfgChainedBftNode(t *testing.T) {
 		}
 		cbi.smr.safetyRules = safetyrules.NewSafetyRules(cbi.logger, cbi.chainStore.blockPool)
 		cbi.commitHeight = cbi.chainStore.getCommitHeight()
-		epoch := cbi.createEpoch(cbi.commitHeight)
+		cbi.createEpoch(cbi.commitHeight)
+		epoch := cbi.nextEpoch
 		cbi.smr.initCommittee(epoch.useValidators)
 		cbi.msgPool = epoch.msgPool
 		cbi.selfIndexInEpoch = epoch.index
 		cbi.smr.paceMaker = liveness.NewPacemaker(cbi.logger, cbi.selfIndexInEpoch, 0, epoch.epochId, cbi.timerService)
 		cbi.smr.forwardNewHeightIfNeed()
+		cbi.nextEpoch = nil
 
 		cbi.msgbus.Register(msgbus.ProposedBlock, cbi)
 		cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)

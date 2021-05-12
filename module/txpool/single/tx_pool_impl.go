@@ -283,7 +283,7 @@ func (pool *txPoolImpl) RetryAndRemoveTxs(retryTxs []*commonPb.Transaction, remo
 	start := utils.CurrentTimeMillisSeconds()
 	pool.retryTxs(retryTxs)
 	pool.removeTxs(removeTxs)
-	pool.log.Infof("RetryAndRemoveTxs elapse time: %d, retry txs:%d, remove txs:%d "+
+	pool.log.Debugf("RetryAndRemoveTxs elapse time: %d, retry txs:%d, remove txs:%d "+
 		"", utils.CurrentTimeMillisSeconds()-start, len(retryTxs), len(removeTxs))
 }
 
@@ -299,9 +299,8 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		commonTxIds = make([]string, 0, len(txs))
 		configTxIds = make([]string, 0, len(txs))
 	)
-	enableSqlDB := pool.chainConf.ChainConfig().Contract.EnableSqlSupport
 	for _, tx := range txs {
-		if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, enableSqlDB) {
+		if utils.IsConfigTx(tx) {
 			configTxs = append(configTxs, tx)
 			configTxIds = append(configTxIds, tx.Header.TxId)
 		} else {
@@ -329,11 +328,10 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	}
 	defer pool.updateAndPublishSignal()
 	start := utils.CurrentTimeMillisSeconds()
-	enableSqlDB := pool.chainConf.ChainConfig().Contract.EnableSqlSupport
 	configTxIds := make([]string, 0, 1)
 	commonTxIds := make([]string, 0, len(txs)/2)
 	for _, tx := range txs {
-		if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, enableSqlDB) {
+		if utils.IsConfigTx(tx) {
 			configTxIds = append(configTxIds, tx.Header.TxId)
 		} else {
 			commonTxIds = append(commonTxIds, tx.Header.TxId)
@@ -375,7 +373,7 @@ func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockH
 		return
 	}
 	pool.log.Infof("add tx to pendingCache, (txs num:%d), blockHeight:%d", len(txs), blockHeight)
-	pool.queue.appendTxsToPendingCache(txs, blockHeight, pool.chainConf.ChainConfig().Contract.EnableSqlSupport)
+	pool.queue.appendTxsToPendingCache(txs, blockHeight)
 }
 
 // OnMessage Process messages from MsgBus

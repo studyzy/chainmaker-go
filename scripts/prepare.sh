@@ -120,15 +120,23 @@ function generate_config() {
     if  [ $NODE_CNT -eq 1 ]; then
         CONSENSUS_TYPE=0
     else
-        read -p "input consensus type(default 1/tbft): " tmp
+        read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT): " tmp
         if  [ ! -z "$tmp" ] ;then
-            CONSENSUS_TYPE=$tmp
+          if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] ;then
+              CONSENSUS_TYPE=$tmp
+          else
+            echo "unknown consensus type [" $tmp "], so use default"
+          fi
         fi
     fi
 
-    read -p "input log level(default INFO): " tmp
+    read -p "input log level (DEBUG|INFO(default)|WARN|ERROR): " tmp
     if  [ ! -z "$tmp" ] ;then
-        LOG_LEVEL=$tmp
+      if  [ $tmp == "DEBUG" ] || [ $tmp == "INFO" ] || [ $tmp == "WARN" ] || [ $tmp == "ERROR" ];then
+          LOG_LEVEL=$tmp
+      else
+        echo "unknown log level [" $tmp "], so use default"
+      fi
     fi
 
     cd "${BUILD_PATH}"

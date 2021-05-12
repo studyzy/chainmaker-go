@@ -445,28 +445,29 @@ func TrySwitchNextValidator(block *commonPb.Block, GovernanceContract *consensus
 
 //CheckAndCreateGovernmentArgs execute after block propose,create government txRWSet,wait to add to block header
 //when block commit,government txRWSet take effect
-func CheckAndCreateGovernmentArgs(block *commonPb.Block,
-	store protocol.BlockchainStore, proposalCache protocol.ProposalCache, ledger protocol.LedgerCache) (*commonPb.TxRWSet, error) {
+func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.BlockchainStore,
+	proposalCache protocol.ProposalCache, ledger protocol.LedgerCache) (*commonPb.TxRWSet, error) {
 	log.Debugf("CheckAndCreateGovernmentArgs start")
 
 	// 1. get GovernanceContract
 	gcr := NewGovernanceContract(store, ledger).(*GovernanceContractImp)
-	GovernanceContract, err := gcr.GetGovernmentContract()
+	governanceContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		log.Errorf("getGovernanceContract err!err=%v", err)
 		return nil, err
 	}
 	var oldBytesData []byte
 	if block.Header.GetBlockHeight() > 1 {
-		if oldBytesData, err = proto.Marshal(GovernanceContract); err != nil {
+		if oldBytesData, err = proto.Marshal(governanceContract); err != nil {
 			log.Errorf("proto marshal pbcc failed err!err=%v", err)
 			return nil, err
 		}
 	}
+
 	var (
 		configChg      = false
-		IsConfigChg    = false
-		IsValidatorChg = false
+		isConfigChg    = false
+		isValidatorChg = false
 	)
 	// 2. check if chain config change
 	if utils.IsConfBlock(block) {
@@ -475,34 +476,33 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block,
 			log.Errorf("getChainConfigFromBlock err!err=%v", err)
 		}
 		if chainConfig != nil {
-			if configChg, err = updateGovContractByConfig(chainConfig, GovernanceContract); err != nil {
+			if configChg, err = updateGovContractByConfig(chainConfig, governanceContract); err != nil {
 				log.Errorf("CheckConfigChange err!err=%v", err)
 				return nil, err
 			}
-			IsConfigChg = configChg
+			isConfigChg = configChg
 		}
 	}
 
 	// 3. if chain config no change,check if epoch switch
 	if !configChg {
-		log.Debugf("IsValidatorChg start")
-		if _, err := TryCreateNextValidators(block, GovernanceContract); err != nil {
+		log.Debugf("no chain config change, will check epoch switch")
+		if _, err := TryCreateNextValidators(block, governanceContract); err != nil {
 			log.Errorf("TryCreateNextValidators err!err=%v", err)
 			return nil, err
 		}
-		IsValidatorChg = TrySwitchNextValidator(block, GovernanceContract)
+		isValidatorChg = TrySwitchNextValidator(block, governanceContract)
 	}
 
 	// 4. if chain config change or switch to next epoch, change the GovernanceContract epochId
-	if IsValidatorChg || IsConfigChg {
-		log.Debugf("EpochId change! height[%v] old epochId[%v] now epochId[%v]",
-			block.Header.GetBlockHeight(), GovernanceContract.EpochId, (GovernanceContract.EpochId + 1))
-		GovernanceContract.EpochId++
+	if isValidatorChg || isConfigChg {
+		governanceContract.EpochId++
+		log.Debugf("EpochId change! block Height[%d], new epochId[%d], isValidatorChg[%v], isConfigChg[%v]",
+			block.Header.GetBlockHeight(), governanceContract.EpochId, isValidatorChg, isConfigChg)
 	}
 
 	//5. create TxRWSet for GovernanceContract
-	log.Debugf("GovernanceContract [%v] height[%v]", GovernanceContract.String(), block.GetHeader().GetBlockHeight())
-	txRWSet, err := getGovernanceContractTxRWSet(GovernanceContract, oldBytesData)
+	txRWSet, err := getGovernanceContractTxRWSet(governanceContract, oldBytesData)
 	return txRWSet, err
 }
 
@@ -623,7 +623,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 
 func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceContract, oldBytes []byte) (*commonPb.TxRWSet, error) {
 	txRWSet := &commonPb.TxRWSet{
-		TxId:     "",
+		TxId:     GovernanceContractName,
 		TxReads:  make([]*commonPb.TxRead, 0, 0),
 		TxWrites: make([]*commonPb.TxWrite, 0, 1),
 	}
@@ -648,7 +648,7 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	if err = proto.Unmarshal(oldBytes, &oldGovernanceContract); err != nil {
 		return nil, err
 	}
-	log.Debugf("GovernanceContract change!older:[%v]", oldGovernanceContract.String())
+	log.Debugf("GovernanceContract change older contract:[%s]", oldGovernanceContract.String())
 	txWrite := &commonPb.TxWrite{
 		Key:          []byte(contractName),
 		Value:        pbccPayload,

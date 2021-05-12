@@ -47,6 +47,4 @@ replace (
 	chainmaker.org/chainmaker-go/vm => ../vm
 	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
-	chainmaker.org/chainmaker-go/wasi => ../vm/wasi
-	chainmaker.org/chainmaker-go/evm => ../vm/evm
 )

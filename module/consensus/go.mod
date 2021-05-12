@@ -21,6 +21,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
+	github.com/tidwall/wal v0.1.4
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20191023171146-3cf2f69b5738
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0

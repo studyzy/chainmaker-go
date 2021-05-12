@@ -1,6 +1,17 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package wxvm
 
 import (
+	"fmt"
+	"sync"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/common/random/uuid"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -8,10 +19,6 @@ import (
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wxvm"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	"fmt"
-	"sync"
-	"testing"
-	"time"
 )
 
 func Test_invoke_cpp(t *testing.T) {

@@ -8,18 +8,20 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"strings"
+	"sync"
+
+	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/pem"
-	"errors"
-	"fmt"
 	"github.com/golang/protobuf/proto"
-	"strings"
-	"sync"
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
@@ -163,14 +165,31 @@ func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig
 }
 
 func verifyChainConfigConsensusNodesIds(mConfig *chainConfig, node *config.OrgConfig) error {
-	for _, nid := range node.NodeId {
-		// node id can not be repeated
-		if _, ok := mConfig.NodeIds[nid]; ok {
-			log.Errorf("node id(%s) existed", nid)
-			return errors.New("address existed")
+	if len(node.NodeId) > 0 {
+		for _, nid := range node.NodeId {
+			// node id can not be repeated
+			if _, ok := mConfig.NodeIds[nid]; ok {
+				log.Errorf("node id(%s) existed", nid)
+				return errors.New("node id existed")
+			}
+			mConfig.NodeIds[nid] = node.OrgId
 		}
-		mConfig.NodeIds[nid] = node.OrgId
+	} else {
+		for _, addr := range node.Address {
+			nid, err := helper.GetNodeUidFromAddr(addr)
+			if err != nil {
+				log.Errorf("get node id from addr(%s) failed", addr)
+				return err
+			}
+			// node id can not be repeated
+			if _, ok := mConfig.NodeIds[nid]; ok {
+				log.Errorf("node id(%s) existed", nid)
+				return errors.New("node id existed")
+			}
+			mConfig.NodeIds[nid] = node.OrgId
+		}
 	}
+
 	return nil
 }
 
@@ -201,7 +220,7 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 
 		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
-			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
 				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}

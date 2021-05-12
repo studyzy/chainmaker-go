@@ -1,16 +1,23 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package hibe
 
 import (
-	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
 	"errors"
 	"fmt"
-	"github.com/samkumar/hibe"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
+	"github.com/samkumar/hibe"
+	"github.com/spf13/cobra"
 	"vuvuzela.io/crypto/bn256"
 	"vuvuzela.io/crypto/rand"
 )
@@ -247,7 +254,7 @@ func genPrivateKey() error {
 		if i == 0 {
 			fileName = fmt.Sprintf("%s%s", fileName, item)
 		} else {
-			fileName = fmt.Sprintf("%s_%s", fileName, item)
+			fileName = fmt.Sprintf("%s#%s", fileName, item)
 		}
 	}
 
@@ -306,7 +313,7 @@ func genPrivateKey() error {
 		pathSlice := strings.Split(keyFilePath, "/")
 		parentFileName := pathSlice[len(pathSlice)-1]
 		parentFileName = strings.TrimSuffix(parentFileName, ".privateKey")
-		parentIdStr := strings.ReplaceAll(parentFileName, "_", "/")
+		parentIdStr := strings.ReplaceAll(parentFileName, "#", "/")
 
 		if !strings.HasPrefix(id, parentIdStr) {
 			return fmt.Errorf("no permission, the input ID [ %s ] is not your subordinate level", id)
@@ -334,11 +341,6 @@ func genPrivateKey() error {
 			}
 		}
 		privateKey = parentKey
-
-		//privateKey, err = hibe.KeyGenFromParent(rand.Reader, params, parentKey, hibeId)
-		//if err != nil {
-		//	return err
-		//}
 	}
 
 	if err = os.MkdirAll(dir, os.ModePerm); err != nil {

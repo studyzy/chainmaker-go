@@ -4,10 +4,6 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// description: chainmaker-go
-//
-// @author: xwc1125
-// @date: 2020/11/9
 package single
 
 import (
@@ -58,9 +54,7 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	}
 
 	for _, tx := range txs {
-		if validate == nil || validate(tx, source) == nil {
-			l.addTxs(tx)
-		}
+		l.addTxs(tx, source, validate)
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if utils.IsConfigTx(txs[0]) {
@@ -71,10 +65,20 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	}
 }
 
-func (l *txList) addTxs(tx *commonPb.Transaction) {
+func (l *txList) addTxs(tx *commonPb.Transaction, source protocol.TxSource, validate txValidateFunc) {
 	l.rwLock.Lock()
 	defer l.rwLock.Unlock()
-	l.queue.Add(tx.Header.TxId, tx)
+	if validate == nil || validate(tx, source) == nil {
+		if source != protocol.INTERNAL {
+			if val, ok := l.pendingCache.Load(tx.Header.TxId); ok && val != nil {
+				return
+			}
+		}
+		if l.queue.Get(tx.Header.TxId) != nil {
+			return
+		}
+		l.queue.Add(tx.Header.TxId, tx)
+	}
 }
 
 // Delete Delete transactions from TXList by the txIds
@@ -177,8 +181,8 @@ func (l *txList) Has(txId string, checkPending bool) (exist bool) {
 			return true
 		}
 	}
-	l.rwLock.Lock()
-	defer l.rwLock.Unlock()
+	l.rwLock.RLock()
+	defer l.rwLock.RUnlock()
 	return l.queue.Get(txId) != nil
 }
 

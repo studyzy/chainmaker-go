@@ -70,7 +70,7 @@ func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, ser
 	}
 
 	if err = s.checkSubscribeContractEventPayload(&payload); err != nil {
-		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_TX
+		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_CONTRACT_EVENT
 		errMsg = s.getErrMsg(errCode, err)
 		s.log.Error(errMsg)
 		return status.Error(codes.InvalidArgument, errMsg)
@@ -92,7 +92,7 @@ func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, ser
 
 func (s *ApiService) checkSubscribeContractEventPayload(payload *commonPb.SubscribeContractEventPayload) error {
 	if payload.Topic == "" || payload.ContractName == "" {
-		return errors.New("invalid start block height or end block height")
+		return errors.New("invalid topic or contract name")
 	}
 	return nil
 }

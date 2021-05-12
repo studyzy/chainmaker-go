@@ -77,7 +77,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	defer func() {
 		if err := recover(); err != nil {
-			r.Log.Errorf("invoke gasm panic, tx id:%s, error:%s", tx.Header.TxId, err)
+			r.Log.Errorf("failed to invoke gasm, tx id:%s, error:%s", tx.Header.TxId, err)
 			contractResult.Code = commonPb.ContractResultCode_FAIL
 			if e, ok := err.(error); ok {
 				contractResult.Message = e.Error()

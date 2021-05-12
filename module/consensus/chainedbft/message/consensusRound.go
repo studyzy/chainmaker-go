@@ -1,6 +1,12 @@
+/*
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package message
 
 import (
+	"bytes"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
@@ -47,18 +53,6 @@ func (cr *consensusRound) insertVote(round uint64, msg *chainedbft.ConsensusMsg,
 	return roundMsgs[msg.Payload.Type].insertVote(msg, minVotesForQc)
 }
 
-//insertVote inserts a vote data to vote pool
-func (cr *consensusRound) insertVoteData(round uint64, vote *chainedbft.VoteData,
-	minVotesForQc int) (bool, error) {
-	if _, ok := cr.msgs[round]; !ok {
-		cr.msgs[round] = make(map[chainedbft.MessageType]*votePool)
-		cr.msgs[round][chainedbft.MessageType_VoteMessage] = newVotePool(cr.size)
-	}
-
-	roundMsgs := cr.msgs[round]
-	return roundMsgs[chainedbft.MessageType_VoteMessage].insertVoteData(vote, minVotesForQc)
-}
-
 //insertProposal inserts a proposal to proposal list
 func (cr *consensusRound) insertProposal(round uint64, msg *chainedbft.ConsensusMsg) (bool, error) {
 	if _, ok := cr.proposals[round]; ok {
@@ -99,4 +93,13 @@ func (cr *consensusRound) checkVoteDone(round uint64, voteType chainedbft.Messag
 		return nil, false, false
 	}
 	return cr.msgs[round][voteType].checkVoteDone()
+}
+
+func (cr *consensusRound) details() string {
+	buf := bytes.NewBufferString(fmt.Sprintf("have %d round msg", len(cr.msgs)))
+	for roundLevel, roundMsgs := range cr.msgs {
+		_ = roundMsgs
+		buf.WriteString(fmt.Sprintf("%d", roundLevel))
+	}
+	return buf.String()
 }

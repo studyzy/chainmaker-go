@@ -1,6 +1,25 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
+	"context"
+	"encoding/hex"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"math/big"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/common/ca"
 	"chainmaker.org/chainmaker-go/common/crypto"
@@ -13,22 +32,11 @@ import (
 	discoveryPb "chainmaker.org/chainmaker-go/pb/protogo/discovery"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"context"
-	"encoding/hex"
-	"flag"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"io/ioutil"
-	"log"
-	"math/big"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (

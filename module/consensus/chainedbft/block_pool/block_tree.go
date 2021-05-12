@@ -9,10 +9,10 @@ package blockpool
 import (
 	"bytes"
 	"errors"
-
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/queue"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 )
 
 //BlockNode save one block and its children
@@ -34,24 +34,27 @@ func (bn *BlockNode) GetChildren() []string {
 //BlockTree maintains a consistent block tree of parent and children links
 //this struct is not thread safety.
 type BlockTree struct {
-	idToNode      map[string]*BlockNode // store block and its' children blockHash
-	rootBlock     *common.Block         // The latest block is committed to the chain
-	prunedBlocks  []string              // Caches the block hash that will be deleted
-	maxPrunedSize int                   // The maximum number of cached blocks that will be deleted
+	idToNode       map[string]*BlockNode // store block and its' children blockHash
+	heightToBlocks map[int64][]*common.Block
+	rootBlock      *common.Block // The latest block is committed to the chain
+	prunedBlocks   []string      // Caches the block hash that will be deleted
+	maxPrunedSize  int           // The maximum number of cached blocks that will be deleted
 }
 
 //NewBlockTree init a block tree with rootBlock, rootQC and maxPrunedSize
 func NewBlockTree(rootBlock *common.Block, maxPrunedSize int) *BlockTree {
 	blockTree := &BlockTree{
-		idToNode:      make(map[string]*BlockNode, 10),
-		rootBlock:     rootBlock,
-		prunedBlocks:  make([]string, 0, maxPrunedSize),
-		maxPrunedSize: maxPrunedSize,
+		idToNode:       make(map[string]*BlockNode, 10),
+		rootBlock:      rootBlock,
+		prunedBlocks:   make([]string, 0, maxPrunedSize),
+		maxPrunedSize:  maxPrunedSize,
+		heightToBlocks: make(map[int64][]*common.Block),
 	}
 	blockTree.idToNode[string(rootBlock.Header.BlockHash)] = &BlockNode{
 		block:    rootBlock,
 		children: make([]string, 0),
 	}
+	blockTree.heightToBlocks[rootBlock.Header.BlockHeight] = append(blockTree.heightToBlocks[rootBlock.Header.BlockHeight], rootBlock)
 	return blockTree
 }
 
@@ -73,6 +76,7 @@ func (bt *BlockTree) InsertBlock(block *common.Block) error {
 	}
 	preBlock := bt.idToNode[string(block.Header.PreBlockHash)]
 	preBlock.children = append(preBlock.children, string(block.Header.BlockHash))
+	bt.heightToBlocks[block.Header.BlockHeight] = append(bt.heightToBlocks[block.Header.BlockHeight], block)
 	return nil
 }
 
@@ -166,5 +170,23 @@ func (bt *BlockTree) findBlockToPrune(newRootID string) []string {
 
 //cleanBlock remove block from tree
 func (bt *BlockTree) cleanBlock(blockId string) {
+	blk := bt.idToNode[blockId]
 	delete(bt.idToNode, blockId)
+	if blk != nil {
+		delete(bt.heightToBlocks, blk.block.Header.BlockHeight)
+	}
+}
+
+func (bt *BlockTree) GetBlocks(height int64) []*common.Block {
+	return bt.heightToBlocks[height]
+}
+
+func (bt *BlockTree) Details() string {
+	blkContents := bytes.NewBufferString(fmt.Sprintf("BlockTree blockNum: %d\n", len(bt.idToNode)))
+	for _, blks := range bt.heightToBlocks {
+		for _, blk := range blks {
+			blkContents.WriteString(fmt.Sprintf("blkID: %x, blockHeight:%d\n", blk.Header.BlockHash, blk.Header.BlockHeight))
+		}
+	}
+	return blkContents.String()
 }

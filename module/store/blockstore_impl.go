@@ -154,13 +154,14 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 }
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
-func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:    block,
-		TxRWSets: txRWSets,
+		Block:          block,
+		TxRWSets:       txRWSets,
+		ContractEvents: contractEvents,
 	}
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
@@ -674,4 +675,16 @@ func (bs *BlockStoreImpl) CommitDbTransaction(txName string) error {
 //回滚一个事务
 func (bs *BlockStoreImpl) RollbackDbTransaction(txName string) error {
 	return bs.stateDB.RollbackDbTransaction(txName)
+}
+
+func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint uint64) uint64 {
+	height := currentHeight + 1
+	if savePoint == 0 && currentHeight == 0 {
+		//check whether has genesis block
+		if data, _ := bs.wal.Read(1); data != nil && len(data) > 0 {
+			height = height - 1
+		}
+	}
+
+	return height
 }

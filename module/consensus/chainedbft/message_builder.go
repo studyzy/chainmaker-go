@@ -67,7 +67,7 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 		ProposalData: proposalData,
 	}
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] constructProposal, proposal: [%v:%v:%v], JustifyQC: %v, HighestTC: %v",
-		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc, syncInfo.HighestTC)
+		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc.String(), syncInfo.HighestTC.String())
 
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_ProposalMessage,
@@ -78,7 +78,7 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 
 //constructVote builds a vote msg with given params
 func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, epochId uint64,
-	block *common.Block) *chainedbftpb.ConsensusPayload {
+	block *common.Block) (*chainedbftpb.ConsensusPayload, error) {
 	voteData := &chainedbftpb.VoteData{
 		Level:     level,
 		Height:    height,
@@ -98,11 +98,11 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 		sign []byte
 	)
 	if data, err = proto.Marshal(voteData); err != nil {
-		return nil
+		return nil, err
 	}
 	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash, data); err != nil {
 		cbi.logger.Errorf("sign data failed, err %v data %v", err, data)
-		return nil
+		return nil, err
 	}
 
 	voteData.Signature = &common.EndorsementEntry{
@@ -122,15 +122,15 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 		Type: chainedbftpb.MessageType_VoteMessage,
 		Data: &chainedbftpb.ConsensusPayload_VoteMsg{vote},
 	}
-	return consensusPayload
+	return consensusPayload, nil
 }
 
 //constructBlockFetchMsg builds a block fetch request msg at given height
-func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(blockID []byte,
-	height uint64, num uint64) *chainedbftpb.ConsensusPayload {
+func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(startHeight uint64, endBlockID []byte,
+	endHeight uint64, num uint64) *chainedbftpb.ConsensusPayload {
 	msg := &chainedbft.BlockFetchMsg{
-		Height:    height,
-		BlockID:   blockID,
+		Height:    endHeight,
+		BlockID:   endBlockID,
 		NumBlocks: num,
 		AuthorIdx: cbi.selfIndexInEpoch,
 	}

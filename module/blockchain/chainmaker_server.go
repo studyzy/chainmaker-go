@@ -276,7 +276,7 @@ func (server *ChainMakerServer) GetAllChainConf() ([]protocol.ChainConf, error) 
 	server.blockchains.Range(func(_, value interface{}) bool {
 		blockchain := value.(*Blockchain)
 		chainConfs = append(chainConfs, blockchain.chainConf)
-		return false
+		return true
 	})
 
 	if len(chainConfs) == 0 {

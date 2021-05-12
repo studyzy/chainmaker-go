@@ -189,8 +189,8 @@ func (cs *chainedbftSMR) getHighestTCLevel() uint64 {
 
 // processCertificates Update the status of local Pacemaker with the latest received QC;
 // height The height of the received block
-// hqcLevel The highest QC level in local node; if the received QC is Proposal type, highest QC is the received QC.
-// htcLevel If the QC is Proposal type, the value is 0; Otherwise, the htcLevel is the receive QC level
+// hqcLevel The highest QC level in local node;
+// htcLevel The received tcLevel
 // hcLevel The latest committed QC level in local node.
 // Returns true if the consensus goes to the next level, otherwise false.
 func (cs *chainedbftSMR) processCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {

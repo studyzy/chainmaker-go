@@ -99,7 +99,8 @@ func (sr *SafetyRules) SetLastVote(vote *chainedbftpb.ConsensusPayload, level ui
 func (sr *SafetyRules) SetLastCommittedBlock(block *common.Block, level uint64) {
 	sr.Lock()
 	defer sr.Unlock()
-	if level <= sr.lastCommittedLevel {
+	if level <= sr.lastCommittedLevel || (sr.lastCommittedBlock != nil &&
+		block.Header.BlockHeight <= sr.lastCommittedBlock.Header.BlockHeight) {
 		return
 	}
 	sr.lastCommittedBlock = block
@@ -111,11 +112,12 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 	sr.RLock()
 	defer sr.RUnlock()
 
-	if level <= sr.lastVoteLevel {
-		sr.logger.Debugf("vote rules failed,"+
-			" level <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
-		return false
-	}
+	// Node will only vote once for each level
+	//if level <= sr.lastVoteLevel {
+	//	sr.logger.Debugf("vote rules failed,"+
+	//		" proposalLevel <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
+	//	return false
+	//}
 	var (
 		err     error
 		qcLevel uint64
@@ -136,7 +138,7 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 		return false
 	}
 	if qcLevel < sr.lockedLevel {
-		sr.logger.Debugf("vote rules failed, preLevel <= locked Level, preLevel [%v], locked level [%v]",
+		sr.logger.Debugf("vote rules failed, qcLevel <= locked Level, preLevel [%v], locked level [%v]",
 			qcLevel, sr.lockedLevel)
 		return false
 	}
@@ -146,11 +148,11 @@ func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool
 //CommitRules validate incoming qc to commit by three-chain
 func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.Block, uint64) {
 	if qc == nil {
-		sr.logger.Debugf("commit rules failed, qc is nil")
+		sr.logger.Debugf("commit rules, qc is nil")
 		return false, nil, 0
 	}
 	if qc.NewView {
-		sr.logger.Debugf("commit rules failed, qc is new view tc")
+		sr.logger.Debugf("commit rules, qc is new view tc")
 		return false, nil, 0
 	}
 
@@ -163,15 +165,15 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.B
 		grandBlock  *common.Block
 	)
 	if qcBlock = sr.blockPool.GetBlockByID(string(qc.BlockID)); qcBlock == nil {
-		sr.logger.Debugf("commit rules failed, qc's block[%x] is nil", qc.BlockID)
+		sr.logger.Debugf("commit rules, qc's block[%x] is nil", qc.BlockID)
 		return false, nil, 0
 	}
 	if parentBlock = sr.blockPool.GetBlockByID(string(qcBlock.Header.PreBlockHash)); parentBlock == nil {
-		sr.logger.Debugf("commit rules failed, qc's parent[%x] block is nil", qc.BlockID)
+		sr.logger.Debugf("commit rules, qc's parent[%x] block is nil", qc.BlockID)
 		return false, nil, 0
 	}
 	if grandBlock = sr.blockPool.GetBlockByID(string(parentBlock.Header.PreBlockHash)); grandBlock == nil {
-		sr.logger.Debugf("commit rules failed, qc's grandBlock is nil")
+		sr.logger.Debugf("commit rules, qc's grandBlock is nil")
 		return false, nil, 0
 	}
 
@@ -196,7 +198,7 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.B
 //UpdateLockedQC process incoming qc, update locked state by two-chain
 func (sr *SafetyRules) UpdateLockedQC(qc *chainedbftpb.QuorumCert) {
 	if qc.NewView || qc.BlockID == nil {
-		sr.logger.Debugf("incoming qc failed, received new view or nil block id")
+		sr.logger.Debugf("received new view or nil block id qc, info: %s", qc.String())
 		return
 	}
 

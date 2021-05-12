@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package proposer
 
 import (
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/utils"
 )
 
@@ -85,6 +85,7 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 		return block, timeLasts, err
 	}
 	bp.proposalCache.SetProposedAt(block.Header.BlockHeight)
+
 	return block, timeLasts, nil
 }
 

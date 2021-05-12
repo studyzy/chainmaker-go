@@ -25,7 +25,7 @@ func (oi orderIndexes) Swap(i, j int) { oi[i], oi[j] = oi[j], oi[i] }
 //Less checks the ith object's index < the jth object's index
 func (oi orderIndexes) Less(i, j int) bool { return oi[i] < oi[j] }
 
-//votePool caches the consensus msg
+//votePool caches the vote msg with all validators for one level
 type votePool struct {
 	newViewNum    int    //The number of new view voted
 	lockedNewView bool   //Indicates whether move to new view
@@ -61,7 +61,7 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	if vote == nil {
 		return false, fmt.Errorf("nil vote data")
 	}
-	if err := vp.checkDuplicationVote(vote); err != nil {
+	if isValid, err := vp.checkDuplicationVote(vote); err != nil || !isValid {
 		return false, err
 	}
 
@@ -69,8 +69,7 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	// process NewView vote
 	if vote.NewView {
 		vp.votedNewView[vote.AuthorIdx] = vote
-		vp.newViewNum++
-		if !vp.lockedNewView && vp.newViewNum >= minVotesForQc {
+		if !vp.lockedNewView && len(vp.votedNewView) >= minVotesForQc {
 			vp.lockedNewView = true
 		}
 	}
@@ -91,18 +90,22 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	return true, nil
 }
 
-func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) error {
+func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (isValid bool, err error) {
 	lastVote, ok := vp.votes[vote.AuthorIdx]
 	if !ok {
-		return nil
+		return true, nil
 	}
 
 	if lastVote.NewView && vote.NewView {
-		return fmt.Errorf("duplicate vote new view on level %v", vote.Level)
+		return false, nil
 	} else if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
-		return fmt.Errorf("different votes from same level %v", vote.Level)
+		return false, fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
+			vote.Level, lastVote.BlockID, vote.BlockID)
 	}
-	return nil
+
+	//blk -> view
+	//view ->
+	return true, nil
 }
 
 //checkVoteDone checks whether a valid block or nil block voted by +2/3 nodes
