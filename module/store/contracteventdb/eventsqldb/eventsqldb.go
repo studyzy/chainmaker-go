@@ -113,25 +113,23 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 				}
 			}
 		}
-		var preBlockHeight int64
-		single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
-		err = single.ScanColumns(&preBlockHeight)
+	}
+	var preBlockHeight int64
+	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	err = single.ScanColumns(&preBlockHeight)
+	if err != nil {
+		c.Logger.Errorf("failed to get block_height err%s", err)
+		c.db.RollbackDbTransaction(blockHashStr)
+		return err
+	}
+	if blockHeight > preBlockHeight {
+		_, err = dbTx.ExecSql(blockIndexDdl)
 		if err != nil {
-			c.Logger.Errorf("failed to get block_height err%s", err)
+			c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, err.Error())
 			c.db.RollbackDbTransaction(blockHashStr)
 			return err
 		}
-		if blockHeight > preBlockHeight {
-			_, err = dbTx.ExecSql(blockIndexDdl)
-			if err != nil {
-				c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, err.Error())
-				c.db.RollbackDbTransaction(blockHashStr)
-				return err
-			}
-		}
-
 	}
-
 	c.db.CommitDbTransaction(blockHashStr)
 	c.Logger.Debugf("chain[%s]: commit contract event block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)

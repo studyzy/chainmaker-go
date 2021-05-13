@@ -186,8 +186,10 @@ func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte
 // EmitEvent emit event to chain
 func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
-	topic, _ := ec.GetString("topic")
-
+	topic, err := ec.GetString("topic")
+	if err != nil {
+		return nil, fmt.Errorf("emit event : get topic err")
+	}
 	if err := protocol.CheckTopicStr(topic); err != nil {
 		return nil, err
 	}
@@ -214,7 +216,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
 	count := utils.GetSqlStatementCount(ddl)
 	if count != 1 {
-		fmt.Errorf("contract event parameter error,exist sql injection")
+		return nil, fmt.Errorf("contract event parameter error,exist sql injection")
 	}
 
 	return contractEvent, nil
