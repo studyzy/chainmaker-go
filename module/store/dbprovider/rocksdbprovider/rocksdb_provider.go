@@ -257,7 +257,10 @@ func (dbHandle *RocksDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Ite
 	// todo
 	panic("not yet implemented for rocksdb")
 }
-
+func (dbHandle *RocksDBHandle) Close() error {
+	dbHandle.db.Close()
+	return nil
+}
 func makeKeyWithDbName(column string, key []byte) []byte {
 	return append(append([]byte(column), DbNameKeySep...), key...)
 }
