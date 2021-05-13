@@ -162,14 +162,6 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(chainConfig *config.ChainConfig) {
 	for _, kv := range chainConfig.Consensus.ExtConfig {
 		switch kv.Key {
-		case timeservice.ProposerTimeoutMill:
-			if proposerTimeOut, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.ProposerTimeout = time.Duration(proposerTimeOut) * time.Millisecond
-			}
-		case timeservice.ProposerTimeoutIntervalMill:
-			if proposerTimeOutInterval, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.ProposerTimeoutInterval = time.Duration(proposerTimeOutInterval) * time.Millisecond
-			}
 		case timeservice.RoundTimeoutMill:
 			if roundTimeOut, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
 				timeservice.RoundTimeout = time.Duration(roundTimeOut) * time.Millisecond
@@ -409,11 +401,8 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 			cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state, cbi.smr.getEpochId())
 		return
 	}
-
 	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s", te.State.String(), te.Height, te.Level, te.Duration.String())
 	switch te.State {
-	case chainedbftpb.ConsStateType_Propose:
-		cbi.processNewPropose(te.Height, te.Level, te.PreBlkHash)
 	case chainedbftpb.ConsStateType_PaceMaker:
 		cbi.processLocalTimeout(te.Height, te.Level)
 	default:
