@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
-	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
@@ -123,18 +122,13 @@ func (sr *SafetyRules) getBlockByHash(blkHash string) *common.Block {
 }
 
 //SafeNode validate incoming block and qc to vote
-func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
+func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData, currLevel uint64) error {
 	sr.RLock()
 	defer sr.RUnlock()
 
 	var (
-		err         error
-		justQc      = proposal.JustifyQC
-		justQcBlock *common.Block
+		justQc = proposal.JustifyQC
 	)
-	if justQcBlock = sr.getBlockByHash(string(justQc.BlockID)); justQcBlock == nil {
-		return fmt.Errorf("safeNode rules failed, preblock not exist, pre block hash [%v]", hex.EncodeToString(justQc.BlockID))
-	}
 
 	// 1. 活性规则：The liveness rule is the replica will accept m if m.justify has a higher view than the current locked QC
 	if justQc.Level > sr.lockedLevel {
@@ -143,26 +137,27 @@ func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
 	}
 
 	// 2. 安全规则：The safety rule to accept a proposal is the branch of m.node extends from the currently locked node locked QC.node
+	if proposal.Level < currLevel {
+		return fmt.Errorf("old blockPair, ignore it. proposal:[%d:%d], smrCurrLevel:[%d]",
+			proposal.Height, proposal.Level, currLevel)
+	}
 	currBlock := proposal.Block
-	currLevel := proposal.Level
-	for currBlock != nil && currLevel > sr.lockedLevel {
+	currHeight := proposal.Height
+	for currBlock != nil && currHeight > uint64(sr.lockedBlock.Header.BlockHeight) {
 		currBlock = sr.getBlockByHash(string(currBlock.Header.PreBlockHash))
 		if currBlock != nil {
-			if currLevel, err = utils.GetLevelFromBlock(currBlock); err != nil {
-				return fmt.Errorf("safety rules failed: not get level from preBlock: %x", currBlock.Header.BlockHash)
-			}
+			currHeight = uint64(currBlock.Header.BlockHeight)
 		}
 	}
-	if currBlock != nil && bytes.Equal(currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash) {
-		sr.logger.Infof("safeNode success: proposal: %x satisfy safety rules", proposal.Block.Header.BlockHash)
-		return nil
+	if currBlock == nil {
+		return fmt.Errorf("not found block: %d", currHeight-1)
 	}
-	if currBlock != nil {
+	if !bytes.Equal(currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash) {
 		return fmt.Errorf("safety rules failed, not extend block from lockedBlock, proposal: %x extend "+
 			"from: %x, lockedBlock: %x", proposal.Block.Header.BlockHash, currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash)
 	}
-	return fmt.Errorf("safety rules failed, no ancestor block can be "+
-		"found, proposalBlock: %x, lockedBlock: %x", proposal.Block.Header.BlockHash, sr.lockedBlock.Header.BlockHash)
+	sr.logger.Infof("safeNode success: proposal: %x satisfy safety rules", proposal.Block.Header.BlockHash)
+	return nil
 }
 
 //CommitRules validate incoming qc to commit by three-chain

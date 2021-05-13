@@ -273,6 +273,16 @@ func (cs *chainStore) getBlock(id string, height uint64) (*common.Block, error) 
 	return block, err
 }
 
+func (cs *chainStore) getBlockByHash(blkHash []byte) *common.Block {
+	if block := cs.blockPool.GetBlockByID(string(blkHash)); block != nil {
+		return block
+	}
+	if block, err := cs.blockChainStore.GetBlockByHash(blkHash); err == nil && block != nil {
+		return block
+	}
+	return nil
+}
+
 func (cs *chainStore) getCurrentQC() *chainedbftpb.QuorumCert {
 	return cs.blockPool.GetHighestQC()
 }

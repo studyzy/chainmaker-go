@@ -144,8 +144,8 @@ func (cs *chainedbftSMR) setLastVote(vote *chainedbftpb.ConsensusPayload, level 
 	cs.safetyRules.SetLastVote(vote, level)
 }
 
-func (cs *chainedbftSMR) safeNode(proposal *chainedbftpb.ProposalData) error {
-	return cs.safetyRules.SafeNode(proposal)
+func (cs *chainedbftSMR) safeNode(proposal *chainedbftpb.ProposalData, currLevel uint64) error {
+	return cs.safetyRules.SafeNode(proposal, currLevel)
 }
 
 func (cs *chainedbftSMR) updateLockedQC(qc *chainedbftpb.QuorumCert) {
