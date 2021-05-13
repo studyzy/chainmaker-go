@@ -127,13 +127,15 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 
 //constructBlockFetchMsg builds a block fetch request msg at given height
 func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(reqID uint64, endBlockID []byte,
-	endHeight uint64, num uint64) *chainedbftpb.ConsensusPayload {
+	endHeight uint64, num uint64, commitBlock, lockedBlock []byte) *chainedbftpb.ConsensusPayload {
 	msg := &chainedbft.BlockFetchMsg{
-		ReqID:     reqID,
-		Height:    endHeight,
-		BlockID:   endBlockID,
-		NumBlocks: num,
-		AuthorIdx: cbi.selfIndexInEpoch,
+		ReqID:       reqID,
+		Height:      endHeight,
+		BlockID:     endBlockID,
+		NumBlocks:   num,
+		AuthorIdx:   cbi.selfIndexInEpoch,
+		CommitBlock: commitBlock,
+		LockedBLock: lockedBlock,
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_BlockFetchMessage,

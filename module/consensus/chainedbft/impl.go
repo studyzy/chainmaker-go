@@ -417,14 +417,7 @@ func (cbi *ConsensusChainedBftImpl) onReceiveBlockFetch(msg *chainedbftpb.Consen
 
 //onReceiveBlockFetchRsp handles a block fetch response
 func (cbi *ConsensusChainedBftImpl) onReceiveBlockFetchRsp(msg *chainedbftpb.ConsensusMsg) {
-	if err := cbi.validateBlockFetchRsp(msg); err != nil {
-		return
-	}
-	authorIdx := msg.Payload.GetBlockFetchRespMsg().GetAuthorIdx()
-	cbi.syncer.syncMsgC <- &syncMsg{
-		fromPeer: authorIdx,
-		msg:      msg.Payload,
-	}
+	cbi.processFetchResp(msg)
 }
 
 //onBlockCommitted update the consensus smr to latest
