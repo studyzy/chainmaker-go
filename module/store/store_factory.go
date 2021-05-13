@@ -30,6 +30,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
+	"errors"
 	"golang.org/x/sync/semaphore"
 	"runtime"
 	"strings"
@@ -112,10 +113,15 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	}
 	var contractEventDB contracteventdb.ContractEventDB
 	contractEventDBConfig := storeConfig.GetContractEventDbConfig()
-	if !storeConfig.DisableContractEventDB && storeConfig.ContractEventDbConfig.Provider == "sql" {
-		contractEventDB, err = eventsqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
-		if err != nil {
-			return nil, err
+	if !storeConfig.DisableContractEventDB {
+		if parseEngineType(storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+			storeConfig.ContractEventDbConfig.Provider == "sql" {
+			contractEventDB, err = eventsqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("contract event db config err")
 		}
 	}
 	return NewBlockStoreImpl(chainId, blockDB, stateDB, historyDB, contractEventDB, resultDB,

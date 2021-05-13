@@ -211,6 +211,11 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 		TxId:            txSimContext.GetTx().Header.TxId,
 		EventData:       eventData,
 	}
+	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
+	count := utils.GetSqlStatementCount(ddl)
+	if count != 1 {
+		fmt.Errorf("contract event parameter error,exist sql injection")
+	}
 
 	return contractEvent, nil
 }
