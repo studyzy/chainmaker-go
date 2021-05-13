@@ -15,7 +15,7 @@ import (
 
 func init() {
 	newRocksdbHandle = func(chainId string, dbName string) protocol.DBHandle {
-		provider := rocksdbprovider.NewBlockProvider(chainId)
+		provider := rocksdbprovider.NewProvider(chainId, dbName)
 		return provider.GetDBHandle(dbName)
 	}
 }
