@@ -162,15 +162,12 @@ func findStringRange(sql string) [][2]int {
 
 func (s *StandardSqlVerify) getFmtSql(sql string) (string, error) {
 	SQL := strings.TrimSpace(sql)
-	if SQL == "" {
+	if len(SQL) == 0 {
 		return "", ERROR_NULL_SQL
 	}
 
 	SQL = strings.ToUpper(SQL)
 
-	if SQL[len(SQL)-1] == ';' {
-		SQL = SQL[0 : len(SQL)-2]
-	}
 	return SQL, nil
 }
 
