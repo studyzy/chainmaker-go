@@ -38,12 +38,15 @@ type SafetyRules struct {
 }
 
 //NewSafetyRules init a SafetyRules
-func NewSafetyRules(logger *logger.CMLogger, blockPool *blockpool.BlockPool, chainStore protocol.BlockchainStore) *SafetyRules {
-	return &SafetyRules{
-		logger:     logger,
-		blockPool:  blockPool,
-		chainStore: chainStore,
+func NewSafetyRules(logger *logger.CMLogger, blkPool *blockpool.BlockPool, chainStore protocol.BlockchainStore) *SafetyRules {
+	sf := &SafetyRules{
+		logger:      logger,
+		blockPool:   blkPool,
+		chainStore:  chainStore,
+		lockedBlock: blkPool.GetRootBlock(),
+		lockedLevel: blkPool.GetHighestQC().Level,
 	}
+	return sf
 }
 
 //GetLastVoteLevel get last vote's level
