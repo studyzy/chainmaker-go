@@ -858,8 +858,8 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, b
 // tc When processing a proposalMsg or voteMsg, the tc information is contained in the incoming message;
 // in other cases, the parameter is nil.
 func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) {
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start: smrHeight [%v], smrLevel [%v], qc.Height "+
-		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates "+
+		"start: smrHeight [%v], smrLevel [%v]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
 	var committedLevel = cbi.smr.getLastCommittedLevel()
 	if tc != nil {
 		cbi.smr.updateTC(tc)
