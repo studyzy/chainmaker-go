@@ -486,9 +486,9 @@ func (cbi *ConsensusChainedBftImpl) VerifyBlockSignatures(block *common.Block) e
 
 func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCert) (int, int, error) {
 	var (
-		newViewNum    = 0
-		votedBlockNum = 0
-		voteIdxs      = make(map[uint64]bool, 0)
+		votedBlock   = make(map[uint64]*chainedbftpb.VoteData)
+		votedNewView = make(map[uint64]*chainedbftpb.VoteData)
+		voteIdxs     = make(map[uint64]bool, 0)
 	)
 	//for each vote
 	for _, vote := range qc.Votes {
@@ -507,16 +507,14 @@ func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCer
 				vote.AuthorIdx, vote.Height, vote.Level)
 		}
 		voteIdxs[vote.AuthorIdx] = true
-		if vote.NewView && vote.BlockID == nil {
-			newViewNum++
-			continue
+		if vote.NewView {
+			votedNewView[vote.AuthorIdx] = vote
 		}
-		if qc.BlockID != nil && (bytes.Compare(vote.BlockID, qc.BlockID) < 0) {
-			continue
+		if len(vote.BlockID) > 0 && bytes.Equal(vote.BlockID, qc.BlockID) {
+			votedBlock[vote.AuthorIdx] = vote
 		}
-		votedBlockNum++
 	}
-	return newViewNum, votedBlockNum, nil
+	return len(votedNewView), len(votedBlock), nil
 }
 
 //VerifyBlockSignatures verify consensus qc at incoming block and chainconf
