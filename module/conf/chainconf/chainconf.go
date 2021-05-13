@@ -184,8 +184,8 @@ func (c *ChainConf) latestChainConfig() error {
 
 	c.ChainConf = &chainConfig
 
-	if chainConfig.Contract.EnableSqlSupport {
-		//panic("get last chain config fail. sql the future feature")
+	if chainConfig.Contract == nil {
+		chainConfig.Contract = &config.ContractConfig{EnableSqlSupport: false} //by default disable sql support
 	}
 	return nil
 }
