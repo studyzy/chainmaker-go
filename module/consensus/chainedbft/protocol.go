@@ -726,7 +726,8 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		return
 	}
 
-	if voteMsg.SyncInfo.HighestQC.Level > voteMsg.SyncInfo.HighestTC.Level {
+	if voteMsg.SyncInfo.HighestTC == nil || (voteMsg.SyncInfo.HighestQC != nil &&
+		voteMsg.SyncInfo.HighestTC != nil && voteMsg.SyncInfo.HighestQC.Level > voteMsg.SyncInfo.HighestTC.Level) {
 		cbi.processCertificates(voteMsg.SyncInfo.HighestQC, nil)
 	} else {
 		tc := voteMsg.SyncInfo.HighestTC
