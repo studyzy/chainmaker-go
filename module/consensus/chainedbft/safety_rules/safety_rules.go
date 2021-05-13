@@ -215,7 +215,7 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (commit bool, co
 
 //UpdateLockedQC process incoming qc, update locked state by two-chain
 func (sr *SafetyRules) UpdateLockedQC(qc *chainedbftpb.QuorumCert) {
-	if qc.NewView || qc.BlockID == nil {
+	if qc == nil || qc.NewView || qc.BlockID == nil {
 		sr.logger.Debugf("received new view or nil block id qc, info: %s", qc.String())
 		return
 	}
