@@ -79,16 +79,6 @@ func (cbi *ConsensusChainedBftImpl) processNewPropose(height, level uint64, preB
 	}
 	nextProposerIndex := cbi.getProposer(level)
 	if cbi.isValidProposer(level, cbi.selfIndexInEpoch) {
-		event := &timeservice.TimerEvent{
-			Level:      level,
-			Height:     height,
-			State:      cbi.smr.state,
-			Index:      cbi.selfIndexInEpoch,
-			EpochId:    cbi.smr.getEpochId(),
-			PreBlkHash: preBlkHash,
-			Duration:   timeservice.GetEventTimeout(timeservice.PROPOSAL_BLOCK_TIMEOUT, 0),
-		}
-		cbi.addTimerEvent(event)
 		cbi.logger.Infof("service selfIndexInEpoch [%v], build proposal, height: [%v], level [%v]", cbi.selfIndexInEpoch, height, level)
 		cbi.msgbus.Publish(msgbus.BuildProposal, &chainedbftpb.BuildProposal{
 			Height:     height,
@@ -199,10 +189,9 @@ func (cbi *ConsensusChainedBftImpl) verifyJustifyQC(qc *chainedbftpb.QuorumCert)
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validate qc failed, nil block id", cbi.selfIndexInEpoch)
 		return fmt.Errorf(fmt.Sprintf("nil block id in qc"))
 	}
-
 	if qc.NewView && qc.BlockID != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validate qc failed, invalid block id", cbi.selfIndexInEpoch)
-		return fmt.Errorf(fmt.Sprintf("invalid block id in qc"))
+		return fmt.Errorf(fmt.Sprintf("should not have block id:%x in tc", qc.BlockID))
 	}
 	if cbi.smr.getEpochId() == qc.EpochId+1 {
 		return nil
@@ -212,12 +201,10 @@ func (cbi *ConsensusChainedBftImpl) verifyJustifyQC(qc *chainedbftpb.QuorumCert)
 			"epoch id [%v],need [%v]", cbi.selfIndexInEpoch, qc.EpochId, cbi.smr.getEpochId())
 		return fmt.Errorf(fmt.Sprintf("invalid epoch id in qc"))
 	}
-
 	newViewNum, votedBlockNum, err := cbi.countNumFromVotes(qc)
 	if err != nil {
 		return err
 	}
-
 	if qc.Level > 0 && qc.NewView && newViewNum < cbi.smr.min() {
 		return fmt.Errorf(fmt.Sprintf("vote new view num [%v] less than expected [%v]",
 			newViewNum, cbi.smr.min()))
@@ -444,7 +431,6 @@ func (cbi *ConsensusChainedBftImpl) fetchData(proposal *chainedbftpb.ProposalDat
 // processQC insert qc and process qc from proposal msg
 func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) error {
 	proposal := msg.Payload.GetProposalMsg().ProposalData
-	syncInfo := msg.Payload.GetProposalMsg().SyncInfo
 	cbi.logger.Debugf("processQC start. height: [%d], level: [%d], blockHash: [%x], JustifyQC.NewView:"+
 		" [%v]", proposal.JustifyQC.Height, proposal.JustifyQC.Level, proposal.JustifyQC.BlockID, proposal.JustifyQC.NewView)
 	if !proposal.JustifyQC.NewView {
@@ -455,7 +441,7 @@ func (cbi *ConsensusChainedBftImpl) processQC(msg *chainedbftpb.ConsensusMsg) er
 
 	//local already handle it when aggregating qc
 	cbi.commitBlocksByQC(proposal.JustifyQC)
-	cbi.processCertificates(proposal.JustifyQC, syncInfo.HighestTC)
+	cbi.processCertificates(proposal.JustifyQC, nil)
 	if proposal.Level != cbi.smr.getCurrentLevel() {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal proposal [%v:%v] does not match the "+
 			"smr level [%v:%v], ignore proposal", cbi.selfIndexInEpoch, proposal.Height, proposal.Level,
@@ -654,8 +640,16 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		cbi.logger.Debugf("repeat add same vote: [%d:%d:%d]", vote.AuthorIdx, vote.Height, vote.Level)
 		return
 	}
-
-	cbi.processCertificates(voteMsg.SyncInfo.HighestQC, voteMsg.SyncInfo.HighestTC)
+	if voteMsg.SyncInfo.HighestQC.Level > voteMsg.SyncInfo.HighestTC.Level {
+		cbi.processCertificates(voteMsg.SyncInfo.HighestQC, nil)
+	} else {
+		tc := voteMsg.SyncInfo.HighestTC
+		if err := cbi.verifyJustifyQC(tc); err != nil {
+			cbi.logger.Errorf("verify tcInfo[%d:%x] failed: %s", tc.Height, tc.Level, err)
+			return
+		}
+		cbi.processCertificates(nil, tc)
+	}
 	// 5. generate QC if majority are voted and process the new QC if don't need sync data from peers
 	cbi.logger.Debugf("process vote step 4 no need fetch info and process vote")
 	cbi.processVotes(vote)
@@ -737,12 +731,12 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVotes: aggregated for height [%v]"+
 		" level [%v], newView: %v, qcInfo: %s", cbi.selfIndexInEpoch, vote.Height, vote.Level, newView, qc.String())
-	var tc *chainedbftpb.QuorumCert
 	if qc.NewView {
 		// If the newly generated QC type is NewView, it means that majority agree on the timeout and assign QC to TC
-		tc = qc
+		cbi.processCertificates(nil, qc)
+	} else {
+		cbi.processCertificates(qc, nil)
 	}
-	cbi.processCertificates(qc, tc)
 	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
 		if !cbi.doneReplayWal {
@@ -779,20 +773,15 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, b
 func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert) {
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates start: smrHeight [%v], smrLevel [%v], qc.Height "+
 		"[%v] qc.Level [%v], qc.epochID [%d]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qc.Height, qc.Level, qc.EpochId)
-	var (
-		tcLevel        = uint64(0)
-		currentQC      = qc
-		committedLevel = cbi.smr.getLastCommittedLevel()
-	)
+	var committedLevel = cbi.smr.getLastCommittedLevel()
 	if tc != nil {
-		tcLevel = tc.Level
 		cbi.smr.updateTC(tc)
-		// 因为当收集到超时QC时，此时参数上 qc == tc，所以应从节点获取实际的QC信息
-		currentQC = cbi.chainStore.getCurrentQC()
 	}
 	cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC().String())
 	cbi.smr.updateLockedQC(qc)
-	if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
+
+	//if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
+	if enterNewLevel := cbi.smr.processCertificates(qc, tc, committedLevel); enterNewLevel {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_NewHeight)
 		cbi.processNewHeight(cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
 	}

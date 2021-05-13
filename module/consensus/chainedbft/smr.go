@@ -193,8 +193,10 @@ func (cs *chainedbftSMR) getHighestTCLevel() uint64 {
 // htcLevel The received tcLevel
 // hcLevel The latest committed QC level in local node.
 // Returns true if the consensus goes to the next level, otherwise false.
-func (cs *chainedbftSMR) processCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
-	return cs.paceMaker.ProcessCertificates(height, hqcLevel, htcLevel, hcLevel)
+//func (cs *chainedbftSMR) processCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
+func (cs *chainedbftSMR) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert, hcLevel uint64) bool {
+	return cs.paceMaker.ProcessCertificates(qc, tc, hcLevel)
+	//return cs.paceMaker.ProcessCertificates(height, hqcLevel, htcLevel, hcLevel)
 }
 
 func (cs *chainedbftSMR) updateTC(tc *chainedbftpb.QuorumCert) {
