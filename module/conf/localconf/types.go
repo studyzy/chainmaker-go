@@ -217,6 +217,10 @@ type clientConfig struct {
 	HashType        string `mapstructure:"hash_type"`
 }
 
+type coreConfig struct {
+	Evidence bool `mapstructure:"evidence"`
+}
+
 // CMConfig - Local config struct
 type CMConfig struct {
 	LogConfig        logger.LogConfig   `mapstructure:"log"`
@@ -233,6 +237,7 @@ type CMConfig struct {
 	DebugConfig   debugConfig   `mapstructure:"debug"`
 	PProfConfig   pprofConfig   `mapstructure:"pprof"`
 	MonitorConfig monitorConfig `mapstructure:"monitor"`
+	CoreConfig    coreConfig    `mapstructure:"core"`
 }
 
 // GetBlockChains - get blockchain config list
