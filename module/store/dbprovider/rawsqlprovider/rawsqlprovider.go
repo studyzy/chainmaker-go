@@ -27,7 +27,6 @@ var defaultMaxIdleConns = 10
 var defaultMaxOpenConns = 10
 var defaultConnMaxLifeTime = 60
 
-// Porvider encapsulate the gorm.DB that providers mysql handles
 type SqlDBHandle struct {
 	sync.Mutex
 	contextDbName string
@@ -44,7 +43,7 @@ func ParseSqlDbType(str string) (types.EngineType, error) {
 	case "sqlite":
 		return types.Sqlite, nil
 	default:
-		return types.UnknownDb, errors.New("uknow sql db type:" + str)
+		return types.UnknownDb, errors.New("unknown sql db type:" + str)
 	}
 }
 func replaceMySqlDsn(dsn string, dbName string) string {
@@ -219,7 +218,9 @@ func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 	update, args := value.GetUpdateSql()
 	p.log.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)
-
+	if err != nil {
+		return 0, err
+	}
 	rowCount, err := effect.RowsAffected()
 	if err != nil {
 		return 0, err
