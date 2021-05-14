@@ -74,7 +74,7 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 	blockHeight := block.Header.BlockHeight
 	blockIndexDdl := utils.GenerateUpdateBlockHeightIndexDdl(block.Header.BlockHeight)
 	blockHashStr := block.GetBlockHashStr()
-
+	topicTableCache := make(map[string]bool)
 	dbTx, err := c.db.BeginDbTransaction(blockHashStr)
 	if err != nil {
 		return err
@@ -85,7 +85,6 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight, eventIndex)
 			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
 			topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic
-
 			if createDdl != "" {
 				_, err := dbTx.ExecSql(createDdl)
 				if err != nil {
@@ -105,11 +104,14 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 			}
 
 			if heightWithTopicDdl != "" {
-				_, err := dbTx.ExecSql(heightWithTopicDdl)
-				if err != nil {
-					c.Logger.Errorf("failed to save block height with topic table, height:%s, topicTableName:%s, err:%s", block.Header.BlockHeight, topicTableName, err.Error())
-					c.db.RollbackDbTransaction(blockHashStr)
-					return err
+				if _, ok := topicTableCache[topicTableName]; !ok {
+					topicTableCache[topicTableName] = true
+					_, err := dbTx.ExecSql(heightWithTopicDdl)
+					if err != nil {
+						c.Logger.Errorf("failed to save block height with topic table, height:%s, topicTableName:%s, err:%s", block.Header.BlockHeight, topicTableName, err.Error())
+						c.db.RollbackDbTransaction(blockHashStr)
+						return err
+					}
 				}
 			}
 		}
