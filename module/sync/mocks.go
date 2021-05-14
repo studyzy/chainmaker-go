@@ -91,6 +91,14 @@ type MockStore struct {
 	blocks map[int64]*commonPb.Block
 }
 
+func (m MockStore) GetArchivedPivot() uint64 {
+	panic("implement me")
+}
+
+func (m MockStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
 func NewMockStore() *MockStore {
 	return &MockStore{blocks: make(map[int64]*commonPb.Block)}
 }

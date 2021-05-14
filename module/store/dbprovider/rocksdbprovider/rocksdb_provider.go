@@ -1,5 +1,4 @@
 // +build rocksdb
-
 /*
 Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
@@ -9,15 +8,17 @@ SPDX-License-Identifier: Apache-2.0
 package rocksdbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/tecbot/gorocksdb"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	logImpl "chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/pkg/errors"
+	"github.com/syndtr/goleveldb/leveldb/util"
+	"github.com/tecbot/gorocksdb"
 )
 
 const (
@@ -242,6 +243,15 @@ func (dbHandle *RocksDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool
 		dbHandle.logger.Errorf("write batch to rocksdbprovider failed")
 		return errors.Wrap(err, "error writing batch to rocksdbprovider")
 	}
+	return nil
+}
+
+// CompactRange compacts the underlying DB for the given key range.
+func (dbHandle *RocksDBHandle) CompactRange(r util.Range) error {
+	dbHandle.db.CompactRange(gorocksdb.Range{
+		Start: r.Start,
+		Limit: r.Limit,
+	})
 	return nil
 }
 

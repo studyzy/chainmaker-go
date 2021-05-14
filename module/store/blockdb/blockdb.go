@@ -23,11 +23,17 @@ type BlockDB interface {
 	// CommitBlock commits the block and the corresponding rwsets in an atomic operation
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
+	// BlockExists returns true if the block hash exist, or returns false if none exists.
+	BlockExists(blockHash []byte) (bool, error)
+
 	// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 	GetBlockByHash(blockHash []byte) (*commonPb.Block, error)
 
-	// BlockExists returns true if the block hash exist, or returns false if none exists.
-	BlockExists(blockHash []byte) (bool, error)
+	// GetHeightByHash returns a block height given it's hash, or returns nil if none exists.
+	GetHeightByHash(blockHash []byte) (uint64, error)
+
+	// GetBlockMateByHash returns a block metadata given it's hash, or returns nil if none exists.
+	GetBlockMateByHash(blockHash []byte) ([]byte, error)
 
 	// GetBlock returns a block given it's block height, or returns nil if none exists.
 	GetBlock(height int64) (*commonPb.Block, error)
@@ -36,8 +42,14 @@ type BlockDB interface {
 	GetTx(txId string) (*commonPb.Transaction, error)
 	GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error)
 
+	// GetTxHeight retrieves a transaction height by txid, or returns nil if none exists.
+	GetTxHeight(txId string) (uint64, error)
+
 	// TxExists returns true if the tx exist, or returns false if none exists.
 	TxExists(txId string) (bool, error)
+
+	// TxArchived returns true if the tx archived, or returns false.
+   	TxArchived(txId string) (bool, error)
 
 	// GetTxConfirmedTime retrieves time of the tx confirmed in the blockChain
 	GetTxConfirmedTime(txId string) (int64, error)
@@ -56,6 +68,18 @@ type BlockDB interface {
 
 	// GetBlockByTx returns a block which contains a tx.如果查询不到，则返回nil,nil
 	GetBlockByTx(txId string) (*commonPb.Block, error)
+
+	// GetArchivedPivot get archived pivot
+	GetArchivedPivot() (uint64, error)
+
+	// SetArchivedPivot set archived pivot
+	SetArchivedPivot(archivedPivot uint64) error
+
+	// ShrinkBlocks archive old blocks in an atomic operation
+	ShrinkBlocks(startHeight uint64, endHeight uint64) error
+
+	// RestoreBlocks restore blocks from outside block data in an atomic operation
+	RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error
 
 	// Close is used to close database
 	Close()

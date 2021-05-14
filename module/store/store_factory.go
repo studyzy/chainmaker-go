@@ -156,6 +156,7 @@ func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, conf
 		Cache:            cache.NewStoreCacheMgr(chainId, logger),
 		Logger:           logger,
 	}
+
 	switch engineType {
 	case types.LevelDb:
 		blockDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreBlockDBDir, config, logger)

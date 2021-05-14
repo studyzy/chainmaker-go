@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -16,6 +17,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
@@ -25,7 +27,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"errors"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
@@ -46,6 +47,7 @@ type BlockStoreImpl struct {
 	wal             binlog.BinLoger
 	//一个本地数据库，用于对外提供一些本节点的数据存储服务
 	commonDB         protocol.DBHandle
+	ArchiveMgr       *archive.ArchiveMgr
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
 	storeConfig      *localconf.StorageConfig
@@ -144,6 +146,10 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	}
 	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), ",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
+
+	//7. init archive manager
+	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB)
+
 	return nil
 }
 func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
@@ -276,6 +282,40 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	return nil
 }
 
+// GetArchivedPivot return archived pivot
+func (bs *BlockStoreImpl) GetArchivedPivot() uint64 {
+	height, _ := bs.ArchiveMgr.GetArchivedPivot()
+	return height
+}
+
+// ArchiveBlock the block after backup
+func (bs *BlockStoreImpl) ArchiveBlock(archiveHeight uint64) error {
+	if err := bs.ArchiveMgr.ArchiveBlock(archiveHeight); err != nil {
+		return err
+	}
+
+	return bs.ArchiveMgr.SetArchivedPivot(archiveHeight)
+}
+
+// RestoreBlocks restore blocks from outside serialized block data
+func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
+	blockInfos := make([]*serialization.BlockWithSerializedInfo, 0, len(serializedBlocks))
+	for _, blockInfo := range serializedBlocks {
+		bwsInfo, err := serialization.DeserializeBlock(blockInfo)
+		if err != nil {
+			return err
+		}
+
+		blockInfos = append(blockInfos, bwsInfo)
+	}
+
+	if err := bs.ArchiveMgr.RestoreBlock(blockInfos); err != nil {
+		return err
+	}
+
+	return bs.ArchiveMgr.SetArchivedPivot(uint64(blockInfos[0].Block.Header.BlockHeight))
+}
+
 // BlockExists returns true if the black hash exist, or returns false if none exists.
 func (bs *BlockStoreImpl) BlockExists(blockHash []byte) (bool, error) {
 	return bs.blockDB.BlockExists(blockHash)
@@ -284,6 +324,16 @@ func (bs *BlockStoreImpl) BlockExists(blockHash []byte) (bool, error) {
 // GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 	return bs.blockDB.GetBlockByHash(blockHash)
+}
+
+// GetHeightByHash returns a block height given it's hash, or returns nil if none exists.
+func (bs *BlockStoreImpl) GetHeightByHash(blockHash []byte) (uint64, error) {
+	return bs.blockDB.GetHeightByHash(blockHash)
+}
+
+// GetBlockMateByHash returns a block metadata given it's hash, or returns nil if none exists.
+func (bs *BlockStoreImpl) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
+	return bs.blockDB.GetBlockMateByHash(blockHash)
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
@@ -309,6 +359,11 @@ func (bs *BlockStoreImpl) GetBlockByTx(txId string) (*commonPb.Block, error) {
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetTx(txId string) (*commonPb.Transaction, error) {
 	return bs.blockDB.GetTx(txId)
+}
+
+// GetTxHeight retrieves a transaction height by txid, or returns nil if none exists.
+func (bs *BlockStoreImpl) GetTxHeight(txId string) (uint64, error) {
+	return bs.blockDB.GetTxHeight(txId)
 }
 func (bs *BlockStoreImpl) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
 	return bs.blockDB.GetTxWithBlockInfo(txId)
@@ -432,13 +487,13 @@ func (bs *BlockStoreImpl) GetDBHandle(dbName string) protocol.DBHandle {
 func (bs *BlockStoreImpl) Close() error {
 	bs.blockDB.Close()
 	bs.stateDB.Close()
-	if !bs.storeConfig.DisableHistoryDB {
+	if !bs.storeConfig.DisableHistoryDB && bs.historyDB != nil {
 		bs.historyDB.Close()
 	}
-	if !bs.storeConfig.DisableContractEventDB {
+	if !bs.storeConfig.DisableContractEventDB && bs.contractEventDB != nil {
 		bs.contractEventDB.Close()
 	}
-	if !bs.storeConfig.DisableResultDB {
+	if !bs.storeConfig.DisableResultDB && bs.resultDB != nil {
 		bs.resultDB.Close()
 	}
 	bs.wal.Close()
@@ -538,6 +593,7 @@ func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64)
 	}
 	return nil
 }
+
 func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[ContractEventDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
@@ -553,6 +609,7 @@ func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint
 	}
 	return nil
 }
+
 func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint64) error {
 	for height := currentHeight + 1; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)

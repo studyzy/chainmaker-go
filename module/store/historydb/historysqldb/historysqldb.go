@@ -23,7 +23,7 @@ type HistorySqlDB struct {
 	dbName string
 }
 
-// NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
+// NewHistorySqlDB construct a new `HistoryDB` for given chainId
 func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*HistorySqlDB, error) {
 	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
 	return newHistorySqlDB(chainId, db, logger)
