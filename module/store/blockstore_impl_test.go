@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"bytes"
 	"path/filepath"
 
 	"chainmaker.org/chainmaker-go/localconf"
@@ -740,3 +741,73 @@ func TestWriteBinlog(t *testing.T) {
 //	}
 //	defer db.Close()
 //}
+
+
+func Test_blockchainStoreImpl_Archive(t *testing.T) {
+	var factory Factory
+	s, err := factory.NewStore(chainId, getlvldbConfig())
+	assert.Equal(t, nil, err)
+	defer s.Close()
+
+	totalHeight := 301000
+	archiveHeight := 10
+	avblkHeight := 20
+
+	//Prepare block data
+	blocks := make([]*commonPb.Block, 0, totalHeight)
+	TxRWSetMp := make(map[int64][]*commonPb.TxRWSet)
+	for i := 0; i < totalHeight; i ++ {
+		block, txRWSet := createBlockAndRWSets(chainId, int64(i), 100)
+		err = s.PutBlock(block, txRWSet, nil)
+		assert.Equal(t, nil, err)
+		blocks = append(blocks, block)
+		TxRWSetMp[block.Header.BlockHeight] = txRWSet
+	}
+
+	//verify store apis
+	avblk := blocks[avblkHeight]
+	vbHeight, err1 := s.GetHeightByHash(avblk.Header.BlockHash)
+	assert.Equal(t, nil, err1)
+	assert.Equal(t, vbHeight, uint64(avblkHeight))
+
+	vbm, err2 := s.GetBlockMateByHash(avblk.Header.BlockHash)
+	assert.Equal(t, nil, err2)
+
+	_, bwsInfo, err3 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
+		Block:          avblk,
+		TxRWSets:       TxRWSetMp[avblk.Header.BlockHeight],
+		ContractEvents: nil,
+	})
+	assert.Equal(t, nil, err3)
+	assert.Equal(t, bytes.Equal(vbm, bwsInfo.GetSerializedMeta()), true)
+
+	vtHeight, err4 := s.GetTxHeight(avblk.Txs[0].Header.TxId)
+	assert.Equal(t, nil, err4)
+	assert.Equal(t, vtHeight, uint64(avblkHeight))
+
+	//archive block
+	err = s.ArchiveBlock(uint64(archiveHeight))
+	assert.Equal(t, nil, err)
+
+	assert.Equal(t, uint64(archiveHeight), s.GetArchivedPivot())
+
+	//Prepare restore data
+	blocksBytes := make([][]byte, 0, archiveHeight + 1)
+	for i := 0; i <= archiveHeight; i++ {
+		blockBytes, _, err5 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
+			Block:          blocks[i],
+			TxRWSets:       TxRWSetMp[blocks[i].Header.BlockHeight],
+			ContractEvents: nil,
+		})
+
+		assert.Equal(t, nil, err5)
+		blocksBytes = append(blocksBytes, blockBytes)
+	}
+
+	//restore block
+	err = s.RestoreBlocks(blocksBytes)
+	assert.Equal(t, nil, err)
+
+	assert.Equal(t, uint64(0), s.GetArchivedPivot())
+}
+

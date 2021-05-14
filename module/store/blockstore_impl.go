@@ -90,6 +90,9 @@ func NewBlockStoreImpl(chainId string,
 		logger:           logger,
 		storeConfig:      storeConfig,
 	}
+
+	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB)
+
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
 	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
 		//check savepoint and recover
