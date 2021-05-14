@@ -11,6 +11,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"sort"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -802,7 +803,7 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 		cbi.logger.Debugf("not done for vote:[%d:%d]", vote.Height, vote.Level)
 		return
 	}
-	//aggregate qc
+	//aggregate qc/tc
 	qc, err := cbi.aggregateQCAndInsert(vote.Height, vote.Level, blockID, newView)
 	if err != nil {
 		cbi.logger.Errorf("service index [%v] processVote: new qc aggregated for height [%v] "+
@@ -824,11 +825,13 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	} else {
 		cbi.processCertificates(qc, nil)
 	}
+
 	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
 		if !cbi.doneReplayWal {
 			return
 		}
+		//cbi.chainStore.getBlocks()
 		qcBlk := cbi.chainStore.getCurrentQC() // qc == block ?
 		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), qcBlk.BlockID)
 	}
@@ -1035,6 +1038,10 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 	if len(blocks)%MaxSyncBlockNum > 0 {
 		count++
 	}
+
+	sort.Slice(blocks, func(i, j int) bool {
+		return blocks[i].Block.Header.BlockHeight < blocks[i].Block.Header.BlockHeight
+	})
 	for i := 0; i <= count-1; i++ {
 		if i == count-1 {
 			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:], status, reqID)
