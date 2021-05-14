@@ -204,7 +204,7 @@ func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
 func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	p.log.Debug("Exec sql:", sql)
+	p.log.Debug("Exec sql:", sql, values)
 	tx, err := p.db.Exec(sql, values...)
 	if err != nil {
 		return 0, err
@@ -217,7 +217,7 @@ func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 	defer p.Unlock()
 	value := val.(TableDMLGenerator)
 	update, args := value.GetUpdateSql()
-	p.log.Debug("Exec sql:", update)
+	p.log.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)
 
 	rowCount, err := effect.RowsAffected()
@@ -228,7 +228,7 @@ func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 		return rowCount, nil
 	}
 	insert, args := value.GetInsertSql()
-	p.log.Debug("Exec sql:", insert)
+	p.log.Debug("Exec sql:", insert, args)
 	result, err := p.db.Exec(insert, args...)
 	if err != nil {
 		return 0, err
@@ -239,7 +239,7 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
-	p.log.Debug("Query sql:", sql)
+	p.log.Debug("Query sql:", sql, values)
 	rows, err := db.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
-	p.log.Debug("Query sql:", sql)
+	p.log.Debug("Query sql:", sql, values)
 	rows, err := p.db.Query(sql, values...)
 	if err != nil {
 		return nil, err

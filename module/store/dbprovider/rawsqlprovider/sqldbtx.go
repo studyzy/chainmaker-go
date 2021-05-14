@@ -41,7 +41,7 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	defer p.Unlock()
 	value := val.(TableDMLGenerator)
 	update, args := value.GetUpdateSql()
-	p.logger.Debug("Exec sql:", update)
+	p.logger.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)
 	if err != nil {
 		p.logger.Error(err)
@@ -55,7 +55,7 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 		return rowCount, nil
 	}
 	insert, args := value.GetInsertSql()
-	p.logger.Debug("Exec sql:", insert)
+	p.logger.Debug("Exec sql:", insert, args)
 	result, err := p.db.Exec(insert, args...)
 	if err != nil {
 		return 0, err
@@ -76,6 +76,7 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
+	p.logger.Debug("Query sql:", sql, values)
 	rows, err := db.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -88,6 +89,7 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
+	p.logger.Debug("Query sql:", sql, values)
 	rows, err := p.db.Query(sql, values...)
 	if err != nil {
 		return nil, err
