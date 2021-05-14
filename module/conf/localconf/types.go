@@ -137,7 +137,7 @@ type blockchainConfig struct {
 type StorageConfig struct {
 	//默认的Leveldb配置，如果每个DB有不同的设置，可以在自己的DB中进行设置
 	StorePath            string `mapstructure:"store_path"`
-	DbPrefix             string "db_prefix"
+	DbPrefix             string `mapstructure:"db_prefix"`
 	WriteBufferSize      int    `mapstructure:"write_buffer_size"`
 	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
 	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
@@ -156,19 +156,19 @@ type StorageConfig struct {
 
 func (config *StorageConfig) setDefault() {
 	if config.DbPrefix != "" {
-		if config.BlockDbConfig.SqlDbConfig != nil {
+		if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil && config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.BlockDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.StateDbConfig.SqlDbConfig != nil {
+		if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil && config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.StateDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.HistoryDbConfig.SqlDbConfig != nil {
+		if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil && config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.HistoryDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.ResultDbConfig.SqlDbConfig != nil {
+		if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil && config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.ResultDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.ContractEventDbConfig.SqlDbConfig != nil {
+		if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.ContractEventDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
 	}
@@ -265,7 +265,7 @@ type SqlDbConfig struct {
 	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
 	SqlLogMode      string `mapstructure:"sqllog_mode"`       //Silent,Error,Warn,Info
 	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
-	DbPrefix        string "db_prefix"
+	DbPrefix        string `mapstructure:"db_prefix"`
 }
 
 type txPoolConfig struct {

@@ -69,7 +69,10 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	if err != nil {
 		panic(err.Error())
 	}
-	dbName = conf.DbPrefix + dbName
+	if conf.DbPrefix != "" {
+		dbName = conf.DbPrefix + dbName
+		log.Debugf("add db prefix[%s] to get new db name:%s", conf.DbPrefix, dbName)
+	}
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)
@@ -115,7 +118,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		panic(fmt.Sprintf("unsupport db:%v", sqlType))
 	}
 
-	log.Debug("inject ChainMaker logger into gorm db logger.")
+	log.Debug("inject ChainMaker logger into db logger.")
 	provider.log = log
 	return provider
 }
