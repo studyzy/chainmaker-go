@@ -192,7 +192,7 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, payload *
 	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, payload.ContractId.ContractName)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, payload.ContractId.ContractName)
 	txKey := block.GetTxKey() + "_KV"
-	err := s.initContractDb(dbName) //创建合约的数据库和KV表
+	err := s.initContractDb(payload.ContractId.ContractName) //创建合约的数据库和KV表
 	dbHandle := s.getContractDbHandle(payload.ContractId.ContractName)
 	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {
