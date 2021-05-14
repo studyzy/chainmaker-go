@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 var defaultMaxIdleConns = 10
@@ -68,6 +69,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	if err != nil {
 		panic(err.Error())
 	}
+	dbName = conf.DbPrefix + dbName
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)
@@ -91,7 +93,10 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 				panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
 			}
 		}
-		log.Debug("open new gorm db connection for " + conf.SqlDbType + " dsn:" + dsn)
+		log.Debug("open new db connection for " + conf.SqlDbType + " dsn:" + dsn)
+		db.SetConnMaxLifetime(time.Second * time.Duration(conf.ConnMaxLifeTime))
+		db.SetMaxIdleConns(conf.MaxIdleConns)
+		db.SetMaxOpenConns(conf.MaxOpenConns)
 		provider.db = db
 		provider.contextDbName = dbName //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
