@@ -260,11 +260,10 @@ func (cbi *ConsensusChainedBftImpl) needFetch(syncInfo *chainedbftpb.SyncInfo) (
 
 func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.ConsensusMsg) error {
 	proposal := msg.Payload.GetProposalMsg().ProposalData
-	// todo 1
-	//if proposal.Level < cbi.smr.getCurrentLevel() {
-	//	return fmt.Errorf("old proposal, ignore it. proposalInfo:[%d:%d], smrInfo:[%d:%d]",
-	//		proposal.Height, proposal.Level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
-	//}
+	if proposal.Level < cbi.smr.getCurrentLevel() {
+		return fmt.Errorf("old proposal, ignore it. proposalInfo:[%d:%d], smrInfo:[%d:%d]",
+			proposal.Height, proposal.Level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+	}
 	if proposal.EpochId != cbi.smr.getEpochId() {
 		return fmt.Errorf("err epochId, ignore it")
 	}
@@ -286,7 +285,7 @@ func (cbi *ConsensusChainedBftImpl) validateProposalMsg(msg *chainedbftpb.Consen
 			cbi.selfIndexInEpoch, proposal.Block.GetHeader().PreBlockHash, proposal.JustifyQC.BlockID)
 		return fmt.Errorf("mismatch pre hash in block header and justify qc")
 	}
-	if err := cbi.smr.safeNode(proposal, cbi.smr.getCurrentLevel()); err != nil {
+	if err := cbi.smr.safeNode(proposal); err != nil {
 		return fmt.Errorf("verify proposal [%v:%v:%x] by satety rules failed: %s",
 			proposal.Height, proposal.Level, proposal.Block.Header.BlockHash, err)
 	}
@@ -334,6 +333,10 @@ func (cbi *ConsensusChainedBftImpl) validateBlockPair(fromPeer uint64,
 
 	qc := blockPair.QC
 	blkHeader := blockPair.Block.GetHeader()
+	if qc.Level < cbi.smr.getCurrentLevel() {
+		return fmt.Errorf("old proposal, ignore it. proposalInfo:[%d:%d], smrInfo:[%d:%d]",
+			qc.Height, qc.Level, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
+	}
 	if qc.EpochId != cbi.smr.getEpochId() {
 		return fmt.Errorf("server selfIndexInEpoch [%v] invalid epochID in pairInfo, "+
 			"qc epochId %v,expected %v ", cbi.selfIndexInEpoch, qc.EpochId, cbi.smr.getEpochId())
@@ -364,7 +367,7 @@ func (cbi *ConsensusChainedBftImpl) validateBlockPair(fromPeer uint64,
 
 	if err := cbi.smr.safeNode(&chainedbftpb.ProposalData{
 		Block: blockPair.Block, JustifyQC: preQC, Level: qc.Level, Height: blockPair.QC.Height,
-	}, cbi.smr.getCurrentLevel()); err != nil {
+	}); err != nil {
 		return fmt.Errorf("verify blockPair [%v:%v:%x] by satety rules failed: %s",
 			qc.Height, qc.Level, qc.BlockID, err)
 	}

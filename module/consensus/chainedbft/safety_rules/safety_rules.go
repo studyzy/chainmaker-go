@@ -125,7 +125,7 @@ func (sr *SafetyRules) getBlockByHash(blkHash string) *common.Block {
 }
 
 //SafeNode validate incoming block and qc to vote
-func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData, currLevel uint64) error {
+func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
 	sr.RLock()
 	defer sr.RUnlock()
 
@@ -140,10 +140,6 @@ func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData, currLevel u
 	}
 
 	// 2. 安全规则：The safety rule to accept a proposal is the branch of m.node extends from the currently locked node locked QC.node
-	if proposal.Level < currLevel {
-		return fmt.Errorf("old blockPair, ignore it. proposal:[%d:%d], smrCurrLevel:[%d]",
-			proposal.Height, proposal.Level, currLevel)
-	}
 	currBlock := proposal.Block
 	currHeight := proposal.Height
 	for currBlock != nil && currHeight > uint64(sr.lockedBlock.Header.BlockHeight) {
