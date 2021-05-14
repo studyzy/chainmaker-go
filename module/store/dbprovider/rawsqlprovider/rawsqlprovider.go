@@ -275,8 +275,6 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	}
 	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
 	p.dbTxCache[txName] = sqltx
-	p.contextDbName = ""
-
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
 }
