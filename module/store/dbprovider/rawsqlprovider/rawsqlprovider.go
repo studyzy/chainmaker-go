@@ -69,10 +69,6 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	if err != nil {
 		panic(err.Error())
 	}
-	if conf.DbPrefix != "" {
-		dbName = conf.DbPrefix + dbName
-		log.Debugf("add db prefix[%s] to get new db name:%s", conf.DbPrefix, dbName)
-	}
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)

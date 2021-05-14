@@ -19,17 +19,18 @@ type ContractEventSqlDB struct {
 
 // NewContractEventMysqlDB construct a new `ContractEventDB` for given chainId
 func NewContractEventMysqlDB(chainId string, sqlDbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ContractEventSqlDB, error) {
-	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), sqlDbConfig, logger)
-	return newContractEventDB(chainId, db, logger)
+	dbName := getDbName(sqlDbConfig, chainId)
+	db := rawsqlprovider.NewSqlDBHandle(dbName, sqlDbConfig, logger)
+	return newContractEventDB(dbName, db, logger)
 }
 
-func newContractEventDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
+func newContractEventDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
 	cdb := &ContractEventSqlDB{
 		db:     db,
 		Logger: logger,
-		dbName: getDbName(chainId),
+		dbName: dbName,
 	}
-	cdb.initDb(getDbName(chainId))
+	cdb.initDb(dbName)
 	return cdb, nil
 }
 
@@ -55,12 +56,12 @@ func (c *ContractEventSqlDB) initDb(dbName string) {
 }
 
 func (c *ContractEventSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	c.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	c.initDb(c.dbName)
 	return nil
 }
 
-func getDbName(chainId string) string {
-	return "contract_eventdb" + chainId
+func getDbName(sqlDbConfig *localconf.SqlDbConfig, chainId string) string {
+	return sqlDbConfig.DbPrefix + "contract_eventdb" + chainId
 }
 
 // CommitBlock commits the event in an atomic operation

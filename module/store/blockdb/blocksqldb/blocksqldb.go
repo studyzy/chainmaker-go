@@ -8,7 +8,6 @@ package blocksqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -31,7 +30,7 @@ type BlockSqlDB struct {
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
 func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*BlockSqlDB, error) {
-	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
+	db := rawsqlprovider.NewSqlDBHandle(getDbName(dbConfig, chainId), dbConfig, logger)
 	return newBlockSqlDB(chainId, db, logger)
 }
 
@@ -52,19 +51,17 @@ func (db *BlockSqlDB) initDb(dbName string) {
 		panic("init state sql db table `tx_infos` fail")
 	}
 }
-func getDbName(chainId string) string {
-	return "blockdb_" + chainId
+func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
+	return dbConfig.DbPrefix + "blockdb_" + chainId
 }
-func newBlockSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*BlockSqlDB, error) {
+func newBlockSqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*BlockSqlDB, error) {
 	nWorkers := runtime.NumCPU()
-	if logger == nil {
-		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
-	}
+
 	blockDB := &BlockSqlDB{
 		db:               db,
 		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
 		logger:           logger,
-		dbName:           getDbName(chainId),
+		dbName:           dbName,
 	}
 	return blockDB, nil
 }
@@ -74,7 +71,7 @@ func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
 	return err
 }
 func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	b.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	b.initDb(b.dbName)
 	return b.CommitBlock(genesisBlock)
 }
 
