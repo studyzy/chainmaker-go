@@ -320,7 +320,9 @@ func (cbi *ConsensusChainedBftImpl) processFetchResp(msg *chainedbftpb.Consensus
 	for _, pair := range payload.Blocks {
 		if err := cbi.validateBlockPair(payload.AuthorIdx, pair, haveProcessBlocks); err != nil {
 			cbi.logger.Errorf("%s", err)
+			continue
 		}
+		cbi.logger.Debugf("validate blockPair success: [%d:%d:%x]", pair.QC.Height, pair.QC.Level, pair.QC.BlockID)
 		if err := cbi.processBlockAndQC(pair); err != nil {
 			cbi.logger.Errorf("%s", err)
 		}
