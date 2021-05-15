@@ -88,14 +88,12 @@ func (cbi *ConsensusChainedBftImpl) addProposalWalIndex(proposalHeight uint64) {
 		err       error
 		lastIndex uint64
 	)
-	defer func() {
-		cbi.logger.Debugf("store proposal: %d walIndex: %d", proposalHeight, lastIndex+1)
-	}()
 	if _, exist := cbi.proposalWalIndex.Load(proposalHeight); !exist {
 		if lastIndex, err = cbi.wal.LastIndex(); err != nil {
 			cbi.logger.Fatalf("get lastIndex from walFile failed, reason: %s", err)
 		} else {
 			cbi.proposalWalIndex.Store(proposalHeight, lastIndex+1)
+			cbi.logger.Debugf("store proposal: %d walIndex: %d", proposalHeight, lastIndex+1)
 		}
 	}
 }
