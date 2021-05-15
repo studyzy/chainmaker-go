@@ -304,6 +304,8 @@ func (sch *scheduler) handleProcessedBlockResp(msg ProcessedBlockResp) (queue.It
 		return nil, fmt.Errorf("query db failed in processor")
 	}
 	if msg.status == addErr {
+		sch.blockStates[msg.height] = newBlock
+		delete(sch.peers, msg.from)
 		return nil, fmt.Errorf("failed add block to chain")
 	}
 	return nil, nil

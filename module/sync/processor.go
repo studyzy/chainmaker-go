@@ -104,6 +104,7 @@ func (pro *processor) handleDataDetection() {
 		}
 	}
 }
+
 func (pro *processor) lastCommitBlockHeight() int64 {
 	return pro.ledgerCache.GetLastCommittedBlock().Header.BlockHeight
 }
