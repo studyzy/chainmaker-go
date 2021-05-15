@@ -94,8 +94,8 @@ var (
 )
 
 var (
-	trustRootCrt     = ""
 	trustRootOrgId   = ""
+	trustRootCrtPath = ""
 	nodeOrgOrgId     = ""
 	nodeOrgAddresses = ""
 )
@@ -107,7 +107,7 @@ func main() {
 	)
 	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator, 4: get chainConfig")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
-	flag.StringVar(&trustRootCrt, "trust_root_crt", "", "node crt that will be added to the trust root")
+	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
 	flag.StringVar(&nodeOrgOrgId, "nodeOrg_org_id", "", "node orgID that will be added")
 	flag.StringVar(&nodeOrgAddresses, "nodeOrg_addresses", "", "node address that will be added")
@@ -571,7 +571,7 @@ type InvokerMsg struct {
 
 func trustRootAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string) error {
 	// 构造Payload
-	if trustRootOrgId == "" || trustRootCrt == "" {
+	if trustRootOrgId == "" || trustRootCrtPath == "" {
 		log.Fatalf("the trustRoot orgId or crt is empty")
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
@@ -579,9 +579,18 @@ func trustRootAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId str
 		Key:   "org_id",
 		Value: trustRootOrgId,
 	})
+	file, err := os.Open(trustRootCrt)
+	if err != nil {
+		log.Fatalf("open file failed: %s, reason: %s", trustRootCrt, err)
+	}
+	defer file.Close()
+	bz, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatalf("read content from file failed: %s", err)
+	}
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "root",
-		Value: trustRootCrt,
+		Value: string(bz),
 	})
 
 	config := getChainConfig(sk3, client, chainId)
