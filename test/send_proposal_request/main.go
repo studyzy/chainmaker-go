@@ -424,9 +424,9 @@ func getKeysAndCertsPath(orgIdList []int) (keysFile, certsFile []string) {
 		keyPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
 		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
 		keysFile = append(keysFile, keyPath)
-		userCrtPaths = append(userCrtPaths, userCrtPath)
+		certsFile = append(certsFile, userCrtPath)
 	}
-	return keysFile, userCrtPaths
+	return keysFile, certsFile
 }
 
 func addCerts(count int) {
@@ -687,7 +687,7 @@ func aclSignSystemContract(msg commonPb.SystemContractPayload, orgIds, adminSign
 	adminSignCrtArray := adminSignCrts
 
 	if len(adminSignKeyArray) != len(adminSignCrtArray) {
-		return nil, errors.New("admin key len is not equal to crt len")
+		return nil, errors.New(fmt.Sprintf("admin key len is not equal to crt len: %d, %d", len(adminSignKeyArray), len(adminSignCrtArray)))
 	}
 	if len(adminSignKeyArray) != len(orgIdArray) {
 		return nil, errors.New("admin key len is not equal to orgId len")
@@ -742,7 +742,7 @@ func nodeOrgAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 		Value: nodeOrgOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
+		Key:   "node_ids",
 		Value: nodeOrgAddresses,
 	})
 
