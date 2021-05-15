@@ -579,9 +579,9 @@ func trustRootAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId str
 		Key:   "org_id",
 		Value: trustRootOrgId,
 	})
-	file, err := os.Open(trustRootCrt)
+	file, err := os.Open(trustRootCrtPath)
 	if err != nil {
-		log.Fatalf("open file failed: %s, reason: %s", trustRootCrt, err)
+		log.Fatalf("open file failed: %s, reason: %s", trustRootCrtPath, err)
 	}
 	defer file.Close()
 	bz, err := ioutil.ReadAll(file)
