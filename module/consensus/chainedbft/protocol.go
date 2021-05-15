@@ -732,13 +732,23 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		return
 	}
 
-	if voteMsg.SyncInfo.HighestTC == nil || (voteMsg.SyncInfo.HighestQC != nil &&
-		voteMsg.SyncInfo.HighestTC != nil && voteMsg.SyncInfo.HighestQC.Level > voteMsg.SyncInfo.HighestTC.Level) {
-		cbi.processCertificates(voteMsg.SyncInfo.HighestQC, nil)
+	qc := voteMsg.SyncInfo.HighestQC
+	tc := voteMsg.SyncInfo.HighestTC
+	// 使用投票携带的QC/TC更新节点状态；为了解决节点可能中途由于网络问题，导致部分QC/TC未即使收到，导致节点状态未更新至最新
+	// 当投票中只携带QC，或携带的QC>TC时，使用QC去尝试推进节点状态
+	// 当TC大时，则用TC更新节点状态
+	if tc == nil || qc.Level > tc.Level {
+		if err := cbi.verifyJustifyQC(qc); err != nil {
+			cbi.logger.Errorf("verify qcInfo[%d:%x] failed in processVote: %s", qc.Height, qc.Level, err)
+			return
+		}
+		// 当进入这步时，当前节点肯定已接收到QC的block（因为上述会检测是否缺少数据），可能缺少该block对应的QC，直接加入即可
+		if err := cbi.chainStore.insertQC(qc); err == nil {
+			cbi.processCertificates(qc, nil)
+		}
 	} else {
-		tc := voteMsg.SyncInfo.HighestTC
 		if err := cbi.verifyJustifyQC(tc); err != nil {
-			cbi.logger.Errorf("verify tcInfo[%d:%x] failed: %s", tc.Height, tc.Level, err)
+			cbi.logger.Errorf("verify tcInfo[%d:%x] failed in processVote: %s", tc.Height, tc.Level, err)
 			return
 		}
 		cbi.processCertificates(nil, tc)
