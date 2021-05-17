@@ -39,3 +39,14 @@ func BlockInfoTable(bInfo BlockInfo) func(tx *gorm.DB) *gorm.DB {
 func DBName(chainId string) string {
 	return fmt.Sprintf("%s_%s", prefixDbName, chainId)
 }
+
+func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) (int64, error) {
+	var bInfo = BlockInfo{
+		ChainID:        chainId,
+		BlockHeight:    blkHeight,
+		BlockWithRWSet: blkWithRWSet,
+		Hmac:           hmac,
+	}
+	result := db.Create(&bInfo)
+	return result.RowsAffected, result.Error
+}
