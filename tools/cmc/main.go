@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker-go/tools/cmc/archive"
 	"chainmaker.org/chainmaker-go/tools/cmc/cert"
 	"chainmaker.org/chainmaker-go/tools/cmc/client"
 	"chainmaker.org/chainmaker-go/tools/cmc/hibe"
@@ -26,6 +27,7 @@ func main() {
 	mainCmd.AddCommand(cert.CertCMD())
 	mainCmd.AddCommand(client.ClientCMD())
 	mainCmd.AddCommand(hibe.HibeCMD())
+	mainCmd.AddCommand(archive.ArchiveCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())
