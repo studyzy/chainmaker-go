@@ -455,6 +455,10 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 		return false, err
 	}
 
+	if heightBytes == nil {
+		return false, ValueNotFoundError
+	}
+
 	archivedPivot, err := b.GetArchivedPivot()
 	if err != nil {
 		return false, err
