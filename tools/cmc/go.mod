@@ -11,7 +11,8 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
-	google.golang.org/grpc v1.26.0
+	gorm.io/driver/mysql v1.0.6
+	gorm.io/gorm v1.21.9
 	vuvuzela.io/crypto v0.0.0-20190327123840-80a93a3ed1d6
 )
 
