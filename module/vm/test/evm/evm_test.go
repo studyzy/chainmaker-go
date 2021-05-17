@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package evm
 
 import (
+	evm_go "chainmaker.org/chainmaker-go/evm/evm-go"
+	pb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -16,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
-	"chainmaker.org/chainmaker-go/pb"
 	"chainmaker.org/chainmaker-go/vm/test"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
