@@ -139,11 +139,13 @@ func main() {
 		return
 	case 2: // 2) 添加trustRoot
 		trustRootAdd(sk3, client, CHAIN1)
-	case 3:
+	case 3: // 3) 添加节点到members
 		nodeOrgAdd(sk3, client, CHAIN1)
-	case 4:
+	case 4: // 4) 查看链配置
 		config := getChainConfig(sk3, client, CHAIN1)
 		fmt.Println(config)
+	case 5: // 5) 删除节点
+		nodeOrgDelete(sk3, client, CHAIN1)
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -749,6 +751,27 @@ func nodeOrgAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 	config := getChainConfig(sk3, client, chainId)
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ORG_ADD.String(), pairs: pairs, oldSeq: config.Sequence})
+	if err != nil {
+		log.Fatalf("create configUpdateRequest error")
+	}
+	fmt.Println("txId: ", txId, ", resp: ", resp)
+	return nil
+}
+
+func nodeOrgDelete(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string) error {
+	// 构造Payload
+	if nodeOrgOrgId == "" {
+		return errors.New("the nodeOrg orgId is empty")
+	}
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   "org_id",
+		Value: nodeOrgOrgId,
+	})
+
+	config := getChainConfig(sk3, client, chainId)
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
+		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ORG_DELETE.String(), pairs: pairs, oldSeq: config.Sequence})
 	if err != nil {
 		log.Fatalf("create configUpdateRequest error")
 	}
