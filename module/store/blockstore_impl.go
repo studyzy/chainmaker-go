@@ -138,9 +138,13 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 			block.Header.ChainId, block.Header.BlockHeight)
 	}
 	//6. init contract event db
-	if !bs.storeConfig.DisableContractEventDB && parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-		bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
-		bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
+	if !bs.storeConfig.DisableContractEventDB {
+		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+			bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
+			bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
+		} else {
+			return errors.New("contract event db config err")
+		}
 	}
 	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), ",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
@@ -154,14 +158,13 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 }
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
-func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
+func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:          block,
-		TxRWSets:       txRWSets,
-		ContractEvents: contractEvents,
+		Block:    block,
+		TxRWSets: txRWSets,
 	}
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
@@ -436,7 +439,12 @@ func (bs *BlockStoreImpl) Close() error {
 		bs.historyDB.Close()
 	}
 	if !bs.storeConfig.DisableContractEventDB {
-		bs.contractEventDB.Close()
+		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+			bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
+			bs.contractEventDB.Close()
+		} else {
+			return errors.New("contract event db config err")
+		}
 	}
 	if !bs.storeConfig.DisableResultDB {
 		bs.resultDB.Close()
@@ -471,8 +479,13 @@ func (bs *BlockStoreImpl) recover() error {
 		}
 	}
 	if !bs.storeConfig.DisableContractEventDB {
-		if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
-			return err
+		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+			bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
+			if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
+				return err
+			}
+		} else {
+			return errors.New("contract event db config err")
 		}
 	}
 

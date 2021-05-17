@@ -26,8 +26,9 @@ type ResultSqlDB struct {
 
 // NewHistoryMysqlDB construct a new `HistoryDB` for given chainId
 func NewResultSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ResultSqlDB, error) {
-	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
-	return newResultSqlDB(chainId, db, logger)
+	dbName := getDbName(dbConfig, chainId)
+	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
+	return newResultSqlDB(dbName, db, logger)
 }
 
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
@@ -49,19 +50,19 @@ func (db *ResultSqlDB) initDb(dbName string) {
 	}
 	db.db.Save(&types.SavePoint{0})
 }
-func getDbName(chainId string) string {
-	return "resultdb_" + chainId
+func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
+	return dbConfig.DbPrefix + "resultdb_" + chainId
 }
-func newResultSqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*ResultSqlDB, error) {
+func newResultSqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*ResultSqlDB, error) {
 	rdb := &ResultSqlDB{
 		db:     db,
 		Logger: logger,
-		dbName: getDbName(chainId),
+		dbName: dbName,
 	}
 	return rdb, nil
 }
 func (h *ResultSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	h.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	h.initDb(h.dbName)
 	return h.CommitBlock(genesisBlock)
 }
 func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {

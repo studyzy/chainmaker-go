@@ -170,7 +170,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 	startDBTick := utils.CurrentTimeMillisSeconds()
-	if err = chain.blockchainStore.PutBlock(block, rwSet, events); err != nil {
+	if err = chain.blockchainStore.PutBlock(block, rwSet); err != nil {
 		// if put db error, then panic
 		chain.log.Error(err)
 		panic(err)

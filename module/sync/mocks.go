@@ -125,7 +125,7 @@ func (m MockStore) GetTxConfirmedTime(txId string) (int64, error) {
 	panic(errStr)
 }
 
-func (m *MockStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEventInfo []*commonPb.ContractEvent) error {
+func (m *MockStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	m.blocks[block.Header.BlockHeight] = block
 	return nil
 }

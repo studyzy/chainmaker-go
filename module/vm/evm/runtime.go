@@ -187,15 +187,18 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 			r.Log.Errorf("failed to save contractName %s", err.Error())
 			panic(err)
 		}
-		if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.ContractVersion)); err != nil {
+		versionKey := []byte(protocol.ContractVersion + r.Address.String())
+		//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.ContractVersion)); err != nil {
+		if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey, []byte(r.ContractId.ContractVersion)); err != nil {
 			r.Log.Errorf("failed to save ContractVersion %s", err.Error())
 			panic(err)
 		}
 		// if is create/upgrade contract then override solidity byteCode
 		if len(result.ByteCodeBody) > 0 && len(result.ByteCodeHead) > 0 {
 			// save byteCodeBody
-			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(r.ContractId.ContractVersion)...)
-			if err := r.TxSimContext.Put(r.ContractId.ContractName, versionedByteCodeKey, result.ByteCodeBody); err != nil {
+			versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.ContractId.ContractName), []byte(r.ContractId.ContractVersion)...)
+			//if err := r.TxSimContext.Put(r.ContractId.ContractName, versionedByteCodeKey, result.ByteCodeBody); err != nil {
+			if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
 				r.Log.Errorf("failed to save byte code body %s", err.Error())
 				panic(err)
 			}

@@ -43,5 +43,13 @@ func (m *Transaction) GetContractName() (string, error) {
 	if m.Header.TxType == TxType_UPDATE_CHAIN_CONFIG {
 		return ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), nil //TODO
 	}
+	if m.Header.TxType == TxType_INVOKE_SYSTEM_CONTRACT {
+		var payload = &SystemContractPayload{}
+		err := payload.Unmarshal(m.RequestPayload)
+		if err != nil {
+			return "", err
+		}
+		return payload.ContractName, nil
+	}
 	return "", errors.New("unknown tx type " + m.Header.TxType.String())
 }

@@ -111,9 +111,9 @@ func TestSyncBlock_Req(t *testing.T) {
 	defer sync.Stop()
 	implSync := sync.(*BlockChainSyncServer)
 
-	_ = implSync.blockChainStore.PutBlock(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 99}}, nil, nil)
-	_ = implSync.blockChainStore.PutBlock(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}}, nil, nil)
-	_ = implSync.blockChainStore.PutBlock(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 101}}, nil, nil)
+	_ = implSync.blockChainStore.PutBlock(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 99}}, nil)
+	_ = implSync.blockChainStore.PutBlock(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}}, nil)
+	_ = implSync.blockChainStore.PutBlock(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 101}}, nil)
 
 	require.NoError(t, implSync.blockSyncMsgHandler("node1", getBlockReq(t, 99, 1), netPb.NetMsg_SYNC_BLOCK_MSG))
 	require.EqualValues(t, 1, len(implSync.net.(*MockNet).sendMsgs))

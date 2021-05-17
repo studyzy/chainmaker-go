@@ -129,6 +129,20 @@ func (mr *MockSnapshotMockRecorder) GetBlockHeight() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockHeight", reflect.TypeOf((*MockSnapshot)(nil).GetBlockHeight))
 }
 
+// GetBlockProposer mocks base method.
+func (m *MockSnapshot) GetBlockProposer() []byte {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlockProposer")
+	ret0, _ := ret[0].([]byte)
+	return ret0
+}
+
+// GetBlockProposer indicates an expected call of GetBlockProposer.
+func (mr *MockSnapshotMockRecorder) GetBlockProposer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockProposer", reflect.TypeOf((*MockSnapshot)(nil).GetBlockProposer))
+}
+
 // GetBlockchainStore mocks base method.
 func (m *MockSnapshot) GetBlockchainStore() protocol.BlockchainStore {
 	m.ctrl.T.Helper()

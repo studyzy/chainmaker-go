@@ -66,7 +66,7 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 		txId := tx.Header.TxId
 		contractName, err := tx.GetContractName()
 		if err != nil {
-			h.logger.Errorf("get contract name fail from tx[%s]", tx.Header.TxId)
+			h.logger.Errorf("get contract name fail from tx[%s],err:%s", tx.Header.TxId, err.Error())
 			continue
 		}
 		batch.Put(constructAcctTxHistKey(accountId, blockHeight, txId), []byte{})
