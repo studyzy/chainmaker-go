@@ -289,7 +289,11 @@ func (s *WaciInstance) CallContract() int32 {
 //}
 
 func (s *WaciInstance) recordMsg(msg string) int32 {
-	s.ContractResult.Message += msg
+	if len(s.ContractResult.Message) > 0 {
+		s.ContractResult.Message += ". error message: " + msg
+	} else {
+		s.ContractResult.Message += "error message: " + msg
+	}
 	s.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	s.Log.Errorf("gasm log>> [%s] %s", s.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail

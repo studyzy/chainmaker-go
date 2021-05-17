@@ -266,7 +266,11 @@ func procExit(context unsafe.Pointer, exitCode int32) {
 }
 
 func (s *WaciInstance) recordMsg(msg string) int32 {
-	s.Sc.ContractResult.Message += msg
+	if len(s.Sc.ContractResult.Message) > 0 {
+		s.Sc.ContractResult.Message += ". error message: " + msg
+	} else {
+		s.Sc.ContractResult.Message += "error message: " + msg
+	}
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	s.Sc.Log.Errorf("wasm log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail

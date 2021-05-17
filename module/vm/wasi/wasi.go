@@ -179,7 +179,11 @@ func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []by
 
 func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte) int32 {
 	contractResult.Code = common.ContractResultCode_FAIL
-	contractResult.Message += string(data)
+	if len(contractResult.Message) > 0 {
+		contractResult.Message += ". contract message:" + string(data)
+	} else {
+		contractResult.Message = "contract message:" + string(data)
+	}
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -252,7 +256,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 		// execute
 		row, err := txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
 		if err != nil {
-			return nil, fmt.Errorf("ctx query error, %s", err.Error())
+			return nil, fmt.Errorf("ctx query one error, %s", err.Error())
 		}
 
 		var dataRow map[string]string
