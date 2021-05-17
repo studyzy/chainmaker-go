@@ -195,7 +195,6 @@ func (cbi *ConsensusChainedBftImpl) verifyJustifyQC(qc *chainedbftpb.QuorumCert)
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] validate qc failed, invalid block id", cbi.selfIndexInEpoch)
 		return fmt.Errorf(fmt.Sprintf("should not have block id:%x in tc", qc.BlockID))
 	}
-	// todo 2
 	if cbi.smr.getEpochId() == qc.EpochId+1 {
 		return nil
 	}
@@ -819,7 +818,7 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 		return
 	}
 	//aggregate qc/tc
-	qc, err := cbi.aggregateQCAndInsert(vote.Height, vote.Level, blockID, newView)
+	qc, err := cbi.aggregateQC(vote.Height, vote.Level, blockID, newView)
 	if err != nil {
 		cbi.logger.Errorf("service index [%v] processVote: new qc aggregated for height [%v] "+
 			"level [%v] blockId [%x], err=%v", cbi.selfIndexInEpoch, vote.Height, vote.Level, blockID, err)
@@ -829,6 +828,13 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	if !qc.NewView {
 		if blk := cbi.chainStore.getBlockByHash(qc.BlockID); blk == nil {
 			cbi.logger.Warnf("Does not hold the current QC bloc：%d:%x", qc.Height, qc.BlockID)
+			return
+		}
+		//因为在processBlockCommitted环节，节点会使用当前已知的最高QC去更新状态；
+		//此时如果使用一个未含有block的QC去推进了节点状态，导致该节点作为leader时既无法生成下一个块，
+		//也无法处理请求到的缺失块数据，因为此时节点的状态level大于接收到的丢失数据，不再处理。
+		if err := cbi.chainStore.insertQC(qc); err != nil {
+			cbi.logger.Errorf("insert qc[%d:%d%x] failed, reason: %s", qc.Height, qc.Level, qc.BlockID, err)
 			return
 		}
 	}
@@ -852,7 +858,7 @@ func (cbi *ConsensusChainedBftImpl) processVotes(vote *chainedbftpb.VoteData) {
 	}
 }
 
-func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, blockID []byte, isNewView bool) (*chainedbftpb.QuorumCert, error) {
+func (cbi *ConsensusChainedBftImpl) aggregateQC(height, level uint64, blockID []byte, isNewView bool) (*chainedbftpb.QuorumCert, error) {
 	votes := cbi.msgPool.GetQCVotes(height, level)
 	qc := &chainedbftpb.QuorumCert{
 		BlockID: blockID,
@@ -861,11 +867,6 @@ func (cbi *ConsensusChainedBftImpl) aggregateQCAndInsert(height, level uint64, b
 		Votes:   votes,
 		NewView: isNewView,
 		EpochId: cbi.smr.getEpochId(),
-	}
-	if blockID != nil {
-		if err := cbi.chainStore.insertQC(qc); err != nil {
-			return nil, err
-		}
 	}
 	return qc, nil
 }
