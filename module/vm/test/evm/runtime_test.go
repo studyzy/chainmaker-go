@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package evm
 
 import (
+	pb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"math/big"
 	"math/rand"
 	"sync"
@@ -13,7 +14,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/pb"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 

@@ -12,6 +12,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	discoveryPb "chainmaker.org/chainmaker-go/pb/protogo/discovery"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -62,6 +63,9 @@ func registerBlockContactMethods(log *logger.CMLogger) map[string]ContractFunc {
 	queryMethodMap[commonPb.QueryFunction_GET_LAST_BLOCK.String()] = blockRuntime.GetLastBlock
 	queryMethodMap[commonPb.QueryFunction_GET_CHAIN_INFO.String()] = blockRuntime.GetChainInfo
 	queryMethodMap[commonPb.QueryFunction_GET_NODE_CHAIN_LIST.String()] = blockRuntime.GetNodeChainList
+	queryMethodMap[commonPb.QueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
+	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
+	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
 	return queryMethodMap
 }
 
@@ -494,6 +498,69 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 	}
 	return transactionInfoBytes, nil
 
+}
+
+func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+
+	blockHeightStr := params[paramNameBlockHeight]
+
+	if utils.IsAnyBlank(blockHeightStr) {
+		err := fmt.Errorf("%s, GetFullBlockByHeight require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		a.log.Error(err)
+		return nil, err
+	}
+
+	blockHeight, err := strconv.Atoi(blockHeightStr)
+	if err != nil {
+		err := fmt.Errorf(" failed, err: %s", err.Error())
+		a.log.Error(err)
+		return nil, err
+	}
+
+	blockWithRWSet, err := context.GetBlockchainStore().GetBlockWithRWSets(int64(blockHeight))
+	if err != nil {
+		return nil, err //todo log
+	}
+
+	return blockWithRWSet.Marshal()
+}
+
+func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+
+	txId := params[paramNameTxId]
+
+	if utils.IsAnyBlank(txId) {
+		err := fmt.Errorf("%s, getBlockHeightByTxId require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		a.log.Error(err)
+		return nil, err
+	}
+
+	blockHeight, err := context.GetBlockchainStore().GetTxHeight(txId)
+	if err != nil {
+		return nil, err //todo log
+	}
+
+	resultBlockHeight := strconv.FormatInt(int64(blockHeight), 10)
+	return []byte(resultBlockHeight), nil
+}
+
+func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+
+	blockHash := params[paramNameBlockHash]
+
+	if utils.IsAnyBlank(blockHash) {
+		err := fmt.Errorf("%s, getBlockHeightByTxId require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		a.log.Error(err)
+		return nil, err
+	}
+
+	blockHeight, err := context.GetBlockchainStore().GetHeightByHash([]byte(blockHash))
+	if err != nil {
+		return nil, err //todo log
+	}
+
+	resultBlockHeight := strconv.FormatInt(int64(blockHeight), 10)
+	return []byte(resultBlockHeight), nil
 }
 
 func (r *BlockRuntime) getChainNodeInfo(provider protocol.ChainNodesInfoProvider, chainId string) ([]*discoveryPb.Node, error) {
