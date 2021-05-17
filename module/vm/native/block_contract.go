@@ -546,15 +546,23 @@ func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, param
 
 func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 
-	blockHash := params[paramNameBlockHash]
+	hash := params[paramNameBlockHash]
 
-	if utils.IsAnyBlank(blockHash) {
-		err := fmt.Errorf("%s, getBlockHeightByTxId require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+	if utils.IsAnyBlank(hash) {
+		err := fmt.Errorf("%s, getBlockHeightByHash require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
 		a.log.Error(err)
 		return nil, err
 	}
 
-	blockHeight, err := context.GetBlockchainStore().GetHeightByHash([]byte(blockHash))
+	blockHash := make([]byte, 0)
+	_, err := hex.Decode(blockHash, []byte(hash))
+	if err != nil {
+		err = fmt.Errorf(" getBlockHeightByHash decode err is %s ", err.Error())
+		a.log.Error(err)
+		return nil, err
+	}
+
+	blockHeight, err := context.GetBlockchainStore().GetHeightByHash(blockHash)
 	if err != nil {
 		return nil, err //todo log
 	}
