@@ -12,7 +12,6 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	discoveryPb "chainmaker.org/chainmaker-go/pb/protogo/discovery"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -501,43 +500,42 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 }
 
 func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	var errMsg string
+	var err error
 
-	blockHeightStr := params[paramNameBlockHeight]
-
-	if utils.IsAnyBlank(blockHeightStr) {
-		err := fmt.Errorf("%s, GetFullBlockByHeight require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
-		a.log.Error(err)
+	// check params
+	var param *BlockRuntimeParam
+	if param, err = a.validateParams(params, paramNameBlockHeight); err != nil {
 		return nil, err
 	}
 
-	blockHeight, err := strconv.Atoi(blockHeightStr)
+	blockWithRWSet, err := context.GetBlockchainStore().GetBlockWithRWSets(param.height)
 	if err != nil {
-		err := fmt.Errorf(" failed, err: %s", err.Error())
-		a.log.Error(err)
 		return nil, err
 	}
 
-	blockWithRWSet, err := context.GetBlockchainStore().GetBlockWithRWSets(int64(blockHeight))
+	blockWithRWSetBytes, err := blockWithRWSet.Marshal()
 	if err != nil {
-		return nil, err //todo log
+		errMsg = fmt.Sprintf("marshal block with rwset failed, %s", err.Error())
+		a.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
-	return blockWithRWSet.Marshal()
+	return blockWithRWSetBytes, nil
 }
 
 func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	var err error
 
-	txId := params[paramNameTxId]
-
-	if utils.IsAnyBlank(txId) {
-		err := fmt.Errorf("%s, getBlockHeightByTxId require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
-		a.log.Error(err)
+	// check params
+	var param *BlockRuntimeParam
+	if param, err = a.validateParams(params, paramNameTxId); err != nil {
 		return nil, err
 	}
 
-	blockHeight, err := context.GetBlockchainStore().GetTxHeight(txId)
+	blockHeight, err := context.GetBlockchainStore().GetTxHeight(param.txId)
 	if err != nil {
-		return nil, err //todo log
+		return nil, err
 	}
 
 	resultBlockHeight := strconv.FormatInt(int64(blockHeight), 10)
@@ -545,26 +543,25 @@ func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, param
 }
 
 func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-
-	hash := params[paramNameBlockHash]
-
-	if utils.IsAnyBlank(hash) {
-		err := fmt.Errorf("%s, getBlockHeightByHash require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
-		a.log.Error(err)
+	var err error
+	var errMsg string
+	// check params
+	var param *BlockRuntimeParam
+	if param, err = a.validateParams(params, paramNameTxId); err != nil {
 		return nil, err
 	}
 
 	blockHash := make([]byte, 0)
-	_, err := hex.Decode(blockHash, []byte(hash))
+	_, err = hex.Decode(blockHash, []byte(param.hash))
 	if err != nil {
-		err = fmt.Errorf(" getBlockHeightByHash decode err is %s ", err.Error())
-		a.log.Error(err)
-		return nil, err
+		errMsg = fmt.Sprintf(" block hash decode err is %s ", err.Error())
+		a.log.Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	blockHeight, err := context.GetBlockchainStore().GetHeightByHash(blockHash)
 	if err != nil {
-		return nil, err //todo log
+		return nil, err
 	}
 
 	resultBlockHeight := strconv.FormatInt(int64(blockHeight), 10)
