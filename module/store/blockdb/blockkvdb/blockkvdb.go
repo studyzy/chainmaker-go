@@ -9,6 +9,7 @@ package blockkvdb
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -38,6 +39,10 @@ const (
 
 const (
 	blockDBName = ""
+)
+
+var (
+	ValueNotFoundError = errors.New("value not found")
 )
 
 // BlockKvDB provider a implementation of `blockdb.BlockDB`
@@ -248,8 +253,12 @@ func (b *BlockKvDB) BlockExists(blockHash []byte) (bool, error) {
 func (b *BlockKvDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 	hashKey := constructBlockHashKey(blockHash)
 	heightBytes, err := b.get(hashKey)
-	if err != nil || heightBytes == nil {
+	if err != nil {
 		return nil, err
+	}
+
+	if heightBytes == nil {
+		return nil, ValueNotFoundError
 	}
 
 	archivedPivot, err := b.GetArchivedPivot()
@@ -268,35 +277,34 @@ func (b *BlockKvDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 func (b *BlockKvDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	hashKey := constructBlockHashKey(blockHash)
 	heightBytes, err := b.get(hashKey)
-	if err == nil && heightBytes != nil {
-		return decodeBlockNumKey(heightBytes), err
+	if err != nil {
+		return 0, err
 	}
 
-	return 0, err
+	if heightBytes == nil {
+		return 0, ValueNotFoundError
+	}
+
+	return decodeBlockNumKey(heightBytes), nil
 }
 
 // GetBlockMateByHash returns a block metadata given it's hash, or returns nil if none exists.
 func (b *BlockKvDB) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
-	archivedPivot, err := b.GetArchivedPivot()
-	if err != nil {
-		return nil, err
-	}
-
 	height, err := b.GetHeightByHash(blockHash)
 	if err != nil {
 		return nil, err
 	}
 
-	if height < archivedPivot {
-		return nil, archive.ArchivedBlockError
-	}
-
-	bytes, err := b.get(constructBlockNumKey(height))
+	vBytes, err := b.get(constructBlockNumKey(height))
 	if err != nil {
 		return nil, err
 	}
 
-	return bytes, nil
+	if vBytes == nil {
+		return nil, ValueNotFoundError
+	}
+
+	return vBytes, nil
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
@@ -377,12 +385,16 @@ func (b *BlockKvDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 // GetTxHeight retrieves a transaction height by txid, or returns nil if none exists.
 func (b *BlockKvDB) GetTxHeight(txId string) (uint64, error) {
 	blockTxIdKey := constructBlockTxIDKey(txId)
-	bytes, err := b.get(blockTxIdKey)
-	if err == nil && bytes != nil {
-		return decodeBlockNumKey(bytes), nil
+	vBytes, err := b.get(blockTxIdKey)
+	if err != nil {
+		return 0, err
 	}
 
-	return 0, err
+	if vBytes == nil {
+		return 0, ValueNotFoundError
+	}
+
+	return decodeBlockNumKey(vBytes), nil
 }
 
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
