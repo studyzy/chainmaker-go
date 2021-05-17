@@ -206,3 +206,11 @@ func (s *SnapshotEvidence) BuildDAG() *commonPb.DAG {
 	log.Debugf("build DAG for block %d finished", s.delegate.blockHeight)
 	return dag
 }
+
+// Get Block Proposer for current snapshot
+func (s *SnapshotEvidence) GetBlockProposer() []byte {
+	if s.delegate == nil {
+		return nil
+	}
+	return s.delegate.blockProposer
+}

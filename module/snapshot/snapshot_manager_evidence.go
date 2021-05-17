@@ -14,38 +14,38 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 )
 
-type ManagerImpl struct {
-	snapshots map[utils.BlockFingerPrint]*SnapshotImpl
+type ManagerEvidence struct {
 	delegate  *ManagerDelegate
-}
-
-func (m *ManagerImpl) storeAndLinkSnapshotImpl(snapshotImpl *SnapshotImpl, prevFingerPrint *utils.BlockFingerPrint, fingerPrint *utils.BlockFingerPrint) {
-	// 存储当前指纹的snapshot
-	m.snapshots[*fingerPrint] = snapshotImpl
-
-	// 如果前序指纹对应的snapshot存在, 就建立snapshot的对应关系
-	if prevSnapshot, ok := m.snapshots[*prevFingerPrint]; ok {
-		snapshotImpl.SetPreSnapshot(prevSnapshot)
-	}
+	snapshots map[utils.BlockFingerPrint]*SnapshotEvidence
 }
 
 // When generating blocks, generate a Snapshot for each block, which is used as read-write set cache
-func (m *ManagerImpl) NewSnapshot(prevBlock *commonPb.Block, block *commonPb.Block) protocol.Snapshot {
+func (m *ManagerEvidence) NewSnapshot(prevBlock *commonPb.Block, block *commonPb.Block) protocol.Snapshot {
 	m.delegate.lock.Lock()
 	defer m.delegate.lock.Unlock()
 	blockHeight := block.Header.BlockHeight
 	snapshotImpl := m.delegate.makeSnapshotImpl(block, blockHeight)
+	evidenceSnapshot := &SnapshotEvidence{
+		delegate: snapshotImpl,
+	}
 
 	// 计算前序指纹, 和当前指纹
 	prevFingerPrint := utils.CalcBlockFingerPrint(prevBlock)
 	fingerPrint := utils.CalcBlockFingerPrint(block)
-	m.storeAndLinkSnapshotImpl(snapshotImpl, &prevFingerPrint, &fingerPrint)
+
+	// 存储当前指纹的snapshot
+	m.snapshots[fingerPrint] = evidenceSnapshot
+
+	// 如果前序指纹对应的snapshot存在, 就建立snapshot的对应关系
+	if prevSnapshot, ok := m.snapshots[prevFingerPrint]; ok {
+		evidenceSnapshot.SetPreSnapshot(prevSnapshot)
+	}
 
 	log.Infof("create snapshot at height %d, fingerPrint[%v] -> prevFingerPrint[%v]", blockHeight, fingerPrint, prevFingerPrint)
-	return snapshotImpl
+	return evidenceSnapshot
 }
 
-func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
+func (m *ManagerEvidence) NotifyBlockCommitted(block *commonPb.Block) error {
 	m.delegate.lock.Lock()
 	defer m.delegate.lock.Unlock()
 
