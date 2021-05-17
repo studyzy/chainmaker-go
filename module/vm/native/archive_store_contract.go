@@ -22,7 +22,6 @@ import (
 )
 
 const (
-	defaultContractName    = "contract1"
 	paramTargetBlockHeight = "targetBlockHeight"
 	paramStartBlockHeight  = "startBlockHeight"
 )
