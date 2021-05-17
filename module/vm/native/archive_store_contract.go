@@ -14,7 +14,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker-go/utils"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -57,54 +56,67 @@ func registerArchiveStoreContractMethods(log *logger.CMLogger) map[string]Contra
 
 type ArchiveStoreRuntime struct {
 	log *logger.CMLogger
+	contractName string
 }
 
 func (a *ArchiveStoreRuntime) GetArchiveBlockHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-
 	blockHeight := strconv.FormatInt(int64(context.GetBlockchainStore().GetArchivedPivot()), 10)
 
-	a.log.Infof("GetArchiveBlockHeight success blockHeight[%s] ", blockHeight)
+	a.log.Infof("get archive block height success blockHeight[%s] ", blockHeight)
 	return []byte(blockHeight), nil
 }
 
 func (a *ArchiveStoreRuntime) ArchiveBlock(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	targetBlockHeightStr := params[paramTargetBlockHeight]
+	var errMsg string
+	var err error
 
-	if utils.IsAnyBlank(targetBlockHeightStr) {
-		err := fmt.Errorf("%s, archive block require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
-		a.log.Error(err)
-		return nil, err
+	targetBlockHeightStr, err := a.getValue(params, paramTargetBlockHeight)
+	if err != nil {
+		errMsg = fmt.Sprintf("%s, archive block require param [%s] not found", ErrParams.Error(), paramTargetBlockHeight)
+		a.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	blockHeight, err := strconv.Atoi(targetBlockHeightStr)
 	if err != nil {
-		err = fmt.Errorf(" failed, err: %s", err.Error())
-		a.log.Error(err)
-		return nil, err
+		errMsg = fmt.Sprintf("convert atoi failed, err: %s", err.Error())
+		a.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	if err = context.GetBlockchainStore().ArchiveBlock(uint64(blockHeight)); err != nil {
-		err = fmt.Errorf(" archive block  err: %s", err.Error())
-		a.log.Error(err)
-		return nil, err
+		errMsg = fmt.Sprintf("archive block  err: %s", err.Error())
+		a.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	return []byte(""), nil
 }
 
 func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	startBlockHeightStr := params[paramStartBlockHeight]
-	if utils.IsAnyBlank(startBlockHeightStr) {
-		err := fmt.Errorf("%s, archive block require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
-		a.log.Error(err)
-		return nil, err
+	var errMsg string
+	var err error
+
+	startBlockHeightStr, err := a.getValue(params, paramStartBlockHeight)
+	if err != nil {
+		errMsg = fmt.Sprintf("%s, restore block require param [%s] not found", ErrParams.Error(), paramStartBlockHeight)
+		a.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	startBlockHeight, err := strconv.Atoi(startBlockHeightStr)
 	if err != nil {
-		err = fmt.Errorf(" failed, err: %s", err.Error())
-		a.log.Error(err)
-		return nil, err
+		errMsg = fmt.Sprintf("convert atoi failed, err: %s", err.Error())
+		a.log.Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
+	}
+
+	//init contractName
+	a.contractName, err = context.GetTx().GetContractName()
+	if err != nil {
+		errMsg = fmt.Sprintf("get contract name failed, err: %s", err.Error())
+		a.log.Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	//getArchivedBlockHeight
@@ -117,9 +129,9 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 	blocks := make([]*commonPb.Block, 0, archiveBlockHeight)
 	TxRWSetMp := make(map[int64][]*commonPb.TxRWSet)
 	for i := 0; i < int(archiveBlockHeight); i++ {
-		block, txRWSet := createBlockAndRWSets(context.GetTx().Header.ChainId, int64(i), 100)
-		if err := context.GetBlockchainStore().PutBlock(block, txRWSet, nil); err != nil {
-			return nil, err //todo log
+		block, txRWSet := a.createBlockAndRWSets(context.GetTx().Header.ChainId, int64(i), 100)
+		if err = context.GetBlockchainStore().PutBlock(block, txRWSet, nil); err != nil {
+			return nil, err
 		}
 		blocks = append(blocks, block)
 		TxRWSetMp[block.Header.BlockHeight] = txRWSet
@@ -134,7 +146,7 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 			ContractEvents: nil,
 		})
 		if err != nil {
-			a.log.Error(err) //todo log
+			a.log.Errorf("serialize block err:%s ", err.Error())
 		}
 		blocksBytes = append(blocksBytes, blockBytes)
 	}
@@ -146,7 +158,7 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 	return []byte(""), nil
 }
 
-func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
+func (a *ArchiveStoreRuntime) createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -158,7 +170,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 		tx := &commonPb.Transaction{
 			Header: &commonPb.TxHeader{
 				ChainId: chainId,
-				TxId:    generateTxId(chainId, height, i),
+				TxId:    a.generateTxId(chainId, height, i),
 				Sender: &acPb.SerializedMember{
 					OrgId: "org1",
 				},
@@ -173,7 +185,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 		block.Txs = append(block.Txs, tx)
 	}
 
-	block.Header.BlockHash = generateBlockHash(chainId, height)
+	block.Header.BlockHash = a.generateBlockHash(chainId, height)
 	var txRWSets []*commonPb.TxRWSet
 	for i := 0; i < txNum; i++ {
 		key := fmt.Sprintf("key_%d", i)
@@ -184,7 +196,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 				{
 					Key:          []byte(key),
 					Value:        []byte(value),
-					ContractName: defaultContractName,
+					ContractName: a.contractName,
 				},
 			},
 		}
@@ -194,12 +206,22 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
-func generateTxId(chainId string, height int64, index int) string {
+func (a *ArchiveStoreRuntime) generateTxId(chainId string, height int64, index int) string {
 	txIdBytes := sha256.Sum256([]byte(fmt.Sprintf("%s-%d-%d", chainId, height, index)))
 	return hex.EncodeToString(txIdBytes[:])
 }
 
-func generateBlockHash(chainId string, height int64) []byte {
+func (a *ArchiveStoreRuntime) generateBlockHash(chainId string, height int64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
 	return blockHash[:]
+}
+
+func (a *ArchiveStoreRuntime) getValue(parameters map[string]string, key string) (string, error) {
+	value, ok := parameters[key]
+	if !ok {
+		errMsg := fmt.Sprintf("miss params %s", key)
+		a.log.Error(errMsg)
+		return "", errors.New(errMsg)
+	}
+	return value, nil
 }

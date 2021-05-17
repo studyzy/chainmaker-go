@@ -553,7 +553,7 @@ func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, param
 
 	blockHash, err := hex.DecodeString(param.hash)
 	if err != nil {
-		errMsg = fmt.Sprintf(" block hash decode err is %s ", err.Error())
+		errMsg = fmt.Sprintf("block hash decode err is %s ", err.Error())
 		a.log.Error(errMsg)
 		return nil, fmt.Errorf(errMsg)
 	}
