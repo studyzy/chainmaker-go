@@ -359,14 +359,22 @@ func (sync *BlockChainSyncServer) loop() {
 
 func (sync *BlockChainSyncServer) validateAndCommitBlock(block *commonPb.Block) processedBlockStatus {
 	if blk := sync.ledgerCache.GetLastCommittedBlock(); blk != nil && blk.Header.BlockHeight >= block.Header.BlockHeight {
-		sync.log.Infof("there is the block in the store whose height is %d", block.Header.BlockHeight)
+		sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
 		return hasProcessed
 	}
 	if err := sync.blockVerifier.VerifyBlock(block, protocol.SYNC_VERIFY); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			return hasProcessed
+		}
 		sync.log.Errorf("fail to verify the block whose height is %d", block.Header.BlockHeight)
 		return validateFailed
 	}
 	if err := sync.blockCommitter.AddBlock(block); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			return hasProcessed
+		}
 		sync.log.Errorf("fail to commit the block whose height is %d", block.Header.BlockHeight)
 		return addErr
 	}
