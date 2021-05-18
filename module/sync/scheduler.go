@@ -283,7 +283,8 @@ func (sch *scheduler) handleSyncedBlockMsg(msg *SyncedBlockMsg) (queue.Item, err
 			sch.blockStates[blk.Header.BlockHeight] = receivedBlock
 			sch.receivedBlocks[blk.Header.BlockHeight] = msg.from
 		}
-		sch.log.Debugf("received block [height:%d] from node [%s]", blk.Header.BlockHeight, msg.from)
+		sch.log.Debugf("received block [height:%d:%x] needToProcess: %v from "+
+			"node [%s]", blk.Header.BlockHeight, blk.Header.BlockHash, needToProcess, msg.from)
 	}
 	if needToProcess {
 		return &ReceivedBlocks{
