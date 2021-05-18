@@ -177,7 +177,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
 			continue
 		}
 
-		for _, tx := range block.Txs {
+		for _, tx := range blk.Txs {
 			// delete tx data
 			batch.Delete(constructTxIDKey(tx.Header.TxId))
 		}
@@ -257,19 +257,6 @@ func (b *BlockKvDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 		return nil, err
 	}
 
-	if heightBytes == nil {
-		return nil, ValueNotFoundError
-	}
-
-	archivedPivot, err := b.GetArchivedPivot()
-	if err != nil {
-		return nil, err
-	}
-
-	if decodeBlockNumKey(heightBytes) < archivedPivot {
-		return nil, archive.ArchivedBlockError
-	}
-
 	return b.getBlockByHeightBytes(heightBytes)
 }
 
@@ -309,14 +296,6 @@ func (b *BlockKvDB) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
 func (b *BlockKvDB) GetBlock(height int64) (*commonPb.Block, error) {
-	archivedPivot, err := b.GetArchivedPivot()
-	if err != nil {
-		return nil, err
-	}
-
-	if uint64(height) < archivedPivot {
-		return nil, archive.ArchivedBlockError
-	}
 	heightBytes := constructBlockNumKey(uint64(height))
 	return b.getBlockByHeightBytes(heightBytes)
 }
@@ -379,6 +358,7 @@ func (b *BlockKvDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return b.getBlockByHeightBytes(heightBytes)
 }
 
@@ -494,15 +474,25 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 	if height == nil {
 		return nil, nil
 	}
-	bytes, err := b.get(height)
+
+	archivedPivot, err := b.GetArchivedPivot()
 	if err != nil {
 		return nil, err
-	} else if bytes == nil {
+	}
+
+	if decodeBlockNumKey(height) < archivedPivot {
+		return nil, archive.ArchivedBlockError
+	}
+
+	vBytes, err := b.get(height)
+	if err != nil {
+		return nil, err
+	} else if vBytes == nil {
 		return nil, nil
 	}
 
 	var blockStoreInfo storePb.SerializedBlock
-	err = proto.Unmarshal(bytes, &blockStoreInfo)
+	err = proto.Unmarshal(vBytes, &blockStoreInfo)
 	if err != nil {
 		return nil, err
 	}

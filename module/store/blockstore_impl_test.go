@@ -16,6 +16,7 @@ import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"github.com/tidwall/wal"
@@ -750,8 +751,8 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	defer s.Close()
 
 	totalHeight := 301000
-	archiveHeight := 10
-	avblkHeight := 20
+	archiveHeight := 20
+	avblkHeight := 10
 
 	//Prepare block data
 	blocks := make([]*commonPb.Block, 0, totalHeight)
@@ -763,6 +764,11 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 		blocks = append(blocks, block)
 		TxRWSetMp[block.Header.BlockHeight] = txRWSet
 	}
+
+	//archive block
+	err = s.ArchiveBlock(uint64(archiveHeight))
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight), s.GetArchivedPivot())
 
 	//verify store apis
 	avblk := blocks[avblkHeight]
@@ -779,17 +785,27 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 		ContractEvents: nil,
 	})
 	assert.Equal(t, nil, err3)
-	assert.Equal(t, bytes.Equal(vbm, bwsInfo.GetSerializedMeta()), true)
+	assert.True(t, bytes.Equal(vbm, bwsInfo.GetSerializedMeta()))
 
 	vtHeight, err4 := s.GetTxHeight(avblk.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err4)
 	assert.Equal(t, vtHeight, uint64(avblkHeight))
 
-	//archive block
-	err = s.ArchiveBlock(uint64(archiveHeight))
-	assert.Equal(t, nil, err)
+	vtBlk, err5 := s.GetBlockByTx(avblk.Txs[0].Header.TxId)
+	assert.True(t, true, archive.ArchivedBlockError == err5)
+	assert.True(t, vtBlk == nil)
 
-	assert.Equal(t, uint64(archiveHeight), s.GetArchivedPivot())
+	vttx, err6 := s.GetTx(avblk.Txs[0].Header.TxId)
+	assert.True(t, archive.ArchivedTxError == err6)
+	assert.True(t, vttx == nil)
+
+	vtBlk2, err7 := s.GetBlockByHash(avblk.Hash())
+	assert.True(t, archive.ArchivedBlockError == err7)
+	assert.True(t, vtBlk2 == nil)
+
+	vtBlkRW, err8 := s.GetBlockWithRWSets(avblk.Header.BlockHeight)
+	assert.True(t, archive.ArchivedBlockError == err8)
+	assert.True(t, vtBlkRW == nil)
 
 	//Prepare restore data
 	blocksBytes := make([][]byte, 0, archiveHeight + 1)

@@ -423,7 +423,7 @@ func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 // or returns nil if zhe block does not exist
 func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet, error) {
 	blockStoreInfo, err := bs.blockDB.GetFilteredBlock(height)
-	if err != nil {
+	if err != nil || blockStoreInfo == nil {
 		return nil, err
 	}
 	var txRWSets []*commonPb.TxRWSet
