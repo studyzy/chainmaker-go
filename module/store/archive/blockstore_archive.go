@@ -32,24 +32,24 @@ var (
 // ArchiveMgr provide handle to archive instances
 type ArchiveMgr struct {
 	sync.RWMutex
-	archivedPivot         uint64
-	minUnArchiveBlockSize uint64
-	blockDB               blockdb.BlockDB
+	archivedPivot           uint64
+	minUnArchiveBlockHeight uint64
+	blockDB                 blockdb.BlockDB
 
 	logger *logImpl.CMLogger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
 func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB) *ArchiveMgr {
-	minUnArchiveBlockSize := localconf.ChainMakerConfig.StorageConfig.MinUnArchiveBlockSize
-	if minUnArchiveBlockSize <= 0 {
-		minUnArchiveBlockSize = defaultMinUnArchiveBlockSize
+	minUnArchiveBlockHeight := localconf.ChainMakerConfig.StorageConfig.MinUnArchiveBlockHeight
+	if minUnArchiveBlockHeight <= 0 {
+		minUnArchiveBlockHeight = defaultMinUnArchiveBlockSize
 	}
 	archiveMgr := &ArchiveMgr{
-		archivedPivot:         0,
-		minUnArchiveBlockSize: minUnArchiveBlockSize,
-		blockDB:               blockDB,
-		logger:                logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		archivedPivot:           0,
+		minUnArchiveBlockHeight: minUnArchiveBlockHeight,
+		blockDB:                 blockDB,
+		logger:                  logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
 	}
 	return archiveMgr
 }
@@ -69,12 +69,12 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 		return err
 	}
 
-	//archiveHeight should between archivedPivot and lastHeight - minUnArchiveBlockSize
-	if lastHeight <= mgr.minUnArchiveBlockSize {
+	//archiveHeight should between archivedPivot and lastHeight - minUnArchiveBlockHeight
+	if lastHeight <= mgr.minUnArchiveBlockHeight {
 		return LastHeightTooLowError
 	} else if mgr.archivedPivot >= archiveHeight {
 		return HeightTooLowError
-	} else if archiveHeight >= lastHeight-mgr.minUnArchiveBlockSize {
+	} else if archiveHeight >= lastHeight-mgr.minUnArchiveBlockHeight {
 		return HeightNotReachError
 	}
 
@@ -132,9 +132,9 @@ func (mgr *ArchiveMgr) GetArchivedPivot() (uint64, error) {
 	return mgr.blockDB.GetArchivedPivot()
 }
 
-// GetMinUnArchiveBlockSize return minUnArchiveBlockSize
+// GetMinUnArchiveBlockSize return minUnArchiveBlockHeight
 func (mgr *ArchiveMgr) GetMinUnArchiveBlockSize() uint64 {
-	return mgr.minUnArchiveBlockSize
+	return mgr.minUnArchiveBlockHeight
 }
 
 // SetArchivedPivot set restore block pivot
