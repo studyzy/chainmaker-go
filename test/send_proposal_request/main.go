@@ -17,6 +17,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -94,10 +95,12 @@ var (
 )
 
 var (
-	trustRootOrgId   = ""
-	trustRootCrtPath = ""
-	nodeOrgOrgId     = ""
-	nodeOrgAddresses = ""
+	trustRootOrgId     = ""
+	trustRootCrtPath   = ""
+	nodeOrgOrgId       = ""
+	nodeOrgAddresses   = ""
+	consensusExtKeys   = ""
+	consensusExtValues = ""
 )
 
 func main() {
@@ -111,6 +114,8 @@ func main() {
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
 	flag.StringVar(&nodeOrgOrgId, "nodeOrg_org_id", "", "node orgID that will be added")
 	flag.StringVar(&nodeOrgAddresses, "nodeOrg_addresses", "", "node address that will be added")
+	flag.StringVar(&consensusExtKeys, "consensus_keys", "", "key1,key2,key3")
+	flag.StringVar(&consensusExtValues, "consensus_Values", "", "value1,value2,value3")
 	flag.Parse()
 
 	conn, err := initGRPCConn(true, 0)
@@ -146,6 +151,8 @@ func main() {
 		fmt.Println(config)
 	case 5: // 5) 删除节点
 		nodeOrgDelete(sk3, client, CHAIN1)
+	case 6: // 6)修改链上配置
+		consensusExtUpdate(sk3, client, CHAIN1)
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -774,6 +781,37 @@ func nodeOrgDelete(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId st
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ORG_DELETE.String(), pairs: pairs, oldSeq: config.Sequence})
 	if err != nil {
 		log.Fatalf("create configUpdateRequest error")
+	}
+	fmt.Println("txId: ", txId, ", resp: ", resp)
+	return nil
+}
+
+func consensusExtUpdate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string) error {
+	// 构造Payload
+	if consensusExtKeys == "" || consensusExtValues == "" {
+		log.Fatalf("consensusKeys: %s, consensusValues: %s\n", consensusExtKeys, consensusExtValues)
+	}
+	consensusExtKeyArray := strings.Split(consensusExtKeys, ",")
+	consensusExtValueArray := strings.Split(consensusExtValues, ",")
+	if len(consensusExtKeyArray) != len(consensusExtValueArray) {
+		log.Fatalf("the consensusExt keys len is not equal to values len, "+
+			"keysNum:%d, valueNum:%d", len(consensusExtKeyArray), len(consensusExtValueArray))
+	}
+
+	pairs := make([]*commonPb.KeyValuePair, 0)
+
+	for i, key := range consensusExtKeyArray {
+		pairs = append(pairs, &commonPb.KeyValuePair{
+			Key:   key,
+			Value: consensusExtValueArray[i],
+		})
+	}
+
+	config := getChainConfig(sk3, client, chainId)
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
+		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), pairs: pairs, oldSeq: config.Sequence})
+	if err != nil {
+		log.Fatalf("send update request failed in consensusExtUpdate: %s", err)
 	}
 	fmt.Println("txId: ", txId, ", resp: ", resp)
 	return nil
