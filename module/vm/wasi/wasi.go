@@ -8,6 +8,7 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
+	"chainmaker.org/chainmaker-go/common/crypto/paillier"
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -15,8 +16,11 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"errors"
 	"fmt"
+	"math/big"
 	"regexp"
+	"strconv"
 	"sync/atomic"
 )
 
@@ -40,6 +44,8 @@ type Wacsi interface {
 	RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
 	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
 	RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
+
+	PaillierOperation(requestBody []byte, memory []byte, data []byte) ([]byte, error)
 }
 
 type WacsiImpl struct {
@@ -52,6 +58,70 @@ func NewWacsi() Wacsi {
 		verifySql: &types.StandardSqlVerify{},
 		rowIndex:  0,
 	}
+}
+
+func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []byte) ([]byte, error) {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	opTypeStr, _ := ec.GetString("opType")
+	operandOne, _ := ec.GetString("operandOne")
+	operandTwo, _ := ec.GetString("operandTwo")
+	pubKeyData, _ := ec.GetString("pubKey")
+
+	valuePtr, _ := ec.GetInt32("value_ptr")
+
+	pubKey := new(paillier.PubKey)
+	err := pubKey.Unmarshal([]byte(pubKeyData))
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nil {
+
+		resultBytes := make([]byte, 0)
+		var err error
+
+		switch opTypeStr {
+		case protocol.PaillierOpTypeAddCiphertext:
+			resultBytes, err = addCiphertext(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeAddCiphertextStr:
+			resultBytes, err = addCiphertextStr(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeAddPlaintext:
+			resultBytes, err = addPlaintext(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeAddPlaintextInt64:
+			resultBytes, err = addPlaintextInt64(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeSubCiphertext:
+			resultBytes, err = subCiphertext(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeSubCiphertextStr:
+			resultBytes, err = subCiphertextStr(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeSubPlaintext:
+			resultBytes, err = subPlaintext(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeSubPlaintextInt64:
+			resultBytes, err = subPlaintextInt64(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeNumMul:
+			resultBytes, err = numMul(operandOne, operandTwo, pubKey)
+		case protocol.PaillierOpTypeNumMulInt64:
+			resultBytes, err = numMulInt64(operandOne, operandTwo, pubKey)
+		default:
+			return nil, errors.New("paillier operate failed")
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(resultBytes))))
+		if len(resultBytes) == 0 {
+			return nil, nil
+		}
+		return resultBytes, nil
+	} else {
+		len := int32(len(data))
+		if len != 0 {
+			copy(memory[valuePtr:valuePtr+len], data)
+		}
+	}
+
+	return nil, nil
 }
 
 func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
@@ -417,4 +487,133 @@ func changeCurrentDB(chainId string, contractName string, transaction protocol.S
 	transaction.ChangeContextDb(dbName)
 	//setCurrentDb(chainId, dbName)
 	//}
+}
+
+func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct1, _ := new(big.Int).SetString(ctOne, 10)
+	ctTwo := operandTwo.(string)
+	ct2, _ := new(big.Int).SetString(ctTwo, 10)
+	result, err := pubKey.AddCiphertext(ct1, ct2)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return []byte(result.String()), nil
+}
+
+func addCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ctTwo := operandTwo.(string)
+	result, err := pubKey.AddCiphertextStr(ctOne, ctTwo)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct, _ := new(big.Int).SetString(ctOne, 10)
+	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	result, err := pubKey.AddPlaintext(ct, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result.String()), nil
+}
+
+func addPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
+	result, err := pubKey.AddPlaintextInt64(ctOne, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct1, _ := new(big.Int).SetString(ctOne, 10)
+	ctTwo := operandTwo.(string)
+	ct2, _ := new(big.Int).SetString(ctTwo, 10)
+	result, err := pubKey.SubCiphertext(ct1, ct2)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return []byte(result.String()), nil
+}
+
+func subCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ctTwo := operandTwo.(string)
+	result, err := pubKey.SubCiphertextStr(ctOne, ctTwo)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct, _ := new(big.Int).SetString(ctOne, 10)
+	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	result, err := pubKey.SubPlaintext(ct, pt)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return result.Bytes(), nil
+}
+
+func subPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
+	result, err := pubKey.SubPlaintextInt64(ctOne, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct, _ := new(big.Int).SetString(ctOne, 10)
+	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	result, err := pubKey.NumMul(ct, pt)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return result.Bytes(), nil
+}
+
+func numMulInt64(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ctOne := operandOne.(string)
+	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
+	result, err := pubKey.NumMulInt64(ctOne, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
 }

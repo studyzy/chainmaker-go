@@ -116,11 +116,31 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.RSNext()
 		case protocol.ContractMethodRSClose:
 			return s.RSClose()
+		case protocol.ContractMethodGetPaillierOperationResultLen:
+			return s.GetPaillierOpResultLen()
+		case protocol.ContractMethodGetPaillierOperationResult:
+			return s.GetPaillierOpResult()
 		default:
 			s.Log.Errorf("method is %s not match.", method)
 		}
 		return protocol.ContractSdkSignalResultFail
 	})
+}
+
+// GetPaillierOpResultLen get result length
+func (s *WaciInstance) GetPaillierOpResultLen() int32 {
+	data, err := wacsi.PaillierOperation(s.RequestBody, s.Vm.Memory, s.GetStateCache)
+	s.GetStateCache = data // reset data
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
+}
+
+// GetPaillierOpResult get result
+func (s *WaciInstance) GetPaillierOpResult() int32 {
+	return s.GetPaillierOpResultLen()
 }
 
 // GetStateLen get state length from chain
