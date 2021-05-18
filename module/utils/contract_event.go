@@ -7,14 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"strconv"
-
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"github.com/pingcap/parser"
-	_ "github.com/pingcap/tidb/types/parser_driver"
 )
 
 const TopicTableColumnDdl = `id bigint unsigned NOT NULL AUTO_INCREMENT,chain_id varchar(128),block_height bigint,tx_id varchar(64),event_index int,topic varchar(255),contract_name varchar(255),contract_version varchar(128),data1 text(65535),data2 text(65535),data3 text(65535),data4 text(65535),data5 text(65535),data6 text(65535),data7 text(65535),data8 text(65535),data9 text(65535),data10 text(65535),data11 text(65535),data12 text(65535),data13 text(65535),data14 text(65535),data15 text(65535),data16 text(65535),`
@@ -76,13 +73,4 @@ func GenerateCreateTopicTableDdl(t *commonPb.ContractEvent, chainId string) stri
 	topicTableNameHex := fmt.Sprintf("event%s", hex.EncodeToString(topicTableNameHash[:20])[5:])
 	createTopicTableSql = fmt.Sprintf("CREATE TABLE IF NOT EXISTS  %s (%s PRIMARY KEY (id),%s,%s ) ENGINE=InnoDB DEFAULT CHARSET=utf8;", topicTableNameHex, TopicTableColumnDdl, TopicTableUniqueKey, TopicTableIndex)
 	return createTopicTableSql
-}
-
-func GetSqlStatementCount(sql string) int {
-	p := parser.New()
-	stmtNodes, _, err := p.Parse(sql, "", "")
-	if err != nil {
-		return 0
-	}
-	return len(stmtNodes)
 }
