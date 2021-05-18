@@ -317,27 +317,30 @@ func (c *ChainConf) CompleteBlock(block *common.Block) error {
 	}
 	tx := block.Txs[0]
 
+	c.log.Debugf("begin enter locker, blockHeight: %d", block.Header.BlockHeight)
 	c.wLock.Lock()
 	defer c.wLock.Unlock()
+	c.log.Debugf("enter locker, blockHeight: %d", block.Header.BlockHeight)
 
 	if utils.IsValidConfigTx(tx) { // tx is chainConfig
 		// watch chainConfig
+		c.log.Debugf("begin call back config 1, blockHeight: %d", block.Header.BlockHeight)
 		if err := c.callbackChainConfigWatcher(); err != nil {
 			return err
 		}
 	}
-
+	c.log.Debugf("call back config success, blockHeight: %d", block.Header.BlockHeight)
 	// watch native contract
 	contract, ok := IsNativeTxSucc(tx)
 	if ok {
 		// is native tx
 		// callback the watcher by sync
-
+		c.log.Debugf("begin call back contract 2, blockHeight: %d", block.Header.BlockHeight)
 		if err := c.callbackContractVmWatcher(contract, tx.RequestPayload); err != nil {
 			return err
 		}
 	}
-
+	c.log.Debugf("call back contract success, blockHeight: %d", block.Header.BlockHeight)
 	return nil
 }
 
