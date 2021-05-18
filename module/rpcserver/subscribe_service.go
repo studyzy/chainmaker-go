@@ -59,7 +59,6 @@ func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, ser
 		errMsg  string
 		errCode commonErr.ErrCode
 		payload commonPb.SubscribeContractEventPayload
-		db      protocol.BlockchainStore
 	)
 
 	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
@@ -78,15 +77,7 @@ func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, ser
 	s.log.Infof("Recv contractEventInfo subscribe request: [topic:%v]/[contractName:%v]",
 		payload.Topic, payload.ContractName)
 
-	chainId := tx.Header.ChainId
-	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
-		errCode = commonErr.ERR_CODE_GET_STORE
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.Internal, errMsg)
-	}
-
-	return s.doSendContractEvent(tx, db, server, payload)
+	return s.doSendContractEvent(tx, server, payload)
 
 }
 
@@ -96,8 +87,7 @@ func (s *ApiService) checkSubscribeContractEventPayload(payload *commonPb.Subscr
 	}
 	return nil
 }
-func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.BlockchainStore,
-	server apiPb.RpcNode_SubscribeServer, payload commonPb.SubscribeContractEventPayload) error {
+func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer, payload commonPb.SubscribeContractEventPayload) error {
 
 	var (
 		errCode         commonErr.ErrCode
@@ -122,12 +112,16 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 	for {
 		select {
 		case ev := <-eventCh:
-			contractEventsInfo := ev.ContractEvents
-			for _, EventInfo := range contractEventsInfo {
+			contractEventInfoList := ev.ContractEventInfoList.ContractEvents
+			sendEventInfoList := &commonPb.ContractEventInfoList{}
+			for _, EventInfo := range contractEventInfoList {
 				if EventInfo.ContractName != payload.ContractName || EventInfo.Topic != payload.Topic {
 					continue
 				}
-				if result, err = s.getContractEventSubscribeResult(EventInfo); err != nil {
+				sendEventInfoList.ContractEvents = append(sendEventInfoList.ContractEvents, EventInfo)
+			}
+			if len(sendEventInfoList.ContractEvents) > 0 {
+				if result, err = s.getContractEventSubscribeResult(sendEventInfoList); err != nil {
 					s.log.Error(err.Error())
 					return status.Error(codes.Internal, err.Error())
 				}
@@ -137,7 +131,6 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 					return status.Error(codes.Internal, err.Error())
 				}
 			}
-
 		case <-server.Context().Done():
 			return nil
 		case <-s.ctx.Done():
@@ -700,9 +693,9 @@ func (s *ApiService) getBlockSubscribeResult(blockInfo *commonPb.BlockInfo) (*co
 	return result, nil
 }
 
-func (s *ApiService) getContractEventSubscribeResult(contractEventInfo *commonPb.ContractEventInfo) (*commonPb.SubscribeResult, error) {
+func (s *ApiService) getContractEventSubscribeResult(contractEventsInfoList *commonPb.ContractEventInfoList) (*commonPb.SubscribeResult, error) {
 
-	eventBytes, err := proto.Marshal(contractEventInfo)
+	eventBytes, err := proto.Marshal(contractEventsInfoList)
 	if err != nil {
 		errMsg := fmt.Sprintf("marshal contract event info failed, %s", err)
 		s.log.Error(errMsg)

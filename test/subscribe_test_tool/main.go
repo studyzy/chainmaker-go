@@ -223,12 +223,15 @@ func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
 }
 func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	recvEventTick := time.Now().UnixNano() / 1e6
-	var con commonPb.ContractEventInfo
-	if err := proto.Unmarshal(result.Data, &con); err != nil {
+	con := &commonPb.ContractEventInfoList{}
+	if err := proto.Unmarshal(result.Data, con); err != nil {
 		log.Println(err)
 		return err
 	}
-
+	for _, event := range con.ContractEvents {
+		Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
+			recvEventTick, event.ChainId, event.TxId, event.Topic, event.ContractName, event.EventData)
+	}
 	/*bytes, err := json.Marshal(con)
 	if err != nil {
 		log.Println(err)
@@ -236,8 +239,7 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	}
 	_, _ = file.Write(bytes)
 	_, _ = file.WriteString("\n")*/
-	Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
-		recvEventTick, con.ChainId, con.TxId, con.Topic, con.ContractName, con.EventData)
+
 	return nil
 }
 
