@@ -151,9 +151,6 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		return nil, err
 	}
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
-	chainConf.AddWatch(service)
-	service.logger.Debugf("add config watch end...")
-
 	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
 		return nil, err
 	}
@@ -183,6 +180,9 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	cbi.msgbus.Register(msgbus.ProposedBlock, cbi)
 	cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)
 	cbi.msgbus.Register(msgbus.BlockInfo, cbi)
+	cbi.logger.Debugf("add config watch begin...")
+	cbi.chainConf.AddWatch(cbi)
+	cbi.logger.Debugf("end config watch begin...")
 
 	go cbi.syncer.start()
 	go cbi.timerService.Start()
