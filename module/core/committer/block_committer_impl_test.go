@@ -53,7 +53,7 @@ func TestAddBlock(t *testing.T) {
 	proposedCache.SetProposedBlock(&block, rwSetMap, contractEventMap, true)
 
 	log.Infof("init block(%d,%s)", block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash))
-	blockchainStoreImpl.EXPECT().PutBlock(&block, make([]*commonpb.TxRWSet, 0), make([]*commonpb.ContractEvent, 0)).Return(nil)
+	blockchainStoreImpl.EXPECT().PutBlock(&block, make([]*commonpb.TxRWSet, 0)).Return(nil)
 	txPool.EXPECT().RetryAndRemoveTxs(gomock.Any(), gomock.Any()).Return()
 	snapshotManager.EXPECT().NotifyBlockCommitted(&block).Return(nil)
 	err := blockCommitterImpl.AddBlock(&block)
