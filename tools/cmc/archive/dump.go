@@ -1,6 +1,7 @@
 package archive
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,6 +10,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	sdk "chainmaker.org/chainmaker-sdk-go"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
 func dumpCMD() *cobra.Command {
@@ -68,11 +71,17 @@ func runDumpCMD() error {
 		return err
 	}
 
-	// check if archived block height off-chain == archived block height on-chain
 	archivedBlockHeightOffChain, err := model.GetArchivedBlockHeight(db)
 	if err != nil {
 		return err
 	}
+
+	// target block height already archived, do nothing.
+	if targetBlockHeight <= archivedBlockHeightOffChain {
+		printDone()
+		return nil
+	}
+
 	fmt.Println("archivedBlockHeightOffChain=", archivedBlockHeightOffChain)
 	heightOnChain, err := cc.GetArchivedBlockHeight()
 	if err != nil {
@@ -80,65 +89,102 @@ func runDumpCMD() error {
 	}
 	archivedBlockHeightOnChain := uint64(heightOnChain)
 	fmt.Println("archivedBlockHeightOnChain=", archivedBlockHeightOnChain)
+
+	// required archived block height off-chain == archived block height on-chain
 	if archivedBlockHeightOffChain != archivedBlockHeightOnChain {
-		return errors.New("archived block height off-chain != archived block height on-chain")
+		return errors.New("required archived block height off-chain == archived block height on-chain")
 	}
-	if targetBlockHeight <= archivedBlockHeightOnChain {
-		// do nothing
+
+	// required current block height > target block height
+	currentBlockHeight, err := cc.GetCurrentBlockHeight()
+	if err != nil {
+		return err
+	}
+	if uint64(currentBlockHeight) <= targetBlockHeight {
+		fmt.Println("lalalalalalalalala")
+		fmt.Println("currentBlockHeight=", currentBlockHeight, "targetBlockHeight=", targetBlockHeight)
 		printDone()
 		return nil
 	}
 
-	// archive block one by one
+	// archive block one by one, incremental
 	var archivedBlockNum uint64
-	for targetBlockHeight-archivedBlockHeightOnChain >= 0 && blockInterval <= archivedBlockNum {
+	fmt.Printf("targetBlockHeight=%d archivedBlockHeightOnChain=%d blockInterval=%d archivedBlockNum=%d \n\n", targetBlockHeight, archivedBlockHeightOnChain, blockInterval, archivedBlockNum)
+	for targetBlockHeight-archivedBlockHeightOnChain >= 0 && archivedBlockNum <= blockInterval {
+		archivedBlockHeightOnChain++
+		fmt.Printf("archivedBlockHeightOnChain %d \n\n", archivedBlockHeightOnChain)
 		// archive block
 		blkWithRWSet, err := cc.GetFullBlockByHeight(int64(archivedBlockHeightOnChain))
 		if err != nil {
 			return err
 		}
 
-		bz, err := blkWithRWSet.Marshal()
+		blkWithRWSetBytes, err := blkWithRWSet.Marshal()
 		if err != nil {
 			return err
 		}
 
-		sig, err := Hmac()
+		blkHeight := blkWithRWSet.Block.Header.BlockHeight
+		blkHeightBytes := make([]byte, 8)
+		binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkHeight))
+
+		sum, err := Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte("123"))
 		if err != nil {
 			return err
 		}
 
-		_, err = model.InsertBlockInfo(db, chainId, blkWithRWSet.Block.Header.BlockHeight, bz, sig)
+		_, err = model.InsertBlockInfo(db, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
 		if err != nil {
 			return err
 		}
-
-		res, err := cc.ArchiveBlock(int64(archivedBlockHeightOnChain))
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("cc.ArchiveBlock=", res)
+		fmt.Printf("model.InsertBlockInfo %s \n\n", sum)
 
 		archivedBlockNum++
-		archivedBlockHeightOnChain++
 	}
+
+	//err = archiveBlockOnChain(cc, int64(archivedBlockHeightOnChain))
+	//if err != nil {
+	//	return err
+	//}
 
 	// cli.GetArchivedBlockHeight
 	// cli.GetCurrentBlockHeight
 	// cli.GetBlockWithRWSet
 	//
 
-	resp, err := cc.GetBlockByHeight(-1, true)
-	if err != nil {
-		return fmt.Errorf("get block by height failed, %s", err.Error())
-	}
-
-	fmt.Printf("\n\n\n\n\nget block by height resp: %+v\n", resp.Block.Header.BlockHeight)
-
 	return nil
 }
 
 func printDone() {
 	fmt.Printf("\nDone!\n")
+}
+
+func archiveBlockOnChain(cc *sdk.ChainClient, blockNum int64) error {
+	var (
+		err                error
+		payload            []byte
+		signedPayloadBytes []byte
+		resp               *common.TxResponse
+		result             string
+	)
+
+	payload, err = cc.CreateArchiveBlockPayload(blockNum)
+	if err != nil {
+		return err
+	}
+
+	signedPayloadBytes, err = cc.SignArchivePayload(payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, true)
+	if err != nil {
+		return err
+	}
+
+	result = string(resp.ContractResult.Result)
+
+	fmt.Printf("resp: %+v, result:%+s\n", resp, result)
+	return nil
 }

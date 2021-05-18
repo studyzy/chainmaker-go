@@ -27,6 +27,7 @@ var (
 	dbDest            string
 	targetBlockHeight uint64
 	blockInterval     uint64
+	secretKey         string
 )
 
 const (
@@ -55,6 +56,8 @@ const (
 	flagTargetBlockHeight = "target-block-height"
 	// Number of blocks to be archived this time
 	flagBlockInterval = "block-interval"
+	// Secret Key for calc Hmac
+	flagSecretKey = "secret-key"
 )
 
 func ArchiveCMD() *cobra.Command {
