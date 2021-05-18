@@ -196,6 +196,7 @@ func (sch *scheduler) nextHeightToReq() int64 {
 	}
 	if min > sch.pendingRecvHeight {
 		min = sch.pendingRecvHeight
+		sch.blockStates[min] = newBlock
 	}
 	return min
 }
