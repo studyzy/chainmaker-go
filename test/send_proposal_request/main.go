@@ -108,7 +108,8 @@ func main() {
 		step     int
 		wasmType int
 	)
-	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator, 4: get chainConfig")
+	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator,"+
+		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
 	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
