@@ -46,6 +46,9 @@ func (bp *BlockProposerImpl) generateNewBlock(proposingHeight int64, preHash []b
 	snapshot := bp.snapshotManager.NewSnapshot(lastBlock, block)
 	vmStartTick := utils.CurrentTimeMillisSeconds()
 	ssLasts := vmStartTick - ssStartTick
+	if bp.chainConf.ChainConfig().Contract.EnableSqlSupport {
+		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
+	}
 	txRWSetMap, contractEventMap, err := bp.txScheduler.Schedule(block, validatedTxs, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
 	timeLasts = append(timeLasts, ssLasts, vmLasts)

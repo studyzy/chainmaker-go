@@ -11,8 +11,8 @@ type ContractEventDB interface {
 	// CommitBlock commits the event in an atomic operation
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
-	//CreateTable create table
-	CreateTable(ddl string) error
+	//init contract event db
+	InitGenesis(genesis *serialization.BlockWithSerializedInfo) error
 
 	// GetLastSavepoint returns the last block height
 	GetLastSavepoint() (uint64, error)

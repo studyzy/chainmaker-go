@@ -9,7 +9,6 @@ package blockchain
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -23,10 +22,10 @@ import (
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
-	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/subscriber"
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
@@ -148,18 +147,7 @@ func (bc *Blockchain) initStore() (err error) {
 		return
 	}
 	var storeFactory store.Factory
-	var storeType types.EngineType
-	switch strings.ToLower(localconf.ChainMakerConfig.StorageConfig.Provider) {
-	case "leveldb":
-		storeType = types.LevelDb
-	case "rocksdb":
-		storeType = types.RocksDb
-	case "mysql":
-		storeType = types.MySQL
-	default:
-		return errors.New("unsupported store provider")
-	}
-	if bc.store, err = storeFactory.NewStore(storeType, bc.chainId); err != nil {
+	if bc.store, err = storeFactory.NewStore(bc.chainId, &localconf.ChainMakerConfig.StorageConfig); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -196,6 +184,9 @@ func (bc *Blockchain) initChainConf() (err error) {
 
 	// register myself as config watcher
 	bc.chainConf.AddWatch(bc)
+	//if localconf.ChainMakerConfig.StorageConfig.StateDbConfig.IsSqlDB() {
+	//	panic("init chain conf fail. sql the future feature")
+	//}
 	return
 }
 
@@ -209,8 +200,8 @@ func (bc *Blockchain) initCache() (err error) {
 	// 1) if not exist on chain, create it
 	// 2) if exist on chain, load the config in genesis, it will be changed to load the config in config transactions in the future
 	bc.lastBlock, err = bc.store.GetLastBlock()
-	if err != nil {
-		return fmt.Errorf("get last block failed, %s", err.Error())
+	if err != nil { //可能是全新数据库没有任何数据，而且还没创世，所以可能报错，不返回错误，继续进行创世操作即可
+		bc.log.Infof("get last block failed, %s", err.Error())
 	}
 
 	if bc.lastBlock != nil {
@@ -226,7 +217,7 @@ func (bc *Blockchain) initCache() (err error) {
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
 		}
-		if err = bc.store.PutBlock(genesisBlock, rwSetList, nil); err != nil {
+		if err = bc.store.InitGenesis(&storePb.BlockWithRWSet{Block: genesisBlock, TxRWSets: rwSetList, ContractEvents: nil}); err != nil {
 			return fmt.Errorf("put chain[%s] genesis block failed, %s", bc.chainId, err.Error())
 		}
 
@@ -244,7 +235,7 @@ func (bc *Blockchain) initCache() (err error) {
 	bc.proposalCache = cache.NewProposalCache(bc.chainConf, bc.ledgerCache)
 	bc.log.Debugf("go last block: %+v", bc.lastBlock)
 	bc.initModules[moduleNameLedger] = struct{}{}
-	return
+	return nil
 }
 
 func (bc *Blockchain) initAC() (err error) {
@@ -325,9 +316,9 @@ func (bc *Blockchain) initVM() (err error) {
 	var vmFactory vm.Factory
 	bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.chainId, bc.ac, nil)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, nil, bc.chainConf)
 	} else {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.chainId, bc.ac, bc.netService.GetChainNodesInfoProvider())
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return

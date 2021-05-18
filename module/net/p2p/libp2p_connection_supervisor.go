@@ -105,7 +105,7 @@ func (cs *ConnSupervisor) try() {
 			}
 			cs.allConnected = false
 			ac, ok := cs.actuators[peerInfo.ID]
-			if !ok {
+			if !ok || ac.finish {
 				cs.actuators[peerInfo.ID] = newTryToDialActuator(peerInfo, cs, cs.tryTimes)
 				ac = cs.actuators[peerInfo.ID]
 			}

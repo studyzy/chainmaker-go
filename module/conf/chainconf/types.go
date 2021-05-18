@@ -8,6 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"strings"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -15,12 +21,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/pem"
-	"errors"
-	"fmt"
 	"github.com/golang/protobuf/proto"
-	"strings"
-	"sync"
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
@@ -219,7 +220,7 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 
 		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
-			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
 				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}

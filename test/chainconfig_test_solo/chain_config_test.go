@@ -12,9 +12,10 @@ SPDX-License-Identifier: Apache-2.0
 package native_test
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"fmt"
 	"testing"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -333,11 +334,11 @@ func TestAddNodeOrg(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   orgId,
-		Value: "wx-org3",
+		Value: "wx-org5.chainmaker.org",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_ids",
-		Value: "QmdT1qXbJNovCSaXproaBCBAtecYshWHm2FELgd8A9M5WZ,QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
+		Value: "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi",
 	})
 
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ORG_ADD.String(), pairs, chainConfig.Sequence)
@@ -354,11 +355,11 @@ func TestUpdateNodeOrg(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   orgId,
-		Value: "wx-org3",
+		Value: "wx-org5.chainmaker.org",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_ids",
-		Value: "QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
+		Value: "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi",
 	})
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ORG_UPDATE.String(), pairs, chainConfig.Sequence)
 }
@@ -374,7 +375,7 @@ func TestDeleteNodeOrg(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   orgId,
-		Value: "wx-org2",
+		Value: "wx-org5.chainmaker.org",
 	})
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ORG_DELETE.String(), pairs, chainConfig.Sequence)
 }

@@ -1,68 +1,58 @@
 /*
- * Copyright 2020 ChainMaker.org
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 
 package evm
 
 import (
+	"encoding/hex"
+	"fmt"
+	"runtime/debug"
+
 	"chainmaker.org/chainmaker-go/common/evmutils"
-	"chainmaker.org/chainmaker-go/evm/evm-go"
+	evm_go "chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/logger"
-	pb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/utils"
-	"encoding/hex"
-	"fmt"
 )
 
 // RuntimeInstance evm runtime
 type RuntimeInstance struct {
-	Method       string         // invoke contract method
-	ChainId      string         // chain id
-	Address      *evmutils.Int  //address
-	ContractId   *pb.ContractId // contract info
+	Method       string               // invoke contract method
+	ChainId      string               // chain id
+	Address      *evmutils.Int        //address
+	ContractId   *commonPb.ContractId // contract info
 	Log          *logger.CMLogger
 	TxSimContext protocol.TxSimContext
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteCode []byte, parameters map[string]string,
-	txSimContext protocol.TxSimContext, gasUsed uint64) (contractResult *pb.ContractResult) {
-	txId := txSimContext.GetTx().GetHeader().GetTxId()
-
-	logStr := fmt.Sprintf("evm runtime invoke[%s]:", txId)
-	startTime := utils.CurrentTimeMillisSeconds()
+func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
+	txSimContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
+	txId := txSimContext.GetTx().GetHeader().TxId
 
 	// contract response
-	contractResult = &pb.ContractResult{
-		Code:    pb.ContractResultCode_FAIL,
+	contractResult = &commonPb.ContractResult{
+		Code:    commonPb.ContractResultCode_FAIL,
 		Result:  nil,
 		Message: "",
 	}
 
-	// record log add panic
 	defer func() {
-		endTime := utils.CurrentTimeMillisSeconds()
-		logStr = fmt.Sprintf("%s, used time %d", logStr, endTime-startTime)
-		r.Log.Debugf(logStr)
-		panicErr := recover()
-		if panicErr != nil {
-			r.errorResult(contractResult, nil, fmt.Sprint("panicErr:", panicErr))
+		if err := recover(); err != nil {
+			r.Log.Errorf("failed to invoke evm, tx id:%s, error:%s", txId, err)
+			contractResult.Code = commonPb.ContractResultCode_FAIL
+			if e, ok := err.(error); ok {
+				contractResult.Message = e.Error()
+			} else if e, ok := err.(string); ok {
+				contractResult.Message = e
+			}
+			debug.PrintStack()
 		}
 	}()
 
@@ -116,7 +106,6 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 
 	// contract
 	address, err := evmutils.MakeAddressFromString(contractId.ContractName) // reference vm_factory.go RunContract
-	logStr = logStr + " address->" + address.String() + " name ->" + contractId.ContractName
 
 	if err != nil {
 		return r.errorResult(contractResult, err, "make address fail")
@@ -129,6 +118,7 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 	}
 	r.Address = address
 	// new evm instance
+	lastBlock, _ := txSimContext.GetBlockchainStore().GetLastBlock()
 	externalStore := &storage.ContractStorage{Ctx: txSimContext}
 	evm := evm_go.New(evm_go.EVMParam{
 		MaxStackDepth:  protocol.EvmMaxStackDepth,
@@ -137,8 +127,8 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 		Context: &environment.Context{
 			Block: environment.Block{
 				Coinbase:   creatorAddress, //proposer ski
-				Timestamp:  evmutils.New(startTime),
-				Number:     evmutils.New(txSimContext.GetBlockHeight()), // height
+				Timestamp:  evmutils.New(lastBlock.Header.BlockTimestamp),
+				Number:     evmutils.New(lastBlock.Header.BlockHeight), // height
 				Difficulty: evmutils.New(0),
 				GasLimit:   evmutils.New(protocol.GasLimit),
 			},
@@ -160,7 +150,7 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 		return r.errorResult(contractResult, err, "failed to execute evm contract")
 	}
 
-	contractResult.Code = pb.ContractResultCode_OK
+	contractResult.Code = commonPb.ContractResultCode_OK
 	contractResult.GasUsed = int64(gasLeft - result.GasLeft)
 	contractResult.Result = result.ResultData
 	return contractResult
@@ -169,19 +159,27 @@ func (r *RuntimeInstance) Invoke(contractId *pb.ContractId, method string, byteC
 func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	if result.ExitOpCode == opcodes.REVERT {
 		err = fmt.Errorf("revert instruction was encountered during execution")
-		r.Log.Errorf("failed to run evm []: %s", r.TxSimContext.GetTx().Header.TxId, err.Error())
+		r.Log.Errorf("revert instruction encountered in contract [%s] execution，tx: [%s], error: [%s]",
+			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId, err.Error())
 		panic(err)
-		return
 	}
 	if err != nil {
-		r.Log.Errorf("call back do nothing for err: %s", err.Error())
+		r.Log.Errorf("error encountered in contract [%s] execution，tx: [%s], error: [%s]",
+			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId, err.Error())
 		panic(err)
-		return
 	}
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
 			r.TxSimContext.Put(n, []byte(k), val.Bytes())
 		}
+	}
+	if len(result.StorageCache.Destructs) > 0 {
+		revokeKey := []byte(protocol.ContractRevoke)
+		if err := r.TxSimContext.Put(r.ContractId.ContractName, revokeKey, []byte(r.ContractId.ContractName)); err != nil {
+			panic(err)
+		}
+		r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
+			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId)
 	}
 	// save address -> contractName,version
 	if r.Method == protocol.ContractInitMethod || r.Method == protocol.ContractUpgradeMethod {
@@ -189,15 +187,18 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 			r.Log.Errorf("failed to save contractName %s", err.Error())
 			panic(err)
 		}
-		if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.ContractVersion)); err != nil {
+		versionKey := []byte(protocol.ContractVersion + r.Address.String())
+		//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.ContractVersion)); err != nil {
+		if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey, []byte(r.ContractId.ContractVersion)); err != nil {
 			r.Log.Errorf("failed to save ContractVersion %s", err.Error())
 			panic(err)
 		}
 		// if is create/upgrade contract then override solidity byteCode
 		if len(result.ByteCodeBody) > 0 && len(result.ByteCodeHead) > 0 {
 			// save byteCodeBody
-			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(r.ContractId.ContractVersion)...)
-			if err := r.TxSimContext.Put(r.ContractId.ContractName, versionedByteCodeKey, result.ByteCodeBody); err != nil {
+			versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.ContractId.ContractName), []byte(r.ContractId.ContractVersion)...)
+			//if err := r.TxSimContext.Put(r.ContractId.ContractName, versionedByteCodeKey, result.ByteCodeBody); err != nil {
+			if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
 				r.Log.Errorf("failed to save byte code body %s", err.Error())
 				panic(err)
 			}
@@ -210,8 +211,8 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	r.Log.Debug("result:", result.ResultData)
 }
 
-func (r *RuntimeInstance) errorResult(contractResult *pb.ContractResult, err error, errMsg string) *pb.ContractResult {
-	contractResult.Code = pb.ContractResultCode_FAIL
+func (r *RuntimeInstance) errorResult(contractResult *commonPb.ContractResult, err error, errMsg string) *commonPb.ContractResult {
+	contractResult.Code = commonPb.ContractResultCode_FAIL
 	if err != nil {
 		errMsg += ", " + err.Error()
 	}

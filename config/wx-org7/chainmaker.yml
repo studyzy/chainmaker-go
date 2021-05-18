@@ -71,15 +71,29 @@ pprof:
   port: 24321
 
 storage:
-  provider: LevelDB
-  store_path: ../data/ledgerData7
-  enable_contract_eventdb: false #是否开启合约事件存储功能， 默认为false，如果设置为true,需要配置mysql
-  mysql:    #MySQL相关配置，只有provider选择MySQL时才需要配置
-    dsn: root:password@tcp(127.0.0.1:3306)/    #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)
-    max_idle_conns: 10    #连接池中维持的最大的空闲连接数，默认为10
-    max_open_conns: 10    #最大的可用连接数，默认为10
-    conn_max_lifetime: 60    #连接维持的最长时间，单位秒，默认为60
-
+  store_path: ../data/org7/ledgerData1
+  blockdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org7/blocks
+  statedb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org7/state
+  historydb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org7/history
+  resultdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org7/result
+  disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
+  contract_eventdb_config:
+    provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
+    sqldb_config:
+      sqldb_type: mysql           #contract event db 只支持mysql
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
 
 debug:
   # 是否开启CLI功能，过度期间使用

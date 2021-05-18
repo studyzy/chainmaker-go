@@ -1,3 +1,8 @@
+/*
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package message
 
 import (
@@ -285,10 +290,6 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	require.True(t, done, "should be done")
 	require.True(t, voteNewView, "should vote newview")
 	require.Nil(t, voteBlockID, "should blockId is null")
-}
-
-func TestInsertWithNet(t *testing.T) {
-
 }
 
 func TestInsertVote(t *testing.T) {

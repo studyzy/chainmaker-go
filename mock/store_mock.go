@@ -118,6 +118,198 @@ func (mr *MockIteratorMockRecorder) Value() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Value", reflect.TypeOf((*MockIterator)(nil).Value))
 }
 
+// MockStateIterator is a mock of StateIterator interface.
+type MockStateIterator struct {
+	ctrl     *gomock.Controller
+	recorder *MockStateIteratorMockRecorder
+}
+
+// MockStateIteratorMockRecorder is the mock recorder for MockStateIterator.
+type MockStateIteratorMockRecorder struct {
+	mock *MockStateIterator
+}
+
+// NewMockStateIterator creates a new mock instance.
+func NewMockStateIterator(ctrl *gomock.Controller) *MockStateIterator {
+	mock := &MockStateIterator{ctrl: ctrl}
+	mock.recorder = &MockStateIteratorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStateIterator) EXPECT() *MockStateIteratorMockRecorder {
+	return m.recorder
+}
+
+// Next mocks base method.
+func (m *MockStateIterator) Next() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Next")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Next indicates an expected call of Next.
+func (mr *MockStateIteratorMockRecorder) Next() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockStateIterator)(nil).Next))
+}
+
+// Release mocks base method.
+func (m *MockStateIterator) Release() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Release")
+}
+
+// Release indicates an expected call of Release.
+func (mr *MockStateIteratorMockRecorder) Release() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockStateIterator)(nil).Release))
+}
+
+// Value mocks base method.
+func (m *MockStateIterator) Value() (*store.KV, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Value")
+	ret0, _ := ret[0].(*store.KV)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Value indicates an expected call of Value.
+func (mr *MockStateIteratorMockRecorder) Value() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Value", reflect.TypeOf((*MockStateIterator)(nil).Value))
+}
+
+// MockKeyHistoryIterator is a mock of KeyHistoryIterator interface.
+type MockKeyHistoryIterator struct {
+	ctrl     *gomock.Controller
+	recorder *MockKeyHistoryIteratorMockRecorder
+}
+
+// MockKeyHistoryIteratorMockRecorder is the mock recorder for MockKeyHistoryIterator.
+type MockKeyHistoryIteratorMockRecorder struct {
+	mock *MockKeyHistoryIterator
+}
+
+// NewMockKeyHistoryIterator creates a new mock instance.
+func NewMockKeyHistoryIterator(ctrl *gomock.Controller) *MockKeyHistoryIterator {
+	mock := &MockKeyHistoryIterator{ctrl: ctrl}
+	mock.recorder = &MockKeyHistoryIteratorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKeyHistoryIterator) EXPECT() *MockKeyHistoryIteratorMockRecorder {
+	return m.recorder
+}
+
+// Next mocks base method.
+func (m *MockKeyHistoryIterator) Next() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Next")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Next indicates an expected call of Next.
+func (mr *MockKeyHistoryIteratorMockRecorder) Next() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockKeyHistoryIterator)(nil).Next))
+}
+
+// Release mocks base method.
+func (m *MockKeyHistoryIterator) Release() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Release")
+}
+
+// Release indicates an expected call of Release.
+func (mr *MockKeyHistoryIteratorMockRecorder) Release() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockKeyHistoryIterator)(nil).Release))
+}
+
+// Value mocks base method.
+func (m *MockKeyHistoryIterator) Value() (*store.KeyModification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Value")
+	ret0, _ := ret[0].(*store.KeyModification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Value indicates an expected call of Value.
+func (mr *MockKeyHistoryIteratorMockRecorder) Value() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Value", reflect.TypeOf((*MockKeyHistoryIterator)(nil).Value))
+}
+
+// MockTxHistoryIterator is a mock of TxHistoryIterator interface.
+type MockTxHistoryIterator struct {
+	ctrl     *gomock.Controller
+	recorder *MockTxHistoryIteratorMockRecorder
+}
+
+// MockTxHistoryIteratorMockRecorder is the mock recorder for MockTxHistoryIterator.
+type MockTxHistoryIteratorMockRecorder struct {
+	mock *MockTxHistoryIterator
+}
+
+// NewMockTxHistoryIterator creates a new mock instance.
+func NewMockTxHistoryIterator(ctrl *gomock.Controller) *MockTxHistoryIterator {
+	mock := &MockTxHistoryIterator{ctrl: ctrl}
+	mock.recorder = &MockTxHistoryIteratorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTxHistoryIterator) EXPECT() *MockTxHistoryIteratorMockRecorder {
+	return m.recorder
+}
+
+// Next mocks base method.
+func (m *MockTxHistoryIterator) Next() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Next")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Next indicates an expected call of Next.
+func (mr *MockTxHistoryIteratorMockRecorder) Next() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockTxHistoryIterator)(nil).Next))
+}
+
+// Release mocks base method.
+func (m *MockTxHistoryIterator) Release() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Release")
+}
+
+// Release indicates an expected call of Release.
+func (mr *MockTxHistoryIteratorMockRecorder) Release() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockTxHistoryIterator)(nil).Release))
+}
+
+// Value mocks base method.
+func (m *MockTxHistoryIterator) Value() (*store.TxHistory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Value")
+	ret0, _ := ret[0].(*store.TxHistory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Value indicates an expected call of Value.
+func (mr *MockTxHistoryIteratorMockRecorder) Value() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Value", reflect.TypeOf((*MockTxHistoryIterator)(nil).Value))
+}
+
 // MockBlockchainStore is a mock of BlockchainStore interface.
 type MockBlockchainStore struct {
 	ctrl     *gomock.Controller
@@ -139,6 +331,21 @@ func NewMockBlockchainStore(ctrl *gomock.Controller) *MockBlockchainStore {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBlockchainStore) EXPECT() *MockBlockchainStoreMockRecorder {
 	return m.recorder
+}
+
+// BeginDbTransaction mocks base method.
+func (m *MockBlockchainStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginDbTransaction", txName)
+	ret0, _ := ret[0].(protocol.SqlDBTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BeginDbTransaction indicates an expected call of BeginDbTransaction.
+func (mr *MockBlockchainStoreMockRecorder) BeginDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginDbTransaction", reflect.TypeOf((*MockBlockchainStore)(nil).BeginDbTransaction), txName)
 }
 
 // BlockExists mocks base method.
@@ -168,6 +375,49 @@ func (m *MockBlockchainStore) Close() error {
 func (mr *MockBlockchainStoreMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockBlockchainStore)(nil).Close))
+}
+
+// CommitDbTransaction mocks base method.
+func (m *MockBlockchainStore) CommitDbTransaction(txName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitDbTransaction", txName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CommitDbTransaction indicates an expected call of CommitDbTransaction.
+func (mr *MockBlockchainStoreMockRecorder) CommitDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitDbTransaction", reflect.TypeOf((*MockBlockchainStore)(nil).CommitDbTransaction), txName)
+}
+
+// ExecDdlSql mocks base method.
+func (m *MockBlockchainStore) ExecDdlSql(contractName, sql string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecDdlSql", contractName, sql)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExecDdlSql indicates an expected call of ExecDdlSql.
+func (mr *MockBlockchainStoreMockRecorder) ExecDdlSql(contractName, sql interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecDdlSql", reflect.TypeOf((*MockBlockchainStore)(nil).ExecDdlSql), contractName, sql)
+}
+
+// GetAccountTxHistory mocks base method.
+func (m *MockBlockchainStore) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountTxHistory", accountId)
+	ret0, _ := ret[0].(protocol.TxHistoryIterator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountTxHistory indicates an expected call of GetAccountTxHistory.
+func (mr *MockBlockchainStoreMockRecorder) GetAccountTxHistory(accountId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountTxHistory", reflect.TypeOf((*MockBlockchainStore)(nil).GetAccountTxHistory), accountId)
 }
 
 // GetBlock mocks base method.
@@ -230,6 +480,21 @@ func (mr *MockBlockchainStoreMockRecorder) GetBlockWithRWSets(height interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockWithRWSets", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockWithRWSets), height)
 }
 
+// GetContractTxHistory mocks base method.
+func (m *MockBlockchainStore) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractTxHistory", contractName)
+	ret0, _ := ret[0].(protocol.TxHistoryIterator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractTxHistory indicates an expected call of GetContractTxHistory.
+func (mr *MockBlockchainStoreMockRecorder) GetContractTxHistory(contractName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractTxHistory", reflect.TypeOf((*MockBlockchainStore)(nil).GetContractTxHistory), contractName)
+}
+
 // GetDBHandle mocks base method.
 func (m *MockBlockchainStore) GetDBHandle(dbName string) protocol.DBHandle {
 	m.ctrl.T.Helper()
@@ -242,6 +507,36 @@ func (m *MockBlockchainStore) GetDBHandle(dbName string) protocol.DBHandle {
 func (mr *MockBlockchainStoreMockRecorder) GetDBHandle(dbName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDBHandle", reflect.TypeOf((*MockBlockchainStore)(nil).GetDBHandle), dbName)
+}
+
+// GetDbTransaction mocks base method.
+func (m *MockBlockchainStore) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDbTransaction", txName)
+	ret0, _ := ret[0].(protocol.SqlDBTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDbTransaction indicates an expected call of GetDbTransaction.
+func (mr *MockBlockchainStoreMockRecorder) GetDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDbTransaction", reflect.TypeOf((*MockBlockchainStore)(nil).GetDbTransaction), txName)
+}
+
+// GetHistoryForKey mocks base method.
+func (m *MockBlockchainStore) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHistoryForKey", contractName, key)
+	ret0, _ := ret[0].(protocol.KeyHistoryIterator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHistoryForKey indicates an expected call of GetHistoryForKey.
+func (mr *MockBlockchainStoreMockRecorder) GetHistoryForKey(contractName, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHistoryForKey", reflect.TypeOf((*MockBlockchainStore)(nil).GetHistoryForKey), contractName, key)
 }
 
 // GetLastBlock mocks base method.
@@ -334,18 +629,72 @@ func (mr *MockBlockchainStoreMockRecorder) GetTxRWSetsByHeight(height interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxRWSetsByHeight", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxRWSetsByHeight), height)
 }
 
-// PutBlock mocks base method.
-func (m *MockBlockchainStore) PutBlock(block *common.Block, txRWSets []*common.TxRWSet, contractEvents []*common.ContractEvent) error {
+// InitGenesis mocks base method.
+func (m *MockBlockchainStore) InitGenesis(genesisBlock *store.BlockWithRWSet) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutBlock", block, txRWSets, contractEvents)
+	ret := m.ctrl.Call(m, "InitGenesis", genesisBlock)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InitGenesis indicates an expected call of InitGenesis.
+func (mr *MockBlockchainStoreMockRecorder) InitGenesis(genesisBlock interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitGenesis", reflect.TypeOf((*MockBlockchainStore)(nil).InitGenesis), genesisBlock)
+}
+
+// PutBlock mocks base method.
+func (m *MockBlockchainStore) PutBlock(block *common.Block, txRWSets []*common.TxRWSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutBlock", block, txRWSets)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PutBlock indicates an expected call of PutBlock.
-func (mr *MockBlockchainStoreMockRecorder) PutBlock(block, txRWSets, contractEvents interface{}) *gomock.Call {
+func (mr *MockBlockchainStoreMockRecorder) PutBlock(block, txRWSets interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutBlock", reflect.TypeOf((*MockBlockchainStore)(nil).PutBlock), block, txRWSets, contractEvents)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutBlock", reflect.TypeOf((*MockBlockchainStore)(nil).PutBlock), block, txRWSets)
+}
+
+// QueryMulti mocks base method.
+func (m *MockBlockchainStore) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{contractName, sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueryMulti", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRows)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryMulti indicates an expected call of QueryMulti.
+func (mr *MockBlockchainStoreMockRecorder) QueryMulti(contractName, sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{contractName, sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryMulti", reflect.TypeOf((*MockBlockchainStore)(nil).QueryMulti), varargs...)
+}
+
+// QuerySingle mocks base method.
+func (m *MockBlockchainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{contractName, sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QuerySingle", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QuerySingle indicates an expected call of QuerySingle.
+func (mr *MockBlockchainStoreMockRecorder) QuerySingle(contractName, sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{contractName, sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QuerySingle", reflect.TypeOf((*MockBlockchainStore)(nil).QuerySingle), varargs...)
 }
 
 // ReadObject mocks base method.
@@ -363,12 +712,27 @@ func (mr *MockBlockchainStoreMockRecorder) ReadObject(contractName, key interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadObject", reflect.TypeOf((*MockBlockchainStore)(nil).ReadObject), contractName, key)
 }
 
+// RollbackDbTransaction mocks base method.
+func (m *MockBlockchainStore) RollbackDbTransaction(txName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RollbackDbTransaction", txName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RollbackDbTransaction indicates an expected call of RollbackDbTransaction.
+func (mr *MockBlockchainStoreMockRecorder) RollbackDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackDbTransaction", reflect.TypeOf((*MockBlockchainStore)(nil).RollbackDbTransaction), txName)
+}
+
 // SelectObject mocks base method.
-func (m *MockBlockchainStore) SelectObject(contractName string, startKey, limit []byte) protocol.Iterator {
+func (m *MockBlockchainStore) SelectObject(contractName string, startKey, limit []byte) (protocol.StateIterator, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SelectObject", contractName, startKey, limit)
-	ret0, _ := ret[0].(protocol.Iterator)
-	return ret0
+	ret0, _ := ret[0].(protocol.StateIterator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // SelectObject indicates an expected call of SelectObject.
@@ -392,6 +756,733 @@ func (mr *MockBlockchainStoreMockRecorder) TxExists(txId interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TxExists", reflect.TypeOf((*MockBlockchainStore)(nil).TxExists), txId)
 }
 
+// MockStateSqlOperation is a mock of StateSqlOperation interface.
+type MockStateSqlOperation struct {
+	ctrl     *gomock.Controller
+	recorder *MockStateSqlOperationMockRecorder
+}
+
+// MockStateSqlOperationMockRecorder is the mock recorder for MockStateSqlOperation.
+type MockStateSqlOperationMockRecorder struct {
+	mock *MockStateSqlOperation
+}
+
+// NewMockStateSqlOperation creates a new mock instance.
+func NewMockStateSqlOperation(ctrl *gomock.Controller) *MockStateSqlOperation {
+	mock := &MockStateSqlOperation{ctrl: ctrl}
+	mock.recorder = &MockStateSqlOperationMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStateSqlOperation) EXPECT() *MockStateSqlOperationMockRecorder {
+	return m.recorder
+}
+
+// BeginDbTransaction mocks base method.
+func (m *MockStateSqlOperation) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginDbTransaction", txName)
+	ret0, _ := ret[0].(protocol.SqlDBTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BeginDbTransaction indicates an expected call of BeginDbTransaction.
+func (mr *MockStateSqlOperationMockRecorder) BeginDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginDbTransaction", reflect.TypeOf((*MockStateSqlOperation)(nil).BeginDbTransaction), txName)
+}
+
+// CommitDbTransaction mocks base method.
+func (m *MockStateSqlOperation) CommitDbTransaction(txName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitDbTransaction", txName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CommitDbTransaction indicates an expected call of CommitDbTransaction.
+func (mr *MockStateSqlOperationMockRecorder) CommitDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitDbTransaction", reflect.TypeOf((*MockStateSqlOperation)(nil).CommitDbTransaction), txName)
+}
+
+// ExecDdlSql mocks base method.
+func (m *MockStateSqlOperation) ExecDdlSql(contractName, sql string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecDdlSql", contractName, sql)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExecDdlSql indicates an expected call of ExecDdlSql.
+func (mr *MockStateSqlOperationMockRecorder) ExecDdlSql(contractName, sql interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecDdlSql", reflect.TypeOf((*MockStateSqlOperation)(nil).ExecDdlSql), contractName, sql)
+}
+
+// GetDbTransaction mocks base method.
+func (m *MockStateSqlOperation) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDbTransaction", txName)
+	ret0, _ := ret[0].(protocol.SqlDBTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDbTransaction indicates an expected call of GetDbTransaction.
+func (mr *MockStateSqlOperationMockRecorder) GetDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDbTransaction", reflect.TypeOf((*MockStateSqlOperation)(nil).GetDbTransaction), txName)
+}
+
+// QueryMulti mocks base method.
+func (m *MockStateSqlOperation) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{contractName, sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueryMulti", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRows)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryMulti indicates an expected call of QueryMulti.
+func (mr *MockStateSqlOperationMockRecorder) QueryMulti(contractName, sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{contractName, sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryMulti", reflect.TypeOf((*MockStateSqlOperation)(nil).QueryMulti), varargs...)
+}
+
+// QuerySingle mocks base method.
+func (m *MockStateSqlOperation) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{contractName, sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QuerySingle", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QuerySingle indicates an expected call of QuerySingle.
+func (mr *MockStateSqlOperationMockRecorder) QuerySingle(contractName, sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{contractName, sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QuerySingle", reflect.TypeOf((*MockStateSqlOperation)(nil).QuerySingle), varargs...)
+}
+
+// RollbackDbTransaction mocks base method.
+func (m *MockStateSqlOperation) RollbackDbTransaction(txName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RollbackDbTransaction", txName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RollbackDbTransaction indicates an expected call of RollbackDbTransaction.
+func (mr *MockStateSqlOperationMockRecorder) RollbackDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackDbTransaction", reflect.TypeOf((*MockStateSqlOperation)(nil).RollbackDbTransaction), txName)
+}
+
+// MockSqlDBHandle is a mock of SqlDBHandle interface.
+type MockSqlDBHandle struct {
+	ctrl     *gomock.Controller
+	recorder *MockSqlDBHandleMockRecorder
+}
+
+// MockSqlDBHandleMockRecorder is the mock recorder for MockSqlDBHandle.
+type MockSqlDBHandleMockRecorder struct {
+	mock *MockSqlDBHandle
+}
+
+// NewMockSqlDBHandle creates a new mock instance.
+func NewMockSqlDBHandle(ctrl *gomock.Controller) *MockSqlDBHandle {
+	mock := &MockSqlDBHandle{ctrl: ctrl}
+	mock.recorder = &MockSqlDBHandleMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSqlDBHandle) EXPECT() *MockSqlDBHandleMockRecorder {
+	return m.recorder
+}
+
+// BeginDbTransaction mocks base method.
+func (m *MockSqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginDbTransaction", txName)
+	ret0, _ := ret[0].(protocol.SqlDBTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BeginDbTransaction indicates an expected call of BeginDbTransaction.
+func (mr *MockSqlDBHandleMockRecorder) BeginDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginDbTransaction", reflect.TypeOf((*MockSqlDBHandle)(nil).BeginDbTransaction), txName)
+}
+
+// Close mocks base method.
+func (m *MockSqlDBHandle) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockSqlDBHandleMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockSqlDBHandle)(nil).Close))
+}
+
+// CommitDbTransaction mocks base method.
+func (m *MockSqlDBHandle) CommitDbTransaction(txName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitDbTransaction", txName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CommitDbTransaction indicates an expected call of CommitDbTransaction.
+func (mr *MockSqlDBHandleMockRecorder) CommitDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitDbTransaction", reflect.TypeOf((*MockSqlDBHandle)(nil).CommitDbTransaction), txName)
+}
+
+// CreateDatabaseIfNotExist mocks base method.
+func (m *MockSqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDatabaseIfNotExist", dbName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDatabaseIfNotExist indicates an expected call of CreateDatabaseIfNotExist.
+func (mr *MockSqlDBHandleMockRecorder) CreateDatabaseIfNotExist(dbName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDatabaseIfNotExist", reflect.TypeOf((*MockSqlDBHandle)(nil).CreateDatabaseIfNotExist), dbName)
+}
+
+// CreateTableIfNotExist mocks base method.
+func (m *MockSqlDBHandle) CreateTableIfNotExist(obj interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTableIfNotExist", obj)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateTableIfNotExist indicates an expected call of CreateTableIfNotExist.
+func (mr *MockSqlDBHandleMockRecorder) CreateTableIfNotExist(obj interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTableIfNotExist", reflect.TypeOf((*MockSqlDBHandle)(nil).CreateTableIfNotExist), obj)
+}
+
+// Delete mocks base method.
+func (m *MockSqlDBHandle) Delete(key []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockSqlDBHandleMockRecorder) Delete(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSqlDBHandle)(nil).Delete), key)
+}
+
+// ExecSql mocks base method.
+func (m *MockSqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExecSql", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecSql indicates an expected call of ExecSql.
+func (mr *MockSqlDBHandleMockRecorder) ExecSql(sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecSql", reflect.TypeOf((*MockSqlDBHandle)(nil).ExecSql), varargs...)
+}
+
+// Get mocks base method.
+func (m *MockSqlDBHandle) Get(key []byte) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", key)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockSqlDBHandleMockRecorder) Get(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSqlDBHandle)(nil).Get), key)
+}
+
+// GetDbTransaction mocks base method.
+func (m *MockSqlDBHandle) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDbTransaction", txName)
+	ret0, _ := ret[0].(protocol.SqlDBTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDbTransaction indicates an expected call of GetDbTransaction.
+func (mr *MockSqlDBHandleMockRecorder) GetDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDbTransaction", reflect.TypeOf((*MockSqlDBHandle)(nil).GetDbTransaction), txName)
+}
+
+// Has mocks base method.
+func (m *MockSqlDBHandle) Has(key []byte) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Has", key)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Has indicates an expected call of Has.
+func (mr *MockSqlDBHandleMockRecorder) Has(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Has", reflect.TypeOf((*MockSqlDBHandle)(nil).Has), key)
+}
+
+// NewIteratorWithPrefix mocks base method.
+func (m *MockSqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewIteratorWithPrefix", prefix)
+	ret0, _ := ret[0].(protocol.Iterator)
+	return ret0
+}
+
+// NewIteratorWithPrefix indicates an expected call of NewIteratorWithPrefix.
+func (mr *MockSqlDBHandleMockRecorder) NewIteratorWithPrefix(prefix interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIteratorWithPrefix", reflect.TypeOf((*MockSqlDBHandle)(nil).NewIteratorWithPrefix), prefix)
+}
+
+// NewIteratorWithRange mocks base method.
+func (m *MockSqlDBHandle) NewIteratorWithRange(start, limit []byte) protocol.Iterator {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewIteratorWithRange", start, limit)
+	ret0, _ := ret[0].(protocol.Iterator)
+	return ret0
+}
+
+// NewIteratorWithRange indicates an expected call of NewIteratorWithRange.
+func (mr *MockSqlDBHandleMockRecorder) NewIteratorWithRange(start, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewIteratorWithRange", reflect.TypeOf((*MockSqlDBHandle)(nil).NewIteratorWithRange), start, limit)
+}
+
+// Put mocks base method.
+func (m *MockSqlDBHandle) Put(key, value []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", key, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Put indicates an expected call of Put.
+func (mr *MockSqlDBHandleMockRecorder) Put(key, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockSqlDBHandle)(nil).Put), key, value)
+}
+
+// QueryMulti mocks base method.
+func (m *MockSqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueryMulti", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRows)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryMulti indicates an expected call of QueryMulti.
+func (mr *MockSqlDBHandleMockRecorder) QueryMulti(sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryMulti", reflect.TypeOf((*MockSqlDBHandle)(nil).QueryMulti), varargs...)
+}
+
+// QuerySingle mocks base method.
+func (m *MockSqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QuerySingle", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QuerySingle indicates an expected call of QuerySingle.
+func (mr *MockSqlDBHandleMockRecorder) QuerySingle(sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QuerySingle", reflect.TypeOf((*MockSqlDBHandle)(nil).QuerySingle), varargs...)
+}
+
+// RollbackDbTransaction mocks base method.
+func (m *MockSqlDBHandle) RollbackDbTransaction(txName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RollbackDbTransaction", txName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RollbackDbTransaction indicates an expected call of RollbackDbTransaction.
+func (mr *MockSqlDBHandleMockRecorder) RollbackDbTransaction(txName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackDbTransaction", reflect.TypeOf((*MockSqlDBHandle)(nil).RollbackDbTransaction), txName)
+}
+
+// Save mocks base method.
+func (m *MockSqlDBHandle) Save(value interface{}) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save", value)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Save indicates an expected call of Save.
+func (mr *MockSqlDBHandleMockRecorder) Save(value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockSqlDBHandle)(nil).Save), value)
+}
+
+// WriteBatch mocks base method.
+func (m *MockSqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteBatch", batch, sync)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteBatch indicates an expected call of WriteBatch.
+func (mr *MockSqlDBHandleMockRecorder) WriteBatch(batch, sync interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBatch", reflect.TypeOf((*MockSqlDBHandle)(nil).WriteBatch), batch, sync)
+}
+
+// MockSqlDBTransaction is a mock of SqlDBTransaction interface.
+type MockSqlDBTransaction struct {
+	ctrl     *gomock.Controller
+	recorder *MockSqlDBTransactionMockRecorder
+}
+
+// MockSqlDBTransactionMockRecorder is the mock recorder for MockSqlDBTransaction.
+type MockSqlDBTransactionMockRecorder struct {
+	mock *MockSqlDBTransaction
+}
+
+// NewMockSqlDBTransaction creates a new mock instance.
+func NewMockSqlDBTransaction(ctrl *gomock.Controller) *MockSqlDBTransaction {
+	mock := &MockSqlDBTransaction{ctrl: ctrl}
+	mock.recorder = &MockSqlDBTransactionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSqlDBTransaction) EXPECT() *MockSqlDBTransactionMockRecorder {
+	return m.recorder
+}
+
+// BeginDbSavePoint mocks base method.
+func (m *MockSqlDBTransaction) BeginDbSavePoint(savePointName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginDbSavePoint", savePointName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeginDbSavePoint indicates an expected call of BeginDbSavePoint.
+func (mr *MockSqlDBTransactionMockRecorder) BeginDbSavePoint(savePointName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginDbSavePoint", reflect.TypeOf((*MockSqlDBTransaction)(nil).BeginDbSavePoint), savePointName)
+}
+
+// ChangeContextDb mocks base method.
+func (m *MockSqlDBTransaction) ChangeContextDb(dbName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeContextDb", dbName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ChangeContextDb indicates an expected call of ChangeContextDb.
+func (mr *MockSqlDBTransactionMockRecorder) ChangeContextDb(dbName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeContextDb", reflect.TypeOf((*MockSqlDBTransaction)(nil).ChangeContextDb), dbName)
+}
+
+// ExecSql mocks base method.
+func (m *MockSqlDBTransaction) ExecSql(sql string, values ...interface{}) (int64, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExecSql", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecSql indicates an expected call of ExecSql.
+func (mr *MockSqlDBTransactionMockRecorder) ExecSql(sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecSql", reflect.TypeOf((*MockSqlDBTransaction)(nil).ExecSql), varargs...)
+}
+
+// QueryMulti mocks base method.
+func (m *MockSqlDBTransaction) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueryMulti", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRows)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryMulti indicates an expected call of QueryMulti.
+func (mr *MockSqlDBTransactionMockRecorder) QueryMulti(sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryMulti", reflect.TypeOf((*MockSqlDBTransaction)(nil).QueryMulti), varargs...)
+}
+
+// QuerySingle mocks base method.
+func (m *MockSqlDBTransaction) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{sql}
+	for _, a := range values {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QuerySingle", varargs...)
+	ret0, _ := ret[0].(protocol.SqlRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QuerySingle indicates an expected call of QuerySingle.
+func (mr *MockSqlDBTransactionMockRecorder) QuerySingle(sql interface{}, values ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{sql}, values...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QuerySingle", reflect.TypeOf((*MockSqlDBTransaction)(nil).QuerySingle), varargs...)
+}
+
+// RollbackDbSavePoint mocks base method.
+func (m *MockSqlDBTransaction) RollbackDbSavePoint(savePointName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RollbackDbSavePoint", savePointName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RollbackDbSavePoint indicates an expected call of RollbackDbSavePoint.
+func (mr *MockSqlDBTransactionMockRecorder) RollbackDbSavePoint(savePointName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackDbSavePoint", reflect.TypeOf((*MockSqlDBTransaction)(nil).RollbackDbSavePoint), savePointName)
+}
+
+// Save mocks base method.
+func (m *MockSqlDBTransaction) Save(value interface{}) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save", value)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Save indicates an expected call of Save.
+func (mr *MockSqlDBTransactionMockRecorder) Save(value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockSqlDBTransaction)(nil).Save), value)
+}
+
+// MockSqlRow is a mock of SqlRow interface.
+type MockSqlRow struct {
+	ctrl     *gomock.Controller
+	recorder *MockSqlRowMockRecorder
+}
+
+// MockSqlRowMockRecorder is the mock recorder for MockSqlRow.
+type MockSqlRowMockRecorder struct {
+	mock *MockSqlRow
+}
+
+// NewMockSqlRow creates a new mock instance.
+func NewMockSqlRow(ctrl *gomock.Controller) *MockSqlRow {
+	mock := &MockSqlRow{ctrl: ctrl}
+	mock.recorder = &MockSqlRowMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSqlRow) EXPECT() *MockSqlRowMockRecorder {
+	return m.recorder
+}
+
+// Data mocks base method.
+func (m *MockSqlRow) Data() (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Data")
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Data indicates an expected call of Data.
+func (mr *MockSqlRowMockRecorder) Data() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Data", reflect.TypeOf((*MockSqlRow)(nil).Data))
+}
+
+// IsEmpty mocks base method.
+func (m *MockSqlRow) IsEmpty() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsEmpty")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsEmpty indicates an expected call of IsEmpty.
+func (mr *MockSqlRowMockRecorder) IsEmpty() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEmpty", reflect.TypeOf((*MockSqlRow)(nil).IsEmpty))
+}
+
+// ScanColumns mocks base method.
+func (m *MockSqlRow) ScanColumns(dest ...interface{}) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range dest {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ScanColumns", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ScanColumns indicates an expected call of ScanColumns.
+func (mr *MockSqlRowMockRecorder) ScanColumns(dest ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanColumns", reflect.TypeOf((*MockSqlRow)(nil).ScanColumns), dest...)
+}
+
+// MockSqlRows is a mock of SqlRows interface.
+type MockSqlRows struct {
+	ctrl     *gomock.Controller
+	recorder *MockSqlRowsMockRecorder
+}
+
+// MockSqlRowsMockRecorder is the mock recorder for MockSqlRows.
+type MockSqlRowsMockRecorder struct {
+	mock *MockSqlRows
+}
+
+// NewMockSqlRows creates a new mock instance.
+func NewMockSqlRows(ctrl *gomock.Controller) *MockSqlRows {
+	mock := &MockSqlRows{ctrl: ctrl}
+	mock.recorder = &MockSqlRowsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSqlRows) EXPECT() *MockSqlRowsMockRecorder {
+	return m.recorder
+}
+
+// Close mocks base method.
+func (m *MockSqlRows) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockSqlRowsMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockSqlRows)(nil).Close))
+}
+
+// Data mocks base method.
+func (m *MockSqlRows) Data() (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Data")
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Data indicates an expected call of Data.
+func (mr *MockSqlRowsMockRecorder) Data() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Data", reflect.TypeOf((*MockSqlRows)(nil).Data))
+}
+
+// Next mocks base method.
+func (m *MockSqlRows) Next() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Next")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Next indicates an expected call of Next.
+func (mr *MockSqlRowsMockRecorder) Next() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Next", reflect.TypeOf((*MockSqlRows)(nil).Next))
+}
+
+// ScanColumns mocks base method.
+func (m *MockSqlRows) ScanColumns(dest ...interface{}) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{}
+	for _, a := range dest {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ScanColumns", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ScanColumns indicates an expected call of ScanColumns.
+func (mr *MockSqlRowsMockRecorder) ScanColumns(dest ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScanColumns", reflect.TypeOf((*MockSqlRows)(nil).ScanColumns), dest...)
+}
+
 // MockDBHandle is a mock of DBHandle interface.
 type MockDBHandle struct {
 	ctrl     *gomock.Controller
@@ -413,6 +1504,20 @@ func NewMockDBHandle(ctrl *gomock.Controller) *MockDBHandle {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDBHandle) EXPECT() *MockDBHandleMockRecorder {
 	return m.recorder
+}
+
+// Close mocks base method.
+func (m *MockDBHandle) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockDBHandleMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockDBHandle)(nil).Close))
 }
 
 // Delete mocks base method.
@@ -600,4 +1705,69 @@ func (m *MockStoreBatcher) Put(key, value []byte) {
 func (mr *MockStoreBatcherMockRecorder) Put(key, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStoreBatcher)(nil).Put), key, value)
+}
+
+// MockSqlVerifier is a mock of SqlVerifier interface.
+type MockSqlVerifier struct {
+	ctrl     *gomock.Controller
+	recorder *MockSqlVerifierMockRecorder
+}
+
+// MockSqlVerifierMockRecorder is the mock recorder for MockSqlVerifier.
+type MockSqlVerifierMockRecorder struct {
+	mock *MockSqlVerifier
+}
+
+// NewMockSqlVerifier creates a new mock instance.
+func NewMockSqlVerifier(ctrl *gomock.Controller) *MockSqlVerifier {
+	mock := &MockSqlVerifier{ctrl: ctrl}
+	mock.recorder = &MockSqlVerifierMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSqlVerifier) EXPECT() *MockSqlVerifierMockRecorder {
+	return m.recorder
+}
+
+// VerifyDDLSql mocks base method.
+func (m *MockSqlVerifier) VerifyDDLSql(sql string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyDDLSql", sql)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyDDLSql indicates an expected call of VerifyDDLSql.
+func (mr *MockSqlVerifierMockRecorder) VerifyDDLSql(sql interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyDDLSql", reflect.TypeOf((*MockSqlVerifier)(nil).VerifyDDLSql), sql)
+}
+
+// VerifyDMLSql mocks base method.
+func (m *MockSqlVerifier) VerifyDMLSql(sql string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyDMLSql", sql)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyDMLSql indicates an expected call of VerifyDMLSql.
+func (mr *MockSqlVerifierMockRecorder) VerifyDMLSql(sql interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyDMLSql", reflect.TypeOf((*MockSqlVerifier)(nil).VerifyDMLSql), sql)
+}
+
+// VerifyDQLSql mocks base method.
+func (m *MockSqlVerifier) VerifyDQLSql(sql string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyDQLSql", sql)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyDQLSql indicates an expected call of VerifyDQLSql.
+func (mr *MockSqlVerifierMockRecorder) VerifyDQLSql(sql interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyDQLSql", reflect.TypeOf((*MockSqlVerifier)(nil).VerifyDQLSql), sql)
 }

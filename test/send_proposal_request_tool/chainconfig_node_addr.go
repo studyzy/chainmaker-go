@@ -90,10 +90,11 @@ func nodeAddrAdd() error {
 		Value: nodeAddrOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
+		Key:   "node_ids",
 		Value: nodeAddresses,
 	})
 
+	fmt.Println("pairs: ", pairs)
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ID_ADD.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
@@ -125,14 +126,15 @@ func nodeAddrUpdate() error {
 		Value: nodeAddrOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "address",
+		Key:   "node_id",
 		Value: nodeOldAddress,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "new_address",
+		Key:   "new_node_id",
 		Value: nodeNewAddress,
 	})
 
+	fmt.Println("pairs: ", pairs)
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ID_UPDATE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
@@ -164,10 +166,11 @@ func nodeAddrDelete() error {
 		Value: nodeAddrOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "address",
+		Key:   "node_id",
 		Value: nodeOldAddress,
 	})
 
+	fmt.Println("pairs: ", pairs)
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ID_DELETE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {

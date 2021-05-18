@@ -27,6 +27,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"net"
+	"sort"
 	"strings"
 	"time"
 )
@@ -190,6 +191,8 @@ func (s *RPCServer) getCurChainConfTrustRootsHash() (string, error) {
 			caCerts = append(caCerts, trustRoot.Root)
 		}
 	}
+
+	sort.Strings(caCerts)
 
 	caCertsStr := strings.Join(caCerts, ";")
 

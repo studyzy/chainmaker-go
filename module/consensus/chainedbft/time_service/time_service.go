@@ -54,6 +54,7 @@ type TimerEvent struct {
 	EpochId    uint64                     // EpochId in the consensus
 	LevelIndex uint64                     // diff in the committed level and current level
 	Duration   time.Duration              // timeout
+	PreBlkHash []byte                     // only used in proposed event
 	State      chainedbftpb.ConsStateType // Monitored events
 }
 

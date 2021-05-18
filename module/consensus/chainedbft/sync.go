@@ -75,6 +75,7 @@ func (sm *syncManager) reqLoop() {
 				continue
 			}
 			if sm.startSyncReq(req) {
+				sm.logger.Debugf("receive all response that was met the condition from peer: %d", req.targetPeer)
 				continue
 			}
 			sm.logger.Errorf("No response was received that met the condition from peer:%d", req.targetPeer)

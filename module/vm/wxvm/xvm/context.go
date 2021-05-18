@@ -12,6 +12,13 @@ type Context struct {
 	TxSimContext   protocol.TxSimContext
 	ContractId     *commonPb.ContractId
 	ContractResult *commonPb.ContractResult
-	ContractEvent  []*commonPb.ContractEvent
-	callArgs       []*serialize.EasyCodecItem
+
+	callArgs      []*serialize.EasyCodecItem
+	ContractEvent []*commonPb.ContractEvent
+
+	gasUsed     uint64
+	requestBody []byte
+	in          []*serialize.EasyCodecItem
+	resp        []*serialize.EasyCodecItem
+	err         error
 }

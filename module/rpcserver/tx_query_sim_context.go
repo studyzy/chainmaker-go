@@ -22,12 +22,14 @@ type txQuerySimContextImpl struct {
 	txResult        *commonPb.Result
 	txReadKeyMap    map[string]*commonPb.TxRead
 	txWriteKeyMap   map[string]*commonPb.TxWrite
+	txWriteKeySql   []*commonPb.TxWrite
 	blockchainStore protocol.BlockchainStore
 	vmManager       protocol.VmManager
 	gasUsed         uint64 // only for callContract
 	currentDepth    int
 	currentResult   []byte
 	hisResult       []*callContractResult
+	sqlRowCache     map[int32]protocol.SqlRows
 }
 
 type callContractResult struct {
@@ -70,17 +72,26 @@ func (s *txQuerySimContextImpl) Put(contractName string, key []byte, value []byt
 	return nil
 }
 
+func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte) {
+	txWrite := &commonPb.TxWrite{
+		Key:          nil,
+		Value:        value,
+		ContractName: contractName,
+	}
+	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
+}
+
 func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {
 	s.putIntoWriteSet(contractName, key, nil)
 	return nil
 }
 
-func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.Iterator, error) {
-	return s.blockchainStore.SelectObject(contractName, startKey, limit), nil
+func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	return s.blockchainStore.SelectObject(contractName, startKey, limit)
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {
-	if creatorByte, err := s.Get(contractName, []byte(protocol.ContractCreator)); err != nil {
+	if creatorByte, err := s.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
 		return nil
 	} else {
 		creator := &acPb.SerializedMember{}
@@ -100,6 +111,14 @@ func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
 		return 0
 	} else {
 		return lastBlock.Header.BlockHeight
+	}
+}
+
+func (s *txQuerySimContextImpl) GetBlockProposer() []byte {
+	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
+		return nil
+	} else {
+		return lastBlock.Header.Proposer
 	}
 }
 
@@ -236,4 +255,13 @@ func (s *txQuerySimContextImpl) GetCurrentResult() []byte {
 
 func (s *txQuerySimContextImpl) GetDepth() int {
 	return s.currentDepth
+}
+
+func (s *txQuerySimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	s.sqlRowCache[index] = rows
+}
+
+func (s *txQuerySimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	data, ok := s.sqlRowCache[index]
+	return data, ok
 }

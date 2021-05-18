@@ -45,7 +45,7 @@ func (bv *BlockValidator) IsHeightValid(block *commonpb.Block, currentHeight int
 // IsPreHashValid, to check if block.preHash equals with last block hash
 func (bv *BlockValidator) IsPreHashValid(block *commonpb.Block, preHash []byte) error {
 	if !bytes.Equal(preHash, block.Header.PreBlockHash) {
-		return fmt.Errorf("prehash expect %x, got %x", preHash, block.Header.BlockHash)
+		return fmt.Errorf("prehash expect %x, got %x", preHash, block.Header.PreBlockHash)
 	}
 	return nil
 }

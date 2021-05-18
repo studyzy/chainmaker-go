@@ -10,7 +10,7 @@ require (
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6
+	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
 	github.com/stretchr/testify v1.6.1
 )
 

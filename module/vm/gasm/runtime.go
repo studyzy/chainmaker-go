@@ -77,7 +77,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	defer func() {
 		if err := recover(); err != nil {
-			r.Log.Errorf("invoke gasm panic, tx id:%s, error:%s", tx.Header.TxId, err)
+			r.Log.Errorf("failed to invoke gasm, tx id:%s, error:%s", tx.Header.TxId, err)
 			contractResult.Code = commonPb.ContractResultCode_FAIL
 			if e, ok := err.(error); ok {
 				contractResult.Message = e.Error()
@@ -103,6 +103,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		ContractId:     contractId,
 		ContractResult: contractResult,
 		Log:            r.Log,
+		ChainId:        r.ChainId,
+		Method:         method,
 	}
 	wasiInstance := &wasi.WasiInstance{}
 	builder := newBuilder(wasiInstance, waciInstance)
@@ -164,8 +166,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	parameters[protocol.ContractContextPtrParam] = "0" // 兼容rust
 	if uint64(commonPb.RuntimeType_GASM) == runtimeSdkType[0] {
-		easyCodecItems := serialize.ParamsMapToEasyCodecItem(parameters)
-		paramMarshalBytes = serialize.EasyMarshal(easyCodecItems)
+		ec := serialize.NewEasyCodecWithMap(parameters)
+		paramMarshalBytes = ec.Marshal()
 	} else {
 		msg := fmt.Sprintf("runtime type error, expect gasm:%d, but got %d", uint64(commonPb.RuntimeType_GASM), runtimeSdkType[0])
 		contractResult.Code = commonPb.ContractResultCode_FAIL
@@ -217,7 +219,7 @@ func newBuilder(wasiInstance *wasi.WasiInstance, waciInstance *waci.WaciInstance
 	builder.MustSetFunction(wasi.WasiModuleName, "proc_exit", wasiInstance.ProcExit)
 
 	builder.MustSetFunction(waci.WaciModuleName, "sys_call", waciInstance.SysCall)
-	builder.MustSetFunction(waci.WaciModuleName, "log_message", waciInstance.LogMessage)
+	builder.MustSetFunction(waci.WaciModuleName, "log_message", waciInstance.LogMsg)
 
 	//builder.MustSetFunction(waci.WaciModuleName, "get_state_len_from_chain", waciInstance.GetStateLen)
 	//builder.MustSetFunction(waci.WaciModuleName, "get_state_from_chain", waciInstance.GetState)
