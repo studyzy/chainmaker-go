@@ -475,19 +475,21 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		return nil, nil
 	}
 
-	archivedPivot, err := b.GetArchivedPivot()
-	if err != nil {
-		return nil, err
-	}
-
-	if decodeBlockNumKey(height) < archivedPivot {
-		return nil, archive.ArchivedBlockError
-	}
-
 	vBytes, err := b.get(height)
 	if err != nil {
 		return nil, err
-	} else if vBytes == nil {
+	}
+
+	if vBytes == nil {
+		archivedPivot, err := b.GetArchivedPivot()
+		if err != nil {
+			return nil, err
+		}
+
+		if decodeBlockNumKey(height) <= archivedPivot {
+			return nil, archive.ArchivedBlockError
+		}
+
 		return nil, nil
 	}
 
