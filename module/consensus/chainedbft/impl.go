@@ -181,7 +181,7 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)
 	cbi.msgbus.Register(msgbus.BlockInfo, cbi)
 	cbi.logger.Debugf("add config watch begin...")
-	cbi.chainConf.AddWatch(cbi)
+	//cbi.chainConf.AddWatch(cbi)
 	cbi.logger.Debugf("end config watch begin...")
 
 	go cbi.syncer.start()
