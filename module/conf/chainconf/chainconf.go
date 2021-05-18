@@ -387,8 +387,10 @@ func (c *ChainConf) callbackContractVmWatcher(contract string, requestPayload []
 
 // AddWatch register a config watcher.
 func (c *ChainConf) AddWatch(w protocol.Watcher) {
+	c.log.Debugf("begin enter config locker")
 	c.wLock.Lock()
 	defer c.wLock.Unlock()
+	c.log.Debugf("end enter config locker")
 	c.watchers[w.Module()] = w
 }
 
