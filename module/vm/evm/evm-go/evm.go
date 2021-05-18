@@ -92,19 +92,19 @@ func (e *EVM) executePreCompiled(addr uint64, input []byte) (ExecuteResult, erro
 	case 10:
 		input = []byte(e.context.Parameters[protocol.ContractSenderOrgIdParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractSenderOrgIdParam])
-	case 12:
+	case 11:
 		input = []byte(e.context.Parameters[protocol.ContractSenderRoleParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractSenderRoleParam])
-	case 13:
+	case 12:
 		input = []byte(e.context.Parameters[protocol.ContractSenderPkParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractSenderPkParam])
-	case 14:
+	case 13:
 		input = []byte(e.context.Parameters[protocol.ContractCreatorOrgIdParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractCreatorOrgIdParam])
-	case 15:
+	case 14:
 		input = []byte(e.context.Parameters[protocol.ContractCreatorRoleParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractCreatorRoleParam])
-	case 16:
+	case 15:
 		input = []byte(e.context.Parameters[protocol.ContractCreatorPkParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractCreatorPkParam])
 	}
