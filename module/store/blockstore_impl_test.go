@@ -306,7 +306,7 @@ func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageCon
 	initGenesis(s)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := s.PutBlock(tt.block, nil, nil); err != nil {
+			if err := s.PutBlock(tt.block, nil); err != nil {
 				t.Errorf("blockchainStoreImpl.PutBlock(), error %v", err)
 			}
 			got, err := s.GetBlockByHash(tt.block.Header.BlockHash)
@@ -332,7 +332,7 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	}
 	defer s.Close()
 	txRWSets[0].TxId = block5.Txs[0].Header.TxId
-	err = s.PutBlock(block5, txRWSets, nil)
+	err = s.PutBlock(block5, txRWSets)
 	assert.NotNil(t, err)
 }
 
@@ -355,29 +355,29 @@ func init5Blocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
 	b, rw := createBlockAndRWSets(chainId, 1, 1)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 3, 3)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 5, 1)
-	s.PutBlock(b, txRWSets, nil)
+	s.PutBlock(b, txRWSets)
 }
 func init5ContractBlocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
 	b, rw := createInitContractBlockAndRWSets(chainId, 1)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 3, 3)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 5, 1)
-	s.PutBlock(b, rw, nil)
+	s.PutBlock(b, rw)
 }
 func Test_blockchainStoreImpl_GetBlockAt(t *testing.T) {
 	var factory Factory
@@ -610,9 +610,9 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 	defer s.Close()
 	init5Blocks(s)
 	block, txRWSets := createBlockAndRWSets(chainId, 6, 1)
-	err = s.PutBlock(block, txRWSets, nil)
+	err = s.PutBlock(block, txRWSets)
 	block, txRWSets = createBlockAndRWSets(chainId, 7, 100)
-	err = s.PutBlock(block, txRWSets, nil)
+	err = s.PutBlock(block, txRWSets)
 
 	assert.Equal(t, nil, err)
 	blockFromDB, err := s.GetBlock(7)
@@ -762,11 +762,13 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
 	for i := 0; i < totalHeight; i ++ {
 		block, txRWSet := createBlockAndRWSets(chainId, int64(i), 100)
-		err = s.PutBlock(block, txRWSet, nil)
+		err = s.PutBlock(block, txRWSet)
 		assert.Equal(t, nil, err)
 		blocks = append(blocks, block)
 		txRWSetMp[block.Header.BlockHeight] = txRWSet
 	}
+
+	verifyArchive(t, 0, blocks, txRWSetMp, s)
 
 	//archive block height1
 	err = s.ArchiveBlock(uint64(archiveHeight1))
@@ -777,8 +779,8 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 
 	//archive block height2 which is a config block
 	err1 := s.ArchiveBlock(uint64(archiveHeight2))
-	assert.True(t, archive.ConfigBlockArchiveError == err1)
-	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
+	assert.True(t, err1 == nil)
+	assert.Equal(t, uint64(archiveHeight2), s.GetArchivedPivot())
 
 	verifyArchive(t, 15, blocks, txRWSetMp, s)
 
@@ -805,7 +807,7 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	//restore block
 	err = s.RestoreBlocks(blocksBytes)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(archiveHeight2), s.GetArchivedPivot())
+	assert.Equal(t, uint64(archiveHeight2 - 1), s.GetArchivedPivot())
 
 	verifyArchive(t, 10, blocks, txRWSetMp, s)
 }
@@ -814,16 +816,23 @@ func verifyArchive(t *testing.T, confHeight uint64, blocks []*commonPb.Block,
 	txRWSetMp map[int64][]*commonPb.TxRWSet, s protocol.BlockchainStore) {
 	archivedPivot := s.GetArchivedPivot()
 
-	if archivedPivot != 0 {
-		//verify store apis: archived height
-		verifyArchivedHeight(t, archivedPivot - 2, blocks, txRWSetMp, s)
+	if archivedPivot == 0 {
+		verifyUnarchivedHeight(t,  archivedPivot, blocks, txRWSetMp, s)
+		verifyUnarchivedHeight(t,  archivedPivot + 1, blocks, txRWSetMp, s)
+		return
 	}
 
+	//verify store apis: archived height
+	verifyArchivedHeight(t, archivedPivot - 1, blocks, txRWSetMp, s)
+
+	//verify store apis: archivedPivot height
+	verifyArchivedHeight(t, archivedPivot, blocks, txRWSetMp, s)
+
 	//verify store apis: conf block height
-	verifyUnarchivedHeight(t, confHeight, blocks, txRWSetMp, s)
+	//verifyUnarchivedHeight(t, confHeight, blocks, txRWSetMp, s)
 
 	//verify store apis: unarchived height
-	verifyUnarchivedHeight(t,  archivedPivot + 2, blocks, txRWSetMp, s)
+	verifyUnarchivedHeight(t,  archivedPivot + 1, blocks, txRWSetMp, s)
 }
 
 func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block,

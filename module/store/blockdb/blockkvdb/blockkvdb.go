@@ -447,7 +447,7 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 		return false, err
 	}
 
-	if decodeBlockNumKey(heightBytes) < archivedPivot {
+	if decodeBlockNumKey(heightBytes) <= archivedPivot {
 		return true, nil
 	}
 
@@ -505,7 +505,7 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		//go func(i int, txid string) {
 		//	defer b.WorkersSemaphore.Release(1)
 		//	defer batchWG.Done()
-		tx, err1 := b.GetTx(txid);
+		tx, err1 := b.GetTx(txid)
 		if err1 != nil {
 			if err1 == archive.ArchivedTxError {
 				return nil, archive.ArchivedBlockError
