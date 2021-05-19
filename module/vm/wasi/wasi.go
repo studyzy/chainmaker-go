@@ -68,7 +68,7 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 	pubKeyData, _ := ec.GetString("pubKey")
 	valuePtr, _ := ec.GetInt32("value_ptr")
 
-	pubKey := new(paillier.PubKey)
+	pubKey := paillier.PaillierHelper().NewPaillier()
 	err := pubKey.Unmarshal([]byte(pubKeyData))
 	if err != nil {
 		return nil, err
@@ -472,7 +472,7 @@ func changeCurrentDB(chainId string, contractName string, transaction protocol.S
 	//}
 }
 
-func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ct1, _ := new(big.Int).SetString(ctOne, 10)
 	ctTwo := operandTwo.(string)
@@ -488,7 +488,7 @@ func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paill
 	return []byte(result.String()), nil
 }
 
-func addCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func addCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ctTwo := operandTwo.(string)
 	result, err := pubKey.AddCiphertextStr(ctOne, ctTwo)
@@ -499,7 +499,7 @@ func addCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey *pa
 	return []byte(result), nil
 }
 
-func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ct, _ := new(big.Int).SetString(ctOne, 10)
 	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
@@ -511,7 +511,7 @@ func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *pailli
 	return []byte(result.String()), nil
 }
 
-func addPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func addPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
 	result, err := pubKey.AddPlaintextInt64(ctOne, pt)
@@ -522,7 +522,7 @@ func addPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey *p
 	return []byte(result), nil
 }
 
-func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ct1, _ := new(big.Int).SetString(ctOne, 10)
 	ctTwo := operandTwo.(string)
@@ -538,7 +538,7 @@ func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paill
 	return []byte(result.String()), nil
 }
 
-func subCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func subCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ctTwo := operandTwo.(string)
 	result, err := pubKey.SubCiphertextStr(ctOne, ctTwo)
@@ -549,7 +549,7 @@ func subCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey *pa
 	return []byte(result), nil
 }
 
-func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ct, _ := new(big.Int).SetString(ctOne, 10)
 	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
@@ -564,7 +564,7 @@ func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *pailli
 	return result.Bytes(), nil
 }
 
-func subPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func subPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
 	result, err := pubKey.SubPlaintextInt64(ctOne, pt)
@@ -575,7 +575,7 @@ func subPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey *p
 	return []byte(result), nil
 }
 
-func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func numMul(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	ct, _ := new(big.Int).SetString(ctOne, 10)
 	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
@@ -590,7 +590,7 @@ func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.Pub
 	return result.Bytes(), nil
 }
 
-func numMulInt64(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+func numMulInt64(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
 	ctOne := operandOne.(string)
 	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
 	result, err := pubKey.NumMulInt64(ctOne, pt)
