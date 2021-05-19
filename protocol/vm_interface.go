@@ -120,6 +120,8 @@ type ContractWacsiCommon interface {
 	SuccessResult() int32
 	ErrorResult() int32
 	CallContract() int32
+	GetPaillierOpResultLen() int32
+	GetPaillierOpResult() int32
 }
 
 type ContractWacsiKV interface {
