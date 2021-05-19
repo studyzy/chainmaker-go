@@ -155,7 +155,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 	}
 
-	txRWSetMap, timeLasts, err := v.validateBlock(block)
+	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(block)
 	if err != nil {
 		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, err.Error())
@@ -230,23 +230,23 @@ func parseVerifyResult(block *commonpb.Block, isValid bool) *consensuspb.VerifyR
 }
 
 // validateBlock, validate block and transactions
-func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet, []int64, error) {
+func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
 	hashType := v.chainConf.ChainConfig().Crypto.Hash
 	timeLasts := make([]int64, 0)
 	var err error
 	var lastBlock *commonpb.Block
 	txCapacity := int64(v.chainConf.ChainConfig().Block.BlockTxCapacity)
 	if block.Header.TxCount > txCapacity {
-		return nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
+		return nil, nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
 	}
 
 	if err = v.blockValidator.IsTxCountValid(block); err != nil {
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 
 	lastBlock, err = v.fetchLastBlock(block, lastBlock)
 	if err != nil {
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 	// proposed height == proposing height - 1
 	proposedHeight := lastBlock.Header.BlockHeight
@@ -254,11 +254,11 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 	lastBlockHash := lastBlock.Header.BlockHash
 	err = v.checkPreBlock(block, lastBlock, err, lastBlockHash, proposedHeight)
 	if err != nil {
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 
 	if err = v.blockValidator.IsBlockHashValid(block); err != nil {
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 
 	// verify block sig and also verify identity and auth of block proposer
@@ -266,7 +266,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 
 	v.log.Debugf("verify block \n %s", utils.FormatBlock(block))
 	if ok, err := utils.VerifyBlockSig(hashType, block, v.ac); !ok || err != nil {
-		return nil, timeLasts, fmt.Errorf("(%d,%x - %x,%x) [signature]",
+		return nil, nil, timeLasts, fmt.Errorf("(%d,%x - %x,%x) [signature]",
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.Proposer, block.Header.Signature)
 	}
 	sigLasts := utils.CurrentTimeMillisSeconds() - startSigTick
@@ -274,16 +274,16 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 
 	err = v.checkVacuumBlock(block)
 	if err != nil {
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 	if len(block.Txs) == 0 {
-		return nil, timeLasts, nil
+		return nil, nil, timeLasts, nil
 	}
 
 	// verify if txs are duplicate in this block
 	if v.blockValidator.IsTxDuplicate(block.Txs) {
 		err := fmt.Errorf("tx duplicate")
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 
 	// simulate with DAG, and verify read write set
@@ -296,11 +296,11 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 	vmLasts := utils.CurrentTimeMillisSeconds() - startVMTick
 	timeLasts = append(timeLasts, vmLasts)
 	if err != nil {
-		return nil, timeLasts, fmt.Errorf("simulate %s", err)
+		return nil, nil, timeLasts, fmt.Errorf("simulate %s", err)
 	}
 	if block.Header.TxCount != int64(len(txRWSetMap)) {
 		err = fmt.Errorf("simulate txcount expect %d, got %d", block.Header.TxCount, len(txRWSetMap))
-		return nil, timeLasts, err
+		return nil, nil, timeLasts, err
 	}
 
 	// 2.transaction verify
@@ -314,22 +314,33 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 			v.log.Warn("[Duplicate txs] delete the err txs")
 			v.txPool.RetryAndRemoveTxs(nil, errTxs)
 		}
-		return nil, timeLasts, fmt.Errorf("verify failed [%d](%x), %s ",
+		return nil, nil, timeLasts, fmt.Errorf("verify failed [%d](%x), %s ",
 			block.Header.BlockHeight, block.Header.PreBlockHash, err)
 	}
 	//if protocol.CONSENSUS_VERIFY == mode && len(newAddTx) > 0 {
 	//	v.txPool.AddTrustedTx(newAddTx)
 	//}
 
+	// get contract events
+	contractEventMap := make(map[string][]*commonpb.ContractEvent)
+	for _, tx := range block.Txs {
+		var events []*commonpb.ContractEvent
+		if result, ok := txResultMap[tx.Header.TxId]; ok {
+			events = result.ContractResult.ContractEvent
+		}
+		contractEventMap[tx.Header.TxId] = events
+	}
+
 	// verify TxRoot
 	startRootsTick := utils.CurrentTimeMillisSeconds()
 	err = v.checkBlockDigests(block, txHashes, hashType)
 	if err != nil {
-		return txRWSetMap, timeLasts, err
+		return txRWSetMap, contractEventMap, timeLasts, err
 	}
 	rootsLast := utils.CurrentTimeMillisSeconds() - startRootsTick
 	timeLasts = append(timeLasts, rootsLast)
-	return txRWSetMap, timeLasts, nil
+
+	return txRWSetMap, contractEventMap, timeLasts, nil
 }
 
 func (v *BlockVerifierImpl) checkVacuumBlock(block *commonpb.Block) error {

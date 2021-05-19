@@ -170,7 +170,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 	startDBTick := utils.CurrentTimeMillisSeconds()
-	if err = chain.blockchainStore.PutBlock(block, rwSet, events); err != nil {
+	if err = chain.blockchainStore.PutBlock(block, rwSet); err != nil {
 		// if put db error, then panic
 		chain.log.Error(err)
 		panic(err)
@@ -200,7 +200,28 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(block.Txs), len(txRetry))
 	chain.txPool.RetryAndRemoveTxs(txRetry, block.Txs)
 	poolLasts := utils.CurrentTimeMillisSeconds() - startPoolTick
-
+	// publish contract event
+	var startPublishContractEventTick int64
+	var pubEvent int64
+	if len(events) > 0 {
+		startPublishContractEventTick = utils.CurrentTimeMillisSeconds()
+		chain.log.Infof("start publish contractEventsInfo: block[%d] ,time[%d]", height, startPublishContractEventTick)
+		var eventsInfo []*commonpb.ContractEventInfo
+		for _, t := range events {
+			eventInfo := &commonpb.ContractEventInfo{
+				BlockHeight:     height,
+				ChainId:         block.Header.GetChainId(),
+				Topic:           t.Topic,
+				TxId:            t.TxId,
+				ContractName:    t.ContractName,
+				ContractVersion: t.ContractVersion,
+				EventData:       t.EventData,
+			}
+			eventsInfo = append(eventsInfo, eventInfo)
+		}
+		chain.msgBus.Publish(msgbus.ContractEventInfo, eventsInfo)
+		pubEvent = utils.CurrentTimeMillisSeconds() - startPublishContractEventTick
+	}
 	startOtherTick := utils.CurrentTimeMillisSeconds()
 	chain.ledgerCache.SetLastCommittedBlock(block)
 	chain.proposalCache.ClearProposedBlockAt(height)
@@ -210,28 +231,14 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	}
 	// synchronize new block height to consensus and sync module
 	chain.msgBus.Publish(msgbus.BlockInfo, bi)
-	for _, t := range events {
-		eventInfo := &commonpb.ContractEventInfo{
-			BlockHeight:     height,
-			ChainId:         block.Header.GetChainId(),
-			Topic:           t.Topic,
-			TxId:            t.TxId,
-			ContractName:    t.ContractName,
-			ContractVersion: t.ContractVersion,
-			EventData:       t.EventData,
-		}
-		chain.msgBus.Publish(msgbus.ContractEventInfo, eventInfo)
-		chain.log.Infof("publish contractEventInfo %v", eventInfo)
-	}
-
 	if err = chain.monitorCommit(bi); err != nil {
 		return err
 	}
 
 	otherLasts := utils.CurrentTimeMillisSeconds() - startOtherTick
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	chain.log.Infof("commit block [%d](count:%d,hash:%x), time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,other:%d,total:%d)",
-		height, block.Header.TxCount, block.Header.BlockHash, checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, otherLasts, elapsed)
+	chain.log.Infof("commit block [%d](count:%d,hash:%x), time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d)",
+		height, block.Header.TxCount, block.Header.BlockHash, checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
 	}

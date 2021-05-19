@@ -25,8 +25,8 @@ func (s *EventSubscriber) OnMessage(msg *msgbus.Message) {
 	if blockInfo, ok := msg.Payload.(*commonPb.BlockInfo); ok {
 		go s.blockFeed.Send(model.NewBlockEvent{BlockInfo: blockInfo})
 	}
-	if conEventInfo, ok := msg.Payload.(*commonPb.ContractEventInfo); ok {
-		go s.contractEventFeed.Send(model.NewContractEvent{ContractEvent: conEventInfo})
+	if conEventsInfo, ok := msg.Payload.([]*commonPb.ContractEventInfo); ok {
+		go s.contractEventFeed.Send(model.NewContractEvent{ContractEvents: conEventsInfo})
 	}
 }
 
@@ -37,8 +37,7 @@ func (s *EventSubscriber) OnQuit() {
 
 // NewSubscriber - new and register msgbus.BlockInfo object
 func NewSubscriber(msgBus msgbus.MessageBus) *EventSubscriber {
-	subscriber := &EventSubscriber{
-	}
+	subscriber := &EventSubscriber{}
 	msgBus.Register(msgbus.BlockInfo, subscriber)
 
 	msgBus.Register(msgbus.ContractEventInfo, subscriber)

@@ -20,6 +20,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 
@@ -62,11 +63,16 @@ func (c *ContractStorage) CanTransfer(from, to, val *evmutils.Int) bool {
 }
 
 func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error) {
+
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
-		if contractVersion, err := c.Ctx.Get(address.String(), []byte(protocol.ContractVersion)); err == nil {
-			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractVersion...)
-			code, err = c.Ctx.Get(string(contractName), versionedByteCodeKey)
+		versionKey := []byte(protocol.ContractVersion + address.String())
+		if contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey); err == nil {
+			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractName...)
+			versionedByteCodeKey = append(versionedByteCodeKey, contractVersion...)
+			code, err = c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey)
 			return code, err
+		} else {
+			log.Errorf("failed to get other contract byte code version, address [%s] , error :", address.String(), err.Error())
 		}
 	}
 	log.Error("failed to get other contract  code :", err.Error())
@@ -74,30 +80,25 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 }
 
 func (c *ContractStorage) GetCodeSize(address *evmutils.Int) (size *evmutils.Int, err error) {
-	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
-		if contractVersion, err := c.Ctx.Get(address.String(), []byte(protocol.ContractVersion)); err == nil {
-			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractVersion...)
-			code, err := c.Ctx.Get(string(contractName), versionedByteCodeKey)
-			return evmutils.New(int64(len(code))), err
-		}
+	code, err := c.GetCode(address)
+	if err != nil {
+		log.Error("failed to get other contract code size :", err.Error())
+		return nil, err
 	}
-	log.Error("failed to get other conteact  code size :", err.Error())
-	return nil, err
+	return evmutils.New(int64(len(code))), err
 }
 
 func (c *ContractStorage) GetCodeHash(address *evmutils.Int) (codeHase *evmutils.Int, err error) {
-	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
-		if contractVersion, err := c.Ctx.Get(address.String(), []byte(protocol.ContractVersion)); err == nil {
-			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractVersion...)
-			code, err := c.Ctx.Get(string(contractName), versionedByteCodeKey)
-			hash := evmutils.Keccak256(code)
-			i := evmutils.New(0)
-			i.SetBytes(hash)
-			return i, err
-		}
+	code, err := c.GetCode(address)
+	if err != nil {
+		log.Error("failed to get other contract code hash :", err.Error())
+		return nil, err
 	}
-	log.Error("failed to get other conteact  code hash :", err.Error())
-	return nil, err
+	hash := evmutils.Keccak256(code)
+	i := evmutils.New(0)
+	i.SetBytes(hash)
+	return i, err
+	return evmutils.New(int64(len(code))), err
 }
 
 func (c *ContractStorage) GetBlockHash(block *evmutils.Int) (*evmutils.Int, error) {

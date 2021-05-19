@@ -19,7 +19,6 @@ type BlockWithSerializedInfo struct {
 	serializedMeta     []byte
 	serializedTxs      [][]byte
 	serializedTxRWSets [][]byte
-	//serializedContractEvents [][]byte
 }
 
 // SerializeBlock serialized a BlockWithRWSet and return serialized data

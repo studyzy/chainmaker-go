@@ -94,7 +94,7 @@ storage:
     provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
     sqldb_config:
       sqldb_type: mysql           #contract event db 只支持mysql
-      dsn: root:password@in@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true

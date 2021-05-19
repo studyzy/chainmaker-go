@@ -176,6 +176,20 @@ func (mr *MockTxSimContextMockRecorder) GetBlockHeight() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockHeight", reflect.TypeOf((*MockTxSimContext)(nil).GetBlockHeight))
 }
 
+// GetBlockProposer mocks base method.
+func (m *MockTxSimContext) GetBlockProposer() []byte {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlockProposer")
+	ret0, _ := ret[0].([]byte)
+	return ret0
+}
+
+// GetBlockProposer indicates an expected call of GetBlockProposer.
+func (mr *MockTxSimContextMockRecorder) GetBlockProposer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockProposer", reflect.TypeOf((*MockTxSimContext)(nil).GetBlockProposer))
+}
+
 // GetBlockchainStore mocks base method.
 func (m *MockTxSimContext) GetBlockchainStore() protocol.BlockchainStore {
 	m.ctrl.T.Helper()
@@ -261,6 +275,21 @@ func (mr *MockTxSimContextMockRecorder) GetSender() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSender", reflect.TypeOf((*MockTxSimContext)(nil).GetSender))
 }
 
+// GetStateSqlHandle mocks base method.
+func (m *MockTxSimContext) GetStateSqlHandle(arg0 int32) (protocol.SqlRows, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStateSqlHandle", arg0)
+	ret0, _ := ret[0].(protocol.SqlRows)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetStateSqlHandle indicates an expected call of GetStateSqlHandle.
+func (mr *MockTxSimContextMockRecorder) GetStateSqlHandle(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateSqlHandle", reflect.TypeOf((*MockTxSimContext)(nil).GetStateSqlHandle), arg0)
+}
+
 // GetTx mocks base method.
 func (m *MockTxSimContext) GetTx() *common.Transaction {
 	m.ctrl.T.Helper()
@@ -331,11 +360,23 @@ func (mr *MockTxSimContextMockRecorder) Put(name, key, value interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockTxSimContext)(nil).Put), name, key, value)
 }
 
+// PutRecord mocks base method.
+func (m *MockTxSimContext) PutRecord(contractName string, value []byte) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PutRecord", contractName, value)
+}
+
+// PutRecord indicates an expected call of PutRecord.
+func (mr *MockTxSimContextMockRecorder) PutRecord(contractName, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutRecord", reflect.TypeOf((*MockTxSimContext)(nil).PutRecord), contractName, value)
+}
+
 // Select mocks base method.
-func (m *MockTxSimContext) Select(name string, startKey, limit []byte) (protocol.Iterator, error) {
+func (m *MockTxSimContext) Select(name string, startKey, limit []byte) (protocol.StateIterator, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Select", name, startKey, limit)
-	ret0, _ := ret[0].(protocol.Iterator)
+	ret0, _ := ret[0].(protocol.StateIterator)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -344,6 +385,18 @@ func (m *MockTxSimContext) Select(name string, startKey, limit []byte) (protocol
 func (mr *MockTxSimContextMockRecorder) Select(name, startKey, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockTxSimContext)(nil).Select), name, startKey, limit)
+}
+
+// SetStateSqlHandle mocks base method.
+func (m *MockTxSimContext) SetStateSqlHandle(arg0 int32, arg1 protocol.SqlRows) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetStateSqlHandle", arg0, arg1)
+}
+
+// SetStateSqlHandle indicates an expected call of SetStateSqlHandle.
+func (mr *MockTxSimContextMockRecorder) SetStateSqlHandle(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStateSqlHandle", reflect.TypeOf((*MockTxSimContext)(nil).SetStateSqlHandle), arg0, arg1)
 }
 
 // SetTxExecSeq mocks base method.
