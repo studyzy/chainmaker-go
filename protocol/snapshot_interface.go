@@ -64,7 +64,7 @@ type Snapshot interface {
 	ApplyTxSimContext(TxSimContext, bool) (bool, int)
 
 	// Build a dag for all transactions that have resolved the read-write conflict dependencies
-	BuildDAG() *common.DAG
+	BuildDAG(isSql bool) *common.DAG
 
 	// If snapshot is sealed, no more transaction will be added into snapshot
 	IsSealed() bool

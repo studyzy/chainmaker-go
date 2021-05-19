@@ -286,7 +286,7 @@ func (s *SnapshotImpl) buildCumulativeBitmap(readBitmap []*bitmap.Bitmap, writeB
 // change during the execution, then the execution result of the transaction is determined.
 // We need to ensure that when validating the DAG, there is no possibility that the execution of other
 // transactions will affect the dependence of the current transaction
-func (s *SnapshotImpl) BuildDAG() *commonPb.DAG {
+func (s *SnapshotImpl) BuildDAG(isSql bool) *commonPb.DAG {
 	if !s.IsSealed() {
 		log.Warnf("you need to execute Seal before you can build DAG of snapshot with height %d", s.blockHeight)
 	}
@@ -315,29 +315,40 @@ func (s *SnapshotImpl) BuildDAG() *commonPb.DAG {
 	// tx2	1		0		0
 	// tx3	1		1		0
 	reachMap := make([]*bitmap.Bitmap, txCount)
-	for i := 0; i < txCount; i++ {
-		// 1、get read and write bitmap for tx i
-		readBitmapForI := readBitmaps[i]
-		writeBitmapForI := writeBitmaps[i]
-
-		// directReach is used to build DAG
-		// reach is used to save reachability we have already known
-		directReachFromI := &bitmap.Bitmap{}
-		reachFromI := &bitmap.Bitmap{}
-		reachFromI.Set(i)
-
-		if i > 0 && s.fastConflicted(readBitmapForI, writeBitmapForI, cumulativeReadBitmap[i-1], cumulativeWriteBitmap[i-1]) {
-			// check reachability one by one, then build table
-			s.buildReach(i, reachFromI, readBitmaps, writeBitmaps, readBitmapForI, writeBitmapForI, directReachFromI, reachMap)
+	if isSql {
+		for i := 0; i < txCount; i++ {
+			dag.Vertexes[i] = &commonPb.DAG_Neighbor{
+				Neighbors: make([]int32, 0, 1),
+			}
+			if i != 0 {
+				dag.Vertexes[i].Neighbors[0] = int32(i - 1)
+			}
 		}
-		reachMap[i] = reachFromI
+	} else {
+		for i := 0; i < txCount; i++ {
+			// 1、get read and write bitmap for tx i
+			readBitmapForI := readBitmaps[i]
+			writeBitmapForI := writeBitmaps[i]
 
-		// build DAG based on directReach bitmap
-		dag.Vertexes[i] = &commonPb.DAG_Neighbor{
-			Neighbors: make([]int32, 0, 16),
-		}
-		for _, j := range directReachFromI.Pos1() {
-			dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, int32(j))
+			// directReach is used to build DAG
+			// reach is used to save reachability we have already known
+			directReachFromI := &bitmap.Bitmap{}
+			reachFromI := &bitmap.Bitmap{}
+			reachFromI.Set(i)
+
+			if i > 0 && s.fastConflicted(readBitmapForI, writeBitmapForI, cumulativeReadBitmap[i-1], cumulativeWriteBitmap[i-1]) {
+				// check reachability one by one, then build table
+				s.buildReach(i, reachFromI, readBitmaps, writeBitmaps, readBitmapForI, writeBitmapForI, directReachFromI, reachMap)
+			}
+			reachMap[i] = reachFromI
+
+			// build DAG based on directReach bitmap
+			dag.Vertexes[i] = &commonPb.DAG_Neighbor{
+				Neighbors: make([]int32, 0, 16),
+			}
+			for _, j := range directReachFromI.Pos1() {
+				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, int32(j))
+			}
 		}
 	}
 	log.Debugf("build DAG for block %d finished", s.blockHeight)
