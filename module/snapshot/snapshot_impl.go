@@ -321,7 +321,7 @@ func (s *SnapshotImpl) BuildDAG(isSql bool) *commonPb.DAG {
 				Neighbors: make([]int32, 0, 1),
 			}
 			if i != 0 {
-				dag.Vertexes[i].Neighbors[0] = int32(i - 1)
+				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, int32(i-1))
 			}
 		}
 	} else {
