@@ -25,8 +25,8 @@ func (s *EventSubscriber) OnMessage(msg *msgbus.Message) {
 	if blockInfo, ok := msg.Payload.(*commonPb.BlockInfo); ok {
 		go s.blockFeed.Send(model.NewBlockEvent{BlockInfo: blockInfo})
 	}
-	if conEventInfo, ok := msg.Payload.(*commonPb.ContractEventInfo); ok {
-		go s.contractEventFeed.Send(model.NewContractEvent{ContractEvent: conEventInfo})
+	if conEventsInfo, ok := msg.Payload.([]*commonPb.ContractEventInfo); ok {
+		go s.contractEventFeed.Send(model.NewContractEvent{ContractEvents: conEventsInfo})
 	}
 }
 

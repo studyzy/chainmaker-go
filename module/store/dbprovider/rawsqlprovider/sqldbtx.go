@@ -10,6 +10,7 @@ package rawsqlprovider
 import (
 	"database/sql"
 	"sync"
+	"time"
 
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
@@ -17,10 +18,11 @@ import (
 
 type SqlDBTx struct {
 	sync.Mutex
-	name   string
-	dbType types.EngineType
-	db     *sql.Tx
-	logger protocol.Logger
+	name      string
+	dbType    types.EngineType
+	db        *sql.Tx
+	logger    protocol.Logger
+	startTime time.Time
 }
 
 func (p *SqlDBTx) ChangeContextDb(dbName string) error {
@@ -101,6 +103,7 @@ func (p *SqlDBTx) Commit() error {
 	p.Lock()
 	defer p.Unlock()
 	result := p.db.Commit()
+	p.logger.Debugf("commit tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if result != nil {
 		return result
 	}
@@ -110,6 +113,7 @@ func (p *SqlDBTx) Rollback() error {
 	p.Lock()
 	defer p.Unlock()
 	result := p.db.Rollback()
+	p.logger.Debugf("rollback tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if result != nil {
 		return result
 	}

@@ -123,23 +123,21 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, db protocol.B
 	for {
 		select {
 		case ev := <-eventCh:
-			contractEventInfo := ev.ContractEvent
-
-			if contractEventInfo.ContractName != payload.ContractName || contractEventInfo.Topic != payload.Topic {
-
-				continue
+			contractEventsInfo := ev.ContractEvents
+			for _, EventInfo := range contractEventsInfo {
+				if EventInfo.ContractName != payload.ContractName || EventInfo.Topic != payload.Topic {
+					continue
+				}
+				if result, err = s.getContractEventSubscribeResult(EventInfo); err != nil {
+					s.log.Error(err.Error())
+					return status.Error(codes.Internal, err.Error())
+				}
+				if err := server.Send(result); err != nil {
+					err = fmt.Errorf("send block info by realtime failed, %s", err)
+					s.log.Error(err.Error())
+					return status.Error(codes.Internal, err.Error())
+				}
 			}
-
-			if result, err = s.getContractEventSubscribeResult(contractEventInfo); err != nil {
-				s.log.Error(err.Error())
-				return status.Error(codes.Internal, err.Error())
-			}
-			if err := server.Send(result); err != nil {
-				err = fmt.Errorf("send block info by realtime failed, %s", err)
-				s.log.Error(err.Error())
-				return status.Error(codes.Internal, err.Error())
-			}
-			s.log.Infof("send contractEvetnInfo to subscriber %v", string(result.Data))
 
 		case <-server.Context().Done():
 			return nil
