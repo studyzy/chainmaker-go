@@ -46,7 +46,6 @@ func BlockInfoTableScopes(bInfo BlockInfo) func(tx *gorm.DB) *gorm.DB {
 // blockInfoTableNameByBlockHeight Get BlockInfo table name by block height
 func blockInfoTableNameByBlockHeight(blkHeight int64) string {
 	tableNum := blkHeight/rowsPerBlockInfoTable + 1
-	tableNum = 100
 	return fmt.Sprintf("%s_%d", prefixBlockInfoTable, tableNum)
 }
 
