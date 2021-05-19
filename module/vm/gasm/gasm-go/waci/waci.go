@@ -88,10 +88,6 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.CallContractLen()
 		case protocol.ContractMethodEmitEvent:
 			return s.EmitEvent()
-		case protocol.ContractMethodGetPaillierOperationResultLen:
-			return s.GetPaillierOpResultLen()
-		case protocol.ContractMethodGetPaillierOperationResult:
-			return s.GetPaillierOpResult()
 		// kv
 		case protocol.ContractMethodGetStateLen:
 			return s.GetStateLen()
@@ -125,26 +121,6 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 		}
 		return protocol.ContractSdkSignalResultFail
 	})
-}
-
-// GetPaillierOpResultLen get result length
-func (s *WaciInstance) GetPaillierOpResultLen() int32 {
-	return s.getPaillierOpResultCore(true)
-}
-
-// GetPaillierOpResult get result
-func (s *WaciInstance) GetPaillierOpResult() int32 {
-	return s.getPaillierOpResultCore(false)
-}
-
-func (s *WaciInstance) getPaillierOpResultCore(isLen bool) int32 {
-	data, err := wacsi.PaillierOperation(s.RequestBody, s.Vm.Memory, s.GetStateCache, isLen)
-	s.GetStateCache = data // reset data
-	if err != nil {
-		s.recordMsg(err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-	return protocol.ContractSdkSignalResultSuccess
 }
 
 // EmitEvent emit event to chain
