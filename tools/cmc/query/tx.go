@@ -56,10 +56,10 @@ func runQueryTxCMD(args []string) error {
 		return err
 	}
 
-	bz, err := json.MarshalIndent(txInfo, "", "    ")
+	output, err := json.MarshalIndent(txInfo, "", "    ")
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(bz))
+	fmt.Println(string(output))
 	return nil
 }
