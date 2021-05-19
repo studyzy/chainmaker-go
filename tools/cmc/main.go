@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/client"
 	"chainmaker.org/chainmaker-go/tools/cmc/hibe"
 	"chainmaker.org/chainmaker-go/tools/cmc/key"
+	"chainmaker.org/chainmaker-go/tools/cmc/query"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +29,7 @@ func main() {
 	mainCmd.AddCommand(client.ClientCMD())
 	mainCmd.AddCommand(hibe.HibeCMD())
 	mainCmd.AddCommand(archive.ArchiveCMD())
+	mainCmd.AddCommand(query.QueryCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
@@ -100,29 +99,6 @@ func runDumpCMD() error {
 	}
 	// do the rest of blocks
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
-}
-
-// initDb Connecting database, migrate tables.
-func initDb() (*gorm.DB, error) {
-	// parse params
-	dbName := model.DbName(chainId)
-	dbDestSlice := strings.Split(dbDest, ":")
-	if len(dbDestSlice) != 4 {
-		return nil, errors.New("invalid database destination")
-	}
-
-	// initialize database
-	db, err := mysql.InitDb(dbDestSlice[0], dbDestSlice[1], dbDestSlice[2], dbDestSlice[3], dbName, true)
-	if err != nil {
-		return nil, err
-	}
-
-	// migrate blockinfo,sysinfo tables
-	err = db.AutoMigrate(&model.BlockInfo{}, &model.Sysinfo{})
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
 }
 
 // validate basic params validation
