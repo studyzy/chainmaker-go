@@ -14,6 +14,7 @@ import (
     "chainmaker.org/chainmaker-go/utils"
     "crypto/sha256"
     "fmt"
+    "strings"
 )
 
 const(
@@ -46,6 +47,9 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CONTRACT.String()] = privateComputeRuntime.SaveContract
     queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_QUOTE.String()] = privateComputeRuntime.SaveQuote
+    queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
+    queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CERT.String()] = privateComputeRuntime.GetCert
+    queryMethodMap[commonPb.PrivateComputeContractFunction_GET_QUOTE.String()] = privateComputeRuntime.GetQuote
 
     return queryMethodMap
 }
@@ -83,6 +87,22 @@ func (r *PrivateComputeRuntime) VerifyByEnclaveCert(context protocol.TxSimContex
     return true,  nil
 }
 
+func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key string) ([]byte, error) {
+    if strings.TrimSpace(key) == "" {
+        err := fmt.Errorf("%s, key is empty", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    value, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(key))
+    if err != nil {
+        r.log.Errorf("Get key: %s from context failed, err: %s", key, err.Error())
+        return nil, err
+    }
+
+    return value, nil
+}
+
 func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
     sign      := params["sign"]
     quote     := params["quote"]
@@ -95,31 +115,6 @@ func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params 
         return nil, err
     }
 
-    //enclaveCert, err:= context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(enclaveId))
-    //if  err != nil {
-    //    r.log.Errorf("%s, get enclave cert[%s] failed, can't verify the quote[%s]", err.Error(), enclaveId, quoteId)
-    //    return nil, err
-    //}
-
-    //cert, err := utils.ParseCert(enclaveCert)
-    //if  err != nil {
-    //    r.log.Errorf("%s, parse enclave certificate failed, enclave id[%s], cert bytes[%s]", err.Error(), enclaveId, enclaveCert)
-    //    return nil, err
-    //}
-
-    //hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
-    //digest, err := hash.Get(hashAlgo, []byte(quote))
-    //if err != nil {
-    //    r.log.Errorf("%s, calculate hash of quote[%s] failed", err.Error(), quoteId)
-    //    return nil, err
-    //}
-
-    //ok, err := cert.PublicKey.Verify(digest, []byte(sign))
-    //if !ok {
-    //    r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
-    //    return nil, err
-    //}
-
     if ok, err := r.VerifyByEnclaveCert(context, []byte(enclaveId), []byte(quote), []byte(sign)); !ok {
         r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
         return nil, err
@@ -131,6 +126,10 @@ func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params 
     }
 
     return nil, nil
+}
+
+func (r *PrivateComputeRuntime) GetQuote(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+    return r.getValue(context, params["quote_id"])
 }
 
 func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -268,6 +267,10 @@ func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params ma
     return nil, nil
 }
 
+func (r *PrivateComputeRuntime) GetDir(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+    return r.getValue(context, params["order_id"])
+}
+
 func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
     var result commonPb.ContractResult
     cRes := []byte(params["result"])
@@ -370,4 +373,8 @@ func (r *PrivateComputeRuntime) SaveCert(context protocol.TxSimContext, params m
     }
 
     return nil, nil
+}
+
+func (r *PrivateComputeRuntime) GetCert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+    return r.getValue(context, params["enclave_id"])
 }
