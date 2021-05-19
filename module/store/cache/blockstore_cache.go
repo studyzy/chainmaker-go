@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package cache
 
 import (
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"context"
 	"sync"
 
@@ -36,9 +35,7 @@ func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
 	}
-	if logger == nil {
-		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
-	}
+
 	storeCacheMgr := &StoreCacheMgr{
 		pendingBlockUpdates: make(map[int64]protocol.StoreBatcher),
 		blockSizeSem:        semaphore.NewWeighted(int64(blockWriteBufferSize)),

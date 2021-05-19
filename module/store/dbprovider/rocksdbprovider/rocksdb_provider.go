@@ -10,7 +10,6 @@ package rocksdbprovider
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
 	"github.com/pkg/errors"
@@ -46,26 +45,26 @@ type Provider struct {
 	dbHandles map[string]*RocksDBHandle
 	mutex     sync.Mutex
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
-// NewBlockProvider construct a new Rocksdb Provider for block operation with given chainId
-func NewBlockProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreBlockDBDir)
-}
-
-// NewStateProvider construct a new Rocksdb Provider for state operation with given chainId
-func NewStateProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreStateDBDir)
-}
-
-// NewHistoryProvider construct a new Rocksdb Provider for history operation with given chainId
-func NewHistoryProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreHistoryDBDir)
-}
+//// NewBlockProvider construct a new Rocksdb Provider for block operation with given chainId
+//func NewBlockProvider(chainId string) *Provider {
+//	return NewProvider(chainId, StoreBlockDBDir)
+//}
+//
+//// NewStateProvider construct a new Rocksdb Provider for state operation with given chainId
+//func NewStateProvider(chainId string) *Provider {
+//	return NewProvider(chainId, StoreStateDBDir)
+//}
+//
+//// NewHistoryProvider construct a new Rocksdb Provider for history operation with given chainId
+//func NewHistoryProvider(chainId string) *Provider {
+//	return NewProvider(chainId, StoreHistoryDBDir)
+//}
 
 // NewProvider construct a new db Provider for given chainId and dir
-func NewProvider(chainId string, dbDir string) *Provider {
+func NewProvider(chainId string, dbDir string, logger protocol.Logger) *Provider {
 	dbOpts := NewRocksdbConfig()
 	writeBufferSize := localconf.ChainMakerConfig.StorageConfig.WriteBufferSize
 	if writeBufferSize > 0 {
@@ -92,7 +91,7 @@ func NewProvider(chainId string, dbDir string) *Provider {
 		dbHandles: make(map[string]*RocksDBHandle),
 		mutex:     sync.Mutex{},
 
-		logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		logger: logger,
 	}
 }
 
@@ -107,7 +106,7 @@ func (p *Provider) GetDBHandle(dbName string) protocol.DBHandle {
 			db:           p.db,
 			readOptions:  gorocksdb.NewDefaultReadOptions(),
 			writeOptions: gorocksdb.NewDefaultWriteOptions(),
-			logger:       logImpl.GetLogger(logImpl.MODULE_STORAGE),
+			logger:       p.logger,
 		}
 		p.dbHandles[dbName] = dbHandle
 	}
@@ -172,7 +171,7 @@ type RocksDBHandle struct {
 	writeOptions *gorocksdb.WriteOptions
 	db           *gorocksdb.DB
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // Get get value from rocksdb
