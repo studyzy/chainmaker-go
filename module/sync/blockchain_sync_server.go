@@ -305,7 +305,7 @@ func (sync *BlockChainSyncServer) loop() {
 		doNodeStatusTk = time.NewTicker(sync.conf.nodeStatusTick)
 		// task: trigger the check of the liveness with connected peers
 		doLivenessTk = time.NewTicker(sync.conf.livenessTick)
-		// task: trigger the check of the data in processor
+		// task: trigger the check of the data in processor and scheduler
 		doDataDetect = time.NewTicker(sync.conf.dataDetectionTick)
 	)
 	defer func() {
@@ -341,7 +341,10 @@ func (sync *BlockChainSyncServer) loop() {
 			}
 		case <-doDataDetect.C:
 			if err := sync.processor.addTask(DataDetection{}); err != nil {
-				sync.log.Errorf("add process data detection task to processor failed, reason: %s", err)
+				sync.log.Errorf("add data detection task to processor failed, reason: %s", err)
+			}
+			if err := sync.scheduler.addTask(DataDetection{}); err != nil {
+				sync.log.Errorf("add data detection task to scheduler failed, reason: %s", err)
 			}
 
 		// State processing results in state machine
