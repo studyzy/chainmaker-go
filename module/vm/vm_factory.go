@@ -559,7 +559,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 		if err != nil {
 			m.Log.Warn("[%s] begin db save point error, %s", txId, err.Error())
 		}
-		txContext.Put(contractId.ContractName, []byte("target"), []byte("mysql")) // for dag
+		//txContext.Put(contractId.ContractName, []byte("target"), []byte("mysql")) // for dag
 	}
 
 	runtimeContractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, gasUsed)
