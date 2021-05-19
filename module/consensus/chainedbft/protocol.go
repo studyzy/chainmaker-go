@@ -931,7 +931,8 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 2. insert committed block to chainStore
 	cbi.logger.Debugf("processBlockCommitted step 1 insert complete block")
 	if err := cbi.chainStore.insertCompletedBlock(block); err != nil {
-		cbi.logger.Errorf("insert block[%d:%x] to chainStore failed", block.Header.BlockHeight, block.Header.BlockHash)
+		cbi.logger.Errorf("insert block[%d:%x] to chainStore failed, reason: %s",
+			block.Header.BlockHeight, block.Header.BlockHash, err)
 		return
 	}
 	// 3. update commit info in the consensus
