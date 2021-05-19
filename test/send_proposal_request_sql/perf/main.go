@@ -88,7 +88,7 @@ func main() {
 	performanceTestUpdate(sk3, &client)
 	time.Sleep(4 * time.Second)
 
-	performanceTestBlank(sk3, &client)
+	//performanceTestBlank(sk3, &client)
 	time.Sleep(4 * time.Second)
 
 	performanceTestInsert(sk3, &client)
@@ -103,7 +103,7 @@ func main() {
 	performanceTestUpdate(sk3, &client)
 	time.Sleep(4 * time.Second)
 
-	performanceTestBlank(sk3, &client)
+	//performanceTestBlank(sk3, &client)
 	time.Sleep(4 * time.Second)
 
 	performanceTestInsert(sk3, &client)
@@ -149,9 +149,10 @@ func performanceTestInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	time.Sleep(time.Second * 4)
 	// wait
 	for {
-		code := testGetTxByTxId(sk3, client, txId, CHAIN1)
-		code2 := testGetTxByTxId(sk3, client, txPreId, CHAIN1)
-		if code == commonPb.ContractResultCode_OK && code2 == commonPb.ContractResultCode_OK {
+		num := testQueryMethod(sk3, client, CHAIN1, "sql_query_count")
+		fmt.Println(num)
+		number, _ := strconv.Atoi(num)
+		if number >= totalCount-2 {
 			break
 		}
 		time.Sleep(time.Millisecond * 2000)
@@ -228,9 +229,10 @@ func performanceTestUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	time.Sleep(time.Second * 4)
 	// wait
 	for {
-		code := testGetTxByTxId(sk3, client, txId, CHAIN1)
-		code2 := testGetTxByTxId(sk3, client, txPreId, CHAIN1)
-		if code == commonPb.ContractResultCode_OK && code2 == commonPb.ContractResultCode_OK {
+		num := testQueryMethod(sk3, client, CHAIN1, "sql_query_number")
+		fmt.Println(num)
+		number, _ := strconv.Atoi(num)
+		if number >= count-2 {
 			break
 		}
 		time.Sleep(time.Millisecond * 2000)
@@ -249,13 +251,13 @@ func performanceTestCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 func initWasmerSqlTest() {
 	WasmPath = "rust-sql-perf-1.1.0.wasm"
 	WasmUpgradePath = "rust-sql-perf-1.1.0.wasm"
-	contractName = "contract100"
+	contractName = "contract1000"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmSqlTest() {
 	WasmPath = "go-sql-perf-1.1.0.wasm"
 	WasmUpgradePath = "go-sql-perf-1.1.0.wasm"
-	contractName = "contract200"
+	contractName = "contract2000"
 	runtimeType = commonPb.RuntimeType_GASM
 }
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
@@ -364,6 +366,30 @@ func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 		chainId, txId, payloadBytes)
 
 	return txId
+}
+
+func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, method string) string {
+	txId := utils.GetRandTxId()
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{}
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	txId = utils.GetRandTxId()
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+		chainId, txId, payloadBytes)
+	if len(resp.ContractResult.Result) == 0 {
+		return ""
+	}
+	return string(resp.ContractResult.Result)
 }
 
 func testInvokeSqlBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, number string) string {
