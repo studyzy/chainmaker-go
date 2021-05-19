@@ -153,7 +153,16 @@ func (s *WaciInstance) ErrorResult() int32 {
 
 //  CallContractLen invoke cross contract calls, save result to cache and putout result length
 func (s *WaciInstance) CallContractLen() int32 {
-	data, err, gas := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed())
+	return s.callContractCore(true)
+}
+
+//  CallContractLen get cross contract call result from cache
+func (s *WaciInstance) CallContract() int32 {
+	return s.callContractCore(false)
+}
+
+func (s *WaciInstance) callContractCore(isLen bool) int32 {
+	data, err, gas := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed(), isLen)
 	s.Sc.GetStateCache = data // reset data
 	s.Sc.Instance.SetGasUsed(gas)
 	if err != nil {
@@ -161,11 +170,6 @@ func (s *WaciInstance) CallContractLen() int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 	return protocol.ContractSdkSignalResultSuccess
-}
-
-//  CallContractLen get cross contract call result from cache
-func (s *WaciInstance) CallContract() int32 {
-	return s.CallContractLen()
 }
 
 // EmitEvent emit event to chain
@@ -178,66 +182,6 @@ func (s *WaciInstance) EmitEvent() int32 {
 	s.Sc.ContractEvent = append(s.Sc.ContractEvent, contractEvent)
 	return protocol.ContractSdkSignalResultSuccess
 }
-
-//
-//func (s *WaciInstance) callContractCore(isGetLen bool) int32 {
-//	req := serialize.easyUnmarshal(s.RequestBody)
-//	valuePtr, _ := serialize.GetValueFromItems(req, "value_ptr", serialize.EasyKeyType_USER)
-//	contractName, _ := serialize.GetValueFromItems(req, "contract_name", serialize.EasyKeyType_USER)
-//	method, _ := serialize.GetValueFromItems(req, "method", serialize.EasyKeyType_USER)
-//	param, _ := serialize.GetValueFromItems(req, "param", serialize.EasyKeyType_USER)
-//	paramItem := serialize.easyUnmarshal(param.([]byte))
-//
-//	if !isGetLen { // get value from cache
-//		result := s.Sc.TxSimContext.GetCurrentResult()
-//		copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+(int32)(len(result))], result)
-//		return protocol.ContractSdkSignalResultSuccess
-//	}
-//
-//	// check param
-//	if len(contractName.(string)) == 0 {
-//		return s.recordMsg("CallContract contractName is null")
-//	}
-//	if len(method.(string)) == 0 {
-//		return s.recordMsg("CallContract method is null")
-//	}
-//	if len(paramItem) > protocol.ParametersKeyMaxCount {
-//		return s.recordMsg("expect less than 20 parameters, but get " + strconv.Itoa(len(paramItem)))
-//	}
-//	for _, item := range paramItem {
-//		if len(item.Key) > protocol.DefaultStateLen {
-//			msg := fmt.Sprintf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(item.Key))
-//			return s.recordMsg(msg)
-//		}
-//		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
-//		if err != nil || !match {
-//			msg := fmt.Sprintf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", item.Key)
-//			return s.recordMsg(msg)
-//		}
-//		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
-//			msg := fmt.Sprintf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string)))
-//			return s.recordMsg(msg)
-//		}
-//	}
-//	if err := protocol.CheckKeyFieldStr(contractName.(string), method.(string)); err != nil {
-//		return s.recordMsg(err.Error())
-//	}
-//
-//	// call contract
-//	usedGas := s.Sc.Instance.GetGasUsed() + protocol.CallContractGasOnce
-//	s.Sc.Instance.SetGasUsed(usedGas)
-//	paramMap := serialize.easyCodecItemToParamsMap(paramItem)
-//	result, code := s.Sc.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contractName.(string)}, method.(string), nil, paramMap, usedGas, commonPb.TxType_INVOKE_USER_CONTRACT)
-//	usedGas = s.Sc.Instance.GetGasUsed() + uint64(result.GasUsed)
-//	s.Sc.Instance.SetGasUsed(usedGas)
-//	if code != commonPb.TxStatusCode_SUCCESS {
-//		return s.recordMsg("CallContract " + code.String() + ", msg:" + result.Message)
-//	}
-//	// set value length to memory
-//	l := utils.IntToBytes(int32(len(result.Result)))
-//	copy(s.Memory[valuePtr.(int32):valuePtr.(int32)+4], l)
-//	return protocol.ContractSdkSignalResultSuccess
-//}
 
 // wasi
 //export fdWrite
