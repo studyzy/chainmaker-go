@@ -16,7 +16,6 @@ import (
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/common/queue/lockfreequeue"
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
@@ -53,7 +52,7 @@ type BatchTxPool struct {
 
 	mb         msgbus.MessageBus              // Receive messages from other modules
 	ac         protocol.AccessControlProvider // Verify transaction signature
-	log        *logger.CMLogger               //
+	log        protocol.Logger                //
 	chainConf  protocol.ChainConf             //
 	chainStore protocol.BlockchainStore       // Access information on the chain
 
@@ -62,7 +61,7 @@ type BatchTxPool struct {
 }
 
 func NewBatchTxPool(nodeId string, chainId string, chainConf protocol.ChainConf,
-	chainStore protocol.BlockchainStore, ac protocol.AccessControlProvider) *BatchTxPool {
+	chainStore protocol.BlockchainStore, ac protocol.AccessControlProvider, log protocol.Logger) *BatchTxPool {
 
 	return &BatchTxPool{
 		nodeId:  nodeId,
@@ -72,7 +71,7 @@ func NewBatchTxPool(nodeId string, chainId string, chainConf protocol.ChainConf,
 		chainConf:  chainConf,
 		chainStore: chainStore,
 		stopCh:     make(chan struct{}),
-		log:        logger.GetLoggerByChain(logger.MODULE_TXPOOL, chainId),
+		log:        log,
 
 		maxTxCount:         int32(poolconf.DefaultMaxTxPoolSize),
 		batchMaxSize:       int32(DefaultBatchMaxSize),

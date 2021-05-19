@@ -14,7 +14,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/common/linkedhashmap"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
@@ -24,7 +23,7 @@ import (
 
 // txList Structure of store transactions in memory
 type txList struct {
-	log              *logger.CMLogger
+	log              protocol.Logger
 	blockchainStore  protocol.BlockchainStore
 	metricTxPoolSize *prometheus.GaugeVec
 
@@ -33,7 +32,7 @@ type txList struct {
 	pendingCache *sync.Map                    // A place where transactions are stored after Fetch
 }
 
-func newTxList(log *logger.CMLogger, pendingCache *sync.Map, blockchainStore protocol.BlockchainStore) *txList {
+func newTxList(log protocol.Logger, pendingCache *sync.Map, blockchainStore protocol.BlockchainStore) *txList {
 	list := &txList{
 		log:             log,
 		blockchainStore: blockchainStore,

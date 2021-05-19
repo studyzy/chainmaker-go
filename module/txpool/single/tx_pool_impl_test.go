@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -22,13 +23,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var log = &logger.GoLogger{}
+
 func TestNewTxPoolImpl(t *testing.T) {
 	chainConf, _ := chainconf.NewChainConf(nil)
-	txPool, err := NewTxPoolImpl("", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet())
+	txPool, err := NewTxPoolImpl("", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet(), log)
 	require.Nil(t, txPool)
 	require.EqualError(t, fmt.Errorf("no chainId in create txpool"), err.Error())
 
-	txPool, err = NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet())
+	txPool, err = NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet(), log)
 	require.NotNil(t, txPool)
 	require.NoError(t, err)
 }
@@ -42,7 +45,7 @@ func newTestPool(txCount uint32) protocol.TxPool {
 	localconf.ChainMakerConfig.LogConfig.SystemLog.LogLevels = make(map[string]string)
 	localconf.ChainMakerConfig.LogConfig.SystemLog.LogLevels["txpool"] = "ERROR"
 
-	txPool, _ := NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet())
+	txPool, _ := NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet(), log)
 	_ = txPool.Start()
 	return txPool
 }
