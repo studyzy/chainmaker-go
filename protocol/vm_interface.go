@@ -89,19 +89,6 @@ const (
 	ContractMethodExecuteUpdate      = "ExecuteUpdate"
 	ContractMethodExecuteDdl         = "ExecuteDDL"
 	ContractMethodEmitEvent          = "EmitEvent"
-	// paillier
-	ContractMethodGetPaillierOperationResult    = "GetPaillierOperationResult"
-	ContractMethodGetPaillierOperationResultLen = "GetPaillierOperationResultLen"
-	PaillierOpTypeAddCiphertext                 = "AddCiphertext"
-	PaillierOpTypeAddCiphertextStr              = "AddCiphertextStr"
-	PaillierOpTypeAddPlaintext                  = "AddPlaintext"
-	PaillierOpTypeAddPlaintextInt64             = "AddPlaintextInt64"
-	PaillierOpTypeSubCiphertext                 = "SubCiphertext"
-	PaillierOpTypeSubCiphertextStr              = "SubCiphertextStr"
-	PaillierOpTypeSubPlaintext                  = "SubPlaintext"
-	PaillierOpTypeSubPlaintextInt64             = "SubPlaintextInt64"
-	PaillierOpTypeNumMul                        = "NumMul"
-	PaillierOpTypeNumMulInt64                   = "NumMulInt64"
 )
 
 //VmManager manage vm runtime
