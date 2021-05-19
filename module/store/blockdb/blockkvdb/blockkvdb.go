@@ -479,7 +479,7 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 	}
 
 	vBytes, err := b.get(height)
-	if err != nil {
+	if err != nil || vBytes == nil {
 		return nil, err
 	}
 
