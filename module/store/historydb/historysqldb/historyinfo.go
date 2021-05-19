@@ -20,7 +20,7 @@ func (b *StateHistoryInfo) GetCreateTableSql(dbType string) string {
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `state_history_infos` (`contract_name` text,`state_key` blob,`tx_id` text,`block_height` integer,PRIMARY KEY (`contract_name`,`state_key`,`tx_id`,`block_height`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (b *StateHistoryInfo) GetTableName() string {
 	return "state_history_infos"
@@ -57,7 +57,7 @@ func (b *AccountTxHistoryInfo) GetCreateTableSql(dbType string) string {
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `account_tx_history_infos` (`account_id` blob,`block_height` integer,`tx_id` text,PRIMARY KEY (`account_id`,`block_height`,`tx_id`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (b *AccountTxHistoryInfo) GetTableName() string {
 	return "account_tx_history_infos"
@@ -83,7 +83,7 @@ func (b *ContractTxHistoryInfo) GetCreateTableSql(dbType string) string {
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `contract_tx_history_infos` (`contract_name` text,`block_height` integer,`tx_id` text,`account_id` blob,PRIMARY KEY (`contract_name`,`block_height`,`tx_id`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (b *ContractTxHistoryInfo) GetTableName() string {
 	return "contract_tx_history_infos"

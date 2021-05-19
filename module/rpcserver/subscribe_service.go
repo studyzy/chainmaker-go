@@ -8,6 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
+	"errors"
+	"fmt"
+
 	commonErr "chainmaker.org/chainmaker-go/common/errors"
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -15,8 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/subscriber/model"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package resultkvdb
 
 import (
+	"encoding/binary"
+	"fmt"
+
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"encoding/binary"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -104,7 +105,7 @@ func (h *ResultKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) 
 	go func() {
 		err := h.DbHandle.WriteBatch(batch, false)
 		if err != nil {
-			panic(fmt.Sprintf("Error writting db: %s", err))
+			panic(fmt.Sprintf("Error writing db: %s", err))
 		}
 		//db committed, clean cache
 		h.Cache.DelBlock(blockHeight)

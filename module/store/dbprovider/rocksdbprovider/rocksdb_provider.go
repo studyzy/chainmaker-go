@@ -9,14 +9,15 @@ SPDX-License-Identifier: Apache-2.0
 package rocksdbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/tecbot/gorocksdb"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/pkg/errors"
+	"github.com/tecbot/gorocksdb"
 )
 
 const (
@@ -187,7 +188,7 @@ func (dbHandle *RocksDBHandle) Get(key []byte) ([]byte, error) {
 // Put put key,value to rocksdb
 func (dbHandle *RocksDBHandle) Put(key []byte, value []byte) error {
 	if value == nil {
-		dbHandle.logger.Warn("writting rocksdbprovider key [%#v] with nil value", key)
+		dbHandle.logger.Warn("writing rocksdbprovider key [%#v] with nil value", key)
 		return errors.New("error writing rocksdbprovider with nil value")
 	}
 	err := dbHandle.db.Put(dbHandle.writeOptions, makeKeyWithDbName(dbHandle.dbName, key), value)

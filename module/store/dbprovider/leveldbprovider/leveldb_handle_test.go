@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package leveldbprovider
 
 import (
+	"os"
+	"path/filepath"
+	"testing"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/types"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 var dbPath = filepath.Join(os.TempDir(), "unit_test_db")

@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package historykvdb
 
 import (
+	"encoding/binary"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"encoding/binary"
-	"fmt"
 )
 
 const (
@@ -105,7 +106,7 @@ func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher)
 	go func() {
 		err := h.dbHandle.WriteBatch(batch, false)
 		if err != nil {
-			panic(fmt.Sprintf("Error writting db: %s", err))
+			panic(fmt.Sprintf("Error writing db: %s", err))
 		}
 		//db committed, clean cache
 		h.cache.DelBlock(blockHeight)

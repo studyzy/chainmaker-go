@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"sync"
 
+	"errors"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -25,15 +27,13 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"errors"
-	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
 
 const (
-	logPath             = "wal"
-	logDBBlockKeyPrefix = 'n'
+	logPath = "wal"
+	//logDBBlockKeyPrefix = 'n'
 )
 
 // BlockStoreImpl provides an implementation of `protocal.BlockchainStore`.
@@ -371,11 +371,7 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 	if err != nil {
 		return nil, err
 	}
-	var txRWSets []*commonPb.TxRWSet
-	//var batchWG sync.WaitGroup
-	//batchWG.Add(len(blockStoreInfo.TxIds))
-	//errsChan := make(chan error, len(blockStoreInfo.TxIds))
-	txRWSets = make([]*commonPb.TxRWSet, len(blockStoreInfo.TxIds))
+	var txRWSets = make([]*commonPb.TxRWSet, len(blockStoreInfo.TxIds))
 	for i, txId := range blockStoreInfo.TxIds {
 
 		txRWSet, err := bs.GetTxRWSet(txId)
@@ -646,14 +642,14 @@ func (bs *BlockStoreImpl) deleteBlockFromLog(num uint64) error {
 	return bs.wal.TruncateFront(lastBlockNum)
 }
 
-func (bs *BlockStoreImpl) construcBlockNumKey(blockNum uint64) []byte {
-	blkNumBytes := bs.encodeBlockNum(blockNum)
-	return append([]byte{logDBBlockKeyPrefix}, blkNumBytes...)
-}
+//func (bs *BlockStoreImpl) construcBlockNumKey(blockNum uint64) []byte {
+//	blkNumBytes := bs.encodeBlockNum(blockNum)
+//	return append([]byte{logDBBlockKeyPrefix}, blkNumBytes...)
+//}
 
-func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
-	return proto.EncodeVarint(blockNum)
-}
+//func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
+//	return proto.EncodeVarint(blockNum)
+//}
 
 //不在事务中，直接查询状态数据库，返回一行结果
 func (bs *BlockStoreImpl) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
@@ -690,14 +686,14 @@ func (bs *BlockStoreImpl) RollbackDbTransaction(txName string) error {
 	return bs.stateDB.RollbackDbTransaction(txName)
 }
 
-func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint uint64) uint64 {
-	height := currentHeight + 1
-	if savePoint == 0 && currentHeight == 0 {
-		//check whether has genesis block
-		if data, _ := bs.wal.Read(1); data != nil && len(data) > 0 {
-			height = height - 1
-		}
-	}
-
-	return height
-}
+//func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint uint64) uint64 {
+//	height := currentHeight + 1
+//	if savePoint == 0 && currentHeight == 0 {
+//		//check whether has genesis block
+//		if data, _ := bs.wal.Read(1); len(data) > 0 {
+//			height = height - 1
+//		}
+//	}
+//
+//	return height
+//}

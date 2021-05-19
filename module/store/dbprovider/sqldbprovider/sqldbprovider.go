@@ -7,22 +7,24 @@ SPDX-License-Identifier: Apache-2.0
 package sqldbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/types"
 	"errors"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm/logger"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm/logger"
+
 	"fmt"
+	"sync"
+
 	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"sync"
 )
 
 var defaultMaxIdleConns = 10

@@ -8,12 +8,13 @@
 package historykvdb
 
 import (
-	"chainmaker.org/chainmaker-go/store/historydb"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/store/historydb"
 )
 
 func constructAcctTxHistKey(accountId []byte, blockHeight uint64, txId string) []byte {

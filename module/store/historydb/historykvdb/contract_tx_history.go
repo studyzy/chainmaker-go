@@ -8,11 +8,12 @@
 package historykvdb
 
 import (
-	"chainmaker.org/chainmaker-go/store/historydb"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/store/historydb"
 )
 
 func constructContractTxHistKey(contractName string, blockHeight uint64, txId string) []byte {

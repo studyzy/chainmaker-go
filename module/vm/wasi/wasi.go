@@ -8,6 +8,10 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
+	"fmt"
+	"regexp"
+	"sync/atomic"
+
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -15,9 +19,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
-	"regexp"
-	"sync/atomic"
 )
 
 var ErrorNotManageContract = fmt.Errorf("method not init_contract or upgrade")

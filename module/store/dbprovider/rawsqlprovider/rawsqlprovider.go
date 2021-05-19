@@ -7,20 +7,21 @@ SPDX-License-Identifier: Apache-2.0
 package rawsqlprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/types"
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var defaultMaxIdleConns = 10
@@ -182,7 +183,9 @@ func (p *SqlDBHandle) HasTable(obj TableDDLGenerator) bool {
 	//obj:=objI.(TableDDLGenerator)
 	sql := ""
 	if p.dbType == types.MySQL {
-		sql = fmt.Sprintf("SELECT count(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'", p.contextDbName, obj.GetTableName())
+		sql = fmt.Sprintf(
+			"SELECT count(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'",
+			p.contextDbName, obj.GetTableName())
 	}
 	if p.dbType == types.Sqlite {
 		sql = fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=\"%s\"", obj.GetTableName())

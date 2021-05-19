@@ -7,6 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"errors"
+	"runtime"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
@@ -27,10 +31,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
-	"errors"
 	"golang.org/x/sync/semaphore"
-	"runtime"
-	"strings"
 )
 
 // Factory is a factory function to create an instance of the block store

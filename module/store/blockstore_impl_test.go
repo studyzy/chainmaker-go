@@ -7,6 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -15,17 +23,8 @@ import (
 	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"github.com/tidwall/wal"
-	"path/filepath"
-
-	"os"
-	"time"
-
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"testing"
+	"github.com/tidwall/wal"
 )
 
 var chainId = "testchain1"
@@ -514,7 +513,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 	iter, err := s.SelectObject(defaultContractName, []byte("key_2"), []byte("key_4"))
 	assert.Nil(t, err)
 	defer iter.Release()
-	var count int = 0
+	var count = 0
 	for iter.Next() {
 		count++
 		kv, _ := iter.Value()
@@ -649,7 +648,7 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	assert.Equal(t, nil, err)
 	err = bs.writeLog(uint64(block6.Header.BlockHeight), blockWithRWSetBytes)
 	if err != nil {
-		fmt.Errorf("chain[%s] Failed to write wal, block[%d]",
+		fmt.Printf("chain[%s] Failed to write wal, block[%d]",
 			block6.Header.ChainId, block6.Header.BlockHeight)
 		t.Error(err)
 	}

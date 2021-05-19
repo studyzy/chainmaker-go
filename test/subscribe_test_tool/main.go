@@ -8,9 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -19,6 +16,10 @@ import (
 	"log"
 	"os"
 	"time"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 

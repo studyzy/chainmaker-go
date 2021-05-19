@@ -8,16 +8,17 @@
 package leveldbprovider
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"os"
-	"path/filepath"
 )
 
 const defaultBloomFilterBits = 10
@@ -95,7 +96,7 @@ func (h *LevelDBHandle) Get(key []byte) ([]byte, error) {
 // Put saves the key-values
 func (h *LevelDBHandle) Put(key []byte, value []byte) error {
 	if value == nil {
-		h.logger.Warn("writting leveldbprovider key [%#v] with nil value", key)
+		h.logger.Warn("writing leveldbprovider key [%#v] with nil value", key)
 		return errors.New("error writing leveldbprovider with nil value")
 	}
 	wo := &opt.WriteOptions{Sync: true}

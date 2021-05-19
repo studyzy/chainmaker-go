@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package sqldbprovider
 
 import (
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol/test"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 var log = &test.GoLogger{}

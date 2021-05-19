@@ -9,14 +9,15 @@ waci: WebAssembly Chainmaker Interface
 package waci
 
 import (
+	"fmt"
+	"reflect"
+
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/wasi"
-	"fmt"
-	"reflect"
 )
 
 const WaciModuleName = "env"

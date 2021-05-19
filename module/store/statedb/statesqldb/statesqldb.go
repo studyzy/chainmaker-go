@@ -7,14 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"fmt"
-	"sync"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
