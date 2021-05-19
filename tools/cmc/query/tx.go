@@ -1,8 +1,12 @@
 package query
 
 import (
+	"chainmaker.org/chainmaker-go/tools/cmc/query/model"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -51,12 +55,49 @@ func runQueryTxCMD(args []string) error {
 	defer locker.UnLock()
 
 	//// 3.Query tx on-chain
-	txInfo, err := cc.GetTxByTxId(args[0])
+	var txInfo *common.TransactionInfo
+	var output []byte
+	txInfo, err = cc.GetTxByTxId(args[0])
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(), "archived transaction") {
+			blkHeight, err := cc.GetBlockHeightByTxId(args[0])
+			if err != nil {
+				return err
+			}
+			var bInfo model.BlockInfo
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(blkHeight)).Where(&model.BlockInfo{BlockHeight: blkHeight}).Find(&bInfo).Error
+			if err != nil {
+				return err
+			}
+
+			var blkWithRWSet store.BlockWithRWSet
+			err = blkWithRWSet.Unmarshal(bInfo.BlockWithRWSet)
+			if err != nil {
+				return err
+			}
+
+			for idx, tx := range blkWithRWSet.Block.Txs {
+				if tx.Header.TxId == args[0] {
+					txInfo = &common.TransactionInfo{
+						Transaction: tx,
+						BlockHeight: uint64(blkWithRWSet.Block.Header.BlockHeight),
+						BlockHash:   blkWithRWSet.Block.Header.BlockHash,
+						TxIndex:     uint32(idx),
+					}
+
+					output, err = txInfo.Marshal()
+					if err != nil {
+						return err
+					}
+					break
+				}
+			}
+		} else {
+			return err
+		}
 	}
 
-	output, err := json.MarshalIndent(txInfo, "", "    ")
+	output, err = json.MarshalIndent(txInfo, "", "    ")
 	if err != nil {
 		return err
 	}

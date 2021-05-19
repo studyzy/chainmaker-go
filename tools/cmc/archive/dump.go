@@ -11,7 +11,6 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	sdk "chainmaker.org/chainmaker-sdk-go"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
 
@@ -168,7 +167,7 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 	archivedBlkHeightOnChain := blkWithRWSetSlice[len(blkWithRWSetSlice)-1].Block.Header.BlockHeight
 	err := archiveBlockOnChain(cc, archivedBlkHeightOnChain)
 	if err != nil {
-		return err
+		//return err
 	}
 
 	// update archived block height off-chain
@@ -192,13 +191,12 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 
 // archiveBlockOnChain Build & Sign & Send a ArchiveBlockRequest
 func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
-	fmt.Println("lllll=", height)
 	var (
 		err                error
 		payload            []byte
 		signedPayloadBytes []byte
-		resp               *common.TxResponse
-		result             string
+		//resp               *common.TxResponse
+		//result             string
 	)
 
 	payload, err = cc.CreateArchiveBlockPayload(height)
@@ -211,13 +209,13 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		return err
 	}
 
-	resp, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, true)
+	_, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, true)
 	if err != nil {
 		return err
 	}
 
-	result = string(resp.ContractResult.Result)
+	//result = string(resp.ContractResult.Result)
 
-	fmt.Printf("resp: %+v, result:%+s\n", resp, result)
+	//fmt.Printf("resp: %+v, result:%+s\n", resp, result)
 	return nil
 }
