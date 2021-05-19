@@ -61,7 +61,7 @@ func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCo
 	}
 
 	logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
-	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, chainStore.getCommitQC(), 100)
+	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, chainStore.getCommitQC(), 20)
 	return chainStore, nil
 }
 
