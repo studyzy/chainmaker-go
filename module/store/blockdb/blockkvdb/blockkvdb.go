@@ -153,8 +153,12 @@ func (b *BlockKvDB) SetArchivedPivot(archivedPivot uint64) error {
 
 // ShrinkBlocks remove ranged heightKey--SerializedMeta and txid--SerializedTx from kvdb
 func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
-	block, err := b.getBlockByHeightBytes(constructBlockNumKey(endHeight))
-	if err != nil {
+	var (
+		block *commonPb.Block
+		err error
+	)
+
+	if block, err = b.getBlockByHeightBytes(constructBlockNumKey(endHeight)); err != nil {
 		return err
 	}
 
@@ -184,8 +188,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
 	}
 
 	beforeWrite := utils.CurrentTimeMillisSeconds()
-	err = b.DbHandle.WriteBatch(batch, false)
-	if err != nil {
+	if err = b.DbHandle.WriteBatch(batch, false); err != nil {
 		return err
 	}
 
@@ -213,9 +216,9 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 		}
 
 		//check block hash
-		sBlock, err2 := b.GetFilteredBlock(blockInfo.Block.Header.BlockHeight)
-		if err2 != nil {
-			return err2
+		sBlock, err := b.GetFilteredBlock(blockInfo.Block.Header.BlockHeight)
+		if err != nil {
+			return err
 		}
 
 		if !bytes.Equal(blockInfo.Block.Header.BlockHash, sBlock.Header.BlockHash) {
@@ -480,19 +483,6 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		return nil, err
 	}
 
-	if vBytes == nil {
-		archivedPivot, err := b.GetArchivedPivot()
-		if err != nil {
-			return nil, err
-		}
-
-		if decodeBlockNumKey(height) <= archivedPivot {
-			return nil, archive.ArchivedBlockError
-		}
-
-		return nil, nil
-	}
-
 	var blockStoreInfo storePb.SerializedBlock
 	err = proto.Unmarshal(vBytes, &blockStoreInfo)
 	if err != nil {
@@ -515,11 +505,15 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		//go func(i int, txid string) {
 		//	defer b.WorkersSemaphore.Release(1)
 		//	defer batchWG.Done()
-		tx, err := b.GetTx(txid)
-		if err != nil {
+		tx, err1 := b.GetTx(txid);
+		if err1 != nil {
+			if err1 == archive.ArchivedTxError {
+				return nil, archive.ArchivedBlockError
+			}
 			//errsChan <- err
-			return nil, err
+			return nil, err1
 		}
+
 		block.Txs[index] = tx
 		//}(index, txid)
 	}

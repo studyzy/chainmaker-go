@@ -59,13 +59,16 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 	mgr.Lock()
 	defer mgr.Unlock()
 
-	lastHeight, err := mgr.blockDB.GetLastSavepoint()
-	if err != nil {
+	var (
+		lastHeight, archivedPivot uint64
+		err error
+	)
+
+	if lastHeight, err = mgr.blockDB.GetLastSavepoint(); err != nil {
 		return err
 	}
 
-	archivedPivot, err := mgr.GetArchivedPivot()
-	if err != nil {
+	if archivedPivot, err = mgr.GetArchivedPivot(); err != nil {
 		return err
 	}
 
@@ -78,7 +81,7 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 		return HeightNotReachError
 	}
 
-	if err := mgr.blockDB.ShrinkBlocks(archivedPivot+1, archiveHeight); err != nil {
+	if err = mgr.blockDB.ShrinkBlocks(archivedPivot+1, archiveHeight); err != nil {
 		return err
 	}
 
