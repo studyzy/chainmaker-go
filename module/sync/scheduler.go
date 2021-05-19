@@ -108,7 +108,6 @@ func (sch *scheduler) addPendingBlocksAndUpdatePendingHeight(peerHeight int64) {
 		return
 	}
 	blk := sch.ledger.GetLastCommittedBlock()
-	//sch.updatePendingHeight(blk)
 	if blk.Header.BlockHeight >= peerHeight {
 		return
 	}
@@ -133,16 +132,6 @@ func (sch *scheduler) handleDataDetection() {
 	sch.pendingRecvHeight = blk.Header.BlockHeight + 1
 	sch.blockStates[sch.pendingRecvHeight] = newBlock
 }
-
-//func (sch *scheduler) updatePendingHeight(currBlk *commonPb.Block) {
-//	if currBlk.Header.BlockHeight > sch.pendingRecvHeight {
-//		delete(sch.blockStates, sch.pendingRecvHeight)
-//		delete(sch.pendingBlocks, sch.pendingRecvHeight)
-//		delete(sch.receivedBlocks, sch.pendingRecvHeight)
-//		delete(sch.pendingTime, sch.pendingRecvHeight)
-//		sch.pendingRecvHeight = currBlk.Header.BlockHeight + 1
-//	}
-//}
 
 func (sch *scheduler) handleLivinessMsg() {
 	reqTime, exist := sch.pendingTime[sch.pendingRecvHeight]
