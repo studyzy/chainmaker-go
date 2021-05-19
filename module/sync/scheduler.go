@@ -84,7 +84,7 @@ func (sch *scheduler) handler(event queue.Item) (queue.Item, error) {
 	case ProcessedBlockResp:
 		return sch.handleProcessedBlockResp(msg)
 	case DataDetection:
-		//sch.handleDataDetection()
+		sch.handleDataDetection()
 	}
 	return nil, nil
 }
