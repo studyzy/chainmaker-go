@@ -109,7 +109,9 @@ func (e *EVM) executePreCompiled(addr uint64, input []byte) (ExecuteResult, erro
 		input = []byte(e.context.Parameters[protocol.ContractCreatorPkParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractCreatorPkParam])
 	default:
-		return ExecuteResult{}, errors.New("no exist instruction")
+		if addr<1||addr>15{
+			return ExecuteResult{}, errors.New("not existed precompiled contract")
+		}
 	}
 	gasCost := contract.GasCost(input)
 	gasLeft := e.instructions.GetGasLeft()
