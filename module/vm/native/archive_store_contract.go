@@ -129,7 +129,7 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 	TxRWSetMp := make(map[int64][]*commonPb.TxRWSet)
 	for i := 0; i < int(archiveBlockHeight); i++ {
 		block, txRWSet := a.createBlockAndRWSets(context.GetTx().Header.ChainId, int64(i), 100)
-		if err = context.GetBlockchainStore().PutBlock(block, txRWSet, nil); err != nil {
+		if err = context.GetBlockchainStore().PutBlock(block, txRWSet); err != nil {
 			return nil, err
 		}
 		blocks = append(blocks, block)
