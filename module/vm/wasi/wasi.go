@@ -25,20 +25,20 @@ var ErrorNotManageContract = fmt.Errorf("method not init_contract or upgrade")
 // Wacsi WebAssembly chainmaker system interface
 type Wacsi interface {
 	PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
-	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
 	DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
-	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64)
+	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64, isLen bool) ([]byte, error, uint64)
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
 	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
 
 	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
-	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
 	ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
 	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error
 
 	RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
-	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
 	RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
 }
 
@@ -66,7 +66,7 @@ func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext
 	return err
 }
 
-func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	key, _ := ec.GetString("key")
 	field, _ := ec.GetString("field")
@@ -75,7 +75,7 @@ func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext
 		return nil, err
 	}
 
-	if data == nil {
+	if isLen {
 		value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key, field))
 		if err != nil {
 			msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key, field, err.Error())
@@ -109,7 +109,7 @@ func (*WacsiImpl) DeleteState(requestBody []byte, contractName string, txSimCont
 	}
 	return nil
 }
-func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64) {
+func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64, isLen bool) ([]byte, error, uint64) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	valuePtr, _ := ec.GetInt32("value_ptr")
 	contractName, _ := ec.GetString("contract_name")
@@ -119,7 +119,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	ecData := serialize.NewEasyCodecWithBytes(param)
 	paramItem := ecData.GetItems()
 
-	if data != nil { // get value from cache
+	if !isLen { // get value from cache
 		result := txSimContext.GetCurrentResult()
 		copy(memory[valuePtr:valuePtr+int32(len(result))], result)
 		return nil, nil, gasUsed
@@ -179,7 +179,11 @@ func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []by
 
 func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte) int32 {
 	contractResult.Code = common.ContractResultCode_FAIL
-	contractResult.Message += string(data)
+	if len(contractResult.Message) > 0 {
+		contractResult.Message += ". contract message:" + string(data)
+	} else {
+		contractResult.Message = "contract message:" + string(data)
+	}
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -244,7 +248,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -255,11 +259,11 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 	}
 
 	// get len
-	if data == nil {
+	if isLen {
 		// execute
 		row, err := txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
 		if err != nil {
-			return nil, fmt.Errorf("ctx query error, %s", err.Error())
+			return nil, fmt.Errorf("ctx query one error, %s", err.Error())
 		}
 
 		var dataRow map[string]string
@@ -304,7 +308,7 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 	return nil
 }
 
-func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -316,7 +320,7 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 	}
 
 	// get len
-	if data == nil {
+	if isLen {
 		var dataRow map[string]string
 		var err error
 		if rows == nil {
