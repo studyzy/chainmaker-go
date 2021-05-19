@@ -19,17 +19,18 @@ type ContractEventSqlDB struct {
 
 // NewContractEventMysqlDB construct a new `ContractEventDB` for given chainId
 func NewContractEventMysqlDB(chainId string, sqlDbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ContractEventSqlDB, error) {
-	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), sqlDbConfig, logger)
-	return newContractEventDB(chainId, db, logger)
+	dbName := getDbName(sqlDbConfig, chainId)
+	db := rawsqlprovider.NewSqlDBHandle(dbName, sqlDbConfig, logger)
+	return newContractEventDB(dbName, db, logger)
 }
 
-func newContractEventDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
+func newContractEventDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
 	cdb := &ContractEventSqlDB{
 		db:     db,
 		Logger: logger,
-		dbName: getDbName(chainId),
+		dbName: dbName,
 	}
-	cdb.initDb(getDbName(chainId))
+	cdb.initDb(dbName)
 	return cdb, nil
 }
 
@@ -43,7 +44,7 @@ func (c *ContractEventSqlDB) initDb(dbName string) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create table %s db:%s", BlockHeightWithTopicTableName, err))
 	}
-	err = c.createTable(CreateBlockHeightIndexTableDDL)
+	err = c.createTable(CreateBlockHeightIndexTableDdl)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create table %s db:%s", BlockHeightIndexTableName, err))
 	}
@@ -55,12 +56,12 @@ func (c *ContractEventSqlDB) initDb(dbName string) {
 }
 
 func (c *ContractEventSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	c.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	c.initDb(c.dbName)
 	return nil
 }
 
-func getDbName(chainId string) string {
-	return "contract_eventdb" + chainId
+func getDbName(sqlDbConfig *localconf.SqlDbConfig, chainId string) string {
+	return sqlDbConfig.DbPrefix + "contract_eventdb" + chainId
 }
 
 // CommitBlock commits the event in an atomic operation
@@ -74,18 +75,32 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 	blockHeight := block.Header.BlockHeight
 	blockIndexDdl := utils.GenerateUpdateBlockHeightIndexDdl(block.Header.BlockHeight)
 	blockHashStr := block.GetBlockHashStr()
-
+	topicTableCache := make(map[string]bool)
 	dbTx, err := c.db.BeginDbTransaction(blockHashStr)
 	if err != nil {
 		return err
 	}
+	var preBlockHeight int64
+	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	err = single.ScanColumns(&preBlockHeight)
+	if err != nil {
+		c.Logger.Errorf("failed to get block_height err%s", err)
+		c.db.RollbackDbTransaction(blockHashStr)
+		return err
+	}
+	//avoid nodes repeat commit block in same db
+	if blockHeight <= preBlockHeight {
+		c.db.CommitDbTransaction(blockHashStr)
+		c.Logger.Debugf("chain[%s]: commit contract event block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+		return nil
+	}
 	for _, tx := range blockInfo.Block.Txs {
-		for _, event := range tx.Result.ContractResult.ContractEvent {
+		for eventIndex, event := range tx.Result.ContractResult.ContractEvent {
 			createDdl := utils.GenerateCreateTopicTableDdl(event, chanId)
-			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight)
+			saveDdl := utils.GenerateSaveContractEventDdl(event, chanId, blockHeight, eventIndex)
 			heightWithTopicDdl := utils.GenerateSaveBlockHeightWithTopicDdl(event, chanId, blockHeight)
 			topicTableName := chanId + "_" + event.ContractName + "_" + event.Topic
-
 			if createDdl != "" {
 				_, err := dbTx.ExecSql(createDdl)
 				if err != nil {
@@ -105,20 +120,23 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 			}
 
 			if heightWithTopicDdl != "" {
-				_, err := dbTx.ExecSql(heightWithTopicDdl)
-				if err != nil {
-					c.Logger.Errorf("failed to save block height with topic table, height:%s, topicTableName:%s, err:%s", block.Header.BlockHeight, topicTableName, err.Error())
-					c.db.RollbackDbTransaction(blockHashStr)
-					return err
+				if _, ok := topicTableCache[topicTableName]; !ok {
+					topicTableCache[topicTableName] = true
+					_, err := dbTx.ExecSql(heightWithTopicDdl)
+					if err != nil {
+						c.Logger.Errorf("failed to save block height with topic table, height:%s, topicTableName:%s, err:%s", block.Header.BlockHeight, topicTableName, err.Error())
+						c.db.RollbackDbTransaction(blockHashStr)
+						return err
+					}
 				}
 			}
 		}
-		_, err = dbTx.ExecSql(blockIndexDdl)
-		if err != nil {
-			c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, err.Error())
-			c.db.RollbackDbTransaction(blockHashStr)
-			return err
-		}
+	}
+	_, err = dbTx.ExecSql(blockIndexDdl)
+	if err != nil {
+		c.Logger.Errorf("failed to update block height index, height:%s err:%s", block.Header.BlockHeight, err.Error())
+		c.db.RollbackDbTransaction(blockHashStr)
+		return err
 	}
 
 	c.db.CommitDbTransaction(blockHashStr)
@@ -130,7 +148,7 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 // GetLastSavepoint returns the last block height
 func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 	var blockHeight int64
-	_, err := c.db.ExecSql(CreateBlockHeightIndexTableDDL)
+	_, err := c.db.ExecSql(CreateBlockHeightIndexTableDdl)
 	if err != nil {
 		c.Logger.Errorf("GetLastSavepoint: try to create " + BlockHeightWithTopicTableName + " table fail")
 		return 0, err
@@ -147,7 +165,7 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 	}
 
 	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
-	single.ScanColumns(&blockHeight)
+	err = single.ScanColumns(&blockHeight)
 	if err != nil {
 		c.Logger.Errorf("failed to get last savepoint")
 		return 0, err
@@ -157,7 +175,7 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 
 // insert a record to init block height index table
 func (c *ContractEventSqlDB) initBlockHeightIndexTable() error {
-	_, err := c.db.ExecSql(InitBlockHeightIndexTableDDL)
+	_, err := c.db.ExecSql(InitBlockHeightIndexTableDdl)
 	return err
 }
 

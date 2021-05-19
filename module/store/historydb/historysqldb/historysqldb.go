@@ -25,8 +25,9 @@ type HistorySqlDB struct {
 
 // NewHistorySqlDB construct a new `HistoryDB` for given chainId
 func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*HistorySqlDB, error) {
-	db := rawsqlprovider.NewSqlDBHandle(getDbName(chainId), dbConfig, logger)
-	return newHistorySqlDB(chainId, db, logger)
+	dbName := getDbName(dbConfig, chainId)
+	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
+	return newHistorySqlDB(dbName, db, logger)
 }
 
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
@@ -57,20 +58,20 @@ func (db *HistorySqlDB) initDb(dbName string) {
 	db.db.Save(&types.SavePoint{0})
 
 }
-func getDbName(chainId string) string {
-	return "historydb_" + chainId
+func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
+	return dbConfig.DbPrefix + "historydb_" + chainId
 }
-func newHistorySqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
+func newHistorySqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
 
 	historyDB := &HistorySqlDB{
 		db:     db,
 		logger: logger,
-		dbName: getDbName(chainId),
+		dbName: dbName,
 	}
 	return historyDB, nil
 }
 func (h *HistorySqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	h.initDb(getDbName(genesisBlock.Block.Header.ChainId))
+	h.initDb(h.dbName)
 	return h.CommitBlock(genesisBlock)
 }
 func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {

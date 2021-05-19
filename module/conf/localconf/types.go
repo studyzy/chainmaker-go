@@ -137,6 +137,7 @@ type blockchainConfig struct {
 type StorageConfig struct {
 	//默认的Leveldb配置，如果每个DB有不同的设置，可以在自己的DB中进行设置
 	StorePath            string `mapstructure:"store_path"`
+	DbPrefix             string `mapstructure:"db_prefix"`
 	WriteBufferSize      int    `mapstructure:"write_buffer_size"`
 	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
 	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
@@ -154,34 +155,58 @@ type StorageConfig struct {
 	MinUnArchiveBlockHeight uint64    `mapstructure:"min_unarchive_block_height"`
 }
 
+func (config *StorageConfig) setDefault() {
+	if config.DbPrefix != "" {
+		if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil && config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.BlockDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil && config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.StateDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil && config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.HistoryDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil && config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.ResultDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.ContractEventDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+	}
+}
 func (config *StorageConfig) GetBlockDbConfig() *DbConfig {
 	if config.BlockDbConfig == nil {
 		return config.GetDefaultDBConfig()
 	}
+	config.setDefault()
 	return config.BlockDbConfig
 }
 func (config *StorageConfig) GetStateDbConfig() *DbConfig {
 	if config.StateDbConfig == nil {
 		return config.GetDefaultDBConfig()
 	}
+	config.setDefault()
 	return config.StateDbConfig
 }
 func (config *StorageConfig) GetHistoryDbConfig() *DbConfig {
 	if config.HistoryDbConfig == nil {
 		return config.GetDefaultDBConfig()
 	}
+	config.setDefault()
 	return config.HistoryDbConfig
 }
 func (config *StorageConfig) GetResultDbConfig() *DbConfig {
 	if config.ResultDbConfig == nil {
 		return config.GetDefaultDBConfig()
 	}
+	config.setDefault()
 	return config.ResultDbConfig
 }
 func (config *StorageConfig) GetContractEventDbConfig() *DbConfig {
 	if config.ContractEventDbConfig == nil {
 		return config.GetDefaultDBConfig()
 	}
+	config.setDefault()
 	return config.ContractEventDbConfig
 }
 func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
@@ -241,6 +266,7 @@ type SqlDbConfig struct {
 	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
 	SqlLogMode      string `mapstructure:"sqllog_mode"`       //Silent,Error,Warn,Info
 	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
+	DbPrefix        string `mapstructure:"db_prefix"`
 }
 
 type txPoolConfig struct {

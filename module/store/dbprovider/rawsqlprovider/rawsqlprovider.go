@@ -21,13 +21,13 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 var defaultMaxIdleConns = 10
 var defaultMaxOpenConns = 10
 var defaultConnMaxLifeTime = 60
 
-// Porvider encapsulate the gorm.DB that providers mysql handles
 type SqlDBHandle struct {
 	sync.Mutex
 	contextDbName string
@@ -48,7 +48,7 @@ func ParseSqlDbType(str string) (types.EngineType, error) {
 	case "sqlite":
 		return types.Sqlite, nil
 	default:
-		return types.UnknownDb, errors.New("uknow sql db type:" + str)
+		return types.UnknownDb, errors.New("unknown sql db type:" + str)
 	}
 }
 func replaceMySqlDsn(dsn string, dbName string) string {
@@ -96,7 +96,10 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 				panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
 			}
 		}
-		log.Debug("open new gorm db connection for " + conf.SqlDbType + " dsn:" + dsn)
+		log.Debug("open new db connection for " + conf.SqlDbType + " dsn:" + dsn)
+		db.SetConnMaxLifetime(time.Second * time.Duration(conf.ConnMaxLifeTime))
+		db.SetMaxIdleConns(conf.MaxIdleConns)
+		db.SetMaxOpenConns(conf.MaxOpenConns)
 		provider.db = db
 		provider.contextDbName = dbName //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
@@ -115,7 +118,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		panic(fmt.Sprintf("unsupport db:%v", sqlType))
 	}
 
-	log.Debug("inject ChainMaker logger into gorm db logger.")
+	log.Debug("inject ChainMaker logger into db logger.")
 	provider.log = log
 	return provider
 }
@@ -205,7 +208,7 @@ func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
 func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	p.log.Debug("Exec sql:", sql)
+	p.log.Debug("Exec sql:", sql, values)
 	tx, err := p.db.Exec(sql, values...)
 	if err != nil {
 		return 0, err
@@ -218,9 +221,11 @@ func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 	defer p.Unlock()
 	value := val.(TableDMLGenerator)
 	update, args := value.GetUpdateSql()
-	p.log.Debug("Exec sql:", update)
+	p.log.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)
-
+	if err != nil {
+		return 0, err
+	}
 	rowCount, err := effect.RowsAffected()
 	if err != nil {
 		return 0, err
@@ -229,7 +234,7 @@ func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 		return rowCount, nil
 	}
 	insert, args := value.GetInsertSql()
-	p.log.Debug("Exec sql:", insert)
+	p.log.Debug("Exec sql:", insert, args)
 	result, err := p.db.Exec(insert, args...)
 	if err != nil {
 		return 0, err
@@ -240,7 +245,7 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 	p.Lock()
 	defer p.Unlock()
 	db := p.db
-	p.log.Debug("Query sql:", sql)
+	p.log.Debug("Query sql:", sql, values)
 	rows, err := db.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -255,7 +260,7 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()
 	defer p.Unlock()
-	p.log.Debug("Query sql:", sql)
+	p.log.Debug("Query sql:", sql, values)
 	rows, err := p.db.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -276,8 +281,6 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	}
 	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
 	p.dbTxCache[txName] = sqltx
-	p.contextDbName = ""
-
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
 }

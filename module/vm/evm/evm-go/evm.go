@@ -171,6 +171,7 @@ func (e *EVM) getClosureDefaultEVM(param instructions.ClosureParam) *EVM {
 			Message: environment.Message{
 				Data: param.CallData,
 			},
+			Parameters: e.context.Parameters,
 		},
 	})
 

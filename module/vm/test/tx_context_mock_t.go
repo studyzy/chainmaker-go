@@ -96,17 +96,13 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 		cacheMap:  make(map[string][]byte),
 	}
 
-	versionKey := []byte(protocol.ContractVersion)
-	runtimeTypeKey := []byte(protocol.ContractRuntimeType)
-	versionedByteCodeKey := append([]byte(protocol.ContractByteCode), []byte(contractId.ContractVersion)...)
+	versionKey := []byte(protocol.ContractVersion + ContractNameTest)
+	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
+	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.ContractVersion)...)
 
-	txContext.Put(contractId.ContractName, versionedByteCodeKey, bytes)
-	txContext.Put(contractId.ContractName, versionKey, []byte(contractId.ContractVersion))
-	txContext.Put(contractId.ContractName, runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
-
-	txContext.Put(contractId.ContractName+"a", versionedByteCodeKey, bytes)
-	txContext.Put(contractId.ContractName+"a", versionKey, []byte(contractId.ContractVersion))
-	txContext.Put(contractId.ContractName+"a", runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey, bytes)
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey, []byte(contractId.ContractVersion))
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }
