@@ -68,7 +68,7 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 	pubKeyData, _ := ec.GetString("pubKey")
 	valuePtr, _ := ec.GetInt32("value_ptr")
 
-	pubKey := paillier.PaillierHelper().NewPaillier()
+	pubKey := paillier.PaillierHelper().NewPubKey()
 	err := pubKey.Unmarshal([]byte(pubKeyData))
 	if err != nil {
 		return nil, err
