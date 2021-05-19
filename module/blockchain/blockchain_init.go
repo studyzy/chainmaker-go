@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
@@ -260,8 +261,8 @@ func (bc *Blockchain) initAC() (err error) {
 			return err
 		}
 	}
-
-	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store)
+	acLog := logger.GetLoggerByChain(logger.MODULE_ACCESS, bc.chainId)
+	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
 		bc.log.Errorf("get organization information failed, %s", err.Error())
 		return
