@@ -8,6 +8,7 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
+	"chainmaker.org/chainmaker-go/common/crypto/paillier"
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -15,8 +16,11 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"errors"
 	"fmt"
+	"math/big"
 	"regexp"
+	"strconv"
 	"sync/atomic"
 )
 
@@ -25,21 +29,23 @@ var ErrorNotManageContract = fmt.Errorf("method not init_contract or upgrade")
 // Wacsi WebAssembly chainmaker system interface
 type Wacsi interface {
 	PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
-	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
 	DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
-	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64)
+	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64, isLen bool) ([]byte, error, uint64)
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
 	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
 
 	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
-	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
 	ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
 	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error
 
 	RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
-	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error)
+	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
 	RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
+
+	PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error)
 }
 
 type WacsiImpl struct {
@@ -54,6 +60,54 @@ func NewWacsi() Wacsi {
 	}
 }
 
+func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error) {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	opTypeStr, _ := ec.GetString("opType")
+	operandOne, _ := ec.GetString("operandOne")
+	operandTwo, _ := ec.GetString("operandTwo")
+	pubKeyData, _ := ec.GetString("pubKey")
+	valuePtr, _ := ec.GetInt32("value_ptr")
+
+	pubKey := paillier.PaillierHelper().NewPubKey()
+	err := pubKey.Unmarshal([]byte(pubKeyData))
+	if err != nil {
+		return nil, err
+	}
+
+	if !isLen {
+		copy(memory[valuePtr:valuePtr+int32(len(data))], data)
+		return nil, nil
+	}
+
+	resultBytes := make([]byte, 0)
+	switch opTypeStr {
+	case protocol.PaillierOpTypeAddCiphertext:
+		resultBytes, err = addCiphertext(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeAddCiphertextStr:
+		resultBytes, err = addCiphertextStr(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeAddPlaintext:
+		resultBytes, err = addPlaintext(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeAddPlaintextInt64:
+		resultBytes, err = addPlaintextInt64(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeSubCiphertext:
+		resultBytes, err = subCiphertext(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeSubCiphertextStr:
+		resultBytes, err = subCiphertextStr(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeSubPlaintext:
+		resultBytes, err = subPlaintext(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeSubPlaintextInt64:
+		resultBytes, err = subPlaintextInt64(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeNumMul:
+		resultBytes, err = numMul(operandOne, operandTwo, pubKey)
+	case protocol.PaillierOpTypeNumMulInt64:
+		resultBytes, err = numMulInt64(operandOne, operandTwo, pubKey)
+	default:
+		return nil, errors.New("paillier operate failed")
+	}
+	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(resultBytes))))
+	return resultBytes, err
+}
+
 func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	key, _ := ec.GetString("key")
@@ -66,7 +120,7 @@ func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext
 	return err
 }
 
-func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	key, _ := ec.GetString("key")
 	field, _ := ec.GetString("field")
@@ -75,24 +129,21 @@ func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext
 		return nil, err
 	}
 
-	if data == nil {
-		value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key, field))
-		if err != nil {
-			msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key, field, err.Error())
-			return nil, msg
-		}
-		copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(value))))
-		if len(value) == 0 {
-			return nil, nil
-		}
-		return value, nil
-	} else {
-		len := int32(len(data))
-		if len != 0 {
-			copy(memory[valuePtr:valuePtr+len], data)
-		}
+	if !isLen {
+		copy(memory[valuePtr:valuePtr+int32(len(data))], data)
+		return nil, nil
 	}
-	return nil, nil
+
+	value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key, field))
+	if err != nil {
+		msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key, field, err.Error())
+		return nil, msg
+	}
+	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(value))))
+	if len(value) == 0 {
+		return nil, nil
+	}
+	return value, nil
 }
 
 func (*WacsiImpl) DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error {
@@ -109,7 +160,7 @@ func (*WacsiImpl) DeleteState(requestBody []byte, contractName string, txSimCont
 	}
 	return nil
 }
-func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64) ([]byte, error, uint64) {
+func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64, isLen bool) ([]byte, error, uint64) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	valuePtr, _ := ec.GetInt32("value_ptr")
 	contractName, _ := ec.GetString("contract_name")
@@ -119,7 +170,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	ecData := serialize.NewEasyCodecWithBytes(param)
 	paramItem := ecData.GetItems()
 
-	if data != nil { // get value from cache
+	if !isLen { // get value from cache
 		result := txSimContext.GetCurrentResult()
 		copy(memory[valuePtr:valuePtr+int32(len(result))], result)
 		return nil, nil, gasUsed
@@ -248,7 +299,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -258,36 +309,35 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 		return nil, fmt.Errorf("verify query one sql error, %s", err.Error())
 	}
 
-	// get len
-	if data == nil {
-		// execute
-		row, err := txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
-		if err != nil {
-			return nil, fmt.Errorf("ctx query one error, %s", err.Error())
-		}
-
-		var dataRow map[string]string
-		if row.IsEmpty() {
-			dataRow = make(map[string]string, 0)
-		} else {
-			dataRow, err = row.Data()
-			if err != nil {
-				return nil, fmt.Errorf("ctx query get data to map error, %s", err.Error())
-			}
-		}
-		ec := serialize.NewEasyCodecWithMap(dataRow)
-		rsBytes := ec.Marshal()
-		copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(rsBytes))))
-		if len(rsBytes) == 0 {
-			return nil, nil
-		}
-		return rsBytes, nil
-	} else { // get data
-		if data != nil && len(data) > 0 {
-			copy(memory[ptr:ptr+int32(len(data))], data)
-		}
+	// get data
+	if !isLen {
+		copy(memory[ptr:ptr+int32(len(data))], data)
 		return nil, nil
 	}
+
+	// get len
+	// execute
+	row, err := txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
+	if err != nil {
+		return nil, fmt.Errorf("ctx query one error, %s", err.Error())
+	}
+
+	var dataRow map[string]string
+	if row.IsEmpty() {
+		dataRow = make(map[string]string, 0)
+	} else {
+		dataRow, err = row.Data()
+		if err != nil {
+			return nil, fmt.Errorf("ctx query get data to map error, %s", err.Error())
+		}
+	}
+	ec = serialize.NewEasyCodecWithMap(dataRow)
+	rsBytes := ec.Marshal()
+	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(rsBytes))))
+	if len(rsBytes) == 0 {
+		return nil, nil
+	}
+	return rsBytes, nil
 }
 
 func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
@@ -308,7 +358,7 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 	return nil
 }
 
-func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte) ([]byte, error) {
+func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -319,31 +369,30 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 		return nil, fmt.Errorf("ctx can not found rs_index[%d]", rsIndex)
 	}
 
-	// get len
-	if data == nil {
-		var dataRow map[string]string
-		var err error
-		if rows == nil {
-			dataRow = make(map[string]string, 0)
-		} else {
-			dataRow, err = rows.Data()
-			if err != nil {
-				return nil, fmt.Errorf("ctx query next data error, %s", err.Error())
-			}
-		}
-		ec := serialize.NewEasyCodecWithMap(dataRow)
-		rsBytes := ec.Marshal()
-		copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(rsBytes))))
-		if len(rsBytes) == 0 {
-			return nil, nil
-		}
-		return rsBytes, nil
-	} else { // get data
-		if len(data) > 0 {
-			copy(memory[ptr:ptr+int32(len(data))], data)
-		}
+	// get data
+	if !isLen {
+		copy(memory[ptr:ptr+int32(len(data))], data)
 		return nil, nil
 	}
+	// get len
+	var dataRow map[string]string
+	var err error
+	if rows == nil {
+		dataRow = make(map[string]string, 0)
+	} else {
+		dataRow, err = rows.Data()
+		if err != nil {
+			return nil, fmt.Errorf("ctx query next data error, %s", err.Error())
+		}
+	}
+	ec = serialize.NewEasyCodecWithMap(dataRow)
+	rsBytes := ec.Marshal()
+	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(rsBytes))))
+	if len(rsBytes) == 0 {
+		return nil, nil
+	}
+	return rsBytes, nil
+
 }
 
 func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
@@ -421,4 +470,133 @@ func changeCurrentDB(chainId string, contractName string, transaction protocol.S
 	transaction.ChangeContextDb(dbName)
 	//setCurrentDb(chainId, dbName)
 	//}
+}
+
+func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct1, _ := new(big.Int).SetString(ctOne, 10)
+	ctTwo := operandTwo.(string)
+	ct2, _ := new(big.Int).SetString(ctTwo, 10)
+	result, err := pubKey.AddCiphertext(ct1, ct2)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return []byte(result.String()), nil
+}
+
+func addCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ctTwo := operandTwo.(string)
+	result, err := pubKey.AddCiphertextStr(ctOne, ctTwo)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct, _ := new(big.Int).SetString(ctOne, 10)
+	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	result, err := pubKey.AddPlaintext(ct, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result.String()), nil
+}
+
+func addPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
+	result, err := pubKey.AddPlaintextInt64(ctOne, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct1, _ := new(big.Int).SetString(ctOne, 10)
+	ctTwo := operandTwo.(string)
+	ct2, _ := new(big.Int).SetString(ctTwo, 10)
+	result, err := pubKey.SubCiphertext(ct1, ct2)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return []byte(result.String()), nil
+}
+
+func subCiphertextStr(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ctTwo := operandTwo.(string)
+	result, err := pubKey.SubCiphertextStr(ctOne, ctTwo)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct, _ := new(big.Int).SetString(ctOne, 10)
+	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	result, err := pubKey.SubPlaintext(ct, pt)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return result.Bytes(), nil
+}
+
+func subPlaintextInt64(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
+	result, err := pubKey.SubPlaintextInt64(ctOne, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
+}
+
+func numMul(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	ct, _ := new(big.Int).SetString(ctOne, 10)
+	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	result, err := pubKey.NumMul(ct, pt)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("paillier operate failed")
+	}
+
+	return result.Bytes(), nil
+}
+
+func numMulInt64(operandOne interface{}, operandTwo interface{}, pubKey paillier.Paillier) ([]byte, error) {
+	ctOne := operandOne.(string)
+	pt, _ := strconv.ParseInt(operandTwo.(string), 10, 64)
+	result, err := pubKey.NumMulInt64(ctOne, pt)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(result), nil
 }
