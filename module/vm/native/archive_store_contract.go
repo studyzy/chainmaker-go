@@ -54,7 +54,6 @@ func registerArchiveStoreContractMethods(log *logger.CMLogger) map[string]Contra
 
 type ArchiveStoreRuntime struct {
 	log          *logger.CMLogger
-	contractName string
 }
 
 func (a *ArchiveStoreRuntime) GetArchiveBlockHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
