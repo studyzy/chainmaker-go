@@ -8,22 +8,21 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 const (
 	paramTargetBlockHeight = "targetBlockHeight"
-	paramStartBlockHeight  = "startBlockHeight"
+	paramBlockWithRWSet    = "blockWithRWSet"
 )
 
 var dbType = types.LevelDb
@@ -54,7 +53,7 @@ func registerArchiveStoreContractMethods(log *logger.CMLogger) map[string]Contra
 }
 
 type ArchiveStoreRuntime struct {
-	log *logger.CMLogger
+	log          *logger.CMLogger
 	contractName string
 }
 
@@ -96,57 +95,42 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 	var errMsg string
 	var err error
 
-	startBlockHeightStr, err := a.getValue(params, paramStartBlockHeight)
+	blocksWithRWSet, err := a.getValue(params, paramBlockWithRWSet)
 	if err != nil {
-		errMsg = fmt.Sprintf("%s, restore block require param [%s] not found", ErrParams.Error(), paramStartBlockHeight)
+		errMsg = fmt.Sprintf("%s, restore block require param [%s] not found", ErrParams.Error(), paramNameWithRWSet)
 		a.log.Errorf(errMsg)
 		return nil, fmt.Errorf(errMsg)
 	}
 
-	startBlockHeight, err := strconv.Atoi(startBlockHeightStr)
-	if err != nil {
-		errMsg = fmt.Sprintf("convert atoi failed, err: %s", err.Error())
-		a.log.Error(errMsg)
-		return nil, fmt.Errorf(errMsg)
-	}
+	blocksWithRwSetArr := strings.Split(blocksWithRWSet, ";")
 
-	//init contractName
-	a.contractName, err = context.GetTx().GetContractName()
-	if err != nil {
-		errMsg = fmt.Sprintf("get contract name failed, err: %s", err.Error())
-		a.log.Error(errMsg)
-		return nil, fmt.Errorf(errMsg)
-	}
-
-	//getArchivedBlockHeight
-	archiveBlockHeight := context.GetBlockchainStore().GetArchivedPivot()
-	if archiveBlockHeight <= uint64(startBlockHeight) {
-		return nil, errors.New("archived block height not low start block height")
-	}
-
-	//Prepare block data
-	blocks := make([]*commonPb.Block, 0, archiveBlockHeight)
-	TxRWSetMp := make(map[int64][]*commonPb.TxRWSet)
-	for i := 0; i < int(archiveBlockHeight); i++ {
-		block, txRWSet := a.createBlockAndRWSets(context.GetTx().Header.ChainId, int64(i), 100)
-		if err = context.GetBlockchainStore().PutBlock(block, txRWSet); err != nil {
-			return nil, err
+	blocksWithRwSetStruct := make([]*storePb.BlockWithRWSet, len(blocksWithRwSetArr))
+	for _, blockWithRwSetStr := range blocksWithRwSetArr {
+		blockWithRwSetStruct := &storePb.BlockWithRWSet{}
+		blockWithRwSetSlice, err := hex.DecodeString(blockWithRwSetStr)
+		if err != nil {
+			a.log.Errorf("hex decode string is err :%s", err.Error())
 		}
-		blocks = append(blocks, block)
-		TxRWSetMp[block.Header.BlockHeight] = txRWSet
+
+		if err = blockWithRwSetStruct.Unmarshal(blockWithRwSetSlice); err != nil {
+			a.log.Errorf("block with rwset unmarshal  is err :%s", err.Error())
+		}
+
+		blocksWithRwSetStruct = append(blocksWithRwSetStruct, blockWithRwSetStruct)
 	}
 
-	//Prepare restore data
-	blocksBytes := make([][]byte, 0, startBlockHeight+1)
-	for i := 0; i <= startBlockHeight; i++ {
+	blocksBytes := make([][]byte, 0, len(blocksWithRwSetStruct)+1)
+	for _, blockRwSetStruct := range blocksWithRwSetStruct {
 		blockBytes, _, err := serialization.SerializeBlock(&storePb.BlockWithRWSet{
-			Block:          blocks[i],
-			TxRWSets:       TxRWSetMp[blocks[i].Header.BlockHeight],
-			ContractEvents: nil,
+			Block:          blockRwSetStruct.Block,
+			TxRWSets:       blockRwSetStruct.TxRWSets,
+			ContractEvents: blockRwSetStruct.ContractEvents,
 		})
+
 		if err != nil {
 			a.log.Errorf("serialize block err:%s ", err.Error())
 		}
+
 		blocksBytes = append(blocksBytes, blockBytes)
 	}
 
@@ -155,64 +139,6 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 	}
 
 	return []byte(""), nil
-}
-
-func (a *ArchiveStoreRuntime) createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
-	block := &commonPb.Block{
-		Header: &commonPb.BlockHeader{
-			ChainId:     chainId,
-			BlockHeight: height,
-		},
-	}
-
-	for i := 0; i < txNum; i++ {
-		tx := &commonPb.Transaction{
-			Header: &commonPb.TxHeader{
-				ChainId: chainId,
-				TxId:    a.generateTxId(chainId, height, i),
-				Sender: &acPb.SerializedMember{
-					OrgId: "org1",
-				},
-			},
-			Result: &commonPb.Result{
-				Code: commonPb.TxStatusCode_SUCCESS,
-				ContractResult: &commonPb.ContractResult{
-					Result: []byte("ok"),
-				},
-			},
-		}
-		block.Txs = append(block.Txs, tx)
-	}
-
-	block.Header.BlockHash = a.generateBlockHash(chainId, height)
-	var txRWSets []*commonPb.TxRWSet
-	for i := 0; i < txNum; i++ {
-		key := fmt.Sprintf("key_%d", i)
-		value := fmt.Sprintf("value_%d", i)
-		txRWset := &commonPb.TxRWSet{
-			TxId: block.Txs[i].Header.TxId,
-			TxWrites: []*commonPb.TxWrite{
-				{
-					Key:          []byte(key),
-					Value:        []byte(value),
-					ContractName: a.contractName,
-				},
-			},
-		}
-		txRWSets = append(txRWSets, txRWset)
-	}
-
-	return block, txRWSets
-}
-
-func (a *ArchiveStoreRuntime) generateTxId(chainId string, height int64, index int) string {
-	txIdBytes := sha256.Sum256([]byte(fmt.Sprintf("%s-%d-%d", chainId, height, index)))
-	return hex.EncodeToString(txIdBytes[:])
-}
-
-func (a *ArchiveStoreRuntime) generateBlockHash(chainId string, height int64) []byte {
-	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
-	return blockHash[:]
 }
 
 func (a *ArchiveStoreRuntime) getValue(parameters map[string]string, key string) (string, error) {
