@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 func TestNewTxPoolImpl(t *testing.T) {
 	chainConf, _ := chainconf.NewChainConf(nil)

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -159,7 +159,7 @@ func createCertNodesTotal() map[string]string {
 		if !filepath.IsAbs(certFile) {
 			certFile = filepath.Join(confDir, certFile)
 		}
-		acLog := &logger.GoLogger{}
+		acLog := &test.GoLogger{}
 		ac, _ := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
 		member, _ := ac.NewMemberFromCertPem(lf.NodeConfig.OrgId, string(certPEM))
 		// member, _ := accesscontrol.MockAccessControl().NewMember(lf.NodeConfig.OrgId, string(certPEM))
@@ -209,7 +209,7 @@ func createNode(t *testing.T, index int, chainid string,
 	if !filepath.IsAbs(certFile) {
 		certFile = filepath.Join(confDir, certFile)
 	}
-	acLog := &logger.GoLogger{}
+	acLog := &test.GoLogger{}
 	ac, err := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, cf, nodeConfig.OrgId, nil, acLog)
 	if err != nil {
 		panic(fmt.Errorf("init org err%v", err))

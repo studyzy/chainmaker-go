@@ -8,11 +8,11 @@ package store
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"github.com/tidwall/wal"
@@ -250,7 +250,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 //func TestMain(m *testing.M) {
 //	fmt.Println("begin")

@@ -8,13 +8,13 @@ package sqldbprovider
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 //func TestProvider_GetDB(t *testing.T) {
 //	conf := &localconf.CMConfig{}

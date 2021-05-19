@@ -8,7 +8,7 @@ package leveldbprovider
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/types"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -18,7 +18,7 @@ import (
 
 var dbPath = filepath.Join(os.TempDir(), "unit_test_db")
 var dbName = "db_test"
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 var dbConfig = &localconf.LevelDbConfig{
 	StorePath: dbPath,
 }
