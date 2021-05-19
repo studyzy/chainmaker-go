@@ -23,11 +23,11 @@ var (
 	adminKeyFilePaths string
 	adminCrtFilePaths string
 
-	dbType            string
-	dbDest            string
-	targetBlockHeight uint64
-	blockInterval     uint64
-	secretKey         string
+	dbType          string
+	dbDest          string
+	targetBlkHeight int64
+	blockInterval   int64
+	secretKey       string
 )
 
 const (
@@ -83,8 +83,8 @@ func init() {
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
 	flags.StringVar(&dbType, flagDbType, "", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
-	flags.Uint64Var(&targetBlockHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
-	flags.Uint64Var(&blockInterval, flagBlockInterval, 1000, "Number of blocks to be archived this time")
+	flags.Int64Var(&targetBlkHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
+	flags.Int64Var(&blockInterval, flagBlockInterval, 1000, "Number of blocks to be archived this time")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

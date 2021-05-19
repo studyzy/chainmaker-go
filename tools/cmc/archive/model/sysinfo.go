@@ -16,7 +16,7 @@ type Sysinfo struct {
 	V string `gorm:"type:varchar(64) NOT NULL"`
 }
 
-func GetArchivedBlockHeight(db *gorm.DB) (uint64, error) {
+func GetArchivedBlockHeight(db *gorm.DB) (int64, error) {
 	var sysinfo Sysinfo
 	err := db.Find(&sysinfo, "k = ?", KArchivedblockheight).Error
 	if err != nil {
@@ -34,7 +34,7 @@ func GetArchivedBlockHeight(db *gorm.DB) (uint64, error) {
 		return 0, nil
 	}
 
-	height, err := strconv.ParseUint(sysinfo.V, 10, 64)
+	height, err := strconv.ParseInt(sysinfo.V, 10, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -42,7 +42,7 @@ func GetArchivedBlockHeight(db *gorm.DB) (uint64, error) {
 	return height, nil
 }
 
-func UpdateArchivedBlockHeight(db *gorm.DB, archivedBlockHeight uint64) error {
+func UpdateArchivedBlockHeight(db *gorm.DB, archivedBlockHeight int64) error {
 	return db.Model(&Sysinfo{}).Where("k = ?", KArchivedblockheight).
 		Update("v", archivedBlockHeight).Error
 }

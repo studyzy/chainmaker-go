@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -9,7 +10,7 @@ import (
 const (
 	rowsPerBlockInfoTable = 100000
 
-	prefixDbName         = "cmc_archived_chain"
+	prefixDbName         = "cm_archived_chain"
 	prefixBlockInfoTable = "t_block_info"
 )
 
@@ -21,23 +22,45 @@ type BlockInfo struct {
 	Hmac           string `gorm:"column:Fhmac;type:varchar(64) NOT NULL"`
 }
 
+type blockInfoNew struct {
+	BlockInfo
+}
+
 // TableName The BlockInfo table name will be overwritten as 't_block_info_1' the first sharding table
 func (BlockInfo) TableName() string {
 	return "t_block_info_1"
 }
 
-// BlockInfoTable BlockInfoTable implement Scopes for sharding.
-func BlockInfoTable(bInfo BlockInfo) func(tx *gorm.DB) *gorm.DB {
+func (blockInfoNew) TableName() string {
+	return "t_block_info_new"
+}
+
+// BlockInfoTableScopes BlockInfoTable implement Scopes for sharding.
+func BlockInfoTableScopes(bInfo BlockInfo) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
-		tableNum := bInfo.BlockHeight/rowsPerBlockInfoTable + 1
-		tableName := fmt.Sprintf("%s_%d", prefixBlockInfoTable, tableNum)
+		tableName := blockInfoTableNameByBlockHeight(bInfo.BlockHeight)
 		return tx.Table(tableName)
 	}
 }
 
-// DBName DBName returns database name by chainId.
-func DBName(chainId string) string {
+// blockInfoTableNameByBlockHeight Get BlockInfo table name by block height
+func blockInfoTableNameByBlockHeight(blkHeight int64) string {
+	tableNum := blkHeight/rowsPerBlockInfoTable + 1
+	tableNum = 100
+	return fmt.Sprintf("%s_%d", prefixBlockInfoTable, tableNum)
+}
+
+// DbName DbName returns database name by chainId.
+func DbName(chainId string) string {
 	return fmt.Sprintf("%s_%s", prefixDbName, chainId)
+}
+
+func createBlockInfoTable(db *gorm.DB, tableName string) error {
+	err := db.Set("gorm:table_options", "ENGINE=InnoDB").Migrator().CreateTable(&blockInfoNew{})
+	if err != nil {
+		return err
+	}
+	return db.Migrator().RenameTable(&blockInfoNew{}, tableName)
 }
 
 func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) (int64, error) {
@@ -47,6 +70,16 @@ func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet 
 		BlockWithRWSet: blkWithRWSet,
 		Hmac:           hmac,
 	}
-	result := db.Create(&bInfo)
+	result := db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
+	if result.Error != nil {
+		if strings.Contains(result.Error.Error(), "Error 1146") {
+			err := createBlockInfoTable(db, blockInfoTableNameByBlockHeight(bInfo.BlockHeight))
+			if err != nil {
+				return 0, err
+			}
+			result = db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
+		}
+	}
+
 	return result.RowsAffected, result.Error
 }
