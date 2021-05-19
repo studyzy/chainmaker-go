@@ -104,7 +104,7 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 
 	blocksWithRwSetArr := strings.Split(blocksWithRWSet, ";")
 
-	blocksWithRwSetStruct := make([]*storePb.BlockWithRWSet, len(blocksWithRwSetArr))
+	blocksBytes := make([][]byte, 0, len(blocksWithRwSetArr)+1)
 	for _, blockWithRwSetStr := range blocksWithRwSetArr {
 		blockWithRwSetStruct := &storePb.BlockWithRWSet{}
 		blockWithRwSetSlice, err := hex.DecodeString(blockWithRwSetStr)
@@ -116,15 +116,10 @@ func (a *ArchiveStoreRuntime) RestoreBlock(context protocol.TxSimContext, params
 			a.log.Errorf("block with rwset unmarshal  is err :%s", err.Error())
 		}
 
-		blocksWithRwSetStruct = append(blocksWithRwSetStruct, blockWithRwSetStruct)
-	}
-
-	blocksBytes := make([][]byte, 0, len(blocksWithRwSetStruct)+1)
-	for _, blockRwSetStruct := range blocksWithRwSetStruct {
 		blockBytes, _, err := serialization.SerializeBlock(&storePb.BlockWithRWSet{
-			Block:          blockRwSetStruct.Block,
-			TxRWSets:       blockRwSetStruct.TxRWSets,
-			ContractEvents: blockRwSetStruct.ContractEvents,
+			Block:          blockWithRwSetStruct.Block,
+			TxRWSets:       blockWithRwSetStruct.TxRWSets,
+			ContractEvents: blockWithRwSetStruct.ContractEvents,
 		})
 
 		if err != nil {
