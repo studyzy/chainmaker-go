@@ -18,6 +18,7 @@ import (
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native"
 	"context"
@@ -225,9 +226,17 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	}
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
-		errMsg = fmt.Sprintf("%d, %d, contractName[%s] method[%s] txType[%s], %s", txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
+		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
+			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
 		s.log.Error(errMsg)
+
 		resp.Code = txStatusCode
+		if txResult.Message == archive.ArchivedBlockError.Error() {
+			resp.Code = commonPb.TxStatusCode_ARCHIVED_BLOCK
+		} else if txResult.Message == archive.ArchivedTxError.Error() {
+			resp.Code = commonPb.TxStatusCode_ARCHIVED_TX
+		}
+
 		resp.Message = errMsg
 		resp.ContractResult = txResult
 		return resp
