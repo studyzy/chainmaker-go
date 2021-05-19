@@ -319,7 +319,7 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		return err
 	}
 
-	return bs.ArchiveMgr.SetArchivedPivot(uint64(blockInfos[0].Block.Header.BlockHeight))
+	return bs.ArchiveMgr.SetArchivedPivot(uint64(blockInfos[0].Block.Header.BlockHeight - 1))
 }
 
 // BlockExists returns true if the black hash exist, or returns false if none exists.
