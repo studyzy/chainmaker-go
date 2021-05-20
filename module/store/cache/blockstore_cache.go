@@ -35,7 +35,6 @@ func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
 	}
-
 	storeCacheMgr := &StoreCacheMgr{
 		pendingBlockUpdates: make(map[int64]protocol.StoreBatcher),
 		blockSizeSem:        semaphore.NewWeighted(int64(blockWriteBufferSize)),
@@ -120,7 +119,7 @@ func (c *storeCache) addBatch(batch protocol.StoreBatcher) {
 }
 
 func (c *storeCache) delBatch(batch protocol.StoreBatcher) {
-	for key, _ := range batch.KVs() {
+	for key := range batch.KVs() {
 		c.table.Remove(key)
 	}
 }

@@ -10,7 +10,7 @@ package utils
 import (
 	"github.com/pingcap/parser"
 	"github.com/pingcap/parser/ast"
-	_ "github.com/pingcap/tidb/types/parser_driver"
+	_ "github.com/studyzy/sqlparse"
 )
 
 type colX struct {

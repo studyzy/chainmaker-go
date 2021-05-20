@@ -80,7 +80,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		if err != nil {
 			if strings.Contains(err.Error(), "Unknown database") {
 				log.Infof("first time connect to a new database,create database %s", dbName)
-				err = createDatabase(conf.Dsn, dbName)
+				err = provider.createDatabase(conf.Dsn, dbName)
 				if err != nil {
 					log.Panicf("failed to open mysql[%s] and create database %s, %s", dsn, dbName, err)
 				}
@@ -118,13 +118,15 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	provider.log = log
 	return provider
 }
-func createDatabase(dsn string, dbName string) error {
+func (p *SqlDBHandle) createDatabase(dsn string, dbName string) error {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec("create database " + dbName)
 	defer db.Close()
+	sqlStr := "create database " + dbName
+	_, err = db.Exec(sqlStr)
+	p.log.Debug("Exec sql:", sqlStr)
 	return err
 }
 
@@ -277,7 +279,7 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	if err != nil {
 		return nil, err
 	}
-	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log, startTime: time.Now()}
+	sqltx := NewSqlDBTx(txName, p.dbType, tx, p.log)
 	p.dbTxCache[txName] = sqltx
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
