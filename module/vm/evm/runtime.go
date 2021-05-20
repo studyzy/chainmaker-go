@@ -172,11 +172,12 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
 			r.TxSimContext.Put(n, []byte(k), val.Bytes())
+			fmt.Println("n k val", n, k, val, val.String())
 		}
 	}
 	if len(result.StorageCache.Destructs) > 0 {
-		revokeKey := []byte(protocol.ContractRevoke)
-		if err := r.TxSimContext.Put(r.ContractId.ContractName, revokeKey, []byte(r.ContractId.ContractName)); err != nil {
+		revokeKey := []byte(protocol.ContractRevoke + r.ContractId.ContractName)
+		if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), revokeKey, []byte(r.ContractId.ContractName)); err != nil {
 			panic(err)
 		}
 		r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",

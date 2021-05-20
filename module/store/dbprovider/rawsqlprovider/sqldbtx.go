@@ -46,6 +46,9 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	sqlStr := "use " + dbName
 	p.logger.Debug("Exec sql:", sqlStr)
 	_, err := p.db.Exec(sqlStr)
+	if err != nil {
+		p.logger.Debugf("change context db fail, error: %s", err)
+	}
 	return err
 }
 func (p *SqlDBTx) Save(val interface{}) (int64, error) {
