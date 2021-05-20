@@ -36,8 +36,8 @@ const (
 	TransitBlock             = "TransitBlock"
 	ValidatorNum             = "ValidatorNum"
 	NodeProposeRound         = "NodeProposeRound"
-	RoundTimeoutMill         = "HOTSTUFF_round_timeout_milli"
-	RoundTimeoutIntervalMill = "HOTSTUFF_round_timeout_delta_milli"
+	RoundTimeoutMill         = "HotstuffRoundTimeoutMill"
+	RoundTimeoutIntervalMill = "HotstuffRoundTimeoutIntervalMill"
 
 	UnmarshalErrFmt        = "proto.Unmarshal err!err=%v"
 	CreateValidatorsErrFmt = "createValidators err!err=%v"
@@ -178,12 +178,12 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 		GovernanceContract.CachedLen = newCachedLen
 		isChg = true
 	}
-	if GovernanceContract.RoundTimeoutMill != newRoundTimeoutMill {
-		GovernanceContract.RoundTimeoutMill = newRoundTimeoutMill
+	if GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
+		GovernanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
 		isChg = true
 	}
-	if GovernanceContract.RoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
-		GovernanceContract.RoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
+	if GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+		GovernanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
 	if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
