@@ -43,30 +43,30 @@ type chainConfig struct {
 }
 
 // VerifyChainConfig verify the chain config.
-func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
-	log := logger.GetLoggerByChain(logger.MODULE_CHAINCONF, config.ChainId)
+func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
+	log := logger.GetLoggerByChain(logger.MODULE_CHAINCONF, cconfig.ChainId)
 	// validate params
-	if err := validateParams(config); err != nil {
+	if err := validateParams(cconfig); err != nil {
 		return nil, err
 	}
 
 	mConfig := &chainConfig{
-		ChainConfig:      config,
+		ChainConfig:      cconfig,
 		NodeOrgIds:       make(map[string][]string),
 		NodeIds:          make(map[string]string),
 		CaRoots:          make(map[string]struct{}),
 		ResourcePolicies: make(map[string]struct{}),
 	}
 
-	if err := verifyChainConfigTrustRoots(config, mConfig); err != nil {
+	if err := verifyChainConfigTrustRoots(cconfig, mConfig); err != nil {
 		return nil, err
 	}
 
-	if err := verifyChainConfigConsensus(config, mConfig); err != nil {
+	if err := verifyChainConfigConsensus(cconfig, mConfig); err != nil {
 		return nil, err
 	}
 
-	if err := verifyChainConfigResourcePolicies(config, mConfig); err != nil {
+	if err := verifyChainConfigResourcePolicies(cconfig, mConfig); err != nil {
 		return nil, err
 	}
 
@@ -79,27 +79,32 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 		return nil, errors.New("node ids len is low")
 	}
 	// block
-	if config.Block.TxTimeout < 600 {
+	if cconfig.Block.TxTimeout < 600 {
 		// timeout
-		log.Errorw("txTimeout len is low", "txTimeout len", config.Block.TxTimeout)
+		log.Errorw("txTimeout len is low", "txTimeout len", cconfig.Block.TxTimeout)
 		return nil, errors.New("tx_time is low")
 	}
-	if config.Block.BlockTxCapacity < 1 {
+	if cconfig.Block.BlockTxCapacity < 1 {
 		// block tx cap
-		log.Errorw("blockTxCapacity is low", "blockTxCapacity", config.Block.BlockTxCapacity)
+		log.Errorw("blockTxCapacity is low", "blockTxCapacity", cconfig.Block.BlockTxCapacity)
 		return nil, errors.New("block_tx_capacity is low")
 	}
-	if config.Block.BlockSize < 1 {
+	if cconfig.Block.BlockSize < 1 {
 		// block size
-		log.Errorw("blockSize is low", "blockSize", config.Block.BlockSize)
+		log.Errorw("blockSize is low", "blockSize", cconfig.Block.BlockSize)
 		return nil, errors.New("blockSize is low")
 	}
-	if config.Block.BlockInterval < 10 {
+	if cconfig.Block.BlockInterval < 10 {
 		// block interval
-		log.Errorw("blockInterval is low", "blockInterval", config.Block.BlockInterval)
+		log.Errorw("blockInterval is low", "blockInterval", cconfig.Block.BlockInterval)
 		return nil, errors.New("blockInterval is low")
 	}
-	if config.Contract.EnableSqlSupport {
+
+	if cconfig.Contract == nil {
+		cconfig.Contract = &config.ContractConfig{EnableSqlSupport: false} //by default disable sql support
+	}
+
+	if cconfig.Contract.EnableSqlSupport {
 		provider := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.Provider
 		if provider != "sql" {
 			log.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql, but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true", provider, provider)
@@ -107,9 +112,9 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 		}
 	}
 	// verify
-	verifier := GetVerifier(config.ChainId, config.Consensus.Type)
+	verifier := GetVerifier(cconfig.ChainId, cconfig.Consensus.Type)
 	if verifier != nil {
-		err := verifier.Verify(config.Consensus.Type, config)
+		err := verifier.Verify(cconfig.Consensus.Type, cconfig)
 		if err != nil {
 			log.Errorw("consensus verify is err", "err", err)
 			return nil, err
