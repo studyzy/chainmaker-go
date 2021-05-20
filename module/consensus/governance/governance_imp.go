@@ -218,7 +218,7 @@ func (gcr *GovernanceContractImp) GetRoundTimeoutMill() uint64 {
 		gcr.log.Errorf("GetRoundTimeoutMill error, failed reason: %s", err)
 		return 0
 	}
-	return governmentContract.RoundTimeoutMill
+	return governmentContract.HotstuffRoundTimeoutMill
 }
 
 func (gcr *GovernanceContractImp) GetRoundTimeoutIntervalMill() uint64 {
@@ -227,5 +227,5 @@ func (gcr *GovernanceContractImp) GetRoundTimeoutIntervalMill() uint64 {
 		gcr.log.Errorf("GetRoundTimeoutIntervalMill error, failed reason: %s", err)
 		return 0
 	}
-	return governmentContract.RoundTimeoutIntervalMill
+	return governmentContract.HotstuffRoundTimeoutIntervalMill
 }
