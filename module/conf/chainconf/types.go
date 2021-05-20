@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -97,6 +98,13 @@ func VerifyChainConfig(config *config.ChainConfig) (*chainConfig, error) {
 		// block interval
 		log.Errorw("blockInterval is low", "blockInterval", config.Block.BlockInterval)
 		return nil, errors.New("blockInterval is low")
+	}
+	if config.Contract.EnableSqlSupport {
+		provider := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.Provider
+		if provider != "sql" {
+			log.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql, but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true", provider, provider)
+			return nil, errors.New("chain config error")
+		}
 	}
 	// verify
 	verifier := GetVerifier(config.ChainId, config.Consensus.Type)

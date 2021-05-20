@@ -107,10 +107,6 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContractLen()
 	case protocol.ContractMethodEmitEvent:
 		return s.EmitEvent()
-	case protocol.ContractMethodGetPaillierOperationResultLen:
-		return s.GetPaillierOpResultLen()
-	case protocol.ContractMethodGetPaillierOperationResult:
-		return s.GetPaillierOpResult()
 	// kv
 	case protocol.ContractMethodGetStateLen:
 		return s.GetStateLen()
@@ -163,26 +159,6 @@ func (s *WaciInstance) CallContractLen() int32 {
 //  CallContractLen get cross contract call result from cache
 func (s *WaciInstance) CallContract() int32 {
 	return s.callContractCore(false)
-}
-
-// GetPaillierOpResultLen get result length
-func (s *WaciInstance) GetPaillierOpResultLen() int32 {
-	return s.getPaillierOpResultCore(true)
-}
-
-// GetPaillierOpResult get result
-func (s *WaciInstance) GetPaillierOpResult() int32 {
-	return s.getPaillierOpResultCore(false)
-}
-
-func (s *WaciInstance) getPaillierOpResultCore(isLen bool) int32 {
-	data, err := wacsi.PaillierOperation(s.RequestBody, s.Memory, s.Sc.GetStateCache, isLen)
-	s.Sc.GetStateCache = data // reset data
-	if err != nil {
-		s.recordMsg(err.Error())
-		return protocol.ContractSdkSignalResultFail
-	}
-	return protocol.ContractSdkSignalResultSuccess
 }
 
 func (s *WaciInstance) callContractCore(isLen bool) int32 {
