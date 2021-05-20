@@ -78,7 +78,7 @@ func (c *CodeManager) makeDiskCache(chainId string, contractId *commonPb.Contrac
 		c.log.Errorf("failed to compile wxvm code for contract %s", contractId.ContractName, err.Error())
 		return "", err
 	}
-	c.log.Infof("compile wxvm code for contract %s,  time cost %v", contractId.ContractName, time.Since(startTime))
+	c.log.Infof("compile wxvm code for contract %s,  time used %v", contractId.ContractName, time.Since(startTime))
 	return libPath, nil
 }
 
