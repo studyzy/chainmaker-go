@@ -56,6 +56,7 @@ func QueryCMD() *cobra.Command {
 	}
 
 	cmd.AddCommand(newTxCMD())
+	cmd.AddCommand(newBlockCMD())
 
 	return cmd
 }
