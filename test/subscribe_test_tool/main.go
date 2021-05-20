@@ -8,10 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -20,6 +16,11 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
@@ -222,22 +223,22 @@ func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
 	return nil
 }
 func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
-	recvEventTick := time.Now().UnixNano() / 1e6
 	var con commonPb.ContractEventInfo
 	if err := proto.Unmarshal(result.Data, &con); err != nil {
 		log.Println(err)
 		return err
 	}
 
-	/*bytes, err := json.Marshal(con)
+	bytes, err := json.Marshal(con)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 	_, _ = file.Write(bytes)
-	_, _ = file.WriteString("\n")*/
-	Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
-		recvEventTick, con.ChainId, con.TxId, con.Topic, con.ContractName, con.EventData)
+	_, _ = file.WriteString("\n")
+
+	fmt.Printf("Received a contract event, chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v\n",
+		con.ChainId, con.TxId, con.Topic, con.ContractName, con.EventData)
 	return nil
 }
 
