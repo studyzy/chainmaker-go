@@ -9,11 +9,12 @@ package archive
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
@@ -140,13 +141,13 @@ func newQueryBlockOffChainCMD() *cobra.Command {
 			//// 2.Query block off-chain.
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).Find(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
 			if err != nil {
-				return err
-			}
-
-			if reflect.DeepEqual(bInfo, model.BlockInfo{}) {
-				output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+				} else {
+					return err
+				}
 			} else {
 				var blkWithRWSetOffChain store.BlockWithRWSet
 				err = blkWithRWSetOffChain.Unmarshal(bInfo.BlockWithRWSet)
