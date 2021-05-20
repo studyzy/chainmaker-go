@@ -94,6 +94,15 @@ func (gcr *GovernanceContractImp) GetGovMembersValidatorMinCount() uint64 {
 	return governmentContract.MinQuorumForQc
 }
 
+func (gcr *GovernanceContractImp) GetLastGovMembersValidatorMinCount() uint64 {
+	governmentContract, err := gcr.GetGovernmentContract()
+	if err != nil {
+		//log.Errorw("getGovernmentContract err,", "err", err)
+		return 0
+	}
+	return governmentContract.LastMinQuorumForQc
+}
+
 func (gcr *GovernanceContractImp) GetCachedLen() uint64 {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {

@@ -207,13 +207,14 @@ func (cbi *ConsensusChainedBftImpl) verifyJustifyQC(qc *chainedbftpb.QuorumCert)
 	if err != nil {
 		return err
 	}
-	if qc.Level > 0 && qc.NewView && newViewNum < cbi.smr.min() {
+	quorum := cbi.smr.min(qc.Height)
+	if qc.Level > 0 && qc.NewView && newViewNum < quorum {
 		return fmt.Errorf(fmt.Sprintf("vote new view num [%v] less than expected [%v]",
-			newViewNum, cbi.smr.min()))
+			newViewNum, quorum))
 	}
-	if qc.Level > 0 && !qc.NewView && votedBlockNum < cbi.smr.min() {
+	if qc.Level > 0 && !qc.NewView && votedBlockNum < quorum {
 		return fmt.Errorf(fmt.Sprintf("vote block num [%v] less than expected [%v]",
-			votedBlockNum, cbi.smr.min()))
+			votedBlockNum, quorum))
 	}
 	return nil
 }

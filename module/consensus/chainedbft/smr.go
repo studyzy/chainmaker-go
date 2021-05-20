@@ -128,8 +128,12 @@ func (cs *chainedbftSMR) peerCount() int {
 	return cs.committee.peerCount()
 }
 
-func (cs *chainedbftSMR) min() int {
-	return cs.committee.min()
+func (cs *chainedbftSMR) min(qcHeight uint64) int {
+	epochSwitchHeight := cs.server.governanceContract.GetSwitchHeight()
+	if epochSwitchHeight == qcHeight {
+		return int(cs.server.governanceContract.GetLastGovMembersValidatorMinCount())
+	}
+	return int(cs.server.governanceContract.GetGovMembersValidatorMinCount())
 }
 
 func (cs *chainedbftSMR) getPeers() []*peer {

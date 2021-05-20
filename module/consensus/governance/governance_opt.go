@@ -420,6 +420,7 @@ func TryCreateNextValidators(block *commonPb.Block, GovernanceContract *consensu
 			log.Errorf(CreateValidatorsErrFmt, err)
 			return false, err
 		}
+		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
 		GovernanceContract.NextValidators = validators
 		GovernanceContract.NextSwitchHeight = uint64(height) + GovernanceContract.TransitBlock
 		log.Debugf("create NextValidators. curHeight=%v,switchHeight=%v", height, GovernanceContract.NextSwitchHeight)
@@ -480,6 +481,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 				return nil, err
 			}
 			isConfigChg = configChg
+			governanceContract.NextSwitchHeight = uint64(block.Header.BlockHeight) + governanceContract.TransitBlock
 		}
 	}
 
@@ -601,6 +603,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 			minQuorumForQc = ConstMinQuorumForQc
 		}
 
+		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
 		GovernanceContract.CurMaxIndex = index
 		GovernanceContract.N = uint64(n)
 		GovernanceContract.MinQuorumForQc = uint64(minQuorumForQc)
