@@ -177,6 +177,8 @@ func (pcs *PeerStateService) sendStateChange() {
 	} else if pcs.tbftImpl.Height == pcs.Height {
 		pcs.sendStateOfRound()
 	} else {
+		pcs.logger.Debugf("[%s](%d) sendStateOfHeight to [%s](%d/%d/%s)",
+			pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.Id, pcs.Height, pcs.Round, pcs.Step)
 		go pcs.sendStateOfHeight(pcs.Height)
 	}
 }

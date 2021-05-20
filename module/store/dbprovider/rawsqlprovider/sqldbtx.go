@@ -25,6 +25,15 @@ type SqlDBTx struct {
 	startTime time.Time
 }
 
+func NewSqlDBTx(name string, dbType types.EngineType, db *sql.Tx, logger protocol.Logger) *SqlDBTx {
+	return &SqlDBTx{
+		name:      name,
+		dbType:    dbType,
+		db:        db,
+		logger:    logger,
+		startTime: time.Now(),
+	}
+}
 func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil

@@ -39,13 +39,13 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	db.logger.Debugf("try to create state db %s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
-		panic("init state sql db fail")
+		db.logger.Panic("init state sql db fail")
 	}
-	db.logger.Debug("try to create state db table: state_infos")
+	db.logger.Debugf("try to create state db table: state_infos for contract[%s]", contractName)
 	dbHandle := db.getContractDbHandle(contractName)
 	err = dbHandle.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state sql db table fail:" + err.Error())
 	}
 	return nil
 }
