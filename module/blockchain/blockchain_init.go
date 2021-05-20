@@ -335,6 +335,7 @@ func (bc *Blockchain) initCore() (err error) {
 	}
 	// init core engine
 	var coreFactory core.CoreFactory
+	coreLogger := logger.GetLoggerByChain(logger.MODULE_CORE, bc.chainId)
 	bc.coreEngine, err = coreFactory.NewCoreWithOptions(
 		core.WithMsgBus(bc.msgBus),
 		core.WithTxPool(bc.txPool),
@@ -348,6 +349,7 @@ func (bc *Blockchain) initCore() (err error) {
 		core.WithAccessControl(bc.ac),
 		core.WithSubscriber(bc.eventSubscriber),
 		core.WithProposalCache(bc.proposalCache),
+		core.WithCoreLogger(coreLogger),
 	)
 	if err != nil {
 		bc.log.Errorf("new core engine failed, %s", err.Error())

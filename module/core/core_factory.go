@@ -25,6 +25,7 @@ type CoreFactory struct {
 	ledgerCache     protocol.LedgerCache     // ledger cache
 	proposalCache   protocol.ProposalCache   // proposal cache
 	chainConf       protocol.ChainConf       // chain config
+	log             protocol.Logger          // chain config
 
 	ac protocol.AccessControlProvider
 
@@ -113,6 +114,13 @@ func WithAccessControl(ac protocol.AccessControlProvider) CoreOption {
 func WithProposalCache(pc protocol.ProposalCache) CoreOption {
 	return func(cf *CoreFactory) error {
 		cf.proposalCache = pc
+		return nil
+	}
+}
+
+func WithCoreLogger(log protocol.Logger) CoreOption {
+	return func(cf *CoreFactory) error {
+		cf.log = log
 		return nil
 	}
 }
