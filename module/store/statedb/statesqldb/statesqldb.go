@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -150,7 +151,16 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		//创建对应合约的数据库
 		payload := &commonPb.ContractMgmtPayload{}
 		payload.Unmarshal(block.Txs[0].RequestPayload)
-		err = s.updateStateForContractInit(block, payload, txRWSets[0].TxWrites)
+		contractId := &commonPb.ContractId{
+			ContractName:    payload.ContractId.ContractName,
+			ContractVersion: payload.ContractId.ContractVersion,
+			RuntimeType:     payload.ContractId.RuntimeType,
+		}
+		if payload.ContractId.RuntimeType == commonPb.RuntimeType_EVM {
+			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
+			contractId.ContractName = address.String()
+		}
+		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites)
 		if err != nil {
 			return err
 		}
@@ -199,13 +209,14 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, payload *commonPb.ContractMgmtPayload,
+func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractId *commonPb.ContractId,
 	writes []*commonPb.TxWrite) error {
-	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, payload.ContractId.ContractName)
-	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, payload.ContractId.ContractName)
+
+	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
+	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
 	txKey := block.GetTxKey() + "_KV"
-	err := s.initContractDb(payload.ContractId.ContractName) //创建合约的数据库和KV表
-	dbHandle := s.getContractDbHandle(payload.ContractId.ContractName)
+	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
+	dbHandle := s.getContractDbHandle(contractId.ContractName)
 	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {
 		return err
