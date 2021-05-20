@@ -18,7 +18,7 @@ const (
 	blocksPerBatch = 20
 )
 
-func dumpCMD() *cobra.Command {
+func newDumpCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "dump",
 		Short: "dump blockchain data",
@@ -159,7 +159,7 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 		if err != nil {
 			return err
 		}
-		fmt.Printf("model.InsertBlockInfo %s \n\n", sum)
+		fmt.Printf("block %d stored\n", blkWithRWSet.Block.Header.BlockHeight)
 	}
 
 	// archive blocks on-chain

@@ -67,14 +67,15 @@ const (
 	flagSecretKey = "secret-key"
 )
 
-func ArchiveCMD() *cobra.Command {
+func NewArchiveCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "archive",
 		Short: "archive blockchain data",
 		Long:  "archive blockchain data and restore blockchain data",
 	}
 
-	cmd.AddCommand(dumpCMD())
+	cmd.AddCommand(newDumpCMD())
+	cmd.AddCommand(newQueryOffChainCMD())
 
 	return cmd
 }

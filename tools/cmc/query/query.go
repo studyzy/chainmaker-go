@@ -8,15 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package query
 
 import (
-	"errors"
-	"strings"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"gorm.io/gorm"
 
-	"chainmaker.org/chainmaker-go/tools/cmc/query/db/mysql"
-	"chainmaker.org/chainmaker-go/tools/cmc/query/model"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
@@ -29,9 +23,6 @@ var (
 	// cert and key
 	adminKeyFilePaths string
 	adminCrtFilePaths string
-
-	dbType string
-	dbDest string
 )
 
 const (
@@ -40,24 +31,18 @@ const (
 	// sdk config file path flag
 	flagSdkConfPath = "sdk-conf-path"
 	flagChainId     = "chain-id"
-
-	//// Archive flags
-	// Off-chain database type. eg. mysql,mongodb,pgsql
-	flagDbType = "type"
-	// Off-chain database destination. eg. user:password:localhost:port
-	flagDbDest = "dest"
 )
 
-func QueryCMD() *cobra.Command {
+func NewQueryOnChainCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
-		Short: "query blockchain data",
-		Long:  "query blockchain data",
+		Short: "query on-chain blockchain data",
+		Long:  "query on-chain blockchain data",
 	}
 
-	cmd.AddCommand(newTxCMD())
-	cmd.AddCommand(newBlockCMD())
-	cmd.AddCommand(newArchivedHeightCMD())
+	cmd.AddCommand(newQueryTxOnChainCMD())
+	cmd.AddCommand(newQueryBlockOnChainCMD())
+	cmd.AddCommand(newQueryArchivedHeightOnChainCMD())
 
 	return cmd
 }
@@ -69,8 +54,6 @@ func init() {
 
 	flags.StringVar(&chainId, flagChainId, "", "Chain ID")
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
-	flags.StringVar(&dbType, flagDbType, "", "Database type. eg. mysql")
-	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
@@ -101,27 +84,4 @@ func createChainClient(keyFilePath, crtFilePath, chainId string) (*sdk.ChainClie
 		return nil, err
 	}
 	return cc, nil
-}
-
-// initDb Connecting database, migrate tables.
-func initDb() (*gorm.DB, error) {
-	// parse params
-	dbName := model.DbName(chainId)
-	dbDestSlice := strings.Split(dbDest, ":")
-	if len(dbDestSlice) != 4 {
-		return nil, errors.New("invalid database destination")
-	}
-
-	// initialize database
-	db, err := mysql.InitDb(dbDestSlice[0], dbDestSlice[1], dbDestSlice[2], dbDestSlice[3], dbName, true)
-	if err != nil {
-		return nil, err
-	}
-
-	// migrate blockinfo,sysinfo tables
-	err = db.AutoMigrate(&model.BlockInfo{}, &model.Sysinfo{})
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
 }
