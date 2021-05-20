@@ -30,9 +30,14 @@ const (
 	RoundTimeoutIntervalMill = "HOTSTUFF_round_timeout_delta_milli"
 )
 
+const (
+	DefaultRoundTimeout         = 6000
+	DefaultRoundTimeoutInterval = 500
+)
+
 var (
-	RoundTimeout         = 6000 * time.Millisecond
-	RoundTimeoutInterval = 500 * time.Millisecond
+	RoundTimeout         time.Duration
+	RoundTimeoutInterval time.Duration
 )
 
 //GetEventTimeout returns the time duration per event type and consensus roundIndex

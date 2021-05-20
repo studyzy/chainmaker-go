@@ -997,6 +997,7 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 	go cbi.timerService.Start()
 	go cbi.syncer.start()
 	cbi.helper.DiscardAboveHeight(int64(blockHeight))
+	cbi.initTimeOutConfig(cbi.governanceContract)
 	return nil
 }
 

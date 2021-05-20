@@ -9,7 +9,6 @@ package utils
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"time"
 
 	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -196,16 +195,9 @@ func GetUidFromProtoSigner(signerpb *pbac.SerializedMember, netservice protocol.
 	return uid, nil
 }
 
-func ParseInt(key, val string) (int64, error) {
-	t, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		return 0, err
+func VerifyTimeConfig(detail string, t uint64) error {
+	if t > uint64(math.MaxInt64/time.Millisecond) {
+		return fmt.Errorf("invalid config[%s] value: %d > maxInt64/time.Millisecond ", detail, t)
 	}
-	if t <= 0 {
-		return 0, fmt.Errorf("invalid config[%s] value: %d <= 0", key, t)
-	}
-	if t > int64(math.MaxInt64)/int64(time.Millisecond) {
-		return 0, fmt.Errorf("invalid config[%s] value: %d > maxInt64/time.Millisecond ", key, t)
-	}
-	return t, nil
+	return nil
 }

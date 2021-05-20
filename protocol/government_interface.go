@@ -31,4 +31,8 @@ type Government interface {
 	GetSkipTimeoutCommit() bool
 	//get validator continuous propose count,  used to validator switching
 	GetNodeProposeRound() uint64
+	//get the base timeout for viewChange
+	GetRoundTimeoutMill() uint64
+	//get the delta timeout for the viewChange
+	GetRoundTimeoutIntervalMill() uint64
 }

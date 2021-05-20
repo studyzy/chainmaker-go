@@ -14,10 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
-
-	"github.com/tidwall/wal"
-
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
@@ -25,14 +21,16 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/pb/protogo/net"
 	"chainmaker.org/chainmaker-go/protocol"
+
 	"github.com/gogo/protobuf/proto"
+	"github.com/tidwall/wal"
 )
 
 const (
@@ -155,22 +153,25 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		return nil, err
 	}
 	service.logger.Debugf("register config success")
-	service.initTimeOutConfig(chainConf.(*chainconf.ChainConf).ChainConfig())
+	service.initTimeOutConfig(service.governanceContract)
 	return service, nil
 }
 
-func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(chainConfig *config.ChainConfig) {
-	for _, kv := range chainConfig.Consensus.ExtConfig {
-		switch kv.Key {
-		case timeservice.RoundTimeoutMill:
-			if roundTimeOut, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.RoundTimeout = time.Duration(roundTimeOut) * time.Millisecond
-			}
-		case timeservice.RoundTimeoutIntervalMill:
-			if roundTimeOutInterval, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.RoundTimeoutInterval = time.Duration(roundTimeOutInterval) * time.Millisecond
-			}
-		}
+func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protocol.Government) {
+	base := governanceContract.GetRoundTimeoutMill()
+	if base == 0 {
+		base = uint64(timeservice.DefaultRoundTimeout)
+	}
+	if err := utils.VerifyTimeConfig(timeservice.RoundTimeoutMill, base); err == nil {
+		timeservice.RoundTimeout = time.Duration(base) * time.Millisecond
+	}
+
+	delta := governanceContract.GetRoundTimeoutIntervalMill()
+	if delta == 0 {
+		delta = uint64(timeservice.DefaultRoundTimeoutInterval)
+	}
+	if err := utils.VerifyTimeConfig(timeservice.RoundTimeoutIntervalMill, delta); err == nil {
+		timeservice.RoundTimeoutInterval = time.Duration(delta) * time.Millisecond
 	}
 }
 
@@ -321,13 +322,6 @@ func (cbi *ConsensusChainedBftImpl) OnQuit() {
 //Module chainedBft
 func (cbi *ConsensusChainedBftImpl) Module() string {
 	return ModuleName
-}
-
-//Watch implement watch interface
-func (cbi *ConsensusChainedBftImpl) Watch(chainConfig *config.ChainConfig) error {
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] watch chain config updated %v", cbi.selfIndexInEpoch)
-	cbi.initTimeOutConfig(chainConfig)
-	return nil
 }
 
 func (cbi *ConsensusChainedBftImpl) onReceivedMsg(msg *net.NetMsg) {
