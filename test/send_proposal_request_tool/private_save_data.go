@@ -34,6 +34,7 @@ func SaveDataCMD() *cobra.Command {
 	flags.StringVarP(&contractName, "contract_name", "c", "", "contract name")
 	flags.StringVarP(&rwSet, "rw_set", "s", "", "read write set")
 	flags.StringVarP(&events, "events", "e", "", "events")
+	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
 }

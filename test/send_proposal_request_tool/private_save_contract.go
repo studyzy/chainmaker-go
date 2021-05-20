@@ -32,6 +32,7 @@ func SaveContractCMD() *cobra.Command {
 	flags.StringVarP(&codeHash, "code_hash", "h", "", "code hash")
 	flags.StringVarP(&contractCode, "contract_code", "c", "", "contract code")
 	flags.StringVarP(&version, "version", "v", "", "version")
+	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
 }

@@ -32,6 +32,7 @@ func SaveDirCMD() *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVarP(&orderId, "order_id", "e", "", "order id")
 	flags.StringVarP(&privateDirString, "private_dir", "c", "", "private dir")
+	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
 }

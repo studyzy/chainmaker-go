@@ -34,6 +34,7 @@ func SaveQuoteCMD() *cobra.Command {
 	flags.StringVarP(&quoteId, "quote_id", "i", "", "quote id")
 	flags.StringVarP(&quote, "quote", "q", "", "quote")
 	flags.StringVarP(&sign, "sign", "s", "", "sign")
+	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
 }
