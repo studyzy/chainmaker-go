@@ -262,6 +262,9 @@ func validateParams(config *config.ChainConfig) error {
 	if config.Block == nil {
 		return errors.New("chainconfig block is nil")
 	}
+	if len(config.ChainId) > 30 {
+		return errors.New("chainId length must less than 30")
+	}
 	return nil
 }
 
