@@ -5,7 +5,7 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package archive
+package query
 
 import (
 	"errors"
@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/pflag"
 	"gorm.io/gorm"
 
-	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
-	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	"chainmaker.org/chainmaker-go/tools/cmc/query/db/mysql"
+	"chainmaker.org/chainmaker-go/tools/cmc/query/model"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
@@ -30,51 +30,33 @@ var (
 	adminKeyFilePaths string
 	adminCrtFilePaths string
 
-	dbType          string
-	dbDest          string
-	targetBlkHeight int64
-	blockInterval   int64
-	secretKey       string
+	dbType string
+	dbDest string
 )
 
 const (
 	// TODO: wrap common flags to a separate package?
 	//// Common flags
 	// sdk config file path flag
-	flagSdkConfPath    = "sdk-conf-path"
-	flagOrgId          = "org-id"
-	flagSyncResult     = "sync-result"
-	flagEnableCertHash = "enable-cert-hash"
-	flagChainId        = "chain-id"
-	// Admin private key file & cert file paths flags, use ',' to separate
-	// The key in the list corresponds to the cert one to one.
-	// If there are only one pair, the single-sign mode will be used.
-	// If there are multiple pairs, the multi-sign mode will be used,
-	// with the first pair used to initiate the multi-sign request and the rest used for the multi-sign vote
-	flagAdminKeyFilePaths = "admin-key-file-paths"
-	flagAdminCrtFilePaths = "admin-crt-file-paths"
+	flagSdkConfPath = "sdk-conf-path"
+	flagChainId     = "chain-id"
 
 	//// Archive flags
 	// Off-chain database type. eg. mysql,mongodb,pgsql
 	flagDbType = "type"
 	// Off-chain database destination. eg. user:password:localhost:port
 	flagDbDest = "dest"
-	// Archive target block height, stop archiving (include this block) after reaching this height.
-	flagTargetBlockHeight = "target-block-height"
-	// Number of blocks to be archived this time
-	flagBlockInterval = "block-interval"
-	// Secret Key for calc Hmac
-	flagSecretKey = "secret-key"
 )
 
-func ArchiveCMD() *cobra.Command {
+func QueryCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "archive",
-		Short: "archive blockchain data",
-		Long:  "archive blockchain data and restore blockchain data",
+		Use:   "query",
+		Short: "query blockchain data",
+		Long:  "query blockchain data",
 	}
 
-	cmd.AddCommand(dumpCMD())
+	cmd.AddCommand(newTxCMD())
+	cmd.AddCommand(newBlockCMD())
 
 	return cmd
 }
@@ -86,12 +68,8 @@ func init() {
 
 	flags.StringVar(&chainId, flagChainId, "", "Chain ID")
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
-	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
-	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
 	flags.StringVar(&dbType, flagDbType, "", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
-	flags.Int64Var(&targetBlkHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
-	flags.Int64Var(&blockInterval, flagBlockInterval, 1000, "Number of blocks to be archived this time")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

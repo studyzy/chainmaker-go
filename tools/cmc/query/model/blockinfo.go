@@ -38,13 +38,13 @@ func (blockInfoNew) TableName() string {
 // BlockInfoTableScopes BlockInfoTable implement Scopes for sharding.
 func BlockInfoTableScopes(bInfo BlockInfo) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
-		tableName := blockInfoTableNameByBlockHeight(bInfo.BlockHeight)
+		tableName := BlockInfoTableNameByBlockHeight(bInfo.BlockHeight)
 		return tx.Table(tableName)
 	}
 }
 
-// blockInfoTableNameByBlockHeight Get BlockInfo table name by block height
-func blockInfoTableNameByBlockHeight(blkHeight int64) string {
+// BlockInfoTableNameByBlockHeight Get BlockInfo table name by block height
+func BlockInfoTableNameByBlockHeight(blkHeight int64) string {
 	tableNum := blkHeight/rowsPerBlockInfoTable + 1
 	return fmt.Sprintf("%s_%d", prefixBlockInfoTable, tableNum)
 }
@@ -72,7 +72,7 @@ func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet 
 	result := db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
 	if result.Error != nil {
 		if strings.Contains(result.Error.Error(), "Error 1146") {
-			err := createBlockInfoTable(db, blockInfoTableNameByBlockHeight(bInfo.BlockHeight))
+			err := createBlockInfoTable(db, BlockInfoTableNameByBlockHeight(bInfo.BlockHeight))
 			if err != nil {
 				return 0, err
 			}
