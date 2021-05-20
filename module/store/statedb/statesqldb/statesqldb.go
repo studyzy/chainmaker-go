@@ -7,14 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"fmt"
-	"sync"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
@@ -97,11 +100,20 @@ func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
 func GetContractDbName(chainId, contractName string) string {
 	return getContractDbName(localconf.ChainMakerConfig.StorageConfig.StateDbConfig.SqlDbConfig, chainId, contractName)
 }
+
+//getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
 func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
 	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(dbConfig, chainId)
 	}
-	return dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
+	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
+	if len(dbName) > 64 { //for mysql only support 64 chars
+		h := sha256.New()
+		h.Write([]byte(dbName))
+		sum := h.Sum(nil)
+		dbName = dbName[:50] + hex.EncodeToString(sum)[:10] + contractName[len(contractName)-4:]
+	}
+	return dbName
 }
 
 // CommitBlock commits the state in an atomic operation

@@ -8,11 +8,12 @@
 package rawsqlprovider
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/types"
 	"database/sql"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
 )
 
 type SqlDBTx struct {

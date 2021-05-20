@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"path/filepath"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -16,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"github.com/tidwall/wal"
-	"path/filepath"
 
 	"os"
 	"time"
@@ -24,8 +25,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var chainId = "testchain1"

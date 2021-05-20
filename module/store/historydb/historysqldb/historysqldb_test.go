@@ -7,6 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package historysqldb
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"strconv"
+	"testing"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -16,12 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"strconv"
-	"testing"
 )
 
 var log = &logger.GoLogger{}

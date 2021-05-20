@@ -1,12 +1,13 @@
 package eventsqldb
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 )
 
 // BlockMysqlDB provider a implementation of `contracteventdb.ContractEventDB`

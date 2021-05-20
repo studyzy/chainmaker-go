@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package cache
 
 import (
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"context"
 	"sync"
+
+	logImpl "chainmaker.org/chainmaker-go/logger"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
