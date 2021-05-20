@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 
-	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
@@ -60,9 +59,9 @@ func runDumpCMD() error {
 	if err != nil {
 		return err
 	}
-	locker := mysql.NewDbLocker(db, "cmc", mysql.DefaultLockLeaseAge)
-	locker.Lock()
-	defer locker.UnLock()
+	//locker := mysql.NewDbLocker(db, "cmc", mysql.DefaultLockLeaseAge)
+	//locker.Lock()
+	//defer locker.UnLock()
 
 	//// 3.Validation, block height etc.
 	archivedBlkHeightOnChain, err := cc.GetArchivedBlockHeight()

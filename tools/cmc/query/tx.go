@@ -1,16 +1,15 @@
 package query
 
 import (
-	"chainmaker.org/chainmaker-go/tools/cmc/query/model"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"chainmaker.org/chainmaker-go/tools/cmc/query/db/mysql"
+	"chainmaker.org/chainmaker-go/tools/cmc/query/model"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
 
 func newTxCMD() *cobra.Command {
@@ -50,9 +49,9 @@ func runQueryTxCMD(args []string) error {
 	if err != nil {
 		return err
 	}
-	locker := mysql.NewDbLocker(db, "cmc", mysql.DefaultLockLeaseAge)
-	locker.Lock()
-	defer locker.UnLock()
+	//locker := mysql.NewDbLocker(db, "cmc", mysql.DefaultLockLeaseAge)
+	//locker.Lock()
+	//defer locker.UnLock()
 
 	//// 3.Query tx on-chain
 	var txInfo *common.TransactionInfo
