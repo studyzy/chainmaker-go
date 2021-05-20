@@ -30,12 +30,14 @@ const (
 	ConstNodeProposeRound  = 1     //default continuity propose round
 	GovernanceContractName = "government_contract"
 
-	SkipTimeoutCommit = "SkipTimeoutCommit"
-	CachedLen         = "CachedLen"
-	BlockNumPerEpoch  = "BlockNumPerEpoch"
-	TransitBlock      = "TransitBlock"
-	ValidatorNum      = "ValidatorNum"
-	NodeProposeRound  = "NodeProposeRound"
+	SkipTimeoutCommit        = "SkipTimeoutCommit"
+	CachedLen                = "CachedLen"
+	BlockNumPerEpoch         = "BlockNumPerEpoch"
+	TransitBlock             = "TransitBlock"
+	ValidatorNum             = "ValidatorNum"
+	NodeProposeRound         = "NodeProposeRound"
+	RoundTimeoutMill         = "HOTSTUFF_round_timeout_milli"
+	RoundTimeoutIntervalMill = "HOTSTUFF_round_timeout_delta_milli"
 
 	UnmarshalErrFmt        = "proto.Unmarshal err!err=%v"
 	CreateValidatorsErrFmt = "createValidators err!err=%v"
@@ -93,9 +95,19 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	newValidatorNum := uint64(ConstValidatorNum)
 	newBlockNumPerEpoch := uint64(ConstBlockNumPerEpoch)
 	newNodeProposeRound := uint64(ConstNodeProposeRound)
+	newRoundTimeoutMill := uint64(0)
+	newRoundTimeoutIntervalMill := uint64(0)
 
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
+		case RoundTimeoutMill:
+			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				newRoundTimeoutMill = v
+			}
+		case RoundTimeoutIntervalMill:
+			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				newRoundTimeoutIntervalMill = v
+			}
 		case SkipTimeoutCommit:
 			if strings.ToUpper(oneConf.Value) == "TRUE" {
 				newSkipTimeoutCommit = true
@@ -164,6 +176,14 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	}
 	if GovernanceContract.CachedLen != newCachedLen {
 		GovernanceContract.CachedLen = newCachedLen
+		isChg = true
+	}
+	if GovernanceContract.RoundTimeoutMill != newRoundTimeoutMill {
+		GovernanceContract.RoundTimeoutMill = newRoundTimeoutMill
+		isChg = true
+	}
+	if GovernanceContract.RoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+		GovernanceContract.RoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
 	if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {

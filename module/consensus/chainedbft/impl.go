@@ -162,7 +162,7 @@ func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protoco
 	if base == 0 {
 		base = uint64(timeservice.DefaultRoundTimeout)
 	}
-	if err := utils.VerifyTimeConfig(timeservice.RoundTimeoutMill, base); err == nil {
+	if err := utils.VerifyTimeConfig(governance.RoundTimeoutMill, base); err == nil {
 		timeservice.RoundTimeout = time.Duration(base) * time.Millisecond
 	}
 
@@ -170,7 +170,7 @@ func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protoco
 	if delta == 0 {
 		delta = uint64(timeservice.DefaultRoundTimeoutInterval)
 	}
-	if err := utils.VerifyTimeConfig(timeservice.RoundTimeoutIntervalMill, delta); err == nil {
+	if err := utils.VerifyTimeConfig(governance.RoundTimeoutIntervalMill, delta); err == nil {
 		timeservice.RoundTimeoutInterval = time.Duration(delta) * time.Millisecond
 	}
 }

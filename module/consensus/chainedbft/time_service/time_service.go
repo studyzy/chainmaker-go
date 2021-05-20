@@ -26,11 +26,6 @@ const (
 )
 
 const (
-	RoundTimeoutMill         = "HOTSTUFF_round_timeout_milli"
-	RoundTimeoutIntervalMill = "HOTSTUFF_round_timeout_delta_milli"
-)
-
-const (
 	DefaultRoundTimeout         = 6000
 	DefaultRoundTimeoutInterval = 500
 )
