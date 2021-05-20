@@ -224,6 +224,15 @@ func main() {
 	mainCmd.AddCommand(CertToAddressCMD())
 	mainCmd.AddCommand(ContractNameToAddressCMD())
 
+	//private contract
+	mainCmd.AddCommand(SaveCertCMD())
+    mainCmd.AddCommand(SaveDirCMD())
+    mainCmd.AddCommand(GetContractCMD())
+	mainCmd.AddCommand(SaveDataCMD())
+	mainCmd.AddCommand(GetDataCMD())
+	mainCmd.AddCommand(SaveContractCMD())
+	mainCmd.AddCommand(SaveQuoteCMD())
+
 	mainCmd.Execute()
 
 	if conn != nil {
