@@ -10,8 +10,6 @@ import (
 	"context"
 	"sync"
 
-	logImpl "chainmaker.org/chainmaker-go/logger"
-
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/emirpasic/gods/maps/treemap"
@@ -36,9 +34,6 @@ func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 	blockWriteBufferSize := localconf.ChainMakerConfig.StorageConfig.BlockWriteBufferSize
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
-	}
-	if logger == nil {
-		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
 	}
 	storeCacheMgr := &StoreCacheMgr{
 		pendingBlockUpdates: make(map[int64]protocol.StoreBatcher),
@@ -124,7 +119,7 @@ func (c *storeCache) addBatch(batch protocol.StoreBatcher) {
 }
 
 func (c *storeCache) delBatch(batch protocol.StoreBatcher) {
-	for key, _ := range batch.KVs() {
+	for key := range batch.KVs() {
 		c.table.Remove(key)
 	}
 }
