@@ -208,7 +208,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		return err
 	}
 
-	_, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, true)
+	_, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, false)
 	if err != nil {
 		return err
 	}
