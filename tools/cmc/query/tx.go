@@ -53,7 +53,7 @@ func runQueryTxCMD(args []string) error {
 	//locker.Lock()
 	//defer locker.UnLock()
 
-	//// 3.Query tx on-chain
+	//// 3.Query tx on-chain, if it's archived on-chain then query off-chain storage.
 	var txInfo *common.TransactionInfo
 	var output []byte
 	txInfo, err = cc.GetTxByTxId(args[0])
