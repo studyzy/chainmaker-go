@@ -32,7 +32,7 @@ func SaveDataCMD() *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVarP(&result, "result", "r", "", "result")
 	flags.StringVarP(&contractName, "contract_name", "c", "", "contract name")
-	flags.StringVarP(&rwSet, "rw_set", "rs", "", "read write set")
+	flags.StringVarP(&rwSet, "rw_set", "s", "", "read write set")
 	flags.StringVarP(&events, "events", "e", "", "events")
 
 	return cmd

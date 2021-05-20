@@ -30,8 +30,8 @@ func SaveQuoteCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&enclaveId, "enclave_id", "eid", "", "enclave id ")
-	flags.StringVarP(&quoteId, "quote_id", "qid", "", "quote id")
+	flags.StringVarP(&enclaveId, "enclave_id", "e", "", "enclave id ")
+	flags.StringVarP(&quoteId, "quote_id", "i", "", "quote id")
 	flags.StringVarP(&quote, "quote", "q", "", "quote")
 	flags.StringVarP(&sign, "sign", "s", "", "sign")
 

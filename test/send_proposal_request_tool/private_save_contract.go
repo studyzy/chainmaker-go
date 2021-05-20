@@ -28,9 +28,9 @@ func SaveContractCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&contractName, "contract_name", "c", "", "contract name")
-	flags.StringVarP(&codeHash, "code_hash", "ch", "", "code hash")
-	flags.StringVarP(&contractCode, "contract_code", "cc", "", "contract code")
+	flags.StringVarP(&contractName, "contract_name", "n", "", "contract name")
+	flags.StringVarP(&codeHash, "code_hash", "h", "", "code hash")
+	flags.StringVarP(&contractCode, "contract_code", "c", "", "contract code")
 	flags.StringVarP(&version, "version", "v", "", "version")
 
 	return cmd
