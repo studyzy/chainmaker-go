@@ -80,6 +80,10 @@ func newConsensusStateCache(size int64) *consensusStateCache {
 }
 
 func (cache *consensusStateCache) addConsensusState(state *ConsensusState) {
+	if state == nil || state.Height <= 0 {
+		return
+	}
+
 	cache.Lock()
 	defer cache.Unlock()
 
