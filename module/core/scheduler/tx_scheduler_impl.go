@@ -172,7 +172,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	// Build DAG from read-write table
 	snapshot.Seal()
 	timeCostA := time.Since(startTime)
-	block.Dag = snapshot.BuildDAG()
+	block.Dag = snapshot.BuildDAG(ts.chainConf.ChainConfig().Contract.EnableSqlSupport)
 	block.Txs = snapshot.GetTxTable()
 	timeCostB := time.Since(startTime)
 	ts.log.Infof("schedule tx batch end, success %d, time cost %v, time cost(dag include) %v ",

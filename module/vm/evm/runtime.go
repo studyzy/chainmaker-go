@@ -117,6 +117,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		Hash:    codeHash,
 	}
 	r.Address = address
+	r.ContractId = contractId
 	// new evm instance
 	lastBlock, _ := txSimContext.GetBlockchainStore().GetLastBlock()
 	externalStore := &storage.ContractStorage{Ctx: txSimContext}

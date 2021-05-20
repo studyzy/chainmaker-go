@@ -208,6 +208,9 @@ func (p *BatchTxPool) popTxsFromQueue() ([]*commonPb.Transaction, map[string]int
 	for i := 0; i < int(p.batchMaxSize); {
 		if val, ok, _ := p.txQueue.Pull(); ok {
 			tx := val.(*commonPb.Transaction)
+			if _, ok := txIdToIndex[tx.GetHeader().GetTxId()]; ok {
+				continue
+			}
 			txs = append(txs, tx)
 			txIdToIndex[tx.GetHeader().GetTxId()] = int32(i)
 			i++
