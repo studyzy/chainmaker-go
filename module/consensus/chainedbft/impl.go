@@ -143,7 +143,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.createEpoch(service.commitHeight)
 	service.msgPool = service.nextEpoch.msgPool
 	service.selfIndexInEpoch = service.nextEpoch.index
-	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService)
+	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService, service)
 	epoch := service.nextEpoch
 	service.nextEpoch = nil
 	walDirPath := path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainID, WalDirSuffix)

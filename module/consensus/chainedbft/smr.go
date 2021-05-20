@@ -36,10 +36,11 @@ type chainedbftSMR struct {
 
 //newChainedBftSMR returns an instance of consensus smr
 func newChainedBftSMR(chainID string,
-	epoch *epochManager, chainStore *chainStore, ts *timeservice.TimerService) *chainedbftSMR {
+	epoch *epochManager, chainStore *chainStore, ts *timeservice.TimerService, server *ConsensusChainedBftImpl) *chainedbftSMR {
 	smr := &chainedbftSMR{
 		chainStore: chainStore,
 		logger:     logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainID),
+		server:     server,
 	}
 	smr.safetyRules = safetyrules.NewSafetyRules(smr.logger, chainStore.blockPool, chainStore.blockChainStore)
 	smr.initByEpoch(epoch, ts)

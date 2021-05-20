@@ -992,7 +992,7 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 	cbi.msgPool = cbi.nextEpoch.msgPool
 	cbi.timerService = timeservice.NewTimerService()
 	cbi.selfIndexInEpoch = cbi.nextEpoch.index
-	cbi.smr = newChainedBftSMR(cbi.chainID, cbi.nextEpoch, cbi.chainStore, cbi.timerService)
+	cbi.smr = newChainedBftSMR(cbi.chainID, cbi.nextEpoch, cbi.chainStore, cbi.timerService, cbi)
 	cbi.nextEpoch = nil
 	go cbi.timerService.Start()
 	go cbi.syncer.start()
