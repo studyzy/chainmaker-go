@@ -10,11 +10,11 @@ import (
 	"chainmaker.org/chainmaker-go/common/random/uuid"
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
 	"crypto/sha256"
 	"fmt"
@@ -28,6 +28,7 @@ import (
 var (
 	chainId      = "Chain1"
 	contractName = "contractName"
+	log          = &test.GoLogger{}
 )
 
 func TestProposeStatusChange(t *testing.T) {
@@ -67,7 +68,7 @@ func TestProposeStatusChange(t *testing.T) {
 		identity:        identity,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:             log,
 		finishProposeC:  make(chan bool),
 	}
 	require.False(t, blockProposer.isProposer)
@@ -104,7 +105,7 @@ func TestShouldPropose(t *testing.T) {
 		identity:        identity,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:             log,
 	}
 
 	b0 := cache.CreateNewTestBlock(0)
@@ -159,7 +160,7 @@ func TestShouldProposeChainedBFT(t *testing.T) {
 		identity:        identity,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:             log,
 	}
 
 	b0 := cache.CreateNewTestBlock(0)

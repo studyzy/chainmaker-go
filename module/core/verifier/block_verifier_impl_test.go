@@ -9,10 +9,10 @@ package verifier
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"github.com/golang/mock/gomock"
@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 )
+
+var log = &test.GoLogger{}
 
 func TestBlockVerifierImpl_VerifyBlock(t *testing.T) {
 	ctl := gomock.NewController(t)
@@ -46,7 +48,7 @@ func TestBlockVerifierImpl_VerifyBlock(t *testing.T) {
 			reentrantLocks: make(map[string]interface{}),
 		},
 		proposalCache: proposedCache,
-		log:           logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:           log,
 	}
 
 	sig_default := []byte("DEFAULT_SIGNATURE")

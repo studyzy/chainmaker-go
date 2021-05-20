@@ -9,20 +9,21 @@ package committer
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
 	"github.com/golang/mock/gomock"
-	"github.com/google/martian/log"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
+
+var log = &test.GoLogger{}
 
 func TestAddBlock(t *testing.T) {
 	ctl := gomock.NewController(t)
@@ -98,7 +99,7 @@ func initCommitter(
 		txPool:          txPool,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:             log,
 		chainConf:       chainConf,
 		msgBus:          msgbus,
 	}
