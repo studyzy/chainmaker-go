@@ -58,7 +58,7 @@ func runQueryBlockCMD(args []string) error {
 	//locker.Lock()
 	//defer locker.UnLock()
 
-	//// 3.Query tx on-chain, if it's archived on-chain then query off-chain storage.
+	//// 3.Query block on-chain, if it's archived on-chain then query off-chain storage.
 	var blkWithRWSet *store.BlockWithRWSet
 	var output []byte
 	blkWithRWSetOnChain, err := cc.GetFullBlockByHeight(height)
