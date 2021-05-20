@@ -6,6 +6,8 @@ require (
 	chainmaker.org/chainmaker-go/common v0.0.0
 	chainmaker.org/chainmaker-sdk-go v0.0.0
 	github.com/gogo/protobuf v1.3.2
+	github.com/gosuri/uilive v0.0.4 // indirect
+	github.com/gosuri/uiprogress v0.0.1
 	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e
 	github.com/samkumar/hibe v0.0.0-20171013061409-c1cd171b6178
 	github.com/spf13/cobra v1.1.1
