@@ -67,5 +67,5 @@ func Test_invoke_cpp(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	fmt.Printf("method [%+v], tx count %+v, time cost %+v\n", method, count, time.Since(start))
+	fmt.Printf("method [%+v], tx count %+v, time used %+v\n", method, count, time.Since(start))
 }
