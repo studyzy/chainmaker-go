@@ -94,8 +94,6 @@ func (sch *scheduler) handleNodeStatus(msg NodeStatusMsg) {
 		if old > msg.msg.BlockHeight {
 			delete(sch.peers, msg.from)
 			return
-		} else if old == msg.msg.BlockHeight {
-			return
 		}
 	}
 	sch.log.Debugf("add node[%s], status[height: %d]", msg.from, msg.msg.BlockHeight)
