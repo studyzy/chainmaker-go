@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gosuri/uiprogress"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 
@@ -83,6 +84,15 @@ func runDumpCMD() error {
 	}
 
 	//// 4.Store & Archive Blocks
+	var barCount = blockInterval
+	if blockInterval > targetBlkHeight {
+		barCount = targetBlkHeight - archivedBlkHeightOnChain
+	}
+	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
+	bar.PrependFunc(func(b *uiprogress.Bar) string {
+		return fmt.Sprintf("Archiving (%d/%d)", b.Current(), barCount)
+	})
+	uiprogress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
 	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks <= blockInterval; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
@@ -94,7 +104,9 @@ func runDumpCMD() error {
 		}
 
 		batchEndBlkHeight++
+		bar.Incr()
 	}
+	uiprogress.Stop()
 	// do the rest of blocks
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
 }
@@ -159,7 +171,6 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 		if err != nil {
 			return err
 		}
-		fmt.Printf("block %d stored\n", blkWithRWSet.Block.Header.BlockHeight)
 	}
 
 	// archive blocks on-chain

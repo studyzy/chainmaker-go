@@ -2,7 +2,6 @@ package archive
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
@@ -13,13 +12,10 @@ func sm3(data []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("%x\n", bz)
-	hexSum := hex.EncodeToString(bz)
-	fmt.Println("hexSum=", hexSum)
-	return hexSum, nil
+	return hex.EncodeToString(bz), nil
 }
 
-// sm3(Fchain_id+Fblock_height+sm3(Fblock_with_rwset)+key)
+// Hmac sm3(Fchain_id+Fblock_height+sm3(Fblock_with_rwset)+key)
 func Hmac(chainId, blkHeight, sumBlkWithRWSet, secretKey []byte) (string, error) {
 	var data []byte
 	data = append(data, chainId...)
