@@ -230,7 +230,7 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	}
 	for _, event := range con.ContractEvents {
 		Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
-			recvEventTick, event.ChainId, event.TxId, event.Topic, event.ContractName, event.EventData)
+			recvEventTick, event.ChainId, event.TxId, event.ContractName, event.Topic, event.EventData)
 	}
 	/*bytes, err := json.Marshal(con)
 	if err != nil {
