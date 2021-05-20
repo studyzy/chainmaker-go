@@ -115,10 +115,10 @@ func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params 
         return nil, err
     }
 
-    if ok, err := r.VerifyByEnclaveCert(context, []byte(enclaveId), []byte(quote), []byte(sign)); !ok {
-        r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
-        return nil, err
-    }
+    //if ok, err := r.VerifyByEnclaveCert(context, []byte(enclaveId), []byte(quote), []byte(sign)); !ok {
+    //    r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
+    //    return nil, err
+    //}
 
     if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(quoteId), []byte(quote)); err != nil{
         r.log.Errorf("%s, save quote[%s] failed", err.Error(), quoteId)
