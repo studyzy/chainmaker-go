@@ -31,7 +31,7 @@ func newDumpCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagChainId, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
-		flagDbType, flagDbDest, flagTargetBlockHeight, flagBlockInterval,
+		flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -41,7 +41,7 @@ func newDumpCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagDbType)
 	cmd.MarkFlagRequired(flagDbDest)
 	cmd.MarkFlagRequired(flagTargetBlockHeight)
-	cmd.MarkFlagRequired(flagBlockInterval)
+	cmd.MarkFlagRequired(flagBlocks)
 
 	return cmd
 }
@@ -84,17 +84,17 @@ func runDumpCMD() error {
 	}
 
 	//// 4.Store & Archive Blocks
-	var barCount = blockInterval
-	if blockInterval > targetBlkHeight {
-		barCount = targetBlkHeight - archivedBlkHeightOnChain
+	var barCount = targetBlkHeight - archivedBlkHeightOnChain
+	if blocks < barCount {
+		barCount = blocks
 	}
 	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("Archiving (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Archiving Block (%d/%d)", b.Current(), barCount)
 	})
 	uiprogress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
-	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks <= blockInterval; processedBlocks++ {
+	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks <= blocks; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
 			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err != nil {
 				return err
@@ -177,7 +177,7 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 	archivedBlkHeightOnChain := blkWithRWSetSlice[len(blkWithRWSetSlice)-1].Block.Header.BlockHeight
 	err := archiveBlockOnChain(cc, archivedBlkHeightOnChain)
 	if err != nil {
-		//return err
+		return err
 	}
 
 	// update archived block height off-chain
@@ -205,8 +205,6 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		err                error
 		payload            []byte
 		signedPayloadBytes []byte
-		//resp               *common.TxResponse
-		//result             string
 	)
 
 	payload, err = cc.CreateArchiveBlockPayload(height)
@@ -224,8 +222,5 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		return err
 	}
 
-	//result = string(resp.ContractResult.Result)
-
-	//fmt.Printf("resp: %+v, result:%+s\n", resp, result)
 	return nil
 }

@@ -63,7 +63,6 @@ func newQueryTxOffChainCMD() *cobra.Command {
 				return err
 			}
 
-			fmt.Println("blkHeight==", blkHeight)
 			var bInfo model.BlockInfo
 			err = db.Table(model.BlockInfoTableNameByBlockHeight(blkHeight)).Where("Fblock_height = ?", blkHeight).Find(&bInfo).Error
 			if err != nil {

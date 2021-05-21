@@ -33,7 +33,7 @@ var (
 	dbType          string
 	dbDest          string
 	targetBlkHeight int64
-	blockInterval   int64
+	blocks          int64
 	secretKey       string
 )
 
@@ -62,7 +62,7 @@ const (
 	// Archive target block height, stop archiving (include this block) after reaching this height.
 	flagTargetBlockHeight = "target-block-height"
 	// Number of blocks to be archived this time
-	flagBlockInterval = "block-interval"
+	flagBlocks = "blocks"
 	// Secret Key for calc Hmac
 	flagSecretKey = "secret-key"
 )
@@ -92,7 +92,7 @@ func init() {
 	flags.StringVar(&dbType, flagDbType, "", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
 	flags.Int64Var(&targetBlkHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
-	flags.Int64Var(&blockInterval, flagBlockInterval, 1000, "Number of blocks to be archived this time")
+	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
