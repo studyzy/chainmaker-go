@@ -8,12 +8,13 @@
 package rawsqlprovider
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
 	"context"
 	"fmt"
+	"time"
+
+	"chainmaker.org/chainmaker-go/protocol"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
-	"time"
 )
 
 const (

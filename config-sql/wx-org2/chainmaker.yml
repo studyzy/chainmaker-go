@@ -44,7 +44,7 @@ net:
     cert_file:     ../config-sql/wx-org2/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
-  max_txpool_size: 5120 # 普通交易池上限
+  max_txpool_size: 50000 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
 

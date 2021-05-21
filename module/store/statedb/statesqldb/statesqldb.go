@@ -7,14 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"chainmaker.org/chainmaker-go/common/evmutils"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"fmt"
-	"sync"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
@@ -36,13 +40,13 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	db.logger.Debugf("try to create state db %s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
-		panic("init state sql db fail")
+		db.logger.Panic("init state sql db fail")
 	}
-	db.logger.Debug("try to create state db table: state_infos")
+	db.logger.Debugf("try to create state db table: state_infos for contract[%s]", contractName)
 	dbHandle := db.getContractDbHandle(contractName)
 	err = dbHandle.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state sql db table fail:" + err.Error())
 	}
 	return nil
 }
@@ -97,11 +101,20 @@ func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
 func GetContractDbName(chainId, contractName string) string {
 	return getContractDbName(localconf.ChainMakerConfig.StorageConfig.StateDbConfig.SqlDbConfig, chainId, contractName)
 }
+
+//getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
 func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
 	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(dbConfig, chainId)
 	}
-	return dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
+	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
+	if len(dbName) > 64 { //for mysql only support 64 chars
+		h := sha256.New()
+		h.Write([]byte(dbName))
+		sum := h.Sum(nil)
+		dbName = dbName[:50] + hex.EncodeToString(sum)[:10] + contractName[len(contractName)-4:]
+	}
+	return dbName
 }
 
 // CommitBlock commits the state in an atomic operation
@@ -138,7 +151,16 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		//创建对应合约的数据库
 		payload := &commonPb.ContractMgmtPayload{}
 		payload.Unmarshal(block.Txs[0].RequestPayload)
-		err = s.updateStateForContractInit(block, payload, txRWSets[0].TxWrites)
+		contractId := &commonPb.ContractId{
+			ContractName:    payload.ContractId.ContractName,
+			ContractVersion: payload.ContractId.ContractVersion,
+			RuntimeType:     payload.ContractId.RuntimeType,
+		}
+		if payload.ContractId.RuntimeType == commonPb.RuntimeType_EVM {
+			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
+			contractId.ContractName = address.String()
+		}
+		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites)
 		if err != nil {
 			return err
 		}
@@ -187,13 +209,14 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, payload *commonPb.ContractMgmtPayload,
+func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractId *commonPb.ContractId,
 	writes []*commonPb.TxWrite) error {
-	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, payload.ContractId.ContractName)
-	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, payload.ContractId.ContractName)
+
+	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
+	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
 	txKey := block.GetTxKey() + "_KV"
-	err := s.initContractDb(payload.ContractId.ContractName) //创建合约的数据库和KV表
-	dbHandle := s.getContractDbHandle(payload.ContractId.ContractName)
+	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
+	dbHandle := s.getContractDbHandle(contractId.ContractName)
 	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {
 		return err

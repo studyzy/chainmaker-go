@@ -7,20 +7,21 @@ SPDX-License-Identifier: Apache-2.0
 package rawsqlprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/types"
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var defaultMaxIdleConns = 10
@@ -66,29 +67,29 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx), log: log}
 	sqlType, err := ParseSqlDbType(conf.SqlDbType)
 	if err != nil {
-		panic(err.Error())
+		log.Panic(err.Error())
 	}
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
-			panic("connect to mysql error:" + err.Error())
+			log.Panic("connect to mysql error:" + err.Error())
 		}
 		_, err = db.Query("SELECT DATABASE()")
 		if err != nil {
 			if strings.Contains(err.Error(), "Unknown database") {
 				log.Infof("first time connect to a new database,create database %s", dbName)
-				err = createDatabase(conf.Dsn, dbName)
+				err = provider.createDatabase(conf.Dsn, dbName)
 				if err != nil {
-					panic(fmt.Sprintf("failed to open mysql[%s] and create database %s, %s", dsn, dbName, err))
+					log.Panicf("failed to open mysql[%s] and create database %s, %s", dsn, dbName, err)
 				}
 				db, err = sql.Open("mysql", dsn)
 				if err != nil {
-					panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
+					log.Panicf("failed to open mysql:%s , %s", dsn, err)
 				}
 			} else {
-				panic(fmt.Sprintf("failed to open mysql:%s , %s", dsn, err))
+				log.Panicf("failed to open mysql:%s , %s", dsn, err)
 			}
 		}
 		log.Debug("open new db connection for " + conf.SqlDbType + " dsn:" + dsn)
@@ -106,24 +107,26 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		}
 		db, err := sql.Open("sqlite3", dbPath)
 		if err != nil {
-			panic(fmt.Sprintf("failed to open sqlite path:%s,get error:%s", dbPath, err))
+			log.Panicf("failed to open sqlite path:%s,get error:%s", dbPath, err)
 		}
 		provider.db = db
 	} else {
-		panic(fmt.Sprintf("unsupport db:%v", sqlType))
+		log.Panicf("unsupported db:%v", sqlType)
 	}
 
 	log.Debug("inject ChainMaker logger into db logger.")
 	provider.log = log
 	return provider
 }
-func createDatabase(dsn string, dbName string) error {
+func (p *SqlDBHandle) createDatabase(dsn string, dbName string) error {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec("create database " + dbName)
 	defer db.Close()
+	sqlStr := "create database " + dbName
+	_, err = db.Exec(sqlStr)
+	p.log.Debug("Exec sql:", sqlStr)
 	return err
 }
 
@@ -274,7 +277,7 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	if err != nil {
 		return nil, err
 	}
-	sqltx := &SqlDBTx{db: tx, dbType: p.dbType, name: txName, logger: p.log}
+	sqltx := NewSqlDBTx(txName, p.dbType, tx, p.log)
 	p.dbTxCache[txName] = sqltx
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
@@ -298,9 +301,12 @@ func (p *SqlDBHandle) CommitDbTransaction(txName string) error {
 	if err != nil {
 		return err
 	}
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
 	delete(p.dbTxCache, txName)
-	p.log.Debugf("commit db transaction[%s]", txName)
+	//p.log.Debugf("commit db transaction[%s]", txName) //devin: already log in tx.Commit()
 	return nil
 }
 func (p *SqlDBHandle) RollbackDbTransaction(txName string) error {
@@ -310,9 +316,12 @@ func (p *SqlDBHandle) RollbackDbTransaction(txName string) error {
 	if err != nil {
 		return err
 	}
-	tx.Rollback()
+	err = tx.Rollback()
+	if err != nil {
+		return err
+	}
 	delete(p.dbTxCache, txName)
-	p.log.Debugf("rollback db transaction[%s]", txName)
+	//p.log.Debugf("rollback db transaction[%s]", txName) //devin: already log in tx.Rollback()
 	return nil
 }
 func (p *SqlDBHandle) Close() error {
@@ -320,7 +329,7 @@ func (p *SqlDBHandle) Close() error {
 	defer p.Unlock()
 	if len(p.dbTxCache) > 0 {
 		txNames := ""
-		for name, _ := range p.dbTxCache {
+		for name := range p.dbTxCache {
 			txNames += name + ";"
 		}
 		p.log.Warnf("these db tx[%s] don't commit or rollback, close them.", txNames)

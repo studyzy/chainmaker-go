@@ -7,14 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package serialization
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"github.com/stretchr/testify/assert"
 )
 
 var chainId = "testchain1"

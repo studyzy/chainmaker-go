@@ -8,20 +8,32 @@
 package rawsqlprovider
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/types"
 	"database/sql"
 	"sync"
+	"time"
+
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
 )
 
 type SqlDBTx struct {
 	sync.Mutex
-	name   string
-	dbType types.EngineType
-	db     *sql.Tx
-	logger protocol.Logger
+	name      string
+	dbType    types.EngineType
+	db        *sql.Tx
+	logger    protocol.Logger
+	startTime time.Time
 }
 
+func NewSqlDBTx(name string, dbType types.EngineType, db *sql.Tx, logger protocol.Logger) *SqlDBTx {
+	return &SqlDBTx{
+		name:      name,
+		dbType:    dbType,
+		db:        db,
+		logger:    logger,
+		startTime: time.Now(),
+	}
+}
 func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
@@ -34,6 +46,9 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	sqlStr := "use " + dbName
 	p.logger.Debug("Exec sql:", sqlStr)
 	_, err := p.db.Exec(sqlStr)
+	if err != nil {
+		p.logger.Debugf("change context db fail, error: %s", err)
+	}
 	return err
 }
 func (p *SqlDBTx) Save(val interface{}) (int64, error) {
@@ -100,6 +115,7 @@ func (p *SqlDBTx) Commit() error {
 	p.Lock()
 	defer p.Unlock()
 	result := p.db.Commit()
+	p.logger.Debugf("commit tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if result != nil {
 		return result
 	}
@@ -109,6 +125,7 @@ func (p *SqlDBTx) Rollback() error {
 	p.Lock()
 	defer p.Unlock()
 	result := p.db.Rollback()
+	p.logger.Debugf("rollback tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if result != nil {
 		return result
 	}

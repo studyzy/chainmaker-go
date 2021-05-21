@@ -8,10 +8,11 @@
 package types
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"regexp"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/utils"
 )
 
 var ERROR_NULL_SQL = errors.New("null sql")

@@ -172,10 +172,10 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 	// Build DAG from read-write table
 	snapshot.Seal()
 	timeCostA := time.Since(startTime)
-	block.Dag = snapshot.BuildDAG()
+	block.Dag = snapshot.BuildDAG(ts.chainConf.ChainConfig().Contract.EnableSqlSupport)
 	block.Txs = snapshot.GetTxTable()
 	timeCostB := time.Since(startTime)
-	ts.log.Infof("schedule tx batch end, success %d, time cost %v, time cost(dag include) %v ",
+	ts.log.Infof("schedule tx batch end, success %d, time used %v, time used (dag include) %v ",
 		len(block.Dag.Vertexes), timeCostA, timeCostB)
 	txRWSetTable := snapshot.GetTxRWSetTable()
 	for _, txRWSet := range txRWSetTable {
@@ -308,7 +308,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	<-ts.scheduleFinishC
 	snapshot.Seal()
 
-	ts.log.Infof("simulate with dag end, size %d, time cost %+v", len(block.Txs), time.Since(startTime))
+	ts.log.Infof("simulate with dag end, size %d, time used %+v", len(block.Txs), time.Since(startTime))
 
 	// Return the read and write set after the scheduled execution
 

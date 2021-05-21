@@ -178,7 +178,7 @@ func (s *SnapshotEvidence) Seal() {
 // change during the execution, then the execution result of the transaction is determined.
 // We need to ensure that when validating the DAG, there is no possibility that the execution of other
 // transactions will affect the dependence of the current transaction
-func (s *SnapshotEvidence) BuildDAG() *commonPb.DAG {
+func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 	if s.delegate == nil {
 		return nil
 	}
@@ -197,10 +197,22 @@ func (s *SnapshotEvidence) BuildDAG() *commonPb.DAG {
 	}
 
 	dag.Vertexes = make([]*commonPb.DAG_Neighbor, txCount)
-	for i := 0; i < txCount; i++ {
-		// build DAG based on directReach bitmap
-		dag.Vertexes[i] = &commonPb.DAG_Neighbor{
-			Neighbors: nil,
+
+	if isSql {
+		for i := 0; i < txCount; i++ {
+			dag.Vertexes[i] = &commonPb.DAG_Neighbor{
+				Neighbors: make([]int32, 0, 1),
+			}
+			if i != 0 {
+				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, int32(i-1))
+			}
+		}
+	} else {
+		for i := 0; i < txCount; i++ {
+			// build DAG based on directReach bitmap
+			dag.Vertexes[i] = &commonPb.DAG_Neighbor{
+				Neighbors: nil,
+			}
 		}
 	}
 	log.Debugf("build DAG for block %d finished", s.delegate.blockHeight)
