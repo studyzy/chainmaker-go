@@ -365,6 +365,9 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 }
 
 func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+		return fmt.Errorf(" Query transaction cannot be updated")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -410,6 +413,7 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
 	return nil
 }
+
 func (w *WacsiImpl) isManageContract(method string) bool {
 	return method == protocol.ContractInitMethod || method == protocol.ContractUpgradeMethod
 }
