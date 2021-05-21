@@ -64,7 +64,7 @@ func (m *ManagerEvidence) NotifyBlockCommitted(block *commonPb.Block) error {
 		}
 	}
 
-	log.Infof("delete snapshot %v at height %d, snapshots nums: %d", deleteFp, block.Header.BlockHeight, len(m.snapshots))
+	log.Infof("delete snapshot %v at height %d", deleteFp, block.Header.BlockHeight)
 	delete(m.snapshots, deleteFp)
 
 	// in case of switch-fork, gc too old snapshot
@@ -72,7 +72,6 @@ func (m *ManagerEvidence) NotifyBlockCommitted(block *commonPb.Block) error {
 		if snapshot == nil || snapshot.GetPreSnapshot() == nil {
 			continue
 		}
-		log.Infof("----------------111 begin delete -----height: %d", block.Header.BlockHeight)
 		preSnapshot := snapshot.GetPreSnapshot().(*SnapshotImpl)
 		if block.Header.BlockHeight-preSnapshot.GetBlockHeight() > 8 {
 			deleteOldFp := m.delegate.calcSnapshotFingerPrint(preSnapshot)
@@ -81,7 +80,5 @@ func (m *ManagerEvidence) NotifyBlockCommitted(block *commonPb.Block) error {
 			snapshot.SetPreSnapshot(nil)
 		}
 	}
-
-	log.Infof("delete snapshot end, height:%d", block.Header.BlockHeight)
 	return nil
 }
