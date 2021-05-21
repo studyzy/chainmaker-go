@@ -182,7 +182,7 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 
 	// 2. store the transaction
 	memTx := &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
-	if utils.IsConfigTx(tx) {
+	if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, pool.chainConf.ChainConfig().Contract.EnableSqlSupport) {
 		memTx.isConfigTxs = true
 	}
 	t := time.NewTimer(time.Second)
@@ -299,8 +299,9 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		commonTxIds = make([]string, 0, len(txs))
 		configTxIds = make([]string, 0, len(txs))
 	)
+	enableSqlDB := pool.chainConf.ChainConfig().Contract.EnableSqlSupport
 	for _, tx := range txs {
-		if utils.IsConfigTx(tx) {
+		if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, enableSqlDB) {
 			configTxs = append(configTxs, tx)
 			configTxIds = append(configTxIds, tx.Header.TxId)
 		} else {
@@ -330,8 +331,9 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	start := utils.CurrentTimeMillisSeconds()
 	configTxIds := make([]string, 0, 1)
 	commonTxIds := make([]string, 0, len(txs)/2)
+	enableSqlDB := pool.chainConf.ChainConfig().Contract.EnableSqlSupport
 	for _, tx := range txs {
-		if utils.IsConfigTx(tx) {
+		if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, enableSqlDB) {
 			configTxIds = append(configTxIds, tx.Header.TxId)
 		} else {
 			commonTxIds = append(commonTxIds, tx.Header.TxId)
@@ -373,7 +375,7 @@ func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockH
 		return
 	}
 	pool.log.Infof("add tx to pendingCache, (txs num:%d), blockHeight:%d", len(txs), blockHeight)
-	pool.queue.appendTxsToPendingCache(txs, blockHeight)
+	pool.queue.appendTxsToPendingCache(txs, blockHeight, pool.chainConf.ChainConfig().Contract.EnableSqlSupport)
 }
 
 // OnMessage Process messages from MsgBus
