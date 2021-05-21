@@ -337,6 +337,13 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+
+	// Archive
+	resourceNamePolicyMap.Store(common.ArchiveStoreContractFunction_ARCHIVE_BLOCK.String(),
+		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
+	resourceNamePolicyMap.Store(common.ArchiveStoreContractFunction_RESTORE_BLOCKS.String(),
+		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
+
 	return resourceNamePolicyMap
 }
 
