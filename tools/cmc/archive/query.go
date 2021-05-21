@@ -1,9 +1,7 @@
-/*
-Copyright (C) BABEC. All rights reserved.
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright (C) BABEC. All rights reserved.
+// Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
 
 package archive
 
@@ -29,7 +27,9 @@ func newQueryOffChainCMD() *cobra.Command {
 	}
 
 	cmd.AddCommand(newQueryTxOffChainCMD())
-	cmd.AddCommand(newQueryBlockOffChainCMD())
+	cmd.AddCommand(newQueryBlockByHeightOffChainCMD())
+	cmd.AddCommand(newQueryBlockByHashOffChainCMD())
+	cmd.AddCommand(newQueryBlockByTxIdOffChainCMD())
 	cmd.AddCommand(newQueryArchivedHeightOffChainCMD())
 
 	return cmd
@@ -120,9 +120,9 @@ func newQueryTxOffChainCMD() *cobra.Command {
 	return cmd
 }
 
-func newQueryBlockOffChainCMD() *cobra.Command {
+func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "block [height]",
+		Use:   "block-by-height [height]",
 		Short: "query off-chain block by height",
 		Long:  "query off-chain block by height",
 		Args:  cobra.ExactArgs(1),
@@ -138,6 +138,134 @@ func newQueryBlockOffChainCMD() *cobra.Command {
 			}
 
 			//// 2.Query block off-chain.
+			var output []byte
+			var bInfo model.BlockInfo
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+				} else {
+					return err
+				}
+			} else {
+				var blkWithRWSetOffChain store.BlockWithRWSet
+				err = blkWithRWSetOffChain.Unmarshal(bInfo.BlockWithRWSet)
+				if err != nil {
+					return err
+				}
+				output, err = json.MarshalIndent(blkWithRWSetOffChain, "", "    ")
+				if err != nil {
+					return err
+				}
+			}
+
+			fmt.Println(string(output))
+			return nil
+		},
+	}
+
+	attachFlags(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
+
+	cmd.MarkFlagRequired(flagSdkConfPath)
+	cmd.MarkFlagRequired(flagChainId)
+	cmd.MarkFlagRequired(flagDbType)
+	cmd.MarkFlagRequired(flagDbDest)
+
+	return cmd
+}
+
+func newQueryBlockByHashOffChainCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "block-by-hash [block hash in hex]",
+		Short: "query off-chain block by hash",
+		Long:  "query off-chain block by hash",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			//// 1.Chain Client
+			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			if err != nil {
+				return err
+			}
+			defer cc.Stop()
+
+			//// 2.Database
+			db, err := initDb()
+			if err != nil {
+				return err
+			}
+
+			//// 3.Query block off-chain.
+			height, err := cc.GetBlockHeightByHash(args[0])
+			if err != nil {
+				return err
+			}
+
+			var output []byte
+			var bInfo model.BlockInfo
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+				} else {
+					return err
+				}
+			} else {
+				var blkWithRWSetOffChain store.BlockWithRWSet
+				err = blkWithRWSetOffChain.Unmarshal(bInfo.BlockWithRWSet)
+				if err != nil {
+					return err
+				}
+				output, err = json.MarshalIndent(blkWithRWSetOffChain, "", "    ")
+				if err != nil {
+					return err
+				}
+			}
+
+			fmt.Println(string(output))
+			return nil
+		},
+	}
+
+	attachFlags(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
+
+	cmd.MarkFlagRequired(flagSdkConfPath)
+	cmd.MarkFlagRequired(flagChainId)
+	cmd.MarkFlagRequired(flagDbType)
+	cmd.MarkFlagRequired(flagDbDest)
+
+	return cmd
+}
+
+func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "block-by-txid [txid]",
+		Short: "query off-chain block by txid",
+		Long:  "query off-chain block by txid",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			//// 1.Chain Client
+			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			if err != nil {
+				return err
+			}
+			defer cc.Stop()
+
+			//// 2.Database
+			db, err := initDb()
+			if err != nil {
+				return err
+			}
+
+			//// 3.Query block off-chain.
+			height, err := cc.GetBlockHeightByTxId(args[0])
+			if err != nil {
+				return err
+			}
+
 			var output []byte
 			var bInfo model.BlockInfo
 			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
