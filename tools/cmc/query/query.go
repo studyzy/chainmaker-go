@@ -1,9 +1,7 @@
-/*
-Copyright (C) BABEC. All rights reserved.
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright (C) BABEC. All rights reserved.
+// Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
 
 package query
 
@@ -41,7 +39,9 @@ func NewQueryOnChainCMD() *cobra.Command {
 	}
 
 	cmd.AddCommand(newQueryTxOnChainCMD())
-	cmd.AddCommand(newQueryBlockOnChainCMD())
+	cmd.AddCommand(newQueryBlockByHeightOnChainCMD())
+	cmd.AddCommand(newQueryBlockByHashOnChainCMD())
+	cmd.AddCommand(newQueryBlockByTxIdOnChainCMD())
 	cmd.AddCommand(newQueryArchivedHeightOnChainCMD())
 
 	return cmd
