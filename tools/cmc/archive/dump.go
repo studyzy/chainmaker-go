@@ -90,7 +90,7 @@ func runDumpCMD() error {
 	}
 	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("Archiving (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Archiving Block (%d/%d)", b.Current(), barCount)
 	})
 	uiprogress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
