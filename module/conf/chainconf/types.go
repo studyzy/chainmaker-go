@@ -267,10 +267,8 @@ func validateParams(config *config.ChainConfig) error {
 
 // RegisterVerifier register a verifier.
 func RegisterVerifier(chainId string, consensusType consensus.ConsensusType, verifier protocol.Verifier) error {
-	log.Debugf("begin enter RegisterVerifier locker")
 	chainConfigVerifierLock.Lock()
 	defer chainConfigVerifierLock.Unlock()
-	log.Debugf("end enter RegisterVerifier locker")
 	initChainConsensusVerifier(chainId)
 	if _, ok := chainConsensusVerifier[chainId][consensusType]; ok {
 		return errors.New("consensusType verifier is exist")
