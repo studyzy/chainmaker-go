@@ -36,7 +36,11 @@ func splitAcctTxHistKey(key []byte) (accountId []byte, blockHeight uint64, txId 
 		return
 	}
 	accountId, err = hex.DecodeString(array[0])
-	height, err := strconv.Atoi(array[1])
+	if err != nil {
+		return
+	}
+	var height int
+	height, err = strconv.Atoi(array[1])
 	blockHeight = uint64(height)
 	txId = array[2]
 	return

@@ -18,7 +18,6 @@ import (
 )
 
 var dbPath = filepath.Join(os.TempDir(), "unit_test_db")
-var dbName = "db_test"
 var log = &test.GoLogger{}
 var dbConfig = &localconf.LevelDbConfig{
 	StorePath: dbPath,

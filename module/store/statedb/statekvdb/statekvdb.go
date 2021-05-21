@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	stateDBName            = ""
 	contractStoreSeparator = '#'
 	stateDBSavepointKey    = "stateDBSavePointKey"
 )
@@ -155,14 +154,14 @@ func (s *StateKvDB) get(key []byte) ([]byte, error) {
 	return s.DbHandle.Get(key)
 }
 
-func (s *StateKvDB) has(key []byte) (bool, error) {
-	//check has from cache
-	isDelete, exist := s.Cache.Has(string(key))
-	if exist {
-		return !isDelete, nil
-	}
-	return s.DbHandle.Has(key)
-}
+//func (s *StateKvDB) has(key []byte) (bool, error) {
+//	//check has from cache
+//	isDelete, exist := s.Cache.Has(string(key))
+//	if exist {
+//		return !isDelete, nil
+//	}
+//	return s.DbHandle.Has(key)
+//}
 
 func constructStateKey(contractName string, key []byte) []byte {
 	return append(append([]byte(contractName), contractStoreSeparator), key...)

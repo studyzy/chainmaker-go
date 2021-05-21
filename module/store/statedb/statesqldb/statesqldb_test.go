@@ -140,7 +140,8 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 var testChainId = "testchainid_1"
 var block0 = createConfigBlock(testChainId, 0)
 var block1 = createBlockAndRWSets(testChainId, 1, 10)
-var block2 = createBlockAndRWSets(testChainId, 2, 2)
+
+//var block2 = createBlockAndRWSets(testChainId, 2, 2)
 
 /*var block3, _ = createBlockAndRWSets(testChainId, 3, 2)
 var configBlock4 = createConfigBlock(testChainId, 4)

@@ -110,6 +110,9 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	}
 	//创世区块只执行一次，而且可能涉及到创建创建数据库，所以串行执行，而且无法启用事务
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(genesisBlock)
+	if err != nil {
+		return err
+	}
 	block := genesisBlock.Block
 	bs.writeLog(uint64(block.Header.BlockHeight), blockBytes)
 	//2.初始化BlockDB
@@ -117,25 +120,28 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write blockDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
-
+		return err
 	}
 	//3. 初始化StateDB
 	err = bs.stateDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write stateDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
+		return err
 	}
 	//4. 初始化历史数据库
 	err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
+		return err
 	}
 	//5. 初始化Result数据库
 	err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
+		return err
 	}
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
@@ -173,6 +179,11 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		blockWithRWSet.TxRWSets = append(blockWithRWSet.TxRWSets, consensusArgs.ConsensusData)
 	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write log, block[%d], err:%s",
+			block.Header.ChainId, block.Header.BlockHeight, err)
+		return err
+	}
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock
 
 	startCommitLogDB := utils.CurrentTimeMillisSeconds()

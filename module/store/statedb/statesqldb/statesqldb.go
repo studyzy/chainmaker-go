@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -216,6 +216,9 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
 	txKey := block.GetTxKey() + "_KV"
 	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
+	if err != nil {
+		return err
+	}
 	dbHandle := s.getContractDbHandle(contractId.ContractName)
 	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {

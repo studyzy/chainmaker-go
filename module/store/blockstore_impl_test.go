@@ -355,7 +355,7 @@ func init5Blocks(s protocol.BlockchainStore) {
 	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
 	s.PutBlock(b, rw)
-	b, rw = createBlockAndRWSets(chainId, 5, 1)
+	b, _ = createBlockAndRWSets(chainId, 5, 1)
 	s.PutBlock(b, txRWSets)
 }
 func init5ContractBlocks(s protocol.BlockchainStore) {
@@ -555,14 +555,15 @@ func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
 	height, err := impl.getLastSavepoint()
+	assert.Nil(t, err)
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.blockDB.GetLastSavepoint()
+	height, _ = impl.blockDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.stateDB.GetLastSavepoint()
+	height, _ = impl.stateDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.resultDB.GetLastSavepoint()
+	height, _ = impl.resultDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.historyDB.GetLastSavepoint()
+	height, _ = impl.historyDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
 }
 

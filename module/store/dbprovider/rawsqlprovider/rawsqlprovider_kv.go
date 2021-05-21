@@ -164,13 +164,6 @@ type kvIterator struct {
 	count     int
 }
 
-func newKVIterator() *kvIterator {
-	return &kvIterator{
-		keyValues: make([]*KeyValue, 0),
-		idx:       0,
-		count:     0,
-	}
-}
 func (kvi *kvIterator) append(kv *KeyValue) {
 	kvi.keyValues = append(kvi.keyValues, kv)
 	kvi.count++

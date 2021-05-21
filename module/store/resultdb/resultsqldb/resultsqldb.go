@@ -48,7 +48,7 @@ func (db *ResultSqlDB) initDb(dbName string) {
 	if err != nil {
 		panic("init state sql db table `save_points` fail")
 	}
-	db.db.Save(&types.SavePoint{0})
+	db.db.Save(&types.SavePoint{})
 }
 func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
 	return dbConfig.DbPrefix + "resultdb_" + chainId

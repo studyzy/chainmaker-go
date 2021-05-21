@@ -35,10 +35,10 @@ func splitKey(dbKey []byte) (contractName string, key []byte, blockHeight uint64
 	}
 	contractName = array[0]
 	key = []byte(array[1])
-	height, err := strconv.Atoi(array[2])
+	var height int
+	height, err = strconv.Atoi(array[2])
 	blockHeight = uint64(height)
 	txId = array[3]
-	err = nil
 	return
 }
 func (h *HistoryKvDB) GetHistoryForKey(contractName string, key []byte) (historydb.HistoryIterator, error) {

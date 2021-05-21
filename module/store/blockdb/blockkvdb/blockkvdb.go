@@ -31,10 +31,6 @@ const (
 	lastConfigBlockNumKey    = "lastConfigBlockNumKey"
 )
 
-const (
-	blockDBName = ""
-)
-
 // BlocKDvDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a key-value based data model
 type BlockKvDB struct {
@@ -370,7 +366,7 @@ func encodeBlockNum(blockNum uint64) []byte {
 	return proto.EncodeVarint(blockNum)
 }
 
-func decodeBlockNum(blockNumBytes []byte) uint64 {
-	blockNum, _ := proto.DecodeVarint(blockNumBytes)
-	return blockNum
-}
+//func decodeBlockNum(blockNumBytes []byte) uint64 {
+//	blockNum, _ := proto.DecodeVarint(blockNumBytes)
+//	return blockNum
+//}
