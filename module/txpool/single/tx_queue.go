@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 )
@@ -98,11 +97,10 @@ func (queue *txQueue) fetch(expectedCount int, blockHeight int64, validateTxTime
 	return nil
 }
 
-func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
-	if utils.IsConfigTx(txs[0]) && len(txs) == 1 {
+func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64, enableSqlDB bool) {
+	if (utils.IsConfigTx(txs[0]) || utils.IsManageContractAsConfigTx(txs[0], enableSqlDB)) && len(txs) == 1 {
 		queue.configTxQueue.appendTxsToPendingCache(txs, blockHeight)
-	}
-	if !utils.IsConfigTx(txs[0]) {
+	} else {
 		queue.commonTxQueue.appendTxsToPendingCache(txs, blockHeight)
 	}
 }

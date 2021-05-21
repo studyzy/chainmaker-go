@@ -33,8 +33,8 @@ type Wacsi interface {
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
 	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
 
-	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
-	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
+	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
+	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error)
 	ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
 	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error
 
@@ -227,7 +227,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	return contractEvent, nil
 }
 
-func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -238,9 +238,21 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	}
 
 	// execute query
-	rows, err := txSimContext.GetBlockchainStore().QueryMulti(contractName, sql)
-	if err != nil {
-		return fmt.Errorf("ctx query error, %s", err.Error())
+	var rows protocol.SqlRows
+	var err error
+	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+		rows, err = txSimContext.GetBlockchainStore().QueryMulti(contractName, sql)
+		if err != nil {
+			return fmt.Errorf("ctx query error, %s", err.Error())
+		}
+	} else {
+		txKey := common.GetTxKewWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+		transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
+		if err != nil {
+			return fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
+		}
+		changeCurrentDB(chainId, contractName, transaction)
+		rows, err = transaction.QueryMulti(sql)
 	}
 
 	index := atomic.AddInt32(&w.rowIndex, 1)
@@ -249,7 +261,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
+func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -262,11 +274,22 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 	// get len
 	if isLen {
 		// execute
-		row, err := txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
-		if err != nil {
-			return nil, fmt.Errorf("ctx query one error, %s", err.Error())
+		var row protocol.SqlRow
+		var err error
+		if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+			row, err = txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
+			if err != nil {
+				return nil, fmt.Errorf("ctx query one error, %s", err.Error())
+			}
+		} else {
+			txKey := common.GetTxKewWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+			transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
+			if err != nil {
+				return nil, fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
+			}
+			changeCurrentDB(chainId, contractName, transaction)
+			row, err = transaction.QuerySingle(sql)
 		}
-
 		var dataRow map[string]string
 		if row.IsEmpty() {
 			dataRow = make(map[string]string, 0)
@@ -366,6 +389,9 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 }
 
 func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+		return fmt.Errorf(" Query transaction cannot be updated")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -411,6 +437,7 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
 	return nil
 }
+
 func (w *WacsiImpl) isManageContract(method string) bool {
 	return method == protocol.ContractInitMethod || method == protocol.ContractUpgradeMethod
 }

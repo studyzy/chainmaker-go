@@ -172,7 +172,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
 			r.TxSimContext.Put(n, []byte(k), val.Bytes())
-			fmt.Println("n k val", n, k, val, val.String())
+			//fmt.Println("n k val", n, k, val, val.String())
 		}
 	}
 	if len(result.StorageCache.Destructs) > 0 {

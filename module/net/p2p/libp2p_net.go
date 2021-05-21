@@ -169,6 +169,7 @@ func (ln *LibP2pNet) InitPubsub(chainId string, maxMessageSize int) error {
 		if err = ps.Start(); err != nil {
 			return err
 		}
+		ln.reloadChainPubSubWhiteList(chainId)
 	}
 	return nil
 }
@@ -616,6 +617,30 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 					logger.Infof("[Net] add peer to chain, (pid: %s, chain id: %s)", pid, chainId)
 				}
 			}
+		}
+		ln.reloadChainPubSubWhiteList(chainId)
+	}
+}
+
+func (ln *LibP2pNet) reloadChainPubSubWhiteList(chainId string) {
+	if ln.startUp {
+		v, ok := ln.pubSubs.Load(chainId)
+		if ok {
+			ps := v.(*LibP2pPubSub)
+			for _, pidStr := range ln.libP2pHost.peerChainIdsRecorder.peerIdsOfChain(chainId) {
+				pid, err := peer.Decode(pidStr)
+				if err != nil {
+					logger.Errorf("[Net] parse peer id string to pid failed. %s", err.Error())
+					continue
+				}
+				err = ps.AddWhitelistPeer(pid)
+				if err != nil {
+					logger.Errorf("[Net] add pubsub white list failed. %s (pid: %s, chain id: %s)", err.Error(), pid, chainId)
+					continue
+				}
+				logger.Infof("[Net] add peer to chain pubsub white list, (pid: %s, chain id: %s)", pid, chainId)
+			}
+
 		}
 	}
 }

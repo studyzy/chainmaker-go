@@ -27,8 +27,11 @@ func (r *SqlDBRow) ScanColumns(dest ...interface{}) error {
 		defer r.close()
 	}
 	defer r.rows.Close()
-	return r.rows.Scan(dest...)
-
+	err := r.rows.Scan(dest...)
+	if err != nil {
+		return ROW_ERROR
+	}
+	return nil
 }
 
 //func (row *SqlDBRow) ScanObject(dest interface{}) error {
@@ -102,7 +105,7 @@ func convertRows2Map(rows *sql.Rows) (map[string]string, error) {
 
 	cols, err := rows.Columns()
 	if err != nil {
-		return nil, err
+		return nil, ROW_ERROR
 	}
 	values := make([]sql.RawBytes, len(cols))
 	scanArgs := make([]interface{}, len(values))
@@ -111,7 +114,7 @@ func convertRows2Map(rows *sql.Rows) (map[string]string, error) {
 	}
 	err = rows.Scan(scanArgs...)
 	if err != nil {
-		return nil, err
+		return nil, ROW_ERROR
 	}
 	var value string
 	resultC := map[string]string{}
