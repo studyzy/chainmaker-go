@@ -12,7 +12,7 @@ import (
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
-	err := wacsi.ExecuteQuery(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory)
+	err := wacsi.ExecuteQuery(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -31,7 +31,7 @@ func (s *WaciInstance) ExecuteQueryOne() int32 {
 }
 
 func (s *WaciInstance) executeQueryOneCore(isLen bool) int32 {
-	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.GetStateCache, isLen)
+	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.ChainId, isLen)
 	s.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
