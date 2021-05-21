@@ -10,8 +10,8 @@ import (
 func newQueryArchivedHeightOnChainCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "archived-height",
-		Short: "query archived height",
-		Long:  "query archived height",
+		Short: "query on-chain archived height",
+		Long:  "query on-chain archived height",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runQueryArchivedHeightOnChainCMD()
