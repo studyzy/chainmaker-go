@@ -84,7 +84,9 @@ func (sync *BlockChainSyncServer) Start() error {
 	sync.processor = NewRoutine("processor", processor.handler, processor.getServiceState, sync.log)
 
 	// 2. register msgs handler
-	sync.msgBus.Register(msgbus.BlockInfo, sync)
+	if sync.msgBus != nil {
+		sync.msgBus.Register(msgbus.BlockInfo, sync)
+	}
 	if err := sync.net.Subscribe(netPb.NetMsg_SYNC_BLOCK_MSG, sync.blockSyncMsgHandler); err != nil {
 		return err
 	}

@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"fmt"
+
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
-	"fmt"
 
 	"chainmaker.org/chainmaker-go/protocol"
 )
@@ -91,6 +92,54 @@ type MockStore struct {
 	blocks map[int64]*commonPb.Block
 }
 
+func (m MockStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	panic(errStr)
+}
+
+func (m MockStore) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	panic(errStr)
+}
+
+func (m MockStore) ExecDdlSql(contractName, sql string) error {
+	panic(errStr)
+}
+
+func (m MockStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic(errStr)
+}
+
+func (m MockStore) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic(errStr)
+}
+
+func (m MockStore) CommitDbTransaction(txName string) error {
+	panic(errStr)
+}
+
+func (m MockStore) RollbackDbTransaction(txName string) error {
+	panic(errStr)
+}
+
+func (m MockStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	panic(errStr)
+}
+
+func (m MockStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic(errStr)
+}
+
+func (m MockStore) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	panic(errStr)
+}
+
+func (m MockStore) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	panic(errStr)
+}
+
+func (m MockStore) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
+	panic(errStr)
+}
+
 func NewMockStore() *MockStore {
 	return &MockStore{blocks: make(map[int64]*commonPb.Block)}
 }
@@ -155,10 +204,6 @@ func (m MockStore) GetLastBlock() (*commonPb.Block, error) {
 }
 
 func (m MockStore) ReadObject(contractName string, key []byte) ([]byte, error) {
-	panic(errStr)
-}
-
-func (m MockStore) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
 	panic(errStr)
 }
 
