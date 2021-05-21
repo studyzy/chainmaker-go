@@ -122,7 +122,7 @@ func (cbi *ConsensusChainedBftImpl) processProposedBlock(block *common.Block) {
 	endConstruct := chainUtils.CurrentTimeMillisSeconds()
 	cbi.signAndBroadcast(proposal)
 	endSignAndBroad := chainUtils.CurrentTimeMillisSeconds()
-	cbi.logger.Debugf("time cost in processProposedBlock, constructProposalTime: %d, "+
+	cbi.logger.Debugf("time used in processProposedBlock, constructProposalTime: %d, "+
 		"signAndBroadTime: %d", endConstruct-beginConstruct, endSignAndBroad-endConstruct)
 }
 

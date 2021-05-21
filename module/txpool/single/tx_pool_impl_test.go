@@ -364,7 +364,7 @@ func TestPoolImplConcurrencyInvoke(t *testing.T) {
 				break Loop
 			}
 		}
-		imlPool.log.Debugf("time costs: fetch txs: %v ", fetchTimes)
+		imlPool.log.Debugf("time used: fetch txs: %v ", fetchTimes)
 	}()
 
 	// 3. Simulation validates the logic of the block
@@ -390,10 +390,10 @@ func TestPoolImplConcurrencyInvoke(t *testing.T) {
 				break Loop
 			}
 		}
-		imlPool.log.Debugf("time costs: get txs: %v ", getTimes)
+		imlPool.log.Debugf("time used: get txs: %v ", getTimes)
 	}()
 
 	wg.Wait()
 	addEnd := utils.CurrentTimeMillisSeconds()
-	imlPool.log.Debugf("time costs: add txs: %d, txPool state: %s\n", addEnd-addBegin, imlPool.queue.status())
+	imlPool.log.Debugf("time used: add txs: %d, txPool state: %s\n", addEnd-addBegin, imlPool.queue.status())
 }
