@@ -11,6 +11,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"time"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -192,7 +193,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
 		return err
 	}
 
-	go b.compactRange()
+	b.compactRange()
 
 	writeTime := utils.CurrentTimeMillisSeconds() - beforeWrite
 	b.Logger.Infof("shrink block from [%d] to [%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
@@ -603,11 +604,15 @@ func decodeBlockNum(blockNumBytes []byte) uint64 {
 
 func (b *BlockKvDB) compactRange() {
 	//trigger level compact
-	if err := b.DbHandle.CompactRange(util.Range{
-		Start: []byte(""),
-		Limit: []byte(""),
-	}); err != nil {
-		b.Logger.Warnf("kvdb level compact failed: %v", err)
+	for i:= 1; i <= 2; i ++ {
+		b.Logger.Infof("Do %dst time CompactRange", i)
+		if err := b.DbHandle.CompactRange(util.Range{
+			Start: nil,
+			Limit: nil,
+		}); err != nil {
+			b.Logger.Warnf("kvdb level compact failed: %v", err)
+		}
+		time.Sleep(2 * time.Second)
 	}
 }
 
