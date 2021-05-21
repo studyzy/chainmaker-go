@@ -25,6 +25,26 @@ type mockBlockChainStore struct {
 	txs map[string]*commonPb.Transaction
 }
 
+func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	panic(errStr)
+}
+
+func (m *mockBlockChainStore) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
+	panic(errStr)
+}
+
 func newMockBlockChainStore() *mockBlockChainStore {
 	return &mockBlockChainStore{txs: make(map[string]*commonPb.Transaction)}
 }
@@ -58,10 +78,6 @@ func (m *mockBlockChainStore) RollbackDbTransaction(txName string) error {
 }
 
 func (m *mockBlockChainStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
-	panic(errStr)
-}
-
-func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEventInfo []*commonPb.ContractEvent) error {
 	panic(errStr)
 }
 
@@ -110,10 +126,6 @@ func (m *mockBlockChainStore) GetLastBlock() (*commonPb.Block, error) {
 }
 
 func (m *mockBlockChainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
-	panic(errStr)
-}
-
-func (m *mockBlockChainStore) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
 	panic(errStr)
 }
 
