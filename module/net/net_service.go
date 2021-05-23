@@ -9,6 +9,7 @@ package net
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"sync"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -16,6 +17,7 @@ import (
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker-go/localconf"
 	rootLog "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
@@ -313,12 +315,30 @@ func (cw *ConfigWatcher) Watch(chainConfig *configPb.ChainConfig) error {
 	for _, root := range chainConfig.TrustRoots {
 		newCerts = append(newCerts, []byte(root.Root))
 	}
+	// load custom chain trust roots
+	for _, chainTrustRoots := range localconf.ChainMakerConfig.NetConfig.CustomChainTrustRoots {
+		if chainTrustRoots.ChainId != cw.ns.chainId {
+			continue
+		}
+		for _, roots := range chainTrustRoots.TrustRoots {
+			rootBytes, err := ioutil.ReadFile(roots.Root)
+			if err != nil {
+				cw.ns.logger.Errorf("[NetService] load custom chain trust roots failed, %s", err.Error())
+				return err
+			}
+			newCerts = append(newCerts, rootBytes)
+		}
+		cw.ns.logger.Infof("[NetService] load custom chain trust roots ok")
+	}
 	// 2.2 rebuild cert pool
 	if err := cw.ns.localNet.RefreshTrustRoots(cw.ns.chainId, newCerts); err != nil {
 		cw.ns.logger.Errorf("[NetService] refresh root certs pool failed ,%s", err.Error())
 		return err
 	}
 	cw.ns.logger.Infof("[NetService] refresh root certs pool ok")
+	// 2.3 verify trust root again
+	cw.ns.localNet.ReVerifyTrustRoots(cw.ns.chainId)
+	cw.ns.logger.Infof("[NetService] re-verify trust roots ok")
 	cw.ns.logger.Infof("[NetService] refresh chain config ok")
 	return nil
 }
