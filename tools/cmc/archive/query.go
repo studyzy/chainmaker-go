@@ -131,6 +131,9 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if height < 0 {
+				return errors.New("block height must >= 0")
+			}
 			//// 1.Database
 			db, err := initDb()
 			if err != nil {
@@ -140,7 +143,7 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 			//// 2.Query block off-chain.
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
@@ -204,7 +207,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
@@ -268,7 +271,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where(&model.BlockInfo{BlockHeight: height}).First(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
