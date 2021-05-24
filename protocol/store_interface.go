@@ -18,7 +18,7 @@ var (
 	ConsensusDBName = "consensus"
 )
 
-// Iterator allows a chaincode to iteratoe over a set of
+// Iterator allows a chaincode to iterator over a set of
 // kev/value pairs returned by range query.
 type Iterator interface {
 	Next() bool

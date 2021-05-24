@@ -104,7 +104,7 @@ type verifyStat struct {
 	sigCount    int
 }
 
-// VerifyBlock, to check if block is valid
+// VerifyBlock to check if block is valid
 func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.VerifyMode) (err error) {
 
 	startTick := utils.CurrentTimeMillisSeconds()

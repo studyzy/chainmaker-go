@@ -551,37 +551,38 @@ func (bs *BlockStoreImpl) recover() error {
 		logSavepoint, blockSavepoint, stateSavepoint, historySavepoint, contractEventSavepoint)
 	//recommit blockdb
 	if err := bs.recoverBlockDB(blockSavepoint, logSavepoint); err != nil {
-		return nil
+		return err
 	}
 
 	//recommit statedb
 	if err := bs.recoverStateDB(stateSavepoint, logSavepoint); err != nil {
-		return nil
+		return err
 	}
 
 	if !bs.storeConfig.DisableHistoryDB {
 		//recommit historydb
 		if err := bs.recoverHistoryDB(stateSavepoint, logSavepoint); err != nil {
-			return nil
+			return err
 		}
 	}
 	if !bs.storeConfig.DisableResultDB {
 		//recommit resultdb
 		if err := bs.recoverResultDB(resultSavepoint, logSavepoint); err != nil {
-			return nil
+			return err
 		}
 	}
 	//recommit contract event db
 	if !bs.storeConfig.DisableContractEventDB {
 		if err := bs.recoverContractEventDB(contractEventSavepoint, logSavepoint); err != nil {
-			return nil
+			return err
 		}
 	}
 	return nil
 }
 
 func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[BlockDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -596,7 +597,8 @@ func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64)
 }
 
 func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[StateDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -611,7 +613,8 @@ func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64)
 }
 
 func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[ContractEventDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -627,7 +630,8 @@ func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint
 }
 
 func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -648,7 +652,8 @@ func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint6
 }
 
 func (bs *BlockStoreImpl) recoverResultDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
