@@ -157,7 +157,7 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
 
     calHash := sha256.Sum256([]byte(code))
     if string(calHash[:]) != hash {
-        err := fmt.Errorf("%s, param hash[%v] != param contract_code hash[%v] in save contract interface", ErrParams.Error(), hash, calHash)
+        err := fmt.Errorf("%s, param hash[%v] != param contract_code hash[%v] in save contract interface", ErrParams.Error(), []byte(hash), calHash)
         r.log.Errorf(err.Error())
         return nil, err
     }
@@ -237,7 +237,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 
     calHash := sha256.Sum256(result.ContractCode)
     if string(calHash[:]) != hash {
-        err := fmt.Errorf("%s, param hash[%v] != contract code hash[%v] in get contract interface", ErrParams.Error(), hash, calHash)
+        err := fmt.Errorf("%s, param hash[%v] != contract code hash[%v] in get contract interface", ErrParams.Error(), []byte(hash), calHash)
         r.log.Errorf(err.Error())
         return nil, err
     }
