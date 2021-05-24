@@ -15,6 +15,7 @@ import (
 	"gorm.io/gorm"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
@@ -43,7 +44,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 			if err != nil {
 				return err
 			}
@@ -187,7 +188,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 			if err != nil {
 				return err
 			}
@@ -251,7 +252,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 			if err != nil {
 				return err
 			}

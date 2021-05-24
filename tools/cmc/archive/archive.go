@@ -15,7 +15,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
-	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
 var (
@@ -101,27 +100,6 @@ func attachFlags(cmd *cobra.Command, names []string) {
 			cmdFlags.AddFlag(flag)
 		}
 	}
-}
-
-// TODO: abstract this function, copied from client package
-// createChainClient create a chain client
-func createChainClient(keyFilePath, crtFilePath, chainId string) (*sdk.ChainClient, error) {
-	cc, err := sdk.NewChainClient(
-		sdk.WithConfPath(sdkConfPath),
-		sdk.WithChainClientChainId(chainId),
-		sdk.WithUserKeyFilePath(keyFilePath),
-		sdk.WithUserCrtFilePath(crtFilePath),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Enable certificate compression
-	err = cc.EnableCertHash()
-	if err != nil {
-		return nil, err
-	}
-	return cc, nil
 }
 
 // initDb Connecting database, migrate tables.

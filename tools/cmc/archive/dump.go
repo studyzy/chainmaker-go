@@ -16,6 +16,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
@@ -36,14 +37,11 @@ func newDumpCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagChainId, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
-		flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagDbType)
 	cmd.MarkFlagRequired(flagDbDest)
 	cmd.MarkFlagRequired(flagTargetBlockHeight)
@@ -56,7 +54,7 @@ func newDumpCMD() *cobra.Command {
 // runDumpCMD `dump` command implementation
 func runDumpCMD() error {
 	//// 1.Chain Client
-	cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 	if err != nil {
 		return err
 	}
@@ -172,7 +170,7 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 		blkHeightBytes := make([]byte, 8)
 		binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
 
-		sum, err := Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
+		sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
 		if err != nil {
 			return err
 		}
