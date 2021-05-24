@@ -236,7 +236,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 
     calHash := sha256.Sum256(result.ContractCode)
     if string(calHash[:]) != hash {
-        err := fmt.Errorf("%s, param[code_hash] != hash of contract code in get contract interface", ErrParams.Error())
+        err := fmt.Errorf("%s, param hash[%s] != contract code hash[%s] in get contract interface", ErrParams.Error(), hash, calHash[:])
         r.log.Errorf(err.Error())
         return nil, err
     }
