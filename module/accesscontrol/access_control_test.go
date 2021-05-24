@@ -8,6 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
 	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
@@ -16,13 +23,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
 )
 
 const (
@@ -792,7 +793,7 @@ var acsMap = map[string]ac{}
 
 func createTempDirWithCleanFunc() (string, func(), error) {
 	var td = filepath.Join("./temp")
-	err := os.MkdirAll(td, 0666)
+	err := os.MkdirAll(td, os.ModePerm)
 	if err != nil {
 		return "", nil, err
 	}
@@ -814,9 +815,9 @@ func constructAC(t *testing.T, info orgInfo) ac {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, info.orgId+".key")
 	localCertFile := filepath.Join(td, info.orgId+".crt")
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(info.consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(info.consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, info.orgId, nil, logger)
 	require.Nil(t, err)
@@ -855,9 +856,9 @@ func TestNewAccessControlWithChainConfig(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -874,9 +875,9 @@ func TestAccessControlGetHashAlg(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -894,9 +895,9 @@ func TestAccessControlValidateResourcePolicy(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -926,9 +927,9 @@ func TestAccessControlLookUpResourceIdByTxType(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -952,9 +953,9 @@ func TestAccessControlGetLocalOrgId(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -973,9 +974,9 @@ func TestAccessControlGetLocalSigningMember(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -996,9 +997,9 @@ func TestAccessControlNewMemberFromCertPem(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -1018,9 +1019,9 @@ func TestAccessControlNewMemberFromProto(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -1043,9 +1044,9 @@ func TestAccessControlNewSigningMemberFromCertFile(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
@@ -1065,9 +1066,9 @@ func TestAccessControlNewSigningMember(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
 	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
