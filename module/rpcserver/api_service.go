@@ -116,12 +116,16 @@ func (s *ApiService) validate(tx *commonPb.Transaction) (errCode commonErr.ErrCo
 		return
 	}
 
-	if err = utils.VerifyTxWithoutPayload(tx, tx.Header.ChainId, bc.GetAccessControl()); err != nil {
-		errCode = commonErr.ERR_CODE_TX_VERIFY_FAILED
-		errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Header.TxId,
-			hex.EncodeToString(tx.Header.Sender.MemberInfo))
-		s.log.Error(errMsg)
-		return
+	if tx.Header.TxType != commonPb.TxType_ARCHIVE_FULL_BLOCK && tx.Header.TxType != commonPb.TxType_RESTORE_FULL_BLOCK {
+		if err = utils.VerifyTxWithoutPayload(tx, tx.Header.ChainId, bc.GetAccessControl()); err != nil {
+			errCode = commonErr.ERR_CODE_TX_VERIFY_FAILED
+			errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Header.TxId,
+				hex.EncodeToString(tx.Header.Sender.MemberInfo))
+			s.log.Error(errMsg)
+			return
+		}
+	} else {
+		// TODO: !!!
 	}
 
 	return commonErr.ERR_CODE_OK, ""
@@ -153,6 +157,8 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		return s.dealQuery(tx, source)
 	case commonPb.TxType_INVOKE_USER_CONTRACT, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.TxType_MANAGE_USER_CONTRACT, commonPb.TxType_INVOKE_SYSTEM_CONTRACT:
 		return s.dealTransact(tx, source)
+	case commonPb.TxType_ARCHIVE_FULL_BLOCK, commonPb.TxType_RESTORE_FULL_BLOCK:
+		return s.doArchive(tx)
 	default:
 		return &commonPb.TxResponse{
 			Code:    commonPb.TxStatusCode_INTERNAL_ERROR,
@@ -230,6 +236,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
 		s.log.Error(errMsg)
 
+		// FIXME: 可以移除掉
 		resp.Code = txStatusCode
 		if txResult.Message == archive.ArchivedBlockError.Error() {
 			resp.Code = commonPb.TxStatusCode_ARCHIVED_BLOCK
