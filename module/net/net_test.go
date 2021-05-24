@@ -7,15 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -26,8 +27,8 @@ const (
 
 // TestNet 网络侧基本功能测试
 func TestNet(t *testing.T) {
-	var td = filepath.Join("./temp")
-	err := os.MkdirAll(td, 0666)
+	var td = filepath.Join(os.TempDir(), "temp")
+	err := os.MkdirAll(td, os.ModePerm)
 	require.Nil(t, err)
 	defer func() {
 		_ = os.RemoveAll(td)
