@@ -116,15 +116,18 @@ func (tv *TxValidator) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*
 		startOthersTicker := utils.CurrentTimeMillisSeconds()
 		rwSet := txRWSetMap[tx.Header.TxId]
 		result := txResultMap[tx.Header.TxId]
-		rwsetHash, err := utils.CalcRWSetHash(tv.hashType, rwSet)
+		rwSetHash, err := utils.CalcRWSetHash(tv.hashType, rwSet)
+		tv.log.DebugDynamic(func() string {
+			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+		})
 		if err != nil {
 			tv.log.Warnf("calc rwset hash error (tx:%s), %s", tx.Header.TxId, err)
 			return nil, nil, err
 		}
-		if err := tv.IsTxRWSetValid(block, tx, rwSet, result, rwsetHash); err != nil {
+		if err := tv.IsTxRWSetValid(block, tx, rwSet, result, rwSetHash); err != nil {
 			return nil, nil, err
 		}
-		result.RwSetHash = rwsetHash
+		result.RwSetHash = rwSetHash
 		// verify if rwset hash is equal
 		if err := tv.VerifyTxResult(tx, result); err != nil {
 			return nil, nil, err
@@ -236,7 +239,7 @@ func (tv *TxValidator) VerifyTxResult(tx *commonpb.Transaction, result *commonpb
 func (tv *TxValidator) IsTxRWSetValid(block *commonpb.Block, tx *commonpb.Transaction, rwSet *commonpb.TxRWSet, result *commonpb.Result,
 	rwsetHash []byte) error {
 	if rwSet == nil || result == nil {
-		return fmt.Errorf("txresult, rwset == nil (tx:%s)",
+		return fmt.Errorf("txresult, rwset == nil (height:%d,blockhash:%x,tx:%s)",
 			block.Header.BlockHeight, block.Header.BlockHash, tx.Header.TxId)
 	}
 	if !bytes.Equal(tx.Result.RwSetHash, rwsetHash) {
