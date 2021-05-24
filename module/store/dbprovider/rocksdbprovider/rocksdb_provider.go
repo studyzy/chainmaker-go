@@ -9,15 +9,16 @@ SPDX-License-Identifier: Apache-2.0
 package rocksdbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/tecbot/gorocksdb"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	logImpl "chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/pkg/errors"
+	"github.com/tecbot/gorocksdb"
 )
 
 const (

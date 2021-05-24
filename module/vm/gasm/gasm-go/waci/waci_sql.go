@@ -12,7 +12,7 @@ import (
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
-	err := wacsi.ExecuteQuery(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory)
+	err := wacsi.ExecuteQuery(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -22,18 +22,22 @@ func (s *WaciInstance) ExecuteQuery() int32 {
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQueryOneLen() int32 {
-	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.GetStateCache)
+	return s.executeQueryOneCore(true)
+}
+
+// ExecuteQuery execute query sql, return result set index
+func (s *WaciInstance) ExecuteQueryOne() int32 {
+	return s.executeQueryOneCore(false)
+}
+
+func (s *WaciInstance) executeQueryOneCore(isLen bool) int32 {
+	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.ChainId, isLen)
 	s.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
 	return protocol.ContractSdkSignalResultSuccess
-}
-
-// ExecuteQuery execute query sql, return result set index
-func (s *WaciInstance) ExecuteQueryOne() int32 {
-	return s.ExecuteQueryOneLen()
 }
 
 // ExecuteQuery execute query sql, return result set index
@@ -48,18 +52,22 @@ func (s *WaciInstance) RSHasNext() int32 {
 
 // RSNextLen get result set length from chain
 func (s *WaciInstance) RSNextLen() int32 {
-	data, err := wacsi.RSNext(s.RequestBody, s.TxSimContext, s.Vm.Memory, s.GetStateCache)
+	return s.rsNextCore(true)
+}
+
+// RSNextLen get one row from result set
+func (s *WaciInstance) RSNext() int32 {
+	return s.rsNextCore(false)
+}
+
+func (s *WaciInstance) rsNextCore(isLen bool) int32 {
+	data, err := wacsi.RSNext(s.RequestBody, s.TxSimContext, s.Vm.Memory, s.GetStateCache, isLen)
 	s.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
 	}
 	return protocol.ContractSdkSignalResultSuccess
-}
-
-// RSNextLen get one row from result set
-func (s *WaciInstance) RSNext() int32 {
-	return s.RSNextLen()
 }
 
 // RSClose close sql statement

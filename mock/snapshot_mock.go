@@ -102,7 +102,7 @@ func (mr *MockSnapshotMockRecorder) ApplyTxSimContext(arg0, arg1 interface{}) *g
 }
 
 // BuildDAG mocks base method.
-func (m *MockSnapshot) BuildDAG() *common.DAG {
+func (m *MockSnapshot) BuildDAG(isSql bool) *common.DAG {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BuildDAG")
 	ret0, _ := ret[0].(*common.DAG)

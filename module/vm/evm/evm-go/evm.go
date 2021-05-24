@@ -26,6 +26,7 @@ import (
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 	"chainmaker.org/chainmaker-go/protocol"
+	"errors"
 )
 
 type EVMResultCallback func(result ExecuteResult, err error)
@@ -107,6 +108,10 @@ func (e *EVM) executePreCompiled(addr uint64, input []byte) (ExecuteResult, erro
 	case 15:
 		input = []byte(e.context.Parameters[protocol.ContractCreatorPkParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractCreatorPkParam])
+	default:
+		if addr<1||addr>15{
+			return ExecuteResult{}, errors.New("not existed precompiled contract")
+		}
 	}
 	gasCost := contract.GasCost(input)
 	gasLeft := e.instructions.GetGasLeft()

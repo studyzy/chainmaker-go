@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"sync"
 
+	"errors"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -25,7 +27,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"errors"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
@@ -170,7 +171,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
 	if err == nil && consensusArgs.ConsensusData != nil {
 		bs.logger.Debugf("add consensusArgs ConsensusData!")
-		txRWSets = append(txRWSets, consensusArgs.ConsensusData)
+		blockWithRWSet.TxRWSets = append(blockWithRWSet.TxRWSets, consensusArgs.ConsensusData)
 	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock

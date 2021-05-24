@@ -8,17 +8,18 @@
 package leveldbprovider
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"os"
-	"path/filepath"
 )
 
 const defaultBloomFilterBits = 10

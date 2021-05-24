@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"time"
+
 	"chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	"time"
 )
 
 // StateInfo defines mysql orm model, used to create mysql table 'state_infos'

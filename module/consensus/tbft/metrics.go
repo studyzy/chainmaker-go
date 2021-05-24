@@ -110,6 +110,17 @@ func (h *heightMetrics) String() string {
 	return string(byt)
 }
 
+func (h *heightMetrics) roundString(num int32) string {
+	j := heightMetricsJson{
+		Height:             h.height,
+		EnterNewHeightTime: h.enterNewHeightTime.String(),
+		Rounds:             map[int32]*roundMetricsJson{},
+	}
+	j.Rounds[num] = h.rounds[num].roundMetricsJson()
+	byt, _ := json.Marshal(j)
+	return string(byt)
+}
+
 func (h *heightMetrics) SetEnterNewHeightTime() {
 	h.enterNewHeightTime = time.Now()
 }

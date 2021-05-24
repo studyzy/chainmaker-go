@@ -7,6 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package blocksqldb
 
 import (
+	"errors"
+	"runtime"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
@@ -14,9 +17,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
-	"errors"
 	"golang.org/x/sync/semaphore"
-	"runtime"
 )
 
 // BlockSqlDB provider a implementation of `blockdb.BlockDB`

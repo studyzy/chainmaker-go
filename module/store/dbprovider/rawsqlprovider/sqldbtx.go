@@ -8,20 +8,32 @@
 package rawsqlprovider
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/types"
 	"database/sql"
 	"sync"
+	"time"
+
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
 )
 
 type SqlDBTx struct {
 	sync.Mutex
-	name   string
-	dbType types.EngineType
-	db     *sql.Tx
-	logger protocol.Logger
+	name      string
+	dbType    types.EngineType
+	db        *sql.Tx
+	logger    protocol.Logger
+	startTime time.Time
 }
 
+func NewSqlDBTx(name string, dbType types.EngineType, db *sql.Tx, logger protocol.Logger) *SqlDBTx {
+	return &SqlDBTx{
+		name:      name,
+		dbType:    dbType,
+		db:        db,
+		logger:    logger,
+		startTime: time.Now(),
+	}
+}
 func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	if dbName == "" {
 		return nil
@@ -34,7 +46,11 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	sqlStr := "use " + dbName
 	p.logger.Debug("Exec sql:", sqlStr)
 	_, err := p.db.Exec(sqlStr)
-	return err
+	if err != nil {
+		p.logger.Warnf("change context db fail, error: %s", err)
+		return TRANSACTION_ERROR
+	}
+	return nil
 }
 func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	p.Lock()
@@ -45,11 +61,12 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	effect, err := p.db.Exec(update, args...)
 	if err != nil {
 		p.logger.Error(err)
-		return 0, err
+		return 0, SQL_ERROR
 	}
 	rowCount, err := effect.RowsAffected()
 	if err != nil {
-		return 0, err
+		p.logger.Error(err)
+		return 0, SQL_ERROR
 	}
 	if rowCount != 0 {
 		return rowCount, nil
@@ -58,9 +75,15 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	p.logger.Debug("Exec sql:", insert, args)
 	result, err := p.db.Exec(insert, args...)
 	if err != nil {
-		return 0, err
+		p.logger.Error(err)
+		return 0, SQL_ERROR
 	}
-	return result.RowsAffected()
+	rowCount, err = result.RowsAffected()
+	if err != nil {
+		p.logger.Error(err)
+		return 0, SQL_ERROR
+	}
+	return rowCount, nil
 }
 func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.Lock()
@@ -68,9 +91,15 @@ func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	tx, err := p.db.Exec(sql, values...)
 	p.logger.Debugf("db tx[%s] exec sql[%s],result:%v", p.name, sql, err)
 	if err != nil {
-		return 0, err
+		p.logger.Error(err)
+		return 0, SQL_ERROR
 	}
-	return tx.RowsAffected()
+	rowCount, err := tx.RowsAffected()
+	if err != nil {
+		p.logger.Error(err)
+		return 0, SQL_ERROR
+	}
+	return rowCount, nil
 }
 func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {
 	p.Lock()
@@ -79,7 +108,8 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 	p.logger.Debug("Query sql:", sql, values)
 	rows, err := db.Query(sql, values...)
 	if err != nil {
-		return nil, err
+		p.logger.Error(err)
+		return nil, SQL_QUERY_ERROR
 	}
 	if !rows.Next() {
 		return &emptyRow{}, nil
@@ -92,25 +122,30 @@ func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRow
 	p.logger.Debug("Query sql:", sql, values)
 	rows, err := p.db.Query(sql, values...)
 	if err != nil {
-		return nil, err
+		p.logger.Error(err)
+		return nil, SQL_QUERY_ERROR
 	}
 	return NewSqlDBRows(rows, nil), nil
 }
 func (p *SqlDBTx) Commit() error {
 	p.Lock()
 	defer p.Unlock()
-	result := p.db.Commit()
-	if result != nil {
-		return result
+	err := p.db.Commit()
+	p.logger.Debugf("commit tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
+	if err != nil {
+		p.logger.Error(err)
+		return TRANSACTION_ERROR
 	}
 	return nil
 }
 func (p *SqlDBTx) Rollback() error {
 	p.Lock()
 	defer p.Unlock()
-	result := p.db.Rollback()
-	if result != nil {
-		return result
+	err := p.db.Rollback()
+	p.logger.Warnf("rollback tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
+	if err != nil {
+		p.logger.Error(err)
+		return TRANSACTION_ERROR
 	}
 	return nil
 }
@@ -121,15 +156,23 @@ func (p *SqlDBTx) BeginDbSavePoint(spName string) error {
 	savePointName := getSavePointName(spName)
 	_, err := p.db.Exec("SAVEPOINT " + savePointName)
 	p.logger.Debugf("db tx[%s] new savepoint[%s],result:%s", p.name, savePointName, err)
-	return err
+	if err != nil {
+		p.logger.Error(err)
+		return TRANSACTION_ERROR
+	}
+	return nil
 }
 func (p *SqlDBTx) RollbackDbSavePoint(spName string) error {
 	p.Lock()
 	defer p.Unlock()
 	savePointName := getSavePointName(spName)
 	_, err := p.db.Exec("ROLLBACK TO SAVEPOINT " + savePointName)
-	p.logger.Debugf("db tx[%s] rollback savepoint[%s],result:%s", p.name, savePointName, err)
-	return err
+	p.logger.Infof("db tx[%s] rollback savepoint[%s],result:%s", p.name, savePointName, err)
+	if err != nil {
+		p.logger.Error(err)
+		return TRANSACTION_ERROR
+	}
+	return nil
 }
 func getSavePointName(spName string) string {
 	return "SP_" + spName

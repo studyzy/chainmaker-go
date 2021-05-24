@@ -7,14 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package statekvdb
 
 import (
+	"encoding/binary"
+	"errors"
+	"fmt"
+
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"encoding/binary"
-	"errors"
-	"fmt"
 )
 
 const (
