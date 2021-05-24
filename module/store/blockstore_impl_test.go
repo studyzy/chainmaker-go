@@ -165,6 +165,17 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 	return block
 }
 
+var txRequestData = generateData()
+
+func generateData() []byte {
+	size := 10240
+	data := make([]byte, 0, size)
+	for i:= 0; i < size; i ++ {
+		data = append(data, 'a')
+	}
+	return data
+}
+
 func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
@@ -183,6 +194,7 @@ func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 					OrgId: "org1",
 				},
 			},
+			//RequestPayload: txRequestData,
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{
@@ -752,8 +764,8 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	assert.Equal(t, nil, err)
 	defer s.Close()
 
-	totalHeight := 401000
-	archiveHeight1 := 6
+	totalHeight := 100000
+	archiveHeight1 := 95
 	archiveHeight2 := 20
 	archiveHeight3 := 26
 
@@ -761,19 +773,20 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	blocks := make([]*commonPb.Block, 0, totalHeight)
 	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
 	for i := 0; i < totalHeight; i ++ {
-		block, txRWSet := createBlockAndRWSets(chainId, int64(i), 100)
+		block, txRWSet := createBlockAndRWSets(chainId, int64(i), 10000)
 		err = s.PutBlock(block, txRWSet)
 		assert.Equal(t, nil, err)
 		blocks = append(blocks, block)
 		txRWSetMp[block.Header.BlockHeight] = txRWSet
 	}
 
-	verifyArchive(t, 0, blocks, txRWSetMp, s)
+	//verifyArchive(t, 0, blocks, txRWSetMp, s)
 
 	//archive block height1
 	err = s.ArchiveBlock(uint64(archiveHeight1))
 	assert.Equal(t, nil, err)
 	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
+	return
 
 	verifyArchive(t, 10, blocks, txRWSetMp, s)
 
