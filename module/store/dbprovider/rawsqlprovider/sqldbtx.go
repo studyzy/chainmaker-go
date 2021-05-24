@@ -142,7 +142,7 @@ func (p *SqlDBTx) Rollback() error {
 	p.Lock()
 	defer p.Unlock()
 	err := p.db.Rollback()
-	p.logger.Debugf("rollback tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
+	p.logger.Warnf("rollback tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if err != nil {
 		p.logger.Error(err)
 		return TRANSACTION_ERROR
@@ -167,7 +167,7 @@ func (p *SqlDBTx) RollbackDbSavePoint(spName string) error {
 	defer p.Unlock()
 	savePointName := getSavePointName(spName)
 	_, err := p.db.Exec("ROLLBACK TO SAVEPOINT " + savePointName)
-	p.logger.Debugf("db tx[%s] rollback savepoint[%s],result:%s", p.name, savePointName, err)
+	p.logger.Infof("db tx[%s] rollback savepoint[%s],result:%s", p.name, savePointName, err)
 	if err != nil {
 		p.logger.Error(err)
 		return TRANSACTION_ERROR

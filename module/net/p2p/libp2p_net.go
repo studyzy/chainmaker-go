@@ -639,6 +639,7 @@ func (ln *LibP2pNet) reloadChainPubSubWhiteList(chainId string) {
 					continue
 				}
 				logger.Infof("[Net] add peer to chain pubsub white list, (pid: %s, chain id: %s)", pid, chainId)
+				_ = ps.TryToReloadPeer(pid)
 			}
 
 		}
@@ -744,7 +745,7 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnAddC() {
 				if err != nil {
 					logger.Errorf("[Net] peer decode failed, %s", err.Error())
 				}
-				logger.Debugf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
+				logger.Infof("[Net] add to pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
 				err = pubsub.AddWhitelistPeer(pid)
 				if err != nil {
 					logger.Errorf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())

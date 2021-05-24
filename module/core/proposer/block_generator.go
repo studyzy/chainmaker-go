@@ -127,6 +127,9 @@ func (bp *BlockProposerImpl) finalizeBlock(block *commonpb.Block,
 			}
 		}
 		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+		bp.log.DebugDynamic(func() string {
+			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+		})
 		if err != nil {
 			return err
 		}
