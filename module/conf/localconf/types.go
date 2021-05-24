@@ -143,16 +143,16 @@ type StorageConfig struct {
 	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
 	//数据库模式：light只存区块头,normal存储区块头和交易以及生成的State,full存储了区块头、交易、状态和交易收据（读写集、日志等）
 	//Mode string `mapstructure:"mode"`
-	DisableHistoryDB        bool      `mapstructure:"disable_historydb"`
-	DisableResultDB         bool      `mapstructure:"disable_resultdb"`
-	DisableContractEventDB  bool      `mapstructure:"disable_contract_eventdb"`
-	LogDBWriteAsync         bool      `mapstructure:"logdb_write_async"`
-	BlockDbConfig           *DbConfig `mapstructure:"blockdb_config"`
-	StateDbConfig           *DbConfig `mapstructure:"statedb_config"`
-	HistoryDbConfig         *DbConfig `mapstructure:"historydb_config"`
-	ResultDbConfig          *DbConfig `mapstructure:"resultdb_config"`
-	ContractEventDbConfig   *DbConfig `mapstructure:"contract_eventdb_config"`
-	MinUnArchiveBlockHeight uint64    `mapstructure:"min_unarchive_block_height"`
+	DisableHistoryDB       bool      `mapstructure:"disable_historydb"`
+	DisableResultDB        bool      `mapstructure:"disable_resultdb"`
+	DisableContractEventDB bool      `mapstructure:"disable_contract_eventdb"`
+	LogDBWriteAsync        bool      `mapstructure:"logdb_write_async"`
+	BlockDbConfig          *DbConfig `mapstructure:"blockdb_config"`
+	StateDbConfig          *DbConfig `mapstructure:"statedb_config"`
+	HistoryDbConfig        *DbConfig `mapstructure:"historydb_config"`
+	ResultDbConfig         *DbConfig `mapstructure:"resultdb_config"`
+	ContractEventDbConfig  *DbConfig `mapstructure:"contract_eventdb_config"`
+	UnArchiveBlockHeight   uint64    `mapstructure:"unarchive_block_height"`
 }
 
 func (config *StorageConfig) setDefault() {

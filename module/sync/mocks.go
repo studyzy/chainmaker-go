@@ -91,8 +91,73 @@ type MockStore struct {
 	blocks map[int64]*commonPb.Block
 }
 
-func (m MockStore) GetArchivedPivot() uint64 {
+func (m MockStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	panic("implement me")
+}
+
+func (m MockStore) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	panic("implement me")
+}
+
+func (m MockStore) ExecDdlSql(contractName, sql string) error {
+	panic("implement me")
+}
+
+func (m MockStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic("implement me")
+}
+
+func (m MockStore) CommitDbTransaction(txName string) error {
+	panic("implement me")
+}
+
+func (m MockStore) RollbackDbTransaction(txName string) error {
+	panic("implement me")
+}
+
+func (m MockStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	panic("implement me")
+}
+
+func (m MockStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (m MockStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic("implement me")
+}
+
+func (m MockStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
+}
+
+func (m MockStore) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetArchivedPivot() uint64 {
+	return 3
+	//panic("implement me")
 }
 
 func (m MockStore) ArchiveBlock(archiveHeight uint64) error {
@@ -163,10 +228,6 @@ func (m MockStore) GetLastBlock() (*commonPb.Block, error) {
 }
 
 func (m MockStore) ReadObject(contractName string, key []byte) ([]byte, error) {
-	panic(errStr)
-}
-
-func (m MockStore) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
 	panic(errStr)
 }
 

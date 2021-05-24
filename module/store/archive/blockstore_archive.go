@@ -16,7 +16,8 @@ import (
 	logImpl "chainmaker.org/chainmaker-go/logger"
 )
 
-const defaultMinUnArchiveBlockSize = 300000 //about 7 days block produces
+const defaultMinUnArchiveBlockHeight = 10
+const defaultUnArchiveBlockHeight = 300000 //about 7 days block produces
 
 var (
 	HeightNotReachError          = errors.New("target archive height not reach")
@@ -32,25 +33,36 @@ var (
 // ArchiveMgr provide handle to archive instances
 type ArchiveMgr struct {
 	sync.RWMutex
-	archivedPivot           uint64
-	minUnArchiveBlockHeight uint64
-	blockDB                 blockdb.BlockDB
+	archivedPivot        uint64
+	unarchiveBlockHeight uint64
+	blockDB              blockdb.BlockDB
 
 	logger *logImpl.CMLogger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
 func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB) *ArchiveMgr {
-	minUnArchiveBlockHeight := localconf.ChainMakerConfig.StorageConfig.MinUnArchiveBlockHeight
-	if minUnArchiveBlockHeight <= 0 {
-		minUnArchiveBlockHeight = defaultMinUnArchiveBlockSize
-	}
 	archiveMgr := &ArchiveMgr{
-		archivedPivot:           0,
-		minUnArchiveBlockHeight: minUnArchiveBlockHeight,
-		blockDB:                 blockDB,
-		logger:                  logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		archivedPivot:        0,
+		blockDB:              blockDB,
+		logger:               logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
 	}
+
+	unarchiveBlockHeight := uint64(0)
+	cfgUnArchiveBlockHeight := localconf.ChainMakerConfig.StorageConfig.UnArchiveBlockHeight
+	if cfgUnArchiveBlockHeight == 0 {
+		unarchiveBlockHeight = defaultUnArchiveBlockHeight
+		archiveMgr.logger.Infof("config UnArchiveBlockHeight not set, will set to defaultMinUnArchiveBlockHeight:[%d]", defaultUnArchiveBlockHeight)
+	} else if cfgUnArchiveBlockHeight <= defaultMinUnArchiveBlockHeight {
+		unarchiveBlockHeight = defaultMinUnArchiveBlockHeight
+		archiveMgr.logger.Infof("config UnArchiveBlockHeight is too low:[%d], will set to defaultMinUnArchiveBlockHeight:[%d]",
+			cfgUnArchiveBlockHeight, defaultMinUnArchiveBlockHeight)
+	} else if cfgUnArchiveBlockHeight > defaultMinUnArchiveBlockHeight {
+		unarchiveBlockHeight = cfgUnArchiveBlockHeight
+	}
+
+	archiveMgr.unarchiveBlockHeight = unarchiveBlockHeight
+
 	return archiveMgr
 }
 
@@ -72,12 +84,12 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 		return err
 	}
 
-	//archiveHeight should between archivedPivot and lastHeight - minUnArchiveBlockHeight
-	if lastHeight <= mgr.minUnArchiveBlockHeight {
+	//archiveHeight should between archivedPivot and lastHeight - unarchiveBlockHeight
+	if lastHeight <= mgr.unarchiveBlockHeight {
 		return LastHeightTooLowError
 	} else if mgr.archivedPivot >= archiveHeight {
 		return HeightTooLowError
-	} else if archiveHeight >= lastHeight-mgr.minUnArchiveBlockHeight {
+	} else if archiveHeight >= lastHeight-mgr.unarchiveBlockHeight {
 		return HeightNotReachError
 	}
 
@@ -135,9 +147,9 @@ func (mgr *ArchiveMgr) GetArchivedPivot() (uint64, error) {
 	return mgr.blockDB.GetArchivedPivot()
 }
 
-// GetMinUnArchiveBlockSize return minUnArchiveBlockHeight
+// GetMinUnArchiveBlockSize return unarchiveBlockHeight
 func (mgr *ArchiveMgr) GetMinUnArchiveBlockSize() uint64 {
-	return mgr.minUnArchiveBlockHeight
+	return mgr.unarchiveBlockHeight
 }
 
 // SetArchivedPivot set restore block pivot

@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"chainmaker.org/chainmaker-go/common/msgbus"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
@@ -57,11 +58,12 @@ func getBlockResp(t *testing.T, height int64) []byte {
 
 func initTestSync(t *testing.T) protocol.SyncService {
 	mockNet := NewMockNet()
+	mockMsgBus := msgbus.NewMessageBus()
 	mockStore := NewMockStore()
 	mockVerify := NewMockVerifier()
 	mockLedger := NewMockLedgerCache(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 10}})
 	mockCommit := NewMockCommit(mockLedger)
-	sync := NewBlockChainSyncServer("chain1", mockNet, nil, mockStore, mockLedger, mockVerify, mockCommit)
+	sync := NewBlockChainSyncServer("chain1", mockNet, mockMsgBus, mockStore, mockLedger, mockVerify, mockCommit)
 	err := sync.Start()
 	require.NoError(t, err)
 

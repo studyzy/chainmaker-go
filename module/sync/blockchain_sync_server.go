@@ -179,8 +179,9 @@ func (sync *BlockChainSyncServer) handleNodeStatusReq(from string) error {
 	if height, err = sync.ledgerCache.CurrentHeight(); err != nil {
 		return err
 	}
+	archivedHeight := sync.blockChainStore.GetArchivedPivot()
 	sync.log.Debugf("receive node status request from node [%s]", from)
-	if bz, err = proto.Marshal(&syncPb.BlockHeightBCM{BlockHeight: height}); err != nil {
+	if bz, err = proto.Marshal(&syncPb.BlockHeightBCM{BlockHeight: height, ArchivedHeight: int64(archivedHeight)}); err != nil {
 		return err
 	}
 	return sync.sendMsg(syncPb.SyncMsg_NODE_STATUS_RESP, bz, from)
@@ -191,7 +192,7 @@ func (sync *BlockChainSyncServer) handleNodeStatusResp(syncMsg *syncPb.SyncMsg, 
 	if err := proto.Unmarshal(syncMsg.Payload, &msg); err != nil {
 		return err
 	}
-	sync.log.Debugf("receive node[%s] status, height [%d]", from, msg.BlockHeight)
+	sync.log.Debugf("receive node[%s] status, height [%d], archived height [%d]", from, msg.BlockHeight, msg.ArchivedHeight)
 	return sync.scheduler.addTask(NodeStatusMsg{msg: msg, from: from})
 }
 
