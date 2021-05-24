@@ -46,14 +46,15 @@ func TestAddBlock(t *testing.T) {
 	crypto := configpb.CryptoConfig{
 		Hash: "SHA256",
 	}
-	chainConfig := configpb.ChainConfig{Crypto: &crypto}
-	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(2)
+	contractConf := configpb.ContractConfig{EnableSqlSupport: false}
+	chainConfig := configpb.ChainConfig{Crypto: &crypto, Contract: &contractConf}
+	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(3)
 
 	block := createNewBlock(lastBlock)
 	proposedCache.SetProposedBlock(&block, rwSetMap, contractEventMap, true)
 
 	log.Infof("init block(%d,%s)", block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash))
-	blockchainStoreImpl.EXPECT().PutBlock(&block, make([]*commonpb.TxRWSet, 0), make([]*commonpb.ContractEvent, 0)).Return(nil)
+	blockchainStoreImpl.EXPECT().PutBlock(&block, make([]*commonpb.TxRWSet, 0)).Return(nil)
 	txPool.EXPECT().RetryAndRemoveTxs(gomock.Any(), gomock.Any()).Return()
 	snapshotManager.EXPECT().NotifyBlockCommitted(&block).Return(nil)
 	err := blockCommitterImpl.AddBlock(&block)
