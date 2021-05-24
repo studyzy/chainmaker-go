@@ -310,6 +310,7 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		}
 	}
 
+	pool.queue.deleteTxsInPending(txs)
 	if len(configTxs) > 0 {
 		pool.log.Debugw("retryTxBatch config txs", "count", len(configTxs), "txIds", configTxIds)
 		pool.queue.addTxsToConfigQueue(&mempoolTxs{txs: configTxs, source: protocol.INTERNAL})
@@ -318,7 +319,6 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		pool.log.Debugw("retryTxBatch common txs", "count", len(commonTxs), "txIds", commonTxIds)
 		pool.queue.addTxsToCommonQueue(&mempoolTxs{txs: commonTxs, source: protocol.INTERNAL})
 	}
-	pool.queue.deleteTxsInPending(txs)
 	pool.log.Infof("retryTxs elapse time: %d", utils.CurrentTimeMillisSeconds()-start)
 }
 

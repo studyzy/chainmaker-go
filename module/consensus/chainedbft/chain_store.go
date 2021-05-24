@@ -61,7 +61,7 @@ func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCo
 	}
 
 	logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
-	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, chainStore.getCommitQC(), 100)
+	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, chainStore.getCommitQC(), 20)
 	return chainStore, nil
 }
 
@@ -222,7 +222,7 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 
 func (cs *chainStore) pruneBlockStore(nextRootID string) error {
 	err := cs.blockPool.PruneBlock(nextRootID)
-	cs.logger.Debugf("chainStore blockPool content: %s", cs.blockPool.Details())
+	//cs.logger.Debugf("chainStore blockPool content: %s", cs.blockPool.Details())
 	return err
 }
 
@@ -271,6 +271,16 @@ func (cs *chainStore) getBlock(id string, height uint64) (*common.Block, error) 
 	}
 	block, err := cs.blockChainStore.GetBlock(int64(height))
 	return block, err
+}
+
+func (cs *chainStore) getBlockByHash(blkHash []byte) *common.Block {
+	if block := cs.blockPool.GetBlockByID(string(blkHash)); block != nil {
+		return block
+	}
+	if block, err := cs.blockChainStore.GetBlockByHash(blkHash); err == nil && block != nil {
+		return block
+	}
+	return nil
 }
 
 func (cs *chainStore) getCurrentQC() *chainedbftpb.QuorumCert {

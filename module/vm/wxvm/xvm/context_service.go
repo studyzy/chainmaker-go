@@ -1,10 +1,11 @@
 package xvm
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"

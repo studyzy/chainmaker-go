@@ -498,6 +498,7 @@ func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height int64, preHash []b
 	currentHeight := committedBlock.Header.BlockHeight
 	// proposing height must higher than current height
 	if currentHeight >= height {
+		bp.log.Errorf("current commit block height: %d, propose height: %d", currentHeight, height)
 		return false
 	}
 	if height == currentHeight+1 {
@@ -512,5 +513,8 @@ func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height int64, preHash []b
 	}
 	// if height not follows the last committed block, then check last proposed block
 	b, _ := bp.proposalCache.GetProposedBlockByHashAndHeight(preHash, height-1)
+	if b == nil {
+		bp.log.Errorf("not find preBlock: [%d:%x]", height-1, preHash)
+	}
 	return b != nil
 }

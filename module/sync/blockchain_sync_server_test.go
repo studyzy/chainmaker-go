@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"testing"
+	"time"
+
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
-	"testing"
-	"time"
 
 	"chainmaker.org/chainmaker-go/protocol"
 
@@ -133,9 +134,9 @@ func TestSyncMsg_NODE_STATUS_RESP(t *testing.T) {
 
 	bz := getNodeStatusResp(t, 120)
 	require.NoError(t, implSync.blockSyncMsgHandler("node2", bz, netPb.NetMsg_SYNC_BLOCK_MSG))
-	time.Sleep(3 * time.Millisecond)
+	time.Sleep(3 * time.Second)
 	require.EqualValues(t, "pendingRecvHeight: 11, peers num: 1, blockStates num: 110, "+
-		"pendingBlocks num: 0, receivedBlocks num: 0", implSync.scheduler.getServiceState())
+		"pendingBlocks num: 110, receivedBlocks num: 0", implSync.scheduler.getServiceState())
 	require.EqualValues(t, "pendingBlockHeight: 11, queue num: 0", implSync.processor.getServiceState())
 }
 
@@ -151,8 +152,8 @@ func TestSyncMsg_BLOCK_SYNC_RESP(t *testing.T) {
 	// 2. receive block
 	bz = getBlockResp(t, 11)
 	require.NoError(t, implSync.blockSyncMsgHandler("node2", bz, netPb.NetMsg_SYNC_BLOCK_MSG))
-	require.EqualValues(t, "pendingRecvHeight: 11, peers num: 1, blockStates num: 110, "+
-		"pendingBlocks num: 0, receivedBlocks num: 1", implSync.scheduler.getServiceState())
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 3)
+	require.EqualValues(t, "pendingRecvHeight: 12, peers num: 1, blockStates num: 109, "+
+		"pendingBlocks num: 109, receivedBlocks num: 0", implSync.scheduler.getServiceState())
 	require.EqualValues(t, "pendingBlockHeight: 12, queue num: 0", implSync.processor.getServiceState())
 }

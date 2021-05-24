@@ -18,7 +18,13 @@ import (
 
 func mockValidateInQueue(queue *txQueue, blockChainStore protocol.BlockchainStore) txValidateFunc {
 	return func(tx *commonPb.Transaction, source protocol.TxSource) error {
-		if queue.has(tx, source != protocol.INTERNAL) {
+		if _, ok := queue.pendingCache.Load(tx.Header.TxId); ok {
+			return fmt.Errorf("tx exist in txpool")
+		}
+		if queue.commonTxQueue.queue.Get(tx.Header.TxId) != nil {
+			return fmt.Errorf("tx exist in txpool")
+		}
+		if queue.configTxQueue.queue.Get(tx.Header.TxId) != nil {
 			return fmt.Errorf("tx exist in txpool")
 		}
 		if blockChainStore != nil {

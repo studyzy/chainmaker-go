@@ -524,7 +524,8 @@ func (bs *BlockStoreImpl) recover() error {
 }
 
 func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[BlockDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -539,7 +540,8 @@ func (bs *BlockStoreImpl) recoverBlockDB(currentHeight uint64, savePoint uint64)
 }
 
 func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[StateDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -553,7 +555,8 @@ func (bs *BlockStoreImpl) recoverStateDB(currentHeight uint64, savePoint uint64)
 	return nil
 }
 func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[ContractEventDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
@@ -568,7 +571,8 @@ func (bs *BlockStoreImpl) recoverContractEventDB(currentHeight uint64, savePoint
 	return nil
 }
 func (bs *BlockStoreImpl) recoverHistoryDB(currentHeight uint64, savePoint uint64) error {
-	for height := currentHeight + 1; height <= savePoint; height++ {
+	height := bs.calculateRecoverHeight(currentHeight, savePoint)
+	for ; height <= savePoint; height++ {
 		bs.logger.Infof("[HistoryDB] recommitting lost blocks, blockNum=%d, lastBlockNum=%d", height, savePoint)
 		blockWithSerializedInfo, err := bs.getBlockFromLog(height)
 		if err != nil {
