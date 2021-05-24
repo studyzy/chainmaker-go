@@ -1,3 +1,8 @@
+// Copyright (C) BABEC. All rights reserved.
+// Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package archive
 
 import (
@@ -9,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 
+	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
@@ -31,7 +37,7 @@ func newDumpCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagChainId, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
-		flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks,
+		flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -42,6 +48,7 @@ func newDumpCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagDbDest)
 	cmd.MarkFlagRequired(flagTargetBlockHeight)
 	cmd.MarkFlagRequired(flagBlocks)
+	cmd.MarkFlagRequired(flagSecretKey)
 
 	return cmd
 }
@@ -60,9 +67,9 @@ func runDumpCMD() error {
 	if err != nil {
 		return err
 	}
-	//locker := mysql.NewDbLocker(db, "cmc", mysql.DefaultLockLeaseAge)
-	//locker.Lock()
-	//defer locker.UnLock()
+	locker := mysql.NewDbLocker(db, "cmc", mysql.DefaultLockLeaseAge)
+	locker.Lock()
+	defer locker.UnLock()
 
 	//// 3.Validation, block height etc.
 	archivedBlkHeightOnChain, err := cc.GetArchivedBlockHeight()

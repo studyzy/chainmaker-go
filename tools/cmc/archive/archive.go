@@ -1,9 +1,7 @@
-/*
-Copyright (C) BABEC. All rights reserved.
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
+// Copyright (C) BABEC. All rights reserved.
+// Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
 
 package archive
 
@@ -93,6 +91,7 @@ func init() {
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
 	flags.Int64Var(&targetBlkHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
 	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
+	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
