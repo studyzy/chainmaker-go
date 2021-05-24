@@ -295,6 +295,9 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	if _, has := p.dbTxCache[txName]; has {
 		return nil, errors.New("transaction already exist, please use GetDbTransaction to get it or commit/rollback it")
 	}
+	if err := p.rollbackAllCacheDbTx(txName); err != nil {
+		return nil, err
+	}
 	tx, err := p.db.Begin()
 	if err != nil {
 		p.log.Error(err)
@@ -304,6 +307,18 @@ func (p *SqlDBHandle) BeginDbTransaction(txName string) (protocol.SqlDBTransacti
 	p.dbTxCache[txName] = sqltx
 	p.log.Debugf("start new db transaction[%s]", txName)
 	return sqltx, nil
+}
+func (p *SqlDBHandle) rollbackAllCacheDbTx(newTxName string) error {
+	for txKey, dbHandel := range p.dbTxCache {
+		p.log.Warnf("try to rollback dbtx[%s] since new db transaction[%s] start", txKey, newTxName)
+		err := dbHandel.Rollback()
+		if err != nil {
+			p.log.Errorf("rollback dbtx[%s] get an error:%s", txKey, err)
+			return err
+		}
+		delete(p.dbTxCache, txKey)
+	}
+	return nil
 }
 func (p *SqlDBHandle) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	p.Lock()
