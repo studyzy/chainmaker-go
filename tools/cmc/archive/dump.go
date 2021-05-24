@@ -101,6 +101,9 @@ func runDumpCMD() error {
 	})
 	uiprogress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
+	if archivedBlkHeightOnChain == 0 {
+		batchStartBlkHeight = 0
+	}
 	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks <= blocks; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
 			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err != nil {
