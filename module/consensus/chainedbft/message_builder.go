@@ -126,13 +126,16 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 }
 
 //constructBlockFetchMsg builds a block fetch request msg at given height
-func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(startHeight uint64, endBlockID []byte,
-	endHeight uint64, num uint64) *chainedbftpb.ConsensusPayload {
+func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(reqID uint64, endBlockID []byte,
+	endHeight uint64, num uint64, commitBlock, lockedBlock []byte) *chainedbftpb.ConsensusPayload {
 	msg := &chainedbft.BlockFetchMsg{
-		Height:    endHeight,
-		BlockID:   endBlockID,
-		NumBlocks: num,
-		AuthorIdx: cbi.selfIndexInEpoch,
+		ReqID:       reqID,
+		Height:      endHeight,
+		BlockID:     endBlockID,
+		NumBlocks:   num,
+		AuthorIdx:   cbi.selfIndexInEpoch,
+		CommitBlock: commitBlock,
+		LockedBLock: lockedBlock,
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_BlockFetchMessage,
@@ -143,8 +146,9 @@ func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(startHeight uint64, e
 
 //constructBlockFetchRespMsg builds a block fetch response with given params
 func (cbi *ConsensusChainedBftImpl) constructBlockFetchRespMsg(blocks []*chainedbft.BlockPair,
-	status chainedbft.BlockFetchStatus) *chainedbftpb.ConsensusPayload {
+	status chainedbft.BlockFetchStatus, respID uint64) *chainedbftpb.ConsensusPayload {
 	msg := &chainedbft.BlockFetchRespMsg{
+		RespID:    respID,
 		Status:    status,
 		Blocks:    blocks,
 		AuthorIdx: cbi.selfIndexInEpoch,

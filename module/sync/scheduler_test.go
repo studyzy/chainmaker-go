@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
 	"testing"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
 
 	"chainmaker.org/chainmaker-go/logger"
 
@@ -41,7 +42,7 @@ func TestNodeStatusMsg(t *testing.T) {
 	// 4. receive the peer status is old, and update the pendingRecvHeight
 	_, _ = sch.handler(NodeStatusMsg{from: "node1", msg: syncPb.BlockHeightBCM{BlockHeight: 151}})
 	require.EqualValues(t, 151, sch.peers["node1"])
-	require.EqualValues(t, 181, sch.pendingRecvHeight)
+	require.EqualValues(t, 101, sch.pendingRecvHeight)
 
 	// 5. malicious node to broadcast old status
 	_, _ = sch.handler(NodeStatusMsg{from: "node1", msg: syncPb.BlockHeightBCM{BlockHeight: 90}})
@@ -54,6 +55,11 @@ func TestNodeStatusMsg(t *testing.T) {
 	// 7. repeat receive same peer status
 	_, _ = sch.handler(NodeStatusMsg{from: "node2", msg: syncPb.BlockHeightBCM{BlockHeight: 100}})
 	require.EqualValues(t, 100, sch.peers["node2"])
+
+	// 8. fired dataDetection task
+	_, _ = sch.handler(DataDetection{})
+	require.EqualValues(t, 181, sch.pendingRecvHeight)
+
 }
 
 func TestNextHeightToReq(t *testing.T) {

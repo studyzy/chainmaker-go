@@ -37,7 +37,7 @@ func (pool *txPoolImpl) validate(tx *commonPb.Transaction, source protocol.TxSou
 	}
 
 	if pool.isTxExistInDB(tx) {
-		pool.log.Warnf("transaction exists in DB", "txId", tx.Header.GetTxId())
+		pool.log.Warnf("transaction exists in DB, txId: %s", tx.Header.GetTxId())
 		return commonErrors.ErrTxIdExistDB
 	}
 	return nil

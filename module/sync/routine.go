@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"fmt"
+	"sync/atomic"
+
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/logger"
-	"fmt"
 	"github.com/Workiva/go-datastructures/queue"
-	"sync/atomic"
 )
 
 type (
@@ -68,7 +69,6 @@ func (r *Routine) loop() {
 				r.log.Errorf("process msg failed, reason: %s", err.Error())
 			}
 		}
-
 		select {
 		case <-r.stop:
 			return

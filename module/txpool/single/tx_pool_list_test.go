@@ -22,7 +22,12 @@ import (
 
 func mockValidate(txList *txList, blockChainStore protocol.BlockchainStore) txValidateFunc {
 	return func(tx *commonPb.Transaction, source protocol.TxSource) error {
-		if txList.Has(tx.Header.TxId, source != protocol.INTERNAL) {
+		if source != protocol.INTERNAL {
+			if val, ok := txList.pendingCache.Load(tx.Header.TxId); ok && val != nil {
+				return fmt.Errorf("tx exist in txpool")
+			}
+		}
+		if txList.queue.Get(tx.Header.TxId) != nil {
 			return fmt.Errorf("tx exist in txpool")
 		}
 		if blockChainStore != nil {

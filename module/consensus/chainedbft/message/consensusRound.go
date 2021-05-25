@@ -68,11 +68,11 @@ func (cr *consensusRound) getProposal(round uint64) *chainedbft.ConsensusMsg {
 }
 
 //getVotes returns all of votes at given round
-func (cr *consensusRound) getVotes(round uint64) []*chainedbft.VoteData {
+func (cr *consensusRound) getQCVotes(round uint64) []*chainedbft.VoteData {
 	if _, ok := cr.msgs[round]; !ok {
 		return nil
 	}
-	return cr.msgs[round][chainedbft.MessageType_VoteMessage].getVotes()
+	return cr.msgs[round][chainedbft.MessageType_VoteMessage].getQCVotes()
 }
 
 //getLastValidRound returns the latest valid round at which enough votes received
@@ -88,7 +88,7 @@ func (cr *consensusRound) getLastValidRound() int64 {
 }
 
 //checkVoteDone checks whether self have received enough votes with given vote type at round
-func (cr *consensusRound) checkVoteDone(round uint64, voteType chainedbft.MessageType) ([]byte, bool, bool) {
+func (cr *consensusRound) checkVoteDone(round uint64, voteType chainedbft.MessageType) (blkID []byte, isNewView bool, done bool) {
 	if _, ok := cr.msgs[round]; !ok {
 		return nil, false, false
 	}

@@ -417,7 +417,7 @@ func (v *BlockVerifierImpl) cutBlocks(blocksToCut []*commonpb.Block, blockToKeep
 				// this transaction is kept, do NOT cut it.
 				continue
 			}
-			v.log.Infof("cut tx hash: %s", txToCut.Header.TxId)
+			v.log.Debugf("cut tx hash: %s", txToCut.Header.TxId)
 			cutTxs = append(cutTxs, txToCut)
 		}
 	}
