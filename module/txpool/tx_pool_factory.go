@@ -64,7 +64,7 @@ func (f TxPoolFactory) NewTxPool(log protocol.Logger, txPoolType PoolType, opts 
 		}
 		return batchPool, nil
 	}
-	return nil, fmt.Errorf("incorrect transaction pool type: %d", txPoolType)
+	return nil, fmt.Errorf("incorrect transaction pool type: %s", txPoolType)
 }
 
 // Apply add the extra configurations to the factory
