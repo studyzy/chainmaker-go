@@ -29,7 +29,7 @@ func (b *StateInfo) ScanObject(scan func(dest ...interface{}) error) error {
 }
 func (b *StateInfo) GetCreateTableSql(dbType string) string {
 	if dbType == "mysql" {
-		return "CREATE TABLE `state_infos` (`contract_name` varchar(128),`object_key` varbinary(128) DEFAULT '',`object_value` longblob,`block_height` bigint unsigned,`updated_at` datetime(3) NULL DEFAULT null,PRIMARY KEY (`contract_name`,`object_key`),INDEX idx_height (`block_height`))"
+		return "CREATE TABLE `state_infos` (`contract_name` varchar(128),`object_key` varbinary(128) DEFAULT '',`object_value` longblob,`block_height` bigint unsigned,`updated_at` datetime(3) NULL DEFAULT null,PRIMARY KEY (`contract_name`,`object_key`),INDEX idx_height (`block_height`)) default character set utf8"
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `state_infos` (`contract_name` text,`object_key` blob DEFAULT '',`object_value` longblob,`block_height` integer,`updated_at` datetime DEFAULT null,PRIMARY KEY (`contract_name`,`object_key`))"
 	}
