@@ -9,10 +9,12 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
 
 	"chainmaker.org/chainmaker-go/common/json"
 	"chainmaker.org/chainmaker-go/logger"
@@ -44,8 +46,8 @@ var blockEmptyError = errors.New(blockEmptyErrorTemplate)
 type ChainConf struct {
 	log *logger.CMLogger // logger
 
-	options                         // extends options
-	chainConfig *config.ChainConfig // chain config
+	options                       // extends options
+	ChainConf *config.ChainConfig // chain config
 
 	wLock      sync.RWMutex                             // lock
 	watchers   map[string]protocol.Watcher              // config watchers, all watcher will be invoked when chain config changing.
@@ -111,6 +113,7 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 		}
 		root.Root = string(entry)
 	}
+
 	// verify
 	_, err = VerifyChainConfig(chainConfig)
 	if err != nil {
@@ -123,6 +126,40 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 // Init chain config.
 func (c *ChainConf) Init() error {
 	return c.latestChainConfig()
+}
+
+// HandleCompatibility will make new version to be compatible with old version
+func HandleCompatibility(chainConfig *config.ChainConfig) error {
+	// For v1.1 to be compatible with v1.0, check consensus config
+	for _, orgConfig := range chainConfig.Consensus.Nodes {
+		if orgConfig.NodeId == nil {
+			orgConfig.NodeId = make([]string, 0)
+		}
+		if len(orgConfig.NodeId) == 0 {
+			for _, addr := range orgConfig.Address {
+				nid, err := helper.GetNodeUidFromAddr(addr)
+				if err != nil {
+					return err
+				}
+				orgConfig.NodeId = append(orgConfig.NodeId, nid)
+			}
+			orgConfig.Address = nil
+		}
+	}
+	// For v1.1 to be compatible with v1.0, check resource policies
+	for _, rp := range chainConfig.ResourcePolicies {
+		switch rp.ResourceName {
+		case common.ConfigFunction_NODE_ID_ADD.String():
+			rp.ResourceName = common.ConfigFunction_NODE_ID_ADD.String()
+		case common.ConfigFunction_NODE_ID_UPDATE.String():
+			rp.ResourceName = common.ConfigFunction_NODE_ID_UPDATE.String()
+		case common.ConfigFunction_NODE_ID_DELETE.String():
+			rp.ResourceName = common.ConfigFunction_NODE_ID_DELETE.String()
+		default:
+			continue
+		}
+	}
+	return nil
 }
 
 // latestChainConfig load latest chainConfig
@@ -140,8 +177,17 @@ func (c *ChainConf) latestChainConfig() error {
 	if err != nil {
 		return err
 	}
-	c.chainConfig = &chainConfig
 
+	err = HandleCompatibility(&chainConfig)
+	if err != nil {
+		return err
+	}
+
+	c.ChainConf = &chainConfig
+
+	if c.ChainConf.Contract == nil {
+		c.ChainConf.Contract = &config.ContractConfig{EnableSqlSupport: false} //by default disable sql support
+	}
 	return nil
 }
 
@@ -209,6 +255,11 @@ func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache
 	if err != nil {
 		return nil, err
 	}
+
+	err = HandleCompatibility(chainConfig)
+	if err != nil {
+		return nil, err
+	}
 	return chainConfig, nil
 }
 
@@ -240,23 +291,18 @@ func getBlockFromStore(blockchainStore protocol.BlockchainStore, blockHeight int
 
 // ChainConfig return the chain config.
 func (c *ChainConf) ChainConfig() *config.ChainConfig {
-	return c.chainConfig
+	return c.ChainConf
 }
 
 // GetConsensusNodeIdList return the node id list of all consensus node.
 func (c *ChainConf) GetConsensusNodeIdList() ([]string, error) {
 	chainNodeList := make([]string, 0)
-	for _, node := range c.chainConfig.Consensus.Nodes {
-		for _, addr := range node.Address {
-			nodeUid, err := utils.GetNodeUidFromAddr(addr)
-			if err != nil {
-				c.log.Errorw("get node uid from trustRoot addr err ", "err", err)
-				return nil, err
-			}
-			chainNodeList = append(chainNodeList, nodeUid)
+	for _, node := range c.ChainConf.Consensus.Nodes {
+		for _, nid := range node.NodeId {
+			chainNodeList = append(chainNodeList, nid)
 		}
 	}
-	c.log.Debugw("nodeList", "nodeList", chainNodeList)
+	c.log.Debugf("consensus node id list: %v", chainNodeList)
 	return chainNodeList, nil
 }
 
@@ -302,7 +348,7 @@ func (c *ChainConf) callbackChainConfigWatcher() error {
 	}
 	// callback the watcher by sync
 	for m, w := range c.watchers {
-		err = w.Watch(c.chainConfig)
+		err = w.Watch(c.ChainConf)
 		if err != nil {
 			c.log.Errorw("chainConf notify err", "module", m, "err", err)
 			return err

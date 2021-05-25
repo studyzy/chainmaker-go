@@ -325,6 +325,13 @@ func (p *PubSub) AddWhitelistPeer(pid peer.ID) {
 	p.whitelist.Add(pid)
 }
 
+// TryToReloadPeer try to reload peer as new peer.
+func (p *PubSub) TryToReloadPeer(pid peer.ID) {
+	go func() {
+		p.newPeers <- pid
+	}()
+}
+
 // RemoveWhitelistPeer remove a peer.ID to whitelist
 func (p *PubSub) RemoveWhitelistPeer(pid peer.ID) {
 	p.whitelistLock.Lock()

@@ -81,10 +81,10 @@ func (pro *processor) handleProcessBlockMsg() (queue.Item, error) {
 	)
 	pendingBlockHeight := pro.lastCommitBlockHeight() + 1
 	if info, exist = pro.queue[pendingBlockHeight]; !exist {
-		//pro.log.Debugf("block [%d] not find in queue [%v].", pendingBlockHeight, pro.queue)
+		pro.log.Debugf("block [%d] not find in queue.", pendingBlockHeight)
 		return nil, nil
 	}
-	if status = pro.validateAndCommitBlock(info.blk); status == ok {
+	if status = pro.validateAndCommitBlock(info.blk); status == ok || status == hasProcessed {
 		pro.hasCommitBlock++
 	}
 	delete(pro.queue, pendingBlockHeight)
@@ -104,6 +104,7 @@ func (pro *processor) handleDataDetection() {
 		}
 	}
 }
+
 func (pro *processor) lastCommitBlockHeight() int64 {
 	return pro.ledgerCache.GetLastCommittedBlock().Header.BlockHeight
 }

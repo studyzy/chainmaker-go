@@ -25,14 +25,15 @@ type nodeConfig struct {
 }
 
 type netConfig struct {
-	Provider                string       `mapstructure:"provider"`
-	ListenAddr              string       `mapstructure:"listen_addr"`
-	PeerStreamPoolSize      int          `mapstructure:"peer_stream_pool_size"`
-	MaxPeerCountAllow       int          `mapstructure:"max_peer_count_allow"`
-	PeerEliminationStrategy int          `mapstructure:"peer_elimination_strategy"`
-	Seeds                   []string     `mapstructure:"seeds"`
-	TLSConfig               netTlsConfig `mapstructure:"tls"`
-	BlackList               blackList    `mapstructure:"blacklist"`
+	Provider                string            `mapstructure:"provider"`
+	ListenAddr              string            `mapstructure:"listen_addr"`
+	PeerStreamPoolSize      int               `mapstructure:"peer_stream_pool_size"`
+	MaxPeerCountAllow       int               `mapstructure:"max_peer_count_allow"`
+	PeerEliminationStrategy int               `mapstructure:"peer_elimination_strategy"`
+	Seeds                   []string          `mapstructure:"seeds"`
+	TLSConfig               netTlsConfig      `mapstructure:"tls"`
+	BlackList               blackList         `mapstructure:"blacklist"`
+	CustomChainTrustRoots   []chainTrustRoots `mapstructure:"custom_chain_trust_roots"`
 }
 
 type netTlsConfig struct {
@@ -53,6 +54,16 @@ type pkcs11Config struct {
 type blackList struct {
 	Addresses []string `mapstructure:"addresses"`
 	NodeIds   []string `mapstructure:"node_ids"`
+}
+
+type chainTrustRoots struct {
+	ChainId    string       `mapstructure:"chain_id"`
+	TrustRoots []trustRoots `mapstructure:"trust_roots"`
+}
+
+type trustRoots struct {
+	OrgId string `mapstructure:"org_id"`
+	Root  string `mapstructure:"root"`
 }
 
 type rpcConfig struct {
@@ -114,7 +125,6 @@ type debugConfig struct {
 
 	IsModifyTxPayload    bool `mapstructure:"is_modify_tx_payload"`
 	IsExtreme            bool `mapstructure:"is_extreme"` //extreme fast mode
-	UseBatchTxPool       bool `mapstructure:"use_batch_tx_pool"`
 	UseNetMsgCompression bool `mapstructure:"use_net_msg_compression"`
 	IsNetInsecurity      bool `mapstructure:"is_net_insecurity"`
 }
@@ -124,28 +134,144 @@ type blockchainConfig struct {
 	Genesis string
 }
 
-type storageConfig struct {
-	Provider             string      `mapstructure:"provider"`
-	StorePath            string      `mapstructure:"store_path"`
-	WriteBufferSize      int         `mapstructure:"write_buffer_size"`
-	BloomFilterBits      int         `mapstructure:"bloom_filter_bits"`
-	DisableHistoryDB     bool        `mapstructure:"disable_historydb"`
-	LogDBWriteAsync      bool        `mapstructure:"logdb_write_async"`
-	BlockWriteBufferSize int         `mapstructure:"block_write_buffer_size"`
-	MysqlConfig          mysqlConfig `mapstructure:"mysql"`
+type StorageConfig struct {
+	//默认的Leveldb配置，如果每个DB有不同的设置，可以在自己的DB中进行设置
+	StorePath            string `mapstructure:"store_path"`
+	DbPrefix             string `mapstructure:"db_prefix"`
+	WriteBufferSize      int    `mapstructure:"write_buffer_size"`
+	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
+	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
+	//数据库模式：light只存区块头,normal存储区块头和交易以及生成的State,full存储了区块头、交易、状态和交易收据（读写集、日志等）
+	//Mode string `mapstructure:"mode"`
+	DisableHistoryDB       bool      `mapstructure:"disable_historydb"`
+	DisableResultDB        bool      `mapstructure:"disable_resultdb"`
+	DisableContractEventDB bool      `mapstructure:"disable_contract_eventdb"`
+	LogDBWriteAsync        bool      `mapstructure:"logdb_write_async"`
+	BlockDbConfig          *DbConfig `mapstructure:"blockdb_config"`
+	StateDbConfig          *DbConfig `mapstructure:"statedb_config"`
+	HistoryDbConfig        *DbConfig `mapstructure:"historydb_config"`
+	ResultDbConfig         *DbConfig `mapstructure:"resultdb_config"`
+	ContractEventDbConfig  *DbConfig `mapstructure:"contract_eventdb_config"`
 }
 
-type mysqlConfig struct {
+func (config *StorageConfig) setDefault() {
+	if config.DbPrefix != "" {
+		if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil && config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.BlockDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil && config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.StateDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil && config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.HistoryDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil && config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.ResultDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+		if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
+			config.ContractEventDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+		}
+	}
+}
+func (config *StorageConfig) GetBlockDbConfig() *DbConfig {
+	if config.BlockDbConfig == nil {
+		return config.GetDefaultDBConfig()
+	}
+	config.setDefault()
+	return config.BlockDbConfig
+}
+func (config *StorageConfig) GetStateDbConfig() *DbConfig {
+	if config.StateDbConfig == nil {
+		return config.GetDefaultDBConfig()
+	}
+	config.setDefault()
+	return config.StateDbConfig
+}
+func (config *StorageConfig) GetHistoryDbConfig() *DbConfig {
+	if config.HistoryDbConfig == nil {
+		return config.GetDefaultDBConfig()
+	}
+	config.setDefault()
+	return config.HistoryDbConfig
+}
+func (config *StorageConfig) GetResultDbConfig() *DbConfig {
+	if config.ResultDbConfig == nil {
+		return config.GetDefaultDBConfig()
+	}
+	config.setDefault()
+	return config.ResultDbConfig
+}
+func (config *StorageConfig) GetContractEventDbConfig() *DbConfig {
+	if config.ContractEventDbConfig == nil {
+		return config.GetDefaultDBConfig()
+	}
+	config.setDefault()
+	return config.ContractEventDbConfig
+}
+func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
+	lconfig := &LevelDbConfig{
+		StorePath:            config.StorePath,
+		WriteBufferSize:      config.WriteBufferSize,
+		BloomFilterBits:      config.BloomFilterBits,
+		BlockWriteBufferSize: config.WriteBufferSize,
+	}
+	return &DbConfig{
+		Provider:      "leveldb",
+		LevelDbConfig: lconfig,
+	}
+}
+
+//根据配置的DisableDB的情况，确定当前配置活跃的数据库数量
+func (config *StorageConfig) GetActiveDBCount() int {
+	count := 5
+	if config.DisableContractEventDB {
+		count--
+	}
+	if config.DisableHistoryDB {
+		count--
+	}
+	if config.DisableResultDB {
+		count--
+	}
+	return count
+}
+
+type DbConfig struct {
+	//leveldb,rocksdb,sql
+	Provider      string         `mapstructure:"provider"`
+	LevelDbConfig *LevelDbConfig `mapstructure:"leveldb_config"`
+	SqlDbConfig   *SqlDbConfig   `mapstructure:"sqldb_config"`
+}
+
+func (dbc *DbConfig) IsKVDB() bool {
+	return dbc.Provider == "leveldb" || dbc.Provider == "rocksdb"
+}
+func (dbc *DbConfig) IsSqlDB() bool {
+	return dbc.Provider == "sql" || dbc.Provider == "mysql" || dbc.Provider == "rdbms"
+}
+
+type LevelDbConfig struct {
+	StorePath            string `mapstructure:"store_path"`
+	WriteBufferSize      int    `mapstructure:"write_buffer_size"`
+	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
+	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
+}
+type SqlDbConfig struct {
+	//mysql, sqlite, postgres, sqlserver
+	SqlDbType       string `mapstructure:"sqldb_type"`
 	Dsn             string `mapstructure:"dsn"`
 	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
 	MaxOpenConns    int    `mapstructure:"max_open_conns"`
 	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
+	SqlLogMode      string `mapstructure:"sqllog_mode"`       //Silent,Error,Warn,Info
+	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
+	DbPrefix        string `mapstructure:"db_prefix"`
 }
 
 type txPoolConfig struct {
+	PoolType            string `mapstructure:"pool_type"`
 	MaxTxPoolSize       uint32 `mapstructure:"max_txpool_size"`
 	MaxConfigTxPoolSize uint32 `mapstructure:"max_config_txpool_size"`
-	FullNotifyAgainTime uint32 `mapstructure:"full_notify_again_time"`
 	IsMetrics           bool   `mapstructure:"is_metrics"`
 	Performance         bool   `mapstructure:"performance"`
 	BatchMaxSize        int    `mapstructure:"batch_max_size"`
@@ -206,6 +332,10 @@ type clientConfig struct {
 	HashType        string `mapstructure:"hash_type"`
 }
 
+type coreConfig struct {
+	Evidence bool `mapstructure:"evidence"`
+}
+
 // CMConfig - Local config struct
 type CMConfig struct {
 	LogConfig        logger.LogConfig   `mapstructure:"log"`
@@ -213,7 +343,7 @@ type CMConfig struct {
 	NodeConfig       nodeConfig         `mapstructure:"node"`
 	RpcConfig        rpcConfig          `mapstructure:"rpc"`
 	BlockChainConfig []blockchainConfig `mapstructure:"blockchain"`
-	StorageConfig    storageConfig      `mapstructure:"storage"`
+	StorageConfig    StorageConfig      `mapstructure:"storage"`
 	TxPoolConfig     txPoolConfig       `mapstructure:"txpool"`
 	SyncConfig       syncConfig         `mapstructure:"sync"`
 	SpvConfig        spvConfig          `mapstructure:"spv"`
@@ -222,6 +352,7 @@ type CMConfig struct {
 	DebugConfig   debugConfig   `mapstructure:"debug"`
 	PProfConfig   pprofConfig   `mapstructure:"pprof"`
 	MonitorConfig monitorConfig `mapstructure:"monitor"`
+	CoreConfig    coreConfig    `mapstructure:"core"`
 }
 
 // GetBlockChains - get blockchain config list

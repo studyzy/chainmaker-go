@@ -8,6 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"fmt"
+	"sync/atomic"
+	"time"
+
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -17,10 +21,7 @@ import (
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
 	"chainmaker.org/chainmaker-go/protocol"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"sync/atomic"
-	"time"
 )
 
 var _ protocol.SyncService = (*BlockChainSyncServer)(nil)
@@ -83,6 +84,9 @@ func (sync *BlockChainSyncServer) Start() error {
 	sync.processor = NewRoutine("processor", processor.handler, processor.getServiceState, sync.log)
 
 	// 2. register msgs handler
+	if sync.msgBus != nil {
+		sync.msgBus.Register(msgbus.BlockInfo, sync)
+	}
 	if err := sync.net.Subscribe(netPb.NetMsg_SYNC_BLOCK_MSG, sync.blockSyncMsgHandler); err != nil {
 		return err
 	}
@@ -303,7 +307,7 @@ func (sync *BlockChainSyncServer) loop() {
 		doNodeStatusTk = time.NewTicker(sync.conf.nodeStatusTick)
 		// task: trigger the check of the liveness with connected peers
 		doLivenessTk = time.NewTicker(sync.conf.livenessTick)
-		// task: trigger the check of the data in processor
+		// task: trigger the check of the data in processor and scheduler
 		doDataDetect = time.NewTicker(sync.conf.dataDetectionTick)
 	)
 	defer func() {
@@ -339,7 +343,10 @@ func (sync *BlockChainSyncServer) loop() {
 			}
 		case <-doDataDetect.C:
 			if err := sync.processor.addTask(DataDetection{}); err != nil {
-				sync.log.Errorf("add process data detection task to processor failed, reason: %s", err)
+				sync.log.Errorf("add data detection task to processor failed, reason: %s", err)
+			}
+			if err := sync.scheduler.addTask(DataDetection{}); err != nil {
+				sync.log.Errorf("add data detection task to scheduler failed, reason: %s", err)
 			}
 
 		// State processing results in state machine
@@ -357,14 +364,22 @@ func (sync *BlockChainSyncServer) loop() {
 
 func (sync *BlockChainSyncServer) validateAndCommitBlock(block *commonPb.Block) processedBlockStatus {
 	if blk := sync.ledgerCache.GetLastCommittedBlock(); blk != nil && blk.Header.BlockHeight >= block.Header.BlockHeight {
-		sync.log.Infof("there is the block in the store whose height is %d", block.Header.BlockHeight)
+		sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
 		return hasProcessed
 	}
 	if err := sync.blockVerifier.VerifyBlock(block, protocol.SYNC_VERIFY); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			return hasProcessed
+		}
 		sync.log.Errorf("fail to verify the block whose height is %d", block.Header.BlockHeight)
 		return validateFailed
 	}
 	if err := sync.blockCommitter.AddBlock(block); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			return hasProcessed
+		}
 		sync.log.Errorf("fail to commit the block whose height is %d", block.Header.BlockHeight)
 		return addErr
 	}
@@ -378,4 +393,40 @@ func (sync *BlockChainSyncServer) Stop() {
 	sync.scheduler.end()
 	sync.processor.end()
 	close(sync.close)
+}
+
+func (sync *BlockChainSyncServer) OnMessage(message *msgbus.Message) {
+	if message == nil || message.Payload == nil {
+		sync.log.Errorf("receive the empty message")
+		return
+	}
+	if message.Topic != msgbus.BlockInfo {
+		sync.log.Errorf("receive the message from the topic as %d, but not msgbus.BlockInfo ", message.Topic)
+		return
+	}
+	switch blockInfo := message.Payload.(type) {
+	case *commonPb.BlockInfo:
+		if blockInfo == nil || blockInfo.Block == nil {
+			sync.log.Errorf("error message BlockInfo = nil")
+			return
+		}
+		height := blockInfo.Block.Header.BlockHeight
+		if height%3 != 0 {
+			return
+		}
+		bz, err := proto.Marshal(&syncPb.BlockHeightBCM{BlockHeight: height})
+		if err != nil {
+			sync.log.Errorf("marshal BlockHeightBCM failed, reason: %s", err)
+			return
+		}
+		if err := sync.broadcastMsg(syncPb.SyncMsg_NODE_STATUS_RESP, bz); err != nil {
+			sync.log.Errorf("fail to broadcast the height as %d, and the error is %s", height, err)
+		}
+	default:
+		sync.log.Errorf("not support the message type as %T", message.Payload)
+	}
+}
+
+func (sync *BlockChainSyncServer) OnQuit() {
+	sync.log.Infof("stop to listen the msgbus.BlockInfo")
 }

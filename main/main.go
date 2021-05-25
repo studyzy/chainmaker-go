@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ./chainmaker start -c ../config/wx-org1/chainmaker.yml
 func main() {
 	mainCmd := &cobra.Command{Use: "chainmaker"}
 	mainCmd.AddCommand(cmd.StartCMD())

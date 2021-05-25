@@ -49,6 +49,9 @@ type Snapshot interface {
 	// Get Block Height for current snapshot
 	GetBlockHeight() int64
 
+	// Get Block Proposer for current snapshot
+	GetBlockProposer() []byte
+
 	// If the transaction can be added to the snapshot after the conflict dependency is established
 	// Even if an exception occurs when the transaction is handed over to the virtual machine module,
 	// the transaction is still packed into a block, but the read-write set of the transaction is left empty.
@@ -61,7 +64,7 @@ type Snapshot interface {
 	ApplyTxSimContext(TxSimContext, bool) (bool, int)
 
 	// Build a dag for all transactions that have resolved the read-write conflict dependencies
-	BuildDAG() *common.DAG
+	BuildDAG(isSql bool) *common.DAG
 
 	// If snapshot is sealed, no more transaction will be added into snapshot
 	IsSealed() bool

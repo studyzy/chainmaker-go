@@ -1,3 +1,5 @@
+// +build rocksdb
+
 /*
 Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
@@ -7,15 +9,15 @@ SPDX-License-Identifier: Apache-2.0
 package rocksdbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/tecbot/gorocksdb"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/pkg/errors"
+	"github.com/tecbot/gorocksdb"
 )
 
 const (
@@ -44,26 +46,26 @@ type Provider struct {
 	dbHandles map[string]*RocksDBHandle
 	mutex     sync.Mutex
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
-// NewBlockProvider construct a new Rocksdb Provider for block operation with given chainId
-func NewBlockProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreBlockDBDir)
-}
-
-// NewStateProvider construct a new Rocksdb Provider for state operation with given chainId
-func NewStateProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreStateDBDir)
-}
-
-// NewHistoryProvider construct a new Rocksdb Provider for history operation with given chainId
-func NewHistoryProvider(chainId string) *Provider {
-	return NewProvider(chainId, StoreHistoryDBDir)
-}
+//// NewBlockProvider construct a new Rocksdb Provider for block operation with given chainId
+//func NewBlockProvider(chainId string) *Provider {
+//	return NewProvider(chainId, StoreBlockDBDir)
+//}
+//
+//// NewStateProvider construct a new Rocksdb Provider for state operation with given chainId
+//func NewStateProvider(chainId string) *Provider {
+//	return NewProvider(chainId, StoreStateDBDir)
+//}
+//
+//// NewHistoryProvider construct a new Rocksdb Provider for history operation with given chainId
+//func NewHistoryProvider(chainId string) *Provider {
+//	return NewProvider(chainId, StoreHistoryDBDir)
+//}
 
 // NewProvider construct a new db Provider for given chainId and dir
-func NewProvider(chainId string, dbDir string) *Provider {
+func NewProvider(chainId string, dbDir string, logger protocol.Logger) *Provider {
 	dbOpts := NewRocksdbConfig()
 	writeBufferSize := localconf.ChainMakerConfig.StorageConfig.WriteBufferSize
 	if writeBufferSize > 0 {
@@ -90,7 +92,7 @@ func NewProvider(chainId string, dbDir string) *Provider {
 		dbHandles: make(map[string]*RocksDBHandle),
 		mutex:     sync.Mutex{},
 
-		logger: logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		logger: logger,
 	}
 }
 
@@ -100,14 +102,12 @@ func (p *Provider) GetDBHandle(dbName string) protocol.DBHandle {
 	defer p.mutex.Unlock()
 	dbHandle := p.dbHandles[dbName]
 	if dbHandle == nil {
-		wo := gorocksdb.NewDefaultWriteOptions()
-		wo.SetSync(true)
 		dbHandle = &RocksDBHandle{
 			dbName:       dbName,
 			db:           p.db,
 			readOptions:  gorocksdb.NewDefaultReadOptions(),
-			writeOptions: wo,
-			logger:       logImpl.GetLogger(logImpl.MODULE_STORAGE),
+			writeOptions: gorocksdb.NewDefaultWriteOptions(),
+			logger:       p.logger,
 		}
 		p.dbHandles[dbName] = dbHandle
 	}
@@ -157,10 +157,10 @@ func (config *RocksDBConfig) ToOptions() *gorocksdb.Options {
 	blockBasedTableOptions.SetFilterPolicy(bloomFilter)
 	blockBasedTableOptions.SetBlockCacheCompressed(gorocksdb.NewLRUCache(uint64(config.blockCache)))
 	blockBasedTableOptions.SetCacheIndexAndFilterBlocks(true)
-	//blockBasedTableOptions.SetIndexType(gorocksdb.KHashSearchIndexType)
+	blockBasedTableOptions.SetIndexType(gorocksdb.KHashSearchIndexType)
 
 	options.SetBlockBasedTableFactory(blockBasedTableOptions)
-	//options.SetPrefixExtractor(gorocksdb.NewFixedPrefixTransform(defaultFixedPrefixTransform))
+	options.SetPrefixExtractor(gorocksdb.NewFixedPrefixTransform(defaultFixedPrefixTransform))
 	options.SetAllowConcurrentMemtableWrites(false)
 	return options
 }
@@ -172,7 +172,7 @@ type RocksDBHandle struct {
 	writeOptions *gorocksdb.WriteOptions
 	db           *gorocksdb.DB
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // Get get value from rocksdb
@@ -188,7 +188,7 @@ func (dbHandle *RocksDBHandle) Get(key []byte) ([]byte, error) {
 // Put put key,value to rocksdb
 func (dbHandle *RocksDBHandle) Put(key []byte, value []byte) error {
 	if value == nil {
-		dbHandle.logger.Warn("writting rocksdbprovider key [%#v] with nil value", key)
+		dbHandle.logger.Warn("writing rocksdbprovider key [%#v] with nil value", key)
 		return errors.New("error writing rocksdbprovider with nil value")
 	}
 	err := dbHandle.db.Put(dbHandle.writeOptions, makeKeyWithDbName(dbHandle.dbName, key), value)
@@ -238,9 +238,7 @@ func (dbHandle *RocksDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool
 		}
 	}
 
-	wo := gorocksdb.NewDefaultWriteOptions()
-	wo.SetSync(sync)
-	if err := dbHandle.db.Write(wo, writeBatch); err != nil {
+	if err := dbHandle.db.Write(dbHandle.writeOptions, writeBatch); err != nil {
 		dbHandle.logger.Errorf("write batch to rocksdbprovider failed")
 		return errors.Wrap(err, "error writing batch to rocksdbprovider")
 	}
@@ -259,7 +257,10 @@ func (dbHandle *RocksDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Ite
 	// todo
 	panic("not yet implemented for rocksdb")
 }
-
+func (dbHandle *RocksDBHandle) Close() error {
+	dbHandle.db.Close()
+	return nil
+}
 func makeKeyWithDbName(column string, key []byte) []byte {
 	return append(append([]byte(column), DbNameKeySep...), key...)
 }

@@ -18,7 +18,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
@@ -168,7 +167,7 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	go consensus.serve()
 	consensus.msgbus.Register(msgbus.ProposedBlock, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
-	chainconf.RegisterVerifier(consensuspb.ConsensusType_RAFT, consensus)
+	chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_RAFT, consensus)
 
 	return nil
 }
@@ -477,13 +476,8 @@ func (consensus *ConsensusRaftImpl) correlateIdAndNetId() {
 	var id uint64 = 1
 	nodes := consensus.chainConf.ChainConfig().Consensus.Nodes
 	for _, node := range nodes {
-		addr := node.Address[0]
-		uid, err := helper.GetNodeUidFromAddr(addr)
-		if err != nil {
-			consensus.logger.Errorf("convert address to uid error: %s", err)
-			continue
-		}
-		consensus.idToNetId[id] = uid
+		nid := node.NodeId[0]
+		consensus.idToNetId[id] = nid
 		id += 1
 	}
 	consensus.logger.Infof("raft id to netid: %v", consensus.idToNetId)

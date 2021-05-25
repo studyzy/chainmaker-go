@@ -37,10 +37,28 @@ node:
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
+#  peer_stream_pool_size: 100
+#  max_peer_count_allow: 20
+#  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
+  seeds:
+
   tls:
     enabled: true
     priv_key_file: ../config/{org_path}/certs/{net_cert_path}.key
     cert_file:     ../config/{org_path}/certs/{net_cert_path}.crt
+#  blacklist:
+#    addresses:
+#      - "127.0.0.1:11305"
+#      - "192.168.1.8"
+#    node_ids:
+#      - "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+#      - "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+#  custom_chain_trust_roots:
+#    - chain_id: "chain1"
+#      trust_roots:
+#        - org_id: "{org_id}"
+#          root: "../config/{org_path}/certs/ca/{org_id}/ca.crt"
+
 
 txpool:
   max_txpool_size: 50000 # 普通交易池上限
@@ -86,5 +104,28 @@ pprof:
   port: {pprof_port}
 
 storage:
-  provider: LevelDB
-  store_path: ../data/ledgerData
+  store_path: ../data/org1/ledgerData1
+  blockdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org1/blocks
+  statedb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org1/state
+  historydb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org1/history
+  resultdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org1/result
+  disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
+  contract_eventdb_config:
+    provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
+    sqldb_config:
+      sqldb_type: mysql           #contract event db 只支持mysql
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+core:
+  evidence: false

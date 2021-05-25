@@ -19,7 +19,7 @@ type TxScheduler interface {
 	// schedule a transaction batch into a block with DAG
 	// Return result(and read write set) of each transaction, no matter it is executed OK, or fail, or timeout.
 	// For cross-contracts invoke, result(and read write set) include all contract relative.
-	Schedule(block *common.Block, txBatch []*common.Transaction, snapshot Snapshot) (map[string]*common.TxRWSet, error)
+	Schedule(block *common.Block, txBatch []*common.Transaction, snapshot Snapshot) (map[string]*common.TxRWSet, map[string][]*common.ContractEvent, error)
 	// Run VM with a given DAG, and return results.
 	SimulateWithDag(block *common.Block, snapshot Snapshot) (map[string]*common.TxRWSet, map[string]*common.Result, error)
 	// To halt scheduler and release VM resources.
@@ -32,10 +32,12 @@ type TxSimContext interface {
 	Get(name string, key []byte) ([]byte, error)
 	// Put key into cache
 	Put(name string, key []byte, value []byte) error
+	// PutRecord put sql state into cache
+	PutRecord(contractName string, value []byte)
 	// Delete key from cache
 	Del(name string, key []byte) error
-	// TODO Query a series of keys from the database, not yet implemented
-	Select(name string, startKey []byte, limit []byte) (Iterator, error)
+	// TODO Query a series of keys from the database, not yet implemented [start, limit)
+	Select(name string, startKey []byte, limit []byte) (StateIterator, error)
 	// Cross contract call, return (contract result, gas used)
 	CallContract(contractId *common.ContractId, method string, byteCode []byte,
 		parameter map[string]string, gasUsed uint64, refTxType common.TxType) (*common.ContractResult, common.TxStatusCode)
@@ -45,6 +47,8 @@ type TxSimContext interface {
 	GetTx() *common.Transaction
 	// Get related transaction
 	GetBlockHeight() int64
+	// Get current block proposer
+	GetBlockProposer() []byte
 	// Get the tx result
 	GetTxResult() *common.Result
 	// Set the tx result
@@ -67,4 +71,6 @@ type TxSimContext interface {
 	SetTxExecSeq(int)
 	// Get cross contract call deep
 	GetDepth() int
+	SetStateSqlHandle(int32, SqlRows)
+	GetStateSqlHandle(int32) (SqlRows, bool)
 }

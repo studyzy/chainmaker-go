@@ -10,11 +10,13 @@ package core
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/committer"
+	"chainmaker.org/chainmaker-go/core/helper"
 	"chainmaker.org/chainmaker-go/core/proposer"
 	"chainmaker.org/chainmaker-go/core/scheduler"
 	"chainmaker.org/chainmaker-go/core/verifier"
-	"chainmaker.org/chainmaker-go/logger"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -27,12 +29,12 @@ type CoreEngine struct {
 	chainId   string             // chainId, identity of a chain
 	chainConf protocol.ChainConf // chain config
 
+	msgBus         msgbus.MessageBus       // message bus, transfer messages with other modules
 	blockProposer  protocol.BlockProposer  // block proposer, to generate new block when node is proposer
 	BlockVerifier  protocol.BlockVerifier  // block verifier, to verify block that proposer generated
 	BlockCommitter protocol.BlockCommitter // block committer, to commit block to store after consensus
 	txScheduler    protocol.TxScheduler    // transaction scheduler, schedule transactions run in vm
-
-	msgBus msgbus.MessageBus // message bus, transfer messages with other modules
+	HotStuffHelper protocol.HotStuffHelper
 
 	txPool          protocol.TxPool          // transaction pool, cache transactions to be pack in block
 	vmMgr           protocol.VmManager       // vm manager
@@ -41,7 +43,7 @@ type CoreEngine struct {
 
 	quitC         <-chan interface{}          // quit chan, reserved for stop core engine running
 	proposedCache protocol.ProposalCache      // cache proposed block and proposal status
-	log           *logger.CMLogger            // logger
+	log           protocol.Logger             // logger
 	subscriber    *subscriber.EventSubscriber // block subsriber
 }
 
@@ -54,12 +56,16 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		blockchainStore: cf.blockchainStore,
 		snapshotManager: cf.snapshotManager,
 		proposedCache:   cf.proposalCache,
-		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf.ChainConfig().ChainId),
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, cf.chainId),
+		chainConf:       cf.chainConf,
+		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf),
+		log:             cf.log,
 	}
 	core.quitC = make(<-chan interface{})
 
 	var err error
+	if core.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_HOTSTUFF {
+		core.HotStuffHelper = helper.NewHotStuffHelper(cf.txPool, cf.chainConf, cf.proposalCache)
+	}
 
 	// new a bock proposer
 	proposerConfig := proposer.BlockProposerConfig{
@@ -75,7 +81,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		AC:              cf.ac,
 		BlockchainStore: cf.blockchainStore,
 	}
-	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig)
+	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig, cf.log)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +99,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		AC:              cf.ac,
 		TxPool:          core.txPool,
 	}
-	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig)
+	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.log)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +117,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		Subscriber:      cf.subscriber,
 		Verifier:        core.BlockVerifier,
 	}
-	core.BlockCommitter, err = committer.NewBlockCommitter(committerConfig)
+	core.BlockCommitter, err = committer.NewBlockCommitter(committerConfig, cf.log)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +161,9 @@ func (c *CoreEngine) OnMessage(message *msgbus.Message) {
 			c.blockProposer.OnReceiveTxPoolSignal(signal)
 		}
 	case msgbus.BuildProposal:
-
+		if proposal, ok := message.Payload.(*chainedbft.BuildProposal); ok {
+			c.blockProposer.OnReceiveChainedBFTProposal(proposal)
+		}
 	}
 }
 

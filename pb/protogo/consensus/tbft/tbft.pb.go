@@ -7,7 +7,7 @@ import (
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
 	fmt "fmt"
 	proto "github.com/gogo/protobuf/proto"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	types "github.com/gogo/protobuf/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -904,10 +904,10 @@ func (m *GossipState) GetRoundVoteSet() *RoundVoteSet {
 
 // TimeoutInfo represents the timeout event
 type TimeoutInfo struct {
-	Duration *durationpb.Duration `protobuf:"bytes,1,opt,name=duration,proto3" json:"duration,omitempty"`
-	Height   int64                `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	Round    int32                `protobuf:"varint,3,opt,name=round,proto3" json:"round,omitempty"`
-	Step     Step                 `protobuf:"varint,4,opt,name=step,proto3,enum=tbft.Step" json:"step,omitempty"`
+	Duration *types.Duration `protobuf:"bytes,1,opt,name=duration,proto3" json:"duration,omitempty"`
+	Height   int64           `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Round    int32           `protobuf:"varint,3,opt,name=round,proto3" json:"round,omitempty"`
+	Step     Step            `protobuf:"varint,4,opt,name=step,proto3,enum=tbft.Step" json:"step,omitempty"`
 }
 
 func (m *TimeoutInfo) Reset()         { *m = TimeoutInfo{} }
@@ -943,7 +943,7 @@ func (m *TimeoutInfo) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_TimeoutInfo proto.InternalMessageInfo
 
-func (m *TimeoutInfo) GetDuration() *durationpb.Duration {
+func (m *TimeoutInfo) GetDuration() *types.Duration {
 	if m != nil {
 		return m.Duration
 	}
@@ -4438,7 +4438,7 @@ func (m *TimeoutInfo) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Duration == nil {
-				m.Duration = &durationpb.Duration{}
+				m.Duration = &types.Duration{}
 			}
 			if err := m.Duration.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

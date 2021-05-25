@@ -83,11 +83,11 @@ func nodeOrgAdd() error {
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   orgId,
+		Key:   "org_id",
 		Value: nodeOrgOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
+		Key:   "node_ids",
 		Value: nodeOrgAddresses,
 	})
 
@@ -118,11 +118,11 @@ func nodeOrgUpdate() error {
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   orgId,
+		Key:   "org_id",
 		Value: nodeOrgOrgId,
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
+		Key:   "node_ids",
 		Value: nodeOrgAddresses,
 	})
 
@@ -153,7 +153,7 @@ func nodeOrgDelete() error {
 	}
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   orgId,
+		Key:   "org_id",
 		Value: nodeOrgOrgId,
 	})
 

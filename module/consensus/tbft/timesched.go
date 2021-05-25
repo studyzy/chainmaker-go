@@ -13,6 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 
 	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
+	"github.com/gogo/protobuf/types"
 )
 
 var (
@@ -30,6 +31,28 @@ type timeoutInfo struct {
 
 func (ti timeoutInfo) String() string {
 	return fmt.Sprintf("timeoutInfo(%v-%d/%d/%s)", ti.Duration, ti.Height, ti.Round, ti.Step)
+}
+
+func (ti timeoutInfo) ToProto() *tbftpb.TimeoutInfo {
+	return &tbftpb.TimeoutInfo{
+		Duration: types.DurationProto(ti.Duration),
+		Height:   ti.Height,
+		Round:    ti.Round,
+		Step:     ti.Step,
+	}
+}
+
+func newTimeoutInfoFromProto(ti *tbftpb.TimeoutInfo) timeoutInfo {
+	duration, err := types.DurationFromProto(ti.Duration)
+	if err != nil {
+		panic(err)
+	}
+	return timeoutInfo{
+		Duration: duration,
+		Height:   ti.Height,
+		Round:    ti.Round,
+		Step:     ti.Step,
+	}
 }
 
 // timeScheduler is used by consensus for shecdule timeout events.
