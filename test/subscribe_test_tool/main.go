@@ -60,6 +60,8 @@ var (
 	Log    *logger.CMLogger
 )
 
+const rpcClientMaxReceiveMessageSize = 1024 * 1024 * 16
+
 func main() {
 	var err error
 	Log = logger.GetLogger("")
@@ -131,7 +133,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 			log.Fatalf("GetTLSCredentialsByCA err: %v", err)
 			return nil, err
 		}
-		return grpc.Dial(url, grpc.WithTransportCredentials(*c))
+		return grpc.Dial(url, grpc.WithTransportCredentials(*c), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(rpcClientMaxReceiveMessageSize)))
 	} else {
 		return grpc.Dial(url, grpc.WithInsecure())
 	}
@@ -229,8 +231,8 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 		return err
 	}
 	for _, event := range con.ContractEvents {
-		Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
-			recvEventTick, event.ChainId, event.TxId, event.ContractName, event.Topic, event.EventData)
+		Log.Infof("time:[%d],received a contract event :chainId:%s, blockHeight:%s,txId:%s, contractName:%s,topic:%s, eventData:%v",
+			recvEventTick, event.ChainId, event.BlockHeight, event.TxId, event.ContractName, event.Topic, event.EventData)
 	}
 	/*bytes, err := json.Marshal(con)
 	if err != nil {
