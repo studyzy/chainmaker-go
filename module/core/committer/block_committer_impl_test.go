@@ -47,8 +47,9 @@ func TestAddBlock(t *testing.T) {
 	crypto := configpb.CryptoConfig{
 		Hash: "SHA256",
 	}
-	chainConfig := configpb.ChainConfig{Crypto: &crypto}
-	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(2)
+	contractConf := configpb.ContractConfig{EnableSqlSupport: false}
+	chainConfig := configpb.ChainConfig{Crypto: &crypto, Contract: &contractConf}
+	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(3)
 
 	block := createNewBlock(lastBlock)
 	proposedCache.SetProposedBlock(&block, rwSetMap, contractEventMap, true)

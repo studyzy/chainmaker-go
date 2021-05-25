@@ -13,6 +13,8 @@ import (
 	"chainmaker.org/chainmaker-go/mock"
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
@@ -41,6 +43,8 @@ func TestProposeStatusChange(t *testing.T) {
 	//consensus := mock.NewMockConsensusEngine(ctl)
 	proposedCache := cache.NewProposalCache(nil, ledgerCache)
 	txScheduler := mock.NewMockTxScheduler(ctl)
+	blockChainStore := mock.NewMockBlockchainStore(ctl)
+	chainConf := mock.NewMockChainConf(ctl)
 
 	ledgerCache.SetLastCommittedBlock(cache.CreateNewTestBlock(0))
 
@@ -51,7 +55,27 @@ func TestProposeStatusChange(t *testing.T) {
 	}
 
 	txPool.EXPECT().FetchTxBatch(gomock.Any()).Return(txs).Times(10)
+	txPool.EXPECT().RetryAndRemoveTxs(gomock.Any(), gomock.Any())
 	identity.EXPECT().Serialize(true).Return([]byte("0123456789"), nil).Times(10)
+	msgBus.EXPECT().Publish(gomock.Any(), gomock.Any())
+	blockChainStore.EXPECT().TxExists("").AnyTimes()
+	consensus := configpb.ConsensusConfig{
+		Type: consensus.ConsensusType_TBFT,
+	}
+	block := configpb.BlockConfig{
+		TxTimestampVerify: false,
+		TxTimeout:         1000000000,
+		BlockTxCapacity:   100,
+		BlockSize:        100000,
+		BlockInterval:     1000,
+	}
+	crypro := configpb.CryptoConfig{Hash: "SHA256"}
+	contract := configpb.ContractConfig{EnableSqlSupport: false}
+	chainConfig := configpb.ChainConfig{Consensus: &consensus, Block: &block, Contract: &contract, Crypto: &crypro}
+	chainConf.EXPECT().ChainConfig().Return(&chainConfig).AnyTimes()
+
+	snapshotMgr.EXPECT().NewSnapshot(gomock.Any(), gomock.Any()).AnyTimes()
+	txScheduler.EXPECT().Schedule(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	blockProposer := &BlockProposerImpl{
 		chainId:         chainId,
@@ -70,6 +94,8 @@ func TestProposeStatusChange(t *testing.T) {
 		proposalCache:   proposedCache,
 		log:             log,
 		finishProposeC:  make(chan bool),
+		blockchainStore: blockChainStore,
+		chainConf:       chainConf,
 	}
 	require.False(t, blockProposer.isProposer)
 	require.Nil(t, blockProposer.proposeTimer)
