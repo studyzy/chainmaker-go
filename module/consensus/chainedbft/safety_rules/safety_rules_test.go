@@ -8,8 +8,6 @@ package safetyrules
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/consensus/chainedbft/consensus_mock"
-
 	"github.com/stretchr/testify/require"
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
@@ -127,7 +125,7 @@ func TestSafetyRules_CommitRules(t *testing.T) {
 	rootQc := &chainedbft.QuorumCert{BlockID: rootBlk.Header.BlockHash, Height: 100, Level: 100}
 	require.NoError(t, bftUtils.AddConsensusArgstoBlock(rootBlk, 100, nil), "add consensus args failed")
 	blkPool := blockpool.NewBlockPool(rootBlk, rootQc, 10)
-	safeRules := NewSafetyRules(log, blkPool, &consensus_mock.MockBlockchainStore{})
+	safeRules := NewSafetyRules(log, blkPool)
 
 	// 2. generate three new block after rootBlock
 	blk101 := &common.Block{Header: &common.BlockHeader{
