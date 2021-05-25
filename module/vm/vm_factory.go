@@ -8,6 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package vm
 
 import (
+	"encoding/hex"
+	"fmt"
+	"path/filepath"
+	"regexp"
+	"strconv"
+
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
@@ -18,12 +24,7 @@ import (
 	"chainmaker.org/chainmaker-go/wasmer"
 	"chainmaker.org/chainmaker-go/wxvm"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	"encoding/hex"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"path/filepath"
-	"regexp"
-	"strconv"
 )
 
 const WxvmCodeFolder = "wxvm"
@@ -32,7 +33,7 @@ type Factory struct {
 }
 
 // NewVmManager get vm runtime manager
-func (f *Factory) NewVmManager(wxvmCodePathPrefix string, snapshotManager protocol.SnapshotManager, AccessControl protocol.AccessControlProvider,
+func (f *Factory) NewVmManager(wxvmCodePathPrefix string, AccessControl protocol.AccessControlProvider,
 	provider protocol.ChainNodesInfoProvider, chainConf protocol.ChainConf) protocol.VmManager {
 
 	chainId := chainConf.ChainConfig().ChainId
@@ -46,7 +47,6 @@ func (f *Factory) NewVmManager(wxvmCodePathPrefix string, snapshotManager protoc
 
 	return &ManagerImpl{
 		ChainId:                chainId,
-		SnapshotManager:        snapshotManager,
 		WasmerVmPoolManager:    wasmerVmPoolManager,
 		WxvmCodeManager:        wxvmCodeManager,
 		WxvmContextService:     wxvmContextService,
