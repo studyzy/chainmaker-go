@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"crypto/sha256"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,6 @@ func SaveContractCMD() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVarP(&contractName, "contract_name", "x", "", "contract name")
-	flags.StringVarP(&codeHash, "code_hash", "y", "", "code hash")
 	flags.StringVarP(&contractCode, "contract_code", "r", "", "contract code")
 	flags.StringVarP(&version, "version", "v", "", "version")
 	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
@@ -39,10 +39,11 @@ func SaveContractCMD() *cobra.Command {
 
 func saveContract() error {
 
+	contractCodeHash := sha256.Sum256([]byte(contractCode))
 	// 构造Payload
 	pairs := paramsMap2KVPairs(map[string]string{
 		"contract_code": contractCode,
-		"code_hash":     codeHash,
+		"code_hash":     string(contractCodeHash[:]),
 		"contract_name": contractName,
 		"version":       version,
 	})
