@@ -66,6 +66,9 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_INVOKE_SYSTEM_CONTRACT:        protocol.ResourceNameWriteData,
 	common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
+
+	common.TxType_ARCHIVE_FULL_BLOCK: 			 protocol.ResourceNameArchive,
+	common.TxType_RESTORE_FULL_BLOCK: 			 protocol.ResourceNameArchive,
 }
 
 var (
@@ -339,9 +342,7 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 
 	// Archive
-	resourceNamePolicyMap.Store(common.ArchiveStoreContractFunction_ARCHIVE_BLOCK.String(),
-		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
-	resourceNamePolicyMap.Store(common.ArchiveStoreContractFunction_RESTORE_BLOCKS.String(),
+	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
 		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
 
 	return resourceNamePolicyMap

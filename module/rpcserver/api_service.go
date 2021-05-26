@@ -116,16 +116,12 @@ func (s *ApiService) validate(tx *commonPb.Transaction) (errCode commonErr.ErrCo
 		return
 	}
 
-	if tx.Header.TxType != commonPb.TxType_ARCHIVE_FULL_BLOCK && tx.Header.TxType != commonPb.TxType_RESTORE_FULL_BLOCK {
-		if err = utils.VerifyTxWithoutPayload(tx, tx.Header.ChainId, bc.GetAccessControl()); err != nil {
-			errCode = commonErr.ERR_CODE_TX_VERIFY_FAILED
-			errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Header.TxId,
-				hex.EncodeToString(tx.Header.Sender.MemberInfo))
-			s.log.Error(errMsg)
-			return
-		}
-	} else {
-		// TODO: !!!
+	if err = utils.VerifyTxWithoutPayload(tx, tx.Header.ChainId, bc.GetAccessControl()); err != nil {
+		errCode = commonErr.ERR_CODE_TX_VERIFY_FAILED
+		errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Header.TxId,
+			hex.EncodeToString(tx.Header.Sender.MemberInfo))
+		s.log.Error(errMsg)
+		return
 	}
 
 	return commonErr.ERR_CODE_OK, ""
