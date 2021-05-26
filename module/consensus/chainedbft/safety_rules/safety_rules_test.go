@@ -125,7 +125,7 @@ func TestSafetyRules_CommitRules(t *testing.T) {
 	rootQc := &chainedbft.QuorumCert{BlockID: rootBlk.Header.BlockHash, Height: 100, Level: 100}
 	require.NoError(t, bftUtils.AddConsensusArgstoBlock(rootBlk, 100, nil), "add consensus args failed")
 	blkPool := blockpool.NewBlockPool(rootBlk, rootQc, 10)
-	safeRules := NewSafetyRules(log, blkPool)
+	safeRules := NewSafetyRules(log, blkPool, nil)
 
 	// 2. generate three new block after rootBlock
 	blk101 := &common.Block{Header: &common.BlockHeader{
