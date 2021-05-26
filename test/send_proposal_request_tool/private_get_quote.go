@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,7 @@ func GetQuoteCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&quoteId, "quote_id", "i", "", "quote id")
+	flags.StringVarP(&quoteId, "quote_id", "v", "", "quote id")
 
 
 	return cmd
@@ -53,6 +54,18 @@ func getQuote() error {
 	if err = checkProposalRequestResp(resp, true); err != nil {
 		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

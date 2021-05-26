@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -30,10 +31,10 @@ func SaveQuoteCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&enclaveId, "enclave_id", "e", "", "enclave id ")
-	flags.StringVarP(&quoteId, "quote_id", "i", "", "quote id")
-	flags.StringVarP(&quote, "quote", "q", "", "quote")
-	flags.StringVarP(&sign, "sign", "s", "", "sign")
+	flags.StringVarP(&enclaveId, "enclave_id", "l", "", "enclave id ")
+	flags.StringVarP(&quoteId, "quote_id", "u", "", "quote id")
+	flags.StringVarP(&quote, "quote", "a", "", "quote")
+	flags.StringVarP(&sign, "sign", "b", "", "sign")
 	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
@@ -85,6 +86,18 @@ func saveQuote() error {
 			resp.ContractResult = contractResult
 		}
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

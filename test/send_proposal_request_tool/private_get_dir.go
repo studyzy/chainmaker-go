@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +32,6 @@ func GetDirCMD() *cobra.Command {
 
 func getDir() error {
 
-
 	// 构造Payload
 	pairs := paramsMap2KVPairs(map[string]string{
 		"order_id": orderId,
@@ -46,14 +46,26 @@ func getDir() error {
 		return fmt.Errorf("marshal get data payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3,client,common.TxType_QUERY_SYSTEM_CONTRACT,chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_SYSTEM_CONTRACT, chainId, "", payloadBytes)
 	if err != nil {
-		return  fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return  fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

@@ -9,6 +9,7 @@ package main
 
 import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Rican7/retry"
@@ -45,8 +46,8 @@ func SaveCertCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&enclaveCert, "enclave_cert", "c", "", "enclave cert")
-	flags.StringVarP(&enclaveId, "enclave_id", "i", "", "enclave id")
+	flags.StringVarP(&enclaveCert, "enclave_cert", "l", "", "enclave cert")
+	flags.StringVarP(&enclaveId, "enclave_id", "m", "", "enclave id")
 	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
@@ -101,6 +102,18 @@ func saveCert() error {
 	if err = checkProposalRequestResp(resp, true); err != nil {
 		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 

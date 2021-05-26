@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,7 @@ func GetCertCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&enclaveId, "enclave_id", "i", "", "enclave id")
+	flags.StringVarP(&enclaveId, "enclave_id", "z", "", "enclave id")
 
 	return cmd
 }
@@ -45,14 +46,26 @@ func getCert() error {
 		return fmt.Errorf("marshal get data payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3,client,common.TxType_QUERY_SYSTEM_CONTRACT,chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_SYSTEM_CONTRACT, chainId, "", payloadBytes)
 	if err != nil {
-		return  fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
 		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
 
-	return  nil
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+
+	return nil
 }

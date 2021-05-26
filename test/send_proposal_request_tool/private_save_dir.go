@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 	"strings"
@@ -30,8 +31,8 @@ func SaveDirCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&orderId, "order_id", "e", "", "order id")
-	flags.StringVarP(&privateDirString, "private_dir", "c", "", "private dir")
+	flags.StringVarP(&orderId, "order_id", "g", "", "order id")
+	flags.StringVarP(&privateDirString, "private_dir", "f", "", "private dir")
 	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
@@ -94,6 +95,18 @@ func saveDir() error {
 	if resp.Code != common.TxStatusCode_SUCCESS || resp.Message != "OK" {
 		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

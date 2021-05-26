@@ -10,6 +10,7 @@ package main
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -85,6 +86,18 @@ func saveContract() error {
 			resp.ContractResult = contractResult
 		}
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

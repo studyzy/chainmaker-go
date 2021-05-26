@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -31,9 +32,9 @@ func SaveDataCMD() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVarP(&result, "result", "r", "", "result")
-	flags.StringVarP(&contractName, "contract_name", "c", "", "contract name")
+	flags.StringVarP(&contractName, "contract_name", "x", "", "contract name")
 	flags.StringVarP(&rwSet, "rw_set", "s", "", "read write set")
-	flags.StringVarP(&events, "events", "e", "", "events")
+	flags.StringVarP(&events, "events", "q", "", "events")
 	flags.BoolVarP(&withSyncResult, "with_sync_result", "w", false, "with sync result")
 
 	return cmd
@@ -90,6 +91,18 @@ func saveData() error {
 	if resp.Code != common.TxStatusCode_SUCCESS || resp.Message != "OK" {
 		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

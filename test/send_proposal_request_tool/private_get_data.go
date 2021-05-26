@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +29,8 @@ func GetDataCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&contractName, "contract_name", "c", "", "contract name")
-	flags.StringVarP(&key, "key", "k", "", "data key")
+	flags.StringVarP(&contractName, "contract_name", "x", "", "contract name")
+	flags.StringVarP(&key, "key", "u", "", "data key")
 
 	return cmd
 }
@@ -59,6 +60,18 @@ func getData() error {
 	if err = checkProposalRequestResp(resp, true); err != nil {
 		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }

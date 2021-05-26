@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -29,8 +30,8 @@ func GetContractCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&contractName, "contract_name", "c", "", "contract name")
-	flags.StringVarP(&codeHash, "code_hash", "p", "", "code hash")
+	flags.StringVarP(&contractName, "contract_name", "x", "", "contract name")
+	flags.StringVarP(&codeHash, "code_hash", "y", "", "code hash")
 
 	return cmd
 }
@@ -64,6 +65,18 @@ func getContract() error {
 	if err = proto.Unmarshal(resp.ContractResult.Result, contractInfo); err != nil {
 		return fmt.Errorf("GetContract unmarshal contract info payload failed, %s", err.Error())
 	}
+
+	resultStruct := &Result{
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
+	}
+
+	bytes, err := json.Marshal(resultStruct)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
 
 	return nil
 }
