@@ -245,7 +245,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 			return fmt.Errorf("ctx query error, %s", err.Error())
 		}
 	} else {
-		txKey := common.GetTxKewWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+		txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
 		transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
 			return fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
@@ -281,7 +281,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 				return nil, fmt.Errorf("ctx query one error, %s", err.Error())
 			}
 		} else {
-			txKey := common.GetTxKewWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+			txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
 			transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 			if err != nil {
 				return nil, fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
@@ -400,7 +400,7 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSim
 		return fmt.Errorf("verify update sql error, [%s]", err.Error())
 	}
 
-	txKey := common.GetTxKewWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+	txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
 	transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 	if err != nil {
 		return fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
