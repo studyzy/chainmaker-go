@@ -280,7 +280,7 @@ func (b *BlockKvDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	return decodeBlockNumKey(heightBytes), nil
 }
 
-// GetBlockHeaderByHeight returns a block metadata given it's hash, or returns nil if none exists.
+// GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
 func (b *BlockKvDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
 	vBytes, err := b.get(constructBlockNumKey(uint64(height)))
 	if err != nil {

@@ -337,7 +337,7 @@ func (bs *BlockStoreImpl) GetHeightByHash(blockHash []byte) (uint64, error) {
 	return bs.blockDB.GetHeightByHash(blockHash)
 }
 
-// GetBlockHeaderByHeight returns a block metadata given it's hash, or returns nil if none exists.
+// GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
 	return bs.blockDB.GetBlockHeaderByHeight(height)
 }
