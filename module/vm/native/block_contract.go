@@ -65,7 +65,7 @@ func registerBlockContactMethods(log *logger.CMLogger) map[string]ContractFunc {
 	queryMethodMap[commonPb.QueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
 	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
 	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeightByHash
+	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
 	return queryMethodMap
 }
 
