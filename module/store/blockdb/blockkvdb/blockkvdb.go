@@ -408,15 +408,19 @@ func (b *BlockKvDB) GetTx(txId string) (*commonPb.Transaction, error) {
 }
 func (b *BlockKvDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
 	txIdKey := constructTxIDKey(txId)
-	bytes, err := b.get(txIdKey)
+	vBytes, err := b.get(txIdKey)
 	if err != nil {
 		return nil, err
-	} else if len(bytes) == 0 {
+	} else if len(vBytes) == 0 {
+		isArchived, erra := b.TxArchived(txId)
+		if erra == nil && isArchived {
+			return nil, archive.ArchivedTxError
+		}
 		return nil, nil
 	}
 
 	var tx commonPb.Transaction
-	err = proto.Unmarshal(bytes, &tx)
+	err = proto.Unmarshal(vBytes, &tx)
 	if err != nil {
 		return nil, err
 	}
