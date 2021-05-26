@@ -18,12 +18,15 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
 
 const (
 	// default 20 blocks per batch
 	blocksPerBatch = 20
+	// Send Archive Block Request timeout
+	archiveBlockRequestTimeout = 20 // 20s
 )
 
 func newDumpCMD() *cobra.Command {
@@ -83,7 +86,7 @@ func runDumpCMD() error {
 		return err
 	}
 
-	err = validate(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain)
+	err = validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain)
 	if err != nil {
 		return err
 	}
@@ -119,8 +122,8 @@ func runDumpCMD() error {
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
 }
 
-// validate basic params validation
-func validate(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain int64) error {
+// validateDump basic params validation
+func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain int64) error {
 	// target block height already archived, do nothing.
 	if targetBlkHeight <= archivedBlkHeightOffChain {
 		return errors.New("target block height already archived")
@@ -213,6 +216,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		err                error
 		payload            []byte
 		signedPayloadBytes []byte
+		resp               *common.TxResponse
 	)
 
 	payload, err = cc.CreateArchiveBlockPayload(height)
@@ -225,10 +229,10 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		return err
 	}
 
-	_, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, false)
+	resp, err = cc.SendArchiveBlockRequest(signedPayloadBytes, archiveBlockRequestTimeout, false)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return util.CheckProposalRequestResp(resp, false)
 }
