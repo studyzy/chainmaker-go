@@ -20,7 +20,7 @@ import (
 
 func TestBatchTxPool_PopTxsFromQueue(t *testing.T) {
 	for i := 0; i < 100; i++ {
-		pool := NewBatchTxPool("nodeId", "test-chain", nil, nil, nil)
+		pool := NewBatchTxPool("nodeId", "test-chain", nil, nil, nil, nil)
 		pool.txQueue = lockfreequeue.NewQueue(uint32(pool.batchMaxSize))
 		for i := 0; i < int(pool.batchMaxSize); i++ {
 			pool.txQueue.Push(&commonpb.Transaction{Header: &commonpb.TxHeader{TxId: utils.GetRandTxId()}})
