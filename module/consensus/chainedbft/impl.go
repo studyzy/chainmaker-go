@@ -14,10 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
-
-	"github.com/tidwall/wal"
-
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
@@ -25,14 +21,16 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/pb/protogo/net"
 	"chainmaker.org/chainmaker-go/protocol"
+
 	"github.com/gogo/protobuf/proto"
+	"github.com/tidwall/wal"
 )
 
 const (
@@ -143,7 +141,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.createEpoch(service.commitHeight)
 	service.msgPool = service.nextEpoch.msgPool
 	service.selfIndexInEpoch = service.nextEpoch.index
-	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService)
+	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService, service)
 	epoch := service.nextEpoch
 	service.nextEpoch = nil
 	walDirPath := path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainID, WalDirSuffix)
@@ -151,34 +149,29 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		return nil, err
 	}
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
-	chainConf.AddWatch(service)
 	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
 		return nil, err
 	}
-	service.initTimeOutConfig(chainConf.(*chainconf.ChainConf).ChainConfig())
+	service.logger.Debugf("register config success")
+	service.initTimeOutConfig(service.governanceContract)
 	return service, nil
 }
 
-func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(chainConfig *config.ChainConfig) {
-	for _, kv := range chainConfig.Consensus.ExtConfig {
-		switch kv.Key {
-		case timeservice.ProposerTimeoutMill:
-			if proposerTimeOut, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.ProposerTimeout = time.Duration(proposerTimeOut) * time.Millisecond
-			}
-		case timeservice.ProposerTimeoutIntervalMill:
-			if proposerTimeOutInterval, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.ProposerTimeoutInterval = time.Duration(proposerTimeOutInterval) * time.Millisecond
-			}
-		case timeservice.RoundTimeoutMill:
-			if roundTimeOut, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.RoundTimeout = time.Duration(roundTimeOut) * time.Millisecond
-			}
-		case timeservice.RoundTimeoutIntervalMill:
-			if roundTimeOutInterval, err := utils.ParseInt(kv.Key, kv.Value); err == nil {
-				timeservice.RoundTimeoutInterval = time.Duration(roundTimeOutInterval) * time.Millisecond
-			}
-		}
+func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protocol.Government) {
+	base := governanceContract.GetRoundTimeoutMill()
+	if base == 0 {
+		base = uint64(timeservice.DefaultRoundTimeout)
+	}
+	if err := utils.VerifyTimeConfig(governance.RoundTimeoutMill, base); err == nil {
+		timeservice.RoundTimeout = time.Duration(base) * time.Millisecond
+	}
+
+	delta := governanceContract.GetRoundTimeoutIntervalMill()
+	if delta == 0 {
+		delta = uint64(timeservice.DefaultRoundTimeoutInterval)
+	}
+	if err := utils.VerifyTimeConfig(governance.RoundTimeoutIntervalMill, delta); err == nil {
+		timeservice.RoundTimeoutInterval = time.Duration(delta) * time.Millisecond
 	}
 }
 
@@ -188,6 +181,9 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	cbi.msgbus.Register(msgbus.ProposedBlock, cbi)
 	cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)
 	cbi.msgbus.Register(msgbus.BlockInfo, cbi)
+	cbi.logger.Debugf("add config watch begin...")
+	//cbi.chainConf.AddWatch(cbi)
+	cbi.logger.Debugf("end config watch begin...")
 
 	go cbi.syncer.start()
 	go cbi.timerService.Start()
@@ -328,13 +324,6 @@ func (cbi *ConsensusChainedBftImpl) Module() string {
 	return ModuleName
 }
 
-//Watch implement watch interface
-func (cbi *ConsensusChainedBftImpl) Watch(chainConfig *config.ChainConfig) error {
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] watch chain config updated %v", cbi.selfIndexInEpoch)
-	cbi.initTimeOutConfig(chainConfig)
-	return nil
-}
-
 func (cbi *ConsensusChainedBftImpl) onReceivedMsg(msg *net.NetMsg) {
 	if msg == nil {
 		cbi.logger.Warnf("service selfIndexInEpoch [%v] received nil message", cbi.selfIndexInEpoch)
@@ -409,11 +398,8 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 			cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state, cbi.smr.getEpochId())
 		return
 	}
-
 	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s", te.State.String(), te.Height, te.Level, te.Duration.String())
 	switch te.State {
-	case chainedbftpb.ConsStateType_Propose:
-		cbi.processNewPropose(te.Height, te.Level, te.PreBlkHash)
 	case chainedbftpb.ConsStateType_PaceMaker:
 		cbi.processLocalTimeout(te.Height, te.Level)
 	default:
@@ -428,14 +414,7 @@ func (cbi *ConsensusChainedBftImpl) onReceiveBlockFetch(msg *chainedbftpb.Consen
 
 //onReceiveBlockFetchRsp handles a block fetch response
 func (cbi *ConsensusChainedBftImpl) onReceiveBlockFetchRsp(msg *chainedbftpb.ConsensusMsg) {
-	if err := cbi.validateBlockFetchRsp(msg); err != nil {
-		return
-	}
-	authorIdx := msg.Payload.GetBlockFetchRespMsg().GetAuthorIdx()
-	cbi.syncer.syncMsgC <- &syncMsg{
-		fromPeer: authorIdx,
-		msg:      msg.Payload,
-	}
+	cbi.processFetchResp(msg)
 }
 
 //onBlockCommitted update the consensus smr to latest
@@ -491,22 +470,23 @@ func (cbi *ConsensusChainedBftImpl) VerifyBlockSignatures(block *common.Block) e
 	if newViewNum, votedBlockNum, err = cbi.countNumFromVotes(qc); err != nil {
 		return err
 	}
-	if qc.Level > 0 && qc.NewView && newViewNum < cbi.smr.min() {
+	quorum := cbi.smr.min(qc.Height)
+	if qc.Level > 0 && qc.NewView && newViewNum < quorum {
 		return fmt.Errorf(fmt.Sprintf("vote new view num [%v] less than expected [%v]",
-			newViewNum, cbi.smr.min()))
+			newViewNum, quorum))
 	}
-	if qc.Level > 0 && !qc.NewView && votedBlockNum < cbi.smr.min() {
+	if qc.Level > 0 && !qc.NewView && votedBlockNum < quorum {
 		return fmt.Errorf(fmt.Sprintf("vote block num [%v] less than expected [%v]",
-			votedBlockNum, cbi.smr.min()))
+			votedBlockNum, quorum))
 	}
 	return nil
 }
 
 func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCert) (int, int, error) {
 	var (
-		newViewNum    = 0
-		votedBlockNum = 0
-		voteIdxs      = make(map[uint64]bool, 0)
+		votedBlock   = make(map[uint64]*chainedbftpb.VoteData)
+		votedNewView = make(map[uint64]*chainedbftpb.VoteData)
+		voteIdxs     = make(map[uint64]bool, 0)
 	)
 	//for each vote
 	for _, vote := range qc.Votes {
@@ -525,16 +505,14 @@ func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCer
 				vote.AuthorIdx, vote.Height, vote.Level)
 		}
 		voteIdxs[vote.AuthorIdx] = true
-		if vote.NewView && vote.BlockID == nil {
-			newViewNum++
-			continue
+		if vote.NewView {
+			votedNewView[vote.AuthorIdx] = vote
 		}
-		if qc.BlockID != nil && (bytes.Compare(vote.BlockID, qc.BlockID) < 0) {
-			continue
+		if len(vote.BlockID) > 0 && bytes.Equal(vote.BlockID, qc.BlockID) {
+			votedBlock[vote.AuthorIdx] = vote
 		}
-		votedBlockNum++
 	}
-	return newViewNum, votedBlockNum, nil
+	return len(votedNewView), len(votedBlock), nil
 }
 
 //VerifyBlockSignatures verify consensus qc at incoming block and chainconf

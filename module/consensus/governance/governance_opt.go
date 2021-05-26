@@ -30,12 +30,14 @@ const (
 	ConstNodeProposeRound  = 1     //default continuity propose round
 	GovernanceContractName = "government_contract"
 
-	SkipTimeoutCommit = "SkipTimeoutCommit"
-	CachedLen         = "CachedLen"
-	BlockNumPerEpoch  = "BlockNumPerEpoch"
-	TransitBlock      = "TransitBlock"
-	ValidatorNum      = "ValidatorNum"
-	NodeProposeRound  = "NodeProposeRound"
+	SkipTimeoutCommit        = "SkipTimeoutCommit"
+	CachedLen                = "CachedLen"
+	BlockNumPerEpoch         = "BlockNumPerEpoch"
+	TransitBlock             = "TransitBlock"
+	ValidatorNum             = "ValidatorNum"
+	NodeProposeRound         = "NodeProposeRound"
+	RoundTimeoutMill         = "HotstuffRoundTimeoutMill"
+	RoundTimeoutIntervalMill = "HotstuffRoundTimeoutIntervalMill"
 
 	UnmarshalErrFmt        = "proto.Unmarshal err!err=%v"
 	CreateValidatorsErrFmt = "createValidators err!err=%v"
@@ -63,7 +65,6 @@ func (s IntSlice64) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s IntSlice64) Less(i, j int) bool { return s[i] < s[j] }
 
 func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*consensusPb.GovernanceContract, error) {
-	log.Debugf("get government contract from chainStore")
 	contractName := GovernanceContractName
 	bz, err := store.ReadObject(contractName, []byte(contractName))
 	if err != nil {
@@ -94,9 +95,19 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	newValidatorNum := uint64(ConstValidatorNum)
 	newBlockNumPerEpoch := uint64(ConstBlockNumPerEpoch)
 	newNodeProposeRound := uint64(ConstNodeProposeRound)
+	newRoundTimeoutMill := uint64(0)
+	newRoundTimeoutIntervalMill := uint64(0)
 
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
+		case RoundTimeoutMill:
+			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				newRoundTimeoutMill = v
+			}
+		case RoundTimeoutIntervalMill:
+			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				newRoundTimeoutIntervalMill = v
+			}
 		case SkipTimeoutCommit:
 			if strings.ToUpper(oneConf.Value) == "TRUE" {
 				newSkipTimeoutCommit = true
@@ -165,6 +176,14 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	}
 	if GovernanceContract.CachedLen != newCachedLen {
 		GovernanceContract.CachedLen = newCachedLen
+		isChg = true
+	}
+	if GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
+		GovernanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
+		isChg = true
+	}
+	if GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+		GovernanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
 	if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
@@ -421,6 +440,7 @@ func TryCreateNextValidators(block *commonPb.Block, GovernanceContract *consensu
 			log.Errorf(CreateValidatorsErrFmt, err)
 			return false, err
 		}
+		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
 		GovernanceContract.NextValidators = validators
 		GovernanceContract.NextSwitchHeight = uint64(height) + GovernanceContract.TransitBlock
 		log.Debugf("create NextValidators. curHeight=%v,switchHeight=%v", height, GovernanceContract.NextSwitchHeight)
@@ -481,6 +501,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 				return nil, err
 			}
 			isConfigChg = configChg
+			governanceContract.NextSwitchHeight = uint64(block.Header.BlockHeight) + governanceContract.TransitBlock
 		}
 	}
 
@@ -602,6 +623,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 			minQuorumForQc = ConstMinQuorumForQc
 		}
 
+		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
 		GovernanceContract.CurMaxIndex = index
 		GovernanceContract.N = uint64(n)
 		GovernanceContract.MinQuorumForQc = uint64(minQuorumForQc)

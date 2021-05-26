@@ -7,19 +7,22 @@ SPDX-License-Identifier: Apache-2.0
 package safetyrules
 
 import (
+	"bytes"
 	"encoding/hex"
+	"fmt"
 	"sync"
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
-	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	"chainmaker.org/chainmaker-go/protocol"
 )
 
 //SafetyRules implementation to validate incoming qc and block, include commit rules(3-chain) and vote rules
 type SafetyRules struct {
 	sync.RWMutex
+	chainStore protocol.BlockchainStore
 
 	lastCommittedLevel uint64        // the latest committed level in local node
 	lastCommittedBlock *common.Block // the latest committed block in local node
@@ -35,11 +38,15 @@ type SafetyRules struct {
 }
 
 //NewSafetyRules init a SafetyRules
-func NewSafetyRules(logger *logger.CMLogger, blockPool *blockpool.BlockPool) *SafetyRules {
-	return &SafetyRules{
-		logger:    logger,
-		blockPool: blockPool,
+func NewSafetyRules(logger *logger.CMLogger, blkPool *blockpool.BlockPool, chainStore protocol.BlockchainStore) *SafetyRules {
+	sf := &SafetyRules{
+		logger:      logger,
+		blockPool:   blkPool,
+		chainStore:  chainStore,
+		lockedBlock: blkPool.GetRootBlock(),
+		lockedLevel: blkPool.GetHighestQC().Level,
 	}
+	return sf
 }
 
 //GetLastVoteLevel get last vote's level
@@ -107,46 +114,53 @@ func (sr *SafetyRules) SetLastCommittedBlock(block *common.Block, level uint64) 
 	sr.lastCommittedLevel = level
 }
 
-//VoteRules validate incoming block and qc to vote
-func (sr *SafetyRules) VoteRules(level uint64, qc *chainedbftpb.QuorumCert) bool {
+func (sr *SafetyRules) getBlockByHash(blkHash string) *common.Block {
+	if blk := sr.blockPool.GetBlockByID(blkHash); blk != nil {
+		return blk
+	}
+	if blk, err := sr.chainStore.GetBlockByHash([]byte(blkHash)); err == nil && blk != nil {
+		return blk
+	}
+	return nil
+}
+
+//SafeNode validate incoming block and qc to vote
+func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
 	sr.RLock()
 	defer sr.RUnlock()
 
-	// Node will only vote once for each level
-	//if level <= sr.lastVoteLevel {
-	//	sr.logger.Debugf("vote rules failed,"+
-	//		" proposalLevel <= lastVote.level, level [%v], lastVote level [%v]", level, sr.lastVoteLevel)
-	//	return false
-	//}
 	var (
-		err     error
-		qcLevel uint64
-		qcBlock *common.Block
+		justQc = proposal.JustifyQC
 	)
-	if qcBlock = sr.blockPool.GetBlockByID(string(qc.BlockID)); qcBlock == nil {
-		sr.logger.Debugf("vote rules failed, preblock not exist, pre block hash [%v]", hex.EncodeToString(qc.BlockID))
-		return false
+
+	// 1. 活性规则：The liveness rule is the replica will accept m if m.justify has a higher view than the current locked QC
+	if justQc.Level > sr.lockedLevel {
+		sr.logger.Infof("safeNode success: proposal: %x satisfy liveness rules", proposal.Block.Header.BlockHash)
+		return nil
 	}
-	if qcLevel, err = utils.GetLevelFromBlock(qcBlock); err != nil {
-		sr.logger.Debugf("vote rules failed, get parent block's level error, block hash [%v], err %v",
-			qcBlock.Header.BlockHash, err)
-		return false
+
+	// 2. 安全规则：The safety rule to accept a proposal is the branch of m.node extends from the currently locked node locked QC.node
+	currBlock := proposal.Block
+	currHeight := proposal.Height
+	for currBlock != nil && currHeight > uint64(sr.lockedBlock.Header.BlockHeight) {
+		currBlock = sr.getBlockByHash(string(currBlock.Header.PreBlockHash))
+		if currBlock != nil {
+			currHeight = uint64(currBlock.Header.BlockHeight)
+		}
 	}
-	if qcLevel != qc.Level {
-		sr.logger.Debugf("vote rules failed, parent block's level is not equal qc'level, block level [%v], qc level [%v]",
-			qcLevel, qc.Level)
-		return false
+	if currBlock == nil {
+		return fmt.Errorf("not found block: %d", currHeight-1)
 	}
-	if qcLevel < sr.lockedLevel {
-		sr.logger.Debugf("vote rules failed, qcLevel <= locked Level, preLevel [%v], locked level [%v]",
-			qcLevel, sr.lockedLevel)
-		return false
+	if !bytes.Equal(currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash) {
+		return fmt.Errorf("safety rules failed, not extend block from lockedBlock, proposal: %x extend "+
+			"from: %x, lockedBlock: %x", proposal.Block.Header.BlockHash, currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash)
 	}
-	return true
+	sr.logger.Infof("safeNode success: proposal: %x satisfy safety rules", proposal.Block.Header.BlockHash)
+	return nil
 }
 
 //CommitRules validate incoming qc to commit by three-chain
-func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.Block, uint64) {
+func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (commit bool, commitBlock *common.Block, commitLevel uint64) {
 	if qc == nil {
 		sr.logger.Debugf("commit rules, qc is nil")
 		return false, nil, 0
@@ -197,7 +211,7 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (bool, *common.B
 
 //UpdateLockedQC process incoming qc, update locked state by two-chain
 func (sr *SafetyRules) UpdateLockedQC(qc *chainedbftpb.QuorumCert) {
-	if qc.NewView || qc.BlockID == nil {
+	if qc == nil || qc.NewView || qc.BlockID == nil {
 		sr.logger.Debugf("received new view or nil block id qc, info: %s", qc.String())
 		return
 	}

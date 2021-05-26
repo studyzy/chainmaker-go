@@ -307,7 +307,7 @@ func (sync *BlockChainSyncServer) loop() {
 		doNodeStatusTk = time.NewTicker(sync.conf.nodeStatusTick)
 		// task: trigger the check of the liveness with connected peers
 		doLivenessTk = time.NewTicker(sync.conf.livenessTick)
-		// task: trigger the check of the data in processor
+		// task: trigger the check of the data in processor and scheduler
 		doDataDetect = time.NewTicker(sync.conf.dataDetectionTick)
 	)
 	defer func() {
@@ -343,7 +343,10 @@ func (sync *BlockChainSyncServer) loop() {
 			}
 		case <-doDataDetect.C:
 			if err := sync.processor.addTask(DataDetection{}); err != nil {
-				sync.log.Errorf("add process data detection task to processor failed, reason: %s", err)
+				sync.log.Errorf("add data detection task to processor failed, reason: %s", err)
+			}
+			if err := sync.scheduler.addTask(DataDetection{}); err != nil {
+				sync.log.Errorf("add data detection task to scheduler failed, reason: %s", err)
 			}
 
 		// State processing results in state machine
@@ -361,14 +364,22 @@ func (sync *BlockChainSyncServer) loop() {
 
 func (sync *BlockChainSyncServer) validateAndCommitBlock(block *commonPb.Block) processedBlockStatus {
 	if blk := sync.ledgerCache.GetLastCommittedBlock(); blk != nil && blk.Header.BlockHeight >= block.Header.BlockHeight {
-		sync.log.Infof("there is the block in the store whose height is %d", block.Header.BlockHeight)
+		sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
 		return hasProcessed
 	}
 	if err := sync.blockVerifier.VerifyBlock(block, protocol.SYNC_VERIFY); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			return hasProcessed
+		}
 		sync.log.Errorf("fail to verify the block whose height is %d", block.Header.BlockHeight)
 		return validateFailed
 	}
 	if err := sync.blockCommitter.AddBlock(block); err != nil {
+		if err == commonErrors.ErrBlockHadBeenCommited {
+			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			return hasProcessed
+		}
 		sync.log.Errorf("fail to commit the block whose height is %d", block.Header.BlockHeight)
 		return addErr
 	}

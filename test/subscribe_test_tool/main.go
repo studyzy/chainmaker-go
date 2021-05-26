@@ -17,7 +17,7 @@ import (
 	"os"
 	"time"
 
-	"chainmaker.org/chainmaker-go/module/logger"
+	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"

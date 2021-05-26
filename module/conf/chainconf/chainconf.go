@@ -9,11 +9,12 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"errors"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	"errors"
-	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/json"
 	"chainmaker.org/chainmaker-go/logger"

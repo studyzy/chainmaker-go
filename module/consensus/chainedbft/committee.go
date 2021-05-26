@@ -110,10 +110,3 @@ func (pp *committee) peerCount() int {
 	defer pp.RUnlock()
 	return len(pp.peers)
 }
-
-//min returns the min quorum size
-func (pp *committee) min() int {
-	pp.RLock()
-	defer pp.RUnlock()
-	return len(pp.peers)*2/3 + 1
-}

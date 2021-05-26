@@ -42,7 +42,7 @@ func TestNodeStatusMsg(t *testing.T) {
 	// 4. receive the peer status is old, and update the pendingRecvHeight
 	_, _ = sch.handler(NodeStatusMsg{from: "node1", msg: syncPb.BlockHeightBCM{BlockHeight: 151}})
 	require.EqualValues(t, 151, sch.peers["node1"])
-	require.EqualValues(t, 181, sch.pendingRecvHeight)
+	require.EqualValues(t, 101, sch.pendingRecvHeight)
 
 	// 5. malicious node to broadcast old status
 	_, _ = sch.handler(NodeStatusMsg{from: "node1", msg: syncPb.BlockHeightBCM{BlockHeight: 90}})
