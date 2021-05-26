@@ -20,6 +20,11 @@ import (
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
+const (
+	// Send Restore Block Request timeout
+	restoreBlockRequestTimeout = 20 // 20s
+)
+
 func newRestoreCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "restore",
@@ -158,7 +163,7 @@ func restoreBlockOnChain(cc *sdk.ChainClient, fullBlock []byte) error {
 		return err
 	}
 
-	resp, err = cc.SendRestoreBlockRequest(signedPayloadBytes, -1)
+	resp, err = cc.SendRestoreBlockRequest(signedPayloadBytes, restoreBlockRequestTimeout)
 	if err != nil {
 		return err
 	}
