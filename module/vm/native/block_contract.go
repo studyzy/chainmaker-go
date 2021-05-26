@@ -65,6 +65,7 @@ func registerBlockContactMethods(log *logger.CMLogger) map[string]ContractFunc {
 	queryMethodMap[commonPb.QueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
 	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
 	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
+	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeightByHash
 	return queryMethodMap
 }
 
@@ -565,6 +566,30 @@ func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, param
 
 	resultBlockHeight := strconv.FormatInt(int64(blockHeight), 10)
 	return []byte(resultBlockHeight), nil
+}
+
+func (a *BlockRuntime) GetBlockHeaderByHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	var err error
+	var errMsg string
+	// check params
+	var param *BlockRuntimeParam
+	if param, err = a.validateParams(params, paramNameBlockHeight); err != nil {
+		return nil, err
+	}
+
+	blockHeader, err := context.GetBlockchainStore().GetBlockHeaderByHeight(param.height)
+	if err != nil {
+		return nil, err
+	}
+
+	blockHeaderBytes, err := blockHeader.Marshal()
+	if err != nil {
+		errMsg = fmt.Sprintf("block header marshal err is %s ", err.Error())
+		a.log.Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
+	}
+
+	return blockHeaderBytes, nil
 }
 
 func (r *BlockRuntime) getChainNodeInfo(provider protocol.ChainNodesInfoProvider, chainId string) ([]*discoveryPb.Node, error) {
