@@ -110,6 +110,10 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 			log.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql, but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true", provider, provider)
 			return nil, errors.New("chain config error")
 		}
+		if cconfig.Consensus.Type == consensus.ConsensusType_HOTSTUFF {
+			log.Errorf("chain config error: chain config sql is enable, expect consensus tbft/raft/solo, but got %s. current config: consensus.type = %s, contract.enable_sql_support = true", consensus.ConsensusType_HOTSTUFF.String(), consensus.ConsensusType_HOTSTUFF)
+			return nil, errors.New("chain config error")
+		}
 	}
 	// verify
 	verifier := GetVerifier(cconfig.ChainId, cconfig.Consensus.Type)
