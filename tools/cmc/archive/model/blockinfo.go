@@ -76,6 +76,28 @@ func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet 
 		Hmac:           hmac,
 		IsArchived:     true,
 	}
+	result := db.Table(BlockInfoTableNameByBlockHeight(bInfo.BlockHeight)).Create(&bInfo)
+	if result.Error != nil {
+		if strings.Contains(result.Error.Error(), "Error 1146") {
+			err := createBlockInfoTable(db, BlockInfoTableNameByBlockHeight(bInfo.BlockHeight))
+			if err != nil {
+				return 0, err
+			}
+			result = db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
+		}
+	}
+
+	return result.RowsAffected, result.Error
+}
+
+func UpdateBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) (int64, error) {
+	var bInfo = BlockInfo{
+		ChainID:        chainId,
+		BlockHeight:    blkHeight,
+		BlockWithRWSet: blkWithRWSet,
+		Hmac:           hmac,
+		IsArchived:     true,
+	}
 	result := db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
 	if result.Error != nil {
 		if strings.Contains(result.Error.Error(), "Error 1146") {

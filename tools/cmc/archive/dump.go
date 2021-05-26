@@ -98,7 +98,7 @@ func runDumpCMD() error {
 	}
 	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("Archiving Block (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("\nArchiving Blocks (%d/%d)", b.Current(), barCount)
 	})
 	uiprogress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
@@ -202,12 +202,64 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 
 // runBatch Run a batch job
 func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
-	blkWithRWSetSlice, err := batchGetFullBlocks(cc, startBlk, endBlk)
+	// check if create table
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+	defer tx.Rollback()
+
+	// get & store blocks
+	for blk := startBlk; blk < endBlk; blk++ {
+		var bInfo model.BlockInfo
+		err := db.Table(model.BlockInfoTableNameByBlockHeight(blk)).Where("Fblock_height = ?", blk).First(&bInfo).Error
+		if err == nil { // this block info was already in database, just update Fis_archived to 1
+			if !bInfo.IsArchived {
+				bInfo.IsArchived = true
+				tx.Table(model.BlockInfoTableNameByBlockHeight(blk)).Save(&bInfo)
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			blkWithRWSet, err := cc.GetFullBlockByHeight(blk)
+			if err != nil {
+				return err
+			}
+
+			blkWithRWSetBytes, err := blkWithRWSet.Marshal()
+			if err != nil {
+				return err
+			}
+
+			blkHeightBytes := make([]byte, 8)
+			binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
+
+			sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
+			if err != nil {
+				return err
+			}
+
+			_, err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// archive blocks on-chain
+	err := archiveBlockOnChain(cc, endBlk-1)
 	if err != nil {
 		return err
 	}
 
-	return batchStoreAndArchiveBlocks(cc, db, blkWithRWSetSlice)
+	// update archived block height off-chain
+	err = model.UpdateArchivedBlockHeight(tx, endBlk-1)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 // archiveBlockOnChain Build & Sign & Send a ArchiveBlockRequest
