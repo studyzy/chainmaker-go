@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -26,6 +27,8 @@ import (
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
+
+const regChainId = "^[a-zA-Z0-9_]{1,30}$"
 
 var (
 	chainConsensusVerifier = make(map[string]consensusVerifier, 0)
@@ -279,8 +282,9 @@ func validateParams(config *config.ChainConfig) error {
 	if config.Block == nil {
 		return errors.New("chainconfig block is nil")
 	}
-	if len(config.ChainId) > 30 {
-		return errors.New("chainId length must less than 30")
+	match, err := regexp.MatchString(regChainId, config.ChainId)
+	if err != nil || !match {
+		return fmt.Errorf("chain id[%s] can only consist of numbers, letters and underscores and chainId length must less than 30", config.ChainId)
 	}
 	return nil
 }

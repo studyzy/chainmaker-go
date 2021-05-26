@@ -185,6 +185,7 @@ func (c *ChainConf) latestChainConfig() error {
 
 	c.ChainConf = &chainConfig
 
+	// compatible with versions before v1.1.1
 	if c.ChainConf.Contract == nil {
 		c.ChainConf.Contract = &config.ContractConfig{EnableSqlSupport: false} //by default disable sql support
 	}
