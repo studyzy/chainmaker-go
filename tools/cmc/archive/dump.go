@@ -229,7 +229,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		return err
 	}
 
-	resp, err = cc.SendArchiveBlockRequest(signedPayloadBytes, archiveBlockRequestTimeout, false)
+	resp, err = cc.SendArchiveBlockRequest(signedPayloadBytes, archiveBlockRequestTimeout)
 	if err != nil {
 		return err
 	}
