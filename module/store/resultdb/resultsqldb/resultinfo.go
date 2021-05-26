@@ -27,7 +27,7 @@ func (b *ResultInfo) ScanObject(scan func(dest ...interface{}) error) error {
 }
 func (b *ResultInfo) GetCreateTableSql(dbType string) string {
 	if dbType == "mysql" {
-		return "CREATE TABLE `result_infos` (`tx_id` varchar(128),`block_height` bigint,`tx_index` bigint,`rwset` longblob,`status` bigint DEFAULT 0,`result` blob,`message` longtext,PRIMARY KEY (`tx_id`))"
+		return "CREATE TABLE `result_infos` (`tx_id` varchar(128),`block_height` bigint,`tx_index` bigint,`rwset` longblob,`status` bigint DEFAULT 0,`result` blob,`message` longtext,PRIMARY KEY (`tx_id`)) default character set utf8"
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `result_infos` (`tx_id` text,`block_height` integer,`tx_index` integer,`rwset` longblob,`status` integer DEFAULT 0,`result` blob,`message` longtext,PRIMARY KEY (`tx_id`))"
 	}
