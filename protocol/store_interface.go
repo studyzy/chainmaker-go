@@ -62,7 +62,7 @@ type BlockchainStore interface {
 	// GetHeightByHash returns a block height given it's hash, or returns nil if none exists.
 	GetHeightByHash(blockHash []byte) (uint64, error)
 
-	// GetBlockHeaderByHeight returns a block metadata given it's hash, or returns nil if none exists.
+	// GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
 	GetBlockHeaderByHeight(height int64) (*common.BlockHeader, error)
 
 	// GetBlock returns a block given it's block height, or returns nil if none exists.
