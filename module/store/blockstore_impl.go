@@ -91,7 +91,7 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB)
+	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB)
 
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
 	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
@@ -155,7 +155,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB)
+	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB)
 
 	return nil
 }
@@ -337,9 +337,9 @@ func (bs *BlockStoreImpl) GetHeightByHash(blockHash []byte) (uint64, error) {
 	return bs.blockDB.GetHeightByHash(blockHash)
 }
 
-// GetBlockMateByHash returns a block metadata given it's hash, or returns nil if none exists.
-func (bs *BlockStoreImpl) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
-	return bs.blockDB.GetBlockMateByHash(blockHash)
+// GetBlockHeaderByHeight returns a block metadata given it's hash, or returns nil if none exists.
+func (bs *BlockStoreImpl) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	return bs.blockDB.GetBlockHeaderByHeight(height)
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
@@ -371,6 +371,7 @@ func (bs *BlockStoreImpl) GetTx(txId string) (*commonPb.Transaction, error) {
 func (bs *BlockStoreImpl) GetTxHeight(txId string) (uint64, error) {
 	return bs.blockDB.GetTxHeight(txId)
 }
+
 func (bs *BlockStoreImpl) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
 	return bs.blockDB.GetTxWithBlockInfo(txId)
 }
@@ -419,7 +420,25 @@ func (bs *BlockStoreImpl) GetContractTxHistory(contractName string) (protocol.Tx
 
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	return bs.resultDB.GetTxRWSet(txId)
+	var (
+		rwSet *commonPb.TxRWSet
+		err error
+		isArchived bool
+	)
+
+	if rwSet, err = bs.resultDB.GetTxRWSet(txId); err != nil {
+		return nil, err
+	}
+
+	if rwSet == nil {
+		if isArchived, err = bs.blockDB.TxArchived(txId); err != nil {
+			return nil, err
+		} else if isArchived {
+			return nil, archive.ArchivedRWSetError
+		}
+	}
+
+	return rwSet, err
 }
 
 // GetTxRWSetsByHeight returns all the rwsets corresponding to the block,

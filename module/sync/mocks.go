@@ -127,7 +127,7 @@ func (m MockStore) GetHeightByHash(blockHash []byte) (uint64, error) {
 	panic("implement me")
 }
 
-func (m MockStore) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
+func (m MockStore) GetBlockHeaderByHeight(blockHash []byte) ([]byte, error) {
 	panic("implement me")
 }
 

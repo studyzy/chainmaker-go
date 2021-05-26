@@ -32,8 +32,8 @@ type BlockDB interface {
 	// GetHeightByHash returns a block height given it's hash, or returns nil if none exists.
 	GetHeightByHash(blockHash []byte) (uint64, error)
 
-	// GetBlockMateByHash returns a block metadata given it's hash, or returns nil if none exists.
-	GetBlockMateByHash(blockHash []byte) ([]byte, error)
+	// GetBlockHeaderByHeight returns a block metadata given it's hash, or returns nil if none exists.
+	GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error)
 
 	// GetBlock returns a block given it's block height, or returns nil if none exists.
 	GetBlock(height int64) (*commonPb.Block, error)
@@ -76,7 +76,7 @@ type BlockDB interface {
 	SetArchivedPivot(archivedPivot uint64) error
 
 	// ShrinkBlocks archive old blocks in an atomic operation
-	ShrinkBlocks(startHeight uint64, endHeight uint64) error
+	ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error)
 
 	// RestoreBlocks restore blocks from outside block data in an atomic operation
 	RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error

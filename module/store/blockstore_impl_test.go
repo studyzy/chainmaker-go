@@ -763,8 +763,8 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	assert.Equal(t, nil, err)
 	defer s.Close()
 
-	totalHeight := 301000
-	archiveHeight1 := 95
+	totalHeight := 300100
+	archiveHeight1 := 94
 	archiveHeight2 := 20
 	archiveHeight3 := 26
 
@@ -779,28 +779,28 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 		txRWSetMp[block.Header.BlockHeight] = txRWSet
 	}
 
-	verifyArchive(t, 0, blocks, txRWSetMp, s)
+	verifyArchive(t, 0, blocks, s)
 
 	//archive block height1
 	err = s.ArchiveBlock(uint64(archiveHeight1))
 	assert.Equal(t, nil, err)
 	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
 
-	verifyArchive(t, 10, blocks, txRWSetMp, s)
+	verifyArchive(t, 10, blocks, s)
 
 	//archive block height2 which is a config block
 	err1 := s.ArchiveBlock(uint64(archiveHeight2))
 	assert.True(t, err1 == nil)
 	assert.Equal(t, uint64(archiveHeight2), s.GetArchivedPivot())
 
-	verifyArchive(t, 15, blocks, txRWSetMp, s)
+	verifyArchive(t, 15, blocks, s)
 
 	//archive block height3
 	err = s.ArchiveBlock(uint64(archiveHeight3))
 	assert.Equal(t, nil, err)
 	assert.Equal(t, uint64(archiveHeight3), s.GetArchivedPivot())
 
-	verifyArchive(t, 25, blocks, txRWSetMp, s)
+	verifyArchive(t, 25, blocks, s)
 
 	//Prepare restore data
 	blocksBytes := make([][]byte, 0, archiveHeight3-archiveHeight2+1)
@@ -820,49 +820,40 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, uint64(archiveHeight2-1), s.GetArchivedPivot())
 
-	verifyArchive(t, 10, blocks, txRWSetMp, s)
+	verifyArchive(t, 10, blocks, s)
 }
 
-func verifyArchive(t *testing.T, confHeight uint64, blocks []*commonPb.Block,
-	txRWSetMp map[int64][]*commonPb.TxRWSet, s protocol.BlockchainStore) {
+func verifyArchive(t *testing.T, confHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
 	archivedPivot := s.GetArchivedPivot()
 
 	if archivedPivot == 0 {
-		verifyUnarchivedHeight(t, archivedPivot, blocks, txRWSetMp, s)
-		verifyUnarchivedHeight(t, archivedPivot+1, blocks, txRWSetMp, s)
+		verifyUnarchivedHeight(t, archivedPivot, blocks, s)
+		verifyUnarchivedHeight(t, archivedPivot+1, blocks, s)
 		return
 	}
 
 	//verify store apis: archived height
-	verifyArchivedHeight(t, archivedPivot-1, blocks, txRWSetMp, s)
+	verifyArchivedHeight(t, archivedPivot-1, blocks, s)
 
 	//verify store apis: archivedPivot height
-	verifyArchivedHeight(t, archivedPivot, blocks, txRWSetMp, s)
+	verifyArchivedHeight(t, archivedPivot, blocks, s)
 
 	//verify store apis: conf block height
-	verifyUnarchivedHeight(t, confHeight, blocks, txRWSetMp, s)
+	verifyUnarchivedHeight(t, confHeight, blocks, s)
 
 	//verify store apis: unarchived height
-	verifyUnarchivedHeight(t, archivedPivot+1, blocks, txRWSetMp, s)
+	verifyUnarchivedHeight(t, archivedPivot+1, blocks, s)
 }
 
-func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block,
-	txRWSetMp map[int64][]*commonPb.TxRWSet, s protocol.BlockchainStore) {
+func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
 	avBlk := blocks[avBlkHeight]
 	vbHeight, err1 := s.GetHeightByHash(avBlk.Header.BlockHash)
 	assert.Equal(t, nil, err1)
 	assert.Equal(t, vbHeight, avBlkHeight)
 
-	vbm, err2 := s.GetBlockMateByHash(avBlk.Header.BlockHash)
+	header, err2 := s.GetBlockHeaderByHeight(avBlk.Header.BlockHeight)
 	assert.Equal(t, nil, err2)
-
-	_, bwsInfo, err3 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
-		Block:          avBlk,
-		TxRWSets:       txRWSetMp[avBlk.Header.BlockHeight],
-		ContractEvents: nil,
-	})
-	assert.Equal(t, nil, err3)
-	assert.True(t, bytes.Equal(vbm, bwsInfo.GetSerializedMeta()))
+	assert.True(t, bytes.Equal(header.BlockHash, avBlk.Header.BlockHash))
 
 	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err4)
@@ -883,25 +874,24 @@ func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb
 	vtBlkRW, err8 := s.GetBlockWithRWSets(avBlk.Header.BlockHeight)
 	assert.Equal(t, nil, err8)
 	assert.Equal(t, avBlk.Header.ChainId, vtBlkRW.Block.Header.ChainId)
+
+	vtBlkRWs, err9 := s.GetTxRWSetsByHeight(avBlk.Header.BlockHeight)
+	assert.Equal(t, nil, err9)
+	assert.Equal(t, len(avBlk.Txs), len(vtBlkRWs))
+	if len(avBlk.Txs) > 0 {
+		assert.Equal(t, avBlk.Txs[0].Header.TxId, vtBlkRWs[0].TxId)
+	}
 }
 
-func verifyArchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block,
-	txRWSetMp map[int64][]*commonPb.TxRWSet, s protocol.BlockchainStore) {
+func verifyArchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
 	avBlk := blocks[avBlkHeight]
 	vbHeight, err1 := s.GetHeightByHash(avBlk.Header.BlockHash)
 	assert.Equal(t, nil, err1)
 	assert.Equal(t, vbHeight, avBlkHeight)
 
-	vbm, err2 := s.GetBlockMateByHash(avBlk.Header.BlockHash)
+	header, err2 := s.GetBlockHeaderByHeight(avBlk.Header.BlockHeight)
 	assert.Equal(t, nil, err2)
-
-	_, bwsInfo, err3 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
-		Block:          avBlk,
-		TxRWSets:       txRWSetMp[avBlk.Header.BlockHeight],
-		ContractEvents: nil,
-	})
-	assert.Equal(t, nil, err3)
-	assert.True(t, bytes.Equal(vbm, bwsInfo.GetSerializedMeta()))
+	assert.True(t, bytes.Equal(header.BlockHash, avBlk.Header.BlockHash))
 
 	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Header.TxId)
 	assert.Equal(t, nil, err4)
@@ -922,4 +912,8 @@ func verifyArchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.B
 	vtBlkRW, err8 := s.GetBlockWithRWSets(avBlk.Header.BlockHeight)
 	assert.True(t, archive.ArchivedBlockError == err8)
 	assert.True(t, vtBlkRW == nil)
+
+	vtBlkRWs, err9 := s.GetTxRWSetsByHeight(avBlk.Header.BlockHeight)
+	assert.True(t, archive.ArchivedBlockError == err9)
+	assert.Equal(t, nil, vtBlkRWs)
 }

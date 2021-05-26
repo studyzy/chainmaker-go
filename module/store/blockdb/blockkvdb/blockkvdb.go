@@ -8,14 +8,12 @@ package blockkvdb
 
 import (
 	"bytes"
-	"encoding/binary"
-	"errors"
-	"fmt"
-	"time"
-
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/store/archive"
+	"encoding/binary"
+	"errors"
+	"fmt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"chainmaker.org/chainmaker-go/protocol"
@@ -153,28 +151,28 @@ func (b *BlockKvDB) SetArchivedPivot(archivedPivot uint64) error {
 }
 
 // ShrinkBlocks remove ranged heightKey--SerializedMeta and txid--SerializedTx from kvdb
-func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
+func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
 	var (
 		block *commonPb.Block
 		err error
 	)
 
 	if block, err = b.getBlockByHeightBytes(constructBlockNumKey(endHeight)); err != nil {
-		return err
+		return nil, err
 	}
 
 	if utils.IsConfBlock(block) {
-		return archive.ConfigBlockArchiveError
+		return nil, archive.ConfigBlockArchiveError
 	}
 
+	txIdsMap := make(map[uint64][]string)
 	batch := types.NewUpdateBatch()
-
 	startTime := utils.CurrentTimeMillisSeconds()
 	for height := endHeight; height >= startHeight; height-- {
 		heightKey := constructBlockNumKey(height)
 		blk, err1 := b.getBlockByHeightBytes(heightKey)
 		if err1 != nil {
-			return err1
+			return nil, err1
 		}
 
 		if utils.IsConfBlock(blk) {
@@ -182,15 +180,18 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
 			continue
 		}
 
+		txIds := make([]string, 0, len(blk.Txs))
 		for _, tx := range blk.Txs {
 			// delete tx data
 			batch.Delete(constructTxIDKey(tx.Header.TxId))
+			txIds = append(txIds, tx.Header.TxId)
 		}
+		txIdsMap[height] = txIds
 	}
 
 	beforeWrite := utils.CurrentTimeMillisSeconds()
-	if err = b.DbHandle.WriteBatch(batch, false); err != nil {
-		return err
+	if err = b.DbHandle.WriteBatch(batch, true); err != nil {
+		return nil, err
 	}
 
 	b.compactRange()
@@ -199,7 +200,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) error {
 	b.Logger.Infof("shrink block from [%d] to [%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
 		startHeight, endHeight, beforeWrite-startTime, writeTime,
 		utils.CurrentTimeMillisSeconds()-startTime)
-	return nil
+	return txIdsMap, nil
 }
 
 // RestoreBlocks restore block data from outside to kvdb: txid--SerializedTx
@@ -279,14 +280,9 @@ func (b *BlockKvDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	return decodeBlockNumKey(heightBytes), nil
 }
 
-// GetBlockMateByHash returns a block metadata given it's hash, or returns nil if none exists.
-func (b *BlockKvDB) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
-	height, err := b.GetHeightByHash(blockHash)
-	if err != nil {
-		return nil, err
-	}
-
-	vBytes, err := b.get(constructBlockNumKey(height))
+// GetBlockHeaderByHeight returns a block metadata given it's hash, or returns nil if none exists.
+func (b *BlockKvDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	vBytes, err := b.get(constructBlockNumKey(uint64(height)))
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +291,13 @@ func (b *BlockKvDB) GetBlockMateByHash(blockHash []byte) ([]byte, error) {
 		return nil, ValueNotFoundError
 	}
 
-	return vBytes, nil
+	var blockStoreInfo storePb.SerializedBlock
+	err = proto.Unmarshal(vBytes, &blockStoreInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return blockStoreInfo.Header, nil
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
@@ -604,15 +606,12 @@ func decodeBlockNum(blockNumBytes []byte) uint64 {
 
 func (b *BlockKvDB) compactRange() {
 	//trigger level compact
-	for i:= 1; i <= 2; i ++ {
+	for i:= 1; i <= 1; i ++ {
 		b.Logger.Infof("Do %dst time CompactRange", i)
-		if err := b.DbHandle.CompactRange(util.Range{
-			Start: nil,
-			Limit: nil,
-		}); err != nil {
-			b.Logger.Warnf("kvdb level compact failed: %v", err)
+		if err := b.DbHandle.CompactRange(util.Range{Start: nil, Limit: nil}); err != nil {
+			b.Logger.Warnf("blockdb level compact failed: %v", err)
 		}
-		time.Sleep(2 * time.Second)
+		//time.Sleep(2 * time.Second)
 	}
 }
 

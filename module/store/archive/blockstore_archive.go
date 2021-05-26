@@ -8,6 +8,7 @@ package archive
 
 import (
 	"chainmaker.org/chainmaker-go/store/blockdb"
+	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"errors"
 	"sync"
@@ -27,6 +28,7 @@ var (
 	InvalidateRestoreBlocksError = errors.New("invalidate restore blocks")
 	ConfigBlockArchiveError      = errors.New("config block do not need archive")
 	ArchivedTxError              = errors.New("archived transaction")
+	ArchivedRWSetError           = errors.New("archived RWSet")
 	ArchivedBlockError           = errors.New("archived block")
 )
 
@@ -36,15 +38,17 @@ type ArchiveMgr struct {
 	archivedPivot        uint64
 	unarchiveBlockHeight uint64
 	blockDB              blockdb.BlockDB
+	resultDB             resultdb.ResultDB
 
 	logger *logImpl.CMLogger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
-func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB) *ArchiveMgr {
+func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB) *ArchiveMgr {
 	archiveMgr := &ArchiveMgr{
 		archivedPivot:        0,
 		blockDB:              blockDB,
+		resultDB:             resultDB,
 		logger:               logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
 	}
 
@@ -73,6 +77,7 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 
 	var (
 		lastHeight, archivedPivot uint64
+		txIdsMap	map[uint64][]string
 		err error
 	)
 
@@ -93,7 +98,11 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 		return HeightNotReachError
 	}
 
-	if err = mgr.blockDB.ShrinkBlocks(archivedPivot+1, archiveHeight); err != nil {
+	if txIdsMap, err = mgr.blockDB.ShrinkBlocks(archivedPivot+1, archiveHeight); err != nil {
+		return err
+	}
+
+	if err = mgr.resultDB.ShrinkBlocks(txIdsMap); err != nil {
 		return err
 	}
 
@@ -134,6 +143,10 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 	}
 
 	if err := mgr.blockDB.RestoreBlocks(blockInfos); err != nil {
+		return err
+	}
+
+	if err := mgr.resultDB.RestoreBlocks(blockInfos); err != nil {
 		return err
 	}
 
