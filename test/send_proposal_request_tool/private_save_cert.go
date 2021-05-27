@@ -106,7 +106,15 @@ func saveCert() error {
 	resultStruct := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    string(resp.ContractResult.Result),
+	}
+
+	if resp.ContractResult != nil {
+		resultStruct.TxId = string(resp.ContractResult.Result)
+		resultStruct.ContractResultCode = resp.ContractResult.Code
+		resultStruct.ContractResultMessage = resp.ContractResult.Message
+		resultStruct.ContractQueryResult = string(resp.ContractResult.Result)
+	} else {
+		fmt.Println("resp.ContractResult is nil ")
 	}
 
 	bytes, err := json.Marshal(resultStruct)

@@ -56,9 +56,16 @@ func getDir() error {
 	}
 
 	resultStruct := &Result{
-		Code:                resp.Code,
-		Message:             resp.Message,
-		ContractQueryResult: string(resp.ContractResult.Result),
+		Code:    resp.Code,
+		Message: resp.Message,
+	}
+
+	if resp.ContractResult != nil {
+		resultStruct.ContractResultCode = resp.ContractResult.Code
+		resultStruct.ContractResultMessage = resp.ContractResult.Message
+		resultStruct.ContractQueryResult = string(resp.ContractResult.Result)
+	} else {
+		fmt.Println("resp.ContractResult is nil ")
 	}
 
 	bytes, err := json.Marshal(resultStruct)
