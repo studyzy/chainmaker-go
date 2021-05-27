@@ -15,7 +15,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
-	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
 var (
@@ -28,11 +27,12 @@ var (
 	adminKeyFilePaths string
 	adminCrtFilePaths string
 
-	dbType          string
-	dbDest          string
-	targetBlkHeight int64
-	blocks          int64
-	secretKey       string
+	dbType                  string
+	dbDest                  string
+	targetBlkHeight         int64
+	blocks                  int64
+	secretKey               string
+	restoreStartBlockHeight int64
 )
 
 const (
@@ -63,6 +63,9 @@ const (
 	flagBlocks = "blocks"
 	// Secret Key for calc Hmac
 	flagSecretKey = "secret-key"
+
+	// block height of restore
+	flagStartBlockHeight = "start-block-height"
 )
 
 func NewArchiveCMD() *cobra.Command {
@@ -73,6 +76,7 @@ func NewArchiveCMD() *cobra.Command {
 	}
 
 	cmd.AddCommand(newDumpCMD())
+	cmd.AddCommand(newRestoreCMD())
 	cmd.AddCommand(newQueryOffChainCMD())
 
 	return cmd
@@ -92,6 +96,7 @@ func init() {
 	flags.Int64Var(&targetBlkHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
 	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
+	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
@@ -101,27 +106,6 @@ func attachFlags(cmd *cobra.Command, names []string) {
 			cmdFlags.AddFlag(flag)
 		}
 	}
-}
-
-// TODO: abstract this function, copied from client package
-// createChainClient create a chain client
-func createChainClient(keyFilePath, crtFilePath, chainId string) (*sdk.ChainClient, error) {
-	cc, err := sdk.NewChainClient(
-		sdk.WithConfPath(sdkConfPath),
-		sdk.WithChainClientChainId(chainId),
-		sdk.WithUserKeyFilePath(keyFilePath),
-		sdk.WithUserCrtFilePath(crtFilePath),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Enable certificate compression
-	err = cc.EnableCertHash()
-	if err != nil {
-		return nil, err
-	}
-	return cc, nil
 }
 
 // initDb Connecting database, migrate tables.

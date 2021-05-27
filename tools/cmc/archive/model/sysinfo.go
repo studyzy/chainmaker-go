@@ -23,28 +23,18 @@ type Sysinfo struct {
 
 func GetArchivedBlockHeight(db *gorm.DB) (int64, error) {
 	var sysinfo Sysinfo
-	err := db.Find(&sysinfo, "k = ?", KArchivedblockheight).Error
+	err := db.First(&sysinfo, "k = ?", KArchivedblockheight).Error
 	if err != nil {
-		return 0, err
-	}
-
-	// no KArchivedblockheight in sysinfos table, init create
-	if sysinfo.V == "" {
-		sysinfo.K = KArchivedblockheight
-		sysinfo.V = "0"
-		err = db.Create(&sysinfo).Error
-		if err != nil {
-			return 0, err
+		// no KArchivedblockheight in sysinfos table, init create
+		if err == gorm.ErrRecordNotFound {
+			sysinfo.K = KArchivedblockheight
+			sysinfo.V = "0"
+			return 0, db.Create(&sysinfo).Error
 		}
-		return 0, nil
-	}
-
-	height, err := strconv.ParseInt(sysinfo.V, 10, 64)
-	if err != nil {
 		return 0, err
 	}
 
-	return height, nil
+	return strconv.ParseInt(sysinfo.V, 10, 64)
 }
 
 func UpdateArchivedBlockHeight(db *gorm.DB, archivedBlockHeight int64) error {
