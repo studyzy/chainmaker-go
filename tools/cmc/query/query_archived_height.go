@@ -10,6 +10,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 func newQueryArchivedHeightOnChainCMD() *cobra.Command {
@@ -36,7 +38,7 @@ func newQueryArchivedHeightOnChainCMD() *cobra.Command {
 // runQueryArchivedHeightOnChainCMD `query archived height` command implementation
 func runQueryArchivedHeightOnChainCMD() error {
 	//// 1.Chain Client
-	cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 	if err != nil {
 		return err
 	}

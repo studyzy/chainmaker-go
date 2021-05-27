@@ -29,7 +29,7 @@ var (
 
 	dbType                  string
 	dbDest                  string
-	targetBlkHeight         int64
+	target                  string
 	blocks                  int64
 	secretKey               string
 	restoreStartBlockHeight int64
@@ -57,8 +57,9 @@ const (
 	flagDbType = "type"
 	// Off-chain database destination. eg. user:password:localhost:port
 	flagDbDest = "dest"
-	// Archive target block height, stop archiving (include this block) after reaching this height.
-	flagTargetBlockHeight = "target-block-height"
+	// 1.Archive target block height, stop archiving (include this block) after reaching this height.
+	// 2.Archive target date, archive all blocks before this date.
+	flagTarget = "target"
 	// Number of blocks to be archived this time
 	flagBlocks = "blocks"
 	// Secret Key for calc Hmac
@@ -91,9 +92,9 @@ func init() {
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
-	flags.StringVar(&dbType, flagDbType, "", "Database type. eg. mysql")
+	flags.StringVar(&dbType, flagDbType, "mysql", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
-	flags.Int64Var(&targetBlkHeight, flagTargetBlockHeight, 10000, "Height of the target block for this archive task")
+	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task\neg. 100 (block height) or `2006-01-02 15:04:05` (date)")
 	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
 	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
@@ -123,8 +124,8 @@ func initDb() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// migrate blockinfo,sysinfo tables
-	err = db.AutoMigrate(&model.BlockInfo{}, &model.Sysinfo{})
+	// migrate sysinfo table
+	err = db.AutoMigrate(&model.Sysinfo{})
 	if err != nil {
 		return nil, err
 	}

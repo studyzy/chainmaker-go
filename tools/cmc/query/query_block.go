@@ -11,6 +11,8 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 // newQueryBlockByHeightOnChainCMD `query block by block height` command implementation
@@ -26,7 +28,7 @@ func newQueryBlockByHeightOnChainCMD() *cobra.Command {
 				return err
 			}
 			//// 1.Chain Client
-			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 			if err != nil {
 				return err
 			}
@@ -66,7 +68,7 @@ func newQueryBlockByHashOnChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 			if err != nil {
 				return err
 			}
@@ -110,7 +112,7 @@ func newQueryBlockByTxIdOnChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 			if err != nil {
 				return err
 			}

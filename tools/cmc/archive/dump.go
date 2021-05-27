@@ -9,6 +9,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/gosuri/uiprogress"
 	"github.com/spf13/cobra"
@@ -19,7 +21,6 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
 
 const (
@@ -35,27 +36,48 @@ func newDumpCMD() *cobra.Command {
 		Short: "dump blockchain data",
 		Long:  "dump blockchain data to off-chain storage and delete on-chain data",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDumpCMD()
+			if dbType != "mysql" {
+				return fmt.Errorf("unsupport database type %s", dbType)
+			}
+
+			// try target is block height
+			if height, err := strconv.ParseInt(target, 10, 64); err == nil {
+				return runDumpByHeightCMD(height)
+			}
+
+			// try target is date
+			loc, err := time.LoadLocation("Local")
+			if err != nil {
+				return err
+			}
+			if t, err := time.ParseInLocation("2006-01-02 15:04:05", target, loc); err == nil {
+				height, err := calcTargetHeightByTime(t)
+				if err != nil {
+					return err
+				}
+				return runDumpByHeightCMD(height)
+			}
+
+			return errors.New("invalid --target, eg. 100 (block height) or `2006-01-02 15:04:05` (date)")
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
+		flagSdkConfPath, flagChainId, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagDbType)
 	cmd.MarkFlagRequired(flagDbDest)
-	cmd.MarkFlagRequired(flagTargetBlockHeight)
+	cmd.MarkFlagRequired(flagTarget)
 	cmd.MarkFlagRequired(flagBlocks)
 	cmd.MarkFlagRequired(flagSecretKey)
 
 	return cmd
 }
 
-// runDumpCMD `dump` command implementation
-func runDumpCMD() error {
+// runDumpByHeightCMD `dump` command implementation
+func runDumpByHeightCMD(targetBlkHeight int64) error {
 	//// 1.Chain Client
 	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 	if err != nil {
@@ -86,7 +108,7 @@ func runDumpCMD() error {
 		return err
 	}
 
-	err = validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain)
+	err = validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight)
 	if err != nil {
 		return err
 	}
@@ -123,7 +145,7 @@ func runDumpCMD() error {
 }
 
 // validateDump basic params validation
-func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain int64) error {
+func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight int64) error {
 	// target block height already archived, do nothing.
 	if targetBlkHeight <= archivedBlkHeightOffChain {
 		return errors.New("target block height already archived")
@@ -134,76 +156,27 @@ func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBl
 		return errors.New("required archived block height off-chain == archived block height on-chain")
 	}
 
-	// required current block height > target block height
-	if currentBlkHeightOnChain <= targetBlkHeight {
-		return errors.New("required current block height > target block height")
+	// required current block height >= target block height
+	if currentBlkHeightOnChain < targetBlkHeight {
+		return errors.New("required current block height >= target block height")
 	}
 	return nil
 }
 
-// batchGetFullBlocks Get full blocks start from startBlk end at endBlk.
-// NOTE: Include startBlk, exclude endBlk
-func batchGetFullBlocks(cc *sdk.ChainClient, startBlk, endBlk int64) ([]*store.BlockWithRWSet, error) {
-	var blkWithRWSetSlice []*store.BlockWithRWSet
-	for blk := startBlk; blk < endBlk; blk++ {
-		blkWithRWSet, err := cc.GetFullBlockByHeight(blk)
-		if err != nil {
-			return nil, err
-		}
-		blkWithRWSetSlice = append(blkWithRWSetSlice, blkWithRWSet)
-	}
-	return blkWithRWSetSlice, nil
-}
-
-// batchStoreAndArchiveBlocks Store blocks to off-chain storage then archive blocks on-chain
-func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSlice []*store.BlockWithRWSet) error {
-	tx := db.Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-	defer tx.Rollback()
-
-	// store blocks
-	for _, blkWithRWSet := range blkWithRWSetSlice {
-		blkWithRWSetBytes, err := blkWithRWSet.Marshal()
-		if err != nil {
-			return err
-		}
-
-		blkHeightBytes := make([]byte, 8)
-		binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
-
-		sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
-		if err != nil {
-			return err
-		}
-
-		_, err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
-		if err != nil {
-			return err
-		}
-	}
-
-	// archive blocks on-chain
-	archivedBlkHeightOnChain := blkWithRWSetSlice[len(blkWithRWSetSlice)-1].Block.Header.BlockHeight
-	err := archiveBlockOnChain(cc, archivedBlkHeightOnChain)
-	if err != nil {
-		return err
-	}
-
-	// update archived block height off-chain
-	err = model.UpdateArchivedBlockHeight(tx, archivedBlkHeightOnChain)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit().Error
-}
-
 // runBatch Run a batch job
+// NOTE: Include startBlk, exclude endBlk
 func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 	// check if create table
+	for blk := startBlk; blk < endBlk; blk++ {
+		// blk is first row of new table, create new table
+		if blk%model.RowsPerBlockInfoTable() == 0 {
+			if err := model.CreateBlockInfoTable(db, model.BlockInfoTableNameByBlockHeight(blk)); err != nil {
+				return err
+			}
+		}
+	}
 
+	// start db tx
 	tx := db.Begin()
 	if tx.Error != nil {
 		return tx.Error
@@ -238,7 +211,7 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 				return err
 			}
 
-			_, err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
+			err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
 			if err != nil {
 				return err
 			}
@@ -287,4 +260,50 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 	}
 
 	return util.CheckProposalRequestResp(resp, false)
+}
+
+func calcTargetHeightByTime(t time.Time) (int64, error) {
+	targetTs := t.Unix()
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	if err != nil {
+		return -1, err
+	}
+	defer cc.Stop()
+
+	lastBlock, err := cc.GetLastBlock(false)
+	if err != nil {
+		return -1, err
+	}
+	if lastBlock.Block.Header.BlockTimestamp <= targetTs {
+		return lastBlock.Block.Header.BlockHeight, nil
+	}
+
+	genesisHeader, err := cc.GetBlockHeaderByHeight(0)
+	if err != nil {
+		return -1, err
+	}
+	if genesisHeader.BlockTimestamp >= targetTs {
+		return -1, fmt.Errorf("no blocks at %s", t)
+	}
+
+	targetBlkHeight, err := util.SearchInt64(lastBlock.Block.Header.BlockHeight, func(i int64) (bool, error) {
+		header, err := cc.GetBlockHeaderByHeight(i)
+		if err != nil {
+			return false, err
+		}
+		return header.BlockTimestamp > targetTs, nil
+	})
+	if err != nil {
+		return -1, err
+	}
+
+	targetHeader, err := cc.GetBlockHeaderByHeight(targetBlkHeight)
+	if err != nil {
+		return -1, err
+	}
+	if targetHeader.BlockTimestamp > targetTs {
+		targetBlkHeight--
+	}
+
+	return targetBlkHeight, nil
 }
