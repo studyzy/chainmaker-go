@@ -236,6 +236,10 @@ func main() {
 	mainCmd.AddCommand(GetDirCMD())
 	mainCmd.AddCommand(GetQuoteCMD())
 
+	//generate hash code
+	mainCmd.AddCommand(GenerateHashCMD())
+
+
 	mainCmd.Execute()
 
 	if conn != nil {
