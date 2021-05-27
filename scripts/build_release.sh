@@ -78,9 +78,9 @@ function package() {
           cp -r $PROJECT_PATH/main/libwasmer.dylib                $chainmaker_file/lib/
           cp -r $PROJECT_PATH/main/prebuilt/mac/wxdec             $chainmaker_file/lib/
         fi
-        sudo chmod 644 $chainmaker_file/lib/*
-        sudo chmod 700 $chainmaker_file/lib/wxdec
-        sudo chmod 700 $chainmaker_file/bin/*
+        chmod 644 $chainmaker_file/lib/*
+        chmod 700 $chainmaker_file/lib/wxdec
+        chmod 700 $chainmaker_file/bin/*
         cp -r $BUILD_CONFIG_PATH/node$c/* $chainmaker_file/config/$file
         xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/start.sh
         xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/stop.sh
