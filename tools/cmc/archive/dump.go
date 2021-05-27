@@ -9,6 +9,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/gosuri/uiprogress"
 	"github.com/spf13/cobra"
@@ -35,27 +37,37 @@ func newDumpCMD() *cobra.Command {
 		Short: "dump blockchain data",
 		Long:  "dump blockchain data to off-chain storage and delete on-chain data",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDumpCMD()
+			if height, err := strconv.ParseInt(target, 10, 64); err == nil {
+				return runDumpByHeightCMD(height)
+			} else if t, err := time.Parse("2006-01-02", target); err == nil {
+				height, err := calcTargetHeightByTime(t)
+				if err != nil {
+					return err
+				}
+				return runDumpByHeightCMD(height)
+			} else {
+				return errors.New("invalid --target, eg. 100 (block height) or 1999-12-31 (date)")
+			}
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagChainId)
 	cmd.MarkFlagRequired(flagDbType)
 	cmd.MarkFlagRequired(flagDbDest)
-	cmd.MarkFlagRequired(flagTargetBlockHeight)
+	cmd.MarkFlagRequired(flagTarget)
 	cmd.MarkFlagRequired(flagBlocks)
 	cmd.MarkFlagRequired(flagSecretKey)
 
 	return cmd
 }
 
-// runDumpCMD `dump` command implementation
-func runDumpCMD() error {
+// runDumpByHeightCMD `dump` command implementation
+func runDumpByHeightCMD(targetBlkHeight int64) error {
 	//// 1.Chain Client
 	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 	if err != nil {
@@ -86,7 +98,7 @@ func runDumpCMD() error {
 		return err
 	}
 
-	err = validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain)
+	err = validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight)
 	if err != nil {
 		return err
 	}
@@ -123,7 +135,7 @@ func runDumpCMD() error {
 }
 
 // validateDump basic params validation
-func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain int64) error {
+func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight int64) error {
 	// target block height already archived, do nothing.
 	if targetBlkHeight <= archivedBlkHeightOffChain {
 		return errors.New("target block height already archived")
@@ -287,4 +299,37 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 	}
 
 	return util.CheckProposalRequestResp(resp, false)
+}
+
+func calcTargetHeightByTime(t time.Time) (int64, error) {
+	targetTs := t.Unix()
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	if err != nil {
+		return -1, err
+	}
+	defer cc.Stop()
+
+	lastBlock, err := cc.GetLastBlock(false)
+	if err != nil {
+		return -1, err
+	}
+	if lastBlock.Block.Header.BlockTimestamp <= targetTs {
+		return lastBlock.Block.Header.BlockHeight, nil
+	}
+
+	genesisHeader, err := cc.GetBlockHeaderByHeight(0)
+	if err != nil {
+		return -1, err
+	}
+	if genesisHeader.BlockTimestamp >= targetTs {
+		return -1, fmt.Errorf("no blocks at %s", t)
+	}
+
+	return util.SearchInt64(lastBlock.Block.Header.BlockHeight, func(i int64) (bool, error) {
+		header, err := cc.GetBlockHeaderByHeight(i)
+		if err != nil {
+			return false, err
+		}
+		return header.BlockTimestamp < targetTs, nil
+	})
 }
