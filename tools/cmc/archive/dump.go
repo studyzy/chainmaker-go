@@ -21,7 +21,6 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
 
 const (
@@ -164,69 +163,20 @@ func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBl
 	return nil
 }
 
-// batchGetFullBlocks Get full blocks start from startBlk end at endBlk.
-// NOTE: Include startBlk, exclude endBlk
-func batchGetFullBlocks(cc *sdk.ChainClient, startBlk, endBlk int64) ([]*store.BlockWithRWSet, error) {
-	var blkWithRWSetSlice []*store.BlockWithRWSet
-	for blk := startBlk; blk < endBlk; blk++ {
-		blkWithRWSet, err := cc.GetFullBlockByHeight(blk)
-		if err != nil {
-			return nil, err
-		}
-		blkWithRWSetSlice = append(blkWithRWSetSlice, blkWithRWSet)
-	}
-	return blkWithRWSetSlice, nil
-}
-
-// batchStoreAndArchiveBlocks Store blocks to off-chain storage then archive blocks on-chain
-func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSlice []*store.BlockWithRWSet) error {
-	tx := db.Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-	defer tx.Rollback()
-
-	// store blocks
-	for _, blkWithRWSet := range blkWithRWSetSlice {
-		blkWithRWSetBytes, err := blkWithRWSet.Marshal()
-		if err != nil {
-			return err
-		}
-
-		blkHeightBytes := make([]byte, 8)
-		binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
-
-		sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
-		if err != nil {
-			return err
-		}
-
-		_, err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
-		if err != nil {
-			return err
-		}
-	}
-
-	// archive blocks on-chain
-	archivedBlkHeightOnChain := blkWithRWSetSlice[len(blkWithRWSetSlice)-1].Block.Header.BlockHeight
-	err := archiveBlockOnChain(cc, archivedBlkHeightOnChain)
-	if err != nil {
-		return err
-	}
-
-	// update archived block height off-chain
-	err = model.UpdateArchivedBlockHeight(tx, archivedBlkHeightOnChain)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit().Error
-}
-
 // runBatch Run a batch job
+// NOTE: Include startBlk, exclude endBlk
 func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 	// check if create table
+	for blk := startBlk; blk < endBlk; blk++ {
+		// blk is first row of new table, create new table
+		if blk%model.RowsPerBlockInfoTable() == 0 {
+			if err := model.CreateBlockInfoTable(db, model.BlockInfoTableNameByBlockHeight(blk)); err != nil {
+				return err
+			}
+		}
+	}
 
+	// start db tx
 	tx := db.Begin()
 	if tx.Error != nil {
 		return tx.Error
@@ -261,7 +211,7 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 				return err
 			}
 
-			_, err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
+			err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
 			if err != nil {
 				return err
 			}

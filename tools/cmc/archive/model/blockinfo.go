@@ -7,13 +7,11 @@ package model
 
 import (
 	"fmt"
-	"strings"
-
 	"gorm.io/gorm"
 )
 
 const (
-	rowsPerBlockInfoTable = 100000
+	rowsPerBlockInfoTable = int64(100000)
 
 	prefixDbName         = "cm_archived_chain"
 	prefixBlockInfoTable = "t_block_info"
@@ -60,7 +58,7 @@ func DbName(chainId string) string {
 	return fmt.Sprintf("%s_%s", prefixDbName, chainId)
 }
 
-func createBlockInfoTable(db *gorm.DB, tableName string) error {
+func CreateBlockInfoTable(db *gorm.DB, tableName string) error {
 	err := db.Set("gorm:table_options", "ENGINE=InnoDB").Migrator().CreateTable(&blockInfoNew{})
 	if err != nil {
 		return err
@@ -68,46 +66,16 @@ func createBlockInfoTable(db *gorm.DB, tableName string) error {
 	return db.Migrator().RenameTable(&blockInfoNew{}, tableName)
 }
 
-func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) (int64, error) {
-	var bInfo = BlockInfo{
+func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) error {
+	return db.Table(BlockInfoTableNameByBlockHeight(blkHeight)).Create(&BlockInfo{
 		ChainID:        chainId,
 		BlockHeight:    blkHeight,
 		BlockWithRWSet: blkWithRWSet,
 		Hmac:           hmac,
 		IsArchived:     true,
-	}
-	result := db.Table(BlockInfoTableNameByBlockHeight(bInfo.BlockHeight)).Create(&bInfo)
-	if result.Error != nil {
-		if strings.Contains(result.Error.Error(), "Error 1146") {
-			err := createBlockInfoTable(db, BlockInfoTableNameByBlockHeight(bInfo.BlockHeight))
-			if err != nil {
-				return 0, err
-			}
-			result = db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
-		}
-	}
-
-	return result.RowsAffected, result.Error
+	}).Error
 }
 
-func UpdateBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) (int64, error) {
-	var bInfo = BlockInfo{
-		ChainID:        chainId,
-		BlockHeight:    blkHeight,
-		BlockWithRWSet: blkWithRWSet,
-		Hmac:           hmac,
-		IsArchived:     true,
-	}
-	result := db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
-	if result.Error != nil {
-		if strings.Contains(result.Error.Error(), "Error 1146") {
-			err := createBlockInfoTable(db, BlockInfoTableNameByBlockHeight(bInfo.BlockHeight))
-			if err != nil {
-				return 0, err
-			}
-			result = db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
-		}
-	}
-
-	return result.RowsAffected, result.Error
+func RowsPerBlockInfoTable() int64 {
+	return rowsPerBlockInfoTable
 }

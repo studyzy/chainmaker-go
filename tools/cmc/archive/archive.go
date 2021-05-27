@@ -124,8 +124,8 @@ func initDb() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// migrate blockinfo,sysinfo tables
-	err = db.AutoMigrate(&model.BlockInfo{}, &model.Sysinfo{})
+	// migrate sysinfo table
+	err = db.AutoMigrate(&model.Sysinfo{})
 	if err != nil {
 		return nil, err
 	}
