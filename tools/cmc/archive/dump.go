@@ -16,13 +16,17 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
 )
 
 const (
 	// default 20 blocks per batch
 	blocksPerBatch = 20
+	// Send Archive Block Request timeout
+	archiveBlockRequestTimeout = 20 // 20s
 )
 
 func newDumpCMD() *cobra.Command {
@@ -36,14 +40,11 @@ func newDumpCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagChainId, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
-		flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTargetBlockHeight, flagBlocks, flagSecretKey,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagDbType)
 	cmd.MarkFlagRequired(flagDbDest)
 	cmd.MarkFlagRequired(flagTargetBlockHeight)
@@ -56,7 +57,7 @@ func newDumpCMD() *cobra.Command {
 // runDumpCMD `dump` command implementation
 func runDumpCMD() error {
 	//// 1.Chain Client
-	cc, err := createChainClient(adminKeyFilePaths, adminCrtFilePaths, chainId)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func runDumpCMD() error {
 		return err
 	}
 
-	err = validate(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain)
+	err = validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain)
 	if err != nil {
 		return err
 	}
@@ -97,10 +98,13 @@ func runDumpCMD() error {
 	}
 	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("Archiving Block (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("\nArchiving Blocks (%d/%d)", b.Current(), barCount)
 	})
 	uiprogress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
+	if archivedBlkHeightOnChain == 0 {
+		batchStartBlkHeight = 0
+	}
 	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks <= blocks; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
 			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err != nil {
@@ -118,8 +122,8 @@ func runDumpCMD() error {
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
 }
 
-// validate basic params validation
-func validate(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain int64) error {
+// validateDump basic params validation
+func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain int64) error {
 	// target block height already archived, do nothing.
 	if targetBlkHeight <= archivedBlkHeightOffChain {
 		return errors.New("target block height already archived")
@@ -169,7 +173,7 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 		blkHeightBytes := make([]byte, 8)
 		binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
 
-		sum, err := Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
+		sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
 		if err != nil {
 			return err
 		}
@@ -198,12 +202,64 @@ func batchStoreAndArchiveBlocks(cc *sdk.ChainClient, db *gorm.DB, blkWithRWSetSl
 
 // runBatch Run a batch job
 func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
-	blkWithRWSetSlice, err := batchGetFullBlocks(cc, startBlk, endBlk)
+	// check if create table
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+	defer tx.Rollback()
+
+	// get & store blocks
+	for blk := startBlk; blk < endBlk; blk++ {
+		var bInfo model.BlockInfo
+		err := db.Table(model.BlockInfoTableNameByBlockHeight(blk)).Where("Fblock_height = ?", blk).First(&bInfo).Error
+		if err == nil { // this block info was already in database, just update Fis_archived to 1
+			if !bInfo.IsArchived {
+				bInfo.IsArchived = true
+				tx.Table(model.BlockInfoTableNameByBlockHeight(blk)).Save(&bInfo)
+			}
+		} else if err == gorm.ErrRecordNotFound {
+			blkWithRWSet, err := cc.GetFullBlockByHeight(blk)
+			if err != nil {
+				return err
+			}
+
+			blkWithRWSetBytes, err := blkWithRWSet.Marshal()
+			if err != nil {
+				return err
+			}
+
+			blkHeightBytes := make([]byte, 8)
+			binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
+
+			sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
+			if err != nil {
+				return err
+			}
+
+			_, err = model.InsertBlockInfo(tx, chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, sum)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// archive blocks on-chain
+	err := archiveBlockOnChain(cc, endBlk-1)
 	if err != nil {
 		return err
 	}
 
-	return batchStoreAndArchiveBlocks(cc, db, blkWithRWSetSlice)
+	// update archived block height off-chain
+	err = model.UpdateArchivedBlockHeight(tx, endBlk-1)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 // archiveBlockOnChain Build & Sign & Send a ArchiveBlockRequest
@@ -212,6 +268,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		err                error
 		payload            []byte
 		signedPayloadBytes []byte
+		resp               *common.TxResponse
 	)
 
 	payload, err = cc.CreateArchiveBlockPayload(height)
@@ -224,10 +281,10 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 		return err
 	}
 
-	_, err = cc.SendArchiveBlockRequest(signedPayloadBytes, -1, false)
+	resp, err = cc.SendArchiveBlockRequest(signedPayloadBytes, archiveBlockRequestTimeout)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return util.CheckProposalRequestResp(resp, false)
 }

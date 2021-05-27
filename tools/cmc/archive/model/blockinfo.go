@@ -25,6 +25,7 @@ type BlockInfo struct {
 	BlockHeight    int64  `gorm:"column:Fblock_height;type:int unsigned NOT NULL;uniqueIndex:idx_blockheight"`
 	BlockWithRWSet []byte `gorm:"column:Fblock_with_rwset;type:longblob NOT NULL"`
 	Hmac           string `gorm:"column:Fhmac;type:varchar(64) NOT NULL"`
+	IsArchived     bool   `gorm:"column:Fis_archived;type:tinyint(1) NOT NULL DEFAULT '0'"`
 }
 
 type blockInfoNew struct {
@@ -73,6 +74,29 @@ func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet 
 		BlockHeight:    blkHeight,
 		BlockWithRWSet: blkWithRWSet,
 		Hmac:           hmac,
+		IsArchived:     true,
+	}
+	result := db.Table(BlockInfoTableNameByBlockHeight(bInfo.BlockHeight)).Create(&bInfo)
+	if result.Error != nil {
+		if strings.Contains(result.Error.Error(), "Error 1146") {
+			err := createBlockInfoTable(db, BlockInfoTableNameByBlockHeight(bInfo.BlockHeight))
+			if err != nil {
+				return 0, err
+			}
+			result = db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
+		}
+	}
+
+	return result.RowsAffected, result.Error
+}
+
+func UpdateBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) (int64, error) {
+	var bInfo = BlockInfo{
+		ChainID:        chainId,
+		BlockHeight:    blkHeight,
+		BlockWithRWSet: blkWithRWSet,
+		Hmac:           hmac,
+		IsArchived:     true,
 	}
 	result := db.Scopes(BlockInfoTableScopes(bInfo)).Create(&bInfo)
 	if result.Error != nil {

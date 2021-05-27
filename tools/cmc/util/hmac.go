@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package archive
+package util
 
 import (
 	"encoding/hex"
