@@ -37,6 +37,10 @@ func newDumpCMD() *cobra.Command {
 		Short: "dump blockchain data",
 		Long:  "dump blockchain data to off-chain storage and delete on-chain data",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if dbType != "mysql" {
+				return fmt.Errorf("unsupport database type %s", dbType)
+			}
+
 			if height, err := strconv.ParseInt(target, 10, 64); err == nil {
 				return runDumpByHeightCMD(height)
 			} else if t, err := time.Parse("2006-01-02", target); err == nil {
