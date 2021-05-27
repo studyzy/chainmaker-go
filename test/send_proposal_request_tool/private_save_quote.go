@@ -90,7 +90,7 @@ func saveQuote() error {
 	resultStruct := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    string(resp.ContractResult.Result),
 	}
 
 	bytes, err := json.Marshal(resultStruct)

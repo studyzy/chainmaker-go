@@ -9,6 +9,7 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
@@ -31,16 +32,18 @@ func GetContractCMD() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVarP(&contractName, "contract_name", "x", "", "contract name")
-	flags.StringVarP(&codeHash, "code_hash", "y", "", "code hash")
+	flags.StringVarP(&contractCode, "", "r", "", "contract")
 
 	return cmd
 }
 
 func getContract() error {
+
+	codeHashArr := sha256.Sum256([]byte(contractCode))
 	// 构造Payload
 	pairs := paramsMap2KVPairs(map[string]string{
 		"contract_name": contractName,
-		"code_hash":     codeHash,
+		"code_hash":     string(codeHashArr[:]),
 	})
 
 	payloadBytes, err := constructQueryPayload(
@@ -52,7 +55,7 @@ func getContract() error {
 		return fmt.Errorf("marshal get contract payload failed, %s", err.Error())
 	}
 
-	resp, err := proposalRequest(sk3, client, common.TxType_QUERY_SYSTEM_CONTRACT, chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_SYSTEM_CONTRACT, chainId, "", payloadBytes)
 	if err != nil {
 		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
 	}
@@ -67,9 +70,9 @@ func getContract() error {
 	}
 
 	resultStruct := &Result{
-		Code:    resp.Code,
-		Message: resp.Message,
-		TxId:    txId,
+		Code:                resp.Code,
+		Message:             resp.Message,
+		ContractQueryResult: string(resp.ContractResult.Result),
 	}
 
 	bytes, err := json.Marshal(resultStruct)

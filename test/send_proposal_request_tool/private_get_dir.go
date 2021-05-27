@@ -56,9 +56,9 @@ func getDir() error {
 	}
 
 	resultStruct := &Result{
-		Code:    resp.Code,
-		Message: resp.Message,
-		TxId:    txId,
+		Code:                resp.Code,
+		Message:             resp.Message,
+		ContractQueryResult: string(resp.ContractResult.Result),
 	}
 
 	bytes, err := json.Marshal(resultStruct)

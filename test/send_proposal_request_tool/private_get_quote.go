@@ -59,6 +59,7 @@ func getQuote() error {
 		Code:    resp.Code,
 		Message: resp.Message,
 		TxId:    txId,
+		ContractQueryResult: string(resp.ContractResult.Result),
 	}
 
 	bytes, err := json.Marshal(resultStruct)
