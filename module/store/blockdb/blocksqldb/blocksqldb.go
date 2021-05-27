@@ -20,6 +20,8 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+var NotImplementError = errors.New("implement me")
+
 // BlockSqlDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a mysql based data model
 type BlockSqlDB struct {
@@ -27,6 +29,38 @@ type BlockSqlDB struct {
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
 	dbName           string
+}
+
+func (db *BlockSqlDB) GetHeightByHash(blockHash []byte) (uint64, error) {
+	return 0, NotImplementError
+}
+
+func (db *BlockSqlDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	return nil, NotImplementError
+}
+
+func (db *BlockSqlDB) GetTxHeight(txId string) (uint64, error) {
+	return 0, NotImplementError
+}
+
+func (db *BlockSqlDB) TxArchived(txId string) (bool, error) {
+	return false, NotImplementError
+}
+
+func (db *BlockSqlDB) GetArchivedPivot() (uint64, error) {
+	return 0, NotImplementError
+}
+
+func (db *BlockSqlDB) SetArchivedPivot(archivedPivot uint64) error {
+	return NotImplementError
+}
+
+func (db *BlockSqlDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
+	return nil, NotImplementError
+}
+
+func (db *BlockSqlDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error {
+	return NotImplementError
 }
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
@@ -331,7 +365,7 @@ func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight int64) ([]*commonPb.Transac
 	return result, nil
 }
 func (b *BlockSqlDB) GetTxConfirmedTime(txId string) (int64, error) {
-	panic("implement me")
+	return 0, NotImplementError
 }
 
 // Close is used to close database

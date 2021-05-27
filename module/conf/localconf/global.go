@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 const (
-	CurrentVersion = "V1.1.0"
+	CurrentVersion = "V1.1.1"
 )
 
 var (

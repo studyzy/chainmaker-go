@@ -1,0 +1,87 @@
+// Copyright (C) BABEC. All rights reserved.
+// Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+package query
+
+import (
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
+	sdk "chainmaker.org/chainmaker-sdk-go"
+)
+
+var (
+	// sdk config file path
+	sdkConfPath string
+
+	chainId string
+
+	// cert and key
+	adminKeyFilePaths string
+	adminCrtFilePaths string
+)
+
+const (
+	// TODO: wrap common flags to a separate package?
+	//// Common flags
+	// sdk config file path flag
+	flagSdkConfPath = "sdk-conf-path"
+	flagChainId     = "chain-id"
+)
+
+func NewQueryOnChainCMD() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query on-chain blockchain data",
+		Long:  "query on-chain blockchain data",
+	}
+
+	cmd.AddCommand(newQueryTxOnChainCMD())
+	cmd.AddCommand(newQueryBlockByHeightOnChainCMD())
+	cmd.AddCommand(newQueryBlockByHashOnChainCMD())
+	cmd.AddCommand(newQueryBlockByTxIdOnChainCMD())
+	cmd.AddCommand(newQueryArchivedHeightOnChainCMD())
+
+	return cmd
+}
+
+var flags *pflag.FlagSet
+
+func init() {
+	flags = &pflag.FlagSet{}
+
+	flags.StringVar(&chainId, flagChainId, "", "Chain ID")
+	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
+}
+
+func attachFlags(cmd *cobra.Command, names []string) {
+	cmdFlags := cmd.Flags()
+	for _, name := range names {
+		if flag := flags.Lookup(name); flag != nil {
+			cmdFlags.AddFlag(flag)
+		}
+	}
+}
+
+// TODO: abstract this function, copied from client package
+// createChainClient create a chain client
+func createChainClient(keyFilePath, crtFilePath, chainId string) (*sdk.ChainClient, error) {
+	cc, err := sdk.NewChainClient(
+		sdk.WithConfPath(sdkConfPath),
+		sdk.WithChainClientChainId(chainId),
+		sdk.WithUserKeyFilePath(keyFilePath),
+		sdk.WithUserCrtFilePath(crtFilePath),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enable certificate compression
+	err = cc.EnableCertHash()
+	if err != nil {
+		return nil, err
+	}
+	return cc, nil
+}

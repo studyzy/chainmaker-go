@@ -152,6 +152,7 @@ type StorageConfig struct {
 	HistoryDbConfig        *DbConfig `mapstructure:"historydb_config"`
 	ResultDbConfig         *DbConfig `mapstructure:"resultdb_config"`
 	ContractEventDbConfig  *DbConfig `mapstructure:"contract_eventdb_config"`
+	UnArchiveBlockHeight   uint64    `mapstructure:"unarchive_block_height"`
 }
 
 func (config *StorageConfig) setDefault() {
