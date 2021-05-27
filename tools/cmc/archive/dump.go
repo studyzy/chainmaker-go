@@ -149,9 +149,9 @@ func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBl
 		return errors.New("required archived block height off-chain == archived block height on-chain")
 	}
 
-	// required current block height > target block height
-	if currentBlkHeightOnChain <= targetBlkHeight {
-		return errors.New("required current block height > target block height")
+	// required current block height >= target block height
+	if currentBlkHeightOnChain < targetBlkHeight {
+		return errors.New("required current block height >= target block height")
 	}
 	return nil
 }
