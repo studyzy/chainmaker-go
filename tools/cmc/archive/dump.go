@@ -50,7 +50,7 @@ func newDumpCMD() *cobra.Command {
 				}
 				return runDumpByHeightCMD(height)
 			} else {
-				return errors.New("invalid --target, eg. 100 (block height) or 1999-12-31 (date)")
+				return errors.New("invalid --target, eg. 100 (block height) or 1999-02-01 (date)")
 			}
 		},
 	}
