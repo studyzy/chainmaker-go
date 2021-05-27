@@ -29,7 +29,7 @@ var (
 
 	dbType                  string
 	dbDest                  string
-	target         string
+	target                  string
 	blocks                  int64
 	secretKey               string
 	restoreStartBlockHeight int64
@@ -92,9 +92,9 @@ func init() {
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
-	flags.StringVar(&dbType, flagDbType, "", "Database type. eg. mysql")
+	flags.StringVar(&dbType, flagDbType, "mysql", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
-	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task")
+	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task\neg. 100 (block height) or 1999-12-31 (date)")
 	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
 	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
