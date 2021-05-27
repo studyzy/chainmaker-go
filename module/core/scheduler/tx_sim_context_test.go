@@ -20,6 +20,7 @@ func TestSha256(t *testing.T) {
 	fmt.Println(sha256.Sum256([]byte("bbb")))
 	fmt.Println(sha256.Sum256([]byte("bbb")))
 }
+
 func TestTxSimContext(t *testing.T) {
 
 	tx := &commonpb.Transaction{

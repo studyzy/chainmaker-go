@@ -7,12 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
-	"fmt"
-	"strings"
-	"sync/atomic"
-	"testing"
-	"time"
-
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
@@ -23,8 +17,13 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
 )
 
 var hashType = "SHA256"
@@ -108,17 +107,17 @@ func TestBlockVerifierImpl_VerifyBlock(t *testing.T) {
 	proposer, err := signerMember.Serialize(true)
 	require.Nil(t, err)
 
-	tx.Result.RwSetHash, err = utils.CalcRWSetHash(hashType, rwSetmap[tx.Header.TxId])
+	tx.Result.RwSetHash, err  = utils.CalcRWSetHash(hashType, rwSetmap[tx.Header.TxId])
 
 	txHash, err := utils.CalcTxHash(hashType, tx)
 	require.Nil(t, err)
 
-	b0 := cache.CreateNewTestBlock(0)
+	b0 := createNewTestBlockWithoutProposer(0)
 	ledgerCache.SetLastCommittedBlock(b0)
 	b1 := createNewTestBlock(1, proposer, txs)
 
 	txHashs := make([][]byte, 0)
-	txHashs = append(txHashs, txHash)
+	txHashs= append(txHashs, txHash)
 	txRoot, err := hash.GetMerkleRoot(hashType, txHashs)
 	require.Nil(t, err)
 	b1.Header.TxRoot = txRoot
@@ -140,7 +139,9 @@ func TestBlockVerifierImpl_VerifyBlock(t *testing.T) {
 }
 
 func Test_ReentrantLock(t *testing.T) {
-	lock := &reentrantLock{}
+	lock := &reentrantLocks{
+		reentrantLocks: make(map[string]interface{}),
+	}
 
 	for i := 0; i < 3; i++ {
 		go func() {
@@ -225,7 +226,7 @@ func Test_DispatchTask(t *testing.T) {
 	fmt.Println(tasks)
 	txs := make([]*commonpb.Transaction, 0)
 	for i := 0; i < 5; i++ {
-		txs = append(txs, cache.CreateNewTestTx())
+		txs = append(txs, createNewTestTx())
 	}
 	require.Equal(t, 5, len(txs))
 	verifyTasks := utils.DispatchTxVerifyTask(txs)
@@ -235,7 +236,7 @@ func Test_DispatchTask(t *testing.T) {
 	}
 
 	for i := 0; i < 123; i++ {
-		txs = append(txs, cache.CreateNewTestTx())
+		txs = append(txs, createNewTestTx())
 	}
 	verifyTasks = utils.DispatchTxVerifyTask(txs)
 	fmt.Println(len(verifyTasks))
@@ -244,7 +245,7 @@ func Test_DispatchTask(t *testing.T) {
 	}
 
 	for i := 0; i < 896; i++ {
-		txs = append(txs, cache.CreateNewTestTx())
+		txs = append(txs, createNewTestTx())
 	}
 	verifyTasks = utils.DispatchTxVerifyTask(txs)
 	fmt.Println(len(verifyTasks))
@@ -297,7 +298,7 @@ func createNewTestTx() *commonpb.Transaction {
 		RequestPayload:   hash,
 		RequestSignature: hash,
 		Result: &commonpb.Result{
-			Code: commonpb.TxStatusCode_CONTRACT_REVOKE_FAILED,
+			Code:           commonpb.TxStatusCode_CONTRACT_REVOKE_FAILED,
 			ContractResult: &commonpb.ContractResult{
 				Code:          0,
 				Result:        nil,
@@ -305,7 +306,39 @@ func createNewTestTx() *commonpb.Transaction {
 				GasUsed:       0,
 				ContractEvent: nil,
 			},
-			RwSetHash: nil,
+			RwSetHash:      nil,
 		},
 	}
+}
+
+func createNewTestBlockWithoutProposer(height int64) *commonpb.Block {
+	var hash = []byte("0123456789")
+	var version = []byte("0")
+	var block = &commonpb.Block{
+		Header: &commonpb.BlockHeader{
+			ChainId:        "Chain1",
+			BlockHeight:    height,
+			PreBlockHash:   hash,
+			BlockHash:      hash,
+			PreConfHeight:  0,
+			BlockVersion:   version,
+			DagHash:        hash,
+			RwSetRoot:      hash,
+			TxRoot:         hash,
+			BlockTimestamp: 0,
+			Proposer:       hash,
+			ConsensusArgs:  nil,
+			TxCount:        1,
+			Signature:      []byte(""),
+		},
+		Dag: &commonpb.DAG{
+			Vertexes: nil,
+		},
+		Txs: nil,
+	}
+	tx := createNewTestTx()
+	txs := make([]*commonpb.Transaction, 1)
+	txs[0] = tx
+	block.Txs = txs
+	return block
 }
