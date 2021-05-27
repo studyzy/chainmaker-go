@@ -81,7 +81,7 @@ func (pro *processor) handleProcessBlockMsg() (queue.Item, error) {
 	)
 	pendingBlockHeight := pro.lastCommitBlockHeight() + 1
 	if info, exist = pro.queue[pendingBlockHeight]; !exist {
-		pro.log.Debugf("block [%d] not find in queue.", pendingBlockHeight)
+		//pro.log.Debugf("block [%d] not find in queue.", pendingBlockHeight)
 		return nil, nil
 	}
 	if status = pro.validateAndCommitBlock(info.blk); status == ok || status == hasProcessed {
