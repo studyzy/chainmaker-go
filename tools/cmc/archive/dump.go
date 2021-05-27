@@ -41,17 +41,25 @@ func newDumpCMD() *cobra.Command {
 				return fmt.Errorf("unsupport database type %s", dbType)
 			}
 
+			// try target is block height
 			if height, err := strconv.ParseInt(target, 10, 64); err == nil {
 				return runDumpByHeightCMD(height)
-			} else if t, err := time.Parse("2006-01-02", target); err == nil {
+			}
+
+			// try target is date
+			loc, err := time.LoadLocation("Local")
+			if err != nil {
+				return err
+			}
+			if t, err := time.ParseInLocation("2006-01-02 15:04:05", target, loc); err == nil {
 				height, err := calcTargetHeightByTime(t)
 				if err != nil {
 					return err
 				}
 				return runDumpByHeightCMD(height)
-			} else {
-				return errors.New("invalid --target, eg. 100 (block height) or 1999-02-01 (date)")
 			}
+
+			return errors.New("invalid --target, eg. 100 (block height) or `2006-01-02 15:04:05` (date)")
 		},
 	}
 
@@ -328,11 +336,24 @@ func calcTargetHeightByTime(t time.Time) (int64, error) {
 		return -1, fmt.Errorf("no blocks at %s", t)
 	}
 
-	return util.SearchInt64(lastBlock.Block.Header.BlockHeight, func(i int64) (bool, error) {
+	targetBlkHeight, err := util.SearchInt64(lastBlock.Block.Header.BlockHeight, func(i int64) (bool, error) {
 		header, err := cc.GetBlockHeaderByHeight(i)
 		if err != nil {
 			return false, err
 		}
-		return header.BlockTimestamp < targetTs, nil
+		return header.BlockTimestamp > targetTs, nil
 	})
+	if err != nil {
+		return -1, err
+	}
+
+	targetHeader, err := cc.GetBlockHeaderByHeight(targetBlkHeight)
+	if err != nil {
+		return -1, err
+	}
+	if targetHeader.BlockTimestamp > targetTs {
+		targetBlkHeight--
+	}
+
+	return targetBlkHeight, nil
 }
