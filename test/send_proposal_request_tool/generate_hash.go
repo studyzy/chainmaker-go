@@ -36,6 +36,6 @@ func generateHash() error {
 		return err
 	}
 	contractCodeHash := sha256.Sum256(wasmBin)
-	fmt.Printf("wasm file code hash is:%v", contractCodeHash[:])
+	fmt.Printf("wasm file code hash is:%s", contractCodeHash[:])
 	return nil
 }
