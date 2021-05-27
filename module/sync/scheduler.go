@@ -112,7 +112,9 @@ func (sch *scheduler) addPendingBlocksAndUpdatePendingHeight(peerHeight int64) {
 		return
 	}
 	blk := sch.ledger.GetLastCommittedBlock()
-	sch.updatePendingHeight(blk)
+	if blk.Header.BlockHeight >= peerHeight {
+		return
+	}
 	for i := sch.pendingRecvHeight; i <= peerHeight && i < sch.pendingRecvHeight+sch.maxPendingBlocks; i++ {
 		if _, exist := sch.blockStates[i]; !exist {
 			sch.blockStates[i] = newBlock
