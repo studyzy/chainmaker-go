@@ -232,7 +232,6 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
 		s.log.Error(errMsg)
 
-		// FIXME: 可以移除掉
 		resp.Code = txStatusCode
 		if txResult.Message == archive.ArchivedBlockError.Error() {
 			resp.Code = commonPb.TxStatusCode_ARCHIVED_BLOCK

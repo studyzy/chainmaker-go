@@ -8,40 +8,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-//func (s *ApiService) Archive(ctx context.Context, req *commonPb.TxRequest) (*commonPb.TxResponse, error) {
-//	var (
-//		//errCode commonErr.ErrCode
-//		//errMsg  string
-//		//resp    = &commonPb.TxResponse{}
-//	)
-//
-//	tx := &commonPb.Transaction{
-//		Header:           req.Header,
-//		RequestPayload:   req.Payload,
-//		RequestSignature: req.Signature,
-//		Result:           nil}
-//
-//	// TODO:
-//	//errCode, errMsg = s.validate(tx)
-//	//if errCode != commonErr.ERR_CODE_OK {
-//	//	resp.Code = commonPb.TxStatusCode_NO_PERMISSION
-//	//	resp.Message = errMsg
-//	//	return resp, nil
-//	//}
-//
-//	switch req.Header.TxType {
-//	case commonPb.TxType_ARCHIVE_FULL_BLOCK:
-//		return s.doArchiveBlock(tx), nil
-//	case commonPb.TxType_RESTORE_FULL_BLOCK:
-//		return s.doRestoreBlock(tx), nil
-//	default:
-//		return &commonPb.TxResponse{
-//			Code:    commonPb.TxStatusCode_INTERNAL_ERROR,
-//			Message: commonErr.ERR_CODE_TXTYPE.String(),
-//		}, nil
-//	}
-//}
-
 func (s *ApiService) doArchive(tx *commonPb.Transaction) *commonPb.TxResponse {
 	switch tx.Header.TxType {
 	case commonPb.TxType_ARCHIVE_FULL_BLOCK:
