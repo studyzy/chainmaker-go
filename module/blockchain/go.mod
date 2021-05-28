@@ -48,4 +48,8 @@ replace (
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
 	chainmaker.org/chainmaker-go/wasi => ../vm/wasi
 	chainmaker.org/chainmaker-go/evm => ../vm/evm
+
+	github.com/libp2p/go-libp2p => ../net/p2p/libp2p
+	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
+	github.com/libp2p/go-libp2p-pubsub => ../net/p2p/libp2ppubsub
 )

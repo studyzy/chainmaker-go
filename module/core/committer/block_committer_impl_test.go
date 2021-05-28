@@ -9,21 +9,20 @@ package committer
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
 	"github.com/golang/mock/gomock"
+	"github.com/google/martian/log"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
-
-var log = &test.GoLogger{}
 
 func TestAddBlock(t *testing.T) {
 	ctl := gomock.NewController(t)
@@ -34,7 +33,7 @@ func TestAddBlock(t *testing.T) {
 	chainConf := mock.NewMockChainConf(ctl)
 	proposedCache := cache.NewProposalCache(chainConf, ledgerCache)
 
-	lastBlock := cache.CreateNewTestBlock(0)
+	lastBlock := createNewTestBlock(0)
 	ledgerCache.SetLastCommittedBlock(lastBlock)
 	rwSetMap := make(map[string]*commonpb.TxRWSet)
 	contractEventMap := make(map[string][]*commonpb.ContractEvent)
@@ -77,7 +76,7 @@ func TestAddBlock(t *testing.T) {
 }
 
 func TestBlockSerialize(t *testing.T) {
-	lastBlock := cache.CreateNewTestBlock(0)
+	lastBlock := createNewTestBlock(0)
 	require.NotNil(t, lastBlock)
 	fmt.Printf(utils.FormatBlock(lastBlock))
 }
@@ -100,7 +99,7 @@ func initCommitter(
 		txPool:          txPool,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             log,
+		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
 		chainConf:       chainConf,
 		msgBus:          msgbus,
 	}
@@ -133,4 +132,57 @@ func createNewBlock(last *commonpb.Block) commonpb.Block {
 	block.Header.BlockTimestamp = time.Now().Unix()
 	block.Header.BlockHash, _ = utils.CalcBlockHash("SHA256", &block)
 	return block
+}
+
+func createNewTestBlock(height int64) *commonpb.Block {
+	var hash = []byte("0123456789")
+	var version = []byte("0")
+	var block = &commonpb.Block{
+		Header: &commonpb.BlockHeader{
+			ChainId:        "Chain1",
+			BlockHeight:    height,
+			PreBlockHash:   hash,
+			BlockHash:      hash,
+			PreConfHeight:  0,
+			BlockVersion:   version,
+			DagHash:        hash,
+			RwSetRoot:      hash,
+			TxRoot:         hash,
+			BlockTimestamp: 0,
+			Proposer:       hash,
+			ConsensusArgs:  nil,
+			TxCount:        1,
+			Signature:      []byte(""),
+		},
+		Dag: &commonpb.DAG{
+			Vertexes: nil,
+		},
+		Txs: nil,
+	}
+	tx := createNewTestTx()
+	txs := make([]*commonpb.Transaction, 1)
+	txs[0] = tx
+	block.Txs = txs
+	return block
+}
+
+func createNewTestTx() *commonpb.Transaction {
+	var hash = []byte("0123456789")
+	return &commonpb.Transaction{
+		Header: &commonpb.TxHeader{
+			ChainId:        "",
+			Sender:         nil,
+			TxType:         0,
+			TxId:           "",
+			Timestamp:      0,
+			ExpirationTime: 0,
+		},
+		RequestPayload:   hash,
+		RequestSignature: hash,
+		Result: &commonpb.Result{
+			Code:           commonpb.TxStatusCode_SUCCESS,
+			ContractResult: nil,
+			RwSetHash:      nil,
+		},
+	}
 }

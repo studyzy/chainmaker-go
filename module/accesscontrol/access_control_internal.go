@@ -9,6 +9,18 @@ package accesscontrol
 
 import (
 	"bytes"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/hex"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
@@ -18,18 +30,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/hex"
-	"encoding/pem"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"io/ioutil"
-	"strconv"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
 // Special characters allowed to define customized access rules
