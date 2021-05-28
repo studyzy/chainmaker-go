@@ -254,7 +254,6 @@ func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimCon
 
 	key := protocol.GetKeyStr(startKey, startField)
 	limit := protocol.GetKeyStr(limitKey, limitField)
-	fmt.Println("key:", key, "  limit:", limit, "  ptr:", valuePtr) //已经执行
 	iter, err := txSimContext.Select(contractName, key, limit)
 	if err != nil {
 		return fmt.Errorf("ctx query error, %s", err.Error())
