@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package tbft
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	netpb "chainmaker.org/chainmaker-go/pb/protogo/net"
@@ -14,7 +16,6 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/localconf"
 	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
 	"github.com/gogo/protobuf/proto"
 )
@@ -56,17 +57,43 @@ func NewPeerStateService(logger *logger.CMLogger, id string, tbftImpl *Consensus
 }
 
 func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "[%s] update with proto to (%d/%d/%s)",
+		pcs.Id, pcsProto.Height, pcsProto.Round, pcsProto.Step)
+
+	if pcsProto.RoundVoteSet != nil &&
+		pcsProto.RoundVoteSet.Prevotes != nil &&
+		pcsProto.RoundVoteSet.Prevotes.Votes != nil {
+		fmt.Fprintf(&builder, " prevote: [")
+		for k := range pcsProto.RoundVoteSet.Prevotes.Votes {
+			fmt.Fprintf(&builder, "%s, ", k)
+		}
+		fmt.Fprintf(&builder, "]")
+	}
+
+	if pcsProto.RoundVoteSet != nil &&
+		pcsProto.RoundVoteSet.Precommits != nil &&
+		pcsProto.RoundVoteSet.Precommits.Votes != nil {
+		fmt.Fprintf(&builder, " precommit: [")
+		for k := range pcsProto.RoundVoteSet.Precommits.Votes {
+			fmt.Fprintf(&builder, "%s, ", k)
+		}
+		fmt.Fprintf(&builder, "]")
+	}
+
+	pcs.logger.Debugf(builder.String())
+
 	pcs.Lock()
 	defer pcs.Unlock()
 
-	pcs.logger.Debugf("[%s] update with proto to (%d/%d/%s)",
-		pcs.Id, pcsProto.Height, pcsProto.Round, pcsProto.Step)
 	pcs.Height = pcsProto.Height
 	pcs.Round = pcsProto.Round
 	pcs.Step = pcsProto.Step
 	pcs.Proposal = pcsProto.Proposal
 	pcs.VerifingProposal = pcsProto.VerifingProposal
-	pcs.RoundVoteSet = NewRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, nil)
+	validatorSet := pcs.tbftImpl.getValidatorSet()
+	pcs.RoundVoteSet = NewRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
 func (pcs *PeerStateService) start() {
@@ -105,13 +132,13 @@ func (pcs *PeerStateService) gossipState(state *tbftpb.GossipState) {
 	pcs.Lock()
 	defer pcs.Unlock()
 
-	if state.Height < pcs.Height {
-		pcs.logger.Debugf("[%s](%d/%d/%s) skip send state to %s(%d/%d/%s)",
-			state.Id, state.Height, state.Round, state.Step,
-			pcs.Id, pcs.Height, pcs.Round, pcs.Step,
-		)
-		return
-	}
+	// if state.Height < pcs.Height {
+	//   pcs.logger.Debugf("gossipState [%s](%d/%d/%s) skip send state to %s(%d/%d/%s)",
+	//     state.Id, state.Height, state.Round, state.Step,
+	//     pcs.Id, pcs.Height, pcs.Round, pcs.Step,
+	//   )
+	//   return
+	// }
 
 	tbftMsg := &tbftpb.TBFTMsg{
 		Type: tbftpb.TBFTMsgType_state,
@@ -138,245 +165,179 @@ func (pcs *PeerStateService) sendStateChange() {
 	pcs.Lock()
 	defer pcs.Unlock()
 
-	pcs.logger.Debugf("begin sendStateChange to %s", pcs.Id)
-	defer pcs.logger.Debugf("end sendStateChange to %s", pcs.Id)
-
 	pcs.tbftImpl.RLock()
 	defer pcs.tbftImpl.RUnlock()
 
-	if pcs.tbftImpl.Height != pcs.Height || pcs.tbftImpl.Round < pcs.Round {
-		pcs.logger.Debugf("[%s](%d/%d/%s) skip send state to [%s](%d/%d/%s)",
-			pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-			pcs.Id, pcs.Height, pcs.Round, pcs.Step,
-		)
+	pcs.logger.Debugf("[%s](%d/%d/%s) sendStateChange to [%s](%d/%d/%s)",
+		pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
+		pcs.Id, pcs.Height, pcs.Round, pcs.Step,
+	)
+	if pcs.tbftImpl.Height < pcs.Height {
 		return
-	}
-
-	if pcs.tbftImpl.Round == pcs.Round {
-		pcs.sendStateChangeInSameRound()
-	} else if pcs.tbftImpl.Round > pcs.Round {
-		pcs.sendStateChangeInDifferentRound()
+	} else if pcs.tbftImpl.Height == pcs.Height {
+		pcs.sendStateOfRound()
 	} else {
-		panic("this should not happen")
+		pcs.logger.Debugf("[%s](%d) sendStateOfHeight to [%s](%d/%d/%s)",
+			pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.Id, pcs.Height, pcs.Round, pcs.Step)
+		go pcs.sendStateOfHeight(pcs.Height)
 	}
 }
 
-func (pcs *PeerStateService) sendProposalInSameRound() {
+func (pcs *PeerStateService) sendStateOfRound() {
+	pcs.sendProposalOfRound()
+	pcs.sendPrevoteOfRound(pcs.Round)
+	pcs.sendPrecommitOfRound(pcs.Round)
+}
+
+func (pcs *PeerStateService) sendProposalOfRound() {
 	// Send proposal
-	if pcs.tbftImpl.isProposer(pcs.tbftImpl.Height, pcs.tbftImpl.Round) &&
-		pcs.tbftImpl.Proposal != nil &&
+	if pcs.tbftImpl.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
 		pcs.Step >= tbftpb.Step_Propose {
-		msg, err := createProposalMsg(pcs.tbftImpl.Proposal)
-
-		if localconf.ChainMakerConfig.DebugConfig.IsProposalOldHeight {
-			pcs.logger.Infof("[%s](%d/%d/%v) switch IsPrevoteOldHeight: %v, prevote old height: %v",
-				pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-				localconf.ChainMakerConfig.DebugConfig.IsProposalOldHeight, pcs.tbftImpl.Height-1)
-			msgClone := proto.Clone(msg)
-			proposalProto := new(tbftpb.Proposal)
-			mustUnmarshal(msgClone.(*tbftpb.TBFTMsg).Msg, proposalProto)
-			proposalProto.Height -= 1
-			proposal := NewProposal(proposalProto.Voter, proposalProto.Height, proposalProto.Round, proposalProto.PolRound, proposalProto.Block)
-			proposal.Endorsement = proposalProto.Endorsement
-			msg, err = createProposalMsg(proposal)
-		}
-
-		if err != nil {
-			pcs.logger.Errorf("[%s](%d/%d/%s) create proposal msg falied, %v",
-				pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step, err)
-			return
-		}
-		netMsg := &netpb.NetMsg{
-			Payload: mustMarshal(msg),
-			Type:    netpb.NetMsg_CONSENSUS_MSG,
-			To:      pcs.Id,
-		}
-
-		//Simulate a node which lost the Proposal
-		if localconf.ChainMakerConfig.DebugConfig.IsProposeLost {
-			pcs.logger.Infof("[%s](%v/%v/%v) switch IsProposeLost: %v",
-				pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-				localconf.ChainMakerConfig.DebugConfig.IsProposeLost)
-			return
-		}
-
-		//Simulate a malicious node propose duplicate proposal during a round
-		if localconf.ChainMakerConfig.DebugConfig.IsProposeDuplicately {
-			pcs.logger.Infof("[%s](%v/%v/%v) switch IsProposeDuplicately: %v, propose duplicately to %s",
-				pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-				localconf.ChainMakerConfig.DebugConfig.IsProposeDuplicately, pcs.Id)
-			pcs.publishToMsgbus(netMsg)
-		}
-
-		//normal broadcast
-		pcs.publishToMsgbus(netMsg)
-
-		pcs.logger.Debugf("send proposal(%d/%x) to %s(%d/%d/%s)",
-			pcs.tbftImpl.Proposal.Block.Header.BlockHeight, pcs.tbftImpl.Proposal.Block.Header.BlockHash,
-			pcs.Id, pcs.Height, pcs.Round, pcs.Step)
+		pcs.sendProposal(pcs.tbftImpl.Proposal)
 	}
 }
 
-func (pcs *PeerStateService) sendPrevoteInSameRound() {
+func (pcs *PeerStateService) sendPrevoteOfRound(round int32) {
+	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 	// Send prevote
-	prevoteVs := pcs.tbftImpl.heightRoundVoteSet.prevotes(pcs.tbftImpl.Round)
-	if prevoteVs == nil {
-		return
-	}
-	vote, ok := prevoteVs.Votes[pcs.tbftImpl.Id]
-	if !ok {
-		return
-	}
-	if pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
-		peerPrevoteVs := pcs.RoundVoteSet.Prevotes
-		if _, pOk := peerPrevoteVs.Votes[pcs.tbftImpl.Id]; !pOk {
-			msg := createPrevoteMsg(vote)
-			if localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight {
-				pcs.logger.Infof("[%s](%d/%d/%v) switch IsPrevoteOldHeight: %v, prevote old height: %v",
-					pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-					localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight, pcs.tbftImpl.Height-1)
-				msgClone := proto.Clone(msg)
-				prevoteProto := new(tbftpb.Vote)
-				mustUnmarshal(msgClone.(*tbftpb.TBFTMsg).Msg, prevoteProto)
-				prevoteProto.Height -= 1
-				prevote := NewVoteFromProto(prevoteProto)
-				msg = createPrevoteMsg(prevote)
-			}
-			netMsg := &netpb.NetMsg{
-				Payload: mustMarshal(msg),
-				Type:    netpb.NetMsg_CONSENSUS_MSG,
-				To:      pcs.Id,
-			}
-			//Simulate a node which lost the Proposal
-			if localconf.ChainMakerConfig.DebugConfig.IsPrevoteLost {
-				pcs.logger.Infof("[%s](%v/%v/%v) switch IsPrevoteLost: %v",
-					pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-					localconf.ChainMakerConfig.DebugConfig.IsPrevoteLost)
-				return
-			}
-
-			pcs.publishToMsgbus(netMsg)
-
-			//Simulate a node which Prevote duplicately
-			if localconf.ChainMakerConfig.DebugConfig.IsPrevoteDuplicately {
-				pcs.logger.Infof("[%s](%v/%v/%v) switch IsPrevoteDuplicately: %v, prevote duplicately",
-					pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-					localconf.ChainMakerConfig.DebugConfig.IsPrevoteDuplicately)
-				pcs.publishToMsgbus(netMsg)
-			}
-
-			pcs.logger.Debugf("send prevote(%d/%d/%s/%x) to %s",
-				pcs.Height, pcs.Round, pcs.Step, vote.Hash, pcs.Id)
-		}
-	}
-}
-
-func (pcs *PeerStateService) sendPrecommitInSameRound() {
-	// Send precommit
-	precommitVs := pcs.tbftImpl.heightRoundVoteSet.precommits(pcs.tbftImpl.Round)
-	if precommitVs == nil {
-		return
-	}
-	vote, ok := precommitVs.Votes[pcs.tbftImpl.Id]
-	if !ok {
-		return
-	}
-	if pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
-		peerPrecommitVs := pcs.RoundVoteSet.Precommits
-		if _, pOk := peerPrecommitVs.Votes[pcs.tbftImpl.Id]; !pOk {
-			msg := createPrecommitMsg(vote)
-			if localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight {
-				pcs.logger.Infof("[%s](%v/%v/%v) switch IsPrecommitOldHeight: %v, precommit old height: %v",
-					pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-					localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight, pcs.tbftImpl.Height-1)
-				msgClone := proto.Clone(msg)
-				precommitProto := new(tbftpb.Vote)
-				mustUnmarshal(msgClone.(*tbftpb.TBFTMsg).Msg, precommitProto)
-				precommitProto.Height -= 1
-				precommit := NewVoteFromProto(precommitProto)
-				msg = createPrevoteMsg(precommit)
-			}
-
-			netMsg := &netpb.NetMsg{
-				Payload: mustMarshal(msg),
-				Type:    netpb.NetMsg_CONSENSUS_MSG,
-				To:      pcs.Id,
-			}
-			//Simulate a node which lost its Precommit
-			if localconf.ChainMakerConfig.DebugConfig.IsPrecommitLost {
-				pcs.logger.Infof("[%s](%v/%v/%v) switch IsPrecommitLost: %v",
-					pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-					localconf.ChainMakerConfig.DebugConfig.IsPrecommitLost)
-				return
-			}
-			pcs.publishToMsgbus(netMsg)
-			pcs.logger.Debugf("send precommit(%d/%d/%s/%x) to %s",
-				pcs.Height, pcs.Round, pcs.Step, vote.Hash, pcs.Id)
-
-			//Simulate a node which Precommit duplicately
-			if localconf.ChainMakerConfig.DebugConfig.IsPrecommitDuplicately {
-				pcs.logger.Infof("[%s](%v/%v/%v) switch IsPrecommitDuplicately: %v, precommit duplicately",
-					pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
-					localconf.ChainMakerConfig.DebugConfig.IsPrecommitDuplicately)
-				pcs.publishToMsgbus(netMsg)
-			}
-		}
-	}
-}
-
-func (pcs *PeerStateService) sendStateChangeInSameRound() {
-	pcs.sendProposalInSameRound()
-	pcs.sendPrevoteInSameRound()
-	pcs.sendPrecommitInSameRound()
-}
-
-func (pcs *PeerStateService) sendPrevoteInDifferentRound() {
-	// Send prevote
-	prevoteVs := pcs.tbftImpl.heightRoundVoteSet.prevotes(pcs.Round)
+	prevoteVs := pcs.tbftImpl.heightRoundVoteSet.prevotes(round)
 	if prevoteVs != nil {
 		vote, ok := prevoteVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
-			peerPrevoteVs := pcs.RoundVoteSet.Prevotes
-			if _, pOk := peerPrevoteVs.Votes[pcs.tbftImpl.Id]; !pOk {
-				msg := createPrevoteMsg(vote)
-				netMsg := &netpb.NetMsg{
-					Payload: mustMarshal(msg),
-					Type:    netpb.NetMsg_CONSENSUS_MSG,
-					To:      pcs.Id,
-				}
-				pcs.publishToMsgbus(netMsg)
+
+			var builder strings.Builder
+			fmt.Fprintf(&builder, " prevote: [")
+			for k := range pcs.RoundVoteSet.Prevotes.Votes {
+				fmt.Fprintf(&builder, "%s, ", k)
+			}
+			fmt.Fprintf(&builder, "]")
+			pcs.logger.Debugf(builder.String())
+
+			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
+				pcs.sendPrevote(vote)
 			}
 		}
 	}
 }
 
-func (pcs *PeerStateService) sendPrecommitInDifferentRound() {
+func (pcs *PeerStateService) sendPrecommitOfRound(round int32) {
+	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 	// Send precommit
-	precommitVs := pcs.tbftImpl.heightRoundVoteSet.precommits(pcs.Round)
+	precommitVs := pcs.tbftImpl.heightRoundVoteSet.precommits(round)
 	if precommitVs != nil {
 		vote, ok := precommitVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
-			peerPrecommitVs := pcs.RoundVoteSet.Precommits
-			if _, pOk := peerPrecommitVs.Votes[pcs.tbftImpl.Id]; !pOk {
-				msg := createPrecommitMsg(vote)
-				netMsg := &netpb.NetMsg{
-					Payload: mustMarshal(msg),
-					Type:    netpb.NetMsg_CONSENSUS_MSG,
-					To:      pcs.Id,
-				}
-				pcs.publishToMsgbus(netMsg)
+
+			var builder strings.Builder
+			fmt.Fprintf(&builder, " precommit: [")
+			for k := range pcs.RoundVoteSet.Precommits.Votes {
+				fmt.Fprintf(&builder, "%s, ", k)
+			}
+			fmt.Fprintf(&builder, "]")
+			pcs.logger.Debugf(builder.String())
+
+			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
+				pcs.sendPrecommit(vote)
 			}
 		}
 	}
-}
-
-func (pcs *PeerStateService) sendStateChangeInDifferentRound() {
-	pcs.sendPrevoteInDifferentRound()
-	pcs.sendPrecommitInDifferentRound()
 }
 
 func (pcs *PeerStateService) publishToMsgbus(msg *netpb.NetMsg) {
 	pcs.logger.Debugf("[%s] publishToMsgbus size: %d", pcs.tbftImpl.Id, proto.Size(msg))
 	pcs.msgbus.Publish(msgbus.SendConsensusMsg, msg)
+}
+
+func (pcs *PeerStateService) sendProposal(proposal *Proposal) {
+	pcs.logger.Infof("[%s](%d/%d/%s) sendProposal [%s](%d/%d/%x) to %v",
+		pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.tbftImpl.Round, pcs.tbftImpl.Step,
+		proposal.Voter, proposal.Height, proposal.Round, proposal.Block.Header.BlockHash, pcs.Id)
+
+	// Send proposal
+	msg := createProposalMsg(proposal)
+	netMsg := &netpb.NetMsg{
+		Payload: mustMarshal(msg),
+		Type:    netpb.NetMsg_CONSENSUS_MSG,
+		To:      pcs.Id,
+	}
+	pcs.publishToMsgbus(netMsg)
+
+	pcs.logger.Debugf("send proposal(%d/%x) to %s(%d/%d/%s)",
+		proposal.Block.Header.BlockHeight, proposal.Block.Header.BlockHash,
+		pcs.Id, pcs.Height, pcs.Round, pcs.Step)
+}
+
+func (pcs *PeerStateService) sendPrevote(prevote *Vote) {
+	// Send prevote
+	msg := createPrevoteMsg(prevote)
+	netMsg := &netpb.NetMsg{
+		Payload: mustMarshal(msg),
+		Type:    netpb.NetMsg_CONSENSUS_MSG,
+		To:      pcs.Id,
+	}
+	pcs.publishToMsgbus(netMsg)
+
+	pcs.logger.Debugf("send prevote(%d/%d/%s/%x) to %s",
+		pcs.Height, pcs.Round, pcs.Step, prevote.Hash, pcs.Id)
+}
+
+func (pcs *PeerStateService) sendPrecommit(precommit *Vote) {
+	// Send precommit
+	msg := createPrecommitMsg(precommit)
+
+	netMsg := &netpb.NetMsg{
+		Payload: mustMarshal(msg),
+		Type:    netpb.NetMsg_CONSENSUS_MSG,
+		To:      pcs.Id,
+	}
+	pcs.publishToMsgbus(netMsg)
+	pcs.logger.Debugf("send precommit(%d/%d/%s/%x) to %s",
+		pcs.Height, pcs.Round, pcs.Step, precommit.Hash, pcs.Id)
+
+}
+
+func (pcs *PeerStateService) sendStateOfHeight(height int64) {
+	state := pcs.tbftImpl.consensusStateCache.getConsensusState(pcs.Height)
+	if state == nil {
+		return
+	}
+	pcs.sendProposalInState(state)
+	pcs.sendPrevoteInState(state)
+	pcs.sendPrecommitInState(state)
+}
+
+func (pcs *PeerStateService) sendProposalInState(state *ConsensusState) {
+	// Send Proposal
+	if state.Proposal != nil &&
+		pcs.VerifingProposal == nil &&
+		pcs.Step >= tbftpb.Step_Propose {
+		pcs.sendProposal(state.Proposal)
+	}
+}
+
+func (pcs *PeerStateService) sendPrevoteInState(state *ConsensusState) {
+	// Send Prevote
+	prevoteVs := state.heightRoundVoteSet.prevotes(pcs.Round)
+	if prevoteVs != nil {
+		vote, ok := prevoteVs.Votes[pcs.tbftImpl.Id]
+		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
+			if _, pOk := pcs.RoundVoteSet.Prevotes.Votes[pcs.tbftImpl.Id]; !pOk {
+				pcs.sendPrevote(vote)
+			}
+		}
+	}
+}
+
+func (pcs *PeerStateService) sendPrecommitInState(state *ConsensusState) {
+	// Send precommit
+	precommitVs := state.heightRoundVoteSet.precommits(pcs.Round)
+	if precommitVs != nil {
+		vote, ok := precommitVs.Votes[pcs.tbftImpl.Id]
+		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
+			if _, pOk := pcs.RoundVoteSet.Precommits.Votes[pcs.tbftImpl.Id]; !pOk {
+				pcs.sendPrecommit(vote)
+			}
+		}
+	}
 }

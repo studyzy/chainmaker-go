@@ -7,14 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package serialization
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"gotest.tools/assert"
 	"testing"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"github.com/stretchr/testify/assert"
 )
 
 var chainId = "testchain1"
@@ -78,15 +79,15 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 }
 
 func TestSerializeBlock(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		block := createBlockAndRWSets(chainId, int64(i), 5000)
 		bytes, blockInfo, err := SerializeBlock(block)
-		assert.NilError(t, err)
+		assert.Nil(t, err)
 		assert.Equal(t, blockInfo.Block.String(), block.Block.String())
-		assert.Equal(t, len(block.Block.Txs), len(blockInfo.Txs))
+		assert.Equal(t, len(block.Block.Txs), len(blockInfo.GetSerializedTxs()))
 		assert.Equal(t, len(block.TxRWSets), len(blockInfo.TxRWSets))
 		result, err := DeserializeBlock(bytes)
-		assert.NilError(t, err)
-		assert.Equal(t, block.String(), result.String())
+		assert.Nil(t, err)
+		assert.Equal(t, block.Block.String(), result.Block.String())
 	}
 }

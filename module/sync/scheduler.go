@@ -13,12 +13,9 @@ import (
 	"sort"
 	"time"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
-
 	"chainmaker.org/chainmaker-go/logger"
+	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
 	"chainmaker.org/chainmaker-go/protocol"
-
 	"github.com/Workiva/go-datastructures/queue"
 	"github.com/gogo/protobuf/proto"
 )
@@ -86,6 +83,8 @@ func (sch *scheduler) handler(event queue.Item) (queue.Item, error) {
 		return sch.handleSyncedBlockMsg(msg)
 	case ProcessedBlockResp:
 		return sch.handleProcessedBlockResp(msg)
+	case DataDetection:
+		sch.handleDataDetection()
 	}
 	return nil, nil
 }
@@ -94,8 +93,6 @@ func (sch *scheduler) handleNodeStatus(msg NodeStatusMsg) {
 	if old, exist := sch.peers[msg.from]; exist {
 		if old > msg.msg.BlockHeight {
 			delete(sch.peers, msg.from)
-			return
-		} else if old == msg.msg.BlockHeight {
 			return
 		}
 	}
@@ -109,7 +106,6 @@ func (sch *scheduler) addPendingBlocksAndUpdatePendingHeight(peerHeight int64) {
 		return
 	}
 	blk := sch.ledger.GetLastCommittedBlock()
-	sch.updatePendingHeight(blk)
 	if blk.Header.BlockHeight >= peerHeight {
 		return
 	}
@@ -120,14 +116,19 @@ func (sch *scheduler) addPendingBlocksAndUpdatePendingHeight(peerHeight int64) {
 	}
 }
 
-func (sch *scheduler) updatePendingHeight(currBlk *commonPb.Block) {
-	if currBlk.Header.BlockHeight > sch.pendingRecvHeight {
-		delete(sch.blockStates, sch.pendingRecvHeight)
-		delete(sch.pendingBlocks, sch.pendingRecvHeight)
-		delete(sch.receivedBlocks, sch.pendingRecvHeight)
-		delete(sch.pendingTime, sch.pendingRecvHeight)
-		sch.pendingRecvHeight = currBlk.Header.BlockHeight + 1
+func (sch *scheduler) handleDataDetection() {
+	blk := sch.ledger.GetLastCommittedBlock()
+	for height := range sch.blockStates {
+		if height < blk.Header.BlockHeight {
+			delete(sch.blockStates, height)
+			delete(sch.pendingBlocks, height)
+			delete(sch.receivedBlocks, height)
+			delete(sch.pendingTime, height)
+			delete(sch.receivedBlocks, height)
+		}
 	}
+	sch.pendingRecvHeight = blk.Header.BlockHeight + 1
+	sch.blockStates[sch.pendingRecvHeight] = newBlock
 }
 
 func (sch *scheduler) handleLivinessMsg() {
@@ -279,7 +280,8 @@ func (sch *scheduler) handleSyncedBlockMsg(msg *SyncedBlockMsg) (queue.Item, err
 			sch.blockStates[blk.Header.BlockHeight] = receivedBlock
 			sch.receivedBlocks[blk.Header.BlockHeight] = msg.from
 		}
-		sch.log.Debugf("received block [height:%d] from node [%s]", blk.Header.BlockHeight, msg.from)
+		sch.log.Debugf("received block [height:%d:%x] needToProcess: %v from "+
+			"node [%s]", blk.Header.BlockHeight, blk.Header.BlockHash, needToProcess, msg.from)
 	}
 	if needToProcess {
 		return &ReceivedBlocks{
@@ -290,11 +292,15 @@ func (sch *scheduler) handleSyncedBlockMsg(msg *SyncedBlockMsg) (queue.Item, err
 }
 
 func (sch *scheduler) handleProcessedBlockResp(msg ProcessedBlockResp) (queue.Item, error) {
-	sch.log.Debugf("process block [height:%d] status[%d] from node [%s]", msg.height, msg.status, msg.from)
+	sch.log.Debugf("process block [height:%d] status[%d] from node"+
+		" [%s], pendingHeight: %d", msg.height, msg.status, msg.from, sch.pendingRecvHeight)
 	delete(sch.receivedBlocks, msg.height)
 	if msg.status == ok || msg.status == hasProcessed {
 		delete(sch.blockStates, msg.height)
-		sch.pendingRecvHeight++
+		if msg.height >= sch.pendingRecvHeight {
+			sch.pendingRecvHeight = msg.height + 1
+			sch.log.Debugf("increase pendingBlockHeight: %d", sch.pendingRecvHeight)
+		}
 	}
 	if msg.status == validateFailed {
 		sch.blockStates[msg.height] = newBlock
@@ -304,6 +310,8 @@ func (sch *scheduler) handleProcessedBlockResp(msg ProcessedBlockResp) (queue.It
 		return nil, fmt.Errorf("query db failed in processor")
 	}
 	if msg.status == addErr {
+		sch.blockStates[msg.height] = newBlock
+		delete(sch.peers, msg.from)
 		return nil, fmt.Errorf("failed add block to chain")
 	}
 	return nil, nil

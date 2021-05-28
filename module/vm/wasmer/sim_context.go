@@ -31,14 +31,17 @@ type SimContext struct {
 	Ctx           *vmcbor.RuntimeContext
 	parameters    map[string]string
 	CtxPtr        int32
-	GetStateCache []byte // cache call method GetStateLen value result
+	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
+	ChainId       string
+	ContractEvent []*commonPb.ContractEvent
 }
 
 // NewSimContext for every transaction
-func NewSimContext(method string, log *logger.CMLogger) *SimContext {
+func NewSimContext(method string, log *logger.CMLogger, chainId string) *SimContext {
 	sc := SimContext{
-		method: method,
-		Log:    log,
+		method:  method,
+		Log:     log,
+		ChainId: chainId,
 	}
 
 	sc.putCtxPointer()
@@ -62,8 +65,8 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 	runtimeSdkType := sdkType.ToI32()
 	if int32(commonPb.RuntimeType_WASMER) == runtimeSdkType {
 		sc.parameters[protocol.ContractContextPtrParam] = strconv.Itoa(int(sc.CtxPtr))
-		easyCodeItems := serialize.ParamsMapToEasyCodecItem(sc.parameters)
-		bytes = serialize.EasyMarshal(easyCodeItems)
+		ec := serialize.NewEasyCodecWithMap(sc.parameters)
+		bytes = ec.Marshal()
 	} else {
 		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d", uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
 	}
@@ -119,17 +122,17 @@ func (sc *SimContext) removeCtxPointer() {
 	vbm.remove(sc.CtxPtr)
 }
 
-var index = int32(0)
+var ctxIndex = int32(0)
 var lock sync.Mutex
 
 // putCtxPointer save SimContext to cache
 func (sc *SimContext) putCtxPointer() {
 	lock.Lock()
-	index++
-	if index > 1e8 {
-		index = 0
+	ctxIndex++
+	if ctxIndex > 1e8 {
+		ctxIndex = 0
 	}
-	sc.CtxPtr = index
+	sc.CtxPtr = ctxIndex
 	lock.Unlock()
 	vbm := GetVmBridgeManager()
 	vbm.put(sc.CtxPtr, sc)

@@ -7,17 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package blockkvdb
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"context"
 	"encoding/binary"
 	"fmt"
-	"sync"
 
-	logImpl "chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
@@ -35,18 +31,23 @@ const (
 	lastConfigBlockNumKey    = "lastConfigBlockNumKey"
 )
 
-const (
-	blockDBName = ""
-)
-
 // BlocKDvDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a key-value based data model
 type BlockKvDB struct {
-	DbProvider       dbprovider.Provider
+	DbHandle         protocol.DBHandle
 	WorkersSemaphore *semaphore.Weighted
 	Cache            *cache.StoreCacheMgr
 
-	Logger *logImpl.CMLogger
+	Logger protocol.Logger
+}
+
+func (b *BlockKvDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
+	heightKey := constructBlockNumKey(uint64(header.BlockHeight))
+	data, _ := header.Marshal()
+	return b.DbHandle.Put(heightKey, data)
+}
+func (b *BlockKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	return b.CommitBlock(genesisBlock)
 }
 
 // CommitBlock commits the block and the corresponding rwsets in an atomic operation
@@ -62,7 +63,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 
 	// 2. height-> blockInfo
 	heightKey := constructBlockNumKey(uint64(block.Header.BlockHeight))
-	batch.Put(heightKey, blockInfo.SerializedMeta)
+	batch.Put(heightKey, blockInfo.GetSerializedMeta())
 
 	// 3. hash-> height
 	hashKey := constructBlockHashKey(block.Header.BlockHash)
@@ -72,8 +73,8 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	txConfirmedTime := make([]byte, 8)
 	binary.BigEndian.PutUint64(txConfirmedTime, uint64(block.Header.BlockTimestamp))
 	startPrepareTxs := utils.CurrentTimeMillisSeconds()
-	for index, txBytes := range blockInfo.SerializedTxs {
-		tx := blockInfo.Txs[index]
+	for index, txBytes := range blockInfo.GetSerializedTxs() {
+		tx := blockInfo.Block.Txs[index]
 		txIdKey := constructTxIDKey(tx.Header.TxId)
 		batch.Put(txIdKey, txBytes)
 
@@ -203,6 +204,23 @@ func (b *BlockKvDB) GetTx(txId string) (*commonPb.Transaction, error) {
 
 	return &tx, nil
 }
+func (b *BlockKvDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error) {
+	txIdKey := constructTxIDKey(txId)
+	bytes, err := b.get(txIdKey)
+	if err != nil {
+		return nil, err
+	} else if len(bytes) == 0 {
+		return nil, nil
+	}
+
+	var tx commonPb.Transaction
+	err = proto.Unmarshal(bytes, &tx)
+	if err != nil {
+		return nil, err
+	}
+	//TODO devin add block info
+	return &commonPb.TransactionInfo{Transaction: &tx}, nil
+}
 
 // TxExists returns true if the tx exist, or returns false if none exists.
 func (b *BlockKvDB) TxExists(txId string) (bool, error) {
@@ -229,7 +247,8 @@ func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockKvDB) Close() {
-	b.DbProvider.Close()
+	b.Logger.Info("close block kv db")
+	b.DbHandle.Close()
 }
 
 func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error) {
@@ -255,27 +274,28 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		AdditionalData: blockStoreInfo.AdditionalData,
 	}
 
-	var batchWG sync.WaitGroup
-	batchWG.Add(len(blockStoreInfo.TxIds))
-	errsChan := make(chan error, len(blockStoreInfo.TxIds))
+	//var batchWG sync.WaitGroup
+	//batchWG.Add(len(blockStoreInfo.TxIds))
+	//errsChan := make(chan error, len(blockStoreInfo.TxIds))
 	block.Txs = make([]*commonPb.Transaction, len(blockStoreInfo.TxIds))
 	for index, txid := range blockStoreInfo.TxIds {
 		//used to limit the num of concurrency goroutine
-		b.WorkersSemaphore.Acquire(context.Background(), 1)
-		go func(i int, txid string) {
-			defer b.WorkersSemaphore.Release(1)
-			defer batchWG.Done()
-			tx, err := b.GetTx(txid)
-			if err != nil {
-				errsChan <- err
-			}
-			block.Txs[i] = tx
-		}(index, txid)
+		//b.WorkersSemaphore.Acquire(context.Background(), 1)
+		//go func(i int, txid string) {
+		//	defer b.WorkersSemaphore.Release(1)
+		//	defer batchWG.Done()
+		tx, err := b.GetTx(txid)
+		if err != nil {
+			//errsChan <- err
+			return nil, err
+		}
+		block.Txs[index] = tx
+		//}(index, txid)
 	}
-	batchWG.Wait()
-	if len(errsChan) > 0 {
-		return nil, <-errsChan
-	}
+	//batchWG.Wait()
+	//if len(errsChan) > 0 {
+	//	return nil, <-errsChan
+	//}
 	b.Logger.Debugf("chain[%s]: get block[%d] with transactions[%d]",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
 	return &block, nil
@@ -284,19 +304,19 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 func (b *BlockKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
 	b.Cache.AddBlock(blockHeight, batch)
-	go func() {
-		startWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		err := b.getDBHandle().WriteBatch(batch, false)
-		endWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		b.Logger.Infof("write block db, block[%d], time used:%d",
-			blockHeight, endWriteBatchTime-startWriteBatchTime)
 
-		if err != nil {
-			panic(fmt.Sprintf("Error writting leveldb: %s", err))
-		}
-		//db committed, clean cache
-		b.Cache.DelBlock(blockHeight)
-	}()
+	startWriteBatchTime := utils.CurrentTimeMillisSeconds()
+	err := b.DbHandle.WriteBatch(batch, false)
+	endWriteBatchTime := utils.CurrentTimeMillisSeconds()
+	b.Logger.Infof("write block db, block[%d], time used:%d",
+		blockHeight, endWriteBatchTime-startWriteBatchTime)
+
+	if err != nil {
+		panic(fmt.Sprintf("Error writing leveldb: %s", err))
+	}
+	//db committed, clean cache
+	b.Cache.DelBlock(blockHeight)
+
 	return nil
 }
 
@@ -308,7 +328,7 @@ func (b *BlockKvDB) get(key []byte) ([]byte, error) {
 		return value, nil
 	}
 	//get from database
-	val, err := b.getDBHandle().Get(key)
+	val, err := b.DbHandle.Get(key)
 	return val, err
 }
 
@@ -318,11 +338,7 @@ func (b *BlockKvDB) has(key []byte) (bool, error) {
 	if exist {
 		return !isDelete, nil
 	}
-	return b.getDBHandle().Has(key)
-}
-
-func (b *BlockKvDB) getDBHandle() protocol.DBHandle {
-	return b.DbProvider.GetDBHandle(blockDBName)
+	return b.DbHandle.Has(key)
 }
 
 func constructBlockNumKey(blockNum uint64) []byte {
@@ -350,7 +366,7 @@ func encodeBlockNum(blockNum uint64) []byte {
 	return proto.EncodeVarint(blockNum)
 }
 
-func decodeBlockNum(blockNumBytes []byte) uint64 {
-	blockNum, _ := proto.DecodeVarint(blockNumBytes)
-	return blockNum
-}
+//func decodeBlockNum(blockNumBytes []byte) uint64 {
+//	blockNum, _ := proto.DecodeVarint(blockNumBytes)
+//	return blockNum
+//}

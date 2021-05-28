@@ -66,11 +66,14 @@ func registerBlockContactMethods(log *logger.CMLogger) map[string]ContractFunc {
 }
 
 type BlockRuntime struct {
+	log *logger.CMLogger
+}
+
+type BlockRuntimeParam struct {
 	height    int64
 	withRWSet string
 	hash      string
 	txId      string
-	log       *logger.CMLogger
 }
 
 // GetNodeChainList return list of chain
@@ -79,7 +82,7 @@ func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, para
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters); err != nil {
+	if _, err = r.validateParams(parameters); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +109,7 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters); err != nil {
+	if _, err = r.validateParams(parameters); err != nil {
 		return nil, err
 	}
 
@@ -152,7 +155,8 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameBlockHeight, paramNameWithRWSet); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameBlockHeight, paramNameWithRWSet); err != nil {
 		return nil, err
 	}
 
@@ -166,11 +170,11 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 	var block *commonPb.Block
 	var txRWSets []*commonPb.TxRWSet
 
-	if block, err = r.getBlockByHeight(store, chainId, r.height); err != nil {
+	if block, err = r.getBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
 	}
 
-	if strings.ToLower(r.withRWSet) == "true" {
+	if strings.ToLower(param.withRWSet) == "true" {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -195,7 +199,8 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameBlockHeight); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameBlockHeight); err != nil {
 		return nil, err
 	}
 
@@ -209,7 +214,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 	var block *commonPb.Block
 	var txRWSets []*commonPb.TxRWSet
 
-	if block, err = r.getBlockByHeight(store, chainId, r.height); err != nil {
+	if block, err = r.getBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
 	}
 
@@ -236,7 +241,8 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameBlockHash, paramNameWithRWSet); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameBlockHash, paramNameWithRWSet); err != nil {
 		return nil, err
 	}
 
@@ -250,11 +256,11 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 	var block *commonPb.Block
 	var txRWSets []*commonPb.TxRWSet
 
-	if block, err = r.getBlockByHash(store, chainId, r.hash); err != nil {
+	if block, err = r.getBlockByHash(store, chainId, param.hash); err != nil {
 		return nil, err
 	}
 
-	if strings.ToLower(r.withRWSet) == "true" {
+	if strings.ToLower(param.withRWSet) == "true" {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -279,7 +285,8 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameBlockHash); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameBlockHash); err != nil {
 		return nil, err
 	}
 
@@ -293,7 +300,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 	var block *commonPb.Block
 	var txRWSets []*commonPb.TxRWSet
 
-	if block, err = r.getBlockByHash(store, chainId, r.hash); err != nil {
+	if block, err = r.getBlockByHash(store, chainId, param.hash); err != nil {
 		return nil, err
 	}
 
@@ -320,7 +327,8 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameTxId, paramNameWithRWSet); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameTxId, paramNameWithRWSet); err != nil {
 		return nil, err
 	}
 
@@ -334,11 +342,11 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 	var block *commonPb.Block
 	var txRWSets []*commonPb.TxRWSet
 
-	if block, err = r.getBlockByTxId(store, chainId, r.txId); err != nil {
+	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
 	}
 
-	if strings.ToLower(r.withRWSet) == "true" {
+	if strings.ToLower(param.withRWSet) == "true" {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -363,7 +371,8 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameWithRWSet); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameWithRWSet); err != nil {
 		return nil, err
 	}
 
@@ -381,7 +390,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 		return nil, err
 	}
 
-	if strings.ToLower(r.withRWSet) == "true" {
+	if strings.ToLower(param.withRWSet) == "true" {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -406,7 +415,8 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameWithRWSet); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameWithRWSet); err != nil {
 		return nil, err
 	}
 
@@ -424,7 +434,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 		return nil, err
 	}
 
-	if strings.ToLower(r.withRWSet) == "true" {
+	if strings.ToLower(param.withRWSet) == "true" {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -449,7 +459,8 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 	var err error
 
 	// check params
-	if err = r.validateParams(parameters, paramNameTxId); err != nil {
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameTxId); err != nil {
 		return nil, err
 	}
 
@@ -463,17 +474,17 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 	var tx *commonPb.Transaction
 	var block *commonPb.Block
 
-	if tx, err = r.getTxByTxId(store, chainId, r.txId); err != nil {
+	if tx, err = r.getTxByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
 	}
 
-	if block, err = r.getBlockByTxId(store, chainId, r.txId); err != nil {
+	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
 	}
 
 	transactionInfo := &commonPb.TransactionInfo{
 		Transaction: tx,
-		BlockHeight: block.Header.BlockHeight,
+		BlockHeight: uint64(block.Header.BlockHeight),
 	}
 	transactionInfoBytes, err := proto.Marshal(transactionInfo)
 	if err != nil {
@@ -575,7 +586,7 @@ func (r *BlockRuntime) handleError(value interface{}, err error, chainId string)
 	return nil
 }
 
-func (r *BlockRuntime) validateParams(parameters map[string]string, keyNames ...string) error {
+func (r *BlockRuntime) validateParams(parameters map[string]string, keyNames ...string) (*BlockRuntimeParam, error) {
 	var (
 		errMsg string
 		err    error
@@ -583,26 +594,26 @@ func (r *BlockRuntime) validateParams(parameters map[string]string, keyNames ...
 	if len(parameters) != len(keyNames) {
 		errMsg = fmt.Sprintf("invalid params len, need [%s]", strings.Join(keyNames, "|"))
 		r.log.Error(errMsg)
-		return errors.New(errMsg)
+		return nil, errors.New(errMsg)
 	}
-
+	param := &BlockRuntimeParam{}
 	for _, keyName := range keyNames {
 		switch keyName {
 		case paramNameBlockHeight:
 			value, _ := r.getValue(parameters, paramNameBlockHeight)
-			r.height, err = strconv.ParseInt(value, 10, 64)
+			param.height, err = strconv.ParseInt(value, 10, 64)
 		case paramNameWithRWSet:
-			r.withRWSet, err = r.getValue(parameters, paramNameWithRWSet)
+			param.withRWSet, err = r.getValue(parameters, paramNameWithRWSet)
 		case paramNameBlockHash:
-			r.hash, err = r.getValue(parameters, paramNameBlockHash)
+			param.hash, err = r.getValue(parameters, paramNameBlockHash)
 		case paramNameTxId:
-			r.txId, err = r.getValue(parameters, paramNameTxId)
+			param.txId, err = r.getValue(parameters, paramNameTxId)
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return param, nil
 }
 
 func (r *BlockRuntime) getValue(parameters map[string]string, key string) (string, error) {

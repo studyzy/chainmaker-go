@@ -3,7 +3,7 @@ version: '2'
 services:
   node1:
     container_name: node1
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
@@ -23,7 +23,7 @@ services:
 
   node2:
     container_name: node2
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
@@ -43,7 +43,7 @@ services:
 
   node3:
     container_name: node3
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
@@ -63,7 +63,7 @@ services:
 
   node4:
     container_name: node4
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
@@ -83,7 +83,7 @@ services:
 
   node5:
     container_name: node5
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
@@ -103,7 +103,7 @@ services:
 
   node6:
     container_name: node6
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"
@@ -123,7 +123,7 @@ services:
 
   node7:
     container_name: node7
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     # environment:
     #   - GODEBUG=madvdontneed=1
     working_dir: "/chainmaker-go/bin"

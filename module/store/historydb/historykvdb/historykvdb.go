@@ -7,31 +7,41 @@ SPDX-License-Identifier: Apache-2.0
 package historykvdb
 
 import (
-	logImpl "chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider"
-	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker-go/store/types"
 	"encoding/binary"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
+
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/cache"
+	"chainmaker.org/chainmaker-go/store/historydb"
+	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker-go/store/types"
 )
 
 const (
-	historyDBName         = ""
-	txRWSetIdxKeyPrefix   = 'r'
-	historyDBSavepointKey = "historySavepointKey"
+	keyHistoryPrefix        = "k"
+	accountTxHistoryPrefix  = "a"
+	contractTxHistoryPrefix = "c"
+	historyDBSavepointKey   = "historySavepointKey"
 )
 
 // HistoryKvDB provider a implementation of `historydb.HistoryDB`
 // This implementation provides a key-value based data model
 type HistoryKvDB struct {
-	DbProvider dbprovider.Provider
-	Cache      *cache.StoreCacheMgr
+	dbHandle protocol.DBHandle
+	cache    *cache.StoreCacheMgr
+	logger   protocol.Logger
+}
 
-	Logger *logImpl.CMLogger
+func NewHistoryKvDB(db protocol.DBHandle, cache *cache.StoreCacheMgr, log protocol.Logger) *HistoryKvDB {
+	return &HistoryKvDB{
+		dbHandle: db,
+		cache:    cache,
+		logger:   log,
+	}
+}
+
+func (h *HistoryKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	return h.CommitBlock(genesisBlock)
 }
 
 // CommitBlock commits the block rwsets in an atomic operation
@@ -42,39 +52,33 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 	lastBlockNumBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(lastBlockNumBytes, uint64(block.Header.BlockHeight))
 	batch.Put([]byte(historyDBSavepointKey), lastBlockNumBytes)
-
+	blockHeight := uint64(block.Header.BlockHeight)
 	txRWSets := blockInfo.TxRWSets
-	for index, txRWSet := range txRWSets {
-		// 6. rwset: txID -> txRWSet
-		txRWSetBytes := blockInfo.SerializedTxRWSets[index]
-		txRWSetKey := constructTxRWSetIDKey(txRWSet.TxId)
-		batch.Put(txRWSetKey, txRWSetBytes)
+	for _, txRWSet := range txRWSets {
+		txId := txRWSet.TxId
+		for _, write := range txRWSet.TxWrites {
+			key := constructKey(write.ContractName, write.Key, blockHeight, txId)
+			batch.Put(key, []byte{}) //write key modify history
+		}
+	}
+	for _, tx := range block.Txs {
+		accountId := tx.GetSenderAccountId()
+		txId := tx.Header.TxId
+		contractName, err := tx.GetContractName()
+		if err != nil {
+			h.logger.Errorf("get contract name fail from tx[%s],err:%s", tx.Header.TxId, err.Error())
+			continue
+		}
+		batch.Put(constructAcctTxHistKey(accountId, blockHeight, txId), []byte{})
+		batch.Put(constructContractTxHistKey(contractName, blockHeight, txId), []byte{})
 	}
 	err := h.writeBatch(block.Header.BlockHeight, batch)
 	if err != nil {
 		return err
 	}
-	h.Logger.Debugf("chain[%s]: commit history block[%d]",
+	h.logger.Debugf("chain[%s]: commit history block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
-}
-
-// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
-func (h *HistoryKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
-	txRWSetKey := constructTxRWSetIDKey(txId)
-	bytes, err := h.get(txRWSetKey)
-	if err != nil {
-		return nil, err
-	} else if bytes == nil {
-		return nil, nil
-	}
-
-	var txRWSet commonPb.TxRWSet
-	err = proto.Unmarshal(bytes, &txRWSet)
-	if err != nil {
-		return nil, err
-	}
-	return &txRWSet, nil
 }
 
 // GetLastSavepoint returns the last block height
@@ -91,46 +95,58 @@ func (h *HistoryKvDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database
 func (h *HistoryKvDB) Close() {
-	h.DbProvider.Close()
+	h.logger.Info("close history kv db")
+	h.dbHandle.Close()
 }
 
 func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
-	h.Cache.AddBlock(blockHeight, batch)
+	h.cache.AddBlock(blockHeight, batch)
 	go func() {
-		err := h.getDBHandle().WriteBatch(batch, false)
+		err := h.dbHandle.WriteBatch(batch, false)
 		if err != nil {
-			panic(fmt.Sprintf("Error writting db: %s", err))
+			panic(fmt.Sprintf("Error writing db: %s", err))
 		}
 		//db committed, clean cache
-		h.Cache.DelBlock(blockHeight)
+		h.cache.DelBlock(blockHeight)
 	}()
 	return nil
 }
 
 func (h *HistoryKvDB) get(key []byte) ([]byte, error) {
 	//get from cache
-	value, exist := h.Cache.Get(string(key))
+	value, exist := h.cache.Get(string(key))
 	if exist {
 		return value, nil
 	}
 	//get from database
-	return h.getDBHandle().Get(key)
+	return h.dbHandle.Get(key)
 }
 
-func (h *HistoryKvDB) has(key []byte) (bool, error) {
-	//check has from cache
-	isDelete, exist := h.Cache.Has(string(key))
-	if exist {
-		return !isDelete, nil
+//func (h *HistoryKvDB) has(key []byte) (bool, error) {
+//	//check has from cache
+//	isDelete, exist := h.cache.Has(string(key))
+//	if exist {
+//		return !isDelete, nil
+//	}
+//	return h.dbHandle.Has(key)
+//}
+
+type historyKeyIterator struct {
+	dbIter    protocol.Iterator
+	buildFunc func(key []byte) (*historydb.BlockHeightTxId, error)
+}
+
+func (i *historyKeyIterator) Next() bool {
+	return i.dbIter.Next()
+}
+func (i *historyKeyIterator) Value() (*historydb.BlockHeightTxId, error) {
+	err := i.dbIter.Error()
+	if err != nil {
+		return nil, err
 	}
-	return h.getDBHandle().Has(key)
+	return i.buildFunc(i.dbIter.Key())
 }
-
-func (h *HistoryKvDB) getDBHandle() protocol.DBHandle {
-	return h.DbProvider.GetDBHandle(historyDBName)
-}
-
-func constructTxRWSetIDKey(txId string) []byte {
-	return append([]byte{txRWSetIdxKeyPrefix}, txId...)
+func (i *historyKeyIterator) Release() {
+	i.dbIter.Release()
 }

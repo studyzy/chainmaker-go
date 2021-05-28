@@ -8,9 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -19,6 +16,11 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
@@ -36,28 +38,32 @@ import (
 )
 
 var (
-	ip          string
-	port        int
-	chainId     string
-	orgId       string
-	caPaths     []string
-	userCrtPath string
-	userKeyPath string
-	useTLS      bool
-	dataFile    string
-	startBlock  int64
-	endBlock    int64
-	withRwSet   bool
-	txType      int32
-	txIds       string
+	ip           string
+	port         int
+	chainId      string
+	orgId        string
+	caPaths      []string
+	userCrtPath  string
+	userKeyPath  string
+	useTLS       bool
+	dataFile     string
+	startBlock   int64
+	endBlock     int64
+	withRwSet    bool
+	txType       int32
+	txIds        string
+	topic        string
+	contractName string
 
 	conn   *grpc.ClientConn
 	client apiPb.RpcNodeClient
 	sk3    crypto.PrivateKey
+	Log    *logger.CMLogger
 )
 
 func main() {
 	var err error
+	Log = logger.GetLogger("")
 	mainCmd := &cobra.Command{
 		Use: "subscribe",
 		PersistentPreRun: func(_ *cobra.Command, _ []string) {
@@ -82,22 +88,25 @@ func main() {
 
 	mainCmd.AddCommand(SubscribeBlockCMD())
 	mainCmd.AddCommand(SubscribeTxCMD())
+	mainCmd.AddCommand(SubscribeContractEvent())
 
 	mainFlags := mainCmd.PersistentFlags()
 	mainFlags.StringVarP(&ip, "ip", "i", "localhost", "specify ip")
-	mainFlags.IntVarP(&port, "port", "p", 17988, "specify port")
-	mainFlags.StringVarP(&userKeyPath, "userkey", "k", "../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key", "specify user key path")
-	mainFlags.StringVarP(&userCrtPath, "user-crt", "c", "../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt", "specify user crt path")
-	mainFlags.StringArrayVarP(&caPaths, "ca-path", "P", []string{"../config/crypto-config/wx-org1.chainmaker.org/ca"}, "specify ca path")
+	mainFlags.IntVarP(&port, "port", "p", 12301, "specify port")
+	mainFlags.StringVarP(&userKeyPath, "userkey", "k", "../../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key", "specify user key path")
+	mainFlags.StringVarP(&userCrtPath, "user-crt", "c", "../../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt", "specify user crt path")
+	mainFlags.StringArrayVarP(&caPaths, "ca-path", "P", []string{"../../config/crypto-config/wx-org1.chainmaker.org/ca"}, "specify ca path")
 	mainFlags.BoolVarP(&useTLS, "use-tls", "t", false, "specify whether use tls")
 	mainFlags.StringVarP(&chainId, "chain-id", "C", "chain1", "specify chain id")
-	mainFlags.StringVarP(&orgId, "org-id", "O", "wx-org1", "specify org id")
+	mainFlags.StringVarP(&orgId, "org-id", "O", "wx-org1.chainmaker.org", "specify org id")
 	mainFlags.StringVarP(&dataFile, "data-file", "f", "data.txt", "specify the data file to write blocks or tx")
 	mainFlags.Int64VarP(&startBlock, "start-block", "s", 2, "specify the start block height to receive from, -1 means to receive until you stop the program")
 	mainFlags.Int64VarP(&endBlock, "end-block", "e", -1, "specify the end block height to receive to, -1 means to receive until you stop the program")
 	mainFlags.BoolVarP(&withRwSet, "withRWSet", "S", false, "specify withRWSet, true or false")
 	mainFlags.Int32VarP(&txType, "tx-type", "T", -1, "specify transaction type you with to receive, -1 means all, other value from 0 to 7")
 	mainFlags.StringVarP(&txIds, "tx-ids", "I", "", "specify the transaction ids, separated by comma, NOTICE: don't add space between ids")
+	mainFlags.StringVarP(&topic, "topic", "", "topic_vx", "specify the contract event topic")
+	mainFlags.StringVarP(&contractName, "contract-name", "", "claim001", "specify the contract name")
 
 	if mainCmd.Execute() != nil {
 		return
@@ -134,7 +143,7 @@ func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType 
 	req := generateReq(sk3, txType, payloadBytes)
 	res, err := client.Subscribe(context.Background(), req)
 	if err != nil {
-		log.Fatalf("subscribe block failed, %s", err.Error())
+		log.Fatalf("subscribe contract event failed, %s", err.Error())
 	}
 
 	f, err := os.OpenFile(dataFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -153,11 +162,22 @@ func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType 
 			log.Println(err)
 			break
 		}
-
-		if txType == commonPb.TxType_SUBSCRIBE_BLOCK_INFO && recvBlock(f, result) != nil {
-			break
-		} else if recvTx(f, result) != nil {
-			break
+		switch txType {
+		case commonPb.TxType_SUBSCRIBE_BLOCK_INFO:
+			err := recvBlock(f, result)
+			if err != nil {
+				break
+			}
+		case commonPb.TxType_SUBSCRIBE_TX_INFO:
+			err := recvTx(f, result)
+			if err != nil {
+				break
+			}
+		case commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO:
+			err := recvContractEvent(f, result)
+			if err != nil {
+				break
+			}
 		}
 	}
 
@@ -200,6 +220,25 @@ func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
 
 	fmt.Printf("Received a transaction, chainId:%s, txId:%s\n",
 		tx.Header.ChainId, tx.Header.TxId)
+	return nil
+}
+func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
+	recvEventTick := time.Now().UnixNano() / 1e6
+	var con commonPb.ContractEventInfo
+	if err := proto.Unmarshal(result.Data, &con); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	/*bytes, err := json.Marshal(con)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	_, _ = file.Write(bytes)
+	_, _ = file.WriteString("\n")*/
+	Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
+		recvEventTick, con.ChainId, con.TxId, con.Topic, con.ContractName, con.EventData)
 	return nil
 }
 

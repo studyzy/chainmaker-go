@@ -9,13 +9,13 @@ package utils
 
 import (
 	"bytes"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"errors"
 	"fmt"
 	"regexp"
 
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	"chainmaker.org/chainmaker-go/common/random/uuid"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
 )
@@ -61,9 +61,10 @@ func CalcUnsignedCompleteTxBytes(t *commonPb.Transaction) ([]byte, error) {
 	return completeTxBytes, nil
 }
 
-// CalcTxHash calculate transaction hash, include tx.Header, tx.Payload, tx.Result
+// CalcTxHash calculate transaction hash, include tx.Header, tx.signature, tx.Payload, tx.Result
 func CalcTxHash(hashType string, t *commonPb.Transaction) ([]byte, error) {
-	txBytes, err := CalcUnsignedCompleteTxBytes(t)
+	//txBytes, err := CalcUnsignedCompleteTxBytes(t)
+	txBytes, err := t.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +116,14 @@ func CalcResultBytes(result *commonPb.Result) ([]byte, error) {
 		return nil, err
 	}
 	return resultBytes, nil
+}
+
+// IsManageContractAsConfigTx Whether the Manager Contract is considered a configuration transaction
+func IsManageContractAsConfigTx(tx *commonPb.Transaction, enableSqlDB bool) bool {
+	if tx == nil || tx.Header == nil {
+		return false
+	}
+	return enableSqlDB && tx.Header.TxType == commonPb.TxType_MANAGE_USER_CONTRACT
 }
 
 // IsConfigTx the transaction is a config transaction or not

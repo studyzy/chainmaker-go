@@ -15,14 +15,22 @@ require (
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/pkg/errors v0.8.1
+	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e // indirect
+	github.com/mattn/go-sqlite3 v2.0.1+incompatible
+	github.com/pingcap/errors v0.11.5-0.20201029093017-5a7df2af2ac7 // indirect
+	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb
+	github.com/pingcap/tidb v1.1.0-beta.0.20200630082100-328b6d0a955c
+	github.com/pkg/errors v0.9.1
+	github.com/spf13/viper v1.7.1 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c
 	github.com/tidwall/wal v0.1.4
+	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	gorm.io/driver/mysql v1.0.3
+	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.20.8
-	gotest.tools v2.2.0+incompatible
 )
 
 replace (

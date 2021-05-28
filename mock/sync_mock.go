@@ -5,34 +5,35 @@
 package mock
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockSyncService is a mock of SyncService interface
+// MockSyncService is a mock of SyncService interface.
 type MockSyncService struct {
 	ctrl     *gomock.Controller
 	recorder *MockSyncServiceMockRecorder
 }
 
-// MockSyncServiceMockRecorder is the mock recorder for MockSyncService
+// MockSyncServiceMockRecorder is the mock recorder for MockSyncService.
 type MockSyncServiceMockRecorder struct {
 	mock *MockSyncService
 }
 
-// NewMockSyncService creates a new mock instance
+// NewMockSyncService creates a new mock instance.
 func NewMockSyncService(ctrl *gomock.Controller) *MockSyncService {
 	mock := &MockSyncService{ctrl: ctrl}
 	mock.recorder = &MockSyncServiceMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockSyncService) EXPECT() *MockSyncServiceMockRecorder {
 	return m.recorder
 }
 
-// Start mocks base method
+// Start mocks base method.
 func (m *MockSyncService) Start() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Start")
@@ -40,19 +41,19 @@ func (m *MockSyncService) Start() error {
 	return ret0
 }
 
-// Start indicates an expected call of Start
+// Start indicates an expected call of Start.
 func (mr *MockSyncServiceMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockSyncService)(nil).Start))
 }
 
-// Stop mocks base method
+// Stop mocks base method.
 func (m *MockSyncService) Stop() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Stop")
 }
 
-// Stop indicates an expected call of Stop
+// Stop indicates an expected call of Stop.
 func (mr *MockSyncServiceMockRecorder) Stop() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockSyncService)(nil).Stop))

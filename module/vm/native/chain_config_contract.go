@@ -8,7 +8,6 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/common/sortedmap"
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -24,11 +23,11 @@ import (
 )
 
 const (
-	paramNameOrgId      = "org_id"
-	paramNameRoot       = "root"
-	paramNameAddresses  = "addresses"
-	paramNameAddress    = "address"
-	paramNameNewAddress = "new_address"
+	paramNameOrgId     = "org_id"
+	paramNameRoot      = "root"
+	paramNameNodeIds   = "node_ids"
+	paramNameNodeId    = "node_id"
+	paramNameNewNodeId = "new_node_id"
 
 	paramNameTxSchedulerTimeout         = "tx_scheduler_timeout"
 	paramNameTxSchedulerValidateTimeout = "tx_scheduler_validate_timeout"
@@ -83,9 +82,9 @@ func registerChainConfigContractMethods(log *logger.CMLogger) map[string]Contrac
 
 	// [consensus]
 	consensusRuntime := &ChainConsensusRuntime{log: log}
-	methodMap[commonPb.ConfigFunction_NODE_ADDR_ADD.String()] = consensusRuntime.NodeAddrAdd
-	methodMap[commonPb.ConfigFunction_NODE_ADDR_UPDATE.String()] = consensusRuntime.NodeAddrUpdate
-	methodMap[commonPb.ConfigFunction_NODE_ADDR_DELETE.String()] = consensusRuntime.NodeAddrDelete
+	methodMap[commonPb.ConfigFunction_NODE_ID_ADD.String()] = consensusRuntime.NodeIdAdd
+	methodMap[commonPb.ConfigFunction_NODE_ID_UPDATE.String()] = consensusRuntime.NodeIdUpdate
+	methodMap[commonPb.ConfigFunction_NODE_ID_DELETE.String()] = consensusRuntime.NodeIdDelete
 	methodMap[commonPb.ConfigFunction_NODE_ORG_ADD.String()] = consensusRuntime.NodeOrgAdd
 	methodMap[commonPb.ConfigFunction_NODE_ORG_UPDATE.String()] = consensusRuntime.NodeOrgUpdate
 	methodMap[commonPb.ConfigFunction_NODE_ORG_DELETE.String()] = consensusRuntime.NodeOrgDelete
@@ -123,6 +122,12 @@ func getChainConfig(txSimContext protocol.TxSimContext, params map[string]string
 		return nil, msg
 	}
 
+	err = chainconf.HandleCompatibility(&chainConfig)
+	if err != nil {
+		msg := fmt.Errorf("compatibility handle failed, contractName %s err: %+v", chainConfigContractName, err)
+		return nil, msg
+	}
+
 	return &chainConfig, nil
 }
 
@@ -153,14 +158,13 @@ type ChainConfigRuntime struct {
 
 // GetChainConfig get newest chain config
 func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
-	if params == nil {
-		r.log.Error(ErrParamsEmpty)
-		return nil, ErrParamsEmpty
-	}
-	bytes, err := txSimContext.Get(chainConfigContractName, []byte(keyChainConfig))
+	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
-		r.log.Errorf("txSimContext get failed, name[%s] key[%s] err: %s", chainConfigContractName, keyChainConfig, err)
 		return nil, err
+	}
+	bytes, err := proto.Marshal(chainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("proto marshal chain config failed, err: %s", err.Error())
 	}
 	return bytes, nil
 }
@@ -430,8 +434,8 @@ type ChainConsensusRuntime struct {
 	log *logger.CMLogger
 }
 
-// NodeAddrAdd add nodeAddr
-func (r *ChainConsensusRuntime) NodeAddrAdd(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+// NodeIdAdd add nodeId
+func (r *ChainConsensusRuntime) NodeIdAdd(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -441,15 +445,15 @@ func (r *ChainConsensusRuntime) NodeAddrAdd(txSimContext protocol.TxSimContext, 
 
 	// verify params
 	orgId := params[paramNameOrgId]
-	addrStr := params[paramNameAddresses] // The addresses are separated by ","
+	nodeIdsStr := params[paramNameNodeIds] // The addresses are separated by ","
 
-	if utils.IsAnyBlank(orgId, addrStr) {
-		err = fmt.Errorf("add node addr failed, require param [%s, %s], but not found", paramNameOrgId, paramNameAddresses)
+	if utils.IsAnyBlank(orgId, nodeIdsStr) {
+		err = fmt.Errorf("add node id failed, require param [%s, %s], but not found", paramNameOrgId, paramNameNodeIds)
 		r.log.Error(err)
 		return nil, err
 	}
 
-	addresses := strings.Split(addrStr, ",")
+	nodeIdStrs := strings.Split(nodeIdsStr, ",")
 	nodes := chainConfig.Consensus.Nodes
 
 	index := -1
@@ -463,22 +467,17 @@ func (r *ChainConsensusRuntime) NodeAddrAdd(txSimContext protocol.TxSimContext, 
 	}
 
 	if index == -1 {
-		err = fmt.Errorf("add node addr failed, param [%s] not found from nodes", orgId)
+		err = fmt.Errorf("add node id failed, param [%s] not found from nodes", orgId)
 		r.log.Error(err)
 		return nil, err
 	}
 
 	changed := false
-	for _, addr := range addresses {
-		addr = strings.TrimSpace(addr)
-		if !helper.P2pAddressFormatVerify(addr) {
-			err = fmt.Errorf("add node addr failed, address[%s] format error", addr)
-			r.log.Error(err)
-			return nil, err
-		}
-		address := nodeConf.Address
-		address = append(address, addr)
-		nodeConf.Address = address
+	for _, nid := range nodeIdStrs {
+		nid = strings.TrimSpace(nid)
+		nodeIds := nodeConf.NodeId
+		nodeIds = append(nodeIds, nid)
+		nodeConf.NodeId = nodeIds
 		nodes[index] = nodeConf
 		chainConfig.Consensus.Nodes = nodes
 		changed = true
@@ -491,15 +490,15 @@ func (r *ChainConsensusRuntime) NodeAddrAdd(txSimContext protocol.TxSimContext, 
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
-		r.log.Errorf("node addr add fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+		r.log.Errorf("node id add fail, %s, orgId[%s] nodeIdsStr[%s]", err.Error(), orgId, nodeIdsStr)
 	} else {
-		r.log.Infof("node addr add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+		r.log.Infof("node id add success. orgId[%s] nodeIdsStr[%s]", orgId, nodeIdsStr)
 	}
 	return result, err
 }
 
-// NodeAddrUpdate update nodeAddr
-func (r *ChainConsensusRuntime) NodeAddrUpdate(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+// NodeIdUpdate update nodeId
+func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -509,24 +508,18 @@ func (r *ChainConsensusRuntime) NodeAddrUpdate(txSimContext protocol.TxSimContex
 
 	// verify params
 	orgId := params[paramNameOrgId]
-	addr := params[paramNameAddress]       // origin address
-	newAddr := params[paramNameNewAddress] // new address
+	nodeId := params[paramNameNodeId]       // origin node id
+	newNodeId := params[paramNameNewNodeId] // new node id
 
-	if utils.IsAnyBlank(orgId, addr, newAddr) {
-		err = fmt.Errorf("update node addr failed, require param [%s, %s, %s], but not found", paramNameOrgId, paramNameAddress, paramNameNewAddress)
+	if utils.IsAnyBlank(orgId, nodeId, newNodeId) {
+		err = fmt.Errorf("update node id failed, require param [%s, %s, %s], but not found", paramNameOrgId, paramNameNodeId, paramNameNewNodeId)
 		r.log.Error(err)
 		return nil, err
 	}
 
 	nodes := chainConfig.Consensus.Nodes
-	addr = strings.TrimSpace(addr)
-	newAddr = strings.TrimSpace(newAddr)
-
-	if !helper.P2pAddressFormatVerify(newAddr) {
-		err = fmt.Errorf("update node addr failed, address[%s] format error", newAddr)
-		r.log.Error(err)
-		return nil, err
-	}
+	nodeId = strings.TrimSpace(nodeId)
+	newNodeId = strings.TrimSpace(newNodeId)
 
 	index := -1
 	var nodeConf *configPb.OrgConfig
@@ -539,33 +532,33 @@ func (r *ChainConsensusRuntime) NodeAddrUpdate(txSimContext protocol.TxSimContex
 	}
 
 	if index == -1 {
-		err = fmt.Errorf("update node addr failed, param orgId[%s] not found from nodes", orgId)
+		err = fmt.Errorf("update node id failed, param orgId[%s] not found from nodes", orgId)
 		r.log.Error(err)
 		return nil, err
 	}
 
-	for j, address := range nodeConf.Address {
-		if addr == address {
-			nodeConf.Address[j] = newAddr
+	for j, nid := range nodeConf.NodeId {
+		if nodeId == nid {
+			nodeConf.NodeId[j] = newNodeId
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
 			result, err = setChainConfig(txSimContext, chainConfig)
 			if err != nil {
-				r.log.Errorf("node addr update fail, %s, orgId[%s] addr[%s] newAddr[%s]", err.Error(), orgId, addr, newAddr)
+				r.log.Errorf("node id update fail, %s, orgId[%s] addr[%s] newAddr[%s]", err.Error(), orgId, nid, newNodeId)
 			} else {
-				r.log.Infof("node addr update success. orgId[%s] addr[%s] newAddr[%s]", orgId, addr, newAddr)
+				r.log.Infof("node id update success. orgId[%s] addr[%s] newAddr[%s]", orgId, nid, newNodeId)
 			}
 			return result, err
 		}
 	}
 
-	err = fmt.Errorf("update node addr failed, param orgId[%s] addr[%s] not found from nodes", orgId, addr)
+	err = fmt.Errorf("update node id failed, param orgId[%s] addr[%s] not found from nodes", orgId, nodeId)
 	r.log.Error(err)
 	return nil, err
 }
 
-// NodeAddrDelete delete nodeAddr
-func (r *ChainConsensusRuntime) NodeAddrDelete(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+// NodeIdDelete delete nodeId
+func (r *ChainConsensusRuntime) NodeIdDelete(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -574,10 +567,10 @@ func (r *ChainConsensusRuntime) NodeAddrDelete(txSimContext protocol.TxSimContex
 	}
 	// verify params
 	orgId := params[paramNameOrgId]
-	addr := params[paramNameAddress]
+	nodeId := params[paramNameNodeId]
 
-	if utils.IsAnyBlank(orgId, addr) {
-		err = fmt.Errorf("delete node addr failed, require param [%s, %s], but not found", paramNameOrgId, paramNameAddress)
+	if utils.IsAnyBlank(orgId, nodeId) {
+		err = fmt.Errorf("delete node id failed, require param [%s, %s], but not found", paramNameOrgId, paramNameNodeId)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -594,28 +587,28 @@ func (r *ChainConsensusRuntime) NodeAddrDelete(txSimContext protocol.TxSimContex
 	}
 
 	if index == -1 {
-		err = fmt.Errorf("delete node addr failed, param orgId[%s] not found from nodes", orgId)
+		err = fmt.Errorf("delete node id failed, param orgId[%s] not found from nodes", orgId)
 		r.log.Error(err)
 		return nil, err
 	}
 
-	addresses := nodeConf.Address
-	for j, address := range addresses {
-		if address == addr {
-			nodeConf.Address = append(addresses[:j], addresses[j+1:]...)
+	nodeIds := nodeConf.NodeId
+	for j, nid := range nodeIds {
+		if nodeId == nid {
+			nodeConf.NodeId = append(nodeIds[:j], nodeIds[j+1:]...)
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
 			result, err = setChainConfig(txSimContext, chainConfig)
 			if err != nil {
-				r.log.Errorf("node addr delete fail, %s, orgId[%s] addr[%s]", err.Error(), orgId, addr)
+				r.log.Errorf("node id delete fail, %s, orgId[%s] addr[%s]", err.Error(), orgId, nid)
 			} else {
-				r.log.Infof("node addr delete success. orgId[%s] addr[%s]", orgId, addr)
+				r.log.Infof("node id delete success. orgId[%s] addr[%s]", orgId, nid)
 			}
 			return result, err
 		}
 	}
 
-	err = fmt.Errorf("delete node addr failed, param orgId[%s] addr[%s] not found from nodes", orgId, addr)
+	err = fmt.Errorf("delete node id failed, param orgId[%s] addr[%s] not found from nodes", orgId, nodeId)
 	r.log.Error(err)
 	return nil, err
 }
@@ -631,10 +624,10 @@ func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, p
 
 	// verify params
 	orgId := params[paramNameOrgId]
-	addrStr := params[paramNameAddresses]
+	nodeIdsStr := params[paramNameNodeIds]
 
-	if utils.IsAnyBlank(orgId, addrStr) {
-		err = fmt.Errorf("add node org failed, require param [%s, %s], but not found", paramNameOrgId, paramNameAddress)
+	if utils.IsAnyBlank(orgId, nodeIdsStr) {
+		err = fmt.Errorf("add node org failed, require param [%s, %s], but not found", paramNameOrgId, paramNameNodeIds)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -645,25 +638,25 @@ func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, p
 		}
 	}
 	org := &configPb.OrgConfig{
-		OrgId:   orgId,
-		Address: make([]string, 0),
+		OrgId:  orgId,
+		NodeId: make([]string, 0),
 	}
 
-	addresses := strings.Split(addrStr, ",")
-	for _, address := range addresses {
-		address = strings.TrimSpace(address)
-		if address != "" {
-			org.Address = append(org.Address, address)
+	nodeIds := strings.Split(nodeIdsStr, ",")
+	for _, nid := range nodeIds {
+		nid = strings.TrimSpace(nid)
+		if nid != "" {
+			org.NodeId = append(org.NodeId, nid)
 		}
 	}
-	if len(org.Address) > 0 {
+	if len(org.NodeId) > 0 {
 		chainConfig.Consensus.Nodes = append(chainConfig.Consensus.Nodes, org)
 
 		result, err = setChainConfig(txSimContext, chainConfig)
 		if err != nil {
-			r.log.Errorf("node org add fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+			r.log.Errorf("node org add fail, %s, orgId[%s] nodeIdsStr[%s]", err.Error(), orgId, nodeIdsStr)
 		} else {
-			r.log.Infof("node org add success. orgId[%s] addrStr[%s]", orgId, addrStr)
+			r.log.Infof("node org add success. orgId[%s] nodeIdsStr[%s]", orgId, nodeIdsStr)
 		}
 		return result, err
 	}
@@ -684,15 +677,15 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 	// verify params
 	changed := false
 	orgId := params[paramNameOrgId]
-	addrStr := params[paramNameAddresses]
+	nodeIdsStr := params[paramNameNodeIds]
 
-	if utils.IsAnyBlank(orgId, addrStr) {
-		err = fmt.Errorf("update node org failed, require param [%s, %s], but not found", paramNameOrgId, paramNameAddress)
+	if utils.IsAnyBlank(orgId, nodeIdsStr) {
+		err = fmt.Errorf("update node org failed, require param [%s, %s], but not found", paramNameOrgId, paramNameNodeIds)
 		r.log.Error(err)
 		return nil, err
 	}
 
-	addresses := strings.Split(addrStr, ",")
+	nodeIds := strings.Split(nodeIdsStr, ",")
 	nodes := chainConfig.Consensus.Nodes
 	index := -1
 	var nodeConf *configPb.OrgConfig
@@ -710,11 +703,11 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 		return nil, err
 	}
 
-	nodeConf.Address = []string{}
-	for _, addr := range addresses {
-		addr = strings.TrimSpace(addr)
-		if addr != "" {
-			nodeConf.Address = append(nodeConf.Address, addr)
+	nodeConf.NodeId = []string{}
+	for _, nid := range nodeIds {
+		nid = strings.TrimSpace(nid)
+		if nid != "" {
+			nodeConf.NodeId = append(nodeConf.NodeId, nid)
 			nodes[index] = nodeConf
 			chainConfig.Consensus.Nodes = nodes
 			changed = true
@@ -728,9 +721,9 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
-		r.log.Errorf("node org update fail, %s, orgId[%s] addrStr[%s]", err.Error(), orgId, addrStr)
+		r.log.Errorf("node org update fail, %s, orgId[%s] nodeIdsStr[%s]", err.Error(), orgId, nodeIdsStr)
 	} else {
-		r.log.Infof("node org update success. orgId[%s] addrStr[%s]", orgId, addrStr)
+		r.log.Infof("node org update success. orgId[%s] nodeIdsStr[%s]", orgId, nodeIdsStr)
 	}
 	return result, err
 }
