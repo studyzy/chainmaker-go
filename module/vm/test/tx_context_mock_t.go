@@ -7,9 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	"chainmaker.org/chainmaker-go/chainconf"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"fmt"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"io/ioutil"
 	"strconv"
+	"strings"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
@@ -25,9 +31,9 @@ import (
 )
 
 var testOrgId = "wx-org1.chainmaker.org"
-
-var CertFilePath = "/Users/boom/projects/chainMaker-go-inner/chainmaker-go/config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
-var WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
+var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+var isSql = false
 
 var txType = commonPb.TxType_INVOKE_USER_CONTRACT
 var pool *wasmer.VmPoolManager
@@ -49,7 +55,7 @@ var bytes []byte
 var file []byte
 
 // 初始化上下文和wasm字节码
-func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *TxContextMockTest, []byte) {
+func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, protocol.TxSimContext, []byte) {
 	if bytes == nil {
 		bytes, _ = wasm.ReadBytes(WasmFile)
 		fmt.Printf("Wasm file size=%d\n", len(bytes))
@@ -78,8 +84,17 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 		IsFullCert: true,
 	}
 
+	db, _ := leveldb.OpenFile("tmp/leveldb", nil)
+
+	chainConf := &chainconf.ChainConf{
+		ChainConf: &config.ChainConfig{
+			Contract: &config.ContractConfig{EnableSqlSupport: isSql},
+		},
+	}
+
 	txContext := TxContextMockTest{
-		lock: &sync.Mutex{},
+		lock:  &sync.Mutex{},
+		lock2: &sync.Mutex{},
 		vmManager: &vm.ManagerImpl{
 			WasmerVmPoolManager:    GetVmPoolManager(),
 			WxvmCodeManager:        wxvmCodeManager,
@@ -89,11 +104,14 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 			ChainNodesInfoProvider: nil,
 			ChainId:                ChainIdTest,
 			Log:                    log,
+			ChainConf:              chainConf,
 		},
-		hisResult: make([]*callContractResult, 0),
-		creator:   sender,
-		sender:    sender,
-		cacheMap:  make(map[string][]byte),
+		hisResult:  make([]*callContractResult, 0),
+		creator:    sender,
+		sender:     sender,
+		cacheMap:   make(map[string][]byte),
+		db:         db,
+		kvRowCache: make(map[int32]protocol.StateIterator),
 	}
 
 	versionKey := []byte(protocol.ContractVersion + ContractNameTest)
@@ -114,15 +132,46 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 
 type TxContextMockTest struct {
 	lock          *sync.Mutex
+	lock2         *sync.Mutex
 	vmManager     protocol.VmManager
 	gasUsed       uint64 // only for callContract
 	currentDepth  int
 	currentResult []byte
 	hisResult     []*callContractResult
 
-	sender   *acPb.SerializedMember
-	creator  *acPb.SerializedMember
-	cacheMap map[string][]byte
+	sender     *acPb.SerializedMember
+	creator    *acPb.SerializedMember
+	cacheMap   map[string][]byte
+	db         *leveldb.DB
+	kvRowCache map[int32]protocol.StateIterator
+}
+
+func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
+	panic("implement me")
+}
+func (s *TxContextMockTest) SetStateKvHandle(index int32, rows protocol.StateIterator) {
+	s.lock2.Lock()
+	defer s.lock2.Unlock()
+	s.kvRowCache[index] = rows
+}
+
+func (s *TxContextMockTest) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
+	s.lock2.Lock()
+	defer s.lock2.Unlock()
+	data, ok := s.kvRowCache[index]
+	return data, ok
+}
+
+func (s *TxContextMockTest) GetBlockProposer() []byte {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) SetStateSqlHandle(i int32, rows protocol.SqlRows) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) {
+	panic("implement me")
 }
 
 type callContractResult struct {
@@ -134,38 +183,45 @@ type callContractResult struct {
 	result       []byte
 }
 
+func constructStateKey(contractName string, key []byte) []byte {
+	return append(append([]byte(contractName), contractStoreSeparator), key...)
+}
 func (s *TxContextMockTest) Get(name string, key []byte) ([]byte, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	key = constructStateKey(name, key)
 	k := string(key)
-	if name != "" {
-		k = name + "::" + k
+	val, err := s.db.Get([]byte(k), nil)
+	if err != nil {
+		fmt.Println("get", err)
 	}
-	//println("【get】 key:" + k)
-	//fms.Println("【get】 key:", k, "val:", cacheMap[k])
-	return s.cacheMap[k], nil
-	//return nil,nil
-	//data := "hello"
-	//for i := 0; i < 70; i++ {
-	//	for i := 0; i < 100; i++ {//1k
-	//		data += "1234567890"
-	//	}
-	//}
-	//return []byte(data), nil
+	return val, nil
 }
 
+const contractStoreSeparator = '#'
+
 func (s *TxContextMockTest) Put(name string, key []byte, value []byte) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	key = constructStateKey(name, key)
 	k := string(key)
-	//v := string(value)
-	if name != "" {
-		k = name + "::" + k
+	if !strings.Contains(k, "SYSTEM_CONTRACT_STATE#:B:") {
+		fmt.Println("【put】 key:", k, "val:", string(value))
 	}
-	//println("【put】 key:" + k)
-	//fmt.Println("【put】 key:", k, "val:", value)
-	s.cacheMap[k] = value
+	wo := &opt.WriteOptions{Sync: true}
+	s.db.Put([]byte(k), value, wo)
+	//s.cacheMap[k] = value
 	return nil
+}
+
+func (s *TxContextMockTest) Select(name string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	startKey = constructStateKey(name, startKey)
+	limit = constructStateKey(name, limit)
+	fmt.Println("select ", string(startKey), string(limit))
+	keyRange := &util.Range{Start: startKey, Limit: limit}
+	iter := s.db.NewIterator(keyRange, nil)
+	return &kvi{
+		iter:         iter,
+		contractName: name,
+	}, nil
 }
 
 func (s *TxContextMockTest) Del(name string, key []byte) error {
@@ -177,12 +233,8 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 		k = name + "::" + k
 	}
 	//println("【put】 key:" + k)
-	s.cacheMap[k] = nil
-	return nil
-}
-
-func (*TxContextMockTest) Select(name string, startKey []byte, limit []byte) (protocol.Iterator, error) {
-	panic("implement me")
+	//s.cacheMap[k] = nil
+	return s.db.Delete([]byte(k), nil)
 }
 
 func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte,
@@ -231,7 +283,7 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 			ChainId:        ChainIdTest,
 			Sender:         s.GetSender(),
 			TxType:         txType,
-			TxId:           "12345678",
+			TxId:           "abcdef12345678",
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
@@ -306,7 +358,55 @@ func BaseParam(parameters map[string]string) {
 type mockBlockchainStore struct {
 }
 
-func (m mockBlockchainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
+func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) ExecDdlSql(contractName, sql string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) CommitDbTransaction(txName string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) RollbackDbTransaction(txName string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
 	panic("implement me")
 }
 
@@ -374,10 +474,6 @@ func (m mockBlockchainStore) ReadObject(contractName string, key []byte) ([]byte
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
-	panic("implement me")
-}
-
 func (m mockBlockchainStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	panic("implement me")
 }
@@ -392,4 +488,27 @@ func (m mockBlockchainStore) GetDBHandle(dbName string) protocol.DBHandle {
 
 func (m mockBlockchainStore) Close() error {
 	panic("implement me")
+}
+
+type kvi struct {
+	iter         protocol.Iterator
+	contractName string
+}
+
+func (i *kvi) Next() bool {
+	return i.iter.Next()
+}
+func (i *kvi) Value() (*storePb.KV, error) {
+	err := i.iter.Error()
+	if err != nil {
+		return nil, err
+	}
+	return &storePb.KV{
+		ContractName: i.contractName,
+		Key:          i.iter.Key(),
+		Value:        i.iter.Value(),
+	}, nil
+}
+func (i *kvi) Release() {
+	i.iter.Release()
 }

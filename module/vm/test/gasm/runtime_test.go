@@ -21,7 +21,7 @@ import (
 )
 
 func TestContract_Fact(t *testing.T) {
-	test.WasmFile = "../../sdk/go/test_functional-0.7.2-go.wasm"
+	test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.0.wasm"
 	//test.WasmFile = "D:/develop/workspace/chainMaker/chainmaker-go/module/vm/sdk/go/fact-go.wasm"
 	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_GASM)
 
@@ -38,13 +38,9 @@ func TestContract_Fact(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				invokeCallContractTestSave("function_test", int32(i), contractId, txContext, byteCode)
-				//invokeCallContractTestSave("save", int32(i), contractId, txContext, byteCode)
-				//invokeCallContractTestSave("find_by_file_hash", int32(i), contractId, txContext, byteCode)
-				//invokeFact("increase", int32(i), contractId, txContext, byteCode)
-				//invokeFact("query", int32(i), contractId, txContext, byteCode)
-				//invokeFact("increase_only_key", int32(i), contractId, txContext, byteCode)
-				//invokeFact("query_only_key", int32(i), contractId, txContext, byteCode)
+				//invokeCallContractTestSave("test_put_state", int32(i), contractId, txContext, byteCode)
+				//invokeCallContractTestSave("test_kv_iterator", int32(i), contractId, txContext, byteCode)
+				invokeCallContractTestSave("functional_verify", int32(i), contractId, txContext, byteCode)
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%100 == 0 {
 					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
@@ -113,7 +109,9 @@ func invokeCallContractTestSave(method string, id int32, contractId *commonPb.Co
 	runtimeInstance := &gasm.RuntimeInstance{
 		Log: logger.GetLogger(logger.MODULE_VM),
 	}
-	runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	r := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	fmt.Println("【result】", r)
+
 }
 
 func invokeCallContractTestQuery(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) {

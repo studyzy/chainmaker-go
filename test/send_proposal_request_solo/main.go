@@ -64,9 +64,8 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
-	//initWasmerTest()
-	initGasmTest()
-	//initWxwmTest()
+	initWasmerTest()
+	//initGasmTest()
 
 	createContract := true
 
@@ -139,36 +138,49 @@ func main() {
 	testUpgradeInvokeSum(sk3, &client, CHAIN1)
 
 	// 15) 批量执行
-	//testPerformanceModeTransfer(sk3, &client, CHAIN1)
-	//time.Sleep(10 * time.Second)
+	testPerformanceModeTransfer(sk3, &client, CHAIN1)
+	time.Sleep(5 * time.Second)
 
 	// 16) 功能测试
 	testInvokeFunctionalVerify(sk3, &client, CHAIN1)
 	time.Sleep(5 * time.Second)
 
-	// 17) 冻结、解冻、吊销用户合约功能测试
+	// 17) KV迭代器测试
+	testKvIterator(sk3, &client)
+
+	// 18) 冻结、解冻、吊销用户合约功能测试
 	testFreezeOrUnfreezeOrRevokeFlow(sk3, client)
 }
 
 func initWasmerTest() {
-	WasmPath = "../wasm/rust-fact-1.0.0.wasm"
-	WasmUpgradePath = "../wasm/rust-func-verify-1.0.0.wasm"
-	contractName = "contract07"
+	WasmPath = "../wasm/rust-func-verify-1.2.0.wasm"
+	WasmUpgradePath = "../wasm/rust-func-verify-1.2.0.wasm"
+	contractName = "contract100"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
-	WasmPath = "../wasm/go-fact-1.0.0.wasm"
-	WasmUpgradePath = "../wasm/go-func-verify-1.0.0.wasm"
-	contractName = "contract14"
+	WasmPath = "../wasm/go-fact-1.2.0.wasm"
+	WasmUpgradePath = "../wasm/go-func-verify-1.2.0.wasm"
+	contractName = "contract200"
 	runtimeType = commonPb.RuntimeType_GASM
 }
 func initWxwmTest() {
 	WasmPath = "../wasm/cpp-func-verify-1.0.0.wasm"
 	WasmUpgradePath = "../wasm/cpp-func-verify-1.0.0.wasm"
-	contractName = "contract01"
+	contractName = "contract300"
 	runtimeType = commonPb.RuntimeType_WXVM
 }
 
+func testKvIterator(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
+	testInvokeMethod(sk3, client, "test_put_state")
+	time.Sleep(time.Second * 4)
+	txId := testInvokeMethod(sk3, client, "test_kv_iterator")
+	time.Sleep(time.Second * 4)
+	r := testGetTxByTxId(sk3, client, txId, CHAIN1)
+	if "15" != string(r) {
+		panic("testKvIterator error count!=15 count=" + string(r))
+	}
+}
 func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
 	fmt.Println("==============================================")
 	fmt.Println("==============================================")
@@ -248,7 +260,7 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 	time.Sleep(4 * time.Second)
 }
 
-func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) {
+func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) []byte {
 	fmt.Println("========================================================================================================")
 	fmt.Println("========================================================================================================")
 	fmt.Println("========get tx by txId ", txId, "===============")
@@ -271,6 +283,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("%+v", result)
 	if result.Transaction.Result.Code != 0 {
 		panic(result.Transaction.Result.ContractResult.Message)
 	}
@@ -279,6 +292,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	fmt.Println(result.Transaction.Result.ContractResult.Message)
 	fmt.Println(result.Transaction.Result.ContractResult.Result)
 	fmt.Println(result.Transaction.Result.ContractResult.Code)
+	return result.Transaction.Result.ContractResult.Result
 }
 
 func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) {
@@ -714,6 +728,31 @@ func testInvokeFactSave(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
 }
+
+func testInvokeMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[%s] [%s] ============\n", contractName, method, txId)
+
+	// 构造Payload
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payload := &commonPb.TransactPayload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	payloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		CHAIN1, txId, payloadBytes)
+
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId
+}
+
 func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 	txId := utils.GetRandTxId()
 	fmt.Printf("\n============ invoke contract %s[functional_verify] [%s] [functional_verify] ============\n", contractName, txId)

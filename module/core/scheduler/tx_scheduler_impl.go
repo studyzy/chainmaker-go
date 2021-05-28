@@ -69,6 +69,7 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		txReadKeyMap:  make(map[string]*commonpb.TxRead, 8),
 		txWriteKeyMap: make(map[string]*commonpb.TxWrite, 8),
 		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:    make(map[int32]protocol.StateIterator, 0),
 		txWriteKeySql: make([]*commonpb.TxWrite, 0),
 		snapshot:      snapshot,
 		vmManager:     vmManager,

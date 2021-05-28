@@ -33,6 +33,7 @@ type txSimContextImpl struct {
 	currentResult []byte
 	hisResult     []*callContractResult
 	sqlRowCache   map[int32]protocol.SqlRows
+	kvRowCache    map[int32]protocol.StateIterator
 }
 
 type callContractResult struct {
@@ -277,10 +278,21 @@ func constructKey(contractName string, key []byte) string {
 }
 
 func (s *txSimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	// 当前交易总是串行执行，故不需要加锁
 	s.sqlRowCache[index] = rows
 }
 
 func (s *txSimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
 	data, ok := s.sqlRowCache[index]
+	return data, ok
+}
+
+func (s *txSimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIterator) {
+	// 当前交易总是串行执行，故不需要加锁
+	s.kvRowCache[index] = rows
+}
+
+func (s *txSimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
+	data, ok := s.kvRowCache[index]
 	return data, ok
 }

@@ -30,6 +30,7 @@ type txQuerySimContextImpl struct {
 	currentResult   []byte
 	hisResult       []*callContractResult
 	sqlRowCache     map[int32]protocol.SqlRows
+	kvRowCache      map[int32]protocol.StateIterator
 }
 
 type callContractResult struct {
@@ -263,5 +264,14 @@ func (s *txQuerySimContextImpl) SetStateSqlHandle(index int32, rows protocol.Sql
 
 func (s *txQuerySimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
 	data, ok := s.sqlRowCache[index]
+	return data, ok
+}
+
+func (s *txQuerySimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIterator) {
+	s.kvRowCache[index] = rows
+}
+
+func (s *txQuerySimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
+	data, ok := s.kvRowCache[index]
 	return data, ok
 }
