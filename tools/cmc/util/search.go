@@ -5,7 +5,7 @@
 
 package util
 
-func SearchInt64(n int64, f func(int64) (bool,error)) (int64, error) {
+func SearchInt64(n int64, f func(int64) (bool, error)) (int64, error) {
 	// Define f(-1) == false and f(n) == true.
 	// Invariant: f(i-1) == false, f(j) == true.
 	i, j := int64(0), n

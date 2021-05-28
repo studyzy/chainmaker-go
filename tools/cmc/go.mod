@@ -20,5 +20,5 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/common => ../../common
-	chainmaker.org/chainmaker-sdk-go => /Users/wanghongda/GoProjects/chainmaker-sdk-go
+	chainmaker.org/chainmaker-sdk-go => ../sdk
 )
