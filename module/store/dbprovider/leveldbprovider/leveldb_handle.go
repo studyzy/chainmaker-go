@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -37,9 +36,6 @@ type LevelDBHandle struct {
 }
 
 func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig, logger protocol.Logger) *LevelDBHandle {
-	if logger == nil {
-		logger = logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId)
-	}
 	dbOpts := &opt.Options{}
 	writeBufferSize := dbconfig.BlockWriteBufferSize
 	if writeBufferSize <= 0 {
@@ -100,7 +96,7 @@ func (h *LevelDBHandle) Get(key []byte) ([]byte, error) {
 // Put saves the key-values
 func (h *LevelDBHandle) Put(key []byte, value []byte) error {
 	if value == nil {
-		h.logger.Warn("writting leveldbprovider key [%#v] with nil value", key)
+		h.logger.Warn("writing leveldbprovider key [%#v] with nil value", key)
 		return errors.New("error writing leveldbprovider with nil value")
 	}
 	wo := &opt.WriteOptions{Sync: true}

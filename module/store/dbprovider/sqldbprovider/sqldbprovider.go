@@ -27,10 +27,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var defaultMaxIdleConns = 10
-var defaultMaxOpenConns = 10
-var defaultConnMaxLifeTime = 60
-
 //
 //type SqlDBProvider struct {
 //	dbs map[string]*SqlDBHandle
@@ -345,7 +341,7 @@ func (p *SqlDBHandle) Close() error {
 	defer p.Unlock()
 	if len(p.dbTxCache) > 0 {
 		txNames := ""
-		for name, _ := range p.dbTxCache {
+		for name := range p.dbTxCache {
 			txNames += name + ";"
 		}
 		p.log.Warnf("these db tx[%s] don't commit or rollback, close them.", txNames)

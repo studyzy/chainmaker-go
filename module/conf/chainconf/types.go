@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -26,6 +27,8 @@ import (
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
+
+const regChainId = "^[a-zA-Z0-9_]{1,30}$"
 
 var (
 	chainConsensusVerifier = make(map[string]consensusVerifier, 0)
@@ -108,6 +111,10 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 		provider := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.Provider
 		if provider != "sql" {
 			log.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql, but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true", provider, provider)
+			return nil, errors.New("chain config error")
+		}
+		if cconfig.Consensus.Type == consensus.ConsensusType_HOTSTUFF {
+			log.Errorf("chain config error: chain config sql is enable, expect consensus tbft/raft/solo, but got %s. current config: consensus.type = %s, contract.enable_sql_support = true", consensus.ConsensusType_HOTSTUFF.String(), consensus.ConsensusType_HOTSTUFF)
 			return nil, errors.New("chain config error")
 		}
 	}
@@ -275,8 +282,9 @@ func validateParams(config *config.ChainConfig) error {
 	if config.Block == nil {
 		return errors.New("chainconfig block is nil")
 	}
-	if len(config.ChainId) > 30 {
-		return errors.New("chainId length must less than 30")
+	match, err := regexp.MatchString(regChainId, config.ChainId)
+	if err != nil || !match {
+		return fmt.Errorf("chain id[%s] can only consist of numbers, letters and underscores and chainId length must less than 30", config.ChainId)
 	}
 	return nil
 }
@@ -318,7 +326,8 @@ func IsNative(contractName string) bool {
 		common.ContractName_SYSTEM_CONTRACT_QUERY.String(),
 		common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		common.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
-		common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String():
+		common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
+		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
 		return true
 	default:
 		return false

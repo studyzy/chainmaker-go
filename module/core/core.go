@@ -14,7 +14,6 @@ import (
 	"chainmaker.org/chainmaker-go/core/proposer"
 	"chainmaker.org/chainmaker-go/core/scheduler"
 	"chainmaker.org/chainmaker-go/core/verifier"
-	"chainmaker.org/chainmaker-go/logger"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
@@ -44,7 +43,7 @@ type CoreEngine struct {
 
 	quitC         <-chan interface{}          // quit chan, reserved for stop core engine running
 	proposedCache protocol.ProposalCache      // cache proposed block and proposal status
-	log           *logger.CMLogger            // logger
+	log           protocol.Logger             // logger
 	subscriber    *subscriber.EventSubscriber // block subsriber
 }
 
@@ -59,7 +58,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		proposedCache:   cf.proposalCache,
 		chainConf:       cf.chainConf,
 		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf),
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, cf.chainId),
+		log:             cf.log,
 	}
 	core.quitC = make(<-chan interface{})
 
@@ -82,7 +81,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		AC:              cf.ac,
 		BlockchainStore: cf.blockchainStore,
 	}
-	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig)
+	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig, cf.log)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +99,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		AC:              cf.ac,
 		TxPool:          core.txPool,
 	}
-	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig)
+	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.log)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +117,7 @@ func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
 		Subscriber:      cf.subscriber,
 		Verifier:        core.BlockVerifier,
 	}
-	core.BlockCommitter, err = committer.NewBlockCommitter(committerConfig)
+	core.BlockCommitter, err = committer.NewBlockCommitter(committerConfig, cf.log)
 	if err != nil {
 		return nil, err
 	}

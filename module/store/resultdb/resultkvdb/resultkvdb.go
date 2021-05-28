@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	historyDBName        = ""
 	txRWSetIdxKeyPrefix  = 'r'
 	resultDBSavepointKey = "resultSavepointKey"
 )
@@ -105,7 +104,7 @@ func (h *ResultKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) 
 	go func() {
 		err := h.DbHandle.WriteBatch(batch, false)
 		if err != nil {
-			panic(fmt.Sprintf("Error writting db: %s", err))
+			panic(fmt.Sprintf("Error writing db: %s", err))
 		}
 		//db committed, clean cache
 		h.Cache.DelBlock(blockHeight)
@@ -123,14 +122,15 @@ func (h *ResultKvDB) get(key []byte) ([]byte, error) {
 	return h.DbHandle.Get(key)
 }
 
-func (h *ResultKvDB) has(key []byte) (bool, error) {
-	//check has from cache
-	isDelete, exist := h.Cache.Has(string(key))
-	if exist {
-		return !isDelete, nil
-	}
-	return h.DbHandle.Has(key)
-}
+//
+//func (h *ResultKvDB) has(key []byte) (bool, error) {
+//	//check has from cache
+//	isDelete, exist := h.Cache.Has(string(key))
+//	if exist {
+//		return !isDelete, nil
+//	}
+//	return h.DbHandle.Has(key)
+//}
 
 func constructTxRWSetIDKey(txId string) []byte {
 	return append([]byte{txRWSetIdxKeyPrefix}, txId...)

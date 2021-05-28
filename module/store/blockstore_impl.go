@@ -27,14 +27,13 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
 
 const (
-	logPath             = "wal"
-	logDBBlockKeyPrefix = 'n'
+	logPath = "wal"
+	//logDBBlockKeyPrefix = 'n'
 )
 
 // BlockStoreImpl provides an implementation of `protocal.BlockchainStore`.
@@ -111,6 +110,9 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	}
 	//创世区块只执行一次，而且可能涉及到创建创建数据库，所以串行执行，而且无法启用事务
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(genesisBlock)
+	if err != nil {
+		return err
+	}
 	block := genesisBlock.Block
 	bs.writeLog(uint64(block.Header.BlockHeight), blockBytes)
 	//2.初始化BlockDB
@@ -118,25 +120,28 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write blockDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
-
+		return err
 	}
 	//3. 初始化StateDB
 	err = bs.stateDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write stateDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
+		return err
 	}
 	//4. 初始化历史数据库
 	err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
+		return err
 	}
 	//5. 初始化Result数据库
 	err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
 			block.Header.ChainId, block.Header.BlockHeight)
+		return err
 	}
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
@@ -174,6 +179,11 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		blockWithRWSet.TxRWSets = append(blockWithRWSet.TxRWSets, consensusArgs.ConsensusData)
 	}
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write log, block[%d], err:%s",
+			block.Header.ChainId, block.Header.BlockHeight, err)
+		return err
+	}
 	elapsedMarshalBlockAndRWSet := utils.CurrentTimeMillisSeconds() - startPutBlock
 
 	startCommitLogDB := utils.CurrentTimeMillisSeconds()
@@ -372,11 +382,7 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 	if err != nil {
 		return nil, err
 	}
-	var txRWSets []*commonPb.TxRWSet
-	//var batchWG sync.WaitGroup
-	//batchWG.Add(len(blockStoreInfo.TxIds))
-	//errsChan := make(chan error, len(blockStoreInfo.TxIds))
-	txRWSets = make([]*commonPb.TxRWSet, len(blockStoreInfo.TxIds))
+	var txRWSets = make([]*commonPb.TxRWSet, len(blockStoreInfo.TxIds))
 	for i, txId := range blockStoreInfo.TxIds {
 
 		txRWSet, err := bs.GetTxRWSet(txId)
@@ -651,14 +657,14 @@ func (bs *BlockStoreImpl) deleteBlockFromLog(num uint64) error {
 	return bs.wal.TruncateFront(lastBlockNum)
 }
 
-func (bs *BlockStoreImpl) construcBlockNumKey(blockNum uint64) []byte {
-	blkNumBytes := bs.encodeBlockNum(blockNum)
-	return append([]byte{logDBBlockKeyPrefix}, blkNumBytes...)
-}
+//func (bs *BlockStoreImpl) construcBlockNumKey(blockNum uint64) []byte {
+//	blkNumBytes := bs.encodeBlockNum(blockNum)
+//	return append([]byte{logDBBlockKeyPrefix}, blkNumBytes...)
+//}
 
-func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
-	return proto.EncodeVarint(blockNum)
-}
+//func (bs *BlockStoreImpl) encodeBlockNum(blockNum uint64) []byte {
+//	return proto.EncodeVarint(blockNum)
+//}
 
 //不在事务中，直接查询状态数据库，返回一行结果
 func (bs *BlockStoreImpl) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
@@ -699,7 +705,7 @@ func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint
 	height := currentHeight + 1
 	if savePoint == 0 && currentHeight == 0 {
 		//check whether has genesis block
-		if data, _ := bs.wal.Read(1); data != nil && len(data) > 0 {
+		if data, _ := bs.wal.Read(1); len(data) > 0 {
 			height = height - 1
 		}
 	}

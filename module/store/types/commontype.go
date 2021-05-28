@@ -17,7 +17,7 @@ func (b *SavePoint) GetCreateTableSql(dbType string) string {
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `save_points` (`block_height` integer,PRIMARY KEY (`block_height`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (b *SavePoint) GetTableName() string {
 	return "save_points"

@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker-go/protocol/test"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -152,7 +154,8 @@ func createCertNodesTotal() map[string]string {
 		if !filepath.IsAbs(certFile) {
 			certFile = filepath.Join(confDir, certFile)
 		}
-		ac, _ := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, nodeChainConf[i], lf.NodeConfig.OrgId, nil)
+		acLog := &test.GoLogger{}
+		ac, _ := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
 		member, _ := ac.NewMemberFromCertPem(lf.NodeConfig.OrgId, string(certPEM))
 		// member, _ := accesscontrol.MockAccessControl().NewMember(lf.NodeConfig.OrgId, string(certPEM))
 		nodecert[member.GetMemberId()] = nodeLists[i]

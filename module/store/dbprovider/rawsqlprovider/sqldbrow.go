@@ -69,14 +69,12 @@ func (row *emptyRow) IsEmpty() bool {
 }
 
 type SqlDBRows struct {
-	db    *sql.DB
 	rows  *sql.Rows
 	close func() error
 }
 
 func NewSqlDBRows(rows *sql.Rows, close func() error) *SqlDBRows {
 	return &SqlDBRows{
-		//db:    db,
 		rows:  rows,
 		close: close,
 	}

@@ -37,7 +37,7 @@ type TxSchedulerImpl struct {
 	lock            sync.Mutex
 	VmManager       protocol.VmManager
 	scheduleFinishC chan bool
-	log             *logger.CMLogger
+	log             protocol.Logger
 	chainConf       protocol.ChainConf // chain config
 
 	metricVMRunTime *prometheus.HistogramVec

@@ -13,17 +13,17 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 //生成测试用的blockHash
 func generateBlockHash(chainId string, height int64) []byte {
@@ -140,7 +140,8 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 var testChainId = "testchainid_1"
 var block0 = createConfigBlock(testChainId, 0)
 var block1 = createBlockAndRWSets(testChainId, 1, 10)
-var block2 = createBlockAndRWSets(testChainId, 2, 2)
+
+//var block2 = createBlockAndRWSets(testChainId, 2, 2)
 
 /*var block3, _ = createBlockAndRWSets(testChainId, 3, 2)
 var configBlock4 = createConfigBlock(testChainId, 4)

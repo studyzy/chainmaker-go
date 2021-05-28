@@ -14,18 +14,18 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 func generateBlockHash(chainId string, height int64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
@@ -187,6 +187,7 @@ func TestHistorySqlDB_CommitBlock(t *testing.T) {
 	db := initSqlDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
+	assert.Nil(t, err)
 	err = db.CommitBlock(blockInfo)
 	assert.Nil(t, err)
 }
@@ -194,6 +195,7 @@ func TestHistorySqlDB_CommitBlock(t *testing.T) {
 func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
 	db := initSqlDb()
 	_, block1, err := serialization.SerializeBlock(block1)
+	assert.Nil(t, err)
 	err = db.CommitBlock(block1)
 	assert.Nil(t, err)
 	height, err := db.GetLastSavepoint()
@@ -201,6 +203,7 @@ func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
 	assert.Equal(t, uint64(block1.Block.Header.BlockHeight), height)
 
 	_, block2, err := serialization.SerializeBlock(block2)
+	assert.Nil(t, err)
 	err = db.CommitBlock(block2)
 	assert.Nil(t, err)
 	height, err = db.GetLastSavepoint()
@@ -211,6 +214,7 @@ func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
 	db := initSqlDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
+	assert.Nil(t, err)
 	err = db.CommitBlock(blockInfo)
 	assert.Nil(t, err)
 	result, err := db.GetHistoryForKey("contract1", []byte("key_1"))
@@ -230,6 +234,7 @@ func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
 	db := initSqlDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
+	assert.Nil(t, err)
 	err = db.CommitBlock(blockInfo)
 	assert.Nil(t, err)
 	result, err := db.GetAccountTxHistory([]byte("User1"))

@@ -15,7 +15,6 @@ import (
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -38,7 +37,7 @@ type BlockCommitterImpl struct {
 
 	ledgerCache           protocol.LedgerCache        // ledger cache
 	proposalCache         protocol.ProposalCache      // proposal cache
-	log                   *logger.CMLogger            // logger
+	log                   protocol.Logger             // logger
 	msgBus                msgbus.MessageBus           // message bus
 	mu                    sync.Mutex                  // lock, to avoid concurrent block commit
 	subscriber            *subscriber.EventSubscriber // subscriber
@@ -62,7 +61,7 @@ type BlockCommitterConfig struct {
 	Verifier        protocol.BlockVerifier
 }
 
-func NewBlockCommitter(config BlockCommitterConfig) (protocol.BlockCommitter, error) {
+func NewBlockCommitter(config BlockCommitterConfig, log protocol.Logger) (protocol.BlockCommitter, error) {
 	blockchain := &BlockCommitterImpl{
 		chainId:         config.ChainId,
 		blockchainStore: config.BlockchainStore,
@@ -70,7 +69,7 @@ func NewBlockCommitter(config BlockCommitterConfig) (protocol.BlockCommitter, er
 		txPool:          config.TxPool,
 		ledgerCache:     config.LedgerCache,
 		proposalCache:   config.ProposedCache,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, config.ChainId),
+		log:             log,
 		chainConf:       config.ChainConf,
 		msgBus:          config.MsgBus,
 		subscriber:      config.Subscriber,

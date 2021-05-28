@@ -33,7 +33,7 @@ func (b *StateInfo) GetCreateTableSql(dbType string) string {
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `state_infos` (`contract_name` text,`object_key` blob DEFAULT '',`object_value` longblob,`block_height` integer,`updated_at` datetime DEFAULT null,PRIMARY KEY (`contract_name`,`object_key`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (b *StateInfo) GetTableName() string {
 	return "state_infos"

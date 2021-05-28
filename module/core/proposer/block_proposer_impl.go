@@ -20,7 +20,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/logger"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
@@ -54,7 +53,7 @@ type BlockProposerImpl struct {
 	idleMu         sync.Mutex   // for proposeBlock reentrant lock
 	statusMu       sync.Mutex   // for propose status change lock
 	proposerMu     sync.RWMutex // for isProposer lock, avoid race
-	log            *logger.CMLogger
+	log            protocol.Logger
 	finishProposeC chan bool // channel to receive signal to yield propose block
 
 	metricBlockPackageTime *prometheus.HistogramVec
@@ -80,7 +79,7 @@ const (
 	DEFAULTVERSION  = "v1.0.0" // default version of chain
 )
 
-func NewBlockProposer(config BlockProposerConfig) (protocol.BlockProposer, error) {
+func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol.BlockProposer, error) {
 	blockProposerImpl := &BlockProposerImpl{
 		chainId:         config.ChainId,
 		isProposer:      false, // not proposer when initialized
@@ -98,7 +97,7 @@ func NewBlockProposer(config BlockProposerConfig) (protocol.BlockProposer, error
 		proposalCache:   config.ProposalCache,
 		chainConf:       config.ChainConf,
 		ac:              config.AC,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, config.ChainId),
+		log:             log,
 		finishProposeC:  make(chan bool),
 	}
 
