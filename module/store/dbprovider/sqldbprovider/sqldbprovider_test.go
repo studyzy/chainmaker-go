@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 //func TestProvider_GetDB(t *testing.T) {
 //	conf := &localconf.CMConfig{}
@@ -99,14 +99,14 @@ func TestProvider_DbTransaction(t *testing.T) {
 	tx.BeginDbSavePoint("tx0")
 	var count int64
 	var err error
-	count, err = tx.ExecSql("insert into t1 values(3,'c')")
+	count, _ = tx.ExecSql("insert into t1 values(3,'c')")
 	assert.Equal(t, int64(1), count)
-	count, err = tx.ExecSql("insert into t1 values(4,'d')")
+	count, _ = tx.ExecSql("insert into t1 values(4,'d')")
 	assert.Equal(t, int64(1), count)
 	tx.BeginDbSavePoint("tx1")
-	count, err = tx.ExecSql("insert into t1 values(5,'e')")
+	count, _ = tx.ExecSql("insert into t1 values(5,'e')")
 	assert.Equal(t, int64(1), count)
-	row, err := tx.QuerySingle("select count(*) from t1")
+	row, _ := tx.QuerySingle("select count(*) from t1")
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(5), count)
 	count, err = tx.ExecSql("insert into t1 values(2,'b')") //duplicate PK error
@@ -114,9 +114,11 @@ func TestProvider_DbTransaction(t *testing.T) {
 	tx.RollbackDbSavePoint("tx1")
 	row, err = tx.QuerySingle("select count(*) from t1")
 	row.ScanColumns(&count)
+	assert.Nil(t, err)
 	assert.Equal(t, int64(4), count)
 	p.RollbackDbTransaction(txName)
 	row, err = p.QuerySingle("select count(1) from t1", "")
+	assert.Nil(t, err)
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(2), count)
 }
@@ -133,10 +135,12 @@ func TestProvider_RollbackEmptyTx(t *testing.T) {
 	assert.NotNil(t, err)
 	tx.RollbackDbSavePoint("tx0")
 	row, err := tx.QuerySingle("select count(*) from t1")
+	assert.Nil(t, err)
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(2), count)
 	p.RollbackDbTransaction(txName)
 	row, err = p.QuerySingle("select count(1) from t1")
+	assert.Nil(t, err)
 	row.ScanColumns(&count)
 	assert.Equal(t, int64(2), count)
 }

@@ -47,6 +47,9 @@ func ParseSqlDbType(str string) (types.EngineType, error) {
 		return types.UnknownDb, errors.New("unknown sql db type:" + str)
 	}
 }
+
+const UTF8_CHAR = "charset=utf8mb4"
+
 func replaceMySqlDsn(dsn string, dbName string) string {
 	dsnPattern := regexp.MustCompile(
 		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
@@ -59,7 +62,14 @@ func replaceMySqlDsn(dsn string, dbName string) string {
 	}
 	start, end := matches[10], matches[11]
 	newDsn := dsn[:start] + dbName + dsn[end:]
-	return newDsn
+	if matches[12] == -1 {
+		return newDsn + "?" + UTF8_CHAR
+	}
+	par := dsn[matches[12]:]
+	if strings.Contains(par, "charset=") {
+		return newDsn
+	}
+	return newDsn + "&" + UTF8_CHAR
 }
 
 // NewSqlDBProvider construct a new SqlDBHandle
@@ -93,9 +103,18 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 			}
 		}
 		log.Debug("open new db connection for " + conf.SqlDbType + " dsn:" + dsn)
-		db.SetConnMaxLifetime(time.Second * time.Duration(conf.ConnMaxLifeTime))
-		db.SetMaxIdleConns(conf.MaxIdleConns)
-		db.SetMaxOpenConns(conf.MaxOpenConns)
+		if conf.ConnMaxLifeTime > 0 {
+			defaultConnMaxLifeTime = conf.ConnMaxLifeTime
+		}
+		if conf.MaxIdleConns > 0 {
+			defaultMaxIdleConns = conf.MaxIdleConns
+		}
+		if conf.MaxOpenConns > 0 {
+			defaultMaxOpenConns = conf.MaxOpenConns
+		}
+		db.SetConnMaxLifetime(time.Second * time.Duration(defaultConnMaxLifeTime))
+		db.SetMaxIdleConns(defaultMaxIdleConns)
+		db.SetMaxOpenConns(defaultMaxOpenConns)
 		provider.db = db
 		provider.contextDbName = dbName //默认连接mysql数据库
 	} else if sqlType == types.Sqlite {
@@ -196,7 +215,9 @@ func (p *SqlDBHandle) HasTable(obj TableDDLGenerator) bool {
 	//obj:=objI.(TableDDLGenerator)
 	sql := ""
 	if p.dbType == types.MySQL {
-		sql = fmt.Sprintf("SELECT count(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'", p.contextDbName, obj.GetTableName())
+		sql = fmt.Sprintf(
+			"SELECT count(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'",
+			p.contextDbName, obj.GetTableName())
 	}
 	if p.dbType == types.Sqlite {
 		sql = fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=\"%s\"", obj.GetTableName())

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
@@ -19,7 +18,7 @@ import (
 type txValidateFunc func(tx *commonPb.Transaction, source protocol.TxSource) error
 
 type txQueue struct {
-	log      *logger.CMLogger
+	log      protocol.Logger
 	validate txValidateFunc
 
 	commonTxQueue *txList   // common transaction queue
@@ -27,7 +26,7 @@ type txQueue struct {
 	pendingCache  *sync.Map // Caches transactions that are already in the block to be deleted
 }
 
-func newQueue(blockStore protocol.BlockchainStore, log *logger.CMLogger, validate txValidateFunc) *txQueue {
+func newQueue(blockStore protocol.BlockchainStore, log protocol.Logger, validate txValidateFunc) *txQueue {
 	pendingCache := sync.Map{}
 	queue := txQueue{
 		log:           log,

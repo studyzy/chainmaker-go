@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -19,7 +18,7 @@ import (
 )
 
 type TxValidator struct {
-	log           *logger.CMLogger
+	log           protocol.Logger
 	chainId       string
 	hashType      string
 	consensusType consensuspb.ConsensusType
@@ -34,7 +33,7 @@ type verifyBlockBatch struct {
 	txHash    [][]byte
 }
 
-func NewTxValidator(log *logger.CMLogger, chainId string, hashType string, consensusType consensuspb.ConsensusType,
+func NewTxValidator(log protocol.Logger, chainId string, hashType string, consensusType consensuspb.ConsensusType,
 	store protocol.BlockchainStore, txPool protocol.TxPool, ac protocol.AccessControlProvider) *TxValidator {
 	return &TxValidator{
 		log:           log,

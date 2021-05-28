@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
+	"chainmaker.org/chainmaker-go/logger"
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
@@ -147,7 +148,8 @@ func (bc *Blockchain) initStore() (err error) {
 		return
 	}
 	var storeFactory store.Factory
-	if bc.store, err = storeFactory.NewStore(bc.chainId, &localconf.ChainMakerConfig.StorageConfig); err != nil {
+	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
+	if bc.store, err = storeFactory.NewStore(bc.chainId, &localconf.ChainMakerConfig.StorageConfig, storeLogger); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -260,8 +262,8 @@ func (bc *Blockchain) initAC() (err error) {
 			return err
 		}
 	}
-
-	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store)
+	acLog := logger.GetLoggerByChain(logger.MODULE_ACCESS, bc.chainId)
+	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
 		bc.log.Errorf("get organization information failed, %s", err.Error())
 		return
@@ -286,7 +288,8 @@ func (bc *Blockchain) initTxPool() (err error) {
 	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
 	}
-	bc.txPool, err = txPoolFactory.NewTxPool(
+	txpoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
+	bc.txPool, err = txPoolFactory.NewTxPool(txpoolLogger,
 		txType,
 		txpool.WithNodeId(localconf.ChainMakerConfig.NodeConfig.NodeId),
 		txpool.WithMsgBus(bc.msgBus),
@@ -332,6 +335,7 @@ func (bc *Blockchain) initCore() (err error) {
 	}
 	// init core engine
 	var coreFactory core.CoreFactory
+	coreLogger := logger.GetLoggerByChain(logger.MODULE_CORE, bc.chainId)
 	bc.coreEngine, err = coreFactory.NewCoreWithOptions(
 		core.WithMsgBus(bc.msgBus),
 		core.WithTxPool(bc.txPool),
@@ -345,6 +349,7 @@ func (bc *Blockchain) initCore() (err error) {
 		core.WithAccessControl(bc.ac),
 		core.WithSubscriber(bc.eventSubscriber),
 		core.WithProposalCache(bc.proposalCache),
+		core.WithCoreLogger(coreLogger),
 	)
 	if err != nil {
 		bc.log.Errorf("new core engine failed, %s", err.Error())

@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
@@ -42,7 +41,7 @@ type BlockVerifierImpl struct {
 	proposalCache  protocol.ProposalCache         // proposal cache
 	chainConf      protocol.ChainConf             // chain config
 	ac             protocol.AccessControlProvider // access control manager
-	log            *logger.CMLogger               // logger
+	log            protocol.Logger                // logger
 	txPool         protocol.TxPool                // tx pool to check if tx is duplicate
 	mu             sync.Mutex                     // to avoid concurrent map modify
 
@@ -65,7 +64,7 @@ type BlockVerifierConfig struct {
 	TxPool          protocol.TxPool
 }
 
-func NewBlockVerifier(config BlockVerifierConfig) (protocol.BlockVerifier, error) {
+func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol.BlockVerifier, error) {
 	v := &BlockVerifierImpl{
 		chainId:         config.ChainId,
 		msgBus:          config.MsgBus,
@@ -79,12 +78,12 @@ func NewBlockVerifier(config BlockVerifierConfig) (protocol.BlockVerifier, error
 		proposalCache: config.ProposedCache,
 		chainConf:     config.ChainConf,
 		ac:            config.AC,
-		log:           logger.GetLoggerByChain(logger.MODULE_CORE, config.ChainId),
+		log:           log,
 		txPool:        config.TxPool,
 	}
 
 	v.blockValidator = NewBlockValidator(v.chainId, v.chainConf.ChainConfig().Crypto.Hash)
-	v.txValidator = NewTxValidator(v.log, v.chainId, v.chainConf.ChainConfig().Crypto.Hash,
+	v.txValidator = NewTxValidator(log, v.chainId, v.chainConf.ChainConfig().Crypto.Hash,
 		v.chainConf.ChainConfig().Consensus.Type, v.blockchainStore, v.txPool, v.ac)
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {

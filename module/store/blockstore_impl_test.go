@@ -7,27 +7,24 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"os"
 	"path/filepath"
+	"testing"
+	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"github.com/tidwall/wal"
-
-	"os"
-	"time"
-
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/tidwall/wal"
 )
 
 var chainId = "testchain1"
@@ -252,7 +249,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
-var log = &logger.GoLogger{}
+var log = &test.GoLogger{}
 
 //func TestMain(m *testing.M) {
 //	fmt.Println("begin")
@@ -358,7 +355,7 @@ func init5Blocks(s protocol.BlockchainStore) {
 	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
 	s.PutBlock(b, rw)
-	b, rw = createBlockAndRWSets(chainId, 5, 1)
+	b, _ = createBlockAndRWSets(chainId, 5, 1)
 	s.PutBlock(b, txRWSets)
 }
 func init5ContractBlocks(s protocol.BlockchainStore) {
@@ -516,7 +513,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 	iter, err := s.SelectObject(defaultContractName, []byte("key_2"), []byte("key_4"))
 	assert.Nil(t, err)
 	defer iter.Release()
-	var count int = 0
+	var count = 0
 	for iter.Next() {
 		count++
 		kv, _ := iter.Value()
@@ -558,14 +555,15 @@ func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
 	height, err := impl.getLastSavepoint()
+	assert.Nil(t, err)
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.blockDB.GetLastSavepoint()
+	height, _ = impl.blockDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.stateDB.GetLastSavepoint()
+	height, _ = impl.stateDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.resultDB.GetLastSavepoint()
+	height, _ = impl.resultDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
-	height, err = impl.historyDB.GetLastSavepoint()
+	height, _ = impl.historyDB.GetLastSavepoint()
 	assert.Equal(t, uint64(5), height)
 }
 
@@ -651,7 +649,7 @@ func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	assert.Equal(t, nil, err)
 	err = bs.writeLog(uint64(block6.Header.BlockHeight), blockWithRWSetBytes)
 	if err != nil {
-		fmt.Errorf("chain[%s] Failed to write wal, block[%d]",
+		fmt.Printf("chain[%s] Failed to write wal, block[%d]",
 			block6.Header.ChainId, block6.Header.BlockHeight)
 		t.Error(err)
 	}

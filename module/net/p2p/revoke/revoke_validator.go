@@ -49,6 +49,9 @@ func (rv *RevokedValidator) ValidateCertsIsRevoked(certs []*cmx509.Certificate) 
 	bl := false
 	rv.accessControls.Range(func(key, value interface{}) bool {
 		ac, _ := value.(protocol.AccessControlProvider)
+		if ac == nil {
+			return false
+		}
 		bl = ac.IsCertRevoked(certs)
 		if bl {
 			return false

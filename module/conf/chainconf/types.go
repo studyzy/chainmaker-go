@@ -326,7 +326,8 @@ func IsNative(contractName string) bool {
 		common.ContractName_SYSTEM_CONTRACT_QUERY.String(),
 		common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		common.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
-		common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String():
+		common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
+		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
 		return true
 	default:
 		return false

@@ -5,12 +5,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package logger
+package test
 
-import "testing"
+import (
+	"testing"
+)
+
+type logNodeConfig struct {
+	LogLevelDefault string            `mapstructure:"log_level_default"`
+	LogLevels       map[string]string `mapstructure:"log_levels"`
+	FilePath        string            `mapstructure:"file_path"`
+	MaxAge          int               `mapstructure:"max_age"`
+	RotationTime    int               `mapstructure:"rotation_time"`
+	LogInConsole    bool              `mapstructure:"log_in_console"`
+	ShowColor       bool              `mapstructure:"show_color"`
+}
 
 var l = &GoLogger{}
-var arg0 = &LogNodeConfig{
+var arg0 = &logNodeConfig{
 	FilePath: "/test",
 	MaxAge:   123,
 }

@@ -83,6 +83,11 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 	}
 	var preBlockHeight int64
 	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	if err != nil {
+		c.Logger.Errorf("failed to get block_height err%s", err)
+		c.db.RollbackDbTransaction(blockHashStr)
+		return err
+	}
 	err = single.ScanColumns(&preBlockHeight)
 	if err != nil {
 		c.Logger.Errorf("failed to get block_height err%s", err)
@@ -166,6 +171,10 @@ func (c *ContractEventSqlDB) GetLastSavepoint() (uint64, error) {
 	}
 
 	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
+	if err != nil {
+		c.Logger.Errorf("failed to get last savepoint")
+		return 0, err
+	}
 	err = single.ScanColumns(&blockHeight)
 	if err != nil {
 		c.Logger.Errorf("failed to get last savepoint")

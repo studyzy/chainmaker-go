@@ -9,7 +9,6 @@ package binlog
 
 import (
 	"errors"
-	"fmt"
 )
 
 type MemBinlog struct {
@@ -34,7 +33,7 @@ func (l *MemBinlog) Read(index uint64) ([]byte, error) {
 	return l.mem[index], nil
 }
 func (l *MemBinlog) LastIndex() (uint64, error) {
-	fmt.Printf("get last index %d", l.last)
+	//fmt.Printf("get last index %d", l.last)
 	return l.last, nil
 }
 func (l *MemBinlog) Write(index uint64, data []byte) error {
@@ -44,6 +43,6 @@ func (l *MemBinlog) Write(index uint64, data []byte) error {
 	}
 	l.mem[index] = data
 	l.last = index
-	fmt.Printf("write binlog index=%d\n", index)
+	//fmt.Printf("write binlog index=%d\n", index)
 	return nil
 }

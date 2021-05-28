@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package logger
+package test
 
 import (
 	"fmt"
@@ -29,11 +29,11 @@ func (GoLogger) Debugw(msg string, keysAndValues ...interface{}) {
 }
 
 func (GoLogger) Error(args ...interface{}) {
-	log.Printf("ERROR: %v\n%s", args,debug.Stack())
+	log.Printf("ERROR: %v\n%s", args, debug.Stack())
 }
 
 func (GoLogger) Errorf(format string, args ...interface{}) {
-	str:=fmt.Sprintf(format,args...)
+	str := fmt.Sprintf(format, args...)
 	log.Printf("ERROR: "+str+"\n%s", debug.Stack())
 }
 
@@ -78,20 +78,20 @@ func (GoLogger) Panicw(msg string, keysAndValues ...interface{}) {
 }
 
 func (GoLogger) Warn(args ...interface{}) {
-	log.Printf("WARN: %v\n%s", args,debug.Stack())
+	log.Printf("WARN: %v\n%s", args, debug.Stack())
 }
 
 func (GoLogger) Warnf(format string, args ...interface{}) {
-	str:=fmt.Sprintf(format,args...)
+	str := fmt.Sprintf(format, args...)
 	log.Printf("WARN: "+str+"\n%s", debug.Stack())
 }
 
 func (GoLogger) Warnw(msg string, keysAndValues ...interface{}) {
 	log.Printf("WARN: "+msg+" %v", keysAndValues...)
 }
-func (GoLogger)DebugDynamic(l func() string){
-	log.Print("DEBUG:",l())
+func (GoLogger) DebugDynamic(l func() string) {
+	log.Print("DEBUG:", l())
 }
-func (GoLogger)InfoDynamic(l func()string){
-	log.Print("INFO:",l())
+func (GoLogger) InfoDynamic(l func() string) {
+	log.Print("INFO:", l())
 }
