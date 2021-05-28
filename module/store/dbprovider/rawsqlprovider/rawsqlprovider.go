@@ -199,8 +199,9 @@ func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 func (p *SqlDBHandle) CreateTableIfNotExist(objI interface{}) error {
 	p.Lock()
 	defer p.Unlock()
-	obj, pass := objI.(TableDDLGenerator)
-	if !pass {
+	obj, ok := objI.(TableDDLGenerator)
+	if !ok {
+		p.log.Errorf("%v not a TableDDLGenerator", objI)
 		return TYPE_CONVERT_ERROR
 	}
 	if !p.HasTable(obj) {
@@ -259,8 +260,9 @@ func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) 
 func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	value, pass := val.(TableDMLGenerator)
-	if !pass {
+	value, ok := val.(TableDMLGenerator)
+	if !ok {
+		p.log.Errorf("%v not a TableDMLGenerator", val)
 		return 0, TYPE_CONVERT_ERROR
 	}
 	update, args := value.GetUpdateSql()
@@ -302,7 +304,7 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 	if !rows.Next() {
 		return &emptyRow{}, nil
 	}
-	return NewSqlDBRow(rows, nil), nil
+	return NewSqlDBRow(rows), nil
 }
 
 func (p *SqlDBHandle) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {

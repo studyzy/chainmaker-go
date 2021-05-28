@@ -36,26 +36,29 @@ func (db *HistorySqlDB) initDb(dbName string) {
 	db.logger.Debugf("create history database:%s", dbName)
 	err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
-		panic("init state sql db fail")
+		db.logger.Panicf("init state sql db fail,error:%s", err)
 	}
 	db.logger.Debug("create table[state_history_infos] to save history")
 	err = db.db.CreateTableIfNotExist(&StateHistoryInfo{})
 	if err != nil {
-		panic("init state sql db table `state_history_infos` fail")
+		db.logger.Panicf("init state sql db table `state_history_infos` fail, error:%s", err)
 	}
 	err = db.db.CreateTableIfNotExist(&AccountTxHistoryInfo{})
 	if err != nil {
-		panic("init state sql db table `account_tx_history_infos` fail")
+		db.logger.Panicf("init state sql db table `account_tx_history_infos` fail, error:%s", err)
 	}
 	err = db.db.CreateTableIfNotExist(&ContractTxHistoryInfo{})
 	if err != nil {
-		panic("init state sql db table `contract_tx_history_infos` fail")
+		db.logger.Panicf("init state sql db table `contract_tx_history_infos` fail, error:%s", err)
 	}
 	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
-		panic("init state sql db table `save_points` fail")
+		db.logger.Panicf("init state sql db table `save_points` fail, error:%s", err)
 	}
-	db.db.Save(&types.SavePoint{})
+	_, err = db.db.Save(&types.SavePoint{})
+	if err != nil {
+		db.logger.Panicf("insert new SavePoint get an error:%s", err)
+	}
 
 }
 func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
@@ -85,10 +88,14 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	for _, txRWSet := range txRWSets {
 		for _, w := range txRWSet.TxWrites {
 			historyInfo := NewStateHistoryInfo(w.ContractName, txRWSet.TxId, w.Key, uint64(block.Header.BlockHeight))
-			_, err := dbtx.Save(historyInfo)
+			_, err = dbtx.Save(historyInfo)
 			if err != nil {
-				h.logger.Errorf("save tx[%s] state key[%s] history info fail,rollback history save transaction,%s", txRWSet.TxId, w.Key, err.Error())
-				h.db.RollbackDbTransaction(blockHashStr)
+				h.logger.Errorf("save tx[%s] state key[%s] history info fail,rollback history save transaction,%s",
+					txRWSet.TxId, w.Key, err.Error())
+				err2 := h.db.RollbackDbTransaction(blockHashStr)
+				if err2 != nil {
+					return err2
+				}
 				return err
 			}
 
@@ -104,13 +111,18 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 			BlockHeight: uint64(block.Header.BlockHeight),
 			TxId:        tx.Header.TxId,
 		}
-		_, err := dbtx.Save(accountTxInfo)
+		_, err = dbtx.Save(accountTxInfo)
 		if err != nil {
-			h.logger.Errorf("save account[%s] and tx[%s] info fail,rollback history save transaction,%s", txSender, tx.Header.TxId, err.Error())
-			h.db.RollbackDbTransaction(blockHashStr)
+			h.logger.Errorf("save account[%s] and tx[%s] info fail,rollback history save transaction,%s",
+				txSender, tx.Header.TxId, err.Error())
+			err2 := h.db.RollbackDbTransaction(blockHashStr)
+			if err2 != nil {
+				return err2
+			}
 			return err
 		}
-		contractName, err := tx.GetContractName()
+		var contractName string
+		contractName, err = tx.GetContractName()
 		if err != nil {
 			h.logger.Warnf("Tx[%s] don't have contract name since:%s", tx.Header.TxId, err.Error())
 			continue
@@ -123,8 +135,12 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 		}
 		_, err = dbtx.Save(contractTxInfo)
 		if err != nil {
-			h.logger.Errorf("save contract[%s] and tx[%s] history info fail,rollback history save transaction,%s", contractName, tx.Header.TxId, err.Error())
-			h.db.RollbackDbTransaction(blockHashStr)
+			h.logger.Errorf("save contract[%s] and tx[%s] history info fail,rollback history save transaction,%s",
+				contractName, tx.Header.TxId, err.Error())
+			err2 := h.db.RollbackDbTransaction(blockHashStr)
+			if err2 != nil {
+				return err2
+			}
 			return err
 		}
 	}
@@ -132,10 +148,16 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	_, err = dbtx.ExecSql("update save_points set block_height=?", block.Header.BlockHeight)
 	if err != nil {
 		h.logger.Errorf("update save point error:%s", err)
-		h.db.RollbackDbTransaction(blockHashStr)
+		err2 := h.db.RollbackDbTransaction(blockHashStr)
+		if err2 != nil {
+			return err2
+		}
 		return err
 	}
-	h.db.CommitDbTransaction(blockHashStr)
+	err = h.db.CommitDbTransaction(blockHashStr)
+	if err != nil {
+		return err
+	}
 
 	h.logger.Debugf("chain[%s]: commit history db, block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
@@ -184,30 +206,39 @@ func (hi *hisIter) Value() (*historydb.BlockHeightTxId, error) {
 func (hi *hisIter) Release() {
 	hi.rows.Close()
 }
-func NewHisIter(rows protocol.SqlRows) *hisIter {
+func newHisIter(rows protocol.SqlRows) *hisIter {
 	return &hisIter{rows: rows}
 }
 func (h *HistorySqlDB) GetHistoryForKey(contractName string, key []byte) (historydb.HistoryIterator, error) {
-	sql := "select tx_id,block_height from state_history_infos where contract_name=? and state_key=? order by block_height desc"
+	sql := `select tx_id,block_height 
+from state_history_infos 
+where contract_name=? and state_key=? 
+order by block_height desc`
 	rows, err := h.db.QueryMulti(sql, contractName, key)
 	if err != nil {
 		return nil, err
 	}
-	return NewHisIter(rows), nil
+	return newHisIter(rows), nil
 }
 func (h *HistorySqlDB) GetAccountTxHistory(account []byte) (historydb.HistoryIterator, error) {
-	sql := "select tx_id,block_height from account_tx_history_infos where account_id=? order by block_height desc"
+	sql := `select tx_id,block_height 
+from account_tx_history_infos 
+where account_id=? 
+order by block_height desc`
 	rows, err := h.db.QueryMulti(sql, account)
 	if err != nil {
 		return nil, err
 	}
-	return NewHisIter(rows), nil
+	return newHisIter(rows), nil
 }
 func (h *HistorySqlDB) GetContractTxHistory(contractName string) (historydb.HistoryIterator, error) {
-	sql := "select tx_id,block_height from contract_tx_history_infos where contract_name=? order by block_height desc"
+	sql := `select tx_id,block_height 
+from contract_tx_history_infos 
+where contract_name=? 
+order by block_height desc`
 	rows, err := h.db.QueryMulti(sql, contractName)
 	if err != nil {
 		return nil, err
 	}
-	return NewHisIter(rows), nil
+	return newHisIter(rows), nil
 }

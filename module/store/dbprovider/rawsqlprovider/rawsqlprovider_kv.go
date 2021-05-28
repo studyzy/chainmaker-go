@@ -21,10 +21,10 @@ type KeyValue struct {
 }
 
 func (kv *KeyValue) GetInsertSql() string {
-	return "TODO"
+	return "TODO GetInsertSql"
 }
 func (kv *KeyValue) GetUpdateSql() string {
-	return "TODO"
+	return "TODO GetUpdateSql"
 }
 
 // Get returns the value for the given key, or returns nil if none exists

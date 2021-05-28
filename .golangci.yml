@@ -10,6 +10,8 @@ run:
     - p2p #from libp2p
     - mock #from gomock
     - protogo #from pb generate
+    - sqldbprovider #will remove
+    - eventsqldb
 linters:
   disable-all: true
   enable:
@@ -65,6 +67,7 @@ linters-settings:
       - name: error-return
       - name: unexported-return
       - name: indent-error-flow
+      #      - name: exported
       - name: function-length
         arguments: [ 80,0 ]
 

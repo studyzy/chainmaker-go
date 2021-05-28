@@ -55,7 +55,11 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	value := val.(TableDMLGenerator)
+	value, ok := val.(TableDMLGenerator)
+	if !ok {
+		p.logger.Errorf("%v not a TableDMLGenerator", val)
+		return 0, TYPE_CONVERT_ERROR
+	}
 	update, args := value.GetUpdateSql()
 	p.logger.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)
@@ -114,7 +118,7 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 	if !rows.Next() {
 		return &emptyRow{}, nil
 	}
-	return NewSqlDBRow(rows, nil), nil
+	return NewSqlDBRow(rows), nil
 }
 func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRows, error) {
 	p.Lock()

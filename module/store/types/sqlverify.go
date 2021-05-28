@@ -101,10 +101,7 @@ func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
 	if count > 1 {
 		return ERROR_FORBIDDEN_MULTI_SQL
 	}
-	if err := s.checkHasForbiddenKeyword(SQL); err != nil {
-		return err
-	}
-	return nil
+	return s.checkHasForbiddenKeyword(SQL)
 }
 func (s *StandardSqlVerify) checkHasForbiddenKeyword(sql string) error {
 	stringRanges := findStringRange(sql)
