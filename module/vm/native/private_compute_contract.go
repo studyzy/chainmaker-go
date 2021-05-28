@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+    "bytes"
     "chainmaker.org/chainmaker-go/common/crypto/hash"
     bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
     "chainmaker.org/chainmaker-go/logger"
@@ -345,6 +346,31 @@ func (r *PrivateComputeRuntime) GetDir(context protocol.TxSimContext, params map
 }
 
 func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+    name := params["contract_name"]
+    hash := params["hash"]
+    version := params["version"]
+    if utils.IsAnyBlank(name, hash, version) {
+        err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
+            ErrParams.Error(), name, hash, version)
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
+    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
+    key := append([]byte(protocol.ContractByteCode), version...)
+    contractCode, err := context.Get(combinationName, key)
+    if err != nil || len(contractCode) == 0 {
+        r.log.Errorf("Read contract[%s] failed.", name)
+        return nil, err
+    }
+
+    calHash := sha256.Sum256(contractCode)
+    if string(calHash[:]) != hash {
+        err := fmt.Errorf("%s, param[code_hash] != hash of contract code in get contract interface", ErrParams.Error())
+        r.log.Errorf(err.Error())
+        return nil, err
+    }
+
     var result commonPb.ContractResult
     cRes := []byte(params["result"])
     if err := result.Unmarshal(cRes); err != nil {
@@ -358,18 +384,17 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
         return nil, err
     }
 
-    combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + params["contract_name"]
     if err := context.Put(combinationName, []byte(ComputeResult), cRes); err != nil {
         r.log.Errorf("Write compute result:%s failed, err: %s", cRes, err.Error())
         return nil, err
     }
 
-    //report := bytes.Join([][]byte{cRes, []byte(params["rw_set"]), []byte(params["events"])}, []byte{})
-    //ok, err := r.VerifyByEnclaveCert(context, []byte(params["enclave_id"]), report, []byte(params["report_sign"]))
-    //if !ok{
-    //    r.log.Errorf("%s, enclave certificate[%s] verify quote of save data failed", err.Error(), params["enclave_id"])
-    //    return nil, err
-    //}
+    report := bytes.Join([][]byte{cRes, []byte(params["rw_set"]), []byte(params["events"])}, []byte{})
+    ok, err := r.VerifyByEnclaveCert(context, []byte(params["enclave_id"]), report, []byte(params["report_sign"]))
+    if !ok{
+        r.log.Errorf("%s, enclave certificate[%s] verify quote of save data failed", err.Error(), params["enclave_id"])
+        return nil, err
+    }
 
     if result.Code != commonPb.ContractResultCode_OK {
         r.log.Infof("Compute result code != ok, return")
