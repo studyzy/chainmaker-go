@@ -15,93 +15,93 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 )
 
-var ERROR_NULL_SQL = errors.New("null sql")
-var ERROR_INVALID_SQL = errors.New("invalid sql")
-var ERROR_FORBIDDEN_SQL = errors.New("forbidden sql")
-var ERROR_FORBIDDEN_SQL_KEYWORD = errors.New("forbidden sql keyword")
-var ERROR_FORBIDDEN_MULTI_SQL = errors.New("forbidden multi sql statement in one function call")
-var ERROR_FORBIDDEN_DOT_IN_TABLE = errors.New("forbidden dot in table name")
-var ERROR_STATE_INFOS = errors.New("you can't change table state_infos")
+var errorNullSql = errors.New("null sql")
+var errorInvalidSql = errors.New("invalid sql")
+var errorForbiddenSql = errors.New("forbidden sql")
+var errorForbiddenSqlKeyword = errors.New("forbidden sql keyword")
+var errorForbiddenMultiSql = errors.New("forbidden multi sql statement in one function call")
+var errorForbiddenDotInTable = errors.New("forbidden dot in table name")
+var errorStateInfos = errors.New("you can't change table state_infos")
 
-//如果状态数据库是标准SQL语句，对标准SQL的SQL语句进行语法检查，不关心具体的SQL DB类型的语法差异
+//StandardSqlVerify 如果状态数据库是标准SQL语句，对标准SQL的SQL语句进行语法检查，不关心具体的SQL DB类型的语法差异
 type StandardSqlVerify struct {
 }
 
 func (s *StandardSqlVerify) VerifyDDLSql(sql string) error {
-	SQL, err := s.getFmtSql(sql)
+	newSql, err := s.getFmtSql(sql)
 	if err != nil {
 		return err
 	}
-	if err := s.checkForbiddenSql(SQL); err != nil {
+	if err := s.checkForbiddenSql(newSql); err != nil {
 		return err
 	}
 	reg := regexp.MustCompile(`^(CREATE|ALTER|DROP)\s+(TABLE|VIEW|INDEX)`)
-	match := reg.MatchString(SQL)
+	match := reg.MatchString(newSql)
 	if match {
 		return nil
 	}
-	if strings.HasPrefix(SQL, "TRUNCATE TABLE") {
+	if strings.HasPrefix(newSql, "TRUNCATE TABLE") {
 		return nil
 	}
-	return ERROR_INVALID_SQL
+	return errorInvalidSql
 
 }
 func (s *StandardSqlVerify) VerifyDMLSql(sql string) error {
-	SQL, err := s.getFmtSql(sql)
+	newSql, err := s.getFmtSql(sql)
 	if err != nil {
 		return err
 	}
-	if err := s.checkForbiddenSql(SQL); err != nil {
+	if err := s.checkForbiddenSql(newSql); err != nil {
 		return err
 	}
 	reg := regexp.MustCompile(`^(INSERT|UPDATE|DELETE)\s+`)
-	match := reg.MatchString(SQL)
+	match := reg.MatchString(newSql)
 	if match {
 		return nil
 	}
-	return ERROR_INVALID_SQL
+	return errorInvalidSql
 }
 func (s *StandardSqlVerify) VerifyDQLSql(sql string) error {
-	SQL, err := s.getFmtSql(sql)
+	newSql, err := s.getFmtSql(sql)
 	if err != nil {
 		return err
 	}
-	if err := s.checkForbiddenSql(SQL); err != nil {
+	if err := s.checkForbiddenSql(newSql); err != nil {
 		return err
 	}
 	reg := regexp.MustCompile(`^SELECT\s+`)
-	match := reg.MatchString(SQL)
+	match := reg.MatchString(newSql)
 	if match {
 		return nil
 	}
-	return ERROR_INVALID_SQL
+	return errorInvalidSql
 }
 
 //禁用use database,禁用 select * from anotherdb.table形式
 func (s *StandardSqlVerify) checkForbiddenSql(sql string) error {
-	SQL, err := s.getFmtSql(sql)
+	newSql, err := s.getFmtSql(sql)
 	if err != nil {
 		return err
 	}
 	reg := regexp.MustCompile(`^(USE|GRANT|CONN|REVOKE|DENY)\s+`)
-	match := reg.MatchString(SQL)
+	match := reg.MatchString(newSql)
 	if match {
-		return ERROR_FORBIDDEN_SQL
+		return errorForbiddenSql
 	}
-	tableNames := utils.GetSqlTableName(SQL)
+	tableNames := utils.GetSqlTableName(newSql)
 	for _, tableName := range tableNames {
 		if strings.Contains(tableName, ".") {
-			return ERROR_FORBIDDEN_DOT_IN_TABLE
+			return errorForbiddenDotInTable
 		}
 		if strings.Contains(tableName, "STATE_INFOS") {
-			return ERROR_STATE_INFOS
+			return errorStateInfos
 		}
 	}
-	count := utils.GetSqlStatementCount(SQL)
+	count := utils.GetSqlStatementCount(newSql)
 	if count > 1 {
-		return ERROR_FORBIDDEN_MULTI_SQL
+		return errorForbiddenMultiSql
 	}
-	return s.checkHasForbiddenKeyword(SQL)
+	return s.checkHasForbiddenKeyword(newSql)
 }
 func (s *StandardSqlVerify) checkHasForbiddenKeyword(sql string) error {
 	stringRanges := findStringRange(sql)
@@ -112,7 +112,7 @@ func (s *StandardSqlVerify) checkHasForbiddenKeyword(sql string) error {
 	result = append(result, result2...)
 	for _, match := range result {
 		if !isInString(match, stringRanges) {
-			return ERROR_FORBIDDEN_SQL_KEYWORD
+			return errorForbiddenSqlKeyword
 		}
 	}
 	return nil
@@ -157,17 +157,17 @@ func findStringRange(sql string) [][2]int {
 }
 
 func (s *StandardSqlVerify) getFmtSql(sql string) (string, error) {
-	SQL := strings.TrimSpace(sql)
-	if len(SQL) == 0 {
-		return "", ERROR_NULL_SQL
+	newSql := strings.TrimSpace(sql)
+	if len(newSql) == 0 {
+		return "", errorNullSql
 	}
 
-	SQL = strings.ToUpper(SQL)
+	newSql = strings.ToUpper(newSql)
 
-	return SQL, nil
+	return newSql, nil
 }
 
-//用于测试场景，不对SQL语句进行检查，任意SQL检查都通过
+//SqlVerifyPass 用于测试场景，不对SQL语句进行检查，任意SQL检查都通过
 type SqlVerifyPass struct {
 }
 

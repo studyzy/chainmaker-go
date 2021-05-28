@@ -42,12 +42,12 @@ func (b *StateHistoryInfo) GetUpdateSql() (string, []interface{}) {
 		[]interface{}{b.ContractName, b.ContractName, b.StateKey, b.TxId, b.BlockHeight}
 }
 
-// NewHistoryInfo construct a new HistoryInfo
-func NewStateHistoryInfo(contractName, txid string, StateKey []byte, blockHeight uint64) *StateHistoryInfo {
+// NewStateHistoryInfo construct a new HistoryInfo
+func NewStateHistoryInfo(contractName, txid string, stateKey []byte, blockHeight uint64) *StateHistoryInfo {
 	return &StateHistoryInfo{
 		TxId:         txid,
 		ContractName: contractName,
-		StateKey:     StateKey,
+		StateKey:     stateKey,
 		BlockHeight:  blockHeight,
 	}
 }

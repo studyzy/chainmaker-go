@@ -200,7 +200,7 @@ func (b *BlockInfo) GetBlock() (*commonPb.Block, error) {
 }
 
 // GetFilteredBlock returns a filtered block given it's block height, or return nil if none exists.
-func (b *BlockInfo) GetFilterdBlock() (*storePb.SerializedBlock, error) {
+func (b *BlockInfo) GetFilteredBlock() (*storePb.SerializedBlock, error) {
 	block, err := b.GetBlock()
 	if err != nil {
 		return nil, err

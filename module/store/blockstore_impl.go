@@ -101,7 +101,7 @@ func NewBlockStoreImpl(chainId string,
 	return blockStore, nil
 }
 
-// 初始化创世区块到数据库，对应的数据库必须为空数据库，否则报错
+//InitGenesis 初始化创世区块到数据库，对应的数据库必须为空数据库，否则报错
 func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	bs.logger.Debug("start initial genesis block to database...")
 	//1.检查创世区块是否有异常
@@ -179,8 +179,6 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		Block:    block,
 		TxRWSets: txRWSets,
 	}
-	//a
-	//b
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
 	if err == nil && consensusArgs.ConsensusData != nil {
@@ -663,37 +661,39 @@ func (bs *BlockStoreImpl) deleteBlockFromLog(num uint64) error {
 //	return proto.EncodeVarint(blockNum)
 //}
 
-//不在事务中，直接查询状态数据库，返回一行结果
+//QuerySingle 不在事务中，直接查询状态数据库，返回一行结果
 func (bs *BlockStoreImpl) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	return bs.stateDB.QuerySingle(contractName, sql, values...)
 }
 
-//不在事务中，直接查询状态数据库，返回多行结果
+//QueryMulti 不在事务中，直接查询状态数据库，返回多行结果
 func (bs *BlockStoreImpl) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
 	return bs.stateDB.QueryMulti(contractName, sql, values...)
 }
+
+//ExecDdlSql execute DDL SQL in a contract
 func (bs *BlockStoreImpl) ExecDdlSql(contractName, sql string) error {
 	return bs.stateDB.ExecDdlSql(contractName, sql)
 }
 
-//启用一个事务
+//BeginDbTransaction 启用一个事务
 func (bs *BlockStoreImpl) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	return bs.stateDB.BeginDbTransaction(txName)
 }
 
-//根据事务名，获得一个已经启用的事务
+//GetDbTransaction 根据事务名，获得一个已经启用的事务
 func (bs *BlockStoreImpl) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	return bs.stateDB.GetDbTransaction(txName)
 
 }
 
-//提交一个事务
+//CommitDbTransaction 提交一个事务
 func (bs *BlockStoreImpl) CommitDbTransaction(txName string) error {
 	return bs.stateDB.CommitDbTransaction(txName)
 
 }
 
-//回滚一个事务
+//RollbackDbTransaction 回滚一个事务
 func (bs *BlockStoreImpl) RollbackDbTransaction(txName string) error {
 	return bs.stateDB.RollbackDbTransaction(txName)
 }

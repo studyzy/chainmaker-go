@@ -36,6 +36,7 @@ linters:
     - sqlclosecheck
     - gosec
 
+
 linters-settings:
   goconst:
     min-len: 2
@@ -63,11 +64,31 @@ linters-settings:
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
     rules:
-      - name: if-return
+      #      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
       - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      #      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      #      - name: receiver-naming
+      - name: time-naming
       - name: unexported-return
       - name: indent-error-flow
-      #      - name: exported
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unexported-naming
+      - name: unexported-return
+      - name: unreachable-code
+      - name: redefines-builtin-id
       - name: function-length
         arguments: [ 80,0 ]
 

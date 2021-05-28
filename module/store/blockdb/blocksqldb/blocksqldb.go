@@ -142,7 +142,7 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 	return nil
 }
 
-// HasBlock returns true if the block hash exist, or returns false if none exists.
+// BlockExists returns true if the block hash exist, or returns false if none exists.
 func (b *BlockSqlDB) BlockExists(blockHash []byte) (bool, error) {
 	var count int64
 	sql := "select count(*) from block_infos where block_hash = ?"
@@ -157,7 +157,7 @@ func (b *BlockSqlDB) BlockExists(blockHash []byte) (bool, error) {
 	return count > 0, nil
 }
 
-// GetBlock returns a block given it's hash, or returns nil if none exists.
+// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 func (b *BlockSqlDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 
 	return b.getFullBlockBySql("select * from block_infos where block_hash = ?", blockHash)
@@ -199,7 +199,7 @@ func (b *BlockSqlDB) getFullBlockBySql(sql string, values ...interface{}) (*comm
 	return block, nil
 }
 
-// GetBlockAt returns a block given it's block height, or returns nil if none exists.
+// GetBlock returns a block given it's block height, or returns nil if none exists.
 func (b *BlockSqlDB) GetBlock(height int64) (*commonPb.Block, error) {
 	return b.getFullBlockBySql("select * from block_infos where block_height =?", height)
 }
@@ -232,7 +232,7 @@ func (b *BlockSqlDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, e
 	if blockInfo == nil && err == nil {
 		return nil, nil
 	}
-	return blockInfo.GetFilterdBlock()
+	return blockInfo.GetFilteredBlock()
 }
 
 // GetLastSavepoint reurns the last block height
@@ -304,7 +304,7 @@ func (b *BlockSqlDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo,
 	return nil, errors.New("data not found")
 }
 
-// HasTx returns true if the tx exist, or returns false if none exists.
+// TxExists returns true if the tx exist, or returns false if none exists.
 func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 	var count int64
 	sql := "select count(*) from tx_infos where tx_id = ?"

@@ -69,7 +69,7 @@ func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	return err
 }
 
-// NewStateMysqlDB construct a new `StateDB` for given chainId
+// NewStateSqlDB construct a new `StateDB` for given chainId
 func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
 	dbName := getDbName(dbConfig, chainId)
 	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)

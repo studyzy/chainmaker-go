@@ -12,7 +12,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// StateHistoryInfo defines mysql orm model, used to create mysql table 'result_infos'
+// ResultInfo defines mysql orm model, used to create mysql table 'result_infos'
 type ResultInfo struct {
 	TxId        string `gorm:"size:128;primaryKey"`
 	BlockHeight int64
@@ -55,7 +55,7 @@ func (b *ResultInfo) GetUpdateSql() (string, []interface{}) {
 		[]interface{}{b.BlockHeight, b.TxIndex, b.Rwset, b.Status, b.Result, b.Message, b.TxId}
 }
 
-// NewHistoryInfo construct a new HistoryInfo
+// NewResultInfo construct a new HistoryInfo
 func NewResultInfo(txid string, blockHeight int64, txIndex int, result *commonpb.ContractResult,
 	rw *commonpb.TxRWSet) *ResultInfo {
 	rwBytes, _ := proto.Marshal(rw)

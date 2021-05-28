@@ -48,7 +48,7 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 	_, err := p.db.Exec(sqlStr)
 	if err != nil {
 		p.logger.Warnf("change context db fail, error: %s", err)
-		return TRANSACTION_ERROR
+		return errTransaction
 	}
 	return nil
 }
@@ -58,19 +58,19 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	value, ok := val.(TableDMLGenerator)
 	if !ok {
 		p.logger.Errorf("%v not a TableDMLGenerator", val)
-		return 0, TYPE_CONVERT_ERROR
+		return 0, errTypeConvert
 	}
 	update, args := value.GetUpdateSql()
 	p.logger.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)
 	if err != nil {
 		p.logger.Error(err)
-		return 0, SQL_ERROR
+		return 0, errSql
 	}
 	rowCount, err := effect.RowsAffected()
 	if err != nil {
 		p.logger.Error(err)
-		return 0, SQL_ERROR
+		return 0, errSql
 	}
 	if rowCount != 0 {
 		return rowCount, nil
@@ -80,12 +80,12 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	result, err := p.db.Exec(insert, args...)
 	if err != nil {
 		p.logger.Error(err)
-		return 0, SQL_ERROR
+		return 0, errSql
 	}
 	rowCount, err = result.RowsAffected()
 	if err != nil {
 		p.logger.Error(err)
-		return 0, SQL_ERROR
+		return 0, errSql
 	}
 	return rowCount, nil
 }
@@ -96,12 +96,12 @@ func (p *SqlDBTx) ExecSql(sql string, values ...interface{}) (int64, error) {
 	p.logger.Debugf("db tx[%s] exec sql[%s],result:%v", p.name, sql, err)
 	if err != nil {
 		p.logger.Error(err)
-		return 0, SQL_ERROR
+		return 0, errSql
 	}
 	rowCount, err := tx.RowsAffected()
 	if err != nil {
 		p.logger.Error(err)
-		return 0, SQL_ERROR
+		return 0, errSql
 	}
 	return rowCount, nil
 }
@@ -113,7 +113,7 @@ func (p *SqlDBTx) QuerySingle(sql string, values ...interface{}) (protocol.SqlRo
 	rows, err := db.Query(sql, values...)
 	if err != nil {
 		p.logger.Error(err)
-		return nil, SQL_QUERY_ERROR
+		return nil, errSqlQuery
 	}
 	if !rows.Next() {
 		return &emptyRow{}, nil
@@ -127,7 +127,7 @@ func (p *SqlDBTx) QueryMulti(sql string, values ...interface{}) (protocol.SqlRow
 	rows, err := p.db.Query(sql, values...)
 	if err != nil {
 		p.logger.Error(err)
-		return nil, SQL_QUERY_ERROR
+		return nil, errSqlQuery
 	}
 	return NewSqlDBRows(rows, nil), nil
 }
@@ -138,7 +138,7 @@ func (p *SqlDBTx) Commit() error {
 	p.logger.Debugf("commit tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if err != nil {
 		p.logger.Error(err)
-		return TRANSACTION_ERROR
+		return errTransaction
 	}
 	return nil
 }
@@ -149,7 +149,7 @@ func (p *SqlDBTx) Rollback() error {
 	p.logger.Warnf("rollback tx[%s], tx duration：%s", p.name, time.Since(p.startTime).String())
 	if err != nil {
 		p.logger.Error(err)
-		return TRANSACTION_ERROR
+		return errTransaction
 	}
 	return nil
 }
@@ -162,7 +162,7 @@ func (p *SqlDBTx) BeginDbSavePoint(spName string) error {
 	p.logger.Debugf("db tx[%s] new savepoint[%s],result:%s", p.name, savePointName, err)
 	if err != nil {
 		p.logger.Error(err)
-		return TRANSACTION_ERROR
+		return errTransaction
 	}
 	return nil
 }
@@ -174,7 +174,7 @@ func (p *SqlDBTx) RollbackDbSavePoint(spName string) error {
 	p.logger.Infof("db tx[%s] rollback savepoint[%s],result:%s", p.name, savePointName, err)
 	if err != nil {
 		p.logger.Error(err)
-		return TRANSACTION_ERROR
+		return errTransaction
 	}
 	return nil
 }
