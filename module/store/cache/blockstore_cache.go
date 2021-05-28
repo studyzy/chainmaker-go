@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/emirpasic/gods/maps/treemap"
 	"golang.org/x/sync/semaphore"
@@ -27,11 +26,11 @@ type StoreCacheMgr struct {
 	cache               *storeCache
 	cacheSize           int //block size in cache, if cache size <= 0, use defalut size = 10
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // NewStoreCacheMgr construct a new `StoreCacheMgr` with given chainId
-func NewStoreCacheMgr(chainId string) *StoreCacheMgr {
+func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 	blockWriteBufferSize := localconf.ChainMakerConfig.StorageConfig.BlockWriteBufferSize
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
@@ -41,7 +40,7 @@ func NewStoreCacheMgr(chainId string) *StoreCacheMgr {
 		blockSizeSem:        semaphore.NewWeighted(int64(blockWriteBufferSize)),
 		cache:               newStoreCache(),
 		cacheSize:           blockWriteBufferSize,
-		logger:              logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		logger:              logger,
 	}
 	return storeCacheMgr
 }
@@ -120,7 +119,7 @@ func (c *storeCache) addBatch(batch protocol.StoreBatcher) {
 }
 
 func (c *storeCache) delBatch(batch protocol.StoreBatcher) {
-	for key, _ := range batch.KVs() {
+	for key := range batch.KVs() {
 		c.table.Remove(key)
 	}
 }
@@ -150,6 +149,6 @@ func (c *storeCache) has(key string) (bool, bool) {
 	}
 }
 
-func (c *storeCache) len() int {
-	return c.table.Size()
-}
+//func (c *storeCache) len() int {
+//	return c.table.Size()
+//}

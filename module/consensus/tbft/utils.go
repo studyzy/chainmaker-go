@@ -13,7 +13,6 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 
 	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
@@ -24,12 +23,8 @@ import (
 func GetValidatorListFromConfig(chainConfig *config.ChainConfig) (validators []string, err error) {
 	nodes := chainConfig.Consensus.Nodes
 	for _, node := range nodes {
-		for _, addr := range node.Address {
-			uid, err := helper.GetNodeUidFromAddr(addr)
-			if err != nil {
-				return nil, err
-			}
-			validators = append(validators, uid)
+		for _, nid := range node.NodeId {
+			validators = append(validators, nid)
 		}
 	}
 	return validators, nil

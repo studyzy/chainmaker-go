@@ -4,23 +4,19 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
-
-// description: chainmaker-go
-//
-// @author: xwc1125
-// @date: 2020/11/24
 package native
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
 	"time"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/common/ca"

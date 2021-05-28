@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p-core/crypto/pb"
 )
 
@@ -125,8 +126,8 @@ func generate() {
 		if err != nil {
 			panic(err)
 		}
-		ioutil.WriteFile(fname(tc.keyType, "pub"), pubb, 0666)
-		ioutil.WriteFile(fname(tc.keyType, "priv"), privb, 0666)
-		ioutil.WriteFile(fname(tc.keyType, "sig"), sig, 0666)
+		ioutil.WriteFile(fname(tc.keyType, "pub"), pubb, os.ModePerm)
+		ioutil.WriteFile(fname(tc.keyType, "priv"), privb, os.ModePerm)
+		ioutil.WriteFile(fname(tc.keyType, "sig"), sig, os.ModePerm)
 	}
 }

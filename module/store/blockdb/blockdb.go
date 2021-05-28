@@ -14,9 +14,14 @@ import (
 
 // BlockDB provides handle to block and tx instances
 type BlockDB interface {
+	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
+	//SaveBlockHeader 用于SPV节点只存储区块头的场景
+	SaveBlockHeader(header *commonPb.BlockHeader) error
+	//GetBlockHeaderByHash(blockHash []byte) (*commonPb.BlockHeader, error)
+	//GetBlockHeaderByHeight(blockHash []byte) (*commonPb.BlockHeader, error)
 
 	// CommitBlock commits the block and the corresponding rwsets in an atomic operation
-	CommitBlock(block *serialization.BlockWithSerializedInfo) error
+	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
 
 	// GetBlockByHash returns a block given it's hash, or returns nil if none exists.
 	GetBlockByHash(blockHash []byte) (*commonPb.Block, error)
@@ -29,6 +34,7 @@ type BlockDB interface {
 
 	// GetTx retrieves a transaction by txid, or returns nil if none exists.
 	GetTx(txId string) (*commonPb.Transaction, error)
+	GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, error)
 
 	// TxExists returns true if the tx exist, or returns false if none exists.
 	TxExists(txId string) (bool, error)
@@ -48,7 +54,7 @@ type BlockDB interface {
 	// GetLastConfigBlock returns the last config block.
 	GetLastConfigBlock() (*commonPb.Block, error)
 
-	// GetBlockByTx returns a block which contains a tx.
+	// GetBlockByTx returns a block which contains a tx.如果查询不到，则返回nil,nil
 	GetBlockByTx(txId string) (*commonPb.Block, error)
 
 	// Close is used to close database

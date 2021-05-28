@@ -1,17 +1,23 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package gasmtest
 
 import (
-	"chainmaker.org/chainmaker-go/gasm"
-	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/vm/test"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker-go/gasm"
+	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/vm/test"
 )
 
 func TestContract_Fact(t *testing.T) {

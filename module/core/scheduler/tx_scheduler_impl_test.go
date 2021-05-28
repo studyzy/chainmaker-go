@@ -105,8 +105,9 @@ func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonp
 	ctl := gomock.NewController(t)
 	snapshot := mock.NewMockSnapshot(ctl)
 	vmMgr := mock.NewMockVmManager(ctl)
+	chainConf := mock.NewMockChainConf(ctl)
 
-	scheduler := NewTxScheduler(vmMgr, "Chain1")
+	scheduler := NewTxScheduler(vmMgr, chainConf)
 
 	contractId := &commonpb.ContractId{
 		ContractName:    "ContractName",
@@ -189,7 +190,7 @@ func TestSchedule(t *testing.T) {
 
 	snapshot.EXPECT().BuildDAG().Return(dag)
 
-	_, err := scheduler.Schedule(block, txBatch, snapshot)
+	_, _, err := scheduler.Schedule(block, txBatch, snapshot)
 
 	if err != nil {
 		fmt.Printf("error : %s", err.Error())

@@ -142,3 +142,25 @@ func (ctr *ChainTrustRoots) VerifyCert(cert *sm2.Certificate) ([]string, error) 
 	}
 	return chainIds, nil
 }
+
+// VerifyCertOfChain verify the cert given with chainId. If ok, return true.
+func (ctr *ChainTrustRoots) VerifyCertOfChain(chainId string, cert *sm2.Certificate) bool {
+	ctr.lock.Lock()
+	defer ctr.lock.Unlock()
+	if cert == nil {
+		return false
+	}
+	certPool, ok := ctr.trustRoots[chainId]
+	if !ok {
+		return false
+	}
+	vo := sm2.VerifyOptions{Roots: certPool}
+	trustIntermediates, ok := ctr.trustIntermediates[chainId]
+	if ok {
+		vo.Intermediates = trustIntermediates
+	}
+	if _, err := cert.Verify(vo); err != nil {
+		return false
+	}
+	return true
+}

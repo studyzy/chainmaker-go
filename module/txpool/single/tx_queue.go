@@ -7,11 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"fmt"
+	"sync"
 
-	"chainmaker.org/chainmaker-go/common/linkedhashmap"
-	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 )
@@ -19,22 +18,22 @@ import (
 type txValidateFunc func(tx *commonPb.Transaction, source protocol.TxSource) error
 
 type txQueue struct {
-	log      *logger.CMLogger
+	log      protocol.Logger
 	validate txValidateFunc
 
-	pendingCache  *linkedhashmap.LinkedHashMap
-	commonTxQueue *txList // common transaction queue
-	configTxQueue *txList // config transaction queue
+	commonTxQueue *txList   // common transaction queue
+	configTxQueue *txList   // config transaction queue
+	pendingCache  *sync.Map // Caches transactions that are already in the block to be deleted
 }
 
-func newQueue(blockStore protocol.BlockchainStore, log *logger.CMLogger, validate txValidateFunc) *txQueue {
-	pendingCache := linkedhashmap.NewLinkedHashMap()
+func newQueue(blockStore protocol.BlockchainStore, log protocol.Logger, validate txValidateFunc) *txQueue {
+	pendingCache := sync.Map{}
 	queue := txQueue{
 		log:           log,
 		validate:      validate,
-		pendingCache:  pendingCache,
-		commonTxQueue: newTxList(log, pendingCache, blockStore),
-		configTxQueue: newTxList(log, pendingCache, blockStore),
+		pendingCache:  &pendingCache,
+		commonTxQueue: newTxList(log, &pendingCache, blockStore),
+		configTxQueue: newTxList(log, &pendingCache, blockStore),
 	}
 	return &queue
 }
@@ -49,7 +48,7 @@ func (queue *txQueue) addTxsToCommonQueue(memTxs *mempoolTxs) {
 
 func (queue *txQueue) deleteTxsInPending(txIds []*commonPb.Transaction) {
 	for _, tx := range txIds {
-		queue.pendingCache.Remove(tx.Header.TxId)
+		queue.pendingCache.Delete(tx.Header.TxId)
 	}
 }
 
@@ -98,11 +97,10 @@ func (queue *txQueue) fetch(expectedCount int, blockHeight int64, validateTxTime
 	return nil
 }
 
-func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
-	if utils.IsConfigTx(txs[0]) && len(txs) == 1 {
+func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64, enableSqlDB bool) {
+	if (utils.IsConfigTx(txs[0]) || utils.IsManageContractAsConfigTx(txs[0], enableSqlDB)) && len(txs) == 1 {
 		queue.configTxQueue.appendTxsToPendingCache(txs, blockHeight)
-	}
-	if !utils.IsConfigTx(txs[0]) {
+	} else {
 		queue.commonTxQueue.appendTxsToPendingCache(txs, blockHeight)
 	}
 }

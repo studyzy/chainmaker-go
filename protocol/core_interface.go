@@ -8,6 +8,7 @@ package protocol
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/pb/protogo/txpool"
 )
 
@@ -28,7 +29,7 @@ type BlockProposer interface {
 	// Receive signal indicates if node is proposer from consensus module.
 	OnReceiveProposeStatusChange(proposeStatus bool)
 	// Receive signal from chained bft consensus(Hotstuff) and propose new block.
-	OnReceiveChainedBFTProposal(proposal *interface{})
+	OnReceiveChainedBFTProposal(proposal *chainedbft.BuildProposal)
 }
 
 // Block verifier, verify if a block is valid

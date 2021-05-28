@@ -34,20 +34,20 @@ func TestCreateConfigUpdatePayload(t *testing.T) {
 }
 
 func TestContractMgmtPayload(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "cmc")
-	assert.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	createOutput = filepath.Join(tmpDir, "contract_collect.pb")
-
-	chainId = "chain1"
-	contractName = "contract"
-	version = "1.0.0"
-	runtime = "WASMER_RUST"
-	method = "init"
-	kvPairs = "tx_scheduler_timeout:15;tx_scheduler_validate_timeout:20"
-	byteCodePath = "../../../test/wasm/fact.wasm"
-
-	err = createContractMgmtPayload()
-	assert.NoError(t, err)
+	//tmpDir, err := ioutil.TempDir("", "cmc")
+	//assert.NoError(t, err)
+	//defer os.RemoveAll(tmpDir)
+	//
+	//createOutput = filepath.Join(tmpDir, "contract_collect.pb")
+	//
+	//chainId = "chain1"
+	//contractName = "contract"
+	//version = "1.0.0"
+	//runtime = "WASMER_RUST"
+	//method = "init"
+	//kvPairs = "tx_scheduler_timeout:15;tx_scheduler_validate_timeout:20"
+	//byteCodePath = "../../../test/wasm/fact.wasm"
+	//
+	//err = createContractMgmtPayload()
+	//assert.NoError(t, err)
 }

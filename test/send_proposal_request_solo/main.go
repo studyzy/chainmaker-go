@@ -46,7 +46,7 @@ const (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
 	Port           = 12301
-	certPathPrefix = "../config"
+	certPathPrefix = "../../config"
 	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
@@ -139,8 +139,8 @@ func main() {
 	testUpgradeInvokeSum(sk3, &client, CHAIN1)
 
 	// 15) 批量执行
-	testPerformanceModeTransfer(sk3, &client, CHAIN1)
-	time.Sleep(10 * time.Second)
+	//testPerformanceModeTransfer(sk3, &client, CHAIN1)
+	//time.Sleep(10 * time.Second)
 
 	// 16) 功能测试
 	testInvokeFunctionalVerify(sk3, &client, CHAIN1)
@@ -151,20 +151,20 @@ func main() {
 }
 
 func initWasmerTest() {
-	WasmPath = "wasm/rust-fact-1.0.0.wasm"
-	WasmUpgradePath = "wasm/rust-functional-verify-1.0.0.wasm"
+	WasmPath = "../wasm/rust-fact-1.0.0.wasm"
+	WasmUpgradePath = "../wasm/rust-func-verify-1.0.0.wasm"
 	contractName = "contract07"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
-	WasmPath = "wasm/go-fact-1.0.0.wasm"
-	WasmUpgradePath = "wasm/go-func-verify-1.0.0.wasm"
+	WasmPath = "../wasm/go-fact-1.0.0.wasm"
+	WasmUpgradePath = "../wasm/go-func-verify-1.0.0.wasm"
 	contractName = "contract14"
 	runtimeType = commonPb.RuntimeType_GASM
 }
 func initWxwmTest() {
-	WasmPath = "wasm/cpp-func-verify-1.0.0.wasm"
-	WasmUpgradePath = "wasm/cpp-func-verify-1.0.0.wasm"
+	WasmPath = "../wasm/cpp-func-verify-1.0.0.wasm"
+	WasmUpgradePath = "../wasm/cpp-func-verify-1.0.0.wasm"
 	contractName = "contract01"
 	runtimeType = commonPb.RuntimeType_WXVM
 }

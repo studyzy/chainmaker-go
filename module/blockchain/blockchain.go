@@ -19,6 +19,21 @@ import (
 	"chainmaker.org/chainmaker-go/subscriber"
 )
 
+const (
+	moduleNameSubscriber    = "Subscriber"
+	moduleNameStore         = "Store"
+	moduleNameLedger        = "Ledger"
+	moduleNameChainConf     = "ChainConf"
+	moduleNameAccessControl = "AccessControl"
+	moduleNameNetService    = "NetService"
+	moduleNameVM            = "VM"
+	moduleNameTxPool        = "TxPool"
+	moduleNameCore          = "Core"
+	moduleNameConsensus     = "Consensus"
+	moduleNameSync          = "Sync"
+	moduleNameSpv           = "Spv"
+)
+
 // Blockchain is a block chain service. It manage all the modules of the chain.
 type Blockchain struct {
 	log *logger.CMLogger
@@ -76,16 +91,21 @@ type Blockchain struct {
 	eventSubscriber *subscriber.EventSubscriber
 
 	spv protocol.Spv
+
+	initModules  map[string]struct{}
+	startModules map[string]struct{}
 }
 
 // NewBlockchain create a new Blockchain instance.
 func NewBlockchain(genesis string, chainId string, msgBus msgbus.MessageBus, net net.Net) *Blockchain {
 	return &Blockchain{
-		log:     logger.GetLoggerByChain(logger.MODULE_BLOCKCHAIN, chainId),
-		genesis: genesis,
-		chainId: chainId,
-		msgBus:  msgBus,
-		net:     net,
+		log:          logger.GetLoggerByChain(logger.MODULE_BLOCKCHAIN, chainId),
+		genesis:      genesis,
+		chainId:      chainId,
+		msgBus:       msgBus,
+		net:          net,
+		initModules:  make(map[string]struct{}),
+		startModules: make(map[string]struct{}),
 	}
 }
 

@@ -9,13 +9,13 @@ package main
 
 import (
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/utils"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 )
 
 func UpgradeContractCMD() *cobra.Command {
@@ -32,6 +32,9 @@ func UpgradeContractCMD() *cobra.Command {
 	flags.StringVarP(&wasmPath, "wasm-path", "w", "../wasm/counter-go.wasm", "specify wasm path")
 	flags.Int32VarP(&runTime, "run-time", "r", int32(commonPb.RuntimeType_GASM), "specify run time")
 	flags.StringVarP(&version, "version", "v", "2.0.0", "specify contract version")
+	flags.StringVarP(&abiPath, "abi-path", "", "", "specify wasm path")
+	flags.StringVarP(&pairsString, "pairs", "", "", "specify pairs")
+	flags.StringVarP(&pairsFile, "pairs-file", "", "", "specify pairs file, if used, set --pairs=\"\"")
 
 	return cmd
 }
@@ -44,9 +47,57 @@ func upgradeContract() error {
 		return err
 	}
 
+	// 构造Payload
+	if pairsString == "" {
+		bytes, err := ioutil.ReadFile(pairsFile)
+		if err != nil {
+			panic(err)
+		}
+		pairsString = string(bytes)
+	}
 	var pairs []*commonPb.KeyValuePair
+	err = json.Unmarshal([]byte(pairsString), &pairs)
+	if err != nil {
+		return err
+	}
 
-	method := "upgrade"
+	method, pairs, err = makePairs("", abiPath, pairs, commonPb.RuntimeType(runTime))
+	if err != nil {
+		return fmt.Errorf("make pairs filure!")
+	}
+	if commonPb.RuntimeType(runTime) == commonPb.RuntimeType_EVM {
+		wasmBin, err = hex.DecodeString(string(wasmBin))
+	}
+
+	//
+	//if commonPb.RuntimeType(runTime) == commonPb.RuntimeType_EVM {
+	//
+	//	data := ""
+	//	//对于参数的处理
+	//	if initParams != "" {
+	//		abiJsonData, err := ioutil.ReadFile(abiPath)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		myAbi, _ := abi.JSON(strings.NewReader(string(abiJsonData)))
+	//		//addr := evm.BigToAddress(evm.FromDecimalString(initParams))
+	//		dataByte, err := myAbi.Pack("", big.NewInt(3), big.NewInt(2))
+	//		if err != nil {
+	//			return err
+	//		}
+	//		data = hex.EncodeToString(dataByte)
+	//	}
+	//	pairs = []*commonPb.KeyValuePair{
+	//		{
+	//			Key:   "data",
+	//			Value: data,
+	//		},
+	//	}
+	//	wasmBin, err = hex.DecodeString(string(wasmBin))
+	//
+	//}
+
+	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,

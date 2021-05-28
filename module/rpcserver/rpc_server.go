@@ -27,6 +27,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"net"
+	"sort"
 	"strings"
 	"time"
 )
@@ -83,16 +84,12 @@ func NewRPCServer(chainMakerServer *blockchain.ChainMakerServer) (*RPCServer, er
 			"grpc_service", "grpc_method")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	var log = logger.GetLogger(logger.MODULE_RPC)
 
 	return &RPCServer{
 		grpcServer:       server,
 		chainMakerServer: chainMakerServer,
 		log:              log,
-		ctx:              ctx,
-		cancel:           cancel,
 	}, nil
 }
 
@@ -101,6 +98,8 @@ func (s *RPCServer) Start() error {
 	var (
 		err error
 	)
+
+	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	s.isShutdown = false
 
@@ -192,6 +191,8 @@ func (s *RPCServer) getCurChainConfTrustRootsHash() (string, error) {
 			caCerts = append(caCerts, trustRoot.Root)
 		}
 	}
+
+	sort.Strings(caCerts)
 
 	caCertsStr := strings.Join(caCerts, ";")
 

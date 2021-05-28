@@ -9,10 +9,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 	"os"
 	"strings"
+
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 )
 
 //args: dbPath, dbName, update/query, address, value
@@ -48,7 +49,7 @@ func main() {
 	fmt.Printf("Before modified, the value of address %s is %s\n", address, string(beforeValue))
 	err = db.Put(key, []byte(value), nil)
 	if err != nil {
-		panic(fmt.Sprintf("Error writting key %s: %s", key, err))
+		panic(fmt.Sprintf("Error writing key %s: %s", key, err))
 	}
 	afterValue, err := db.Get(key, nil)
 	if err != nil {
