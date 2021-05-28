@@ -76,7 +76,8 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		if err != nil {
 			log.Panic("connect to mysql error:" + err.Error())
 		}
-		_, err = db.Query("SELECT DATABASE()")
+		err = db.Ping()
+		//_, err = db.Query("SELECT DATABASE()")
 		if err != nil {
 			if strings.Contains(err.Error(), "Unknown database") {
 				log.Infof("first time connect to a new database,create database %s", dbName)
@@ -111,7 +112,10 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 		dbPath := conf.Dsn
 		if !strings.Contains(dbPath, ":memory:") { //不是内存数据库模式，则需要在路径中包含chainId
 			dbPath = filepath.Join(dbPath, dbName)
-			provider.createDirIfNotExist(dbPath)
+			err := provider.createDirIfNotExist(dbPath)
+			if err != nil {
+				log.Panicf("failed to create folder for sqlite path:%s,get error:%s", dbPath, err)
+			}
 			dbPath = filepath.Join(dbPath, "sqlite.db")
 		}
 		db, err := sql.Open("sqlite3", dbPath)
@@ -195,7 +199,10 @@ func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 func (p *SqlDBHandle) CreateTableIfNotExist(objI interface{}) error {
 	p.Lock()
 	defer p.Unlock()
-	obj := objI.(TableDDLGenerator)
+	obj, pass := objI.(TableDDLGenerator)
+	if !pass {
+		return TYPE_CONVERT_ERROR
+	}
 	if !p.HasTable(obj) {
 		return p.CreateTable(obj)
 	}
@@ -206,16 +213,24 @@ func (p *SqlDBHandle) HasTable(obj TableDDLGenerator) bool {
 	sql := ""
 	if p.dbType == types.MySQL {
 		sql = fmt.Sprintf(
-			"SELECT count(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'",
+			`SELECT count(*) 
+FROM information_schema.tables 
+WHERE table_schema = '%s' AND table_name = '%s' AND table_type = 'BASE TABLE'`,
 			p.contextDbName, obj.GetTableName())
 	}
 	if p.dbType == types.Sqlite {
-		sql = fmt.Sprintf("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=\"%s\"", obj.GetTableName())
+		sql = fmt.Sprintf(`SELECT count(*) 
+FROM sqlite_master 
+WHERE type='table' AND name='%s'`, obj.GetTableName())
 	}
 	p.log.Debug("Query sql:", sql)
 	row := p.db.QueryRow(sql)
 	count := 0
-	row.Scan(&count)
+	err := row.Scan(&count)
+	if err != nil {
+		p.log.Error("scan count get error:%s", err)
+		return false
+	}
 	return count > 0
 }
 func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
@@ -244,7 +259,10 @@ func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) 
 func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
-	value := val.(TableDMLGenerator)
+	value, pass := val.(TableDMLGenerator)
+	if !pass {
+		return 0, TYPE_CONVERT_ERROR
+	}
 	update, args := value.GetUpdateSql()
 	p.log.Debug("Exec sql:", update, args)
 	effect, err := p.db.Exec(update, args...)

@@ -243,11 +243,15 @@ type DbConfig struct {
 	SqlDbConfig   *SqlDbConfig   `mapstructure:"sqldb_config"`
 }
 
+const DbConfig_Provider_Sql = "sql"
+const DbConfig_Provider_LevelDb = "leveldb"
+const DbConfig_Provider_RocksDb = "rocksdb"
+
 func (dbc *DbConfig) IsKVDB() bool {
-	return dbc.Provider == "leveldb" || dbc.Provider == "rocksdb"
+	return dbc.Provider == DbConfig_Provider_LevelDb || dbc.Provider == DbConfig_Provider_RocksDb
 }
 func (dbc *DbConfig) IsSqlDB() bool {
-	return dbc.Provider == "sql" || dbc.Provider == "mysql" || dbc.Provider == "rdbms"
+	return dbc.Provider == DbConfig_Provider_Sql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
 }
 
 type LevelDbConfig struct {
@@ -267,6 +271,9 @@ type SqlDbConfig struct {
 	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
 	DbPrefix        string `mapstructure:"db_prefix"`
 }
+
+const SqlDbConfig_SqlDbType_MySQL = "mysql"
+const SqlDbConfig_SqlDbType_Sqlite = "sqlite"
 
 type txPoolConfig struct {
 	PoolType            string `mapstructure:"pool_type"`

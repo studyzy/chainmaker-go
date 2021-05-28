@@ -88,17 +88,24 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 	}
 	//save txs
 	for index, tx := range block.Txs {
-		txInfo, err := NewTxInfo(tx, uint64(block.Header.BlockHeight), block.Header.BlockHash, uint32(index))
+		var txInfo *TxInfo
+		txInfo, err = NewTxInfo(tx, uint64(block.Header.BlockHeight), block.Header.BlockHash, uint32(index))
 		if err != nil {
 			b.logger.Errorf("failed to init txinfo, err:%s", err)
-			b.db.RollbackDbTransaction(dbTxKey)
+			if err2 := b.db.RollbackDbTransaction(dbTxKey); err2 != nil {
+				b.logger.Errorf("failed to rollback db transaction[%s],error:%s", dbTxKey, err2.Error())
+				return err2
+			}
 			return err
 		}
 		_, err = dbtx.Save(txInfo)
 		if err != nil {
-			b.logger.Errorf("faield to commit txinfo info, height:%d, tx:%s,err:%s",
+			b.logger.Errorf("failed to commit txinfo info, height:%d, tx:%s,err:%s",
 				block.Header.BlockHeight, txInfo.TxId, err)
-			b.db.RollbackDbTransaction(dbTxKey) //rollback tx
+			if err2 := b.db.RollbackDbTransaction(dbTxKey); err2 != nil {
+				b.logger.Errorf("failed to rollback db transaction[%s],error:%s", dbTxKey, err2.Error())
+				return err2
+			}
 			return err
 		}
 	}
@@ -109,14 +116,17 @@ func (b *BlockSqlDB) CommitBlock(blocksInfo *serialization.BlockWithSerializedIn
 	blockInfo, err := NewBlockInfo(block)
 	if err != nil {
 		b.logger.Errorf("failed to init blockinfo, err:%s", err)
-		b.db.RollbackDbTransaction(dbTxKey)
+		if err2 := b.db.RollbackDbTransaction(dbTxKey); err2 != nil {
+			b.logger.Errorf("failed to rollback db transaction[%s],error:%s", dbTxKey, err2.Error())
+			return err2
+		}
 		return err
 	}
 	_, err = dbtx.Save(blockInfo)
 	if err != nil {
-		b.logger.Errorf("faield to commit block info, height:%d, err:%s",
+		b.logger.Errorf("failed to commit block info, height:%d, err:%s",
 			block.Header.BlockHeight, err)
-		b.db.RollbackDbTransaction(dbTxKey) //rollback tx
+		_ = b.db.RollbackDbTransaction(dbTxKey) //rollback tx
 		return err
 	}
 	err = b.db.CommitDbTransaction(dbTxKey)
@@ -140,12 +150,11 @@ func (b *BlockSqlDB) BlockExists(blockHash []byte) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	res.ScanColumns(&count)
-	if count > 0 {
-		return true, nil
-	} else {
-		return false, nil
+	err = res.ScanColumns(&count)
+	if err != nil {
+		return false, err
 	}
+	return count > 0, nil
 }
 
 // GetBlock returns a block given it's hash, or returns nil if none exists.
@@ -197,7 +206,9 @@ func (b *BlockSqlDB) GetBlock(height int64) (*commonPb.Block, error) {
 
 // GetLastBlock returns the last block.
 func (b *BlockSqlDB) GetLastBlock() (*commonPb.Block, error) {
-	return b.getFullBlockBySql("select * from block_infos where block_height = (select max(block_height) from block_infos)")
+	return b.getFullBlockBySql(`select * 
+from block_infos 
+where block_height = (select max(block_height) from block_infos)`)
 }
 
 // GetLastConfigBlock returns the last config block.
@@ -301,12 +312,11 @@ func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	res.ScanColumns(&count)
-	if count > 0 {
-		return true, nil
-	} else {
-		return false, nil
+	err = res.ScanColumns(&count)
+	if err != nil {
+		return false, err
 	}
+	return count > 0, nil
 }
 
 //获得某个区块高度下的所有交易

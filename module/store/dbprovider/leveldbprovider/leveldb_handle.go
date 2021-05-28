@@ -35,7 +35,8 @@ type LevelDBHandle struct {
 	logger protocol.Logger
 }
 
-func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig, logger protocol.Logger) *LevelDBHandle {
+func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig,
+	logger protocol.Logger) *LevelDBHandle {
 	dbOpts := &opt.Options{}
 	writeBufferSize := dbconfig.BlockWriteBufferSize
 	if writeBufferSize <= 0 {

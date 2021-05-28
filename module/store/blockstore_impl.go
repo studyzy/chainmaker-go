@@ -114,7 +114,10 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		return err
 	}
 	block := genesisBlock.Block
-	bs.writeLog(uint64(block.Header.BlockHeight), blockBytes)
+	err = bs.writeLog(uint64(block.Header.BlockHeight), blockBytes)
+	if err != nil {
+		return err
+	}
 	//2.初始化BlockDB
 	err = bs.blockDB.InitGenesis(blockWithSerializedInfo)
 	if err != nil {
@@ -146,8 +149,13 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
 		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
-			bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
+			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbConfig_Provider_Sql {
+			err = bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
+			if err != nil {
+				bs.logger.Errorf("chain[%s] failed to write event db, block[%d]",
+					block.Header.ChainId, block.Header.BlockHeight)
+				return err
+			}
 		} else {
 			return errors.New("contract event db config err")
 		}
@@ -166,12 +174,13 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
 func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	startPutBlock := utils.CurrentTimeMillisSeconds()
-
 	//1. commit log
 	blockWithRWSet := &storePb.BlockWithRWSet{
 		Block:    block,
 		TxRWSets: txRWSets,
 	}
+	//a
+	//b
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
 	if err == nil && consensusArgs.ConsensusData != nil {
@@ -205,35 +214,20 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	// 2.commit blockDB
 	go func() {
 		defer batchWG.Done()
-		err := bs.blockDB.CommitBlock(blockWithSerializedInfo)
-		if err != nil {
-			bs.logger.Errorf("chain[%s] failed to write blockDB, block[%d]",
-				block.Header.ChainId, block.Header.BlockHeight)
-			errsChan <- err
-		}
+		bs.putBlock2DB(blockWithSerializedInfo, errsChan, bs.blockDB.CommitBlock)
 	}()
 
 	// 3.commit stateDB
 	go func() {
 		defer batchWG.Done()
-		err := bs.stateDB.CommitBlock(blockWithSerializedInfo)
-		if err != nil {
-			bs.logger.Errorf("chain[%s] failed to write stateDB, block[%d]",
-				block.Header.ChainId, block.Header.BlockHeight)
-			errsChan <- err
-		}
+		bs.putBlock2DB(blockWithSerializedInfo, errsChan, bs.stateDB.CommitBlock)
 	}()
 
 	// 4.commit historyDB
 	if !bs.storeConfig.DisableHistoryDB {
 		go func() {
 			defer batchWG.Done()
-			err := bs.historyDB.CommitBlock(blockWithSerializedInfo)
-			if err != nil {
-				bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
-					block.Header.ChainId, block.Header.BlockHeight)
-				errsChan <- err
-			}
+			bs.putBlock2DB(blockWithSerializedInfo, errsChan, bs.historyDB.CommitBlock)
 		}()
 	} else {
 		batchWG.Done()
@@ -242,27 +236,16 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 	if !bs.storeConfig.DisableResultDB {
 		go func() {
 			defer batchWG.Done()
-			err := bs.resultDB.CommitBlock(blockWithSerializedInfo)
-			if err != nil {
-				bs.logger.Errorf("chain[%s] failed to write resultdb, block[%d]",
-					block.Header.ChainId, block.Header.BlockHeight)
-				errsChan <- err
-			}
+			bs.putBlock2DB(blockWithSerializedInfo, errsChan, bs.resultDB.CommitBlock)
 		}()
 	} else {
 		batchWG.Done()
 	}
 	//6.commit contractEventDB
 	if !bs.storeConfig.DisableContractEventDB {
-
 		go func() {
 			defer batchWG.Done()
-			err := bs.contractEventDB.CommitBlock(blockWithSerializedInfo)
-			if err != nil {
-				bs.logger.Errorf("chain[%s] failed to write contractEventDB, block[%d]",
-					block.Header.ChainId, block.Header.BlockHeight)
-				errsChan <- err
-			}
+			bs.putBlock2DB(blockWithSerializedInfo, errsChan, bs.contractEventDB.CommitBlock)
 		}()
 	} else {
 		batchWG.Done()
@@ -288,6 +271,19 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		elapsedMarshalBlockAndRWSet, elapsedCommitlogDB, elapsedCommitBlock,
 		utils.CurrentTimeMillisSeconds()-startPutBlock)
 	return nil
+}
+
+type commitBlock func(blockInfo *serialization.BlockWithSerializedInfo) error
+
+func (bs *BlockStoreImpl) putBlock2DB(blockWithSerializedInfo *serialization.BlockWithSerializedInfo,
+	errsChan chan error, commit commitBlock) {
+	err := commit(blockWithSerializedInfo)
+	block := blockWithSerializedInfo.Block
+	if err != nil {
+		bs.logger.Errorf("chain[%s] failed to write DB, block[%d]",
+			block.Header.ChainId, block.Header.BlockHeight)
+		errsChan <- err
+	}
 }
 
 // BlockExists returns true if the black hash exist, or returns false if none exists.
@@ -345,7 +341,8 @@ func (bs *BlockStoreImpl) ReadObject(contractName string, key []byte) ([]byte, e
 
 // SelectObject returns an iterator that contains all the key-values between given key ranges.
 // startKey is included in the results and limit is excluded.
-func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+func (bs *BlockStoreImpl) SelectObject(contractName string, startKey []byte, limit []byte) (
+	protocol.StateIterator, error) {
 	return bs.stateDB.SelectObject(contractName, startKey, limit)
 }
 func (bs *BlockStoreImpl) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
@@ -447,7 +444,7 @@ func (bs *BlockStoreImpl) Close() error {
 	}
 	if !bs.storeConfig.DisableContractEventDB {
 		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
+			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbConfig_Provider_Sql {
 			bs.contractEventDB.Close()
 		} else {
 			return errors.New("contract event db config err")
@@ -487,7 +484,7 @@ func (bs *BlockStoreImpl) recover() error {
 	}
 	if !bs.storeConfig.DisableContractEventDB {
 		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == "sql" {
+			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbConfig_Provider_Sql {
 			if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
 				return err
 			}
