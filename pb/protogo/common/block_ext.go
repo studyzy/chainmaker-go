@@ -29,13 +29,13 @@ func (b *Block) GetTimestamp() time.Time {
 
 // GetTxKey get transaction key
 func (b *Block) GetTxKey() string {
-	return GetTxKewWith(b.Header.Proposer, b.Header.BlockHeight)
+	return GetTxKeyWith(b.Header.Proposer, b.Header.BlockHeight)
 }
 
 func (b *Block) IsConfigBlock() bool {
 	return b.Header.BlockHeight == 0 || b.Txs[0].Header.TxType == TxType_UPDATE_CHAIN_CONFIG
 }
-func GetTxKewWith(propose []byte, blockHeight int64) string {
+func GetTxKeyWith(propose []byte, blockHeight int64) string {
 	if propose == nil {
 		return ""
 	}
