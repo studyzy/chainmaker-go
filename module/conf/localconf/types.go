@@ -332,8 +332,13 @@ type clientConfig struct {
 	HashType        string `mapstructure:"hash_type"`
 }
 
+type schedulerConfig struct {
+	RWSetLog int `mapstructure:"rwset_log"`
+}
+
 type coreConfig struct {
-	Evidence bool `mapstructure:"evidence"`
+	Evidence        bool            `mapstructure:"evidence"`
+	SchedulerConfig schedulerConfig `mapstructure:"scheduler"`
 }
 
 // CMConfig - Local config struct

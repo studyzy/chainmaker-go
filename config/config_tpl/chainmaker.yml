@@ -128,4 +128,6 @@ storage:
       sqldb_type: mysql           #contract event db 只支持mysql
       dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
 core:
+  scheduler:
+    rwset_log: 0 #how many items are there in the debug log
   evidence: false
