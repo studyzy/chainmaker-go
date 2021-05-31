@@ -333,7 +333,7 @@ type clientConfig struct {
 }
 
 type schedulerConfig struct {
-	RWSetLog int `mapstructure:"rwset_log"`
+	RWSetLog bool `mapstructure:"rwset_log"`
 }
 
 type coreConfig struct {

@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -77,25 +76,6 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		currentDepth:  0,
 		hisResult:     make([]*callContractResult, 0),
 	}
-}
-
-// log the rwset map
-func (ts *TxSchedulerImpl) logRWSets(where string, txRWSetMap map[string]*commonpb.TxRWSet) {
-	bt := bytes.NewBufferString(fmt.Sprintf("rwset in %s: {", where))
-	n := localconf.ChainMakerConfig.CoreConfig.SchedulerConfig.RWSetLog
-	if n <= 0 {
-		return
-	}
-	for k, v := range txRWSetMap {
-		if n <= 0 {
-			break
-		}
-		bt.WriteString(fmt.Sprintf("\"%s\": {%v},", k, v))
-		n--
-	}
-	bt.Truncate(bt.Len() - 1)
-	bt.WriteString("}")
-	ts.log.Debugf(bt.String())
 }
 
 // Schedule according to a batch of transactions, and generating DAG according to the conflict relationship
@@ -209,7 +189,9 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 		contractEventMap[tx.Header.TxId] = event
 	}
 	//ts.dumpDAG(block.Dag, block.Txs)
-	ts.logRWSets("Schedule", txRWSetMap)
+	if localconf.ChainMakerConfig.CoreConfig.SchedulerConfig.RWSetLog {
+		ts.log.Debugf("rwset %v", txRWSetMap)
+	}
 	return txRWSetMap, contractEventMap, nil
 }
 
@@ -338,7 +320,9 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 			txRWSetMap[txRWSet.TxId] = txRWSet
 		}
 	}
-	ts.logRWSets("SimulateWithDAG", txRWSetMap)
+	if localconf.ChainMakerConfig.CoreConfig.SchedulerConfig.RWSetLog {
+		ts.log.Debugf("rwset %v", txRWSetMap)
+	}
 	return txRWSetMap, snapshot.GetTxResultMap(), nil
 }
 
