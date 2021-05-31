@@ -4,20 +4,23 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"encoding/hex"
+	"fmt"
 	"github.com/golang/mock/gomock"
+	"testing"
 )
 
 func TestValidateTx(t *testing.T) {
-	verifyTx := txPrepare(t)
-	hashes, _, _ := verifyTx.VerifierTxs()
+	verifyTx, block := txPrepare(t)
+	hashes, _, _, _ := verifyTx.verifierTxs(block)
 
 	for _, hash := range hashes {
 		fmt.Println("test hash: ", hex.EncodeToString(hash))
 	}
 }
 
-func txPrepare(t *testing.T) *VerifierTx {
+func txPrepare(t *testing.T) (*VerifierTx, *commonpb.Block) {
 	block := newBlock()
 	contractId := &commonpb.ContractId{
 		ContractName:    "ContractName",
@@ -98,5 +101,5 @@ func txPrepare(t *testing.T) *VerifierTx {
 		ChainConf:   chainConf,
 		Log:         log,
 	}
-	return NewVerifierTx(verifyTxConf)
+	return NewVerifierTx(verifyTxConf), block
 }
