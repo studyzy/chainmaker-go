@@ -112,9 +112,7 @@ func (s *StandardSqlVerify) checkHasForbiddenKeyword(sql string) error {
 	result := reg.FindAllIndex([]byte(sql), -1)
 	reg2 := regexp.MustCompile(`\s+(AUTO_INCREMENT|IDENTITY)[^\w]+`)
 	result2 := reg2.FindAllIndex([]byte(sql), -1)
-	for _, r2 := range result2 {
-		result = append(result, r2)
-	}
+	result = append(result, result2...)
 	for _, match := range result {
 		if !isInString(match, stringRanges) {
 			return ERROR_FORBIDDEN_SQL_KEYWORD

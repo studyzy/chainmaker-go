@@ -16,7 +16,6 @@ import (
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
@@ -42,7 +41,7 @@ type txPoolImpl struct {
 	latestFullTime int64               // The most latest time the trading pool was full
 
 	ac              protocol.AccessControlProvider
-	log             *logger.CMLogger
+	log             protocol.Logger
 	msgBus          msgbus.MessageBus        // Information interaction between modules
 	chainConf       protocol.ChainConf       // chainConfig
 	netService      protocol.NetService      // P2P module implementation
@@ -50,7 +49,7 @@ type txPoolImpl struct {
 }
 
 func NewTxPoolImpl(chainId string, blockStore protocol.BlockchainStore, msgBus msgbus.MessageBus,
-	conf protocol.ChainConf, ac protocol.AccessControlProvider, net protocol.NetService) (protocol.TxPool, error) {
+	conf protocol.ChainConf, ac protocol.AccessControlProvider, net protocol.NetService, log protocol.Logger) (protocol.TxPool, error) {
 	if len(chainId) == 0 {
 		return nil, fmt.Errorf("no chainId in create txpool")
 	}
@@ -58,7 +57,6 @@ func NewTxPoolImpl(chainId string, blockStore protocol.BlockchainStore, msgBus m
 	var (
 		ticker    = DefaultFlushTicker
 		addChSize = DefaultChannelSize
-		log       = logger.GetLoggerByChain(logger.MODULE_TXPOOL, chainId)
 	)
 	if localconf.ChainMakerConfig.TxPoolConfig.AddTxChannelSize > 0 {
 		addChSize = int(localconf.ChainMakerConfig.TxPoolConfig.AddTxChannelSize)
@@ -310,6 +308,7 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		}
 	}
 
+	pool.queue.deleteTxsInPending(txs)
 	if len(configTxs) > 0 {
 		pool.log.Debugw("retryTxBatch config txs", "count", len(configTxs), "txIds", configTxIds)
 		pool.queue.addTxsToConfigQueue(&mempoolTxs{txs: configTxs, source: protocol.INTERNAL})
@@ -318,7 +317,6 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 		pool.log.Debugw("retryTxBatch common txs", "count", len(commonTxs), "txIds", commonTxIds)
 		pool.queue.addTxsToCommonQueue(&mempoolTxs{txs: commonTxs, source: protocol.INTERNAL})
 	}
-	pool.queue.deleteTxsInPending(txs)
 	pool.log.Infof("retryTxs elapse time: %d", utils.CurrentTimeMillisSeconds()-start)
 }
 

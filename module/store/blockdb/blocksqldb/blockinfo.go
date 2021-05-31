@@ -41,11 +41,11 @@ func (b *BlockInfo) ScanObject(scan func(dest ...interface{}) error) error {
 }
 func (b *BlockInfo) GetCreateTableSql(dbType string) string {
 	if dbType == "mysql" {
-		return "CREATE TABLE `block_infos` (`chain_id` varchar(128),`block_height` bigint,`pre_block_hash` varbinary(128),`block_hash` varbinary(128),`pre_conf_height` bigint DEFAULT 0,`block_version` varbinary(128),`dag_hash` varbinary(128),`rw_set_root` varbinary(128),`tx_root` varbinary(128),`block_timestamp` bigint DEFAULT 0,`proposer` blob,`consensus_args` blob,`tx_count` bigint DEFAULT 0,`signature` blob,`dag` blob,`tx_ids` longtext,`additional_data` longblob,PRIMARY KEY (`block_height`),INDEX idx_hash (`block_hash`))"
+		return "CREATE TABLE `block_infos` (`chain_id` varchar(128),`block_height` bigint,`pre_block_hash` varbinary(128),`block_hash` varbinary(128),`pre_conf_height` bigint DEFAULT 0,`block_version` varbinary(128),`dag_hash` varbinary(128),`rw_set_root` varbinary(128),`tx_root` varbinary(128),`block_timestamp` bigint DEFAULT 0,`proposer` blob,`consensus_args` blob,`tx_count` bigint DEFAULT 0,`signature` blob,`dag` blob,`tx_ids` longtext,`additional_data` longblob,PRIMARY KEY (`block_height`),INDEX idx_hash (`block_hash`)) default character set utf8"
 	} else if dbType == "sqlite" {
 		return "CREATE TABLE `block_infos` (`chain_id` text,`block_height` integer,`pre_block_hash` blob,`block_hash` blob,`pre_conf_height` integer DEFAULT 0,`block_version` blob,`dag_hash` blob,`rw_set_root` blob,`tx_root` blob,`block_timestamp` integer DEFAULT 0,`proposer` blob,`consensus_args` blob,`tx_count` integer DEFAULT 0,`signature` blob,`dag` blob,`tx_ids` longtext,`additional_data` longblob,PRIMARY KEY (`block_height`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (b *BlockInfo) GetTableName() string {
 	return "block_infos"

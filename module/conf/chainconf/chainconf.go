@@ -9,11 +9,12 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"errors"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	"errors"
-	"fmt"
 
 	"chainmaker.org/chainmaker-go/common/json"
 	"chainmaker.org/chainmaker-go/logger"
@@ -184,6 +185,7 @@ func (c *ChainConf) latestChainConfig() error {
 
 	c.ChainConf = &chainConfig
 
+	// compatible with versions before v1.1.1
 	if c.ChainConf.Contract == nil {
 		c.ChainConf.Contract = &config.ContractConfig{EnableSqlSupport: false} //by default disable sql support
 	}

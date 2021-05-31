@@ -36,12 +36,12 @@ func (t *TxInfo) ScanObject(scan func(dest ...interface{}) error) error {
 }
 func (t *TxInfo) GetCreateTableSql(dbType string) string {
 	if dbType == "mysql" {
-		return "CREATE TABLE `tx_infos` (`tx_id` varchar(128),`chain_id` varchar(128),`sender` blob,`tx_type` int,`block_height` bigint unsigned,`block_hash` varbinary(128),`offset` int unsigned,`timestamp` bigint DEFAULT 0,`expiration_time` bigint DEFAULT 0,`request_payload` longblob,`request_signature` blob,`code` int,`contract_result` longblob,`rw_set_hash` varbinary(128),PRIMARY KEY (`tx_id`),INDEX idx_height_offset (`block_height`,`offset`))"
+		return "CREATE TABLE `tx_infos` (`tx_id` varchar(128),`chain_id` varchar(128),`sender` blob,`tx_type` int,`block_height` bigint unsigned,`block_hash` varbinary(128),`offset` int unsigned,`timestamp` bigint DEFAULT 0,`expiration_time` bigint DEFAULT 0,`request_payload` longblob,`request_signature` blob,`code` int,`contract_result` longblob,`rw_set_hash` varbinary(128),PRIMARY KEY (`tx_id`),INDEX idx_height_offset (`block_height`,`offset`)) default character set utf8"
 	}
 	if dbType == "sqlite" {
 		return "CREATE TABLE `tx_infos` (`tx_id` text,`chain_id` text,`sender` blob,`tx_type` integer,`block_height` integer,`block_hash` blob,`offset` integer,`timestamp` integer DEFAULT 0,`expiration_time` integer DEFAULT 0,`request_payload` longblob,`request_signature` blob,`code` integer,`contract_result` longblob,`rw_set_hash` blob,PRIMARY KEY (`tx_id`))"
 	}
-	panic("Unsupported db type:" + string(dbType))
+	panic("Unsupported db type:" + dbType)
 }
 func (t *TxInfo) GetTableName() string {
 	return "tx_infos"

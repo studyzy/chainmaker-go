@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -216,6 +216,9 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
 	txKey := block.GetTxKey() + "_KV"
 	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
+	if err != nil {
+		return err
+	}
 	dbHandle := s.getContractDbHandle(contractId.ContractName)
 	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {
@@ -231,12 +234,13 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 
 	for _, txWrite := range writes {
 		if len(txWrite.Key) == 0 { //这是SQL语句
-			_, err := dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
-			if err != nil {
-				s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
-				dbHandle.RollbackDbTransaction(txKey) //前面开启的事务，这里还是需要回滚一下
-				return err
-			}
+			// 已经在VM执行的时候执行了SQL
+			//_, err := dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
+			//if err != nil {
+			//	s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
+			//	dbHandle.RollbackDbTransaction(txKey) //前面开启的事务，这里还是需要回滚一下
+			//	return err
+			//}
 		} else { //是KV数据，直接存储到StateInfo表
 			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight), block.GetTimestamp())
 			writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)

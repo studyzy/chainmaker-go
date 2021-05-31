@@ -98,11 +98,9 @@ func (p *Pacemaker) UpdateTC(tc *chainedbftpb.QuorumCert) {
 		p.timeoutCertificate = tc
 		return
 	}
-	if tc.Height <= p.timeoutCertificate.Height ||
-		tc.Level <= p.timeoutCertificate.Level {
-		return
+	if tc.Level > p.timeoutCertificate.Level {
+		p.timeoutCertificate = tc
 	}
-	p.timeoutCertificate = tc
 }
 
 // ProcessCertificates Push status of consensus to the next block height or level, and set
@@ -112,35 +110,41 @@ func (p *Pacemaker) UpdateTC(tc *chainedbftpb.QuorumCert) {
 // htcLevel The tc level in incoming msg(proposal or vote),
 // hcLevel The latest committed level in local node
 // When the consensus enters the next level, return true, otherwise return false.
-func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
+//func (p *Pacemaker) ProcessCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
+func (p *Pacemaker) ProcessCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert, hcLevel uint64) bool {
 	p.rwMtx.Lock()
 	defer p.rwMtx.Unlock()
 	p.logger.Debugf("process certificates begin (smrHeight:%d,"+
 		"smrCurrentLevel:%d, smrHtcLevel:%d, smrHCLevel:%d, smrHQCLevel: %d",
 		p.height, p.currentLevel, p.highestTCLevel, p.highestCommittedLevel, p.highestQCLevel)
 	defer func() {
-		p.logger.Debugf("process certificates end (height:%d, smrHeight:%d, hqcLevel:%d, "+
-			"smrCurrentLevel:%d, htcLevel:%d, smrHtcLevel:%d, hcLevel:%d, smrHCLevel:%d, smrHQCLevel: %d", height,
-			p.height, hqcLevel, p.currentLevel, htcLevel, p.highestTCLevel, hcLevel, p.highestCommittedLevel, p.highestQCLevel)
+		if qc != nil {
+			p.logger.Debugf("process certificates end (hqcHeight:%d, hqcLevel:%d, smrHeight:%d, smrHQCLevel:%d,"+
+				" smrCurrentLevel:%d, smrHtcLevel:%d, smrHCLevel:%d,  hcLevel:%d,", qc.Height, qc.Level,
+				p.height, p.highestQCLevel, p.currentLevel, p.highestTCLevel, p.highestCommittedLevel, hcLevel)
+		} else {
+			p.logger.Debugf("process certificates end (tcHeight:%d, tcLevel:%d, smrHeight:%d, smrHQCLevel: %d "+
+				"smrCurrentLevel:%d, smrHtcLevel:%d, smrHCLevel:%d, hcLevel:%d, ", tc.Height, tc.Level,
+				p.height, p.highestQCLevel, p.currentLevel, p.highestTCLevel, p.highestCommittedLevel, hcLevel)
+		}
 	}()
 	if hcLevel > p.highestCommittedLevel {
 		p.highestCommittedLevel = hcLevel
 	}
-	if hqcLevel > p.highestQCLevel {
-		p.highestQCLevel = hqcLevel
+	if tc != nil && tc.Level > p.highestTCLevel {
+		p.highestTCLevel = tc.Level
 	}
-	if htcLevel > p.highestTCLevel {
-		p.highestTCLevel = htcLevel
+	// qc != nil: 表示接收到了新的QC信息，
+	// 副本：如果 qc.Height > p.height，表示n-f节点已对更高的区块 qc.Height达成一致，此时节点应用该QC后，应该进入qc.Height+1阶段
+	if qc != nil && qc.Height >= p.height {
+		p.height = qc.Height + 1
 	}
-	if height > p.height {
-		p.height = height
+	if qc != nil && qc.Level > p.highestQCLevel {
+		p.highestQCLevel = qc.Level
 	}
-
 	maxLevel := p.highestTCLevel
-	// When htcLevel> hqcLevel, it means consensus has timeout, otherwise, it means height +1
-	if hqcLevel >= p.highestTCLevel {
-		maxLevel = hqcLevel
-		p.height = height + 1
+	if p.highestQCLevel > p.highestTCLevel {
+		maxLevel = p.highestQCLevel
 	}
 	newLevel := maxLevel + 1
 	if newLevel > p.currentLevel {

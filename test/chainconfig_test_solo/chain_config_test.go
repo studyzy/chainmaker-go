@@ -12,9 +12,10 @@ SPDX-License-Identifier: Apache-2.0
 package native_test
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"fmt"
 	"testing"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -258,7 +259,7 @@ func TestDeleteTrustRoot(t *testing.T) {
 }
 
 // 节点地址添加
-func TestAddNodeAddr(t *testing.T) {
+func TestAddNodeId(t *testing.T) {
 	txId := utils.GetRandTxId()
 	fmt.Printf(templateStr, txId)
 
@@ -271,14 +272,14 @@ func TestAddNodeAddr(t *testing.T) {
 		Value: "wx-org1",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "addresses",
-		Value: "/ip4/127.0.0.1/tcp/7777/p2p/QmdT1qXbJNovCSaXproaBCBAtecYshWHm2FELgd8A9M5WZ,/ip4/127.0.0.1/tcp/8888/p2p/QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
+		Key:   "node_ids",
+		Value: "QmdT1qXbJNovCSaXproaBCBAtecYshWHm2FELgd8A9M5WZ,QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
 	})
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ID_ADD.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点地址更新
-func TestUpdateNodeAddr(t *testing.T) {
+func TestUpdateNodeId(t *testing.T) {
 	txId := utils.GetRandTxId()
 	fmt.Printf(templateStr, txId)
 
@@ -291,19 +292,19 @@ func TestUpdateNodeAddr(t *testing.T) {
 		Value: "wx-org1",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "address",
-		Value: "/ip4/127.0.0.1/tcp/8888/p2p/QmecidwW22B2rPKe91smZFjKrbewwDgnHEbfBxydrzSMV2",
+		Key:   "node_id",
+		Value: "QmecidwW22B2rPKe91smZFjKrbewwDgnHEbfBxydrzSMV2",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "new_address",
-		Value: "/ip4/127.0.0.1/tcp/6666/p2p/QmQZn3pZCcuEf34FSvucqkvVJEvfzpNjQTk17HS6CYMR35",
+		Key:   "new_node_id",
+		Value: "QmQZn3pZCcuEf34FSvucqkvVJEvfzpNjQTk17HS6CYMR35",
 	})
 
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ID_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点地址删除
-func TestDeleteNodeAddr(t *testing.T) {
+func TestDeleteNodeId(t *testing.T) {
 	txId := utils.GetRandTxId()
 	fmt.Printf(templateStr, txId)
 
@@ -316,8 +317,8 @@ func TestDeleteNodeAddr(t *testing.T) {
 		Value: "wx-org1",
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "address",
-		Value: "/ip4/127.0.0.1/tcp/8888/p2p/QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
+		Key:   "node_id",
+		Value: "QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
 	})
 	processReq(txId, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ID_DELETE.String(), pairs, chainConfig.Sequence)
 }

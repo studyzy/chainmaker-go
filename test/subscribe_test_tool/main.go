@@ -8,10 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -20,6 +16,11 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
@@ -59,6 +60,8 @@ var (
 	sk3    crypto.PrivateKey
 	Log    *logger.CMLogger
 )
+
+const rpcClientMaxReceiveMessageSize = 1024 * 1024 * 16
 
 func main() {
 	var err error
@@ -131,7 +134,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 			log.Fatalf("GetTLSCredentialsByCA err: %v", err)
 			return nil, err
 		}
-		return grpc.Dial(url, grpc.WithTransportCredentials(*c))
+		return grpc.Dial(url, grpc.WithTransportCredentials(*c), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(rpcClientMaxReceiveMessageSize)))
 	} else {
 		return grpc.Dial(url, grpc.WithInsecure())
 	}
@@ -223,12 +226,15 @@ func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
 }
 func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	recvEventTick := time.Now().UnixNano() / 1e6
-	var con commonPb.ContractEventInfo
-	if err := proto.Unmarshal(result.Data, &con); err != nil {
+	con := &commonPb.ContractEventInfoList{}
+	if err := proto.Unmarshal(result.Data, con); err != nil {
 		log.Println(err)
 		return err
 	}
-
+	for _, event := range con.ContractEvents {
+		Log.Infof("time:[%d],received a contract event :chainId:%s, blockHeight:%d,txId:%s, contractName:%s,topic:%s, eventData:%v",
+			recvEventTick, event.ChainId, event.BlockHeight, event.TxId, event.ContractName, event.Topic, event.EventData)
+	}
 	/*bytes, err := json.Marshal(con)
 	if err != nil {
 		log.Println(err)
@@ -236,8 +242,7 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	}
 	_, _ = file.Write(bytes)
 	_, _ = file.WriteString("\n")*/
-	Log.Infof("time:[%d],received a contract event :chainId:%s, txId:%s, contractName:%s,topic:%s, eventData:%v",
-		recvEventTick, con.ChainId, con.TxId, con.Topic, con.ContractName, con.EventData)
+
 	return nil
 }
 

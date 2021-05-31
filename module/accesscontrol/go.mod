@@ -11,7 +11,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 )
 
 replace (

@@ -43,6 +43,7 @@ var (
 	DebugRatio         = false
 	PerWorkerMsgNumber = 100000000
 	SenderBuffer       = 10000
+	CallContract       = 0
 )
 
 const (
@@ -50,7 +51,9 @@ const (
 	certPathPrefix = "/big_space/chainmaker/chainmaker-go/build/crypto-config/"
 
 	contractNameFact = "ex_fact"
-	contractNameAcct = "ac"
+	addContractName  = "add"
+	factFuncName     = "save"
+	addFuncName      = "increase"
 )
 
 var (
@@ -96,6 +99,7 @@ func main() {
 	flag.IntVar(&SenderNumber, "sender", 100, "The number of sender")
 	flag.IntVar(&Interval, "interval", 200, "The time interval between sending the transaction, Millisecond")
 	flag.IntVar(&ReceiveReqNodeIndex, "index", 1, "The index of the node to receive the request")
+	flag.IntVar(&CallContract, "call", 0, "0: call cert contract, 1: call counter contract")
 	flag.Parse()
 	randData := make([]byte, 200)
 	rand.Read(randData)
@@ -231,25 +235,34 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 	)
 
 	// 1. create payload
-	if payloadBytes, err = proto.Marshal(&commonPb.TransactPayload{
-		ContractName: contractNameFact,
-		Method:       "save",
-		Parameters: []*commonPb.KeyValuePair{
-			{
-				Key:   "file_hash",
-				Value: txId[:10],
+	if CallContract == 1 {
+		if payloadBytes, err = proto.Marshal(&commonPb.TransactPayload{
+			ContractName: addContractName,
+			Method:       addFuncName,
+		}); err != nil {
+			log.Fatalf("marshal payload failed, %s", err.Error())
+		}
+	} else {
+		if payloadBytes, err = proto.Marshal(&commonPb.TransactPayload{
+			ContractName: contractNameFact,
+			Method:       factFuncName,
+			Parameters: []*commonPb.KeyValuePair{
+				{
+					Key:   "file_hash",
+					Value: txId[:10],
+				},
+				{
+					Key:   "file_name",
+					Value: "长安链chainmaker",
+				},
+				{
+					Key:   "time",
+					Value: "1615188470000",
+				},
 			},
-			{
-				Key:   "file_name",
-				Value: "长安链chainmaker",
-			},
-			{
-				Key:   "time",
-				Value: "1615188470000",
-			},
-		},
-	}); err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
+		}); err != nil {
+			log.Fatalf("marshal payload failed, %s", err.Error())
+		}
 	}
 
 	// 2. create request with payload

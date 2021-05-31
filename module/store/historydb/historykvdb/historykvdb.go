@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	historyDBName           = ""
 	keyHistoryPrefix        = "k"
 	accountTxHistoryPrefix  = "a"
 	contractTxHistoryPrefix = "c"
@@ -106,7 +105,7 @@ func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher)
 	go func() {
 		err := h.dbHandle.WriteBatch(batch, false)
 		if err != nil {
-			panic(fmt.Sprintf("Error writting db: %s", err))
+			panic(fmt.Sprintf("Error writing db: %s", err))
 		}
 		//db committed, clean cache
 		h.cache.DelBlock(blockHeight)
@@ -124,14 +123,14 @@ func (h *HistoryKvDB) get(key []byte) ([]byte, error) {
 	return h.dbHandle.Get(key)
 }
 
-func (h *HistoryKvDB) has(key []byte) (bool, error) {
-	//check has from cache
-	isDelete, exist := h.cache.Has(string(key))
-	if exist {
-		return !isDelete, nil
-	}
-	return h.dbHandle.Has(key)
-}
+//func (h *HistoryKvDB) has(key []byte) (bool, error) {
+//	//check has from cache
+//	isDelete, exist := h.cache.Has(string(key))
+//	if exist {
+//		return !isDelete, nil
+//	}
+//	return h.dbHandle.Has(key)
+//}
 
 type historyKeyIterator struct {
 	dbIter    protocol.Iterator

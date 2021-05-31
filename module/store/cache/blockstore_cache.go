@@ -149,6 +149,6 @@ func (c *storeCache) has(key string) (bool, bool) {
 	}
 }
 
-func (c *storeCache) len() int {
-	return c.table.Size()
-}
+//func (c *storeCache) len() int {
+//	return c.table.Size()
+//}

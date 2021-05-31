@@ -183,6 +183,9 @@ func (b *BlockSqlDB) getFullBlockBySql(sql string, values ...interface{}) (*comm
 		return nil, err
 	}
 	txs, err := b.getTxsByBlockHeight(blockInfo.BlockHeight)
+	if err != nil {
+		return nil, err
+	}
 	block.Txs = txs
 	return block, nil
 }
