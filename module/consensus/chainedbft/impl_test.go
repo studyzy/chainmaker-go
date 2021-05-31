@@ -20,6 +20,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/consensus_mock"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
+	//timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/mock"

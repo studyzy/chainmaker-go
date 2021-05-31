@@ -54,6 +54,9 @@ func ParseSqlDbType(str string) (types.EngineType, error) {
 		return types.UnknownDb, errors.New("unknown sql db type:" + str)
 	}
 }
+
+const UTF8_CHAR = "charset=utf8mb4"
+
 func replaceMySqlDsn(dsn string, dbName string) string {
 	dsnPattern := regexp.MustCompile(
 		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
@@ -66,7 +69,14 @@ func replaceMySqlDsn(dsn string, dbName string) string {
 	}
 	start, end := matches[10], matches[11]
 	newDsn := dsn[:start] + dbName + dsn[end:]
-	return newDsn
+	if matches[12] == -1 {
+		return newDsn + "?" + UTF8_CHAR
+	}
+	par := dsn[matches[12]:]
+	if strings.Contains(par, "charset=") {
+		return newDsn
+	}
+	return newDsn + "&" + UTF8_CHAR
 }
 
 // NewSqlDBProvider construct a new SqlDBHandle
