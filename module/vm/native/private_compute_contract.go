@@ -745,6 +745,4 @@ func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimCont
     }
 
     return signature, nil
-=======
->>>>>>> 657dc7f64684ecee95308bb8df16b5125a27a842
 }
