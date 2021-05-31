@@ -9,7 +9,7 @@ package payload
 
 import (
 	"bytes"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"io/ioutil"
 

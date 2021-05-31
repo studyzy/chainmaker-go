@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"

@@ -9,7 +9,7 @@ package client
 
 import (
 	"chainmaker.org/chainmaker/common/random/uuid"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"errors"
 	"fmt"
 )
