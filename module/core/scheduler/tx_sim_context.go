@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"errors"
+	"fmt"
+	"sort"
+
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"sort"
 )
 
 // Storage interface for smart contracts
@@ -24,19 +25,21 @@ type txSimContextImpl struct {
 	tx            *commonpb.Transaction
 	txReadKeyMap  map[string]*commonpb.TxRead
 	txWriteKeyMap map[string]*commonpb.TxWrite
+	txWriteKeySql []*commonpb.TxWrite
 	snapshot      protocol.Snapshot
 	vmManager     protocol.VmManager
 	gasUsed       uint64 // only for callContract
-	currentDeep   int
+	currentDepth  int
 	currentResult []byte
 	hisResult     []*callContractResult
+	sqlRowCache   map[int32]protocol.SqlRows
 }
 
 type callContractResult struct {
 	contractName string
 	method       string
 	param        map[string]string
-	deep         int
+	depth        int
 	gasUsed      uint64
 	result       []byte
 }
@@ -62,10 +65,18 @@ func (s *txSimContextImpl) Get(contractName string, key []byte) ([]byte, error) 
 		return value, nil
 	}
 }
-
 func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)
 	return nil
+}
+
+func (s *txSimContextImpl) PutRecord(contractName string, value []byte) {
+	txWrite := &commonpb.TxWrite{
+		Key:          nil,
+		Value:        value,
+		ContractName: contractName,
+	}
+	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
 }
 
 func (s *txSimContextImpl) Del(contractName string, key []byte) error {
@@ -73,13 +84,13 @@ func (s *txSimContextImpl) Del(contractName string, key []byte) error {
 	return nil
 }
 
-func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.Iterator, error) {
+func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	// 将来需要把txRwSet的最新状态填充到Iter中去，覆盖或者替换，才是完整的最新的Iter，否则就只是数据库的状态
-	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit), nil
+	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
-	if creatorByte, err := s.Get(contractName, []byte(protocol.ContractCreator)); err != nil {
+	if creatorByte, err := s.Get(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
 		return nil
 	} else {
 		creator := &acpb.SerializedMember{}
@@ -180,6 +191,8 @@ func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
 		for _, k := range txIds {
 			s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeyMap[k])
 		}
+		// sql nil key tx writes
+		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeySql...)
 	}
 	return s.txRWSet
 }
@@ -187,6 +200,10 @@ func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
 // Get the height of the corresponding block
 func (s *txSimContextImpl) GetBlockHeight() int64 {
 	return s.snapshot.GetBlockHeight()
+}
+
+func (s *txSimContextImpl) GetBlockProposer() []byte {
+	return s.snapshot.GetBlockProposer()
 }
 
 // Obtain the corresponding transaction execution sequence
@@ -212,12 +229,12 @@ func (s *txSimContextImpl) SetTxResult(txResult *commonpb.Result) {
 // Cross contract call
 func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonpb.TxType) (*commonpb.ContractResult, commonpb.TxStatusCode) {
 	s.gasUsed = gasUsed
-	s.currentDeep = s.currentDeep + 1
-	if s.currentDeep > protocol.CallContractDeep {
+	s.currentDepth = s.currentDepth + 1
+	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonpb.ContractResult{
 			Code:    commonpb.ContractResultCode_FAIL,
 			Result:  nil,
-			Message: fmt.Sprintf("CallContract too deep %d", s.currentDeep),
+			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
 		return contractResult, commonpb.TxStatusCode_CONTRACT_TOO_DEEP_FAILED
 	}
@@ -232,7 +249,7 @@ func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method 
 	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
-		deep:         s.currentDeep,
+		depth:        s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
 		contractName: contractId.ContractName,
@@ -241,7 +258,7 @@ func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method 
 	}
 	s.hisResult = append(s.hisResult, &result)
 	s.currentResult = r.Result
-	s.currentDeep = s.currentDeep - 1
+	s.currentDepth = s.currentDepth - 1
 	return r, code
 }
 
@@ -252,9 +269,18 @@ func (s *txSimContextImpl) GetCurrentResult() []byte {
 
 // Get contract call depth
 func (s *txSimContextImpl) GetDepth() int {
-	return s.currentDeep
+	return s.currentDepth
 }
 
 func constructKey(contractName string, key []byte) string {
 	return contractName + string(key)
+}
+
+func (s *txSimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRows) {
+	s.sqlRowCache[index] = rows
+}
+
+func (s *txSimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
+	data, ok := s.sqlRowCache[index]
+	return data, ok
 }

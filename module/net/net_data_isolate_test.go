@@ -7,21 +7,31 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/stretchr/testify/require"
 )
 
 // TestNetDataIsolate 网络侧多链数据隔离
 func TestNetDataIsolate(t *testing.T) {
-	var td = filepath.Join(os.TempDir(), "chainmaker_net_data_isolate_test_key")
-	os.Mkdir(td, 0666)
+	var td = filepath.Join(os.TempDir(), "temp")
+	err := os.MkdirAll(td, os.ModePerm)
+	require.Nil(t, err)
+	defer func() {
+		_ = os.RemoveAll(td)
+		_ = os.RemoveAll(filepath.Join("./default.log"))
+		now := time.Now()
+		_ = os.RemoveAll(filepath.Join("./default.log." + now.Format("2006010215")))
+		now = now.Add(-5 * time.Hour)
+		_ = os.RemoveAll(filepath.Join("./default.log." + now.Format("2006010215")))
+	}()
 	key6666 := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIF4Sy4KANZHi8uU4YkmymbcbF3HHJnGgSjV/0iNOSdy3oAoGCCqGSM49\nAwEHoUQDQgAEKwemRhrzv5GSSmsy4EREhnQJ4jocauyWnD1dXUx9X8c4VwhG5hWQ\n7oc+cMyz6rXPKTrUxKD50V+OB0FVkpY7vA==\n-----END EC PRIVATE KEY-----\n"
 	cert6666 := "-----BEGIN CERTIFICATE-----\nMIIDFTCCArugAwIBAgIDBOOCMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ\nMA4GA1UECBMHQmVpamluZzEQMA4GA1UEBxMHQmVpamluZzEfMB0GA1UEChMWd3gt\nb3JnMS5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD\nExljYS53eC1vcmcxLmNoYWlubWFrZXIub3JnMB4XDTIwMTIwODA2NTM0M1oXDTI1\nMTIwNzA2NTM0M1owgZYxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw\nDgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmcxLmNoYWlubWFrZXIub3Jn\nMRIwEAYDVQQLEwljb25zZW5zdXMxLjAsBgNVBAMTJWNvbnNlbnN1czEudGxzLnd4\nLW9yZzEuY2hhaW5tYWtlci5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQr\nB6ZGGvO/kZJKazLgRESGdAniOhxq7JacPV1dTH1fxzhXCEbmFZDuhz5wzLPqtc8p\nOtTEoPnRX44HQVWSlju8o4IBADCB/TAOBgNVHQ8BAf8EBAMCAaYwDwYDVR0lBAgw\nBgYEVR0lADApBgNVHQ4EIgQgqzFBKQ6cAvTThFgrn//B/SDhAFEDfW5Y8MOE7hvY\nBf4wKwYDVR0jBCQwIoAgNSQ/cRy5t8Q1LpMfcMVzMfl0CcLZ4Pvf7BxQX9sQiWcw\nUQYDVR0RBEowSIIOY2hhaW5tYWtlci5vcmeCCWxvY2FsaG9zdIIlY29uc2Vuc3Vz\nMS50bHMud3gtb3JnMS5jaGFpbm1ha2VyLm9yZ4cEfwAAATAvBguBJ1iPZAsej2QL\nBAQgMDAxNjQ2ZTY3ODBmNGIwZDhiZWEzMjNlZThjMjQ5MTUwCgYIKoZIzj0EAwID\nSAAwRQIgNVNGr+G8dbYnzmmNMr9GCSUEC3TUmRcS4uOd5/Sw4mECIQDII1R7dCcx\n02YrxI8jEQZhmWeZ5FJhnSG6p6H9pCIWDQ==\n-----END CERTIFICATE-----\n"
 	ca6666 := "-----BEGIN CERTIFICATE-----\nMIICrzCCAlWgAwIBAgIDDsPeMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ\nMA4GA1UECBMHQmVpamluZzEQMA4GA1UEBxMHQmVpamluZzEfMB0GA1UEChMWd3gt\nb3JnMS5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD\nExljYS53eC1vcmcxLmNoYWlubWFrZXIub3JnMB4XDTIwMTIwODA2NTM0M1oXDTMw\nMTIwNjA2NTM0M1owgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw\nDgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmcxLmNoYWlubWFrZXIub3Jn\nMRIwEAYDVQQLEwlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4LW9yZzEuY2hhaW5t\nYWtlci5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAT7NyTIKcjtUVeMn29b\nGKeEmwbefZ7g9Uk5GROl+o4k7fiIKNuty1rQHLQUvAvkpxqtlmOpPOZ0Qziu6Hw6\nhi19o4GnMIGkMA4GA1UdDwEB/wQEAwIBpjAPBgNVHSUECDAGBgRVHSUAMA8GA1Ud\nEwEB/wQFMAMBAf8wKQYDVR0OBCIEIDUkP3EcubfENS6TH3DFczH5dAnC2eD73+wc\nUF/bEIlnMEUGA1UdEQQ+MDyCDmNoYWlubWFrZXIub3Jngglsb2NhbGhvc3SCGWNh\nLnd4LW9yZzEuY2hhaW5tYWtlci5vcmeHBH8AAAEwCgYIKoZIzj0EAwIDSAAwRQIg\nar8CSuLl7pA4Iy6ytAMhR0kzy0WWVSElc+koVY6pF5sCIQCDs+vTD/9V1azmbDXX\nbjoWeEfXbFJp2X/or9f4UIvMgg==\n-----END CERTIFICATE-----\n"
@@ -31,18 +41,21 @@ func TestNetDataIsolate(t *testing.T) {
 	key8888 := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIBOdWWD5V7dgz/q9PaQ3lyXddMuscws80fnI8Spo0PFYoAoGCCqGSM49\nAwEHoUQDQgAELUQWoVacLUfxlCHIc3OaosHj0MnnwV61i6z9ltBHLGB3vltuW29V\nt+vTgK2QregXLQUyzsS/w5dlpPyjwbMyrg==\n-----END EC PRIVATE KEY-----\n"
 	cert8888 := "-----BEGIN CERTIFICATE-----\nMIIDFTCCArugAwIBAgIDCJoJMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ\nMA4GA1UECBMHQmVpamluZzEQMA4GA1UEBxMHQmVpamluZzEfMB0GA1UEChMWd3gt\nb3JnMy5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD\nExljYS53eC1vcmczLmNoYWlubWFrZXIub3JnMB4XDTIwMTIwODA2NTM0M1oXDTI1\nMTIwNzA2NTM0M1owgZYxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw\nDgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmczLmNoYWlubWFrZXIub3Jn\nMRIwEAYDVQQLEwljb25zZW5zdXMxLjAsBgNVBAMTJWNvbnNlbnN1czEudGxzLnd4\nLW9yZzMuY2hhaW5tYWtlci5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQt\nRBahVpwtR/GUIchzc5qiwePQyefBXrWLrP2W0EcsYHe+W25bb1W369OArZCt6Bct\nBTLOxL/Dl2Wk/KPBszKuo4IBADCB/TAOBgNVHQ8BAf8EBAMCAaYwDwYDVR0lBAgw\nBgYEVR0lADApBgNVHQ4EIgQgEnC2getHs64R4n9VVe1A66N41/5HH63o63aV8Iqq\nk2EwKwYDVR0jBCQwIoAg0Y9lHSxXCu9i0Wd5MPoZTIFB+XClOYnSoKyC90WAif0w\nUQYDVR0RBEowSIIOY2hhaW5tYWtlci5vcmeCCWxvY2FsaG9zdIIlY29uc2Vuc3Vz\nMS50bHMud3gtb3JnMy5jaGFpbm1ha2VyLm9yZ4cEfwAAATAvBguBJ1iPZAsej2QL\nBAQgNzNiMWM4MWJkZjA2NDllNjk4YmI4MTVlNWI3NzM2YmIwCgYIKoZIzj0EAwID\nSAAwRQIhAODEcNO5jIBT+Dd4Fcsxz1ML8pzIzcWlPDeeuD6nfbQMAiARIw6KvJMu\nH9A4TrVomaX3eP0ttXTYwhdqu+5JeA+j2Q==\n-----END CERTIFICATE-----\n"
 	ca8888 := "-----BEGIN CERTIFICATE-----\nMIICrzCCAlWgAwIBAgIDDjhZMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ\nMA4GA1UECBMHQmVpamluZzEQMA4GA1UEBxMHQmVpamluZzEfMB0GA1UEChMWd3gt\nb3JnMy5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD\nExljYS53eC1vcmczLmNoYWlubWFrZXIub3JnMB4XDTIwMTIwODA2NTM0M1oXDTMw\nMTIwNjA2NTM0M1owgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw\nDgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmczLmNoYWlubWFrZXIub3Jn\nMRIwEAYDVQQLEwlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4LW9yZzMuY2hhaW5t\nYWtlci5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAREQ8bC/Ocg6Nf1c0OG\nQXybPYWXT0fWygGvn2KgrBFQjq8NLOwXQPO4BYY1vYuBTTFl0Qf0uz7OvVPMcrmy\n6ZDXo4GnMIGkMA4GA1UdDwEB/wQEAwIBpjAPBgNVHSUECDAGBgRVHSUAMA8GA1Ud\nEwEB/wQFMAMBAf8wKQYDVR0OBCIEINGPZR0sVwrvYtFneTD6GUyBQflwpTmJ0qCs\ngvdFgIn9MEUGA1UdEQQ+MDyCDmNoYWlubWFrZXIub3Jngglsb2NhbGhvc3SCGWNh\nLnd4LW9yZzMuY2hhaW5tYWtlci5vcmeHBH8AAAEwCgYIKoZIzj0EAwIDSAAwRQIg\nOxwZGMwSa58xWiou+Bpi6YcerIwm7Lqsd+4OqjHZp8ACIQCGElUBWJt5EYKkxt3x\nNb1ypMnQXHMFaHZVOIACtGz2GA==\n-----END CERTIFICATE-----\n"
-	ioutil.WriteFile(filepath.Join(td, "6666.key"), []byte(key6666), 0600)
-	ioutil.WriteFile(filepath.Join(td, "6666.crt"), []byte(cert6666), 0666)
-	ioutil.WriteFile(filepath.Join(td, "6666.ca.crt"), []byte(ca6666), 0666)
-	ioutil.WriteFile(filepath.Join(td, "7777.key"), []byte(key7777), 0600)
-	ioutil.WriteFile(filepath.Join(td, "7777.crt"), []byte(cert7777), 0666)
-	ioutil.WriteFile(filepath.Join(td, "7777.ca.crt"), []byte(ca7777), 0666)
-	ioutil.WriteFile(filepath.Join(td, "8888.key"), []byte(key8888), 0600)
-	ioutil.WriteFile(filepath.Join(td, "8888.crt"), []byte(cert8888), 0666)
-	ioutil.WriteFile(filepath.Join(td, "8888.ca.crt"), []byte(ca8888), 0666)
-	caBytes6666, _ := ioutil.ReadFile(filepath.Join(td, "6666.ca.crt"))
-	caBytes7777, _ := ioutil.ReadFile(filepath.Join(td, "7777.ca.crt"))
-	caBytes8888, _ := ioutil.ReadFile(filepath.Join(td, "8888.ca.crt"))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "6666.key"), []byte(key6666), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "6666.crt"), []byte(cert6666), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "6666.ca.crt"), []byte(ca6666), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "7777.key"), []byte(key7777), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "7777.crt"), []byte(cert7777), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "7777.ca.crt"), []byte(ca7777), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "8888.key"), []byte(key8888), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "8888.crt"), []byte(cert8888), 0777))
+	require.Nil(t, ioutil.WriteFile(filepath.Join(td, "8888.ca.crt"), []byte(ca8888), 0777))
+	caBytes6666, err := ioutil.ReadFile(filepath.Join(td, "6666.ca.crt"))
+	require.Nil(t, err)
+	caBytes7777, err := ioutil.ReadFile(filepath.Join(td, "7777.ca.crt"))
+	require.Nil(t, err)
+	caBytes8888, err := ioutil.ReadFile(filepath.Join(td, "8888.ca.crt"))
+	require.Nil(t, err)
 
 	// start node A
 	var nf NetFactory
@@ -54,12 +67,10 @@ func TestNetDataIsolate(t *testing.T) {
 		WithCrypto(filepath.Join(td, "6666.key"), filepath.Join(td, "6666.crt")),
 	)
 	require.Nil(t, err)
-	a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH")
-	a.AddTrustRoot(chainId1, caBytes6666)
-	a.AddTrustRoot(chainId1, caBytes7777)
-	//a.AddTrustRoot(chainId1, certBytes8888)
-	a.InitPubsub(chainId1, 0)
-	//a.InitPubsub(chainId2, 0)
+	err = a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH")
+	err = a.AddTrustRoot(chainId1, caBytes6666)
+	err = a.AddTrustRoot(chainId1, caBytes7777)
+	err = a.InitPubsub(chainId1, 0)
 	err = a.Start()
 	require.Nil(t, err)
 	fmt.Println("node A is running...")
@@ -72,19 +83,21 @@ func TestNetDataIsolate(t *testing.T) {
 		WithCrypto(filepath.Join(td, "7777.key"), filepath.Join(td, "7777.crt")),
 	)
 	require.Nil(t, err)
-	b.AddSeed("/ip4/127.0.0.1/tcp/6666/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4")
-	b.AddTrustRoot(chainId1, caBytes6666)
-	b.AddTrustRoot(chainId1, caBytes7777)
-	//b.AddTrustRoot(chainId1, certBytes8888)
-	b.AddTrustRoot(chainId2, caBytes8888)
-	b.AddTrustRoot(chainId2, caBytes7777)
-	//b.AddTrustRoot(chainId2, certBytes6666)
-	b.InitPubsub(chainId1, 0)
-	b.InitPubsub(chainId2, 0)
+	err = b.AddTrustRoot(chainId1, caBytes6666)
+	require.Nil(t, err)
+	err = b.AddTrustRoot(chainId1, caBytes7777)
+	require.Nil(t, err)
+	err = b.AddTrustRoot(chainId2, caBytes8888)
+	require.Nil(t, err)
+	err = b.AddTrustRoot(chainId2, caBytes7777)
+	require.Nil(t, err)
+	err = b.InitPubsub(chainId1, 0)
+	require.Nil(t, err)
+	err = b.InitPubsub(chainId2, 0)
+	require.Nil(t, err)
 	err = b.Start()
 	require.Nil(t, err)
 	fmt.Println("node B is running...")
-	//time.Sleep(10*time.Second)
 	// start node C
 	c, err := nf.NewNet(
 		protocol.Libp2p,
@@ -93,16 +106,19 @@ func TestNetDataIsolate(t *testing.T) {
 		WithCrypto(filepath.Join(td, "8888.key"), filepath.Join(td, "8888.crt")),
 	)
 	require.Nil(t, err)
-	c.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH")
-	c.AddTrustRoot(chainId2, caBytes8888)
-	c.AddTrustRoot(chainId2, caBytes7777)
-	//c.AddTrustRoot(chainId2, certBytes6666)
-	c.InitPubsub(chainId1, 0)
-	c.InitPubsub(chainId2, 0)
+	err = c.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH")
+	require.Nil(t, err)
+	err = c.AddTrustRoot(chainId2, caBytes8888)
+	require.Nil(t, err)
+	err = c.AddTrustRoot(chainId2, caBytes7777)
+	require.Nil(t, err)
+	err = c.InitPubsub(chainId1, 0)
+	require.Nil(t, err)
+	err = c.InitPubsub(chainId2, 0)
+	require.Nil(t, err)
 	err = c.Start()
 	require.Nil(t, err)
 	fmt.Println("node C is running...")
-	//time.Sleep(10*time.Second)
 	// test A send msg to B
 	data := []byte("hello")
 	toNodeB := "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"

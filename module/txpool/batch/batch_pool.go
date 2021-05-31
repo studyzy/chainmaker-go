@@ -41,6 +41,13 @@ func (p *nodeBatchPool) currentSize() int {
 	return p.pool.Length()
 }
 
+func (p *nodeBatchPool) GetBatch(batchId int32) *txpoolPb.TxBatch {
+	if val, ok := p.pool.Get(int(batchId)); ok {
+		return val.(*txpoolPb.TxBatch)
+	}
+	return nil
+}
+
 type pendingBatchPool struct {
 	l    sync.RWMutex
 	pool map[int32]*txpoolPb.TxBatch
@@ -74,6 +81,15 @@ func (p *pendingBatchPool) RemoveIfExist(batch *txpoolPb.TxBatch) bool {
 	return false
 }
 
+func (p *pendingBatchPool) GetBatch(batchId int32) *txpoolPb.TxBatch {
+	p.l.RLock()
+	defer p.l.RUnlock()
+	if val, ok := p.pool[batchId]; ok {
+		return val
+	}
+	return nil
+}
+
 func (p *pendingBatchPool) Range(f func(batch *txpoolPb.TxBatch) (isContinue bool)) {
 	p.l.RLock()
 	defer p.l.RUnlock()
@@ -88,32 +104,4 @@ func (p *pendingBatchPool) currentSize() int {
 	p.l.RLock()
 	defer p.l.RUnlock()
 	return len(p.pool)
-}
-
-type cfgBatchPool struct {
-	pool *sortedmap.IntKeySortedMap
-}
-
-func newCfgBatchPool() *cfgBatchPool {
-	return &cfgBatchPool{pool: sortedmap.NewIntKeySortedMap()}
-}
-
-func (p *cfgBatchPool) PutIfNotExist(batch *txpoolPb.TxBatch) bool {
-	batchId := int(batch.BatchId)
-	ok := p.pool.Contains(batchId)
-	if ok {
-		return false
-	}
-	p.pool.Put(batchId, batch)
-	return true
-}
-
-func (p *cfgBatchPool) RemoveIfExist(batch *txpoolPb.TxBatch) bool {
-	batchId := int(batch.BatchId)
-	_, ok := p.pool.Remove(batchId)
-	return ok
-}
-
-func (p *cfgBatchPool) currentSize() int {
-	return p.pool.Length()
 }

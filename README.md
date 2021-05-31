@@ -1,5 +1,4 @@
 
-
 长安链·ChainMaker, a blockchain platform for building secure, trustworthy value-exchange networks to power the new global digital economy.
 
 ChainMaker aims to use standardized and modularized components to build a blockchain infrastructure that can be utilized to construct various blockchain systems for a wide-range of applications,  advancing blockchain developing from the “pre-industrial” era to the “industrial” era of automated assembly.

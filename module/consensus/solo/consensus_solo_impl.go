@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	"fmt"
 	"sync"
 	"time"
 
@@ -139,7 +140,9 @@ func (consensus *ConsensusSoloImpl) handleVerifyResult(message *msgbus.Message) 
 	verifyResult := message.Payload.(*consensuspb.VerifyResult)
 	clog.Infof("handle verifyResult start, id: %s verifyResult: %s BlockInfo: %v",
 		consensus.id, verifyResult.Code, verifyResult.VerifiedBlock.Header.BlockHeight)
-	clog.Debugf("verifyingBlock: %s", consensus.verifyingBlock)
+	clog.DebugDynamic(func() string {
+		return fmt.Sprintf("verifyingBlock: %v", consensus.verifyingBlock)
+	})
 
 	if consensus.verifyingBlock == nil {
 		clog.Errorf("%s CommitBlock verifyingBlock nil")

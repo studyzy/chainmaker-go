@@ -5,34 +5,35 @@
 package mock
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockConsensusEngine is a mock of ConsensusEngine interface
+// MockConsensusEngine is a mock of ConsensusEngine interface.
 type MockConsensusEngine struct {
 	ctrl     *gomock.Controller
 	recorder *MockConsensusEngineMockRecorder
 }
 
-// MockConsensusEngineMockRecorder is the mock recorder for MockConsensusEngine
+// MockConsensusEngineMockRecorder is the mock recorder for MockConsensusEngine.
 type MockConsensusEngineMockRecorder struct {
 	mock *MockConsensusEngine
 }
 
-// NewMockConsensusEngine creates a new mock instance
+// NewMockConsensusEngine creates a new mock instance.
 func NewMockConsensusEngine(ctrl *gomock.Controller) *MockConsensusEngine {
 	mock := &MockConsensusEngine{ctrl: ctrl}
 	mock.recorder = &MockConsensusEngineMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockConsensusEngine) EXPECT() *MockConsensusEngineMockRecorder {
 	return m.recorder
 }
 
-// Start mocks base method
+// Start mocks base method.
 func (m *MockConsensusEngine) Start() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Start")
@@ -40,13 +41,13 @@ func (m *MockConsensusEngine) Start() error {
 	return ret0
 }
 
-// Start indicates an expected call of Start
+// Start indicates an expected call of Start.
 func (mr *MockConsensusEngineMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockConsensusEngine)(nil).Start))
 }
 
-// Stop mocks base method
+// Stop mocks base method.
 func (m *MockConsensusEngine) Stop() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Stop")
@@ -54,7 +55,7 @@ func (m *MockConsensusEngine) Stop() error {
 	return ret0
 }
 
-// Stop indicates an expected call of Stop
+// Stop indicates an expected call of Stop.
 func (mr *MockConsensusEngineMockRecorder) Stop() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockConsensusEngine)(nil).Stop))

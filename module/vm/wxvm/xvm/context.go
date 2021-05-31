@@ -13,5 +13,12 @@ type Context struct {
 	ContractId     *commonPb.ContractId
 	ContractResult *commonPb.ContractResult
 
-	callArgs []*serialize.EasyCodecItem
+	callArgs      []*serialize.EasyCodecItem
+	ContractEvent []*commonPb.ContractEvent
+
+	gasUsed     uint64
+	requestBody []byte
+	in          []*serialize.EasyCodecItem
+	resp        []*serialize.EasyCodecItem
+	err         error
 }

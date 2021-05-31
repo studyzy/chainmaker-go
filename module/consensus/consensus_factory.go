@@ -9,6 +9,8 @@ package consensus
 import (
 	"fmt"
 
+	"chainmaker.org/chainmaker-go/consensus/chainedbft"
+
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 
@@ -40,7 +42,8 @@ func (f Factory) NewConsensusEngine(
 	netService protocol.NetService,
 	msgBus msgbus.MessageBus,
 	chainConf protocol.ChainConf,
-	store protocol.BlockchainStore) (protocol.ConsensusEngine, error) {
+	store protocol.BlockchainStore,
+	helper protocol.HotStuffHelper) (protocol.ConsensusEngine, error) {
 	switch consensusType {
 	case consensuspb.ConsensusType_TBFT:
 		config := tbft.ConsensusTBFTImplConfig{
@@ -69,9 +72,13 @@ func (f Factory) NewConsensusEngine(
 			MsgBus:         msgBus,
 		}
 		return raft.New(config)
+	case consensuspb.ConsensusType_HOTSTUFF:
+		return chainedbft.New(chainID, id, signer, ac, ledgerCache,
+			proposalCache, blockVerifier, blockCommitter, netService,
+			store, msgBus, chainConf, helper)
 	default:
 	}
-	return nil, (fmt.Errorf("error consensusType: %s", consensusType))
+	return nil, fmt.Errorf("error consensusType: %s", consensusType)
 }
 
 // VerifyBlockSignatures verifies whether the signatures in block
@@ -83,6 +90,7 @@ func VerifyBlockSignatures(
 	ac protocol.AccessControlProvider,
 	store protocol.BlockchainStore,
 	block *commonpb.Block,
+	ledger protocol.LedgerCache,
 ) error {
 	consensusType := chainConf.ChainConfig().Consensus.Type
 	switch consensusType {
@@ -90,6 +98,8 @@ func VerifyBlockSignatures(
 		return tbft.VerifyBlockSignatures(chainConf, ac, block)
 	case consensuspb.ConsensusType_RAFT:
 		return raft.VerifyBlockSignatures(block)
+	case consensuspb.ConsensusType_HOTSTUFF:
+		return chainedbft.VerifyBlockSignatures(chainConf, ac, store, block, ledger)
 	case consensuspb.ConsensusType_SOLO:
 		fallthrough
 	default:

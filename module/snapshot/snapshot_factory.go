@@ -20,7 +20,18 @@ type Factory struct {
 
 func (f *Factory) NewSnapshotManager(blockchainStore protocol.BlockchainStore) protocol.SnapshotManager {
 	return &ManagerImpl{
-		snapshots:       make(map[utils.BlockFingerPrint]*SnapshotImpl, 1024),
-		blockchainStore: blockchainStore,
+		snapshots: make(map[utils.BlockFingerPrint]*SnapshotImpl, 1024),
+		delegate: &ManagerDelegate{
+			blockchainStore: blockchainStore,
+		},
+	}
+}
+
+func (f *Factory) NewSnapshotEvidenceMgr(blockchainStore protocol.BlockchainStore) protocol.SnapshotManager {
+	return &ManagerEvidence{
+		snapshots: make(map[utils.BlockFingerPrint]*SnapshotEvidence, 1024),
+		delegate: &ManagerDelegate{
+			blockchainStore: blockchainStore,
+		},
 	}
 }

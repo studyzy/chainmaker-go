@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -19,7 +18,7 @@ import (
 )
 
 type TxValidator struct {
-	log           *logger.CMLogger
+	log           protocol.Logger
 	chainId       string
 	hashType      string
 	consensusType consensuspb.ConsensusType
@@ -34,7 +33,7 @@ type verifyBlockBatch struct {
 	txHash    [][]byte
 }
 
-func NewTxValidator(log *logger.CMLogger, chainId string, hashType string, consensusType consensuspb.ConsensusType,
+func NewTxValidator(log protocol.Logger, chainId string, hashType string, consensusType consensuspb.ConsensusType,
 	store protocol.BlockchainStore, txPool protocol.TxPool, ac protocol.AccessControlProvider) *TxValidator {
 	return &TxValidator{
 		log:           log,
@@ -116,15 +115,18 @@ func (tv *TxValidator) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*
 		startOthersTicker := utils.CurrentTimeMillisSeconds()
 		rwSet := txRWSetMap[tx.Header.TxId]
 		result := txResultMap[tx.Header.TxId]
-		rwsetHash, err := utils.CalcRWSetHash(tv.hashType, rwSet)
+		rwSetHash, err := utils.CalcRWSetHash(tv.hashType, rwSet)
+		tv.log.DebugDynamic(func() string {
+			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+		})
 		if err != nil {
 			tv.log.Warnf("calc rwset hash error (tx:%s), %s", tx.Header.TxId, err)
 			return nil, nil, err
 		}
-		if err := tv.IsTxRWSetValid(block, tx, rwSet, result, rwsetHash); err != nil {
+		if err := tv.IsTxRWSetValid(block, tx, rwSet, result, rwSetHash); err != nil {
 			return nil, nil, err
 		}
-		result.RwSetHash = rwsetHash
+		result.RwSetHash = rwSetHash
 		// verify if rwset hash is equal
 		if err := tv.VerifyTxResult(tx, result); err != nil {
 			return nil, nil, err
@@ -158,14 +160,14 @@ func (tv *TxValidator) txVerifyResultsMerge(resultTasks map[int]verifyBlockBatch
 	return txHashes, txNewAdd, nil, nil
 }
 
-func (tv *TxValidator) validateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transaction, txsHeightRet map[string]int64,
+func (tv *TxValidator) validateTx(txsRetInPool map[string]*commonpb.Transaction, tx *commonpb.Transaction, txsHeightInPool map[string]int64,
 	stat *verifyStat, newAddTxs []*commonpb.Transaction, block *commonpb.Block) error {
-	txInPool, existTx := txsRet[tx.Header.TxId]
-	blockHeight := txsHeightRet[tx.Header.TxId]
+	txInPool, existTx := txsRetInPool[tx.Header.TxId]
+	blockHeightInPool := txsHeightInPool[tx.Header.TxId]
 	if existTx {
-		if consensuspb.ConsensusType_HOTSTUFF == tv.consensusType && blockHeight != block.Header.BlockHeight && blockHeight > 0 {
+		if consensuspb.ConsensusType_HOTSTUFF == tv.consensusType && blockHeightInPool < block.Header.BlockHeight && blockHeightInPool > 0 {
 			err := fmt.Errorf("tx duplicate in pending (tx:%s), txInPoolHeight:%d, txInBlockHeight:%d",
-				tx.Header.TxId, blockHeight, block.Header.BlockHeight)
+				tx.Header.TxId, blockHeightInPool, block.Header.BlockHeight)
 			return err
 		}
 		if err := tv.isTxHashValid(tx, txInPool); err != nil {
@@ -196,6 +198,9 @@ func (tv *TxValidator) validateTx(txsRet map[string]*commonpb.Transaction, tx *c
 
 // IsTxHashValid, to check if transaction hash is valid
 func (tv *TxValidator) isTxHashValid(tx *commonpb.Transaction, txInPool *commonpb.Transaction) error {
+	if txInPool == nil {
+		return fmt.Errorf("unknown tx (tx:%s)", tx.Header.TxId)
+	}
 	poolTxRawHash, err := utils.CalcTxRequestHash(tv.hashType, txInPool)
 	if err != nil {
 		return fmt.Errorf("calc pool txhash error (tx:%s), %s", tx.Header.TxId, err.Error())
@@ -233,7 +238,7 @@ func (tv *TxValidator) VerifyTxResult(tx *commonpb.Transaction, result *commonpb
 func (tv *TxValidator) IsTxRWSetValid(block *commonpb.Block, tx *commonpb.Transaction, rwSet *commonpb.TxRWSet, result *commonpb.Result,
 	rwsetHash []byte) error {
 	if rwSet == nil || result == nil {
-		return fmt.Errorf("txresult, rwset == nil (tx:%s)",
+		return fmt.Errorf("txresult, rwset == nil (height:%d,blockhash:%x,tx:%s)",
 			block.Header.BlockHeight, block.Header.BlockHash, tx.Header.TxId)
 	}
 	if !bytes.Equal(tx.Result.RwSetHash, rwsetHash) {

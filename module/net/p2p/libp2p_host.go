@@ -48,6 +48,10 @@ var networkNotify = func(host *LibP2pHost) network.Notifiee {
 				logger.Errorf("[Host][BUG] nil peer stream manager or nil connection manager err")
 				return
 			}
+			conn := host.connManager.GetConn(c.RemotePeer())
+			if conn != nil && conn.RemoteMultiaddr().String() != c.RemoteMultiaddr().String() {
+				return
+			}
 			logger.Infof("[Host] connection disconnected(remote peer-id:%s, remote multi-addr:%s)", c.RemotePeer().Pretty(), c.RemoteMultiaddr().String())
 			host.connManager.RemoveConn(c.RemotePeer())
 			pid := c.RemotePeer().Pretty()

@@ -8,20 +8,22 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/localconf"
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
+	"chainmaker.org/chainmaker-go/localconf"
+	logger2 "chainmaker.org/chainmaker-go/logger"
+	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/utils"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -35,7 +37,6 @@ const (
 
 	msg = "Winter is coming."
 
-	tempDirName          = "chainmaker_access_control_test"
 	tempOrg1KeyFileName  = "org1.key"
 	tempOrg1CertFileName = "org1.crt"
 )
@@ -53,17 +54,17 @@ var chainConf = &config.ChainConfig{
 	Consensus: &config.ConsensusConfig{
 		Type: 0,
 		Nodes: []*config.OrgConfig{{
-			OrgId:   org1Name,
-			Address: nil,
+			OrgId:  org1Name,
+			NodeId: nil,
 		}, {
-			OrgId:   org2Name,
-			Address: nil,
+			OrgId:  org2Name,
+			NodeId: nil,
 		}, {
-			OrgId:   org3Name,
-			Address: nil,
+			OrgId:  org3Name,
+			NodeId: nil,
 		}, {
-			OrgId:   org4Name,
-			Address: nil,
+			OrgId:  org4Name,
+			NodeId: nil,
 		},
 		},
 		ExtConfig: nil,
@@ -790,16 +791,35 @@ iNFs27DyjMHY5cVorqXs4krmuCg9j22BvUuSOe7qwA==
 
 var acsMap = map[string]ac{}
 
+func createTempDirWithCleanFunc() (string, func(), error) {
+	var td = filepath.Join("./temp")
+	err := os.MkdirAll(td, os.ModePerm)
+	if err != nil {
+		return "", nil, err
+	}
+	var cleanFunc = func() {
+		_ = os.RemoveAll(td)
+		_ = os.RemoveAll(filepath.Join("./default.log"))
+		now := time.Now()
+		_ = os.RemoveAll(filepath.Join("./default.log." + now.Format("2006010215")))
+		now = now.Add(-5 * time.Hour)
+		_ = os.RemoveAll(filepath.Join("./default.log." + now.Format("2006010215")))
+	}
+	return td, cleanFunc, nil
+}
+
 func constructAC(t *testing.T, info orgInfo) ac {
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, info.orgId+".key")
 	localCertFile := filepath.Join(td, info.orgId+".crt")
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(info.consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(info.consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(info.consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, info.orgId, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, info.orgId, nil, logger)
 	require.Nil(t, err)
 	consensusMember, err := acInst.NewMemberFromCertPem(info.orgId, info.consensusNode.certificate)
 	require.Nil(t, err)
@@ -830,15 +850,17 @@ func TestNewAccessControlWithChainConfig(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 }
@@ -847,15 +869,17 @@ func TestAccessControlGetHashAlg(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 	fmt.Printf("hash alg: %s\n", acInst.GetHashAlg())
@@ -865,15 +889,17 @@ func TestAccessControlValidateResourcePolicy(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 
@@ -895,15 +921,17 @@ func TestAccessControlLookUpResourceIdByTxType(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 
@@ -919,15 +947,17 @@ func TestAccessControlGetLocalOrgId(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 
@@ -938,15 +968,17 @@ func TestAccessControlGetLocalSigningMember(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 	signingMember := acInst.GetLocalSigningMember()
@@ -959,15 +991,17 @@ func TestAccessControlNewMemberFromCertPem(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 	member, err := acInst.NewMemberFromCertPem(org2Name, orgList[org2Name].consensusNode.certificate)
@@ -979,15 +1013,17 @@ func TestAccessControlNewMemberFromProto(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 	signingMember := acInst.GetLocalSigningMember()
@@ -1002,15 +1038,17 @@ func TestAccessControlNewSigningMemberFromCertFile(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 	signer, err := acInst.NewSigningMemberFromCertFile(org1Name, localPrivKeyFile, "", localCertFile)
@@ -1022,15 +1060,17 @@ func TestAccessControlNewSigningMember(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-	var td = filepath.Join(os.TempDir(), tempDirName)
-	os.Mkdir(td, 0666)
+	td, cleanFunc, err := createTempDirWithCleanFunc()
+	require.Nil(t, err)
+	defer cleanFunc()
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
 	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
 	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err := ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), 0666)
+	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
 	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), 0666)
+	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
 	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil)
+	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 	member, err := acInst.NewMemberFromCertPem(org2Name, orgList[org2Name].consensusNode.certificate)

@@ -66,7 +66,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	instance.SetGasUsed(gasUsed)
 	instance.SetGasLimit(protocol.GasLimit)
 
-	var sc = NewSimContext(method, r.log)
+	var sc = NewSimContext(method, r.log, r.chainId)
 	defer sc.removeCtxPointer()
 	sc.ContractId = contractId
 	sc.TxSimContext = txContext
@@ -96,5 +96,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		instanceInfo.errCount++
 		return contractResult
 	}
+	contractResult.ContractEvent = sc.ContractEvent
+	contractResult.GasUsed = int64(gas)
 	return contractResult
 }

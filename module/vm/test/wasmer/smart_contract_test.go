@@ -1,6 +1,19 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package wasmertest
 
 import (
+	"fmt"
+	"runtime"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -8,12 +21,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"fmt"
-	"runtime"
-	"strings"
-	"sync"
-	"testing"
-	"time"
+
 	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
 	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
 	_ "net/http/pprof"

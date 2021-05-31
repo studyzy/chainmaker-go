@@ -46,8 +46,8 @@ var (
 
 	blockInterval  int
 	nodeOrgId      string
-	nodeOldAddress string
-	nodeAddress    string
+	nodeIdOld      string
+	nodeId         string
 	trustRootOrgId string
 	trustRootPath  string
 	certFilePaths  string
@@ -79,8 +79,8 @@ const (
 	flagTimeout                = "timeout"
 	flagBlockInterval          = "block-interval"
 	flagNodeOrgId              = "node-org-id"
-	flagNodeOldAddress         = "node-old-address"
-	flagNodeAddress            = "node-address"
+	flagNodeIdOld              = "node-id-old"
+	flagNodeId                 = "node-id"
 	flagTrustRootOrgId         = "trust-root-org-id"
 	flagTrustRootCrtPath       = "trust-root-path"
 	flagCertFilePaths          = "cert-file-paths"
@@ -146,8 +146,8 @@ func init() {
 	flags.IntVar(&blockInterval, flagBlockInterval, 2000, "block interval timeout in milliseconds, default 2000ms")
 
 	flags.StringVar(&nodeOrgId, flagNodeOrgId, "", "specify node org id")
-	flags.StringVar(&nodeOldAddress, flagNodeOldAddress, "", "specify node old address")
-	flags.StringVar(&nodeAddress, flagNodeAddress, "", "specify node address(which will be added or update to")
+	flags.StringVar(&nodeIdOld, flagNodeIdOld, "", "specify old node id")
+	flags.StringVar(&nodeId, flagNodeId, "", "specify node id(which will be added or update to")
 
 	flags.StringVar(&trustRootOrgId, flagTrustRootOrgId, "", "specify the ca org id")
 	flags.StringVar(&trustRootPath, flagTrustRootCrtPath, "", "specify the ca file path")

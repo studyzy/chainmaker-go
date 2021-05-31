@@ -9,18 +9,20 @@ package proposer
 import (
 	"bytes"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"sync"
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/logger"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/gogo/protobuf/proto"
 )
 
 // BlockProposerImpl implements BlockProposer interface.
@@ -51,7 +53,7 @@ type BlockProposerImpl struct {
 	idleMu         sync.Mutex   // for proposeBlock reentrant lock
 	statusMu       sync.Mutex   // for propose status change lock
 	proposerMu     sync.RWMutex // for isProposer lock, avoid race
-	log            *logger.CMLogger
+	log            protocol.Logger
 	finishProposeC chan bool // channel to receive signal to yield propose block
 
 	metricBlockPackageTime *prometheus.HistogramVec
@@ -77,7 +79,7 @@ const (
 	DEFAULTVERSION  = "v1.0.0" // default version of chain
 )
 
-func NewBlockProposer(config BlockProposerConfig) (protocol.BlockProposer, error) {
+func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol.BlockProposer, error) {
 	blockProposerImpl := &BlockProposerImpl{
 		chainId:         config.ChainId,
 		isProposer:      false, // not proposer when initialized
@@ -95,7 +97,7 @@ func NewBlockProposer(config BlockProposerConfig) (protocol.BlockProposer, error
 		proposalCache:   config.ProposalCache,
 		chainConf:       config.ChainConf,
 		ac:              config.AC,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, config.ChainId),
+		log:             log,
 		finishProposeC:  make(chan bool),
 	}
 
@@ -229,27 +231,38 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 
 	selfProposedBlock := bp.proposalCache.GetSelfProposedBlockAt(height)
 	if selfProposedBlock != nil {
-		// Repeat propose block if node has proposed before at the same height
-		bp.proposalCache.SetProposedAt(height)
-		bp.msgBus.Publish(msgbus.ProposedBlock, selfProposedBlock)
-		bp.log.Infof("proposer success repeat [%d](txs:%d,hash:%x)",
-			selfProposedBlock.Header.BlockHeight, selfProposedBlock.Header.TxCount, selfProposedBlock.Header.BlockHash)
-		return nil
+		if bytes.Equal(selfProposedBlock.Header.PreBlockHash, preHash) {
+			// Repeat propose block if node has proposed before at the same height
+			bp.proposalCache.SetProposedAt(height)
+			bp.msgBus.Publish(msgbus.ProposedBlock, selfProposedBlock)
+			bp.log.Infof("proposer success repeat [%d](txs:%d,hash:%x)",
+				selfProposedBlock.Header.BlockHeight, selfProposedBlock.Header.TxCount, selfProposedBlock.Header.BlockHash)
+			return nil
+		} else {
+			bp.proposalCache.ClearTheBlock(selfProposedBlock)
+			// Note: It is not possible to re-add the transactions in the deleted block to txpool; because some transactions may
+			// be included in other blocks to be confirmed, and it is impossible to quickly exclude these pending transactions
+			// that have been entered into the block. Comprehensive considerations, directly discard this block is the optimal
+			// choice. This processing method may only cause partial transaction loss at the current node, but it can be solved
+			// by rebroadcasting on the client side.
+			bp.txPool.RetryAndRemoveTxs(nil, selfProposedBlock.Txs)
+		}
 	}
 
 	// retrieve tx batch from tx pool
 	startFetchTick := utils.CurrentTimeMillisSeconds()
-	checkedBatch := bp.txPool.FetchTxBatch(height)
+	fetchBatch := bp.txPool.FetchTxBatch(height)
 	fetchLasts := utils.CurrentTimeMillisSeconds() - startFetchTick
-	bp.log.Debugf("begin proposing block[%d], fetch tx num[%d]", height, len(checkedBatch))
+	bp.log.Debugf("begin proposing block[%d], fetch tx num[%d]", height, len(fetchBatch))
 
 	startDupTick := utils.CurrentTimeMillisSeconds()
-	//checkedBatch := bp.txDuplicateCheck(txBatch)
+	checkedBatch := bp.txDuplicateCheck(fetchBatch)
 	dupLasts := utils.CurrentTimeMillisSeconds() - startDupTick
 	if !utils.CanProposeEmptyBlock(bp.chainConf.ChainConfig().Consensus.Type) &&
 		(checkedBatch == nil || len(checkedBatch) == 0) {
 		// can not propose empty block and tx batch is empty, then yield proposing.
 		bp.log.Debugf("no txs in tx pool, proposing block stoped")
+		bp.txPool.RetryAndRemoveTxs(nil, fetchBatch)
 		return nil
 	}
 
@@ -264,6 +277,20 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 
 	block, timeLasts, err := bp.generateNewBlock(height, preHash, checkedBatch)
 	if err != nil {
+		// rollback sql
+		if bp.chainConf.ChainConfig().Contract.EnableSqlSupport {
+			_ = bp.blockchainStore.RollbackDbTransaction(block.GetTxKey())
+			// drop database if create contract fail
+			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+				var payload commonpb.ContractMgmtPayload
+				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
+					if payload.ContractId != nil {
+						dbName := statesqldb.GetContractDbName(bp.chainId, payload.ContractId.ContractName)
+						bp.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
+					}
+				}
+			}
+		}
 		bp.txPool.RetryAndRemoveTxs(checkedBatch, nil) // put txs back to txpool
 		bp.log.Warnf("generate new block failed, %s", err.Error())
 		return nil
@@ -285,10 +312,10 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 	if batch == nil || len(batch) == 0 {
 		return nil
 	}
-	checked := make([]*commonpb.Transaction, 0)
-	verifyBatchs := utils.DispatchTxVerifyTask(batch)
-	results := make([][]*commonpb.Transaction, 0)
-	workerCount := len(verifyBatchs)
+	checked := make([]*commonpb.Transaction, 0, len(batch))
+	verifyBatches := utils.DispatchTxVerifyTask(batch)
+	workerCount := len(verifyBatches)
+	results := make([][]*commonpb.Transaction, workerCount)
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
 	for i := 0; i < workerCount; i++ {
@@ -302,7 +329,7 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 				}
 			}
 			results[index] = result
-		}(i, verifyBatchs[i])
+		}(i, verifyBatches[i])
 	}
 	wg.Wait()
 	for _, result := range results {
@@ -343,8 +370,23 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 
 // OnReceiveChainedBFTProposal, to check if this proposer should propose a new block
 // Only for chained bft consensus
-func (bp *BlockProposerImpl) OnReceiveChainedBFTProposal(_ *interface{}) {
+func (bp *BlockProposerImpl) OnReceiveChainedBFTProposal(proposal *chainedbft.BuildProposal) {
+	proposingHeight := int64(proposal.Height)
+	preHash := proposal.PreHash
+	if !bp.shouldProposeByChainedBFT(proposingHeight, preHash) {
+		bp.log.Infof("not a legal proposal request [%d](%x)", proposingHeight, preHash)
+		return
+	}
 
+	if !bp.setNotIdle() {
+		bp.log.Warnf("concurrent propose block [%d](%x), yield!", proposingHeight, preHash)
+		return
+	}
+	defer bp.setIdle()
+
+	bp.log.Infof("trigger proposal from chainedBFT, height[%d]", proposal.Height)
+	go bp.proposing(proposingHeight, preHash)
+	<-bp.finishProposeC
 }
 
 // OnReceiveYieldProposeSignal, receive yield propose signal
@@ -455,6 +497,7 @@ func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height int64, preHash []b
 	currentHeight := committedBlock.Header.BlockHeight
 	// proposing height must higher than current height
 	if currentHeight >= height {
+		bp.log.Errorf("current commit block height: %d, propose height: %d", currentHeight, height)
 		return false
 	}
 	if height == currentHeight+1 {
@@ -469,5 +512,8 @@ func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height int64, preHash []b
 	}
 	// if height not follows the last committed block, then check last proposed block
 	b, _ := bp.proposalCache.GetProposedBlockByHashAndHeight(preHash, height-1)
+	if b == nil {
+		bp.log.Errorf("not find preBlock: [%d:%x]", height-1, preHash)
+	}
 	return b != nil
 }

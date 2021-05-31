@@ -60,6 +60,7 @@ func getBlockByTxId() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("resp: ", resp, "err: ", err)
 
 	blockInfo := &commonPb.BlockInfo{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, blockInfo); err != nil {

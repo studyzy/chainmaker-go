@@ -30,6 +30,14 @@ node:
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/11303
+  seeds:
+    - "/ip4/127.0.0.1/tcp/11301/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
+    - "/ip4/127.0.0.1/tcp/11302/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+    - "/ip4/127.0.0.1/tcp/11303/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
+    - "/ip4/127.0.0.1/tcp/11304/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
+    - "/ip4/127.0.0.1/tcp/11305/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+    - "/ip4/127.0.0.1/tcp/11306/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+    - "/ip4/127.0.0.1/tcp/11307/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   tls:
     enabled: true
     priv_key_file: ../config/wx-org3/certs/node/consensus1/consensus1.tls.key
@@ -63,8 +71,29 @@ pprof:
   port: 24321
 
 storage:
-  provider: LevelDB
-  store_path: ../data/ledgerData3
+  store_path: ../data/org3/ledgerData1
+  blockdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org3/blocks
+  statedb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org3/state
+  historydb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org3/history
+  resultdb_config:
+    provider: leveldb
+    leveldb_config:
+      store_path: ../data/org3/result
+  disable_contract_eventdb: true  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
+  contract_eventdb_config:
+    provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
+    sqldb_config:
+      sqldb_type: mysql           #contract event db 只支持mysql
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
 
 debug:
   # 是否开启CLI功能，过度期间使用

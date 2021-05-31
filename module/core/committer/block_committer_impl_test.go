@@ -9,20 +9,21 @@ package committer
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
 	"github.com/golang/mock/gomock"
-	"github.com/google/martian/log"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
+
+var log = &test.GoLogger{}
 
 func TestAddBlock(t *testing.T) {
 	ctl := gomock.NewController(t)
@@ -36,6 +37,7 @@ func TestAddBlock(t *testing.T) {
 	lastBlock := cache.CreateNewTestBlock(0)
 	ledgerCache.SetLastCommittedBlock(lastBlock)
 	rwSetMap := make(map[string]*commonpb.TxRWSet)
+	contractEventMap := make(map[string][]*commonpb.ContractEvent)
 	msgbus := mock.NewMockMessageBus(ctl)
 	msgbus.EXPECT().Publish(gomock.Any(), gomock.Any()).Return().Times(2)
 
@@ -45,11 +47,12 @@ func TestAddBlock(t *testing.T) {
 	crypto := configpb.CryptoConfig{
 		Hash: "SHA256",
 	}
-	chainConfig := configpb.ChainConfig{Crypto: &crypto}
-	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(2)
+	contractConf := configpb.ContractConfig{EnableSqlSupport: false}
+	chainConfig := configpb.ChainConfig{Crypto: &crypto, Contract: &contractConf}
+	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(3)
 
 	block := createNewBlock(lastBlock)
-	proposedCache.SetProposedBlock(&block, rwSetMap, true)
+	proposedCache.SetProposedBlock(&block, rwSetMap, contractEventMap, true)
 
 	log.Infof("init block(%d,%s)", block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash))
 	blockchainStoreImpl.EXPECT().PutBlock(&block, make([]*commonpb.TxRWSet, 0)).Return(nil)
@@ -97,7 +100,7 @@ func initCommitter(
 		txPool:          txPool,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
+		log:             log,
 		chainConf:       chainConf,
 		msgBus:          msgbus,
 	}

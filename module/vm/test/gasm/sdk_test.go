@@ -1,17 +1,23 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
 package gasmtest
 
 import (
-	"chainmaker.org/chainmaker-go/gasm"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/vm/test"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker-go/gasm"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/vm/test"
+	"github.com/stretchr/testify/require"
 )
 
 type person struct {
@@ -82,7 +88,7 @@ func Test_invoke_c(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	fmt.Printf("method [%+v], tx count %+v, time cost %+v\n", method, count, time.Since(start))
+	fmt.Printf("method [%+v], tx count %+v, time used %+v\n", method, count, time.Since(start))
 }
 
 func Test_invoke_go(t *testing.T) {
@@ -140,5 +146,5 @@ func Test_invoke_go(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	fmt.Printf("method [%+v], tx count %+v, time cost %+v\n", method, count, time.Since(start))
+	fmt.Printf("method [%+v], tx count %+v, time used %+v\n", method, count, time.Since(start))
 }
