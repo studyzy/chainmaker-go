@@ -111,21 +111,9 @@ issues:
         - forbidigo
         - dupl
         - errcheck
-    - path: _test\.go
-      linters:
-        - funlen # 规范说单测函数，单个函数可以到160行，但是工具不好做区分处理，这里就直接不检查单测的函数长度
-    - linters:
-        - staticcheck
-      text: "SA1019: package github.com/golang/protobuf" # 它会说 'SA1019: package github.com/golang/protobuf/proto is deprecated: Use the "google.golang.org/protobuf/proto" package instead.', 但是这个库更更新很稳定
-    - linters:
-        - staticcheck
-      text: "SA6002: argument should be pointer-like to avoid allocations" # sync.pool.Put(buf), slice `var buf []byte` will tiger this
-    - linters:
-        - structcheck
-      text: "Store` is unused" # 文档项目独有的, 当非导出结构嵌入另一个结构, 前一个结构被使用就不会监测到
-    - linters:
         - lll
-      source: "^//go:generate " # Exclude lll issues for long lines with go:generate
+        - funlen
+
   max-same-issues: 0
   new: false
   max-issues-per-linter: 0

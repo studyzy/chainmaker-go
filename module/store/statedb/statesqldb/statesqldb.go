@@ -168,7 +168,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
 			contractId.ContractName = address.String()
 		}
-		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites)
+		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int6
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
 func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractId *commonPb.ContractId,
-	writes []*commonPb.TxWrite) error {
+	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
 	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
@@ -265,16 +265,18 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 
 	for _, txWrite := range writes {
 		if len(txWrite.Key) == 0 { //这是SQL语句
-			// 已经在VM执行的时候执行了SQL
-			//_, err = dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
-			//if err != nil {
-			//	s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
-			//	err2 := dbHandle.RollbackDbTransaction(txKey)
-			//	if err2 != nil {
-			//		return err2
-			//	} //前面开启的事务，这里还是需要回滚一下
-			//	return err
-			//}
+			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
+			if !processStateDbSqlOutside {
+				_, err = dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
+				if err != nil {
+					s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
+					err2 := dbHandle.RollbackDbTransaction(txKey)
+					if err2 != nil {
+						return err2
+					} //前面开启的事务，这里还是需要回滚一下
+					return err
+				}
+			}
 		} else { //是KV数据，直接存储到StateInfo表
 			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
 				uint64(block.Header.BlockHeight), block.GetTimestamp())
