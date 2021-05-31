@@ -1,3 +1,0 @@
-[submodule "pb/proto"]
-	path = pb/proto
-	url = git@git.code.tencent.com:ChainMaker/chainmaker-pb.git
