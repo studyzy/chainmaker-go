@@ -11,12 +11,6 @@ log:
 blockchain:
   - chainId: chain1
     genesis: ../config/wx-org3.chainmaker.org/chainconfig/bc1.yml
-#  - chainId: chain2
-#    genesis: ../config/{org_path2}/chainconfig/bc2.yml
-#  - chainId: chain3
-#    genesis: ../config/{org_path3}/chainconfig/bc3.yml
-#  - chainId: chain4
-#    genesis: ../config/{org_path4}/chainconfig/bc4.yml
 
 node:
   # 节点类型：full、spv
@@ -37,6 +31,11 @@ node:
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/11303
+  seeds:
+    - "/dns/cm-node1/tcp/11301/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
+    - "/dns/cm-node2/tcp/11302/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+    - "/dns/cm-node3/tcp/11303/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
+    - "/dns/cm-node4/tcp/11304/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
   tls:
     enabled: true
     priv_key_file: ../config/wx-org3.chainmaker.org/certs/node/consensus1/consensus1.tls.key
@@ -78,12 +77,12 @@ rpc:
     cert_file:      ../config/wx-org3.chainmaker.org/certs/node/consensus1/consensus1.tls.crt
 
 monitor:
-  enabled: true
-  port: 14323
+  enabled: false
+  port: 14321
 
 pprof:
   enabled: false
-  port: 24323
+  port: 24321
 
 storage:
   store_path: ../data/org3/ledgerData1

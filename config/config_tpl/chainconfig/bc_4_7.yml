@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}    # 链标识
-version: v1.0.0         # 链版本
+version: v1.2.0         # 链版本
 sequence: 1             # 配置版本
 auth_type: "identity"   # 认证类型
 
