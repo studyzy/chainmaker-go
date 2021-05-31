@@ -11,10 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
-
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
-
+	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/logger"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/utils"
