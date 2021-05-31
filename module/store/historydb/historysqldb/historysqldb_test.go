@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol/test"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -22,6 +21,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/test"
 	"github.com/stretchr/testify/assert"
 )
 

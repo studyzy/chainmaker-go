@@ -8,7 +8,6 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38 // indirect
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210531071221-ccada476876b // indirect
 	chainmaker.org/chainmaker/protocol v0.0.0-20210531063313-99b65ccc50e6 // indirect
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
