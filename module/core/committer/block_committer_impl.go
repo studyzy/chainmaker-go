@@ -218,7 +218,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 			}
 			eventsInfo = append(eventsInfo, eventInfo)
 		}
-		chain.msgBus.Publish(msgbus.ContractEventInfo, eventsInfo)
+		chain.msgBus.Publish(msgbus.ContractEventInfo, &commonpb.ContractEventInfoList{ContractEvents: eventsInfo})
 		pubEvent = utils.CurrentTimeMillisSeconds() - startPublishContractEventTick
 	}
 	startOtherTick := utils.CurrentTimeMillisSeconds()
