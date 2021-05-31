@@ -13,7 +13,7 @@ require (
 	chainmaker.org/chainmaker-go/net v0.0.0
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
-	chainmaker.org/chainmaker-go/provider v0.0.0
+	chainmaker.org/chainmaker-go/provider v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/snapshot v0.0.0
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
@@ -50,4 +50,8 @@ replace (
 	chainmaker.org/chainmaker-go/wasi => ../vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
+	github.com/libp2p/go-libp2p => ../net/p2p/libp2p
+	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
+	github.com/libp2p/go-libp2p-pubsub => ../net/p2p/libp2ppubsub
+
 )

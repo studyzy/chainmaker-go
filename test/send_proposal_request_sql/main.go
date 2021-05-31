@@ -304,14 +304,14 @@ func initWasmerTest() {
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initWasmerSqlTest() {
-	WasmPath = "../wasm/rust-sql-1.1.0.wasm"
-	WasmUpgradePath = "../wasm/rust-sql-1.1.0.wasm"
+	WasmPath = "../wasm/rust-sql-1.1.1.wasm"
+	WasmUpgradePath = "../wasm/rust-sql-1.1.1.wasm"
 	contractName = "contract100"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
-	WasmPath = "../wasm/go-sql-1.1.0.wasm"
-	WasmUpgradePath = "../wasm/go-sql-1.1.0.wasm"
+	WasmPath = "../wasm/go-sql-1.1.1.wasm"
+	WasmUpgradePath = "../wasm/go-sql-1.1.1.wasm"
 	contractName = "contract200"
 	runtimeType = commonPb.RuntimeType_GASM
 }

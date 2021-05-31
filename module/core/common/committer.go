@@ -115,7 +115,7 @@ func (cb *CommitBlock) CommitBlock(
 			}
 			eventsInfo = append(eventsInfo, eventInfo)
 		}
-		cb.msgBus.Publish(msgbus.ContractEventInfo, eventsInfo)
+		cb.msgBus.Publish(msgbus.ContractEventInfo, &commonpb.ContractEventInfoList{ContractEvents: eventsInfo})
 		pubEvent = utils.CurrentTimeMillisSeconds() - startPublishContractEventTick
 	}
 	startOtherTick := utils.CurrentTimeMillisSeconds()

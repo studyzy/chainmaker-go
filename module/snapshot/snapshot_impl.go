@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"strings"
 	"sync"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
 	"chainmaker.org/chainmaker-go/common/bitmap"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -72,13 +73,21 @@ func (s *SnapshotImpl) GetTxResultMap() map[string]*commonPb.Result {
 }
 
 func (s *SnapshotImpl) GetTxRWSetTable() []*commonPb.TxRWSet {
-	for _, txRWSet := range s.txRWSetTable {
+	for i, txRWSet := range s.txRWSetTable {
+		log.Debugf("read set for tx id:[%s], count [%d]", s.txTable[i].Header.TxId, len(txRWSet.TxReads))
 		for _, txRead := range txRWSet.TxReads {
+			if !strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) {
+				log.Debugf("[%v] -> [%v], contract name [%v], version [%v]", txRead.Key, txRead.Value, txRead.ContractName, txRead.Version)
+			}
 			if strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) ||
 				strings.HasPrefix(string(txRead.Key), protocol.ContractCreator) ||
 				txRead.ContractName == commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String() {
 				txRead.Value = nil
 			}
+		}
+		log.Debugf("write set for tx id:[%s], count [%d]", s.txTable[i].Header.TxId, len(txRWSet.TxWrites))
+		for _, txWrite := range txRWSet.TxWrites {
+			log.Debugf("[%v] -> [%v], contract name [%v]", txWrite.Key, txWrite.Value, txWrite.ContractName)
 		}
 	}
 	return s.txRWSetTable

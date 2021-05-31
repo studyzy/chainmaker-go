@@ -190,9 +190,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.log.Infof("remove txs[%d] and retry txs[%d] in add block", len(block.Txs), len(txRetry))
 	chain.txPool.RetryAndRemoveTxs(txRetry, block.Txs)
 	poolLasts := utils.CurrentTimeMillisSeconds() - startPoolTick
-
 	chain.proposalCache.ClearProposedBlockAt(height)
-
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
 	chain.log.Infof("commit block [%d](count:%d,hash:%x), time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d)",
 		height, block.Header.TxCount, block.Header.BlockHash, checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed)

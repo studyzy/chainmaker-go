@@ -111,6 +111,7 @@ func TestNewConsensusEngine(t *testing.T) {
 				tt.args.msgBus,
 				tt.args.chainConf,
 				tt.args.store,
+				nil,
 			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewConsensusEngine() error = %v, wantErr %v", err, tt.wantErr)

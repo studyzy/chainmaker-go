@@ -167,32 +167,32 @@ func constructStateKey(contractName string, key []byte) []byte {
 	return append(append([]byte(contractName), contractStoreSeparator), key...)
 }
 
-var ERROR_SQLDB_ONLY = errors.New("leveldb don't support this operation, please change to sql db")
+var errorSqldbOnly = errors.New("leveldb don't support this operation, please change to sql db")
 
 func (s *StateKvDB) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
-	return nil, ERROR_SQLDB_ONLY
+	return nil, errorSqldbOnly
 }
 func (s *StateKvDB) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
-	return nil, ERROR_SQLDB_ONLY
+	return nil, errorSqldbOnly
 
 }
 func (s *StateKvDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
-	return nil, ERROR_SQLDB_ONLY
+	return nil, errorSqldbOnly
 
 }
 func (s *StateKvDB) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
-	return nil, ERROR_SQLDB_ONLY
+	return nil, errorSqldbOnly
 
 }
 func (s *StateKvDB) CommitDbTransaction(txName string) error {
-	return ERROR_SQLDB_ONLY
+	return errorSqldbOnly
 
 }
 func (s *StateKvDB) RollbackDbTransaction(txName string) error {
-	return ERROR_SQLDB_ONLY
+	return errorSqldbOnly
 
 }
 func (s *StateKvDB) ExecDdlSql(contractName, sql string) error {
-	return ERROR_SQLDB_ONLY
+	return errorSqldbOnly
 
 }

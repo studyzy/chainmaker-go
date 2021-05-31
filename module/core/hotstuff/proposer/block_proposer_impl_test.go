@@ -10,13 +10,13 @@ import (
 	"chainmaker.org/chainmaker-go/common/random/uuid"
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
-	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/utils"
 	"crypto/sha256"
 	"fmt"
@@ -30,7 +30,6 @@ import (
 var (
 	chainId      = "Chain1"
 	contractName = "contractName"
-	log          = &test.GoLogger{}
 )
 
 func TestProposeStatusChange(t *testing.T) {
@@ -46,12 +45,12 @@ func TestProposeStatusChange(t *testing.T) {
 	blockChainStore := mock.NewMockBlockchainStore(ctl)
 	chainConf := mock.NewMockChainConf(ctl)
 
-	ledgerCache.SetLastCommittedBlock(cache.CreateNewTestBlock(0))
+	ledgerCache.SetLastCommittedBlock(createNewTestBlock(0))
 
 	txs := make([]*commonpb.Transaction, 0)
 
 	for i := 0; i < 5; i++ {
-		txs = append(txs, cache.CreateNewTestTx())
+		txs = append(txs, createNewTestTx())
 	}
 
 	txPool.EXPECT().FetchTxBatch(gomock.Any()).Return(txs).Times(10)
@@ -92,7 +91,7 @@ func TestProposeStatusChange(t *testing.T) {
 		identity:        identity,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             log,
+		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
 		finishProposeC:  make(chan bool),
 		blockchainStore: blockChainStore,
 		chainConf:       chainConf,
@@ -115,7 +114,7 @@ func TestShouldPropose(t *testing.T) {
 	proposedCache := cache.NewProposalCache(nil, ledgerCache)
 	txScheduler := mock.NewMockTxScheduler(ctl)
 
-	ledgerCache.SetLastCommittedBlock(cache.CreateNewTestBlock(0))
+	ledgerCache.SetLastCommittedBlock(createNewTestBlock(0))
 	blockProposer := &BlockProposerImpl{
 		chainId:         chainId,
 		isProposer:      false, // not proposer when initialized
@@ -131,20 +130,20 @@ func TestShouldPropose(t *testing.T) {
 		identity:        identity,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             log,
+		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
 	}
 
-	b0 := cache.CreateNewTestBlock(0)
+	b0 := createNewTestBlock(0)
 	ledgerCache.SetLastCommittedBlock(b0)
 	require.True(t, blockProposer.shouldProposeByBFT(b0.Header.BlockHeight+1))
 
-	b := cache.CreateNewTestBlock(1)
+	b := createNewTestBlock(1)
 	proposedCache.SetProposedBlock(b, nil, nil, false)
 	require.Nil(t, proposedCache.GetSelfProposedBlockAt(1))
 	b1, _, _ := proposedCache.GetProposedBlock(b)
 	require.NotNil(t, b1)
 
-	b2 := cache.CreateNewTestBlock(1)
+	b2 := createNewTestBlock(1)
 	b2.Header.BlockHash = nil
 	proposedCache.SetProposedBlock(b2, nil, nil, true)
 	require.False(t, blockProposer.shouldProposeByBFT(b2.Header.BlockHeight))
@@ -170,7 +169,7 @@ func TestShouldProposeChainedBFT(t *testing.T) {
 	proposedCache := cache.NewProposalCache(nil, ledgerCache)
 	txScheduler := mock.NewMockTxScheduler(ctl)
 
-	ledgerCache.SetLastCommittedBlock(cache.CreateNewTestBlock(0))
+	ledgerCache.SetLastCommittedBlock(createNewTestBlock(0))
 	blockProposer := &BlockProposerImpl{
 		chainId:         chainId,
 		isProposer:      false, // not proposer when initialized
@@ -186,22 +185,22 @@ func TestShouldProposeChainedBFT(t *testing.T) {
 		identity:        identity,
 		ledgerCache:     ledgerCache,
 		proposalCache:   proposedCache,
-		log:             log,
+		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainId),
 	}
 
-	b0 := cache.CreateNewTestBlock(0)
+	b0 := createNewTestBlock(0)
 	ledgerCache.SetLastCommittedBlock(b0)
 	require.True(t, blockProposer.shouldProposeByChainedBFT(b0.Header.BlockHeight+1, b0.Header.BlockHash))
 	require.False(t, blockProposer.shouldProposeByChainedBFT(b0.Header.BlockHeight+1, []byte("xyz")))
 	require.False(t, blockProposer.shouldProposeByChainedBFT(b0.Header.BlockHeight, b0.Header.PreBlockHash))
 
-	b := cache.CreateNewTestBlock(1)
+	b := createNewTestBlock(1)
 	proposedCache.SetProposedBlock(b, nil, nil, false)
 	require.Nil(t, proposedCache.GetSelfProposedBlockAt(1))
 	b1, _, _ := proposedCache.GetProposedBlock(b)
 	require.NotNil(t, b1)
 
-	b2 := cache.CreateNewTestBlock(1)
+	b2 := createNewTestBlock(1)
 	b2.Header.BlockHash = nil
 	proposedCache.SetProposedBlock(b2, nil, nil, true)
 	require.NotNil(t, proposedCache.GetSelfProposedBlockAt(1))
@@ -389,6 +388,59 @@ func parseTx(txId string, payloadBytes []byte) *commonpb.Transaction {
 				GasUsed: 0,
 			},
 			RwSetHash: nil,
+		},
+	}
+}
+
+func createNewTestBlock(height int64) *commonpb.Block {
+	var hash = []byte("0123456789")
+	var version = []byte("0")
+	var block = &commonpb.Block{
+		Header: &commonpb.BlockHeader{
+			ChainId:        "Chain1",
+			BlockHeight:    height,
+			PreBlockHash:   hash,
+			BlockHash:      hash,
+			PreConfHeight:  0,
+			BlockVersion:   version,
+			DagHash:        hash,
+			RwSetRoot:      hash,
+			TxRoot:         hash,
+			BlockTimestamp: 0,
+			Proposer:       hash,
+			ConsensusArgs:  nil,
+			TxCount:        1,
+			Signature:      []byte(""),
+		},
+		Dag: &commonpb.DAG{
+			Vertexes: nil,
+		},
+		Txs: nil,
+	}
+	tx := createNewTestTx()
+	txs := make([]*commonpb.Transaction, 1)
+	txs[0] = tx
+	block.Txs = txs
+	return block
+}
+
+func createNewTestTx() *commonpb.Transaction {
+	var hash = []byte("0123456789")
+	return &commonpb.Transaction{
+		Header: &commonpb.TxHeader{
+			ChainId:        "",
+			Sender:         nil,
+			TxType:         0,
+			TxId:           "",
+			Timestamp:      0,
+			ExpirationTime: 0,
+		},
+		RequestPayload:   hash,
+		RequestSignature: hash,
+		Result: &commonpb.Result{
+			Code:           commonpb.TxStatusCode_SUCCESS,
+			ContractResult: nil,
+			RwSetHash:      nil,
 		},
 	}
 }

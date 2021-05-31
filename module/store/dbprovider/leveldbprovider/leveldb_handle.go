@@ -23,10 +23,14 @@ import (
 
 const defaultBloomFilterBits = 10
 const (
-	StoreBlockDBDir   = "store_block"
-	StoreStateDBDir   = "store_state"
+	//StoreBlockDBDir blockdb folder name
+	StoreBlockDBDir = "store_block"
+	//StoreStateDBDir statedb folder name
+	StoreStateDBDir = "store_state"
+	//StoreHistoryDBDir historydb folder name
 	StoreHistoryDBDir = "store_history"
-	StoreResultDBDir  = "store_result"
+	//StoreResultDBDir resultdb folder name
+	StoreResultDBDir = "store_result"
 )
 
 // LevelDBHandle encapsulated handle to leveldb
@@ -35,7 +39,8 @@ type LevelDBHandle struct {
 	logger protocol.Logger
 }
 
-func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig, logger protocol.Logger) *LevelDBHandle {
+func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig,
+	logger protocol.Logger) *LevelDBHandle {
 	dbOpts := &opt.Options{}
 	writeBufferSize := dbconfig.BlockWriteBufferSize
 	if writeBufferSize <= 0 {

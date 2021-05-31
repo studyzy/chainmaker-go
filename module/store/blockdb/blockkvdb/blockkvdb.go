@@ -31,7 +31,7 @@ const (
 	lastConfigBlockNumKey    = "lastConfigBlockNumKey"
 )
 
-// BlocKDvDB provider a implementation of `blockdb.BlockDB`
+// BlockKvDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a key-value based data model
 type BlockKvDB struct {
 	DbHandle         protocol.DBHandle
@@ -103,7 +103,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	return nil
 }
 
-// HasBlock returns true if the block hash exist, or returns false if none exists.
+// BlockExists returns true if the block hash exist, or returns false if none exists.
 func (b *BlockKvDB) BlockExists(blockHash []byte) (bool, error) {
 	hashKey := constructBlockHashKey(blockHash)
 	return b.has(hashKey)

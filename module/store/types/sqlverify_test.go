@@ -129,8 +129,8 @@ func TestStandardSqlVerify_checkHasForbiddenKeyword(t *testing.T) {
 	v := &StandardSqlVerify{}
 	for sql, result := range table {
 		t.Run(sql, func(t *testing.T) {
-			SQL, _ := v.getFmtSql(sql)
-			err := v.checkHasForbiddenKeyword(SQL)
+			formatSql, _ := v.getFmtSql(sql)
+			err := v.checkHasForbiddenKeyword(formatSql)
 			if result {
 				assert.Nil(t, err)
 			} else {

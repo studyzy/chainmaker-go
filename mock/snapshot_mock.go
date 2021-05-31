@@ -104,15 +104,15 @@ func (mr *MockSnapshotMockRecorder) ApplyTxSimContext(arg0, arg1 interface{}) *g
 // BuildDAG mocks base method.
 func (m *MockSnapshot) BuildDAG(isSql bool) *common.DAG {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BuildDAG")
+	ret := m.ctrl.Call(m, "BuildDAG", isSql)
 	ret0, _ := ret[0].(*common.DAG)
 	return ret0
 }
 
 // BuildDAG indicates an expected call of BuildDAG.
-func (mr *MockSnapshotMockRecorder) BuildDAG() *gomock.Call {
+func (mr *MockSnapshotMockRecorder) BuildDAG(isSql interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildDAG", reflect.TypeOf((*MockSnapshot)(nil).BuildDAG))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildDAG", reflect.TypeOf((*MockSnapshot)(nil).BuildDAG), isSql)
 }
 
 // GetBlockHeight mocks base method.
