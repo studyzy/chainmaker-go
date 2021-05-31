@@ -10,13 +10,16 @@ import (
     "chainmaker.org/chainmaker-go/common/crypto/hash"
     bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
     "chainmaker.org/chainmaker-go/logger"
+    "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
     commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
     "chainmaker.org/chainmaker-go/protocol"
     "chainmaker.org/chainmaker-go/utils"
     "crypto/sha256"
+    "errors"
     "fmt"
     "regexp"
     "strings"
+    "time"
 )
 
 const(
@@ -53,6 +56,7 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
     queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CERT.String()] = privateComputeRuntime.GetCert
     queryMethodMap[commonPb.PrivateComputeContractFunction_GET_QUOTE.String()] = privateComputeRuntime.GetQuote
     queryMethodMap[commonPb.PrivateComputeContractFunction_UPDATE_CONTRACT.String()] = privateComputeRuntime.UpdateContract
+    queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
 
     return queryMethodMap
 }
@@ -746,3 +750,87 @@ func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimCont
 
     return signature, nil
 }
+
+
+func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, params map[string]string) ([]byte, error) {
+    ac, err := ctx.GetAccessControl()
+    if err != nil {
+        return nil, err
+    }
+
+    userCertPem, err := r.getParamValue(params, "user_cert")
+    if err != nil {
+       return nil, err
+    }
+
+    signature, err := r.getParamValue(params, "signature")
+    if err != nil {
+        return nil, err
+    }
+
+    payload, err := r.getParamValue(params, "payload")
+    if err != nil {
+        return nil, err
+    }
+
+    orgId, err := r.getParamValue(params, "org_id")
+    if err != nil {
+        return nil, err
+    }
+
+
+    header := &commonPb.TxHeader{
+        ChainId:        ctx.GetTx().Header.ChainId,
+        Sender:         &accesscontrol.SerializedMember{
+            OrgId:      orgId,
+            MemberInfo: []byte(userCertPem),
+            IsFullCert: true,
+        },
+        Timestamp:      time.Now().Unix(),
+    }
+
+    tx := &commonPb.Transaction{
+        Header:           header,
+        RequestPayload:   []byte(payload),
+        RequestSignature: []byte(signature),
+    }
+
+
+    txBytes, err := utils.CalcUnsignedTxBytes(tx)
+    if err != nil {
+        return nil, err
+    }
+
+    endorsements := []*commonPb.EndorsementEntry{{
+        Signer:    tx.Header.Sender,
+        Signature: []byte(signature),
+    }}
+
+    principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, txBytes)
+    if err != nil {
+        return nil ,fmt.Errorf("fail to construct authentication principal: %s", err)
+    }
+
+    ok, err := ac.VerifyPrincipal(principal)
+    if err != nil {
+        return nil,fmt.Errorf("authentication error, %s", err)
+    }
+
+    if !ok {
+        return nil, fmt.Errorf("authentication failed")
+    }
+
+
+    return []byte("true"),nil
+}
+
+func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key string) (string, error) {
+    value, ok := parameters[key]
+    if !ok {
+        errMsg := fmt.Sprintf("miss params %s", key)
+        r.log.Error(errMsg)
+        return "", errors.New(errMsg)
+    }
+    return value, nil
+}
+
