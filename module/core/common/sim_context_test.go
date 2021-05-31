@@ -4,7 +4,7 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package scheduler
+package common
 
 import (
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"

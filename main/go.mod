@@ -12,7 +12,6 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
-	gorm.io/driver/sqlite v1.1.4 // indirect
 )
 
 replace (
@@ -22,6 +21,7 @@ replace (
 	chainmaker.org/chainmaker-go/common => ./../common
 	chainmaker.org/chainmaker-go/consensus => ./../module/consensus
 	chainmaker.org/chainmaker-go/core => ./../module/core
+	chainmaker.org/chainmaker-go/evm => ../module/vm/evm
 	chainmaker.org/chainmaker-go/gasm => ../module/vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
@@ -30,6 +30,7 @@ replace (
 	chainmaker.org/chainmaker-go/net => ./../module/net
 	chainmaker.org/chainmaker-go/pb/protogo => ./../pb/protogo
 	chainmaker.org/chainmaker-go/protocol => ./../protocol
+	chainmaker.org/chainmaker-go/provider => ../module/provider
 	chainmaker.org/chainmaker-go/rpcserver => ./../module/rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ./../module/snapshot
 	chainmaker.org/chainmaker-go/spv => ./../module/spv
@@ -43,7 +44,6 @@ replace (
 	chainmaker.org/chainmaker-go/wasi => ../module/vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../module/vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../module/vm/wxvm
-	chainmaker.org/chainmaker-go/evm => ../module/vm/evm
 	github.com/libp2p/go-libp2p => ./../module/net/p2p/libp2p
 	github.com/libp2p/go-libp2p-core => ./../module/net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ./../module/net/p2p/libp2ppubsub

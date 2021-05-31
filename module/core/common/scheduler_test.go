@@ -4,7 +4,7 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package scheduler
+package common
 
 import (
 	"chainmaker.org/chainmaker-go/mock"
@@ -175,8 +175,8 @@ func TestSchedule(t *testing.T) {
 
 	txBatch := []*commonpb.Transaction{tx0, tx1}
 
-	txSimCache0 := newTxSimContext(vmMgr, snapshot, tx0)
-	txSimCache1 := newTxSimContext(vmMgr, snapshot, tx1)
+	txSimCache0 := NewTxSimContext(vmMgr, snapshot, tx0)
+	txSimCache1 := NewTxSimContext(vmMgr, snapshot, tx1)
 
 	snapshot.EXPECT().IsSealed().AnyTimes().Return(false)
 	snapshot.EXPECT().Seal().Return()
@@ -224,9 +224,9 @@ func TestSimulateWithDag(t *testing.T) {
 		},
 	}
 
-	txSimCache0 := newTxSimContext(vmMgr, snapshot, tx0)
-	txSimCache1 := newTxSimContext(vmMgr, snapshot, tx1)
-	txSimCache2 := newTxSimContext(vmMgr, snapshot, tx2)
+	txSimCache0 := NewTxSimContext(vmMgr, snapshot, tx0)
+	txSimCache1 := NewTxSimContext(vmMgr, snapshot, tx1)
+	txSimCache2 := NewTxSimContext(vmMgr, snapshot, tx2)
 
 	snapshot.EXPECT().IsSealed().AnyTimes().Return(false)
 	snapshot.EXPECT().Seal().Return()

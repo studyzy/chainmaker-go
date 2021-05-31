@@ -14,8 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
@@ -23,8 +21,10 @@ import (
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	providerConf "chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -333,24 +333,25 @@ func (bc *Blockchain) initCore() (err error) {
 		bc.log.Infof("core engine module existed, ignore.")
 		return
 	}
-	// init core engine
-	var coreFactory core.CoreFactory
-	coreLogger := logger.GetLoggerByChain(logger.MODULE_CORE, bc.chainId)
-	bc.coreEngine, err = coreFactory.NewCoreWithOptions(
-		core.WithMsgBus(bc.msgBus),
-		core.WithTxPool(bc.txPool),
-		core.WithSnapshotManager(bc.snapshotManager),
-		core.WithBlockchainStore(bc.store),
-		core.WithVmMgr(bc.vmMgr),
-		core.WithSigningMember(bc.identity),
-		core.WithLedgerCache(bc.ledgerCache),
-		core.WithChainId(bc.chainId),
-		core.WithChainConf(bc.chainConf),
-		core.WithAccessControl(bc.ac),
-		core.WithSubscriber(bc.eventSubscriber),
-		core.WithProposalCache(bc.proposalCache),
-		core.WithCoreLogger(coreLogger),
-	)
+	// init coreEngine module
+	coreEngineConfig := &providerConf.CoreEngineConfig{
+		ChainId:         bc.chainId,
+		TxPool:          bc.txPool,
+		SnapshotManager: bc.snapshotManager,
+		MsgBus:          bc.msgBus,
+		Identity:        bc.identity,
+		LedgerCache:     bc.ledgerCache,
+		ChainConf:       bc.chainConf,
+		AC:              bc.ac,
+		BlockchainStore: bc.store,
+		Log:             logger.GetLoggerByChain(logger.MODULE_CORE, bc.chainId),
+		VmMgr:           bc.vmMgr,
+		ProposalCache:   bc.proposalCache,
+		Subscriber:      bc.eventSubscriber,
+	}
+
+	coreEngineFactory := core.Factory()
+	bc.coreEngine, err = coreEngineFactory.NewConsensusEngine(bc.getConsensusType().String(), coreEngineConfig)
 	if err != nil {
 		bc.log.Errorf("new core engine failed, %s", err.Error())
 		return err
@@ -395,13 +396,13 @@ func (bc *Blockchain) initConsensus() (err error) {
 		dbHandle,
 		bc.ledgerCache,
 		bc.proposalCache,
-		bc.coreEngine.BlockVerifier,
-		bc.coreEngine.BlockCommitter,
+		bc.coreEngine.GetBlockVerifier(),
+		bc.coreEngine.GetBlockCommitter(),
 		bc.netService,
 		bc.msgBus,
 		bc.chainConf,
 		bc.store,
-		bc.coreEngine.HotStuffHelper)
+		bc.coreEngine.GetHotStuffHelper())
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
 		return err
@@ -423,8 +424,8 @@ func (bc *Blockchain) initSync() (err error) {
 		bc.msgBus,
 		bc.store,
 		bc.ledgerCache,
-		bc.coreEngine.BlockVerifier,
-		bc.coreEngine.BlockCommitter,
+		bc.coreEngine.GetBlockVerifier(),
+		bc.coreEngine.GetBlockCommitter(),
 	)
 	bc.initModules[moduleNameSync] = struct{}{}
 	return

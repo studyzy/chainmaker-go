@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
+	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"encoding/hex"
 	"fmt"
@@ -44,9 +45,7 @@ type BlockVerifierImpl struct {
 	log            protocol.Logger                // logger
 	txPool         protocol.TxPool                // tx pool to check if tx is duplicate
 	mu             sync.Mutex                     // to avoid concurrent map modify
-
-	blockValidator *BlockValidator //block validator
-	txValidator    *TxValidator    //tx validator
+	verifierBlock  *common.VerifierBlock
 
 	metricBlockVerifyTime *prometheus.HistogramVec // metrics monitor
 }
@@ -62,6 +61,7 @@ type BlockVerifierConfig struct {
 	ChainConf       protocol.ChainConf
 	AC              protocol.AccessControlProvider
 	TxPool          protocol.TxPool
+	VmMgr           protocol.VmManager
 }
 
 func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol.BlockVerifier, error) {
@@ -82,9 +82,17 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		txPool:        config.TxPool,
 	}
 
-	v.blockValidator = NewBlockValidator(v.chainId, v.chainConf.ChainConfig().Crypto.Hash)
-	v.txValidator = NewTxValidator(log, v.chainId, v.chainConf.ChainConfig().Crypto.Hash,
-		v.chainConf.ChainConfig().Consensus.Type, v.blockchainStore, v.txPool, v.ac)
+	conf := &common.VerifierBlockConf{
+		ChainConf:       config.ChainConf,
+		Log:             v.log,
+		LedgerCache:     config.LedgerCache,
+		Ac:              config.AC,
+		SnapshotManager: config.SnapshotManager,
+		VmMgr:           config.VmMgr,
+		TxPool:          config.TxPool,
+		BlockchainStore: config.BlockchainStore,
+	}
+	v.verifierBlock = common.NewVerifierBlock(conf)
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		v.metricBlockVerifyTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_VERIFIER, "metric_block_verify_time",
@@ -94,18 +102,8 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 	return v, nil
 }
 
-// verifyStat, statistic for verify steps
-type verifyStat struct {
-	totalCount  int
-	dbLasts     int64
-	sigLasts    int64
-	othersLasts int64
-	sigCount    int
-}
-
 // VerifyBlock, to check if block is valid
 func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.VerifyMode) (err error) {
-
 	startTick := utils.CurrentTimeMillisSeconds()
 	if err = utils.IsEmptyBlock(block); err != nil {
 		v.log.Error(err)
@@ -210,6 +208,63 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	return nil
 }
 
+func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
+	hashType := v.chainConf.ChainConfig().Crypto.Hash
+	timeLasts := make([]int64, 0)
+	var err error
+	var lastBlock *commonpb.Block
+	txCapacity := int64(v.chainConf.ChainConfig().Block.BlockTxCapacity)
+	if block.Header.TxCount > txCapacity {
+		return nil, nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
+	}
+
+	if err = common.IsTxCountValid(block); err != nil {
+		return nil, nil, timeLasts, err
+	}
+
+	lastBlock, err = v.verifierBlock.FetchLastBlock(block, lastBlock)
+	if err != nil {
+		return nil, nil, timeLasts, err
+	}
+	// proposed height == proposing height - 1
+	proposedHeight := lastBlock.Header.BlockHeight
+	// check if this block height is 1 bigger than last block height
+	lastBlockHash := lastBlock.Header.BlockHash
+	err = v.checkPreBlock_HOTSTUFF(block, lastBlock, err, lastBlockHash, proposedHeight)
+	if err != nil {
+		return nil, nil, timeLasts, err
+	}
+
+	return v.verifierBlock.ValidateBlock(block, lastBlock, hashType, timeLasts)
+}
+
+func (v *BlockVerifierImpl) checkPreBlock_HOTSTUFF(block *commonpb.Block, lastBlock *commonpb.Block, err error,
+	lastBlockHash []byte, proposedHeight int64) error {
+
+	if block.Header.BlockHeight == lastBlock.Header.BlockHeight+1 {
+		if err = common.IsPreHashValid(block, lastBlock.Header.BlockHash); err != nil {
+			return err
+		}
+	} else {
+		// for chained bft consensus type
+		proposedBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
+		if proposedBlock == nil {
+			return fmt.Errorf("no last block found [%d](%x) %s", block.Header.BlockHeight-1, block.Header.PreBlockHash, err)
+		}
+	}
+
+	// remove unconfirmed block from proposal cache and txpool
+	cutBlocks := v.proposalCache.KeepProposedBlock(lastBlockHash, lastBlock.Header.BlockHeight)
+	if len(cutBlocks) > 0 {
+		cutTxs := make([]*commonpb.Transaction, 0)
+		for _, cutBlock := range cutBlocks {
+			cutTxs = append(cutTxs, cutBlock.Txs...)
+		}
+		v.txPool.RetryAndRemoveTxs(cutTxs, nil)
+	}
+	return nil
+}
+
 func (v *BlockVerifierImpl) verifyVoteSig(block *commonpb.Block) error {
 	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block, v.ledgerCache)
 }
@@ -226,182 +281,6 @@ func parseVerifyResult(block *commonpb.Block, isValid bool) *consensuspb.VerifyR
 		verifyResult.Code = consensuspb.VerifyResult_FAIL
 	}
 	return verifyResult
-}
-
-// validateBlock, validate block and transactions
-func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
-	hashType := v.chainConf.ChainConfig().Crypto.Hash
-	timeLasts := make([]int64, 0)
-	var err error
-	var lastBlock *commonpb.Block
-	txCapacity := int64(v.chainConf.ChainConfig().Block.BlockTxCapacity)
-	if block.Header.TxCount > txCapacity {
-		return nil, nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
-	}
-
-	if err = v.blockValidator.IsTxCountValid(block); err != nil {
-		return nil, nil, timeLasts, err
-	}
-
-	lastBlock, err = v.fetchLastBlock(block, lastBlock)
-	if err != nil {
-		return nil, nil, timeLasts, err
-	}
-	// proposed height == proposing height - 1
-	proposedHeight := lastBlock.Header.BlockHeight
-	// check if this block height is 1 bigger than last block height
-	lastBlockHash := lastBlock.Header.BlockHash
-	err = v.checkPreBlock(block, lastBlock, err, lastBlockHash, proposedHeight)
-	if err != nil {
-		return nil, nil, timeLasts, err
-	}
-
-	if err = v.blockValidator.IsBlockHashValid(block); err != nil {
-		return nil, nil, timeLasts, err
-	}
-
-	// verify block sig and also verify identity and auth of block proposer
-	startSigTick := utils.CurrentTimeMillisSeconds()
-
-	v.log.Debugf("verify block \n %s", utils.FormatBlock(block))
-	if ok, err := utils.VerifyBlockSig(hashType, block, v.ac); !ok || err != nil {
-		return nil, nil, timeLasts, fmt.Errorf("(%d,%x - %x,%x) [signature]",
-			block.Header.BlockHeight, block.Header.BlockHash, block.Header.Proposer, block.Header.Signature)
-	}
-	sigLasts := utils.CurrentTimeMillisSeconds() - startSigTick
-	timeLasts = append(timeLasts, sigLasts)
-
-	err = v.checkVacuumBlock(block)
-	if err != nil {
-		return nil, nil, timeLasts, err
-	}
-	if len(block.Txs) == 0 {
-		return nil, nil, timeLasts, nil
-	}
-
-	// verify if txs are duplicate in this block
-	if v.blockValidator.IsTxDuplicate(block.Txs) {
-		err := fmt.Errorf("tx duplicate")
-		return nil, nil, timeLasts, err
-	}
-
-	// simulate with DAG, and verify read write set
-	startVMTick := utils.CurrentTimeMillisSeconds()
-	snapshot := v.snapshotManager.NewSnapshot(lastBlock, block)
-	if v.chainConf.ChainConfig().Contract.EnableSqlSupport {
-		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
-	}
-	txRWSetMap, txResultMap, err := v.txScheduler.SimulateWithDag(block, snapshot)
-	vmLasts := utils.CurrentTimeMillisSeconds() - startVMTick
-	timeLasts = append(timeLasts, vmLasts)
-	if err != nil {
-		return nil, nil, timeLasts, fmt.Errorf("simulate %s", err)
-	}
-	if block.Header.TxCount != int64(len(txRWSetMap)) {
-		err = fmt.Errorf("simulate txcount expect %d, got %d", block.Header.TxCount, len(txRWSetMap))
-		return nil, nil, timeLasts, err
-	}
-
-	// 2.transaction verify
-	startTxTick := utils.CurrentTimeMillisSeconds()
-	txHashes, _, errTxs, err := v.txValidator.VerifyTxs(block, txRWSetMap, txResultMap)
-	txLasts := utils.CurrentTimeMillisSeconds() - startTxTick
-	timeLasts = append(timeLasts, txLasts)
-	if err != nil {
-		// verify failed, need to put transactions back to txpool
-		if len(errTxs) > 0 {
-			v.log.Warn("[Duplicate txs] delete the err txs")
-			v.txPool.RetryAndRemoveTxs(nil, errTxs)
-		}
-		return nil, nil, timeLasts, fmt.Errorf("verify failed [%d](%x), %s ",
-			block.Header.BlockHeight, block.Header.PreBlockHash, err)
-	}
-	//if protocol.CONSENSUS_VERIFY == mode && len(newAddTx) > 0 {
-	//	v.txPool.AddTrustedTx(newAddTx)
-	//}
-
-	// get contract events
-	contractEventMap := make(map[string][]*commonpb.ContractEvent)
-	for _, tx := range block.Txs {
-		var events []*commonpb.ContractEvent
-		if result, ok := txResultMap[tx.Header.TxId]; ok {
-			events = result.ContractResult.ContractEvent
-		}
-		contractEventMap[tx.Header.TxId] = events
-	}
-
-	// verify TxRoot
-	startRootsTick := utils.CurrentTimeMillisSeconds()
-	err = v.checkBlockDigests(block, txHashes, hashType)
-	if err != nil {
-		return txRWSetMap, contractEventMap, timeLasts, err
-	}
-	rootsLast := utils.CurrentTimeMillisSeconds() - startRootsTick
-	timeLasts = append(timeLasts, rootsLast)
-
-	return txRWSetMap, contractEventMap, timeLasts, nil
-}
-
-func (v *BlockVerifierImpl) checkVacuumBlock(block *commonpb.Block) error {
-	if 0 == block.Header.TxCount {
-		if utils.CanProposeEmptyBlock(v.chainConf.ChainConfig().Consensus.Type) {
-			// for consensus that allows empty block, skip txs verify
-			return nil
-		} else {
-			// for consensus that NOT allows empty block, return error
-			return fmt.Errorf("tx must not empty")
-		}
-	}
-	return nil
-}
-
-func (v *BlockVerifierImpl) checkBlockDigests(block *commonpb.Block, txHashes [][]byte, hashType string) error {
-	if err := v.blockValidator.IsMerkleRootValid(block, txHashes); err != nil {
-		v.log.Error(err)
-		return err
-	}
-	// verify DAG hash
-	if err := v.blockValidator.IsDagHashValid(block); err != nil {
-		v.log.Error(err)
-		return err
-	}
-	// verify read write set, check if simulate result is equal with rwset in block header
-	if err := v.blockValidator.IsRWSetHashValid(block); err != nil {
-		v.log.Error(err)
-		return err
-	}
-	return nil
-}
-
-func (v *BlockVerifierImpl) checkPreBlock(block *commonpb.Block, lastBlock *commonpb.Block, err error,
-	lastBlockHash []byte, proposedHeight int64) error {
-	if consensuspb.ConsensusType_HOTSTUFF != v.chainConf.ChainConfig().Consensus.Type {
-		if err = v.blockValidator.IsHeightValid(block, proposedHeight); err != nil {
-			return err
-		}
-		// check if this block pre hash is equal with last block hash
-		return v.blockValidator.IsPreHashValid(block, lastBlockHash)
-	}
-
-	if block.Header.BlockHeight == lastBlock.Header.BlockHeight+1 {
-		if err := v.blockValidator.IsPreHashValid(block, lastBlock.Header.BlockHash); err != nil {
-			return err
-		}
-	} else {
-		// for chained bft consensus type
-		proposedBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
-		if proposedBlock == nil {
-			return fmt.Errorf("no last block found [%d](%x) %s", block.Header.BlockHeight-1, block.Header.PreBlockHash, err)
-		}
-	}
-
-	// remove unconfirmed block from proposal cache and txpool
-	cutBlocks := v.proposalCache.KeepProposedBlock(lastBlockHash, lastBlock.Header.BlockHeight)
-	if len(cutBlocks) > 0 {
-		v.log.Infof("cut block block hash: %s, height: %v", hex.EncodeToString(lastBlockHash), lastBlock.Header.BlockHeight)
-		v.cutBlocks(cutBlocks, lastBlock)
-	}
-	return nil
 }
 
 func (v *BlockVerifierImpl) cutBlocks(blocksToCut []*commonpb.Block, blockToKeep *commonpb.Block) {
@@ -424,21 +303,4 @@ func (v *BlockVerifierImpl) cutBlocks(blocksToCut []*commonpb.Block, blockToKeep
 	if len(cutTxs) > 0 {
 		v.txPool.RetryAndRemoveTxs(cutTxs, nil)
 	}
-}
-
-func (v *BlockVerifierImpl) fetchLastBlock(block *commonpb.Block, lastBlock *commonpb.Block) (*commonpb.Block, error) {
-	currentHeight, _ := v.ledgerCache.CurrentHeight()
-	if currentHeight >= block.Header.BlockHeight {
-		return nil, commonErrors.ErrBlockHadBeenCommited
-	}
-
-	if currentHeight+1 == block.Header.BlockHeight {
-		lastBlock = v.ledgerCache.GetLastCommittedBlock()
-	} else {
-		lastBlock, _ = v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
-	}
-	if lastBlock == nil {
-		return nil, fmt.Errorf("no pre block found [%d](%x)", block.Header.BlockHeight-1, block.Header.PreBlockHash)
-	}
-	return lastBlock, nil
 }
