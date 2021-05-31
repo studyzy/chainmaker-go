@@ -555,7 +555,6 @@ func (vb *VerifierBlock) ValidateBlock(
 	return txRWSetMap, contractEventMap, timeLasts, nil
 }
 
-// todo hotstuff...
 func CheckPreBlock(block *commonpb.Block, lastBlock *commonpb.Block, err error,
 	lastBlockHash []byte, proposedHeight int64) error {
 

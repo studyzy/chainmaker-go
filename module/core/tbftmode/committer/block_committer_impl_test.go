@@ -7,6 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package committer
 
 import (
+	"encoding/hex"
+	"fmt"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/logger"
@@ -15,13 +20,9 @@ import (
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/hex"
-	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/google/martian/log"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestAddBlock(t *testing.T) {
@@ -38,7 +39,7 @@ func TestAddBlock(t *testing.T) {
 	rwSetMap := make(map[string]*commonpb.TxRWSet)
 	contractEventMap := make(map[string][]*commonpb.ContractEvent)
 	msgbus := mock.NewMockMessageBus(ctl)
-	msgbus.EXPECT().Publish(gomock.Any(), gomock.Any()).Return().Times(2)
+	msgbus.EXPECT().PublishSafe(gomock.Any(), gomock.Any()).Return().Times(2)
 
 	blockCommitterImpl := initCommitter(blockchainStoreImpl, txPool, snapshotManager, ledgerCache, proposedCache, chainConf, msgbus)
 	require.NotNil(t, blockCommitterImpl)
