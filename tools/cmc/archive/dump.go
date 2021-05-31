@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gosuri/uiprogress"
@@ -171,6 +172,9 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 		// blk is first row of new table, create new table
 		if blk%model.RowsPerBlockInfoTable() == 0 {
 			if err := model.CreateBlockInfoTable(db, model.BlockInfoTableNameByBlockHeight(blk)); err != nil {
+				if strings.Contains(err.Error(), "Error 1050") {
+					continue
+				}
 				return err
 			}
 		}
