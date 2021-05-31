@@ -218,7 +218,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 			}
 			eventsInfo = append(eventsInfo, eventInfo)
 		}
-		chain.msgBus.Publish(msgbus.ContractEventInfo, eventsInfo)
+		chain.msgBus.Publish(msgbus.ContractEventInfo, &commonpb.ContractEventInfoList{ContractEvents: eventsInfo})
 		pubEvent = utils.CurrentTimeMillisSeconds() - startPublishContractEventTick
 	}
 	startOtherTick := utils.CurrentTimeMillisSeconds()
@@ -229,7 +229,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		RwsetList: rwSet,
 	}
 	// synchronize new block height to consensus and sync module
-	chain.msgBus.Publish(msgbus.BlockInfo, bi)
+	chain.msgBus.PublishSafe(msgbus.BlockInfo, bi)
 	if err = chain.monitorCommit(bi); err != nil {
 		return err
 	}

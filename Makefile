@@ -11,7 +11,7 @@ DATETIME=$(shell date "+%Y%m%d%H%M%S")
 VERSION=V1.0.0
 
 chainmaker:
-	@cd main && go build -o ../bin/chainmaker
+	@cd main && go build -mod=mod -o ../bin/chainmaker
 
 package:
 	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
