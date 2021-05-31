@@ -13,7 +13,7 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 )
 

@@ -7,8 +7,8 @@ package mock
 import (
 	reflect "reflect"
 
-	accesscontrol "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	common "chainmaker.org/chainmaker-go/pb/protogo/common"
+	accesscontrol "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	common "chainmaker.org/chainmaker/pb-go/common"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
 )

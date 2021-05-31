@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/logger"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 

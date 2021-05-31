@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package protocol
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/pb/protogo/txpool"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/txpool"
 )
 
 // Block committer, put block and read write set into ledger(DB).

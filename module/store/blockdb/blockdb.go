@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package blockdb
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker-go/store/serialization"
 )
 

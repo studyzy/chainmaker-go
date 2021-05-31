@@ -13,7 +13,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/protocol/test"
 
-	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configpb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker/common/errors"

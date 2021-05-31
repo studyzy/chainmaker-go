@@ -16,7 +16,7 @@ import (
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/subscriber"

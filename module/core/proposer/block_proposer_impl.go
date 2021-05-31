@@ -8,19 +8,19 @@ package proposer
 
 import (
 	"bytes"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"sync"
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"chainmaker.org/chainmaker/common/msgbus"
-	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
+	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
 )

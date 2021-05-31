@@ -10,7 +10,7 @@ package main
 import (
 	"chainmaker.org/chainmaker/common/crypto"
 	localhibe "chainmaker.org/chainmaker/common/crypto/hibe"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"github.com/samkumar/hibe"

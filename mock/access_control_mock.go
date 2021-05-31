@@ -9,9 +9,9 @@ import (
 	reflect "reflect"
 
 	x509 "chainmaker.org/chainmaker/common/crypto/x509"
-	accesscontrol "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	common "chainmaker.org/chainmaker-go/pb/protogo/common"
-	config "chainmaker.org/chainmaker-go/pb/protogo/config"
+	accesscontrol "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	common "chainmaker.org/chainmaker/pb-go/common"
+	config "chainmaker.org/chainmaker/pb-go/config"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
 )

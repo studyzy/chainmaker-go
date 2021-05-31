@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"

@@ -9,7 +9,7 @@ package main
 
 import (
 	evm "chainmaker.org/chainmaker/common/evmutils"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"github.com/spf13/cobra"
 )

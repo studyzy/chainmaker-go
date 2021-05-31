@@ -6,9 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 package protocol
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/consensus"
 )
 
 // ChainConf chainconf interface

@@ -9,7 +9,7 @@ package utils
 
 import (
 	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 )

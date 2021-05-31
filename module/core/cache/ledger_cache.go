@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package cache
 
 import (
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"errors"
 	"sync"

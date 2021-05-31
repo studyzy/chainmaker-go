@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 //consensusRound caches consensus msg per round

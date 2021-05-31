@@ -9,7 +9,7 @@ package subscriber
 
 import (
 	"chainmaker.org/chainmaker/common/msgbus"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/subscriber/model"
 	feed "github.com/ethereum/go-ethereum/event"
 )

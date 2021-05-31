@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker/common/sortedmap"
-	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
+	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
 )
 
 type nodeBatchPool struct {

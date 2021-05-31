@@ -10,7 +10,7 @@ package utils
 import (
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"encoding/pem"
 	"fmt"
 )

@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package tbft
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	netpb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	"chainmaker.org/chainmaker/pb-go/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	netpb "chainmaker.org/chainmaker/pb-go/net"
 	"fmt"
 	"sync"
 	"testing"

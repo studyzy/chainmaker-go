@@ -8,8 +8,8 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker-go/protocol"
 	"errors"
 	"fmt"

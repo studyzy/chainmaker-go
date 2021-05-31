@@ -9,7 +9,7 @@ import (
     "chainmaker.org/chainmaker/common/crypto/hash"
     bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
     "chainmaker.org/chainmaker-go/logger"
-    commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+    commonPb "chainmaker.org/chainmaker/pb-go/common"
     "chainmaker.org/chainmaker-go/protocol"
     "chainmaker.org/chainmaker-go/utils"
     "crypto/sha256"

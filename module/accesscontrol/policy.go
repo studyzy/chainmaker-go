@@ -9,7 +9,7 @@ package accesscontrol
 
 import (
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/protocol"
 	"strings"
 )

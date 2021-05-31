@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/stretchr/testify/require"
 	"testing"

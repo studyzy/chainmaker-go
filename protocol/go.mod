@@ -4,7 +4,7 @@ go 1.15
 
 require (
 
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
+
 )
 
 replace (

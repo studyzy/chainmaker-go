@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	common "chainmaker.org/chainmaker-go/pb/protogo/common"
+	common "chainmaker.org/chainmaker/pb-go/common"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
 )

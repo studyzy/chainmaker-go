@@ -4,7 +4,7 @@ go 1.15
 
 require (
 
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
+
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	github.com/golang/mock v1.4.4
 )

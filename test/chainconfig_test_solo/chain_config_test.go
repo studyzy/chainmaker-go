@@ -15,11 +15,11 @@ import (
 	"fmt"
 	"testing"
 
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker-go/protocol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/utils"

@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker/common/queue"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 //BlockNode save one block and its children

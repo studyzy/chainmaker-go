@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/gasm"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"github.com/stretchr/testify/require"

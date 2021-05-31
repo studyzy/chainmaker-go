@@ -9,8 +9,8 @@ package native
 import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	discoveryPb "chainmaker.org/chainmaker-go/pb/protogo/discovery"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"chainmaker.org/chainmaker-go/protocol"
 	"encoding/hex"
 	"errors"

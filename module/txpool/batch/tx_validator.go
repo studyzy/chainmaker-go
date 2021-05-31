@@ -12,7 +12,7 @@ import (
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
 
 	commonErrors "chainmaker.org/chainmaker/common/errors"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 )

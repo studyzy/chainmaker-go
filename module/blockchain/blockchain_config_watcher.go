@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 

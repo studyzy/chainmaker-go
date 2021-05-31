@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package protocol
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/store"
 )
 
 var (

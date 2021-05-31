@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	netpb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	netpb "chainmaker.org/chainmaker/pb-go/net"
 	"github.com/tidwall/wal"
 
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -34,7 +34,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/logger"
-	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
+	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
 )
 
 var clog *zap.SugaredLogger = zap.S()

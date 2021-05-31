@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"flag"
 	"fmt"
 	"io/ioutil"

@@ -7,9 +7,9 @@ package mock
 import (
 	reflect "reflect"
 
-	common "chainmaker.org/chainmaker-go/pb/protogo/common"
-	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	txpool "chainmaker.org/chainmaker-go/pb/protogo/txpool"
+	common "chainmaker.org/chainmaker/pb-go/common"
+	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	txpool "chainmaker.org/chainmaker/pb-go/txpool"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
 )

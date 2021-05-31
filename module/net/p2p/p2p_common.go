@@ -10,7 +10,7 @@ package p2p
 import (
 	"bytes"
 	rootLog "chainmaker.org/chainmaker-go/logger"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"encoding/binary"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"

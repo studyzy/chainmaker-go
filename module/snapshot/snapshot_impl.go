@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker/common/bitmap"
 	"chainmaker.org/chainmaker-go/protocol"

@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"sort"
 
-	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
 )

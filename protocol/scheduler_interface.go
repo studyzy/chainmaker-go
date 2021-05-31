@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package protocol
 
 import (
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 // TxScheduler schedules a transaction batch and returns a block (maybe not complete) with DAG

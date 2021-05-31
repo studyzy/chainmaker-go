@@ -1,5 +1,7 @@
 chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38 h1:QlykY15JoHq6LKrh9r+2Ll8Zv/9XzHe93NuBW/Q1Xxo=
 chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38/go.mod h1:/Xk1SQl6o4Jv35+gP+6DQOvHz0RxILCX/SGIO/QtpO8=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210531071221-ccada476876b h1:l7E1ndP1nAaFPLqIwJ7VGYmFxaVKrXSI/hvjrwUXqj4=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210531071221-ccada476876b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Azure/azure-pipeline-go v0.2.1/go.mod h1:UGSo8XybXnIGZ3epmeBw7Jdz+HiUVpqIlpz/HKHylF4=
 github.com/Azure/azure-pipeline-go v0.2.2/go.mod h1:4rQ/NZncSvGqNkkOsNpOU1tgoNuIlp9AfUH5G1tvCHc=

@@ -9,7 +9,7 @@ package protocol
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"regexp"
 )

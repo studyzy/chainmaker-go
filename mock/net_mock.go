@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	net "chainmaker.org/chainmaker-go/pb/protogo/net"
+	net "chainmaker.org/chainmaker/pb-go/net"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
 )

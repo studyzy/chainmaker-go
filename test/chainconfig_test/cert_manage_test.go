@@ -12,8 +12,8 @@ SPDX-License-Identifier: Apache-2.0
 package native_test
 
 import (
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"testing"
 

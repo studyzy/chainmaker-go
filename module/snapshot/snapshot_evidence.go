@@ -10,7 +10,7 @@ package snapshot
 import (
 	"errors"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/protocol"
 )

@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -23,7 +23,7 @@ import (
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"

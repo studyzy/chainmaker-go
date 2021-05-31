@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	syncPb "chainmaker.org/chainmaker/pb-go/sync"
 
 	"chainmaker.org/chainmaker-go/protocol"
 
