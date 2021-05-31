@@ -9,9 +9,9 @@ package hotstuff
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
-	"chainmaker.org/chainmaker-go/core/tbftmode/committer"
-	"chainmaker.org/chainmaker-go/core/tbftmode/proposer"
-	"chainmaker.org/chainmaker-go/core/tbftmode/verifier"
+	"chainmaker.org/chainmaker-go/core/hotstuff/committer"
+	"chainmaker.org/chainmaker-go/core/hotstuff/proposer"
+	"chainmaker.org/chainmaker-go/core/hotstuff/verifier"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
@@ -107,6 +107,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		ChainConf:       cf.ChainConf,
 		AC:              cf.AC,
 		TxPool:          core.txPool,
+		VmMgr:           cf.VmMgr,
 	}
 	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.Log)
 	if err != nil {
@@ -200,7 +201,7 @@ func (c *CoreEngine) GetBlockVerifier() protocol.BlockVerifier {
 	return c.BlockVerifier
 }
 
-func (c *CoreEngine) DiscardAboveHeight(baseHeight int64)() {
+func (c *CoreEngine) DiscardAboveHeight(baseHeight int64) () {
 }
 
 func (c *CoreEngine) GetHotStuffHelper() protocol.HotStuffHelper {

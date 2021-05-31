@@ -2,7 +2,6 @@ package conf
 
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 )
@@ -18,7 +17,7 @@ type CoreEngineConfig struct {
 	ChainConf       protocol.ChainConf
 	AC              protocol.AccessControlProvider
 	BlockchainStore protocol.BlockchainStore
-	Log             *logger.CMLogger
+	Log             protocol.Logger
 	VmMgr           protocol.VmManager
 	Subscriber      *subscriber.EventSubscriber // block subsriber
 }

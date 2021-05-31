@@ -91,6 +91,7 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		VmMgr:           config.VmMgr,
 		TxPool:          config.TxPool,
 		BlockchainStore: config.BlockchainStore,
+		ProposalCache:   config.ProposedCache,
 	}
 	v.verifierBlock = common.NewVerifierBlock(conf)
 
