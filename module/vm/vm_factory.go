@@ -549,7 +549,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 	// begin save point for sql
 	var dbTransaction protocol.SqlDBTransaction
 	if m.chainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
-		txKey := commonPb.GetTxKewWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
+		txKey := commonPb.GetTxKeyWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
 		dbTransaction, err = txContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
 			contractResult.Message = fmt.Sprintf("get db transaction from [%s] error %+v", txKey, err)

@@ -162,9 +162,22 @@ function generate_config() {
         xsed "s%{pprof_port}%$(($PPROF_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
         xsed "s%{trusted_port}%$(($TRUSTED_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
 
-        for ((k = $NODE_CNT; k > 0; k = k - 1)); do
-            xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
-        done
+        system=$(uname)
+
+        if [ "${system}" = "Linux" ]; then
+            for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+                xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
+            done
+        else
+            for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+                xsed  "/  seeds:/a\\
+                \ \ \ \ - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
+                " node$i/chainmaker.yml
+            done
+        fi
+
+
+
 
         for ((j = 1; j < $CHAIN_CNT + 1; j = j + 1)); do
             xsed "s%#\(.*\)- chainId: chain${j}%\1- chainId: chain${j}%g" node$i/chainmaker.yml
