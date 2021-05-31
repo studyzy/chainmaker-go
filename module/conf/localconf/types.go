@@ -337,8 +337,7 @@ type schedulerConfig struct {
 }
 
 type coreConfig struct {
-	Evidence        bool            `mapstructure:"evidence"`
-	SchedulerConfig schedulerConfig `mapstructure:"scheduler"`
+	Evidence bool `mapstructure:"evidence"`
 }
 
 // CMConfig - Local config struct
@@ -354,10 +353,11 @@ type CMConfig struct {
 	SpvConfig        spvConfig          `mapstructure:"spv"`
 
 	// 开发调试使用
-	DebugConfig   debugConfig   `mapstructure:"debug"`
-	PProfConfig   pprofConfig   `mapstructure:"pprof"`
-	MonitorConfig monitorConfig `mapstructure:"monitor"`
-	CoreConfig    coreConfig    `mapstructure:"core"`
+	DebugConfig     debugConfig     `mapstructure:"debug"`
+	PProfConfig     pprofConfig     `mapstructure:"pprof"`
+	MonitorConfig   monitorConfig   `mapstructure:"monitor"`
+	CoreConfig      coreConfig      `mapstructure:"core"`
+	SchedulerConfig schedulerConfig `mapstructure:"scheduler"`
 }
 
 // GetBlockChains - get blockchain config list

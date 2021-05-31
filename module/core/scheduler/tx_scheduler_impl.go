@@ -189,7 +189,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 		contractEventMap[tx.Header.TxId] = event
 	}
 	//ts.dumpDAG(block.Dag, block.Txs)
-	if localconf.ChainMakerConfig.CoreConfig.SchedulerConfig.RWSetLog {
+	if localconf.ChainMakerConfig.SchedulerConfig.RWSetLog {
 		ts.log.Debugf("rwset %v", txRWSetMap)
 	}
 	return txRWSetMap, contractEventMap, nil
@@ -320,7 +320,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 			txRWSetMap[txRWSet.TxId] = txRWSet
 		}
 	}
-	if localconf.ChainMakerConfig.CoreConfig.SchedulerConfig.RWSetLog {
+	if localconf.ChainMakerConfig.SchedulerConfig.RWSetLog {
 		ts.log.Debugf("rwset %v", txRWSetMap)
 	}
 	return txRWSetMap, snapshot.GetTxResultMap(), nil
