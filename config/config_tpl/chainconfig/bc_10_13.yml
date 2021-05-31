@@ -30,6 +30,10 @@ core:
   tx_scheduler_timeout: 10 #  [0, 60] 交易调度器从交易池拿到交易后, 进行调度的时间
   tx_scheduler_validate_timeout: 10 # [0, 60] 交易调度器从区块中拿到交易后, 进行验证的超时时间
 
+# snapshot module
+snapshot:
+  enable_evidence: false # enable the evidence support 
+
 #共识配置
 consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)

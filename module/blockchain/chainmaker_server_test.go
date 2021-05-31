@@ -9,10 +9,15 @@ package blockchain
 
 import (
 	"testing"
+	"time"
 )
 
 func TestInitAndStart(*testing.T) {
 	chainmakerServer := ChainMakerServer{}
 	chainmakerServer.Init()
-	select {}
+	timer := time.NewTimer(5 * time.Second)
+	select {
+	case <-timer.C:
+		break
+	}
 }

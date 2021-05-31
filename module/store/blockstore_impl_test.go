@@ -35,28 +35,32 @@ var chainId = "testchain1"
 var defaultContractName = "contract1"
 var block0 = createConfigBlock(chainId, 0)
 var block5 = createBlock(chainId, 5, 1)
-var txRWSets = []*commonPb.TxRWSet{
-	{
-		//TxId: "abcdefg",
-		TxWrites: []*commonPb.TxWrite{
-			{
-				Key:          []byte("key1"),
-				Value:        []byte("value1"),
-				ContractName: defaultContractName,
-			},
-			{
-				Key:          []byte("key2"),
-				Value:        []byte("value2"),
-				ContractName: defaultContractName,
-			},
-			{
-				Key:          []byte("key3"),
-				Value:        nil,
-				ContractName: defaultContractName,
+
+func getTxRWSets() []*commonPb.TxRWSet {
+	return []*commonPb.TxRWSet{
+		{
+			//TxId: "abcdefg",
+			TxWrites: []*commonPb.TxWrite{
+				{
+					Key:          []byte("key1"),
+					Value:        []byte("value1"),
+					ContractName: defaultContractName,
+				},
+				{
+					Key:          []byte("key2"),
+					Value:        []byte("value2"),
+					ContractName: defaultContractName,
+				},
+				{
+					Key:          []byte("key3"),
+					Value:        nil,
+					ContractName: defaultContractName,
+				},
 			},
 		},
-	},
+	}
 }
+
 var config1 = getSqlConfig()
 
 func getSqlConfig() *localconf.StorageConfig {
@@ -311,7 +315,7 @@ func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageCon
 }
 func initGenesis(s protocol.BlockchainStore) {
 	genesis := block0
-	g := &storePb.BlockWithRWSet{Block: genesis, TxRWSets: txRWSets}
+	g := &storePb.BlockWithRWSet{Block: genesis, TxRWSets: getTxRWSets()}
 	s.InitGenesis(g)
 }
 
@@ -319,7 +323,7 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 	var factory Factory
 	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	initGenesis(s)
-
+	txRWSets := getTxRWSets()
 	if err != nil {
 		panic(err)
 	}
@@ -356,7 +360,7 @@ func init5Blocks(s protocol.BlockchainStore) {
 	b, rw = createBlockAndRWSets(chainId, 4, 10)
 	s.PutBlock(b, rw)
 	b, _ = createBlockAndRWSets(chainId, 5, 1)
-	s.PutBlock(b, txRWSets)
+	s.PutBlock(b, getTxRWSets())
 }
 func init5ContractBlocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
@@ -417,8 +421,10 @@ func Test_blockchainStoreImpl_GetBlockByTx(t *testing.T) {
 
 }
 
+const HAS_TX = "has tx"
+
 func Test_blockchainStoreImpl_GetTx(t *testing.T) {
-	funcName := "has tx"
+	funcName := HAS_TX
 	tests := []struct {
 		name  string
 		block *commonPb.Block
@@ -453,7 +459,7 @@ func Test_blockchainStoreImpl_GetTx(t *testing.T) {
 }
 
 func Test_blockchainStoreImpl_HasTx(t *testing.T) {
-	funcName := "has tx"
+	funcName := HAS_TX
 	tests := []struct {
 		name  string
 		block *commonPb.Block
@@ -534,7 +540,7 @@ func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 	txRWSetFromDB, err := impl.GetTxRWSet(txid)
 	assert.Equal(t, nil, err)
 	t.Log(txRWSetFromDB)
-	assert.Equal(t, txRWSets[0].String(), txRWSetFromDB.String())
+	assert.Equal(t, getTxRWSets()[0].String(), txRWSetFromDB.String())
 }
 
 /*func TestBlockStoreImpl_Recovery(t *testing.T) {
@@ -572,6 +578,7 @@ func TestBlockStoreImpl_GetTxRWSetsByHeight(t *testing.T) {
 	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
 	defer s.Close()
 	init5Blocks(s)
+	txRWSets := getTxRWSets()
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)

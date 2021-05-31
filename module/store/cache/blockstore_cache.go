@@ -48,7 +48,10 @@ func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 // AddBlock cache a block with given block height and update batch
 func (mgr *StoreCacheMgr) AddBlock(blockHeight int64, updateBatch protocol.StoreBatcher) {
 	//wait for semaphore
-	mgr.blockSizeSem.Acquire(context.Background(), 1)
+	err := mgr.blockSizeSem.Acquire(context.Background(), 1)
+	if err != nil {
+		mgr.logger.Error(err.Error())
+	}
 	mgr.Lock()
 	defer mgr.Unlock()
 	mgr.pendingBlockUpdates[blockHeight] = updateBatch
@@ -89,7 +92,10 @@ func (mgr *StoreCacheMgr) Has(key string) (bool, bool) {
 
 // LockForFlush used to lock cache until all cache item be flushed to db
 func (mgr *StoreCacheMgr) LockForFlush() {
-	mgr.blockSizeSem.Acquire(context.Background(), defaultMaxBlockSize)
+	err := mgr.blockSizeSem.Acquire(context.Background(), defaultMaxBlockSize)
+	if err != nil {
+		mgr.logger.Error(err.Error())
+	}
 }
 
 // UnLockFlush used to unlock cache by release all semaphore
@@ -140,13 +146,11 @@ func (c *storeCache) get(key string) ([]byte, bool) {
 // if key exist in cache and value == nil, isDelete = true
 func (c *storeCache) has(key string) (bool, bool) {
 	value, exist := c.get(key)
-	var isDelete bool
 	if exist {
-		isDelete = value == nil
-		return isDelete, true
-	} else {
-		return false, false
+		return value == nil, true
 	}
+	return false, false
+
 }
 
 //func (c *storeCache) len() int {

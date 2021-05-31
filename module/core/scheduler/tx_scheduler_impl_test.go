@@ -7,14 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker-go/mock"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"fmt"
+	"testing"
+
+	"chainmaker.org/chainmaker-go/mock"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestDag(t *testing.T) {
@@ -67,7 +69,17 @@ func newTx(txId string, contractId *commonpb.ContractId, parameterMap map[string
 		},
 		RequestPayload:   payloadBytes,
 		RequestSignature: nil,
-		Result:           nil,
+		Result: &commonpb.Result{
+			Code: 0,
+			ContractResult: &commonpb.ContractResult{
+				Code:          0,
+				Result:        nil,
+				Message:       "",
+				GasUsed:       0,
+				ContractEvent: nil,
+			},
+			RwSetHash: nil,
+		},
 	}
 }
 
@@ -99,13 +111,19 @@ func newBlock() *commonpb.Block {
 }
 
 func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonpb.Transaction, *mock.MockSnapshot, *TxSchedulerImpl, *commonpb.ContractId, *commonpb.Block) {
-	var txRWSetTable = make([]*commonpb.TxRWSet, 8)
-	var txTable = make([]*commonpb.Transaction, 8)
+	var txRWSetTable = make([]*commonpb.TxRWSet, 2)
+	var txTable = make([]*commonpb.Transaction, 2)
 
 	ctl := gomock.NewController(t)
 	snapshot := mock.NewMockSnapshot(ctl)
 	vmMgr := mock.NewMockVmManager(ctl)
 	chainConf := mock.NewMockChainConf(ctl)
+	crypto := configpb.CryptoConfig{
+		Hash: "SHA256",
+	}
+	contractConf := configpb.ContractConfig{EnableSqlSupport: false}
+	chainConfig := configpb.ChainConfig{Crypto: &crypto, Contract: &contractConf}
+	chainConf.EXPECT().ChainConfig().AnyTimes().Return(&chainConfig)
 
 	scheduler := NewTxScheduler(vmMgr, chainConf)
 
@@ -124,6 +142,8 @@ func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonp
 
 	snapshot.EXPECT().GetTxTable().AnyTimes().Return(txTable)
 	snapshot.EXPECT().GetTxRWSetTable().AnyTimes().Return(txRWSetTable)
+	snapshot.EXPECT().GetSnapshotSize().AnyTimes().Return(len(txTable))
+	snapshot.EXPECT().ApplyTxSimContext(gomock.Any(), gomock.Any()).AnyTimes()
 
 	vmMgr.EXPECT().RunContract(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(contractResult, commonpb.TxStatusCode_SUCCESS)
 	return vmMgr, txRWSetTable, txTable, snapshot, scheduler, contractId, block
@@ -188,7 +208,7 @@ func TestSchedule(t *testing.T) {
 		Vertexes: []*commonpb.DAG_Neighbor{{}},
 	}
 
-	snapshot.EXPECT().BuildDAG().Return(dag)
+	snapshot.EXPECT().BuildDAG(gomock.Any()).Return(dag)
 
 	_, _, err := scheduler.Schedule(block, txBatch, snapshot)
 
@@ -234,6 +254,10 @@ func TestSimulateWithDag(t *testing.T) {
 	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(true, 2)
 	snapshot.EXPECT().ApplyTxSimContext(txSimCache2, true).Return(true, 3)
 
+	txRWSets := make(map[string]*commonpb.Result, len(block.Txs))
+	//
+	snapshot.EXPECT().GetTxResultMap().AnyTimes().Return(txRWSets)
+
 	scheduler.SimulateWithDag(block, snapshot)
 }
 
@@ -243,7 +267,6 @@ func TestMarshalDag(t *testing.T) {
 			{
 				Neighbors: []int32{0},
 			},
-			nil,
 			{
 				Neighbors: []int32{0, 1, 2},
 			},
@@ -255,5 +278,5 @@ func TestMarshalDag(t *testing.T) {
 	dag2 := &commonpb.DAG{}
 	proto.Unmarshal(mar, dag2)
 
-	require.Equal(t, len(dag2.Vertexes), 3)
+	require.Equal(t, len(dag2.Vertexes), 2)
 }

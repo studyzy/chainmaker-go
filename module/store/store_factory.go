@@ -42,11 +42,13 @@ type Factory struct {
 var newRocksdbHandle func(chainId string, dbName string, logger protocol.Logger) protocol.DBHandle
 
 // NewStore constructs new BlockStore
-func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig, logger protocol.Logger) (protocol.BlockchainStore, error) {
+func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig,
+	logger protocol.Logger) (protocol.BlockchainStore, error) {
 	return m.newStore(chainId, storeConfig, nil, logger)
 }
 
-func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig, binLog binlog.BinLoger, logger protocol.Logger) (protocol.BlockchainStore, error) {
+func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig, binLog binlog.BinLoger,
+	logger protocol.Logger) (protocol.BlockchainStore, error) {
 
 	var blockDB blockdb.BlockDB
 	var err error
@@ -149,7 +151,8 @@ func parseEngineType(dbType string) types.EngineType {
 }
 
 // NewBlockKvDB constructs new `BlockDB`
-func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig, logger protocol.Logger) (blockdb.BlockDB, error) {
+func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig,
+	logger protocol.Logger) (blockdb.BlockDB, error) {
 	nWorkers := runtime.NumCPU()
 	blockDB := &blockkvdb.BlockKvDB{
 		WorkersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
@@ -168,7 +171,8 @@ func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, conf
 }
 
 // NewStateKvDB constructs new `StabeKvDB`
-func (m *Factory) NewStateKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig, logger protocol.Logger) (statedb.StateDB, error) {
+func (m *Factory) NewStateKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig,
+	logger protocol.Logger) (statedb.StateDB, error) {
 	stateDB := &statekvdb.StateKvDB{
 		Logger: logger,
 		Cache:  cache.NewStoreCacheMgr(chainId, logger),
@@ -186,7 +190,8 @@ func (m *Factory) NewStateKvDB(chainId string, engineType types.EngineType, conf
 }
 
 // NewHistoryKvDB constructs new `HistoryKvDB`
-func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig, logger protocol.Logger) (*historykvdb.HistoryKvDB, error) {
+func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig,
+	logger protocol.Logger) (*historykvdb.HistoryKvDB, error) {
 	var db protocol.DBHandle
 	switch engineType {
 	case types.LevelDb:
@@ -199,7 +204,8 @@ func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, co
 	historyDB := historykvdb.NewHistoryKvDB(db, cache.NewStoreCacheMgr(chainId, logger), logger)
 	return historyDB, nil
 }
-func (m *Factory) NewResultKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig, logger protocol.Logger) (*resultkvdb.ResultKvDB, error) {
+func (m *Factory) NewResultKvDB(chainId string, engineType types.EngineType, config *localconf.LevelDbConfig,
+	logger protocol.Logger) (*resultkvdb.ResultKvDB, error) {
 	var db protocol.DBHandle
 	switch engineType {
 	case types.LevelDb:
