@@ -7,15 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"encoding/hex"
+	"fmt"
+	"testing"
+
 	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	"encoding/hex"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestDag(t *testing.T) {
@@ -68,8 +69,8 @@ func newTx(txId string, contractId *commonpb.ContractId, parameterMap map[string
 		},
 		RequestPayload:   payloadBytes,
 		RequestSignature: nil,
-		Result:           &commonpb.Result{
-			Code:           0,
+		Result: &commonpb.Result{
+			Code: 0,
 			ContractResult: &commonpb.ContractResult{
 				Code:          0,
 				Result:        nil,
@@ -77,7 +78,7 @@ func newTx(txId string, contractId *commonpb.ContractId, parameterMap map[string
 				GasUsed:       0,
 				ContractEvent: nil,
 			},
-			RwSetHash:      nil,
+			RwSetHash: nil,
 		},
 	}
 }
@@ -207,7 +208,7 @@ func TestSchedule(t *testing.T) {
 		Vertexes: []*commonpb.DAG_Neighbor{{}},
 	}
 
-	snapshot.EXPECT().BuildDAG().Return(dag)
+	snapshot.EXPECT().BuildDAG(gomock.Any()).Return(dag)
 
 	_, _, err := scheduler.Schedule(block, txBatch, snapshot)
 
