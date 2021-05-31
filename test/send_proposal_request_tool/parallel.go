@@ -21,9 +21,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"chainmaker.org/chainmaker-go/common/ca"
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/logger"
 
 	"chainmaker.org/chainmaker-go/utils"

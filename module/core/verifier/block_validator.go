@@ -8,7 +8,7 @@ package verifier
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"

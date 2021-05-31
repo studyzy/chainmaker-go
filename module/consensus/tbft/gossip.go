@@ -12,7 +12,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
 	"github.com/gogo/protobuf/proto"
 )

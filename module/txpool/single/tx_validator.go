@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"math"
 
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/txpool/poolconf"

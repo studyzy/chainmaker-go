@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package protocol
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"

@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	evm "chainmaker.org/chainmaker-go/common/evmutils"
+	evm "chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/json"
 	"fmt"

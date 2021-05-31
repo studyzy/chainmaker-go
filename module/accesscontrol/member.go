@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	bccrypto "chainmaker.org/chainmaker/common/crypto"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"

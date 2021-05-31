@@ -12,7 +12,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/hostfunc"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/waci"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasi"

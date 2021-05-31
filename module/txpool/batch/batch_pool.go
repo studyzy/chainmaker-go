@@ -9,7 +9,7 @@ package batch
 import (
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/sortedmap"
+	"chainmaker.org/chainmaker/common/sortedmap"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 )
 

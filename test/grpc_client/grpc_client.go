@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"log"
 
-	"chainmaker.org/chainmaker-go/common/ca"
+	"chainmaker.org/chainmaker/common/ca"
 	"google.golang.org/grpc"
 )
 

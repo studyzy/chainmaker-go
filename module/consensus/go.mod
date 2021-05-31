@@ -5,13 +5,13 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/chainconf v0.0.0-00010101000000-000000000000
-	chainmaker.org/chainmaker-go/common v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/mock v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
@@ -30,7 +30,7 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ./../../module/accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
-	chainmaker.org/chainmaker-go/common => ../../common
+
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ./../logger
 	chainmaker.org/chainmaker-go/mock => ../../mock

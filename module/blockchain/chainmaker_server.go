@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -20,7 +20,7 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/protocol"

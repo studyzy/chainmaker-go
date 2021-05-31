@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 
-	commonErr "chainmaker.org/chainmaker-go/common/errors"
+	commonErr "chainmaker.org/chainmaker/common/errors"
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"

@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"

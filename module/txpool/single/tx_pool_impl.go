@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"

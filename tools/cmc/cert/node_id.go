@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package cert
 
 import (
-	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker/common/helper"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"

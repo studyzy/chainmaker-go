@@ -12,11 +12,11 @@ import (
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 
-	"chainmaker.org/chainmaker-go/common/json"
+	"chainmaker.org/chainmaker/common/json"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"

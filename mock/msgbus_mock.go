@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	msgbus "chainmaker.org/chainmaker-go/common/msgbus"
+	msgbus "chainmaker.org/chainmaker/common/msgbus"
 	gomock "github.com/golang/mock/gomock"
 )
 

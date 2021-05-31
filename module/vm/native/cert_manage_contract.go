@@ -8,7 +8,7 @@ package native
 
 import (
 	"bytes"
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"

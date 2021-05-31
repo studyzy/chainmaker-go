@@ -16,7 +16,7 @@
 package evm_go
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/instructions"
 	"chainmaker.org/chainmaker-go/evm/evm-go/memory"

@@ -13,9 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
-	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/common/queue/lockfreequeue"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
+	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
 	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"

@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"chainmaker.org/chainmaker-go/common/random/uuid"
+	"chainmaker.org/chainmaker/common/random/uuid"
 	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"errors"
 	"fmt"

@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"encoding/pem"
 	"fmt"

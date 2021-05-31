@@ -9,7 +9,7 @@ package utils
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/crypto/hash"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"

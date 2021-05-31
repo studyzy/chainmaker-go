@@ -12,7 +12,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/pb/protogo/net"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"

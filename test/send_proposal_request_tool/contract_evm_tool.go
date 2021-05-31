@@ -1,8 +1,8 @@
 package main
 
 import (
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
-	evm "chainmaker.org/chainmaker-go/common/evmutils"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	evm "chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"encoding/json"

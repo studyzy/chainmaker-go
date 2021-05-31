@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-	chainmaker.org/chainmaker-go/common v0.0.0
+
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
@@ -23,7 +23,7 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../module/accesscontrol
-	chainmaker.org/chainmaker-go/common => ../common
+
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
 	chainmaker.org/chainmaker-go/net => ../module/net

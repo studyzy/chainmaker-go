@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
 	"github.com/libp2p/go-libp2p"

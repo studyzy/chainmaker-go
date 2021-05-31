@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
+	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
 	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"

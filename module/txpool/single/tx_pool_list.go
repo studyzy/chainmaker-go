@@ -12,7 +12,7 @@ import (
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
-	"chainmaker.org/chainmaker-go/common/linkedhashmap"
+	"chainmaker.org/chainmaker/common/linkedhashmap"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/protocol"

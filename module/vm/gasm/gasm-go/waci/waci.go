@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"

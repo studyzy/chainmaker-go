@@ -14,7 +14,7 @@ import (
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"github.com/golang/mock/gomock"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"

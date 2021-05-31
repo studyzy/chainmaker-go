@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package revoke
 
 import (
-	cmx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/protocol"
 	"sync"
 )

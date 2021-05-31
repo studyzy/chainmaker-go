@@ -16,7 +16,7 @@ import (
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/stretchr/testify/require"

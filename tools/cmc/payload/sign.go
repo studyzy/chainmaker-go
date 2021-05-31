@@ -8,9 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package payload
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	sdkPbAc "chainmaker.org/chainmaker-sdk-go/pb/protogo/accesscontrol"
 	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"encoding/pem"

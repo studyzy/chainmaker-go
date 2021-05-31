@@ -8,6 +8,7 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38 // indirect
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/spf13/cobra v1.1.1
@@ -22,6 +23,7 @@ replace (
 	chainmaker.org/chainmaker-go/common => ./../common
 	chainmaker.org/chainmaker-go/consensus => ./../module/consensus
 	chainmaker.org/chainmaker-go/core => ./../module/core
+	chainmaker.org/chainmaker-go/evm => ../module/vm/evm
 	chainmaker.org/chainmaker-go/gasm => ../module/vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
@@ -43,7 +45,6 @@ replace (
 	chainmaker.org/chainmaker-go/wasi => ../module/vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../module/vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../module/vm/wxvm
-	chainmaker.org/chainmaker-go/evm => ../module/vm/evm
 	github.com/libp2p/go-libp2p => ./../module/net/p2p/libp2p
 	github.com/libp2p/go-libp2p-core => ./../module/net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ./../module/net/p2p/libp2ppubsub

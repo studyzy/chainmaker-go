@@ -9,7 +9,7 @@ package rpcserver
 
 import (
 	"chainmaker.org/chainmaker-go/blockchain"
-	commonErr "chainmaker.org/chainmaker-go/common/errors"
+	commonErr "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"

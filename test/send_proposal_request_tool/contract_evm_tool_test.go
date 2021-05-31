@@ -1,7 +1,7 @@
 package main
 
 import (
-	evm "chainmaker.org/chainmaker-go/common/evmutils"
+	evm "chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"github.com/ethereum/go-ethereum/accounts/abi"

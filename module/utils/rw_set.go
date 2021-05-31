@@ -12,7 +12,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/gogo/protobuf/proto"
 )

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/common/queue/lockfreequeue"
+	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/utils"
 

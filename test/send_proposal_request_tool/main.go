@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	evm "chainmaker.org/chainmaker-go/common/evmutils"
+	evm "chainmaker.org/chainmaker/common/evmutils"
 	"context"
 	"errors"
 	"fmt"
@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
-	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/helper"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"

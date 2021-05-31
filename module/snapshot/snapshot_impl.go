@@ -13,7 +13,7 @@ import (
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
-	"chainmaker.org/chainmaker-go/common/bitmap"
+	"chainmaker.org/chainmaker/common/bitmap"
 	"chainmaker.org/chainmaker-go/protocol"
 )
 

@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 )
 
 type Blocker struct {

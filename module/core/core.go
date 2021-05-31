@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package core
 
 import (
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/committer"
 	"chainmaker.org/chainmaker-go/core/helper"
 	"chainmaker.org/chainmaker-go/core/proposer"

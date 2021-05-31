@@ -8,7 +8,7 @@ import (
 	pkix "crypto/x509/pkix"
 	reflect "reflect"
 
-	x509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	x509 "chainmaker.org/chainmaker/common/crypto/x509"
 	accesscontrol "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
 	config "chainmaker.org/chainmaker-go/pb/protogo/config"
