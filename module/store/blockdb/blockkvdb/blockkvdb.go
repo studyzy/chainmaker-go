@@ -166,7 +166,6 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 	}
 
 	txIdsMap := make(map[uint64][]string)
-	batch := types.NewUpdateBatch()
 	startTime := utils.CurrentTimeMillisSeconds()
 	for height := endHeight; height >= startHeight; height-- {
 		heightKey := constructBlockNumKey(height)
@@ -180,6 +179,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 			continue
 		}
 
+		batch := types.NewUpdateBatch()
 		txIds := make([]string, 0, len(blk.Txs))
 		for _, tx := range blk.Txs {
 			// delete tx data
@@ -187,14 +187,14 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 			txIds = append(txIds, tx.Header.TxId)
 		}
 		txIdsMap[height] = txIds
+		if err = b.DbHandle.WriteBatch(batch, false); err != nil {
+			return nil, err
+		}
 	}
 
 	beforeWrite := utils.CurrentTimeMillisSeconds()
-	if err = b.DbHandle.WriteBatch(batch, true); err != nil {
-		return nil, err
-	}
 
-	b.compactRange()
+	go b.compactRange()
 
 	writeTime := utils.CurrentTimeMillisSeconds() - beforeWrite
 	b.Logger.Infof("shrink block from [%d] to [%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
@@ -205,8 +205,6 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 
 // RestoreBlocks restore block data from outside to kvdb: txid--SerializedTx
 func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error {
-	batch := types.NewUpdateBatch()
-
 	startTime := utils.CurrentTimeMillisSeconds()
 	for i := len(blockInfos) - 1; i >= 0; i-- {
 		blockInfo := blockInfos[i]
@@ -227,17 +225,19 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 			return archive.InvalidateRestoreBlocksError
 		}
 
+		batch := types.NewUpdateBatch()
 		//verify imported block txs
 		for index, stx := range blockInfo.GetSerializedTxs() {
 			// put tx data
 			batch.Put(constructTxIDKey(blockInfo.Block.Txs[index].Header.TxId), stx)
 		}
+
+		if err := b.DbHandle.WriteBatch(batch, false); err != nil {
+			return err
+		}
 	}
 
 	beforeWrite := utils.CurrentTimeMillisSeconds()
-	if err := b.DbHandle.WriteBatch(batch, false); err != nil {
-		return err
-	}
 
 	go b.compactRange()
 

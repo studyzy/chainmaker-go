@@ -65,28 +65,25 @@ func (h *ResultKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInf
 
 // ShrinkBlocks archive old blocks rwsets in an atomic operation
 func (h *ResultKvDB) ShrinkBlocks(txIdsMap map[uint64][]string) error {
-	batch := types.NewUpdateBatch()
 	var err error
 
 	for _, txIds := range txIdsMap {
+		batch := types.NewUpdateBatch()
 		for _, txId := range txIds {
 			txRWSetKey := constructTxRWSetIDKey(txId)
 			batch.Delete(txRWSetKey)
 		}
+		if err = h.DbHandle.WriteBatch(batch, false); err != nil {
+			return err
+		}
 	}
 
-	if err = h.DbHandle.WriteBatch(batch, true); err != nil {
-		return err
-	}
-
-	h.compactRange()
+	go h.compactRange()
 
 	return nil
 }
 
 func (h *ResultKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error {
-	batch := types.NewUpdateBatch()
-
 	startTime := utils.CurrentTimeMillisSeconds()
 	for i := len(blockInfos) - 1; i >= 0; i-- {
 		blockInfo := blockInfos[i]
@@ -99,16 +96,17 @@ func (h *ResultKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializ
 
 		txRWSets := blockInfo.TxRWSets
 		rwsetData := blockInfo.GetSerializedTxRWSets()
+		batch := types.NewUpdateBatch()
 		for index, txRWSet := range txRWSets {
 			// rwset: txID -> txRWSet
 			batch.Put(constructTxRWSetIDKey(txRWSet.TxId), rwsetData[index])
 		}
+		if err := h.DbHandle.WriteBatch(batch, false); err != nil {
+			return err
+		}
 	}
 
 	beforeWrite := utils.CurrentTimeMillisSeconds()
-	if err := h.DbHandle.WriteBatch(batch, false); err != nil {
-		return err
-	}
 
 	go h.compactRange()
 
