@@ -8,12 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"strings"
-
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
@@ -315,13 +314,11 @@ func (bc *Blockchain) initVM() (err error) {
 		return
 	}
 	// init VM
-	var snapshotFactory snapshot.Factory
 	var vmFactory vm.Factory
-	bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, nil, bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, nil, bc.chainConf)
 	} else {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return
@@ -332,6 +329,13 @@ func (bc *Blockchain) initCore() (err error) {
 	if ok {
 		bc.log.Infof("core engine module existed, ignore.")
 		return
+	}
+	// create snapshot manager
+	var snapshotFactory snapshot.Factory
+	if bc.chainConf.ChainConfig().Snapshot != nil && bc.chainConf.ChainConfig().Snapshot.EnableEvidence {
+		bc.snapshotManager = snapshotFactory.NewSnapshotEvidenceMgr(bc.store)
+	} else {
+		bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
 	}
 	// init coreEngine module
 	coreEngineConfig := &providerConf.CoreEngineConfig{
