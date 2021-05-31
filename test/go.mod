@@ -4,11 +4,8 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
-
-	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
@@ -23,12 +20,9 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../module/accesscontrol
-
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
 	chainmaker.org/chainmaker-go/net => ../module/net
-	chainmaker.org/chainmaker-go/pb/protogo => ../pb/protogo
-	chainmaker.org/chainmaker-go/protocol => ../protocol
 	chainmaker.org/chainmaker-go/utils => ../module/utils
 
 	github.com/libp2p/go-libp2p => ../module/net/p2p/libp2p

@@ -15,7 +15,7 @@ import (
 	"chainmaker.org/chainmaker/common/random/uuid"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wxvm"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"

@@ -19,11 +19,11 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker/protocol/mock"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/gogo/protobuf/proto"
 )

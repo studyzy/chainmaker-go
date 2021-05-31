@@ -13,7 +13,7 @@ import (
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/txpool/batch"
 	"chainmaker.org/chainmaker-go/txpool/single"
 )

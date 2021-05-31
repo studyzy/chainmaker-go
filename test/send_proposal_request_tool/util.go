@@ -21,7 +21,7 @@ import (
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )

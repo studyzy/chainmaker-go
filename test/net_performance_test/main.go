@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 func main() {

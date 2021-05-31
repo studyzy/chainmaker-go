@@ -8,7 +8,7 @@ package single
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type mempoolTxs struct {

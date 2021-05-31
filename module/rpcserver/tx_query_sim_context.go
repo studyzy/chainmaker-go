@@ -10,7 +10,7 @@ package rpcserver
 import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"

@@ -20,7 +20,7 @@ import (
 	"chainmaker.org/chainmaker-go/monitor"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/panjf2000/ants/v2"

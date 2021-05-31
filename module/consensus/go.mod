@@ -7,15 +7,14 @@ require (
 	chainmaker.org/chainmaker-go/chainconf v0.0.0-00010101000000-000000000000
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker-go/mock v0.0.0-00010101000000-000000000000
-	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210531071221-ccada476876b
+	chainmaker.org/chainmaker/protocol v0.0.0-20210531063313-99b65ccc50e6
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/viper v1.7.1
@@ -33,9 +32,9 @@ replace (
 
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ./../logger
-	chainmaker.org/chainmaker-go/mock => ../../mock
 
-	chainmaker.org/chainmaker-go/protocol => ./../../protocol
+
+
 	chainmaker.org/chainmaker-go/utils => ../utils
 	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
 )

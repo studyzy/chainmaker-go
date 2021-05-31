@@ -18,7 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/raft"
 	"chainmaker.org/chainmaker-go/consensus/solo"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type Factory struct {

@@ -27,7 +27,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/pb-go/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/tidwall/wal"

@@ -10,7 +10,6 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
-	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/snapshot v0.0.0
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
@@ -20,6 +19,7 @@ require (
 	chainmaker.org/chainmaker-go/vm v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210531071221-ccada476876b
+	chainmaker.org/chainmaker/protocol v0.0.0-20210531063313-99b65ccc50e6
 )
 
 replace (
@@ -32,11 +32,11 @@ replace (
 	chainmaker.org/chainmaker-go/gasm => ../vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-	chainmaker.org/chainmaker-go/mock => ../../mock
+
 	chainmaker.org/chainmaker-go/monitor => ../monitor
 	chainmaker.org/chainmaker-go/net => ../net
 
-	chainmaker.org/chainmaker-go/protocol => ../../protocol
+
 	chainmaker.org/chainmaker-go/snapshot => ../snapshot
 	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type txCache struct {

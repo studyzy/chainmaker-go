@@ -12,14 +12,15 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/msgbus"
+	msgbusMock "chainmaker.org/chainmaker/common/msgbus/mock"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/martian/log"
 	"github.com/stretchr/testify/require"
@@ -38,8 +39,8 @@ func TestAddBlock(t *testing.T) {
 	ledgerCache.SetLastCommittedBlock(lastBlock)
 	rwSetMap := make(map[string]*commonpb.TxRWSet)
 	contractEventMap := make(map[string][]*commonpb.ContractEvent)
-	msgbus := mock.NewMockMessageBus(ctl)
-	msgbus.EXPECT().PublishSafe(gomock.Any(), gomock.Any()).Return().Times(2)
+	msgbus := msgbusMock.NewMockMessageBus(ctl)
+	msgbus.EXPECT().PublishSafe(gomock.Any(), gomock.Any()).Return().AnyTimes()
 
 	blockCommitterImpl := initCommitter(blockchainStoreImpl, txPool, snapshotManager, ledgerCache, proposedCache, chainConf, msgbus)
 	require.NotNil(t, blockCommitterImpl)
@@ -49,7 +50,7 @@ func TestAddBlock(t *testing.T) {
 	}
 	contractConf := configpb.ContractConfig{EnableSqlSupport: false}
 	chainConfig := configpb.ChainConfig{Crypto: &crypto, Contract: &contractConf}
-	chainConf.EXPECT().ChainConfig().Return(&chainConfig).Times(3)
+	chainConf.EXPECT().ChainConfig().Return(&chainConfig).AnyTimes()
 
 	block := createNewBlock(lastBlock)
 	proposedCache.SetProposedBlock(&block, rwSetMap, contractEventMap, true)

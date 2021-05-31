@@ -13,7 +13,7 @@ import (
 
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 )
 

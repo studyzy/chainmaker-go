@@ -9,7 +9,7 @@ package accesscontrol
 
 import (
 	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var _ protocol.Principal = (*principal)(nil)

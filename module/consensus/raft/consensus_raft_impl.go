@@ -26,7 +26,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	netpb "chainmaker.org/chainmaker/pb-go/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/pkg/fileutil"

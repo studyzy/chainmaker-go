@@ -14,7 +14,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/stretchr/testify/require"

@@ -14,12 +14,12 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker/protocol/mock"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 )
 

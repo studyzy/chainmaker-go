@@ -9,7 +9,7 @@ package accesscontrol
 
 import (
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // structure to store cached signers: speed up verification, support CRL

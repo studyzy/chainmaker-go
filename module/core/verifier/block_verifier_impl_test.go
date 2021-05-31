@@ -7,16 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -78,7 +78,7 @@ func TestBlockVerifierImpl_VerifyBlock(t *testing.T) {
 	verifier.txValidator = NewTxValidator(verifier.log, chainId, hashType, verifier.chainConf.ChainConfig().Consensus.Type, verifier.blockchainStore, txpool, ac)
 
 	sig_default := []byte("DEFAULT_SIGNATURE")
-	signerMember.EXPECT().Sign(gomock.Any(), gomock.Any()).Return(sig_default, nil).Times(100)
+	signerMember.EXPECT().Sign(gomock.Any(), gomock.Any()).Return(sig_default, nil).AnyTimes()
 	signerMember.EXPECT().Serialize(gomock.Any()).AnyTimes()
 	ac.EXPECT().CreatePrincipal(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	ac.EXPECT().VerifyPrincipal(gomock.Any()).Return(true, nil).AnyTimes()

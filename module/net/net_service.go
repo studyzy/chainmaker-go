@@ -19,7 +19,7 @@ import (
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	rootLog "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

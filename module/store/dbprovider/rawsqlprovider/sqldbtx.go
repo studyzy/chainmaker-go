@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type SqlDBTx struct {

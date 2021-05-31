@@ -9,7 +9,7 @@ package rpcserver
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

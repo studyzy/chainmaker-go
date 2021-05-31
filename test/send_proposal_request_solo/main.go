@@ -17,7 +17,7 @@ import (
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"context"
 	"encoding/hex"

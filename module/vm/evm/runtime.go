@@ -18,7 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // RuntimeInstance evm runtime

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package waci
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // GetStateLen get state length from chain

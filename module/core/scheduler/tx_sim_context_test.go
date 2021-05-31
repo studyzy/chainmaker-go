@@ -8,7 +8,7 @@ package scheduler
 
 import (
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"fmt"
 	"github.com/stretchr/testify/require"

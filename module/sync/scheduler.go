@@ -15,7 +15,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 	syncPb "chainmaker.org/chainmaker/pb-go/sync"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/Workiva/go-datastructures/queue"
 	"github.com/gogo/protobuf/proto"
 )

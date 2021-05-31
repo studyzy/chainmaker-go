@@ -8,7 +8,7 @@ package core
 
 import (
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 )
 

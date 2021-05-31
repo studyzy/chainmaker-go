@@ -23,7 +23,7 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"

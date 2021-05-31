@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package blockdb
 
 import (
+	"chainmaker.org/chainmaker-go/store/serialization"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
 // BlockDB provides handle to block and tx instances

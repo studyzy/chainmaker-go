@@ -18,7 +18,7 @@ import (
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"github.com/google/martian/log"
 )

@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 
 	"encoding/hex"

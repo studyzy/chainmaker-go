@@ -25,7 +25,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"

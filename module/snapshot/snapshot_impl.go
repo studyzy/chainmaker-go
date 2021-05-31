@@ -14,7 +14,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker/common/bitmap"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // The record value is written by the SEQ corresponding to TX

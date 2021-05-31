@@ -16,7 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

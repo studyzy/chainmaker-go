@@ -15,7 +15,7 @@ import (
 	"chainmaker.org/chainmaker/common/linkedhashmap"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/prometheus/client_golang/prometheus"

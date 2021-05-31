@@ -29,7 +29,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p-core/network"
 
-	api "chainmaker.org/chainmaker-go/protocol"
+	api "chainmaker.org/chainmaker/protocol"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	libP2pPubSub "github.com/libp2p/go-libp2p-pubsub"

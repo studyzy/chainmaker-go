@@ -18,7 +18,7 @@ import (
 
 	"chainmaker.org/chainmaker/common/json"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"

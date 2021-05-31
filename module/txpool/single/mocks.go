@@ -16,7 +16,7 @@ import (
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var errStr = "implement me"

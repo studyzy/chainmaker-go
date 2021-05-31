@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package statedb
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // StateDB provides handle to world state instances

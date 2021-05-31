@@ -11,14 +11,14 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/protocol/test"
+	"chainmaker.org/chainmaker/protocol/test"
 
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 )
 

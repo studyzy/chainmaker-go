@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/mock"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -199,16 +199,16 @@ func TestSchedule(t *testing.T) {
 	txSimCache1 := newTxSimContext(vmMgr, snapshot, tx1)
 
 	snapshot.EXPECT().IsSealed().AnyTimes().Return(false)
-	snapshot.EXPECT().Seal().Return()
-	snapshot.EXPECT().ApplyTxSimContext(txSimCache0, true).Return(true, 1)
-	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(false, 1)
-	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(true, 2)
+	snapshot.EXPECT().Seal().Return().AnyTimes()
+	snapshot.EXPECT().ApplyTxSimContext(txSimCache0, true).Return(true, 1).AnyTimes()
+	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(false, 1).AnyTimes()
+	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(true, 2).AnyTimes()
 
 	dag := &commonpb.DAG{
 		Vertexes: []*commonpb.DAG_Neighbor{{}},
 	}
 
-	snapshot.EXPECT().BuildDAG(gomock.Any()).Return(dag)
+	snapshot.EXPECT().BuildDAG(gomock.Any()).Return(dag).AnyTimes()
 
 	_, _, err := scheduler.Schedule(block, txBatch, snapshot)
 
@@ -250,9 +250,9 @@ func TestSimulateWithDag(t *testing.T) {
 
 	snapshot.EXPECT().IsSealed().AnyTimes().Return(false)
 	snapshot.EXPECT().Seal().Return()
-	snapshot.EXPECT().ApplyTxSimContext(txSimCache0, true).Return(true, 1)
-	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(true, 2)
-	snapshot.EXPECT().ApplyTxSimContext(txSimCache2, true).Return(true, 3)
+	snapshot.EXPECT().ApplyTxSimContext(txSimCache0, true).Return(true, 1).AnyTimes()
+	snapshot.EXPECT().ApplyTxSimContext(txSimCache1, true).Return(true, 2).AnyTimes()
+	snapshot.EXPECT().ApplyTxSimContext(txSimCache2, true).Return(true, 3).AnyTimes()
 
 	txRWSets := make(map[string]*commonpb.Result, len(block.Txs))
 	//

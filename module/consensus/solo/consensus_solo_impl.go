@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/logger"

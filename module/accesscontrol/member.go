@@ -11,7 +11,7 @@ import (
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/pem"
 	"fmt"

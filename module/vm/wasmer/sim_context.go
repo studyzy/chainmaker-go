@@ -15,7 +15,7 @@ import (
 	"chainmaker.org/chainmaker/common/vmcbor"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 

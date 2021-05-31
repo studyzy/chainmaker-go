@@ -10,14 +10,14 @@ import (
 	"reflect"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker/protocol/mock"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const (

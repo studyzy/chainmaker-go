@@ -13,7 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/native"
 	"chainmaker.org/chainmaker-go/wasmer"
 	"chainmaker.org/chainmaker-go/wxvm"

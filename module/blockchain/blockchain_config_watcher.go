@@ -8,7 +8,7 @@ package blockchain
 
 import (
 	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var _ protocol.Watcher = (*Blockchain)(nil)

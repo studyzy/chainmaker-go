@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type mockMemCache struct {

@@ -11,7 +11,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"encoding/hex"
 	"errors"
 	"fmt"

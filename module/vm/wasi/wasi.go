@@ -15,7 +15,7 @@ import (
 	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"

@@ -7,17 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 package proposer
 
 import (
-	"chainmaker.org/chainmaker/common/random/uuid"
 	"chainmaker.org/chainmaker-go/core/cache"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker-go/utils"
+	msgbugMock "chainmaker.org/chainmaker/common/msgbus/mock"
+	"chainmaker.org/chainmaker/common/random/uuid"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"crypto/sha256"
 	"fmt"
 	gogo "github.com/gogo/protobuf/proto"
@@ -36,7 +37,7 @@ func TestProposeStatusChange(t *testing.T) {
 	ctl := gomock.NewController(t)
 	txPool := mock.NewMockTxPool(ctl)
 	snapshotMgr := mock.NewMockSnapshotManager(ctl)
-	msgBus := mock.NewMockMessageBus(ctl)
+	msgBus := msgbugMock.NewMockMessageBus(ctl)
 	identity := mock.NewMockSigningMember(ctl)
 	ledgerCache := cache.NewLedgerCache(chainId)
 	//consensus := mock.NewMockConsensusEngine(ctl)
@@ -53,10 +54,11 @@ func TestProposeStatusChange(t *testing.T) {
 		txs = append(txs, createNewTestTx())
 	}
 
-	txPool.EXPECT().FetchTxBatch(gomock.Any()).Return(txs).Times(10)
+	txPool.EXPECT().FetchTxBatch(gomock.Any()).Return(txs).AnyTimes()
 	txPool.EXPECT().RetryAndRemoveTxs(gomock.Any(), gomock.Any())
-	identity.EXPECT().Serialize(true).Return([]byte("0123456789"), nil).Times(10)
+	identity.EXPECT().Serialize(true).Return([]byte("0123456789"), nil).AnyTimes()
 	msgBus.EXPECT().Publish(gomock.Any(), gomock.Any())
+	//msgBus.EXPECT().PublishSafe(gomock.Any(), gomock.Any())
 	blockChainStore.EXPECT().TxExists("").AnyTimes()
 	consensus := configpb.ConsensusConfig{
 		Type: consensus.ConsensusType_TBFT,
@@ -108,7 +110,7 @@ func TestShouldPropose(t *testing.T) {
 	ctl := gomock.NewController(t)
 	txPool := mock.NewMockTxPool(ctl)
 	snapshotMgr := mock.NewMockSnapshotManager(ctl)
-	msgBus := mock.NewMockMessageBus(ctl)
+	msgBus := msgbugMock.NewMockMessageBus(ctl)
 	identity := mock.NewMockSigningMember(ctl)
 	ledgerCache := cache.NewLedgerCache(chainId)
 	proposedCache := cache.NewProposalCache(nil, ledgerCache)
@@ -163,7 +165,7 @@ func TestShouldProposeChainedBFT(t *testing.T) {
 	ctl := gomock.NewController(t)
 	txPool := mock.NewMockTxPool(ctl)
 	snapshotMgr := mock.NewMockSnapshotManager(ctl)
-	msgBus := mock.NewMockMessageBus(ctl)
+	msgBus := msgbugMock.NewMockMessageBus(ctl)
 	identity := mock.NewMockSigningMember(ctl)
 	ledgerCache := cache.NewLedgerCache(chainId)
 	proposedCache := cache.NewProposalCache(nil, ledgerCache)

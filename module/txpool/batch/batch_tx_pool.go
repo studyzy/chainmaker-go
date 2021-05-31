@@ -19,7 +19,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
 

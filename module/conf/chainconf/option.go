@@ -9,7 +9,7 @@ package chainconf
 
 import (
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type options struct {

@@ -17,7 +17,7 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"

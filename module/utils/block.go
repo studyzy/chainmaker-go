@@ -13,7 +13,7 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"fmt"
 	"github.com/gogo/protobuf/proto"

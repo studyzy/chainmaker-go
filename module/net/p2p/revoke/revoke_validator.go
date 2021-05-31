@@ -8,7 +8,7 @@ package revoke
 
 import (
 	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"sync"
 )
 

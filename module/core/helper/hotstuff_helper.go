@@ -9,7 +9,7 @@ package helper
 import (
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type hotStuffHelper struct {

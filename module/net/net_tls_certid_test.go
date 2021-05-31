@@ -15,7 +15,7 @@ import (
 	"time"
 
 	netPb "chainmaker.org/chainmaker/pb-go/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 )
 

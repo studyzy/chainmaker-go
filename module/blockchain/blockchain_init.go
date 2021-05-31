@@ -24,7 +24,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"

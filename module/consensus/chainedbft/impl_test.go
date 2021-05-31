@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/protocol/test"
+	"chainmaker.org/chainmaker/protocol/test"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -22,10 +22,10 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/mock"
+	"chainmaker.org/chainmaker/protocol/mock"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"

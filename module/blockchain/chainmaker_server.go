@@ -23,7 +23,7 @@ import (
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var log = logger.GetLogger(logger.MODULE_BLOCKCHAIN)

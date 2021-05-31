@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/emirpasic/gods/maps/treemap"
 	"golang.org/x/sync/semaphore"
 )

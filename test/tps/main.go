@@ -26,7 +26,7 @@ import (
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/helper"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"

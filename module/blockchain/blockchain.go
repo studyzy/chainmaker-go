@@ -15,7 +15,7 @@ import (
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 )
 

@@ -25,7 +25,7 @@ import (
 	"chainmaker.org/chainmaker-go/evm/evm-go/stack"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 )
 

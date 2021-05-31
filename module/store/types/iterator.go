@@ -10,10 +10,10 @@ package types
 import (
 	"bytes"
 
-	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 )
 
 type HistoryIteratorImpl struct {

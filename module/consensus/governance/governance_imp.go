@@ -12,7 +12,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type GovernanceContractImp struct {

@@ -9,7 +9,7 @@ package cache
 
 import (
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
 )

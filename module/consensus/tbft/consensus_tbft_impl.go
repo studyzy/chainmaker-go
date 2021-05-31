@@ -25,7 +25,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"go.uber.org/zap"
 
 	"github.com/gogo/protobuf/proto"

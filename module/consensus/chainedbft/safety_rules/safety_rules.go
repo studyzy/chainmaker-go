@@ -16,7 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 //SafetyRules implementation to validate incoming qc and block, include commit rules(3-chain) and vote rules
