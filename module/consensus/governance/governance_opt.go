@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -119,15 +118,6 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 				continue
 			}
 			newCachedLen = cachedLen
-		case BlockNumPerEpoch:
-			blockNumPerEpoch, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			if err != nil {
-				continue
-			}
-			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && blockNumPerEpoch > 0 {
-				log.Warnf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0")
-				continue
-			}
 		}
 	}
 	if newCachedLen != 0 && GovernanceContract.CachedLen != newCachedLen {
@@ -156,21 +146,14 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 			}
 		}
 	}
-	n := len(tempMap)
-	if n < (ConstMinQuorumForQc + 1) {
-		return false, fmt.Errorf("set Nodes size err")
+	if len(tempMap) < (ConstMinQuorumForQc + 1) {
+		return false, fmt.Errorf("set Nodes size is too minimum: %d < %d", len(tempMap), ConstMinQuorumForQc+1)
 	}
 
 	conConf := chainConfig.Consensus
-	newTransitBlock := int64(ConstTransitBlock)
 	newBlockNumPerEpoch := int64(ConstBlockNumPerEpoch)
-
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
-		case SkipTimeoutCommit:
-			if strings.ToUpper(oneConf.Value) != "TRUE" && strings.ToUpper(oneConf.Value) != "FALSE" {
-				return false, fmt.Errorf("set SkipTimeoutCommit err")
-			}
 		case CachedLen:
 			cachedLen, err := strconv.ParseInt(oneConf.Value, 10, 64)
 			if err != nil || cachedLen < 0 {
@@ -178,35 +161,29 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 			}
 		case BlockNumPerEpoch:
 			newBlockNumPerEpoch, err = strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || newBlockNumPerEpoch < 0 {
-				return false, fmt.Errorf("set BlockNumPerEpoch err")
+			if err != nil {
+				return false, fmt.Errorf("set BlockNumPerEpoch err: %s", err)
 			}
-		case TransitBlock:
-			newTransitBlock, err = strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || newTransitBlock < 0 {
-				return false, fmt.Errorf("set TransitBlock err")
+			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newBlockNumPerEpoch > 0 {
+				return false, fmt.Errorf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0, actual: %d", newBlockNumPerEpoch)
 			}
-			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newTransitBlock != 0 {
-				return false, fmt.Errorf("TransitBlock err,hotstuff should set 0")
+		case RoundTimeoutMill:
+			v, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			if err != nil {
+				return false, fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutMill, err)
 			}
-		case ValidatorNum:
-			validatorNum, err := strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || validatorNum < 0 {
-				return false, fmt.Errorf("set ValidatorNum err")
+			if v < MinimumTimeOutMill {
+				return false, fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
 			}
-			//if less than default,no effect
-			if validatorNum < ConstValidatorNum {
-				return false, fmt.Errorf("set ValidatorNum err")
+		case RoundTimeoutIntervalMill:
+			v, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			if err != nil {
+				return false, fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutIntervalMill, err)
 			}
-		case NodeProposeRound:
-			nodeProposeRound, err := strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || nodeProposeRound < 1 {
-				return false, fmt.Errorf("set nodeProposeRound err")
+			if v < MinimumIntervalTimeOutMill {
+				return false, fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
 			}
 		}
-	}
-	if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
-		return false, fmt.Errorf("newBlockNumPerEpoch less than transitBlock err")
 	}
 	return true, nil
 }
