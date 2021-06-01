@@ -158,21 +158,25 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 }
 
 func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protocol.Government) {
+	cbi.logger.Debugf("initTimeOutConfig begin ...")
 	base := governanceContract.GetRoundTimeoutMill()
 	if base == 0 {
 		base = uint64(timeservice.DefaultRoundTimeout)
 	}
+	cbi.logger.Debugf("initTimeOutConfig 1111 ...")
 	if err := utils.VerifyTimeConfig(governance.RoundTimeoutMill, base); err == nil {
 		timeservice.RoundTimeout = time.Duration(base) * time.Millisecond
 	}
-
+	cbi.logger.Debugf("initTimeOutConfig 2222 ...")
 	delta := governanceContract.GetRoundTimeoutIntervalMill()
 	if delta == 0 {
 		delta = uint64(timeservice.DefaultRoundTimeoutInterval)
 	}
+	cbi.logger.Debugf("initTimeOutConfig 3333 ...")
 	if err := utils.VerifyTimeConfig(governance.RoundTimeoutIntervalMill, delta); err == nil {
 		timeservice.RoundTimeoutInterval = time.Duration(delta) * time.Millisecond
 	}
+	cbi.logger.Debugf("initTimeOutConfig 4444 ...")
 }
 
 //Start start consensus

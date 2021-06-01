@@ -994,10 +994,15 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 	cbi.selfIndexInEpoch = cbi.nextEpoch.index
 	cbi.smr = newChainedBftSMR(cbi.chainID, cbi.nextEpoch, cbi.chainStore, cbi.timerService, cbi)
 	cbi.nextEpoch = nil
+	cbi.logger.Debugf("switchNextEpoch 0000")
 	go cbi.timerService.Start()
+	cbi.logger.Debugf("switchNextEpoch 1111")
 	go cbi.syncer.start()
+	cbi.logger.Debugf("switchNextEpoch 2222")
 	cbi.helper.DiscardAboveHeight(int64(blockHeight))
+	cbi.logger.Debugf("switchNextEpoch 3333")
 	cbi.initTimeOutConfig(cbi.governanceContract)
+	cbi.logger.Debugf("switchNextEpoch 4444")
 	return nil
 }
 

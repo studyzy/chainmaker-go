@@ -44,6 +44,7 @@ func newChainedBftSMR(chainID string,
 	}
 	smr.safetyRules = safetyrules.NewSafetyRules(smr.logger, chainStore.blockPool, chainStore.blockChainStore)
 	smr.initByEpoch(epoch, ts)
+	smr.logger.Debugf("newChainedBftSMR end...")
 	return smr
 }
 
@@ -81,14 +82,16 @@ func (cs *chainedbftSMR) forwardNewHeightIfNeed() {
 			lastBlock.Header.BlockHeight, cs.getHeight())
 		return
 	}
-
+	cs.logger.Debugf("forwardNewHeightIfNeed 111")
 	cs.state = chainedbftpb.ConsStateType_NewHeight
 	level, err := utils.GetLevelFromBlock(lastBlock)
 	if err != nil {
 		cs.logger.Errorf("get level from block error: %s, block %v", err, lastBlock)
 		return
 	}
+	cs.logger.Debugf("forwardNewHeightIfNeed 222")
 	cs.safetyRules.SetLastCommittedBlock(lastBlock, level)
+	cs.logger.Debugf("forwardNewHeightIfNeed 333")
 }
 
 func (cs *chainedbftSMR) updateState(newState chainedbftpb.ConsStateType) {
