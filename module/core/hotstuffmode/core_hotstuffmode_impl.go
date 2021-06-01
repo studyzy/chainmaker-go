@@ -4,21 +4,18 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// Package core in charge of propose block, verify block, schedule run transactions in vm and commit block.
-package core
+package hotstuffmode
 
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/core/committer"
-	"chainmaker.org/chainmaker-go/core/helper"
-	"chainmaker.org/chainmaker-go/core/proposer"
-	"chainmaker.org/chainmaker-go/core/scheduler"
-	"chainmaker.org/chainmaker-go/core/verifier"
+	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
+	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"github.com/google/martian/log"
 )
@@ -47,77 +44,89 @@ type CoreEngine struct {
 	subscriber    *subscriber.EventSubscriber // block subsriber
 }
 
+type CoreEngineConfig struct {
+	ChainId         string
+	MsgBus          msgbus.MessageBus
+	ChainConf       protocol.ChainConf
+	TxPool          protocol.TxPool
+	VmMgr           protocol.VmManager
+	BlockchainStore protocol.BlockchainStore
+	SnapshotManager protocol.SnapshotManager
+	Identity        protocol.SigningMember
+	LedgerCache     protocol.LedgerCache
+	ProposalCache   protocol.ProposalCache // proposal cache
+	AC              protocol.AccessControlProvider
+	Subscriber      *subscriber.EventSubscriber
+}
+
 // NewCoreEngine new a core engine.
-func NewCoreEngine(cf *CoreFactory) (*CoreEngine, error) {
+func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	core := &CoreEngine{
-		msgBus:          cf.msgBus,
-		txPool:          cf.txPool,
-		vmMgr:           cf.vmMgr,
-		blockchainStore: cf.blockchainStore,
-		snapshotManager: cf.snapshotManager,
-		proposedCache:   cf.proposalCache,
-		chainConf:       cf.chainConf,
-		txScheduler:     scheduler.NewTxScheduler(cf.vmMgr, cf.chainConf),
-		log:             cf.log,
+		msgBus:          cf.MsgBus,
+		txPool:          cf.TxPool,
+		vmMgr:           cf.VmMgr,
+		blockchainStore: cf.BlockchainStore,
+		snapshotManager: cf.SnapshotManager,
+		proposedCache:   cf.ProposalCache,
+		chainConf:       cf.ChainConf,
+		txScheduler:     common.NewTxScheduler(cf.VmMgr, cf.ChainConf),
+		log:             cf.Log,
 	}
 	core.quitC = make(<-chan interface{})
 
 	var err error
-	if core.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_HOTSTUFF {
-		core.HotStuffHelper = helper.NewHotStuffHelper(cf.txPool, cf.chainConf, cf.proposalCache)
-	}
-
 	// new a bock proposer
 	proposerConfig := proposer.BlockProposerConfig{
-		ChainId:         cf.chainId,
+		ChainId:         cf.ChainId,
 		TxPool:          core.txPool,
 		SnapshotManager: core.snapshotManager,
-		MsgBus:          cf.msgBus,
-		Identity:        cf.identity,
-		LedgerCache:     cf.ledgerCache,
+		MsgBus:          cf.MsgBus,
+		Identity:        cf.Identity,
+		LedgerCache:     cf.LedgerCache,
 		TxScheduler:     core.txScheduler,
 		ProposalCache:   core.proposedCache,
-		ChainConf:       cf.chainConf,
-		AC:              cf.ac,
-		BlockchainStore: cf.blockchainStore,
+		ChainConf:       cf.ChainConf,
+		AC:              cf.AC,
+		BlockchainStore: cf.BlockchainStore,
 	}
-	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig, cf.log)
+	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig, cf.Log)
 	if err != nil {
 		return nil, err
 	}
 
 	// new a block verifier
 	verifierConfig := verifier.BlockVerifierConfig{
-		ChainId:         cf.chainId,
-		MsgBus:          cf.msgBus,
+		ChainId:         cf.ChainId,
+		MsgBus:          cf.MsgBus,
 		SnapshotManager: core.snapshotManager,
 		BlockchainStore: core.blockchainStore,
-		LedgerCache:     cf.ledgerCache,
+		LedgerCache:     cf.LedgerCache,
 		TxScheduler:     core.txScheduler,
 		ProposedCache:   core.proposedCache,
-		ChainConf:       cf.chainConf,
-		AC:              cf.ac,
+		ChainConf:       cf.ChainConf,
+		AC:              cf.AC,
 		TxPool:          core.txPool,
+		VmMgr:           cf.VmMgr,
 	}
-	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.log)
+	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.Log)
 	if err != nil {
 		return nil, err
 	}
 
 	// new a block committer
-	committerConfig := committer.BlockCommitterConfig{
-		ChainId:         cf.chainId,
+	committerConfig := common.BlockCommitterConfig{
+		ChainId:         cf.ChainId,
 		BlockchainStore: core.blockchainStore,
 		SnapshotManager: core.snapshotManager,
 		TxPool:          core.txPool,
-		LedgerCache:     cf.ledgerCache,
+		LedgerCache:     cf.LedgerCache,
 		ProposedCache:   core.proposedCache,
-		ChainConf:       cf.chainConf,
-		MsgBus:          cf.msgBus,
-		Subscriber:      cf.subscriber,
+		ChainConf:       cf.ChainConf,
+		MsgBus:          cf.MsgBus,
+		Subscriber:      cf.Subscriber,
 		Verifier:        core.BlockVerifier,
 	}
-	core.BlockCommitter, err = committer.NewBlockCommitter(committerConfig, cf.log)
+	core.BlockCommitter, err = common.NewBlockCommitter(committerConfig, cf.Log)
 	if err != nil {
 		return nil, err
 	}
@@ -181,4 +190,19 @@ func (c *CoreEngine) Start() {
 func (c *CoreEngine) Stop() {
 	defer log.Infof("core stoped.")
 	c.blockProposer.Stop()
+}
+
+func (c *CoreEngine) GetBlockCommitter() protocol.BlockCommitter {
+	return c.BlockCommitter
+}
+
+func (c *CoreEngine) GetBlockVerifier() protocol.BlockVerifier {
+	return c.BlockVerifier
+}
+
+func (c *CoreEngine) DiscardAboveHeight(baseHeight int64) () {
+}
+
+func (c *CoreEngine) GetHotStuffHelper() protocol.HotStuffHelper {
+	return c.HotStuffHelper
 }

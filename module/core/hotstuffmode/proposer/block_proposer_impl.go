@@ -8,21 +8,20 @@ package proposer
 
 import (
 	"bytes"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
-	"sync"
-	"time"
-
+	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/utils"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
+	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
+	"sync"
+	"time"
 )
 
 // BlockProposerImpl implements BlockProposer interface.
@@ -58,6 +57,8 @@ type BlockProposerImpl struct {
 
 	metricBlockPackageTime *prometheus.HistogramVec
 	proposer               []byte // this node identity
+
+	blockBuilder *common.BlockBuilder
 }
 
 type BlockProposerConfig struct {
@@ -118,6 +119,20 @@ func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol
 		blockProposerImpl.metricBlockPackageTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER, "metric_block_package_time",
 			"block package time metric", []float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10}, "chainId")
 	}
+
+	bbConf := &common.BlockBuilderConf{
+		ChainId:         blockProposerImpl.chainId,
+		TxPool:          blockProposerImpl.txPool,
+		TxScheduler:     blockProposerImpl.txScheduler,
+		SnapshotManager: blockProposerImpl.snapshotManager,
+		Identity:        blockProposerImpl.identity,
+		LedgerCache:     blockProposerImpl.ledgerCache,
+		ProposalCache:   blockProposerImpl.proposalCache,
+		ChainConf:       blockProposerImpl.chainConf,
+		Log:             blockProposerImpl.log,
+	}
+
+	blockProposerImpl.blockBuilder = common.NewBlockBuilder(bbConf)
 
 	return blockProposerImpl, nil
 }

@@ -4,7 +4,7 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package scheduler
+package common
 
 import (
 	"encoding/hex"
@@ -32,8 +32,8 @@ const (
 	ScheduleWithDagTimeout = 20
 )
 
-// TxSchedulerImpl transaction scheduler structure
-type TxSchedulerImpl struct {
+// TxScheduler transaction scheduler structure
+type TxScheduler struct {
 	lock            sync.Mutex
 	VmManager       protocol.VmManager
 	scheduleFinishC chan bool
@@ -47,8 +47,8 @@ type TxSchedulerImpl struct {
 type dagNeighbors map[int]bool
 
 // NewTxScheduler building a transaction scheduler
-func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxSchedulerImpl {
-	txSchedulerImpl := &TxSchedulerImpl{
+func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxScheduler {
+	TxScheduler := &TxScheduler{
 		lock:            sync.Mutex{},
 		VmManager:       vmMgr,
 		scheduleFinishC: make(chan bool),
@@ -56,13 +56,13 @@ func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxS
 		chainConf:       chainConf,
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		txSchedulerImpl.metricVMRunTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER_SCHEDULER, "metric_vm_run_time",
+		TxScheduler.metricVMRunTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER_SCHEDULER, "metric_vm_run_time",
 			"VM run time metric", []float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10}, "chainId")
 	}
-	return txSchedulerImpl
+	return TxScheduler
 }
 
-func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction) protocol.TxSimContext {
+func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction) protocol.TxSimContext {
 	return &txSimContextImpl{
 		txExecSeq:     snapshot.GetSnapshotSize(),
 		tx:            tx,
@@ -79,7 +79,7 @@ func newTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 }
 
 // Schedule according to a batch of transactions, and generating DAG according to the conflict relationship
-func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, error) {
+func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, error) {
 
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
@@ -110,7 +110,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 						return
 					}
 					ts.log.Debugf("run vm for tx id:%s", tx.Header.GetTxId())
-					txSimContext := newTxSimContext(ts.VmManager, snapshot, tx)
+					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx)
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
@@ -196,7 +196,7 @@ func (ts *TxSchedulerImpl) Schedule(block *commonpb.Block, txBatch []*commonpb.T
 }
 
 // SimulateWithDag based on the dag in the block, perform scheduling and execution transactions
-func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string]*commonpb.Result, error) {
+func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string]*commonpb.Result, error) {
 	ts.lock.Lock()
 	defer ts.lock.Unlock()
 
@@ -250,7 +250,7 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
 					ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
-					txSimContext := newTxSimContext(ts.VmManager, snapshot, tx)
+					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx)
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
@@ -326,13 +326,13 @@ func (ts *TxSchedulerImpl) SimulateWithDag(block *commonpb.Block, snapshot proto
 	return txRWSetMap, snapshot.GetTxResultMap(), nil
 }
 
-func (ts *TxSchedulerImpl) shrinkDag(txIndex int, dagRemain map[int]dagNeighbors) {
+func (ts *TxScheduler) shrinkDag(txIndex int, dagRemain map[int]dagNeighbors) {
 	for _, neighbors := range dagRemain {
 		delete(neighbors, txIndex)
 	}
 }
 
-func (ts *TxSchedulerImpl) popNextTxBatchFromDag(dagRemain map[int]dagNeighbors) []int {
+func (ts *TxScheduler) popNextTxBatchFromDag(dagRemain map[int]dagNeighbors) []int {
 	var txIndexBatch []int
 	for checkIndex, neighbors := range dagRemain {
 		if len(neighbors) == 0 {
@@ -343,11 +343,11 @@ func (ts *TxSchedulerImpl) popNextTxBatchFromDag(dagRemain map[int]dagNeighbors)
 	return txIndexBatch
 }
 
-func (ts *TxSchedulerImpl) Halt() {
+func (ts *TxScheduler) Halt() {
 	ts.scheduleFinishC <- true
 }
 
-func (ts *TxSchedulerImpl) runVM(tx *commonpb.Transaction, txSimContext protocol.TxSimContext) (*commonpb.Result, error) {
+func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxSimContext) (*commonpb.Result, error) {
 	var contractId *commonpb.ContractId
 	var contractName string
 	var runtimeType commonpb.RuntimeType
@@ -497,7 +497,7 @@ func errResult(result *commonpb.Result, err error) (*commonpb.Result, error) {
 	result.ContractResult.Code = commonpb.ContractResultCode_FAIL
 	return result, err
 }
-func (ts *TxSchedulerImpl) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string]string {
+func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string]string {
 	parameters := make(map[string]string, 16)
 	for i := 0; i < len(parameterPairs); i++ {
 		key := parameterPairs[i].Key
@@ -518,7 +518,7 @@ func (ts *TxSchedulerImpl) parseParameter(parameterPairs []*commonpb.KeyValuePai
 	return parameters
 }
 
-func (ts *TxSchedulerImpl) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string]string) error {
+func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string]string) error {
 	var ac protocol.AccessControlProvider
 	var targetOrgId string
 	var err error
@@ -568,7 +568,7 @@ func (ts *TxSchedulerImpl) acVerify(txSimContext protocol.TxSimContext, methodNa
 	}
 }
 
-func (ts *TxSchedulerImpl) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
+func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
 	dagString := "digraph DAG {\n"
 	for i, ns := range dag.Vertexes {
 		if len(ns.Neighbors) == 0 {
