@@ -8,21 +8,21 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"strings"
-
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/core/cache"
+	"chainmaker.org/chainmaker-go/dpos"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
+	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/snapshot"
@@ -77,6 +77,8 @@ func (bc *Blockchain) Init() (err error) {
 			{moduleNameNetService: bc.initNetService},
 			// init vm instances and module
 			{moduleNameVM: bc.initVM},
+			// init dpos service
+			{moduleNameDpos: bc.initDpos},
 
 			// init transaction pool
 			{moduleNameTxPool: bc.initTxPool},
@@ -123,6 +125,20 @@ func (bc *Blockchain) initExtModules(extModules []map[string]func() error) (err 
 			bc.log.Infof("MODULE INIT STEP (%d/%d) => init module[%s] success :)", idx+1, moduleNum, name)
 		}
 	}
+	return
+}
+
+func (bc *Blockchain) initDpos() (err error) {
+	if bc.chainConf.ChainConfig().Consensus.Type != consensusPb.ConsensusType_DPOS {
+		return nil
+	}
+	_, ok := bc.initModules[moduleNameDpos]
+	if ok {
+		bc.log.Infof("dpos service module existed, ignore.")
+		return
+	}
+	bc.dpos = dpos.NewDposImpl(bc.store)
+	bc.initModules[moduleNameNetService] = struct{}{}
 	return
 }
 
@@ -401,7 +417,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 		bc.msgBus,
 		bc.chainConf,
 		bc.store,
-		bc.coreEngine.HotStuffHelper)
+		bc.coreEngine.HotStuffHelper,
+		bc.dpos)
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
 		return err

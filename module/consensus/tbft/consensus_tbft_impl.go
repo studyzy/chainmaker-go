@@ -81,6 +81,7 @@ type ConsensusTBFTImpl struct {
 	logger           *logger.CMLogger
 	chainID          string
 	Id               string
+	dpos             protocol.Dpos
 	singer           protocol.SigningMember
 	ac               protocol.AccessControlProvider
 	dbHandle         protocol.DBHandle
@@ -119,6 +120,7 @@ type ConsensusTBFTImpl struct {
 type ConsensusTBFTImplConfig struct {
 	ChainID     string
 	Id          string
+	Dpos        protocol.Dpos
 	Signer      protocol.SigningMember
 	Ac          protocol.AccessControlProvider
 	DbHandle    protocol.DBHandle
@@ -143,6 +145,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 	consensus.chainConf = config.ChainConf
 	consensus.netService = config.NetService
 	consensus.msgbus = config.MsgBus
+	consensus.dpos = config.Dpos
 	consensus.closeC = make(chan struct{})
 
 	consensus.waldir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, walDir)

@@ -43,7 +43,8 @@ func (f Factory) NewConsensusEngine(
 	msgBus msgbus.MessageBus,
 	chainConf protocol.ChainConf,
 	store protocol.BlockchainStore,
-	helper protocol.HotStuffHelper) (protocol.ConsensusEngine, error) {
+	helper protocol.HotStuffHelper,
+	dpos protocol.Dpos) (protocol.ConsensusEngine, error) {
 	switch consensusType {
 	case consensuspb.ConsensusType_TBFT:
 		config := tbft.ConsensusTBFTImplConfig{
@@ -56,6 +57,7 @@ func (f Factory) NewConsensusEngine(
 			ChainConf:   chainConf,
 			NetService:  netService,
 			MsgBus:      msgBus,
+			Dpos:        dpos,
 		}
 		return tbft.New(config)
 	case consensuspb.ConsensusType_SOLO:
