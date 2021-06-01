@@ -23,12 +23,14 @@ import (
 )
 
 const (
-	ConstMinQuorumForQc    = 3     //default min vote num
-	ConstTransitBlock      = 0     //default epoch switch block buff
-	ConstBlockNumPerEpoch  = 10000 //default epoch change height
-	ConstValidatorNum      = 4     //default actual consensus node num
-	ConstNodeProposeRound  = 1     //default continuity propose round
-	GovernanceContractName = "government_contract"
+	ConstMinQuorumForQc        = 3     //default min vote num
+	ConstTransitBlock          = 0     //default epoch switch block buff
+	ConstBlockNumPerEpoch      = 10000 //default epoch change height
+	ConstValidatorNum          = 4     //default actual consensus node num
+	ConstNodeProposeRound      = 1     //default continuity propose round
+	GovernanceContractName     = "government_contract"
+	MinimumTimeOutMill         = 4000
+	MinimumIntervalTimeOutMill = 100
 
 	SkipTimeoutCommit        = "SkipTimeoutCommit"
 	CachedLen                = "CachedLen"
@@ -92,20 +94,23 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	newCachedLen := uint64(0)
 	newRoundTimeoutMill := uint64(0)
 	newRoundTimeoutIntervalMill := uint64(0)
-	//newBlockNumPerEpoch := uint64(ConstBlockNumPerEpoch)
-	//newSkipTimeoutCommit := false
-	//newTransitBlock := uint64(ConstTransitBlock)
-	//newValidatorNum := uint64(ConstValidatorNum)
-	//newNodeProposeRound := uint64(ConstNodeProposeRound)
 
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
 		case RoundTimeoutMill:
 			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				if v < MinimumTimeOutMill {
+					log.Warnf("%s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
+					continue
+				}
 				newRoundTimeoutMill = v
 			}
 		case RoundTimeoutIntervalMill:
 			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				if v < MinimumIntervalTimeOutMill {
+					log.Warnf("%s is too minimun, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
+					continue
+				}
 				newRoundTimeoutIntervalMill = v
 			}
 		case CachedLen:
@@ -123,85 +128,20 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 				log.Warnf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0")
 				continue
 			}
-			//newBlockNumPerEpoch = blockNumPerEpoch
-			//case SkipTimeoutCommit:
-			//	if strings.ToUpper(oneConf.Value) == "TRUE" {
-			//		newSkipTimeoutCommit = true
-			//		continue
-			//	}
-			//	if strings.ToUpper(oneConf.Value) == "FALSE" {
-			//		newSkipTimeoutCommit = false
-			//		continue
-			//	}
-			//case TransitBlock:
-			//	transitBlock, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			//	if err != nil {
-			//		continue
-			//	}
-			//	if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newTransitBlock != 0 {
-			//		log.Warnf("set TransitBlock err!HOTSTUFF should set 0")
-			//		continue
-			//	}
-			//	newTransitBlock = transitBlock
-			//case ValidatorNum:
-			//	validatorNum, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			//	if err != nil {
-			//		continue
-			//	}
-			//	//if less than default,no effect
-			//	if validatorNum < ConstValidatorNum {
-			//		log.Warnf("set validatorNum err!validatorNum[%v],min ConstValidatorNum[%v]", validatorNum, ConstValidatorNum)
-			//		continue
-			//	}
-			//	newValidatorNum = validatorNum
-			//case NodeProposeRound:
-			//	nodeProposeRound, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			//	if err != nil {
-			//		continue
-			//	}
-			//	if nodeProposeRound < 1 {
-			//		log.Warnf("set nodeProposeRound err!NodeProposeRound=%v", nodeProposeRound)
-			//		continue
-			//	}
-			//	newNodeProposeRound = nodeProposeRound
 		}
 	}
-	//if GovernanceContract.SkipTimeoutCommit != newSkipTimeoutCommit {
-	//	GovernanceContract.SkipTimeoutCommit = newSkipTimeoutCommit
-	//	isChg = true
-	//}
-	//if GovernanceContract.ValidatorNum != newValidatorNum {
-	//	GovernanceContract.ValidatorNum = newValidatorNum
-	//	isChg = true
-	//}
-	//if GovernanceContract.NodeProposeRound != newNodeProposeRound {
-	//	GovernanceContract.NodeProposeRound = newNodeProposeRound
-	//	isChg = true
-	//}
-	if GovernanceContract.CachedLen != newCachedLen {
+	if newCachedLen != 0 && GovernanceContract.CachedLen != newCachedLen {
 		GovernanceContract.CachedLen = newCachedLen
 		isChg = true
 	}
-	if GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
+	if newRoundTimeoutMill != 0 && GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
 		GovernanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
 		isChg = true
 	}
-	if GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+	if newRoundTimeoutIntervalMill != 0 && GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
 		GovernanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
-	//if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
-	//	log.Errorf("set ConstBlockNumPerEpoch or ConstTransitBlock err!newBlockNumPerEpoch=%v,newTransitBlock=%v", newBlockNumPerEpoch, newTransitBlock)
-	//} else {
-	//	if GovernanceContract.BlockNumPerEpoch != newBlockNumPerEpoch {
-	//		GovernanceContract.BlockNumPerEpoch = newBlockNumPerEpoch
-	//		isChg = true
-	//	}
-	//	if GovernanceContract.TransitBlock != newTransitBlock {
-	//		GovernanceContract.TransitBlock = newTransitBlock
-	//		isChg = true
-	//	}
-	//}
 	return isChg
 }
 func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
