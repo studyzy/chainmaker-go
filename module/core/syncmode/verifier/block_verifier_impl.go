@@ -26,8 +26,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const LOCKED = "LOCKED" // LOCKED mark
-
 // BlockVerifierImpl implements BlockVerifier interface.
 // Verify block and transactions.
 type BlockVerifierImpl struct {
@@ -38,7 +36,7 @@ type BlockVerifierImpl struct {
 	ledgerCache     protocol.LedgerCache     // ledger cache
 	blockchainStore protocol.BlockchainStore // blockchain store
 
-	reentrantLocks *reentrantLocks                // reentrant lock for avoid concurrent verify block
+	reentrantLocks *common.ReentrantLocks         // reentrant lock for avoid concurrent verify block
 	proposalCache  protocol.ProposalCache         // proposal cache
 	chainConf      protocol.ChainConf             // chain config
 	ac             protocol.AccessControlProvider // access control manager
@@ -72,8 +70,8 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		snapshotManager: config.SnapshotManager,
 		ledgerCache:     config.LedgerCache,
 		blockchainStore: config.BlockchainStore,
-		reentrantLocks: &reentrantLocks{
-			reentrantLocks: make(map[string]interface{}),
+		reentrantLocks: &common.ReentrantLocks{
+			ReentrantLocks: make(map[string]interface{}),
 		},
 		proposalCache: config.ProposedCache,
 		chainConf:     config.ChainConf,
@@ -115,11 +113,11 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	v.log.Debugf("verify receive [%d](%x,%d,%d), from sync %d",
 		block.Header.BlockHeight, block.Header.BlockHash, block.Header.TxCount, len(block.Txs), mode)
 	// avoid concurrent verify, only one block hash can be verified at the same time
-	if !v.reentrantLocks.lock(string(block.Header.BlockHash)) {
+	if !v.reentrantLocks.Lock(string(block.Header.BlockHash)) {
 		v.log.Warnf("block(%d,%x) concurrent verify, yield", block.Header.BlockHeight, block.Header.BlockHash)
 		return commonErrors.ErrConcurrentVerify
 	}
-	defer v.reentrantLocks.unlock(string(block.Header.BlockHash))
+	defer v.reentrantLocks.Unlock(string(block.Header.BlockHash))
 
 	var isValid bool
 	var contractEventMap map[string][]*commonpb.ContractEvent

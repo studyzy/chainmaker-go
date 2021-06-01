@@ -1,14 +1,14 @@
 package core
 
 import (
-	"chainmaker.org/chainmaker-go/core/hotstuff"
-	tbftMode "chainmaker.org/chainmaker-go/core/tbftmode"
+	hotstuffMode "chainmaker.org/chainmaker-go/core/hotstuffmode"
+	syncMode "chainmaker.org/chainmaker-go/core/syncmode"
 	"chainmaker.org/chainmaker-go/provider"
 )
 
 func init() {
-	provider.RegisterCoreEngineProvider(tbftMode.ConsensusTypeSOLO, tbftMode.NilSOLOProvider)
-	provider.RegisterCoreEngineProvider(tbftMode.ConsensusTypeRAFT, tbftMode.NilRAFTProvider)
-	provider.RegisterCoreEngineProvider(tbftMode.ConsensusTypeTBFT, tbftMode.NilTBFTProvider)
-	provider.RegisterCoreEngineProvider(hotstuff.ConsensusTypeHOTSTUFF, hotstuff.NilTHOTSTUFFProvider)
+	provider.RegisterCoreEngineProvider(syncMode.ConsensusTypeSOLO, syncMode.NilSOLOProvider)
+	provider.RegisterCoreEngineProvider(syncMode.ConsensusTypeRAFT, syncMode.NilRAFTProvider)
+	provider.RegisterCoreEngineProvider(syncMode.ConsensusTypeTBFT, syncMode.NilTBFTProvider)
+	provider.RegisterCoreEngineProvider(hotstuffMode.ConsensusTypeHOTSTUFF, hotstuffMode.NilTHOTSTUFFProvider)
 }

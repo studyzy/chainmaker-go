@@ -4,7 +4,7 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package tbftmode
+package syncmode
 
 import (
 	"chainmaker.org/chainmaker-go/protocol"
@@ -12,13 +12,13 @@ import (
 	"chainmaker.org/chainmaker-go/provider/conf"
 )
 
-const ConsensusTypeRAFT = "RAFT"
+const ConsensusTypeTBFT = "TBFT"
 
-var NilRAFTProvider provider.CoreProvider = (*raftProvider)(nil)
+var NilTBFTProvider provider.CoreProvider = (*tbftProvider)(nil)
 
-type raftProvider struct {
+type tbftProvider struct {
 }
 
-func (rp *raftProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (tp *tbftProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	return NewCoreEngine(config)
 }

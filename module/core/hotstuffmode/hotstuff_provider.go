@@ -4,7 +4,7 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package hotstuff
+package hotstuffmode
 
 import (
 	"chainmaker.org/chainmaker-go/protocol"

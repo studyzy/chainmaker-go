@@ -157,7 +157,6 @@ func IsTxRWSetValid(block *commonpb.Block, tx *commonpb.Transaction, rwSet *comm
 	return nil
 }
 
-
 type VerifierTx struct {
 	block         *commonpb.Block
 	txRWSetMap    map[string]*commonpb.TxRWSet
@@ -170,6 +169,7 @@ type VerifierTx struct {
 	chainId       string
 	consensusType consensuspb.ConsensusType
 }
+
 type VerifierTxConfig struct {
 	Block       *commonpb.Block
 	TxRWSetMap  map[string]*commonpb.TxRWSet

@@ -4,14 +4,13 @@ Copyright (C) BABEC. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package tbftmode
+package hotstuffmode
 
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
-	"chainmaker.org/chainmaker-go/core/tbftmode/committer"
-	"chainmaker.org/chainmaker-go/core/tbftmode/proposer"
-	"chainmaker.org/chainmaker-go/core/tbftmode/verifier"
+	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
+	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
@@ -115,7 +114,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	}
 
 	// new a block committer
-	committerConfig := committer.BlockCommitterConfig{
+	committerConfig := common.BlockCommitterConfig{
 		ChainId:         cf.ChainId,
 		BlockchainStore: core.blockchainStore,
 		SnapshotManager: core.snapshotManager,
@@ -127,7 +126,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		Subscriber:      cf.Subscriber,
 		Verifier:        core.BlockVerifier,
 	}
-	core.BlockCommitter, err = committer.NewBlockCommitter(committerConfig, cf.Log)
+	core.BlockCommitter, err = common.NewBlockCommitter(committerConfig, cf.Log)
 	if err != nil {
 		return nil, err
 	}
