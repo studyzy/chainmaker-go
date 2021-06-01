@@ -4,10 +4,9 @@ cd chainmaker-go/tools/cmc
 go mod download
 go build
 
-# 拷贝sdk的配置文件和示例里cmc命令行需要使用的文件
-cp -r ../sdk/testdata .
+#拷贝sdk的配置文件和示例里cmc命令行需要使用的文件
+cp -r ../sdk/testdata ./
 mv testdata/crypto-config testdata/crypto-config-bak
-# 拷贝证书文件（按实际拷贝，此处为默认证书）
 cp -r ../../config/crypto-config/ testdata/crypto-config
 ```
 
