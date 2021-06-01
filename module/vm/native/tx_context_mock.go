@@ -21,7 +21,6 @@ func newTxContextMock(cache dataStore) *TxContextMock {
 	}
 }
 
-
 func (mock *TxContextMock) Get(name string, key []byte) ([]byte, error) {
 	mock.lock.Lock()
 	defer mock.lock.Unlock()
@@ -58,11 +57,6 @@ func (mock *TxContextMock) Del(name string, key []byte) error {
 
 	mock.cacheMap[k] = nil
 	return nil
-}
-
-
-func (*TxContextMock) Select(name string, startKey []byte, limit []byte) (protocol.Iterator, error) {
-	panic("implement me")
 }
 
 func (*TxContextMock) CallContract(contractId *commonPb.ContractId,
@@ -131,5 +125,26 @@ func (mock *TxContextMock) SetTxExecSeq(i int) {
 }
 
 func (mock *TxContextMock) GetDepth() int {
+	panic("implement me")
+}
+
+func (mock *TxContextMock) GetBlockProposer() []byte {
+	panic("implement me")
+}
+
+
+func (mock *TxContextMock) PutRecord(contractName string, value []byte) {
+	panic("implement me")
+}
+
+func (mock *TxContextMock) Select(name string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic("implement me")
+}
+
+func (mock *TxContextMock) SetStateSqlHandle(i int32, rows protocol.SqlRows) {
+	panic("implement me")
+}
+
+func (mock *TxContextMock) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) {
 	panic("implement me")
 }

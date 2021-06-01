@@ -1,7 +1,7 @@
 package native
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"encoding/hex"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -9,65 +9,32 @@ import (
 	"testing"
 )
 
-var certFile = "testdata/remote_attestation/in_teecert.pem"
-var verificationKeyFile = "testdata/remote_attestation/secretkey.pem"
-var encryptKeyFile = "testdata/remote_attestation/secretkeyExt.pem"
+var certFilename = "testdata/remote_attestation/in_teecert.pem"
+var proofFilename = "testdata/remote_attestation/proof.hex"
 
-func TestExtractPubKeyPair(t *testing.T) {
-	file, err := os.Open(certFile)
-	if err != nil {
-		t.Fatalf("open cert file error: %v", err)
-	}
-
-	certPEM, err := ioutil.ReadAll(file)
-	if err != nil {
-		t.Fatalf("read cert file error: %v", err)
-	}
-
-	// 读取公钥
-	verificationPubKey, encryptPubKey, err := getPubkeyPairFromCert(certPEM)
-	if err != nil {
-		t.Fatalf("extract pub key pair error: %v", err)
-	}
-	verificationPubKeyBytes, _ := verificationPubKey.Bytes()
-	fmt.Println("get verification pub key ok !")
-	fmt.Printf(" %x \n", verificationPubKeyBytes)
-	fmt.Println("get encrypt pub key !")
-	encryptPubKeyStr, _ := encryptPubKey.String()
-	fmt.Printf("%v \n", encryptPubKeyStr)
-
-	//
-	file, err = os.Open(verificationKeyFile)
-	if err != nil {
-		t.Fatalf("open verification private key file error: %v", err)
-	}
-
-	verificationPrivKeyDER, err := ioutil.ReadAll(file)
-	if err != nil {
-		t.Fatalf("read verification private key file error: %v", err)
-	}
-
-	verificationPrivKey, err := asym.PrivateKeyFromDER(verificationPrivKeyDER)
-	if err != nil {
-		t.Fatalf("decode verification private key from DER error: %v", err)
-	}
-	fmt.Println("get verification private key ok !")
-	verificationPubKey2 := verificationPrivKey.PublicKey()
-	fmt.Printf("%x \n", verificationPubKey2)
-}
-
-func TestGenRemoteAttestationProof(t *testing.T) {
-	//challenge := "This is a challenge message for test."
-
-}
 
 func TestSaveRemoteAttestation(t *testing.T) {
 	ds := map[string][]byte{}
 	mockCtx := newTxContextMock(ds)
 
+	proofFile, err := os.Open(proofFilename)
+	if err != nil {
+		t.Fatalf("open file '%s' error: %v", proofFilename, err)
+	}
+
+	proofHex, err := ioutil.ReadAll(proofFile)
+	if err != nil {
+		t.Fatalf("read file '%v' error: %v", proofFile, err)
+	}
+
+	proof, err := hex.DecodeString(string(proofHex))
+	if err != nil {
+		t.Fatalf("decode hex string error: %v", err)
+	}
+
 	contactRuntime := PrivateComputeRuntime{}
 	params := map[string]string{}
-	params["proof"] = string([]byte{ 0x01, 0x02,0x03,0x03 })
+	params["proof"] = string(proof)
 	result, err := contactRuntime.SaveRemoteAttestation(mockCtx, params)
 	assert.Error(t, err, "Save remote attestation error")
 
