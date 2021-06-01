@@ -371,7 +371,7 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 		return
 	}
 	height, _ := bp.ledgerCache.CurrentHeight()
-	bp.proposalCache.ResetProposedAt(height) // proposer status changed, reset this round proposed status
+	bp.proposalCache.ResetProposedAt(height+1) // proposer status changed, reset this round proposed status
 	bp.setIsSelfProposer(proposeStatus)
 	if !bp.isSelfProposer() {
 		bp.yieldProposing() // try to yield if proposer self is proposing right now.
@@ -413,7 +413,7 @@ func (bp *BlockProposerImpl) OnReceiveYieldProposeSignal(isYield bool) {
 		// halt scheduler execution
 		bp.txScheduler.Halt()
 		height, _ := bp.ledgerCache.CurrentHeight()
-		bp.proposalCache.ResetProposedAt(height)
+		bp.proposalCache.ResetProposedAt(height+1)
 	}
 }
 
