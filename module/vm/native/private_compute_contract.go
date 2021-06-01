@@ -355,6 +355,19 @@ func (r *PrivateComputeRuntime) GetDir(context protocol.TxSimContext, params map
 }
 
 func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	ac, err := context.GetAccessControl()
+	if err != nil {
+		return nil, err
+	}
+
+	auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
+	if !auth || err != nil {
+		err := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
+			params["user_cert"], params["signature"], params["payload"])
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+
 	name := params["contract_name"]
 	version := params["version"]
 	codeHash := params["code_hash"]
