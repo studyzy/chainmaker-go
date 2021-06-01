@@ -12,25 +12,19 @@ import (
 	"strconv"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/vm"
-	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"chainmaker.org/chainmaker-go/wxvm/xvm"
 )
 
 var testOrgId = "wx-org1.chainmaker.org"
 
-var CertFilePath = "/Users/boom/projects/chainMaker-go-inner/chainmaker-go/config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
-var WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
+var CertFilePath = "./config/admin1.sing.crt"
+var ByteCodeFile = "./token.bin"
 
 var txType = commonPb.TxType_INVOKE_USER_CONTRACT
-var pool *wasmer.VmPoolManager
 
 const (
 	ContractNameTest    = "contract01"
@@ -38,21 +32,14 @@ const (
 	ChainIdTest         = "chain01"
 )
 
-func GetVmPoolManager() *wasmer.VmPoolManager {
-	if pool == nil {
-		pool = wasmer.NewVmPoolManager(ChainIdTest)
-	}
-	return pool
-}
-
 var bytes []byte
 var file []byte
 
 // 初始化上下文和wasm字节码
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *TxContextMockTest, []byte) {
 	if bytes == nil {
-		bytes, _ = wasm.ReadBytes(WasmFile)
-		fmt.Printf("Wasm file size=%d\n", len(bytes))
+		bytes, _ = wasm.ReadBytes(ByteCodeFile)
+		fmt.Printf("byteCode file size=%d\n", len(bytes))
 	}
 
 	contractId := commonPb.ContractId{
@@ -60,11 +47,6 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 		ContractVersion: ContractVersionTest,
 		RuntimeType:     runtimeType,
 	}
-
-	wxvmCodeManager := xvm.NewCodeManager(ChainIdTest, "tmp/wxvm-data")
-	wxvmContextService := xvm.NewContextService(ChainIdTest)
-	log := logger.GetLoggerByChain(logger.MODULE_VM, ChainIdTest)
-
 	if file == nil {
 		var err error
 		file, err = ioutil.ReadFile(CertFilePath)
@@ -79,17 +61,8 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 	}
 
 	txContext := TxContextMockTest{
-		lock: &sync.Mutex{},
-		vmManager: &vm.ManagerImpl{
-			WasmerVmPoolManager:    GetVmPoolManager(),
-			WxvmCodeManager:        wxvmCodeManager,
-			WxvmContextService:     wxvmContextService,
-			SnapshotManager:        nil,
-			AccessControl:          accesscontrol.MockAccessControl(),
-			ChainNodesInfoProvider: nil,
-			ChainId:                ChainIdTest,
-			Log:                    log,
-		},
+		lock:      &sync.Mutex{},
+		vmManager: nil,
 		hisResult: make([]*callContractResult, 0),
 		creator:   sender,
 		sender:    sender,
@@ -106,11 +79,6 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 
 	return &contractId, &txContext, bytes
 }
-
-// test
-// test
-// test
-// test
 
 type TxContextMockTest struct {
 	lock          *sync.Mutex
@@ -309,13 +277,13 @@ func (s *TxContextMockTest) GetDepth() int {
 
 func BaseParam(parameters map[string]string) {
 	parameters[protocol.ContractTxIdParam] = "TX_ID"
-	parameters[protocol.ContractCreatorOrgIdParam] = "CREATOR_ORG_ID"
-	parameters[protocol.ContractCreatorRoleParam] = "CREATOR_ROLE"
-	parameters[protocol.ContractCreatorPkParam] = "CREATOR_PK"
-	parameters[protocol.ContractSenderOrgIdParam] = "SENDER_ORG_ID"
-	parameters[protocol.ContractSenderRoleParam] = "SENDER_ROLE"
-	parameters[protocol.ContractSenderPkParam] = "SENDER_PK"
-	parameters[protocol.ContractBlockHeightParam] = "111"
+	parameters[protocol.ContractCreatorOrgIdParam] = "org_a"
+	parameters[protocol.ContractCreatorRoleParam] = "admin"
+	parameters[protocol.ContractCreatorPkParam] = "1234567890abcdef1234567890abcdef"
+	parameters[protocol.ContractSenderOrgIdParam] = "org_b"
+	parameters[protocol.ContractSenderRoleParam] = "user"
+	parameters[protocol.ContractSenderPkParam] = "11223344556677889900aabbccddeeff"
+	parameters[protocol.ContractBlockHeightParam] = "1"
 }
 
 type mockBlockchainStore struct {
@@ -436,8 +404,6 @@ func (m mockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 func (m mockBlockchainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
 	panic("implement me")
 }
-
-
 
 func (m mockBlockchainStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	panic("implement me")
