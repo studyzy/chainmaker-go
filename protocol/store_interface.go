@@ -103,7 +103,9 @@ type BlockchainStore interface {
 	Close() error
 	//GetHistoryForKey 查询某合约中某个Key的变更历史
 	GetHistoryForKey(contractName string, key []byte) (KeyHistoryIterator, error)
+	//GetAccountTxHistory 查询一个账户的交易历史记录
 	GetAccountTxHistory(accountId []byte) (TxHistoryIterator, error)
+	//GetContractTxHistory 查询一个合约的调用交易历史记录
 	GetContractTxHistory(contractName string) (TxHistoryIterator, error)
 }
 type StateSqlOperation interface {

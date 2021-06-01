@@ -8,14 +8,20 @@ package types
 
 import "strings"
 
+//EngineType database type
 type EngineType int32
 
 const (
+	//UnknownDb don't know database
 	UnknownDb EngineType = 0
-	LevelDb   EngineType = 1
-	RocksDb   EngineType = 2
-	MySQL     EngineType = 3
-	Sqlite    EngineType = 4
+	//LevelDb LevelDb
+	LevelDb EngineType = 1
+	//RocksDb RocksDb
+	RocksDb EngineType = 2
+	//MySQL MySQL
+	MySQL EngineType = 3
+	//Sqlite Sqlite
+	Sqlite EngineType = 4
 )
 
 func (t EngineType) String() string {
@@ -37,4 +43,4 @@ func (t EngineType) LowerString() string {
 	return strings.ToLower(t.String())
 }
 
-var CommonDBDir = "common" // used to define database dir for other module (for instance consensus) to use kv database
+//var CommonDBDir = "common" // used to define database dir for other module (for instance consensus) to use kv database

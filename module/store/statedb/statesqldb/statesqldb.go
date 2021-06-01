@@ -69,14 +69,15 @@ func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	return err
 }
 
-// NewStateMysqlDB construct a new `StateDB` for given chainId
+// NewStateSqlDB construct a new `StateDB` for given chainId
 func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
 	dbName := getDbName(dbConfig, chainId)
 	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
 	return newStateSqlDB(dbName, chainId, db, dbConfig, logger)
 }
 
-func newStateSqlDB(dbName, chainId string, db protocol.SqlDBHandle, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
+func newStateSqlDB(dbName, chainId string, db protocol.SqlDBHandle, dbConfig *localconf.SqlDbConfig,
+	logger protocol.Logger) (*StateSqlDB, error) {
 	stateDB := &StateSqlDB{
 		db:          db,
 		dbConfig:    dbConfig,
@@ -91,7 +92,10 @@ func newStateSqlDB(dbName, chainId string, db protocol.SqlDBHandle, dbConfig *lo
 func (s *StateSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	s.Lock()
 	defer s.Unlock()
-	s.initSystemStateDb(s.dbName)
+	err := s.initSystemStateDb(s.dbName)
+	if err != nil {
+		return err
+	}
 	return s.commitBlock(genesisBlock)
 }
 func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
@@ -131,11 +135,12 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		s.logger.Warnf("block[%d] don't have any read write set data", block.Header.BlockHeight)
 		return nil
 	}
+	//1. get a db transaction
 	dbTx, err := s.db.GetDbTransaction(txKey)
 	s.logger.Infof("GetDbTransaction db:%v,err:%s", dbTx, err)
 	processStateDbSqlOutside := false
 	if err == nil { //外部已经开启了事务，不用重复创建事务
-		s.logger.Debugf("db transaction[%s] already created outside, don't need process statedb sql in CommitBlock function", txKey)
+		s.logger.Debugf("db transaction[%s] already created outside, don't need process statedb sql again", txKey)
 		processStateDbSqlOutside = true
 	}
 	//没有在外部开启事务，则开启事务，进行数据写入
@@ -146,11 +151,14 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		}
 	}
 
-	//如果是新建合约，则创建对应的数据库，并执行DDL
+	//2. 如果是新建合约，则创建对应的数据库，并执行DDL
 	if block.IsContractMgmtBlock() {
 		//创建对应合约的数据库
 		payload := &commonPb.ContractMgmtPayload{}
-		payload.Unmarshal(block.Txs[0].RequestPayload)
+		err = payload.Unmarshal(block.Txs[0].RequestPayload)
+		if err != nil {
+			return err
+		}
 		contractId := &commonPb.ContractId{
 			ContractName:    payload.ContractId.ContractName,
 			ContractVersion: payload.ContractId.ContractVersion,
@@ -160,57 +168,80 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
 			contractId.ContractName = address.String()
 		}
-		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites)
+		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
 			return err
 		}
 	}
-	//不是新建合约，是普通的合约调用，则在事务中更新数据
-	currentDb := ""
+	//3. 不是新建合约，是普通的合约调用，则在事务中更新数据
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
-			contractDbName := getContractDbName(s.dbConfig, s.chainId, txWrite.ContractName)
-			if txWrite.ContractName != "" && (contractDbName != currentDb || currentDb == "") { //切换DB
-				dbTx.ChangeContextDb(contractDbName)
-				currentDb = contractDbName
-			}
-			if len(txWrite.Key) == 0 && !processStateDbSqlOutside { //是sql,而且没有在外面处理过，则在这里进行处理
-				sql := string(txWrite.Value)
-				if _, err := dbTx.ExecSql(sql); err != nil {
-					s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
-					s.db.RollbackDbTransaction(txKey)
-					return err
+			err = s.operateDbByWriteSet(dbTx, block, txWrite, processStateDbSqlOutside)
+			if err != nil {
+				err2 := s.db.RollbackDbTransaction(txKey)
+				if err2 != nil {
+					return err2
 				}
-			} else {
-				stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight), block.GetTimestamp())
-				if _, err := dbTx.Save(stateInfo); err != nil {
-					s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
-					s.db.RollbackDbTransaction(txKey)
-					return err
-				}
+				return err
 			}
 		}
 	}
-	//更新SavePoint
-	dbTx.ChangeContextDb(s.dbName)
-	_, err = dbTx.ExecSql("update save_points set block_height=?", block.Header.BlockHeight)
+	//4. 更新SavePoint
+	err = s.updateSavePoint(dbTx, block.Header.BlockHeight)
 	if err != nil {
-		s.logger.Errorf("update save point error:%s", err)
+		s.logger.Error(err.Error())
 		return err
 	}
+	//5. commit transaction
 	err = s.db.CommitDbTransaction(txKey)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return err
 	}
-	s.logger.Debugf("chain[%s]: commit state block[%d]",
-		block.Header.ChainId, block.Header.BlockHeight)
+	s.logger.Debugf("chain[%s]: commit state block[%d]", block.Header.ChainId, block.Header.BlockHeight)
+	return nil
+}
+func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
+	block *commonPb.Block, txWrite *commonPb.TxWrite, processStateDbSqlOutside bool) error {
+	contractDbName := getContractDbName(s.dbConfig, s.chainId, txWrite.ContractName)
+	if txWrite.ContractName != "" { //切换DB
+		err := dbTx.ChangeContextDb(contractDbName)
+		if err != nil {
+			return err
+		}
+	}
+	if len(txWrite.Key) == 0 && !processStateDbSqlOutside { //是sql,而且没有在外面处理过，则在这里进行处理
+		sql := string(txWrite.Value)
+		if _, err := dbTx.ExecSql(sql); err != nil {
+			s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
+			return err
+		}
+	} else {
+		stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
+			uint64(block.Header.BlockHeight), block.GetTimestamp())
+		if _, err := dbTx.Save(stateInfo); err != nil {
+			s.logger.Errorf("save state key[%s] get error:%s", txWrite.Key, err.Error())
+			return err
+		}
+	}
+	return nil
+}
+func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int64) error {
+	err := dbTx.ChangeContextDb(s.dbName)
+	if err != nil {
+		return err
+	}
+	_, err = dbTx.ExecSql("update save_points set block_height=?", height)
+	if err != nil {
+		s.logger.Errorf("update save point to %d get an error:%s", height, err)
+		return err
+	}
 	return nil
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
 func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractId *commonPb.ContractId,
-	writes []*commonPb.TxWrite) error {
+	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
 	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
@@ -234,26 +265,41 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 
 	for _, txWrite := range writes {
 		if len(txWrite.Key) == 0 { //这是SQL语句
-			// 已经在VM执行的时候执行了SQL
-			//_, err := dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
-			//if err != nil {
-			//	s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
-			//	dbHandle.RollbackDbTransaction(txKey) //前面开启的事务，这里还是需要回滚一下
-			//	return err
-			//}
+			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
+			if !processStateDbSqlOutside {
+				_, err = dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
+				if err != nil {
+					s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
+					err2 := dbHandle.RollbackDbTransaction(txKey)
+					if err2 != nil {
+						return err2
+					} //前面开启的事务，这里还是需要回滚一下
+					return err
+				}
+			}
 		} else { //是KV数据，直接存储到StateInfo表
-			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value, uint64(block.Header.BlockHeight), block.GetTimestamp())
+			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
+				uint64(block.Header.BlockHeight), block.GetTimestamp())
 			writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
-			dbTx.ChangeContextDb(writeDbName)
+			err = dbTx.ChangeContextDb(writeDbName)
+			if err != nil {
+				return err
+			}
 			s.logger.Debugf("try save state key[%s] to db[%s]", txWrite.Key, writeDbName)
-			if err := saveStateInfo(dbTx, stateInfo); err != nil {
+			if err = saveStateInfo(dbTx, stateInfo); err != nil {
 				s.logger.Errorf("save state key[%s] to db[%s] get error:%s", txWrite.Key, writeDbName, err.Error())
-				dbHandle.RollbackDbTransaction(txKey)
+				err2 := dbHandle.RollbackDbTransaction(txKey)
+				if err2 != nil {
+					return err2
+				}
 				return err
 			}
 		}
 	}
-	dbTx.ChangeContextDb(dbName)
+	err = dbTx.ChangeContextDb(dbName)
+	if err != nil {
+		return err
+	}
 	err = dbHandle.CommitDbTransaction(txKey)
 	if err != nil {
 		return err
@@ -264,11 +310,15 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 }
 
 func saveStateInfo(tx protocol.SqlDBTransaction, stateInfo *StateInfo) error {
-	updateSql := "update state_infos set object_value=?,block_height=?  where contract_name=? and object_key=?"
-	result, err := tx.ExecSql(updateSql, stateInfo.ObjectValue, stateInfo.BlockHeight, stateInfo.ContractName, stateInfo.ObjectKey)
+	updateSql := `update state_infos set object_value=?,block_height=?
+where contract_name=? and object_key=?`
+	result, err := tx.ExecSql(updateSql, stateInfo.ObjectValue, stateInfo.BlockHeight, stateInfo.ContractName,
+		stateInfo.ObjectKey)
 	if result == 0 || err != nil {
-		insertSql := "INSERT INTO state_infos (contract_name,object_key,object_value,block_height) VALUES (?,?,?,?)"
-		_, err = tx.ExecSql(insertSql, stateInfo.ContractName, stateInfo.ObjectKey, stateInfo.ObjectValue, stateInfo.BlockHeight)
+		insertSql := `INSERT INTO state_infos (contract_name,object_key,object_value,block_height)
+VALUES (?,?,?,?)`
+		_, err = tx.ExecSql(insertSql, stateInfo.ContractName, stateInfo.ObjectKey, stateInfo.ObjectValue,
+			stateInfo.BlockHeight)
 	}
 	return err
 }
