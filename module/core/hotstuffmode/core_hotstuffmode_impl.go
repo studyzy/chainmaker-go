@@ -9,6 +9,7 @@ package hotstuffmode
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/core/hotstuffmode/helper"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -130,6 +131,8 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	core.HotStuffHelper = helper.NewHotStuffHelper(cf.TxPool, cf.ChainConf, cf.ProposalCache)
 
 	return core, nil
 }
