@@ -18,7 +18,8 @@ import (
     "errors"
     "fmt"
     "regexp"
-    "strings"
+	"strconv"
+	"strings"
     "time"
 )
 
@@ -758,70 +759,76 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
         return nil, err
     }
 
-    userCertPem, err := r.getParamValue(params, "user_cert")
-    if err != nil {
-       return nil, err
-    }
-
-    signature, err := r.getParamValue(params, "signature")
+    auth, err := r.verifyCallerAuth(params, ctx.GetTx().Header.ChainId, ac)
     if err != nil {
         return nil, err
     }
 
-    payload, err := r.getParamValue(params, "payload")
-    if err != nil {
-        return nil, err
-    }
+    return []byte(strconv.FormatBool(auth)), nil
+}
 
-    orgId, err := r.getParamValue(params, "org_id")
-    if err != nil {
-        return nil, err
-    }
+func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chainId string, ac protocol.AccessControlProvider, ) (bool, error) {
+	userCertPem, err := r.getParamValue(params, "user_cert")
+	if err != nil {
+		return false, err
+	}
 
+	signature, err := r.getParamValue(params, "signature")
+	if err != nil {
+		return false, err
+	}
 
-    header := &commonPb.TxHeader{
-        ChainId:        ctx.GetTx().Header.ChainId,
-        Sender:         &accesscontrol.SerializedMember{
-            OrgId:      orgId,
-            MemberInfo: []byte(userCertPem),
-            IsFullCert: true,
-        },
-        Timestamp:      time.Now().Unix(),
-    }
+	payload, err := r.getParamValue(params, "payload")
+	if err != nil {
+		return false, err
+	}
 
-    tx := &commonPb.Transaction{
-        Header:           header,
-        RequestPayload:   []byte(payload),
-        RequestSignature: []byte(signature),
-    }
+	orgId, err := r.getParamValue(params, "org_id")
+	if err != nil {
+		return false, err
+	}
 
+	header := &commonPb.TxHeader{
+		ChainId: chainId,
+		Sender: &accesscontrol.SerializedMember{
+			OrgId:      orgId,
+			MemberInfo: []byte(userCertPem),
+			IsFullCert: true,
+		},
+		Timestamp: time.Now().Unix(),
+	}
 
-    txBytes, err := utils.CalcUnsignedTxBytes(tx)
-    if err != nil {
-        return nil, err
-    }
+	tx := &commonPb.Transaction{
+		Header:           header,
+		RequestPayload:   []byte(payload),
+		RequestSignature: []byte(signature),
+	}
 
-    endorsements := []*commonPb.EndorsementEntry{{
-        Signer:    tx.Header.Sender,
-        Signature: []byte(signature),
-    }}
+	txBytes, err := utils.CalcUnsignedTxBytes(tx)
+	if err != nil {
+		return false, err
+	}
 
-    principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, txBytes)
-    if err != nil {
-        return nil ,fmt.Errorf("fail to construct authentication principal: %s", err)
-    }
+	endorsements := []*commonPb.EndorsementEntry{{
+		Signer:    tx.Header.Sender,
+		Signature: []byte(signature),
+	}}
 
-    ok, err := ac.VerifyPrincipal(principal)
-    if err != nil {
-        return nil,fmt.Errorf("authentication error, %s", err)
-    }
+	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, txBytes)
+	if err != nil {
+		return false, fmt.Errorf("fail to construct authentication principal: %s", err)
+	}
 
-    if !ok {
-        return nil, fmt.Errorf("authentication failed")
-    }
+	ok, err := ac.VerifyPrincipal(principal)
+	if err != nil {
+		return false, fmt.Errorf("authentication error, %s", err)
+	}
 
+	if !ok {
+		return false, fmt.Errorf("authentication failed")
+	}
 
-    return []byte("true"),nil
+	return true, nil
 }
 
 func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key string) (string, error) {
