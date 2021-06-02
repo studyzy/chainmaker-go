@@ -487,7 +487,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 			r.log.Errorf("Unmarshal RSet failed, err: %s", err.Error())
 			return nil, err
 		}
-		if !bytes.Equal(val, rSet.Value) || (len(version.RefTxId) != 0 && len(rSet.Version.RefTxId) != 0 && version.RefTxId != rSet.Version.RefTxId) {
+		if !bytes.Equal(val, rSet.Value) || version.RefTxId != rSet.Version.RefTxId {
 			r.log.Errorf("rSet verification failed! key: %s, value: %s, version: %s; but value on chain: %s, version on chain: %s",
 				key, val, version.RefTxId, rSet.Value, rSet.Version.RefTxId)
 			return nil, nil
