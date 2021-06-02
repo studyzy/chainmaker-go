@@ -201,8 +201,7 @@ func (c *CoreEngine) GetBlockVerifier() protocol.BlockVerifier {
 	return c.BlockVerifier
 }
 
-func (c *CoreEngine) DiscardAboveHeight(baseHeight int64) {
-	c.log.Debugf("DiscardAboveHeight ..222")
+func (c *CoreEngine) DiscardAboveHeight(baseHeight int64) () {
 }
 
 func (c *CoreEngine) GetHotStuffHelper() protocol.HotStuffHelper {
