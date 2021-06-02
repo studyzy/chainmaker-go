@@ -31,7 +31,7 @@ func newRestoreCMD() *cobra.Command {
 		Short: "restore blockchain data",
 		Long:  "restore blockchain data from off-chain storage",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dbType != "mysql" {
+			if dbType != defaultDbType {
 				return fmt.Errorf("unsupport database type %s", dbType)
 			}
 
@@ -40,7 +40,7 @@ func newRestoreCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagChainId, flagDbDest, flagSecretKey, flagStartBlockHeight,
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagSecretKey, flagStartBlockHeight,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)

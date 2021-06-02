@@ -17,15 +17,15 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 )
 
+const (
+	defaultDbType = "mysql"
+)
+
 var (
 	// sdk config file path
 	sdkConfPath string
 
 	chainId string
-
-	// cert and key
-	adminKeyFilePaths string
-	adminCrtFilePaths string
 
 	dbType                  string
 	dbDest                  string
@@ -36,21 +36,9 @@ var (
 )
 
 const (
-	// TODO: wrap common flags to a separate package?
 	//// Common flags
-	// sdk config file path flag
-	flagSdkConfPath    = "sdk-conf-path"
-	flagOrgId          = "org-id"
-	flagSyncResult     = "sync-result"
-	flagEnableCertHash = "enable-cert-hash"
-	flagChainId        = "chain-id"
-	// Admin private key file & cert file paths flags, use ',' to separate
-	// The key in the list corresponds to the cert one to one.
-	// If there are only one pair, the single-sign mode will be used.
-	// If there are multiple pairs, the multi-sign mode will be used,
-	// with the first pair used to initiate the multi-sign request and the rest used for the multi-sign vote
-	flagAdminKeyFilePaths = "admin-key-file-paths"
-	flagAdminCrtFilePaths = "admin-crt-file-paths"
+	flagSdkConfPath = "sdk-conf-path"
+	flagChainId     = "chain-id"
 
 	//// Archive flags
 	// Off-chain database type. eg. mysql,mongodb,pgsql
@@ -64,7 +52,6 @@ const (
 	flagBlocks = "blocks"
 	// Secret Key for calc Hmac
 	flagSecretKey = "secret-key"
-
 	// block height of restore
 	flagStartBlockHeight = "start-block-height"
 )
@@ -90,8 +77,6 @@ func init() {
 
 	flags.StringVar(&chainId, flagChainId, "", "Chain ID")
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
-	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
-	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
 	flags.StringVar(&dbType, flagDbType, "mysql", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
 	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task\neg. 100 (block height) or `2006-01-02 15:04:05` (date)")

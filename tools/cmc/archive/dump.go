@@ -37,7 +37,7 @@ func newDumpCMD() *cobra.Command {
 		Short: "dump blockchain data",
 		Long:  "dump blockchain data to off-chain storage and delete on-chain data",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dbType != "mysql" {
+			if dbType != defaultDbType {
 				return fmt.Errorf("unsupport database type %s", dbType)
 			}
 
@@ -64,7 +64,7 @@ func newDumpCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagChainId, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
