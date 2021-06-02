@@ -179,12 +179,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		Block:    block,
 		TxRWSets: txRWSets,
 	}
-	//try to add consensusArgs
-	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
-	if err == nil && consensusArgs.ConsensusData != nil {
-		bs.logger.Debugf("add consensusArgs ConsensusData!")
-		blockWithRWSet.TxRWSets = append(blockWithRWSet.TxRWSets, consensusArgs.ConsensusData)
-	}
+
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write log, block[%d], err:%s",
