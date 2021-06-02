@@ -895,7 +895,6 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 			MemberInfo: []byte(userCertPem),
 			IsFullCert: true,
 		},
-		Timestamp: time.Now().Unix(),
 	}
 
 	tx := &commonPb.Transaction{
