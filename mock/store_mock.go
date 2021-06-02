@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
+	config "chainmaker.org/chainmaker-go/pb/protogo/config"
 	store "chainmaker.org/chainmaker-go/pb/protogo/store"
 	protocol "chainmaker.org/chainmaker-go/protocol"
 	gomock "github.com/golang/mock/gomock"
@@ -552,6 +553,21 @@ func (m *MockBlockchainStore) GetLastBlock() (*common.Block, error) {
 func (mr *MockBlockchainStoreMockRecorder) GetLastBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastBlock", reflect.TypeOf((*MockBlockchainStore)(nil).GetLastBlock))
+}
+
+// GetLastChainConfig mocks base method.
+func (m *MockBlockchainStore) GetLastChainConfig() (*config.ChainConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastChainConfig")
+	ret0, _ := ret[0].(*config.ChainConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLastChainConfig indicates an expected call of GetLastChainConfig.
+func (mr *MockBlockchainStoreMockRecorder) GetLastChainConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastChainConfig", reflect.TypeOf((*MockBlockchainStore)(nil).GetLastChainConfig))
 }
 
 // GetLastConfigBlock mocks base method.

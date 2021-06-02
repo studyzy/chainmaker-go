@@ -8,6 +8,7 @@ package protocol
 
 import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/store"
 )
 
@@ -62,7 +63,8 @@ type BlockchainStore interface {
 
 	// GetLastConfigBlock returns the last config block.
 	GetLastConfigBlock() (*common.Block, error)
-
+	//GetLastChainConfig return the last chain config
+	GetLastChainConfig() (*configPb.ChainConfig, error)
 	// GetBlockByTx returns a block which contains a tx.
 	GetBlockByTx(txId string) (*common.Block, error)
 

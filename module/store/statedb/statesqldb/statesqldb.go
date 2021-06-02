@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"sync"
 
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+
 	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/common/evmutils"
@@ -499,4 +501,17 @@ func (s *StateSqlDB) updateConsensusArgs(dbTx protocol.SqlDBTransaction, block *
 		}
 	}
 	return nil
+}
+func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
+	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	if err != nil {
+		return nil, err
+	}
+	conf := &configPb.ChainConfig{}
+	err = conf.Unmarshal(val)
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
 }
