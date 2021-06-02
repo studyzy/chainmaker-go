@@ -994,7 +994,7 @@ func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
 	cbi.chainStore = chainStore
 	cbi.syncer = newSyncManager(cbi)
 	cbi.msgPool = cbi.nextEpoch.msgPool
-	cbi.timerService = timeservice.NewTimerService()
+	cbi.timerService = timeservice.NewTimerService(cbi.logger)
 	cbi.selfIndexInEpoch = cbi.nextEpoch.index
 	cbi.smr = newChainedBftSMR(cbi.chainID, cbi.nextEpoch, cbi.chainStore, cbi.timerService, cbi)
 	cbi.nextEpoch = nil

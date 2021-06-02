@@ -121,9 +121,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		blockCommitter:        blockCommitter,
 		accessControlProvider: ac,
 		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
-
-		timerService:       timeservice.NewTimerService(),
-		governanceContract: governance.NewGovernanceContract(store, ledgerCache),
+		governanceContract:    governance.NewGovernanceContract(store, ledgerCache),
 
 		quitCh:         make(chan struct{}),
 		quitSyncCh:     make(chan struct{}),
@@ -137,6 +135,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 
 	service.chainStore = chainStore
 	service.syncer = newSyncManager(service)
+	service.timerService = timeservice.NewTimerService(service.logger)
 	service.commitHeight = service.chainStore.getCommitHeight()
 	service.createEpoch(service.commitHeight)
 	service.msgPool = service.nextEpoch.msgPool
