@@ -1,79 +1,94 @@
 package native
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"encoding/hex"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-var certFile = "testdata/remote_attestation/in_teecert.pem"
-var verificationKeyFile = "testdata/remote_attestation/secretkey.pem"
-var encryptKeyFile = "testdata/remote_attestation/secretkeyExt.pem"
+var certCaFilename = "testdata/remote_attestation/enclave_cacert.crt"
+var certFilename = "testdata/remote_attestation/in_teecert.pem"
+var proofFilename = "testdata/remote_attestation/proof.hex"
 
-func TestExtractPubKeyPair(t *testing.T) {
-	file, err := os.Open(certFile)
+func readFileData(filename string, t *testing.T) []byte {
+	file, err := os.Open(filename)
 	if err != nil {
-		t.Fatalf("open cert file error: %v", err)
+		t.Fatalf("open file '%s' error: %v", certCaFilename, err)
 	}
 
-	certPEM, err := ioutil.ReadAll(file)
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		t.Fatalf("read cert file error: %v", err)
+		t.Fatalf("read file '%v' error: %v", certCaFilename, err)
 	}
 
-	// 读取公钥
-	verificationPubKey, encryptPubKey, err := getPubkeyPairFromCert(certPEM)
-	if err != nil {
-		t.Fatalf("extract pub key pair error: %v", err)
-	}
-	verificationPubKeyBytes, _ := verificationPubKey.Bytes()
-	fmt.Println("get verification pub key ok !")
-	fmt.Printf(" %x \n", verificationPubKeyBytes)
-	fmt.Println("get encrypt pub key !")
-	encryptPubKeyStr, _ := encryptPubKey.String()
-	fmt.Printf("%v \n", encryptPubKeyStr)
-
-	//
-	file, err = os.Open(verificationKeyFile)
-	if err != nil {
-		t.Fatalf("open verification private key file error: %v", err)
-	}
-
-	verificationPrivKeyDER, err := ioutil.ReadAll(file)
-	if err != nil {
-		t.Fatalf("read verification private key file error: %v", err)
-	}
-
-	verificationPrivKey, err := asym.PrivateKeyFromDER(verificationPrivKeyDER)
-	if err != nil {
-		t.Fatalf("decode verification private key from DER error: %v", err)
-	}
-	fmt.Println("get verification private key ok !")
-	verificationPubKey2 := verificationPrivKey.PublicKey()
-	fmt.Printf("%x \n", verificationPubKey2)
+	return data
 }
 
-func TestGenRemoteAttestationProof(t *testing.T) {
-	//challenge := "This is a challenge message for test."
-
-}
-
-func TestSaveRemoteAttestation(t *testing.T) {
+func TestSaveEnclaveCaCert(t *testing.T) {
 	ds := map[string][]byte{}
 	mockCtx := newTxContextMock(ds)
 
-	contactRuntime := PrivateComputeRuntime{}
+	privateComputeRuntime := PrivateComputeRuntime{
+		log: logger.GetLogger("test-logger"),
+	}
+
+	// 读取CA证书
+	certCaPem := readFileData(certCaFilename, t)
+
 	params := map[string]string{}
-	params["proof"] = string([]byte{ 0x01, 0x02,0x03,0x03 })
-	result, err := contactRuntime.SaveRemoteAttestation(mockCtx, params)
-	assert.Error(t, err, "Save remote attestation error")
+	params["ca_cert"] = string(certCaPem)
+	result, err := privateComputeRuntime.SaveEnclaveCACert(mockCtx, params)
+	if err != nil {
+		t.Fatalf("Save enclave ca cert error: %v", err)
+	}
+
+	fmt.Printf("result = %v \n", string(result))
+}
+
+func TestSaveRemoteAttestation(t *testing.T) {
+
+	caCertPem := readFileData(certCaFilename, t)
+	report := readFileData("testdata/remote_attestation/report.dat", t)
+
+	ds := map[string][]byte{}
+	mockCtx := newTxContextMock(ds)
+	reportKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
+	ds[reportKey] = report
+	caCertKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "::ca_cert"
+	ds[caCertKey] = caCertPem
+
+	proofFile, err := os.Open(proofFilename)
+	if err != nil {
+		t.Fatalf("open file '%s' error: %v", proofFilename, err)
+	}
+
+	proofHex, err := ioutil.ReadAll(proofFile)
+	if err != nil {
+		t.Fatalf("read file '%v' error: %v", proofFile, err)
+	}
+
+	proof, err := hex.DecodeString(string(proofHex))
+	if err != nil {
+		t.Fatalf("decode hex string error: %v", err)
+	}
+
+	privateComputeRuntime := PrivateComputeRuntime{
+		log: logger.GetLogger("test-logger"),
+	}
+	params := map[string]string{}
+	params["proof"] = string(proof)
+	result, err := privateComputeRuntime.SaveRemoteAttestation(mockCtx, params)
+	if err != nil {
+		t.Fatalf("Save remote attestation error: %v", err)
+	}
 
 	fmt.Printf("result = %v \n", string(result));
 	for key, val := range ds {
-		fmt.Printf("key = %v, val = %v \n", key, val)
+		fmt.Printf("key = %v, val = %x \n", key, val)
 	}
 }
 
