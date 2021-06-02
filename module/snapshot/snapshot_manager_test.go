@@ -8,19 +8,20 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
+	"fmt"
+	"testing"
+
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"sync"
-	"testing"
 )
 
 func TestChainedSnapshot(t *testing.T) {
 	snapshotMgr := &ManagerImpl{
-		lock:            sync.Mutex{},
-		snapshots:       make(map[utils.BlockFingerPrint]*SnapshotImpl, 1024),
-		blockchainStore: nil,
+		snapshots: make(map[utils.BlockFingerPrint]*SnapshotImpl, 1024),
+		delegate: &ManagerDelegate{
+			blockchainStore: nil,
+		},
 	}
 
 	genesis := createNewBlock(0, 0)
