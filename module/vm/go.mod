@@ -18,6 +18,7 @@ require (
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
+	github.com/mr-tron/base58 v1.2.0
 	github.com/stretchr/testify v1.7.0
 )
 

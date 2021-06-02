@@ -42,6 +42,8 @@ const (
 	ContractName_SYSTEM_CONTRACT_STATE ContractName = 5
 	// private compute contract
 	ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE ContractName = 6
+	// erc20 contract for DPoS
+	ContractName_SYSTEM_CONTRACT_DPOS_ERC20 ContractName = 7
 )
 
 var ContractName_name = map[int32]string{
@@ -52,6 +54,7 @@ var ContractName_name = map[int32]string{
 	4: "SYSTEM_CONTRACT_MULTI_SIGN",
 	5: "SYSTEM_CONTRACT_STATE",
 	6: "SYSTEM_CONTRACT_PRIVATE_COMPUTE",
+	7: "SYSTEM_CONTRACT_DPOS_ERC20",
 }
 
 var ContractName_value = map[string]int32{
@@ -62,6 +65,7 @@ var ContractName_value = map[string]int32{
 	"SYSTEM_CONTRACT_MULTI_SIGN":      4,
 	"SYSTEM_CONTRACT_STATE":           5,
 	"SYSTEM_CONTRACT_PRIVATE_COMPUTE": 6,
+	"SYSTEM_CONTRACT_DPOS_ERC20":      7,
 }
 
 func (x ContractName) String() string {
@@ -487,6 +491,68 @@ func (x PrivateComputeContractFunction) String() string {
 
 func (PrivateComputeContractFunction) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_a1095c55e7168440, []int{7}
+}
+
+type DPoSERC20ContractFunction int32
+
+const (
+	// get owner of DPoS
+	DPoSERC20ContractFunction_GET_OWNER DPoSERC20ContractFunction = 0
+	// get decimals of DPoS
+	DPoSERC20ContractFunction_GET_DECIMALS DPoSERC20ContractFunction = 1
+	// transfer token at DPoS
+	DPoSERC20ContractFunction_TRANSFER DPoSERC20ContractFunction = 2
+	// transfer token from user at DPoS
+	DPoSERC20ContractFunction_TRANSFER_FROM DPoSERC20ContractFunction = 3
+	// get balance of user at DPoS
+	DPoSERC20ContractFunction_GET_BALANCEOF DPoSERC20ContractFunction = 4
+	// approve token for user to other user at DPoS
+	DPoSERC20ContractFunction_APPROVE DPoSERC20ContractFunction = 5
+	// get allowance at DPoS
+	DPoSERC20ContractFunction_GET_ALLOWANCE DPoSERC20ContractFunction = 6
+	// burn token at DPoS
+	DPoSERC20ContractFunction_BURN DPoSERC20ContractFunction = 7
+	// mint token at DPoS
+	DPoSERC20ContractFunction_MINT DPoSERC20ContractFunction = 8
+	// transfer owner ship at DPoS
+	DPoSERC20ContractFunction_TRANSFER_OWNERSHIP DPoSERC20ContractFunction = 9
+)
+
+// Enum value maps for DPoSERC20ContractFunction.
+var (
+	DPoSERC20ContractFunction_name = map[int32]string{
+		0: "GET_OWNER",
+		1: "GET_DECIMALS",
+		2: "TRANSFER",
+		3: "TRANSFER_FROM",
+		4: "GET_BALANCEOF",
+		5: "APPROVE",
+		6: "GET_ALLOWANCE",
+		7: "BURN",
+		8: "MINT",
+		9: "TRANSFER_OWNERSHIP",
+	}
+	DPoSERC20ContractFunction_value = map[string]int32{
+		"GET_OWNER":          0,
+		"GET_DECIMALS":       1,
+		"TRANSFER":           2,
+		"TRANSFER_FROM":      3,
+		"GET_BALANCEOF":      4,
+		"APPROVE":            5,
+		"GET_ALLOWANCE":      6,
+		"BURN":               7,
+		"MINT":               8,
+		"TRANSFER_OWNERSHIP": 9,
+	}
+)
+
+func (x DPoSERC20ContractFunction) String() string {
+	return proto.EnumName(DPoSERC20ContractFunction_name, int32(x))
+}
+
+// Deprecated: Use DPoSERC20ContractFunction.Descriptor instead.
+func (DPoSERC20ContractFunction) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{8}
 }
 
 // the unique identifier of a smart contract
