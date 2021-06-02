@@ -126,7 +126,7 @@ func (cbi *ConsensusChainedBftImpl) processLocalTimeout(height uint64, level uin
 		err  error
 		vote *chainedbftpb.ConsensusPayload
 	)
-	if lastVotedLevel, lastVote := cbi.smr.getLastVote(); lastVotedLevel == level {
+	if lastVotedLevel, lastVote := cbi.smr.getLastVote(); lastVotedLevel == level && lastVote.GetVoteMsg().VoteData.Height == height {
 		// retry send last vote
 		vote, err = cbi.retryVote(lastVote)
 	} else {
