@@ -316,14 +316,18 @@ func (cbi *ConsensusChainedBftImpl) processFetchResp(msg *chainedbftpb.Consensus
 	}
 	payload := msg.Payload.GetBlockFetchRespMsg()
 	haveProcessBlocks := make(map[string]bool, len(payload.Blocks))
+
+	sort.Slice(payload.Blocks, func(i, j int) bool {
+		return payload.Blocks[i].Block.Header.BlockHeight < payload.Blocks[j].Block.Header.BlockHeight
+	})
 	for _, pair := range payload.Blocks {
 		if err := cbi.validateBlockPair(payload.AuthorIdx, pair, haveProcessBlocks); err != nil {
-			cbi.logger.Errorf("%s", err)
+			cbi.logger.Warnf("%s", err)
 			continue
 		}
 		cbi.logger.Debugf("validate blockPair success: [%d:%d:%x]", pair.QC.Height, pair.QC.Level, pair.QC.BlockID)
 		if err := cbi.processBlockAndQC(pair); err != nil {
-			cbi.logger.Errorf("%s", err)
+			cbi.logger.Warnf("%s", err)
 		}
 	}
 }
@@ -884,7 +888,7 @@ func (cbi *ConsensusChainedBftImpl) processCertificates(qc *chainedbftpb.QuorumC
 	if tc != nil {
 		cbi.smr.updateTC(tc)
 	}
-	cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC().String())
+	//cbi.logger.Debugf("local node's currentQC: %s", cbi.chainStore.getCurrentQC().String())
 
 	cbi.smr.updateLockedQC(qc)
 	//if enterNewLevel := cbi.smr.processCertificates(qc.Height, currentQC.Level, tcLevel, committedLevel); enterNewLevel {
@@ -1059,7 +1063,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 	}
 
 	sort.Slice(blocks, func(i, j int) bool {
-		return blocks[i].Block.Header.BlockHeight < blocks[i].Block.Header.BlockHeight
+		return blocks[i].Block.Header.BlockHeight < blocks[j].Block.Header.BlockHeight
 	})
 	for i := 0; i <= count-1; i++ {
 		if i == count-1 {
