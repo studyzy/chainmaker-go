@@ -12,6 +12,10 @@ import (
 	"fmt"
 	"sync"
 
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+
+	"chainmaker.org/chainmaker-go/utils"
+
 	"chainmaker.org/chainmaker-go/common/evmutils"
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -184,6 +188,17 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 				}
 				return err
 			}
+		}
+	}
+	//3.5 处理BlockHeader中ConsensusArgs对应的合约状态数据更新
+	if len(block.Header.ConsensusArgs) > 0 {
+		err = s.updateConsensusArgs(dbTx, block)
+		if err != nil {
+			err2 := s.db.RollbackDbTransaction(txKey)
+			if err2 != nil {
+				return err2
+			}
+			return err
 		}
 	}
 	//4. 更新SavePoint
@@ -467,4 +482,36 @@ func (s *StateSqlDB) RollbackDbTransaction(txName string) error {
 	s.Lock()
 	defer s.Unlock()
 	return s.db.RollbackDbTransaction(txName)
+}
+
+func (s *StateSqlDB) updateConsensusArgs(dbTx protocol.SqlDBTransaction, block *commonPb.Block) error {
+	//try to add consensusArgs
+	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
+	if err != nil {
+		s.logger.Errorf("parse header.ConsensusArgs get an error:%s", err)
+		return err
+	}
+	if consensusArgs.ConsensusData != nil {
+		s.logger.Debugf("add consensusArgs ConsensusData to statedb")
+		for _, write := range consensusArgs.ConsensusData.TxWrites {
+			err = s.operateDbByWriteSet(dbTx, block, write, false)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
+	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	if err != nil {
+		return nil, err
+	}
+	conf := &configPb.ChainConfig{}
+	err = conf.Unmarshal(val)
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
 }
