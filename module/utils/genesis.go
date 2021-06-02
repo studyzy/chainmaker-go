@@ -11,14 +11,20 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
+	"github.com/mr-tron/base58/base58"
+	"unicode"
 )
 
 // default timestamp is "2020-11-30 0:0:0"
 const (
 	defaultTimestamp           = int64(1606669261)
 	errMsgMarshalChainConfFail = "proto marshal chain config failed, %s"
+	keyERC20Total              = "erc20.total"
+	keyERC20Owner              = "erc20.owner"
+	keyERC20Decimals           = "erc20.decimals"
 )
 
 // CreateGenesis create genesis block (with read-write set) based on chain config
@@ -158,16 +164,117 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
 	}
 
+	/**
+	  erc20合约的配置
+	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+	    - key: erc20.total
+	      value: 1000000000000
+	    - key: erc20.owner
+	      value: 5pQfwDwtyA
+	    - key: erc20.decimals
+	      value: 18
+	 */
+	var erc20Config *ERC20Config
+	if cc.Consensus.Type == consensus.ConsensusType_DPOS {
+		erc20Config, err = loadERC20Config(cc.Consensus.ExtConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
 	set := &commonPb.TxRWSet{
 		TxId:    GetTxIdWithSeed(int64(defaultTimestamp)),
 		TxReads: nil,
-		TxWrites: []*commonPb.TxWrite{
-			{
-				Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
-				Value:        ccBytes,
-				ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-			},
-		},
+		TxWrites: totalTxRWSet(ccBytes, erc20Config),
 	}
 	return set, nil
+}
+
+// ERC20Config for DPoS
+type ERC20Config struct {
+	total string
+	owner string
+	decimals string
+}
+
+// legal check field is legal
+func (e *ERC20Config) legal() error {
+	// total and decimals must be number
+	// owner must be base58 encode
+	_, err := base58.Decode(e.owner)
+	if err != nil {
+		return fmt.Errorf("config of owner[%s] is not in base58 format", e.owner)
+	}
+	if !isNumber(e.total) {
+		return fmt.Errorf("config of total[%s] is not number", e.total)
+	}
+	if !isNumber(e.decimals) {
+		return fmt.Errorf("config of decimals[%s] is not number", e.decimals)
+	}
+	return nil
+}
+
+// toTxWrites convert to TxWrites
+func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
+	return []*commonPb.TxWrite {
+		{
+			Key:          []byte("OWN"), // equal with native.KeyOwner
+			Value:        []byte(e.owner),
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		},
+		{
+			Key:          []byte("DEC"), // equal with native.KeyDecimals
+			Value:        []byte(e.decimals),
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		},
+		{
+			Key:          []byte("TS"), // equal with native.KeyTotalSupply
+			Value:        []byte(e.total),
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		},
+	}
+}
+
+// isNumber check str
+func isNumber(str string) bool {
+	for _, x := range []rune(str) {
+		if !unicode.IsDigit(x) {
+			return false
+		}
+	}
+	return true
+}
+
+// loadERC20Config load config of erc20 contract
+func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config, error) {
+	config := &ERC20Config{}
+	for i := 0; i < len(consensusExtConfig); i++ {
+		keyValuePair := consensusExtConfig[i]
+		switch keyValuePair.Key {
+		case keyERC20Total:
+			config.total = keyValuePair.Value
+		case keyERC20Owner:
+			config.owner = keyValuePair.Value
+		case keyERC20Decimals:
+			config.decimals = keyValuePair.Value
+		}
+	}
+	// check config is legal
+	if err := config.legal(); err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config) []*commonPb.TxWrite {
+	txWrites := make([]*commonPb.TxWrite, 0)
+	txWrites = append(txWrites, &commonPb.TxWrite {
+			Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
+			Value:        chainConfigBytes,
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		})
+	if erc20Config != nil {
+		erc20ConfigTxWrites := erc20Config.toTxWrites()
+		txWrites = append(txWrites, erc20ConfigTxWrites...)
+	}
+	return txWrites
 }
