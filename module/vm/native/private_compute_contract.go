@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	"chainmaker.org/chainmaker-go/common/crypto/tee"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -16,7 +17,9 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/binary"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"regexp"
@@ -579,24 +582,23 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 		return nil, err
 	}
 
-	// convert params
-	//proofData, err := base64.StdEncoding.DecodeString(proofBase64)
-	//if err != nil {
-	//    err := fmt.Errorf("decode base64 string of 'proof' error: %v", err)
-	//    r.log.Errorf(err.Error())
-	//    return nil, err
-	//}
+
 	proofData := []byte(proofDataStr)
 
-	// extract challenge/report/signing pub key/encrypt pub key/ from proof
-	ok, proof, msg, err := splitProof(proofData)
-	if err != nil || !ok {
-		err := fmt.Errorf("split 'proof' data error: %v", err)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
+	// 备注：
+	// 	目前 enclaveId = "global_enclave_id" 全局唯一, 不需要通过验签公钥生成, 所以不需要后面两步
+	//
+	// 1）extract challenge/report/signing pub key/encrypt pub key/ from proof
+	//
+	// ok, proof, msg, err := splitProof(proofData)
+	// if err != nil || !ok {
+	// 	 err := fmt.Errorf("split 'proof' data error: %v", err)
+	//	 r.log.Errorf(err.Error())
+	//	 return nil, err
+	// }
 
-	// construct the enclaveId
+	// 2）construct the enclaveId
+	//
 	// enclaveData, err := utils.GetCertificateIdFromDER(proof.CertificateDER, bccrypto.CRYPTO_ALGO_SHA3_256)
 	//if err != nil {
 	//    err := fmt.Errorf("generate enclave_id error: %v", err)
@@ -607,16 +609,48 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	enclaveId := "global_enclave_id"
 
 	// get report from chain
-	combinedKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
-	reportFromChain, err := context.Get(combinedKey, []byte("report"))
+	enclaveIdKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
+	reportFromChain, err := context.Get(enclaveIdKey, []byte("report"))
 	if err != nil {
-		err := fmt.Errorf("get 'report' from chain error: %v", err)
+		err := fmt.Errorf("get enclave 'report' from chain error: %v", err)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
+	// get ca_cert from chain
+	caCertPem, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte("ca_cert"))
+	if err != nil {
+		err := fmt.Errorf("get enclave 'ca_cert' from chain error: %v", err)
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+	caCertBlock, _ := pem.Decode(caCertPem)
+	if caCertBlock == nil {
+		err := fmt.Errorf("decode enclave 'ca_cert' from pem format error: %v", err)
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+	caCert, err := bcx509.ParseCertificate(caCertBlock.Bytes)
+	if err != nil {
+		err := fmt.Errorf("parse enclave 'ca_cert' error: %v", err)
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	intermediateCAPool := bcx509.NewCertPool()
+	intermediateCAPool.AddCert(caCert)
+	verifyOption := bcx509.VerifyOptions{
+		DNSName: "",
+		Roots: intermediateCAPool,
+		CurrentTime: time.Time{},
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		MaxConstraintComparisions: 0,
+	}
 	// verify remote attestation
-	passed, err := attestationVerify(msg, proof, bcx509.VerifyOptions{}, reportFromChain, true)
+	passed, proof, err := tee.AttestationVerify(
+		proofData,
+		verifyOption,
+	reportFromChain)
 	if err != nil || !passed {
 		err := fmt.Errorf("save RemoteAttestation Proof error: %v", err)
 		r.log.Errorf(err.Error())
@@ -624,27 +658,27 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	}
 
 	// save remote attestation
-	if err := context.Put(combinedKey, []byte("report"), proof.Report); err != nil {
+	if err := context.Put(enclaveIdKey, []byte("report"), proof.Report); err != nil {
 		err := fmt.Errorf("save RemoteAttestatipn attribute 'report' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-	if err := context.Put(combinedKey, []byte("challenge"), proof.Challenge); err != nil {
+	if err := context.Put(enclaveIdKey, []byte("challenge"), proof.Challenge); err != nil {
 		err := fmt.Errorf("save RemoteAttestatipn attribute 'challenge' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-	if err := context.Put(combinedKey, []byte("signature"), proof.Signature); err != nil {
+	if err := context.Put(enclaveIdKey, []byte("signature"), proof.Signature); err != nil {
 		err := fmt.Errorf("save RemoteAttestatipn attribute 'challenge' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-	if err := context.Put(combinedKey, []byte("verification_pub_key"), proof.VerificationKeyPEM); err != nil {
+	if err := context.Put(enclaveIdKey, []byte("verification_pub_key"), proof.VerificationKeyPEM); err != nil {
 		err := fmt.Errorf("save remote attestatipn attribute <verification_pub_key> failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-	if err := context.Put(combinedKey, []byte("encrypt_pub_key"), proof.EncryptionKeyPEM); err != nil {
+	if err := context.Put(enclaveIdKey, []byte("encrypt_pub_key"), proof.EncryptionKeyPEM); err != nil {
 		err := fmt.Errorf("save remote attestatipn attribute <encrypt_pub_key> failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err

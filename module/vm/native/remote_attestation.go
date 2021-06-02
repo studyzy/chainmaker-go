@@ -53,12 +53,13 @@ func splitProof(proof []byte) (bool, *tee.TEEProof, []byte, error) {
 		return false, nil, nil, fmt.Errorf("fail to get encryption key: %v", err)
 	}
 
-	encryptionKeyBlock, _ := pem.Decode(encryptionKeyPEM)
-	if encryptionKeyBlock == nil {
-		return false, nil, nil, fmt.Errorf("fail to decode encryption key")
-	}
+	//encryptionKeyBlock, _ := pem.Decode(encryptionKeyPEM)
+	//if encryptionKeyBlock == nil {
+	//	return false, nil, nil, fmt.Errorf("fail to decode encryption key")
+	//}
 
-	encryptionKeyInterface, err := asym.PublicKeyFromPEM(encryptionKeyBlock.Bytes)
+	// encryptionKeyInterface, err := asym.PublicKeyFromPEM(encryptionKeyBlock.Bytes)
+	encryptionKeyInterface, err := asym.PublicKeyFromPEM(encryptionKeyPEM)
 	if err != nil {
 		return false, nil, nil, fmt.Errorf("fail to parse TEE encryption key: %v", err)
 	}
