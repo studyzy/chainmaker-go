@@ -426,7 +426,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(version))
 	evmResultBuffer.Write([]byte(codeHash))
 	evmResultBuffer.Write([]byte(reportHash))
-	b, err := asym.Verify(pk, evmResultBuffer.Bytes(), []byte(params["sign"]))
+	b, err := asym.Verify(pk, evmResultBuffer.Bytes(), []byte(params["report_sign"]))
 	if err != nil {
 		r.log.Errorf("verify ContractResult err: %s", err.Error())
 		return nil, err
@@ -878,7 +878,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 		return false, err
 	}
 
-	signature, err := r.getParamValue(params, "signature")
+	signature, err := r.getParamValue(params, "client_sign")
 	if err != nil {
 		return false, err
 	}
