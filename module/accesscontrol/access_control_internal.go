@@ -297,6 +297,8 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
 	resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
 
+	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
+
 	// system contract interface resource definitions
 	resourceNamePolicyMap.Store(common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
@@ -530,6 +532,9 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 }
 
 func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsements []*common.EndorsementEntry, resourceName string) (bool, error) {
+	if strings.Compare(resourceName, "PRIVATE_COMPUTE") == 0 {
+		ac.log.Infof("verifyPricipalPolicyRualAnyCase hit private_compute------")
+	}
 	orgList, roleList := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 	for _, endorsement := range endorsements {
 		if len(orgList) > 0 {
