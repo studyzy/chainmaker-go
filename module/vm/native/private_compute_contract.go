@@ -64,11 +64,12 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
 	//queryMethodMap[commonPb.PrivateComputeContractFunction_GET_QUOTE.String()] = privateComputeRuntime.GetQuote
 	queryMethodMap[commonPb.PrivateComputeContractFunction_UPDATE_CONTRACT.String()] = privateComputeRuntime.UpdateContract
 	queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.CheckCallerCertAuth
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.QueryEnclaveEncryptPubKey
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.QueryEnclaveVerificationPubKey
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.QueryEnclaveReport
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.QueryEnclaveChallenge
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.QueryEnclaveSignature
+	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_REMOTE_ATTESTATION.String()] = privateComputeRuntime.SaveRemoteAttestation
 
 	return queryMethodMap
 }
