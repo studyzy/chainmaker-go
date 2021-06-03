@@ -661,15 +661,6 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	return []byte(enclaveId), nil
 }
 
-// QueryEnclaveCryptoPubKey
-/**
- * 参数：
- *      enclave_id:
- *
- * 返回值：
- *      pubkey
- *
- */
 func (r *PrivateComputeRuntime) QueryEnclaveEncryptPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
@@ -691,14 +682,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveEncryptPubKey(context protocol.TxSim
 	return pemEncryptPubKey, nil
 }
 
-// QueryEnclaveSigVerifyPubKey
-/**
- * 参数：
- *      enclave_id:
- *
- * 返回值：
- *      pubkey
- */
+
 func (r *PrivateComputeRuntime) QueryEnclaveVerificationPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
@@ -741,12 +725,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 	return nil, nil
 }
 
-// QueryEnclaveReport
-/**
- * 参数：
- *      enclave_pub_key:
- *
- */
+
 func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
@@ -768,15 +747,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext
 	return report, nil
 }
 
-// QueryEnclaveRandomSignature
-/**
- * 参数：
- *      enclave_pub_key:
- *
- * 返回值：
- *      random:
- *      signature:
- */
+
 func (r *PrivateComputeRuntime) QueryEnclaveChallenge(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
