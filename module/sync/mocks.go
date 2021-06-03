@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"fmt"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -103,7 +104,9 @@ func (m MockStore) QueryMulti(contractName, sql string, values ...interface{}) (
 func (m MockStore) ExecDdlSql(contractName, sql string) error {
 	panic(errStr)
 }
-
+func (m MockStore) GetLastChainConfig() (*configPb.ChainConfig, error)  {
+	panic(errStr)
+}
 func (m MockStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	panic(errStr)
 }
