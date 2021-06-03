@@ -42,11 +42,6 @@ func newRestoreCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagSecretKey, flagStartBlockHeight,
 	})
-
-	markFlagsRequired(cmd, []string{
-		flagSdkConfPath, flagChainId, flagDbDest, flagSecretKey, flagStartBlockHeight,
-	})
-
 	return cmd
 }
 

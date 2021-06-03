@@ -94,12 +94,6 @@ func attachFlags(cmd *cobra.Command, names []string) {
 	}
 }
 
-func markFlagsRequired(cmd *cobra.Command, names []string) {
-	for _, name := range names {
-		_ = cmd.MarkFlagRequired(name)
-	}
-}
-
 // initDb Connecting database, migrate tables.
 func initDb() (*gorm.DB, error) {
 	// parse params

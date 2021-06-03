@@ -67,10 +67,6 @@ func newDumpCMD() *cobra.Command {
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
 	})
 
-	markFlagsRequired(cmd, []string{
-		flagSdkConfPath, flagChainId, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
-	})
-
 	return cmd
 }
 
