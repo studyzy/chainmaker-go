@@ -189,7 +189,7 @@ func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 	defer s.delegate.lock.Unlock()
 
 	txCount := len(s.delegate.txTable)
-	log.Debugf("start building DAG for block %d with %d txs", s.delegate.blockHeight, txCount)
+	log.Debugf("start building DAG(all vertexes are nil) for block %d with %d txs", s.delegate.blockHeight, txCount)
 
 	dag := &commonPb.DAG{}
 	if txCount == 0 {

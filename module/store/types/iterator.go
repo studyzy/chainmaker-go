@@ -24,7 +24,8 @@ type HistoryIteratorImpl struct {
 	blockStore   blockdb.BlockDB
 }
 
-func NewHistoryIterator(contractName string, key []byte, dbItr historydb.HistoryIterator, resultStore resultdb.ResultDB, blockStore blockdb.BlockDB) *HistoryIteratorImpl {
+func NewHistoryIterator(contractName string, key []byte, dbItr historydb.HistoryIterator,
+	resultStore resultdb.ResultDB, blockStore blockdb.BlockDB) *HistoryIteratorImpl {
 	return &HistoryIteratorImpl{
 		contractName: contractName,
 		key:          key,

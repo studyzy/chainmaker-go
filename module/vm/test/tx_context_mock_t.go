@@ -125,6 +125,26 @@ type TxContextMockTest struct {
 	cacheMap map[string][]byte
 }
 
+func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) Select(name string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetBlockProposer() []byte {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) SetStateSqlHandle(i int32, rows protocol.SqlRows) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) {
+	panic("implement me")
+}
+
 type callContractResult struct {
 	contractName string
 	method       string
@@ -180,11 +200,6 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.cacheMap[k] = nil
 	return nil
 }
-
-func (*TxContextMockTest) Select(name string, startKey []byte, limit []byte) (protocol.Iterator, error) {
-	panic("implement me")
-}
-
 func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte,
 	parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
@@ -306,7 +321,55 @@ func BaseParam(parameters map[string]string) {
 type mockBlockchainStore struct {
 }
 
-func (m mockBlockchainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet, contractEvents []*commonPb.ContractEvent) error {
+func (m mockBlockchainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) ExecDdlSql(contractName, sql string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) CommitDbTransaction(txName string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) RollbackDbTransaction(txName string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetHistoryForKey(contractName string, key []byte) (protocol.KeyHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetAccountTxHistory(accountId []byte) (protocol.TxHistoryIterator, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetContractTxHistory(contractName string) (protocol.TxHistoryIterator, error) {
 	panic("implement me")
 }
 
@@ -374,9 +437,7 @@ func (m mockBlockchainStore) ReadObject(contractName string, key []byte) ([]byte
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) protocol.Iterator {
-	panic("implement me")
-}
+
 
 func (m mockBlockchainStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	panic("implement me")

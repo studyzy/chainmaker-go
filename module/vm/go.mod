@@ -13,10 +13,8 @@ require (
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker-go/wasi v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
-	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
 	github.com/stretchr/testify v1.7.0
 )
