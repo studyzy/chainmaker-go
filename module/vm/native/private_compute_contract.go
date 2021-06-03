@@ -612,7 +612,7 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	// get params
 	proofDataStr := params["proof"]
 	if utils.IsAnyBlank(proofDataStr) {
-		err := fmt.Errorf("'enclave_id' or 'proof' is nil")
+		err := fmt.Errorf("'proof' is nil")
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
