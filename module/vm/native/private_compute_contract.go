@@ -617,7 +617,6 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 		return nil, err
 	}
 
-
 	proofData := []byte(proofDataStr)
 
 	// 备注：
@@ -675,17 +674,17 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	intermediateCAPool := bcx509.NewCertPool()
 	intermediateCAPool.AddCert(caCert)
 	verifyOption := bcx509.VerifyOptions{
-		DNSName: "",
-		Roots: intermediateCAPool,
-		CurrentTime: time.Time{},
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		DNSName:                   "",
+		Roots:                     intermediateCAPool,
+		CurrentTime:               time.Time{},
+		KeyUsages:                 []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 		MaxConstraintComparisions: 0,
 	}
 	// verify remote attestation
 	passed, proof, err := tee.AttestationVerify(
 		proofData,
 		verifyOption,
-	reportFromChain)
+		reportFromChain)
 	if err != nil || !passed {
 		err := fmt.Errorf("save RemoteAttestation Proof error: %v", err)
 		r.log.Errorf(err.Error())
@@ -874,10 +873,6 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 }
 
 func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chainId string, ac protocol.AccessControlProvider) (bool, error) {
-	userCertPem, err := r.getParamValue(params, "user_cert")
-	if err != nil {
-		return false, err
-	}
 
 	signature, err := r.getParamValue(params, "client_sign")
 	if err != nil {
@@ -889,22 +884,13 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 		return false, err
 	}
 
-	orgId, err := r.getParamValue(params, "org_id")
+	headers, err := r.getHeaders(params, chainId)
 	if err != nil {
 		return false, err
 	}
 
-	header := &commonPb.TxHeader{
-		ChainId: chainId,
-		Sender: &accesscontrol.SerializedMember{
-			OrgId:      orgId,
-			MemberInfo: []byte(userCertPem),
-			IsFullCert: true,
-		},
-	}
-
 	tx := &commonPb.Transaction{
-		Header:           header,
+		Header:           headers,
 		RequestPayload:   []byte(payload),
 		RequestSignature: []byte(signature),
 	}
@@ -934,6 +920,28 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	}
 
 	return true, nil
+}
+
+func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId string, ) (*commonPb.TxHeader, error) {
+	userCertPem, err := r.getParamValue(params, "user_cert")
+	if err != nil {
+		return nil, err
+	}
+
+	orgId, err := r.getParamValue(params, "org_id")
+	if err != nil {
+		return nil, err
+	}
+
+	header := &commonPb.TxHeader{
+		ChainId: chainId,
+		Sender: &accesscontrol.SerializedMember{
+			OrgId:      orgId,
+			MemberInfo: []byte(userCertPem),
+			IsFullCert: true,
+		},
+	}
+	return header, nil
 }
 
 func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key string) (string, error) {
