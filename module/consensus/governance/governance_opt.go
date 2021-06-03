@@ -22,12 +22,12 @@ import (
 )
 
 const (
-	ConstMinQuorumForQc        = 3     //default min vote num
-	ConstTransitBlock          = 0     //default epoch switch block buff
-	ConstBlockNumPerEpoch      = 10000 //default epoch change height
-	ConstValidatorNum          = 4     //default actual consensus node num
-	ConstNodeProposeRound      = 1     //default continuity propose round
-	GovernanceContractName     = "government_contract"
+	ConstMinQuorumForQc   = 3     //default min vote num
+	ConstTransitBlock     = 0     //default epoch switch block buff
+	ConstBlockNumPerEpoch = 10000 //default epoch change height
+	ConstValidatorNum     = 4     //default actual consensus node num
+	ConstNodeProposeRound = 1     //default continuity propose round
+	//GovernanceContractName     = "government_contract"
 	MinimumTimeOutMill         = 4000
 	MinimumIntervalTimeOutMill = 100
 
@@ -66,7 +66,7 @@ func (s IntSlice64) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s IntSlice64) Less(i, j int) bool { return s[i] < s[j] }
 
 func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*consensusPb.GovernanceContract, error) {
-	contractName := GovernanceContractName
+	contractName := commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()
 	bz, err := store.ReadObject(contractName, []byte(contractName))
 	if err != nil {
 		log.Errorf("ReadObject.Get err!contractName=%v,err=%v", contractName, err)
@@ -571,7 +571,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 
 func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceContract, oldBytes []byte) (*commonPb.TxRWSet, error) {
 	txRWSet := &commonPb.TxRWSet{
-		TxId:     GovernanceContractName,
+		TxId:     commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
 		TxReads:  make([]*commonPb.TxRead, 0, 0),
 		TxWrites: make([]*commonPb.TxWrite, 0, 1),
 	}
@@ -579,7 +579,7 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	var (
 		err          error
 		pbccPayload  []byte
-		contractName = GovernanceContractName
+		contractName = commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()
 	)
 	log.Debugf("begin getGovernanceContractTxRWSet ...")
 	// 1. check for changes
