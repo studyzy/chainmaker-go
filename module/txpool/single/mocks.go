@@ -124,7 +124,9 @@ func (m *mockBlockChainStore) GetTxConfirmedTime(txId string) (int64, error) {
 func (m *mockBlockChainStore) GetLastBlock() (*commonPb.Block, error) {
 	panic(errStr)
 }
-
+func (m mockBlockChainStore) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	panic(errStr)
+}
 func (m *mockBlockChainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
 	panic(errStr)
 }
