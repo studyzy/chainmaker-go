@@ -70,7 +70,7 @@ func TestSaveEnclaveReport(t *testing.T) {
 	}
 
 	for key, val := range ds {
-		fmt.Printf("%s ==>\n %s \n", key, val)
+		fmt.Printf("%s ==>\n%s \n", key, val)
 	}
 }
 
