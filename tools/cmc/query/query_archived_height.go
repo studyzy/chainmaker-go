@@ -6,9 +6,9 @@
 package query
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -50,7 +50,7 @@ func runQueryArchivedHeightOnChainCMD() error {
 		return err
 	}
 
-	output, err := json.MarshalIndent(map[string]int64{"archived_height": archivedBlkHeight}, "", "    ")
+	output, err := prettyjson.Marshal(map[string]int64{"archived_height": archivedBlkHeight})
 	if err != nil {
 		return err
 	}

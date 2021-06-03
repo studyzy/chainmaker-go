@@ -6,9 +6,9 @@
 package query
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -38,7 +38,7 @@ func newQueryTxOnChainCMD() *cobra.Command {
 				return err
 			}
 
-			output, err = json.MarshalIndent(txInfo, "", "    ")
+			output, err = prettyjson.Marshal(txInfo)
 			if err != nil {
 				return err
 			}

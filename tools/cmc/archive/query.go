@@ -6,15 +6,17 @@
 package archive
 
 import (
-	"encoding/json"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
 
+	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	"chainmaker.org/chainmaker-go/tools/cmc/types"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
@@ -96,9 +98,9 @@ func newQueryTxOffChainCMD() *cobra.Command {
 			}
 
 			if txInfo == nil {
-				output, _ = json.MarshalIndent(map[string]string{"err": "tx not found in off-chain storage"}, "", "    ")
+				output, _ = prettyjson.Marshal(map[string]string{"err": "tx not found in off-chain storage"})
 			} else {
-				output, err = json.MarshalIndent(txInfo, "", "    ")
+				output, err = prettyjson.Marshal(txInfo)
 				if err != nil {
 					return err
 				}
@@ -113,10 +115,9 @@ func newQueryTxOffChainCMD() *cobra.Command {
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 
-	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagDbType)
-	cmd.MarkFlagRequired(flagDbDest)
+	markFlagsRequired(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
 
 	return cmd
 }
@@ -147,7 +148,7 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+					output, _ = prettyjson.Marshal(map[string]string{"err": "block not found in off-chain storage"})
 				} else {
 					return err
 				}
@@ -157,7 +158,18 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				output, err = json.MarshalIndent(blkWithRWSetOffChain, "", "    ")
+				var blkWithRWSet = &types.BlockWithRWSet{
+					BlockWithRWSet: &blkWithRWSetOffChain,
+					Block: &types.Block{
+						Block: blkWithRWSetOffChain.Block,
+						Header: &types.BlockHeader{
+							BlockHeader: blkWithRWSetOffChain.Block.Header,
+							BlockHash:   hex.EncodeToString(blkWithRWSetOffChain.Block.Header.BlockHash),
+						},
+					},
+				}
+
+				output, err = prettyjson.Marshal(blkWithRWSet)
 				if err != nil {
 					return err
 				}
@@ -172,10 +184,9 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 
-	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagDbType)
-	cmd.MarkFlagRequired(flagDbDest)
+	markFlagsRequired(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
 
 	return cmd
 }
@@ -211,7 +222,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+					output, _ = prettyjson.Marshal(map[string]string{"err": "block not found in off-chain storage"})
 				} else {
 					return err
 				}
@@ -221,7 +232,18 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				output, err = json.MarshalIndent(blkWithRWSetOffChain, "", "    ")
+				var blkWithRWSet = &types.BlockWithRWSet{
+					BlockWithRWSet: &blkWithRWSetOffChain,
+					Block: &types.Block{
+						Block: blkWithRWSetOffChain.Block,
+						Header: &types.BlockHeader{
+							BlockHeader: blkWithRWSetOffChain.Block.Header,
+							BlockHash:   hex.EncodeToString(blkWithRWSetOffChain.Block.Header.BlockHash),
+						},
+					},
+				}
+
+				output, err = prettyjson.Marshal(blkWithRWSet)
 				if err != nil {
 					return err
 				}
@@ -236,10 +258,9 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 
-	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagDbType)
-	cmd.MarkFlagRequired(flagDbDest)
+	markFlagsRequired(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
 
 	return cmd
 }
@@ -275,7 +296,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					output, _ = json.MarshalIndent(map[string]string{"err": "block not found in off-chain storage"}, "", "    ")
+					output, _ = prettyjson.Marshal(map[string]string{"err": "block not found in off-chain storage"})
 				} else {
 					return err
 				}
@@ -285,7 +306,18 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				output, err = json.MarshalIndent(blkWithRWSetOffChain, "", "    ")
+				var blkWithRWSet = &types.BlockWithRWSet{
+					BlockWithRWSet: &blkWithRWSetOffChain,
+					Block: &types.Block{
+						Block: blkWithRWSetOffChain.Block,
+						Header: &types.BlockHeader{
+							BlockHeader: blkWithRWSetOffChain.Block.Header,
+							BlockHash:   hex.EncodeToString(blkWithRWSetOffChain.Block.Header.BlockHash),
+						},
+					},
+				}
+
+				output, err = prettyjson.Marshal(blkWithRWSet)
 				if err != nil {
 					return err
 				}
@@ -300,10 +332,9 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 
-	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagDbType)
-	cmd.MarkFlagRequired(flagDbDest)
+	markFlagsRequired(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
 
 	return cmd
 }
@@ -327,7 +358,7 @@ func newQueryArchivedHeightOffChainCMD() *cobra.Command {
 				return err
 			}
 
-			output, err := json.MarshalIndent(map[string]int64{"archived_height": archivedBlkHeightOffChain}, "", "    ")
+			output, err := prettyjson.Marshal(map[string]int64{"archived_height": archivedBlkHeightOffChain})
 			if err != nil {
 				return err
 			}
@@ -340,10 +371,9 @@ func newQueryArchivedHeightOffChainCMD() *cobra.Command {
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 
-	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagChainId)
-	cmd.MarkFlagRequired(flagDbType)
-	cmd.MarkFlagRequired(flagDbDest)
+	markFlagsRequired(cmd, []string{
+		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
+	})
 
 	return cmd
 }

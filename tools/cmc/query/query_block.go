@@ -6,12 +6,14 @@
 package query
 
 import (
-	"encoding/json"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
+	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 
+	"chainmaker.org/chainmaker-go/tools/cmc/types"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
@@ -40,7 +42,18 @@ func newQueryBlockByHeightOnChainCMD() *cobra.Command {
 				return err
 			}
 
-			output, err := json.MarshalIndent(blkWithRWSetOnChain, "", "    ")
+			var blkWithRWSet = &types.BlockWithRWSet{
+				BlockWithRWSet: blkWithRWSetOnChain,
+				Block: &types.Block{
+					Block: blkWithRWSetOnChain.Block,
+					Header: &types.BlockHeader{
+						BlockHeader: blkWithRWSetOnChain.Block.Header,
+						BlockHash:   hex.EncodeToString(blkWithRWSetOnChain.Block.Header.BlockHash),
+					},
+				},
+			}
+
+			output, err := prettyjson.Marshal(blkWithRWSet)
 			if err != nil {
 				return err
 			}
@@ -84,7 +97,18 @@ func newQueryBlockByHashOnChainCMD() *cobra.Command {
 				return err
 			}
 
-			output, err := json.MarshalIndent(blkWithRWSetOnChain, "", "    ")
+			var blkWithRWSet = &types.BlockWithRWSet{
+				BlockWithRWSet: blkWithRWSetOnChain,
+				Block: &types.Block{
+					Block: blkWithRWSetOnChain.Block,
+					Header: &types.BlockHeader{
+						BlockHeader: blkWithRWSetOnChain.Block.Header,
+						BlockHash:   hex.EncodeToString(blkWithRWSetOnChain.Block.Header.BlockHash),
+					},
+				},
+			}
+
+			output, err := prettyjson.Marshal(blkWithRWSet)
 			if err != nil {
 				return err
 			}
@@ -128,7 +152,18 @@ func newQueryBlockByTxIdOnChainCMD() *cobra.Command {
 				return err
 			}
 
-			output, err := json.MarshalIndent(blkWithRWSetOnChain, "", "    ")
+			var blkWithRWSet = &types.BlockWithRWSet{
+				BlockWithRWSet: blkWithRWSetOnChain,
+				Block: &types.Block{
+					Block: blkWithRWSetOnChain.Block,
+					Header: &types.BlockHeader{
+						BlockHeader: blkWithRWSetOnChain.Block.Header,
+						BlockHash:   hex.EncodeToString(blkWithRWSetOnChain.Block.Header.BlockHash),
+					},
+				},
+			}
+
+			output, err := prettyjson.Marshal(blkWithRWSet)
 			if err != nil {
 				return err
 			}
