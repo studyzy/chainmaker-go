@@ -135,7 +135,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
 	txKey := block.GetTxKey()
-	if len(txRWSets) == 0 {
+	if len(txRWSets) == 0 && len(block.Header.ConsensusArgs) == 0 {
 		s.logger.Warnf("block[%d] don't have any read write set data", block.Header.BlockHeight)
 		return nil
 	}
