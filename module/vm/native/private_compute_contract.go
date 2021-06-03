@@ -763,7 +763,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveVerificationPubKey(context protocol.
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['ca_cert'] of save cert  not found", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -780,6 +780,27 @@ func (r *PrivateComputeRuntime) QueryEnclaveVerificationPubKey(context protocol.
 	return pemVerificationPubKey, nil
 }
 
+func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get params
+	enclaveId := params["enclave_id"]
+	report := params["report"]
+	if utils.IsAnyBlank(enclaveId, report) {
+		err := fmt.Errorf("%s,param['enclave_id'] or param['report'] does not found", ErrParams.Error())
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	// save report into chain
+	enclaveIdKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
+	if err := context.Put(enclaveIdKey, []byte("report"), []byte(report)); err != nil {
+		err := fmt.Errorf("save enclave 'report' failed, err: %s", err.Error())
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	return nil, nil
+}
+
 // QueryEnclaveReport
 /**
  * 参数：
@@ -790,14 +811,14 @@ func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
 	// get data from chain
-	combinedKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
-	report, err := context.Get(combinedKey, []byte("report"))
+	enclaveIdKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
+	report, err := context.Get(enclaveIdKey, []byte("report"))
 	if err != nil {
 		err := fmt.Errorf("get 'report' from chain error: %v", err)
 		r.log.Errorf(err.Error())
@@ -820,14 +841,14 @@ func (r *PrivateComputeRuntime) QueryEnclaveChallenge(context protocol.TxSimCont
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
 	// get data from chain
-	combinedKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
-	challenge, err := context.Get(combinedKey, []byte("challenge"))
+	enclaveIdKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
+	challenge, err := context.Get(enclaveIdKey, []byte("challenge"))
 	if err != nil {
 		err := fmt.Errorf("get 'challenge' from chain error: %v", err)
 		r.log.Errorf(err.Error())
@@ -841,7 +862,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimCont
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -850,7 +871,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimCont
 	combinedKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
 	signature, err := context.Get(combinedKey, []byte("signature"))
 	if err != nil {
-		err := fmt.Errorf("get 'challenge' from chain error: %v", err)
+		err := fmt.Errorf("get 'signature' from chain error: %v", err)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
