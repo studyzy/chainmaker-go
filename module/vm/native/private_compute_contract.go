@@ -705,11 +705,11 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	}
 
 	// save remote attestation
-	if err := context.Put(enclaveIdKey, []byte("report"), proof.Report); err != nil {
-		err := fmt.Errorf("save RemoteAttestatipn attribute 'report' failed, err: %s", err.Error())
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
+	//if err := context.Put(enclaveIdKey, []byte("report"), proof.Report); err != nil {
+	//	err := fmt.Errorf("save RemoteAttestatipn attribute 'report' failed, err: %s", err.Error())
+	//	r.log.Errorf(err.Error())
+	//	return nil, err
+	//}
 	if err := context.Put(enclaveIdKey, []byte("challenge"), proof.Challenge); err != nil {
 		err := fmt.Errorf("save RemoteAttestatipn attribute 'challenge' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
