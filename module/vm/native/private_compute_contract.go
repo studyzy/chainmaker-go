@@ -63,7 +63,7 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
-	//queryMethodMap[commonPb.PrivateComputeContractFunction_GET_QUOTE.String()] = privateComputeRuntime.GetQuote
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.QueryEnclaveProof
 	queryMethodMap[commonPb.PrivateComputeContractFunction_UPDATE_CONTRACT.String()] = privateComputeRuntime.UpdateContract
 	queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.QueryEnclaveEncryptPubKey
@@ -125,34 +125,6 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 	return value, nil
 }
 
-func (r *PrivateComputeRuntime) SaveQuote(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	sign := params["sign"]
-	quote := params["quote"]
-	quoteId := params["quote_id"]
-	enclaveId := params["enclave_id"]
-	if utils.IsAllBlank(enclaveId, quoteId, quote, sign) {
-		err := fmt.Errorf("%s, param[enclave_id]%s, param[quote_id]%s, param[quote]%s, param[sign]%s ",
-			ErrParams.Error(), enclaveId, quoteId, quote, sign)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	//if ok, err := r.VerifyByEnclaveCert(context, []byte(enclaveId), []byte(quote), []byte(sign)); !ok {
-	//    r.log.Errorf("%s, enclave certificate[%s] verify quote[%s] failed", err.Error(), enclaveId, quoteId)
-	//    return nil, err
-	//}
-
-	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(quoteId), []byte(quote)); err != nil {
-		r.log.Errorf("%s, save quote[%s] failed", err.Error(), quoteId)
-		return nil, err
-	}
-
-	return nil, nil
-}
-
-func (r *PrivateComputeRuntime) GetQuote(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	return r.getValue(context, params["quote_id"])
-}
 
 func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	name := params["contract_name"]
@@ -549,78 +521,36 @@ func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params ma
 	return value, nil
 }
 
-func (r *PrivateComputeRuntime) SaveCert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	teeId := params["enclave_id"]
-	if utils.IsAnyBlank(teeId) {
-		err := fmt.Errorf("%s,param[enclave_id] of save cert  not found", ErrParams.Error())
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	teeCert := params["enclave_cert"]
-	if utils.IsAnyBlank(teeCert) {
-		err := fmt.Errorf("%s,param[enclave_cert] of save cert  not found", ErrParams.Error())
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte(teeId), []byte(teeCert)); err != nil {
-		r.log.Errorf("Put enclave:%s cert into chain DB failed, err: %s", teeId, err.Error())
-	}
-
-	return nil, nil
-}
-
-func (r *PrivateComputeRuntime) GetCert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	return r.getValue(context, params["enclave_id"])
-}
-
-// GetEnclaveCACert
-/**
- * 无参数
- */
 func (r *PrivateComputeRuntime) GetEnclaveCACert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 
 	caCertPEM, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte("ca_cert"))
 	if err != nil {
-		r.log.Errorf("query ca_cert failed", err.Error())
+		r.log.Errorf("get enclave ca cert failed: %v", err.Error())
 		return nil, err
 	}
 
 	return caCertPEM, nil
 }
 
-// SaveEnclaveCACert
-/** 参数:
- *      ca_cert:
- */
+
 func (r *PrivateComputeRuntime) SaveEnclaveCACert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// PEM 格式的证书
 	caCertPEM := params["ca_cert"]
 	if utils.IsAnyBlank(caCertPEM) {
-		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param[ca_cert] does not found", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
 	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(), []byte("ca_cert"), []byte(caCertPEM)); err != nil {
-		r.log.Errorf("save ca_cert failed: %v", err.Error())
+		r.log.Errorf("save enclave ca cert failed: %v", err.Error())
 		return nil, err
 	}
 
 	return nil, nil
 }
 
-// SaveEnclaveCert
-/** 参数:
- *      challenge:
- *      report:
- *      cert:
- *      signature:
- *
- * 返回值：
- *      成功/失败
- */
+
 func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	proofDataStr := params["proof"]
@@ -632,8 +562,7 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 
 	proofData := []byte(proofDataStr)
 
-	// 备注：
-	// 	目前 enclaveId = "global_enclave_id" 全局唯一, 不需要通过验签公钥生成, 所以不需要后面两步
+	//
 	//
 	// 1）extract challenge/report/signing pub key/encrypt pub key/ from proof
 	//
@@ -705,8 +634,13 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	}
 
 	// save remote attestation
-	if err := context.Put(enclaveIdKey, []byte("report"), proof.Report); err != nil {
-		err := fmt.Errorf("save RemoteAttestatipn attribute 'report' failed, err: %s", err.Error())
+	if err := context.Put(enclaveIdKey, []byte("proof"), proofData); err != nil {
+		err := fmt.Errorf("save RemoteAttestatipn proof failed, err: %s", err.Error())
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+	if err := context.Put(enclaveIdKey, []byte("cert"), proof.CertificateDER); err != nil {
+		err := fmt.Errorf("save RemoteAttestatipn attribute 'cert' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -890,6 +824,27 @@ func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimCont
 	}
 
 	return signature, nil
+}
+
+func (r *PrivateComputeRuntime) QueryEnclaveProof(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// 证书二进制数据
+	enclaveId := params["enclave_id"]
+	if utils.IsAnyBlank(enclaveId) {
+		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	// get data from chain
+	combinedKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
+	proof, err := context.Get(combinedKey, []byte("proof"))
+	if err != nil {
+		err := fmt.Errorf("get 'proof' from chain error: %v", err)
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	return proof, nil
 }
 
 func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, params map[string]string) ([]byte, error) {
