@@ -413,11 +413,11 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 	evmResultBuffer := bytes.NewBuffer([]byte{})
-	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.Code); err != nil {
+	if err := binary.Write(evmResultBuffer, binary.BigEndian, result.Code); err != nil {
 		return nil, err
 	}
 	evmResultBuffer.Write(result.Result)
-	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.GasUsed); err != nil {
+	if err := binary.Write(evmResultBuffer, binary.BigEndian, result.GasUsed); err != nil {
 		return nil, err
 	}
 	for i := 0; i < len(rwSet.TxReads); i++ {
@@ -433,7 +433,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(version))
 	evmResultBuffer.Write([]byte(codeHash))
 	evmResultBuffer.Write([]byte(reportHash))
-
+	// todo add params(4)
 	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["report_sign"]), &crypto.SignOpts{
 		Hash:         crypto.HASH_TYPE_SHA256,
 		UID:          "",
@@ -507,6 +507,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		if !bytes.Equal(val, rSet.Value) || version.RefTxId != rSet.Version.RefTxId {
 			r.log.Errorf("rSet verification failed! key: %s, value: %s, version: %s; but value on chain: %s, version on chain: %s",
 				key, val, version.RefTxId, rSet.Value, rSet.Version.RefTxId)
+			// todo return err
 			return nil, nil
 		}
 	}
@@ -516,6 +517,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		val := rwSet.TxWrites[j].Value
 		if err := context.Put(combinationName, key, val); err != nil {
 			r.log.Errorf("Put key: %s, value:%s into write set failed, err: %s", key, val, err.Error())
+			return nil, err
 		}
 	}
 
@@ -906,7 +908,7 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 
 func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chainId string, ac protocol.AccessControlProvider) (bool, error) {
 
-	signature, err := r.getParamValue(params, "client_sign")
+	clientSign, err := r.getParamValue(params, "client_sign")
 	if err != nil {
 		return false, err
 	}
@@ -924,7 +926,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	tx := &commonPb.Transaction{
 		Header:           headers,
 		RequestPayload:   []byte(payload),
-		RequestSignature: []byte(signature),
+		RequestSignature: []byte(clientSign),
 	}
 
 	txBytes, err := utils.CalcUnsignedTxBytes(tx)
@@ -934,7 +936,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 
 	endorsements := []*commonPb.EndorsementEntry{{
 		Signer:    tx.Header.Sender,
-		Signature: []byte(signature),
+		Signature: []byte(clientSign),
 	}}
 
 	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, txBytes)
@@ -966,9 +968,9 @@ func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId str
 	}
 
 	header := &commonPb.TxHeader{
-		ChainId: chainId,
+		ChainId: chainId,   //todo chainid from gateway
 		Sender: &accesscontrol.SerializedMember{
-			OrgId:      orgId,
+			OrgId:      orgId,   //todo from unmarshal payload
 			MemberInfo: []byte(userCertPem),
 			IsFullCert: true,
 		},
