@@ -44,6 +44,8 @@ const (
 	ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE ContractName = 6
 	// erc20 contract for DPoS
 	ContractName_SYSTEM_CONTRACT_DPOS_ERC20 ContractName = 7
+	// dpos stake / unstake contract
+	ContractName_SYSTEM_CONTRACT_DPOS_STAKE ContractName = 8
 )
 
 var ContractName_name = map[int32]string{
@@ -552,6 +554,50 @@ func (x DPoSERC20ContractFunction) String() string {
 
 // Deprecated: Use DPoSERC20ContractFunction.Descriptor instead.
 func (DPoSERC20ContractFunction) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{8}
+}
+
+// methods of dpos stake contract
+type DposStakeContractFunction int32
+
+const (
+	// get all validator
+	DposStakeContractFunction_GET_ALL_VALIDATOR 	DposStakeContractFunction = 0
+	// reward
+	DposStakeContractFunction_REWARD 				DposStakeContractFunction = 1
+	// user delegation tokens to validator
+	DposStakeContractFunction_DELEGATE				DposStakeContractFunction = 2
+	// user undelegation tokens from validator
+	DposStakeContractFunction_UNDELEGATE			DposStakeContractFunction = 3
+	// read epoch data
+	DposStakeContractFunction_READ_EPOCH			DposStakeContractFunction = 4
+	// update epoch
+	DposStakeContractFunction_UPDATE_EPOCH			DposStakeContractFunction = 5
+)
+
+var DposStakeContractFunction_name = map[int32]string{
+	0: "GET_ALL_VALIDATOR",
+	1: "REWARD",
+	2: "DELEGATE",
+	3: "UNDELEGATE",
+	4: "READ_EPOCH",
+	5: "UPDATE_EPOCH",
+}
+
+var DposStakeContractFunction_value = map[string]int32{
+	"GET_ALL_VALIDATOR":	0,
+	"REWARD":				1,
+	"DELEGATE":				2,
+	"UNDELEGATE":			3,
+	"READ_EPOCH":			4,
+	"UPDATE_EPOCH":			5,
+}
+
+func (dposEnum DposStakeContractFunction) String() string {
+	return proto.EnumName(PrivateComputeContractFunction_name, int32(dposEnum))
+}
+
+func (dposEnum DposStakeContractFunction) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_a1095c55e7168440, []int{8}
 }
 

@@ -20,6 +20,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/mr-tron/base58 v1.2.0
 	github.com/stretchr/testify v1.7.0
+	github.com/shopspring/decimal v1.2.0
 )
 
 replace (
