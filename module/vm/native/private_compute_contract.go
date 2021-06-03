@@ -7,7 +7,9 @@ package native
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"chainmaker.org/chainmaker-go/common/crypto/asym/rsa"
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	"chainmaker.org/chainmaker-go/common/crypto/tee"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
@@ -400,12 +402,16 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	}
 	// verify sign
 	combinedKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "global_enclave_id"
-	pk, err := context.Get(combinedKey, []byte("verification_pub_key"))
+	pkPEM, err := context.Get(combinedKey, []byte("verification_pub_key"))
 	if err != nil {
 		r.log.Errorf("get verification_pub_key error: %s", err.Error())
 		return nil, err
 	}
-
+	pk, err := asym.PublicKeyFromPEM(pkPEM)
+	if err != nil {
+		r.log.Errorf("get pk from PEM error: %s", err.Error())
+		return nil, err
+	}
 	evmResultBuffer := bytes.NewBuffer([]byte{})
 	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.Code); err != nil {
 		return nil, err
@@ -427,7 +433,12 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(version))
 	evmResultBuffer.Write([]byte(codeHash))
 	evmResultBuffer.Write([]byte(reportHash))
-	b, err := asym.Verify(pk, evmResultBuffer.Bytes(), []byte(params["report_sign"]))
+
+	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["report_sign"]), &crypto.SignOpts{
+		Hash:         crypto.HASH_TYPE_SHA256,
+		UID:          "",
+		EncodingType: rsa.RSA_PSS,
+	})
 	if err != nil {
 		r.log.Errorf("verify ContractResult err: %s", err.Error())
 		return nil, err
@@ -617,7 +628,6 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 		return nil, err
 	}
 
-
 	proofData := []byte(proofDataStr)
 
 	// 备注：
@@ -675,17 +685,17 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	intermediateCAPool := bcx509.NewCertPool()
 	intermediateCAPool.AddCert(caCert)
 	verifyOption := bcx509.VerifyOptions{
-		DNSName: "",
-		Roots: intermediateCAPool,
-		CurrentTime: time.Time{},
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		DNSName:                   "",
+		Roots:                     intermediateCAPool,
+		CurrentTime:               time.Time{},
+		KeyUsages:                 []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 		MaxConstraintComparisions: 0,
 	}
 	// verify remote attestation
 	passed, proof, err := tee.AttestationVerify(
 		proofData,
 		verifyOption,
-	reportFromChain)
+		reportFromChain)
 	if err != nil || !passed {
 		err := fmt.Errorf("save RemoteAttestation Proof error: %v", err)
 		r.log.Errorf(err.Error())
