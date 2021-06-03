@@ -7,11 +7,12 @@ import (
 )
 
 type DposImpl struct {
+	log     protocol.Logger
 	stateDB protocol.BlockchainStore
 }
 
-func NewDposImpl(blockChainStore protocol.BlockchainStore) *DposImpl {
-	return &DposImpl{stateDB: blockChainStore}
+func NewDposImpl(log protocol.Logger, blockChainStore protocol.BlockchainStore) *DposImpl {
+	return &DposImpl{stateDB: blockChainStore, log: log}
 }
 
 func (impl *DposImpl) CreateDposRWSets(proposalHeight int64) []*common.TxRWSet {

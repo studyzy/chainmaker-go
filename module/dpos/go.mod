@@ -5,6 +5,7 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
+	github.com/golang/protobuf v1.4.2
 	github.com/stretchr/testify v1.7.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
