@@ -13,6 +13,7 @@ import (
 var certCaFilename = "testdata/remote_attestation/enclave_cacert.crt"
 var certFilename = "testdata/remote_attestation/in_teecert.pem"
 var proofFilename = "testdata/remote_attestation/proof.hex"
+var reportFilename = "testdata/remote_attestation/report.dat"
 
 func readFileData(filename string, t *testing.T) []byte {
 	file, err := os.Open(filename)
@@ -47,6 +48,30 @@ func TestSaveEnclaveCaCert(t *testing.T) {
 	}
 
 	fmt.Printf("result = %v \n", string(result))
+}
+
+func TestSaveEnclaveReport(t *testing.T) {
+	ds := map[string][]byte{}
+	mockCtx := newTxContextMock(ds)
+
+	privateComputeRuntime := PrivateComputeRuntime{
+		log: logger.GetLogger("test-logger"),
+	}
+
+	// 读取report
+	report := readFileData(reportFilename, t)
+
+	params := map[string]string{}
+	params["enclave_id"] = "global_enclave_id"
+	params["report"] = string(report)
+	_, err := privateComputeRuntime.SaveEnclaveReport(mockCtx, params)
+	if err != nil {
+		t.Fatalf("Save enclave report error: %v", err)
+	}
+
+	for key, val := range ds {
+		fmt.Printf("%s ==>\n%s \n", key, val)
+	}
 }
 
 func TestSaveRemoteAttestation(t *testing.T) {
