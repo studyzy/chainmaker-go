@@ -447,13 +447,6 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	report := bytes.Join([][]byte{cRes, []byte(params["rw_set"]), []byte(params["events"])}, []byte{})
-	ok, err := r.VerifyByEnclaveCert(context, []byte(params["enclave_id"]), report, []byte(params["report_sign"]))
-	if !ok {
-		r.log.Errorf("%s, enclave certificate[%s] verify quote of save data failed", err.Error(), params["enclave_id"])
-		return nil, err
-	}
-
 	if result.Code != commonPb.ContractResultCode_OK {
 		r.log.Infof("Compute result code != ok, return")
 		return nil, nil
