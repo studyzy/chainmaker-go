@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -321,6 +322,10 @@ func BaseParam(parameters map[string]string) {
 type mockBlockchainStore struct {
 }
 
+func (m mockBlockchainStore) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	panic("implement me")
+}
+
 func (m mockBlockchainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	panic("implement me")
 }
@@ -436,8 +441,6 @@ func (m mockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 func (m mockBlockchainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
 	panic("implement me")
 }
-
-
 
 func (m mockBlockchainStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	panic("implement me")
