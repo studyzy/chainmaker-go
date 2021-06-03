@@ -15,10 +15,6 @@ var (
 	sdkConfPath string
 
 	chainId string
-
-	// cert and key
-	adminKeyFilePaths string
-	adminCrtFilePaths string
 )
 
 const (
