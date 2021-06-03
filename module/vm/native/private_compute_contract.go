@@ -385,11 +385,11 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 	evmResultBuffer := bytes.NewBuffer([]byte{})
-	if err := binary.Write(evmResultBuffer, binary.BigEndian, result.Code); err != nil {
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.Code); err != nil {
 		return nil, err
 	}
 	evmResultBuffer.Write(result.Result)
-	if err := binary.Write(evmResultBuffer, binary.BigEndian, result.GasUsed); err != nil {
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.GasUsed); err != nil {
 		return nil, err
 	}
 	for i := 0; i < len(rwSet.TxReads); i++ {
