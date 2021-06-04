@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	pbdpos "chainmaker.org/chainmaker-go/pb/protogo/dpos"
-	"chainmaker.org/chainmaker-go/vm/native"
 	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
 	"time"
+
+	pbdpos "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker-go/utils"
 )
 
 // ValidatorsElection select validators from Candidates
@@ -35,8 +36,8 @@ func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, outSort bool) ([]*
 	sort.Sort(CandidateInfos(infos))
 	// n、m 都分为 两部分，
 	var (
-		m0, _ = distributionM(m ,n)
-		n0, n1 = distributionN(m, n)
+		m0, _      = distributionM(m, n)
+		n0, n1     = distributionN(m, n)
 		validators = make([]*pbdpos.CandidateInfo, 0)
 	)
 	// 首选从m0个对象中选择n0个结果
@@ -98,11 +99,10 @@ func (s CandidateInfos) Swap(i, j int) {
 
 func (s CandidateInfos) Less(i, j int) bool {
 	// 优先按照weight排序，相同的情况下按照peerID从小到大排序（字符串）
-	wi, wj := native.NewBigInteger(s[i].Weight), native.NewBigInteger(s[j].Weight)
+	wi, wj := utils.NewBigInteger(s[i].Weight), utils.NewBigInteger(s[j].Weight)
 	if val := wi.Cmp(wj); val == 0 {
 		return strings.Compare(s[i].PeerID, s[j].PeerID) < 0
 	} else {
 		return val > 0
 	}
 }
-

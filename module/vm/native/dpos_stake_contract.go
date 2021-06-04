@@ -6,16 +6,18 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"math/big"
+
+	"chainmaker.org/chainmaker-go/evm/evm-go/math"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"crypto/sha256"
-	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/shopspring/decimal"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"math/big"
 )
 
 // Key: validatorPrefix + ValidatorAddress
@@ -40,14 +42,14 @@ func toUnbondingDelegationKey(DelegatorID, ValidatorID string) string {
 
 func newValidator(validatorAddress string) *commonPb.Validator {
 	return &commonPb.Validator{
-		ValidatorAddress: validatorAddress,
-		Jailed: false,
-		Status: commonPb.BondStatus_Unbonded,
-		Tokens: "0",
-		DelegatorShares: "0",
-		UnbondingEpochID: 0,
+		ValidatorAddress:           validatorAddress,
+		Jailed:                     false,
+		Status:                     commonPb.BondStatus_Unbonded,
+		Tokens:                     "0",
+		DelegatorShares:            "0",
+		UnbondingEpochID:           0,
 		UnbondingCompletionEpochID: 0,
-		SelfDelegation: "0",
+		SelfDelegation:             "0",
 	}
 }
 
@@ -55,7 +57,7 @@ func newDelegation(delegatorAddress, validatorAddress string, shares string) *co
 	return &commonPb.Delegation{
 		DelegatorAddress: delegatorAddress,
 		ValidatorAddress: validatorAddress,
-		Shares: shares,
+		Shares:           shares,
 	}
 }
 
@@ -64,17 +66,17 @@ func newUnbondingDelegation(DelegatorAddress, ValidatorAddress string) *commonPb
 	return &commonPb.UnbondingDelegation{
 		DelegatorAddress: DelegatorAddress,
 		ValidatorAddress: ValidatorAddress,
-		Entries: UnbondingDelegationEntry,
+		Entries:          UnbondingDelegationEntry,
 	}
 }
 
 func newUnbondingDelegationEntry(CreationEpochID, UnbondedEpochID uint64, InitialBalance, Balance string) *commonPb.UnbondingDelegationEntry {
 	return &commonPb.UnbondingDelegationEntry{
-		CreationEpochID: CreationEpochID,
-		UnbondedEpochID: UnbondedEpochID,
-		CompletionEpochID: -1,
-		InitialBalance: InitialBalance,
-		Balance: Balance,
+		CreationEpochID:   CreationEpochID,
+		UnbondedEpochID:   UnbondedEpochID,
+		CompletionEpochID: math.MaxUint64,
+		InitialBalance:    InitialBalance,
+		Balance:           Balance,
 	}
 }
 
@@ -159,8 +161,8 @@ func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params
 // @params["amount"]	抵押数量，带decimal
 // return Delegation
 func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	to      := params["to"]		// delegate target
-	amount  := params["amount"]	// amount must be a integer
+	to := params["to"]         // delegate target
+	amount := params["amount"] // amount must be a integer
 
 	// 获取最小抵押的全局变量
 	minSelfDelegation, err := getMinSelfDelegation(context)
@@ -239,7 +241,7 @@ func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[
 	stakeAddr := base58.Encode(stakeAddrHash[:])
 	// prepare params
 	transferParams := map[string]string{
-		"to": stakeAddr,
+		"to":    stakeAddr,
 		"value": amount,
 	}
 	_, err = erc20RunTime.Transfer(context, transferParams)
@@ -291,7 +293,7 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 	}
 	// read balance
 	erc20RunTime := NewDPoSRuntime(s.log)
-	bz, err = erc20RunTime.BalanceOf(context, map[string]string{"owner": sender} )
+	bz, err = erc20RunTime.BalanceOf(context, map[string]string{"owner": sender})
 	if err != nil {
 		s.log.Errorf("get sender balance error: ", err.Error())
 		return nil, err
@@ -309,7 +311,7 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 	total := &big.Int{}
 	total.Add(amountValue, currentBalance)
 	// new entry
-	entry := newUnbondingDelegationEntry(epoch.EpochID, epoch.EpochID + 1, currentBalance.String(), total.String())
+	entry := newUnbondingDelegationEntry(epoch.EpochID, epoch.EpochID+1, currentBalance.String(), total.String())
 	// update delegation
 	ud, err := getOrCreateUnbondingDelegation(context, sender, undelegateValidatorAddress)
 	if err != nil {
