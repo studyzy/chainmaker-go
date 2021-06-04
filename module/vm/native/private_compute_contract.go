@@ -846,11 +846,13 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 
 	payLoadBytes, err := hex.DecodeString(payload)
 	if err != nil {
+		r.log.Errorf("payload hex err:%v",err.Error())
 		return false, err
 	}
 
 	clientSignBytes, err := hex.DecodeString(clientSign)
 	if err != nil {
+		r.log.Errorf("client sign hex err:%v",err.Error())
 		return false, err
 	}
 
@@ -905,6 +907,7 @@ func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId, or
 
 	userCertPemBytes, err := hex.DecodeString(userCertPem)
 	if err != nil {
+		r.log.Errorf("user cert pem hex err:%v",err.Error())
 		return nil, err
 	}
 
