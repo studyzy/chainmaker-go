@@ -21,6 +21,9 @@ func (b *Block) GetBlockHashStr() string {
 	return hex.EncodeToString(b.Header.BlockHash)
 }
 func (b *Block) IsContractMgmtBlock() bool {
+	if len(b.Txs) == 0 {
+		return false
+	}
 	return b.Txs[0].Header.TxType == TxType_MANAGE_USER_CONTRACT
 }
 func (b *Block) GetTimestamp() time.Time {
@@ -33,6 +36,9 @@ func (b *Block) GetTxKey() string {
 }
 
 func (b *Block) IsConfigBlock() bool {
+	if len(b.Txs) == 0 {
+		return false
+	}
 	return b.Header.BlockHeight == 0 || b.Txs[0].Header.TxType == TxType_UPDATE_CHAIN_CONFIG
 }
 func GetTxKeyWith(propose []byte, blockHeight int64) string {
