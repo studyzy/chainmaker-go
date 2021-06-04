@@ -1,6 +1,7 @@
 package dpos
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 
@@ -121,11 +122,43 @@ func (impl *DposImpl) AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *comm
 	return block, nil
 }
 
+func (impl *DposImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.BlockHeaderConsensusArgs {
+	if !impl.isDposConsensus() {
+		return nil
+	}
+
+	consensusArgs := consensus.BlockHeaderConsensusArgs{}
+	if len(block.Header.ConsensusArgs) == 0 {
+		return nil
+	}
+	if err := proto.Unmarshal(block.Header.ConsensusArgs, &consensusArgs); err != nil {
+		impl.log.Errorf("proto unmarshal consensus args failed, reason: %s", err)
+		return nil
+	}
+	return &consensusArgs
+}
+
 func (impl *DposImpl) VerifyConsensusArgs(block *common.Block) error {
 	if !impl.isDposConsensus() {
 		return nil
 	}
-	return nil
+	localConsensus, err := impl.CreateDposRWSets(uint64(block.Header.BlockHeight))
+	if err != nil {
+		impl.log.Errorf("get dpos txRwSets failed, reason: %s", err)
+		return err
+	}
+	localBz, err := proto.Marshal(&consensus.BlockHeaderConsensusArgs{
+		ConsensusType: int64(consensus.ConsensusType_DPOS),
+		ConsensusData: localConsensus,
+	})
+	if err != nil {
+		impl.log.Errorf("marshal BlockHeaderConsensusArgs failed, reason: %s", err)
+		return err
+	}
+	if bytes.Equal(block.Header.ConsensusArgs, localBz) {
+		return nil
+	}
+	return fmt.Errorf("consensus args verify mismatch, blockConsensus: %v, localConsensus: %v", block.Header.ConsensusArgs, localConsensus)
 }
 
 func (impl *DposImpl) GetValidators() ([]string, error) {
