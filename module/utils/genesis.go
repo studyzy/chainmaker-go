@@ -8,18 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"encoding/binary"
 	"fmt"
-	"github.com/pingcap/tidb/kv"
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
-	"unicode"
 
-	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
 )
@@ -202,10 +202,14 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 			return nil, fmt.Errorf("token of stake contract account[%s] is not equal, erc20[%s] stake[%s]", stakeContractAddr, tokenInERC20.String(), stackContractToken)
 		}
 	}
+	rwSets, err := totalTxRWSet(ccBytes, erc20Config, stakeConfig)
+	if err != nil {
+		return nil, err
+	}
 	set := &commonPb.TxRWSet{
 		TxId:     GetTxIdWithSeed(int64(defaultTimestamp)),
 		TxReads:  nil,
-		TxWrites: totalTxRWSet(ccBytes, erc20Config, stakeConfig),
+		TxWrites: rwSets,
 	}
 	return set, nil
 }
@@ -248,18 +252,18 @@ func (e *ERC20Config) addAccount(address string, token *BigInteger) error {
 func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
 	contractName := commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()
 	txWrites := []*commonPb.TxWrite{{
-			Key:          []byte("OWN"), // equal with native.KeyOwner
-			Value:        []byte(e.owner),
-			ContractName: contractName,
-		}, {
-			Key:          []byte("DEC"), // equal with native.KeyDecimals
-			Value:        []byte(e.decimals.String()),
-			ContractName: contractName,
-		}, {
-			Key:          []byte("TS"), // equal with native.KeyTotalSupply
-			Value:        []byte(e.total.String()),
-			ContractName: contractName,
-		},
+		Key:          []byte("OWN"), // equal with native.KeyOwner
+		Value:        []byte(e.owner),
+		ContractName: contractName,
+	}, {
+		Key:          []byte("DEC"), // equal with native.KeyDecimals
+		Value:        []byte(e.decimals.String()),
+		ContractName: contractName,
+	}, {
+		Key:          []byte("TS"), // equal with native.KeyTotalSupply
+		Value:        []byte(e.total.String()),
+		ContractName: contractName,
+	},
 	}
 	// 添加accounts的读写集
 	for i := 0; i < len(e.accounts); i++ {
@@ -361,14 +365,105 @@ type StakeConfig struct {
 	candidates        []*dpospb.CandidateInfo
 }
 
-func (s *StakeConfig) toTxWrites() []*commonPb.TxWrite {
-	return []*commonPb.TxWrite{
+func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
+	var (
+		valNum   = make([]byte, 8)
+		epochNum = make([]byte, 8)
+	)
+	binary.BigEndian.PutUint64(valNum, s.validatorNum)
+	binary.BigEndian.PutUint64(epochNum, s.eachEpochNum)
+
+	// 1. add property in rwSets
+	rwSets := []*commonPb.TxWrite{
 		{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          commonPb.StakePrefix_Prefix_MinSelfDelegation.,
-			Value:        nil,
+			Key:          []byte(commonPb.StakePrefix_Prefix_MinSelfDelegation.String()),
+			Value:        []byte(s.minSelfDelegation),
+		},
+		{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(commonPb.StakePrefix_Prefix_Validator.String()), // todo, will modify validatorNUm
+			Value:        valNum,
+		},
+		{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(commonPb.StakePrefix_Prefix_Validator.String()), // todo, will modify epochNum
+			Value:        epochNum,
 		},
 	}
+
+	// 2. add validatorInfo in rwSet
+	validators := make([][]byte, 0, len(s.candidates))
+	for _, candidate := range s.candidates {
+		bz, err := proto.Marshal(&commonPb.Validator{
+			Jailed:                     false,
+			Status:                     commonPb.BondStatus_Bonded,
+			Tokens:                     candidate.Weight,
+			ValidatorAddress:           candidate.PeerID,
+			DelegatorShares:            candidate.Weight,
+			SelfDelegation:             candidate.Weight,
+			UnbondingEpochID:           math.MaxInt64,
+			UnbondingCompletionEpochID: math.MaxUint64,
+		})
+		if err != nil {
+			return nil, err
+		}
+		validators = append(validators, bz)
+	}
+	for i, validator := range s.candidates {
+		rwSets = append(rwSets, &commonPb.TxWrite{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(commonPb.StakePrefix_Prefix_Validator.String() + validator.PeerID), // todo, will modify epochNum
+			Value:        validators[i],
+		})
+	}
+
+	// 3. add delegationInfo in rwSet
+	delegations := make([][]byte, 0, len(s.candidates))
+	for _, candidate := range s.candidates {
+		bz, err := proto.Marshal(&commonPb.Delegation{
+			DelegatorAddress: candidate.PeerID,
+			ValidatorAddress: candidate.PeerID,
+			Shares:           candidate.Weight,
+		})
+		if err != nil {
+			return nil, err
+		}
+		delegations = append(delegations, bz)
+	}
+	for i, validator := range s.candidates {
+		rwSets = append(rwSets, &commonPb.TxWrite{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(commonPb.StakePrefix_Prefix_Delegation.String() + validator.PeerID + validator.PeerID), // key: prefix|delegator|validator
+			Value:        delegations[i],                                                                                // val: delegation info
+		})
+	}
+
+	// 4. add epoch info
+	epochID := make([]byte, 8)
+	valAddrs := make([]string, 0, len(s.candidates))
+	for _, v := range s.candidates {
+		valAddrs = append(valAddrs, v.PeerID)
+	}
+	epochInfo, err := proto.Marshal(&commonPb.Epoch{
+		EpochID:               0,
+		ProposerVector:        valAddrs,
+		NextEpochCreateHeight: s.eachEpochNum,
+	})
+	if err != nil {
+		return nil, err
+	}
+	rwSets = append(rwSets, &commonPb.TxWrite{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		Key:          []byte(commonPb.StakePrefix_Prefix_Curr_Epoch.String()), // key: prefix
+		Value:        epochInfo,                                               // val: epochInfo
+	})
+	rwSets = append(rwSets, &commonPb.TxWrite{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		Key:          append([]byte(commonPb.StakePrefix_Prefix_Epoch_Record.String()), epochID...), // key: prefix|epochID
+		Value:        epochInfo,                                                                     // val: epochInfo
+	})
+	return rwSets, nil
 }
 
 // getContractAddress 返回质押合约地址
@@ -448,7 +543,7 @@ func isValidBigInt(val string) error {
 	return nil
 }
 
-func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) []*commonPb.TxWrite {
+func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) ([]*commonPb.TxWrite, error) {
 	txWrites := make([]*commonPb.TxWrite, 0)
 	txWrites = append(txWrites, &commonPb.TxWrite{
 		Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
@@ -460,8 +555,11 @@ func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig
 		txWrites = append(txWrites, erc20ConfigTxWrites...)
 	}
 	if stakeConfig != nil {
-		stakeConfigTxWrites := stakeConfig.toTxWrites()
+		stakeConfigTxWrites, err := stakeConfig.toTxWrites()
+		if err != nil {
+			return nil, err
+		}
 		txWrites = append(txWrites, stakeConfigTxWrites...)
 	}
-	return txWrites
+	return txWrites, nil
 }
