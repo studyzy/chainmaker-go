@@ -97,9 +97,9 @@ docker-build:
 	docker build -t chainmaker -f ./DOCKER/Dockerfile .
 	docker tag chainmaker chainmaker:v1.1.1
 
-docker-build-dev:
+docker-build-dev: chainmaker
 	docker build -t chainmaker -f ./DOCKER/dev.Dockerfile .
-	docker tag chainmaker chainmaker:v1.0.0_r
+	docker tag chainmaker chainmaker:v1.1.1
 
 docker-compose-start: docker-compose-stop
 	docker-compose up -d

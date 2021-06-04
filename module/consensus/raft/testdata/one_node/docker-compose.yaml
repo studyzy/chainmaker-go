@@ -3,7 +3,7 @@ version: '3'
 services:
   node1:
     container_name: node1
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
     command: "chainmaker -e wx-org1 start"
     ports:
