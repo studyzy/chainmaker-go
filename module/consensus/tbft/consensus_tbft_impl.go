@@ -294,8 +294,13 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 
 	consensus.TimeoutPropose = timeoutPropose
 	consensus.TimeoutProposeDelta = timeoutProposeDelta
-	consensus.validatorSet.updateBlocksPerProposer(tbftBlocksPerProposer)
-
+	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		if validators, err = consensus.dpos.GetValidators(); err != nil {
+			return nil, nil, err
+		}
+	} else {
+		consensus.validatorSet.updateBlocksPerProposer(tbftBlocksPerProposer)
+	}
 	return consensus.validatorSet.updateValidators(validators)
 }
 
@@ -417,6 +422,17 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
 			block.Header.BlockHeight, block.Header.BlockHash,
 		)
 		return
+	}
+
+	// add Dpos consensus args in block
+	consensusRwSets, err := consensus.dpos.CreateDposRWSets(uint64(consensus.Height))
+	if err != nil {
+		consensus.logger.Errorf("CreateDposRWSets failed, reason: %s", err)
+	}
+	if consensusRwSets != nil {
+		if block, err = consensus.dpos.AddConsensusArgsToBlock(consensusRwSets, block); err != nil {
+			consensus.logger.Errorf("AddConsensusArgsToBlock failed, reason: %s", err)
+		}
 	}
 
 	// Add hash and signature to block
@@ -566,6 +582,11 @@ func (consensus *ConsensusTBFTImpl) procPropose(msg *tbftpb.TBFTMsg) {
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
 				proposal.Voter, proposal.Block.Header.BlockHash)
 		}
+		return
+	}
+
+	if err := consensus.dpos.VerifyConsensusArgs(proposal.Block); err != nil {
+		consensus.logger.Infof("verify consensusArgs in block failed, reason: %s", err)
 		return
 	}
 

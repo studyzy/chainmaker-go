@@ -137,7 +137,7 @@ func (bc *Blockchain) initDpos() (err error) {
 		bc.log.Infof("dpos service module existed, ignore.")
 		return
 	}
-	bc.dpos = dpos.NewDposImpl(bc.log, bc.store)
+	bc.dpos = dpos.NewDposImpl(bc.log, bc.chainConf, bc.store)
 	bc.initModules[moduleNameNetService] = struct{}{}
 	return
 }
