@@ -15,12 +15,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/mr-tron/base58/base58"
-	"math/big"
 	"strings"
 )
 
 const (
-	DecBase = 10
+	//DecBase = 10
 
 	paramNameOwner = "owner"
 	paramNameFrom = "from"
@@ -104,7 +103,7 @@ func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[s
 			return nil, err
 		}
 		if bigInteger == nil {
-			bigInteger = NewZeroBigInteger()
+			bigInteger = utils.NewZeroBigInteger()
 		}
 		return []byte(bigInteger.String()), nil
 	}
@@ -188,7 +187,7 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 						dposErc20ContractName, sender, from, approveVal.String(), val.String())
 				}
 				// 将授权值重置，然后进行转账操作
-				newApproveVal := Sub(approveVal, val)
+				newApproveVal := utils.Sub(approveVal, val)
 				err = setApproveValue(txSimContext, from, sender, newApproveVal)
 				if err != nil {
 					return nil, err
@@ -280,7 +279,7 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 			}
 			if totalSupply == nil {
 				// 默认设置为0
-				totalSupply = NewZeroBigInteger()
+				totalSupply = utils.NewZeroBigInteger()
 			}
 			// 获取增发用户原始的值
 			toBalance, err := balanceOf(txSimContext, mintTo)
@@ -289,9 +288,9 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 				return nil, fmt.Errorf("load to address balance error, contract[%s] address[%s]", dposErc20ContractName, mintTo)
 			}
 			// 重设总量
-			newTotalSupply := Sum(totalSupply, val)
+			newTotalSupply := utils.Sum(totalSupply, val)
 			// 增发给具体用户
-			newToBalance := Sum(toBalance, val)
+			newToBalance := utils.Sum(toBalance, val)
 			// 写入到数据库
 			err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(newTotalSupply.String()))
 			if err != nil {
@@ -346,20 +345,20 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 			return nil, fmt.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
 		}
 		// 检查是否会燃烧殆尽
-		var afterTotalSupply, afterFromBalance *BigInteger
+		var afterTotalSupply, afterFromBalance *utils.BigInteger
 		// 检查总量是否够燃烧
 		if beforeTotalSupply.Cmp(val) < 0 {
 			r.log.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
 			return nil, fmt.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
 		}
 		// 计算燃烧后的值
-		afterTotalSupply = Sub(beforeTotalSupply, val)
+		afterTotalSupply = utils.Sub(beforeTotalSupply, val)
 		// 检查当前账号总量是否够燃烧
 		if beforeFromBalance.Cmp(val) < 0 {
 			r.log.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
 			return nil, fmt.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
 		}
-		afterFromBalance = Sub(beforeFromBalance, val)
+		afterFromBalance = utils.Sub(beforeFromBalance, val)
 		//if beforeTotalSupply.Cmp(val) > 0 {
 		//	r.log.Debugf("total supply will have balance after burn, before[%s] sub-value[%s]", beforeTotalSupply.String(), val.String())
 		//	afterTotalSupply = Sub(beforeTotalSupply, val)
@@ -507,21 +506,21 @@ func owner(txSimContext protocol.TxSimContext) ([]byte, error) {
 	return owner, nil
 }
 
-func totalSupply(txSimContext protocol.TxSimContext) (*BigInteger, error) {
+func totalSupply(txSimContext protocol.TxSimContext) (*utils.BigInteger, error) {
 	totalSupply, err := txSimContext.Get(dposErc20ContractName, []byte(totalSupplyKey()))
 	if err != nil {
 		return nil, err
 	}
-	return NewBigInteger(string(totalSupply)), nil
+	return utils.NewBigInteger(string(totalSupply)), nil
 }
 
-func approveValue(txSimContext protocol.TxSimContext, from, to string) (*BigInteger, error) {
+func approveValue(txSimContext protocol.TxSimContext, from, to string) (*utils.BigInteger, error) {
 	approveKey := approveKey(from, to)
 	valueBytes, err := txSimContext.Get(dposErc20ContractName, []byte(approveKey))
 	if err != nil {
 		return nil, err
 	}
-	return NewBigInteger(string(valueBytes)), nil
+	return utils.NewBigInteger(string(valueBytes)), nil
 }
 
 func allowance(txSimContext protocol.TxSimContext, from, to string) ([]byte, error) {
@@ -529,7 +528,7 @@ func allowance(txSimContext protocol.TxSimContext, from, to string) ([]byte, err
 	return txSimContext.Get(dposErc20ContractName, []byte(approveKey))
 }
 
-func setApproveValue(txSimContext protocol.TxSimContext, from, to string, val *BigInteger) error {
+func setApproveValue(txSimContext protocol.TxSimContext, from, to string, val *utils.BigInteger) error {
 	approveKey := approveKey(from, to)
 	// 无需关注之前的结果，直接更新当前信息即可
 	err := txSimContext.Put(dposErc20ContractName, []byte(approveKey), []byte(val.String()))
@@ -589,33 +588,33 @@ func getWholeCertInfo(txSimContext protocol.TxSimContext, certHash string) (*com
 	}, nil
 }
 
-func balanceOf(txSimContext protocol.TxSimContext, address string) (*BigInteger, error) {
+func balanceOf(txSimContext protocol.TxSimContext, address string) (*utils.BigInteger, error) {
 	balanceKey := balanceKey(address)
 	balanceBytes, err := txSimContext.Get(dposErc20ContractName, []byte(balanceKey))
 	if err != nil {
 		msg := fmt.Errorf("txSimContext get failed, name[%s] key[%s] err: %+v", dposErc20ContractName, balanceKey, err)
 		return nil, msg
 	}
-	if len(balanceBytes) == 0{
-		return NewZeroBigInteger(), nil
+	if len(balanceBytes) == 0 {
+		return utils.NewZeroBigInteger(), nil
 	}
-	return NewBigInteger(string(balanceBytes)), nil
+	return utils.NewBigInteger(string(balanceBytes)), nil
 }
 
-func loadAndCheckValue(value string) (*BigInteger, error) {
-	val := NewBigInteger(value)
+func loadAndCheckValue(value string) (*utils.BigInteger, error) {
+	val := utils.NewBigInteger(value)
 	if val == nil {
 		// 转账的值不正确
 		return nil, fmt.Errorf("param is error, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
 	}
-	if val.Cmp(NewZeroBigInteger()) <= 0 {
+	if val.Cmp(utils.NewZeroBigInteger()) <= 0 {
 		// 转账的值不能<=0
 		return nil, fmt.Errorf("param is illegal, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
 	}
 	return val, nil
 }
 
-func transfer(txSimContext protocol.TxSimContext, from, to string, val *BigInteger) ([]byte, error){
+func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.BigInteger) ([]byte, error){
 	// 获取双方的Money
 	fromBalance, err := balanceOf(txSimContext, from)
 	if err != nil {
@@ -635,14 +634,14 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *BigInteg
 		return nil, fmt.Errorf("load to address balance error, contract[%s] address[%s]", dposErc20ContractName, to)
 	}
 	if toBalance == nil {
-		toBalance = NewZeroBigInteger()
+		toBalance = utils.NewZeroBigInteger()
 	}
 	// 记录原始值
-	beforeSum := Sum(fromBalance, toBalance)
+	beforeSum := utils.Sum(fromBalance, toBalance)
 	// 进行转账操作
-	afterFromBalance, afterToBalance := Sub(fromBalance, val), Sum(toBalance, val)
+	afterFromBalance, afterToBalance := utils.Sub(fromBalance, val), utils.Sum(toBalance, val)
 	// 判断操作后值是否一致
-	afterSum := Sum(afterFromBalance, afterToBalance)
+	afterSum := utils.Sum(afterFromBalance, afterToBalance)
 	if beforeSum.Cmp(afterSum) != 0 {
 		// 前后值存在问题
 		return nil, fmt.Errorf("balance is not equal before and after operation, contract[%s] before-balance[%s] after-balance[%s]",
@@ -659,60 +658,4 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *BigInteg
 		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 	}
 	return []byte(afterFromBalance.String()), nil
-}
-
-// BigInteger wrapper for big.Int
-type BigInteger struct {
-	Value *big.Int
-}
-
-func NewBigInteger(value string) *BigInteger {
-	var val big.Int
-	newVal, ok := val.SetString(value, DecBase)
-	if ok {
-		return &BigInteger{
-			Value: newVal,
-		}
-	}
-	return nil
-}
-
-func NewZeroBigInteger() *BigInteger {
-	return &BigInteger{
-		Value: big.NewInt(0),
-	}
-}
-
-func (x *BigInteger) Add(y *BigInteger) {
-	x.Value = x.Value.Add(x.Value, y.Value)
-}
-
-func (x *BigInteger) Sub(y *BigInteger) {
-	x.Value = x.Value.Sub(x.Value, y.Value)
-}
-
-// Cmp compares x and y and returns:
-//
-//   -1 if x <  y
-//    0 if x == y
-//   +1 if x >  y
-func (x *BigInteger) Cmp(y *BigInteger) int {
-	return x.Value.Cmp(y.Value)
-}
-
-func (x *BigInteger) String() string {
-	return x.Value.String()
-}
-
-func Sub(x, y *BigInteger) *BigInteger {
-	z := NewBigInteger(x.String())
-	z.Sub(y)
-	return z
-}
-
-func Sum(x, y *BigInteger) *BigInteger {
-	z := NewZeroBigInteger()
-	z.Add(x)
-	z.Add(y)
-	return z
 }

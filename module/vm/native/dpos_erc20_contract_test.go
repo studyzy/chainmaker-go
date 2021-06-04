@@ -30,15 +30,6 @@ const (
 
 var isFromAccount = false
 
-func TestBigInteger(t *testing.T) {
-	bigInteger := NewBigInteger("1024000000000000000000000000000000000000000000")
-	require.NotNil(t, bigInteger)
-	bigInteger.Add(NewBigInteger("1024"))
-	require.Equal(t, "1024000000000000000000000000000000000000001024", bigInteger.String())
-	bigInteger.Sub(NewBigInteger("1024"))
-	require.Equal(t, "1024000000000000000000000000000000000000000000", bigInteger.String())
-}
-
 func TestDPoSRuntime_Owner(t *testing.T) {
 	dPoSRuntime, txSimContext := initEnv(t)
 	// 获取owner

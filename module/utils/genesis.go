@@ -9,6 +9,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/pingcap/tidb/kv"
 	"math/big"
 	"strconv"
 	"strings"
@@ -30,6 +31,7 @@ const (
 	keyERC20Total              = "erc20.total"
 	keyERC20Owner              = "erc20.owner"
 	keyERC20Decimals           = "erc20.decimals"
+	keyERC20Acc                = "erc20.acc:"
 	keyStakeMinSelfDelegation  = "stake.minSelfDelegation"
 	keyStakeEpochValidatorNum  = "stake.epochValidatorNum"
 	keyStakeEpochBlockNum      = "stake.epochBlockNum"
@@ -178,7 +180,6 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 		stakeConfig *StakeConfig
 	)
 	if cc.Consensus.Type == consensus.ConsensusType_DPOS {
-		// preCheck
 		erc20Config, err = loadERC20Config(cc.Consensus.ExtConfig)
 		if err != nil {
 			return nil, err
@@ -187,8 +188,19 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 		if err != nil {
 			return nil, err
 		}
-		// postCheck
-
+		// check erc20 config
+		if err = erc20Config.legal(); err != nil {
+			return nil, err
+		}
+		// check stake's sum with erc20
+		stakeContractAddr := stakeConfig.getContractAddress()
+		tokenInERC20, stackContractToken := erc20Config.loadToken(stakeContractAddr), stakeConfig.getSumToken()
+		if tokenInERC20 == nil || stackContractToken == nil {
+			return nil, fmt.Errorf("token of stake contract account[%s] is nil", stakeContractAddr)
+		}
+		if tokenInERC20.Cmp(stackContractToken) != 0 {
+			return nil, fmt.Errorf("token of stake contract account[%s] is not equal, erc20[%s] stake[%s]", stakeContractAddr, tokenInERC20.String(), stackContractToken)
+		}
 	}
 	set := &commonPb.TxRWSet{
 		TxId:     GetTxIdWithSeed(int64(defaultTimestamp)),
@@ -200,57 +212,89 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 
 // ERC20Config for DPoS
 type ERC20Config struct {
-	total    string
+	total    *BigInteger
 	owner    string
-	decimals string
+	decimals *BigInteger
+	accounts []*struct{
+		address string
+		token *BigInteger
+	}
 }
 
-// legal check field is legal
-func (e *ERC20Config) legal() error {
-	// total and decimals must be number
-	// owner must be base58 encode
-	_, err := base58.Decode(e.owner)
-	if err != nil {
-		return fmt.Errorf("config of owner[%s] is not in base58 format", e.owner)
+func newERC20Config() *ERC20Config {
+	return &ERC20Config{
+		accounts: make([]*struct{
+			address string
+			token *BigInteger
+		}, 0),
 	}
-	if !isNumber(e.total) {
-		return fmt.Errorf("config of total[%s] is not number", e.total)
+}
+
+func (e *ERC20Config) addAccount(address string, token *BigInteger) error {
+	// 需要判断是否有重复，每个地址只允许配置一次token
+	for i := 0; i < len(e.accounts); i++ {
+		if e.accounts[i].address == address {
+			return fmt.Errorf("token of address[%s] cannot be set more than once", address)
+		}
 	}
-	if !isNumber(e.decimals) {
-		return fmt.Errorf("config of decimals[%s] is not number", e.decimals)
-	}
+	e.accounts = append(e.accounts, &struct{
+		address string
+		token   *BigInteger
+	}{address: address, token: token})
 	return nil
 }
 
 // toTxWrites convert to TxWrites
 func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
-	return []*commonPb.TxWrite{
-		{
+	contractName := commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()
+	txWrites := []*commonPb.TxWrite{{
 			Key:          []byte("OWN"), // equal with native.KeyOwner
 			Value:        []byte(e.owner),
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		},
-		{
+			ContractName: contractName,
+		}, {
 			Key:          []byte("DEC"), // equal with native.KeyDecimals
-			Value:        []byte(e.decimals),
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		},
-		{
+			Value:        []byte(e.decimals.String()),
+			ContractName: contractName,
+		}, {
 			Key:          []byte("TS"), // equal with native.KeyTotalSupply
-			Value:        []byte(e.total),
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+			Value:        []byte(e.total.String()),
+			ContractName: contractName,
 		},
 	}
+	// 添加accounts的读写集
+	for i := 0; i < len(e.accounts); i++ {
+		txWrites = append(txWrites, &commonPb.TxWrite{
+			Key: []byte(fmt.Sprintf("B/%s", e.accounts[i].address)),
+			Value: []byte(e.accounts[i].token.String()),
+			ContractName: contractName,
+		})
+	}
+	return txWrites
 }
 
-// isNumber check str
-func isNumber(str string) bool {
-	for _, x := range []rune(str) {
-		if !unicode.IsDigit(x) {
-			return false
+func (e *ERC20Config) loadToken(address string) *BigInteger {
+	for i := 0; i < len(e.accounts); i++ {
+		if e.accounts[i].address == address {
+			return e.accounts[i].token
 		}
 	}
-	return true
+	return nil
+}
+
+func (e *ERC20Config) legal() error {
+	if len(e.accounts) == 0 {
+		return fmt.Errorf("account's size must more than zero")
+	}
+	// 其他信息已校验过，当前只需要校验所有账户的token和为total即可
+	sum := NewZeroBigInteger()
+	for i := 0; i < len(e.accounts); i++ {
+		sum.Add(e.accounts[i].token)
+	}
+	// 比较sum与total
+	if sum.Cmp(e.total) != 0 {
+		return fmt.Errorf("sum of token is not equal with total, sum[%s] total[%s]", sum.String(), e.total.String())
+	}
+	return nil
 }
 
 // loadERC20Config load config of erc20 contract
@@ -269,21 +313,43 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 		- key: erc20.account:<addr2>
 		  value: 8000
 	*/
-	config := &ERC20Config{}
+	config := newERC20Config()
 	for i := 0; i < len(consensusExtConfig); i++ {
 		keyValuePair := consensusExtConfig[i]
 		switch keyValuePair.Key {
 		case keyERC20Total:
-			config.total = keyValuePair.Value
+			config.total = NewBigInteger(keyValuePair.Value)
+			if config.total == nil || config.total.Cmp(NewZeroBigInteger()) <= 0 {
+				return nil, fmt.Errorf("total config of dpos must more than zero")
+			}
 		case keyERC20Owner:
 			config.owner = keyValuePair.Value
+			_, err := base58.Decode(config.owner)
+			if err != nil {
+				return nil, fmt.Errorf("config of owner[%s] is not in base58 format", config.owner)
+			}
 		case keyERC20Decimals:
-			config.decimals = keyValuePair.Value
+			config.decimals = NewBigInteger(keyValuePair.Value)
+			if config.decimals == nil || config.decimals.Cmp(NewZeroBigInteger()) < 0 {
+				return nil, fmt.Errorf("decimals config of dpos must more than -1")
+			}
+		default:
+			if strings.HasPrefix(keyValuePair.Key, keyERC20Acc) {
+				accAddress := keyValuePair.Key[len(keyERC20Acc):]
+				_, err := base58.Decode(accAddress)
+				if err != nil {
+					return nil, fmt.Errorf("account [%s] is not in base58 format", accAddress)
+				}
+				token := NewBigInteger(keyValuePair.Value)
+				if token == nil || token.Cmp(NewZeroBigInteger()) <= 0 {
+					return nil, fmt.Errorf("token must more than zero, address[%s] token[%s]", accAddress, keyValuePair.Value)
+				}
+				err = config.addAccount(accAddress, token)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
-	}
-	// check config is legal
-	if err := config.legal(); err != nil {
-		return nil, err
 	}
 	return config, nil
 }
@@ -303,6 +369,21 @@ func (s *StakeConfig) toTxWrites() []*commonPb.TxWrite {
 			Value:        nil,
 		},
 	}
+}
+
+// getContractAddress 返回质押合约地址
+func (s *StakeConfig) getContractAddress() string {
+	// TODO
+	return ""
+}
+
+// getSumToken 返回所有token的值
+func (s *StakeConfig) getSumToken() *BigInteger {
+	sum := NewZeroBigInteger()
+	for i := 0; i < len(s.candidates); i++ {
+		sum.Add(NewBigInteger(s.candidates[i].Weight))
+	}
+	return sum
 }
 
 func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig, error) {
