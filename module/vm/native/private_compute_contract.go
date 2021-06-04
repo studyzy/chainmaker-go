@@ -849,7 +849,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 		r.log.Errorf("payload hex err:%v", err.Error())
 		return false, err
 	}
-
+	fmt.Printf("++++++++++++private payLoadBytes is %v++++++++++", payLoadBytes)
 	clientSignBytes, err := hex.DecodeString(clientSign)
 	if err != nil {
 		r.log.Errorf("client sign hex err:%v", err.Error())
