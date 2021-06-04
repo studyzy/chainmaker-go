@@ -9,6 +9,7 @@ package test
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
+	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -84,7 +85,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, pr
 		IsFullCert: true,
 	}
 
-	db, _ := leveldb.OpenFile("tmp/leveldb", nil)
+	db, _ := leveldb.OpenFile("tmp/leveldb"+utils.GetRandTxId(), nil)
 
 	chainConf := &chainconf.ChainConf{
 		ChainConf: &config.ChainConfig{
@@ -204,7 +205,7 @@ func (s *TxContextMockTest) Put(name string, key []byte, value []byte) error {
 	key = constructStateKey(name, key)
 	k := string(key)
 	if !strings.Contains(k, "SYSTEM_CONTRACT_STATE#:B:") {
-		fmt.Println("【put】 key:", k, "val:", string(value))
+		//fmt.Println("【put】 key:", k, "val:", string(value))
 	}
 	wo := &opt.WriteOptions{Sync: true}
 	s.db.Put([]byte(k), value, wo)
