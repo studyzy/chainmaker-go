@@ -846,13 +846,13 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 
 	payLoadBytes, err := hex.DecodeString(payload)
 	if err != nil {
-		r.log.Errorf("payload hex err:%v",err.Error())
+		r.log.Errorf("payload hex err:%v", err.Error())
 		return false, err
 	}
 
 	clientSignBytes, err := hex.DecodeString(clientSign)
 	if err != nil {
-		r.log.Errorf("client sign hex err:%v",err.Error())
+		r.log.Errorf("client sign hex err:%v", err.Error())
 		return false, err
 	}
 
@@ -861,28 +861,29 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 		return false, err
 	}
 
-	headers, err := r.getHeaders(params, chainId, orgId)
+	userCertPem, err := r.getParamValue(params, "user_cert")
 	if err != nil {
 		return false, err
 	}
 
-	tx := &commonPb.Transaction{
-		Header:           headers,
-		RequestPayload:   payLoadBytes,
-		RequestSignature: clientSignBytes,
+	userCertPemBytes, err := hex.DecodeString(userCertPem)
+	if err != nil {
+		r.log.Errorf("user cert pem hex err:%v", err.Error())
+		return false, err
 	}
 
-	txBytes, err := utils.CalcUnsignedTxBytes(tx)
-	if err != nil {
-		return false, err
+	sender := &accesscontrol.SerializedMember{
+		OrgId:      orgId,
+		MemberInfo: userCertPemBytes,
+		IsFullCert: true,
 	}
 
 	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    tx.Header.Sender,
+		Signer:    sender,
 		Signature: clientSignBytes,
 	}}
 
-	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, txBytes)
+	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, payLoadBytes)  //todo pb
 	if err != nil {
 		return false, fmt.Errorf("fail to construct authentication principal: %s", err)
 	}
@@ -899,29 +900,6 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	return true, nil
 }
 
-func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId, orgId string) (*commonPb.TxHeader, error) {
-	userCertPem, err := r.getParamValue(params, "user_cert")
-	if err != nil {
-		return nil, err
-	}
-
-	userCertPemBytes, err := hex.DecodeString(userCertPem)
-	if err != nil {
-		r.log.Errorf("user cert pem hex err:%v",err.Error())
-		return nil, err
-	}
-
-	header := &commonPb.TxHeader{
-		ChainId: chainId,
-		Sender: &accesscontrol.SerializedMember{
-			OrgId:      orgId,
-			MemberInfo: userCertPemBytes,
-			IsFullCert: true,
-		},
-	}
-	return header, nil
-}
-
 func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) {
 	result := make(map[string]string, 0)
 
@@ -934,7 +912,7 @@ func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) {
 		return orgId, nil
 	}
 
-	return "" ,errors.New("payload miss org_id ")
+	return "", errors.New("payload miss org_id ")
 }
 
 func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key string) (string, error) {
