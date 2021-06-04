@@ -9,8 +9,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
-
-	"chainmaker.org/chainmaker-go/evm/evm-go/math"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -18,6 +16,7 @@ import (
 	"github.com/mr-tron/base58"
 	"github.com/shopspring/decimal"
 	"github.com/syndtr/goleveldb/leveldb/util"
+	"strconv"
 )
 
 // Key: validatorPrefix + ValidatorAddress
@@ -36,8 +35,8 @@ func toEpochKey(epochID string) string {
 }
 
 // Key：unbondPrefix + DelegatorID + ValidatorID
-func toUnbondingDelegationKey(DelegatorID, ValidatorID string) string {
-	return commonPb.StakePrefix_Prefix_Unbond.String() + DelegatorID + ValidatorID
+func toUnbondingDelegationKey(epochID, DelegatorAddress, ValidatorAddress string) string {
+	return commonPb.StakePrefix_Prefix_Unbond.String() + epochID + DelegatorAddress + ValidatorAddress
 }
 
 func newValidator(validatorAddress string) *commonPb.Validator {
@@ -70,13 +69,10 @@ func newUnbondingDelegation(DelegatorAddress, ValidatorAddress string) *commonPb
 	}
 }
 
-func newUnbondingDelegationEntry(CreationEpochID, UnbondedEpochID uint64, InitialBalance, Balance string) *commonPb.UnbondingDelegationEntry {
+func newUnbondingDelegationEntry(CreationEpochID uint64, amount string) *commonPb.UnbondingDelegationEntry {
 	return &commonPb.UnbondingDelegationEntry{
 		CreationEpochID:   CreationEpochID,
-		UnbondedEpochID:   UnbondedEpochID,
-		CompletionEpochID: math.MaxUint64,
-		InitialBalance:    InitialBalance,
-		Balance:           Balance,
+		Amount: amount,
 	}
 }
 
@@ -114,7 +110,7 @@ type DPosStakeRuntime struct {
 	log *logger.CMLogger
 }
 
-// * GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人
+// GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人
 // return ValidatorVector
 func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 获取验证人数据
@@ -269,7 +265,7 @@ func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[
 // * Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
 //@params["from"] 		解质押的验证人
 //@params["amount"] 	解质押数量
-//return
+//return UnbondingDelegation
 func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	undelegateValidatorAddress := params["from"]
 	amount := params["amount"]
@@ -279,6 +275,7 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 		s.log.Errorf("undelegate read latest epoch error")
 		return nil, err
 	}
+	// read epoch
 	epoch := &commonPb.Epoch{}
 	err = proto.Unmarshal(bz, epoch)
 	if err != nil {
@@ -291,43 +288,18 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 		s.log.Errorf("get sender address error: ", err.Error())
 		return nil, err
 	}
-	// read balance
-	erc20RunTime := NewDPoSRuntime(s.log)
-	bz, err = erc20RunTime.BalanceOf(context, map[string]string{"owner": sender})
-	if err != nil {
-		s.log.Errorf("get sender balance error: ", err.Error())
-		return nil, err
-	}
-	currentBalance, err := stringToBigInt(string(bz))
-	if err != nil {
-		s.log.Errorf("get sender balance error: ", err.Error())
-		return nil, err
-	}
-	amountValue, err := stringToBigInt(amount)
-	if err != nil {
-		s.log.Errorf("get sender balance error: ", err.Error())
-		return nil, err
-	}
-	total := &big.Int{}
-	total.Add(amountValue, currentBalance)
+	// TODO check current epoch undelegate amount
 	// new entry
-	entry := newUnbondingDelegationEntry(epoch.EpochID, epoch.EpochID+1, currentBalance.String(), total.String())
+	entry := newUnbondingDelegationEntry(epoch.EpochID, amount)
 	// update delegation
-	ud, err := getOrCreateUnbondingDelegation(context, sender, undelegateValidatorAddress)
+	ud, err := getOrCreateUnbondingDelegation(context, sender, undelegateValidatorAddress, strconv.FormatUint(epoch.EpochID, 10))
 	if err != nil {
 		s.log.Errorf("get or create unbonding delegation error: ", err.Error())
 		return nil, err
 	}
 	ud.Entries = append(ud.Entries, entry)
-	// get UnbondingDelegationQueue
-	udq, err := getUnbondingDelegationQueue(context)
-	if err != nil {
-		s.log.Errorf("get unbonding delegation queue error: ", err.Error())
-		return nil, err
-	}
-	udq.Queue = append(udq.Queue, ud)
-	// save UnbondingDelegationQueue
-	err = save(context, commonPb.StakePrefix_Prefix_UnbondingDelegationQueue.String(), udq)
+	// save
+	err = save(context, toUnbondingDelegationKey(strconv.FormatUint(epoch.EpochID, 10), sender, undelegateValidatorAddress), ud)
 	if err != nil {
 		s.log.Errorf("get unbonding delegation queue error: ", err.Error())
 		return nil, err
@@ -508,8 +480,8 @@ func updateDelegateShares(delegate *commonPb.Delegation, shares *big.Int) error 
 }
 
 // 获取或创建 delegation
-func getOrCreateUnbondingDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.UnbondingDelegation, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(toUnbondingDelegationKey(delegatorAddress, validatorAddress)))
+func getOrCreateUnbondingDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string, epochID string) (*commonPb.UnbondingDelegation, error) {
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(toUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress)))
 	if err != nil {
 		return nil, err
 	}
@@ -561,19 +533,6 @@ func getMinSelfDelegation(context protocol.TxSimContext) (*big.Int, error) {
 		return nil, err
 	}
 	return v, nil
-}
-
-func getUnbondingDelegationQueue(context protocol.TxSimContext) (*commonPb.UnbondingDelegationQueue, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(commonPb.StakePrefix_Prefix_UnbondingDelegationQueue.String()))
-	if err != nil {
-		return nil, err
-	}
-	udq := &commonPb.UnbondingDelegationQueue{}
-	err = proto.Unmarshal(bz, udq)
-	if err != nil {
-		return nil, err
-	}
-	return udq, nil
 }
 
 func save(context protocol.TxSimContext, key string, m proto.Message) error {
