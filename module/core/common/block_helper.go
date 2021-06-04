@@ -489,11 +489,12 @@ func (vb *VerifierBlock) ValidateBlock(
 	if err != nil {
 		return nil, nil, timeLasts, err
 	}
+	// we must new a snapshot for the vacant block,
+	// otherwise the subsequent snapshot can not link to the previous snapshot.
 	snapshot := vb.snapshotManager.NewSnapshot(lastBlock, block)
 	if len(block.Txs) == 0 {
 		return nil, nil, timeLasts, nil
 	}
-
 	// verify if txs are duplicate in this block
 	if IsTxDuplicate(block.Txs) {
 		return nil, nil, timeLasts, fmt.Errorf("tx duplicate")
