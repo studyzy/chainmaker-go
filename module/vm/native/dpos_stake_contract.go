@@ -12,12 +12,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/gorilla/context"
 	"github.com/mr-tron/base58"
 	"github.com/shopspring/decimal"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"math/big"
-	"strconv"
 )
 
 // Key: validatorPrefix + ValidatorAddress
