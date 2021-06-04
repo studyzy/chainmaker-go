@@ -8,14 +8,19 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"fmt"
+	"math/big"
+	"strconv"
+	"strings"
+	"unicode"
+
+	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
-	"unicode"
 )
 
 // default timestamp is "2020-11-30 0:0:0"
@@ -25,6 +30,10 @@ const (
 	keyERC20Total              = "erc20.total"
 	keyERC20Owner              = "erc20.owner"
 	keyERC20Decimals           = "erc20.decimals"
+	keyStakeMinSelfDelegation  = "stake.minSelfDelegation"
+	keyStakeEpochValidatorNum  = "stake.epochValidatorNum"
+	keyStakeEpochBlockNum      = "stake.epochBlockNum"
+	keyStakeCandidate          = "stake.candidate"
 )
 
 // CreateGenesis create genesis block (with read-write set) based on chain config
@@ -164,35 +173,35 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
 	}
 
-	/**
-	  erc20合约的配置
-	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
-	    - key: erc20.total
-	      value: 1000000000000
-	    - key: erc20.owner
-	      value: 5pQfwDwtyA
-	    - key: erc20.decimals
-	      value: 18
-	 */
-	var erc20Config *ERC20Config
+	var (
+		erc20Config *ERC20Config
+		stakeConfig *StakeConfig
+	)
 	if cc.Consensus.Type == consensus.ConsensusType_DPOS {
+		// preCheck
 		erc20Config, err = loadERC20Config(cc.Consensus.ExtConfig)
 		if err != nil {
 			return nil, err
 		}
+		stakeConfig, err = loadStakeConfig(cc.Consensus.ExtConfig)
+		if err != nil {
+			return nil, err
+		}
+		// postCheck
+
 	}
 	set := &commonPb.TxRWSet{
-		TxId:    GetTxIdWithSeed(int64(defaultTimestamp)),
-		TxReads: nil,
-		TxWrites: totalTxRWSet(ccBytes, erc20Config),
+		TxId:     GetTxIdWithSeed(int64(defaultTimestamp)),
+		TxReads:  nil,
+		TxWrites: totalTxRWSet(ccBytes, erc20Config, stakeConfig),
 	}
 	return set, nil
 }
 
 // ERC20Config for DPoS
 type ERC20Config struct {
-	total string
-	owner string
+	total    string
+	owner    string
 	decimals string
 }
 
@@ -215,7 +224,7 @@ func (e *ERC20Config) legal() error {
 
 // toTxWrites convert to TxWrites
 func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
-	return []*commonPb.TxWrite {
+	return []*commonPb.TxWrite{
 		{
 			Key:          []byte("OWN"), // equal with native.KeyOwner
 			Value:        []byte(e.owner),
@@ -246,6 +255,20 @@ func isNumber(str string) bool {
 
 // loadERC20Config load config of erc20 contract
 func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config, error) {
+	/**
+	  erc20合约的配置
+	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+	    - key: erc20.total
+	      value: 1000000000000
+	    - key: erc20.owner
+	      value: 5pQfwDwtyA
+	    - key: erc20.decimals
+	      value: 18
+		- key: erc20.account:<addr1>
+		  value: 8000
+		- key: erc20.account:<addr2>
+		  value: 8000
+	*/
 	config := &ERC20Config{}
 	for i := 0; i < len(consensusExtConfig); i++ {
 		keyValuePair := consensusExtConfig[i]
@@ -265,16 +288,99 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 	return config, nil
 }
 
-func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config) []*commonPb.TxWrite {
+type StakeConfig struct {
+	minSelfDelegation string
+	validatorNum      uint64
+	eachEpochNum      uint64
+	candidates        []*dpospb.CandidateInfo
+}
+
+func (s *StakeConfig) toTxWrites() []*commonPb.TxWrite {
+	return []*commonPb.TxWrite{
+		{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          commonPb.StakePrefix_Prefix_MinSelfDelegation.,
+			Value:        nil,
+		},
+	}
+}
+
+func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig, error) {
+	/**
+	  stake合约的配置
+	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
+	    - key: stake.minSelfDelegation
+	      value: 1000000000000
+	    - key: stake.epochValidatorNum
+	      value: 10
+	    - key: stake.epochBlockNum
+	      value: 2000
+		- key: stake.candidate:<addr1>
+	      value: 800000
+		- key: stake.candidate:<addr2>
+	      value: 600000
+	*/
+	config := StakeConfig{}
+	for _, kv := range consensusExtConfig {
+		switch kv.Key {
+		case keyStakeEpochBlockNum:
+			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			config.eachEpochNum = val
+		case keyStakeEpochValidatorNum:
+			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			config.validatorNum = val
+		case keyStakeMinSelfDelegation:
+			if err := isValidBigInt(kv.Value); err != nil {
+				return nil, fmt.Errorf("%s error, reason: %s", keyStakeMinSelfDelegation, err)
+			}
+			config.minSelfDelegation = kv.Value
+		default:
+			if !strings.HasPrefix(kv.Key, keyStakeCandidate) {
+				continue
+			}
+			values := strings.Split(kv.Key, ":")
+			if len(values) != 2 {
+				return nil, fmt.Errorf("stake.candidate config error, actual: %s, expect: %s:<addr1>", kv.Key, keyStakeCandidate)
+			}
+			if err := isValidBigInt(kv.Value); err != nil {
+				return nil, fmt.Errorf("stake.candidate amount error, reason: %s", err)
+			}
+			config.candidates = append(config.candidates, &dpospb.CandidateInfo{
+				PeerID: values[1], Weight: kv.Value,
+			})
+		}
+	}
+	return &config, nil
+}
+
+func isValidBigInt(val string) error {
+	_, ok := big.NewInt(0).SetString(val, 10)
+	if !ok {
+		return fmt.Errorf("parse string to big.Int failed, actual: %s", val)
+	}
+	return nil
+}
+
+func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) []*commonPb.TxWrite {
 	txWrites := make([]*commonPb.TxWrite, 0)
-	txWrites = append(txWrites, &commonPb.TxWrite {
-			Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
-			Value:        chainConfigBytes,
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		})
+	txWrites = append(txWrites, &commonPb.TxWrite{
+		Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
+		Value:        chainConfigBytes,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+	})
 	if erc20Config != nil {
 		erc20ConfigTxWrites := erc20Config.toTxWrites()
 		txWrites = append(txWrites, erc20ConfigTxWrites...)
+	}
+	if stakeConfig != nil {
+		stakeConfigTxWrites := stakeConfig.toTxWrites()
+		txWrites = append(txWrites, stakeConfigTxWrites...)
 	}
 	return txWrites
 }
