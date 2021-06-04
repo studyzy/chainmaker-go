@@ -252,19 +252,22 @@ func (e *ERC20Config) addAccount(address string, token *BigInteger) error {
 // toTxWrites convert to TxWrites
 func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
 	contractName := commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()
-	txWrites := []*commonPb.TxWrite{{
-		Key:          []byte("OWN"), // equal with native.KeyOwner
-		Value:        []byte(e.owner),
-		ContractName: contractName,
-	}, {
-		Key:          []byte("DEC"), // equal with native.KeyDecimals
-		Value:        []byte(e.decimals.String()),
-		ContractName: contractName,
-	}, {
-		Key:          []byte("TS"), // equal with native.KeyTotalSupply
-		Value:        []byte(e.total.String()),
-		ContractName: contractName,
-	},
+	txWrites := []*commonPb.TxWrite{
+		{
+			Key:          []byte("OWN"), // equal with native.KeyOwner
+			Value:        []byte(e.owner),
+			ContractName: contractName,
+		},
+		{
+			Key:          []byte("DEC"), // equal with native.KeyDecimals
+			Value:        []byte(e.decimals.String()),
+			ContractName: contractName,
+		},
+		{
+			Key:          []byte("TS"), // equal with native.KeyTotalSupply
+			Value:        []byte(e.total.String()),
+			ContractName: contractName,
+		},
 	}
 	// 添加accounts的读写集
 	for i := 0; i < len(e.accounts); i++ {
