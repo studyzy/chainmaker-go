@@ -125,7 +125,6 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 	return value, nil
 }
 
-
 func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	name := params["contract_name"]
 	code := params["contract_code"]
@@ -346,7 +345,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
 	if !auth || err != nil {
 		err := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
-			params["user_cert"], params["signature"], params["payload"])
+			params["user_cert"], params["client_sign"], params["payload"])
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -355,9 +354,16 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	version := params["version"]
 	codeHash := params["code_hash"]
 	reportHash := params["report_hash"]
+	userCert := params["user_cert"]
+	clientSign := params["client_sign"]
+	payload := params["payload"]
+	orgId := params["org_id"]
+
 	if utils.IsAnyBlank(name, version, codeHash, reportHash) {
-		err := fmt.Errorf("%s, param[contract_name]=%s, params[version]=%s, param[code_hash]=%s, param[report_hash]=%s",
-			ErrParams.Error(), name, version, codeHash, reportHash)
+		err := fmt.Errorf(
+			"%s, param[contract_name]=%s, params[version]=%s, param[code_hash]=%s, param[report_hash]=%s, "+
+				"params[user_cert]=%s, params[client_sign]=%s, params[payload]=%s, params[org_id]=%s,",
+			ErrParams.Error(), name, version, codeHash, reportHash, userCert, clientSign, payload, orgId)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -385,11 +391,11 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 	evmResultBuffer := bytes.NewBuffer([]byte{})
-	if err := binary.Write(evmResultBuffer, binary.BigEndian, result.Code); err != nil {
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.Code); err != nil {
 		return nil, err
 	}
 	evmResultBuffer.Write(result.Result)
-	if err := binary.Write(evmResultBuffer, binary.BigEndian, result.GasUsed); err != nil {
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.GasUsed); err != nil {
 		return nil, err
 	}
 	for i := 0; i < len(rwSet.TxReads); i++ {
@@ -405,7 +411,10 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(version))
 	evmResultBuffer.Write([]byte(codeHash))
 	evmResultBuffer.Write([]byte(reportHash))
-	// todo add params(4)
+	evmResultBuffer.Write([]byte(userCert))
+	evmResultBuffer.Write([]byte(clientSign))
+	evmResultBuffer.Write([]byte(payload))
+	evmResultBuffer.Write([]byte(orgId))
 	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["report_sign"]), &crypto.SignOpts{
 		Hash:         crypto.HASH_TYPE_SHA256,
 		UID:          "",
@@ -472,8 +481,9 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		if !bytes.Equal(val, rSet.Value) || version.RefTxId != rSet.Version.RefTxId {
 			r.log.Errorf("rSet verification failed! key: %s, value: %s, version: %s; but value on chain: %s, version on chain: %s",
 				key, val, version.RefTxId, rSet.Value, rSet.Version.RefTxId)
-			// todo return err
-			return nil, nil
+			return nil, errors.New("rSet verification failed! key: " + string(key) + ", value: " + string(val) +
+				", version: " + version.RefTxId + "; but value on chain: " + string(rSet.Value) +
+				", version on chain: " + rSet.Version.RefTxId)
 		}
 	}
 
@@ -525,7 +535,6 @@ func (r *PrivateComputeRuntime) GetEnclaveCACert(context protocol.TxSimContext, 
 	return caCertPEM, nil
 }
 
-
 func (r *PrivateComputeRuntime) SaveEnclaveCACert(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// PEM 格式的证书
 	caCertPEM := params["ca_cert"]
@@ -542,7 +551,6 @@ func (r *PrivateComputeRuntime) SaveEnclaveCACert(context protocol.TxSimContext,
 
 	return nil, nil
 }
-
 
 func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
@@ -682,7 +690,6 @@ func (r *PrivateComputeRuntime) QueryEnclaveEncryptPubKey(context protocol.TxSim
 	return pemEncryptPubKey, nil
 }
 
-
 func (r *PrivateComputeRuntime) QueryEnclaveVerificationPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
@@ -725,7 +732,6 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 	return nil, nil
 }
 
-
 func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
@@ -746,7 +752,6 @@ func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext
 
 	return report, nil
 }
-
 
 func (r *PrivateComputeRuntime) QueryEnclaveChallenge(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 证书二进制数据
@@ -875,7 +880,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	return true, nil
 }
 
-func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId string, ) (*commonPb.TxHeader, error) {
+func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId string) (*commonPb.TxHeader, error) {
 	userCertPem, err := r.getParamValue(params, "user_cert")
 	if err != nil {
 		return nil, err
@@ -887,9 +892,9 @@ func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId str
 	}
 
 	header := &commonPb.TxHeader{
-		ChainId: chainId,   //todo chainid from gateway
+		ChainId: chainId, //todo chainid from gateway
 		Sender: &accesscontrol.SerializedMember{
-			OrgId:      orgId,   //todo from unmarshal payload
+			OrgId:      orgId, //todo from unmarshal payload
 			MemberInfo: []byte(userCertPem),
 			IsFullCert: true,
 		},
