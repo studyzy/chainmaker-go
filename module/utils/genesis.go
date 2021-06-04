@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -219,17 +220,17 @@ type ERC20Config struct {
 	total    *BigInteger
 	owner    string
 	decimals *BigInteger
-	accounts []*struct{
+	accounts []*struct {
 		address string
-		token *BigInteger
+		token   *BigInteger
 	}
 }
 
 func newERC20Config() *ERC20Config {
 	return &ERC20Config{
-		accounts: make([]*struct{
+		accounts: make([]*struct {
 			address string
-			token *BigInteger
+			token   *BigInteger
 		}, 0),
 	}
 }
@@ -241,7 +242,7 @@ func (e *ERC20Config) addAccount(address string, token *BigInteger) error {
 			return fmt.Errorf("token of address[%s] cannot be set more than once", address)
 		}
 	}
-	e.accounts = append(e.accounts, &struct{
+	e.accounts = append(e.accounts, &struct {
 		address string
 		token   *BigInteger
 	}{address: address, token: token})
@@ -268,8 +269,8 @@ func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
 	// 添加accounts的读写集
 	for i := 0; i < len(e.accounts); i++ {
 		txWrites = append(txWrites, &commonPb.TxWrite{
-			Key: []byte(fmt.Sprintf("B/%s", e.accounts[i].address)),
-			Value: []byte(e.accounts[i].token.String()),
+			Key:          []byte(fmt.Sprintf("B/%s", e.accounts[i].address)),
+			Value:        []byte(e.accounts[i].token.String()),
 			ContractName: contractName,
 		})
 	}
@@ -468,8 +469,8 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 
 // getContractAddress 返回质押合约地址
 func (s *StakeConfig) getContractAddress() string {
-	// TODO
-	return ""
+	bz := sha256.Sum256([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()))
+	return base58.Encode(bz[:])
 }
 
 // getSumToken 返回所有token的值
