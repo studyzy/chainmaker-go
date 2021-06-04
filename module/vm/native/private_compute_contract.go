@@ -21,6 +21,8 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -842,15 +844,30 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 		return false, err
 	}
 
-	headers, err := r.getHeaders(params, chainId)
+	payLoadBytes, err := hex.DecodeString(payload)
+	if err != nil {
+		return false, err
+	}
+
+	clientSignBytes, err := hex.DecodeString(clientSign)
+	if err != nil {
+		return false, err
+	}
+
+	orgId, err := r.getOrgId(payLoadBytes)
+	if err != nil {
+		return false, err
+	}
+
+	headers, err := r.getHeaders(params, chainId, orgId)
 	if err != nil {
 		return false, err
 	}
 
 	tx := &commonPb.Transaction{
 		Header:           headers,
-		RequestPayload:   []byte(payload),
-		RequestSignature: []byte(clientSign),
+		RequestPayload:   payLoadBytes,
+		RequestSignature: clientSignBytes,
 	}
 
 	txBytes, err := utils.CalcUnsignedTxBytes(tx)
@@ -860,7 +877,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 
 	endorsements := []*commonPb.EndorsementEntry{{
 		Signer:    tx.Header.Sender,
-		Signature: []byte(clientSign),
+		Signature: clientSignBytes,
 	}}
 
 	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, txBytes)
@@ -880,26 +897,41 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	return true, nil
 }
 
-func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId string) (*commonPb.TxHeader, error) {
+func (r *PrivateComputeRuntime) getHeaders(params map[string]string, chainId, orgId string) (*commonPb.TxHeader, error) {
 	userCertPem, err := r.getParamValue(params, "user_cert")
 	if err != nil {
 		return nil, err
 	}
 
-	orgId, err := r.getParamValue(params, "org_id")
+	userCertPemBytes, err := hex.DecodeString(userCertPem)
 	if err != nil {
 		return nil, err
 	}
 
 	header := &commonPb.TxHeader{
-		ChainId: chainId, //todo chainid from gateway
+		ChainId: chainId,
 		Sender: &accesscontrol.SerializedMember{
-			OrgId:      orgId, //todo from unmarshal payload
-			MemberInfo: []byte(userCertPem),
+			OrgId:      orgId,
+			MemberInfo: userCertPemBytes,
 			IsFullCert: true,
 		},
 	}
 	return header, nil
+}
+
+func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) {
+	result := make(map[string]string, 0)
+
+	if err := json.Unmarshal(payLoad, &result); err != nil {
+		return "", errors.New("unmarshal payload failed err" + err.Error())
+	}
+
+	orgId, ok := result["org_id"]
+	if ok {
+		return orgId, nil
+	}
+
+	return "" ,errors.New("payload miss org_id ")
 }
 
 func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key string) (string, error) {
