@@ -32,7 +32,44 @@ func PaillierCMD() *cobra.Command {
 	paillierCmd.AddCommand(keyGenCMD())
 	paillierCmd.AddCommand(encryptCMD())
 	paillierCmd.AddCommand(decryptCMD())
+	paillierCmd.AddCommand(getPtBytesCMD())
 	return paillierCmd
+}
+
+func getPtBytesCMD() *cobra.Command {
+	getPtBytesCMD := &cobra.Command{
+		Use:   "getPtBytes",
+		Short: "returns the base64Str of the plaintext bytes",
+		Long:  "returns the base64Str of the plaintext bytes",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return getPlaintextBytes()
+		},
+	}
+
+	flags := getPtBytesCMD.Flags()
+	flags.StringVarP(&plaintext, "pt", "", "", "Plaintext")
+
+	return getPtBytesCMD
+}
+
+func getPlaintextBytes() error {
+	if plaintext == "" {
+		return errors.New("invalid plaintext, please check it")
+	}
+
+	bigPt, ok := new(big.Int).SetString(plaintext, 10)
+	if !ok {
+		return errors.New("invalid plaintext, please check it")
+	}
+
+	ptBytes := bigPt.Bytes()
+	if ptBytes == nil {
+		return errors.New("invalid plaintext, please check it")
+	}
+
+	encodeBytes := base64.StdEncoding.EncodeToString(ptBytes)
+	fmt.Printf("The bytes2str of [%s] is [%s]\n", plaintext, encodeBytes)
+	return nil
 }
 
 func keyGenCMD() *cobra.Command {
