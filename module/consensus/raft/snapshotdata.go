@@ -13,6 +13,5 @@ type SnapshotHeight struct {
 
 // AdditionalData contains consensus specified data to be store in block
 type AdditionalData struct {
-	Signature    []byte
-	AppliedIndex uint64
+	Signature []byte
 }

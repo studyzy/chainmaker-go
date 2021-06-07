@@ -1,0 +1,111 @@
+version: '3'
+
+services:
+  node1:
+    container_name: node1
+    image: "chainmaker"
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker -c ../config/wx-org1/chainmaker.yml start"
+    ports:
+      - "7988:7988"
+      - "17989:17989"
+      - "4321:4321"
+    volumes:
+      - ./wx-org1:/chainmaker-go/config/wx-org1
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
+      - ../../../../../config/wx-org5/certs:/chainmaker-go/config/wx-org5/certs
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.2
+
+  node2:
+    container_name: node2
+    image: "chainmaker"
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker -c ../config/wx-org2/chainmaker.yml start"
+    ports:
+      - "7989:7988"
+      - "17990:17989"
+      - "4322:4321"
+    volumes:
+      - ./wx-org2:/chainmaker-go/config/wx-org2
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
+      - ../../../../../config/wx-org5/certs:/chainmaker-go/config/wx-org5/certs
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.3
+
+  node3:
+    container_name: node3
+    image: "chainmaker"
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker -c ../config/wx-org3/chainmaker.yml start"
+    ports:
+      - "7990:7988"
+      - "17991:17989"
+      - "4323:4321"
+    volumes:
+      - ./wx-org3:/chainmaker-go/config/wx-org3
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
+      - ../../../../../config/wx-org5/certs:/chainmaker-go/config/wx-org5/certs
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.4
+
+  node4:
+    container_name: node4
+    image: "chainmaker"
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker -c ../config/wx-org4/chainmaker.yml start"
+    ports:
+      - "7991:7988"
+      - "17992:17989"
+      - "4324:4321"
+    volumes:
+      - ./wx-org4:/chainmaker-go/config/wx-org4
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
+      - ../../../../../config/wx-org5/certs:/chainmaker-go/config/wx-org5/certs
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.5
+
+  node5:
+    container_name: node5
+    image: "chainmaker"
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker -c ../config/wx-org5/chainmaker.yml start"
+    ports:
+      - "7992:7988"
+      - "17993:17989"
+      - "4325:4321"
+    volumes:
+      - ./wx-org5:/chainmaker-go/config/wx-org5
+      - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
+      - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
+      - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
+      - ../../../../../config/wx-org4/certs:/chainmaker-go/config/wx-org4/certs
+      - ../../../../../config/wx-org5/certs:/chainmaker-go/config/wx-org5/certs
+    networks:
+      localnet:
+        ipv4_address: 192.168.2.6
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 192.168.2.0/16

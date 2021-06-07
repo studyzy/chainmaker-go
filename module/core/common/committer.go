@@ -6,13 +6,14 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -66,7 +67,7 @@ func NewCommitBlock(cbConf *CommitBlockConf) *CommitBlock {
 func (cb *CommitBlock) CommitBlock(
 	block *commonpb.Block,
 	rwSetMap map[string]*commonpb.TxRWSet,
-	conEventMap map[string][]*commonpb.ContractEvent) (dbLasts, snapshotLasts, confLasts, otherLasts,pubEvent int64, err error) {
+	conEventMap map[string][]*commonpb.ContractEvent) (dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent int64, err error) {
 	// record block
 	rwSet := RearrangeRWSet(block, rwSetMap)
 	// record contract event
@@ -92,6 +93,7 @@ func (cb *CommitBlock) CommitBlock(
 
 	// notify chainConf to update config when config block committed
 	startConfTick := utils.CurrentTimeMillisSeconds()
+	cb.ledgerCache.SetLastCommittedBlock(block)
 	if err = NotifyChainConf(block, cb.chainConf); err != nil {
 		return 0, 0, 0, 0, 0, err
 	}
@@ -119,7 +121,6 @@ func (cb *CommitBlock) CommitBlock(
 		pubEvent = utils.CurrentTimeMillisSeconds() - startPublishContractEventTick
 	}
 	startOtherTick := utils.CurrentTimeMillisSeconds()
-	cb.ledgerCache.SetLastCommittedBlock(block)
 	bi := &commonpb.BlockInfo{
 		Block:     block,
 		RwsetList: rwSet,
