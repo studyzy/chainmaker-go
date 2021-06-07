@@ -403,7 +403,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	for i := 0; i < len(rwSet.TxReads); i++ {
 		evmResultBuffer.Write(rwSet.TxReads[i].Key)
 		evmResultBuffer.Write(rwSet.TxReads[i].Value)
-		evmResultBuffer.Write([]byte(rwSet.TxReads[i].Version.RefTxId))
+		//evmResultBuffer.Write([]byte(rwSet.TxReads[i].Version.RefTxId))
 	}
 	for i := 0; i < len(rwSet.TxWrites); i++ {
 		evmResultBuffer.Write(rwSet.TxWrites[i].Key)
@@ -415,8 +415,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(reportHash))
 	evmResultBuffer.Write([]byte(userCert))
 	evmResultBuffer.Write([]byte(clientSign))
-	evmResultBuffer.Write([]byte(payload))
 	evmResultBuffer.Write([]byte(orgId))
+	evmResultBuffer.Write([]byte(payload))
 	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["report_sign"]), &crypto.SignOpts{
 		Hash:         crypto.HASH_TYPE_SHA256,
 		UID:          "",
