@@ -10,6 +10,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/store"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 	ConsensusDBName = "consensus"
 )
 
-// Iterator allows a chaincode to iteratoe over a set of
+// Iterator allows a chaincode to iterator over a set of
 // kev/value pairs returned by range query.
 type Iterator interface {
 	Next() bool
@@ -58,6 +59,12 @@ type BlockchainStore interface {
 	// BlockExists returns true if the black hash exist, or returns false if none exists.
 	BlockExists(blockHash []byte) (bool, error)
 
+	// GetHeightByHash returns a block height given it's hash, or returns nil if none exists.
+	GetHeightByHash(blockHash []byte) (uint64, error)
+
+	// GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
+	GetBlockHeaderByHeight(height int64) (*common.BlockHeader, error)
+
 	// GetBlock returns a block given it's block height, or returns nil if none exists.
 	GetBlock(height int64) (*common.Block, error)
 
@@ -77,6 +84,9 @@ type BlockchainStore interface {
 
 	// TxExists returns true if the tx exist, or returns false if none exists.
 	TxExists(txId string) (bool, error)
+
+	// GetTxHeight retrieves a transaction height by txid, or returns nil if none exists.
+	GetTxHeight(txId string) (uint64, error)
 
 	// GetTxConfirmedTime returns the confirmed time for given tx
 	GetTxConfirmedTime(txId string) (int64, error)
@@ -100,6 +110,15 @@ type BlockchainStore interface {
 
 	// GetDBHandle returns the database handle for given dbName
 	GetDBHandle(dbName string) DBHandle
+
+	// GetArchivedPivot returns the archived pivot (include this pivot height)
+	GetArchivedPivot() uint64
+
+	// ArchiveBlock the block after backup
+	ArchiveBlock(archiveHeight uint64) error
+
+	//RestoreBlocks restore blocks from outside block data
+	RestoreBlocks(serializedBlocks [][]byte) error
 
 	// Close closes all the store db instances and releases any resources held by BlockchainStore
 	Close() error
@@ -211,6 +230,9 @@ type DBHandle interface {
 
 	// WriteBatch writes a batch in an atomic operation
 	WriteBatch(batch StoreBatcher, sync bool) error
+
+	// CompactRange compacts the underlying DB for the given key range.
+	CompactRange(r util.Range) error
 
 	// NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 	// start is included in the results and limit is excluded.

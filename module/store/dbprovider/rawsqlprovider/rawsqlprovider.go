@@ -10,6 +10,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -35,6 +38,10 @@ type SqlDBHandle struct {
 	dbType        types.EngineType
 	dbTxCache     map[string]*SqlDBTx
 	log           protocol.Logger
+}
+
+func (p *SqlDBHandle) CompactRange(r util.Range) error {
+	return errors.New("implement me")
 }
 
 func ParseSqlDbType(str string) (types.EngineType, error) {
