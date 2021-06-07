@@ -2,13 +2,17 @@ package dpos
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math/big"
 
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker-go/vm/native"
 
 	"github.com/golang/protobuf/proto"
 )
+
+const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
 func (impl *DposImpl) getEpochInfo() (*commonpb.Epoch, error) {
@@ -102,6 +106,105 @@ func (impl *DposImpl) createRewardRwSet(rewardAmount big.Int) (*commonpb.TxRWSet
 
 func (impl *DposImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, error) {
 	return nil, nil
+}
+
+func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
+	start := native.ToUnbondingDelegationKey(epoch.EpochID, "", "")
+	end := BytesPrefix(start)
+	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), start, end)
+	if err != nil {
+		impl.log.Errorf("new select range failed, reason: %s", err)
+		return nil, err
+	}
+	defer iter.Release()
+
+	undelegations := make([]*commonpb.UnbondingDelegation, 0, 10)
+	for iter.Next() {
+		kv, err := iter.Value()
+		if err != nil {
+			impl.log.Errorf("get kv from iterator failed, reason: %s", err)
+			return nil, err
+		}
+		undelegation := commonpb.UnbondingDelegation{}
+		if err = proto.Unmarshal(kv.Value, &undelegation); err != nil {
+			impl.log.Errorf("unmarshal value to UnbondingDelegation failed, reason: %s", err)
+			return nil, err
+		}
+		undelegations = append(undelegations, &undelegation)
+	}
+	rwSet := &commonpb.TxRWSet{
+		TxId: ModuleName,
+	}
+	for _, undelegation := range undelegations {
+		for _, entry := range undelegation.Entries {
+			wSet, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, entry.Amount)
+			if err != nil {
+				return nil, err
+			}
+			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
+
+			stakeContractAddr := native.StakeContractAddr()
+			if wSet, err = impl.subBalanceRwSet(stakeContractAddr, entry.Amount); err != nil {
+				return nil, err
+			}
+			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
+		}
+	}
+	return rwSet, nil
+}
+
+func (impl *DposImpl) addBalanceRwSet(addr string, amount string) (*commonpb.TxWrite, error) {
+	before, err := impl.balanceOf(addr)
+	if err != nil {
+		return nil, err
+	}
+	add, ok := big.NewInt(0).SetString(amount, 10)
+	if !ok {
+		impl.log.Errorf("invalid amount: %s", amount)
+		return nil, fmt.Errorf("\"invalid amount: %s", amount)
+	}
+	after := before.Add(add, before)
+	return &commonpb.TxWrite{
+		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		Key:          []byte(native.BalanceKey(addr)),
+		Value:        after.Bytes(),
+	}, nil
+}
+
+func (impl *DposImpl) subBalanceRwSet(addr string, amount string) (*commonpb.TxWrite, error) {
+	before, err := impl.balanceOf(addr)
+	if err != nil {
+		return nil, err
+	}
+	sub, ok := big.NewInt(0).SetString(amount, 10)
+	if !ok {
+		impl.log.Errorf("invalid amount: %s", amount)
+		return nil, fmt.Errorf("\"invalid amount: %s", amount)
+	}
+	if before.Cmp(sub) < 0 {
+		impl.log.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
+		return nil, fmt.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
+	}
+	after := before.Sub(before, sub)
+	return &commonpb.TxWrite{
+		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		Key:          []byte(native.BalanceKey(addr)),
+		Value:        after.Bytes(),
+	}, nil
+}
+
+func (impl *DposImpl) balanceOf(addr string) (*big.Int, error) {
+	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), []byte(native.BalanceKey(addr)))
+	if err != nil {
+		impl.log.Errorf("query user balance failed, reason: %s", err)
+		return nil, err
+	}
+	balance := big.NewInt(0)
+	if len(val) == 0 {
+		return balance, nil
+	}
+	balance = balance.SetBytes(val)
+	return balance, nil
 }
 
 // BytesPrefix returns key range that satisfy the given prefix.

@@ -35,17 +35,23 @@ func (impl *DposImpl) CreateDposRWSets(preBlkHash []byte, proposalHeight uint64)
 	if epoch.NextEpochCreateHeight != proposalHeight {
 		return nil, nil
 	}
-
-	// 3. create newEpoch
+	// 3. create unbounding rwset
+	unboundingRwSet, err := impl.completeUnbonding(epoch)
+	if err != nil {
+		return nil, err
+	}
+	// 4. create newEpoch
 	newEpoch, err := impl.createNewEpoch(proposalHeight, epoch, preBlkHash)
 	if err != nil {
 		return nil, err
 	}
-	txRwSet, err := impl.createEpochRwSet(newEpoch)
+	epochRwSet, err := impl.createEpochRwSet(newEpoch)
 	if err != nil {
 		return nil, err
 	}
-	return txRwSet, nil
+	// 5. Aggregate read-write set
+	unboundingRwSet.TxWrites = append(unboundingRwSet.TxWrites, epochRwSet.TxWrites...)
+	return unboundingRwSet, nil
 }
 
 func (impl *DposImpl) isDposConsensus() bool {
