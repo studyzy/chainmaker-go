@@ -344,6 +344,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
+	r.log.Info("rwset bytes: ", []byte(params["rw_set"]))
+
 	auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
 	if !auth || err != nil {
 		err := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
