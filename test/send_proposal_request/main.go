@@ -9,10 +9,12 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/mr-tron/base58/base58"
 	"io/ioutil"
 	"log"
 	"os"
@@ -53,6 +55,9 @@ const (
 	prePathFmt  = certPathPrefix + "/wx-org%s.chainmaker.org/user/admin1/"
 	OrgIdFormat = "wx-org%d.chainmaker.org"
 	tps         = 10000 //
+
+	userKeyPathFormat  = certPathPrefix + "/wx-org%d.chainmaker.org/user/client1/client1.tls.key"
+	userCertPathFormat = certPathPrefix + "/wx-org%d.chainmaker.org/user/client1/client1.tls.crt"
 )
 
 var (
@@ -101,6 +106,10 @@ var (
 	nodeOrgAddresses   = ""
 	consensusExtKeys   = ""
 	consensusExtValues = ""
+
+	dposParamFrom  = ""
+	dposParamTo    = ""
+	dposParamValue = ""
 )
 
 func main() {
@@ -109,7 +118,7 @@ func main() {
 		wasmType int
 	)
 	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator,"+
-		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param")
+		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: delegate, 9: undelegate, 10: balance of owner")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
 	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
@@ -117,6 +126,11 @@ func main() {
 	flag.StringVar(&nodeOrgAddresses, "nodeOrg_addresses", "", "node address that will be added")
 	flag.StringVar(&consensusExtKeys, "consensus_keys", "", "key1,key2,key3")
 	flag.StringVar(&consensusExtValues, "consensus_Values", "", "value1,value2,value3")
+
+	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")
+	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")
+	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token")
+
 	flag.Parse()
 
 	conn, err := initGRPCConn(true, 0)
@@ -154,6 +168,14 @@ func main() {
 		nodeOrgDelete(sk3, client, CHAIN1)
 	case 6: // 6)修改链上配置
 		consensusExtUpdate(sk3, client, CHAIN1)
+	case 7: // 7)增发token
+		mint()
+	case 8: // 8)质押指定token
+		delegate()
+	case 9: // 9)解质押指定token
+		undelegate()
+	case 10: // 10)查询指定用户余额
+		balanceOf()
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -816,4 +838,190 @@ func consensusExtUpdate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chain
 	}
 	fmt.Println("txId: ", txId, ", resp: ", resp)
 	return nil
+}
+
+//mint 增发给指定用户token
+func mint() {
+	sk, member, toAddr, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key: "to",
+		    Value: toAddr,
+		},
+		{
+			Key: "value",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName: commonPb.DPoSERC20ContractFunction_MINT.String(),
+		Pairs: params,
+	})
+	if err == nil {
+		fmt.Printf("mint send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_mint: %v\n", err)
+}
+
+// 质押token
+func delegate() {
+	sk, member, toAddr, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key: "to",
+			Value: toAddr,
+		},
+		{
+			Key: "amount",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		MethodName: commonPb.DPoSStakeContractFunction_DELEGATE.String(),
+		Pairs: params,
+	})
+	if err == nil {
+		fmt.Printf("delegate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_delegate: %v\n", err)
+}
+
+func undelegate() {
+	sk, member, toAddr, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key: "to",
+			Value: toAddr,
+		},
+		{
+			Key: "amount",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		MethodName: commonPb.DPoSStakeContractFunction_UNDELEGATE.String(),
+		Pairs: params,
+	})
+	if err == nil {
+		fmt.Printf("undelegate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_undelegate: %v\n", err)
+}
+
+func balanceOf() {
+	sk, member, toAddr, _, err := loadDposParams()
+	params := []*commonPb.KeyValuePair{
+		{
+			Key: "owner",
+			Value: toAddr,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName: commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
+		Pairs: params,
+	})
+	if err == nil {
+		fmt.Printf("get balance of send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		if resp != nil {
+			fmt.Printf("balance of [%s] is [%s] \n", toAddr, string(resp.ContractResult.Result))
+			return
+		}
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_undelegate: %v\n", err)
+}
+
+func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string, error) {
+	if dposParamTo == ""{
+		log.Fatalf("dposParamTo: %s\n", dposParamTo)
+	}
+	var (
+		toAddr string
+		toIdx int64
+		err error
+	)
+	// 判断dposParams的信息
+	toIdx, err = strconv.ParseInt(dposParamTo, 10, 32)
+	if err != nil {
+		// 判断是否为base58编码
+		_, err = base58.Decode(dposParamTo)
+		if err != nil {
+			log.Fatalf("param is not number or base58, %s", dposParamTo)
+		}
+		toAddr = dposParamTo
+	} else {
+		// 获取证书
+		userCertPath := fmt.Sprintf(userCertPathFormat, toIdx)
+		// 读取内容，并转换为公钥
+		userCertBytes, err := ioutil.ReadFile(userCertPath)
+		if err != nil {
+			panic(err)
+		}
+		toAddr, err = parseUserAddress(userCertBytes)
+		if err != nil {
+			log.Fatalf("parse cert to address error, %s", userCertPath)
+		}
+	}
+	var skIdx = 0
+	if dposParamFrom != "" {
+		ownerIdx, err := strconv.ParseInt(dposParamFrom, 10, 32)
+		if err == nil {
+			skIdx = int(ownerIdx)
+		}
+	}
+	sk, member := getUserSK(skIdx + 1, userKeyPaths[skIdx], userCrtPaths[skIdx])
+	return sk, member, toAddr, dposParamValue, nil
+}
+
+// parseUserAddress
+func parseUserAddress(member []byte) (string, error) {
+	certificate, err := utils.ParseCert(member)
+	if err != nil {
+		msg := fmt.Errorf("parse cert failed, err: %+v", err)
+		return "", msg
+	}
+	pubKeyBytes, err := certificate.PublicKey.Bytes()
+	if err != nil {
+		msg := fmt.Errorf("load public key from cert failed, err: %+v", err)
+		return "", msg
+	}
+	// 转换为SHA-256
+	addressBytes := sha256.Sum256(pubKeyBytes)
+	return base58.Encode(addressBytes[:]), nil
 }
