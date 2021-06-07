@@ -344,7 +344,11 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	r.log.Info("rwset bytes: ", []byte(params["rw_set"]))
+	rwb, err := hex.DecodeString(params["rw_set"])
+	if err != nil {
+		return nil, err
+	}
+	r.log.Info("rwset bytes: ", rwb)
 
 	auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
 	if !auth || err != nil {
@@ -379,7 +383,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	}
 	r.log.Info("rwset bytes: ", []byte(params["rw_set"]))
 	var rwSet commonPb.TxRWSet
-	if err := rwSet.Unmarshal([]byte(params["rw_set"])); err != nil {
+	if err := rwSet.Unmarshal(rwb); err != nil {
 		r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
 		return nil, err
 	}
