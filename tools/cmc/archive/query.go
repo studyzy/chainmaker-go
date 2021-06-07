@@ -67,7 +67,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 			}
 
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(blkHeight)).Where("Fblock_height = ?", blkHeight).Find(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(blkHeight)).Where("Fblock_height=? AND Fis_archived=1", blkHeight).Find(&bInfo).Error
 			if err != nil {
 				return err
 			}
@@ -140,7 +140,7 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 			//// 2.Query block off-chain.
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height=? AND Fis_archived=1", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					output, _ = prettyjson.Marshal(map[string]string{"err": "block not found in off-chain storage"})
@@ -209,7 +209,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height=? AND Fis_archived=1", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					output, _ = prettyjson.Marshal(map[string]string{"err": "block not found in off-chain storage"})
@@ -278,7 +278,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 
 			var output []byte
 			var bInfo model.BlockInfo
-			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height = ?", height).First(&bInfo).Error
+			err = db.Table(model.BlockInfoTableNameByBlockHeight(height)).Where("Fblock_height=? AND Fis_archived=1", height).First(&bInfo).Error
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					output, _ = prettyjson.Marshal(map[string]string{"err": "block not found in off-chain storage"})
