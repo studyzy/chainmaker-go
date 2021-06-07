@@ -7,18 +7,17 @@ package native
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/binary"
-	"fmt"
-	"math/big"
-
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/shopspring/decimal"
 	"github.com/syndtr/goleveldb/leveldb/util"
+	"math/big"
 )
 
 // Key: validatorPrefix + ValidatorAddress
@@ -42,7 +41,7 @@ func StakeContractAddr() string {
 	return stakeAddr
 }
 
-// Key：unbondPrefix + DelegatorID + ValidatorID
+// Key：unbondPrefix + DelegatorAddress + ValidatorAddress
 func ToUnbondingDelegationKey(epochID uint64, delegatorAddress, validatorAddress string) []byte {
 	epochBz := make([]byte, 8)
 	binary.BigEndian.PutUint64(epochBz, epochID)
@@ -83,9 +82,10 @@ func newUnbondingDelegation(DelegatorAddress, ValidatorAddress string) *commonPb
 	}
 }
 
-func newUnbondingDelegationEntry(CreationEpochID uint64, amount string) *commonPb.UnbondingDelegationEntry {
+func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amount string) *commonPb.UnbondingDelegationEntry {
 	return &commonPb.UnbondingDelegationEntry{
 		CreationEpochID: CreationEpochID,
+		CompletionEpochID: CompletionEpochID,
 		Amount:          amount,
 	}
 }
@@ -261,8 +261,7 @@ func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[
 	// 获取 runtime 对象
 	erc20RunTime := NewDPoSRuntime(s.log)
 	// stake 地址
-	stakeAddrHash := sha256.Sum256([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()))
-	stakeAddr := base58.Encode(stakeAddrHash[:])
+	stakeAddr := StakeContractAddr()
 	// prepare params
 	transferParams := map[string]string{
 		"to":    stakeAddr,
@@ -331,17 +330,23 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 		return nil, err
 	}
 	// TODO check current epoch undelegate amount
+	// get completion epochID
+	completionEpoch, err := getCompletionEpochID(context, epoch.EpochID)
+	if err != nil {
+		s.log.Errorf("get completion epoch error: ", err.Error())
+		return nil, err
+	}
 	// new entry
-	entry := newUnbondingDelegationEntry(epoch.EpochID, amount)
+	entry := newUnbondingDelegationEntry(epoch.EpochID, completionEpoch, amount)
 	// update delegation
-	ud, err := getOrCreateUnbondingDelegation(context, sender, undelegateValidatorAddress, epoch.EpochID)
+	ud, err := getOrCreateUnbondingDelegation(context, sender, undelegateValidatorAddress, completionEpoch)
 	if err != nil {
 		s.log.Errorf("get or create unbonding delegation error: ", err.Error())
 		return nil, err
 	}
 	ud.Entries = append(ud.Entries, entry)
 	// save
-	err = save(context, ToUnbondingDelegationKey(epoch.EpochID, sender, undelegateValidatorAddress), ud)
+	err = save(context, ToUnbondingDelegationKey(completionEpoch, sender, undelegateValidatorAddress), ud)
 	if err != nil {
 		s.log.Errorf("get unbonding delegation queue error: ", err.Error())
 		return nil, err
@@ -605,6 +610,18 @@ func getAllValidatorByPrefix(context protocol.TxSimContext, prefix string) ([]*c
 	}
 
 	return validatorVector, nil
+}
+
+func getCompletionEpochID(context protocol.TxSimContext, currentEpochID uint64) (uint64, error) {
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(commonPb.StakePrefix_Prefix_CompletionUnbondingEpochNumber.String()))
+	if err != nil {
+		return 0, err
+	}
+	completionEpochNumber, err := stringToBigInt(string(bz))
+	if err != nil {
+		return 0, err
+	}
+	return currentEpochID + completionEpochNumber.Uint64(), nil
 }
 
 // 获得最少抵押数量的基础配置
