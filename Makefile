@@ -30,12 +30,12 @@ compile:
 	@cd main && go build -o ../bin/chainmaker
 
 cmc:
-	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc 
+	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
 
 scanner:
-	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner 
+	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner
 
-dep: pb-dep mockgen-dep 
+dep: pb-dep mockgen-dep
 	@go get golang.org/x/tools/cmd/stringer
 
 generate:
@@ -97,6 +97,10 @@ docker-build:
 	docker build -t chainmaker -f ./DOCKER/Dockerfile .
 	docker tag chainmaker chainmaker:v1.1.1
 
+docker-build-dev: chainmaker
+	docker build -t chainmaker -f ./DOCKER/dev.Dockerfile .
+	docker tag chainmaker chainmaker:v1.1.1
+
 docker-compose-start: docker-compose-stop
 	docker-compose up -d
 
@@ -138,7 +142,7 @@ lint:
 #	cd module/net && golangci-lint run ./...
 #	cd module/rpcserver && golangci-lint run ./...
 #	cd module/snapshot && golangci-lint run ./...
-#	cd module/store && golangci-lint run ./...
+	cd module/store && golangci-lint run ./...
 #	cd module/subscriber && golangci-lint run ./...
 #	cd module/sync && golangci-lint run ./...
 #	cd module/txpool && golangci-lint run ./...

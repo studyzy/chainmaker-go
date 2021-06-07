@@ -10,7 +10,7 @@ require (
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 )
 
@@ -33,12 +33,12 @@ replace (
 	chainmaker.org/chainmaker-go/provider => ../module/provider
 	chainmaker.org/chainmaker-go/rpcserver => ./../module/rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ./../module/snapshot
-	//chainmaker.org/chainmaker-go/spv => ./../module/spv
+	chainmaker.org/chainmaker-go/spv => ./../module/spv
 	chainmaker.org/chainmaker-go/store => ./../module/store
 	chainmaker.org/chainmaker-go/subscriber => ./../module/subscriber
 	chainmaker.org/chainmaker-go/sync => ./../module/sync
 	chainmaker.org/chainmaker-go/txpool => ./../module/txpool
-	//chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../module/txpool/batch
+	chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../module/txpool/batch
 	chainmaker.org/chainmaker-go/utils => ./../module/utils
 	chainmaker.org/chainmaker-go/vm => ./../module/vm
 	chainmaker.org/chainmaker-go/wasi => ../module/vm/wasi
