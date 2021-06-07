@@ -7,23 +7,24 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"github.com/mr-tron/base58/base58"
-	"strings"
 )
 
 const (
 	//DecBase = 10
 
 	paramNameOwner = "owner"
-	paramNameFrom = "from"
-	paramNameTo = "to"
+	paramNameFrom  = "from"
+	paramNameTo    = "to"
 	paramNameValue = "value"
 
 	// Balance:map[Account]Value
@@ -115,7 +116,7 @@ func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[s
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value of ${sender} after transfer
-func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -150,7 +151,7 @@ func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[st
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value of ${from} after transfer
-func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -206,7 +207,7 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value for ${sender} to ${to}
-func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -240,7 +241,7 @@ func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[str
 // params["to"]:${to}
 // params["value"]:${value}
 // return newest token of ${to} after mint
-func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -296,7 +297,7 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 			if err != nil {
 				return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 			}
-			err = txSimContext.Put(dposErc20ContractName, []byte(balanceKey(mintTo)), []byte(newToBalance.String()))
+			err = txSimContext.Put(dposErc20ContractName, []byte(BalanceKey(mintTo)), []byte(newToBalance.String()))
 			if err != nil {
 				return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 			}
@@ -311,7 +312,7 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 // Burn 交易的发送者燃烧一定数量的代币，最多可燃烧殆尽
 // params["value"]:${value}
 // return balance of sender after burn
-func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -381,7 +382,7 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 		if err != nil {
 			return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 		}
-		err = txSimContext.Put(dposErc20ContractName, []byte(balanceKey(from)), []byte(afterFromBalance.String()))
+		err = txSimContext.Put(dposErc20ContractName, []byte(BalanceKey(from)), []byte(afterFromBalance.String()))
 		if err != nil {
 			return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 		}
@@ -394,7 +395,7 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 // TransferOwnership 转移拥有者给其他账户
 // params["to"]:${to}
 // return new owner
-func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -428,7 +429,7 @@ func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, para
 // params["from"]:${from}
 // params["to"]:${to}
 // return value of approve
-func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
 		return nil, ErrParamsEmpty
 	}
@@ -453,13 +454,13 @@ func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[s
 
 // Owner
 // return owner of DPoS
-func (r *DPoSRuntime) Owner(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Owner(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	return owner(txSimContext)
 }
 
 // Decimals
 // return decimals of DPoS
-func (r *DPoSRuntime) Decimals(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error)  {
+func (r *DPoSRuntime) Decimals(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	decimalsBytes, err := txSimContext.Get(dposErc20ContractName, []byte(KeyDecimals))
 	if err != nil {
 		r.log.Errorf("load [%s] from cache failed, %s", KeyDecimals, err.Error())
@@ -478,7 +479,7 @@ func (r DPoSRuntime) setDecimals(txSimContext protocol.TxSimContext, decimals st
 	return txSimContext.Put(dposErc20ContractName, []byte(KeyDecimals), []byte(decimals))
 }
 
-func balanceKey(account string) string {
+func BalanceKey(account string) string {
 	return fmt.Sprintf(KeyBalanceFormat, account)
 }
 
@@ -589,7 +590,7 @@ func getWholeCertInfo(txSimContext protocol.TxSimContext, certHash string) (*com
 }
 
 func balanceOf(txSimContext protocol.TxSimContext, address string) (*utils.BigInteger, error) {
-	balanceKey := balanceKey(address)
+	balanceKey := BalanceKey(address)
 	balanceBytes, err := txSimContext.Get(dposErc20ContractName, []byte(balanceKey))
 	if err != nil {
 		msg := fmt.Errorf("txSimContext get failed, name[%s] key[%s] err: %+v", dposErc20ContractName, balanceKey, err)
@@ -614,7 +615,7 @@ func loadAndCheckValue(value string) (*utils.BigInteger, error) {
 	return val, nil
 }
 
-func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.BigInteger) ([]byte, error){
+func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.BigInteger) ([]byte, error) {
 	// 获取双方的Money
 	fromBalance, err := balanceOf(txSimContext, from)
 	if err != nil {
@@ -648,7 +649,7 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.Bi
 			dposErc20ContractName, beforeSum.String(), afterSum.String())
 	}
 	// 一致的情况下更新存储
-	fromBalanceKey, toBalanceKey := balanceKey(from), balanceKey(to)
+	fromBalanceKey, toBalanceKey := BalanceKey(from), BalanceKey(to)
 	err = txSimContext.Put(dposErc20ContractName, []byte(fromBalanceKey), []byte(afterFromBalance.String()))
 	if err != nil {
 		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
