@@ -375,6 +375,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
 		return nil, err
 	}
+	r.log.Info("rwset bytes: ", []byte(params["rw_set"]))
 	var rwSet commonPb.TxRWSet
 	if err := rwSet.Unmarshal([]byte(params["rw_set"])); err != nil {
 		r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
