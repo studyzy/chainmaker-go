@@ -148,7 +148,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 				}
 			case <-timeoutC:
 				ts.scheduleFinishC <- true
-				ts.log.Debugf("schedule reached time limit")
+				ts.log.Warnf("block [%d] schedule reached time limit", block.Header.BlockHeight)
 				return
 			case <-finishC:
 				ts.log.Debugf("schedule finish")
@@ -293,7 +293,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 				ts.scheduleFinishC <- true
 				return
 			case <-timeoutC:
-				ts.log.Errorf("schedule with dag timeout")
+				ts.log.Errorf("block [%d] schedule with dag timeout", block.Header.BlockHeight)
 				ts.scheduleFinishC <- true
 				return
 			}
