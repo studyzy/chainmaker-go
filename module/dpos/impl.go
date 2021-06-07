@@ -22,26 +22,31 @@ func NewDposImpl(log protocol.Logger, chainConf protocol.ChainConf, blockChainSt
 	return &DposImpl{stateDB: blockChainStore, log: log, chainConf: chainConf}
 }
 
-func (impl *DposImpl) CreateDposRWSets(preBlkHash []byte, proposalHeight uint64) (*common.TxRWSet, error) {
+func (impl *DposImpl) CreateDposRWSets(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
 	// 1. judge consensus: dpos
 	if !impl.isDposConsensus() {
 		return nil, nil
 	}
+	var (
+		block        = proposedBlock.Block
+		blockTxRwSet = proposedBlock.TxsRwSet
+	)
+	blockHeight := uint64(block.Header.BlockHeight)
 	// 2. get epoch info from stateDB
 	epoch, err := impl.getEpochInfo()
 	if err != nil {
 		return nil, err
 	}
-	if epoch.NextEpochCreateHeight != proposalHeight {
+	if epoch.NextEpochCreateHeight != blockHeight {
 		return nil, nil
 	}
 	// 3. create unbounding rwset
-	unboundingRwSet, err := impl.completeUnbonding(epoch)
+	unboundingRwSet, err := impl.completeUnbonding(epoch, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
 	}
 	// 4. create newEpoch
-	newEpoch, err := impl.createNewEpoch(proposalHeight, epoch, preBlkHash)
+	newEpoch, err := impl.createNewEpoch(blockHeight, epoch, preBlkHash)
 	if err != nil {
 		return nil, err
 	}
@@ -143,11 +148,11 @@ func (impl *DposImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.
 	return &consensusArgs
 }
 
-func (impl *DposImpl) VerifyConsensusArgs(block *common.Block) error {
+func (impl *DposImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) error {
 	if !impl.isDposConsensus() {
 		return nil
 	}
-	localConsensus, err := impl.CreateDposRWSets(block.Header.PreBlockHash, uint64(block.Header.BlockHeight))
+	localConsensus, err := impl.CreateDposRWSets(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
 	if err != nil {
 		impl.log.Errorf("get dpos txRwSets failed, reason: %s", err)
 		return err

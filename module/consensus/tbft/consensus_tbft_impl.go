@@ -103,7 +103,7 @@ type ConsensusTBFTImpl struct {
 	timeScheduler *timeScheduler
 	verifingBlock *common.Block // verifing block
 
-	proposedBlockC chan *common.Block
+	proposedBlockC chan *consensuspb.ProposalBlock
 	verifyResultC  chan *consensuspb.VerifyResult
 	blockHeightC   chan int64
 	externalMsgC   chan *tbftpb.TBFTMsg
@@ -155,7 +155,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 	}
 	consensus.heightFirstIndex = 0
 
-	consensus.proposedBlockC = make(chan *common.Block, defaultChanCap)
+	consensus.proposedBlockC = make(chan *consensuspb.ProposalBlock, defaultChanCap)
 	consensus.verifyResultC = make(chan *consensuspb.VerifyResult, defaultChanCap)
 	consensus.blockHeightC = make(chan int64, defaultChanCap)
 	consensus.externalMsgC = make(chan *tbftpb.TBFTMsg, defaultChanCap)
@@ -229,8 +229,8 @@ func (consensus *ConsensusTBFTImpl) OnMessage(message *msgbus.Message) {
 
 	switch message.Topic {
 	case msgbus.ProposedBlock:
-		if block, ok := message.Payload.(*common.Block); ok {
-			consensus.proposedBlockC <- block
+		if proposedBlock, ok := message.Payload.(*consensuspb.ProposalBlock); ok {
+			consensus.proposedBlockC <- proposedBlock
 		}
 	case msgbus.VerifyResult:
 		if verifyResult, ok := message.Payload.(*consensuspb.VerifyResult); ok {
@@ -372,8 +372,8 @@ func (consensus *ConsensusTBFTImpl) handle() {
 	loop := true
 	for loop {
 		select {
-		case block := <-consensus.proposedBlockC:
-			consensus.handleProposedBlock(block)
+		case proposedBlock := <-consensus.proposedBlockC:
+			consensus.handleProposedBlock(proposedBlock)
 		case result := <-consensus.verifyResultC:
 			consensus.handleVerifyResult(result, false)
 		case height := <-consensus.blockHeightC:
@@ -393,10 +393,11 @@ func (consensus *ConsensusTBFTImpl) handle() {
 	}
 }
 
-func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
+func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensuspb.ProposalBlock) {
 	consensus.Lock()
 	defer consensus.Unlock()
 
+	block := proposedBlock.Block
 	consensus.logger.Debugf("[%s](%d/%d/%s) receive proposal from core engine (%d/%x/%d), isProposer: %v",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 		block.Header.BlockHeight, block.Header.BlockHash, proto.Size(block), consensus.isProposer(consensus.Height, consensus.Round),
@@ -425,7 +426,7 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
 	}
 
 	// add Dpos consensus args in block
-	consensusRwSets, err := consensus.dpos.CreateDposRWSets(block.Header.PreBlockHash, uint64(consensus.Height))
+	consensusRwSets, err := consensus.dpos.CreateDposRWSets(block.Header.PreBlockHash, proposedBlock)
 	if err != nil {
 		consensus.logger.Errorf("CreateDposRWSets failed, reason: %s", err)
 	}
@@ -486,6 +487,11 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
 			height, hash, verifyResult.Code,
 		)
+		return
+	}
+
+	if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
+		consensus.logger.Warnf("verify block Dpos consensus failed, reason: %s", err)
 		return
 	}
 
@@ -582,11 +588,6 @@ func (consensus *ConsensusTBFTImpl) procPropose(msg *tbftpb.TBFTMsg) {
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
 				proposal.Voter, proposal.Block.Header.BlockHash)
 		}
-		return
-	}
-
-	if err := consensus.dpos.VerifyConsensusArgs(proposal.Block); err != nil {
-		consensus.logger.Infof("verify consensusArgs in block failed, reason: %s", err)
 		return
 	}
 

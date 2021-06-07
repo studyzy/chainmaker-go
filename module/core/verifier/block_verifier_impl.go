@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"encoding/hex"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
+	"github.com/gogo/protobuf/proto"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -137,7 +138,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			isValid = true
 			if protocol.CONSENSUS_VERIFY == mode {
 				// consensus mode, publish verify result to message bus
-				v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+				v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRwSet))
 			}
 			lastBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
 			if lastBlock == nil {
@@ -159,7 +160,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, err.Error())
 		if protocol.CONSENSUS_VERIFY == mode {
-			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
 		}
 
 		// rollback sql
@@ -199,7 +200,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	isValid = true
 	if protocol.CONSENSUS_VERIFY == mode {
-		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
 	}
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
 	v.log.Infof("verify success [%d,%x](%v,%d)", block.Header.BlockHeight, block.Header.BlockHash,
@@ -214,9 +215,10 @@ func (v *BlockVerifierImpl) verifyVoteSig(block *commonpb.Block) error {
 	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block, v.ledgerCache)
 }
 
-func parseVerifyResult(block *commonpb.Block, isValid bool) *consensuspb.VerifyResult {
+func parseVerifyResult(block *commonpb.Block, isValid bool, txsRwSet map[string]*commonpb.TxRWSet) *consensuspb.VerifyResult {
 	verifyResult := &consensuspb.VerifyResult{
 		VerifiedBlock: block,
+		TxsRwSet:      txsRwSet,
 	}
 	if isValid {
 		verifyResult.Code = consensuspb.VerifyResult_SUCCESS

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
 	"chainmaker.org/chainmaker-go/vm/native"
@@ -108,7 +109,7 @@ func (impl *DposImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 	return nil, nil
 }
 
-func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
+func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 	start := native.ToUnbondingDelegationKey(epoch.EpochID, "", "")
 	end := BytesPrefix(start)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), start, end)
@@ -137,14 +138,14 @@ func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch) (*commonpb.TxRWSe
 	}
 	for _, undelegation := range undelegations {
 		for _, entry := range undelegation.Entries {
-			wSet, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, entry.Amount)
+			wSet, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, entry.Amount, block, blockTxRwSet)
 			if err != nil {
 				return nil, err
 			}
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
 
 			stakeContractAddr := native.StakeContractAddr()
-			if wSet, err = impl.subBalanceRwSet(stakeContractAddr, entry.Amount); err != nil {
+			if wSet, err = impl.subBalanceRwSet(stakeContractAddr, entry.Amount, block, blockTxRwSet); err != nil {
 				return nil, err
 			}
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
@@ -153,8 +154,8 @@ func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch) (*commonpb.TxRWSe
 	return rwSet, nil
 }
 
-func (impl *DposImpl) addBalanceRwSet(addr string, amount string) (*commonpb.TxWrite, error) {
-	before, err := impl.balanceOf(addr)
+func (impl *DposImpl) addBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
+	before, err := impl.balanceOf(addr, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
 	}
@@ -171,8 +172,8 @@ func (impl *DposImpl) addBalanceRwSet(addr string, amount string) (*commonpb.TxW
 	}, nil
 }
 
-func (impl *DposImpl) subBalanceRwSet(addr string, amount string) (*commonpb.TxWrite, error) {
-	before, err := impl.balanceOf(addr)
+func (impl *DposImpl) subBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
+	before, err := impl.balanceOf(addr, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
 	}
@@ -193,10 +194,10 @@ func (impl *DposImpl) subBalanceRwSet(addr string, amount string) (*commonpb.TxW
 	}, nil
 }
 
-func (impl *DposImpl) balanceOf(addr string) (*big.Int, error) {
-	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), []byte(native.BalanceKey(addr)))
+func (impl *DposImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {
+	key := []byte(native.BalanceKey(addr))
+	val, err := impl.getState(key, block, blockTxRwSet)
 	if err != nil {
-		impl.log.Errorf("query user balance failed, reason: %s", err)
 		return nil, err
 	}
 	balance := big.NewInt(0)
