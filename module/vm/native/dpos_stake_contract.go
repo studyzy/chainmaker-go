@@ -112,8 +112,8 @@ func registerDPosStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	// implement
 	DPosStakeRuntime := &DPosStakeRuntime{log: log}
 	queryMethodMap[commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String()] = DPosStakeRuntime.GetAllValidator
-	queryMethodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPosStakeRuntime.Delegation
-	queryMethodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.Undelegation
+	queryMethodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPosStakeRuntime.Delegate
+	queryMethodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.UnDelegate
 	queryMethodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPosStakeRuntime.ReadEpochByID
 	queryMethodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpoch
 
@@ -180,11 +180,11 @@ func (s *DPosStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, 
 	return bz, nil
 }
 
-// * Delegation(to string, amount string) (delegation, error)		// 创建抵押，更新验证人，如果MsgSender是给自己，即给自己抵押，则创建验证人
+// * Delegate(to string, amount string) (delegation, error)		// 创建抵押，更新验证人，如果MsgSender是给自己，即给自己抵押，则创建验证人
 // @params["to"] 		抵押的目标验证人
-// @params["amount"]	抵押数量，带decimal
+// @params["amount"]	抵押数量，乘上erc20合约 decimal 的结果值，比如用户认知的1USD，系统内是 1 * 10 ^ 18
 // return Delegation
-func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPosStakeRuntime) Delegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	to := params["to"]         // delegate target
 	amount := params["amount"] // amount must be a integer
 
@@ -291,7 +291,7 @@ func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[
 
 // GetDelegationByAddress() []Delegation		// 返回所有满足最低抵押条件验证人
 // @params["address"]
-// return Validator
+// return DelegationInfo
 func (s *DPosStakeRuntime) GetDelegationByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	address := params["address"]
 	// 获取验证人数据
@@ -303,11 +303,11 @@ func (s *DPosStakeRuntime) GetDelegationByAddress(context protocol.TxSimContext,
 	return proto.Marshal(di)
 }
 
-// * Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
+// Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
 // @params["from"] 		解质押的验证人
-// @params["amount"] 	解质押数量
+// @params["amount"] 	解质押数量，1 * 10 ^ 18
 // return UnbondingDelegation
-func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	undelegateValidatorAddress := params["from"]
 	amount := params["amount"]
 	// read epoch
@@ -329,7 +329,12 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 		s.log.Errorf("get sender address error: ", err.Error())
 		return nil, err
 	}
-	// TODO check current epoch undelegate amount
+	// check epoch undelegate amount
+	err = checkEpochUnDelegateAmount(s, context, sender, undelegateValidatorAddress, amount)
+	if err != nil {
+		s.log.Errorf("check epoch undelegate amount error: ", err.Error())
+		return nil, err
+	}
 	// get completion epochID
 	completionEpoch, err := getCompletionEpochID(context, epoch.EpochID)
 	if err != nil {
@@ -354,7 +359,7 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 	return proto.Marshal(ud)
 }
 
-// * ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
+// ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
 // return Epoch
 func (s *DPosStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(commonPb.StakePrefix_Prefix_Curr_Epoch.String()))
@@ -364,7 +369,7 @@ func (s *DPosStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params
 	return bz, nil
 }
 
-// * ReadEpochByID() []ValidatorAddress				// 读取指定ID的世代数据
+// ReadEpochByID() []ValidatorAddress				// 读取指定ID的世代数据
 // @params["epoch_id"] 查询的世代ID
 // return Epoch
 func (s *DPosStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -505,6 +510,36 @@ func calcShareByAmount(tokens string, shares string, amount string) (*big.Int, e
 	return newShare, nil
 }
 
+func calcAmountByShare(tokens string, shares string, amount string) (*big.Int, error) {
+	// 将 amount 转换成 int
+	var err error
+	tokensValue, err := stringToBigInt(tokens)
+	if err != nil {
+		return nil, err
+	}
+	sharesValue, err := stringToBigInt(shares)
+	if err != nil {
+		return nil, err
+	}
+	amountValue, err := stringToBigInt(amount)
+	if err != nil {
+		return nil, err
+	}
+
+	// 计算 share 对应的 amount 数量
+	newAmount := &big.Int{}
+	if tokensValue.Cmp(amountValue) == -1 {
+		return nil, fmt.Errorf("")
+	} else if tokensValue.Cmp(amountValue) == 0 {
+		return amountValue, nil
+	} else if tokensValue.Cmp(amountValue) == 1 {
+		percentage := &big.Int{}
+		percentage.Div(amountValue, tokensValue)
+		newAmount.Mul(percentage, sharesValue)
+	}
+	return newAmount, nil
+}
+
 // 获取或创建 delegation
 func getOrCreateDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Delegation, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(toDelegationKey(delegatorAddress, validatorAddress)))
@@ -585,6 +620,49 @@ func getOrCreateUnbondingDelegation(context protocol.TxSimContext, delegatorAddr
 		ud = newUnbondingDelegation(delegatorAddress, validatorAddress)
 	}
 	return ud, nil
+}
+
+func checkEpochUnDelegateAmount(s *DPosStakeRuntime, context protocol.TxSimContext, address string, validatorAddress string, amount string) error {
+	// get delegate
+	bz, err := s.GetDelegationByAddress(context, map[string]string{"address": address})
+	if err != nil {
+		return err
+	}
+	di := &commonPb.DelegationInfo{}
+	err = proto.Unmarshal(bz, di)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range di.Infos {
+		if d.ValidatorAddress == validatorAddress {
+			// convert delegate share string to big int
+			sharesValue, err := stringToBigInt(d.Shares)
+			if err != nil {
+				return err
+			}
+			// find validator of delegation
+			b, err := s.GetValidatorByAddress(context, map[string]string{"address": d.ValidatorAddress})
+			if err != nil {
+				return err
+			}
+			v := &commonPb.Validator{}
+			err = proto.Unmarshal(b, v)
+			if err != nil {
+				return err
+			}
+			// cal shares of undelegate amount
+			shares, err := calcShareByAmount(v.Tokens, v.DelegatorShares, amount)
+			if err != nil {
+				return err
+			}
+			// share delta GT delegate share
+			if shares.Cmp(sharesValue) < 0 {
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("undelegate is ileagle")
 }
 
 // 返回所有验证人
