@@ -101,7 +101,7 @@ func registerDPosStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	queryMethodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPosStakeRuntime.Delegation
 	queryMethodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.Undelegation
 	queryMethodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPosStakeRuntime.ReadEpochByID
-	queryMethodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpochByID
+	queryMethodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpoch
 
 	return queryMethodMap
 }
@@ -147,6 +147,20 @@ func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params
 	bz, err := proto.Marshal(collection)
 	if err != nil {
 		s.log.Errorf("marshal validator collection error: ", err.Error())
+		return nil, err
+	}
+	return bz, nil
+}
+
+// GetValidatorByAddress() Validator		// 返回所有满足最低抵押条件验证人
+// @params["address"]
+// return Validator
+func (s *DPosStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	address := params["address"]
+	// 获取验证人数据
+	bz, err := getValidatorInfo(context, address)
+	if err != nil {
+		s.log.Errorf("get validator error, address: %s", address)
 		return nil, err
 	}
 	return bz, nil
@@ -262,15 +276,29 @@ func (s *DPosStakeRuntime) Delegation(context protocol.TxSimContext, params map[
 	return proto.Marshal(d)
 }
 
+// GetDelegationByAddress() []Delegation		// 返回所有满足最低抵押条件验证人
+// @params["address"]
+// return Validator
+func (s *DPosStakeRuntime) GetDelegationByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	address := params["address"]
+	// 获取验证人数据
+	di, err := getDelegationsByAddress(context, address)
+	if err != nil {
+		s.log.Errorf("get delegation of address [%s] error, error: %s", address, err.Error())
+		return nil, err
+	}
+	return proto.Marshal(di)
+}
+
 // * Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
-//@params["from"] 		解质押的验证人
-//@params["amount"] 	解质押数量
-//return UnbondingDelegation
+// @params["from"] 		解质押的验证人
+// @params["amount"] 	解质押数量
+// return UnbondingDelegation
 func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	undelegateValidatorAddress := params["from"]
 	amount := params["amount"]
 	// read epoch
-	bz, err := s.ReadLatestEpochByID(context, nil)
+	bz, err := s.ReadLatestEpoch(context, nil)
 	if err != nil {
 		s.log.Errorf("undelegate read latest epoch error")
 		return nil, err
@@ -309,7 +337,7 @@ func (s *DPosStakeRuntime) Undelegation(context protocol.TxSimContext, params ma
 
 // * ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
 // return Epoch
-func (s *DPosStakeRuntime) ReadLatestEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPosStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(commonPb.StakePrefix_Prefix_Curr_Epoch.String()))
 	if err != nil {
 		return nil, err
@@ -318,8 +346,8 @@ func (s *DPosStakeRuntime) ReadLatestEpochByID(context protocol.TxSimContext, pa
 }
 
 // * ReadEpochByID() []ValidatorAddress				// 读取指定ID的世代数据
-//@params["epoch_id"] 查询的世代ID
-//return Epoch
+// @params["epoch_id"] 查询的世代ID
+// return Epoch
 func (s *DPosStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	epochID := params["epoch_id"]
 
@@ -359,6 +387,17 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 		}
 		return v, nil
 	}
+}
+
+func getValidatorInfo(context protocol.TxSimContext, validatorAddress string) ([]byte, error) {
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(toValidatorKey(validatorAddress)))
+	if err != nil {
+		return nil, err
+	}
+	if len(bz) <= 0 {
+		return nil, fmt.Errorf("no susch validator as address: %s", validatorAddress)
+	}
+	return bz, nil
 }
 
 func updateValidatorShares(validator *commonPb.Validator, shares *big.Int) error {
@@ -463,6 +502,38 @@ func getOrCreateDelegation(context protocol.TxSimContext, delegatorAddress, vali
 		d = newDelegation(delegatorAddress, validatorAddress, "0")
 	}
 	return d, nil
+}
+
+// 获取或创建 delegation
+func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress string) (*commonPb.DelegationInfo, error) {
+	// 获取地址所有抵押数据
+	iterRange := util.BytesPrefix([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String() + delegatorAddress))
+	iter, err := context.Select(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
+	if err != nil {
+		return nil, err
+	}
+	delegationVector := make([]*commonPb.Delegation, 0)
+	for iter.Next() {
+		kv, err := iter.Value()
+		if err != nil {
+			return nil, err
+		}
+		d := &commonPb.Delegation{}
+		err = proto.Unmarshal(kv.GetValue(), d)
+		if err != nil {
+			return nil, err
+		}
+		delegationVector = append(delegationVector, d)
+	}
+
+	if len(delegationVector) == 0 {
+		return nil, fmt.Errorf("address: [%s] has no delegation", delegatorAddress)
+	}
+
+	di := &commonPb.DelegationInfo{}
+	di.Infos = delegationVector
+
+	return di, nil
 }
 
 func updateDelegateShares(delegate *commonPb.Delegation, shares *big.Int) error {
