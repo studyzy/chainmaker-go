@@ -30,12 +30,12 @@ compile:
 	@cd main && go build -o ../bin/chainmaker
 
 cmc:
-	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc 
+	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
 
 scanner:
-	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner 
+	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner
 
-dep: pb-dep mockgen-dep 
+dep: pb-dep mockgen-dep
 	@go get golang.org/x/tools/cmd/stringer
 
 generate:
@@ -148,6 +148,6 @@ lint:
 #	cd module/txpool && golangci-lint run ./...
 #	cd module/utils && golangci-lint run ./...
 #	cd module/vm && golangci-lint run ./...
-#	cd tools/cmc && golangci-lint run ./...
+	cd tools/cmc && golangci-lint run ./...
 #	cd tools/scanner && golangci-lint run ./...
 #	cd tools/sdk && golangci-lint run ./...

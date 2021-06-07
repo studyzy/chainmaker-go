@@ -105,6 +105,8 @@ pprof:
 
 storage:
   store_path: ../data/{org_id}/ledgerData1
+  # 最小的不允许归档的区块高度
+  unarchive_block_height: 300000
   blockdb_config:
     provider: leveldb
     leveldb_config:

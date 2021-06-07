@@ -224,6 +224,7 @@ func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
 		tx.Header.ChainId, tx.Header.TxId)
 	return nil
 }
+
 func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	recvEventTick := time.Now().UnixNano() / 1e6
 	con := &commonPb.ContractEventInfoList{}

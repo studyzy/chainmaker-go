@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package cert
 
 import (
-	"chainmaker.org/chainmaker-go/common/helper"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/common/helper"
+	"github.com/spf13/cobra"
 )
 
 func nodeIdCMD() *cobra.Command {
