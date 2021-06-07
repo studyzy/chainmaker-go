@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"sync"
 
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+
 	"errors"
 
 	"chainmaker.org/chainmaker-go/localconf"
@@ -179,12 +181,7 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 		Block:    block,
 		TxRWSets: txRWSets,
 	}
-	//try to add consensusArgs
-	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
-	if err == nil && consensusArgs.ConsensusData != nil {
-		bs.logger.Debugf("add consensusArgs ConsensusData!")
-		blockWithRWSet.TxRWSets = append(blockWithRWSet.TxRWSets, consensusArgs.ConsensusData)
-	}
+
 	blockBytes, blockWithSerializedInfo, err := serialization.SerializeBlock(blockWithRWSet)
 	if err != nil {
 		bs.logger.Errorf("chain[%s] failed to write log, block[%d], err:%s",
@@ -307,6 +304,11 @@ func (bs *BlockStoreImpl) GetLastBlock() (*commonPb.Block, error) {
 // GetLastConfigBlock returns the last config block.
 func (bs *BlockStoreImpl) GetLastConfigBlock() (*commonPb.Block, error) {
 	return bs.blockDB.GetLastConfigBlock()
+}
+
+//GetLastChainConfig returns the last chain config
+func (bs *BlockStoreImpl) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	return bs.stateDB.GetChainConfig()
 }
 
 // GetBlockByTx returns a block which contains a tx.
