@@ -381,7 +381,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
 		return nil, err
 	}
-	r.log.Info("rwset bytes: ", []byte(params["rw_set"]))
+	r.log.Info("rwset bytes: ", rwb)
 	var rwSet commonPb.TxRWSet
 	if err := rwSet.Unmarshal(rwb); err != nil {
 		r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
@@ -482,6 +482,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		if len(chainRSetBytes) == 0 {
 			r.log.Debug("there is not a rSet with key: %s on chain\n", key)
 		}
+		fmt.Printf("Key: %v value: %v\n", key, rwSet.TxReads[i].Value)
+		fmt.Println("RSet bytes: ", chainRSetBytes)
 		var rSet commonPb.TxRead
 		if err := rSet.Unmarshal(chainRSetBytes); err != nil {
 			r.log.Errorf("Unmarshal RSet failed, err: %s", err.Error())
