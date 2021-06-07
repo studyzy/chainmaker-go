@@ -8,6 +8,10 @@ package common
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -19,11 +23,8 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/hex"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
 )
 
 const (
@@ -488,6 +489,9 @@ func (vb *VerifierBlock) ValidateBlock(
 	if err != nil {
 		return nil, nil, timeLasts, err
 	}
+	// we must new a snapshot for the vacant block,
+	// otherwise the subsequent snapshot can not link to the previous snapshot.
+	snapshot := vb.snapshotManager.NewSnapshot(lastBlock, block)
 	if len(block.Txs) == 0 {
 		return nil, nil, timeLasts, nil
 	}
@@ -498,7 +502,6 @@ func (vb *VerifierBlock) ValidateBlock(
 
 	// simulate with DAG, and verify read write set
 	startVMTick := utils.CurrentTimeMillisSeconds()
-	snapshot := vb.snapshotManager.NewSnapshot(lastBlock, block)
 	if vb.chainConf.ChainConfig().Contract.EnableSqlSupport {
 		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
 	}
@@ -585,7 +588,7 @@ type BlockCommitterImpl struct {
 
 	ledgerCache           protocol.LedgerCache        // ledger cache
 	proposalCache         protocol.ProposalCache      // proposal cache
-	log                   protocol.Logger            // logger
+	log                   protocol.Logger             // logger
 	msgBus                msgbus.MessageBus           // message bus
 	mu                    sync.Mutex                  // lock, to avoid concurrent block commit
 	subscriber            *subscriber.EventSubscriber // subscriber

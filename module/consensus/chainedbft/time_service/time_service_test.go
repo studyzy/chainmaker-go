@@ -9,13 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker-go/logger"
+
 	"github.com/stretchr/testify/require"
 
 	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 )
 
 func TestTimerService_AddEvent(t *testing.T) {
-	timerService := NewTimerService()
+	log := logger.GetLogger("test")
+	timerService := NewTimerService(log)
 	go timerService.Start()
 	firedCh := timerService.GetFiredCh()
 
