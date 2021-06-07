@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -43,7 +44,8 @@ func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, seed []byte, outSo
 	// 首选从m0个对象中选择n0个结果
 	// |m0|after(m0) ~ m1|
 	// |n0|n1|
-	rand.Seed(time.Now().Unix()) // 设置种子
+	seedInt := binary.LittleEndian.Uint64(seed)
+	rand.Seed(int64(seedInt)) // 设置种子
 	selectM0IdxMap := sliceToMap(rand.Perm(m0)[:n0])
 	for k, _ := range selectM0IdxMap {
 		validators = append(validators, infos[k])

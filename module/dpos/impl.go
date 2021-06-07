@@ -54,7 +54,7 @@ func (impl *DposImpl) isDposConsensus() bool {
 
 func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
 	// 1. get property: epochBlockNum
-	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_MinSelfDelegation.String()))
+	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_EpochBlockNumber.String()))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
@@ -84,14 +84,13 @@ func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	// 4. create NewEpoch
 	return &common.Epoch{
 		EpochID:               oldEpoch.EpochID + 1,
-		NextEpochCreateHeight: proposalHeight + epochBlockNum, // todo. may be query property
+		NextEpochCreateHeight: proposalHeight + epochBlockNum,
 		ProposerVector:        proposer,
 	}, nil
 }
 
 func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
-	// todo. may be query property: valNum
-	valNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_MinSelfDelegation.String()))
+	valNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_EpochValidatorNumber.String()))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
