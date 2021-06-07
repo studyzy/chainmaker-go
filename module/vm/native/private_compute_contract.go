@@ -484,10 +484,16 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		}
 		r.log.Infof("Key: %v value: %v\n", key, rwSet.TxReads[i].Value)
 		r.log.Info("RSet bytes: ", chainRSetBytes)
-		var rSet commonPb.TxRead
-		if err := rSet.Unmarshal(chainRSetBytes); err != nil {
-			r.log.Errorf("Unmarshal RSet failed, err: %s", err.Error())
-			return nil, err
+		//var rSet commonPb.TxRead
+		//if err := rSet.Unmarshal(chainRSetBytes); err != nil {
+		//	r.log.Errorf("Unmarshal RSet failed, err: %s", err.Error())
+		//	return nil, err
+		//}
+		if !bytes.Equal(val, chainRSetBytes) {
+			r.log.Errorf("rSet verification failed! key: %s, value: %s; but value on chain: %s\n",
+				key, val, chainRSetBytes)
+			return nil, errors.New("rSet verification failed! key: " + string(key) + ", value: " + string(val) +
+				"; but value on chain: " + string(chainRSetBytes))
 		}
 		//if !bytes.Equal(val, rSet.Value) || version.RefTxId != rSet.Version.RefTxId {
 		//	r.log.Errorf("rSet verification failed! key: %s, value: %s, version: %s; but value on chain: %s, version on chain: %s",
