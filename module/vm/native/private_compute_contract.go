@@ -130,18 +130,18 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	name := params["contract_name"]
 	code := params["contract_code"]
-	hash := params["code_hash"]
+	codeHash := params["code_hash"]
 	version := params["version"]
-	if utils.IsAnyBlank(name, code, hash, version) {
+	if utils.IsAnyBlank(name, code, codeHash, version) {
 		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
-			ErrParams.Error(), name, code, hash, version)
+			ErrParams.Error(), name, code, codeHash, version)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
 	calHash := sha256.Sum256([]byte(code))
-	if string(calHash[:]) != hash {
-		err := fmt.Errorf("%s, param[code_hash] != hash of param[contract_code] in save contract interface", ErrParams.Error())
+	if string(calHash[:]) != codeHash {
+		err := fmt.Errorf("%s, param[code_hash] != codeHash of param[contract_code] in save contract interface", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -466,7 +466,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	for i := 0; i < len(rwSet.TxReads); i++ {
 		key := rwSet.TxReads[i].Key
 		val := rwSet.TxReads[i].Value
-		version := rwSet.TxReads[i].Version
+		//version := rwSet.TxReads[i].Version
 		chainRSetBytes, err := context.Get(combinationName, key)
 		if err != nil {
 			r.log.Errorf("Put key: %s, value:%s into read set failed, err: %s", key, val, err.Error())
@@ -480,13 +480,13 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 			r.log.Errorf("Unmarshal RSet failed, err: %s", err.Error())
 			return nil, err
 		}
-		if !bytes.Equal(val, rSet.Value) || version.RefTxId != rSet.Version.RefTxId {
-			r.log.Errorf("rSet verification failed! key: %s, value: %s, version: %s; but value on chain: %s, version on chain: %s",
-				key, val, version.RefTxId, rSet.Value, rSet.Version.RefTxId)
-			return nil, errors.New("rSet verification failed! key: " + string(key) + ", value: " + string(val) +
-				", version: " + version.RefTxId + "; but value on chain: " + string(rSet.Value) +
-				", version on chain: " + rSet.Version.RefTxId)
-		}
+		//if !bytes.Equal(val, rSet.Value) || version.RefTxId != rSet.Version.RefTxId {
+		//	r.log.Errorf("rSet verification failed! key: %s, value: %s, version: %s; but value on chain: %s, version on chain: %s",
+		//		key, val, version.RefTxId, rSet.Value, rSet.Version.RefTxId)
+		//	return nil, errors.New("rSet verification failed! key: " + string(key) + ", value: " + string(val) +
+		//		", version: " + version.RefTxId + "; but value on chain: " + string(rSet.Value) +
+		//		", version on chain: " + rSet.Version.RefTxId)
+		//}
 	}
 
 	for j := 0; j < len(rwSet.TxWrites); j++ {
