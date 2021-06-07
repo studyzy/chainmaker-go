@@ -40,6 +40,12 @@ func (impl *DposImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 		return nil, err
 	}
 	defer iter.Release()
+	minSelfDelegationBz, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(commonpb.StakePrefix_Prefix_MinSelfDelegation.String()))
+	if err != nil {
+		impl.log.Errorf("get selfMinDelegation from contract %s failed, reason: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
+		return nil, err
+	}
+	minSelfDelegation := big.NewInt(0).SetBytes(minSelfDelegationBz)
 
 	vals := make([]*commonpb.Validator, 0, 10)
 	for iter.Next() {
@@ -61,7 +67,12 @@ func (impl *DposImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	}
 	candidates := make([]*dpospb.CandidateInfo, 0, len(vals))
 	for i := 0; i < len(vals); i++ {
-		if !vals[i].Jailed && vals[i].Status == commonpb.BondStatus_Bonded {
+		selfDelegation, ok := big.NewInt(0).SetString(vals[i].SelfDelegation, 10)
+		if !ok {
+			impl.log.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
+			return nil, fmt.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
+		}
+		if !vals[i].Jailed && vals[i].Status == commonpb.BondStatus_Bonded && selfDelegation.Cmp(minSelfDelegation) >= 0 {
 			candidates = append(candidates, &dpospb.CandidateInfo{
 				PeerID: vals[i].ValidatorAddress,
 				Weight: vals[i].Tokens,
