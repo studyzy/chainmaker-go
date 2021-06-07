@@ -482,8 +482,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		if len(chainRSetBytes) == 0 {
 			r.log.Debug("there is not a rSet with key: %s on chain\n", key)
 		}
-		fmt.Printf("Key: %v value: %v\n", key, rwSet.TxReads[i].Value)
-		fmt.Println("RSet bytes: ", chainRSetBytes)
+		r.log.Infof("Key: %v value: %v\n", key, rwSet.TxReads[i].Value)
+		r.log.Info("RSet bytes: ", chainRSetBytes)
 		var rSet commonPb.TxRead
 		if err := rSet.Unmarshal(chainRSetBytes); err != nil {
 			r.log.Errorf("Unmarshal RSet failed, err: %s", err.Error())
