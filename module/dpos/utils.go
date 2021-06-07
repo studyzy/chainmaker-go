@@ -18,7 +18,7 @@ import (
 )
 
 // ValidatorsElection select validators from Candidates
-func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, outSort bool) ([]*pbdpos.CandidateInfo, error) {
+func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, seed []byte, outSort bool) ([]*pbdpos.CandidateInfo, error) {
 	if n == 0 {
 		return nil, fmt.Errorf("can not select zero validators")
 	}

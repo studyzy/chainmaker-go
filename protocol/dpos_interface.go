@@ -5,7 +5,7 @@ import (
 )
 
 type Dpos interface {
-	CreateDposRWSets(proposalHeight uint64) (*common.TxRWSet, error)
+	CreateDposRWSets(preBlkHash []byte, proposalHeight uint64) (*common.TxRWSet, error)
 	VerifyConsensusArgs(block *common.Block) error
 	GetValidators() ([]string, error)
 	AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *common.Block) (*common.Block, error)

@@ -425,7 +425,7 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
 	}
 
 	// add Dpos consensus args in block
-	consensusRwSets, err := consensus.dpos.CreateDposRWSets(uint64(consensus.Height))
+	consensusRwSets, err := consensus.dpos.CreateDposRWSets(block.Header.PreBlockHash, uint64(consensus.Height))
 	if err != nil {
 		consensus.logger.Errorf("CreateDposRWSets failed, reason: %s", err)
 	}

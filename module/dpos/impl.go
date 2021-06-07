@@ -22,7 +22,7 @@ func NewDposImpl(log protocol.Logger, chainConf protocol.ChainConf, blockChainSt
 	return &DposImpl{stateDB: blockChainStore, log: log, chainConf: chainConf}
 }
 
-func (impl *DposImpl) CreateDposRWSets(proposalHeight uint64) (*common.TxRWSet, error) {
+func (impl *DposImpl) CreateDposRWSets(preBlkHash []byte, proposalHeight uint64) (*common.TxRWSet, error) {
 	// 1. judge consensus: dpos
 	if !impl.isDposConsensus() {
 		return nil, nil
@@ -37,7 +37,7 @@ func (impl *DposImpl) CreateDposRWSets(proposalHeight uint64) (*common.TxRWSet, 
 	}
 
 	// 3. create newEpoch
-	newEpoch, err := impl.createNewEpoch(proposalHeight, epoch)
+	newEpoch, err := impl.createNewEpoch(proposalHeight, epoch, preBlkHash)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (impl *DposImpl) isDposConsensus() bool {
 	return impl.chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS
 }
 
-func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch) (*common.Epoch, error) {
+func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
 	// 1. get property: epochBlockNum
 	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_MinSelfDelegation.String()))
 	if err != nil {
@@ -72,7 +72,7 @@ func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	}
 
 	// 3. select validators from candidates
-	validators, err := impl.selectValidators(candidates)
+	validators, err := impl.selectValidators(candidates, seed)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	}, nil
 }
 
-func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo) ([]*dpos.CandidateInfo, error) {
+func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
 	// todo. may be query property: valNum
 	valNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_MinSelfDelegation.String()))
 	if err != nil {
@@ -97,7 +97,7 @@ func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo) ([]*dpo
 		return nil, err
 	}
 	valNum := binary.BigEndian.Uint64(valNumBz)
-	vals, err := ValidatorsElection(candidates, int(valNum), true)
+	vals, err := ValidatorsElection(candidates, int(valNum), seed, true)
 	if err != nil {
 		impl.log.Errorf("select validators from candidates failed, reason: %s", err)
 		return nil, err
@@ -142,7 +142,7 @@ func (impl *DposImpl) VerifyConsensusArgs(block *common.Block) error {
 	if !impl.isDposConsensus() {
 		return nil
 	}
-	localConsensus, err := impl.CreateDposRWSets(uint64(block.Header.BlockHeight))
+	localConsensus, err := impl.CreateDposRWSets(block.Header.PreBlockHash, uint64(block.Header.BlockHeight))
 	if err != nil {
 		impl.log.Errorf("get dpos txRwSets failed, reason: %s", err)
 		return err
