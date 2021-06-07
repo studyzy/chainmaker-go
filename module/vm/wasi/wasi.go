@@ -35,8 +35,7 @@ type Wacsi interface {
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
 	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
-
-	PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error)
+	PaillierOperation(requestBody, memory, data []byte, isLen bool) ([]byte, error)
 
 	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
 	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error)
@@ -235,22 +234,16 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	opTypeStr, _ := ec.GetString("opType")
-	operandOne, _ := ec.GetString("operandOne")
-	//fingerprintOne, _ := ec.GetString("fingerprintOne")
-	operandTwo, _ := ec.GetString("operandTwo")
-	//fingerprintTwo, _ := ec.GetString("fingerprintTwo")
-	pubKeyData, _ := ec.GetString("pubKey")
+	operandOne, _ := ec.GetBytes("operandOne")
+	operandTwo, _ := ec.GetBytes("operandTwo")
+	pubKeyBytes, _ := ec.GetBytes("pubKey")
 	valuePtr, _ := ec.GetInt32("value_ptr")
 
 	pubKey := paillier.Helper().NewPubKey()
-	err := pubKey.Unmarshal([]byte(pubKeyData))
+	err := pubKey.Unmarshal(pubKeyBytes)
 	if err != nil {
 		return nil, err
 	}
-
-	//if !checkPaillier(operandOne, []byte(fingerprintOne), operandTwo, []byte(fingerprintTwo), pubKey) {
-	//	return nil, err
-	//}
 
 	if !isLen {
 		copy(memory[valuePtr:valuePtr+int32(len(data))], data)
@@ -284,11 +277,11 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
 	ct1 := paillier.Helper().NewCiphertext()
 	ct2 := paillier.Helper().NewCiphertext()
-	err := ct1.Unmarshal([]byte(operandOne.(string)))
+	err := ct1.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
 	}
-	err = ct2.Unmarshal([]byte(operandTwo.(string)))
+	err = ct2.Unmarshal(operandTwo.([]byte))
 	if err != nil {
 		return nil, err
 	}
@@ -305,12 +298,12 @@ func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey pailli
 
 func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
 	ct := paillier.Helper().NewCiphertext()
-	err := ct.Unmarshal([]byte(operandOne.(string)))
+	err := ct.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
 	}
 
-	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	pt := new(big.Int).SetBytes(operandTwo.([]byte))
 	result, err := pubKey.AddPlaintext(ct, pt)
 	if err != nil {
 		return nil, err
@@ -322,11 +315,11 @@ func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
 	ct1 := paillier.Helper().NewCiphertext()
 	ct2 := paillier.Helper().NewCiphertext()
-	err := ct1.Unmarshal([]byte(operandOne.(string)))
+	err := ct1.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
 	}
-	err = ct2.Unmarshal([]byte(operandTwo.(string)))
+	err = ct2.Unmarshal(operandTwo.([]byte))
 	if err != nil {
 		return nil, err
 	}
@@ -343,12 +336,12 @@ func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey pailli
 
 func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
 	ct := paillier.Helper().NewCiphertext()
-	err := ct.Unmarshal([]byte(operandOne.(string)))
+	err := ct.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
 	}
 
-	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	pt := new(big.Int).SetBytes(operandTwo.([]byte))
 	result, err := pubKey.SubPlaintext(ct, pt)
 	if err != nil {
 		return nil, err
@@ -362,12 +355,12 @@ func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 
 func numMul(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
 	ct := paillier.Helper().NewCiphertext()
-	err := ct.Unmarshal([]byte(operandOne.(string)))
+	err := ct.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
 	}
 
-	pt, _ := new(big.Int).SetString(operandTwo.(string), 10)
+	pt := new(big.Int).SetBytes(operandTwo.([]byte))
 	result, err := pubKey.NumMul(ct, pt)
 	if err != nil {
 		return nil, err
