@@ -79,8 +79,28 @@ permissions:
       role_list:
         - admin
         - client
-  - resource_name: user_contract_create_method
-    principle:
+  - resource_name: INIT_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: UPGRADE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: FREEZE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: UNFREEZE_CONTRACT
+    policy:
+      rule: ANY
+      org_list:
+      role_list:
+  - resource_name: REVOKE_CONTRACT
+    policy:
       rule: ANY
       org_list:
       role_list:

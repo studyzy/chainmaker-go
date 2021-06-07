@@ -3,9 +3,9 @@ version: '3'
 services:
   node1:
     container_name: node1
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org1/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org1/chainmaker.yml start"
     ports:
       - "7988:7988"
       - "17989:17989"
@@ -15,7 +15,7 @@ services:
       - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
       - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
       - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ./data/wx-org1/ledgerData:/chainmaker-go/testdata/wx-org1/ledgerData
+      - ./data/wx-org1/ledgerData:/chainmaker-go/data/org1
       - ./data/wx-org1/log:/chainmaker-go/log
     networks:
       localnet:
@@ -23,9 +23,9 @@ services:
 
   node2:
     container_name: node2
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org2/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org2/chainmaker.yml start"
     ports:
       - "7989:7988"
       - "17990:17989"
@@ -35,7 +35,7 @@ services:
       - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
       - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
       - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ./data/wx-org2/ledgerData:/chainmaker-go/testdata/wx-org2/ledgerData
+      - ./data/wx-org2/ledgerData:/chainmaker-go/data/org2
       - ./data/wx-org2/log:/chainmaker-go/log
     networks:
       localnet:
@@ -43,9 +43,9 @@ services:
 
   node3:
     container_name: node3
-    image: "chainmaker:v0.7.0"
+    image: "chainmaker"
     working_dir: "/chainmaker-go/bin"
-    command: "chainmaker -c ../config/wx-org3/chainmaker.yml start"
+    command: "./chainmaker -c ../config/wx-org3/chainmaker.yml start"
     ports:
       - "7990:7988"
       - "17991:17989"
@@ -55,7 +55,7 @@ services:
       - ../../../../../config/wx-org1/certs:/chainmaker-go/config/wx-org1/certs
       - ../../../../../config/wx-org2/certs:/chainmaker-go/config/wx-org2/certs
       - ../../../../../config/wx-org3/certs:/chainmaker-go/config/wx-org3/certs
-      - ./data/wx-org3/ledgerData:/chainmaker-go/testdata/wx-org3/ledgerData
+      - ./data/wx-org3/ledgerData:/chainmaker-go/data/org3
       - ./data/wx-org3/log:/chainmaker-go/log
     networks:
       localnet:
