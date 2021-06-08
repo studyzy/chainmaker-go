@@ -16,9 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
@@ -59,6 +57,7 @@ type BlockProposerImpl struct {
 	proposer               []byte // this node identity
 
 	blockBuilder *common.BlockBuilder
+	storeHelper  common.StoreHelper
 }
 
 type BlockProposerConfig struct {
@@ -73,6 +72,7 @@ type BlockProposerConfig struct {
 	ChainConf       protocol.ChainConf
 	AC              protocol.AccessControlProvider
 	BlockchainStore protocol.BlockchainStore
+	StoreHelper     common.StoreHelper
 }
 
 const (
@@ -100,6 +100,7 @@ func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol
 		ac:              config.AC,
 		log:             log,
 		finishProposeC:  make(chan bool),
+		storeHelper:     config.StoreHelper,
 	}
 
 	var err error
@@ -120,6 +121,7 @@ func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol
 			"block package time metric", []float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10}, "chainId")
 	}
 
+	blockProposerImpl.storeHelper = config.StoreHelper
 	bbConf := &common.BlockBuilderConf{
 		ChainId:         blockProposerImpl.chainId,
 		TxPool:          blockProposerImpl.txPool,
@@ -130,6 +132,7 @@ func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol
 		ProposalCache:   blockProposerImpl.proposalCache,
 		ChainConf:       blockProposerImpl.chainConf,
 		Log:             blockProposerImpl.log,
+		StoreHelper:     config.StoreHelper,
 	}
 
 	blockProposerImpl.blockBuilder = common.NewBlockBuilder(bbConf)
@@ -293,19 +296,7 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 	block, timeLasts, err := bp.generateNewBlock(height, preHash, checkedBatch)
 	if err != nil {
 		// rollback sql
-		if bp.chainConf.ChainConfig().Contract.EnableSqlSupport {
-			_ = bp.blockchainStore.RollbackDbTransaction(block.GetTxKey())
-			// drop database if create contract fail
-			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
-				var payload commonpb.ContractMgmtPayload
-				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
-					if payload.ContractId != nil {
-						dbName := statesqldb.GetContractDbName(bp.chainId, payload.ContractId.ContractName)
-						bp.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
-					}
-				}
-			}
-		}
+		bp.storeHelper.RollBack(block, bp.blockchainStore)
 		bp.txPool.RetryAndRemoveTxs(checkedBatch, nil) // put txs back to txpool
 		bp.log.Warnf("generate new block failed, %s", err.Error())
 		return nil
@@ -371,7 +362,7 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 		return
 	}
 	height, _ := bp.ledgerCache.CurrentHeight()
-	bp.proposalCache.ResetProposedAt(height+1) // proposer status changed, reset this round proposed status
+	bp.proposalCache.ResetProposedAt(height + 1) // proposer status changed, reset this round proposed status
 	bp.setIsSelfProposer(proposeStatus)
 	if !bp.isSelfProposer() {
 		bp.yieldProposing() // try to yield if proposer self is proposing right now.
@@ -413,7 +404,7 @@ func (bp *BlockProposerImpl) OnReceiveYieldProposeSignal(isYield bool) {
 		// halt scheduler execution
 		bp.txScheduler.Halt()
 		height, _ := bp.ledgerCache.CurrentHeight()
-		bp.proposalCache.ResetProposedAt(height+1)
+		bp.proposalCache.ResetProposedAt(height + 1)
 	}
 }
 

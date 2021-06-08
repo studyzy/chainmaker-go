@@ -20,10 +20,8 @@ import (
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -42,6 +40,7 @@ type BlockBuilderConf struct {
 	ProposalCache   protocol.ProposalCache
 	ChainConf       protocol.ChainConf // chain config
 	Log             protocol.Logger
+	StoreHelper     StoreHelper
 }
 
 type BlockBuilder struct {
@@ -54,6 +53,7 @@ type BlockBuilder struct {
 	proposalCache   protocol.ProposalCache
 	chainConf       protocol.ChainConf // chain config
 	log             protocol.Logger
+	storeHelper     StoreHelper
 }
 
 func NewBlockBuilder(conf *BlockBuilderConf) *BlockBuilder {
@@ -67,6 +67,7 @@ func NewBlockBuilder(conf *BlockBuilderConf) *BlockBuilder {
 		proposalCache:   conf.ProposalCache,
 		chainConf:       conf.ChainConf,
 		log:             conf.Log,
+		storeHelper:     conf.StoreHelper,
 	}
 
 	return creatorBlock
@@ -106,9 +107,7 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 	snapshot := bb.snapshotManager.NewSnapshot(lastBlock, block)
 	vmStartTick := utils.CurrentTimeMillisSeconds()
 	ssLasts := vmStartTick - ssStartTick
-	if bb.chainConf.ChainConfig().Contract.EnableSqlSupport {
-		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
-	}
+	bb.storeHelper.BeginDbTransaction(snapshot.GetBlockchainStore(), block.GetTxKey())
 	txRWSetMap, contractEventMap, err := bb.txScheduler.Schedule(block, validatedTxs, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - vmStartTick
 	timeLasts = append(timeLasts, ssLasts, vmLasts)
@@ -418,6 +417,7 @@ type VerifierBlockConf struct {
 	TxPool          protocol.TxPool
 	BlockchainStore protocol.BlockchainStore
 	ProposalCache   protocol.ProposalCache // proposal cache
+	StoreHelper     StoreHelper
 }
 
 type VerifierBlock struct {
@@ -431,6 +431,7 @@ type VerifierBlock struct {
 	txPool          protocol.TxPool
 	blockchainStore protocol.BlockchainStore
 	proposalCache   protocol.ProposalCache // proposal cache
+	storeHelper     StoreHelper
 }
 
 func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
@@ -444,8 +445,9 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		txPool:          conf.TxPool,
 		blockchainStore: conf.BlockchainStore,
 		proposalCache:   conf.ProposalCache,
+		storeHelper:     conf.StoreHelper,
 	}
-	verifyBlock.txScheduler = NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf)
+	verifyBlock.txScheduler = NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf, verifyBlock.storeHelper)
 	return verifyBlock
 }
 
@@ -502,9 +504,7 @@ func (vb *VerifierBlock) ValidateBlock(
 
 	// simulate with DAG, and verify read write set
 	startVMTick := utils.CurrentTimeMillisSeconds()
-	if vb.chainConf.ChainConfig().Contract.EnableSqlSupport {
-		snapshot.GetBlockchainStore().BeginDbTransaction(block.GetTxKey())
-	}
+	vb.storeHelper.BeginDbTransaction(snapshot.GetBlockchainStore(), block.GetTxKey())
 	txRWSetMap, txResultMap, err := vb.txScheduler.SimulateWithDag(block, snapshot)
 	vmLasts := utils.CurrentTimeMillisSeconds() - startVMTick
 	timeLasts = append(timeLasts, vmLasts)
@@ -598,6 +598,7 @@ type BlockCommitterImpl struct {
 	metricBlockCounter    *prometheus.CounterVec   // metric block counter
 	metricTxCounter       *prometheus.CounterVec   // metric transaction counter
 	metricBlockCommitTime *prometheus.HistogramVec // metric block commit time
+	storeHelper           StoreHelper
 }
 
 type BlockCommitterConfig struct {
@@ -611,6 +612,7 @@ type BlockCommitterConfig struct {
 	MsgBus          msgbus.MessageBus
 	Subscriber      *subscriber.EventSubscriber
 	Verifier        protocol.BlockVerifier
+	StoreHelper     StoreHelper
 }
 
 func NewBlockCommitter(config BlockCommitterConfig, log protocol.Logger) (protocol.BlockCommitter, error) {
@@ -626,6 +628,7 @@ func NewBlockCommitter(config BlockCommitterConfig, log protocol.Logger) (protoc
 		msgBus:          config.MsgBus,
 		subscriber:      config.Subscriber,
 		verifier:        config.Verifier,
+		storeHelper:     config.StoreHelper,
 	}
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
@@ -643,13 +646,13 @@ func NewBlockCommitter(config BlockCommitterConfig, log protocol.Logger) (protoc
 	}
 
 	cbConf := &CommitBlockConf{
-		Store:                 config.BlockchainStore,
+		Store:                 blockchain.blockchainStore,
 		Log:                   blockchain.log,
-		SnapshotManager:       config.SnapshotManager,
-		TxPool:                config.TxPool,
-		LedgerCache:           config.LedgerCache,
-		ChainConf:             config.ChainConf,
-		MsgBus:                config.MsgBus,
+		SnapshotManager:       blockchain.snapshotManager,
+		TxPool:                blockchain.txPool,
+		LedgerCache:           blockchain.ledgerCache,
+		ChainConf:             blockchain.chainConf,
+		MsgBus:                blockchain.msgBus,
 		MetricBlockCommitTime: blockchain.metricBlockCommitTime,
 		MetricBlockCounter:    blockchain.metricBlockCounter,
 		MetricBlockSize:       blockchain.metricBlockSize,
@@ -697,20 +700,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		}
 		// rollback sql
 		chain.log.Error(err)
-		if chain.chainConf.ChainConfig().Contract.EnableSqlSupport {
-			txKey := block.GetTxKey()
-			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
-			// drop database if create contract fail
-			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
-				var payload commonpb.ContractMgmtPayload
-				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
-					if payload.ContractId != nil {
-						dbName := statesqldb.GetContractDbName(chain.chainId, payload.ContractId.ContractName)
-						chain.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
-					}
-				}
-			}
-		}
+		chain.storeHelper.RollBack(block, chain.blockchainStore)
 	}()
 
 	startTick := utils.CurrentTimeMillisSeconds()

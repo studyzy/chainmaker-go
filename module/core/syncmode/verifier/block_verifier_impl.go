@@ -8,10 +8,8 @@ package verifier
 
 import (
 	"chainmaker.org/chainmaker-go/core/common"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"encoding/hex"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"sync"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
@@ -44,6 +42,7 @@ type BlockVerifierImpl struct {
 	txPool         protocol.TxPool                // tx pool to check if tx is duplicate
 	mu             sync.Mutex                     // to avoid concurrent map modify
 	verifierBlock  *common.VerifierBlock
+	storeHelper    common.StoreHelper
 
 	metricBlockVerifyTime *prometheus.HistogramVec // metrics monitor
 }
@@ -60,6 +59,7 @@ type BlockVerifierConfig struct {
 	AC              protocol.AccessControlProvider
 	TxPool          protocol.TxPool
 	VmMgr           protocol.VmManager
+	StoreHelper     common.StoreHelper
 }
 
 func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol.BlockVerifier, error) {
@@ -78,11 +78,12 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		ac:            config.AC,
 		log:           log,
 		txPool:        config.TxPool,
+		storeHelper:   config.StoreHelper,
 	}
 
 	conf := &common.VerifierBlockConf{
 		ChainConf:       config.ChainConf,
-		Log:             v.log,
+		Log:             log,
 		LedgerCache:     config.LedgerCache,
 		Ac:              config.AC,
 		SnapshotManager: config.SnapshotManager,
@@ -90,6 +91,7 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		TxPool:          config.TxPool,
 		BlockchainStore: config.BlockchainStore,
 		ProposalCache:   config.ProposedCache,
+		StoreHelper:     config.StoreHelper,
 	}
 	v.verifierBlock = common.NewVerifierBlock(conf)
 
@@ -161,19 +163,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 
 		// rollback sql
-		if v.chainConf.ChainConfig().Contract.EnableSqlSupport {
-			_ = v.blockchainStore.RollbackDbTransaction(block.GetTxKey())
-			// drop database if create contract fail
-			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
-				var payload commonpb.ContractMgmtPayload
-				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
-					if payload.ContractId != nil {
-						dbName := statesqldb.GetContractDbName(v.chainId, payload.ContractId.ContractName)
-						v.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
-					}
-				}
-			}
-		}
+		v.storeHelper.RollBack(block, v.blockchainStore)
 		return err
 	}
 
