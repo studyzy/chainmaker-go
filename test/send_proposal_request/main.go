@@ -122,8 +122,8 @@ func main() {
 		wasmType int
 	)
 	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator,"+
-		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: delegate, 9: undelegate," +
-		" 10: balance of owner, 11: set relationship between user and node_id")
+		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: delegate, 9: undelegate,"+
+		" 10: balance of owner, 11: set relationship between user and node_id, 15: calculate address from cert")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
 	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
@@ -132,8 +132,8 @@ func main() {
 	flag.StringVar(&consensusExtKeys, "consensus_keys", "", "key1,key2,key3")
 	flag.StringVar(&consensusExtValues, "consensus_Values", "", "value1,value2,value3")
 
-	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg") // 谁来发送这笔交易，可能具有业务意义，也可能没有
-	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to") // 接收方，可以是一个地址或其他方式
+	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")    // 谁来发送这笔交易，可能具有业务意义，也可能没有
+	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")  // 接收方，可以是一个地址或其他方式
 	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token") // token值，该参数可有可无
 
 	flag.StringVar(&certPath, "cert_path", "", "path of cert that will calculate address")
@@ -1008,8 +1008,8 @@ func setRelationshipForAddrAndNodeId() {
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId: "",
-		ChainId: CHAIN1,
+		TxId:         "",
+		ChainId:      CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_SET_NODE_ID.String(),
