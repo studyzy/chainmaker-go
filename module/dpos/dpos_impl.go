@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"chainmaker.org/chainmaker-go/logger"
+
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/pb/protogo/dpos"
@@ -13,19 +15,21 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type DposImpl struct {
+type DPoSImpl struct {
 	log       protocol.Logger
 	chainConf protocol.ChainConf
 	stateDB   protocol.BlockchainStore
 }
 
-func NewDposImpl(log protocol.Logger, chainConf protocol.ChainConf, blockChainStore protocol.BlockchainStore) *DposImpl {
-	return &DposImpl{stateDB: blockChainStore, log: log, chainConf: chainConf}
+func NewDPoSImpl(chainConf protocol.ChainConf, blockChainStore protocol.BlockchainStore) *DPoSImpl {
+	log := logger.GetLoggerByChain(logger.MODULE_DPOS, chainConf.ChainConfig().ChainId)
+	return &DPoSImpl{stateDB: blockChainStore, log: log, chainConf: chainConf}
 }
 
-func (impl *DposImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
-	// 1. judge consensus: dpos
-	if !impl.isDposConsensus() {
+func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
+	impl.log.Debugf("begin createDPoS rwSet ")
+	// 1. judge consensus: DPoS
+	if !impl.isDPoSConsensus() {
 		return nil, nil
 	}
 	var (
@@ -57,14 +61,15 @@ func (impl *DposImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 	}
 	// 5. Aggregate read-write set
 	unboundingRwSet.TxWrites = append(unboundingRwSet.TxWrites, epochRwSet.TxWrites...)
+	impl.log.Debugf("end createDPoS rwSet: %v ", unboundingRwSet)
 	return unboundingRwSet, nil
 }
 
-func (impl *DposImpl) isDposConsensus() bool {
+func (impl *DPoSImpl) isDPoSConsensus() bool {
 	return impl.chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS
 }
 
-func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
+func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
 	// 1. get property: epochBlockNum
 	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyEpochBlockNumber))
 	if err != nil {
@@ -101,7 +106,7 @@ func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	}, nil
 }
 
-func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
+func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
 	valNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyEpochValidatorNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
@@ -116,8 +121,9 @@ func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []
 	return vals, nil
 }
 
-func (impl *DposImpl) AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *common.Block) (*common.Block, error) {
-	if !impl.isDposConsensus() {
+func (impl *DPoSImpl) AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *common.Block) (*common.Block, error) {
+	impl.log.Debugf("begin add consensus args to block ")
+	if !impl.isDPoSConsensus() {
 		return block, nil
 	}
 	consensusArgs := &consensus.BlockHeaderConsensusArgs{
@@ -130,11 +136,12 @@ func (impl *DposImpl) AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *comm
 		return nil, err
 	}
 	block.Header.ConsensusArgs = argBytes
+	impl.log.Debugf("end add consensus args ")
 	return block, nil
 }
 
-func (impl *DposImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.BlockHeaderConsensusArgs {
-	if !impl.isDposConsensus() {
+func (impl *DPoSImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.BlockHeaderConsensusArgs {
+	if !impl.isDPoSConsensus() {
 		return nil
 	}
 
@@ -149,13 +156,15 @@ func (impl *DposImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.
 	return &consensusArgs
 }
 
-func (impl *DposImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) error {
-	if !impl.isDposConsensus() {
+func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) error {
+	impl.log.Debugf("begin VerifyConsensusArgs, blockHeight: %d, blockHash: %x", block.Header.BlockHeight, block.Header.BlockHash)
+	if !impl.isDPoSConsensus() {
 		return nil
 	}
+
 	localConsensus, err := impl.CreateDPoSRWSet(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
 	if err != nil {
-		impl.log.Errorf("get dpos txRwSets failed, reason: %s", err)
+		impl.log.Errorf("get DPoS txRwSets failed, reason: %s", err)
 		return err
 	}
 	localBz, err := proto.Marshal(&consensus.BlockHeaderConsensusArgs{
@@ -167,13 +176,14 @@ func (impl *DposImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[
 		return err
 	}
 	if bytes.Equal(block.Header.ConsensusArgs, localBz) {
+		impl.log.Debugf("end VerifyConsensusArgs")
 		return nil
 	}
 	return fmt.Errorf("consensus args verify mismatch, blockConsensus: %v, localConsensus: %v", block.Header.ConsensusArgs, localConsensus)
 }
 
-func (impl *DposImpl) GetValidators() ([]string, error) {
-	if !impl.isDposConsensus() {
+func (impl *DPoSImpl) GetValidators() ([]string, error) {
+	if !impl.isDPoSConsensus() {
 		return nil, nil
 	}
 	epochBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
@@ -186,6 +196,7 @@ func (impl *DposImpl) GetValidators() ([]string, error) {
 		impl.log.Errorf("proto unmarshal epoch failed, reason: %s", err)
 		return nil, err
 	}
+	impl.log.Debugf("curr epoch msg: %s", epoch.String())
 
 	nodeIDs := make([]string, 0, len(epoch.ProposerVector))
 	for _, validator := range epoch.ProposerVector {
@@ -197,5 +208,6 @@ func (impl *DposImpl) GetValidators() ([]string, error) {
 		}
 		nodeIDs = append(nodeIDs, string(nodeID))
 	}
+	impl.log.Debugf("curr validator nodeID: %v", nodeIDs)
 	return nodeIDs, nil
 }

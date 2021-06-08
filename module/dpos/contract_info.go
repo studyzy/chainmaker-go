@@ -17,7 +17,7 @@ import (
 const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
-func (impl *DposImpl) getEpochInfo() (*commonpb.Epoch, error) {
+func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
 	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(native.KeyCurrentEpoch))
 	if err != nil {
 		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), err)
@@ -33,7 +33,7 @@ func (impl *DposImpl) getEpochInfo() (*commonpb.Epoch, error) {
 }
 
 // getAllCandidateInfo get all candidates from ledger
-func (impl *DposImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
+func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	preFix := native.ToValidatorKey("")
 	iterRange := util.BytesPrefix(preFix)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), iterRange.Start, iterRange.Limit)
@@ -84,7 +84,7 @@ func (impl *DposImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	return candidates, nil
 }
 
-func (impl *DposImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
 	id := make([]byte, 8)
 	currPreFix := []byte(native.KeyCurrentEpoch)
 	binary.BigEndian.PutUint64(id, epoch.EpochID)
@@ -112,15 +112,15 @@ func (impl *DposImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet
 	return rw, nil
 }
 
-func (impl *DposImpl) createRewardRwSet(rewardAmount big.Int) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) createRewardRwSet(rewardAmount big.Int) (*commonpb.TxRWSet, error) {
 	return nil, nil
 }
 
-func (impl *DposImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, error) {
 	return nil, nil
 }
 
-func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 	start := native.ToUnbondingDelegationKey(epoch.EpochID, "", "")
 	iterRange := util.BytesPrefix(start)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
@@ -165,7 +165,7 @@ func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Blo
 	return rwSet, nil
 }
 
-func (impl *DposImpl) addBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
+func (impl *DPoSImpl) addBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
 	before, err := impl.balanceOf(addr, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (impl *DposImpl) addBalanceRwSet(addr string, amount string, block *common.
 	}, nil
 }
 
-func (impl *DposImpl) subBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
+func (impl *DPoSImpl) subBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
 	before, err := impl.balanceOf(addr, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ func (impl *DposImpl) subBalanceRwSet(addr string, amount string, block *common.
 	}, nil
 }
 
-func (impl *DposImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {
+func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {
 	key := []byte(native.BalanceKey(addr))
 	val, err := impl.getState(key, block, blockTxRwSet)
 	if err != nil {

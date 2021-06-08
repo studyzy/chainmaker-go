@@ -46,7 +46,7 @@ func (f Factory) NewConsensusEngine(
 	helper protocol.HotStuffHelper,
 	dpos protocol.DPoS) (protocol.ConsensusEngine, error) {
 	switch consensusType {
-	case consensuspb.ConsensusType_TBFT:
+	case consensuspb.ConsensusType_TBFT, consensuspb.ConsensusType_DPOS:
 		config := tbft.ConsensusTBFTImplConfig{
 			ChainID:     chainID,
 			Id:          id,

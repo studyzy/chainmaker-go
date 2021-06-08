@@ -7,6 +7,7 @@ package native
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -28,7 +29,7 @@ const (
 	KeyValidatorFormat           = "V/%s"
 	KeyDelegationFormat          = "D/%s/%s"
 	KeyEpochFormat               = "E/%s"
-	KeyUnbondingDelegationFormat = "U/%8d/%s/%s"
+	KeyUnbondingDelegationFormat = "U/%s/%s/%s"
 
 	KeyCurrentEpoch                   = "CE"
 	KeyMinSelfDelegation              = "MSD"
@@ -54,24 +55,14 @@ func ToEpochKey(epochID string) []byte {
 
 // ToNodeIDKey - Key：N + "/" + NodeID
 func ToNodeIDKey(addr string) []byte {
-	//bz := bytes.NewBufferString("")
-	//bz.WriteString(addr)
-	//return bz.Bytes()
 	return []byte(fmt.Sprintf(KeyNodeIDFormat, addr))
 }
 
-// ToUnbondingDelegationKey - Key：U + "/" + EpochID + "/" + DelegatorAddress + "/" + ValidatorAddress
+// ToUnbondingDelegationKey - Key：U + "/" + BigEndian(EpochID) + "/" + DelegatorAddress + "/" + ValidatorAddress
 func ToUnbondingDelegationKey(epochID uint64, delegatorAddress, validatorAddress string) []byte {
-	//epochBz := make([]byte, 8)
-	//binary.BigEndian.PutUint64(epochBz, epochID)
-	//bz := bytes.NewBufferString(commonPb.StakePrefix_PU.String())
-	//bz.Write(epochBz)
-	//bz.Write([]byte("/"))
-	//bz.WriteString(delegatorAddress)
-	//bz.Write([]byte("/"))
-	//bz.WriteString(validatorAddress)
-	//return bz.Bytes()
-	return []byte(fmt.Sprintf(KeyUnbondingDelegationFormat, epochID, delegatorAddress, validatorAddress))
+	epochBz := make([]byte, 8)
+	binary.BigEndian.PutUint64(epochBz, epochID)
+	return []byte(fmt.Sprintf(KeyUnbondingDelegationFormat, epochBz, delegatorAddress, validatorAddress))
 }
 
 func ToReverseNodeIDKey(nodeID string) []byte {
@@ -161,7 +152,7 @@ type DPosStakeRuntime struct {
 
 // SetNodeID - 系加入节点绑定自身身份
 func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	// check parans
+	// check params
 	err := checkParams(params, "node_id")
 	if err != nil {
 		return nil, err
@@ -231,7 +222,7 @@ func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params
 // @params["address"]
 // return Validator
 func (s *DPosStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	// check parans
+	// check params
 	err := checkParams(params, "address")
 	if err != nil {
 		return nil, err

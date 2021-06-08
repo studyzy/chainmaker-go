@@ -44,7 +44,7 @@ replace (
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/sync => ../sync
 	chainmaker.org/chainmaker-go/txpool => ../txpool
-	chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../txpool/batch
+	//chainmaker.org/chainmaker-go/txpool/batchtxpool => ./../txpool/batch
 	chainmaker.org/chainmaker-go/utils => ../utils
 	chainmaker.org/chainmaker-go/vm => ../vm
 	chainmaker.org/chainmaker-go/wasi => ../vm/wasi

@@ -7,7 +7,7 @@ import (
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 )
 
-func (impl *DposImpl) getState(key []byte, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) ([]byte, error) {
+func (impl *DPoSImpl) getState(key []byte, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) ([]byte, error) {
 	for i := len(block.Txs) - 1; i >= 0; i-- {
 		rwSets := blockTxRwSet[block.Txs[i].Header.TxId]
 		for _, txWrite := range rwSets.TxWrites {
