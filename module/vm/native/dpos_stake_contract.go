@@ -21,19 +21,20 @@ import (
 )
 
 const (
-	prefixValidator	= "V/"
+	prefixValidator = "V/"
 
-	KeyNodeIDFormat					= "N/%s"
-	KeyValidatorFormat 				= "V/%s"
-	KeyDelegationFormat 			= "D/%s/%s"
-	KeyEpochFormat 					= "E/%s"
-	KeyUnbondingDelegationFormat	= "U/%8d/%s/%s"
+	KeyNodeIDFormat              = "N/%s"
+	KeyRevNodeFormat             = "NR/%s"
+	KeyValidatorFormat           = "V/%s"
+	KeyDelegationFormat          = "D/%s/%s"
+	KeyEpochFormat               = "E/%s"
+	KeyUnbondingDelegationFormat = "U/%8d/%s/%s"
 
-	KeyCurrentEpoch 					= "CE"
-	KeyMinSelfDelegation				= "MSD"
-	KeyCompletionUnbondingEpochNumber 	= "CUEN"
-	KeyEpochValidatorNumber				= "EVN"
-	KeyEpochBlockNumber 				= "EBN"
+	KeyCurrentEpoch                   = "CE"
+	KeyMinSelfDelegation              = "MSD"
+	KeyCompletionUnbondingEpochNumber = "CUEN"
+	KeyEpochValidatorNumber           = "EVN"
+	KeyEpochBlockNumber               = "EBN"
 )
 
 // ToValidatorKey - Key: V + "/" + ValidatorAddress
@@ -71,6 +72,10 @@ func ToUnbondingDelegationKey(epochID uint64, delegatorAddress, validatorAddress
 	//bz.WriteString(validatorAddress)
 	//return bz.Bytes()
 	return []byte(fmt.Sprintf(KeyUnbondingDelegationFormat, epochID, delegatorAddress, validatorAddress))
+}
+
+func ToReverseNodeIDKey(nodeID string) []byte {
+	return []byte(fmt.Sprintf(KeyRevNodeFormat, nodeID))
 }
 
 // StakeContractAddr - convert stake contract name string to address: base58.Encode(sha256(stake_contract_name))
@@ -169,8 +174,17 @@ func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 		return nil, err
 	}
 
+	reverseKey := ToReverseNodeIDKey(nodeID)
+	if val, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), reverseKey); err != nil {
+		return nil, fmt.Errorf("query state from context failed, reason: %s", err)
+	} else if len(val) > 0 {
+		return nil, fmt.Errorf("the nodeID:[%s] has been set by [%s]", nodeID, val)
+	}
 	key := ToNodeIDKey(sender)
 	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, []byte(nodeID)); err != nil {
+		return nil, err
+	}
+	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), reverseKey, []byte(sender)); err != nil {
 		return nil, err
 	}
 	return nil, nil

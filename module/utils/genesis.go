@@ -38,6 +38,16 @@ const (
 	keyStakeEpochBlockNum      = "stake.epochBlockNum"
 	keyStakeCandidate          = "stake.candidate"
 	keyStakeConfigNodeID       = "stake.nodeID"
+
+	keyCurrentEpoch         = "CE"
+	keyMinSelfDelegation    = "MSD"
+	keyEpochFormat          = "E/%s"
+	keyDelegationFormat     = "D/%s/%s"
+	keyValidatorFormat      = "V/%s"
+	keyEpochValidatorNumber = "EVN"
+	keyEpochBlockNumber     = "EBN"
+	keyNodeIDFormat         = "N/%s"
+	keyRevNodeFormat        = "NR/%s"
 )
 
 // CreateGenesis create genesis block (with read-write set) based on chain config
@@ -383,17 +393,17 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	rwSets := []*commonPb.TxWrite{
 		{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(commonPb.StakePrefix_Prefix_MinSelfDelegation.String()),
+			Key:          []byte(keyMinSelfDelegation),
 			Value:        []byte(s.minSelfDelegation),
 		},
 		{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(commonPb.StakePrefix_Prefix_Validator.String()), // todo, will modify validatorNUm
+			Key:          []byte(keyEpochValidatorNumber),
 			Value:        valNum,
 		},
 		{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(commonPb.StakePrefix_Prefix_Validator.String()), // todo, will modify epochNum
+			Key:          []byte(keyEpochBlockNumber),
 			Value:        epochNum,
 		},
 	}
@@ -419,7 +429,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	for i, validator := range s.candidates {
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(commonPb.StakePrefix_Prefix_Validator.String() + validator.PeerID), // todo, will modify epochNum
+			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerID)),
 			Value:        validators[i],
 		})
 	}
@@ -440,13 +450,12 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	for i, validator := range s.candidates {
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(commonPb.StakePrefix_Prefix_Delegation.String() + validator.PeerID + validator.PeerID), // key: prefix|delegator|validator
-			Value:        delegations[i],                                                                                // val: delegation info
+			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerID, validator.PeerID)), // key: prefix|delegator|validator
+			Value:        delegations[i],                                                               // val: delegation info
 		})
 	}
 
 	// 4. add epoch info
-	epochID := make([]byte, 8)
 	valAddrs := make([]string, 0, len(s.candidates))
 	for _, v := range s.candidates {
 		valAddrs = append(valAddrs, v.PeerID)
@@ -461,19 +470,24 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	}
 	rwSets = append(rwSets, &commonPb.TxWrite{
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		Key:          []byte(commonPb.StakePrefix_Prefix_Curr_Epoch.String()), // key: prefix
-		Value:        epochInfo,                                               // val: epochInfo
+		Key:          []byte(keyCurrentEpoch), // key: prefix
+		Value:        epochInfo,               // val: epochInfo
 	})
 	rwSets = append(rwSets, &commonPb.TxWrite{
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		Key:          append([]byte(commonPb.StakePrefix_Prefix_Epoch_Record.String()), epochID...), // key: prefix|epochID
-		Value:        epochInfo,                                                                     // val: epochInfo
+		Key:          []byte(fmt.Sprintf(keyEpochFormat, "0")), // key: prefix|epochID
+		Value:        epochInfo,                                // val: epochInfo
 	})
 	for addr, nodeID := range s.nodeIDs {
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          append([]byte(commonPb.StakePrefix_Prefix_Epoch_Record.String()), []byte(addr)...), // key: prefix|epochID todo, will rename prefix
-			Value:        []byte(nodeID),                                                                     // val: nodeID
+			Key:          []byte(fmt.Sprintf(keyNodeIDFormat, addr)), // key: prefix|addr
+			Value:        []byte(nodeID),                             // val: nodeID
+		})
+		rwSets = append(rwSets, &commonPb.TxWrite{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(fmt.Sprintf(keyRevNodeFormat, nodeID)), // key: prefix|nodeID
+			Value:        []byte(addr),                                  // val: addr
 		})
 	}
 	return rwSets, nil

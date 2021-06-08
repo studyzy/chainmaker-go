@@ -11,13 +11,14 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
 func (impl *DposImpl) getEpochInfo() (*commonpb.Epoch, error) {
-	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(commonpb.StakePrefix_Prefix_Curr_Epoch.String()))
+	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(native.KeyCurrentEpoch))
 	if err != nil {
 		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), err)
 		return nil, err
@@ -33,14 +34,15 @@ func (impl *DposImpl) getEpochInfo() (*commonpb.Epoch, error) {
 
 // getAllCandidateInfo get all candidates from ledger
 func (impl *DposImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
-	preFix := []byte(commonpb.StakePrefix_Prefix_Validator.String())
-	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), preFix, BytesPrefix(preFix))
+	preFix := native.ToValidatorKey("")
+	iterRange := util.BytesPrefix(preFix)
+	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), err)
 		return nil, err
 	}
 	defer iter.Release()
-	minSelfDelegationBz, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(commonpb.StakePrefix_Prefix_MinSelfDelegation.String()))
+	minSelfDelegationBz, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyMinSelfDelegation))
 	if err != nil {
 		impl.log.Errorf("get selfMinDelegation from contract %s failed, reason: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
@@ -84,9 +86,7 @@ func (impl *DposImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 
 func (impl *DposImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
 	id := make([]byte, 8)
-	currPreFix := []byte(commonpb.StakePrefix_Prefix_Curr_Epoch.String())
-	recordPreFix := []byte(commonpb.StakePrefix_Prefix_Epoch_Record.String())
-
+	currPreFix := []byte(native.KeyCurrentEpoch)
 	binary.BigEndian.PutUint64(id, epoch.EpochID)
 	bz, err := proto.Marshal(epoch)
 	if err != nil {
@@ -104,7 +104,7 @@ func (impl *DposImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet
 			},
 			{
 				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(),
-				Key:          append(recordPreFix, id...),
+				Key:          native.ToEpochKey(fmt.Sprintf("%d", epoch.EpochID)),
 				Value:        bz,
 			},
 		},
@@ -122,8 +122,8 @@ func (impl *DposImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 
 func (impl *DposImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 	start := native.ToUnbondingDelegationKey(epoch.EpochID, "", "")
-	end := BytesPrefix(start)
-	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), start, end)
+	iterRange := util.BytesPrefix(start)
+	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("new select range failed, reason: %s", err)
 		return nil, err

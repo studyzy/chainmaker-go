@@ -66,7 +66,7 @@ func (impl *DposImpl) isDposConsensus() bool {
 
 func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
 	// 1. get property: epochBlockNum
-	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_EpochBlockNumber.String()))
+	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyEpochBlockNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
@@ -102,7 +102,7 @@ func (impl *DposImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 }
 
 func (impl *DposImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
-	valNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_EpochValidatorNumber.String()))
+	valNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyEpochValidatorNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
@@ -176,7 +176,7 @@ func (impl *DposImpl) GetValidators() ([]string, error) {
 	if !impl.isDposConsensus() {
 		return nil, nil
 	}
-	epochBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(common.StakePrefix_Prefix_Curr_Epoch.String()))
+	epochBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
 	if err != nil {
 		impl.log.Errorf("read epochInfo from stateDB failed, reason: %s", err)
 		return nil, err
