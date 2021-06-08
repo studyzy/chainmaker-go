@@ -14,13 +14,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/mr-tron/base58/base58"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mr-tron/base58/base58"
 
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 
@@ -110,6 +111,9 @@ var (
 	dposParamFrom  = ""
 	dposParamTo    = ""
 	dposParamValue = ""
+
+	// cal address from cert
+	certPath = ""
 )
 
 func main() {
@@ -131,6 +135,7 @@ func main() {
 	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")
 	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token")
 
+	flag.StringVar(&certPath, "cert_path", "", "path of cert that will calculate address")
 	flag.Parse()
 
 	conn, err := initGRPCConn(true, 0)
@@ -176,6 +181,8 @@ func main() {
 		undelegate()
 	case 10: // 10)查询指定用户余额
 		balanceOf()
+	case 15: // 15)提取证书中的公钥，计算对应的地址
+		calAddressFromCert()
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -186,6 +193,28 @@ var (
 	marshalFailedStr = "marshal payload failed, %s"
 	deadLineErr      = "WARN: client.call err: deadline"
 )
+
+func calAddressFromCert() {
+	if len(certPath) == 0 {
+		panic("cert path is null")
+	}
+
+	certContent, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		panic(fmt.Errorf("read cert content failed, reason: %s", err))
+	}
+	cert, err := utils.ParseCert(certContent)
+	if err != nil {
+		panic(fmt.Errorf("parse cert failed, reason: %s", err))
+	}
+	pubkey, err := cert.PublicKey.Bytes()
+	if err != nil {
+		panic(fmt.Errorf("get pubkey failed from cert, reason: %s", err))
+	}
+	hash := sha256.Sum256(pubkey)
+	addr := base58.Encode(hash[:])
+	fmt.Printf("address: %s from cert: %s\n", addr, certPath)
+}
 
 func testCertQuery(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	file, err := ioutil.ReadFile(userCrtPath)
@@ -848,20 +877,20 @@ func mint() {
 	}
 	params := []*commonPb.KeyValuePair{
 		{
-			Key: "to",
-		    Value: toAddr,
+			Key:   "to",
+			Value: toAddr,
 		},
 		{
-			Key: "value",
+			Key:   "value",
 			Value: value,
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName: commonPb.DPoSERC20ContractFunction_MINT.String(),
-		Pairs: params,
+		MethodName:   commonPb.DPoSERC20ContractFunction_MINT.String(),
+		Pairs:        params,
 	})
 	if err == nil {
 		fmt.Printf("mint send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -881,20 +910,20 @@ func delegate() {
 	}
 	params := []*commonPb.KeyValuePair{
 		{
-			Key: "to",
+			Key:   "to",
 			Value: toAddr,
 		},
 		{
-			Key: "amount",
+			Key:   "amount",
 			Value: value,
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		MethodName: commonPb.DPoSStakeContractFunction_DELEGATE.String(),
-		Pairs: params,
+		MethodName:   commonPb.DPoSStakeContractFunction_DELEGATE.String(),
+		Pairs:        params,
 	})
 	if err == nil {
 		fmt.Printf("delegate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -913,20 +942,20 @@ func undelegate() {
 	}
 	params := []*commonPb.KeyValuePair{
 		{
-			Key: "to",
+			Key:   "to",
 			Value: toAddr,
 		},
 		{
-			Key: "amount",
+			Key:   "amount",
 			Value: value,
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		MethodName: commonPb.DPoSStakeContractFunction_UNDELEGATE.String(),
-		Pairs: params,
+		MethodName:   commonPb.DPoSStakeContractFunction_UNDELEGATE.String(),
+		Pairs:        params,
 	})
 	if err == nil {
 		fmt.Printf("undelegate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -942,16 +971,16 @@ func balanceOf() {
 	sk, member, toAddr, _, err := loadDposParams()
 	params := []*commonPb.KeyValuePair{
 		{
-			Key: "owner",
+			Key:   "owner",
 			Value: toAddr,
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName: commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
-		Pairs: params,
+		MethodName:   commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
+		Pairs:        params,
 	})
 	if err == nil {
 		fmt.Printf("get balance of send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -968,13 +997,13 @@ func balanceOf() {
 }
 
 func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string, error) {
-	if dposParamTo == ""{
+	if dposParamTo == "" {
 		log.Fatalf("dposParamTo: %s\n", dposParamTo)
 	}
 	var (
 		toAddr string
-		toIdx int64
-		err error
+		toIdx  int64
+		err    error
 	)
 	// 判断dposParams的信息
 	toIdx, err = strconv.ParseInt(dposParamTo, 10, 32)
@@ -1005,7 +1034,7 @@ func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string
 			skIdx = int(ownerIdx)
 		}
 	}
-	sk, member := getUserSK(skIdx + 1, userKeyPaths[skIdx], userCrtPaths[skIdx])
+	sk, member := getUserSK(skIdx+1, userKeyPaths[skIdx], userCrtPaths[skIdx])
 	return sk, member, toAddr, dposParamValue, nil
 }
 
