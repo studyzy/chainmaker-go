@@ -81,7 +81,7 @@ type ConsensusTBFTImpl struct {
 	logger           *logger.CMLogger
 	chainID          string
 	Id               string
-	dpos             protocol.Dpos
+	dpos             protocol.DPoS
 	singer           protocol.SigningMember
 	ac               protocol.AccessControlProvider
 	dbHandle         protocol.DBHandle
@@ -120,7 +120,7 @@ type ConsensusTBFTImpl struct {
 type ConsensusTBFTImplConfig struct {
 	ChainID     string
 	Id          string
-	Dpos        protocol.Dpos
+	Dpos        protocol.DPoS
 	Signer      protocol.SigningMember
 	Ac          protocol.AccessControlProvider
 	DbHandle    protocol.DBHandle
@@ -425,10 +425,10 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 		return
 	}
 
-	// add Dpos consensus args in block
-	consensusRwSets, err := consensus.dpos.CreateDposRWSets(block.Header.PreBlockHash, proposedBlock)
+	// add DPoS consensus args in block
+	consensusRwSets, err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock)
 	if err != nil {
-		consensus.logger.Errorf("[%s](%d/%d/%s) Create Dpos RWSets failed, reason: %s",
+		consensus.logger.Errorf("[%s](%d/%d/%s) Create DPoS RWSets failed, reason: %s",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
 		return
 	}
@@ -496,7 +496,7 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 	}
 
 	if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
-		consensus.logger.Warnf("verify block Dpos consensus failed, reason: %s", err)
+		consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
 		return
 	}
 

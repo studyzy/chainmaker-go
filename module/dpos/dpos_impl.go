@@ -23,7 +23,7 @@ func NewDposImpl(log protocol.Logger, chainConf protocol.ChainConf, blockChainSt
 	return &DposImpl{stateDB: blockChainStore, log: log, chainConf: chainConf}
 }
 
-func (impl *DposImpl) CreateDposRWSets(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
+func (impl *DposImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
 	// 1. judge consensus: dpos
 	if !impl.isDposConsensus() {
 		return nil, nil
@@ -153,7 +153,7 @@ func (impl *DposImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[
 	if !impl.isDposConsensus() {
 		return nil
 	}
-	localConsensus, err := impl.CreateDposRWSets(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
+	localConsensus, err := impl.CreateDPoSRWSet(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
 	if err != nil {
 		impl.log.Errorf("get dpos txRwSets failed, reason: %s", err)
 		return err

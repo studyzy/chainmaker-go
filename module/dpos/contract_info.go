@@ -173,7 +173,7 @@ func (impl *DposImpl) addBalanceRwSet(addr string, amount string, block *common.
 	add, ok := big.NewInt(0).SetString(amount, 10)
 	if !ok {
 		impl.log.Errorf("invalid amount: %s", amount)
-		return nil, fmt.Errorf("\"invalid amount: %s", amount)
+		return nil, fmt.Errorf("invalid amount: %s", amount)
 	}
 	after := before.Add(add, before)
 	return &commonpb.TxWrite{
@@ -191,7 +191,7 @@ func (impl *DposImpl) subBalanceRwSet(addr string, amount string, block *common.
 	sub, ok := big.NewInt(0).SetString(amount, 10)
 	if !ok {
 		impl.log.Errorf("invalid amount: %s", amount)
-		return nil, fmt.Errorf("\"invalid amount: %s", amount)
+		return nil, fmt.Errorf("invalid amount: %s", amount)
 	}
 	if before.Cmp(sub) < 0 {
 		impl.log.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())

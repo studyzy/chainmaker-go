@@ -44,7 +44,7 @@ func (f Factory) NewConsensusEngine(
 	chainConf protocol.ChainConf,
 	store protocol.BlockchainStore,
 	helper protocol.HotStuffHelper,
-	dpos protocol.Dpos) (protocol.ConsensusEngine, error) {
+	dpos protocol.DPoS) (protocol.ConsensusEngine, error) {
 	switch consensusType {
 	case consensuspb.ConsensusType_TBFT:
 		config := tbft.ConsensusTBFTImplConfig{
