@@ -122,7 +122,8 @@ func main() {
 		wasmType int
 	)
 	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator,"+
-		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: delegate, 9: undelegate, 10: balance of owner")
+		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: delegate, 9: undelegate," +
+		" 10: balance of owner, 11: set relationship between user and node_id")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
 	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
@@ -131,9 +132,9 @@ func main() {
 	flag.StringVar(&consensusExtKeys, "consensus_keys", "", "key1,key2,key3")
 	flag.StringVar(&consensusExtValues, "consensus_Values", "", "value1,value2,value3")
 
-	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")
-	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")
-	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token")
+	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg") // 谁来发送这笔交易，可能具有业务意义，也可能没有
+	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to") // 接收方，可以是一个地址或其他方式
+	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token") // token值，该参数可有可无
 
 	flag.StringVar(&certPath, "cert_path", "", "path of cert that will calculate address")
 	flag.Parse()
@@ -181,6 +182,8 @@ func main() {
 		undelegate()
 	case 10: // 10)查询指定用户余额
 		balanceOf()
+	case 11: // 11)设置地址和NodeID之间的关系
+		setRelationshipForAddrAndNodeId()
 	case 15: // 15)提取证书中的公钥，计算对应的地址
 		calAddressFromCert()
 	default:
@@ -993,7 +996,36 @@ func balanceOf() {
 		fmt.Println(deadLineErr)
 		return
 	}
-	fmt.Printf("ERROR: client.call err in dpos_stake_undelegate: %v\n", err)
+	fmt.Printf("ERROR: client.call err in dpos_erc20_balanceof: %v\n", err)
+}
+
+func setRelationshipForAddrAndNodeId() {
+	sk, member, nodeID, _, err := loadDposParams()
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "node_id",
+			Value: nodeID,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+		// todo 等待pb调整
+		MethodName:   commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		if resp != nil {
+			return
+		}
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
 }
 
 func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string, error) {
