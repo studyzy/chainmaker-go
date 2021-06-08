@@ -7,18 +7,19 @@ package native
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math/big"
+	"strconv"
+
+	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/shopspring/decimal"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"math/big"
-	"strconv"
 )
 
 // Key: validatorPrefix + ValidatorAddress
@@ -79,7 +80,7 @@ func newDelegation(delegatorAddress, validatorAddress string, shares string) *co
 func newUnbondingDelegation(EpochID uint64, DelegatorAddress, ValidatorAddress string) *commonPb.UnbondingDelegation {
 	UnbondingDelegationEntry := make([]*commonPb.UnbondingDelegationEntry, 0)
 	return &commonPb.UnbondingDelegation{
-		EpochID: strconv.Itoa(int(EpochID)),
+		EpochID:          strconv.Itoa(int(EpochID)),
 		DelegatorAddress: DelegatorAddress,
 		ValidatorAddress: ValidatorAddress,
 		Entries:          UnbondingDelegationEntry,
@@ -88,9 +89,9 @@ func newUnbondingDelegation(EpochID uint64, DelegatorAddress, ValidatorAddress s
 
 func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amount string) *commonPb.UnbondingDelegationEntry {
 	return &commonPb.UnbondingDelegationEntry{
-		CreationEpochID: CreationEpochID,
+		CreationEpochID:   CreationEpochID,
 		CompletionEpochID: CompletionEpochID,
-		Amount:          amount,
+		Amount:            amount,
 	}
 }
 
@@ -120,6 +121,7 @@ func registerDPosStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.UnDelegate
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPosStakeRuntime.ReadEpochByID
 	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpoch
+	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.SetNodeID // todo will rename: setNodeID
 
 	return methodMap
 }
@@ -322,6 +324,33 @@ func (s *DPosStakeRuntime) GetDelegationByAddress(context protocol.TxSimContext,
 	return proto.Marshal(di)
 }
 
+func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	nodeID := params["node_id"]
+	if len(nodeID) == 0 {
+		s.log.Errorf("SetNodeID nodeID is null")
+		return nil, fmt.Errorf("nodeID is null")
+	}
+
+	sender, err := loadSenderAddress(context) // Use ERC20 parse method
+	if err != nil {
+		s.log.Errorf("get sender address error: ", err.Error())
+		return nil, err
+	}
+
+	key := ToNodeIDKey(sender)
+	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, []byte(nodeID)); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+// todo. will add prefix
+func ToNodeIDKey(addr string) []byte {
+	bz := bytes.NewBufferString("")
+	bz.WriteString(addr)
+	return bz.Bytes()
+}
+
 // Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
 // @params["from"] 		解质押的验证人
 // @params["amount"] 	解质押数量，1 * 10 ^ 18
@@ -389,12 +418,12 @@ func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		s.log.Errorf("update validator [%s] share error: ", undelegateValidatorAddress, err.Error())
 		return nil, err
 	}
-	err = updateValidatorTokens(v, "-" + amount)
+	err = updateValidatorTokens(v, "-"+amount)
 	if err != nil {
 		s.log.Errorf("update validator [%s] tokens error: ", undelegateValidatorAddress, err.Error())
 		return nil, err
 	}
-	err = updateValidatorSelfDelegate(v, "-" + amount)
+	err = updateValidatorSelfDelegate(v, "-"+amount)
 	if err != nil {
 		s.log.Errorf("update validator [%s] self delegation error: ", undelegateValidatorAddress, err.Error())
 		return nil, err
@@ -480,6 +509,10 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 			// 如果是新建 validator, 抵押人被抵押人必须是同一个人
 			return nil, fmt.Errorf("no such validator, validator address: %s", validatorAddress)
 		} else {
+			key := ToNodeIDKey(validatorAddress)
+			if bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key); err != nil || len(bz) == 0 {
+				return nil, fmt.Errorf("not set validator nodeID, you should first set nodeID with validator")
+			}
 			v = newValidator(validatorAddress)
 		}
 		return v, nil

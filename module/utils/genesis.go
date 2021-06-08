@@ -37,6 +37,7 @@ const (
 	keyStakeEpochValidatorNum  = "stake.epochValidatorNum"
 	keyStakeEpochBlockNum      = "stake.epochBlockNum"
 	keyStakeCandidate          = "stake.candidate"
+	keyStakeConfigNodeID       = "stake.nodeID"
 )
 
 // CreateGenesis create genesis block (with read-write set) based on chain config
@@ -367,6 +368,7 @@ type StakeConfig struct {
 	validatorNum      uint64
 	eachEpochNum      uint64
 	candidates        []*dpospb.CandidateInfo
+	nodeIDs           map[string]string // userAddr => nodeID
 }
 
 func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
@@ -467,6 +469,13 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		Key:          append([]byte(commonPb.StakePrefix_Prefix_Epoch_Record.String()), epochID...), // key: prefix|epochID
 		Value:        epochInfo,                                                                     // val: epochInfo
 	})
+	for addr, nodeID := range s.nodeIDs {
+		rwSets = append(rwSets, &commonPb.TxWrite{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          append([]byte(commonPb.StakePrefix_Prefix_Epoch_Record.String()), []byte(addr)...), // key: prefix|epochID todo, will rename prefix
+			Value:        []byte(nodeID),                                                                     // val: nodeID
+		})
+	}
 	return rwSets, nil
 }
 
@@ -485,6 +494,29 @@ func (s *StakeConfig) getSumToken() *BigInteger {
 	return sum
 }
 
+func (s *StakeConfig) setCandidate(key, value string) error {
+	values := strings.Split(key, ":")
+	if len(values) != 2 {
+		return fmt.Errorf("stake.candidate config error, actual: %s, expect: %s:<addr1>", key, keyStakeCandidate)
+	}
+	if err := isValidBigInt(value); err != nil {
+		return fmt.Errorf("stake.candidate amount error, reason: %s", err)
+	}
+	s.candidates = append(s.candidates, &dpospb.CandidateInfo{
+		PeerID: values[1], Weight: value,
+	})
+	return nil
+}
+
+func (s *StakeConfig) setNodeID(key, value string) error {
+	values := strings.Split(key, ":")
+	if len(values) != 2 {
+		return fmt.Errorf("stake.nodeIDs config error, actual: %s, expect: %s:<addr1>", key, keyStakeConfigNodeID)
+	}
+	s.nodeIDs[values[1]] = value
+	return nil
+}
+
 func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig, error) {
 	/**
 	  stake合约的配置
@@ -499,8 +531,10 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 	      value: 800000
 		- key: stake.candidate:<addr2>
 	      value: 600000
+		- key: stake.nodeID:<addr1>
+		  value: nodeID
 	*/
-	config := StakeConfig{}
+	config := &StakeConfig{}
 	for _, kv := range consensusExtConfig {
 		switch kv.Key {
 		case keyStakeEpochBlockNum:
@@ -521,22 +555,19 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 			}
 			config.minSelfDelegation = kv.Value
 		default:
-			if !strings.HasPrefix(kv.Key, keyStakeCandidate) {
-				continue
+			if strings.HasPrefix(kv.Key, keyStakeCandidate) {
+				if err := config.setCandidate(kv.Key, kv.Value); err != nil {
+					return nil, err
+				}
 			}
-			values := strings.Split(kv.Key, ":")
-			if len(values) != 2 {
-				return nil, fmt.Errorf("stake.candidate config error, actual: %s, expect: %s:<addr1>", kv.Key, keyStakeCandidate)
+			if strings.HasPrefix(kv.Key, keyStakeConfigNodeID) {
+				if err := config.setNodeID(kv.Key, kv.Value); err != nil {
+					return nil, err
+				}
 			}
-			if err := isValidBigInt(kv.Value); err != nil {
-				return nil, fmt.Errorf("stake.candidate amount error, reason: %s", err)
-			}
-			config.candidates = append(config.candidates, &dpospb.CandidateInfo{
-				PeerID: values[1], Weight: kv.Value,
-			})
 		}
 	}
-	return &config, nil
+	return config, nil
 }
 
 func isValidBigInt(val string) error {

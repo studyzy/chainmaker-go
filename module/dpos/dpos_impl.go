@@ -9,6 +9,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/pb/protogo/dpos"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/vm/native"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -185,5 +186,16 @@ func (impl *DposImpl) GetValidators() ([]string, error) {
 		impl.log.Errorf("proto unmarshal epoch failed, reason: %s", err)
 		return nil, err
 	}
-	return epoch.ProposerVector, nil
+
+	nodeIDs := make([]string, 0, len(epoch.ProposerVector))
+	for _, validator := range epoch.ProposerVector {
+		nodeID, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), native.ToNodeIDKey(validator))
+		if err != nil || len(nodeID) == 0 {
+			err = fmt.Errorf("read nodeID of the validator[%s] failed, reason: %s", validator, err)
+			impl.log.Errorf("%s", err)
+			return nil, err
+		}
+		nodeIDs = append(nodeIDs, string(nodeID))
+	}
+	return nodeIDs, nil
 }
