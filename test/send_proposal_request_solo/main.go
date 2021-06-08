@@ -153,14 +153,14 @@ func main() {
 }
 
 func initWasmerTest() {
-	WasmPath = "../wasm/rust-func-verify-1.2.0.wasm"
-	WasmUpgradePath = "../wasm/rust-func-verify-1.2.0.wasm"
+	WasmPath = "../wasm/rust-func-verify-1.2.1.wasm"
+	WasmUpgradePath = "../wasm/rust-func-verify-1.2.1.wasm"
 	contractName = "contract100"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
-	WasmPath = "../wasm/go-fact-1.2.0.wasm"
-	WasmUpgradePath = "../wasm/go-func-verify-1.2.0.wasm"
+	WasmPath = "../wasm/go-fact-1.2.1.wasm"
+	WasmUpgradePath = "../wasm/go-func-verify-1.2.1.wasm"
 	contractName = "contract200"
 	runtimeType = commonPb.RuntimeType_GASM
 }
