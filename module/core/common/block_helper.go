@@ -430,7 +430,7 @@ type VerifierBlock struct {
 	ac              protocol.AccessControlProvider
 	snapshotManager protocol.SnapshotManager
 	vmMgr           protocol.VmManager
-	txScheduler     *TxScheduler
+	txScheduler     protocol.TxScheduler
 	txPool          protocol.TxPool
 	blockchainStore protocol.BlockchainStore
 	proposalCache   protocol.ProposalCache // proposal cache
@@ -448,7 +448,8 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		blockchainStore: conf.BlockchainStore,
 		proposalCache:   conf.ProposalCache,
 	}
-	verifyBlock.txScheduler = NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf)
+	var schedulerFactory TxSchedulerFactory
+	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf)
 	return verifyBlock
 }
 

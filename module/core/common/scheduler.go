@@ -16,8 +16,6 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/monitor"
 	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -45,22 +43,6 @@ type TxScheduler struct {
 
 // Transaction dependency in adjacency table representation
 type dagNeighbors map[int]bool
-
-// NewTxScheduler building a transaction scheduler
-func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxScheduler {
-	TxScheduler := &TxScheduler{
-		lock:            sync.Mutex{},
-		VmManager:       vmMgr,
-		scheduleFinishC: make(chan bool),
-		log:             logger.GetLoggerByChain(logger.MODULE_CORE, chainConf.ChainConfig().ChainId),
-		chainConf:       chainConf,
-	}
-	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		TxScheduler.metricVMRunTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER_SCHEDULER, "metric_vm_run_time",
-			"VM run time metric", []float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10}, "chainId")
-	}
-	return TxScheduler
-}
 
 func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction) protocol.TxSimContext {
 	return &txSimContextImpl{
