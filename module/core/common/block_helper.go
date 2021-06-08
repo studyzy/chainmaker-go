@@ -118,9 +118,12 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 			block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
 
-	//if len(block.Txs) == 0 {
-	//	return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
-	//}
+	// deal with the special situation：
+	// 1. only one tx and schedule time out
+	// 2. package the empty block
+	if !utils.CanProposeEmptyBlock(bb.chainConf.ChainConfig().Consensus.Type) && len(block.Txs) == 0{
+		return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
+	}
 
 	err = FinalizeBlock(
 		block,
