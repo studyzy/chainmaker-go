@@ -179,7 +179,7 @@ func (impl *DposImpl) addBalanceRwSet(addr string, amount string, block *common.
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
-		Value:        after.Bytes(),
+		Value:        []byte(after.String()),
 	}, nil
 }
 
@@ -201,7 +201,7 @@ func (impl *DposImpl) subBalanceRwSet(addr string, amount string, block *common.
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
-		Value:        after.Bytes(),
+		Value:        []byte(after.String()),
 	}, nil
 }
 
