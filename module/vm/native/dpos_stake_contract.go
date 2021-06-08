@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math/big"
@@ -24,6 +23,7 @@ import (
 const (
 	prefixValidator	= "V/"
 
+	KeyNodeIDFormat					= "N/%s"
 	KeyValidatorFormat 				= "V/%s"
 	KeyDelegationFormat 			= "D/%s/%s"
 	KeyEpochFormat 					= "E/%s"
@@ -37,18 +37,26 @@ const (
 )
 
 // ToValidatorKey - Key: V + "/" + ValidatorAddress
-func ToValidatorKey(ValidatorAddress string) string {
-	return fmt.Sprintf(KeyValidatorFormat, ValidatorAddress)
+func ToValidatorKey(ValidatorAddress string) []byte {
+	return []byte(fmt.Sprintf(KeyValidatorFormat, ValidatorAddress))
 }
 
 // ToDelegationKey - Key: D + "/" + DelegatorAddress + "/" + ValidatorAddress
-func ToDelegationKey(DelegatorAddress, ValidatorAddress string) string {
-	return fmt.Sprintf(KeyDelegationFormat, DelegatorAddress, ValidatorAddress)
+func ToDelegationKey(DelegatorAddress, ValidatorAddress string) []byte {
+	return []byte(fmt.Sprintf(KeyDelegationFormat, DelegatorAddress, ValidatorAddress))
 }
 
 // ToEpochKey - Key：E + "/" + EpochID
-func ToEpochKey(epochID string) string {
-	return fmt.Sprintf(KeyEpochFormat, epochID)
+func ToEpochKey(epochID string) []byte {
+	return []byte(fmt.Sprintf(KeyEpochFormat, epochID))
+}
+
+// ToNodeIDKey - Key：N + "/" + NodeID
+func ToNodeIDKey(addr string) []byte {
+	//bz := bytes.NewBufferString("")
+	//bz.WriteString(addr)
+	//return bz.Bytes()
+	return []byte(fmt.Sprintf(KeyNodeIDFormat, addr))
 }
 
 // ToUnbondingDelegationKey - Key：U + "/" + EpochID + "/" + DelegatorAddress + "/" + ValidatorAddress
@@ -137,7 +145,7 @@ func registerDPosStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.UnDelegate
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPosStakeRuntime.ReadEpochByID
 	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpoch
-	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.SetNodeID // todo will rename: setNodeID
+	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPosStakeRuntime.SetNodeID
 
 	return methodMap
 }
@@ -298,12 +306,12 @@ func (s *DPosStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 	}
 
 	// 写入存储
-	err = save(context, []byte(ToDelegationKey(from, to)), d)
+	err = save(context, ToDelegationKey(from, to), d)
 	if err != nil {
 		s.log.Errorf("save delegate error: ", err.Error())
 		return nil, err
 	}
-	err = save(context, []byte(ToValidatorKey(to)), v)
+	err = save(context, ToValidatorKey(to), v)
 	if err != nil {
 		s.log.Errorf("save validator error: ", err.Error())
 		return nil, err
@@ -351,13 +359,6 @@ func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 		return nil, err
 	}
 	return nil, nil
-}
-
-// todo. will add prefix
-func ToNodeIDKey(addr string) []byte {
-	bz := bytes.NewBufferString("")
-	bz.WriteString(addr)
-	return bz.Bytes()
 }
 
 // Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
@@ -456,7 +457,7 @@ func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		s.log.Errorf("save unbonding delegation error: ", err.Error())
 		return nil, err
 	}
-	err = save(context, []byte(ToValidatorKey(undelegateValidatorAddress)), v)
+	err = save(context, ToValidatorKey(undelegateValidatorAddress), v)
 	if err != nil {
 		s.log.Errorf("save validator error: ", err.Error())
 		return nil, err
@@ -486,7 +487,7 @@ func (s *DPosStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params m
 
 	epochID := params["epoch_id"]
 
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(ToEpochKey(epochID)))
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToEpochKey(epochID))
 	if err != nil {
 		return nil, err
 	}
@@ -495,7 +496,7 @@ func (s *DPosStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params m
 
 // 获取或创建 validator
 func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Validator, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(ToValidatorKey(validatorAddress)))
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +531,7 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 
 // 返回 validator 字节数据
 func getValidatorBytes(context protocol.TxSimContext, validatorAddress string) ([]byte, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(ToValidatorKey(validatorAddress)))
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +543,7 @@ func getValidatorBytes(context protocol.TxSimContext, validatorAddress string) (
 
 // 返回 validator 对象
 func getValidator(context protocol.TxSimContext, validatorAddress string) (*commonPb.Validator, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(ToValidatorKey(validatorAddress)))
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -681,7 +682,7 @@ func calcAmountByShare(tokens string, shares string, amount string) (*big.Int, e
 
 // 获取或创建 delegation
 func getOrCreateDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Delegation, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(ToDelegationKey(delegatorAddress, validatorAddress)))
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
