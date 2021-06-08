@@ -296,7 +296,7 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 		if bp.chainConf.ChainConfig().Contract.EnableSqlSupport {
 			_ = bp.blockchainStore.RollbackDbTransaction(block.GetTxKey())
 			// drop database if create contract fail
-			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+			if len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
 				var payload commonpb.ContractMgmtPayload
 				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
 					if payload.ContractId != nil {
@@ -371,7 +371,7 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 		return
 	}
 	height, _ := bp.ledgerCache.CurrentHeight()
-	bp.proposalCache.ResetProposedAt(height+1) // proposer status changed, reset this round proposed status
+	bp.proposalCache.ResetProposedAt(height + 1) // proposer status changed, reset this round proposed status
 	bp.setIsSelfProposer(proposeStatus)
 	if !bp.isSelfProposer() {
 		bp.yieldProposing() // try to yield if proposer self is proposing right now.
@@ -413,7 +413,7 @@ func (bp *BlockProposerImpl) OnReceiveYieldProposeSignal(isYield bool) {
 		// halt scheduler execution
 		bp.txScheduler.Halt()
 		height, _ := bp.ledgerCache.CurrentHeight()
-		bp.proposalCache.ResetProposedAt(height+1)
+		bp.proposalCache.ResetProposedAt(height + 1)
 	}
 }
 

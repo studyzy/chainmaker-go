@@ -214,6 +214,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		txWriteKeyMap:   map[string]*commonPb.TxWrite{},
 		txWriteKeySql:   make([]*commonPb.TxWrite, 0),
 		sqlRowCache:     make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:      make(map[int32]protocol.StateIterator, 0),
 		blockchainStore: store,
 		vmManager:       vmMgr,
 	}
@@ -284,6 +285,7 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		txWriteKeyMap: map[string]*commonPb.TxWrite{},
 		txWriteKeySql: make([]*commonPb.TxWrite, 0),
 		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:    make(map[int32]protocol.StateIterator, 0),
 		vmManager:     vmMgr,
 	}
 

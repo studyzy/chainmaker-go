@@ -73,4 +73,6 @@ type TxSimContext interface {
 	GetDepth() int
 	SetStateSqlHandle(int32, SqlRows)
 	GetStateSqlHandle(int32) (SqlRows, bool)
+	SetStateKvHandle(int32, StateIterator)
+	GetStateKvHandle(int32) (StateIterator, bool)
 }

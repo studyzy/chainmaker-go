@@ -36,7 +36,7 @@ type BlockVerifierImpl struct {
 	ledgerCache     protocol.LedgerCache     // ledger cache
 	blockchainStore protocol.BlockchainStore // blockchain store
 
-	reentrantLocks *common.ReentrantLocks                // reentrant lock for avoid concurrent verify block
+	reentrantLocks *common.ReentrantLocks         // reentrant lock for avoid concurrent verify block
 	proposalCache  protocol.ProposalCache         // proposal cache
 	chainConf      protocol.ChainConf             // chain config
 	ac             protocol.AccessControlProvider // access control manager
@@ -128,7 +128,6 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		isSqlDb := v.chainConf.ChainConfig().Contract.EnableSqlSupport
 		notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
 		if notSolo || isSqlDb {
-			// the block has verified befo
 			// the block has verified before
 			v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
 			isValid = true
