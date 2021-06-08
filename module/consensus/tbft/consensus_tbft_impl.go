@@ -428,11 +428,15 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 	// add Dpos consensus args in block
 	consensusRwSets, err := consensus.dpos.CreateDposRWSets(block.Header.PreBlockHash, proposedBlock)
 	if err != nil {
-		consensus.logger.Errorf("CreateDposRWSets failed, reason: %s", err)
+		consensus.logger.Errorf("[%s](%d/%d/%s) Create Dpos RWSets failed, reason: %s",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+		return
 	}
 	if consensusRwSets != nil {
 		if block, err = consensus.dpos.AddConsensusArgsToBlock(consensusRwSets, block); err != nil {
-			consensus.logger.Errorf("AddConsensusArgsToBlock failed, reason: %s", err)
+			consensus.logger.Errorf("[%s](%d/%d/%s) AddConsensusArgsToBlock failed, reason: %s",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+			return
 		}
 	}
 
@@ -440,6 +444,7 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 	hash, sig, err := utils.SignBlock(consensus.chainConf.ChainConfig().Crypto.Hash, consensus.singer, block)
 	if err != nil {
 		consensus.logger.Errorf("[%s]sign block failed, %s", consensus.Id, err)
+		return
 	}
 	block.Header.BlockHash = hash[:]
 	block.Header.Signature = sig
