@@ -572,6 +572,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveCACert(context protocol.TxSimContext,
 func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	proofDataStr := params["proof"]
+	r.log.Debug("SaveRemoteAttestation start, proof data: ", proofDataStr)
 	if utils.IsAnyBlank(proofDataStr) {
 		err := fmt.Errorf("'proof' is nil")
 		r.log.Errorf(err.Error())
@@ -579,6 +580,7 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	}
 
 	proofData, err := hex.DecodeString(proofDataStr)
+	r.log.Debug("SaveRemoteAttestation decoded proof data: ", proofData)
 	if err != nil {
 		r.log.Errorf(err.Error())
 		return nil, err
