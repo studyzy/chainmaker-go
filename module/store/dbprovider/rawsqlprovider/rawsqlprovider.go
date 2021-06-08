@@ -10,15 +10,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -38,7 +38,7 @@ type SqlDBHandle struct {
 	log           protocol.Logger
 }
 
-func (p *SqlDBHandle) CompactRange(r util.Range) error {
+func (p *SqlDBHandle) CompactRange(start, limit []byte) error {
 	return errors.New("implement me")
 }
 

@@ -10,7 +10,6 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/store"
-	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 var (
@@ -232,7 +231,7 @@ type DBHandle interface {
 	WriteBatch(batch StoreBatcher, sync bool) error
 
 	// CompactRange compacts the underlying DB for the given key range.
-	CompactRange(r util.Range) error
+	CompactRange(start, limit []byte) error
 
 	// NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 	// start is included in the results and limit is excluded.

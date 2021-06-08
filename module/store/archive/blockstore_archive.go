@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package archive
 
 import (
+	"errors"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"errors"
-	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	logImpl "chainmaker.org/chainmaker-go/logger"
@@ -46,10 +47,10 @@ type ArchiveMgr struct {
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
 func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB) *ArchiveMgr {
 	archiveMgr := &ArchiveMgr{
-		archivedPivot:        0,
-		blockDB:              blockDB,
-		resultDB:             resultDB,
-		logger:               logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		archivedPivot: 0,
+		blockDB:       blockDB,
+		resultDB:      resultDB,
+		logger:        logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
 	}
 
 	unarchiveBlockHeight := uint64(0)
@@ -77,8 +78,8 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 
 	var (
 		lastHeight, archivedPivot uint64
-		txIdsMap	map[uint64][]string
-		err error
+		txIdsMap                  map[uint64][]string
+		err                       error
 	)
 
 	if lastHeight, err = mgr.blockDB.GetLastSavepoint(); err != nil {

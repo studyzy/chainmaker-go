@@ -21,7 +21,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -154,7 +153,7 @@ func (b *BlockKvDB) SetArchivedPivot(archivedPivot uint64) error {
 func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
 	var (
 		block *commonPb.Block
-		err error
+		err   error
 	)
 
 	if block, err = b.getBlockByHeightBytes(constructBlockNumKey(endHeight)); err != nil {
@@ -610,9 +609,9 @@ func decodeBlockNum(blockNumBytes []byte) uint64 {
 
 func (b *BlockKvDB) compactRange() {
 	//trigger level compact
-	for i:= 1; i <= 1; i ++ {
+	for i := 1; i <= 1; i++ {
 		b.Logger.Infof("Do %dst time CompactRange", i)
-		if err := b.DbHandle.CompactRange(util.Range{Start: nil, Limit: nil}); err != nil {
+		if err := b.DbHandle.CompactRange(nil, nil); err != nil {
 			b.Logger.Warnf("blockdb level compact failed: %v", err)
 		}
 		//time.Sleep(2 * time.Second)

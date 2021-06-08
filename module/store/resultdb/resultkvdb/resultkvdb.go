@@ -7,16 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package resultkvdb
 
 import (
+	"encoding/binary"
+	"fmt"
+
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/binary"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const (
@@ -194,9 +194,9 @@ func constructTxRWSetIDKey(txId string) []byte {
 
 func (h *ResultKvDB) compactRange() {
 	//trigger level compact
-	for i:= 1; i <= 1; i ++ {
+	for i := 1; i <= 1; i++ {
 		h.Logger.Infof("Do %dst time CompactRange", i)
-		if err := h.DbHandle.CompactRange(util.Range{Start: nil, Limit: nil}); err != nil {
+		if err := h.DbHandle.CompactRange(nil, nil); err != nil {
 			h.Logger.Warnf("resultdb level compact failed: %v", err)
 		}
 		//time.Sleep(2 * time.Second)
