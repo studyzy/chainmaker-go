@@ -578,7 +578,11 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 		return nil, err
 	}
 
-	proofData := []byte(proofDataStr)
+	proofData, err := hex.DecodeString(proofDataStr)
+	if err != nil {
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
 
 	//
 	//
@@ -737,10 +741,14 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-
+	reportStr, err := hex.DecodeString(report)
+	if err != nil {
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
 	// save report into chain
 	enclaveIdKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
-	if err := context.Put(enclaveIdKey, []byte("report"), []byte(report)); err != nil {
+	if err := context.Put(enclaveIdKey, []byte("report"), []byte(reportStr)); err != nil {
 		err := fmt.Errorf("save enclave 'report' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
@@ -767,7 +775,9 @@ func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext
 		return nil, err
 	}
 
-	return report, nil
+	reportBytes := make([]byte, hex.EncodedLen(len(report)))
+	hex.Encode(reportBytes, report)
+	return reportBytes, nil
 }
 
 func (r *PrivateComputeRuntime) QueryEnclaveChallenge(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -829,8 +839,9 @@ func (r *PrivateComputeRuntime) QueryEnclaveProof(context protocol.TxSimContext,
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-
-	return proof, nil
+	proofBytes := make([]byte, hex.EncodedLen(len(proof)))
+	hex.Encode(proofBytes, proof)
+	return proofBytes, nil
 }
 
 func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, params map[string]string) ([]byte, error) {
