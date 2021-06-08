@@ -32,7 +32,7 @@ const (
 	keyERC20Total              = "erc20.total"
 	keyERC20Owner              = "erc20.owner"
 	keyERC20Decimals           = "erc20.decimals"
-	keyERC20Acc                = "erc20.acc:"
+	keyERC20Acc                = "erc20.account:"
 	keyStakeMinSelfDelegation  = "stake.minSelfDelegation"
 	keyStakeEpochValidatorNum  = "stake.epochValidatorNum"
 	keyStakeEpochBlockNum      = "stake.epochBlockNum"
