@@ -154,6 +154,28 @@ type DPosStakeRuntime struct {
 	log *logger.CMLogger
 }
 
+// SetNodeID - 系加入节点绑定自身身份
+func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// check parans
+	err := checkParams(params, "node_id")
+	if err != nil {
+		return nil, err
+	}
+	nodeID := params["node_id"]
+
+	sender, err := loadSenderAddress(context) // Use ERC20 parse method
+	if err != nil {
+		s.log.Errorf("get sender address error: ", err.Error())
+		return nil, err
+	}
+
+	key := ToNodeIDKey(sender)
+	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, []byte(nodeID)); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 // GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人
 // return ValidatorVector
 func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -339,26 +361,6 @@ func (s *DPosStakeRuntime) GetDelegationByAddress(context protocol.TxSimContext,
 		return nil, err
 	}
 	return proto.Marshal(di)
-}
-
-func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	nodeID := params["node_id"]
-	if len(nodeID) == 0 {
-		s.log.Errorf("SetNodeID nodeID is null")
-		return nil, fmt.Errorf("nodeID is null")
-	}
-
-	sender, err := loadSenderAddress(context) // Use ERC20 parse method
-	if err != nil {
-		s.log.Errorf("get sender address error: ", err.Error())
-		return nil, err
-	}
-
-	key := ToNodeIDKey(sender)
-	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, []byte(nodeID)); err != nil {
-		return nil, err
-	}
-	return nil, nil
 }
 
 // Undelegation(from string, amount string) bool	// 解除抵押，更新验证人
