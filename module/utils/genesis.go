@@ -548,7 +548,9 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 		- key: stake.nodeID:<addr1>
 		  value: nodeID
 	*/
-	config := &StakeConfig{}
+	config := &StakeConfig{
+		nodeIDs: make(map[string]string),
+	}
 	for _, kv := range consensusExtConfig {
 		switch kv.Key {
 		case keyStakeEpochBlockNum:
