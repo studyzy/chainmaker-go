@@ -111,9 +111,6 @@ var (
 	dposParamFrom  = ""
 	dposParamTo    = ""
 	dposParamValue = ""
-
-	// cal address from cert
-	certPath = ""
 )
 
 func main() {
@@ -196,28 +193,6 @@ var (
 	marshalFailedStr = "marshal payload failed, %s"
 	deadLineErr      = "WARN: client.call err: deadline"
 )
-
-func calAddressFromCert() {
-	if len(certPath) == 0 {
-		panic("cert path is null")
-	}
-
-	certContent, err := ioutil.ReadFile(certPath)
-	if err != nil {
-		panic(fmt.Errorf("read cert content failed, reason: %s", err))
-	}
-	cert, err := utils.ParseCert(certContent)
-	if err != nil {
-		panic(fmt.Errorf("parse cert failed, reason: %s", err))
-	}
-	pubkey, err := cert.PublicKey.Bytes()
-	if err != nil {
-		panic(fmt.Errorf("get pubkey failed from cert, reason: %s", err))
-	}
-	hash := sha256.Sum256(pubkey)
-	addr := base58.Encode(hash[:])
-	fmt.Printf("address: %s from cert: %s\n", addr, certPath)
-}
 
 func testCertQuery(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	file, err := ioutil.ReadFile(userCrtPath)
