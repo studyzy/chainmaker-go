@@ -358,6 +358,30 @@ func BaseParam(parameters map[string]string) {
 type mockBlockchainStore struct {
 }
 
+func (m mockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetArchivedPivot() uint64 {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
+}
+
 func (m mockBlockchainStore) GetLastChainConfig() (*config.ChainConfig, error) {
 	panic("implement me")
 }
