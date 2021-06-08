@@ -139,23 +139,18 @@ func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params
 	}
 
 	// 过滤
-	minSelfDelegation, err := getMinSelfDelegation(context)
-	if err != nil {
-		s.log.Error("get min self delegation error: ", err.Error())
-		return nil, err
-	}
 	collection := &commonPb.ValidatorVector{}
 	for _, v := range vc {
 		if v == nil {
 			s.log.Errorf("validator is nil", v)
 			continue
 		}
-		value, err := stringToBigInt(v.SelfDelegation)
+		cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
 		if err != nil {
-			s.log.Errorf("convert self delegate string to integer error, amount: %s", v.SelfDelegation)
-			return nil, fmt.Errorf("convert self delegate string to integer error, amount: %s", v.SelfDelegation)
+			s.log.Errorf("compare min self delegation error, amount: %s", v.SelfDelegation)
+			return nil, fmt.Errorf("convert self delegate string to integer error, amount: %s, err: %s", v.SelfDelegation, err.Error())
 		}
-		if v.Jailed == true || value.Cmp(minSelfDelegation) == -1 || v.Status != commonPb.BondStatus_Bonded {
+		if v.Jailed == true || cmp == -1 || v.Status != commonPb.BondStatus_Bonded {
 			continue
 		}
 		collection.Vector = append(collection.Vector, v.ValidatorAddress)
@@ -263,13 +258,15 @@ func (s *DPosStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 			s.log.Errorf("update self delegate error: ", err.Error())
 			return nil, err
 		}
-		selfDelegationValue, err := stringToBigInt(v.SelfDelegation)
+		cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
 		if err != nil {
-			s.log.Errorf("get or create validator error: ", err.Error())
+			s.log.Errorf("compare min self delegation error: ", err.Error())
 			return nil, err
 		}
-		if v.Status == commonPb.BondStatus_Unbonded && selfDelegationValue.Cmp(minSelfDelegation) == 1 {
+		if v.Status == commonPb.BondStatus_Unbonded && cmp > 0 {
 			updateValidatorStatus(v, commonPb.BondStatus_Bonded)
+		} else if v.Status == commonPb.BondStatus_Unbonded && cmp == -1 {
+			updateValidatorStatus(v, commonPb.BondStatus_Unbonding)
 		}
 	}
 
@@ -309,7 +306,7 @@ func (s *DPosStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 // @params["address"]
 // return DelegationInfo
 func (s *DPosStakeRuntime) GetDelegationByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	// chekc params
+	// check params
 	err := checkParams(params, "address")
 	if err != nil {
 		return nil, err
@@ -348,7 +345,7 @@ func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 	epoch := &commonPb.Epoch{}
 	err = proto.Unmarshal(bz, epoch)
 	if err != nil {
-		s.log.Errorf("undelegate read latest epoch error")
+		s.log.Errorf("undelegate unmarshal latest epoch error")
 		return nil, err
 	}
 	// parse sender
@@ -358,7 +355,7 @@ func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		return nil, err
 	}
 	// check epoch undelegate amount
-	err = checkEpochUnDelegateAmount(s, context, sender, undelegateValidatorAddress, amount)
+	shares, err := s.checkEpochUnDelegateAmount(context, sender, undelegateValidatorAddress, amount)
 	if err != nil {
 		s.log.Errorf("check epoch undelegate amount error: ", err.Error())
 		return nil, err
@@ -378,16 +375,52 @@ func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		return nil, err
 	}
 	ud.Entries = append(ud.Entries, entry)
+
 	// update validator
-	err = updateValidatorUnDelegate(context, undelegateValidatorAddress, amount)
+	v, err := getValidator(context, undelegateValidatorAddress)
 	if err != nil {
-		s.log.Errorf("update validator undelegation error: ", err.Error())
+		s.log.Errorf("get validator [%s] error: ", undelegateValidatorAddress, err.Error())
 		return nil, err
+	}
+	negShare := &big.Int{}
+	negShare.Mul(shares, big.NewInt(-1))
+	err = updateValidatorShares(v, negShare)
+	if err != nil {
+		s.log.Errorf("update validator [%s] share error: ", undelegateValidatorAddress, err.Error())
+		return nil, err
+	}
+	err = updateValidatorTokens(v, "-" + amount)
+	if err != nil {
+		s.log.Errorf("update validator [%s] tokens error: ", undelegateValidatorAddress, err.Error())
+		return nil, err
+	}
+	err = updateValidatorSelfDelegate(v, "-" + amount)
+	if err != nil {
+		s.log.Errorf("update validator [%s] self delegation error: ", undelegateValidatorAddress, err.Error())
+		return nil, err
+	}
+	// compare self delegation
+	cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
+	if err != nil {
+		s.log.Errorf("compare min self delegation error: ", err.Error())
+		return nil, err
+	}
+	if cmp == -1 {
+		if v.SelfDelegation == "0" {
+			updateValidatorStatus(v, commonPb.BondStatus_Unbonded)
+		} else {
+			updateValidatorStatus(v, commonPb.BondStatus_Unbonding)
+		}
 	}
 	// save
 	err = save(context, ToUnbondingDelegationKey(completionEpoch, sender, undelegateValidatorAddress), ud)
 	if err != nil {
 		s.log.Errorf("save unbonding delegation error: ", err.Error())
+		return nil, err
+	}
+	err = save(context, []byte(ToValidatorKey(undelegateValidatorAddress)), v)
+	if err != nil {
+		s.log.Errorf("save validator error: ", err.Error())
 		return nil, err
 	}
 	return proto.Marshal(ud)
@@ -434,7 +467,7 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 		if err != nil {
 			return nil, err
 		}
-		if delegatorAddress == validatorAddress && v.Status != commonPb.BondStatus_Unbonding {
+		if delegatorAddress == validatorAddress {
 			return v, nil
 		}
 		if v.Status != commonPb.BondStatus_Bonded || v.Jailed == true {
@@ -464,21 +497,20 @@ func getValidatorBytes(context protocol.TxSimContext, validatorAddress string) (
 	return bz, nil
 }
 
-func updateValidatorUnDelegate(context protocol.TxSimContext, validatorAddress string, amount string) error {
+func getValidator(context protocol.TxSimContext, validatorAddress string) (*commonPb.Validator, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(ToValidatorKey(validatorAddress)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(bz) <= 0 {
-		return fmt.Errorf("no susch validator as address: %s", validatorAddress)
+		return nil, fmt.Errorf("no susch validator as address: %s", validatorAddress)
 	}
 	v := &commonPb.Validator{}
 	err = proto.Unmarshal(bz, v)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	//TODO update validator
-	return nil
+	return v, nil
 }
 
 func updateValidatorShares(validator *commonPb.Validator, shares *big.Int) error {
@@ -623,6 +655,7 @@ func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress str
 	if err != nil {
 		return nil, err
 	}
+	defer iter.Release()
 	delegationVector := make([]*commonPb.Delegation, 0)
 	for iter.Next() {
 		kv, err := iter.Value()
@@ -679,16 +712,16 @@ func getOrCreateUnbondingDelegation(context protocol.TxSimContext, epochID uint6
 	return ud, nil
 }
 
-func checkEpochUnDelegateAmount(s *DPosStakeRuntime, context protocol.TxSimContext, address string, validatorAddress string, amount string) error {
+func (s *DPosStakeRuntime) checkEpochUnDelegateAmount(context protocol.TxSimContext, address string, validatorAddress string, amount string) (*big.Int, error) {
 	// get delegate
 	bz, err := s.GetDelegationByAddress(context, map[string]string{"address": address})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	di := &commonPb.DelegationInfo{}
 	err = proto.Unmarshal(bz, di)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, d := range di.Infos {
@@ -696,30 +729,30 @@ func checkEpochUnDelegateAmount(s *DPosStakeRuntime, context protocol.TxSimConte
 			// convert delegate share string to big int
 			sharesValue, err := stringToBigInt(d.Shares)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			// find validator of delegation
 			b, err := s.GetValidatorByAddress(context, map[string]string{"address": d.ValidatorAddress})
 			if err != nil {
-				return err
+				return nil, err
 			}
 			v := &commonPb.Validator{}
 			err = proto.Unmarshal(b, v)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			// cal shares of undelegate amount
 			shares, err := calcShareByAmount(v.Tokens, v.DelegatorShares, amount)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			// share delta GT delegate share
+			// share delta LT delegate share
 			if shares.Cmp(sharesValue) < 0 {
-				return nil
+				return shares, nil
 			}
 		}
 	}
-	return fmt.Errorf("undelegate is ileagle")
+	return nil, fmt.Errorf("undelegate is ileagle")
 }
 
 // 返回所有验证人
@@ -804,4 +837,19 @@ func checkParams(params map[string]string, keys ...string) error {
 		}
 	}
 	return nil
+}
+
+// selfDelegation > minSelfDelegation 	: 1
+// selfDelegation == minSelfDelegation 	: 0
+// selfDelegation < minSelfDelegation 	: -1
+func compareMinSelfDelegation(context protocol.TxSimContext, selfDelegation string) (int, error) {
+	minSelfDelegation, err := getMinSelfDelegation(context)
+	if err != nil {
+		return 0, err
+	}
+	selfDelegationValue, err := stringToBigInt(selfDelegation)
+	if err != nil {
+		return 0, err
+	}
+	return selfDelegationValue.Cmp(minSelfDelegation), nil
 }
