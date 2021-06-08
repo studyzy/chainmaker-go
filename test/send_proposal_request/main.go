@@ -1008,11 +1008,11 @@ func setRelationshipForAddrAndNodeId() {
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId: "", ChainId: CHAIN1,
+		TxId: "",
+		ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
-		// todo 等待pb调整
-		MethodName:   commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String(),
+		MethodName:   commonPb.DPoSStakeContractFunction_SET_NODE_ID.String(),
 		Pairs:        params,
 	})
 	if err == nil {
