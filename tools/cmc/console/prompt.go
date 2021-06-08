@@ -10,10 +10,7 @@ import (
 )
 
 // CallbackAnnotation for dynamic suggestions.
-const CallbackAnnotation = "cobra-prompt"
-
-// PersistFlagValuesFlag the flag that will be avaiailable when PersistFlagValues is true
-const PersistFlagValuesFlag = "persist-flag-values"
+const CallbackAnnotation = "CallbackAnnotation"
 
 // CobraPrompt given a Cobra command it will make every flag and sub commands available as suggestions.
 // Command.Short will be used as description for the suggestion.
@@ -28,15 +25,11 @@ type CobraPrompt struct {
 	// DynamicSuggestionsFunc will be executed if an command has CallbackAnnotation as an annotation. If it's included
 	// the value will be provided to the DynamicSuggestionsFunc function.
 	DynamicSuggestionsFunc func(annotation string, document *prompt.Document) []prompt.Suggest
-
-	// PersistFlagValues will persist flags. For example have verbose turned on every command.
-	PersistFlagValues bool
 }
 
 // Run will automatically generate suggestions for all cobra commands and flags defined by RootCmd
-// and execute the selected commands. Run will also reset all given flags by default, see PersistFlagValues
+// and execute the selected commands.
 func (co CobraPrompt) Run() {
-	co.prepare()
 	p := prompt.New(
 		func(in string) {
 			promptArgs := strings.Fields(in)
@@ -51,13 +44,6 @@ func (co CobraPrompt) Run() {
 	p.Run()
 }
 
-func (co CobraPrompt) prepare() {
-	if co.PersistFlagValues {
-		co.RootCmd.PersistentFlags().BoolP(PersistFlagValuesFlag, "",
-			false, "Persist last given value for flags")
-	}
-}
-
 func findSuggestions(co *CobraPrompt, d *prompt.Document) []prompt.Suggest {
 	command := co.RootCmd
 	args := strings.Fields(d.CurrentLine())
@@ -67,9 +53,8 @@ func findSuggestions(co *CobraPrompt, d *prompt.Document) []prompt.Suggest {
 	}
 
 	var suggestions []prompt.Suggest
-	persistFlagValues, _ := command.Flags().GetBool(PersistFlagValuesFlag)
 	addFlags := func(flag *pflag.Flag) {
-		if flag.Changed && !persistFlagValues {
+		if flag.Changed {
 			flag.Value.Set(flag.DefValue)
 		}
 		if flag.Hidden {

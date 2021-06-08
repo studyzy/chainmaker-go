@@ -5,7 +5,7 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/common v0.0.0
 	chainmaker.org/chainmaker-sdk-go v0.0.0
-	github.com/c-bata/go-prompt v0.2.2
+	github.com/c-bata/go-prompt v0.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1

@@ -10,26 +10,28 @@ import (
 
 var exitCmd = &cobra.Command{
 	Use:   "exit",
-	Short: "Exit prompt",
+	Short: "Exit console",
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Bye!")
 		os.Exit(0)
 	},
 }
 
 func NewConsoleCMD(rootCmd *cobra.Command) *cobra.Command {
-	rootCmd.AddCommand(exitCmd)
 	cmd := &cobra.Command{
 		Use:   "console",
 		Short: "Open a console to interact with ChainMaker daemon",
 		Long:  "Open a console to interact with ChainMaker daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("Welcome to cmc console!\n")
-			fmt.Println("Please use `exit` or `Ctrl-D` to exit this program.")
+			// remove console cmd, because already in console now.
+			rootCmd.RemoveCommand(cmd)
+			// add exit console command.
+			rootCmd.AddCommand(exitCmd)
+			fmt.Printf("Welcome to cmc console!\nPlease use `exit` or `Ctrl-D` to exit this program.\n")
 			defer fmt.Println("Bye!")
 			console := &CobraPrompt{
 				RootCmd:                rootCmd,
 				DynamicSuggestionsFunc: handleDynamicSuggestions,
-				PersistFlagValues:      true,
 				GoPromptOptions: []prompt.Option{
 					prompt.OptionTitle("cmc console: interactive ChainMaker client"),
 					prompt.OptionPrefix(">>> "),

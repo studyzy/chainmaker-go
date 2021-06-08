@@ -34,8 +34,7 @@ func main() {
 	mainCmd.AddCommand(paillier.PaillierCMD())
 	mainCmd.AddCommand(archive.NewArchiveCMD())
 	mainCmd.AddCommand(query.NewQueryOnChainCMD())
-	copyMainCmd := *mainCmd
-	mainCmd.AddCommand(console.NewConsoleCMD(&copyMainCmd))
+	mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

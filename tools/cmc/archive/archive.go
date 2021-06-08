@@ -79,7 +79,7 @@ func init() {
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
 	flags.StringVar(&dbType, flagDbType, "mysql", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
-	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task\neg. 100 (block height) or `2006-01-02 15:04:05` (date)")
+	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task. eg. 100 (block height) or \"2006-01-02 15:04:05\" (date)")
 	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
 	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
