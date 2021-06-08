@@ -748,6 +748,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
+	r.log.Debugf("Save enclave report start, orginal report data: %s, decoded report data: %s", reportStr)
 	// save report into chain
 	enclaveIdKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + enclaveId
 	if err := context.Put(enclaveIdKey, []byte("report"), []byte(reportStr)); err != nil {
