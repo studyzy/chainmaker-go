@@ -9,10 +9,11 @@ package client
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 func certManageCMD() *cobra.Command {

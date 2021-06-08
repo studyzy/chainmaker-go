@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package payload
 
 import (
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"

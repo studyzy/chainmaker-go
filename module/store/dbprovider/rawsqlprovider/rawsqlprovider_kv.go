@@ -129,7 +129,7 @@ func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
 func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
-	sql := "select * from key_values where object_key between ? and ?"
+	sql := "select * from key_values where object_key >= ? and object_key < ?"
 	rows, err := p.QueryMulti(sql, start, limit)
 	if err != nil {
 		return nil

@@ -15,8 +15,10 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
+	//logImpl "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/pkg/errors"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"github.com/tecbot/gorocksdb"
 )
 
@@ -242,6 +244,15 @@ func (dbHandle *RocksDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool
 		dbHandle.logger.Errorf("write batch to rocksdbprovider failed")
 		return errors.Wrap(err, "error writing batch to rocksdbprovider")
 	}
+	return nil
+}
+
+// CompactRange compacts the underlying DB for the given key range.
+func (dbHandle *RocksDBHandle) CompactRange(r util.Range) error {
+	dbHandle.db.CompactRange(gorocksdb.Range{
+		Start: r.Start,
+		Limit: r.Limit,
+	})
 	return nil
 }
 
