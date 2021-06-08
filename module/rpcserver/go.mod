@@ -53,5 +53,6 @@ replace (
 	github.com/libp2p/go-libp2p => ../net/p2p/libp2p
 	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ../net/p2p/libp2ppubsub
+	chainmaker.org/chainmaker-go/provider => ./../provider
 
 )

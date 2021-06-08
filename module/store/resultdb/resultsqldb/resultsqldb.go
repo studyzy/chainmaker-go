@@ -8,11 +8,12 @@ package resultsqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	"errors"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -108,6 +109,16 @@ func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 
+}
+
+// ShrinkBlocks archive old blocks rwsets in an atomic operation
+func (h *ResultSqlDB) ShrinkBlocks(txIdsMap map[uint64][]string) error {
+	return errors.New("implement me")
+}
+
+// RestoreBlocks restore blocks from outside serialized block data
+func (h *ResultSqlDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error {
+	return errors.New("implement me")
 }
 
 func (h *ResultSqlDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {

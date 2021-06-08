@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package cert
 
 import (
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/common/evmutils"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	"chainmaker.org/chainmaker-go/common/evmutils"
+	"github.com/spf13/cobra"
 )
 
 func addrCMD() *cobra.Command {
@@ -58,4 +59,3 @@ func getAddr() error {
 	fmt.Printf("addr:      0x%x\n", addrInt.AsStringKey())
 	return nil
 }
-

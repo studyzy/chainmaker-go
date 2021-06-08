@@ -8,13 +8,15 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker-go/localconf"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 
-	"chainmaker.org/chainmaker/common/bitmap"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/common/bitmap"
+	"chainmaker.org/chainmaker-go/protocol"
 )
 
 // The record value is written by the SEQ corresponding to TX
@@ -73,21 +75,32 @@ func (s *SnapshotImpl) GetTxResultMap() map[string]*commonPb.Result {
 }
 
 func (s *SnapshotImpl) GetTxRWSetTable() []*commonPb.TxRWSet {
-	for i, txRWSet := range s.txRWSetTable {
-		log.Debugf("read set for tx id:[%s], count [%d]", s.txTable[i].Header.TxId, len(txRWSet.TxReads))
-		for _, txRead := range txRWSet.TxReads {
-			if !strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) {
-				log.Debugf("[%v] -> [%v], contract name [%v], version [%v]", txRead.Key, txRead.Value, txRead.ContractName, txRead.Version)
+	if localconf.ChainMakerConfig.SchedulerConfig.RWSetLog {
+		info := "rwset: "
+		for i, txRWSet := range s.txRWSetTable {
+			info += fmt.Sprintf("read set for tx id:[%s], count [%d]<", s.txTable[i].Header.TxId, len(txRWSet.TxReads))
+			for _, txRead := range txRWSet.TxReads {
+				if !strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) {
+					info += fmt.Sprintf("[%v] -> [%v], contract name [%v], version [%v],", txRead.Key, txRead.Value, txRead.ContractName, txRead.Version)
+				}
 			}
+			info += "> "
+			info += fmt.Sprintf("write set for tx id:[%s], count [%d]<", s.txTable[i].Header.TxId, len(txRWSet.TxWrites))
+			for _, txWrite := range txRWSet.TxWrites {
+				info += fmt.Sprintf("[%v] -> [%v], contract name [%v], ", txWrite.Key, txWrite.Value, txWrite.ContractName)
+			}
+			info += ">"
+		}
+		log.Debugf(info)
+	}
+
+	for _, txRWSet := range s.txRWSetTable {
+		for _, txRead := range txRWSet.TxReads {
 			if strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) ||
 				strings.HasPrefix(string(txRead.Key), protocol.ContractCreator) ||
 				txRead.ContractName == commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String() {
 				txRead.Value = nil
 			}
-		}
-		log.Debugf("write set for tx id:[%s], count [%d]", s.txTable[i].Header.TxId, len(txRWSet.TxWrites))
-		for _, txWrite := range txRWSet.TxWrites {
-			log.Debugf("[%v] -> [%v], contract name [%v]", txWrite.Key, txWrite.Value, txWrite.ContractName)
 		}
 	}
 	return s.txRWSetTable

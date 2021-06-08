@@ -63,6 +63,7 @@ func (f Factory) NewConsensusEngine(
 	case consensuspb.ConsensusType_RAFT:
 		config := raft.ConsensusRaftImplConfig{
 			ChainID:        chainID,
+			NodeId:         id,
 			Singer:         signer,
 			Ac:             ac,
 			LedgerCache:    ledgerCache,

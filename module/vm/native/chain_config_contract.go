@@ -102,6 +102,11 @@ func registerChainConfigContractMethods(log *logger.CMLogger) map[string]Contrac
 	methodMap[commonPb.ConfigFunction_GET_CHAIN_CONFIG.String()] = ChainConfigRuntime.GetChainConfig
 	methodMap[commonPb.ConfigFunction_GET_CHAIN_CONFIG_AT.String()] = ChainConfigRuntime.GetChainConfigFromBlockHeight
 
+	//// [archive]
+	//archiveStoreRuntime := &ArchiveStoreRuntime{log: log}
+	//methodMap[commonPb.ArchiveStoreContractFunction_ARCHIVE_BLOCK.String()] = archiveStoreRuntime.ArchiveBlock
+	//methodMap[commonPb.ArchiveStoreContractFunction_RESTORE_BLOCKS.String()] = archiveStoreRuntime.RestoreBlock
+
 	return methodMap
 }
 

@@ -23,12 +23,13 @@ import (
 
 // RuntimeInstance evm runtime
 type RuntimeInstance struct {
-	Method       string               // invoke contract method
-	ChainId      string               // chain id
-	Address      *evmutils.Int        //address
-	ContractId   *commonPb.ContractId // contract info
-	Log          *logger.CMLogger
-	TxSimContext protocol.TxSimContext
+	Method        string               // invoke contract method
+	ChainId       string               // chain id
+	Address       *evmutils.Int        //address
+	ContractId    *commonPb.ContractId // contract info
+	Log           *logger.CMLogger
+	TxSimContext  protocol.TxSimContext
+	ContractEvent []*commonPb.ContractEvent
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
@@ -169,6 +170,13 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId, err.Error())
 		panic(err)
 	}
+	//emit  contract event
+	err = r.emitContractEvent(result)
+	if err != nil {
+		r.Log.Debugf("emit contract event err:%s", err.Error())
+		panic(err)
+		return
+	}
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
 			r.TxSimContext.Put(n, []byte(k), val.Bytes())
@@ -221,4 +229,48 @@ func (r *RuntimeInstance) errorResult(contractResult *commonPb.ContractResult, e
 	contractResult.Message = errMsg
 	r.Log.Error(errMsg)
 	return contractResult
+}
+func (r *RuntimeInstance) emitContractEvent(result evm_go.ExecuteResult) error {
+	//parse log
+	var contractEvents []*commonPb.ContractEvent
+	logsMap := result.StorageCache.Logs
+	for _, logs := range logsMap {
+		for _, log := range logs {
+			if len(log.Topics) > protocol.EventDataMaxCount {
+				return fmt.Errorf("too many event data")
+			}
+			contractEvent := &commonPb.ContractEvent{
+				TxId:            r.TxSimContext.GetTx().Header.TxId,
+				ContractName:    r.ContractId.ContractName,
+				ContractVersion: r.ContractId.ContractVersion,
+			}
+			topics := log.Topics
+			for index, topic := range topics {
+				//first topic in log as contract event data. In ChainMaker contract event,only has a topic filed.
+				if index == 0 && topic != nil {
+					topicHexStr := hex.EncodeToString(topic)
+					if err := protocol.CheckTopicStr(topicHexStr); err != nil {
+						return fmt.Errorf(err.Error())
+					}
+					contractEvent.Topic = topicHexStr
+					r.Log.Debugf("topicHexString: %s", topicHexStr)
+					continue
+				}
+				//topic marked by 'index' in ethereum as contract event data
+				topicIndexHexStr := hex.EncodeToString(topic)
+				r.Log.Debugf("topicIndexString: %s", topicIndexHexStr)
+				contractEvent.EventData = append(contractEvent.EventData, topicIndexHexStr)
+			}
+			data := log.Data
+			dataHexStr := hex.EncodeToString(data)
+			if len(dataHexStr) > protocol.EventDataMaxLen {
+				return fmt.Errorf("event data too long,longer than %v", protocol.EventDataMaxLen)
+			}
+			contractEvent.EventData = append(contractEvent.EventData, dataHexStr)
+			contractEvents = append(contractEvents, contractEvent)
+			r.Log.Debugf("dataHexStr: %s", dataHexStr)
+		}
+	}
+	r.ContractEvent = contractEvents
+	return nil
 }

@@ -9,15 +9,16 @@ package rpcserver
 
 import (
 	"chainmaker.org/chainmaker-go/blockchain"
-	commonErr "chainmaker.org/chainmaker/common/errors"
+	commonErr "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	"chainmaker.org/chainmaker/protocol"
+	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native"
 	"context"
@@ -152,6 +153,8 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		return s.dealQuery(tx, source)
 	case commonPb.TxType_INVOKE_USER_CONTRACT, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.TxType_MANAGE_USER_CONTRACT, commonPb.TxType_INVOKE_SYSTEM_CONTRACT:
 		return s.dealTransact(tx, source)
+	case commonPb.TxType_ARCHIVE_FULL_BLOCK, commonPb.TxType_RESTORE_FULL_BLOCK:
+		return s.doArchive(tx)
 	default:
 		return &commonPb.TxResponse{
 			Code:    commonPb.TxStatusCode_INTERNAL_ERROR,
@@ -225,9 +228,17 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	}
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
-		errMsg = fmt.Sprintf("%d, %d, contractName[%s] method[%s] txType[%s], %s", txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
+		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
+			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
 		s.log.Error(errMsg)
+
 		resp.Code = txStatusCode
+		if txResult.Message == archive.ArchivedBlockError.Error() {
+			resp.Code = commonPb.TxStatusCode_ARCHIVED_BLOCK
+		} else if txResult.Message == archive.ArchivedTxError.Error() {
+			resp.Code = commonPb.TxStatusCode_ARCHIVED_TX
+		}
+
 		resp.Message = errMsg
 		resp.ContractResult = txResult
 		return resp

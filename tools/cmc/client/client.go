@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	sdk "chainmaker.org/chainmaker/sdk-go"
 	"fmt"
+	"log"
+
+	sdk "chainmaker.org/chainmaker-sdk-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"log"
 )
 
 var (

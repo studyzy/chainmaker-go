@@ -90,13 +90,19 @@ func (sch *scheduler) handler(event queue.Item) (queue.Item, error) {
 }
 
 func (sch *scheduler) handleNodeStatus(msg NodeStatusMsg) {
+	localCurrBlk := sch.ledger.GetLastCommittedBlock()
 	if old, exist := sch.peers[msg.from]; exist {
-		if old > msg.msg.BlockHeight {
+		if old > msg.msg.BlockHeight || sch.isPeerArchivedTooHeight(localCurrBlk.Header.BlockHeight, msg.msg.GetArchivedHeight()) {
 			delete(sch.peers, msg.from)
 			return
 		}
 	}
-	sch.log.Debugf("add node[%s], status[height: %d]", msg.from, msg.msg.BlockHeight)
+	if sch.isPeerArchivedTooHeight(localCurrBlk.Header.BlockHeight, msg.msg.GetArchivedHeight()) {
+		sch.log.Debugf("coming node[%s], status[height: %d, archivedHeight: %d], archived too height to sync, will ignore it",
+			msg.from, msg.msg.BlockHeight, msg.msg.GetArchivedHeight())
+		return
+	}
+	sch.log.Debugf("add node[%s], status[height: %d, archivedHeight: %d]", msg.from, msg.msg.BlockHeight, msg.msg.ArchivedHeight)
 	sch.peers[msg.from] = msg.msg.BlockHeight
 	sch.addPendingBlocksAndUpdatePendingHeight(msg.msg.BlockHeight)
 }
@@ -321,4 +327,8 @@ func (sch *scheduler) getServiceState() string {
 	return fmt.Sprintf("pendingRecvHeight: %d, peers num: %d, blockStates num: %d, "+
 		"pendingBlocks num: %d, receivedBlocks num: %d", sch.pendingRecvHeight, len(sch.peers), len(sch.blockStates),
 		len(sch.pendingBlocks), len(sch.receivedBlocks))
+}
+
+func (sch *scheduler) isPeerArchivedTooHeight(localHeight, peerArchivedHeight int64) bool {
+	return peerArchivedHeight != 0 && localHeight <= peerArchivedHeight
 }

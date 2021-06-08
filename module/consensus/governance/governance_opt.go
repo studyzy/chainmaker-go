@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -23,12 +22,14 @@ import (
 )
 
 const (
-	ConstMinQuorumForQc    = 3     //default min vote num
-	ConstTransitBlock      = 0     //default epoch switch block buff
-	ConstBlockNumPerEpoch  = 10000 //default epoch change height
-	ConstValidatorNum      = 4     //default actual consensus node num
-	ConstNodeProposeRound  = 1     //default continuity propose round
-	GovernanceContractName = "government_contract"
+	ConstMinQuorumForQc   = 3     //default min vote num
+	ConstTransitBlock     = 0     //default epoch switch block buff
+	ConstBlockNumPerEpoch = 10000 //default epoch change height
+	ConstValidatorNum     = 4     //default actual consensus node num
+	ConstNodeProposeRound = 1     //default continuity propose round
+	//GovernanceContractName     = "government_contract"
+	MinimumTimeOutMill         = 4000
+	MinimumIntervalTimeOutMill = 100
 
 	SkipTimeoutCommit        = "SkipTimeoutCommit"
 	CachedLen                = "CachedLen"
@@ -65,7 +66,7 @@ func (s IntSlice64) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s IntSlice64) Less(i, j int) bool { return s[i] < s[j] }
 
 func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*consensusPb.GovernanceContract, error) {
-	contractName := GovernanceContractName
+	contractName := commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()
 	bz, err := store.ReadObject(contractName, []byte(contractName))
 	if err != nil {
 		log.Errorf("ReadObject.Get err!contractName=%v,err=%v", contractName, err)
@@ -92,20 +93,23 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	newCachedLen := uint64(0)
 	newRoundTimeoutMill := uint64(0)
 	newRoundTimeoutIntervalMill := uint64(0)
-	//newBlockNumPerEpoch := uint64(ConstBlockNumPerEpoch)
-	//newSkipTimeoutCommit := false
-	//newTransitBlock := uint64(ConstTransitBlock)
-	//newValidatorNum := uint64(ConstValidatorNum)
-	//newNodeProposeRound := uint64(ConstNodeProposeRound)
 
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
 		case RoundTimeoutMill:
 			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				if v < MinimumTimeOutMill {
+					log.Warnf("%s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
+					continue
+				}
 				newRoundTimeoutMill = v
 			}
 		case RoundTimeoutIntervalMill:
 			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+				if v < MinimumIntervalTimeOutMill {
+					log.Warnf("%s is too minimun, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
+					continue
+				}
 				newRoundTimeoutIntervalMill = v
 			}
 		case CachedLen:
@@ -114,94 +118,20 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 				continue
 			}
 			newCachedLen = cachedLen
-		case BlockNumPerEpoch:
-			blockNumPerEpoch, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			if err != nil {
-				continue
-			}
-			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && blockNumPerEpoch > 0 {
-				log.Warnf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0")
-				continue
-			}
-			//newBlockNumPerEpoch = blockNumPerEpoch
-			//case SkipTimeoutCommit:
-			//	if strings.ToUpper(oneConf.Value) == "TRUE" {
-			//		newSkipTimeoutCommit = true
-			//		continue
-			//	}
-			//	if strings.ToUpper(oneConf.Value) == "FALSE" {
-			//		newSkipTimeoutCommit = false
-			//		continue
-			//	}
-			//case TransitBlock:
-			//	transitBlock, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			//	if err != nil {
-			//		continue
-			//	}
-			//	if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newTransitBlock != 0 {
-			//		log.Warnf("set TransitBlock err!HOTSTUFF should set 0")
-			//		continue
-			//	}
-			//	newTransitBlock = transitBlock
-			//case ValidatorNum:
-			//	validatorNum, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			//	if err != nil {
-			//		continue
-			//	}
-			//	//if less than default,no effect
-			//	if validatorNum < ConstValidatorNum {
-			//		log.Warnf("set validatorNum err!validatorNum[%v],min ConstValidatorNum[%v]", validatorNum, ConstValidatorNum)
-			//		continue
-			//	}
-			//	newValidatorNum = validatorNum
-			//case NodeProposeRound:
-			//	nodeProposeRound, err := strconv.ParseUint(oneConf.Value, 10, 64)
-			//	if err != nil {
-			//		continue
-			//	}
-			//	if nodeProposeRound < 1 {
-			//		log.Warnf("set nodeProposeRound err!NodeProposeRound=%v", nodeProposeRound)
-			//		continue
-			//	}
-			//	newNodeProposeRound = nodeProposeRound
 		}
 	}
-	//if GovernanceContract.SkipTimeoutCommit != newSkipTimeoutCommit {
-	//	GovernanceContract.SkipTimeoutCommit = newSkipTimeoutCommit
-	//	isChg = true
-	//}
-	//if GovernanceContract.ValidatorNum != newValidatorNum {
-	//	GovernanceContract.ValidatorNum = newValidatorNum
-	//	isChg = true
-	//}
-	//if GovernanceContract.NodeProposeRound != newNodeProposeRound {
-	//	GovernanceContract.NodeProposeRound = newNodeProposeRound
-	//	isChg = true
-	//}
-	if GovernanceContract.CachedLen != newCachedLen {
+	if newCachedLen != 0 && GovernanceContract.CachedLen != newCachedLen {
 		GovernanceContract.CachedLen = newCachedLen
 		isChg = true
 	}
-	if GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
+	if newRoundTimeoutMill != 0 && GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
 		GovernanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
 		isChg = true
 	}
-	if GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+	if newRoundTimeoutIntervalMill != 0 && GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
 		GovernanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
-	//if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
-	//	log.Errorf("set ConstBlockNumPerEpoch or ConstTransitBlock err!newBlockNumPerEpoch=%v,newTransitBlock=%v", newBlockNumPerEpoch, newTransitBlock)
-	//} else {
-	//	if GovernanceContract.BlockNumPerEpoch != newBlockNumPerEpoch {
-	//		GovernanceContract.BlockNumPerEpoch = newBlockNumPerEpoch
-	//		isChg = true
-	//	}
-	//	if GovernanceContract.TransitBlock != newTransitBlock {
-	//		GovernanceContract.TransitBlock = newTransitBlock
-	//		isChg = true
-	//	}
-	//}
 	return isChg
 }
 func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
@@ -216,21 +146,14 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 			}
 		}
 	}
-	n := len(tempMap)
-	if n < (ConstMinQuorumForQc + 1) {
-		return false, fmt.Errorf("set Nodes size err")
+	if len(tempMap) < (ConstMinQuorumForQc + 1) {
+		return false, fmt.Errorf("set Nodes size is too minimum: %d < %d", len(tempMap), ConstMinQuorumForQc+1)
 	}
 
 	conConf := chainConfig.Consensus
-	newTransitBlock := int64(ConstTransitBlock)
 	newBlockNumPerEpoch := int64(ConstBlockNumPerEpoch)
-
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
-		case SkipTimeoutCommit:
-			if strings.ToUpper(oneConf.Value) != "TRUE" && strings.ToUpper(oneConf.Value) != "FALSE" {
-				return false, fmt.Errorf("set SkipTimeoutCommit err")
-			}
 		case CachedLen:
 			cachedLen, err := strconv.ParseInt(oneConf.Value, 10, 64)
 			if err != nil || cachedLen < 0 {
@@ -238,35 +161,29 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 			}
 		case BlockNumPerEpoch:
 			newBlockNumPerEpoch, err = strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || newBlockNumPerEpoch < 0 {
-				return false, fmt.Errorf("set BlockNumPerEpoch err")
+			if err != nil {
+				return false, fmt.Errorf("set BlockNumPerEpoch err: %s", err)
 			}
-		case TransitBlock:
-			newTransitBlock, err = strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || newTransitBlock < 0 {
-				return false, fmt.Errorf("set TransitBlock err")
+			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newBlockNumPerEpoch > 0 {
+				return false, fmt.Errorf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0, actual: %d", newBlockNumPerEpoch)
 			}
-			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newTransitBlock != 0 {
-				return false, fmt.Errorf("TransitBlock err,hotstuff should set 0")
+		case RoundTimeoutMill:
+			v, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			if err != nil {
+				return false, fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutMill, err)
 			}
-		case ValidatorNum:
-			validatorNum, err := strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || validatorNum < 0 {
-				return false, fmt.Errorf("set ValidatorNum err")
+			if v < MinimumTimeOutMill {
+				return false, fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
 			}
-			//if less than default,no effect
-			if validatorNum < ConstValidatorNum {
-				return false, fmt.Errorf("set ValidatorNum err")
+		case RoundTimeoutIntervalMill:
+			v, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			if err != nil {
+				return false, fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutIntervalMill, err)
 			}
-		case NodeProposeRound:
-			nodeProposeRound, err := strconv.ParseInt(oneConf.Value, 10, 64)
-			if err != nil || nodeProposeRound < 1 {
-				return false, fmt.Errorf("set nodeProposeRound err")
+			if v < MinimumIntervalTimeOutMill {
+				return false, fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
 			}
 		}
-	}
-	if newBlockNumPerEpoch != 0 && newBlockNumPerEpoch < newTransitBlock {
-		return false, fmt.Errorf("newBlockNumPerEpoch less than transitBlock err")
 	}
 	return true, nil
 }
@@ -654,7 +571,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 
 func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceContract, oldBytes []byte) (*commonPb.TxRWSet, error) {
 	txRWSet := &commonPb.TxRWSet{
-		TxId:     GovernanceContractName,
+		TxId:     commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
 		TxReads:  make([]*commonPb.TxRead, 0, 0),
 		TxWrites: make([]*commonPb.TxWrite, 0, 1),
 	}
@@ -662,7 +579,7 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	var (
 		err          error
 		pbccPayload  []byte
-		contractName = GovernanceContractName
+		contractName = commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()
 	)
 	log.Debugf("begin getGovernanceContractTxRWSet ...")
 	// 1. check for changes

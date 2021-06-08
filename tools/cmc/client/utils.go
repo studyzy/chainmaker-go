@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"chainmaker.org/chainmaker/common/random/uuid"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/common/random/uuid"
+	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
 func checkProposalRequestResp(resp *sdkPbCommon.TxResponse, needContractResult bool) error {

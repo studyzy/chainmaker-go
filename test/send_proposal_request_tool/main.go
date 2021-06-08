@@ -226,8 +226,8 @@ func main() {
 
 	//private contract
 	mainCmd.AddCommand(SaveCertCMD())
-    mainCmd.AddCommand(SaveDirCMD())
-    mainCmd.AddCommand(GetContractCMD())
+	mainCmd.AddCommand(SaveDirCMD())
+	mainCmd.AddCommand(GetContractCMD())
 	mainCmd.AddCommand(SaveDataCMD())
 	mainCmd.AddCommand(GetDataCMD())
 	mainCmd.AddCommand(SaveContractCMD())
@@ -239,6 +239,8 @@ func main() {
 	//generate hash code
 	mainCmd.AddCommand(GenerateHashCMD())
 
+	//paillier
+	mainCmd.AddCommand(PaillierCMD())
 
 	mainCmd.Execute()
 

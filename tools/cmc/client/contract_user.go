@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	sdk "chainmaker.org/chainmaker/sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"strings"
+
+	sdk "chainmaker.org/chainmaker-sdk-go"
+	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"github.com/spf13/cobra"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"

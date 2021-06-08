@@ -9,9 +9,10 @@ package payload
 
 import (
 	"bytes"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"io/ioutil"
+
+	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"

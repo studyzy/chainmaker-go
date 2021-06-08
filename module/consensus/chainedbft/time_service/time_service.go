@@ -79,13 +79,13 @@ type TimerService struct {
 }
 
 //NewTimerService initializes an instance of timer service
-func NewTimerService() *TimerService {
+func NewTimerService(log *logger.CMLogger) *TimerService {
 	ts := &TimerService{
 		pacemakerTimer: time.NewTimer(RoundTimeout),
 		eventCh:        make(chan *TimerEvent, 10),
 		firedCh:        make(chan *TimerEvent, 10),
 		quitCh:         make(chan struct{}, 0),
-		logger:         logger.GetLogger(logger.MODULE_CONSENSUS),
+		logger:         log,
 	}
 	dropTimerC(ts.pacemakerTimer, "start timeService", ts.logger)
 	return ts
@@ -125,6 +125,7 @@ func (ts *TimerService) loop() {
 		select {
 		case newEvent, ok := <-ts.eventCh:
 			if !ok {
+				ts.logger.Warnf("add timeout msg failed")
 				continue
 			}
 			ts.processEvent(newEvent)

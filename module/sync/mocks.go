@@ -10,12 +10,14 @@ package sync
 import (
 	"fmt"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	syncPb "chainmaker.org/chainmaker/pb-go/sync"
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
+
+	"chainmaker.org/chainmaker-go/protocol"
 )
 
 var errStr = "implement me"
@@ -92,6 +94,30 @@ type MockStore struct {
 	blocks map[int64]*commonPb.Block
 }
 
+func (m MockStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (m MockStore) GetArchivedPivot() uint64 {
+	return 0
+}
+
+func (m MockStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (m MockStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
+}
+
 func (m MockStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {
 	panic(errStr)
 }
@@ -103,7 +129,9 @@ func (m MockStore) QueryMulti(contractName, sql string, values ...interface{}) (
 func (m MockStore) ExecDdlSql(contractName, sql string) error {
 	panic(errStr)
 }
-
+func (m MockStore) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	panic(errStr)
+}
 func (m MockStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	panic(errStr)
 }

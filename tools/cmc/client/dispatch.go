@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	sdk "chainmaker.org/chainmaker/sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"sync"
+
+	sdk "chainmaker.org/chainmaker-sdk-go"
+	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
 func Dispatch(client *sdk.ChainClient, contractName, method string, params map[string]string) {

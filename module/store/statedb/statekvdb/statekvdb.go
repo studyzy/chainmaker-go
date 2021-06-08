@@ -11,11 +11,17 @@ import (
 	"errors"
 	"fmt"
 
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+
+	"chainmaker.org/chainmaker-go/utils"
+
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+
+	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 )
 
 const (
@@ -48,22 +54,39 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerialize
 	txRWSets := blockWithRWSet.TxRWSets
 	for _, txRWSet := range txRWSets {
 		for _, txWrite := range txRWSet.TxWrites {
-			// 5. state: contractID + stateKey
-			txWriteKey := constructStateKey(txWrite.ContractName, txWrite.Key)
-			if txWrite.Value == nil {
-				batch.Delete(txWriteKey)
-			} else {
-				batch.Put(txWriteKey, txWrite.Value)
-			}
+
+			s.operateDbByWriteSet(batch, txWrite)
 		}
 	}
-
+	//process consensusArgs
+	if len(block.Header.ConsensusArgs) > 0 {
+		err := s.updateConsensusArgs(batch, block)
+		if err != nil {
+			return err
+		}
+	}
 	err := s.writeBatch(block.Header.BlockHeight, batch)
 	if err != nil {
 		return err
 	}
 	s.Logger.Debugf("chain[%s]: commit state block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
+	return nil
+}
+
+func (s *StateKvDB) updateConsensusArgs(batch protocol.StoreBatcher, block *commonPb.Block) error {
+	//try to add consensusArgs
+	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
+	if err != nil {
+		s.Logger.Errorf("parse header.ConsensusArgs get an error:%s", err)
+		return err
+	}
+	if consensusArgs.ConsensusData != nil {
+		s.Logger.Debugf("add consensusArgs ConsensusData to statedb")
+		for _, write := range consensusArgs.ConsensusData.TxWrites {
+			s.operateDbByWriteSet(batch, write)
+		}
+	}
 	return nil
 }
 
@@ -195,4 +218,27 @@ func (s *StateKvDB) RollbackDbTransaction(txName string) error {
 func (s *StateKvDB) ExecDdlSql(contractName, sql string) error {
 	return errorSqldbOnly
 
+}
+
+func (s *StateKvDB) operateDbByWriteSet(batch protocol.StoreBatcher, txWrite *commonPb.TxWrite) {
+	// 5. state: contractID + stateKey
+	txWriteKey := constructStateKey(txWrite.ContractName, txWrite.Key)
+	if txWrite.Value == nil {
+		batch.Delete(txWriteKey)
+	} else {
+		batch.Put(txWriteKey, txWrite.Value)
+	}
+}
+func (s *StateKvDB) GetChainConfig() (*configPb.ChainConfig, error) {
+	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	if err != nil {
+		return nil, err
+	}
+	conf := &configPb.ChainConfig{}
+	err = conf.Unmarshal(val)
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
 }

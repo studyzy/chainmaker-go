@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/protocol/mock"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -137,7 +136,7 @@ func (cm *MockCommitter) AddBlock(block *commonPb.Block) error {
 		return errors.New("consensusArgs.ConsensusData is nil")
 	}
 	rwset, _ := proto.Marshal(consensusArgs.ConsensusData)
-	cm.store.WriteObject(governance.GovernanceContractName, rwset)
+	cm.store.WriteObject(commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(), rwset)
 	// chain.proposedCache.ClearProposedBlock(block.Header.BlockHeight)
 	// chain.proposedCache.ResetProposedThisRound()
 	cm.msgBus.Publish(msgbus.BlockInfo, block) // synchronize new block height to consensus and sync module
