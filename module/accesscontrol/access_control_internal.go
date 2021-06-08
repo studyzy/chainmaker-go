@@ -92,42 +92,42 @@ var (
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
 	ac.orgNum = 0
 	ac.orgList = &sync.Map{}
-	for _, root := range roots {
+	for _, orgRoot := range roots {
 		org := &organization{
-			id:                       root.OrgId,
+			id:                       orgRoot.OrgId,
 			trustedRootCerts:         map[string]*bcx509.Certificate{},
 			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
-
-		certificateChain, err := ac.buildCertificateChain(root, org)
-		if err != nil {
-			return err
-		}
-		if certificateChain == nil || !certificateChain[len(certificateChain)-1].IsCA {
-			return fmt.Errorf("the certificate configured as root for organization %s is not a CA certificate", root.OrgId)
-		}
-		org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] = certificateChain[len(certificateChain)-1]
-		ac.opts.Roots.AddCert(certificateChain[len(certificateChain)-1])
-		for i := 0; i < len(certificateChain); i++ {
-			org.trustedIntermediateCerts[string(certificateChain[i].Raw)] = certificateChain[i]
-			ac.opts.Intermediates.AddCert(certificateChain[i])
-		}
-
-		/*for _, certificate := range certificateChain {
-			if certificate.IsCA {
-				org.trustedRootCerts[string(certificate.Raw)] = certificate
-				ac.opts.Roots.AddCert(certificate)
-			} else {
-				org.trustedIntermediateCerts[string(certificate.Raw)] = certificate
-				ac.opts.Intermediates.AddCert(certificate)
+        for _,root:= range orgRoot.Root{
+			certificateChain, err := ac.buildCertificateChain(root, orgRoot.OrgId,org)
+			if err != nil {
+				return err
 			}
-		}*/
+			if certificateChain == nil || !certificateChain[len(certificateChain)-1].IsCA {
+				return fmt.Errorf("the certificate configured as root for organization %s is not a CA certificate", orgRoot.OrgId)
+			}
+			org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] = certificateChain[len(certificateChain)-1]
+			ac.opts.Roots.AddCert(certificateChain[len(certificateChain)-1])
+			for i := 0; i < len(certificateChain); i++ {
+				org.trustedIntermediateCerts[string(certificateChain[i].Raw)] = certificateChain[i]
+				ac.opts.Intermediates.AddCert(certificateChain[i])
+			}
 
-		if len(org.trustedRootCerts) <= 0 {
-			return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", root.OrgId)
+			/*for _, certificate := range certificateChain {
+				if certificate.IsCA {
+					org.trustedRootCerts[string(certificate.Raw)] = certificate
+					ac.opts.Roots.AddCert(certificate)
+				} else {
+					org.trustedIntermediateCerts[string(certificate.Raw)] = certificate
+					ac.opts.Intermediates.AddCert(certificate)
+				}
+			}*/
+
+			if len(org.trustedRootCerts) <= 0 {
+				return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
+			}
+			ac.addOrg(org)
 		}
-
-		ac.addOrg(org)
 	}
 	localOrg := ac.getOrgByOrgId(localOrgId)
 	if localOrg == nil {
@@ -152,22 +152,22 @@ func (ac *accessControl) initLocalSigningMember(localOrgId, localPrivKeyFile, lo
 	return nil
 }
 
-func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
+func (ac *accessControl) buildCertificateChain(root, orgId string, org *organization) ([]*bcx509.Certificate, error) {
 	isUsePk := false
 
-	pk, errPubKey := asym.PublicKeyFromPEM([]byte(root.Root))
+	pk, errPubKey := asym.PublicKeyFromPEM([]byte(root))
 	if errPubKey == nil {
 		isUsePk = true
-		if ac.getOrgByOrgId(root.OrgId) != nil {
-			return nil, fmt.Errorf("multiple public key for member %s", root.OrgId)
+		if ac.getOrgByOrgId(orgId) != nil {
+			return nil, fmt.Errorf("multiple public key for member %s", orgId)
 		}
-		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
+		org.trustedRootCerts[root] = &bcx509.Certificate{Raw: []byte(root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
 		ac.identityType = IdentityTypePublicKey
 	}
 
 	var certificates, certificateChain []*bcx509.Certificate
 
-	pemBlock, rest := pem.Decode([]byte(root.Root))
+	pemBlock, rest := pem.Decode([]byte(root))
 	for pemBlock != nil {
 		cert, errCert := bcx509.ParseCertificate(pemBlock.Bytes)
 		if (errCert != nil || cert == nil) && errPubKey != nil {
@@ -197,31 +197,32 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 		Intermediates: bcx509.NewCertPool(),
 		Roots:         bcx509.NewCertPool(),
 	}
-	for _, root := range roots {
+	for _, orgRoot := range roots {
 		org := &organization{
-			id:                       root.OrgId,
+			id:                       orgRoot.OrgId,
 			trustedRootCerts:         map[string]*bcx509.Certificate{},
 			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
 
-		certificateChain, err := ac.buildCertificateChainForUpdatingChainConfig(root, org)
-		if err != nil {
-			return err
-		}
-		for _, certificate := range certificateChain {
-			if certificate.IsCA {
-				org.trustedRootCerts[string(certificate.Raw)] = certificate
-				opts.Roots.AddCert(certificate)
-			} else {
-				org.trustedIntermediateCerts[string(certificate.Raw)] = certificate
-				opts.Intermediates.AddCert(certificate)
+        for _,root:=range orgRoot.Root{
+			certificateChain, err := ac.buildCertificateChainForUpdatingChainConfig(root,orgRoot.OrgId, org)
+			if err != nil {
+				return err
+			}
+			for _, certificate := range certificateChain {
+				if certificate.IsCA {
+					org.trustedRootCerts[string(certificate.Raw)] = certificate
+					opts.Roots.AddCert(certificate)
+				} else {
+					org.trustedIntermediateCerts[string(certificate.Raw)] = certificate
+					opts.Intermediates.AddCert(certificate)
+				}
+			}
+
+			if len(org.trustedRootCerts) <= 0 {
+				return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
 			}
 		}
-
-		if len(org.trustedRootCerts) <= 0 {
-			return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", root.OrgId)
-		}
-
 		orgList.Store(org.id, org)
 		orgNum++
 	}
@@ -242,26 +243,26 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 	return nil
 }
 
-func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
+func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId string, org *organization) ([]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
 	if ac.identityType == IdentityTypePublicKey {
-		pk, errPubKey := asym.PublicKeyFromPEM([]byte(root.Root))
+		pk, errPubKey := asym.PublicKeyFromPEM([]byte(root))
 		if errPubKey != nil {
-			return nil, fmt.Errorf("update configuration failed, invalid public key for organization %s", root.OrgId)
+			return nil, fmt.Errorf("update configuration failed, invalid public key for organization %s", orgId)
 		}
-		if ac.getOrgByOrgId(root.OrgId) != nil {
-			return nil, fmt.Errorf("update configuration failed, multiple public key for member %s", root.OrgId)
+		if ac.getOrgByOrgId(orgId) != nil {
+			return nil, fmt.Errorf("update configuration failed, multiple public key for member %s",orgId)
 		}
 
-		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
+		org.trustedRootCerts[root] = &bcx509.Certificate{Raw: []byte(root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
 	}
 	if ac.identityType == IdentityTypeCert {
-		pemBlock, rest := pem.Decode([]byte(root.Root))
+		pemBlock, rest := pem.Decode([]byte(root))
 		for pemBlock != nil {
 			cert, errCert := bcx509.ParseCertificate(pemBlock.Bytes)
 			if errCert != nil {
-				return nil, fmt.Errorf("update configuration failed, invalid certificate for organization %s", root.OrgId)
+				return nil, fmt.Errorf("update configuration failed, invalid certificate for organization %s", orgId)
 			}
 			if len(cert.Signature) == 0 {
 				return nil, fmt.Errorf("update configuration failed, invalid certificate [SN: %s]", cert.SerialNumber)

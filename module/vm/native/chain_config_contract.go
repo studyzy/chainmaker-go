@@ -327,11 +327,21 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 		r.log.Error(err)
 		return nil, err
 	}
+	root := &configPb.TrustRootConfig{}
+	err = proto.Unmarshal([]byte(rootCaCrt), root)
+	if err != nil {
+		err = fmt.Errorf("policy Unmarshal err:%s", err)
+		r.log.Error(err)
+		return nil, err
+	}
 
-	chainConfig.TrustRoots = append(chainConfig.TrustRoots, &configPb.TrustRootConfig{
-		OrgId: orgId,
-		Root:  rootCaCrt,
-	})
+    if orgId!=root.OrgId{
+		err = fmt.Errorf("orgid is not match:[%s, %s]", orgId,root.OrgId)
+		r.log.Error(err)
+		return nil, err
+	}
+
+	chainConfig.TrustRoots = append(chainConfig.TrustRoots, root)
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
 		r.log.Errorf("trust root add fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
@@ -357,14 +367,25 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 		r.log.Error(err)
 		return nil, err
 	}
+	root := &configPb.TrustRootConfig{}
+	err = proto.Unmarshal([]byte(rootCaCrt), root)
+	if err != nil {
+		err = fmt.Errorf("policy Unmarshal err:%s", err)
+		r.log.Error(err)
+		return nil, err
+	}
+
+	if orgId!=root.OrgId{
+		err = fmt.Errorf("orgid is not match:[%s, %s]", orgId,root.OrgId)
+		r.log.Error(err)
+		return nil, err
+	}
+
 
 	trustRoots := chainConfig.TrustRoots
 	for i, root := range trustRoots {
 		if orgId == root.OrgId {
-			trustRoots[i] = &configPb.TrustRootConfig{
-				OrgId: orgId,
-				Root:  rootCaCrt,
-			}
+			trustRoots[i] = root
 			result, err = setChainConfig(txSimContext, chainConfig)
 			if err != nil {
 				r.log.Errorf("trust root update fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)

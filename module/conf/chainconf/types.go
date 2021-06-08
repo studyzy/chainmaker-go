@@ -133,22 +133,25 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 
 func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfig) error {
 	// load all ca root certs
-	for _, root := range config.TrustRoots {
-		if _, ok := mConfig.CaRoots[root.OrgId]; ok {
-			err := fmt.Errorf("check root certificate failed, org id [%s] already exists", root.OrgId)
+	for _, orgRoots := range config.TrustRoots {
+		if _, ok := mConfig.CaRoots[orgRoots.OrgId]; ok {
+			err := fmt.Errorf("check root certificate failed, org id [%s] already exists", orgRoots.OrgId)
 			log.Error(err)
 			return err
 		}
-		// check root cert
-		if ok, err := utils.CheckRootCertificate(root.Root); err != nil && !ok {
-			log.Errorf("check root certificate failed, %s", err.Error())
-			return err
+		for _,root := range orgRoots.Root{
+			// check root cert
+			if ok, err := utils.CheckRootCertificate(root); err != nil && !ok {
+				log.Errorf("check root certificate failed, %s", err.Error())
+				return err
+			}
+			mConfig.CaRoots[orgRoots.OrgId] = struct{}{}
+			block, _ := pem.Decode([]byte(root))
+			if block == nil {
+				return errors.New("root is empty")
+			}
 		}
-		mConfig.CaRoots[root.OrgId] = struct{}{}
-		block, _ := pem.Decode([]byte(root.Root))
-		if block == nil {
-			return errors.New("root is empty")
-		}
+
 	}
 	return nil
 }
