@@ -65,14 +65,14 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.QueryEnclaveProof
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.GetEnclaveProof
 	queryMethodMap[commonPb.PrivateComputeContractFunction_UPDATE_CONTRACT.String()] = privateComputeRuntime.UpdateContract
 	queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.QueryEnclaveEncryptPubKey
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.QueryEnclaveVerificationPubKey
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.QueryEnclaveReport
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.QueryEnclaveChallenge
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.QueryEnclaveSignature
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveEncryptPubKey
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveVerificationPubKey
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.GetEnclaveReport
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.GetEnclaveChallenge
+	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.GetEnclaveSignature
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_REMOTE_ATTESTATION.String()] = privateComputeRuntime.SaveRemoteAttestation
 
 	return queryMethodMap
@@ -692,7 +692,7 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	return []byte(enclaveId), nil
 }
 
-func (r *PrivateComputeRuntime) QueryEnclaveEncryptPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *PrivateComputeRuntime) GetEnclaveEncryptPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
@@ -713,7 +713,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveEncryptPubKey(context protocol.TxSim
 	return pemEncryptPubKey, nil
 }
 
-func (r *PrivateComputeRuntime) QueryEnclaveVerificationPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *PrivateComputeRuntime) GetEnclaveVerificationPubKey(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
@@ -760,7 +760,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 	return nil, nil
 }
 
-func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *PrivateComputeRuntime) GetEnclaveReport(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
@@ -783,7 +783,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveReport(context protocol.TxSimContext
 	return reportBytes, nil
 }
 
-func (r *PrivateComputeRuntime) QueryEnclaveChallenge(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *PrivateComputeRuntime) GetEnclaveChallenge(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
@@ -804,7 +804,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveChallenge(context protocol.TxSimCont
 	return challenge, nil
 }
 
-func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *PrivateComputeRuntime) GetEnclaveSignature(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
@@ -825,7 +825,7 @@ func (r *PrivateComputeRuntime) QueryEnclaveSignature(context protocol.TxSimCont
 	return signature, nil
 }
 
-func (r *PrivateComputeRuntime) QueryEnclaveProof(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *PrivateComputeRuntime) GetEnclaveProof(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
