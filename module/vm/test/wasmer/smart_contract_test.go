@@ -31,7 +31,7 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/rust-functional-verify-1.0.0.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
 	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
@@ -50,6 +50,8 @@ func TestCallFact(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				invokeFact("test_put_state", y, contractId, txContext, pool, bytes)
+				invokeFact("test_kv_iterator", y, contractId, txContext, pool, bytes)
 				invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
 
 				end := time.Now().UnixNano() / 1e6
@@ -82,8 +84,9 @@ func invokeFact(method string, id int32, contractId *commonPb.ContractId, txCont
 	parameters["contract_name"] = test.ContractNameTest
 
 	baseParam(parameters)
-	runtime, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
-	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
+	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	fmt.Println("【result】", r)
 }
 
 func TestCallCounter(t *testing.T) {
@@ -138,7 +141,7 @@ func TestCallCounter(t *testing.T) {
 func invokeCounter(method string, key string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	parameters := make(map[string]string)
 	parameters["key"] = key
-	runtime, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
+	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
@@ -155,7 +158,7 @@ func TestCallTraceability(t *testing.T) {
 	)
 	parameters = make(map[string]string)
 
-	runtime, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
+	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 
 	name := "apple_000001"
@@ -226,7 +229,7 @@ func invokeTraceability(method string, category string, name string, contractId 
 	parameters := make(map[string]string)
 	parameters["category"] = category
 	parameters["name"] = name
-	runtime, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
+	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
@@ -300,7 +303,7 @@ func TestCallHelloWorldUsePool(t *testing.T) {
 
 	// 创建
 	parameters := make(map[string]string)
-	runtimeInstance, _ := pool.NewRuntimeInstance(contractId, txContext, byteCode)
+	runtimeInstance, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtimeInstance.Invoke(contractId, "init", byteCode, parameters, txContext, 0)
 
 	// 调用
@@ -336,4 +339,82 @@ func baseParam(parameters map[string]string) {
 	parameters[protocol.ContractSenderRoleParam] = "SENDER_ROLE"
 	parameters[protocol.ContractSenderPkParam] = "SENDER_PK"
 	parameters[protocol.ContractBlockHeightParam] = "111"
+}
+
+func TestKVIteratorTest(t *testing.T) {
+	//test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+	test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
+	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
+	println("bytes len", len(bytes))
+
+	pool := test.GetVmPoolManager()
+
+	invokeKvIterator("test_put_state", 1, contractId, txContext, pool, bytes)
+
+	// 调用
+	x := int32(0)
+	println("start") // 2.9m
+	start := time.Now().UnixNano() / 1e6
+	wg := sync.WaitGroup{}
+	for i := 0; i < 50; i++ {
+		for j := 0; j < 10; j++ {
+			x++
+			y := x
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				invokeKvIterator("test_get_state", y, contractId, txContext, pool, bytes)
+
+				end := time.Now().UnixNano() / 1e6
+				if (end-start)/1000 > 0 && y%1000 == 0 {
+					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
+				}
+			}()
+		}
+		wg.Wait()
+	}
+	end := time.Now().UnixNano() / 1e6
+
+	println("end1 ", start, end, end-start, end, (end-start)/500) // 2.9m
+	start = time.Now().UnixNano() / 1e6
+	wg = sync.WaitGroup{}
+	for i := 0; i < 50; i++ {
+		for j := 0; j < 10; j++ {
+			x++
+			y := x
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				invokeKvIterator("test_kv_iterator", y, contractId, txContext, pool, bytes)
+
+				end := time.Now().UnixNano() / 1e6
+				if (end-start)/1000 > 0 && y%1000 == 0 {
+					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
+				}
+			}()
+		}
+		wg.Wait()
+	}
+	end = time.Now().UnixNano() / 1e6
+	println("end2 ", start, end, end-start, end, (end-start)/500) // 2.9m
+
+	runtime.GC()
+}
+func invokeKvIterator(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+	parameters := make(map[string]string)
+	parameters["key"] = "key"
+	parameters["field"] = "field"
+	parameters["val"] = "val"
+	parameters["start_count"] = "10000"
+	parameters["count"] = "20000"
+
+	parameters["start_key"] = "key"
+	parameters["start_field"] = "field10000"
+	parameters["limit_key"] = "key"
+	parameters["limit_field"] = "field20000"
+
+	baseParam(parameters)
+	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
+	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	//fmt.Println("【result】", r)
 }

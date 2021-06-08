@@ -14,8 +14,15 @@ import (
 // ResultDB provides handle to rwSets instances
 type ResultDB interface {
 	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
+
 	// CommitBlock commits the block rwsets in an atomic operation
 	CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error
+
+	// ShrinkBlocks archive old blocks rwsets in an atomic operation
+	ShrinkBlocks(txIdsMap map[uint64][]string) error
+
+	// RestoreBlocks restore blocks from outside serialized block data
+	RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error
 
 	// GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 	GetTxRWSet(txid string) (*commonPb.TxRWSet, error)

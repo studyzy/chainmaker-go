@@ -9,6 +9,18 @@ package accesscontrol
 
 import (
 	"bytes"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/hex"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	"chainmaker.org/chainmaker-go/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
@@ -18,18 +30,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/hex"
-	"encoding/pem"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"io/ioutil"
-	"strconv"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
 // Special characters allowed to define customized access rules
@@ -66,6 +67,9 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_INVOKE_SYSTEM_CONTRACT:        protocol.ResourceNameWriteData,
 	common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
+
+	common.TxType_ARCHIVE_FULL_BLOCK: 			 protocol.ResourceNameArchive,
+	common.TxType_RESTORE_FULL_BLOCK: 			 protocol.ResourceNameArchive,
 }
 
 var (
@@ -342,6 +346,11 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+
+	// Archive
+	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
+		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
+
 	return resourceNamePolicyMap
 }
 

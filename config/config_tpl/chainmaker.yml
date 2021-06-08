@@ -105,6 +105,8 @@ pprof:
 
 storage:
   store_path: ../data/{org_id}/ledgerData1
+  # 最小的不允许归档的区块高度
+  unarchive_block_height: 300000
   blockdb_config:
     provider: leveldb
     leveldb_config:
@@ -129,3 +131,5 @@ storage:
       dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
 core:
   evidence: false
+scheduler:
+  rwset_log: false #whether log the txRWSet map in the debug mode

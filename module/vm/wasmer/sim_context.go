@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/common/serialize"
-	"chainmaker.org/chainmaker-go/common/vmcbor"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -28,7 +27,6 @@ type SimContext struct {
 	Instance       *wasm.Instance
 
 	method        string
-	Ctx           *vmcbor.RuntimeContext
 	parameters    map[string]string
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction

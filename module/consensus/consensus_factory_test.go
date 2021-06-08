@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package consensus
 
 import (
-	"reflect"
-	"testing"
-
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/mock"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"github.com/golang/mock/gomock"
+	"reflect"
+	"testing"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
@@ -34,6 +34,13 @@ var (
 func TestNewConsensusEngine(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+
+	prePath := localconf.ChainMakerConfig.StorageConfig.StorePath
+	defer func() {
+		localconf.ChainMakerConfig.StorageConfig.StorePath = prePath
+	}()
+	//localconf.ChainMakerConfig.StorageConfig.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	localconf.ChainMakerConfig.StorageConfig.StorePath = t.TempDir()
 
 	signer := mock.NewMockSigningMember(ctrl)
 	ledgerCache := mock.NewMockLedgerCache(ctrl)
@@ -111,6 +118,7 @@ func TestNewConsensusEngine(t *testing.T) {
 				tt.args.msgBus,
 				tt.args.chainConf,
 				tt.args.store,
+				nil,
 			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewConsensusEngine() error = %v, wantErr %v", err, tt.wantErr)

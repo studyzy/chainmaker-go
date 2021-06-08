@@ -12,38 +12,24 @@ import (
 )
 
 type SqlDBRow struct {
-	rows  *sql.Rows
-	close func() error
+	rows *sql.Rows
 }
 
-func NewSqlDBRow(row *sql.Rows, close func() error) *SqlDBRow {
+func NewSqlDBRow(row *sql.Rows) *SqlDBRow {
 	return &SqlDBRow{
-		rows:  row,
-		close: close,
+		rows: row,
 	}
 }
 func (r *SqlDBRow) ScanColumns(dest ...interface{}) error {
-	if r.close != nil {
-		defer r.close()
-	}
 	defer r.rows.Close()
 	err := r.rows.Scan(dest...)
 	if err != nil {
-		return ROW_ERROR
+		return errRow
 	}
 	return nil
 }
 
-//func (row *SqlDBRow) ScanObject(dest interface{}) error {
-//	if row.close != nil {
-//		defer row.close()
-//	}
-//	return row.db.ScanRows(row.rows, dest)
-//}
 func (row *SqlDBRow) Data() (map[string]string, error) {
-	if row.close != nil {
-		defer row.close()
-	}
 	defer row.rows.Close()
 	return convertRows2Map(row.rows)
 }
@@ -103,7 +89,7 @@ func convertRows2Map(rows *sql.Rows) (map[string]string, error) {
 
 	cols, err := rows.Columns()
 	if err != nil {
-		return nil, ROW_ERROR
+		return nil, errRow
 	}
 	values := make([]sql.RawBytes, len(cols))
 	scanArgs := make([]interface{}, len(values))
@@ -112,7 +98,7 @@ func convertRows2Map(rows *sql.Rows) (map[string]string, error) {
 	}
 	err = rows.Scan(scanArgs...)
 	if err != nil {
-		return nil, ROW_ERROR
+		return nil, errRow
 	}
 	var value string
 	resultC := map[string]string{}

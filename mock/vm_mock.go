@@ -129,6 +129,34 @@ func (mr *MockContractWacsiCommonMockRecorder) ErrorResult() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ErrorResult", reflect.TypeOf((*MockContractWacsiCommon)(nil).ErrorResult))
 }
 
+// GetPaillierOpResult mocks base method.
+func (m *MockContractWacsiCommon) GetPaillierOpResult() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPaillierOpResult")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetPaillierOpResult indicates an expected call of GetPaillierOpResult.
+func (mr *MockContractWacsiCommonMockRecorder) GetPaillierOpResult() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaillierOpResult", reflect.TypeOf((*MockContractWacsiCommon)(nil).GetPaillierOpResult))
+}
+
+// GetPaillierOpResultLen mocks base method.
+func (m *MockContractWacsiCommon) GetPaillierOpResultLen() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPaillierOpResultLen")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetPaillierOpResultLen indicates an expected call of GetPaillierOpResultLen.
+func (mr *MockContractWacsiCommonMockRecorder) GetPaillierOpResultLen() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaillierOpResultLen", reflect.TypeOf((*MockContractWacsiCommon)(nil).GetPaillierOpResultLen))
+}
+
 // LogMessage mocks base method.
 func (m *MockContractWacsiCommon) LogMessage() int32 {
 	m.ctrl.T.Helper()
@@ -220,6 +248,34 @@ func (m *MockContractWacsiKV) ErrorResult() int32 {
 func (mr *MockContractWacsiKVMockRecorder) ErrorResult() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ErrorResult", reflect.TypeOf((*MockContractWacsiKV)(nil).ErrorResult))
+}
+
+// GetPaillierOpResult mocks base method.
+func (m *MockContractWacsiKV) GetPaillierOpResult() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPaillierOpResult")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetPaillierOpResult indicates an expected call of GetPaillierOpResult.
+func (mr *MockContractWacsiKVMockRecorder) GetPaillierOpResult() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaillierOpResult", reflect.TypeOf((*MockContractWacsiKV)(nil).GetPaillierOpResult))
+}
+
+// GetPaillierOpResultLen mocks base method.
+func (m *MockContractWacsiKV) GetPaillierOpResultLen() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPaillierOpResultLen")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetPaillierOpResultLen indicates an expected call of GetPaillierOpResultLen.
+func (mr *MockContractWacsiKVMockRecorder) GetPaillierOpResultLen() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaillierOpResultLen", reflect.TypeOf((*MockContractWacsiKV)(nil).GetPaillierOpResultLen))
 }
 
 // GetState mocks base method.
@@ -383,6 +439,34 @@ func (m *MockContractWacsiSQL) ExecuteUpdate() int32 {
 func (mr *MockContractWacsiSQLMockRecorder) ExecuteUpdate() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteUpdate", reflect.TypeOf((*MockContractWacsiSQL)(nil).ExecuteUpdate))
+}
+
+// GetPaillierOpResult mocks base method.
+func (m *MockContractWacsiSQL) GetPaillierOpResult() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPaillierOpResult")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetPaillierOpResult indicates an expected call of GetPaillierOpResult.
+func (mr *MockContractWacsiSQLMockRecorder) GetPaillierOpResult() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaillierOpResult", reflect.TypeOf((*MockContractWacsiSQL)(nil).GetPaillierOpResult))
+}
+
+// GetPaillierOpResultLen mocks base method.
+func (m *MockContractWacsiSQL) GetPaillierOpResultLen() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPaillierOpResultLen")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetPaillierOpResultLen indicates an expected call of GetPaillierOpResultLen.
+func (mr *MockContractWacsiSQLMockRecorder) GetPaillierOpResultLen() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaillierOpResultLen", reflect.TypeOf((*MockContractWacsiSQL)(nil).GetPaillierOpResultLen))
 }
 
 // LogMessage mocks base method.

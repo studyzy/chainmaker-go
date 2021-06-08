@@ -21,10 +21,10 @@ type KeyValue struct {
 }
 
 func (kv *KeyValue) GetInsertSql() string {
-	return "TODO"
+	return "TODO GetInsertSql"
 }
 func (kv *KeyValue) GetUpdateSql() string {
-	return "TODO"
+	return "TODO GetUpdateSql"
 }
 
 // Get returns the value for the given key, or returns nil if none exists
@@ -71,10 +71,11 @@ func (p *SqlDBHandle) Has(key []byte) (bool, error) {
 	return count > 0, nil
 }
 
+const DELETE_SQL = "delete from key_values where object_key=?"
+
 // Delete deletes the given key
 func (p *SqlDBHandle) Delete(key []byte) error {
-	sql := "delete from key_values where object_key=?"
-	count, err := p.ExecSql(sql, key)
+	count, err := p.ExecSql(DELETE_SQL, key)
 	if err != nil {
 		return err
 	}
@@ -84,8 +85,7 @@ func (p *SqlDBHandle) Delete(key []byte) error {
 	return nil
 }
 func deleteInTx(tx protocol.SqlDBTransaction, key []byte) error {
-	sql := "delete from key_values where object_key=?"
-	count, err := tx.ExecSql(sql, key)
+	count, err := tx.ExecSql(DELETE_SQL, key)
 	if err != nil {
 		return err
 	}
@@ -107,14 +107,18 @@ func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 		if v == nil {
 			err := deleteInTx(tx, key)
 			if err != nil {
-				p.RollbackDbTransaction(txName)
+				if err2 := p.RollbackDbTransaction(txName); err2 != nil {
+					p.log.Errorf("rollback db transaction[%s] get an error:%s", txName, err2)
+				}
 				return err
 			}
 		} else {
 			kv := &KeyValue{key, v}
 			_, err := tx.Save(kv)
 			if err != nil {
-				p.RollbackDbTransaction(txName)
+				if err2 := p.RollbackDbTransaction(txName); err2 != nil {
+					p.log.Errorf("rollback db transaction[%s] get an error:%s", txName, err2)
+				}
 				return err
 			}
 		}
@@ -125,7 +129,7 @@ func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
 func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
-	sql := "select * from key_values where object_key between ? and ?"
+	sql := "select * from key_values where object_key >= ? and object_key < ?"
 	rows, err := p.QueryMulti(sql, start, limit)
 	if err != nil {
 		return nil
@@ -134,7 +138,7 @@ func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.
 	result := &kvIterator{}
 	for rows.Next() {
 		var kv KeyValue
-		rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
+		_ = rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
 		result.append(&kv)
 	}
 	return result
@@ -152,7 +156,7 @@ func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 	result := &kvIterator{}
 	for rows.Next() {
 		var kv KeyValue
-		rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
+		_ = rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
 		result.append(&kv)
 	}
 	return result

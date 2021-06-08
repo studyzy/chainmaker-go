@@ -9,12 +9,15 @@ package rawsqlprovider
 
 import "errors"
 
-var SQL_ERROR = errors.New("sql error")
-var SQL_QUERY_ERROR = errors.New("sql query error")
-var TRANSACTION_ERROR = errors.New("database transaction error")
-var CONNECTION_ERROR = errors.New("database connect error")
-var DATABASE_ERROR = errors.New("database operation error")
-var TABLE_ERROR = errors.New("table operation error")
-var ROW_ERROR = errors.New("table row query error")
-var IO_ERROR = errors.New("database I/O error")
-var TX_NOT_FOUND_ERROR = errors.New("transaction not found or closed")
+var (
+	errSql         = errors.New("sql error")
+	errSqlQuery    = errors.New("sql query error")
+	errTransaction = errors.New("database transaction error")
+	errConnection  = errors.New("database connect error")
+	errDatabase    = errors.New("database operation error")
+	errTable       = errors.New("table operation error")
+	errRow         = errors.New("table row query error")
+	errIO          = errors.New("database I/O error")
+	errTxNotFound  = errors.New("transaction not found or closed")
+	errTypeConvert = errors.New("type convert error")
+)

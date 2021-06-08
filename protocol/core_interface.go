@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package protocol
 
 import (
+	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/pb/protogo/txpool"
@@ -45,3 +46,13 @@ const (
 	CONSENSUS_VERIFY VerifyMode = iota
 	SYNC_VERIFY
 )
+
+type CoreEngine interface {
+	Start()
+	Stop()
+	GetBlockCommitter() BlockCommitter
+	GetBlockVerifier() BlockVerifier
+	msgbus.Subscriber
+	//HotStuffHelper
+	GetHotStuffHelper() HotStuffHelper
+}

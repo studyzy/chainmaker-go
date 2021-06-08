@@ -9,8 +9,9 @@ package client
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	"github.com/spf13/cobra"
 )
 
 const (

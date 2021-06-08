@@ -65,12 +65,12 @@ type SqlDBHandle struct {
 }
 
 // GetDBHandle returns a DBHandle for given dbname
-func (p *SqlDBHandle) GetDBHandle(dbName string) protocol.DBHandle {
-	p.Lock()
-	defer p.Unlock()
-
-	return p
-}
+//func (p *SqlDBHandle) GetDBHandle(dbName string) protocol.DBHandle {
+//	p.Lock()
+//	defer p.Unlock()
+//
+//	return p
+//}
 func ParseSqlDbType(str string) (types.EngineType, error) {
 	switch str {
 	case "mysql":

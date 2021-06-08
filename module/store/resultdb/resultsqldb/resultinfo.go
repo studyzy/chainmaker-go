@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package resultsqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/gogo/protobuf/proto"
 )
 
-// StateHistoryInfo defines mysql orm model, used to create mysql table 'result_infos'
+// ResultInfo defines mysql orm model, used to create mysql table 'result_infos'
 type ResultInfo struct {
 	TxId        string `gorm:"size:128;primaryKey"`
 	BlockHeight int64
@@ -26,10 +27,18 @@ func (b *ResultInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&b.TxId, &b.BlockHeight, &b.TxIndex, &b.Rwset, &b.Status, &b.Result, &b.Message)
 }
 func (b *ResultInfo) GetCreateTableSql(dbType string) string {
-	if dbType == "mysql" {
-		return "CREATE TABLE `result_infos` (`tx_id` varchar(128),`block_height` bigint,`tx_index` bigint,`rwset` longblob,`status` bigint DEFAULT 0,`result` blob,`message` longtext,PRIMARY KEY (`tx_id`))"
-	} else if dbType == "sqlite" {
-		return "CREATE TABLE `result_infos` (`tx_id` text,`block_height` integer,`tx_index` integer,`rwset` longblob,`status` integer DEFAULT 0,`result` blob,`message` longtext,PRIMARY KEY (`tx_id`))"
+	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+		return `CREATE TABLE result_infos (
+    tx_id varchar(128),block_height bigint,tx_index bigint,
+    rwset longblob,status bigint DEFAULT 0,result blob,
+    message longtext,PRIMARY KEY (tx_id)
+    ) default character set utf8`
+	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+		return `CREATE TABLE result_infos (
+    tx_id text,block_height integer,tx_index integer,rwset longblob,
+    status integer DEFAULT 0,result blob,message longtext,
+    PRIMARY KEY (tx_id)
+    )`
 	}
 	panic("Unsupported db type:" + dbType)
 }
@@ -46,8 +55,9 @@ func (b *ResultInfo) GetUpdateSql() (string, []interface{}) {
 		[]interface{}{b.BlockHeight, b.TxIndex, b.Rwset, b.Status, b.Result, b.Message, b.TxId}
 }
 
-// NewHistoryInfo construct a new HistoryInfo
-func NewResultInfo(txid string, blockHeight int64, txIndex int, result *commonpb.ContractResult, rw *commonpb.TxRWSet) *ResultInfo {
+// NewResultInfo construct a new HistoryInfo
+func NewResultInfo(txid string, blockHeight int64, txIndex int, result *commonpb.ContractResult,
+	rw *commonpb.TxRWSet) *ResultInfo {
 	rwBytes, _ := proto.Marshal(rw)
 
 	return &ResultInfo{

@@ -10,51 +10,97 @@ run:
     - p2p #from libp2p
     - mock #from gomock
     - protogo #from pb generate
+    - sqldbprovider #will remove
+    - eventsqldb
 linters:
   disable-all: true
   enable:
     - deadcode
     - goconst
+    - gocyclo
+    - gofmt
+    - ineffassign
+    - staticcheck
+    - structcheck # 当非导出结构嵌入另一个结构, 前一个结构被使用就不会监测到, 这个需要每个业务自己屏蔽
+    - typecheck
     - goimports
+    - revive
     - gosimple
     - govet
-    - ineffassign
+    - lll
+    - rowserrcheck
+    - errcheck
     - misspell
-    - staticcheck
-    - unconvert
     - unused
     - varcheck
+    - sqlclosecheck
     - gosec
-    - typecheck
-    - gofmt
-    - dupl
-#    - gocyclo
-#    - funlen
-#    - lll
-#    - nestif
+
 
 linters-settings:
-  gofmt:
-    simplify: true
   goconst:
-    min-len: 2 # minimum length of string constant
-    min-occurrences: 6 # minimum number of occurrences
+    min-len: 2
+    min-occurrences: 2
+  gocyclo:
+    min-complexity: 20
+  goimports:
+  #local-prefixes: git.code.oa.com
+  golint:
+  #min-confidence: 0
+  govet:
+    check-shadowing: true
   gosimple:
-    # Select the Go version to target. The default is '1.13'.
     go: "1.15"
   lll:
-    # max line length, lines longer will be reported. Default is 120.
-    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
     line-length: 120
-    # tab width in spaces. Default to 1.
-    tab-width: 1
-  funlen:
-    lines: 60
-    statements: 40
-  dupl:
-    # tokens count to trigger issue, 150 by default
-    threshold: 120
+  errcheck:
+    check-type-assertions: true
+  gocritic:
+    enabled-checks:
+      - nestingReduce
+    settings:
+      nestingReduce:
+        bodyWidth: 5
+  revive:
+    # see https://github.com/mgechev/revive#available-rules for details.
+    rules:
+      #      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      #      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      #      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unexported-naming
+      - name: unexported-return
+      - name: unreachable-code
+      - name: redefines-builtin-id
+      - name: function-length
+        arguments: [ 80,0 ]
+
 issues:
+  exclude-use-default: true
+  include:
+    - EXC0002 # golint (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
+    - EXC0003 # golint func name will be used as test\.Test.* by other packages, and that stutters; consider calling this
+    - EXC0004 # govet (possible misuse of unsafe.Pointer|should have signature)
+    - EXC0005 # staticcheck ineffective break statement. Did you mean to break out of the outer loop
+    - EXC0011 # stylecheck (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
+
   exclude-rules:
     - path: .*_test.go
       linters:
@@ -64,3 +110,13 @@ issues:
         - staticcheck
         - forbidigo
         - dupl
+        - errcheck
+        - lll
+        - funlen
+
+  max-same-issues: 0
+  new: false
+  max-issues-per-linter: 0
+
+output:
+  sort-results: true

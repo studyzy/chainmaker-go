@@ -152,6 +152,7 @@ type StorageConfig struct {
 	HistoryDbConfig        *DbConfig `mapstructure:"historydb_config"`
 	ResultDbConfig         *DbConfig `mapstructure:"resultdb_config"`
 	ContractEventDbConfig  *DbConfig `mapstructure:"contract_eventdb_config"`
+	UnArchiveBlockHeight   uint64    `mapstructure:"unarchive_block_height"`
 }
 
 func (config *StorageConfig) setDefault() {
@@ -243,11 +244,15 @@ type DbConfig struct {
 	SqlDbConfig   *SqlDbConfig   `mapstructure:"sqldb_config"`
 }
 
+const DbConfig_Provider_Sql = "sql"
+const DbConfig_Provider_LevelDb = "leveldb"
+const DbConfig_Provider_RocksDb = "rocksdb"
+
 func (dbc *DbConfig) IsKVDB() bool {
-	return dbc.Provider == "leveldb" || dbc.Provider == "rocksdb"
+	return dbc.Provider == DbConfig_Provider_LevelDb || dbc.Provider == DbConfig_Provider_RocksDb
 }
 func (dbc *DbConfig) IsSqlDB() bool {
-	return dbc.Provider == "sql" || dbc.Provider == "mysql" || dbc.Provider == "rdbms"
+	return dbc.Provider == DbConfig_Provider_Sql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
 }
 
 type LevelDbConfig struct {
@@ -267,6 +272,9 @@ type SqlDbConfig struct {
 	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
 	DbPrefix        string `mapstructure:"db_prefix"`
 }
+
+const SqlDbConfig_SqlDbType_MySQL = "mysql"
+const SqlDbConfig_SqlDbType_Sqlite = "sqlite"
 
 type txPoolConfig struct {
 	PoolType            string `mapstructure:"pool_type"`
@@ -332,6 +340,10 @@ type clientConfig struct {
 	HashType        string `mapstructure:"hash_type"`
 }
 
+type schedulerConfig struct {
+	RWSetLog bool `mapstructure:"rwset_log"`
+}
+
 type coreConfig struct {
 	Evidence bool `mapstructure:"evidence"`
 }
@@ -349,10 +361,11 @@ type CMConfig struct {
 	SpvConfig        spvConfig          `mapstructure:"spv"`
 
 	// 开发调试使用
-	DebugConfig   debugConfig   `mapstructure:"debug"`
-	PProfConfig   pprofConfig   `mapstructure:"pprof"`
-	MonitorConfig monitorConfig `mapstructure:"monitor"`
-	CoreConfig    coreConfig    `mapstructure:"core"`
+	DebugConfig     debugConfig     `mapstructure:"debug"`
+	PProfConfig     pprofConfig     `mapstructure:"pprof"`
+	MonitorConfig   monitorConfig   `mapstructure:"monitor"`
+	CoreConfig      coreConfig      `mapstructure:"core"`
+	SchedulerConfig schedulerConfig `mapstructure:"scheduler"`
 }
 
 // GetBlockChains - get blockchain config list

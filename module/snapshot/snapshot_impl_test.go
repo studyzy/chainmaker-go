@@ -8,9 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -18,15 +15,21 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/protocol"
 )
 
 var _ protocol.TxSimContext = (*MockSimContextImpl)(nil)
 
 // Storage interface for smart contracts
 type MockSimContextImpl struct {
-	txExecSeq int32
-	tx        *commonPb.Transaction
-	txRwSet   *commonPb.TxRWSet
+	txExecSeq    int32
+	tx           *commonPb.Transaction
+	txRwSet      *commonPb.TxRWSet
+	currentDepth int
+	txResult     *commonPb.Result
 }
 
 const implement_me = "implement me"
@@ -36,7 +39,7 @@ func (s *MockSimContextImpl) GetTxExecSeq() int {
 }
 
 func (s *MockSimContextImpl) GetDepth() int {
-	panic(implement_me)
+	return s.currentDepth
 }
 
 func (s *MockSimContextImpl) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
@@ -51,7 +54,7 @@ func (s *MockSimContextImpl) GetCreator(namespace string) *acPb.SerializedMember
 	panic(implement_me)
 }
 
-func (s *MockSimContextImpl) Select(namespace string, startKey []byte, limit []byte) (protocol.Iterator, error) {
+func (s *MockSimContextImpl) Select(namespace string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	panic(implement_me)
 }
 
@@ -64,11 +67,11 @@ func (s *MockSimContextImpl) GetBlockProposer() []byte {
 }
 
 func (s *MockSimContextImpl) GetTxResult() *commonPb.Result {
-	panic(implement_me)
+	return s.txResult
 }
 
 func (s *MockSimContextImpl) SetTxResult(result *commonPb.Result) {
-	panic(implement_me)
+	s.txResult = result
 }
 
 func (s *MockSimContextImpl) GetSender() *acPb.SerializedMember {
@@ -159,13 +162,18 @@ func testSnapshot(t *testing.T, i int) {
 		preSnapshot:     nil,
 		txRWSetTable:    nil,
 		txTable:         make([]*commonPb.Transaction, 0, 2048),
-		txResultMap:     nil,
+		txResultMap:     make(map[string]*commonPb.Result, 256),
 		readTable:       make(map[string]*sv, 256),
 		writeTable:      make(map[string]*sv, 256),
 	}
 
 	txSimContext := &MockSimContextImpl{
-		tx: &commonPb.Transaction{},
+		tx: &commonPb.Transaction{
+			Header: &commonPb.TxHeader{
+				TxId: "tx id in snapshot",
+			},
+		},
+		txResult: &commonPb.Result{},
 	}
 
 	txCount := 4000
@@ -194,13 +202,11 @@ func testSnapshot(t *testing.T, i int) {
 
 					atomic.AddInt64(&count, 1)
 					if applyResult {
-						wg.Done()
 						break
 					}
 				}
-			} else {
-				wg.Done()
 			}
+			wg.Done()
 		}()
 
 		////fmt.Printf("apply read write set %v, size %d, txExecSeq %d, ", applyResult, len(snapshot.txTable), txExecSeq)
@@ -219,7 +225,7 @@ func testSnapshot(t *testing.T, i int) {
 	//dump(snapshot)
 	//dumpDAG(snapshot.BuildDAG())
 
-	fmt.Printf("Cost:%v, count:%d", timeCost, count)
+	fmt.Printf("Cost:%v, count:%d\n", timeCost, count)
 }
 
 func randKey() []string {
