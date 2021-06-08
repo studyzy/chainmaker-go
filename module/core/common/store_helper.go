@@ -44,18 +44,22 @@ func NewSQLStoreHelper(chainId string) *SQLStoreHelper {
 
 func (sql *SQLStoreHelper) RollBack(block *commonpb.Block, blockchainStore protocol.BlockchainStore) error {
 	txKey := block.GetTxKey()
-	_ = blockchainStore.RollbackDbTransaction(txKey)
+	err := blockchainStore.RollbackDbTransaction(txKey)
+	if err != nil {
+		return err
+	}
 	// drop database if create contract fail
 	if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
 		var payload commonpb.ContractMgmtPayload
-		if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
+		err = proto.Unmarshal(block.Txs[0].RequestPayload, &payload)
+		if err == nil {
 			if payload.ContractId != nil {
 				dbName := statesqldb.GetContractDbName(sql.chainId, payload.ContractId.ContractName)
 				blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
 			}
 		}
 	}
-	return nil
+	return err
 }
 
 func (sql *SQLStoreHelper) BeginDbTransaction(blockchainStore protocol.BlockchainStore, txKey string) {

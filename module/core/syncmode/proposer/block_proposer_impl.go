@@ -296,7 +296,9 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 	block, timeLasts, err := bp.generateNewBlock(height, preHash, checkedBatch)
 	if err != nil {
 		// rollback sql
-		bp.storeHelper.RollBack(block, bp.blockchainStore)
+		if err2 := bp.storeHelper.RollBack(block, bp.blockchainStore); err2 != nil {
+			bp.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, err)
+		}
 		bp.txPool.RetryAndRemoveTxs(checkedBatch, nil) // put txs back to txpool
 		bp.log.Warnf("generate new block failed, %s", err.Error())
 		return nil

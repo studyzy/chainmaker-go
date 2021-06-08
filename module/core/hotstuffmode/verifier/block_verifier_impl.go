@@ -162,7 +162,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 
 		// rollback sql
-		v.storeHelper.RollBack(block, v.blockchainStore)
+		if err2 := v.storeHelper.RollBack(block, v.blockchainStore); err2 != nil {
+			v.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, err)
+		}
 		return err
 	}
 
