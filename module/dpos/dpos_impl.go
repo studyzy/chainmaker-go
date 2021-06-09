@@ -156,7 +156,7 @@ func (impl *DPoSImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.
 	return &consensusArgs
 }
 
-func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) error {
+func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (err error) {
 	impl.log.Debugf("begin VerifyConsensusArgs, blockHeight: %d, blockHash: %x", block.Header.BlockHeight, block.Header.BlockHash)
 	if !impl.isDPoSConsensus() {
 		return nil
@@ -167,13 +167,17 @@ func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[
 		impl.log.Errorf("get DPoS txRwSets failed, reason: %s", err)
 		return err
 	}
-	localBz, err := proto.Marshal(&consensus.BlockHeaderConsensusArgs{
-		ConsensusType: int64(consensus.ConsensusType_DPOS),
-		ConsensusData: localConsensus,
-	})
-	if err != nil {
-		impl.log.Errorf("marshal BlockHeaderConsensusArgs failed, reason: %s", err)
-		return err
+
+	var localBz []byte
+	if localConsensus != nil {
+		localBz, err = proto.Marshal(&consensus.BlockHeaderConsensusArgs{
+			ConsensusType: int64(consensus.ConsensusType_DPOS),
+			ConsensusData: localConsensus,
+		})
+		if err != nil {
+			impl.log.Errorf("marshal BlockHeaderConsensusArgs failed, reason: %s", err)
+			return err
+		}
 	}
 	if bytes.Equal(block.Header.ConsensusArgs, localBz) {
 		impl.log.Debugf("end VerifyConsensusArgs")

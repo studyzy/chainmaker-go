@@ -448,6 +448,8 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 	}
 	block.Header.BlockHash = hash[:]
 	block.Header.Signature = sig
+	consensus.logger.Infof("[%s]create proposal block[%d:%x] success",
+		consensus.Id, block.Header.BlockHeight, block.Header.BlockHash)
 
 	// Add proposal
 	proposal := NewProposal(consensus.Id, consensus.Height, consensus.Round, -1, block)

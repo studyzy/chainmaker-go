@@ -478,16 +478,17 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		Key:          []byte(fmt.Sprintf(keyEpochFormat, "0")), // key: prefix|epochID
 		Value:        epochInfo,                                // val: epochInfo
 	})
-	for addr, nodeID := range s.nodeIDs {
+
+	for _, addr := range valAddrs {
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyNodeIDFormat, addr)), // key: prefix|addr
-			Value:        []byte(nodeID),                             // val: nodeID
+			Value:        []byte(s.nodeIDs[addr]),                    // val: nodeID
 		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyRevNodeFormat, nodeID)), // key: prefix|nodeID
-			Value:        []byte(addr),                                  // val: addr
+			Key:          []byte(fmt.Sprintf(keyRevNodeFormat, s.nodeIDs[addr])), // key: prefix|nodeID
+			Value:        []byte(addr),                                           // val: addr
 		})
 	}
 	return rwSets, nil
@@ -582,6 +583,9 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 				}
 			}
 		}
+	}
+	if len(config.nodeIDs) != len(config.candidates) {
+		return nil, fmt.Errorf("config nodeIDs and candidates not matched, nodeIDs num: %d, candidates: %d ", len(config.nodeIDs), len(config.candidates))
 	}
 	return config, nil
 }

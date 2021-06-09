@@ -133,7 +133,6 @@ func main() {
 	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")  // 接收方，可以是一个地址或其他方式
 	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token") // token值，该参数可有可无
 
-	flag.StringVar(&certPath, "cert_path", "", "path of cert that will calculate address")
 	flag.Parse()
 
 	conn, err := initGRPCConn(true, 0)
@@ -181,8 +180,6 @@ func main() {
 		balanceOf()
 	case 11: // 11)设置地址和NodeID之间的关系
 		setRelationshipForAddrAndNodeId()
-	case 15: // 15)提取证书中的公钥，计算对应的地址
-		calAddressFromCert()
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
