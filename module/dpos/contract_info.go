@@ -48,7 +48,12 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 		impl.log.Errorf("get selfMinDelegation from contract %s failed, reason: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
 	}
-	minSelfDelegation := big.NewInt(0).SetBytes(minSelfDelegationBz)
+	minSelfDelegation, ok := big.NewInt(0).SetString(string(minSelfDelegationBz), 10)
+	if !ok {
+		err := fmt.Errorf("invalid minSelfDelegation in stake contract")
+		impl.log.Errorf("%s", err)
+		return nil, err
+	}
 	impl.log.Debugf("minSelfDelegation: %s", minSelfDelegation.String())
 	vals := make([]*commonpb.Validator, 0, 10)
 	for iter.Next() {
