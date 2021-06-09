@@ -31,6 +31,7 @@ func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 		proposedBlock.Block.Header.BlockHeight, proposedBlock.Block.Header.BlockHash)
 	// 1. judge consensus: DPoS
 	if !impl.isDPoSConsensus() {
+		impl.log.Debugf("no dpos consensus")
 		return nil, nil
 	}
 	var (
@@ -43,23 +44,32 @@ func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 	if err != nil {
 		return nil, err
 	}
+	impl.log.Debugf("create dpos 1111...")
 	if epoch.NextEpochCreateHeight != blockHeight {
+		impl.log.Debugf("create dpos 222 mismatch blockHeight...")
 		return nil, nil
 	}
+	impl.log.Debugf("create dpos 333")
 	// 3. create unbounding rwset
 	unboundingRwSet, err := impl.completeUnbonding(epoch, block, blockTxRwSet)
 	if err != nil {
+		impl.log.Errorf("create complete unbonding error, reason: %s", err)
 		return nil, err
 	}
+	impl.log.Debugf("create dpos 444")
 	// 4. create newEpoch
 	newEpoch, err := impl.createNewEpoch(blockHeight, epoch, preBlkHash)
 	if err != nil {
+		impl.log.Errorf("create new epoch error, reason: %s", err)
 		return nil, err
 	}
+	impl.log.Debugf("create dpos 555")
 	epochRwSet, err := impl.createEpochRwSet(newEpoch)
 	if err != nil {
+		impl.log.Errorf("create epoch rwSet error, reason: %s", err)
 		return nil, err
 	}
+	impl.log.Debugf("create dpos 666")
 	// 5. Aggregate read-write set
 	unboundingRwSet.TxWrites = append(unboundingRwSet.TxWrites, epochRwSet.TxWrites...)
 	impl.log.Debugf("end createDPoS rwSet: %v ", unboundingRwSet)
