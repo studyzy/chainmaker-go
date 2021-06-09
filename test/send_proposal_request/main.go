@@ -111,6 +111,8 @@ var (
 	dposParamFrom  = ""
 	dposParamTo    = ""
 	dposParamValue = ""
+
+	dposParamEpochId = ""
 )
 
 func main() {
@@ -119,8 +121,9 @@ func main() {
 		wasmType int
 	)
 	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator,"+
-		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: delegate, 9: undelegate,"+
-		" 10: balance of owner, 11: set relationship between user and node_id, 15: calculate address from cert")
+		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: transfer, 9: transferFrom,"+
+		" 10: allowance, 11: approve, 12: burn, 13: transferOwnership, 14: owner, 15: decimals, 16: balanceOf, 17: delegate," +
+		" 18: undelegate, 19: getAllValidator, 20: readEpochByID, 21:readLatestEpoch, 22: setRelationshipForAddrAndNodeId,")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
 	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
 	flag.StringVar(&trustRootOrgId, "trust_root_org_id", "", "node orgID that will be added to the trust root")
@@ -132,6 +135,7 @@ func main() {
 	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")    // 谁来发送这笔交易，可能具有业务意义，也可能没有
 	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")  // 接收方，可以是一个地址或其他方式
 	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token") // token值，该参数可有可无
+	flag.StringVar(&dposParamEpochId, "dpos_epoch_id", "", "value of epoch_id") // 世代id
 
 	flag.Parse()
 
@@ -170,15 +174,41 @@ func main() {
 		nodeOrgDelete(sk3, client, CHAIN1)
 	case 6: // 6)修改链上配置
 		consensusExtUpdate(sk3, client, CHAIN1)
+
+	// DPoS_ERC20合约测试工具
 	case 7: // 7)增发token
 		mint()
-	case 8: // 8)质押指定token
-		delegate()
-	case 9: // 9)解质押指定token
-		undelegate()
-	case 10: // 10)查询指定用户余额
+	case 8: // 8)向某一用户转移token
+		transfer()
+	case 9: // 9)从某一用户向另一用户转移token
+		transferFrom()
+	case 10: // 10)查询某一用户授权另一用户额度
+		allowance()
+	case 11: // 11)授权另一用户额度
+		approve()
+	case 12: // 12)燃烧一定数量的代币
+		burn()
+	case 13: // 13)转移拥有者给其他账户
+		transferOwnership()
+	case 14: // 14)获得token拥有者
+		owner()
+	case 15: // 15)获得decimals
+		decimals()
+	case 16: // 16)查询指定用户余额
 		balanceOf()
-	case 11: // 11)设置地址和NodeID之间的关系
+
+	// DPoS_Stake合约测试工具
+	case 17: // 17)质押指定token
+		delegate()
+	case 18: // 18)解质押指定token
+		undelegate()
+	case 19: // 19)获得所有满足最低抵押条件验证人
+		getAllValidator()
+	case 20: // 20)获取指定ID的世代数据
+		readEpochByID()
+	case 21: // 21)读取当前世代数据
+		readLatestEpoch()
+	case 22: // 22)设置地址和NodeID之间的关系
 		setRelationshipForAddrAndNodeId()
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
@@ -877,7 +907,267 @@ func mint() {
 	fmt.Printf("ERROR: client.call err in dpos_erc20_mint: %v\n", err)
 }
 
-// 质押token
+//transfer 向某一用户转移token
+func transfer() {
+	sk, member, toAddr, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "to",
+			Value: toAddr,
+		},
+		{
+			Key:   "value",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_TRANSFER.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("transfer send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_transfer: %v\n", err)
+}
+
+//transferFrom 从某一用户向另一用户转移token
+func transferFrom() {
+	fromAddr, err := loadDposParamsFrom()
+	sk, member, toAddr, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "from",
+			Value: fromAddr,
+		},
+		{
+			Key:   "to",
+			Value: toAddr,
+		},
+		{
+			Key:   "value",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_TRANSFER_FROM.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("transfer_from send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_transfer_from: %v\n", err)
+}
+
+//allowance 查询某一用户授权另一用户额度
+func allowance() {
+	fromAddr, err := loadDposParamsFrom()
+	sk, member, toAddr,_ , err := loadDposParams()
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "from",
+			Value: fromAddr,
+		},
+		{
+			Key:   "to",
+			Value: toAddr,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("allowance send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_allowance: %v\n", err)
+}
+
+//approve 授权另一用户额度
+func approve() {
+	sk, member, toAddr, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "to",
+			Value: toAddr,
+		},
+		{
+			Key:   "value",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_APPROVE.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("approve send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_approve: %v\n", err)
+}
+
+//burn 燃烧一定数量的代币
+func burn() {
+	sk, member, _, value, err := loadDposParams()
+	if value == "" {
+		log.Fatalf("dposParamValue: %s\n", value)
+	}
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "value",
+			Value: value,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_BURN.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("burn send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_burn: %v\n", err)
+}
+
+// transferOwnership 转移拥有者给其他账户
+func transferOwnership() {
+	sk, member, toAddr, _, err := loadDposParams()
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "to",
+			Value: toAddr,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_TRANSFER_OWNERSHIP.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("transferOwnership send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_transferOwnership: %v\n", err)
+}
+
+//owner 获得token拥有者
+func owner() {
+	sk, member, _, _, err := loadDposParams()
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_GET_OWNER.String(),
+		Pairs:        nil,
+	})
+	if err == nil {
+		fmt.Printf("owner send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_owner: %v\n", err)
+}
+
+//decimals 获得decimals
+func decimals() {
+	sk, member, _, _, err := loadDposParams()
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String(),
+		Pairs:        nil,
+	})
+	if err == nil {
+		fmt.Printf("decimals send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_decimals: %v\n", err)
+}
+
+//balanceOf 查询指定用户余额
+func balanceOf() {
+	sk, member, toAddr, _, err := loadDposParams()
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "owner",
+			Value: toAddr,
+		},
+	}
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+		MethodName:   commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("get balance of send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		if resp != nil {
+			fmt.Printf("balance of [%s] is [%s] \n", toAddr, string(resp.ContractResult.Result))
+			return
+		}
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_erc20_balanceof: %v\n", err)
+}
+
+//delegate 质押token
 func delegate() {
 	sk, member, toAddr, value, err := loadDposParams()
 	if value == "" {
@@ -910,6 +1200,7 @@ func delegate() {
 	fmt.Printf("ERROR: client.call err in dpos_stake_delegate: %v\n", err)
 }
 
+//undelegate 解质押token
 func undelegate() {
 	sk, member, toAddr, value, err := loadDposParams()
 	if value == "" {
@@ -942,35 +1233,81 @@ func undelegate() {
 	fmt.Printf("ERROR: client.call err in dpos_stake_undelegate: %v\n", err)
 }
 
-func balanceOf() {
-	sk, member, toAddr, _, err := loadDposParams()
-	params := []*commonPb.KeyValuePair{
-		{
-			Key:   "owner",
-			Value: toAddr,
-		},
-	}
+
+//getAllValidator 获得所有满足最低抵押条件验证人
+func getAllValidator() {
+	sk, member, _, _, err := loadDposParams()
+
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName:   commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
-		Pairs:        params,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		MethodName:   commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String(),
+		Pairs:        nil,
 	})
 	if err == nil {
-		fmt.Printf("get balance of send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-		if resp != nil {
-			fmt.Printf("balance of [%s] is [%s] \n", toAddr, string(resp.ContractResult.Result))
-			return
-		}
+		fmt.Printf("getAllValidator send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
 		return
 	}
-	fmt.Printf("ERROR: client.call err in dpos_erc20_balanceof: %v\n", err)
+	fmt.Printf("ERROR: client.call err in dpos_stake_getAllValidator: %v\n", err)
 }
 
+//readEpochByID 获取指定ID的世代数据
+func readEpochByID() {
+	if dposParamEpochId == "" {
+		log.Fatalf("dposParamEpochId: %s\n", dposParamEpochId)
+	}
+
+	sk, member, _, _, err := loadDposParams()
+	params := []*commonPb.KeyValuePair{
+		{
+			Key:   "epoch_id",
+			Value: dposParamEpochId,
+		},
+	}
+
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		MethodName:   commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("readEpochByID send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_readEpochByID: %v\n", err)
+}
+
+//readLatestEpoch 读取当前世代数据
+func readLatestEpoch() {
+	sk, member, _, _, err := loadDposParams()
+
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId: "", ChainId: CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		MethodName:   commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String(),
+		Pairs:        nil,
+	})
+	if err == nil {
+		fmt.Printf("readLatestEpoch send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_readLatestEpoch: %v\n", err)
+}
+
+// setRelationshipForAddrAndNodeId 系加入节点绑定自身身份
 func setRelationshipForAddrAndNodeId() {
 	sk, member, nodeID, _, err := loadDposParams()
 	params := []*commonPb.KeyValuePair{
@@ -1041,6 +1378,42 @@ func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string
 	sk, member := getUserSK(skIdx+1, userKeyPaths[skIdx], userCrtPaths[skIdx])
 	return sk, member, toAddr, dposParamValue, nil
 }
+
+func loadDposParamsFrom() (string, error) {
+	if dposParamFrom == "" {
+		log.Fatalf("dposParamFrom: %s\n", dposParamFrom)
+	}
+	var (
+		fromAddr string
+		fromIdx  int64
+		err    error
+	)
+	// 判断dposParams的信息
+	fromIdx, err = strconv.ParseInt(dposParamFrom, 10, 32)
+	if err != nil {
+		// 判断是否为base58编码
+		_, err = base58.Decode(dposParamFrom)
+		if err != nil {
+			log.Fatalf("param is not number or base58, %s", dposParamFrom)
+		}
+		fromAddr = dposParamFrom
+	} else {
+		// 获取证书
+		userCertPath := fmt.Sprintf(userCertPathFormat, fromIdx)
+		// 读取内容，并转换为公钥
+		userCertBytes, err := ioutil.ReadFile(userCertPath)
+		if err != nil {
+			panic(err)
+		}
+		fromAddr, err = parseUserAddress(userCertBytes)
+		if err != nil {
+			log.Fatalf("parse cert to address error, %s", userCertPath)
+		}
+	}
+
+	return fromAddr, nil
+}
+
 
 // parseUserAddress
 func parseUserAddress(member []byte) (string, error) {
