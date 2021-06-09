@@ -121,7 +121,7 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 	// deal with the special situation：
 	// 1. only one tx and schedule time out
 	// 2. package the empty block
-	if !utils.CanProposeEmptyBlock(bb.chainConf.ChainConfig().Consensus.Type) && len(block.Txs) == 0{
+	if !utils.CanProposeEmptyBlock(bb.chainConf.ChainConfig().Consensus.Type) && len(block.Txs) == 0 {
 		return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
 	}
 
@@ -695,16 +695,21 @@ func (chain *BlockCommitterImpl) isBlockLegal(blk *commonpb.Block) error {
 
 func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	defer func() {
+		panicErr := recover()
 		if err == nil {
-			return
+			if panicErr != nil {
+				err = fmt.Errorf(fmt.Sprint(panicErr))
+			} else {
+				return
+			}
 		}
 		// rollback sql
-		chain.log.Error(err)
+		chain.log.Error("cache add block err: ", err)
 		if chain.chainConf.ChainConfig().Contract.EnableSqlSupport {
 			txKey := block.GetTxKey()
 			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
 			// drop database if create contract fail
-			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+			if false && len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
 				var payload commonpb.ContractMgmtPayload
 				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
 					if payload.ContractId != nil {
@@ -713,6 +718,9 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 					}
 				}
 			}
+		}
+		if panicErr != nil {
+			panic(panicErr)
 		}
 	}()
 

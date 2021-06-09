@@ -225,11 +225,15 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 			return err
 		}
 	}
-	if len(txWrite.Key) == 0 && !processStateDbSqlOutside { //是sql,而且没有在外面处理过，则在这里进行处理
-		sql := string(txWrite.Value)
-		if _, err := dbTx.ExecSql(sql); err != nil {
-			s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
-			return err
+	if len(txWrite.Key) == 0 { //是sql
+		if !processStateDbSqlOutside { // 没有在外面处理过，则在这里进行处理
+			sql := string(txWrite.Value)
+			if _, err := dbTx.ExecSql(sql); err != nil {
+				s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
+				return err
+			}
+		} else {
+			// TODO: record sql rw
 		}
 	} else {
 		stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
@@ -481,6 +485,7 @@ func (s *StateSqlDB) CommitDbTransaction(txName string) error {
 func (s *StateSqlDB) RollbackDbTransaction(txName string) error {
 	s.Lock()
 	defer s.Unlock()
+	s.logger.Warnw("rollback db transaction:", txName)
 	return s.db.RollbackDbTransaction(txName)
 }
 

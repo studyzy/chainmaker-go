@@ -80,7 +80,8 @@ func (sc *SimContext) callContract(instance *wasm.Instance, methodName string, b
 	// Allocate memory for the subject, and get a pointer to it.
 	allocateResult, err := exports(lengthOfSubject)
 	if err != nil {
-		return err
+		sc.Log.Errorf("contract invoke %s failed, %s", protocol.ContractAllocateMethod, err.Error())
+		return fmt.Errorf("%s invoke failed. There may not be enough memory or CPU", protocol.ContractAllocateMethod)
 	}
 	dataPtr := allocateResult.ToI32()
 

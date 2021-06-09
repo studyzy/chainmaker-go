@@ -8,6 +8,7 @@ package wasmertest
 
 import (
 	"fmt"
+	"gotest.tools/assert"
 	"runtime"
 	"strings"
 	"sync"
@@ -31,7 +32,8 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-fact-1.2.1.wasm"
+	//test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
@@ -50,9 +52,12 @@ func TestCallFact(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				invokeFact("test_put_state", y, contractId, txContext, pool, bytes)
-				invokeFact("test_kv_iterator", y, contractId, txContext, pool, bytes)
-				invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
+
+				invokeFact("save", y, contractId, txContext, pool, bytes)
+				invokeFact("find_by_file_hash", y, contractId, txContext, pool, bytes)
+				//invokeFact("test_put_state", y, contractId, txContext, pool, bytes)
+				//invokeFact("test_kv_iterator", y, contractId, txContext, pool, bytes)
+				//invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
 
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%1000 == 0 {
@@ -76,7 +81,7 @@ func TestCallFact(t *testing.T) {
 func invokeFact(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	parameters := make(map[string]string)
 	txId := utils.GetRandTxId()
-	parameters["time"] = txId
+	parameters["time"] = "567124123"
 	parameters["file_hash"] = "file_hash"
 	parameters["file_name"] = txId
 	parameters["tx_id"] = txId
@@ -89,153 +94,48 @@ func invokeFact(method string, id int32, contractId *commonPb.ContractId, txCont
 	fmt.Println("【result】", r)
 }
 
-func TestCallCounter(t *testing.T) {
-	//{
+func TestFactContract(t *testing.T) {
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	//bytes, _ = wasm.ReadBytes("../../../../test/wasm/counter.wasm")
-	println("bytes len", len(bytes))
-
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 	pool := wasmer.NewVmPoolManager("chain001")
-
-	// 调用
-	key := "counter001"
-	x := 0
-	println("start") // 2.9m
-	wg := sync.WaitGroup{}
-	start := time.Now().UnixNano() / 1e6
-	for i := 0; i < 2000; i++ {
-		for j := 0; j < 100; j++ {
-			x += 1
-			y := x
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				//invokeCounter("increase", key, contractId, txContext, pool, bytes)
-				//invokeCounter("test_verify_signature", key, contractId, txContext, pool, bytes)
-				//invokeCounter("test_marshal_unmarshal", key, contractId, txContext, pool, bytes)
-				invokeCounter("query", key, contractId, txContext, pool, bytes)
-				end := time.Now().UnixNano() / 1e6
-				if y%1000 == 0 && (end-start)/1000 > 0 {
-					fmt.Printf("【tps】 %d 【spend】%d i = %d, j = %d count=%d\n", y/int((end-start)/1000), end-start, i+1, j, y)
-				}
-			}()
-		}
-		wg.Wait()
-		//time.Sleep(time.Millisecond * 20)
-	}
-
-	end := time.Now().UnixNano() / 1e6
-	println("end 【spend】", end-start)
-	time.Sleep(time.Second * 5) // 73m
-	//pool.resetPool()            // 10000*10:73m->63m 1000*10:44->33m 10000*50:281->238m  1000*50:106->75m
-	//time.Sleep(time.Second * 3) // 73m
-	//CleanMap() // 无用
-	//println("gc")
-	//runtime.GC()
-	//time.Sleep(time.Second * 2)
-	//} // 3m
-	runtime.GC() // 无用，未回收内存
-	println("gc2")
-	time.Sleep(time.Second * 20000)
+	invokeFactContract("save", contractId, txContext, pool, bytes)
+	r := invokeFactContract("find_by_file_hash", contractId, txContext, pool, bytes)
+	assert.Equal(t, string(r.Result), "{\"file_hash\":\"file_hash\",\"file_name\":\"file_name\",\"time\":\"1314520\"}")
 }
-func invokeCounter(method string, key string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+
+func invokeFactContract(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
-	parameters["key"] = key
+	parameters["time"] = "1314520"
+	parameters["file_hash"] = "file_hash"
+	parameters["file_name"] = "file_name"
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
-	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	return r
 }
 
-func TestCallTraceability(t *testing.T) {
-	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	byteCode, _ = wasm.ReadBytes("D:\\develop\\workspace\\chainMaker\\chainmaker-go\\test\\wasm\\traceability.wasm")
-	start := time.Now().UnixNano() / 1e6
-
+func TestCounterContract(t *testing.T) {
+	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 	pool := wasmer.NewVmPoolManager("chain001")
-
-	var (
-		method     string = "init"
-		parameters map[string]string
-	)
-	parameters = make(map[string]string)
-
-	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
-	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
-
-	name := "apple_000001"
-	category := "fruits"
-	// 注册
-	log.Infof("注册")
-	invokeTraceability("register", category, name, contractId, txContext, pool, byteCode)
-	// 重复注册
-	log.Infof("重复注册")
-	invokeTraceability("register", category, name, contractId, txContext, pool, byteCode)
-
-	// 查询
-	log.Infof("查询")
-	invokeTraceability("query", category, name, contractId, txContext, pool, byteCode)
-
-	// 进海关
-	log.Infof("海关")
-	invokeTraceability("customs", category, name, contractId, txContext, pool, byteCode)
-	log.Infof("海关")
-	invokeTraceability("customs", category, name, contractId, txContext, pool, byteCode)
-
-	// 进北京
-	log.Infof("北京")
-	invokeTraceability("beijing", category, name, contractId, txContext, pool, byteCode)
-
-	// 进海淀
-	log.Infof("海淀")
-	invokeTraceability("haidian", category, name, contractId, txContext, pool, byteCode)
-
-	log.Infof("查询")
-	invokeTraceability("query", category, name, contractId, txContext, pool, byteCode)
-
-	name = "apple_002"
-	// 注册
-	log.Infof("注册")
-	invokeTraceability("register", category, name, contractId, txContext, pool, byteCode)
-	invokeTraceability("register", category, name, contractId, txContext, pool, byteCode)
-	// 未入海关直接进海淀
-	log.Infof("跳跃")
-	//invokeTraceability("beijing", category, name, contractId, txContext, pool, byteCode)
-
-	log.Infof("查询")
-	invokeTraceability("query", category, name, contractId, txContext, pool, byteCode)
-
-	x := 0
-	wg := sync.WaitGroup{}
-	for i := 0; i < 10000; i++ {
-		for j := 0; j < 10; j++ {
-			wg.Add(1)
-			go func() {
-				invokeTraceability("query", category, name, contractId, txContext, pool, byteCode)
-				end := time.Now().UnixNano() / 1e6
-				fmt.Printf("【spend】%d i = %d, j = %d count=%d\n", end-start, i, j, x)
-				x += 1
-				wg.Done()
-			}()
-		}
-		wg.Wait()
-		//time.Sleep(time.Millisecond * 20)
-	}
-
-	end := time.Now().UnixNano() / 1e6
-	println("【spend】", end-start, "【tps】", int64(x)/((end-start)/1000))
-	time.Sleep(time.Second * 1000)
+	invokeCounterContract("increase", contractId, txContext, pool, bytes)
+	invokeCounterContract("increase", contractId, txContext, pool, bytes)
+	r := invokeCounterContract("query", contractId, txContext, pool, bytes)
+	assert.Equal(t, string(r.Result), "2")
 }
 
-func invokeTraceability(method string, category string, name string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterContract(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
-	parameters["category"] = category
-	parameters["name"] = name
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
-	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	return r
 }
 
 // 使用原始调用智能合约
 func TestCallHelloWorldUseOrigin(t *testing.T) {
 	_, _, byteCode := test.InitContextTest(commonPb.RuntimeType_WASMER)
+	if byteCode == nil {
+		panic("byteCode is nil")
+	}
 	vb := wasmer.GetVmBridgeManager()
 	instance, _ := wasm.NewInstanceWithImports(byteCode, vb.GetImports())
 	defer instance.Close()
@@ -262,7 +162,7 @@ func TestCallHelloWorldUseOrigin(t *testing.T) {
 	memory[lengthOfSubject] = 0
 
 	// Run the `greet` function. Given the pointer to the subject.
-	greetResult, _ := instance.Exports["invoke"](inputPointer, lengthOfSubject)
+	greetResult, _ := instance.Exports["increase"](inputPointer, lengthOfSubject)
 	outputPointer := greetResult.ToI32()
 
 	// Read the result of the `greet` function.
@@ -289,44 +189,6 @@ func TestCallHelloWorldUseOrigin(t *testing.T) {
 	deallocate(outputPointer, lengthOfOutput)
 
 	fmt.Println("end ")
-	time.Sleep(time.Second * 2)
-}
-
-// 使用pool调用智能合约
-func TestCallHelloWorldUsePool(t *testing.T) {
-	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_WASMER)
-
-	start := time.Now().UnixNano() / 1e6
-	time.Sleep(time.Second * 1)
-
-	pool := wasmer.NewVmPoolManager("chain001")
-
-	// 创建
-	parameters := make(map[string]string)
-	runtimeInstance, _ := pool.NewRuntimeInstance(contractId, byteCode)
-	runtimeInstance.Invoke(contractId, "init", byteCode, parameters, txContext, 0)
-
-	// 调用
-	y := 0
-	wg := sync.WaitGroup{}
-	for i := 0; i < 10000; i++ {
-		for j := 0; j < 100; j++ {
-			wg.Add(1)
-			x := y
-			go func() {
-				invokeCounter("increase", "key", contractId, txContext, pool, byteCode)
-				end := time.Now().UnixNano() / 1e6
-				fmt.Printf("【tps】 %d【spend】%d i = %d, j = %d count=%d\n ", int64(x)/((end-start)/1000), end-start, i, j, x)
-				wg.Done()
-			}()
-			y += 1
-		}
-		wg.Wait()
-		//time.Sleep(time.Millisecond * 20)
-	}
-
-	end := time.Now().UnixNano() / 1e6
-	println("【spend】", end-start, "【tps】", int64(y)/((end-start)/1000))
 	time.Sleep(time.Second * 2)
 }
 
