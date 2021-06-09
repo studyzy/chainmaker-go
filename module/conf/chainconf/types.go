@@ -65,6 +65,10 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 		return nil, err
 	}
 
+	if err := verifyChainConfigTrustMembers(cconfig); err != nil {
+		return nil, err
+	}
+
 	if err := verifyChainConfigConsensus(cconfig, mConfig); err != nil {
 		return nil, err
 	}
@@ -139,7 +143,7 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 			log.Error(err)
 			return err
 		}
-		for _,root := range orgRoots.Root{
+		for _, root := range orgRoots.Root {
 			// check root cert
 			if ok, err := utils.CheckRootCertificate(root); err != nil && !ok {
 				log.Errorf("check root certificate failed, %s", err.Error())
@@ -150,6 +154,23 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 			if block == nil {
 				return errors.New("root is empty")
 			}
+		}
+
+	}
+	return nil
+}
+
+func verifyChainConfigTrustMembers(config *config.ChainConfig) error {
+	// load all ca root certs
+	for _, member := range config.TrustMembers {
+		// check root cert
+		if ok, err := utils.CheckRootCertificate(member.MemberInfo); err != nil && !ok {
+			log.Errorf("check root certificate failed, %s", err.Error())
+			return err
+		}
+		block, _ := pem.Decode([]byte(member.MemberInfo))
+		if block == nil {
+			return errors.New("trust member is empty")
 		}
 
 	}

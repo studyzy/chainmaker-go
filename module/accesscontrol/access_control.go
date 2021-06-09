@@ -79,7 +79,9 @@ type accessControl struct {
 	localOrg           *organization
 	localSigningMember protocol.SigningMember
 
-	log protocol.Logger
+	//local trust members
+	localTrustMembers []*config.TrustMemberConfig
+	log               protocol.Logger
 }
 
 func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig protocol.ChainConf,
@@ -112,8 +114,9 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 			Intermediates: bcx509.NewCertPool(),
 			Roots:         bcx509.NewCertPool(),
 		},
-		localOrg: nil,
-		log:      log,
+		localOrg:          nil,
+		localTrustMembers: chainConfig.TrustMembers,
+		log:               log,
 	}
 	err := ac.initTrustRoots(chainConfig.TrustRoots, localOrgId)
 	if err != nil {
@@ -384,6 +387,12 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 		newMember.role = append(newMember.role, protocol.Role(ou))
 
+		for _, v := range ac.localTrustMembers {
+			if v.MemberInfo == certPEM {
+				newMember.role = append(newMember.role, protocol.Role(v.Role))
+				break
+			}
+		}
 		newMember.identityType = IdentityTypeCert
 		return &newMember, nil
 	}
@@ -469,6 +478,7 @@ func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
 	ac.memberCache.Clear()
 	ac.certCache.Clear()
 
+	ac.localTrustMembers = chainConfig.TrustMembers
 	return nil
 }
 

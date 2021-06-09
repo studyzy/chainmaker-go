@@ -116,6 +116,25 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 		}
 	}
 
+	// load the trust member certs than set the bytes as value
+	// need verify org
+	for _, member := range chainConfig.TrustMembers {
+
+			filePath := member.MemberInfo
+			if !filepath.IsAbs(filePath) {
+				filePath, err = filepath.Abs(filePath)
+				if err != nil {
+					return nil, err
+				}
+			}
+			log.Infof("load trust root file path: %s", filePath)
+			entry, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("fail to read trust memberInfo file [%s]: %v", filePath, err)
+			}
+		    member.MemberInfo= string(entry)
+	}
+
 	// verify
 	_, err = VerifyChainConfig(chainConfig)
 	if err != nil {
