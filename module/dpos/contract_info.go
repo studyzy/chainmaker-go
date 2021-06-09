@@ -29,6 +29,7 @@ func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
 		impl.log.Errorf("unmarshal epoch failed, reason: %s", err)
 		return nil, err
 	}
+	impl.log.Debugf("epoch info: %s", epoch.String())
 	return &epoch, nil
 }
 
