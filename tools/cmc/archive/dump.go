@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gosuri/uiprogress"
@@ -59,7 +58,7 @@ func newDumpCMD() *cobra.Command {
 				return runDumpByHeightCMD(height)
 			}
 
-			return errors.New("invalid --target, eg. 100 (block height) or `2006-01-02 15:04:05` (date)")
+			return fmt.Errorf("invalid --target %s, eg. 100 (block height) or \"2006-01-02 15:04:05\" (date)", target)
 		},
 	}
 
@@ -112,11 +111,12 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 	if blocks < barCount {
 		barCount = blocks
 	}
-	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
+	progress := uiprogress.New()
+	bar := progress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("\nArchiving Blocks (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Archiving Blocks (%d/%d)", b.Current(), barCount)
 	})
-	uiprogress.Start()
+	progress.Start()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
 	if archivedBlkHeightOnChain == 0 {
 		batchStartBlkHeight = 0
@@ -133,7 +133,7 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 		batchEndBlkHeight++
 		bar.Incr()
 	}
-	uiprogress.Stop()
+	progress.Stop()
 	// do the rest of blocks
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
 }
@@ -164,10 +164,8 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 	for blk := startBlk; blk < endBlk; blk++ {
 		// blk is first row of new table, create new table
 		if blk%model.RowsPerBlockInfoTable() == 0 {
-			if err := model.CreateBlockInfoTable(db, model.BlockInfoTableNameByBlockHeight(blk)); err != nil {
-				if strings.Contains(err.Error(), "Error 1050") {
-					continue
-				}
+			err := model.CreateBlockInfoTableIfNotExists(db, model.BlockInfoTableNameByBlockHeight(blk))
+			if err != nil {
 				return err
 			}
 		}

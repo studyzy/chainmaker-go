@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/c-bata/go-prompt"
+	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -32,7 +33,7 @@ type CobraPrompt struct {
 func (co CobraPrompt) Run() {
 	p := prompt.New(
 		func(in string) {
-			promptArgs := strings.Fields(in)
+			promptArgs, _ := shlex.Split(in)
 			os.Args = append([]string{os.Args[0]}, promptArgs...)
 			co.RootCmd.Execute()
 		},

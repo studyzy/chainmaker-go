@@ -76,11 +76,12 @@ func runRestoreCMD() error {
 
 	//// 4.Restore Blocks
 	var barCount = archivedBlkHeightOnChain - restoreStartBlockHeight + 1
-	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
+	progress := uiprogress.New()
+	bar := progress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("\nRestoring Blocks (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Restoring Blocks (%d/%d)", b.Current(), barCount)
 	})
-	uiprogress.Start()
+	progress.Start()
 	for height := archivedBlkHeightOnChain; height >= restoreStartBlockHeight; height-- {
 		if err := restoreBlock(cc, db, height); err != nil {
 			return err
@@ -88,7 +89,7 @@ func runRestoreCMD() error {
 
 		bar.Incr()
 	}
-	uiprogress.Stop()
+	progress.Stop()
 	return nil
 }
 
