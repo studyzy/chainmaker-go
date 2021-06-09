@@ -253,6 +253,14 @@ const (
 	ConfigFunction_NODE_ID_UPDATE ConfigFunction = 20
 	// organization delete node_id [org_id and node_id must already exist in nodes]
 	ConfigFunction_NODE_ID_DELETE ConfigFunction = 21
+
+	// add trusted member (org_id signcert role  node_id)
+	ConfigFunction_TRUST_MEMBER_ADD ConfigFunction = 22
+	// [self] modify an individual's own trusted member [node_id must exist in the original trust_members,
+	// and the new trust member must be different from other trust members]
+	ConfigFunction_TRUST_MEMBER_UPDATE ConfigFunction = 23
+	// delete trusted root certificate [node_ ID should be in trust_ The nodes in nodes need to be deleted]
+	ConfigFunction_TRUST_MEMBER_DELETE ConfigFunction = 24
 )
 
 var ConfigFunction_name = map[int32]string{
