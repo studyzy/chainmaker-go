@@ -122,6 +122,7 @@ func (impl *DPoSImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 
 func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 	start := native.ToUnbondingDelegationKey(epoch.EpochID, "", "")
+	start = start[:len(start)-1]
 	iterRange := util.BytesPrefix(start)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
