@@ -49,7 +49,7 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 		return nil, err
 	}
 	minSelfDelegation := big.NewInt(0).SetBytes(minSelfDelegationBz)
-
+	impl.log.Debugf("minSelfDelegation: %s", minSelfDelegation.String())
 	vals := make([]*commonpb.Validator, 0, 10)
 	for iter.Next() {
 		kv, err := iter.Value()
@@ -75,6 +75,7 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 			impl.log.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
 			return nil, fmt.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
 		}
+		impl.log.Debugf("candidateInfo: %s", vals[i].String())
 		if !vals[i].Jailed && vals[i].Status == commonpb.BondStatus_Bonded && selfDelegation.Cmp(minSelfDelegation) >= 0 {
 			candidates = append(candidates, &dpospb.CandidateInfo{
 				PeerID: vals[i].ValidatorAddress,
@@ -219,20 +220,4 @@ func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet m
 	}
 	balance = balance.SetBytes(val)
 	return balance, nil
-}
-
-// BytesPrefix returns key range that satisfy the given prefix.
-// This only applicable for the standard 'bytes comparer'.
-func BytesPrefix(start []byte) (end []byte) {
-	var limit []byte
-	for i := len(start) - 1; i >= 0; i-- {
-		c := start[i]
-		if c < 0xff {
-			limit = make([]byte, i+1)
-			copy(limit, start)
-			limit[i] = c + 1
-			break
-		}
-	}
-	return limit
 }
