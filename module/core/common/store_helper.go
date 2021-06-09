@@ -23,10 +23,12 @@ func NewKVStoreHelper(chainId string) *KVStoreHelper {
 	return &KVStoreHelper{chainId: chainId}
 }
 
+// KVDB do nothing
 func (kv *KVStoreHelper) RollBack(block *commonpb.Block, blockchainStore protocol.BlockchainStore) error {
 	return nil
 }
 
+// KVDB do nothing
 func (kv *KVStoreHelper) BeginDbTransaction(blockchainStore protocol.BlockchainStore, txKey string) {
 }
 

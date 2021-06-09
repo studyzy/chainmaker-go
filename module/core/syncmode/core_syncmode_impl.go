@@ -45,21 +45,6 @@ type CoreEngine struct {
 	subscriber    *subscriber.EventSubscriber // block subsriber
 }
 
-type CoreEngineConfig struct {
-	ChainId         string
-	MsgBus          msgbus.MessageBus
-	ChainConf       protocol.ChainConf
-	TxPool          protocol.TxPool
-	VmMgr           protocol.VmManager
-	BlockchainStore protocol.BlockchainStore
-	SnapshotManager protocol.SnapshotManager
-	Identity        protocol.SigningMember
-	LedgerCache     protocol.LedgerCache
-	ProposalCache   protocol.ProposalCache // proposal cache
-	AC              protocol.AccessControlProvider
-	Subscriber      *subscriber.EventSubscriber
-}
-
 // NewCoreEngine new a core engine.
 func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	var storeHelper common.StoreHelper
