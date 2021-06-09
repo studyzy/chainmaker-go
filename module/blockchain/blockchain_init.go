@@ -129,15 +129,12 @@ func (bc *Blockchain) initExtModules(extModules []map[string]func() error) (err 
 }
 
 func (bc *Blockchain) initDpos() (err error) {
-	if bc.chainConf.ChainConfig().Consensus.Type != consensusPb.ConsensusType_DPOS {
-		return nil
-	}
 	_, ok := bc.initModules[moduleNameDpos]
 	if ok {
 		bc.log.Infof("dpos service module existed, ignore.")
 		return
 	}
-	bc.dpos = dpos.NewDposImpl(bc.log, bc.chainConf, bc.store)
+	bc.dpos = dpos.NewDPoSImpl(bc.chainConf, bc.store)
 	bc.initModules[moduleNameNetService] = struct{}{}
 	return
 }
