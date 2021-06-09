@@ -33,7 +33,7 @@ func NewConsoleCMD(rootCmd *cobra.Command) *cobra.Command {
 				RootCmd:                rootCmd,
 				DynamicSuggestionsFunc: handleDynamicSuggestions,
 				GoPromptOptions: []prompt.Option{
-					prompt.OptionTitle("cmc console: interactive ChainMaker client"),
+					prompt.OptionTitle("Interactive ChainMaker Client"),
 					prompt.OptionPrefix(">>> "),
 					prompt.OptionInputTextColor(prompt.Yellow),
 					prompt.OptionMaxSuggestion(10),
