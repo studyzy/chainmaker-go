@@ -350,7 +350,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	}
 	r.log.Info("rwset bytes: ", rwb)
 
-	auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
+	//auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
+	auth, err := r.verifyMultiCallerAuth(params, ac)
 	if !auth || err != nil {
 		err := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
 			params["user_cert"], params["client_sign"], params["payload"])
@@ -853,7 +854,8 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 		return nil, err
 	}
 
-	auth, err := r.verifyCallerAuth(params, ctx.GetTx().Header.ChainId, ac)
+	//auth, err := r.verifyCallerAuth(params, ctx.GetTx().Header.ChainId, ac)
+	auth, err := r.verifyMultiCallerAuth(params, ac)
 	if err != nil {
 		return nil, err
 	}
@@ -861,7 +863,7 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 	return []byte(strconv.FormatBool(auth)), nil
 }
 
-func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chainId string, ac protocol.AccessControlProvider) (bool, error) {
+func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chainId string, ac protocol.AccessControlProvider) (bool, error) { //todo delete
 
 	clientSign, err := r.getParamValue(params, "client_sign")
 	if err != nil {
@@ -913,7 +915,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 		Signature: clientSignBytes,
 	}}
 
-	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, payLoadBytes)  //todo pb
+	principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, payLoadBytes) //todo pb
 	if err != nil {
 		return false, fmt.Errorf("fail to construct authentication principal: %s", err)
 	}
@@ -930,7 +932,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	return true, nil
 }
 
-func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) {
+func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) {  //todo delete
 	result := make(map[string]string, 0)
 
 	if err := json.Unmarshal(payLoad, &result); err != nil {
@@ -953,4 +955,75 @@ func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key 
 		return "", errors.New(errMsg)
 	}
 	return value, nil
+}
+
+func (r *PrivateComputeRuntime) verifyMultiCallerAuth(params map[string]string, ac protocol.AccessControlProvider) (bool, error) {
+
+	req, err := r.getPrivateRequest(params)
+	if err != nil {
+		return false, err
+	}
+
+	for i, certPair := range req.SignPair {
+		payLoadBytes, err := req.Payload.Marshal()
+		if err != nil {
+			r.log.Errorf("sign pair number is: %v ,payload marshal err:%v", i, err.Error())
+			return false, err
+		}
+
+		clientSignBytes, err := hex.DecodeString(certPair.ClientSign)
+		if err != nil {
+			r.log.Errorf("sign pair number is: %v ,client sign hex err:%v", i, err.Error())
+			return false, err
+		}
+		fmt.Printf("++++++++++++private clientSignBytges is %v++++++++++", clientSignBytes)
+
+		userCertPemBytes, err := hex.DecodeString(certPair.Cert)
+		if err != nil {
+			r.log.Errorf("sign pair number is: %v ,user cert pem hex err:%v", i, err.Error())
+			return false, err
+		}
+
+		sender := &accesscontrol.SerializedMember{
+			OrgId:      req.Payload.OrgId[i],
+			MemberInfo: userCertPemBytes,
+			IsFullCert: true,
+		}
+
+		endorsements := []*commonPb.EndorsementEntry{{
+			Signer:    sender,
+			Signature: clientSignBytes,
+		}}
+
+		principal, err := ac.CreatePrincipal("PRIVATE_COMPUTE", endorsements, payLoadBytes) //todo pb
+		if err != nil {
+			return false, fmt.Errorf("sign pair number is: %v ,fail to construct authentication principal: %s", i, err.Error())
+		}
+
+		ok, err := ac.VerifyPrincipal(principal)
+		if err != nil {
+			return false, fmt.Errorf("sign pair number is: %v ,authentication error, %s", i, err.Error())
+		}
+
+		if !ok {
+			return false, fmt.Errorf("sign pair number is: %v ,authentication failed", i)
+		}
+
+	}
+	return true, nil
+}
+
+func (r *PrivateComputeRuntime) getPrivateRequest(params map[string]string) (*commonPb.PrivateComputeRequest, error) {
+	privateReq, err := r.getParamValue(params, "private_req")
+	if err != nil {
+		return nil, err
+	}
+
+	privateReqBytes, err := hex.DecodeString(privateReq)
+	req := &commonPb.PrivateComputeRequest{}
+	if err := req.Unmarshal(privateReqBytes); err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
