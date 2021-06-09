@@ -46,7 +46,7 @@ func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 	}
 	impl.log.Debugf("create dpos 1111...")
 	if epoch.NextEpochCreateHeight != blockHeight {
-		impl.log.Debugf("create dpos 222 mismatch blockHeight...")
+		impl.log.Debugf("create dpos 222 mismatch blockHeight..., epoch.NextEpochCreateHeight: %d, blockHeight: %d", epoch.NextEpochCreateHeight, blockHeight)
 		return nil, nil
 	}
 	impl.log.Debugf("create dpos 333")
