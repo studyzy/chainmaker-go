@@ -295,10 +295,12 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 	consensus.TimeoutPropose = timeoutPropose
 	consensus.TimeoutProposeDelta = timeoutProposeDelta
 	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		consensus.logger.Debugf("enter dpos to get proposers ...")
 		if validators, err = consensus.dpos.GetValidators(); err != nil {
 			return nil, nil, err
 		}
 	} else {
+		consensus.logger.Debugf("enter tbft to get proposers ...")
 		consensus.validatorSet.updateBlocksPerProposer(tbftBlocksPerProposer)
 	}
 	return consensus.validatorSet.updateValidators(validators)

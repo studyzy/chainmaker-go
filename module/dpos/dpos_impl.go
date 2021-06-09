@@ -27,7 +27,8 @@ func NewDPoSImpl(chainConf protocol.ChainConf, blockChainStore protocol.Blockcha
 }
 
 func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
-	impl.log.Debugf("begin createDPoS rwSet ")
+	impl.log.Debugf("begin createDPoS rwSet, blockInfo: %d:%x ",
+		proposedBlock.Block.Header.BlockHeight, proposedBlock.Block.Header.BlockHash)
 	// 1. judge consensus: DPoS
 	if !impl.isDPoSConsensus() {
 		return nil, nil
@@ -70,6 +71,7 @@ func (impl *DPoSImpl) isDPoSConsensus() bool {
 }
 
 func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
+	impl.log.Debugf("begin create new epoch in blockHeight: %d", proposalHeight)
 	// 1. get property: epochBlockNum
 	epochBlockNumBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyEpochBlockNumber))
 	if err != nil {
@@ -77,6 +79,7 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 		return nil, err
 	}
 	epochBlockNum := binary.BigEndian.Uint64(epochBlockNumBz)
+	impl.log.Debugf("epoch blockNum: %d", epochBlockNum)
 
 	// 2. get all candidates
 	candidates, err := impl.getAllCandidateInfo()
@@ -99,11 +102,13 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	}
 
 	// 4. create NewEpoch
-	return &common.Epoch{
+	newEpoch := &common.Epoch{
 		EpochID:               oldEpoch.EpochID + 1,
 		NextEpochCreateHeight: proposalHeight + epochBlockNum,
 		ProposerVector:        proposer,
-	}, nil
+	}
+	impl.log.Debugf("new epoch: %s", newEpoch.String())
+	return newEpoch, nil
 }
 
 func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
