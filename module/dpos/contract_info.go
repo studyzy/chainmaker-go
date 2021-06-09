@@ -18,9 +18,9 @@ const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
 func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
-	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(native.KeyCurrentEpoch))
+	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
 	if err != nil {
-		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), err)
+		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
 	}
 
@@ -37,9 +37,9 @@ func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
 func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	preFix := native.ToValidatorKey("")
 	iterRange := util.BytesPrefix(preFix)
-	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), iterRange.Start, iterRange.Limit)
+	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
-		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), err)
+		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
 	}
 	defer iter.Release()
@@ -99,12 +99,12 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet
 		TxId: "",
 		TxWrites: []*commonpb.TxWrite{
 			{
-				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 				Key:          currPreFix,
 				Value:        bz,
 			},
 			{
-				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 				Key:          native.ToEpochKey(fmt.Sprintf("%d", epoch.EpochID)),
 				Value:        bz,
 			},
