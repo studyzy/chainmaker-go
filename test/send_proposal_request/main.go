@@ -209,7 +209,7 @@ func main() {
 	case 13: // 13)转移拥有者给其他账户
 		transferOwnership()
 	case 14: // 14)获得token拥有者
-		owner()
+		owner(sk3, client)
 	case 15: // 15)获得decimals
 		decimals()
 	case 16: // 16)查询指定用户余额
@@ -1125,24 +1125,34 @@ func transferOwnership() {
 }
 
 //owner 获得token拥有者
-func owner() {
-	sk, member, _, _, err := loadDposParams()
-	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName:   commonPb.DPoSERC20ContractFunction_GET_OWNER.String(),
-		Pairs:        nil,
-	})
-	if err == nil {
-		fmt.Printf("owner send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-		return
+func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
+	//sk, member, _, _, err := loadDposParams()
+
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_OWNER.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
 	}
-	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-		fmt.Println(deadLineErr)
-		return
-	}
-	fmt.Printf("ERROR: client.call err in dpos_erc20_owner: %v\n", err)
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		CHAIN1, "", payloadBytes, 0)
+	fmt.Println(resp)
+
+	//resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+	//	TxId: "", ChainId: CHAIN1,
+	//	TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	//	ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
+	//	MethodName:   commonPb.DPoSERC20ContractFunction_GET_OWNER.String(),
+	//	Pairs:        nil,
+	//})
+	//if err == nil {
+	//	fmt.Printf("owner send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	//	return
+	//}
+	//if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+	//	fmt.Println(deadLineErr)
+	//	return
+	//}
+	//fmt.Printf("ERROR: client.call err in dpos_erc20_owner: %v\n", err)
 }
 
 //decimals 获得decimals
