@@ -96,7 +96,7 @@ func VerifyBlockSignatures(
 ) error {
 	consensusType := chainConf.ChainConfig().Consensus.Type
 	switch consensusType {
-	case consensuspb.ConsensusType_TBFT:
+	case consensuspb.ConsensusType_TBFT, consensuspb.ConsensusType_DPOS:
 		return tbft.VerifyBlockSignatures(chainConf, ac, block)
 	case consensuspb.ConsensusType_RAFT:
 		return raft.VerifyBlockSignatures(block)
