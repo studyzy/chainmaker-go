@@ -35,9 +35,9 @@ func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
 
 // getAllCandidateInfo get all candidates from ledger
 func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
-	preFix := native.ToValidatorKey("")
-	iterRange := util.BytesPrefix(preFix)
-	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
+	prefix := native.ToValidatorPrefix()
+	iterRange := util.BytesPrefix(prefix)
+	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
@@ -128,9 +128,8 @@ func (impl *DPoSImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 }
 
 func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
-	start := native.ToUnbondingDelegationKey(epoch.EpochID, "", "")
-	start = start[:len(start)-1]
-	iterRange := util.BytesPrefix(start)
+	prefix := native.ToUnbondingDelegationPrefix(epoch.EpochID)
+	iterRange := util.BytesPrefix(prefix)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("new select range failed, reason: %s", err)
