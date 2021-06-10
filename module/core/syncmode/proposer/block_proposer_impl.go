@@ -16,6 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"sync"
@@ -57,7 +58,7 @@ type BlockProposerImpl struct {
 	proposer               []byte // this node identity
 
 	blockBuilder *common.BlockBuilder
-	storeHelper  common.StoreHelper
+	storeHelper  conf.StoreHelper
 }
 
 type BlockProposerConfig struct {
@@ -72,7 +73,7 @@ type BlockProposerConfig struct {
 	ChainConf       protocol.ChainConf
 	AC              protocol.AccessControlProvider
 	BlockchainStore protocol.BlockchainStore
-	StoreHelper     common.StoreHelper
+	StoreHelper     conf.StoreHelper
 }
 
 const (

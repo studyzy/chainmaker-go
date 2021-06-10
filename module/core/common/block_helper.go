@@ -8,6 +8,7 @@ package common
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/provider/conf"
 	"encoding/hex"
 	"fmt"
 	"sync"
@@ -40,7 +41,7 @@ type BlockBuilderConf struct {
 	ProposalCache   protocol.ProposalCache
 	ChainConf       protocol.ChainConf // chain config
 	Log             protocol.Logger
-	StoreHelper     StoreHelper
+	StoreHelper     conf.StoreHelper
 }
 
 type BlockBuilder struct {
@@ -53,7 +54,7 @@ type BlockBuilder struct {
 	proposalCache   protocol.ProposalCache
 	chainConf       protocol.ChainConf // chain config
 	log             protocol.Logger
-	storeHelper     StoreHelper
+	storeHelper     conf.StoreHelper
 }
 
 func NewBlockBuilder(conf *BlockBuilderConf) *BlockBuilder {
@@ -417,7 +418,7 @@ type VerifierBlockConf struct {
 	TxPool          protocol.TxPool
 	BlockchainStore protocol.BlockchainStore
 	ProposalCache   protocol.ProposalCache // proposal cache
-	StoreHelper     StoreHelper
+	StoreHelper     conf.StoreHelper
 }
 
 type VerifierBlock struct {
@@ -431,7 +432,7 @@ type VerifierBlock struct {
 	txPool          protocol.TxPool
 	blockchainStore protocol.BlockchainStore
 	proposalCache   protocol.ProposalCache // proposal cache
-	storeHelper     StoreHelper
+	storeHelper     conf.StoreHelper
 }
 
 func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
@@ -598,7 +599,7 @@ type BlockCommitterImpl struct {
 	metricBlockCounter    *prometheus.CounterVec   // metric block counter
 	metricTxCounter       *prometheus.CounterVec   // metric transaction counter
 	metricBlockCommitTime *prometheus.HistogramVec // metric block commit time
-	storeHelper           StoreHelper
+	storeHelper           conf.StoreHelper
 }
 
 type BlockCommitterConfig struct {
@@ -612,7 +613,7 @@ type BlockCommitterConfig struct {
 	MsgBus          msgbus.MessageBus
 	Subscriber      *subscriber.EventSubscriber
 	Verifier        protocol.BlockVerifier
-	StoreHelper     StoreHelper
+	StoreHelper     conf.StoreHelper
 }
 
 func NewBlockCommitter(config BlockCommitterConfig, log protocol.Logger) (protocol.BlockCommitter, error) {

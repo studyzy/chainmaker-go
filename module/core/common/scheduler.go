@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
+	"chainmaker.org/chainmaker-go/provider/conf"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -40,14 +41,14 @@ type TxScheduler struct {
 	chainConf       protocol.ChainConf // chain config
 
 	metricVMRunTime *prometheus.HistogramVec
-	StoreHelper     StoreHelper
+	StoreHelper     conf.StoreHelper
 }
 
 // Transaction dependency in adjacency table representation
 type dagNeighbors map[int]bool
 
 // NewTxScheduler building a transaction scheduler
-func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf, storeHelper StoreHelper) *TxScheduler {
+func NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf, storeHelper conf.StoreHelper) *TxScheduler {
 	TxScheduler := &TxScheduler{
 		lock:            sync.Mutex{},
 		VmManager:       vmMgr,

@@ -8,6 +8,7 @@ package verifier
 
 import (
 	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/provider/conf"
 	"encoding/hex"
 	"fmt"
 	"sync"
@@ -42,7 +43,7 @@ type BlockVerifierImpl struct {
 	txPool         protocol.TxPool                // tx pool to check if tx is duplicate
 	mu             sync.Mutex                     // to avoid concurrent map modify
 	verifierBlock  *common.VerifierBlock
-	storeHelper    common.StoreHelper
+	storeHelper    conf.StoreHelper
 
 	metricBlockVerifyTime *prometheus.HistogramVec // metrics monitor
 }
@@ -59,7 +60,7 @@ type BlockVerifierConfig struct {
 	AC              protocol.AccessControlProvider
 	TxPool          protocol.TxPool
 	VmMgr           protocol.VmManager
-	StoreHelper     common.StoreHelper
+	StoreHelper     conf.StoreHelper
 }
 
 func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol.BlockVerifier, error) {
