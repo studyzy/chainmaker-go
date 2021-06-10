@@ -917,6 +917,7 @@ func mint() {
 	})
 	if err == nil {
 		fmt.Printf("mint send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -950,6 +951,7 @@ func transfer() {
 	})
 	if err == nil {
 		fmt.Printf("transfer send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -988,6 +990,7 @@ func transferFrom() {
 	})
 	if err == nil {
 		fmt.Printf("transfer_from send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1012,13 +1015,14 @@ func allowance() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String(),
 		Pairs:        params,
 	})
 	if err == nil {
 		fmt.Printf("allowance send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1052,6 +1056,7 @@ func approve() {
 	})
 	if err == nil {
 		fmt.Printf("approve send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1081,6 +1086,7 @@ func burn() {
 	})
 	if err == nil {
 		fmt.Printf("burn send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1107,6 +1113,7 @@ func transferOwnership() {
 	})
 	if err == nil {
 		fmt.Printf("transferOwnership send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1120,13 +1127,14 @@ func owner() {
 	sk, member, _, _, err := loadDposParams()
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_GET_OWNER.String(),
 		Pairs:        nil,
 	})
 	if err == nil {
 		fmt.Printf("owner send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1140,13 +1148,14 @@ func decimals() {
 	sk, member, _, _, err := loadDposParams()
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String(),
 		Pairs:        nil,
 	})
 	if err == nil {
 		fmt.Printf("decimals send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1166,7 +1175,7 @@ func balanceOf() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
 		Pairs:        params,
@@ -1210,6 +1219,7 @@ func delegate() {
 	})
 	if err == nil {
 		fmt.Printf("delegate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1243,6 +1253,7 @@ func undelegate() {
 	})
 	if err == nil {
 		fmt.Printf("undelegate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1257,13 +1268,14 @@ func getAllValidator() {
 
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String(),
 		Pairs:        nil,
 	})
 	if err == nil {
 		fmt.Printf("getAllValidator send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1288,13 +1300,14 @@ func readEpochByID() {
 
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String(),
 		Pairs:        params,
 	})
 	if err == nil {
 		fmt.Printf("readEpochByID send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
@@ -1309,13 +1322,14 @@ func readLatestEpoch() {
 
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String(),
 		Pairs:        nil,
 	})
 	if err == nil {
 		fmt.Printf("readLatestEpoch send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
 		fmt.Println(deadLineErr)
