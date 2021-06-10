@@ -72,16 +72,14 @@ func ToNodeIDKey(addr string) []byte {
 
 // ToUnbondingDelegationKey - Key：U + "/" + BigEndian(EpochID) + "/" + DelegatorAddress + "/" + ValidatorAddress
 func ToUnbondingDelegationKey(epochID uint64, delegatorAddress, validatorAddress string) []byte {
-	epochBz := make([]byte, 8)
-	binary.BigEndian.PutUint64(epochBz, epochID)
-	return []byte(fmt.Sprintf(KeyUnbondingDelegationFormat, epochBz, delegatorAddress, validatorAddress))
+	bz := encodeUint64ToBigEndian(epochID)
+	return []byte(fmt.Sprintf(KeyUnbondingDelegationFormat, bz, delegatorAddress, validatorAddress))
 }
 
 // ToUnbondingDelegationPrefix - Key：U + "/" + BigEndian(EpochID)
 func ToUnbondingDelegationPrefix(epochID uint64) []byte {
-	epochBz := make([]byte, 8)
-	binary.BigEndian.PutUint64(epochBz, epochID)
-	return []byte(prefixUnDelegation + string(epochBz))
+	bz := encodeUint64ToBigEndian(epochID)
+	return []byte(prefixUnDelegation + string(bz))
 }
 
 func ToReverseNodeIDKey(nodeID string) []byte {
@@ -155,7 +153,7 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap := make(map[string]ContractFunc, 64)
 	// implement
 	DPoSStakeRuntime := &DPoSStakeRuntime{log: log}
-	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String()] = DPoSStakeRuntime.GetAllValidator
+	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_CANDIDATES.String()] = DPoSStakeRuntime.GetAllCandidates
 	methodMap[commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String()] = DPoSStakeRuntime.GetValidatorByAddress
 	methodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPoSStakeRuntime.Delegate
 	methodMap[commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String()] = DPoSStakeRuntime.GetDelegationsByAddress
@@ -165,6 +163,12 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPoSStakeRuntime.ReadLatestEpoch
 	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPoSStakeRuntime.SetNodeID
 	methodMap[commonPb.DPoSStakeContractFunction_GET_NODE_ID.String()] = DPoSStakeRuntime.GetNodeID
+	methodMap[commonPb.DPoSStakeContractFunction_READ_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.ReadMinSelfDelegation
+	methodMap[commonPb.DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.UpdateMinSelfDelegation
+	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
+	methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
+	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
+	methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
 	return methodMap
 }
 
@@ -234,9 +238,9 @@ func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[s
 	}
 }
 
-// GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人
+// GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人候选人
 // return ValidatorVector
-func (s *DPoSStakeRuntime) GetAllValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 获取验证人数据
 	vc, err := getAllValidatorByPrefix(context, ToValidatorPrefix())
 	if err != nil {
@@ -613,6 +617,146 @@ func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params m
 	return bz, nil
 }
 
+// ReadMinSelfDelegation() string				// 读取验证人最少抵押token数量
+// return string
+func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation))
+	if err != nil {
+		return nil, err
+	}
+	return bz, nil
+}
+
+// UpdateMinSelfDelegation() string				// 更新验证人最少抵押token数量
+// @params["min_self_delegation"]
+// return string
+func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// check params
+	err := checkParams(params, "min_self_delegation")
+	if err != nil {
+		return nil, err
+	}
+
+	minSelfDelegation := params["min_self_delegation"]
+	if !assertStringAmountPositive(minSelfDelegation) {
+		s.log.Errorf("minSelfDelegation less than 0")
+		return nil, fmt.Errorf("minSelfDelegation less than 0")
+	}
+
+	// check sender and owner
+	err = s.checkSenderAndOwner(context)
+	if err != nil {
+		s.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	// put data
+	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation), []byte(minSelfDelegation))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(minSelfDelegation), nil
+}
+
+// ReadEpochValidatorNumber() string				// 读取每个世代验证人数量
+// return string
+func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
+	if err != nil {
+		return nil, err
+	}
+	amount := decodeUint64FromBigEndian(bz)
+	return []byte(strconv.Itoa(int(amount))), nil
+}
+
+// UpdateEpochValidatorNumber() string				// 更新每个世代验证人数量
+// @params["epoch_validator_number"]
+// return string
+func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// check params
+	err := checkParams(params, "epoch_validator_number")
+	if err != nil {
+		return nil, err
+	}
+
+	epochValidatorNumber := params["epoch_validator_number"]
+	if !assertStringAmountPositive(epochValidatorNumber) {
+		s.log.Errorf("epochValidatorNumber less than 0")
+		return nil, fmt.Errorf("epochValidatorNumber less than 0")
+	}
+
+	// check sender and owner
+	err = s.checkSenderAndOwner(context)
+	if err != nil {
+		s.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	// convert int string to int
+	amount, err := strconv.Atoi(epochValidatorNumber)
+	if err != nil {
+		return nil, err
+	}
+	// big endian encode
+	bigEndianAmount := encodeUint64ToBigEndian(uint64(amount))
+	// put data
+	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber), bigEndianAmount)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(epochValidatorNumber), nil
+}
+
+// ReadEpochBlockNumber() string				// 读取世代的出块数量
+// return string
+func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber))
+	if err != nil {
+		return nil, err
+	}
+	amount := decodeUint64FromBigEndian(bz)
+	return []byte(strconv.Itoa(int(amount))), nil
+}
+
+// UpdateEpochBlockNumber() bool				// 更新世代的出块数量
+// @params["epoch_block_number"]
+// return nil
+func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// check params
+	err := checkParams(params, "epoch_block_number")
+	if err != nil {
+		return nil, err
+	}
+
+	epochBlockNumber := params["epoch_block_number"]
+	if !assertStringAmountPositive(epochBlockNumber) {
+		s.log.Errorf("epochBlockNumber less than 0")
+		return nil, fmt.Errorf("epochBlockNumber less than 0")
+	}
+
+
+	// check sender and owner
+	err = s.checkSenderAndOwner(context)
+	if err != nil {
+		s.log.Errorf(err.Error())
+		return nil, err
+	}
+
+	// convert int string to int
+	amount, err := strconv.Atoi(epochBlockNumber)
+	if err != nil {
+		return nil, err
+	}
+	// big endian encode
+	bigEndianAmount := encodeUint64ToBigEndian(uint64(amount))
+	// put data
+	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber), bigEndianAmount)
+	return []byte(epochBlockNumber), nil
+}
+
 // 获取或创建 validator
 func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Validator, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
@@ -965,6 +1109,40 @@ func (s *DPoSStakeRuntime) checkEpochUnDelegateAmount(context protocol.TxSimCont
 	return shareAmount, nil
 }
 
+// 获取 erc20 合约的所有人
+func (s *DPoSStakeRuntime) getERC20ContractOwner(context protocol.TxSimContext) (string, error) {
+	// 跨合约转账
+	// 获取 runtime 对象
+	erc20RunTime := NewDPoSRuntime(s.log)
+
+	bz, err := erc20RunTime.Owner(context, nil)
+	if err != nil {
+		s.log.Errorf("cross call contract ERC20, method owner error: ", err.Error())
+		return "", err
+	}
+	return string(bz), nil
+}
+
+// 检查消息发送人和erc20token的权限拥有者是否一致
+func (s *DPoSStakeRuntime) checkSenderAndOwner(context protocol.TxSimContext) error {
+	// get message sender
+	sender, err := loadSenderAddress(context) // Use ERC20 parse method
+	if err != nil {
+		s.log.Errorf("get sender address error: ", err.Error())
+		return err
+	}
+	owner, err := s.getERC20ContractOwner(context)
+	if err != nil {
+		s.log.Errorf("get erc20 owner address error: ", err.Error())
+		return err
+	}
+	if sender != owner {
+		s.log.Errorf("only erc20 contract owner is access to this method, sender: [%s], owner: [%s]", sender, owner)
+		return fmt.Errorf("only erc20 contract owner is access to this method, sender: [%s], owner: [%s]", sender, owner)
+	}
+	return nil
+}
+
 // 返回所有验证人
 func getAllValidatorByPrefix(context protocol.TxSimContext, prefix []byte) ([]*commonPb.Validator, error) {
 	// 获取所有验证人数据
@@ -1072,4 +1250,14 @@ func assertStringAmountPositive(amount string) bool {
 		return false
 	}
 	return amountValue.Cmp(big.NewInt(0)) >= 0
+}
+
+func encodeUint64ToBigEndian(amount uint64) []byte {
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, amount)
+	return bz
+}
+
+func decodeUint64FromBigEndian(bz []byte) uint64 {
+	return binary.BigEndian.Uint64(bz)
 }
