@@ -126,6 +126,7 @@ var (
 	dposParamFrom  = ""
 	dposParamTo    = ""
 	dposParamValue = ""
+	dposParamAllowancer = ""
 
 	dposParamEpochId = ""
 )
@@ -150,6 +151,7 @@ func main() {
 	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")            // 谁来发送这笔交易，可能具有业务意义，也可能没有
 	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")          // 接收方，可以是一个地址或其他方式
 	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token")         // token值，该参数可有可无
+	flag.StringVar(&dposParamAllowancer, "dpos_allowancer", "", "value of allowanced_ID") // 世代id
 	flag.StringVar(&dposParamEpochId, "dpos_epoch_id", "", "value of epoch_id") // 世代id
 
 	flag.Parse()
@@ -196,15 +198,15 @@ func main() {
 	case 8: // 8)向某一用户转移token
 		transfer()                              // ./main -step 8 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 9: // 9)从某一用户向另一用户转移token
-		transferFrom()                          // ./main -step 9 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
+		transferFrom()                          // ./main -step 9 -dpos_from="allowanced_ValidatorID" -dpos_allowancer= "allowancer_Address" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 10: // 10)查询某一用户授权另一用户额度
-		allowance(sk3, client)                  // ./main -step 10
+		allowance(sk3, client)                  // ./main -step 10 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress"
 	case 11: // 11)授权另一用户额度
 		approve()                               // ./main -step 11 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 12: // 12)燃烧一定数量的代币
 		burn()                                  // ./main -step 12 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress"
 	case 13: // 13)转移拥有者给其他账户
-		transferOwnership()                     // ./main -step 13 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress"
+		transferOwnership()                     // ./main -step 13 -dpos_from="ownerID" -dpos_to="validatorID/validatorAddress"
 	case 14: // 14)获得token拥有者
 		owner(sk3, client)                      // ./main -step 14
 	case 15: // 15)获得decimals
@@ -967,7 +969,10 @@ func transfer() {
 
 //transferFrom 从某一用户向另一用户转移token
 func transferFrom() {
-	fromAddr, err := loadDposParamsFrom()
+	if dposParamAllowancer == "" {
+		log.Fatalf("dposParamAllowanced: %s\n", dposParamAllowancer)
+	}
+
 	sk, member, toAddr, value, err := loadDposParams()
 	if value == "" {
 		log.Fatalf("dposParamValue: %s\n", value)
@@ -975,7 +980,7 @@ func transferFrom() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
-			Value: fromAddr,
+			Value: dposParamAllowancer,
 		},
 		{
 			Key:   "to",
