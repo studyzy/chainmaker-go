@@ -133,6 +133,7 @@ func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []
 		impl.log.Errorf("select validators from candidates failed, reason: %s", err)
 		return nil, err
 	}
+	impl.log.Debugf("select validators: %v from candidates: %v", vals, candidates)
 	return vals, nil
 }
 
