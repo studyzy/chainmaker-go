@@ -36,6 +36,7 @@ const (
 	keyStakeMinSelfDelegation  = "stake.minSelfDelegation"
 	keyStakeEpochValidatorNum  = "stake.epochValidatorNum"
 	keyStakeEpochBlockNum      = "stake.epochBlockNum"
+	keyStakeUnbondingEpochNum  = "stake.completionUnbondingEpochNum"
 	keyStakeCandidate          = "stake.candidate"
 	keyStakeConfigNodeID       = "stake.nodeID"
 
@@ -46,6 +47,7 @@ const (
 	keyValidatorFormat      = "V/%s"
 	keyEpochValidatorNumber = "EVN"
 	keyEpochBlockNumber     = "EBN"
+	keyUnbondingEpochNumber = "UEN"
 	keyNodeIDFormat         = "N/%s"
 	keyRevNodeFormat        = "NR/%s"
 )
@@ -377,6 +379,7 @@ type StakeConfig struct {
 	minSelfDelegation string
 	validatorNum      uint64
 	eachEpochNum      uint64
+	unbondingEpochNum uint64
 	candidates        []*dpospb.CandidateInfo
 	nodeIDs           map[string]string // userAddr => nodeID
 }
@@ -406,6 +409,12 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 			Key:          []byte(keyEpochBlockNumber),
 			Value:        epochNum,
 		},
+		{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(keyUnbondingEpochNumber),
+			Value:        epochNum,
+		},
+
 	}
 
 	// 2. add validatorInfo in rwSet
@@ -542,6 +551,8 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 	      value: 10
 	    - key: stake.epochBlockNum
 	      value: 2000
+	    - key: stake.completionUnbondingEpochNum
+	      value: 1
 		- key: stake.candidate:<addr1>
 	      value: 800000
 		- key: stake.candidate:<addr2>
@@ -571,6 +582,12 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 				return nil, fmt.Errorf("%s error, reason: %s", keyStakeMinSelfDelegation, err)
 			}
 			config.minSelfDelegation = kv.Value
+		case keyStakeUnbondingEpochNum:
+			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			config.unbondingEpochNum = val
 		default:
 			if strings.HasPrefix(kv.Key, keyStakeCandidate) {
 				if err := config.setCandidate(kv.Key, kv.Value); err != nil {

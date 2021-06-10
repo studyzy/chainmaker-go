@@ -35,7 +35,7 @@ const (
 
 	KeyCurrentEpoch                   = "CE"
 	KeyMinSelfDelegation              = "MSD"
-	KeyCompletionUnbondingEpochNumber = "CUEN" // 这个 number 不能改动，若改动，会遇到 unbonding entry 数组中 completionEpochID 不同的情况
+	KeyCompletionUnbondingEpochNumber = "UEN" // 这个 number 不能改动，若改动，会遇到 unbonding entry 数组中 completionEpochID 不同的情况
 	KeyEpochValidatorNumber           = "EVN"
 	KeyEpochBlockNumber               = "EBN"
 )
