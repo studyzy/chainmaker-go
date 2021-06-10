@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 
@@ -101,8 +102,8 @@ func newValidator(validatorAddress string) *commonPb.Validator {
 		Status:                     commonPb.BondStatus_Unbonded,
 		Tokens:                     "0",
 		DelegatorShares:            "0",
-		UnbondingEpochID:           0,
-		UnbondingCompletionEpochID: 0,
+		UnbondingEpochID:           math.MaxInt64,
+		UnbondingCompletionEpochID: math.MaxInt64,
 		SelfDelegation:             "0",
 	}
 }

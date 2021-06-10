@@ -226,13 +226,13 @@ func main() {
 	case 22: // 22)获得指定用户在指定验证人的抵押数据
 		getUserDelegationByValidator(sk3, client) 		// ./main -step 22 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="delegatorAddress"
 	case 23: // 23)获取指定ID的世代数据
-		readEpochByID(sk3, client)						// ./main -step 23 -dpos_from="" -dpos_to="" -dpos_value="1"
+		readEpochByID(sk3, client)						// ./main -step 23 -dpos_from="" -dpos_to="" -dpos_value="1" ok
 	case 24: // 24)读取当前世代数据
-		readLatestEpoch(sk3, client)					// ./main -step 24 -dpos_from="" -dpos_to="" -dpos_value="" .
+		readLatestEpoch(sk3, client)					// ./main -step 24 -dpos_from="" -dpos_to="" -dpos_value="" ok
 	case 25: // 25)设置地址和NodeID之间的关系
 		setRelationshipForAddrAndNodeId(sk3, client)	// ./main -step 25 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="node ID"
 	case 26: // 26)查询地址和NodeID之间的关系
-		getRelationshipForAddrAndNodeId(sk3, client)	// ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" .
+		getRelationshipForAddrAndNodeId(sk3, client)	// ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
