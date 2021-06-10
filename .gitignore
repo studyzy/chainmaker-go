@@ -31,3 +31,5 @@ tools
 /data/
 /log/
 .DS_Store
+/module/vm/test/*/tmp/
+nohup.out

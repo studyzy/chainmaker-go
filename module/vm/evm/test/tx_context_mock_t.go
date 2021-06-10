@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -91,6 +92,14 @@ type TxContextMockTest struct {
 	sender   *acPb.SerializedMember
 	creator  *acPb.SerializedMember
 	cacheMap map[string][]byte
+}
+
+func (s *TxContextMockTest) SetStateKvHandle(i int32, iterator protocol.StateIterator) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetStateKvHandle(i int32) (protocol.StateIterator, bool) {
+	panic("implement me")
 }
 
 func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
@@ -287,6 +296,34 @@ func BaseParam(parameters map[string]string) {
 }
 
 type mockBlockchainStore struct {
+}
+
+func (m mockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetArchivedPivot() uint64 {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
 }
 
 func (m mockBlockchainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {

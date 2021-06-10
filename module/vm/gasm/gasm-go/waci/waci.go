@@ -102,6 +102,17 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.PutState()
 		case protocol.ContractMethodDeleteState:
 			return s.DeleteState()
+		//kv author:whang1234
+		case protocol.ContractMethodKvIterator:
+			return s.KvIterator()
+		case protocol.ContractMethodKvIteratorHasNext:
+			return s.KvIteratorHasNext()
+		case protocol.ContractMethodKvIteratorNextLen:
+			return s.KvIteratorNextLen()
+		case protocol.ContractMethodKvIteratorNext:
+			return s.KvIteratorNext()
+		case protocol.ContractMethodKvIteratorClose:
+			return s.KvIteratorClose()
 		//sql
 		case protocol.ContractMethodExecuteUpdate:
 			return s.ExecuteUpdate()

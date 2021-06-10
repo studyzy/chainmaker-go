@@ -43,7 +43,7 @@ func (b *Block) IsConfigBlock() bool {
 }
 func GetTxKeyWith(propose []byte, blockHeight int64) string {
 	if propose == nil {
-		return ""
+		propose = make([]byte, 0)
 	}
 	f := sha256.New()
 	f.Write(propose)

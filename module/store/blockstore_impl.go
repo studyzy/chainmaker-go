@@ -434,8 +434,8 @@ func (bs *BlockStoreImpl) GetContractTxHistory(contractName string) (protocol.Tx
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	var (
-		rwSet *commonPb.TxRWSet
-		err error
+		rwSet      *commonPb.TxRWSet
+		err        error
 		isArchived bool
 	)
 

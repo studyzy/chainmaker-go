@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/common/serialize"
-	"chainmaker.org/chainmaker-go/common/vmcbor"
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -28,7 +27,6 @@ type SimContext struct {
 	Instance       *wasm.Instance
 
 	method        string
-	Ctx           *vmcbor.RuntimeContext
 	parameters    map[string]string
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
@@ -82,7 +80,8 @@ func (sc *SimContext) callContract(instance *wasm.Instance, methodName string, b
 	// Allocate memory for the subject, and get a pointer to it.
 	allocateResult, err := exports(lengthOfSubject)
 	if err != nil {
-		return err
+		sc.Log.Errorf("contract invoke %s failed, %s", protocol.ContractAllocateMethod, err.Error())
+		return fmt.Errorf("%s invoke failed. There may not be enough memory or CPU", protocol.ContractAllocateMethod)
 	}
 	dataPtr := allocateResult.ToI32()
 

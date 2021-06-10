@@ -13,7 +13,6 @@ import (
 
 // ResultDB provides handle to rwSets instances
 type ResultDB interface {
-
 	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
 
 	// CommitBlock commits the block rwsets in an atomic operation

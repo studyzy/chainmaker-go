@@ -75,15 +75,14 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	sc.Instance = instance
 
 	err := sc.CallMethod(instance)
+	if err != nil {
+		r.log.Errorw("contract invoke failed, ", err.Error())
+	}
 
 	// gas Log
 	gas := instance.GetGasUsed()
 	if gas > protocol.GasLimit {
-		if err != nil {
-			err = fmt.Errorf("contract invoke failed, %s, out of gas %d/%d", err.Error(), gas, int64(protocol.GasLimit))
-		} else {
-			err = fmt.Errorf("contract invoke failed, out of gas %d/%d", gas, int64(protocol.GasLimit))
-		}
+		err = fmt.Errorf("contract invoke failed, out of gas %d/%d", gas, int64(protocol.GasLimit))
 	}
 	logStr += fmt.Sprintf("used gas %d ", gas)
 	contractResult.GasUsed = int64(gas)

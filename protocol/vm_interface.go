@@ -78,6 +78,12 @@ const (
 	ContractMethodGetState    = "GetState"
 	ContractMethodPutState    = "PutState"
 	ContractMethodDeleteState = "DeleteState"
+	// kv iterator author:whang1234
+	ContractMethodKvIterator        = "KvIterator"
+	ContractMethodKvIteratorHasNext = "KvIteratorHasNext"
+	ContractMethodKvIteratorNextLen = "KvIteratorNextLen"
+	ContractMethodKvIteratorNext    = "KvIteratorNext"
+	ContractMethodKvIteratorClose   = "KvIteratorClose"
 	// sql
 	ContractMethodExecuteQuery       = "ExecuteQuery"
 	ContractMethodExecuteQueryOne    = "ExecuteQueryOne"
@@ -115,8 +121,6 @@ type ContractWacsiCommon interface {
 	SuccessResult() int32
 	ErrorResult() int32
 	CallContract() int32
-	GetPaillierOpResultLen() int32
-	GetPaillierOpResult() int32
 }
 
 type ContractWacsiKV interface {
@@ -124,6 +128,10 @@ type ContractWacsiKV interface {
 	GetState() int32
 	PutState() int32
 	DeleteState() int32
+	KvIterator() int32
+	KvIteratorClose() int32
+	KvIteratorNext() int32
+	KvIteratorHasNext() int32
 }
 
 type ContractWacsiSQL interface {

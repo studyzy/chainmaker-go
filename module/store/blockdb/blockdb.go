@@ -49,7 +49,7 @@ type BlockDB interface {
 	TxExists(txId string) (bool, error)
 
 	// TxArchived returns true if the tx archived, or returns false.
-   	TxArchived(txId string) (bool, error)
+	TxArchived(txId string) (bool, error)
 
 	// GetTxConfirmedTime retrieves time of the tx confirmed in the blockChain
 	GetTxConfirmedTime(txId string) (int64, error)

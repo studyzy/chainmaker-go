@@ -118,9 +118,12 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 			block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
 
-	//if len(block.Txs) == 0 {
-	//	return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
-	//}
+	// deal with the special situation：
+	// 1. only one tx and schedule time out
+	// 2. package the empty block
+	if !utils.CanProposeEmptyBlock(bb.chainConf.ChainConfig().Consensus.Type) && len(block.Txs) == 0 {
+		return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
+	}
 
 	err = FinalizeBlock(
 		block,
@@ -696,13 +699,21 @@ func (chain *BlockCommitterImpl) isBlockLegal(blk *commonpb.Block) error {
 
 func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	defer func() {
+		panicErr := recover()
 		if err == nil {
-			return
+			if panicErr != nil {
+				err = fmt.Errorf(fmt.Sprint(panicErr))
+			} else {
+				return
+			}
 		}
 		// rollback sql
-		chain.log.Error(err)
+		chain.log.Error("cache add block err: ", err)
 		if sqlErr := chain.storeHelper.RollBack(block, chain.blockchainStore); sqlErr != nil {
 			chain.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
+		}
+		if panicErr != nil {
+			panic(panicErr)
 		}
 	}()
 
