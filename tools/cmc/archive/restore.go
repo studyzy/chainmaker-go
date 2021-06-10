@@ -82,6 +82,7 @@ func runRestoreCMD() error {
 		return fmt.Sprintf("Restoring Blocks (%d/%d)", b.Current(), barCount)
 	})
 	progress.Start()
+	defer progress.Stop()
 	for height := archivedBlkHeightOnChain; height >= restoreStartBlockHeight; height-- {
 		if err := restoreBlock(cc, db, height); err != nil {
 			return err
@@ -89,7 +90,6 @@ func runRestoreCMD() error {
 
 		bar.Incr()
 	}
-	progress.Stop()
 	return nil
 }
 

@@ -117,6 +117,7 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 		return fmt.Sprintf("Archiving Blocks (%d/%d)", b.Current(), barCount)
 	})
 	progress.Start()
+	defer progress.Stop()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
 	if archivedBlkHeightOnChain == 0 {
 		batchStartBlkHeight = 0
@@ -133,7 +134,6 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 		batchEndBlkHeight++
 		bar.Incr()
 	}
-	progress.Stop()
 	// do the rest of blocks
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
 }
