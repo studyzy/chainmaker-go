@@ -155,12 +155,15 @@ func registerDPosStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	// implement
 	DPosStakeRuntime := &DPosStakeRuntime{log: log}
 	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String()] = DPosStakeRuntime.GetAllValidator
+	methodMap[commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String()] = DPosStakeRuntime.GetValidatorByAddress
 	methodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPosStakeRuntime.Delegate
+	methodMap[commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String()] = DPosStakeRuntime.GetDelegationsByAddress
+	methodMap[commonPb.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String()] = DPosStakeRuntime.GetUserDelegationByValidator
 	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.UnDelegate
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPosStakeRuntime.ReadEpochByID
 	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpoch
 	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPosStakeRuntime.SetNodeID
-
+	methodMap[commonPb.DPoSStakeContractFunction_GET_NODE_ID.String()] = DPosStakeRuntime.GetNodeID
 	return methodMap
 }
 
