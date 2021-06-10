@@ -9,6 +9,7 @@ package hotstuffmode
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/helper"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
@@ -72,7 +73,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		chainConf:       cf.ChainConf,
 		log:             cf.Log,
 	}
-	var schedulerFactory common.TxSchedulerFactory
+	var schedulerFactory scheduler.TxSchedulerFactory
 	core.txScheduler = schedulerFactory.NewTxScheduler(cf.VmMgr, cf.ChainConf)
 	core.quitC = make(<-chan interface{})
 
