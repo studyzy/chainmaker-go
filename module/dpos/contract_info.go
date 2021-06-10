@@ -37,7 +37,7 @@ func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
 func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	prefix := native.ToValidatorPrefix()
 	iterRange := util.BytesPrefix(prefix)
-	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_STATE.String(), iterRange.Start, iterRange.Limit)
+	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
