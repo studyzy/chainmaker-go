@@ -5,6 +5,17 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 package common
+
+import "testing"
+
+func TestAddBlock(t *testing.T) {
+
+
+
+
+}
+
+
 //
 //import (
 //	"chainmaker.org/chainmaker-go/common/msgbus"

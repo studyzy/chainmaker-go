@@ -8,10 +8,6 @@ package common
 
 import (
 	"bytes"
-	"encoding/hex"
-	"fmt"
-	"sync"
-
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
@@ -23,8 +19,13 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
+	"encoding/hex"
+	"fmt"
 	"github.com/gogo/protobuf/proto"
+	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
+	"runtime"
+	"sync"
 )
 
 const (
@@ -222,61 +223,92 @@ func FinalizeBlock(
 	// TxCount contains acl verify failed txs and invoked contract txs
 	txCount := len(block.Txs)
 	block.Header.TxCount = int64(txCount)
-
-	// TxRoot/RwSetRoot
-	var err error
+	type txHashMess struct {
+		tx    *commonpb.Transaction
+		index int
+	}
+	txC := make(chan *txHashMess, block.Header.TxCount)
+	finishC := make(chan bool)
+	errC := make(chan error)
 	txHashes := make([][]byte, txCount)
-	for i, tx := range block.Txs {
-		// finalize tx, put rwsethash into tx.Result
-		rwSet := txRWSetMap[tx.Header.TxId]
-		if rwSet == nil {
-			rwSet = &commonpb.TxRWSet{
-				TxId:     tx.Header.TxId,
-				TxReads:  nil,
-				TxWrites: nil,
+	var goRoutinePool *ants.Pool
+	var err error
+	poolCapacity := runtime.NumCPU() * 4
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
+		return err
+	}
+	defer goRoutinePool.Release()
+
+	go func() {
+		// DagDigest
+		dagHash, err := utils.CalcDagHash(hashType, block.Dag)
+		if err != nil {
+			logger.Warnf("get dag hash error %s", err)
+			errC <- err
+		}
+		block.Header.DagHash = dagHash
+	}()
+	for {
+		select {
+		case txcc := <-txC:
+			err = goRoutinePool.Submit(func() {
+				tx := txcc.tx
+				logger.Debugf("calc hash for tx id: %s", tx.Header.GetTxId())
+
+				rwSet := txRWSetMap[tx.Header.TxId]
+				if rwSet == nil {
+					rwSet = &commonpb.TxRWSet{
+						TxId:     tx.Header.TxId,
+						TxReads:  nil,
+						TxWrites: nil,
+					}
+				}
+				rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+				logger.DebugDynamic(func() string {
+					return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+				})
+				if err != nil {
+					errC <- err
+				}
+				if tx.Result == nil {
+					// in case tx.Result is nil, avoid panic
+					e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
+					logger.Error(e.Error())
+					errC <- e
+					return
+				}
+				tx.Result.RwSetHash = rwSetHash
+				// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
+				txHash, err := utils.CalcTxHash(hashType, tx)
+				if err != nil {
+					errC <- err
+				}
+				index := txcc.index
+				txHashes[index] = txHash
+
+				if cap(txHashes) == len(block.Txs) {
+					finishC <- true
+				}
+			})
+		case err = <-errC:
+			return err
+		case <-finishC:
+
+		}
+	}
+
+	go func() {
+		if block.Header.TxCount > 0 {
+			for i, tx := range block.Txs {
+				txC <- &txHashMess{
+					tx: tx,
+					index: i,
+				}
 			}
+		} else {
+			finishC <- true
 		}
-		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
-		logger.DebugDynamic(func() string {
-			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
-		})
-		if err != nil {
-			return err
-		}
-		if tx.Result == nil {
-			// in case tx.Result is nil, avoid panic
-			e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
-			logger.Error(e.Error())
-			return e
-		}
-		tx.Result.RwSetHash = rwSetHash
-		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-		txHash, err := utils.CalcTxHash(hashType, tx)
-		if err != nil {
-			return err
-		}
-		txHashes[i] = txHash
-	}
-
-	block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
-	if err != nil {
-		logger.Warnf("get tx merkle root error %s", err)
-		return err
-	}
-	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
-	if err != nil {
-		logger.Warnf("get rwset merkle root error %s", err)
-		return err
-	}
-
-	// DagDigest
-	dagHash, err := utils.CalcDagHash(hashType, block.Dag)
-	if err != nil {
-		logger.Warnf("get dag hash error %s", err)
-		return err
-	}
-	block.Header.DagHash = dagHash
-
+	}()
 	return nil
 }
 
