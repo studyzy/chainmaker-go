@@ -134,45 +134,45 @@ func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amou
 }
 
 // main implement here
-type DPosStakeContract struct {
+type DPoSStakeContract struct {
 	methods map[string]ContractFunc
 	log     *logger.CMLogger
 }
 
-func (d *DPosStakeContract) getMethod(methodName string) ContractFunc {
+func (d *DPoSStakeContract) getMethod(methodName string) ContractFunc {
 	return d.methods[methodName]
 }
 
-func newDPosStakeContract(log *logger.CMLogger) *DPosStakeContract {
-	return &DPosStakeContract{
+func newDPoSStakeContract(log *logger.CMLogger) *DPoSStakeContract {
+	return &DPoSStakeContract{
 		log:     log,
-		methods: registerDPosStakeContractMethods(log),
+		methods: registerDPoSStakeContractMethods(log),
 	}
 }
 
-func registerDPosStakeContractMethods(log *logger.CMLogger) map[string]ContractFunc {
+func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractFunc {
 	methodMap := make(map[string]ContractFunc, 64)
 	// implement
-	DPosStakeRuntime := &DPosStakeRuntime{log: log}
-	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String()] = DPosStakeRuntime.GetAllValidator
-	methodMap[commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String()] = DPosStakeRuntime.GetValidatorByAddress
-	methodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPosStakeRuntime.Delegate
-	methodMap[commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String()] = DPosStakeRuntime.GetDelegationsByAddress
-	methodMap[commonPb.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String()] = DPosStakeRuntime.GetUserDelegationByValidator
-	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPosStakeRuntime.UnDelegate
-	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPosStakeRuntime.ReadEpochByID
-	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPosStakeRuntime.ReadLatestEpoch
-	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPosStakeRuntime.SetNodeID
-	methodMap[commonPb.DPoSStakeContractFunction_GET_NODE_ID.String()] = DPosStakeRuntime.GetNodeID
+	DPoSStakeRuntime := &DPoSStakeRuntime{log: log}
+	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_VALIDATOR.String()] = DPoSStakeRuntime.GetAllValidator
+	methodMap[commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String()] = DPoSStakeRuntime.GetValidatorByAddress
+	methodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPoSStakeRuntime.Delegate
+	methodMap[commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String()] = DPoSStakeRuntime.GetDelegationsByAddress
+	methodMap[commonPb.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String()] = DPoSStakeRuntime.GetUserDelegationByValidator
+	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPoSStakeRuntime.UnDelegate
+	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPoSStakeRuntime.ReadEpochByID
+	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPoSStakeRuntime.ReadLatestEpoch
+	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPoSStakeRuntime.SetNodeID
+	methodMap[commonPb.DPoSStakeContractFunction_GET_NODE_ID.String()] = DPoSStakeRuntime.GetNodeID
 	return methodMap
 }
 
-type DPosStakeRuntime struct {
+type DPoSStakeRuntime struct {
 	log *logger.CMLogger
 }
 
 // SetNodeID - 系统加入节点绑定自身身份
-func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "node_id")
 	if err != nil {
@@ -211,7 +211,7 @@ func (s *DPosStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 }
 
 // GetNodeID - 系统节点自身身份查询
-func (s *DPosStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	sender, err := loadSenderAddress(context) // Use ERC20 parse method
 	if err != nil {
 		s.log.Errorf("get sender address error: ", err.Error())
@@ -234,7 +234,7 @@ func (s *DPosStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[s
 
 // GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人
 // return ValidatorVector
-func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetAllValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// 获取验证人数据
 	vc, err := getAllValidatorByPrefix(context, ToValidatorPrefix())
 	if err != nil {
@@ -272,7 +272,7 @@ func (s *DPosStakeRuntime) GetAllValidator(context protocol.TxSimContext, params
 // GetValidatorByAddress() Validator		// 返回所有满足最低抵押条件验证人
 // @params["address"]
 // return Validator
-func (s *DPosStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "address")
 	if err != nil {
@@ -293,7 +293,7 @@ func (s *DPosStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, 
 // @params["to"] 		抵押的目标验证人
 // @params["amount"]	抵押数量，乘上erc20合约 decimal 的结果值，比如用户认知的1USD，系统内是 1 * 10 ^ 18
 // return Delegation
-func (s *DPosStakeRuntime) Delegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "to", "amount")
 	if err != nil {
@@ -407,7 +407,7 @@ func (s *DPosStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 // GetDelegationsByAddress() []Delegation		// 返回所有 Delegation
 // @params["address"]
 // return DelegationInfo
-func (s *DPosStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "address")
 	if err != nil {
@@ -427,7 +427,7 @@ func (s *DPosStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext
 // GetUserDelegationByValidator() Delegation		// 返回所有 Delegation
 // @params["validator_address"]
 // return Delegation
-func (s *DPosStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "validator_address")
 	if err != nil {
@@ -456,7 +456,7 @@ func (s *DPosStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimCo
 // @params["from"] 		解质押的验证人
 // @params["amount"] 	解质押数量，1 * 10 ^ 18
 // return UnbondingDelegation
-func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "from", "amount")
 	if err != nil {
@@ -587,7 +587,7 @@ func (s *DPosStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 
 // ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
 // return Epoch
-func (s *DPosStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyCurrentEpoch))
 	if err != nil {
 		return nil, err
@@ -598,7 +598,7 @@ func (s *DPosStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params
 // ReadEpochByID() []ValidatorAddress				// 读取指定ID的世代数据
 // @params["epoch_id"] 查询的世代ID
 // return Epoch
-func (s *DPosStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
 	err := checkParams(params, "epoch_id")
 	if err != nil {
@@ -938,7 +938,7 @@ func getUnbondingDelegation(context protocol.TxSimContext, epochID uint64, deleg
 }
 
 // 检查 当前 epoch 总的 undelegation 数量
-func (s *DPosStakeRuntime) checkEpochUnDelegateAmount(context protocol.TxSimContext, delegatorAddress string, validatorAddress string, amount string) (*big.Int, error) {
+func (s *DPoSStakeRuntime) checkEpochUnDelegateAmount(context protocol.TxSimContext, delegatorAddress string, validatorAddress string, amount string) (*big.Int, error) {
 	// get delegate
 	d, err := getDelegation(context, delegatorAddress, validatorAddress)
 	if err != nil {

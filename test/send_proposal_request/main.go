@@ -228,8 +228,8 @@ func main() {
 		readLatestEpoch()
 	case 22: // 22)设置地址和NodeID之间的关系
 		setRelationshipForAddrAndNodeId()
-	case 23: // 22)设置地址和NodeID之间的关系
-		getRelationshipForAddrAndNodeId()
+	case 23: // 23)查询地址和NodeID之间的关系
+		getRelationshipForAddrAndNodeId(sk3, client)
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -1351,28 +1351,37 @@ func setRelationshipForAddrAndNodeId() {
 }
 
 // setRelationshipForAddrAndNodeId 系加入节点绑定自身身份
-func getRelationshipForAddrAndNodeId() {
-	sk, member, _, _, err := loadDposParams()
-	var params []*commonPb.KeyValuePair
-	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId:         "",
-		ChainId:      CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
-		MethodName:   commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(),
-		Pairs:        params,
-	})
-	if err == nil {
-		fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-		if resp != nil {
-			return
-		}
+func getRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
 	}
-	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-		fmt.Println(deadLineErr)
-		return
-	}
-	fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		CHAIN1, "", payloadBytes, 0)
+	fmt.Println(resp)
+
+	//sk, member, _, _, err := loadDposParams()
+	//var params []*commonPb.KeyValuePair
+	//resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+	//	TxId:         "",
+	//	ChainId:      CHAIN1,
+	//	TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	//	ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+	//	MethodName:   commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(),
+	//	Pairs:        params,
+	//})
+	//if err == nil {
+	//	fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	//	if resp != nil {
+	//		return
+	//	}
+	//}
+	//if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+	//	fmt.Println(deadLineErr)
+	//	return
+	//}
+	//fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
 }
 
 func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string, error) {
