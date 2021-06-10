@@ -34,7 +34,7 @@ const (
 
 	KeyCurrentEpoch                   = "CE"
 	KeyMinSelfDelegation              = "MSD"
-	KeyCompletionUnbondingEpochNumber = "CUEN"
+	KeyCompletionUnbondingEpochNumber = "CUEN" // 这个 number 不能改动，若改动，会遇到 unbonding entry 数组中 completionEpochID 不同的情况
 	KeyEpochValidatorNumber           = "EVN"
 	KeyEpochBlockNumber               = "EBN"
 )
@@ -430,22 +430,16 @@ func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext
 // return Delegation
 func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "validator_address")
+	err := checkParams(params, "delegator_address", "validator_address")
 	if err != nil {
 		return nil, err
 	}
 
+	delegatorAddress := params["delegator_address"]
 	validatorAddress := params["validator_address"]
 
-	// parse sender
-	sender, err := loadSenderAddress(context) // Use ERC20 parse method
-	if err != nil {
-		s.log.Errorf("get sender address error: ", err.Error())
-		return nil, err
-	}
-
 	// 获取验证人数据
-	bz, err := getDelegationBytes(context, sender, validatorAddress)
+	bz, err := getDelegationBytes(context, delegatorAddress, validatorAddress)
 	if err != nil {
 		s.log.Errorf("get delegation of address [%s] error, error: %s", validatorAddress, err.Error())
 		return nil, err
