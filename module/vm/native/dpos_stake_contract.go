@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	prefixValidator 	= "V/"
-	prefixDelegation	= "D/"
-	prefixUnDelegation 	= "U/"
+	prefixValidator    = "V/"
+	prefixDelegation   = "D/"
+	prefixUnDelegation = "U/"
 
 	KeyNodeIDFormat              = "N/%s"
 	KeyRevNodeFormat             = "NR/%s"
@@ -189,8 +189,8 @@ func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 	// construct kv pair
 	// key: 		N/{sender}	V: nodeID
 	// reverse key: NR/{nodeID}	V: sender
-	reverseKey 	:= ToReverseNodeIDKey(nodeID)
-	key 		:= ToNodeIDKey(sender)
+	reverseKey := ToReverseNodeIDKey(nodeID)
+	key := ToNodeIDKey(sender)
 	// check reverseKey, check nodeIDKey is unnecessary
 	if val, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), reverseKey); err != nil {
 		s.log.Errorf("query state from context failed, reason: %s", err)
@@ -221,14 +221,14 @@ func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[s
 	address := params["address"]
 	// construct kv pair
 	// key: 		N/{sender}	V: nodeID
-	key 		:= ToNodeIDKey(address)
+	key := ToNodeIDKey(address)
 	// check reverseKey, check nodeIDKey is unnecessary
 	if val, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key); err != nil {
 		s.log.Errorf("query nodeID from context failed, error: %s", err)
 		return nil, fmt.Errorf("query nodeID from context failed, error: %s", err)
 	} else if len(val) <= 0 {
-		s.log.Errorf("[%s] the address's nodeID has been set", address)
-		return nil, fmt.Errorf("[%s] the address's nodeID has been set", address)
+		s.log.Errorf("[%s] the address's nodeID has not been set", address)
+		return nil, fmt.Errorf("[%s] the address's nodeID has not been set", address)
 	} else {
 		return val, nil
 	}
@@ -853,7 +853,7 @@ func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress str
 }
 
 // 返回 delegation 信息
-func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Delegation, error){
+func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Delegation, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
@@ -871,7 +871,7 @@ func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAdd
 }
 
 // 返回 delegation 字节数据
-func getDelegationBytes(context protocol.TxSimContext, delegatorAddress, validatorAddress string) ([]byte, error){
+func getDelegationBytes(context protocol.TxSimContext, delegatorAddress, validatorAddress string) ([]byte, error) {
 	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err

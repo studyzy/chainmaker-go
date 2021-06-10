@@ -214,25 +214,25 @@ func main() {
 
 	// DPoS_Stake合约测试工具
 	case 17: // 17)质押指定token
-		delegate(sk3, client) 							// ./main -step 17 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="1000000"
+		delegate(sk3, client) // ./main -step 17 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="1000000"
 	case 18: // 18)解质押指定token
-		undelegate(sk3, client) 						// ./main -step 18 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="1000000"
+		undelegate(sk3, client) // ./main -step 18 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="1000000"
 	case 19: // 19)获得所有满足最低抵押条件验证人
-		getAllValidator(sk3, client)  					// ./main -step 19 -dpos_from="" -dpos_to="" -dpos_value=""
+		getAllValidator(sk3, client) // ./main -step 19 -dpos_from="" -dpos_to="" -dpos_value=""
 	case 20: // 20)获得指定验证人数据
-		getValidatorByAddress(sk3, client) 				// ./main -step 20 -dpos_from="" -dpos_to="validatorAddress" -dpos_value=""
+		getValidatorByAddress(sk3, client) // ./main -step 20 -dpos_from="" -dpos_to="validatorAddress" -dpos_value=""
 	case 21: // 21)获得指定用户的所有抵押数据
-		getDelagationsByAddress(sk3, client) 			// ./main -step 21 -dpos_from="" -dpos_to="" -dpos_value="delegatorAddress"
+		getDelagationsByAddress(sk3, client) // ./main -step 21 -dpos_from="" -dpos_to="" -dpos_value="delegatorAddress"
 	case 22: // 22)获得指定用户在指定验证人的抵押数据
-		getUserDelegationByValidator(sk3, client) 		// ./main -step 22 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="delegatorAddress"
+		getUserDelegationByValidator(sk3, client) // ./main -step 22 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="delegatorAddress"
 	case 23: // 23)获取指定ID的世代数据
-		readEpochByID(sk3, client)						// ./main -step 23 -dpos_from="" -dpos_to="" -dpos_value="1" ok
+		readEpochByID(sk3, client) // ./main -step 23 -dpos_from="" -dpos_to="" -dpos_value="1" ok
 	case 24: // 24)读取当前世代数据
-		readLatestEpoch(sk3, client)					// ./main -step 24 -dpos_from="" -dpos_to="" -dpos_value="" ok
+		readLatestEpoch(sk3, client) // ./main -step 24 -dpos_from="" -dpos_to="" -dpos_value="" ok
 	case 25: // 25)设置地址和NodeID之间的关系
-		setRelationshipForAddrAndNodeId(sk3, client)	// ./main -step 25 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="node ID"
+		setRelationshipForAddrAndNodeId(sk3, client) // ./main -step 25 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="node ID"
 	case 26: // 26)查询地址和NodeID之间的关系
-		getRelationshipForAddrAndNodeId(sk3, client)	// ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
+		getRelationshipForAddrAndNodeId(sk3, client) // ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -1244,7 +1244,7 @@ func getValidatorByAddress(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	_, _, toAddr, _, err := loadDposParams()
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key: "address",
+		Key:   "address",
 		Value: toAddr,
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String(), pairs)
@@ -1260,7 +1260,7 @@ func getDelagationsByAddress(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 	_, _, _, value, err := loadDposParams()
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key: "address",
+		Key:   "address",
 		Value: value,
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String(), pairs)
@@ -1277,11 +1277,11 @@ func getUserDelegationByValidator(sk3 crypto.PrivateKey, client apiPb.RpcNodeCli
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs,
 		&commonPb.KeyValuePair{
-			Key: "delegator_address",
+			Key:   "delegator_address",
 			Value: value,
 		},
 		&commonPb.KeyValuePair{
-			Key: "validator_address",
+			Key:   "validator_address",
 			Value: toAddress,
 		},
 	)
@@ -1351,7 +1351,7 @@ func setRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNode
 		TxId:         "",
 		ChainId:      CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_SET_NODE_ID.String(),
 		Pairs:        params,
 	})
