@@ -17,6 +17,8 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/mr-tron/base58/base58"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -504,7 +506,11 @@ func owner(txSimContext protocol.TxSimContext) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return owner, nil
+	msg := &commonPb.Owner{
+		Owner: string(owner),
+	}
+	bz, err := proto.Marshal(msg)
+	return bz, err
 }
 
 func totalSupply(txSimContext protocol.TxSimContext) (*utils.BigInteger, error) {
