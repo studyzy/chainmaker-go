@@ -94,9 +94,6 @@ var (
 		"wx-org2.chainmaker.org",
 		"wx-org3.chainmaker.org",
 		"wx-org4.chainmaker.org",
-		"wx-org5.chainmaker.org",
-		"wx-org6.chainmaker.org",
-		"wx-org7.chainmaker.org",
 	}
 	IPs = []string{
 		"127.0.0.1",
@@ -776,7 +773,7 @@ func aclSignSystemContract(msg commonPb.SystemContractPayload, orgIds, adminSign
 		return nil, errors.New(fmt.Sprintf("admin key len is not equal to crt len: %d, %d", len(adminSignKeyArray), len(adminSignCrtArray)))
 	}
 	if len(adminSignKeyArray) != len(orgIdArray) {
-		return nil, errors.New("admin key len is not equal to orgId len")
+		return nil, errors.New(fmt.Sprintf("admin key len:[%d] is not equal to orgId len:[%d]", len(adminSignKeyArray), len(orgIdArray)))
 	}
 
 	for i, key := range adminSignKeyArray {
@@ -1117,8 +1114,6 @@ func transferOwnership() {
 
 //owner 获得token拥有者
 func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
-	//sk, member, _, _, err := loadDposParams()
-
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_OWNER.String(), pairs)
 	if err != nil {
@@ -1127,23 +1122,6 @@ func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
-
-	//resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-	//	TxId: "", ChainId: CHAIN1,
-	//	TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-	//	ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-	//	MethodName:   commonPb.DPoSERC20ContractFunction_GET_OWNER.String(),
-	//	Pairs:        nil,
-	//})
-	//if err == nil {
-	//	fmt.Printf("owner send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-	//	return
-	//}
-	//if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-	//	fmt.Println(deadLineErr)
-	//	return
-	//}
-	//fmt.Printf("ERROR: client.call err in dpos_erc20_owner: %v\n", err)
 }
 
 //decimals 获得decimals
