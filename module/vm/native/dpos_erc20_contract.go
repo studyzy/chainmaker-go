@@ -643,6 +643,11 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.Bi
 	if toBalance == nil {
 		toBalance = utils.NewZeroBigInteger()
 	}
+	// 同一账户转账
+	if from == to {
+		return []byte(fromBalance.String()), nil
+	}
+	// 不同账户间转账
 	// 记录原始值
 	beforeSum := utils.Sum(fromBalance, toBalance)
 	// 进行转账操作
