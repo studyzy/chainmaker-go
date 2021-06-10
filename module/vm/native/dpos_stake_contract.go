@@ -1006,7 +1006,10 @@ func getMinSelfDelegation(context protocol.TxSimContext) (*big.Int, error) {
 	if err != nil {
 		return nil, err
 	}
-	m := big.NewInt(0).SetBytes(bz)
+	m, ok := big.NewInt(0).SetString(string(bz), 10)
+	if !ok {
+		return nil, fmt.Errorf("invalid minSelfDelegation in stakeContract config")
+	}
 	return m, nil
 }
 
