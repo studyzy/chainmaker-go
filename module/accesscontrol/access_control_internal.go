@@ -98,8 +98,8 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 			trustedRootCerts:         map[string]*bcx509.Certificate{},
 			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
-        for _,root:= range orgRoot.Root{
-			certificateChain, err := ac.buildCertificateChain(root, orgRoot.OrgId,org)
+		for _, root := range orgRoot.Root {
+			certificateChain, err := ac.buildCertificateChain(root, orgRoot.OrgId, org)
 			if err != nil {
 				return err
 			}
@@ -204,8 +204,8 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
 
-        for _,root:=range orgRoot.Root{
-			certificateChain, err := ac.buildCertificateChainForUpdatingChainConfig(root,orgRoot.OrgId, org)
+		for _, root := range orgRoot.Root {
+			certificateChain, err := ac.buildCertificateChainForUpdatingChainConfig(root, orgRoot.OrgId, org)
 			if err != nil {
 				return err
 			}
@@ -252,7 +252,7 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId
 			return nil, fmt.Errorf("update configuration failed, invalid public key for organization %s", orgId)
 		}
 		if ac.getOrgByOrgId(orgId) != nil {
-			return nil, fmt.Errorf("update configuration failed, multiple public key for member %s",orgId)
+			return nil, fmt.Errorf("update configuration failed, multiple public key for member %s", orgId)
 		}
 
 		org.trustedRootCerts[root] = &bcx509.Certificate{Raw: []byte(root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
@@ -1061,11 +1061,21 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	if err != nil {
 		return nil, fmt.Errorf("authentication failed, not ac valid certificate from trusted CAs: %v", err)
 	}
-	orgIdFromCert := cert.Subject.Organization[0]
-	if mem.GetOrgId() != orgIdFromCert {
-		return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
+	trustMemberFlag := false
+	for _, v := range ac.localTrustMembers {
+		if v.OrgId == mem.GetOrgId() {
+			trustMemberFlag = true
+			break
+		}
 	}
-	org := ac.getOrgByOrgId(orgIdFromCert)
+	if !trustMemberFlag {
+		orgIdFromCert := cert.Subject.Organization[0]
+		if mem.GetOrgId() != orgIdFromCert {
+			return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
+		}
+	}
+
+	org := ac.getOrgByOrgId(mem.GetOrgId())
 	if org == nil {
 		return nil, fmt.Errorf("authentication failed, no orgnization found")
 	}

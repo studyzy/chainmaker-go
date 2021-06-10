@@ -163,11 +163,6 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 func verifyChainConfigTrustMembers(config *config.ChainConfig) error {
 	// load all ca root certs
 	for _, member := range config.TrustMembers {
-		// check root cert
-		if ok, err := utils.CheckRootCertificate(member.MemberInfo); err != nil && !ok {
-			log.Errorf("check root certificate failed, %s", err.Error())
-			return err
-		}
 		block, _ := pem.Decode([]byte(member.MemberInfo))
 		if block == nil {
 			return errors.New("trust member is empty")

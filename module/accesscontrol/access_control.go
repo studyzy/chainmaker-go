@@ -361,10 +361,30 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
 	if err == nil {
-		orgIdFromCert := cert.Subject.Organization[0]
+
+		for _, v := range ac.localTrustMembers {
+			if v.MemberInfo == certPEM {
+				newMember.role = append(newMember.role, protocol.Role(strings.ToUpper(v.Role)))
+				id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+				if err != nil {
+					id = []byte(cert.Subject.CommonName)
+				}
+				newMember.id = string(id)
+				newMember.cert = cert
+				newMember.pk = cert.PublicKey
+				newMember.identityType = IdentityTypeCert
+				return &newMember, nil
+			}
+		}
+
+		orgIdFromCert := ""
+		if len(cert.Subject.Organization) > 0 {
+			orgIdFromCert = cert.Subject.Organization[0]
+		}
 		if orgIdFromCert != orgId {
 			return nil, fmt.Errorf("setup member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
 		}
+
 		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
 		if err != nil {
 			id = []byte(cert.Subject.CommonName)
@@ -387,12 +407,6 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 		newMember.role = append(newMember.role, protocol.Role(ou))
 
-		for _, v := range ac.localTrustMembers {
-			if v.MemberInfo == certPEM {
-				newMember.role = append(newMember.role, protocol.Role(v.Role))
-				break
-			}
-		}
 		newMember.identityType = IdentityTypeCert
 		return &newMember, nil
 	}
