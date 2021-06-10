@@ -192,25 +192,25 @@ func main() {
 
 	// DPoS_ERC20合约测试工具
 	case 7: // 7)增发token
-		mint()
+		mint()                                   // ./main -step 7 -dpos_from="ownerID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 8: // 8)向某一用户转移token
-		transfer()
+		transfer()                              // ./main -step 8 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 9: // 9)从某一用户向另一用户转移token
-		transferFrom()
+		transferFrom()                          // ./main -step 9 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 10: // 10)查询某一用户授权另一用户额度
-		allowance(sk3, client)
+		allowance(sk3, client)                  // ./main -step 10
 	case 11: // 11)授权另一用户额度
-		approve()
+		approve()                               // ./main -step 11 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress" -dpos_value="250000000000000000000000"
 	case 12: // 12)燃烧一定数量的代币
-		burn()
+		burn()                                  // ./main -step 12 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress"
 	case 13: // 13)转移拥有者给其他账户
-		transferOwnership()
+		transferOwnership()                     // ./main -step 13 -dpos_from="validatorID" -dpos_to="validatorID/validatorAddress"
 	case 14: // 14)获得token拥有者
-		owner(sk3, client)
+		owner(sk3, client)                      // ./main -step 14
 	case 15: // 15)获得decimals
-		decimals(sk3, client)
+		decimals(sk3, client)                   // ./main -step 15
 	case 16: // 16)查询指定用户余额
-		balanceOf(sk3, client)
+		balanceOf(sk3, client)                  // ./main -step 16 -dpos_to="validatorID/validatorAddress"
 
 	// DPoS_Stake合约测试工具
 	case 17: // 17)质押指定token
