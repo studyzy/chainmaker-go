@@ -228,6 +228,8 @@ func main() {
 		readLatestEpoch()
 	case 22: // 22)设置地址和NodeID之间的关系
 		setRelationshipForAddrAndNodeId()
+	case 23: // 22)设置地址和NodeID之间的关系
+		getRelationshipForAddrAndNodeId()
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
 	}
@@ -1353,6 +1355,31 @@ func setRelationshipForAddrAndNodeId() {
 		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_SET_NODE_ID.String(),
+		Pairs:        params,
+	})
+	if err == nil {
+		fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		if resp != nil {
+			return
+		}
+	}
+	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
+		fmt.Println(deadLineErr)
+		return
+	}
+	fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
+}
+
+// setRelationshipForAddrAndNodeId 系加入节点绑定自身身份
+func getRelationshipForAddrAndNodeId() {
+	sk, member, _, _, err := loadDposParams()
+	var params []*commonPb.KeyValuePair
+	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
+		TxId:         "",
+		ChainId:      CHAIN1,
+		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+		MethodName:   commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(),
 		Pairs:        params,
 	})
 	if err == nil {
