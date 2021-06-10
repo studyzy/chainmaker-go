@@ -6,7 +6,6 @@
 package archive
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -198,10 +197,7 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 				return err
 			}
 
-			blkHeightBytes := make([]byte, 8)
-			binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
-
-			sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
+			sum, err := hmac(chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, secretKey)
 			if err != nil {
 				return err
 			}

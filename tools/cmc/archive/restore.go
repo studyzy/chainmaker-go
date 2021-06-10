@@ -118,9 +118,13 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 		return err
 	}
 
-	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
+	// verify hmac
+	sum, err := hmac(chainId, height, bInfo.BlockWithRWSet, secretKey)
 	if err != nil {
 		return err
+	}
+	if sum != bInfo.Hmac {
+		return fmt.Errorf("invalid HMAC signature, recalculate: %s from_db: %s", sum, bInfo.Hmac)
 	}
 
 	bInfo.IsArchived = false
@@ -135,6 +139,11 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 	}
 
 	err = model.UpdateArchivedBlockHeight(tx, archivedBlkHeight)
+	if err != nil {
+		return err
+	}
+
+	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
 	if err != nil {
 		return err
 	}

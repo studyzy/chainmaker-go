@@ -6,6 +6,7 @@
 package archive
 
 import (
+	"encoding/binary"
 	"errors"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 const (
@@ -115,4 +117,17 @@ func initDb() (*gorm.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// hmac SM3(Fchain_id+Fblock_height+Fblock_with_rwset+key)
+func hmac(chainId string, blkHeight int64, blkWithRWSetBytes []byte, secretKey string) (string, error) {
+	blkHeightBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkHeight))
+
+	var data []byte
+	data = append(data, []byte(chainId)...)
+	data = append(data, blkHeightBytes...)
+	data = append(data, blkWithRWSetBytes...)
+	data = append(data, []byte(secretKey)...)
+	return util.SM3(data)
 }
