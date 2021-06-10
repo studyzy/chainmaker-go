@@ -1360,28 +1360,6 @@ func getRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNode
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
-
-	//sk, member, _, _, err := loadDposParams()
-	//var params []*commonPb.KeyValuePair
-	//resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-	//	TxId:         "",
-	//	ChainId:      CHAIN1,
-	//	TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-	//	ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
-	//	MethodName:   commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(),
-	//	Pairs:        params,
-	//})
-	//if err == nil {
-	//	fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-	//	if resp != nil {
-	//		return
-	//	}
-	//}
-	//if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-	//	fmt.Println(deadLineErr)
-	//	return
-	//}
-	//fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
 }
 
 func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string, error) {

@@ -212,21 +212,22 @@ func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 
 // GetNodeID - 系统节点自身身份查询
 func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	sender, err := loadSenderAddress(context) // Use ERC20 parse method
+	// check params
+	err := checkParams(params, "address")
 	if err != nil {
-		s.log.Errorf("get sender address error: ", err.Error())
 		return nil, err
 	}
+	address := params["address"]
 	// construct kv pair
 	// key: 		N/{sender}	V: nodeID
-	key 		:= ToNodeIDKey(sender)
+	key 		:= ToNodeIDKey(address)
 	// check reverseKey, check nodeIDKey is unnecessary
 	if val, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key); err != nil {
 		s.log.Errorf("query nodeID from context failed, error: %s", err)
 		return nil, fmt.Errorf("query nodeID from context failed, error: %s", err)
 	} else if len(val) <= 0 {
-		s.log.Errorf("[%s] the address's nodeID has been set", sender)
-		return nil, fmt.Errorf("[%s] the address's nodeID has been set", sender)
+		s.log.Errorf("[%s] the address's nodeID has been set", address)
+		return nil, fmt.Errorf("[%s] the address's nodeID has been set", address)
 	} else {
 		return val, nil
 	}
