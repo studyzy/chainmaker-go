@@ -201,7 +201,7 @@ func main() {
 	case 9: // 9)从某一用户向另一用户转移token
 		transferFrom()
 	case 10: // 10)查询某一用户授权另一用户额度
-		allowance()
+		allowance(sk3, client)
 	case 11: // 11)授权另一用户额度
 		approve()
 	case 12: // 12)燃烧一定数量的代币
@@ -211,9 +211,9 @@ func main() {
 	case 14: // 14)获得token拥有者
 		owner(sk3, client)
 	case 15: // 15)获得decimals
-		decimals()
+		decimals(sk3, client)
 	case 16: // 16)查询指定用户余额
-		balanceOf()
+		balanceOf(sk3, client)
 
 	// DPoS_Stake合约测试工具
 	case 17: // 17)质押指定token
@@ -1002,10 +1002,10 @@ func transferFrom() {
 }
 
 //allowance 查询某一用户授权另一用户额度
-func allowance() {
+func allowance(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	fromAddr, err := loadDposParamsFrom()
-	sk, member, toAddr, _, err := loadDposParams()
-	params := []*commonPb.KeyValuePair{
+	_, _, toAddr, _, err := loadDposParams()
+	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
 			Value: fromAddr,
@@ -1015,22 +1015,13 @@ func allowance() {
 			Value: toAddr,
 		},
 	}
-	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName:   commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String(),
-		Pairs:        params,
-	})
-	if err == nil {
-		fmt.Printf("allowance send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-		return
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
 	}
-	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-		fmt.Println(deadLineErr)
-		return
-	}
-	fmt.Printf("ERROR: client.call err in dpos_erc20_allowance: %v\n", err)
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		CHAIN1, "", payloadBytes, 0)
+	fmt.Println(resp)
 }
 
 //approve 授权另一用户额度
@@ -1156,54 +1147,33 @@ func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 }
 
 //decimals 获得decimals
-func decimals() {
-	sk, member, _, _, err := loadDposParams()
-	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName:   commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String(),
-		Pairs:        nil,
-	})
-	if err == nil {
-		fmt.Printf("decimals send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-		return
+func decimals(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
 	}
-	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-		fmt.Println(deadLineErr)
-		return
-	}
-	fmt.Printf("ERROR: client.call err in dpos_erc20_decimals: %v\n", err)
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		CHAIN1, "", payloadBytes, 0)
+	fmt.Println(resp)
 }
 
 //balanceOf 查询指定用户余额
-func balanceOf() {
-	sk, member, toAddr, _, err := loadDposParams()
-	params := []*commonPb.KeyValuePair{
+func balanceOf(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
+	_, _, toAddr, _, err := loadDposParams()
+	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "owner",
 			Value: toAddr,
 		},
 	}
-	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
-		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		MethodName:   commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
-		Pairs:        params,
-	})
-	if err == nil {
-		fmt.Printf("get balance of send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-		if resp != nil {
-			fmt.Printf("balance of [%s] is [%s] \n", toAddr, string(resp.ContractResult.Result))
-			return
-		}
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
 	}
-	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
-		fmt.Println(deadLineErr)
-		return
-	}
-	fmt.Printf("ERROR: client.call err in dpos_erc20_balanceof: %v\n", err)
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		CHAIN1, "", payloadBytes, 0)
+	fmt.Println(resp)
 }
 
 //delegate 质押token
