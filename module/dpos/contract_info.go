@@ -80,6 +80,7 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 			impl.log.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
 			return nil, fmt.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
 		}
+		impl.log.Debugf("mixture candidatesInfo: %s", vals[i].String())
 		if !vals[i].Jailed && vals[i].Status == commonpb.BondStatus_Bonded && selfDelegation.Cmp(minSelfDelegation) >= 0 {
 			candidates = append(candidates, &dpospb.CandidateInfo{
 				PeerID: vals[i].ValidatorAddress,
@@ -87,7 +88,6 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 			})
 		}
 	}
-	impl.log.Debugf("candidatesInfo: %v", candidates)
 	return candidates, nil
 }
 
