@@ -67,26 +67,41 @@ var (
 		{certPathPrefix + "/wx-org2.chainmaker.org/ca"},
 		{certPathPrefix + "/wx-org3.chainmaker.org/ca"},
 		{certPathPrefix + "/wx-org4.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org5.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org6.chainmaker.org/ca"},
+		{certPathPrefix + "/wx-org7.chainmaker.org/ca"},
 	}
 	userKeyPaths = []string{
 		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
 		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.tls.key",
 		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.tls.key",
 		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org5.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org6.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org7.chainmaker.org/user/client1/client1.tls.key",
 	}
 	userCrtPaths = []string{
 		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
 		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.tls.crt",
 		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.tls.crt",
 		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org5.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org6.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org7.chainmaker.org/user/client1/client1.tls.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",
 		"wx-org2.chainmaker.org",
 		"wx-org3.chainmaker.org",
 		"wx-org4.chainmaker.org",
+		"wx-org5.chainmaker.org",
+		"wx-org6.chainmaker.org",
+		"wx-org7.chainmaker.org",
 	}
 	IPs = []string{
+		"127.0.0.1",
+		"127.0.0.1",
+		"127.0.0.1",
 		"127.0.0.1",
 		"127.0.0.1",
 		"127.0.0.1",
@@ -97,6 +112,9 @@ var (
 		12302,
 		12303,
 		12304,
+		12305,
+		12306,
+		12307,
 	}
 )
 
@@ -122,7 +140,7 @@ func main() {
 	)
 	flag.IntVar(&step, "step", 1, "0: add certs, 1: creat contract, 2: add trustRoot, 3: add validator,"+
 		" 4: get chainConfig, 5: delete validatorNode, 6: updateConsensus param, 7: mint token, 8: transfer, 9: transferFrom,"+
-		" 10: allowance, 11: approve, 12: burn, 13: transferOwnership, 14: owner, 15: decimals, 16: balanceOf, 17: delegate," +
+		" 10: allowance, 11: approve, 12: burn, 13: transferOwnership, 14: owner, 15: decimals, 16: balanceOf, 17: delegate,"+
 		" 18: undelegate, 19: getAllValidator, 20: readEpochByID, 21:readLatestEpoch, 22: setRelationshipForAddrAndNodeId,")
 	flag.IntVar(&wasmType, "wasm", 0, "0: cert, 1: counter")
 	flag.StringVar(&trustRootCrtPath, "trust_root_crt", "", "node crt that will be added to the trust root")
@@ -132,9 +150,9 @@ func main() {
 	flag.StringVar(&consensusExtKeys, "consensus_keys", "", "key1,key2,key3")
 	flag.StringVar(&consensusExtValues, "consensus_Values", "", "value1,value2,value3")
 
-	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")    // 谁来发送这笔交易，可能具有业务意义，也可能没有
-	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")  // 接收方，可以是一个地址或其他方式
-	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token") // token值，该参数可有可无
+	flag.StringVar(&dposParamFrom, "dpos_from", "", "sender of msg")            // 谁来发送这笔交易，可能具有业务意义，也可能没有
+	flag.StringVar(&dposParamTo, "dpos_to", "", "who will be send to")          // 接收方，可以是一个地址或其他方式
+	flag.StringVar(&dposParamValue, "dpos_value", "", "value of token")         // token值，该参数可有可无
 	flag.StringVar(&dposParamEpochId, "dpos_epoch_id", "", "value of epoch_id") // 世代id
 
 	flag.Parse()
@@ -981,7 +999,7 @@ func transferFrom() {
 //allowance 查询某一用户授权另一用户额度
 func allowance() {
 	fromAddr, err := loadDposParamsFrom()
-	sk, member, toAddr,_ , err := loadDposParams()
+	sk, member, toAddr, _, err := loadDposParams()
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
@@ -1233,7 +1251,6 @@ func undelegate() {
 	fmt.Printf("ERROR: client.call err in dpos_stake_undelegate: %v\n", err)
 }
 
-
 //getAllValidator 获得所有满足最低抵押条件验证人
 func getAllValidator() {
 	sk, member, _, _, err := loadDposParams()
@@ -1368,14 +1385,14 @@ func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string
 			log.Fatalf("parse cert to address error, %s", userCertPath)
 		}
 	}
-	var skIdx = 0
+	var skIdx = 1
 	if dposParamFrom != "" {
 		ownerIdx, err := strconv.ParseInt(dposParamFrom, 10, 32)
 		if err == nil {
 			skIdx = int(ownerIdx)
 		}
 	}
-	sk, member := getUserSK(skIdx+1, userKeyPaths[skIdx], userCrtPaths[skIdx])
+	sk, member := getUserSK(skIdx, userKeyPaths[skIdx-1], userCrtPaths[skIdx-1])
 	return sk, member, toAddr, dposParamValue, nil
 }
 
@@ -1386,7 +1403,7 @@ func loadDposParamsFrom() (string, error) {
 	var (
 		fromAddr string
 		fromIdx  int64
-		err    error
+		err      error
 	)
 	// 判断dposParams的信息
 	fromIdx, err = strconv.ParseInt(dposParamFrom, 10, 32)
@@ -1413,7 +1430,6 @@ func loadDposParamsFrom() (string, error) {
 
 	return fromAddr, nil
 }
-
 
 // parseUserAddress
 func parseUserAddress(member []byte) (string, error) {
