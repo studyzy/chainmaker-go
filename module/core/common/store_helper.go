@@ -9,12 +9,6 @@ import (
 	"runtime"
 )
 
-type StoreHelper interface {
-	RollBack(*commonpb.Block, protocol.BlockchainStore) error
-	BeginDbTransaction(protocol.BlockchainStore, string)
-	GetPoolCapacity() int
-}
-
 type KVStoreHelper struct {
 	chainId string
 }

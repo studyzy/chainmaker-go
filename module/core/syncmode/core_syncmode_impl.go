@@ -47,11 +47,6 @@ type CoreEngine struct {
 
 // NewCoreEngine new a core engine.
 func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
-	var storeHelper common.StoreHelper
-	storeHelper = common.NewKVStoreHelper(cf.ChainConf.ChainConfig().ChainId)
-	if cf.ChainConf.ChainConfig().Contract.EnableSqlSupport {
-		storeHelper = common.NewSQLStoreHelper(cf.ChainConf.ChainConfig().ChainId)
-	}
 	core := &CoreEngine{
 		msgBus:          cf.MsgBus,
 		txPool:          cf.TxPool,
@@ -60,7 +55,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		snapshotManager: cf.SnapshotManager,
 		proposedCache:   cf.ProposalCache,
 		chainConf:       cf.ChainConf,
-		txScheduler:     common.NewTxScheduler(cf.VmMgr, cf.ChainConf, storeHelper),
+		txScheduler:     common.NewTxScheduler(cf.VmMgr, cf.ChainConf, cf.StoreHelper),
 		log:             cf.Log,
 	}
 	core.quitC = make(<-chan interface{})
@@ -79,7 +74,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		ChainConf:       cf.ChainConf,
 		AC:              cf.AC,
 		BlockchainStore: cf.BlockchainStore,
-		StoreHelper:     storeHelper,
+		StoreHelper:     cf.StoreHelper,
 	}
 	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig, cf.Log)
 	if err != nil {
@@ -99,7 +94,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		AC:              cf.AC,
 		TxPool:          cf.TxPool,
 		VmMgr:           cf.VmMgr,
-		StoreHelper:     storeHelper,
+		StoreHelper:     cf.StoreHelper,
 	}
 	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.Log)
 	if err != nil {
@@ -118,7 +113,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		MsgBus:          cf.MsgBus,
 		Subscriber:      cf.Subscriber,
 		Verifier:        core.BlockVerifier,
-		StoreHelper:     storeHelper,
+		StoreHelper:     cf.StoreHelper,
 	}
 	core.BlockCommitter, err = common.NewBlockCommitter(committerConfig, cf.Log)
 	if err != nil {

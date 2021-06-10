@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package core
 
 import (
+	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/provider"
 	"chainmaker.org/chainmaker-go/provider/conf"
@@ -28,7 +29,14 @@ func Factory() *coreEngineFactory {
 // NewCoreEngine new the core engine.
 // consensusType specifies the core engine type.
 // consensusConfig specifies the necessary config parameters.
-func (cf *coreEngineFactory) NewConsensusEngine(consensusType string, consensusConfig *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (cf *coreEngineFactory) NewConsensusEngine(consensusType string, providerConf *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	p := provider.NewCoreEngineProviderByConsensusType(consensusType)
-	return p.NewCoreEngine(consensusConfig)
+	var storeHelper conf.StoreHelper
+	storeHelper = common.NewKVStoreHelper(providerConf.ChainConf.ChainConfig().ChainId)
+	if providerConf.ChainConf.ChainConfig().Contract.EnableSqlSupport {
+		storeHelper = common.NewSQLStoreHelper(providerConf.ChainConf.ChainConfig().ChainId)
+	}
+	providerConf.StoreHelper = storeHelper
+
+	return p.NewCoreEngine(providerConf)
 }

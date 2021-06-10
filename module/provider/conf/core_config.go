@@ -2,6 +2,7 @@ package conf
 
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 )
@@ -20,4 +21,11 @@ type CoreEngineConfig struct {
 	Log             protocol.Logger
 	VmMgr           protocol.VmManager
 	Subscriber      *subscriber.EventSubscriber // block subsriber
+	StoreHelper     StoreHelper
+}
+
+type StoreHelper interface {
+	RollBack(*commonpb.Block, protocol.BlockchainStore) error
+	BeginDbTransaction(protocol.BlockchainStore, string)
+	GetPoolCapacity() int
 }
