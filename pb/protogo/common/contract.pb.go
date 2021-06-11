@@ -581,7 +581,7 @@ const (
 	DPoSStakeContractFunction_GET_NODE_ID DPoSStakeContractFunction = 9
 	// update min self delegation
 	DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION DPoSStakeContractFunction = 10
-	// update min epoch validator number
+	// update epoch validator number
 	DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER DPoSStakeContractFunction = 11
 	// update epoch block number
 	DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER DPoSStakeContractFunction = 12
