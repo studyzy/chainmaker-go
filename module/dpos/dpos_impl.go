@@ -206,28 +206,10 @@ func (impl *DPoSImpl) GetValidators() ([]string, error) {
 	if !impl.isDPoSConsensus() {
 		return nil, nil
 	}
-	epochBz, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
+	epoch, err := impl.getEpochInfo()
 	if err != nil {
-		impl.log.Errorf("read epochInfo from stateDB failed, reason: %s", err)
 		return nil, err
 	}
-	epoch := common.Epoch{}
-	if err := proto.Unmarshal(epochBz, &epoch); err != nil {
-		impl.log.Errorf("proto unmarshal epoch failed, reason: %s", err)
-		return nil, err
-	}
-	impl.log.Debugf("curr epoch msg: %s", epoch.String())
-
-	nodeIDs := make([]string, 0, len(epoch.ProposerVector))
-	for _, validator := range epoch.ProposerVector {
-		nodeID, err := impl.stateDB.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), native.ToNodeIDKey(validator))
-		if err != nil || len(nodeID) == 0 {
-			err = fmt.Errorf("read nodeID of the validator[%s] failed, reason: %s", validator, err)
-			impl.log.Errorf("%s", err)
-			return nil, err
-		}
-		nodeIDs = append(nodeIDs, string(nodeID))
-	}
-	impl.log.Debugf("curr validator nodeID: %v", nodeIDs)
-	return nodeIDs, nil
+	nodeIDs, err := impl.getNodeIDsFromValidators(epoch)
+	return nodeIDs, err
 }

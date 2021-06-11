@@ -18,19 +18,23 @@ const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
 func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
-	val, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
+	epoch, err := GetLatestEpochInfo(impl.stateDB)
 	if err != nil {
-		impl.log.Errorf("read contract: %s error: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
-		return nil, err
-	}
-
-	epoch := commonpb.Epoch{}
-	if err = proto.Unmarshal(val, &epoch); err != nil {
-		impl.log.Errorf("unmarshal epoch failed, reason: %s", err)
+		impl.log.Errorf("get epoch failed, reason: %s", err)
 		return nil, err
 	}
 	impl.log.Debugf("epoch info: %s", epoch.String())
-	return &epoch, nil
+	return epoch, nil
+}
+
+func (impl *DPoSImpl) getNodeIDsFromValidators(epoch *common.Epoch) ([]string, error) {
+	nodeIDs, err := GetNodeIDsFromValidators(impl.stateDB, epoch.ProposerVector)
+	if err != nil {
+		impl.log.Errorf("get nodeids from ledger failed, reason: %s", err)
+		return nil, err
+	}
+	impl.log.Debugf("curr validators nodeID: %v", nodeIDs)
+	return nodeIDs, nil
 }
 
 // getAllCandidateInfo get all candidates from ledger

@@ -14,8 +14,13 @@ import (
 	"strings"
 	"time"
 
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	pbdpos "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native"
+	"github.com/golang/protobuf/proto"
 )
 
 // ValidatorsElection select validators from Candidates
@@ -107,4 +112,32 @@ func (s CandidateInfos) Less(i, j int) bool {
 	} else {
 		return val > 0
 	}
+}
+
+func GetLatestEpochInfo(store protocol.BlockchainStore) (*common.Epoch, error) {
+	val, err := store.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
+	if err != nil {
+		return nil, fmt.Errorf("read contract: %s key: %s, error: %s",
+			commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), native.KeyCurrentEpoch, err)
+	}
+	epoch := commonpb.Epoch{}
+	if err = proto.Unmarshal(val, &epoch); err != nil {
+		return nil, fmt.Errorf("unmarshal epoch failed, reason: %s", err)
+	}
+	return &epoch, nil
+}
+
+func GetNodeIDsFromValidators(store protocol.BlockchainStore, validators []string) ([]string, error) {
+	if len(validators) == 0 {
+		return nil, fmt.Errorf("validators is null")
+	}
+	nodeIDs := make([]string, 0, len(validators))
+	for _, validator := range validators {
+		nodeID, err := store.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), native.ToNodeIDKey(validator))
+		if err != nil || len(nodeID) == 0 {
+			return nil, fmt.Errorf("read nodeID of the validator[%s] failed, reason: %s", validator, err)
+		}
+		nodeIDs = append(nodeIDs, string(nodeID))
+	}
+	return nodeIDs, nil
 }

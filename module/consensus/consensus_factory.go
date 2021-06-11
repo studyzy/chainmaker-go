@@ -97,7 +97,7 @@ func VerifyBlockSignatures(
 	consensusType := chainConf.ChainConfig().Consensus.Type
 	switch consensusType {
 	case consensuspb.ConsensusType_TBFT, consensuspb.ConsensusType_DPOS:
-		return tbft.VerifyBlockSignatures(chainConf, ac, block)
+		return tbft.VerifyBlockSignatures(chainConf, ac, block, store)
 	case consensuspb.ConsensusType_RAFT:
 		return raft.VerifyBlockSignatures(block)
 	case consensuspb.ConsensusType_HOTSTUFF:
