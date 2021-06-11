@@ -192,8 +192,8 @@ func testSnapshot(t *testing.T, i int) {
 	wg := sync.WaitGroup{}
 
 	for i := 0; i < txCount; i++ {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			//fmt.Printf("tx:%d\t", i)
 			readKey := randKey()
 			writeKey := randKey()
