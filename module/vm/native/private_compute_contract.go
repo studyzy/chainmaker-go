@@ -344,12 +344,6 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	rwb, err := hex.DecodeString(params["rw_set"])
-	if err != nil {
-		return nil, err
-	}
-	r.log.Info("rwset bytes: ", rwb)
-
 	auth, err := r.verifyCallerAuth(params, context.GetTx().Header.ChainId, ac)
 	if !auth || err != nil {
 		err := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
@@ -381,7 +375,9 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
 		return nil, err
 	}
-	r.log.Info("rwset bytes: ", rwb)
+
+	rwb := []byte(params["rw_set"])
+	r.log.Debug("rwset bytes: ", rwb)
 	var rwSet commonPb.TxRWSet
 	if err := rwSet.Unmarshal(rwb); err != nil {
 		r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
