@@ -482,7 +482,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		//	return nil, err
 		//}
 
-		if len(chainValue) > 0 && !bytes.Equal(val, chainValue) {
+		if chainValue != nil && len(chainValue) > 0 && !bytes.Equal(val, chainValue) {
 			r.log.Errorf("rSet verification failed! key: %v, value: %v; but value on chain: %v\n",
 				key, val, chainValue)
 			return nil, fmt.Errorf("rSet verification failed! key: %v, value: %v, but value on chain: %v",
