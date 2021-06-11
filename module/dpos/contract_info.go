@@ -226,6 +226,9 @@ func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet m
 	if len(val) == 0 {
 		return balance, nil
 	}
-	balance = balance.SetBytes(val)
+	balance, ok := balance.SetString(string(val), 10)
+	if !ok {
+		return balance, fmt.Errorf("invalid amount: %s", val)
+	}
 	return balance, nil
 }
