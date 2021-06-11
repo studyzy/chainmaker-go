@@ -61,12 +61,10 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]Cont
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String()] = privateComputeRuntime.SaveEnclaveCACert
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CONTRACT.String()] = privateComputeRuntime.SaveContract
 	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.GetEnclaveProof
-	queryMethodMap[commonPb.PrivateComputeContractFunction_UPDATE_CONTRACT.String()] = privateComputeRuntime.UpdateContract
 	queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveEncryptPubKey
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveVerificationPubKey
@@ -126,37 +124,98 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 
 	return value, nil
 }
+//
+//func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+//	name := params["contract_name"]
+//	code := params["contract_code"]
+//	codeHash := params["code_hash"]
+//	version := params["version"]
+//	if utils.IsAnyBlank(name, code, codeHash, version) {
+//		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
+//			ErrParams.Error(), name, code, codeHash, version)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	calHash := sha256.Sum256([]byte(code))
+//	if string(calHash[:]) != codeHash {
+//		err := fmt.Errorf("%s, param[code_hash] != codeHash of param[contract_code] in save contract interface", ErrParams.Error())
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	if len(version) > protocol.DefaultVersionLen {
+//		err := fmt.Errorf("param[version] string of the contract[%+v] too long, should be less than %d", name, protocol.DefaultVersionLen)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	match, err := regexp.MatchString(protocol.DefaultVersionRegex, version)
+//	if err != nil || !match {
+//		err := fmt.Errorf("param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", name, protocol.DefaultVersionRegex)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
+//	versionKey := []byte(protocol.ContractVersion)
+//	versionInCtx, err := context.Get(combinationName, versionKey)
+//	if err != nil {
+//		err := fmt.Errorf("unable to find latest version for contract[%s], system error:%s", name, err.Error())
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	if versionInCtx != nil {
+//		err := fmt.Errorf("the contract already exists. contract[%s], version[%s]", name, string(versionInCtx))
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	if err := context.Put(combinationName, versionKey, []byte(version)); err != nil {
+//		r.log.Errorf("Put contract version into DB failed while save contract, err: %s", err.Error())
+//		return nil, err
+//	}
+//
+//	key := append([]byte(protocol.ContractByteCode), []byte(version)...)
+//	if err := context.Put(combinationName, key, []byte(code)); err != nil {
+//		r.log.Errorf("Put compute contract[%s] failed, err: %s", err.Error(), name)
+//		return nil, err
+//	}
+//
+//	return nil, nil
+//}
 
-func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	name := params["contract_name"]
-	code := params["contract_code"]
-	codeHash := params["code_hash"]
-	version := params["version"]
-	if utils.IsAnyBlank(name, code, codeHash, version) {
+func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name, version string,
+	codeHeader, code []byte, codeHash string) error {
+	if utils.IsAnyBlank(name, version, string(codeHeader), string(code), codeHash) {
 		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
 			ErrParams.Error(), name, code, codeHash, version)
 		r.log.Errorf(err.Error())
-		return nil, err
+		return err
 	}
 
-	calHash := sha256.Sum256([]byte(code))
+	fullCodes := make([]byte, len(codeHeader) + len(code))
+	fullCodes = append(fullCodes, codeHeader...)
+	fullCodes = append(fullCodes, code...)
+	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
 		err := fmt.Errorf("%s, param[code_hash] != codeHash of param[contract_code] in save contract interface", ErrParams.Error())
 		r.log.Errorf(err.Error())
-		return nil, err
+		return err
 	}
 
 	if len(version) > protocol.DefaultVersionLen {
 		err := fmt.Errorf("param[version] string of the contract[%+v] too long, should be less than %d", name, protocol.DefaultVersionLen)
 		r.log.Errorf(err.Error())
-		return nil, err
+		return err
 	}
 
 	match, err := regexp.MatchString(protocol.DefaultVersionRegex, version)
 	if err != nil || !match {
 		err := fmt.Errorf("param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", name, protocol.DefaultVersionRegex)
 		r.log.Errorf(err.Error())
-		return nil, err
+		return err
 	}
 
 	combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
@@ -165,96 +224,102 @@ func (r *PrivateComputeRuntime) SaveContract(context protocol.TxSimContext, para
 	if err != nil {
 		err := fmt.Errorf("unable to find latest version for contract[%s], system error:%s", name, err.Error())
 		r.log.Errorf(err.Error())
-		return nil, err
+		return err
 	}
 
 	if versionInCtx != nil {
 		err := fmt.Errorf("the contract already exists. contract[%s], version[%s]", name, string(versionInCtx))
 		r.log.Errorf(err.Error())
-		return nil, err
+		return err
 	}
 
 	if err := context.Put(combinationName, versionKey, []byte(version)); err != nil {
 		r.log.Errorf("Put contract version into DB failed while save contract, err: %s", err.Error())
-		return nil, err
+		return err
 	}
 
 	key := append([]byte(protocol.ContractByteCode), []byte(version)...)
 	if err := context.Put(combinationName, key, []byte(code)); err != nil {
 		r.log.Errorf("Put compute contract[%s] failed, err: %s", err.Error(), name)
-		return nil, err
+		return err
 	}
 
-	return nil, nil
-}
-
-func (r *PrivateComputeRuntime) UpdateContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	name := params["contract_name"]
-	code := params["contract_code"]
-	hash := params["code_hash"]
-	version := params["version"]
-	if utils.IsAnyBlank(name, code, hash, version) {
-		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
-			ErrParams.Error(), name, code, hash, version)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	calHash := sha256.Sum256([]byte(code))
-	if string(calHash[:]) != hash {
-		err := fmt.Errorf("%s, param hash[%v] != param contract_code hash[%v] in save contract interface", ErrParams.Error(), []byte(hash), calHash)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	if len(version) > protocol.DefaultVersionLen {
-		err := fmt.Errorf("param[version] string of the contract[%+v] too long, should be less than %d", name, protocol.DefaultVersionLen)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	match, err := regexp.MatchString(protocol.DefaultVersionRegex, version)
-	if err != nil || !match {
-		err := fmt.Errorf("param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", name, protocol.DefaultVersionRegex)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
-	versionKey := []byte(protocol.ContractVersion)
-	versionInCtx, err := context.Get(combinationName, versionKey)
-	if err != nil {
-		err := fmt.Errorf("unable to find latest version for contract[%s], system error:%s", name, err.Error())
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	if len(versionInCtx) == 0 {
-		err := fmt.Errorf("the contract[%s] does not exist, update failed", name)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	key := append([]byte(protocol.ContractByteCode), []byte(version)...)
-	codeInCtx, err := context.Get(combinationName, key)
-	if err == nil && len(codeInCtx) > 0 {
-		err := fmt.Errorf("the contract version[%s] and code[%s] is already exist", version, codeInCtx)
-		r.log.Errorf(err.Error())
-		return nil, err
-	}
-
-	if err := context.Put(combinationName, versionKey, []byte(version)); err != nil {
-		r.log.Errorf("Put contract version into DB failed while save contract, err: %s", err.Error())
-		return nil, err
-	}
-
-	if err := context.Put(combinationName, key, []byte(code)); err != nil {
+	headerKey := append([]byte(protocol.ContractByteHeader), []byte(version)...)
+	if err := context.Put(combinationName, headerKey, []byte(codeHeader)); err != nil {
 		r.log.Errorf("Put compute contract[%s] failed, err: %s", err.Error(), name)
-		return nil, err
+		return err
 	}
 
-	return nil, nil
+	return nil
 }
+//
+//func (r *PrivateComputeRuntime) UpdateContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+//	name := params["contract_name"]
+//	code := params["contract_code"]
+//	hash := params["code_hash"]
+//	version := params["version"]
+//	if utils.IsAnyBlank(name, code, hash, version) {
+//		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
+//			ErrParams.Error(), name, code, hash, version)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	calHash := sha256.Sum256([]byte(code))
+//	if string(calHash[:]) != hash {
+//		err := fmt.Errorf("%s, param hash[%v] != param contract_code hash[%v] in save contract interface", ErrParams.Error(), []byte(hash), calHash)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	if len(version) > protocol.DefaultVersionLen {
+//		err := fmt.Errorf("param[version] string of the contract[%+v] too long, should be less than %d", name, protocol.DefaultVersionLen)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	match, err := regexp.MatchString(protocol.DefaultVersionRegex, version)
+//	if err != nil || !match {
+//		err := fmt.Errorf("param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", name, protocol.DefaultVersionRegex)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	combinationName := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + name
+//	versionKey := []byte(protocol.ContractVersion)
+//	versionInCtx, err := context.Get(combinationName, versionKey)
+//	if err != nil {
+//		err := fmt.Errorf("unable to find latest version for contract[%s], system error:%s", name, err.Error())
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	if len(versionInCtx) == 0 {
+//		err := fmt.Errorf("the contract[%s] does not exist, update failed", name)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	key := append([]byte(protocol.ContractByteCode), []byte(version)...)
+//	codeInCtx, err := context.Get(combinationName, key)
+//	if err == nil && len(codeInCtx) > 0 {
+//		err := fmt.Errorf("the contract version[%s] and code[%s] is already exist", version, codeInCtx)
+//		r.log.Errorf(err.Error())
+//		return nil, err
+//	}
+//
+//	if err := context.Put(combinationName, versionKey, []byte(version)); err != nil {
+//		r.log.Errorf("Put contract version into DB failed while save contract, err: %s", err.Error())
+//		return nil, err
+//	}
+//
+//	if err := context.Put(combinationName, key, []byte(code)); err != nil {
+//		r.log.Errorf("Put compute contract[%s] failed, err: %s", err.Error(), name)
+//		return nil, err
+//	}
+//
+//	return nil, nil
+//}
 
 func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	name := params["contract_name"]
@@ -264,8 +329,8 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	hash := params["code_hash"]
-	if utils.IsAnyBlank(hash) {
+	codehash := params["code_hash"]
+	if utils.IsAnyBlank(codehash) {
 		err := fmt.Errorf("%s, param[code_hash] of get contract not found", ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
@@ -297,16 +362,34 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	result.ContractCode = contractCode
-	result.GasLimit = protocol.GasLimit
-	result.Version = string(version)
+	headerKey := append([]byte(protocol.ContractByteHeader), version...)
+	headerCode, err := context.Get(combinationName, headerKey)
+	if err != nil {
+		r.log.Errorf("Read contract code header[%s] failed.", name)
+		return nil, err
+	}
+	r.log.Infof("get contract, name[%s], header code[%v]", name, headerCode)
 
-	calHash := sha256.Sum256(result.ContractCode)
-	if string(calHash[:]) != hash {
-		err := fmt.Errorf("%s, param hash[%v] != contract code hash[%v] in get contract interface", ErrParams.Error(), []byte(hash), calHash)
+	if len(headerCode) == 0 {
+		r.log.Errorf("Contract[%s] header code is empty.", name)
+		return nil, err
+	}
+
+	fullCodes := make([]byte, len(headerCode) + len(contractCode))
+	fullCodes = append(fullCodes, headerCode...)
+	fullCodes = append(fullCodes, contractCode...)
+
+	calHash := sha256.Sum256(fullCodes)
+	if string(calHash[:]) != codehash {
+		err := fmt.Errorf("%s, param codehash[%v] != contract code codehash[%v] in get contract interface",
+			ErrParams.Error(), []byte(codehash), calHash)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
+
+	result.ContractCode = contractCode
+	result.GasLimit = protocol.GasLimit
+	result.Version = string(version)
 
 	return result.Marshal()
 }
@@ -367,19 +450,37 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	clientSign := params["client_sign"]
 	payload := params["payload"]
 	orgId := params["org_id"]
-
+	isDeployStr := params["is_deploy"]
+	codeHeader := params["code_header"]
+	cRes := []byte(params["result"])
+	var result commonPb.ContractResult
+	if err := result.Unmarshal(cRes); err != nil {
+		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
+		return nil, err
+	}
+	if isDeployStr == "" {
+		err := fmt.Errorf("is_deploy param should not be empty")
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+	isDeploy, err := strconv.ParseBool(isDeployStr)
+	if err != nil {
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+	if isDeploy && (codeHeader == "" || len(result.Result) == 0) {
+		r.log.Errorf("code_header should not be empty when deploying contract")
+		return nil, err
+	}
+	if isDeploy {
+		r.saveContract(context, name, version, []byte(codeHeader), result.Result, codeHash)
+	}
 	if utils.IsAnyBlank(name, version, codeHash, reportHash) {
 		err := fmt.Errorf(
 			"%s, param[contract_name]=%s, params[version]=%s, param[code_hash]=%s, param[report_hash]=%s, "+
 				"params[user_cert]=%s, params[client_sign]=%s, params[payload]=%s, params[org_id]=%s,",
 			ErrParams.Error(), name, version, codeHash, reportHash, userCert, clientSign, payload, orgId)
 		r.log.Errorf(err.Error())
-		return nil, err
-	}
-	var result commonPb.ContractResult
-	cRes := []byte(params["result"])
-	if err := result.Unmarshal(cRes); err != nil {
-		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
 		return nil, err
 	}
 	r.log.Info("rwset bytes: ", rwb)
