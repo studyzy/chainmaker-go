@@ -2,7 +2,6 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -26,7 +25,7 @@ func readFileData(filename string, t *testing.T) []byte {
 		t.Fatalf("read file '%v' error: %v", certCaFilename, err)
 	}
 
-	return data
+	return []byte(hex.EncodeToString(data))
 }
 
 func TestSaveEnclaveCaCert(t *testing.T) {
@@ -74,51 +73,46 @@ func TestSaveEnclaveReport(t *testing.T) {
 	}
 }
 
-func TestSaveRemoteAttestation(t *testing.T) {
-
-	caCertPem := readFileData(certCaFilename, t)
-	report := readFileData("testdata/remote_attestation/report.dat", t)
-
-	ds := map[string][]byte{}
-	mockCtx := newTxContextMock(ds)
-	reportKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
-	ds[reportKey] = report
-	caCertKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "::ca_cert"
-	ds[caCertKey] = caCertPem
-
-	proofFile, err := os.Open(proofFilename)
-	if err != nil {
-		t.Fatalf("open file '%s' error: %v", proofFilename, err)
-	}
-
-	proofHex, err := ioutil.ReadAll(proofFile)
-	if err != nil {
-		t.Fatalf("read file '%v' error: %v", proofFile, err)
-	}
-
-	proof, err := hex.DecodeString(string(proofHex))
-	if err != nil {
-		t.Fatalf("decode hex string error: %v", err)
-	}
-
-	privateComputeRuntime := PrivateComputeRuntime{
-		log: logger.GetLogger("test-logger"),
-	}
-	params := map[string]string{}
-	params["proof"] = string(proof)
-	result, err := privateComputeRuntime.SaveRemoteAttestation(mockCtx, params)
-	if err != nil {
-		t.Fatalf("Save remote attestation error: %v", err)
-	}
-
-	fmt.Printf("result = %v \n", string(result));
-	for key, val := range ds {
-		fmt.Printf("key = %v, val = %x \n", key, val)
-	}
-}
+//func TestSaveRemoteAttestation(t *testing.T) {
+//
+//	caCertPem := readFileData(certCaFilename, t)
+//	report := readFileData("testdata/remote_attestation/report.dat", t)
+//
+//	ds := map[string][]byte{}
+//	mockCtx := newTxContextMock(ds)
+//	reportKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
+//	ds[reportKey] = report
+//	caCertKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "::ca_cert"
+//	ds[caCertKey] = caCertPem
+//
+//	proofFile, err := os.Open(proofFilename)
+//	if err != nil {
+//		t.Fatalf("open file '%s' error: %v", proofFilename, err)
+//	}
+//
+//	proofHex, err := ioutil.ReadAll(proofFile)
+//	if err != nil {
+//		t.Fatalf("read file '%v' error: %v", proofFile, err)
+//	}
+//
+//	privateComputeRuntime := PrivateComputeRuntime{
+//		log: logger.GetLogger("test-logger"),
+//	}
+//	params := map[string]string{}
+//	params["proof"] = string(proofHex)
+//	result, err := privateComputeRuntime.SaveRemoteAttestation(mockCtx, params)
+//	if err != nil {
+//		t.Fatalf("Save remote attestation error: %v", err)
+//	}
+//
+//	fmt.Printf("result = %v \n", string(result));
+//	for key, val := range ds {
+//		fmt.Printf("key = %v, val = %x \n", key, val)
+//	}
+//}
 
 func TestInTeecertPemFile(t *testing.T) {
-	file, err := os.Open("/Users/caizhihong/证书测试/in_teecert.pem")
+	file, err := os.Open(certFilename)
 	if err != nil {
 		t.Fatalf("open file error: %v", err)
 	}

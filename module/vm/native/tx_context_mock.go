@@ -148,3 +148,11 @@ func (mock *TxContextMock) SetStateSqlHandle(i int32, rows protocol.SqlRows) {
 func (mock *TxContextMock) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) {
 	panic("implement me")
 }
+
+func (mock *TxContextMock) GetStateKvHandle(int32) (protocol.StateIterator, bool) {
+	panic("implement me")
+}
+
+func (mock *TxContextMock)  SetStateKvHandle(int32, protocol.StateIterator) {
+	panic("implement me")
+}
