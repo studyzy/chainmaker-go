@@ -116,25 +116,29 @@ func configTrustRoot(op int) error {
 	}
 	defer adminClient.Stop()
 
-	var trustRootBytes []byte
+	var trustRootBytes []string
 	if op == addTrustRoot || op == updateTrustRoot {
-		if trustRootPath == "" {
+
+		if len(trustRootPaths) == 0 {
 			return fmt.Errorf("please specify trust root path")
 		}
-		trustRootBytes, err = ioutil.ReadFile(trustRootPath)
-		if err != nil {
-			return err
+		for _,trustRootPath := range trustRootPaths{
+			trustRoot, err := ioutil.ReadFile(trustRootPath)
+			if err != nil {
+				return err
+			}
+			trustRootBytes = append(trustRootBytes,string(trustRoot))
 		}
 	}
 
 	var payloadBytes []byte
 	switch op {
 	case addTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, string(trustRootBytes))
+		payloadBytes, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, []string(trustRootBytes))
 	case removeTrustRoot:
 		payloadBytes, err = client.CreateChainConfigTrustRootDeletePayload(trustRootOrgId)
 	case updateTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, string(trustRootBytes))
+		payloadBytes, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, []string(trustRootBytes))
 	default:
 		err = fmt.Errorf("invalid trust root operation")
 	}

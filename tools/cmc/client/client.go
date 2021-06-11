@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	sdk "chainmaker.org/chainmaker-sdk-go"
 	"fmt"
+	"log"
+
+	sdk "chainmaker.org/chainmaker-sdk-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"log"
 )
 
 var (
@@ -49,9 +50,14 @@ var (
 	nodeIdOld      string
 	nodeId         string
 	trustRootOrgId string
-	trustRootPath  string
+	trustRootPaths []string
 	certFilePaths  string
 	certCrlPath    string
+
+	trustMemberOrgId    string
+	trustMemberInfoPath string
+	trustMemberRole     string
+	trustMemberNodeId   string
 )
 
 const (
@@ -83,6 +89,9 @@ const (
 	flagNodeId                 = "node-id"
 	flagTrustRootOrgId         = "trust-root-org-id"
 	flagTrustRootCrtPath       = "trust-root-path"
+	flagTrustMemberOrgId       = "trust-member-org-id"
+	flagTrustMemberCrtPath     = "trust-member-path"
+	flagTrustMemberRole        = "trust-member-role"
 	flagCertFilePaths          = "cert-file-paths"
 	flagCertCrlPath            = "cert-crl-path"
 )
@@ -150,7 +159,13 @@ func init() {
 	flags.StringVar(&nodeId, flagNodeId, "", "specify node id(which will be added or update to")
 
 	flags.StringVar(&trustRootOrgId, flagTrustRootOrgId, "", "specify the ca org id")
-	flags.StringVar(&trustRootPath, flagTrustRootCrtPath, "", "specify the ca file path")
+	flags.StringSliceVar(&trustRootPaths, flagTrustRootCrtPath, nil, "specify the ca file path")
+
+	flags.StringVar(&trustMemberOrgId, flagTrustMemberOrgId, "", "specify the ca org id")
+	flags.StringVar(&trustMemberInfoPath, flagTrustMemberCrtPath, "", "specify the ca file path")
+	flags.StringVar(&trustMemberRole, flagTrustMemberRole, "", "specify trust member role")
+	flags.StringVar(&trustMemberNodeId, flagNodeId, "", "specify trust member role")
+
 	// 证书管理
 	flags.StringVar(&certFilePaths, flagCertFilePaths, "", "specify cert file paths, use ',' to separate")
 	flags.StringVar(&certCrlPath, flagCertCrlPath, "", "specify cert crl path")
