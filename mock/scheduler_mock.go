@@ -275,6 +275,21 @@ func (mr *MockTxSimContextMockRecorder) GetSender() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSender", reflect.TypeOf((*MockTxSimContext)(nil).GetSender))
 }
 
+// GetStateKvHandle mocks base method.
+func (m *MockTxSimContext) GetStateKvHandle(arg0 int32) (protocol.StateIterator, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStateKvHandle", arg0)
+	ret0, _ := ret[0].(protocol.StateIterator)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetStateKvHandle indicates an expected call of GetStateKvHandle.
+func (mr *MockTxSimContextMockRecorder) GetStateKvHandle(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateKvHandle", reflect.TypeOf((*MockTxSimContext)(nil).GetStateKvHandle), arg0)
+}
+
 // GetStateSqlHandle mocks base method.
 func (m *MockTxSimContext) GetStateSqlHandle(arg0 int32) (protocol.SqlRows, bool) {
 	m.ctrl.T.Helper()
@@ -385,6 +400,18 @@ func (m *MockTxSimContext) Select(name string, startKey, limit []byte) (protocol
 func (mr *MockTxSimContextMockRecorder) Select(name, startKey, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockTxSimContext)(nil).Select), name, startKey, limit)
+}
+
+// SetStateKvHandle mocks base method.
+func (m *MockTxSimContext) SetStateKvHandle(arg0 int32, arg1 protocol.StateIterator) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetStateKvHandle", arg0, arg1)
+}
+
+// SetStateKvHandle indicates an expected call of SetStateKvHandle.
+func (mr *MockTxSimContextMockRecorder) SetStateKvHandle(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStateKvHandle", reflect.TypeOf((*MockTxSimContext)(nil).SetStateKvHandle), arg0, arg1)
 }
 
 // SetStateSqlHandle mocks base method.

@@ -334,6 +334,20 @@ func (m *MockBlockchainStore) EXPECT() *MockBlockchainStoreMockRecorder {
 	return m.recorder
 }
 
+// ArchiveBlock mocks base method.
+func (m *MockBlockchainStore) ArchiveBlock(archiveHeight uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveBlock", archiveHeight)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ArchiveBlock indicates an expected call of ArchiveBlock.
+func (mr *MockBlockchainStoreMockRecorder) ArchiveBlock(archiveHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveBlock", reflect.TypeOf((*MockBlockchainStore)(nil).ArchiveBlock), archiveHeight)
+}
+
 // BeginDbTransaction mocks base method.
 func (m *MockBlockchainStore) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	m.ctrl.T.Helper()
@@ -421,6 +435,20 @@ func (mr *MockBlockchainStoreMockRecorder) GetAccountTxHistory(accountId interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountTxHistory", reflect.TypeOf((*MockBlockchainStore)(nil).GetAccountTxHistory), accountId)
 }
 
+// GetArchivedPivot mocks base method.
+func (m *MockBlockchainStore) GetArchivedPivot() uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArchivedPivot")
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetArchivedPivot indicates an expected call of GetArchivedPivot.
+func (mr *MockBlockchainStoreMockRecorder) GetArchivedPivot() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArchivedPivot", reflect.TypeOf((*MockBlockchainStore)(nil).GetArchivedPivot))
+}
+
 // GetBlock mocks base method.
 func (m *MockBlockchainStore) GetBlock(height int64) (*common.Block, error) {
 	m.ctrl.T.Helper()
@@ -464,6 +492,21 @@ func (m *MockBlockchainStore) GetBlockByTx(txId string) (*common.Block, error) {
 func (mr *MockBlockchainStoreMockRecorder) GetBlockByTx(txId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByTx", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockByTx), txId)
+}
+
+// GetBlockHeaderByHeight mocks base method.
+func (m *MockBlockchainStore) GetBlockHeaderByHeight(height int64) (*common.BlockHeader, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlockHeaderByHeight", height)
+	ret0, _ := ret[0].(*common.BlockHeader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBlockHeaderByHeight indicates an expected call of GetBlockHeaderByHeight.
+func (mr *MockBlockchainStoreMockRecorder) GetBlockHeaderByHeight(height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockHeaderByHeight", reflect.TypeOf((*MockBlockchainStore)(nil).GetBlockHeaderByHeight), height)
 }
 
 // GetBlockWithRWSets mocks base method.
@@ -523,6 +566,21 @@ func (m *MockBlockchainStore) GetDbTransaction(txName string) (protocol.SqlDBTra
 func (mr *MockBlockchainStoreMockRecorder) GetDbTransaction(txName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDbTransaction", reflect.TypeOf((*MockBlockchainStore)(nil).GetDbTransaction), txName)
+}
+
+// GetHeightByHash mocks base method.
+func (m *MockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHeightByHash", blockHash)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHeightByHash indicates an expected call of GetHeightByHash.
+func (mr *MockBlockchainStoreMockRecorder) GetHeightByHash(blockHash interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHeightByHash", reflect.TypeOf((*MockBlockchainStore)(nil).GetHeightByHash), blockHash)
 }
 
 // GetHistoryForKey mocks base method.
@@ -613,6 +671,21 @@ func (m *MockBlockchainStore) GetTxConfirmedTime(txId string) (int64, error) {
 func (mr *MockBlockchainStoreMockRecorder) GetTxConfirmedTime(txId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxConfirmedTime", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxConfirmedTime), txId)
+}
+
+// GetTxHeight mocks base method.
+func (m *MockBlockchainStore) GetTxHeight(txId string) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTxHeight", txId)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTxHeight indicates an expected call of GetTxHeight.
+func (mr *MockBlockchainStoreMockRecorder) GetTxHeight(txId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxHeight", reflect.TypeOf((*MockBlockchainStore)(nil).GetTxHeight), txId)
 }
 
 // GetTxRWSet mocks base method.
@@ -726,6 +799,20 @@ func (m *MockBlockchainStore) ReadObject(contractName string, key []byte) ([]byt
 func (mr *MockBlockchainStoreMockRecorder) ReadObject(contractName, key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadObject", reflect.TypeOf((*MockBlockchainStore)(nil).ReadObject), contractName, key)
+}
+
+// RestoreBlocks mocks base method.
+func (m *MockBlockchainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestoreBlocks", serializedBlocks)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RestoreBlocks indicates an expected call of RestoreBlocks.
+func (mr *MockBlockchainStoreMockRecorder) RestoreBlocks(serializedBlocks interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestoreBlocks", reflect.TypeOf((*MockBlockchainStore)(nil).RestoreBlocks), serializedBlocks)
 }
 
 // RollbackDbTransaction mocks base method.
@@ -971,6 +1058,20 @@ func (m *MockSqlDBHandle) CommitDbTransaction(txName string) error {
 func (mr *MockSqlDBHandleMockRecorder) CommitDbTransaction(txName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitDbTransaction", reflect.TypeOf((*MockSqlDBHandle)(nil).CommitDbTransaction), txName)
+}
+
+// CompactRange mocks base method.
+func (m *MockSqlDBHandle) CompactRange(start, limit []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CompactRange", start, limit)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CompactRange indicates an expected call of CompactRange.
+func (mr *MockSqlDBHandleMockRecorder) CompactRange(start, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompactRange", reflect.TypeOf((*MockSqlDBHandle)(nil).CompactRange), start, limit)
 }
 
 // CreateDatabaseIfNotExist mocks base method.
@@ -1534,6 +1635,20 @@ func (m *MockDBHandle) Close() error {
 func (mr *MockDBHandleMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockDBHandle)(nil).Close))
+}
+
+// CompactRange mocks base method.
+func (m *MockDBHandle) CompactRange(start, limit []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CompactRange", start, limit)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CompactRange indicates an expected call of CompactRange.
+func (mr *MockDBHandleMockRecorder) CompactRange(start, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompactRange", reflect.TypeOf((*MockDBHandle)(nil).CompactRange), start, limit)
 }
 
 // Delete mocks base method.
