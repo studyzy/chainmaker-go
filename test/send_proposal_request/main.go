@@ -237,17 +237,17 @@ func main() {
 		getRelationshipForAddrAndNodeId(sk3, client) // ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
 	// dpos 基础数据查询
 	case 27: // 27)读取验证人最少抵押token数量
-		readMinSelfDelegation(sk3, client) // ./main -step 27 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
+		readMinSelfDelegation(sk3, client) 			// ./main -step 27 -dpos_from=1 -dpos_to=1 ok
 	case 28: // 28)更新验证人最少抵押token数量
-		updateMinSelfDelegation(sk3, client) // ./main -step 26 -dpos_from="5" -dpos_to="5" -dpos_value="nodeID" ok
+		updateMinSelfDelegation(sk3, client) 		// ./main -step 28 -dpos_from=1 -dpos_to=1 -dpos_value="25000000000000000000001" ok
 	case 29: // 29)读取每个世代验证人数量
-		readEpochValidatorNumber(sk3, client) // ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
+		readEpochValidatorNumber(sk3, client) 		// ./main -step 29 -dpos_from=1 -dpos_to=1 ok
 	case 30: // 30)更新每个世代验证人数量
-		updateEpochValidatorNumber(sk3, client) // ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
+		updateEpochValidatorNumber(sk3, client) 	// ./main -step 30 -dpos_from=1 -dpos_to=1 -dpos_value="5" ok
 	case 31: // 31)读取世代的出块数量
-		readEpochBlockNumber(sk3, client) // ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
+		readEpochBlockNumber(sk3, client) 			// ./main -step 31 -dpos_from=1 -dpos_to=1 ok
 	case 32: // 32)更新世代的出块数量
-		updateEpochBlockNumber(sk3, client) // ./main -step 26 -dpos_from="" -dpos_to="validatorAddress" -dpos_value="" ok
+		updateEpochBlockNumber(sk3, client) 		// ./main -step 32 -dpos_from=1 -dpos_to=1 -dpos_value=2 ok
 
 	default:
 		panic("only three flag: upload cert(1), create contract(1), invoke contract(2)")
@@ -1431,7 +1431,7 @@ func updateMinSelfDelegation(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 		Pairs:        params,
 	})
 	if err == nil {
-		fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 		if resp != nil {
 			return
 		}
@@ -1440,7 +1440,7 @@ func updateMinSelfDelegation(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 		fmt.Println(deadLineErr)
 		return
 	}
-	fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
+	fmt.Printf("ERROR: client.call err: %v\n", err)
 }
 
 func readEpochValidatorNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
@@ -1471,7 +1471,7 @@ func updateEpochValidatorNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClien
 		Pairs:        params,
 	})
 	if err == nil {
-		fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 		if resp != nil {
 			return
 		}
@@ -1480,7 +1480,7 @@ func updateEpochValidatorNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClien
 		fmt.Println(deadLineErr)
 		return
 	}
-	fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
+	fmt.Printf("ERROR: client.call err in: %v\n", err)
 }
 
 func readEpochBlockNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
@@ -1511,7 +1511,7 @@ func updateEpochBlockNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 		Pairs:        params,
 	})
 	if err == nil {
-		fmt.Printf("setRelationshipForAddrAndNodeId send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 		if resp != nil {
 			return
 		}
@@ -1520,7 +1520,7 @@ func updateEpochBlockNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 		fmt.Println(deadLineErr)
 		return
 	}
-	fmt.Printf("ERROR: client.call err in dpos_stake_setNodeID: %v\n", err)
+	fmt.Printf("ERROR: client.call err in: %v\n", err)
 }
 
 func loadDposParams() (crypto.PrivateKey, *acPb.SerializedMember, string, string, error) {

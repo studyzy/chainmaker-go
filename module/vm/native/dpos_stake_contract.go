@@ -628,7 +628,8 @@ func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, 
 	return bz, nil
 }
 
-// UpdateMinSelfDelegation() string				// 更新验证人最少抵押token数量
+// 更新验证人最少抵押token数量，当提高最少抵押门槛时，原先的 validator 状态不会更新，validator 需要尽块增加抵押
+// UpdateMinSelfDelegation() string
 // @params["min_self_delegation"]
 // return string
 func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -671,7 +672,8 @@ func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContex
 	return []byte(strconv.Itoa(int(amount))), nil
 }
 
-// UpdateEpochValidatorNumber() string				// 更新每个世代验证人数量
+// 更新每个世代验证人数量，不能大于当前所有验证人数量
+// UpdateEpochValidatorNumber() string
 // @params["epoch_validator_number"]
 // return string
 func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
@@ -693,10 +695,16 @@ func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimCont
 		s.log.Errorf(err.Error())
 		return nil, err
 	}
-
 	// convert int string to int
 	amount, err := strconv.Atoi(epochValidatorNumber)
 	if err != nil {
+		s.log.Errorf(err.Error())
+		return nil, err
+	}
+	// check all validator candidates number
+	err = s.checkNewValidatorNumberOverRange(context, amount)
+	if err != nil {
+		s.log.Errorf(err.Error())
 		return nil, err
 	}
 	// big endian encode
@@ -1139,6 +1147,24 @@ func (s *DPoSStakeRuntime) checkSenderAndOwner(context protocol.TxSimContext) er
 	if sender != owner {
 		s.log.Errorf("only erc20 contract owner is access to this method, sender: [%s], owner: [%s]", sender, owner)
 		return fmt.Errorf("only erc20 contract owner is access to this method, sender: [%s], owner: [%s]", sender, owner)
+	}
+	return nil
+}
+
+func (s *DPoSStakeRuntime) checkNewValidatorNumberOverRange(context protocol.TxSimContext, amount int) error {
+	// get all candidates
+	bz, err := s.GetAllCandidates(context, nil)
+	if err != nil {
+		return err
+	}
+	// unmarshal
+	vc := &commonPb.ValidatorVector{}
+	err = proto.Unmarshal(bz, vc)
+	if err != nil {
+		return err
+	}
+	if amount > len(vc.Vector) {
+		return fmt.Errorf("new validator amount is over range, current all candidates number is: [%s]", len(vc.Vector))
 	}
 	return nil
 }
