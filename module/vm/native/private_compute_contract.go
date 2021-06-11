@@ -473,7 +473,11 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 	if isDeploy {
-		r.saveContract(context, name, version, []byte(codeHeader), result.Result, codeHash)
+		err := r.saveContract(context, name, version, []byte(codeHeader), result.Result, codeHash)
+		if err != nil {
+			r.log.Errorf("save contract err: %s", err.Error())
+			return nil, err
+		}
 	}
 	if utils.IsAnyBlank(name, version, codeHash, reportHash) {
 		err := fmt.Errorf(
