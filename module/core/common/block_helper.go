@@ -711,7 +711,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 			txKey := block.GetTxKey()
 			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
 			// drop database if create contract fail
-			if false && len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+			if len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
 				var payload commonpb.ContractMgmtPayload
 				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
 					if payload.ContractId != nil {
