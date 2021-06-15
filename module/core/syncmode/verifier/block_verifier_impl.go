@@ -8,7 +8,7 @@ package verifier
 
 import (
 	"chainmaker.org/chainmaker-go/core/common"
-	"chainmaker.org/chainmaker-go/provider/conf"
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"encoding/hex"
 	"fmt"
 	"sync"

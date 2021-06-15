@@ -8,22 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"encoding/hex"
-	"fmt"
-	"path/filepath"
-	"strings"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/core/cache"
+	providerConf "chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	providerConf "chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -31,6 +27,10 @@ import (
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm"
+	"encoding/hex"
+	"fmt"
+	"path/filepath"
+	"strings"
 )
 
 // Init all the modules.

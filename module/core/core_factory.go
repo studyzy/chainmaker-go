@@ -8,9 +8,9 @@ package core
 
 import (
 	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/core/provider"
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/provider"
-	"chainmaker.org/chainmaker-go/provider/conf"
 	"sync"
 )
 

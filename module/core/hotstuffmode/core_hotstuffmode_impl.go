@@ -13,11 +13,11 @@ import (
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/helper"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"github.com/google/martian/log"
 )
