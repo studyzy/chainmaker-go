@@ -2,8 +2,8 @@ package core
 
 import (
 	hotstuffMode "chainmaker.org/chainmaker-go/core/hotstuffmode"
+	"chainmaker.org/chainmaker-go/core/provider"
 	syncMode "chainmaker.org/chainmaker-go/core/syncmode"
-	"chainmaker.org/chainmaker-go/provider"
 )
 
 func init() {
