@@ -164,11 +164,11 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPoSStakeRuntime.SetNodeID
 	methodMap[commonPb.DPoSStakeContractFunction_GET_NODE_ID.String()] = DPoSStakeRuntime.GetNodeID
 	methodMap[commonPb.DPoSStakeContractFunction_READ_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.ReadMinSelfDelegation
-	methodMap[commonPb.DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.UpdateMinSelfDelegation
+	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.UpdateMinSelfDelegation
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
-	methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
+	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
-	methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
+	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
 	return methodMap
 }
 
@@ -744,7 +744,6 @@ func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext,
 		s.log.Errorf("epochBlockNumber less than 0")
 		return nil, fmt.Errorf("epochBlockNumber less than 0")
 	}
-
 
 	// check sender and owner
 	err = s.checkSenderAndOwner(context)
