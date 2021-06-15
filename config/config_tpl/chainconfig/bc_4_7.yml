@@ -32,7 +32,11 @@ core:
 
 # snapshot module
 snapshot:
-  enable_evidence: false # enable the evidence support 
+  enable_evidence: false # enable the evidence support
+
+# scheduler module
+scheduler:
+  enable_evidence: false # enable the evidence support
 
 #共识配置
 consensus:

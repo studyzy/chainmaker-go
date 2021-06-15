@@ -123,18 +123,18 @@ func TestNet(t *testing.T) {
 	require.Nil(t, err)
 	fmt.Println("[B]B register receive msg handler for chain1")
 	go func() {
+		fmt.Println("[A]A send msg to B in chain1")
 		for {
 			sendMsg := NewNetMsg(data, netPb.NetMsg_TX, toNodeB)
 			if err = a.SendMsg(chainId1, toNodeB, msgFlag, sendMsg); err != nil {
 				fmt.Println(err)
-				time.Sleep(2 * time.Second)
+				time.Sleep(time.Second)
 				continue
 			}
-			fmt.Println("[A]A send msg to B in chain1")
 			break
 		}
 	}()
-	timer := time.NewTimer(20 * time.Second)
+	timer := time.NewTimer(time.Minute)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test A send msg to B timeout ====")
@@ -176,7 +176,7 @@ func TestNet(t *testing.T) {
 	require.Nil(t, err)
 	fmt.Println("[A]A broadcast a msg to chain1:", string(data))
 
-	timer = time.NewTimer(20 * time.Second)
+	timer = time.NewTimer(time.Minute)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test broadcast timeout ====")

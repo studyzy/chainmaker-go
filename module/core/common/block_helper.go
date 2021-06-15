@@ -11,6 +11,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -478,7 +479,7 @@ type VerifierBlock struct {
 	ac              protocol.AccessControlProvider
 	snapshotManager protocol.SnapshotManager
 	vmMgr           protocol.VmManager
-	txScheduler     *TxScheduler
+	txScheduler     protocol.TxScheduler
 	txPool          protocol.TxPool
 	blockchainStore protocol.BlockchainStore
 	proposalCache   protocol.ProposalCache // proposal cache
@@ -496,7 +497,8 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		blockchainStore: conf.BlockchainStore,
 		proposalCache:   conf.ProposalCache,
 	}
-	verifyBlock.txScheduler = NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf)
+	var schedulerFactory scheduler.TxSchedulerFactory
+	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf)
 	return verifyBlock
 }
 
@@ -756,7 +758,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 			txKey := block.GetTxKey()
 			_ = chain.blockchainStore.RollbackDbTransaction(txKey)
 			// drop database if create contract fail
-			if false && len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
+			if len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
 				var payload commonpb.ContractMgmtPayload
 				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
 					if payload.ContractId != nil {
