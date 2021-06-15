@@ -76,11 +76,13 @@ func runRestoreCMD() error {
 
 	//// 4.Restore Blocks
 	var barCount = archivedBlkHeightOnChain - restoreStartBlockHeight + 1
-	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
+	progress := uiprogress.New()
+	bar := progress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("\nRestoring Blocks (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Restoring Blocks (%d/%d)", b.Current(), barCount)
 	})
-	uiprogress.Start()
+	progress.Start()
+	defer progress.Stop()
 	for height := archivedBlkHeightOnChain; height >= restoreStartBlockHeight; height-- {
 		if err := restoreBlock(cc, db, height); err != nil {
 			return err
@@ -88,7 +90,6 @@ func runRestoreCMD() error {
 
 		bar.Incr()
 	}
-	uiprogress.Stop()
 	return nil
 }
 
@@ -117,9 +118,13 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 		return err
 	}
 
-	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
+	// verify hmac
+	sum, err := hmac(chainId, height, bInfo.BlockWithRWSet, secretKey)
 	if err != nil {
 		return err
+	}
+	if sum != bInfo.Hmac {
+		return fmt.Errorf("invalid HMAC signature, recalculate: %s from_db: %s", sum, bInfo.Hmac)
 	}
 
 	bInfo.IsArchived = false
@@ -134,6 +139,11 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 	}
 
 	err = model.UpdateArchivedBlockHeight(tx, archivedBlkHeight)
+	if err != nil {
+		return err
+	}
+
+	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
 	if err != nil {
 		return err
 	}

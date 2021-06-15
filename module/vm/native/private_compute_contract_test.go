@@ -112,7 +112,7 @@ func TestSaveEnclaveReport(t *testing.T) {
 //}
 
 func TestInTeecertPemFile(t *testing.T) {
-	file, err := os.Open("/Users/caizhihong/证书测试/in_teecert.pem")
+	file, err := os.Open(certFilename)
 	if err != nil {
 		t.Fatalf("open file error: %v", err)
 	}

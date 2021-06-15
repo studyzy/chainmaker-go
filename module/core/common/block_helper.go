@@ -16,6 +16,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -431,7 +432,7 @@ type VerifierBlock struct {
 	ac              protocol.AccessControlProvider
 	snapshotManager protocol.SnapshotManager
 	vmMgr           protocol.VmManager
-	txScheduler     *TxScheduler
+	txScheduler     protocol.TxScheduler
 	txPool          protocol.TxPool
 	blockchainStore protocol.BlockchainStore
 	proposalCache   protocol.ProposalCache // proposal cache
@@ -451,7 +452,8 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		proposalCache:   conf.ProposalCache,
 		storeHelper:     conf.StoreHelper,
 	}
-	verifyBlock.txScheduler = NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf, verifyBlock.storeHelper)
+	var schedulerFactory scheduler.TxSchedulerFactory
+	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf)
 	return verifyBlock
 }
 

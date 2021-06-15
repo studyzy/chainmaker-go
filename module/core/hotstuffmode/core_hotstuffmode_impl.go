@@ -9,6 +9,7 @@ package hotstuffmode
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/helper"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
@@ -55,9 +56,10 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 		snapshotManager: cf.SnapshotManager,
 		proposedCache:   cf.ProposalCache,
 		chainConf:       cf.ChainConf,
-		txScheduler:     common.NewTxScheduler(cf.VmMgr, cf.ChainConf, cf.StoreHelper),
 		log:             cf.Log,
 	}
+	var schedulerFactory scheduler.TxSchedulerFactory
+	core.txScheduler = schedulerFactory.NewTxScheduler(cf.VmMgr, cf.ChainConf)
 	core.quitC = make(<-chan interface{})
 
 	var err error
@@ -191,7 +193,7 @@ func (c *CoreEngine) GetBlockVerifier() protocol.BlockVerifier {
 	return c.BlockVerifier
 }
 
-func (c *CoreEngine) DiscardAboveHeight(baseHeight int64) () {
+func (c *CoreEngine) DiscardAboveHeight(baseHeight int64) {
 }
 
 func (c *CoreEngine) GetHotStuffHelper() protocol.HotStuffHelper {

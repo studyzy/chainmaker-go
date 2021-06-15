@@ -47,8 +47,7 @@ func (sql *SQLStoreHelper) RollBack(block *commonpb.Block, blockchainStore proto
 	// drop database if create contract fail
 	if len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
 		var payload commonpb.ContractMgmtPayload
-		err = proto.Unmarshal(block.Txs[0].RequestPayload, &payload)
-		if err != nil {
+		if err = proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err != nil {
 			return err
 		}
 		if payload.ContractId != nil {

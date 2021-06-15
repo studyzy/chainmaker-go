@@ -123,17 +123,17 @@ func TestNetService(t *testing.T) {
 	require.Nil(t, err)
 	fmt.Println("[B]B register receive msg handler for chain1")
 	go func() {
+		fmt.Println("[A]A send msg to B in chain1")
 		for {
 			if err = nsa.SendMsg(data, netPb.NetMsg_TX, toNodeB); err != nil {
 				fmt.Println(err)
-				time.Sleep(2 * time.Second)
+				time.Sleep(time.Second)
 				continue
 			}
-			fmt.Println("[A]A send msg to B in chain1")
 			break
 		}
 	}()
-	timer := time.NewTimer(15 * time.Second)
+	timer := time.NewTimer(time.Minute)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test A send msg to B timeout ====")
@@ -156,7 +156,7 @@ func TestNetService(t *testing.T) {
 	require.Nil(t, err)
 	fmt.Println("[A]A broadcast a msg to chain1:", string(data))
 
-	timer = time.NewTimer(10 * time.Second)
+	timer = time.NewTimer(time.Minute)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test broadcast timeout ====")
@@ -192,7 +192,7 @@ func TestNetService(t *testing.T) {
 	require.Nil(t, err)
 	fmt.Println("[A]A broadcast a msg to chain1 consensus nodes:", string(data))
 
-	timer = time.NewTimer(10 * time.Second)
+	timer = time.NewTimer(time.Minute)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test consensus broadcast timeout ====")

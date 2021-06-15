@@ -9,56 +9,54 @@ package raft
 import (
 	"reflect"
 	"testing"
-
-	etcdraft "go.etcd.io/etcd/raft/v3"
 )
 
 func Test_computeUpdatedNodes(t *testing.T) {
 	type args struct {
-		oldSet []etcdraft.Peer
-		newSet []etcdraft.Peer
+		oldSet []uint64
+		newSet []uint64
 	}
 	tests := []struct {
 		name        string
 		args        args
-		wantRemoved []etcdraft.Peer
-		wantAdded   []etcdraft.Peer
+		wantRemoved []uint64
+		wantAdded   []uint64
 	}{
 		{
 			"no change",
 			args{
-				oldSet: []etcdraft.Peer{{ID: 1}, {ID: 2}, {ID: 3}},
-				newSet: []etcdraft.Peer{{ID: 1}, {ID: 2}, {ID: 3}},
+				oldSet: []uint64{1, 2, 3},
+				newSet: []uint64{1, 2, 3},
 			},
-			[]etcdraft.Peer{},
-			[]etcdraft.Peer{},
+			[]uint64{},
+			[]uint64{},
 		},
 		{
 			"add 2 nodes",
 			args{
-				oldSet: []etcdraft.Peer{{ID: 1}, {ID: 2}, {ID: 3}},
-				newSet: []etcdraft.Peer{{ID: 1}, {ID: 2}, {ID: 3}, {ID: 4}, {ID: 5}},
+				oldSet: []uint64{1, 2, 3},
+				newSet: []uint64{1, 2, 3, 4, 5},
 			},
-			[]etcdraft.Peer{},
-			[]etcdraft.Peer{{ID: 4}, {ID: 5}},
+			[]uint64{},
+			[]uint64{4, 5},
 		},
 		{
 			"remove 2 nodes",
 			args{
-				oldSet: []etcdraft.Peer{{ID: 1}, {ID: 2}, {ID: 3}},
-				newSet: []etcdraft.Peer{{ID: 1}},
+				oldSet: []uint64{1, 2, 3},
+				newSet: []uint64{1},
 			},
-			[]etcdraft.Peer{{ID: 2}, {ID: 3}},
-			[]etcdraft.Peer{},
+			[]uint64{2, 3},
+			[]uint64{},
 		},
 		{
 			"add 2 nodes and remove 2 nodes",
 			args{
-				oldSet: []etcdraft.Peer{{ID: 1}, {ID: 2}, {ID: 3}},
-				newSet: []etcdraft.Peer{{ID: 1}, {ID: 4}, {ID: 5}},
+				oldSet: []uint64{1, 2, 3},
+				newSet: []uint64{1, 4, 5},
 			},
-			[]etcdraft.Peer{{ID: 2}, {ID: 3}},
-			[]etcdraft.Peer{{ID: 4}, {ID: 5}},
+			[]uint64{2, 3},
+			[]uint64{4, 5},
 		},
 	}
 	for _, tt := range tests {

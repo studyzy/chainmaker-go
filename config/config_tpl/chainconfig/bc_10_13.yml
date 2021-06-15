@@ -34,6 +34,10 @@ core:
 snapshot:
   enable_evidence: false # enable the evidence support 
 
+# scheduler module
+scheduler:
+  enable_evidence: false # enable the evidence support
+
 #共识配置
 consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)

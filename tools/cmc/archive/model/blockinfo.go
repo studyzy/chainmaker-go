@@ -59,12 +59,17 @@ func DbName(chainId string) string {
 	return fmt.Sprintf("%s_%s", prefixDbName, chainId)
 }
 
-func CreateBlockInfoTable(db *gorm.DB, tableName string) error {
-	err := db.Set("gorm:table_options", "ENGINE=InnoDB").Migrator().CreateTable(&blockInfoNew{})
-	if err != nil {
-		return err
+func CreateBlockInfoTableIfNotExists(db *gorm.DB, tableName string) error {
+	if !db.Migrator().HasTable(tableName) {
+		if !db.Migrator().HasTable(&blockInfoNew{}) {
+			err := db.Set("gorm:table_options", "ENGINE=InnoDB").Migrator().CreateTable(&blockInfoNew{})
+			if err != nil {
+				return err
+			}
+		}
+		return db.Migrator().RenameTable(&blockInfoNew{}, tableName)
 	}
-	return db.Migrator().RenameTable(&blockInfoNew{}, tableName)
+	return nil
 }
 
 func InsertBlockInfo(db *gorm.DB, chainId string, blkHeight int64, blkWithRWSet []byte, hmac string) error {
