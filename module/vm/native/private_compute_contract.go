@@ -1001,8 +1001,13 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 	if err != nil {
 		return nil, err
 	}
+	payloadBytes := make([]byte, hex.DecodedLen(len(payloadByteStr)))
+	_, err =hex.Decode(payloadBytes, []byte(payloadByteStr))
+	if err != nil {
+		return nil, err
+	}
 	//auth, err := r.verifyCallerAuth(params, ctx.GetTx().Header.ChainId, ac)
-	auth, err := r.verifyMultiCallerAuth(signPairs, orgIds, []byte(payloadByteStr), ac)
+	auth, err := r.verifyMultiCallerAuth(signPairs, orgIds, payloadBytes, ac)
 	if err != nil {
 		return nil, err
 	}
@@ -1104,8 +1109,8 @@ func (r *PrivateComputeRuntime) getParamValue(parameters map[string]string, key 
 	return value, nil
 }
 
-func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.SignInfo, orgId []string, payloadBytes []byte,
-	ac protocol.AccessControlProvider) (bool, error) {
+func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.SignInfo, orgId []string,
+	payloadBytes []byte, ac protocol.AccessControlProvider) (bool, error) {
 	for i, certPair := range signPairs {
 		clientSignBytes, err := hex.DecodeString(certPair.ClientSign)
 		if err != nil {
