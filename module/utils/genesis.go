@@ -194,11 +194,11 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 		stakeConfig *StakeConfig
 	)
 	if cc.Consensus.Type == consensus.ConsensusType_DPOS {
-		erc20Config, err = loadERC20Config(cc.Consensus.ExtConfig)
+		erc20Config, err = loadERC20Config(cc.Consensus.DposConfig)
 		if err != nil {
 			return nil, err
 		}
-		stakeConfig, err = loadStakeConfig(cc.Consensus.ExtConfig)
+		stakeConfig, err = loadStakeConfig(cc.Consensus.DposConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +414,6 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 			Key:          []byte(keyUnbondingEpochNumber),
 			Value:        epochNum,
 		},
-
 	}
 
 	// 2. add validatorInfo in rwSet
