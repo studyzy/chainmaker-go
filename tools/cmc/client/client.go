@@ -92,6 +92,7 @@ const (
 	flagTrustMemberOrgId       = "trust-member-org-id"
 	flagTrustMemberCrtPath     = "trust-member-path"
 	flagTrustMemberRole        = "trust-member-role"
+	flagTrustMemberNodeId      = "trust-member-node-id"
 	flagCertFilePaths          = "cert-file-paths"
 	flagCertCrlPath            = "cert-crl-path"
 )
@@ -164,7 +165,7 @@ func init() {
 	flags.StringVar(&trustMemberOrgId, flagTrustMemberOrgId, "", "specify the ca org id")
 	flags.StringVar(&trustMemberInfoPath, flagTrustMemberCrtPath, "", "specify the ca file path")
 	flags.StringVar(&trustMemberRole, flagTrustMemberRole, "", "specify trust member role")
-	flags.StringVar(&trustMemberNodeId, flagNodeId, "", "specify trust member role")
+	flags.StringVar(&trustMemberNodeId, flagTrustMemberNodeId, "", "specify trust member node id")
 
 	// 证书管理
 	flags.StringVar(&certFilePaths, flagCertFilePaths, "", "specify cert file paths, use ',' to separate")
