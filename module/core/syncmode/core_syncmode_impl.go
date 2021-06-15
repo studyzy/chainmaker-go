@@ -60,7 +60,7 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	}
 
 	var schedulerFactory scheduler.TxSchedulerFactory
-	core.txScheduler = schedulerFactory.NewTxScheduler(cf.VmMgr, cf.ChainConf)
+	core.txScheduler = schedulerFactory.NewTxScheduler(cf.VmMgr, cf.ChainConf, cf.StoreHelper)
 	core.quitC = make(<-chan interface{})
 
 	var err error
