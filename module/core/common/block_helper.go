@@ -224,18 +224,18 @@ func FinalizeBlock(
 	// TxCount contains acl verify failed txs and invoked contract txs
 	txCount := len(block.Txs)
 	block.Header.TxCount = int64(txCount)
-	type txHashMess struct {
-		tx    *commonpb.Transaction
+	type txPacket struct {
 		index int
+		tx    *commonpb.Transaction
 	}
-	txC := make(chan *txHashMess, block.Header.TxCount)
+	txPacketC := make(chan *txPacket, block.Header.TxCount)
 	finishC := make(chan bool)
 	errC := make(chan error)
 	txHashes := make([][]byte, txCount)
 	var goRoutinePool *ants.Pool
 	var err error
-	var n int
-	var l sync.Mutex
+	var txNum int
+	var lock sync.Mutex
 	go func() {
 		// DagDigest
 		dagHash, err := utils.CalcDagHash(hashType, block.Dag)
@@ -255,11 +255,11 @@ func FinalizeBlock(
 	go func() {
 		if block.Header.TxCount > 0 {
 			for i, tx := range block.Txs {
-				txMess := &txHashMess{
-					tx:    tx,
+				txMess := &txPacket{
 					index: i,
+					tx:    tx,
 				}
-				txC <- txMess
+				txPacketC <- txMess
 			}
 		} else {
 			finishC <- true
@@ -267,11 +267,9 @@ func FinalizeBlock(
 	}()
 	for {
 		select {
-		case txcc := <-txC:
+		case packet := <-txPacketC:
 			err = goRoutinePool.Submit(func() {
-				tx := txcc.tx
-				logger.Debugf("calc hash for tx id: %s", tx.Header.GetTxId())
-
+				tx := packet.tx
 				rwSet := txRWSetMap[tx.Header.TxId]
 				if rwSet == nil {
 					rwSet = &commonpb.TxRWSet{
@@ -302,22 +300,18 @@ func FinalizeBlock(
 					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
 					errC <- err
 				}
-				index := txcc.index
-				l.Lock()
-				n++
+				index := packet.index
+				lock.Lock()
+				txNum++
 				txHashes[index] = txHash
-				l.Unlock()
-				logger.Debugf("txIndex [%d]", index)
-
-				if n == len(block.Txs) {
-					logger.Debugf("txHashs len: [%d], cap: [%d]", len(txHashes), cap(txHashes))
+				lock.Unlock()
+				if txNum == len(block.Txs) {
 					finishC <- true
 				}
 			})
 		case err = <-errC:
 			return err
 		case <-finishC:
-			logger.Debugf("TxHashes:::[%v]", txHashes)
 			block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
 			if err != nil {
 				logger.Warnf("get tx merkle root error %s", err)
@@ -587,7 +581,6 @@ func (vb *VerifierBlock) ValidateBlock(
 	}
 	verifiertx := NewVerifierTx(verifierTxConf)
 	txHashes, _, errTxs, err := verifiertx.verifierTxs(block)
-	vb.log.Debugf("txHashes:[%v]", txHashes)
 	txLasts := utils.CurrentTimeMillisSeconds() - startTxTick
 	timeLasts = append(timeLasts, txLasts)
 	if err != nil {
@@ -611,7 +604,6 @@ func (vb *VerifierBlock) ValidateBlock(
 		}
 		contractEventMap[tx.Header.TxId] = events
 	}
-
 	// verify TxRoot
 	startRootsTick := utils.CurrentTimeMillisSeconds()
 	err = CheckBlockDigests(block, txHashes, hashType, vb.log)

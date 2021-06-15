@@ -8,7 +8,7 @@ package common
 
 import "testing"
 
-func TestAddBlock(t *testing.T) {
+func TestFalizeBlock(t *testing.T) {
 
 
 
