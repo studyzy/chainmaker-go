@@ -103,6 +103,15 @@ const (
 	PaillierOpTypeSubCiphertext                 = "SubCiphertext"
 	PaillierOpTypeSubPlaintext                  = "SubPlaintext"
 	PaillierOpTypeNumMul                        = "NumMul"
+	// bulletproofs
+	ContractMethodGetBulletproofsResult     = "GetBulletproofsResult"
+	ContractMethodGetBulletproofsResultLen  = "GetBulletproofsResultLen"
+	BulletProofsOpTypePedersenAddNum        = "PedersenAddNum"
+	BulletProofsOpTypePedersenAddCommitment = "PedersenAddCommitment"
+	BulletProofsOpTypePedersenSubNum        = "PedersenSubNum"
+	BulletProofsOpTypePedersenSubCommitment = "PedersenSubCommitment"
+	BulletProofsOpTypePedersenMulNum        = "PedersenMulNum"
+	BulletProofsVerify                      = "BulletProofsVerify"
 )
 
 //VmManager manage vm runtime
