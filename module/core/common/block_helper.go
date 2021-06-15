@@ -215,6 +215,7 @@ func FinalizeBlock(
 	hashType string,
 	logger protocol.Logger) error {
 
+	logger.Debugf("finalize block [%d], txNum [%d]", block.Header.BlockHeight, len(block.Txs))
 	if aclFailTxs != nil && len(aclFailTxs) > 0 {
 		// append acl check failed txs to the end of block.Txs
 		block.Txs = append(block.Txs, aclFailTxs...)
@@ -233,12 +234,8 @@ func FinalizeBlock(
 	txHashes := make([][]byte, txCount)
 	var goRoutinePool *ants.Pool
 	var err error
-	poolCapacity := runtime.NumCPU() * 4
-	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
-		return err
-	}
-	defer goRoutinePool.Release()
-
+	var n int
+	var l sync.Mutex
 	go func() {
 		// DagDigest
 		dagHash, err := utils.CalcDagHash(hashType, block.Dag)
@@ -247,6 +244,26 @@ func FinalizeBlock(
 			errC <- err
 		}
 		block.Header.DagHash = dagHash
+		logger.Debugf("calc dag hash finish [%s]", block.Header.DagHash)
+	}()
+
+	poolCapacity := runtime.NumCPU() * 4
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
+		return err
+	}
+	defer goRoutinePool.Release()
+	go func() {
+		if block.Header.TxCount > 0 {
+			for i, tx := range block.Txs {
+				txMess := &txHashMess{
+					tx:    tx,
+					index: i,
+				}
+				txC <- txMess
+			}
+		} else {
+			finishC <- true
+		}
 	}()
 	for {
 		select {
@@ -268,6 +285,7 @@ func FinalizeBlock(
 					return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
 				})
 				if err != nil {
+					logger.Debugf("calc rwSet hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
 					errC <- err
 				}
 				if tx.Result == nil {
@@ -281,35 +299,39 @@ func FinalizeBlock(
 				// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
 				txHash, err := utils.CalcTxHash(hashType, tx)
 				if err != nil {
+					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
 					errC <- err
 				}
 				index := txcc.index
+				l.Lock()
+				n++
 				txHashes[index] = txHash
+				l.Unlock()
+				logger.Debugf("txIndex [%d]", index)
 
-				if cap(txHashes) == len(block.Txs) {
+				if n == len(block.Txs) {
+					logger.Debugf("txHashs len: [%d], cap: [%d]", len(txHashes), cap(txHashes))
 					finishC <- true
 				}
 			})
 		case err = <-errC:
 			return err
 		case <-finishC:
-
+			logger.Debugf("TxHashes:::[%v]", txHashes)
+			block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
+			if err != nil {
+				logger.Warnf("get tx merkle root error %s", err)
+				return err
+			}
+			block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
+			if err != nil {
+				logger.Warnf("get rwset merkle root error %s", err)
+				return err
+			}
+			logger.Debugf("finalize block [%d] finish", block.Header.BlockHeight)
+			return nil
 		}
 	}
-
-	go func() {
-		if block.Header.TxCount > 0 {
-			for i, tx := range block.Txs {
-				txC <- &txHashMess{
-					tx: tx,
-					index: i,
-				}
-			}
-		} else {
-			finishC <- true
-		}
-	}()
-	return nil
 }
 
 // IsTxCountValid, to check if txcount in block is valid
@@ -366,7 +388,7 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 func IsMerkleRootValid(block *commonpb.Block, txHashes [][]byte, hashType string) error {
 	txRoot, err := hash.GetMerkleRoot(hashType, txHashes)
 	if err != nil || !bytes.Equal(txRoot, block.Header.TxRoot) {
-		return fmt.Errorf("txroot expect %x, got %x", block.Header.TxRoot, txRoot)
+		return fmt.Errorf("txroot expect %x, got %x, err: %s", block.Header.TxRoot, txRoot, err.Error())
 	}
 	return nil
 }
@@ -565,6 +587,7 @@ func (vb *VerifierBlock) ValidateBlock(
 	}
 	verifiertx := NewVerifierTx(verifierTxConf)
 	txHashes, _, errTxs, err := verifiertx.verifierTxs(block)
+	vb.log.Debugf("txHashes:[%v]", txHashes)
 	txLasts := utils.CurrentTimeMillisSeconds() - startTxTick
 	timeLasts = append(timeLasts, txLasts)
 	if err != nil {
