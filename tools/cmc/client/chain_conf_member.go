@@ -22,7 +22,7 @@ const (
 
 func configTrustMemberCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "trustroot",
+		Use:   "trustmember",
 		Short: "trust member command",
 		Long:  "trust member command",
 	}
@@ -55,6 +55,7 @@ func addTrustMemberCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagTrustMemberCrtPath)
 	cmd.MarkFlagRequired(flagTrustMemberRole)
 	cmd.MarkFlagRequired(flagNodeId)
+	return cmd
 }
 
 func removeTrustMemberCMD() *cobra.Command {
@@ -76,7 +77,6 @@ func removeTrustMemberCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustMemberOrgId)
-	cmd.MarkFlagRequired(flagTrustMemberCrtPath)
 
 	return cmd
 }
