@@ -11,18 +11,18 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
-	"github.com/gogo/protobuf/proto"
-
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus"
+	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/utils"
+	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -267,9 +267,10 @@ func (v *BlockVerifierImpl) verifyVoteSig(block *commonpb.Block) error {
 	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block, v.ledgerCache)
 }
 
-func parseVerifyResult(block *commonpb.Block, isValid bool) *consensuspb.VerifyResult {
+func parseVerifyResult(block *commonpb.Block, isValid bool, txsRwSet map[string]*commonpb.TxRWSet) *consensuspb.VerifyResult {
 	verifyResult := &consensuspb.VerifyResult{
 		VerifiedBlock: block,
+		TxsRwSet:      txsRwSet,
 	}
 	if isValid {
 		verifyResult.Code = consensuspb.VerifyResult_SUCCESS

@@ -10,8 +10,7 @@ require (
 	chainmaker.org/chainmaker-go/vm v0.0.0
 	github.com/golang/protobuf v1.4.3
 	github.com/stretchr/testify v1.7.0
-	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 )
 
 replace (
