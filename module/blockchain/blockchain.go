@@ -10,7 +10,6 @@ package blockchain
 
 import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -62,7 +61,7 @@ type Blockchain struct {
 	txPool protocol.TxPool
 
 	// core engine
-	coreEngine *core.CoreEngine
+	coreEngine protocol.CoreEngine
 
 	// vm manager
 	vmMgr protocol.VmManager

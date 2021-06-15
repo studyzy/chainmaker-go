@@ -10,7 +10,7 @@ require (
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 )
 
@@ -31,6 +31,7 @@ replace (
 	chainmaker.org/chainmaker-go/net => ./../module/net
 	chainmaker.org/chainmaker-go/pb/protogo => ./../pb/protogo
 	chainmaker.org/chainmaker-go/protocol => ./../protocol
+	chainmaker.org/chainmaker-go/provider => ../module/provider
 	chainmaker.org/chainmaker-go/rpcserver => ./../module/rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ./../module/snapshot
 	chainmaker.org/chainmaker-go/spv => ./../module/spv

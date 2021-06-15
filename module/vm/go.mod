@@ -13,16 +13,14 @@ require (
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker-go/wasi v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
-	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/mr-tron/base58 v1.2.0
-	github.com/shopspring/decimal v1.2.0
-	github.com/stretchr/testify v1.7.0
-	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca // indirect
+	github.com/spf13/cobra v1.1.1
+	github.com/spf13/pflag v1.0.5
+	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
+	gotest.tools v2.2.0+incompatible
 )
 
 replace (

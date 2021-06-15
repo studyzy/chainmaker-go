@@ -108,6 +108,10 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContractLen()
 	case protocol.ContractMethodEmitEvent:
 		return s.EmitEvent()
+	case protocol.ContractMethodGetPaillierOperationResultLen:
+		return s.GetPaillierResultLen()
+	case protocol.ContractMethodGetPaillierOperationResult:
+		return s.GetPaillierResult()
 	// kv
 	case protocol.ContractMethodGetStateLen:
 		return s.GetStateLen()
@@ -117,6 +121,16 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.PutState()
 	case protocol.ContractMethodDeleteState:
 		return s.DeleteState()
+	case protocol.ContractMethodKvIterator:
+		return s.KvIterator()
+	case protocol.ContractMethodKvIteratorHasNext:
+		return s.KvIteratorHasNext()
+	case protocol.ContractMethodKvIteratorNextLen:
+		return s.KvIteratorNextLen()
+	case protocol.ContractMethodKvIteratorNext:
+		return s.KvIteratorNext()
+	case protocol.ContractMethodKvIteratorClose:
+		return s.KvIteratorClose()
 	// sql
 	case protocol.ContractMethodExecuteUpdate:
 		return s.ExecuteUpdate()
@@ -181,6 +195,26 @@ func (s *WaciInstance) EmitEvent() int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 	s.Sc.ContractEvent = append(s.Sc.ContractEvent, contractEvent)
+	return protocol.ContractSdkSignalResultSuccess
+}
+
+// GetPaillierResultLen get paillier operation result length from chain
+func (s *WaciInstance) GetPaillierResultLen() int32 {
+	return s.getPaillierResultCore(true)
+}
+
+// GetPaillierResult get paillier operation result from chain
+func (s *WaciInstance) GetPaillierResult() int32 {
+	return s.getPaillierResultCore(false)
+}
+
+func (s *WaciInstance) getPaillierResultCore(isLen bool) int32 {
+	data, err := wacsi.PaillierOperation(s.RequestBody, s.Memory, s.Sc.GetStateCache, isLen)
+	s.Sc.GetStateCache = data // reset data
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
 	return protocol.ContractSdkSignalResultSuccess
 }
 

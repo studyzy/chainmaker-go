@@ -37,6 +37,9 @@ const (
 	ResourceNameTxQuery    = "query"
 	ResourceNameTxTransact = "transaction"
 
+	ResourceNamePrivateCompute = "PRIVATE_COMPUTE"
+	ResourceNameArchive          = "ARCHIVE"
+
 	RoleAdmin         Role = "ADMIN"
 	RoleClient        Role = "CLIENT"
 	RoleConsensusNode Role = "CONSENSUS"

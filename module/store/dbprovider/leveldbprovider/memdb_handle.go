@@ -49,7 +49,9 @@ func (db *MemdbHandle) Delete(key []byte) error {
 // WriteBatch writes a batch in an atomic operation
 func (db *MemdbHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 	for k, v := range batch.KVs() {
-		db.db.Put([]byte(k), v)
+		if err := db.db.Put([]byte(k), v); err != nil {
+			return err
+		}
 	}
 	return nil
 }

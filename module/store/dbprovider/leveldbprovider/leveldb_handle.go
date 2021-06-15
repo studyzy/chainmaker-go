@@ -23,10 +23,14 @@ import (
 
 const defaultBloomFilterBits = 10
 const (
-	StoreBlockDBDir   = "store_block"
-	StoreStateDBDir   = "store_state"
+	//StoreBlockDBDir blockdb folder name
+	StoreBlockDBDir = "store_block"
+	//StoreStateDBDir statedb folder name
+	StoreStateDBDir = "store_state"
+	//StoreHistoryDBDir historydb folder name
 	StoreHistoryDBDir = "store_history"
-	StoreResultDBDir  = "store_result"
+	//StoreResultDBDir resultdb folder name
+	StoreResultDBDir = "store_result"
 )
 
 // LevelDBHandle encapsulated handle to leveldb
@@ -35,7 +39,8 @@ type LevelDBHandle struct {
 	logger protocol.Logger
 }
 
-func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig, logger protocol.Logger) *LevelDBHandle {
+func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig,
+	logger protocol.Logger) *LevelDBHandle {
 	dbOpts := &opt.Options{}
 	writeBufferSize := dbconfig.BlockWriteBufferSize
 	if writeBufferSize <= 0 {
@@ -150,6 +155,14 @@ func (h *LevelDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error
 		return errors.Wrap(err, "error writing batch to leveldbprovider")
 	}
 	return nil
+}
+
+// CompactRange compacts the underlying DB for the given key range.
+func (h *LevelDBHandle) CompactRange(start, limit []byte) error {
+	return h.db.CompactRange(util.Range{
+		Start: start,
+		Limit: limit,
+	})
 }
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges

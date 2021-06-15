@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package blocksqldb
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/gogo/protobuf/proto"
@@ -31,15 +32,24 @@ type TxInfo struct {
 }
 
 func (t *TxInfo) ScanObject(scan func(dest ...interface{}) error) error {
-	return scan(&t.TxId, &t.ChainId, &t.Sender, &t.TxType, &t.BlockHeight, &t.BlockHash, &t.Offset, &t.Timestamp, &t.ExpirationTime,
-		&t.RequestPayload, &t.RequestSignature, &t.Code, &t.ContractResult, &t.RwSetHash)
+	return scan(&t.TxId, &t.ChainId, &t.Sender, &t.TxType, &t.BlockHeight, &t.BlockHash, &t.Offset, &t.Timestamp,
+		&t.ExpirationTime, &t.RequestPayload, &t.RequestSignature, &t.Code, &t.ContractResult, &t.RwSetHash)
 }
 func (t *TxInfo) GetCreateTableSql(dbType string) string {
-	if dbType == "mysql" {
-		return "CREATE TABLE `tx_infos` (`tx_id` varchar(128),`chain_id` varchar(128),`sender` blob,`tx_type` int,`block_height` bigint unsigned,`block_hash` varbinary(128),`offset` int unsigned,`timestamp` bigint DEFAULT 0,`expiration_time` bigint DEFAULT 0,`request_payload` longblob,`request_signature` blob,`code` int,`contract_result` longblob,`rw_set_hash` varbinary(128),PRIMARY KEY (`tx_id`),INDEX idx_height_offset (`block_height`,`offset`)) default character set utf8"
+	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+		return `CREATE TABLE tx_infos (tx_id varchar(128),chain_id varchar(128),sender blob,tx_type int,
+block_height bigint unsigned,block_hash varbinary(128),offset int unsigned,timestamp bigint DEFAULT 0,
+expiration_time bigint DEFAULT 0,request_payload longblob,request_signature blob,code int,
+contract_result longblob,rw_set_hash varbinary(128),PRIMARY KEY (tx_id),
+INDEX idx_height_offset (block_height,offset)) default character set utf8`
 	}
-	if dbType == "sqlite" {
-		return "CREATE TABLE `tx_infos` (`tx_id` text,`chain_id` text,`sender` blob,`tx_type` integer,`block_height` integer,`block_hash` blob,`offset` integer,`timestamp` integer DEFAULT 0,`expiration_time` integer DEFAULT 0,`request_payload` longblob,`request_signature` blob,`code` integer,`contract_result` longblob,`rw_set_hash` blob,PRIMARY KEY (`tx_id`))"
+	if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+		return `CREATE TABLE tx_infos (
+tx_id text,chain_id text,sender blob,tx_type integer,block_height integer,block_hash blob,offset integer,
+timestamp integer DEFAULT 0,expiration_time integer DEFAULT 0,request_payload longblob,request_signature blob,
+code integer,contract_result longblob,rw_set_hash blob,
+PRIMARY KEY (tx_id)
+)`
 	}
 	panic("Unsupported db type:" + dbType)
 }
@@ -48,7 +58,8 @@ func (t *TxInfo) GetTableName() string {
 }
 func (t *TxInfo) GetInsertSql() (string, []interface{}) {
 	return "INSERT INTO tx_infos values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", []interface{}{t.TxId, t.ChainId, t.Sender, t.TxType,
-		t.BlockHeight, t.BlockHash, t.Offset, t.Timestamp, t.ExpirationTime, t.RequestPayload, t.RequestSignature, t.Code, t.ContractResult, t.RwSetHash}
+		t.BlockHeight, t.BlockHash, t.Offset, t.Timestamp, t.ExpirationTime, t.RequestPayload, t.RequestSignature,
+		t.Code, t.ContractResult, t.RwSetHash}
 }
 func (t *TxInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE tx_infos SET chain_id=? WHERE tx_id=?", []interface{}{t.ChainId, t.TxId}

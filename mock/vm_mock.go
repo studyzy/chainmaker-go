@@ -236,6 +236,62 @@ func (mr *MockContractWacsiKVMockRecorder) GetState() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockContractWacsiKV)(nil).GetState))
 }
 
+// KvIterator mocks base method.
+func (m *MockContractWacsiKV) KvIterator() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KvIterator")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// KvIterator indicates an expected call of KvIterator.
+func (mr *MockContractWacsiKVMockRecorder) KvIterator() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KvIterator", reflect.TypeOf((*MockContractWacsiKV)(nil).KvIterator))
+}
+
+// KvIteratorClose mocks base method.
+func (m *MockContractWacsiKV) KvIteratorClose() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KvIteratorClose")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// KvIteratorClose indicates an expected call of KvIteratorClose.
+func (mr *MockContractWacsiKVMockRecorder) KvIteratorClose() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KvIteratorClose", reflect.TypeOf((*MockContractWacsiKV)(nil).KvIteratorClose))
+}
+
+// KvIteratorHasNext mocks base method.
+func (m *MockContractWacsiKV) KvIteratorHasNext() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KvIteratorHasNext")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// KvIteratorHasNext indicates an expected call of KvIteratorHasNext.
+func (mr *MockContractWacsiKVMockRecorder) KvIteratorHasNext() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KvIteratorHasNext", reflect.TypeOf((*MockContractWacsiKV)(nil).KvIteratorHasNext))
+}
+
+// KvIteratorNext mocks base method.
+func (m *MockContractWacsiKV) KvIteratorNext() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KvIteratorNext")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// KvIteratorNext indicates an expected call of KvIteratorNext.
+func (mr *MockContractWacsiKVMockRecorder) KvIteratorNext() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KvIteratorNext", reflect.TypeOf((*MockContractWacsiKV)(nil).KvIteratorNext))
+}
+
 // LogMessage mocks base method.
 func (m *MockContractWacsiKV) LogMessage() int32 {
 	m.ctrl.T.Helper()

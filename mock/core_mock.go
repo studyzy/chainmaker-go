@@ -7,6 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
+	msgbus "chainmaker.org/chainmaker-go/common/msgbus"
 	common "chainmaker.org/chainmaker-go/pb/protogo/common"
 	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpool "chainmaker.org/chainmaker-go/pb/protogo/txpool"
@@ -173,4 +174,117 @@ func (m *MockBlockVerifier) VerifyBlock(block *common.Block, mode protocol.Verif
 func (mr *MockBlockVerifierMockRecorder) VerifyBlock(block, mode interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyBlock", reflect.TypeOf((*MockBlockVerifier)(nil).VerifyBlock), block, mode)
+}
+
+// MockCoreEngine is a mock of CoreEngine interface.
+type MockCoreEngine struct {
+	ctrl     *gomock.Controller
+	recorder *MockCoreEngineMockRecorder
+}
+
+// MockCoreEngineMockRecorder is the mock recorder for MockCoreEngine.
+type MockCoreEngineMockRecorder struct {
+	mock *MockCoreEngine
+}
+
+// NewMockCoreEngine creates a new mock instance.
+func NewMockCoreEngine(ctrl *gomock.Controller) *MockCoreEngine {
+	mock := &MockCoreEngine{ctrl: ctrl}
+	mock.recorder = &MockCoreEngineMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCoreEngine) EXPECT() *MockCoreEngineMockRecorder {
+	return m.recorder
+}
+
+// GetBlockCommitter mocks base method.
+func (m *MockCoreEngine) GetBlockCommitter() protocol.BlockCommitter {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlockCommitter")
+	ret0, _ := ret[0].(protocol.BlockCommitter)
+	return ret0
+}
+
+// GetBlockCommitter indicates an expected call of GetBlockCommitter.
+func (mr *MockCoreEngineMockRecorder) GetBlockCommitter() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockCommitter", reflect.TypeOf((*MockCoreEngine)(nil).GetBlockCommitter))
+}
+
+// GetBlockVerifier mocks base method.
+func (m *MockCoreEngine) GetBlockVerifier() protocol.BlockVerifier {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlockVerifier")
+	ret0, _ := ret[0].(protocol.BlockVerifier)
+	return ret0
+}
+
+// GetBlockVerifier indicates an expected call of GetBlockVerifier.
+func (mr *MockCoreEngineMockRecorder) GetBlockVerifier() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockVerifier", reflect.TypeOf((*MockCoreEngine)(nil).GetBlockVerifier))
+}
+
+// GetHotStuffHelper mocks base method.
+func (m *MockCoreEngine) GetHotStuffHelper() protocol.HotStuffHelper {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHotStuffHelper")
+	ret0, _ := ret[0].(protocol.HotStuffHelper)
+	return ret0
+}
+
+// GetHotStuffHelper indicates an expected call of GetHotStuffHelper.
+func (mr *MockCoreEngineMockRecorder) GetHotStuffHelper() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHotStuffHelper", reflect.TypeOf((*MockCoreEngine)(nil).GetHotStuffHelper))
+}
+
+// OnMessage mocks base method.
+func (m *MockCoreEngine) OnMessage(arg0 *msgbus.Message) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "OnMessage", arg0)
+}
+
+// OnMessage indicates an expected call of OnMessage.
+func (mr *MockCoreEngineMockRecorder) OnMessage(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnMessage", reflect.TypeOf((*MockCoreEngine)(nil).OnMessage), arg0)
+}
+
+// OnQuit mocks base method.
+func (m *MockCoreEngine) OnQuit() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "OnQuit")
+}
+
+// OnQuit indicates an expected call of OnQuit.
+func (mr *MockCoreEngineMockRecorder) OnQuit() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnQuit", reflect.TypeOf((*MockCoreEngine)(nil).OnQuit))
+}
+
+// Start mocks base method.
+func (m *MockCoreEngine) Start() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Start")
+}
+
+// Start indicates an expected call of Start.
+func (mr *MockCoreEngineMockRecorder) Start() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockCoreEngine)(nil).Start))
+}
+
+// Stop mocks base method.
+func (m *MockCoreEngine) Stop() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Stop")
+}
+
+// Stop indicates an expected call of Stop.
+func (mr *MockCoreEngineMockRecorder) Stop() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockCoreEngine)(nil).Stop))
 }

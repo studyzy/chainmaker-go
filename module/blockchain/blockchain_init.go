@@ -25,6 +25,7 @@ import (
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
+	providerConf "chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -328,13 +329,11 @@ func (bc *Blockchain) initVM() (err error) {
 		return
 	}
 	// init VM
-	var snapshotFactory snapshot.Factory
 	var vmFactory vm.Factory
-	bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, nil, bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, nil, bc.chainConf)
 	} else {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.snapshotManager, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return
@@ -346,24 +345,32 @@ func (bc *Blockchain) initCore() (err error) {
 		bc.log.Infof("core engine module existed, ignore.")
 		return
 	}
-	// init core engine
-	var coreFactory core.CoreFactory
-	coreLogger := logger.GetLoggerByChain(logger.MODULE_CORE, bc.chainId)
-	bc.coreEngine, err = coreFactory.NewCoreWithOptions(
-		core.WithMsgBus(bc.msgBus),
-		core.WithTxPool(bc.txPool),
-		core.WithSnapshotManager(bc.snapshotManager),
-		core.WithBlockchainStore(bc.store),
-		core.WithVmMgr(bc.vmMgr),
-		core.WithSigningMember(bc.identity),
-		core.WithLedgerCache(bc.ledgerCache),
-		core.WithChainId(bc.chainId),
-		core.WithChainConf(bc.chainConf),
-		core.WithAccessControl(bc.ac),
-		core.WithSubscriber(bc.eventSubscriber),
-		core.WithProposalCache(bc.proposalCache),
-		core.WithCoreLogger(coreLogger),
-	)
+	// create snapshot manager
+	var snapshotFactory snapshot.Factory
+	if bc.chainConf.ChainConfig().Snapshot != nil && bc.chainConf.ChainConfig().Snapshot.EnableEvidence {
+		bc.snapshotManager = snapshotFactory.NewSnapshotEvidenceMgr(bc.store)
+	} else {
+		bc.snapshotManager = snapshotFactory.NewSnapshotManager(bc.store)
+	}
+	// init coreEngine module
+	coreEngineConfig := &providerConf.CoreEngineConfig{
+		ChainId:         bc.chainId,
+		TxPool:          bc.txPool,
+		SnapshotManager: bc.snapshotManager,
+		MsgBus:          bc.msgBus,
+		Identity:        bc.identity,
+		LedgerCache:     bc.ledgerCache,
+		ChainConf:       bc.chainConf,
+		AC:              bc.ac,
+		BlockchainStore: bc.store,
+		Log:             logger.GetLoggerByChain(logger.MODULE_CORE, bc.chainId),
+		VmMgr:           bc.vmMgr,
+		ProposalCache:   bc.proposalCache,
+		Subscriber:      bc.eventSubscriber,
+	}
+
+	coreEngineFactory := core.Factory()
+	bc.coreEngine, err = coreEngineFactory.NewConsensusEngine(bc.getConsensusType().String(), coreEngineConfig)
 	if err != nil {
 		bc.log.Errorf("new core engine failed, %s", err.Error())
 		return err
@@ -399,13 +406,13 @@ func (bc *Blockchain) initConsensus() (err error) {
 		dbHandle,
 		bc.ledgerCache,
 		bc.proposalCache,
-		bc.coreEngine.BlockVerifier,
-		bc.coreEngine.BlockCommitter,
+		bc.coreEngine.GetBlockVerifier(),
+		bc.coreEngine.GetBlockCommitter(),
 		bc.netService,
 		bc.msgBus,
 		bc.chainConf,
 		bc.store,
-		bc.coreEngine.HotStuffHelper,
+		bc.coreEngine.GetHotStuffHelper(),
 		bc.dpos)
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
@@ -428,8 +435,8 @@ func (bc *Blockchain) initSync() (err error) {
 		bc.msgBus,
 		bc.store,
 		bc.ledgerCache,
-		bc.coreEngine.BlockVerifier,
-		bc.coreEngine.BlockCommitter,
+		bc.coreEngine.GetBlockVerifier(),
+		bc.coreEngine.GetBlockCommitter(),
 	)
 	bc.initModules[moduleNameSync] = struct{}{}
 	return

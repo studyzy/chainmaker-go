@@ -19,5 +19,4 @@ replace (
 	chainmaker.org/chainmaker-go/common => ../../common
 	chainmaker.org/chainmaker-go/pb/protogo => ../../pb/protogo
 	chainmaker.org/chainmaker-go/protocol => ../../protocol
-	google.golang.org/grpc v1.37.0 => google.golang.org/grpc v1.26.0
 )

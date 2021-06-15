@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -137,7 +136,7 @@ func (cm *MockCommitter) AddBlock(block *commonPb.Block) error {
 		return errors.New("consensusArgs.ConsensusData is nil")
 	}
 	rwset, _ := proto.Marshal(consensusArgs.ConsensusData)
-	cm.store.WriteObject(governance.GovernanceContractName, rwset)
+	cm.store.WriteObject(commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(), rwset)
 	// chain.proposedCache.ClearProposedBlock(block.Header.BlockHeight)
 	// chain.proposedCache.ResetProposedThisRound()
 	cm.msgBus.Publish(msgbus.BlockInfo, block) // synchronize new block height to consensus and sync module
@@ -435,6 +434,30 @@ type MockBlockchainStore struct {
 	blockList []*commonPb.Block
 
 	rwMu sync.RWMutex
+}
+
+func (bs *MockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) GetArchivedPivot() uint64 {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
 }
 
 func NewMockMockBlockchainStore(gensis *commonPb.Block, cf *chainconf.ChainConf) *MockBlockchainStore {

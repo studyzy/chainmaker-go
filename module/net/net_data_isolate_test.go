@@ -151,18 +151,18 @@ func aSendMsgToB(t *testing.T, a, b Net, passChan chan bool, data []byte, toNode
 	require.Nil(t, err)
 	fmt.Println("[B]B register receive msg handler for chain1")
 	go func() {
+		fmt.Println("[A]A send msg to B in chain1")
 		for {
 			sendMsg := NewNetMsg(data, netPb.NetMsg_TX, toNodeB)
 			if err := a.SendMsg(chainId1, toNodeB, msgFlag, sendMsg); err != nil {
 				fmt.Println(err)
-				time.Sleep(2 * time.Second)
+				time.Sleep(time.Second)
 				continue
 			}
-			fmt.Println("[A]A send msg to B in chain1")
 			break
 		}
 	}()
-	timer := time.NewTimer(15 * time.Second)
+	timer := time.NewTimer(time.Minute)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test A send msg to B timeout ====")
@@ -183,6 +183,7 @@ func aSendMsgToC(t *testing.T, a, c Net, passChan chan bool, data []byte, toNode
 	fmt.Println("[C]C register receive msg handler for chain1")
 	breakFlag := false
 	go func() {
+		fmt.Println("[A]A send msg to C in chain2")
 		for {
 			if breakFlag {
 				break
@@ -193,11 +194,10 @@ func aSendMsgToC(t *testing.T, a, c Net, passChan chan bool, data []byte, toNode
 				time.Sleep(2 * time.Second)
 				continue
 			}
-			fmt.Println("[A]A send msg to C in chain2")
 			break
 		}
 	}()
-	timer := time.NewTimer(15 * time.Second)
+	timer := time.NewTimer(10 * time.Second)
 	select {
 	case <-timer.C:
 		fmt.Println("==== test A send msg to C : pass ====")
@@ -234,7 +234,7 @@ func aBroadcastMsgToChain1(t *testing.T, a, b, c Net, passChan chan bool, data [
 	}
 	fmt.Println("[A]chain1广播消息")
 
-	timer := time.NewTimer(15 * time.Second)
+	timer := time.NewTimer(10 * time.Second)
 	select {
 	case <-timer.C:
 		if isBRecvSub {

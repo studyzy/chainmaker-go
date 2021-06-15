@@ -25,6 +25,30 @@ type mockBlockChainStore struct {
 	txs map[string]*commonPb.Transaction
 }
 
+func (m *mockBlockChainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (m *mockBlockChainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (m *mockBlockChainStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (m *mockBlockChainStore) GetArchivedPivot() uint64 {
+	return 0
+}
+
+func (m *mockBlockChainStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (m *mockBlockChainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
+}
+
 func (m *mockBlockChainStore) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 	panic(errStr)
 }
@@ -124,7 +148,9 @@ func (m *mockBlockChainStore) GetTxConfirmedTime(txId string) (int64, error) {
 func (m *mockBlockChainStore) GetLastBlock() (*commonPb.Block, error) {
 	panic(errStr)
 }
-
+func (m mockBlockChainStore) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	panic(errStr)
+}
 func (m *mockBlockChainStore) ReadObject(contractName string, key []byte) ([]byte, error) {
 	panic(errStr)
 }

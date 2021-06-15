@@ -7,12 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmertest
 
 import (
-	"testing"
-	"time"
-
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/vm/test"
-
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/wasmer"
 
@@ -22,59 +17,59 @@ import (
 )
 
 // 转账合约
-func TestCallWallet(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/asset-rust-0.7.2_v1.0.0.wasm"
-	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	//bytes, _ = wasm.ReadBytes("../../../../test/wasm/wallet-rust-0.6.2.wasm")
-	println("bytes len", len(bytes))
-
-	pool := wasmer.NewVmPoolManager("Wallet")
-	start := time.Now().UnixNano() / 1e6
-
-	// 安装
-	invokeWalletInit(contractId, txContext, pool, bytes)
-	invokeWalletBalanceOfCreator(contractId, txContext, pool, bytes)
-
-	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
-	invokeWalletRegister1(contractId, txContext, pool, bytes)
-	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
-
-	invokeWalletRegister2(contractId, txContext, pool, bytes)
-
-	invokeWalletEmitAmountTo1(contractId, txContext, pool, bytes)
-	invokeWalletEmitAmountTo2(contractId, txContext, pool, bytes)
-
-	invokeWalletTransfer1to2(contractId, txContext, pool, bytes)
-	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
-	invokeWalletBalanceOf2(contractId, txContext, pool, bytes)
-
-	invokeWalletTransfer2to1(contractId, txContext, pool, bytes)
-	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
-	invokeWalletBalanceOf2(contractId, txContext, pool, bytes)
-
-	invokeWalletTransfer1to1(contractId, txContext, pool, bytes)
-
-	invokeWalletQueryAddress1(contractId, txContext, pool, bytes)
-	invokeWalletQueryAddress3(contractId, txContext, pool, bytes)
-
-	invokeWalletRegister3(contractId, txContext, pool, bytes)
-	invokeWalletApprove1to3(contractId, txContext, pool, bytes)
-	invokeWallet3TransferFrom1to2(contractId, txContext, pool, bytes)
-	invokeWallet3TransferFrom1to2(contractId, txContext, pool, bytes)
-
-	invokeWalletAllowance1to3(contractId, txContext, pool, bytes)
-	invokeWalletAllowance1to2(contractId, txContext, pool, bytes)
-
-	invokeWalletTransfer1to2ErrorAmount(contractId, txContext, pool, bytes)
-	invokeWalletTransfer1to2ErrorPk(contractId, txContext, pool, bytes)
-	invokeWalletTransfer2to1NoEnough(contractId, txContext, pool, bytes)
-	invokeWalletEmitAmountTo1OutOfLimit(contractId, txContext, pool, bytes)
-	invokeWalletEmitAmountTo1OutOfInt(contractId, txContext, pool, bytes)
-
-	end := time.Now().UnixNano() / 1e6
-	println("end 【spend】", end-start)
-	// time.Sleep(time.Second * 5)
-}
+//func TestCallWallet(t *testing.T) {
+//	test.WasmFile = "../../../../test/wasm/asset-rust-0.7.2_v1.0.0.wasm"
+//	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
+//	//bytes, _ = wasm.ReadBytes("../../../../test/wasm/wallet-rust-0.6.2.wasm")
+//	println("bytes len", len(bytes))
+//
+//	pool := wasmer.NewVmPoolManager("Wallet")
+//	start := time.Now().UnixNano() / 1e6
+//
+//	// 安装
+//	invokeWalletInit(contractId, txContext, pool, bytes)
+//	invokeWalletBalanceOfCreator(contractId, txContext, pool, bytes)
+//
+//	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
+//	invokeWalletRegister1(contractId, txContext, pool, bytes)
+//	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
+//
+//	invokeWalletRegister2(contractId, txContext, pool, bytes)
+//
+//	invokeWalletEmitAmountTo1(contractId, txContext, pool, bytes)
+//	invokeWalletEmitAmountTo2(contractId, txContext, pool, bytes)
+//
+//	invokeWalletTransfer1to2(contractId, txContext, pool, bytes)
+//	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
+//	invokeWalletBalanceOf2(contractId, txContext, pool, bytes)
+//
+//	invokeWalletTransfer2to1(contractId, txContext, pool, bytes)
+//	invokeWalletBalanceOf1(contractId, txContext, pool, bytes)
+//	invokeWalletBalanceOf2(contractId, txContext, pool, bytes)
+//
+//	invokeWalletTransfer1to1(contractId, txContext, pool, bytes)
+//
+//	invokeWalletQueryAddress1(contractId, txContext, pool, bytes)
+//	invokeWalletQueryAddress3(contractId, txContext, pool, bytes)
+//
+//	invokeWalletRegister3(contractId, txContext, pool, bytes)
+//	invokeWalletApprove1to3(contractId, txContext, pool, bytes)
+//	invokeWallet3TransferFrom1to2(contractId, txContext, pool, bytes)
+//	invokeWallet3TransferFrom1to2(contractId, txContext, pool, bytes)
+//
+//	invokeWalletAllowance1to3(contractId, txContext, pool, bytes)
+//	invokeWalletAllowance1to2(contractId, txContext, pool, bytes)
+//
+//	invokeWalletTransfer1to2ErrorAmount(contractId, txContext, pool, bytes)
+//	invokeWalletTransfer1to2ErrorPk(contractId, txContext, pool, bytes)
+//	invokeWalletTransfer2to1NoEnough(contractId, txContext, pool, bytes)
+//	invokeWalletEmitAmountTo1OutOfLimit(contractId, txContext, pool, bytes)
+//	invokeWalletEmitAmountTo1OutOfInt(contractId, txContext, pool, bytes)
+//
+//	end := time.Now().UnixNano() / 1e6
+//	println("end 【spend】", end-start)
+//	// time.Sleep(time.Second * 5)
+//}
 
 func invokeWalletInit(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "init_contract"

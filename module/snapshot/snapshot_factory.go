@@ -19,6 +19,7 @@ type Factory struct {
 }
 
 func (f *Factory) NewSnapshotManager(blockchainStore protocol.BlockchainStore) protocol.SnapshotManager {
+	log.Debugf("use the common Snapshot.")
 	return &ManagerImpl{
 		snapshots: make(map[utils.BlockFingerPrint]*SnapshotImpl, 1024),
 		delegate: &ManagerDelegate{
@@ -28,6 +29,7 @@ func (f *Factory) NewSnapshotManager(blockchainStore protocol.BlockchainStore) p
 }
 
 func (f *Factory) NewSnapshotEvidenceMgr(blockchainStore protocol.BlockchainStore) protocol.SnapshotManager {
+	log.Debugf("use the evidence Snapshot.")
 	return &ManagerEvidence{
 		snapshots: make(map[utils.BlockFingerPrint]*SnapshotEvidence, 1024),
 		delegate: &ManagerDelegate{
