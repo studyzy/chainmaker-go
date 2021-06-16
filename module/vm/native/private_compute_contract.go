@@ -585,7 +585,24 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	calHash := sha256.Sum256(contractCode)
+	headerKey := append([]byte(protocol.ContractByteHeader), version...)
+	headerCode, err := context.Get(combinationName, headerKey)
+	if err != nil {
+		r.log.Errorf("Save data: read contract code header[%s] failed.", name)
+		return nil, err
+	}
+	r.log.Infof("Save data: contract name[%s], header code[%v]", name, headerCode)
+
+	if len(headerCode) == 0 {
+		r.log.Errorf("Contract[%s] header code is empty.", name)
+		return nil, err
+	}
+
+	fullCodes := make([]byte, len(headerCode) + len(contractCode))
+	fullCodes = append(fullCodes, headerCode...)
+	fullCodes = append(fullCodes, contractCode...)
+
+	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
 		err := fmt.Errorf("%s, param[code_hash] != hash of contract code in get contract interface", ErrParams.Error())
 		r.log.Errorf(err.Error())
