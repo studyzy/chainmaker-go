@@ -105,6 +105,8 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 		//kv author:whang1234
 		case protocol.ContractMethodKvIterator:
 			return s.KvIterator()
+		case protocol.ContractMethodKvPreIterator:
+			return s.KvPreIterator()
 		case protocol.ContractMethodKvIteratorHasNext:
 			return s.KvIteratorHasNext()
 		case protocol.ContractMethodKvIteratorNextLen:
