@@ -1,8 +1,8 @@
 package provider
 
 import (
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/provider/conf"
 )
 
 type CoreProvider interface {

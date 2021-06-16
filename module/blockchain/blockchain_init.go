@@ -12,18 +12,20 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"chainmaker.org/chainmaker-go/logger"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/core/cache"
+	providerConf "chainmaker.org/chainmaker-go/core/provider/conf"
+	"chainmaker.org/chainmaker-go/dpos"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
 	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
 	"chainmaker.org/chainmaker-go/protocol"
-	providerConf "chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"
@@ -76,6 +78,8 @@ func (bc *Blockchain) Init() (err error) {
 			{moduleNameNetService: bc.initNetService},
 			// init vm instances and module
 			{moduleNameVM: bc.initVM},
+			// init dpos service
+			{moduleNameDpos: bc.initDpos},
 
 			// init transaction pool
 			{moduleNameTxPool: bc.initTxPool},
@@ -122,6 +126,17 @@ func (bc *Blockchain) initExtModules(extModules []map[string]func() error) (err 
 			bc.log.Infof("MODULE INIT STEP (%d/%d) => init module[%s] success :)", idx+1, moduleNum, name)
 		}
 	}
+	return
+}
+
+func (bc *Blockchain) initDpos() (err error) {
+	_, ok := bc.initModules[moduleNameDpos]
+	if ok {
+		bc.log.Infof("dpos service module existed, ignore.")
+		return
+	}
+	bc.dpos = dpos.NewDPoSImpl(bc.chainConf, bc.store)
+	bc.initModules[moduleNameNetService] = struct{}{}
 	return
 }
 
@@ -370,19 +385,10 @@ func (bc *Blockchain) initConsensus() (err error) {
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
-	isConsensusNode := false
 	for i, node := range nodes {
 		for _, nid := range node.NodeId {
 			nodeIds[i] = nid
-			if nid == id {
-				isConsensusNode = true
-			}
 		}
-	}
-	if !isConsensusNode {
-		// this node is not a consensus node
-		delete(bc.initModules, moduleNameConsensus)
-		return nil
 	}
 	_, ok := bc.initModules[moduleNameConsensus]
 	if ok {
@@ -406,7 +412,8 @@ func (bc *Blockchain) initConsensus() (err error) {
 		bc.msgBus,
 		bc.chainConf,
 		bc.store,
-		bc.coreEngine.GetHotStuffHelper())
+		bc.coreEngine.GetHotStuffHelper(),
+		bc.dpos)
 	if err != nil {
 		bc.log.Errorf("new consensus engine failed, %s", err)
 		return err

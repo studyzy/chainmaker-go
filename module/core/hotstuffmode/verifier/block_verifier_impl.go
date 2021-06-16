@@ -7,16 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package verifier
 
 import (
-	"chainmaker.org/chainmaker-go/core/common"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"encoding/hex"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"sync"
 
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus"
+	"chainmaker.org/chainmaker-go/core/common"
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -44,6 +43,7 @@ type BlockVerifierImpl struct {
 	txPool         protocol.TxPool                // tx pool to check if tx is duplicate
 	mu             sync.Mutex                     // to avoid concurrent map modify
 	verifierBlock  *common.VerifierBlock
+	storeHelper    conf.StoreHelper
 
 	metricBlockVerifyTime *prometheus.HistogramVec // metrics monitor
 }
@@ -60,6 +60,7 @@ type BlockVerifierConfig struct {
 	AC              protocol.AccessControlProvider
 	TxPool          protocol.TxPool
 	VmMgr           protocol.VmManager
+	StoreHelper     conf.StoreHelper
 }
 
 func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol.BlockVerifier, error) {
@@ -78,18 +79,20 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		ac:            config.AC,
 		log:           log,
 		txPool:        config.TxPool,
+		storeHelper:   config.StoreHelper,
 	}
 
 	conf := &common.VerifierBlockConf{
-		ChainConf:       config.ChainConf,
+		ChainConf:       v.chainConf,
 		Log:             v.log,
-		LedgerCache:     config.LedgerCache,
-		Ac:              config.AC,
-		SnapshotManager: config.SnapshotManager,
+		LedgerCache:     v.ledgerCache,
+		Ac:              v.ac,
+		SnapshotManager: v.snapshotManager,
+		TxPool:          v.txPool,
+		BlockchainStore: v.blockchainStore,
+		ProposalCache:   v.proposalCache,
 		VmMgr:           config.VmMgr,
-		TxPool:          config.TxPool,
-		BlockchainStore: config.BlockchainStore,
-		ProposalCache:   config.ProposedCache,
+		StoreHelper:     config.StoreHelper,
 	}
 	v.verifierBlock = common.NewVerifierBlock(conf)
 
@@ -133,7 +136,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			isValid = true
 			if protocol.CONSENSUS_VERIFY == mode {
 				// consensus mode, publish verify result to message bus
-				v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+				v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRwSet))
 			}
 			lastBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
 			if lastBlock == nil {
@@ -155,22 +158,12 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, err.Error())
 		if protocol.CONSENSUS_VERIFY == mode {
-			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
 		}
 
 		// rollback sql
-		if v.chainConf.ChainConfig().Contract.EnableSqlSupport {
-			_ = v.blockchainStore.RollbackDbTransaction(block.GetTxKey())
-			// drop database if create contract fail
-			if len(block.Txs) == 0 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
-				var payload commonpb.ContractMgmtPayload
-				if err := proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err == nil {
-					if payload.ContractId != nil {
-						dbName := statesqldb.GetContractDbName(v.chainId, payload.ContractId.ContractName)
-						v.blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
-					}
-				}
-			}
+		if sqlErr := v.storeHelper.RollBack(block, v.blockchainStore); sqlErr != nil {
+			v.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
 		}
 		return err
 	}
@@ -195,7 +188,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 
 	isValid = true
 	if protocol.CONSENSUS_VERIFY == mode {
-		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid))
+		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
 	}
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
 	v.log.Infof("verify success [%d,%x](%v,%d)", block.Header.BlockHeight, block.Header.BlockHash,
@@ -267,9 +260,10 @@ func (v *BlockVerifierImpl) verifyVoteSig(block *commonpb.Block) error {
 	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block, v.ledgerCache)
 }
 
-func parseVerifyResult(block *commonpb.Block, isValid bool) *consensuspb.VerifyResult {
+func parseVerifyResult(block *commonpb.Block, isValid bool, txsRwSet map[string]*commonpb.TxRWSet) *consensuspb.VerifyResult {
 	verifyResult := &consensuspb.VerifyResult{
 		VerifiedBlock: block,
+		TxsRwSet:      txsRwSet,
 	}
 	if isValid {
 		verifyResult.Code = consensuspb.VerifyResult_SUCCESS

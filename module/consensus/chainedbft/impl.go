@@ -224,8 +224,8 @@ func (cbi *ConsensusChainedBftImpl) OnMessage(message *msgbus.Message) {
 	cbi.logger.Debugf("id [%s] OnMessage receive topic: %s", cbi.id, message.Topic)
 	switch message.Topic {
 	case msgbus.ProposedBlock:
-		if block, ok := message.Payload.(*common.Block); ok {
-			cbi.proposedBlockCh <- block
+		if proposedBlock, ok := message.Payload.(*consensus.ProposalBlock); ok {
+			cbi.proposedBlockCh <- proposedBlock.Block
 		}
 	case msgbus.RecvConsensusMsg:
 		if netMsg, ok := message.Payload.(*net.NetMsg); ok {
