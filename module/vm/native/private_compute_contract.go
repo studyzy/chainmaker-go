@@ -455,6 +455,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	var signPairs []*commonPb.SignInfo
 	var orgIds []string
 	var payloadBytes []byte
+	r.log.Debugf("Sava data params: %v, isDeploy: %v", params, isDeploy)
 	if isDeploy {
 		deployReq, err := r.getDeployRequest(params)
 		if err != nil {
@@ -462,6 +463,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 			r.log.Errorf(err.Error())
 			return nil, err
 		}
+		r.log.Debugf("deployReq: %v", deployReq)
 		signPairs = deployReq.SignPair
 		orgIds = deployReq.Payload.OrgId
 		payloadBytes, err = deployReq.Payload.Marshal()
