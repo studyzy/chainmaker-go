@@ -1163,7 +1163,7 @@ func (s *DPoSStakeRuntime) checkNewValidatorNumberOverRange(context protocol.TxS
 		return err
 	}
 	if amount > len(vc.Vector) {
-		return fmt.Errorf("new validator amount is over range, current all candidates number is: [%s]", len(vc.Vector))
+		return fmt.Errorf("new validator amount is over range, current all candidates number is: [%d]", len(vc.Vector))
 	}
 	return nil
 }

@@ -17,15 +17,14 @@ import (
 )
 
 const (
-	Owner = "GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
-	TransferTo = "4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	TransferFrom = "9WqpbNL8q2qfo67WMjEB1iFrKb1VsGRgim4eW49R5fhj"
-	Decimals = "18"
-	TotalSupply = "100000000"
-	TransferValue = "1000000"
+	Owner            = "GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
+	TransferTo       = "4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
+	TransferFrom     = "9WqpbNL8q2qfo67WMjEB1iFrKb1VsGRgim4eW49R5fhj"
+	Decimals         = "18"
+	TotalSupply      = "100000000"
+	TransferValue    = "1000000"
 	TransferBigValue = "3000000"
-	ApproveValue  = "2000000"
-
+	ApproveValue     = "2000000"
 )
 
 var isFromAccount = false
@@ -95,7 +94,6 @@ func TestDPoSRuntime_TransferOwnership(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, string(result), TransferTo)
 }
-
 
 func TestDPoSRuntime_Approve(t *testing.T) {
 	dPoSRuntime, txSimContext := initEnv(t)
@@ -195,13 +193,21 @@ func initEnv(t *testing.T) (*DPoSRuntime, *TxSimContextMock) {
 	return dPoSRuntime, txSimContext
 }
 
-func NewLogger() *logger.CMLogger{
+func NewLogger() *logger.CMLogger {
 	cmLogger := logger.GetLogger("DPoS")
 	return cmLogger
 }
 
 type TxSimContextMock struct {
 	cache *CacheMock
+}
+
+func (t *TxSimContextMock) SetStateKvHandle(i int32, iterator protocol.StateIterator) {
+	panic("implement me")
+}
+
+func (t *TxSimContextMock) GetStateKvHandle(i int32) (protocol.StateIterator, bool) {
+	panic("implement me")
 }
 
 func NewTxSimContextMock() *TxSimContextMock {
@@ -269,8 +275,8 @@ func (t *TxSimContextMock) GetCreator(namespace string) *acPb.SerializedMember {
 
 func (t *TxSimContextMock) GetSender() *acPb.SerializedMember {
 	// 生成证书
-	member := &acPb.SerializedMember {
-		OrgId: "wx-org1.chainmaker.org",
+	member := &acPb.SerializedMember{
+		OrgId:      "wx-org1.chainmaker.org",
 		MemberInfo: ownerCert(),
 		IsFullCert: true,
 	}
