@@ -33,8 +33,6 @@ type Bool int32
 const boolTrue Bool = 1
 const boolFalse Bool = 0
 
-var bulletproofsImpl = bulletproofs.Helper().NewBulletproofs()
-
 // Wacsi WebAssembly chainmaker system interface
 type Wacsi interface {
 	// state operation
@@ -414,14 +412,14 @@ func pedersenAddNum(commitment, num interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return bulletproofsImpl.PedersenAddNum(c, uint64(x))
+	return bulletproofs.Helper().NewBulletproofs().PedersenAddNum(c, uint64(x))
 }
 
 func pedersenAddCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
 	commitmentX := commitment1.([]byte)
 	commitmentY := commitment2.([]byte)
 
-	return bulletproofsImpl.PedersenAddCommitment(commitmentX, commitmentY)
+	return bulletproofs.Helper().NewBulletproofs().PedersenAddCommitment(commitmentX, commitmentY)
 }
 
 func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
@@ -431,13 +429,13 @@ func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return bulletproofsImpl.PedersenSubNum(c, uint64(x))
+	return bulletproofs.Helper().NewBulletproofs().PedersenSubNum(c, uint64(x))
 }
 
 func pedersenSubCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
 	commitmentX := commitment1.([]byte)
 	commitmentY := commitment2.([]byte)
-	return bulletproofsImpl.PedersenSubCommitment(commitmentX, commitmentY)
+	return bulletproofs.Helper().NewBulletproofs().PedersenSubCommitment(commitmentX, commitmentY)
 
 }
 
@@ -448,13 +446,13 @@ func pedersenMulNum(commitment, num interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return bulletproofsImpl.PedersenMulNum(c, uint64(x))
+	return bulletproofs.Helper().NewBulletproofs().PedersenMulNum(c, uint64(x))
 }
 
 func bulletproofsVerify(proof, commitment interface{}) ([]byte, error) {
 	p := proof.([]byte)
 	c := commitment.([]byte)
-	ok, err := bulletproofsImpl.Verify(p, c)
+	ok, err := bulletproofs.Helper().NewBulletproofs().Verify(p, c)
 	if err != nil {
 		return nil, err
 	}
