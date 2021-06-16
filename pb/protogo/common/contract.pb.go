@@ -4,6 +4,7 @@
 package common
 
 import (
+	accesscontrol "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	fmt "fmt"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
@@ -42,6 +43,10 @@ const (
 	ContractName_SYSTEM_CONTRACT_STATE ContractName = 5
 	// private compute contract
 	ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE ContractName = 6
+	// erc20 contract for DPoS
+	ContractName_SYSTEM_CONTRACT_DPOS_ERC20 ContractName = 7
+	// stake contract for dpos
+	ContractName_SYSTEM_CONTRACT_DPOS_STAKE ContractName = 8
 )
 
 var ContractName_name = map[int32]string{
@@ -52,6 +57,8 @@ var ContractName_name = map[int32]string{
 	4: "SYSTEM_CONTRACT_MULTI_SIGN",
 	5: "SYSTEM_CONTRACT_STATE",
 	6: "SYSTEM_CONTRACT_PRIVATE_COMPUTE",
+	7: "SYSTEM_CONTRACT_DPOS_ERC20",
+	8: "SYSTEM_CONTRACT_DPOS_STAKE",
 }
 
 var ContractName_value = map[string]int32{
@@ -62,6 +69,8 @@ var ContractName_value = map[string]int32{
 	"SYSTEM_CONTRACT_MULTI_SIGN":      4,
 	"SYSTEM_CONTRACT_STATE":           5,
 	"SYSTEM_CONTRACT_PRIVATE_COMPUTE": 6,
+	"SYSTEM_CONTRACT_DPOS_ERC20":      7,
+	"SYSTEM_CONTRACT_DPOS_STAKE":      8,
 }
 
 func (x ContractName) String() string {
@@ -109,6 +118,10 @@ const (
 	QueryFunction_GET_BLOCK_HEADER_BY_HEIGHT QueryFunction = 15
 	// get archived block height
 	QueryFunction_GET_ARCHIVED_BLOCK_HEIGHT QueryFunction = 16
+	//get contract bytecode
+	QueryFunction_GET_CONTRACT_BYTECODE QueryFunction = 17
+	//get all contract info list
+	QueryFunction_GET_ALL_CONTRACTS QueryFunction = 18
 )
 
 var QueryFunction_name = map[int32]string{
@@ -129,6 +142,8 @@ var QueryFunction_name = map[int32]string{
 	14: "GET_BLOCK_HEIGHT_BY_HASH",
 	15: "GET_BLOCK_HEADER_BY_HEIGHT",
 	16: "GET_ARCHIVED_BLOCK_HEIGHT",
+	17: "GET_CONTRACT_BYTECODE",
+	18: "GET_ALL_CONTRACTS",
 }
 
 var QueryFunction_value = map[string]int32{
@@ -149,6 +164,8 @@ var QueryFunction_value = map[string]int32{
 	"GET_BLOCK_HEIGHT_BY_HASH":          14,
 	"GET_BLOCK_HEADER_BY_HEIGHT":        15,
 	"GET_ARCHIVED_BLOCK_HEIGHT":         16,
+	"GET_CONTRACT_BYTECODE":             17,
+	"GET_ALL_CONTRACTS":                 18,
 }
 
 func (x QueryFunction) String() string {
@@ -535,6 +552,247 @@ func (PrivateComputeContractFunction) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_a1095c55e7168440, []int{7}
 }
 
+//ContractStatus 合约状态
+type ContractStatus int32
+
+const (
+	//未知
+	ContractStatus_UNKNOWN ContractStatus = 0
+	//普通正常状态
+	ContractStatus_NORMAL ContractStatus = 1
+	//冻结
+	ContractStatus_FROZEN ContractStatus = 2
+	//被撤销
+	ContractStatus_REVOKED ContractStatus = 3
+)
+
+var ContractStatus_name = map[int32]string{
+	0: "UNKNOWN",
+	1: "NORMAL",
+	2: "FROZEN",
+	3: "REVOKED",
+}
+
+var ContractStatus_value = map[string]int32{
+	"UNKNOWN": 0,
+	"NORMAL":  1,
+	"FROZEN":  2,
+	"REVOKED": 3,
+}
+
+func (x ContractStatus) String() string {
+	return proto.EnumName(ContractStatus_name, int32(x))
+}
+
+func (ContractStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{8}
+}
+
+type ContractType int32
+
+const (
+	//normal,support parallel
+	ContractType_PARALLEL ContractType = 0
+	//don't support parallel, for example: SQL contract
+	ContractType_SERIAL ContractType = 1
+	//like Fabric contract, run contract need add endorsement, for example: TEE contract
+	ContractType_ENDORSE ContractType = 2
+	//only pack 1 tx in block
+	ContractType_SINGLE ContractType = 4
+)
+
+var ContractType_name = map[int32]string{
+	0: "PARALLEL",
+	1: "SERIAL",
+	2: "ENDORSE",
+	4: "SINGLE",
+}
+
+var ContractType_value = map[string]int32{
+	"PARALLEL": 0,
+	"SERIAL":   1,
+	"ENDORSE":  2,
+	"SINGLE":   4,
+}
+
+func (x ContractType) String() string {
+	return proto.EnumName(ContractType_name, int32(x))
+}
+
+func (ContractType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{9}
+}
+
+type DPoSERC20ContractFunction int32
+
+const (
+	// get owner of DPoS
+	DPoSERC20ContractFunction_GET_OWNER DPoSERC20ContractFunction = 0
+	// get decimals of DPoS
+	DPoSERC20ContractFunction_GET_DECIMALS DPoSERC20ContractFunction = 1
+	// transfer token at DPoS
+	DPoSERC20ContractFunction_TRANSFER DPoSERC20ContractFunction = 2
+	// transfer token from user at DPoS
+	DPoSERC20ContractFunction_TRANSFER_FROM DPoSERC20ContractFunction = 3
+	// get balance of user at DPoS
+	DPoSERC20ContractFunction_GET_BALANCEOF DPoSERC20ContractFunction = 4
+	// approve token for user to other user at DPoS
+	DPoSERC20ContractFunction_APPROVE DPoSERC20ContractFunction = 5
+	// get allowance at DPoS
+	DPoSERC20ContractFunction_GET_ALLOWANCE DPoSERC20ContractFunction = 6
+	// burn token at DPoS
+	DPoSERC20ContractFunction_BURN DPoSERC20ContractFunction = 7
+	// mint token at DPoS
+	DPoSERC20ContractFunction_MINT DPoSERC20ContractFunction = 8
+	// transfer owner ship at DPoS
+	DPoSERC20ContractFunction_TRANSFER_OWNERSHIP DPoSERC20ContractFunction = 9
+)
+
+var DPoSERC20ContractFunction_name = map[int32]string{
+	0: "GET_OWNER",
+	1: "GET_DECIMALS",
+	2: "TRANSFER",
+	3: "TRANSFER_FROM",
+	4: "GET_BALANCEOF",
+	5: "APPROVE",
+	6: "GET_ALLOWANCE",
+	7: "BURN",
+	8: "MINT",
+	9: "TRANSFER_OWNERSHIP",
+}
+
+var DPoSERC20ContractFunction_value = map[string]int32{
+	"GET_OWNER":          0,
+	"GET_DECIMALS":       1,
+	"TRANSFER":           2,
+	"TRANSFER_FROM":      3,
+	"GET_BALANCEOF":      4,
+	"APPROVE":            5,
+	"GET_ALLOWANCE":      6,
+	"BURN":               7,
+	"MINT":               8,
+	"TRANSFER_OWNERSHIP": 9,
+}
+
+func (x DPoSERC20ContractFunction) String() string {
+	return proto.EnumName(DPoSERC20ContractFunction_name, int32(x))
+}
+
+func (DPoSERC20ContractFunction) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{10}
+}
+
+type DPoSStakeContractFunction int32
+
+const (
+	// get all validator
+	DPoSStakeContractFunction_GET_ALL_CANDIDATES DPoSStakeContractFunction = 0
+	// get validator by address
+	DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS DPoSStakeContractFunction = 1
+	// delegate
+	DPoSStakeContractFunction_DELEGATE DPoSStakeContractFunction = 2
+	// get delegate by address
+	DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS DPoSStakeContractFunction = 3
+	// get user delegation by validator
+	DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR DPoSStakeContractFunction = 4
+	// undelegate
+	DPoSStakeContractFunction_UNDELEGATE DPoSStakeContractFunction = 5
+	// read epoch by id
+	DPoSStakeContractFunction_READ_EPOCH_BY_ID DPoSStakeContractFunction = 6
+	// read latest epoch
+	DPoSStakeContractFunction_READ_LATEST_EPOCH DPoSStakeContractFunction = 7
+	// set node id before join network
+	DPoSStakeContractFunction_SET_NODE_ID DPoSStakeContractFunction = 8
+	// get node id after join network
+	DPoSStakeContractFunction_GET_NODE_ID DPoSStakeContractFunction = 9
+	// update min self delegation
+	DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION DPoSStakeContractFunction = 10
+	// read min self delegation
+	DPoSStakeContractFunction_READ_MIN_SELF_DELEGATION DPoSStakeContractFunction = 11
+	// update epoch validator number
+	DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER DPoSStakeContractFunction = 12
+	// read epoch validator number
+	DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER DPoSStakeContractFunction = 13
+	// update epoch block number
+	DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER DPoSStakeContractFunction = 14
+	// read epoch block number
+	DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER DPoSStakeContractFunction = 15
+)
+
+var DPoSStakeContractFunction_name = map[int32]string{
+	0:  "GET_ALL_CANDIDATES",
+	1:  "GET_VALIDATOR_BY_ADDRESS",
+	2:  "DELEGATE",
+	3:  "GET_DELEGATIONS_BY_ADDRESS",
+	4:  "GET_USER_DELEGATION_BY_VALIDATOR",
+	5:  "UNDELEGATE",
+	6:  "READ_EPOCH_BY_ID",
+	7:  "READ_LATEST_EPOCH",
+	8:  "SET_NODE_ID",
+	9:  "GET_NODE_ID",
+	10: "UPDATE_MIN_SELF_DELEGATION",
+	11: "READ_MIN_SELF_DELEGATION",
+	12: "UPDATE_EPOCH_VALIDATOR_NUMBER",
+	13: "READ_EPOCH_VALIDATOR_NUMBER",
+	14: "UPDATE_EPOCH_BLOCK_NUMBER",
+	15: "READ_EPOCH_BLOCK_NUMBER",
+}
+
+var DPoSStakeContractFunction_value = map[string]int32{
+	"GET_ALL_CANDIDATES":               0,
+	"GET_VALIDATOR_BY_ADDRESS":         1,
+	"DELEGATE":                         2,
+	"GET_DELEGATIONS_BY_ADDRESS":       3,
+	"GET_USER_DELEGATION_BY_VALIDATOR": 4,
+	"UNDELEGATE":                       5,
+	"READ_EPOCH_BY_ID":                 6,
+	"READ_LATEST_EPOCH":                7,
+	"SET_NODE_ID":                      8,
+	"GET_NODE_ID":                      9,
+	"UPDATE_MIN_SELF_DELEGATION":       10,
+	"READ_MIN_SELF_DELEGATION":         11,
+	"UPDATE_EPOCH_VALIDATOR_NUMBER":    12,
+	"READ_EPOCH_VALIDATOR_NUMBER":      13,
+	"UPDATE_EPOCH_BLOCK_NUMBER":        14,
+	"READ_EPOCH_BLOCK_NUMBER":          15,
+}
+
+func (x DPoSStakeContractFunction) String() string {
+	return proto.EnumName(DPoSStakeContractFunction_name, int32(x))
+}
+
+func (DPoSStakeContractFunction) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{11}
+}
+
+type BondStatus int32
+
+const (
+	BondStatus_Bonded    BondStatus = 0
+	BondStatus_Unbonding BondStatus = 1
+	BondStatus_Unbonded  BondStatus = 2
+)
+
+var BondStatus_name = map[int32]string{
+	0: "Bonded",
+	1: "Unbonding",
+	2: "Unbonded",
+}
+
+var BondStatus_value = map[string]int32{
+	"Bonded":    0,
+	"Unbonding": 1,
+	"Unbonded":  2,
+}
+
+func (x BondStatus) String() string {
+	return proto.EnumName(BondStatus_name, int32(x))
+}
+
+func (BondStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{12}
+}
+
 // the unique identifier of a smart contract
 type ContractId struct {
 	// smart contract name, set by contract creator, can have multiple versions
@@ -695,6 +953,612 @@ func (m *ContractTransaction) GetTxId() string {
 	return ""
 }
 
+type Contract struct {
+	// smart contract name, set by contract creator, can have multiple versions
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// smart contract version, set by contract creator, name + version should be unique
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// smart contract runtime type, set by contract creator
+	RuntimeType RuntimeType `protobuf:"varint,3,opt,name=runtime_type,json=runtimeType,proto3,enum=common.RuntimeType" json:"runtime_type,omitempty"`
+	//contract status
+	Status ContractStatus `protobuf:"varint,4,opt,name=status,proto3,enum=common.ContractStatus" json:"status,omitempty"`
+	// contract run parallel or need endorsement
+	Type ContractType `protobuf:"varint,5,opt,name=type,proto3,enum=common.ContractType" json:"type,omitempty"`
+	//if need endorsement,specify policy
+	EndorsePolicy *accesscontrol.Policy `protobuf:"bytes,6,opt,name=endorse_policy,json=endorsePolicy,proto3" json:"endorse_policy,omitempty"`
+	//contract upgrade policy
+	UpdatePolicy *accesscontrol.Policy `protobuf:"bytes,7,opt,name=update_policy,json=updatePolicy,proto3" json:"update_policy,omitempty"`
+	//contract initial block timestamp
+	CreateTime int64 `protobuf:"varint,8,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	//contract creator identity
+	Creator *accesscontrol.SerializedMember `protobuf:"bytes,9,opt,name=creator,proto3" json:"creator,omitempty"`
+	//contract identity
+	Address *accesscontrol.SerializedMember `protobuf:"bytes,10,opt,name=address,proto3" json:"address,omitempty"`
+}
+
+func (m *Contract) Reset()         { *m = Contract{} }
+func (m *Contract) String() string { return proto.CompactTextString(m) }
+func (*Contract) ProtoMessage()    {}
+func (*Contract) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{3}
+}
+func (m *Contract) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Contract) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Contract.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Contract) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Contract.Merge(m, src)
+}
+func (m *Contract) XXX_Size() int {
+	return m.Size()
+}
+func (m *Contract) XXX_DiscardUnknown() {
+	xxx_messageInfo_Contract.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Contract proto.InternalMessageInfo
+
+func (m *Contract) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Contract) GetVersion() string {
+	if m != nil {
+		return m.Version
+	}
+	return ""
+}
+
+func (m *Contract) GetRuntimeType() RuntimeType {
+	if m != nil {
+		return m.RuntimeType
+	}
+	return RuntimeType_INVALID
+}
+
+func (m *Contract) GetStatus() ContractStatus {
+	if m != nil {
+		return m.Status
+	}
+	return ContractStatus_UNKNOWN
+}
+
+func (m *Contract) GetType() ContractType {
+	if m != nil {
+		return m.Type
+	}
+	return ContractType_PARALLEL
+}
+
+func (m *Contract) GetEndorsePolicy() *accesscontrol.Policy {
+	if m != nil {
+		return m.EndorsePolicy
+	}
+	return nil
+}
+
+func (m *Contract) GetUpdatePolicy() *accesscontrol.Policy {
+	if m != nil {
+		return m.UpdatePolicy
+	}
+	return nil
+}
+
+func (m *Contract) GetCreateTime() int64 {
+	if m != nil {
+		return m.CreateTime
+	}
+	return 0
+}
+
+func (m *Contract) GetCreator() *accesscontrol.SerializedMember {
+	if m != nil {
+		return m.Creator
+	}
+	return nil
+}
+
+func (m *Contract) GetAddress() *accesscontrol.SerializedMember {
+	if m != nil {
+		return m.Address
+	}
+	return nil
+}
+
+type ContractList struct {
+	Contracts []*Contract `protobuf:"bytes,1,rep,name=contracts,proto3" json:"contracts,omitempty"`
+}
+
+func (m *ContractList) Reset()         { *m = ContractList{} }
+func (m *ContractList) String() string { return proto.CompactTextString(m) }
+func (*ContractList) ProtoMessage()    {}
+func (*ContractList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{4}
+}
+func (m *ContractList) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ContractList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ContractList.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ContractList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractList.Merge(m, src)
+}
+func (m *ContractList) XXX_Size() int {
+	return m.Size()
+}
+func (m *ContractList) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContractList proto.InternalMessageInfo
+
+func (m *ContractList) GetContracts() []*Contract {
+	if m != nil {
+		return m.Contracts
+	}
+	return nil
+}
+
+type Epoch struct {
+	EpochID               uint64   `protobuf:"varint,1,opt,name=EpochID,proto3" json:"EpochID,omitempty"`
+	ProposerVector        []string `protobuf:"bytes,2,rep,name=ProposerVector,proto3" json:"ProposerVector,omitempty"`
+	NextEpochCreateHeight uint64   `protobuf:"varint,3,opt,name=NextEpochCreateHeight,proto3" json:"NextEpochCreateHeight,omitempty"`
+}
+
+func (m *Epoch) Reset()         { *m = Epoch{} }
+func (m *Epoch) String() string { return proto.CompactTextString(m) }
+func (*Epoch) ProtoMessage()    {}
+func (*Epoch) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{5}
+}
+func (m *Epoch) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Epoch) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Epoch.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Epoch) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Epoch.Merge(m, src)
+}
+func (m *Epoch) XXX_Size() int {
+	return m.Size()
+}
+func (m *Epoch) XXX_DiscardUnknown() {
+	xxx_messageInfo_Epoch.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Epoch proto.InternalMessageInfo
+
+func (m *Epoch) GetEpochID() uint64 {
+	if m != nil {
+		return m.EpochID
+	}
+	return 0
+}
+
+func (m *Epoch) GetProposerVector() []string {
+	if m != nil {
+		return m.ProposerVector
+	}
+	return nil
+}
+
+func (m *Epoch) GetNextEpochCreateHeight() uint64 {
+	if m != nil {
+		return m.NextEpochCreateHeight
+	}
+	return 0
+}
+
+type Validator struct {
+	ValidatorAddress           string     `protobuf:"bytes,1,opt,name=ValidatorAddress,proto3" json:"ValidatorAddress,omitempty"`
+	Jailed                     bool       `protobuf:"varint,2,opt,name=Jailed,proto3" json:"Jailed,omitempty"`
+	Status                     BondStatus `protobuf:"varint,3,opt,name=Status,proto3,enum=common.BondStatus" json:"Status,omitempty"`
+	Tokens                     string     `protobuf:"bytes,4,opt,name=Tokens,proto3" json:"Tokens,omitempty"`
+	DelegatorShares            string     `protobuf:"bytes,5,opt,name=DelegatorShares,proto3" json:"DelegatorShares,omitempty"`
+	UnbondingEpochID           uint64     `protobuf:"varint,6,opt,name=UnbondingEpochID,proto3" json:"UnbondingEpochID,omitempty"`
+	UnbondingCompletionEpochID uint64     `protobuf:"varint,7,opt,name=UnbondingCompletionEpochID,proto3" json:"UnbondingCompletionEpochID,omitempty"`
+	SelfDelegation             string     `protobuf:"bytes,8,opt,name=SelfDelegation,proto3" json:"SelfDelegation,omitempty"`
+}
+
+func (m *Validator) Reset()         { *m = Validator{} }
+func (m *Validator) String() string { return proto.CompactTextString(m) }
+func (*Validator) ProtoMessage()    {}
+func (*Validator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{6}
+}
+func (m *Validator) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Validator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Validator.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Validator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Validator.Merge(m, src)
+}
+func (m *Validator) XXX_Size() int {
+	return m.Size()
+}
+func (m *Validator) XXX_DiscardUnknown() {
+	xxx_messageInfo_Validator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Validator proto.InternalMessageInfo
+
+func (m *Validator) GetValidatorAddress() string {
+	if m != nil {
+		return m.ValidatorAddress
+	}
+	return ""
+}
+
+func (m *Validator) GetJailed() bool {
+	if m != nil {
+		return m.Jailed
+	}
+	return false
+}
+
+func (m *Validator) GetStatus() BondStatus {
+	if m != nil {
+		return m.Status
+	}
+	return BondStatus_Bonded
+}
+
+func (m *Validator) GetTokens() string {
+	if m != nil {
+		return m.Tokens
+	}
+	return ""
+}
+
+func (m *Validator) GetDelegatorShares() string {
+	if m != nil {
+		return m.DelegatorShares
+	}
+	return ""
+}
+
+func (m *Validator) GetUnbondingEpochID() uint64 {
+	if m != nil {
+		return m.UnbondingEpochID
+	}
+	return 0
+}
+
+func (m *Validator) GetUnbondingCompletionEpochID() uint64 {
+	if m != nil {
+		return m.UnbondingCompletionEpochID
+	}
+	return 0
+}
+
+func (m *Validator) GetSelfDelegation() string {
+	if m != nil {
+		return m.SelfDelegation
+	}
+	return ""
+}
+
+type Delegation struct {
+	DelegatorAddress string `protobuf:"bytes,1,opt,name=DelegatorAddress,proto3" json:"DelegatorAddress,omitempty"`
+	ValidatorAddress string `protobuf:"bytes,2,opt,name=ValidatorAddress,proto3" json:"ValidatorAddress,omitempty"`
+	Shares           string `protobuf:"bytes,3,opt,name=Shares,proto3" json:"Shares,omitempty"`
+}
+
+func (m *Delegation) Reset()         { *m = Delegation{} }
+func (m *Delegation) String() string { return proto.CompactTextString(m) }
+func (*Delegation) ProtoMessage()    {}
+func (*Delegation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{7}
+}
+func (m *Delegation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Delegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Delegation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Delegation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Delegation.Merge(m, src)
+}
+func (m *Delegation) XXX_Size() int {
+	return m.Size()
+}
+func (m *Delegation) XXX_DiscardUnknown() {
+	xxx_messageInfo_Delegation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Delegation proto.InternalMessageInfo
+
+func (m *Delegation) GetDelegatorAddress() string {
+	if m != nil {
+		return m.DelegatorAddress
+	}
+	return ""
+}
+
+func (m *Delegation) GetValidatorAddress() string {
+	if m != nil {
+		return m.ValidatorAddress
+	}
+	return ""
+}
+
+func (m *Delegation) GetShares() string {
+	if m != nil {
+		return m.Shares
+	}
+	return ""
+}
+
+type UnbondingDelegation struct {
+	EpochID          string                      `protobuf:"bytes,1,opt,name=EpochID,proto3" json:"EpochID,omitempty"`
+	DelegatorAddress string                      `protobuf:"bytes,2,opt,name=DelegatorAddress,proto3" json:"DelegatorAddress,omitempty"`
+	ValidatorAddress string                      `protobuf:"bytes,3,opt,name=ValidatorAddress,proto3" json:"ValidatorAddress,omitempty"`
+	Entries          []*UnbondingDelegationEntry `protobuf:"bytes,4,rep,name=Entries,proto3" json:"Entries,omitempty"`
+}
+
+func (m *UnbondingDelegation) Reset()         { *m = UnbondingDelegation{} }
+func (m *UnbondingDelegation) String() string { return proto.CompactTextString(m) }
+func (*UnbondingDelegation) ProtoMessage()    {}
+func (*UnbondingDelegation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{8}
+}
+func (m *UnbondingDelegation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *UnbondingDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_UnbondingDelegation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *UnbondingDelegation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnbondingDelegation.Merge(m, src)
+}
+func (m *UnbondingDelegation) XXX_Size() int {
+	return m.Size()
+}
+func (m *UnbondingDelegation) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnbondingDelegation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnbondingDelegation proto.InternalMessageInfo
+
+func (m *UnbondingDelegation) GetEpochID() string {
+	if m != nil {
+		return m.EpochID
+	}
+	return ""
+}
+
+func (m *UnbondingDelegation) GetDelegatorAddress() string {
+	if m != nil {
+		return m.DelegatorAddress
+	}
+	return ""
+}
+
+func (m *UnbondingDelegation) GetValidatorAddress() string {
+	if m != nil {
+		return m.ValidatorAddress
+	}
+	return ""
+}
+
+func (m *UnbondingDelegation) GetEntries() []*UnbondingDelegationEntry {
+	if m != nil {
+		return m.Entries
+	}
+	return nil
+}
+
+type UnbondingDelegationEntry struct {
+	CreationEpochID   uint64 `protobuf:"varint,1,opt,name=CreationEpochID,proto3" json:"CreationEpochID,omitempty"`
+	CompletionEpochID uint64 `protobuf:"varint,2,opt,name=CompletionEpochID,proto3" json:"CompletionEpochID,omitempty"`
+	Amount            string `protobuf:"bytes,3,opt,name=Amount,proto3" json:"Amount,omitempty"`
+}
+
+func (m *UnbondingDelegationEntry) Reset()         { *m = UnbondingDelegationEntry{} }
+func (m *UnbondingDelegationEntry) String() string { return proto.CompactTextString(m) }
+func (*UnbondingDelegationEntry) ProtoMessage()    {}
+func (*UnbondingDelegationEntry) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{9}
+}
+func (m *UnbondingDelegationEntry) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *UnbondingDelegationEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_UnbondingDelegationEntry.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *UnbondingDelegationEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnbondingDelegationEntry.Merge(m, src)
+}
+func (m *UnbondingDelegationEntry) XXX_Size() int {
+	return m.Size()
+}
+func (m *UnbondingDelegationEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnbondingDelegationEntry.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnbondingDelegationEntry proto.InternalMessageInfo
+
+func (m *UnbondingDelegationEntry) GetCreationEpochID() uint64 {
+	if m != nil {
+		return m.CreationEpochID
+	}
+	return 0
+}
+
+func (m *UnbondingDelegationEntry) GetCompletionEpochID() uint64 {
+	if m != nil {
+		return m.CompletionEpochID
+	}
+	return 0
+}
+
+func (m *UnbondingDelegationEntry) GetAmount() string {
+	if m != nil {
+		return m.Amount
+	}
+	return ""
+}
+
+type ValidatorVector struct {
+	Vector []string `protobuf:"bytes,1,rep,name=Vector,proto3" json:"Vector,omitempty"`
+}
+
+func (m *ValidatorVector) Reset()         { *m = ValidatorVector{} }
+func (m *ValidatorVector) String() string { return proto.CompactTextString(m) }
+func (*ValidatorVector) ProtoMessage()    {}
+func (*ValidatorVector) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{10}
+}
+func (m *ValidatorVector) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ValidatorVector) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ValidatorVector.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ValidatorVector) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValidatorVector.Merge(m, src)
+}
+func (m *ValidatorVector) XXX_Size() int {
+	return m.Size()
+}
+func (m *ValidatorVector) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValidatorVector.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValidatorVector proto.InternalMessageInfo
+
+func (m *ValidatorVector) GetVector() []string {
+	if m != nil {
+		return m.Vector
+	}
+	return nil
+}
+
+type DelegationInfo struct {
+	Infos []*Delegation `protobuf:"bytes,1,rep,name=Infos,proto3" json:"Infos,omitempty"`
+}
+
+func (m *DelegationInfo) Reset()         { *m = DelegationInfo{} }
+func (m *DelegationInfo) String() string { return proto.CompactTextString(m) }
+func (*DelegationInfo) ProtoMessage()    {}
+func (*DelegationInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a1095c55e7168440, []int{11}
+}
+func (m *DelegationInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DelegationInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DelegationInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DelegationInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelegationInfo.Merge(m, src)
+}
+func (m *DelegationInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *DelegationInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_DelegationInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DelegationInfo proto.InternalMessageInfo
+
+func (m *DelegationInfo) GetInfos() []*Delegation {
+	if m != nil {
+		return m.Infos
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("common.ContractName", ContractName_name, ContractName_value)
 	proto.RegisterEnum("common.QueryFunction", QueryFunction_name, QueryFunction_value)
@@ -704,93 +1568,168 @@ func init() {
 	proto.RegisterEnum("common.MultiSignFunction", MultiSignFunction_name, MultiSignFunction_value)
 	proto.RegisterEnum("common.ManageUserContractFunction", ManageUserContractFunction_name, ManageUserContractFunction_value)
 	proto.RegisterEnum("common.PrivateComputeContractFunction", PrivateComputeContractFunction_name, PrivateComputeContractFunction_value)
+	proto.RegisterEnum("common.ContractStatus", ContractStatus_name, ContractStatus_value)
+	proto.RegisterEnum("common.ContractType", ContractType_name, ContractType_value)
+	proto.RegisterEnum("common.DPoSERC20ContractFunction", DPoSERC20ContractFunction_name, DPoSERC20ContractFunction_value)
+	proto.RegisterEnum("common.DPoSStakeContractFunction", DPoSStakeContractFunction_name, DPoSStakeContractFunction_value)
+	proto.RegisterEnum("common.BondStatus", BondStatus_name, BondStatus_value)
 	proto.RegisterType((*ContractId)(nil), "common.ContractId")
 	proto.RegisterType((*ContractInfo)(nil), "common.ContractInfo")
 	proto.RegisterType((*ContractTransaction)(nil), "common.ContractTransaction")
+	proto.RegisterType((*Contract)(nil), "common.Contract")
+	proto.RegisterType((*ContractList)(nil), "common.ContractList")
+	proto.RegisterType((*Epoch)(nil), "common.Epoch")
+	proto.RegisterType((*Validator)(nil), "common.Validator")
+	proto.RegisterType((*Delegation)(nil), "common.Delegation")
+	proto.RegisterType((*UnbondingDelegation)(nil), "common.UnbondingDelegation")
+	proto.RegisterType((*UnbondingDelegationEntry)(nil), "common.UnbondingDelegationEntry")
+	proto.RegisterType((*ValidatorVector)(nil), "common.ValidatorVector")
+	proto.RegisterType((*DelegationInfo)(nil), "common.DelegationInfo")
 }
 
 func init() { proto.RegisterFile("common/contract.proto", fileDescriptor_a1095c55e7168440) }
 
 var fileDescriptor_a1095c55e7168440 = []byte{
-	// 1235 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x56, 0xcd, 0x6e, 0xdb, 0x46,
-	0x17, 0x15, 0xf5, 0x6b, 0x5f, 0x49, 0xf6, 0x78, 0x64, 0x27, 0xce, 0xcf, 0xa7, 0xf8, 0x4b, 0x5a,
-	0x20, 0x15, 0x50, 0x1b, 0x4d, 0x80, 0xee, 0xc7, 0xe4, 0x48, 0x9a, 0x5a, 0x22, 0x95, 0xe1, 0x88,
-	0xb6, 0xb3, 0x28, 0x21, 0xcb, 0x8a, 0x2a, 0xb4, 0x12, 0x0d, 0x46, 0x0e, 0x92, 0x45, 0xb7, 0x5d,
-	0x77, 0xd1, 0x37, 0xe9, 0x4b, 0x74, 0x99, 0x65, 0x97, 0x85, 0x83, 0xee, 0xfa, 0x10, 0xc5, 0x1d,
-	0x92, 0x22, 0x2d, 0x07, 0x5d, 0x49, 0x73, 0xee, 0xb9, 0xe7, 0x9e, 0xb9, 0xf3, 0x47, 0xd8, 0x1b,
-	0x07, 0xf3, 0x79, 0xb0, 0x38, 0x1a, 0x07, 0x8b, 0x65, 0x38, 0x1a, 0x2f, 0x0f, 0xaf, 0xc2, 0x60,
-	0x19, 0xd0, 0x72, 0x04, 0x3f, 0xfd, 0xcd, 0x00, 0x30, 0xe3, 0x90, 0xb8, 0xa4, 0xcf, 0xa0, 0x9e,
-	0x10, 0xfd, 0xc5, 0x68, 0x3e, 0xd9, 0x37, 0x0e, 0x8c, 0xe7, 0x9b, 0xb2, 0x96, 0x80, 0xf6, 0x68,
-	0x3e, 0xa1, 0x5f, 0x01, 0x59, 0x91, 0xde, 0x4d, 0xc2, 0xb7, 0xb3, 0x60, 0xb1, 0x9f, 0xd7, 0xbc,
-	0xed, 0x04, 0xf7, 0x22, 0x98, 0x7e, 0x0b, 0xb5, 0xf0, 0x7a, 0xb1, 0x9c, 0xcd, 0x27, 0xfe, 0xf2,
-	0xc3, 0xd5, 0x64, 0xbf, 0x70, 0x60, 0x3c, 0xdf, 0x7a, 0xd1, 0x38, 0x8c, 0xaa, 0x1f, 0xca, 0x28,
-	0xa6, 0x3e, 0x5c, 0x4d, 0x64, 0x35, 0x4c, 0x07, 0x4f, 0xbf, 0x87, 0xda, 0xca, 0xd5, 0xe2, 0x4d,
-	0x40, 0x6d, 0xd8, 0x5d, 0x95, 0x5c, 0x86, 0xa3, 0xc5, 0xdb, 0xd1, 0x78, 0x89, 0x65, 0x8d, 0x83,
-	0xc2, 0xf3, 0xea, 0x8b, 0x47, 0x89, 0x5e, 0x92, 0xa3, 0x52, 0x8a, 0x6c, 0x8c, 0xef, 0x82, 0x4f,
-	0x7d, 0x68, 0x7c, 0x86, 0x4b, 0x5f, 0x42, 0x75, 0x55, 0x66, 0x76, 0xa9, 0x27, 0x5f, 0x7d, 0x41,
-	0xd7, 0xd5, 0xc5, 0xa5, 0x84, 0x71, 0xda, 0xb3, 0x06, 0x94, 0x96, 0xef, 0x91, 0x1e, 0xf5, 0xa0,
-	0xb8, 0x7c, 0x2f, 0x2e, 0x5b, 0xff, 0x18, 0xe9, 0x0c, 0x74, 0xd3, 0x0e, 0xe0, 0xb1, 0x7b, 0xee,
-	0x2a, 0xde, 0xf7, 0x4d, 0xc7, 0x56, 0x92, 0x99, 0xca, 0x37, 0xbb, 0x4c, 0xd8, 0x38, 0x6c, 0x8b,
-	0x0e, 0xc9, 0xd1, 0x07, 0xb0, 0xb7, 0xce, 0x78, 0x35, 0xe4, 0xf2, 0x9c, 0x18, 0xf4, 0x09, 0x3c,
-	0xba, 0x93, 0xcc, 0xa5, 0xf2, 0xfb, 0xcc, 0x66, 0x1d, 0x4e, 0xf2, 0xb4, 0x09, 0x0f, 0xd7, 0x09,
-	0x1d, 0xc7, 0xe3, 0xd2, 0x66, 0xb6, 0xc9, 0x49, 0xe1, 0x73, 0xf1, 0xfe, 0xb0, 0xa7, 0x84, 0xef,
-	0x8a, 0x8e, 0x4d, 0x8a, 0x9f, 0xab, 0xed, 0x2a, 0xa6, 0x38, 0x29, 0xd1, 0x67, 0xf0, 0x64, 0x3d,
-	0x34, 0x90, 0xc2, 0x63, 0x8a, 0xfb, 0xa6, 0xd3, 0x1f, 0x0c, 0x15, 0x27, 0xe5, 0xd6, 0x4d, 0x01,
-	0xea, 0xaf, 0xae, 0x27, 0xe1, 0x87, 0xf6, 0xf5, 0x22, 0x6a, 0xe5, 0x3d, 0xa0, 0x1d, 0xae, 0xfc,
-	0xe3, 0x9e, 0x63, 0x9e, 0xf8, 0xc7, 0xe7, 0xbe, 0x3a, 0xf3, 0x85, 0x45, 0x72, 0x74, 0x0f, 0x76,
-	0x10, 0x5f, 0x69, 0x09, 0xbb, 0xed, 0x10, 0x83, 0x36, 0x60, 0x1b, 0x61, 0x75, 0x96, 0x72, 0xf3,
-	0xf4, 0x3e, 0x34, 0x6e, 0x69, 0x74, 0xb9, 0xe8, 0x74, 0x15, 0x29, 0x50, 0x0a, 0x5b, 0x5a, 0x44,
-	0x37, 0x50, 0x2b, 0xe8, 0x29, 0x20, 0xd6, 0x63, 0xae, 0x8a, 0x7b, 0x1a, 0x25, 0x92, 0x52, 0x52,
-	0x33, 0xd5, 0x61, 0x6e, 0x97, 0x94, 0x13, 0x79, 0xdb, 0xb1, 0x78, 0x2c, 0xd5, 0x13, 0xae, 0x22,
-	0x15, 0xfa, 0x08, 0xee, 0x63, 0x20, 0xed, 0xe0, 0xca, 0x2e, 0xd9, 0xa0, 0x5f, 0xc2, 0xff, 0x53,
-	0xb1, 0x53, 0xa1, 0xba, 0xbe, 0x3a, 0x93, 0xa7, 0x2e, 0x57, 0x6e, 0xc6, 0xe2, 0x26, 0xb6, 0xed,
-	0xbf, 0x68, 0xe8, 0x00, 0x92, 0x79, 0x68, 0xcf, 0x91, 0xd9, 0x2a, 0x7d, 0x0c, 0xfb, 0x88, 0xb5,
-	0x87, 0xbd, 0xde, 0x9d, 0x99, 0xd7, 0xe8, 0xff, 0xe0, 0x41, 0x2a, 0x1b, 0xa1, 0x69, 0xc7, 0xea,
-	0x49, 0xf2, 0x7a, 0x58, 0x97, 0xdb, 0xc2, 0x5d, 0x90, 0x8d, 0x32, 0x8b, 0xcb, 0x8c, 0xf8, 0x76,
-	0x22, 0xce, 0xa4, 0xd9, 0x15, 0x1e, 0xb7, 0x6e, 0xc9, 0x10, 0xd2, 0x0a, 0xa0, 0x9a, 0x39, 0xb0,
-	0xb4, 0x0a, 0x15, 0x61, 0x7b, 0xac, 0xa7, 0x97, 0x15, 0xa0, 0x6c, 0x33, 0x25, 0x3c, 0x4e, 0x0c,
-	0xfc, 0x7f, 0xca, 0xdc, 0x3e, 0x97, 0x24, 0x4f, 0x37, 0xa0, 0x78, 0x7a, 0xe6, 0xf5, 0x49, 0x01,
-	0xff, 0x75, 0x98, 0xdb, 0x27, 0x45, 0x5a, 0x81, 0x02, 0xf7, 0xfa, 0xa4, 0x44, 0xeb, 0xb0, 0x69,
-	0x39, 0xe6, 0x09, 0x97, 0x7e, 0xc7, 0x21, 0x65, 0xba, 0x0d, 0xd5, 0x78, 0xf8, 0x1d, 0xf3, 0x18,
-	0xa9, 0xb4, 0xfe, 0x2e, 0xc0, 0x96, 0x19, 0x2c, 0xde, 0xcc, 0xa6, 0xab, 0x6d, 0xb5, 0x0b, 0x24,
-	0x5d, 0xf9, 0xd5, 0xd1, 0x89, 0x57, 0x32, 0x8b, 0xfa, 0x4c, 0x11, 0x03, 0x25, 0x4d, 0x47, 0x72,
-	0x7f, 0x38, 0xb0, 0x70, 0x37, 0xe7, 0x29, 0x81, 0x5a, 0x34, 0xab, 0x18, 0xd1, 0x7b, 0x49, 0xc9,
-	0xa1, 0xab, 0x7c, 0xe9, 0x38, 0xca, 0x67, 0x96, 0x45, 0x8a, 0xb8, 0x61, 0x32, 0x58, 0x4c, 0x2d,
-	0xad, 0xc1, 0x16, 0xef, 0x71, 0xdc, 0xfc, 0x74, 0x07, 0xea, 0x7a, 0x0f, 0x31, 0xcb, 0x92, 0x5a,
-	0xa0, 0x82, 0x36, 0x53, 0x28, 0xce, 0xdf, 0xb8, 0x8d, 0xc6, 0xe9, 0x9b, 0x68, 0x49, 0xa3, 0x8e,
-	0xec, 0xe8, 0x6c, 0xc0, 0xc3, 0xb0, 0x42, 0xe2, 0xe4, 0xea, 0x2d, 0x30, 0xce, 0xad, 0xa1, 0x23,
-	0xd3, 0xb1, 0x5d, 0x6e, 0xbb, 0x43, 0xd7, 0xe7, 0x67, 0x91, 0xff, 0x3a, 0xdd, 0x87, 0xdd, 0xdb,
-	0x70, 0xac, 0xb2, 0x75, 0x37, 0x12, 0x4b, 0x6d, 0x63, 0x1f, 0x06, 0x5c, 0xf6, 0x85, 0xeb, 0x0a,
-	0xc7, 0xd6, 0x3a, 0x04, 0xe5, 0x33, 0x58, 0x2c, 0xb2, 0xb3, 0x06, 0xc7, 0x0a, 0x14, 0x9b, 0xad,
-	0x1d, 0x0a, 0x4b, 0xa7, 0x37, 0x50, 0x32, 0x01, 0xe2, 0xdc, 0xdd, 0x2c, 0x16, 0x27, 0xee, 0xb5,
-	0x7e, 0x06, 0x6a, 0x4e, 0xc2, 0x65, 0x7f, 0xb4, 0x18, 0x4d, 0x27, 0xab, 0xa5, 0xae, 0xc1, 0x86,
-	0xbe, 0xe4, 0x50, 0x2b, 0x87, 0x5d, 0xc2, 0x91, 0x9b, 0x64, 0x45, 0x6b, 0xab, 0x91, 0xe8, 0x96,
-	0xcc, 0xa7, 0x94, 0xb6, 0xe4, 0xfc, 0x75, 0xbc, 0xb6, 0x11, 0x32, 0xb4, 0x63, 0xac, 0x98, 0xb2,
-	0x24, 0xf7, 0x9c, 0x13, 0x4e, 0x4a, 0xad, 0x6f, 0x60, 0xa7, 0x7f, 0xfd, 0xd3, 0x72, 0xe6, 0xce,
-	0xa6, 0x8b, 0x55, 0xf5, 0x0a, 0x14, 0x24, 0x7f, 0x45, 0x72, 0xb8, 0x6f, 0x3d, 0x47, 0x17, 0xdc,
-	0x84, 0x52, 0x5c, 0xaa, 0xf5, 0x8b, 0x01, 0x0f, 0x23, 0xbb, 0xc3, 0xb7, 0x93, 0x30, 0xb9, 0xe8,
-	0x57, 0xc9, 0x3b, 0x50, 0x17, 0xb6, 0x48, 0x6f, 0x39, 0x92, 0xc3, 0xb5, 0x1f, 0x0e, 0x3a, 0x92,
-	0x59, 0x99, 0xcb, 0x44, 0x5f, 0x7b, 0x91, 0xb1, 0x14, 0xcc, 0x63, 0x7b, 0x13, 0xbf, 0x29, 0x5c,
-	0x40, 0x6e, 0x64, 0x39, 0x05, 0x8b, 0xad, 0xdf, 0x0b, 0xd0, 0x1c, 0x84, 0xb3, 0x77, 0xa3, 0xe5,
-	0xc4, 0x0c, 0xe6, 0x57, 0xd7, 0xf8, 0xb3, 0x66, 0x86, 0x40, 0x2d, 0x7b, 0xe3, 0x92, 0x1c, 0x76,
-	0x16, 0x11, 0x8b, 0x29, 0x46, 0x0c, 0x8c, 0xbb, 0xcc, 0xe3, 0xbe, 0xc9, 0xf4, 0xa3, 0x42, 0xf2,
-	0x18, 0xd7, 0x88, 0x25, 0x24, 0x29, 0xe0, 0x29, 0x8d, 0x46, 0x48, 0x2f, 0xe2, 0xdc, 0x22, 0x7a,
-	0xa2, 0x57, 0xc2, 0xe3, 0xa7, 0x21, 0x6e, 0x9b, 0x3d, 0xfc, 0x95, 0x7c, 0xe0, 0x48, 0x45, 0xca,
-	0xc9, 0xc5, 0x9b, 0xe0, 0x03, 0xe9, 0x38, 0x6d, 0x52, 0xc1, 0x95, 0xd3, 0x8e, 0xe2, 0x82, 0x1b,
-	0x78, 0x95, 0x68, 0x43, 0x42, 0x92, 0x4d, 0x9c, 0x67, 0xb4, 0x5b, 0xd2, 0x12, 0x40, 0x1f, 0xc2,
-	0x3d, 0xb3, 0xcb, 0xcd, 0x13, 0xdf, 0x64, 0xbd, 0x1e, 0x97, 0xd1, 0xf3, 0xc7, 0x86, 0xaa, 0x4b,
-	0xaa, 0xf8, 0x3a, 0x66, 0xab, 0x70, 0xdb, 0x94, 0xe7, 0x03, 0xe5, 0x0f, 0x86, 0xc7, 0xfe, 0x09,
-	0x3f, 0x27, 0x35, 0xfa, 0x05, 0x1c, 0x64, 0x09, 0x1e, 0x97, 0xa2, 0x2d, 0x4c, 0xa6, 0x70, 0xf7,
-	0x26, 0xac, 0x7a, 0xf2, 0x62, 0xad, 0x4d, 0x62, 0x2b, 0x79, 0x58, 0x12, 0xdc, 0xec, 0xa2, 0x03,
-	0xbb, 0x83, 0x67, 0x66, 0x2d, 0x84, 0x8f, 0x29, 0x53, 0x43, 0xc9, 0x09, 0xc1, 0x37, 0xc4, 0x8d,
-	0x64, 0xfa, 0x8e, 0xe2, 0x3e, 0x53, 0x8a, 0xe3, 0x8b, 0x2a, 0x1c, 0x9b, 0xec, 0x1c, 0x5f, 0xfc,
-	0x71, 0xd3, 0x34, 0x3e, 0xde, 0x34, 0x8d, 0xbf, 0x6e, 0x9a, 0xc6, 0xaf, 0x9f, 0x9a, 0xb9, 0x8f,
-	0x9f, 0x9a, 0xb9, 0x3f, 0x3f, 0x35, 0x73, 0xb0, 0x1f, 0x84, 0xd3, 0xc3, 0xf1, 0x0f, 0xa3, 0xd9,
-	0x62, 0x3e, 0xfa, 0x71, 0x12, 0x1e, 0x5e, 0x5d, 0xc4, 0x5f, 0x1f, 0xaf, 0xb3, 0x68, 0x10, 0x4e,
-	0x8f, 0xd2, 0xe1, 0xd7, 0xd3, 0xe0, 0xe8, 0xea, 0xe2, 0x48, 0x7f, 0xd8, 0x4d, 0x83, 0xa3, 0x88,
-	0x7f, 0x51, 0xd6, 0xe3, 0x97, 0xff, 0x06, 0x00, 0x00, 0xff, 0xff, 0xdf, 0x6e, 0xbd, 0xdd, 0x01,
-	0x0a, 0x00, 0x00,
+	// 2212 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x58, 0x4b, 0x6f, 0x23, 0x59,
+	0xf5, 0x8f, 0xdf, 0xf6, 0xb1, 0x9d, 0xdc, 0xdc, 0x74, 0x32, 0x9e, 0xf4, 0x4c, 0x3a, 0xe3, 0xf9,
+	0xff, 0x51, 0xc6, 0x82, 0x04, 0x7a, 0x00, 0x89, 0x16, 0x1a, 0xa9, 0x52, 0x75, 0x6d, 0xd7, 0xa4,
+	0x5c, 0xe5, 0xbe, 0x55, 0x76, 0x3a, 0xbd, 0xa0, 0xe4, 0xd8, 0xd5, 0x69, 0xab, 0x63, 0x57, 0x54,
+	0x76, 0x46, 0xdd, 0x08, 0xc4, 0x8e, 0x05, 0x2b, 0x16, 0xf3, 0x31, 0xd8, 0xb1, 0x65, 0x05, 0x1b,
+	0x96, 0xc3, 0x0e, 0x89, 0x0d, 0xea, 0x16, 0xdf, 0x03, 0x9d, 0x7b, 0xeb, 0x15, 0x3b, 0xdd, 0x02,
+	0x56, 0xf1, 0xf9, 0x9d, 0xc7, 0xfd, 0xdd, 0x73, 0xcf, 0xc3, 0x0e, 0xec, 0x8e, 0xfd, 0xd9, 0xcc,
+	0x9f, 0x9f, 0x8c, 0xfd, 0xf9, 0x32, 0x18, 0x8d, 0x97, 0xc7, 0x37, 0x81, 0xbf, 0xf4, 0x69, 0x51,
+	0xc2, 0xfb, 0xfb, 0xa3, 0xf1, 0xd8, 0x5b, 0x2c, 0x84, 0xd6, 0xbf, 0x3e, 0x99, 0x79, 0xb3, 0x4b,
+	0x2f, 0x90, 0x36, 0xab, 0xba, 0x1b, 0xff, 0x7a, 0x3a, 0x7e, 0x23, 0x75, 0xcd, 0x6f, 0x33, 0x00,
+	0x6a, 0x18, 0x52, 0x9f, 0xd0, 0xcf, 0xa1, 0x1e, 0x1d, 0xe0, 0xce, 0x47, 0x33, 0xaf, 0x91, 0x39,
+	0xcc, 0x1c, 0x55, 0x78, 0x2d, 0x02, 0xcd, 0xd1, 0xcc, 0xa3, 0x5f, 0x00, 0x89, 0x8d, 0xbe, 0xf1,
+	0x82, 0xc5, 0xd4, 0x9f, 0x37, 0xb2, 0xc2, 0x6e, 0x2b, 0xc2, 0x87, 0x12, 0xa6, 0x3f, 0x85, 0x5a,
+	0x70, 0x3b, 0x5f, 0x4e, 0x67, 0x9e, 0xbb, 0x7c, 0x73, 0xe3, 0x35, 0x72, 0x87, 0x99, 0xa3, 0xcd,
+	0xc7, 0x3b, 0xc7, 0x92, 0xf5, 0x31, 0x97, 0x3a, 0xe7, 0xcd, 0x8d, 0xc7, 0xab, 0x41, 0x22, 0x34,
+	0x7f, 0x01, 0xb5, 0x98, 0xd5, 0xfc, 0x85, 0x4f, 0x4d, 0x78, 0x10, 0x1f, 0xb9, 0x0c, 0x46, 0xf3,
+	0xc5, 0x68, 0xbc, 0xc4, 0x63, 0x33, 0x87, 0xb9, 0xa3, 0xea, 0xe3, 0x87, 0x51, 0xbc, 0xc8, 0xc7,
+	0x49, 0x4c, 0xf8, 0xce, 0x78, 0x1d, 0x6c, 0xba, 0xb0, 0x73, 0x8f, 0x2d, 0xfd, 0x12, 0xaa, 0xf1,
+	0x31, 0xd3, 0x89, 0xb8, 0x7c, 0xf5, 0x31, 0x5d, 0x8d, 0xae, 0x4f, 0x38, 0x8c, 0x93, 0x9c, 0xed,
+	0x40, 0x61, 0xf9, 0x1a, 0xcd, 0x65, 0x0e, 0xf2, 0xcb, 0xd7, 0xfa, 0xa4, 0xf9, 0x8f, 0x1c, 0x94,
+	0x23, 0x7b, 0x4a, 0x21, 0x9f, 0x4a, 0xa6, 0xf8, 0x4c, 0x1b, 0x50, 0xba, 0x9b, 0xbb, 0x48, 0xfc,
+	0x5f, 0x73, 0x46, 0x8f, 0xa1, 0xb8, 0x58, 0x8e, 0x96, 0xb7, 0x8b, 0x46, 0x5e, 0x78, 0xec, 0xad,
+	0xf2, 0xb6, 0x85, 0x96, 0x87, 0x56, 0xf4, 0x08, 0xf2, 0x22, 0x7e, 0x41, 0x58, 0x3f, 0x58, 0xcb,
+	0x21, 0x1e, 0x20, 0x2c, 0xe8, 0xcf, 0x61, 0xd3, 0x9b, 0x4f, 0xfc, 0x60, 0xe1, 0xb9, 0xb2, 0x78,
+	0x1a, 0x45, 0x91, 0x99, 0xdd, 0xe3, 0x3b, 0x95, 0x75, 0xdc, 0x17, 0x4a, 0x5e, 0x0f, 0x8d, 0xa5,
+	0x48, 0x9f, 0x40, 0xfd, 0xf6, 0x66, 0x32, 0x5a, 0xc6, 0xce, 0xa5, 0x0f, 0x39, 0xd7, 0xa4, 0x6d,
+	0xe8, 0xfb, 0x08, 0xaa, 0xe3, 0xc0, 0x43, 0x5f, 0xbc, 0x66, 0xa3, 0x7c, 0x98, 0x39, 0xca, 0x71,
+	0x90, 0x90, 0x33, 0x9d, 0x79, 0xf4, 0x67, 0x50, 0x12, 0x92, 0x1f, 0x34, 0x2a, 0x22, 0xec, 0xa3,
+	0x95, 0xb0, 0xb6, 0x17, 0x4c, 0x47, 0xd7, 0xd3, 0x5f, 0x7a, 0x93, 0x9e, 0xe8, 0x09, 0x1e, 0xd9,
+	0xa3, 0xeb, 0x68, 0x32, 0x09, 0xbc, 0xc5, 0xa2, 0x01, 0xff, 0xa1, 0x6b, 0x68, 0xdf, 0xfc, 0x2a,
+	0x29, 0x4f, 0x63, 0xba, 0x58, 0xd2, 0x63, 0xa8, 0x44, 0x05, 0xb1, 0x08, 0x6b, 0x92, 0xac, 0xe6,
+	0x93, 0x27, 0x26, 0xcd, 0xdf, 0x40, 0x81, 0xdd, 0xf8, 0xe3, 0x97, 0x58, 0x05, 0xe2, 0x83, 0xae,
+	0x89, 0xe2, 0xc8, 0xf3, 0x48, 0xa4, 0xdf, 0x83, 0xcd, 0x7e, 0xe0, 0xdf, 0xf8, 0x0b, 0x2f, 0x18,
+	0x7a, 0x63, 0xbc, 0x5f, 0xf6, 0x30, 0x77, 0x54, 0xe1, 0x2b, 0x28, 0xfd, 0x31, 0xec, 0x9a, 0xde,
+	0xeb, 0xa5, 0x70, 0x53, 0x45, 0x5e, 0xba, 0xde, 0xf4, 0xea, 0xe5, 0x52, 0x94, 0x4d, 0x9e, 0xdf,
+	0xaf, 0x6c, 0xfe, 0x2d, 0x0b, 0x95, 0xe1, 0xe8, 0x7a, 0x3a, 0x11, 0x99, 0x68, 0x01, 0x89, 0x05,
+	0x25, 0x4c, 0x89, 0xac, 0xd5, 0x35, 0x9c, 0xee, 0x41, 0xf1, 0xeb, 0xd1, 0xf4, 0xda, 0x93, 0xe5,
+	0x5e, 0xe6, 0xa1, 0x44, 0x5b, 0x50, 0x94, 0xf5, 0x15, 0xd6, 0x6b, 0xdc, 0x35, 0xa7, 0xfe, 0x7c,
+	0x12, 0x55, 0x9e, 0xfc, 0x8b, 0x31, 0x1c, 0xff, 0x95, 0x37, 0x97, 0x95, 0x5a, 0xe1, 0xa1, 0x44,
+	0x8f, 0x60, 0x4b, 0xf3, 0xae, 0xbd, 0x2b, 0x3c, 0xcf, 0x7e, 0x39, 0x0a, 0xbc, 0x85, 0x28, 0xce,
+	0x0a, 0x5f, 0x85, 0x91, 0xf1, 0x60, 0x7e, 0xe9, 0xcf, 0x27, 0xd3, 0xf9, 0x55, 0x94, 0xc0, 0xa2,
+	0xb8, 0xf0, 0x1a, 0x4e, 0xbf, 0x82, 0xfd, 0x18, 0x53, 0xfd, 0xd9, 0xcd, 0xb5, 0x87, 0xbd, 0x1e,
+	0x79, 0x95, 0x84, 0xd7, 0x07, 0x2c, 0xf0, 0x25, 0x6c, 0xef, 0xfa, 0x45, 0x48, 0x01, 0x1b, 0xb6,
+	0x2c, 0x48, 0xad, 0xa0, 0xcd, 0x5f, 0x01, 0x24, 0x12, 0x32, 0x8c, 0x49, 0xaf, 0xe4, 0x74, 0x15,
+	0xbf, 0x37, 0xff, 0xd9, 0xf7, 0xe7, 0x3f, 0x4c, 0x4d, 0x4e, 0xe6, 0x4e, 0x4a, 0xcd, 0xbf, 0x64,
+	0x60, 0x27, 0xbe, 0x44, 0x8a, 0xc7, 0x4a, 0x85, 0x55, 0x92, 0x0a, 0xbb, 0x8f, 0x61, 0xf6, 0xbf,
+	0x60, 0x98, 0x7b, 0x0f, 0xc3, 0x27, 0x50, 0x62, 0xf3, 0x65, 0x30, 0xf5, 0xf0, 0x79, 0xb1, 0x15,
+	0x0e, 0xa3, 0x52, 0xb8, 0x87, 0x1f, 0x5a, 0xbe, 0xe1, 0x91, 0x43, 0xf3, 0x77, 0x19, 0x68, 0xbc,
+	0xcf, 0x0a, 0xcb, 0x43, 0x14, 0x71, 0xea, 0xf5, 0x64, 0xd3, 0xac, 0xc2, 0xf4, 0xfb, 0xb0, 0xbd,
+	0xfe, 0xd2, 0x59, 0x61, 0xbb, 0xae, 0xc0, 0x94, 0x2a, 0x33, 0xff, 0x76, 0xbe, 0x8c, 0x52, 0x2a,
+	0xa5, 0xe6, 0x17, 0xb0, 0x15, 0x5f, 0x2e, 0xec, 0xb6, 0x3d, 0x28, 0x86, 0xdd, 0x98, 0x11, 0xdd,
+	0x18, 0x4a, 0xcd, 0x27, 0xb0, 0x99, 0xb0, 0x15, 0x1b, 0xeb, 0x08, 0x0a, 0xf8, 0x37, 0x1a, 0x07,
+	0x71, 0x3b, 0x24, 0x66, 0x5c, 0x1a, 0xb4, 0xfe, 0x90, 0x4d, 0xa6, 0x89, 0xd8, 0xaf, 0x87, 0xf0,
+	0x89, 0x7d, 0x61, 0x3b, 0xac, 0xe7, 0xaa, 0x96, 0xe9, 0x70, 0x45, 0x75, 0x5c, 0xb5, 0xab, 0xe8,
+	0x26, 0x8a, 0x6d, 0xbd, 0x43, 0x36, 0xe8, 0xc7, 0xb0, 0xbb, 0x6a, 0xf1, 0x74, 0xc0, 0xf8, 0x05,
+	0xc9, 0xd0, 0x47, 0xf0, 0x70, 0xcd, 0x99, 0x71, 0xc7, 0xed, 0x29, 0xa6, 0xd2, 0x61, 0x24, 0x4b,
+	0x0f, 0x60, 0x7f, 0xd5, 0xa0, 0x63, 0x0d, 0x19, 0x37, 0x15, 0x53, 0x65, 0x24, 0x77, 0x9f, 0xbe,
+	0x37, 0x30, 0x1c, 0xdd, 0xb5, 0xf5, 0x8e, 0x49, 0xf2, 0xf7, 0x9d, 0x6d, 0x3b, 0x8a, 0xc3, 0x48,
+	0x81, 0x7e, 0x0e, 0x8f, 0x56, 0x55, 0x7d, 0xae, 0x0f, 0x15, 0x87, 0xb9, 0xaa, 0xd5, 0xeb, 0x0f,
+	0x1c, 0x46, 0x8a, 0xf7, 0xc5, 0xd7, 0xfa, 0x96, 0xed, 0x32, 0xae, 0x3e, 0xfe, 0x21, 0x29, 0xbd,
+	0x57, 0x6f, 0x3b, 0xca, 0x19, 0x23, 0xe5, 0xd6, 0xb7, 0x79, 0xa8, 0x3f, 0xbd, 0xf5, 0x82, 0x37,
+	0xed, 0xdb, 0xb9, 0xdc, 0xda, 0x7b, 0x40, 0x3b, 0xcc, 0x71, 0x4f, 0x0d, 0x4b, 0x3d, 0x73, 0x4f,
+	0x2f, 0x5c, 0xe7, 0x99, 0xab, 0x6b, 0x64, 0x83, 0xee, 0xc2, 0x36, 0xe2, 0x71, 0x18, 0xdd, 0x6c,
+	0x5b, 0x24, 0x43, 0x77, 0x60, 0x0b, 0x61, 0xe7, 0x59, 0x62, 0x9b, 0xa5, 0x1f, 0xc1, 0xce, 0x9d,
+	0x18, 0x5d, 0xa6, 0x77, 0xba, 0x0e, 0xc9, 0x51, 0x0a, 0x9b, 0x22, 0x88, 0x78, 0x00, 0x11, 0x41,
+	0xa4, 0x00, 0x31, 0x43, 0xb1, 0x9d, 0xf0, 0x4d, 0xa4, 0x23, 0x29, 0x44, 0x67, 0x26, 0x71, 0x14,
+	0xbb, 0x4b, 0x8a, 0x51, 0x78, 0xd3, 0xd2, 0x58, 0x18, 0xca, 0xd0, 0x6d, 0x87, 0x94, 0xe8, 0x43,
+	0xf8, 0x08, 0x15, 0xc9, 0x0b, 0xc4, 0x74, 0x49, 0x99, 0xfe, 0x3f, 0x7c, 0x96, 0x04, 0x3b, 0xd7,
+	0x9d, 0xae, 0xeb, 0x3c, 0xe3, 0xe7, 0x36, 0x73, 0xec, 0x14, 0xc5, 0x0a, 0xa6, 0xfd, 0x43, 0x66,
+	0xc8, 0x00, 0xa2, 0x7b, 0x08, 0xce, 0x92, 0x6c, 0x95, 0x7e, 0x02, 0x0d, 0xc4, 0xda, 0x03, 0xc3,
+	0x58, 0xbb, 0x79, 0x8d, 0x7e, 0x0a, 0x1f, 0x27, 0x61, 0x25, 0x9a, 0x64, 0xac, 0x1e, 0x39, 0xaf,
+	0xaa, 0xc5, 0x71, 0x9b, 0xf8, 0x8a, 0x69, 0xad, 0xa2, 0x31, 0x9e, 0x0a, 0xbe, 0x15, 0x05, 0x57,
+	0xb8, 0xda, 0xd5, 0x87, 0x4c, 0xbb, 0x13, 0x86, 0x90, 0x28, 0xc3, 0xf1, 0xd3, 0x9d, 0x5e, 0x38,
+	0x4c, 0xb5, 0x34, 0x46, 0xb6, 0xa3, 0x0c, 0x2b, 0x86, 0x11, 0xab, 0x6d, 0x42, 0x5b, 0x3e, 0x54,
+	0x53, 0xdf, 0x8c, 0x68, 0x15, 0x4a, 0xba, 0x39, 0x54, 0x0c, 0x51, 0x08, 0x00, 0x45, 0x53, 0x71,
+	0xf4, 0x21, 0x23, 0x19, 0xfc, 0x7c, 0xae, 0xd8, 0x3d, 0xc6, 0x49, 0x96, 0x96, 0x21, 0x7f, 0xfe,
+	0x6c, 0xd8, 0x23, 0x39, 0xfc, 0xd4, 0x51, 0xec, 0x1e, 0xc9, 0xd3, 0x12, 0xe4, 0xd8, 0xb0, 0x47,
+	0x0a, 0xb4, 0x0e, 0x15, 0xcd, 0x52, 0xcf, 0x18, 0x77, 0x3b, 0x16, 0x29, 0xd2, 0x2d, 0xa8, 0x86,
+	0xe2, 0xd7, 0xca, 0x50, 0x21, 0xa5, 0xd6, 0xbf, 0x72, 0xb0, 0xa9, 0xfa, 0xf3, 0x17, 0xd3, 0xab,
+	0xb8, 0x10, 0x1f, 0x00, 0x49, 0x6a, 0x25, 0x6e, 0xd6, 0xf0, 0xed, 0xd3, 0xa8, 0xab, 0x38, 0x24,
+	0x83, 0x21, 0x55, 0x8b, 0x33, 0x77, 0xd0, 0xd7, 0xb0, 0x7f, 0xb2, 0x94, 0x40, 0x4d, 0xe6, 0x21,
+	0x44, 0x44, 0xf5, 0x39, 0x7c, 0x60, 0x3b, 0x2e, 0xb7, 0x2c, 0xc7, 0x55, 0x34, 0x8d, 0xe4, 0x31,
+	0x01, 0x29, 0x2c, 0x34, 0x2d, 0xac, 0xc0, 0x1a, 0x33, 0x98, 0x68, 0xb7, 0x6d, 0xa8, 0x8b, 0xaa,
+	0x53, 0x34, 0x8d, 0x8b, 0x00, 0x25, 0xa4, 0x99, 0x40, 0xa1, 0x7f, 0xf9, 0x2e, 0x1a, 0xba, 0x57,
+	0x90, 0x92, 0x40, 0x2d, 0xde, 0x11, 0xde, 0x80, 0xed, 0x13, 0x23, 0xa1, 0x73, 0xf5, 0x0e, 0x18,
+	0xfa, 0xd6, 0x90, 0x91, 0x6a, 0x99, 0x36, 0x33, 0xed, 0x81, 0xed, 0xb2, 0x67, 0x92, 0x7f, 0x9d,
+	0x36, 0xe0, 0xc1, 0x5d, 0x38, 0x8c, 0xb2, 0xb9, 0xae, 0x09, 0x43, 0x6d, 0x61, 0x1e, 0xfa, 0x8c,
+	0xf7, 0x74, 0xdb, 0xd6, 0x2d, 0x53, 0xc4, 0x21, 0x18, 0x3e, 0x85, 0x85, 0x41, 0xb6, 0x57, 0xe0,
+	0x30, 0x02, 0xc5, 0x64, 0x0b, 0x86, 0xba, 0x26, 0xdc, 0x77, 0x30, 0x64, 0x04, 0x84, 0xbe, 0x0f,
+	0xd2, 0x58, 0xe8, 0xb8, 0xdb, 0xfa, 0x35, 0x50, 0xd5, 0x0b, 0x96, 0xbd, 0xd1, 0x7c, 0x74, 0xe5,
+	0xc5, 0x4f, 0x5d, 0x83, 0xb2, 0x18, 0xab, 0x18, 0x6b, 0x03, 0xb3, 0x84, 0x92, 0x1d, 0x79, 0xc9,
+	0xb7, 0x15, 0x88, 0x9c, 0xcb, 0xd9, 0xc4, 0xa4, 0xcd, 0x19, 0x7b, 0x1e, 0xbe, 0xad, 0x44, 0x06,
+	0x66, 0x88, 0xe5, 0x13, 0x2b, 0xce, 0x86, 0xd6, 0x19, 0x23, 0x85, 0xd6, 0x8f, 0x60, 0xbb, 0x77,
+	0x7b, 0xbd, 0x9c, 0xda, 0xd3, 0xab, 0x79, 0x7c, 0x7a, 0x09, 0x72, 0x9c, 0x3d, 0x25, 0x1b, 0x58,
+	0xb7, 0x43, 0x4b, 0x1c, 0x58, 0x81, 0x42, 0x78, 0x54, 0xeb, 0xb7, 0x19, 0xd8, 0x97, 0x74, 0x07,
+	0x0b, 0x2f, 0x88, 0x56, 0x4b, 0xec, 0xbc, 0x0d, 0x75, 0xdd, 0xd4, 0x93, 0xe6, 0x22, 0x1b, 0xf8,
+	0xf6, 0x83, 0x7e, 0x87, 0x2b, 0x5a, 0x6a, 0xfc, 0x88, 0x41, 0x29, 0x89, 0x25, 0x60, 0x16, 0xd3,
+	0x1b, 0xf1, 0x4d, 0xe0, 0x1c, 0xda, 0x4a, 0xca, 0x09, 0x98, 0x6f, 0xfd, 0x31, 0x07, 0x07, 0xfd,
+	0x60, 0xfa, 0xcd, 0x68, 0xe9, 0xe1, 0xd6, 0xbd, 0xc5, 0x3f, 0x2b, 0x64, 0x08, 0xd4, 0xd2, 0x8d,
+	0x4e, 0x36, 0x30, 0xb3, 0x88, 0x68, 0x8a, 0xa3, 0x90, 0x0c, 0xea, 0x6d, 0x65, 0xc8, 0x5c, 0x55,
+	0x11, 0x6b, 0x8c, 0x64, 0x51, 0x2f, 0x10, 0x4d, 0xe7, 0x24, 0x87, 0x5d, 0x2a, 0x25, 0x34, 0xcf,
+	0xe3, 0xdd, 0xa4, 0x79, 0x14, 0xaf, 0x80, 0xed, 0x27, 0x20, 0x66, 0xaa, 0x06, 0xfe, 0xe5, 0xac,
+	0x6f, 0x71, 0x87, 0x14, 0xa3, 0x41, 0x12, 0xe1, 0x7d, 0x6e, 0x59, 0x6d, 0x52, 0xc2, 0x97, 0x13,
+	0x8c, 0xc2, 0x03, 0xcb, 0x38, 0x4a, 0x04, 0x21, 0x9d, 0x93, 0x0a, 0xde, 0x53, 0x56, 0x4b, 0x72,
+	0x04, 0xd0, 0x7d, 0xd8, 0x53, 0xbb, 0x4c, 0x3d, 0x73, 0x55, 0xc5, 0x30, 0x18, 0x97, 0x0b, 0x57,
+	0x19, 0x38, 0x5d, 0x52, 0xc5, 0x7d, 0x9c, 0x3e, 0x85, 0x99, 0x2a, 0xbf, 0xe8, 0x3b, 0x6e, 0x7f,
+	0x70, 0xea, 0x9e, 0xb1, 0x0b, 0x52, 0xa3, 0xff, 0x07, 0x87, 0x69, 0x83, 0x21, 0xe3, 0x7a, 0x5b,
+	0x57, 0x15, 0x07, 0xab, 0x37, 0xb2, 0xaa, 0x47, 0x3b, 0x6e, 0xe5, 0x12, 0x9b, 0xd1, 0xa0, 0x8c,
+	0x70, 0xb5, 0x8b, 0x0c, 0xcc, 0x0e, 0xf6, 0xcc, 0x8a, 0x0a, 0xd7, 0xb7, 0xe2, 0x0c, 0x38, 0x23,
+	0x04, 0xb7, 0x8e, 0x2d, 0xc3, 0xf4, 0x2c, 0x87, 0xb9, 0x8a, 0xe3, 0x30, 0xdc, 0xe1, 0xba, 0x65,
+	0x92, 0xed, 0xd6, 0xa9, 0x98, 0x6b, 0xa9, 0x5f, 0x8c, 0x98, 0x81, 0x81, 0x79, 0x66, 0x5a, 0xe7,
+	0x66, 0x38, 0x4c, 0x2d, 0xde, 0x53, 0x0c, 0x39, 0x4c, 0xdb, 0xdc, 0x7a, 0xce, 0x4c, 0x92, 0x45,
+	0x23, 0x59, 0x01, 0x1a, 0xc9, 0xb5, 0x94, 0xe4, 0x2b, 0x8d, 0x18, 0xc7, 0x35, 0x28, 0xf7, 0x15,
+	0x8e, 0xdc, 0x0c, 0x19, 0xc2, 0x66, 0x5c, 0x17, 0x21, 0xaa, 0x50, 0x62, 0xa6, 0x66, 0x71, 0x1b,
+	0x07, 0x20, 0x2a, 0x74, 0xb3, 0x63, 0x30, 0x92, 0x6f, 0xfd, 0x29, 0x03, 0x1f, 0x6b, 0x7d, 0xdf,
+	0x16, 0xdf, 0x0b, 0xd6, 0xea, 0xa6, 0x0e, 0x15, 0xbc, 0x9c, 0x75, 0x6e, 0x32, 0x2e, 0x1b, 0x50,
+	0xbc, 0x11, 0x53, 0xf5, 0x9e, 0x62, 0xd8, 0x24, 0x83, 0x27, 0x3a, 0x5c, 0x31, 0xed, 0xb6, 0x98,
+	0xf4, 0xdb, 0x50, 0x8f, 0x24, 0xb7, 0xcd, 0x2d, 0x1c, 0xf9, 0xdb, 0x50, 0x17, 0x1b, 0x4a, 0x31,
+	0x70, 0xed, 0x5a, 0x6d, 0x92, 0x47, 0x2e, 0x4a, 0xbf, 0xcf, 0xad, 0x21, 0xce, 0xd3, 0x50, 0xaf,
+	0x18, 0x86, 0x75, 0x2e, 0xbe, 0x1a, 0x15, 0xb1, 0xdb, 0x4e, 0x07, 0xdc, 0x24, 0x25, 0xfc, 0xd4,
+	0xd3, 0x4d, 0xac, 0x8e, 0x3d, 0xa0, 0x71, 0x64, 0xc1, 0xc6, 0xee, 0xea, 0x7d, 0x52, 0x69, 0xfd,
+	0x39, 0x27, 0xe9, 0xdb, 0xcb, 0xd1, 0xab, 0xf5, 0xb2, 0x0f, 0x9f, 0x53, 0x2c, 0x31, 0xc5, 0xd4,
+	0x74, 0xac, 0x28, 0x9b, 0x6c, 0x44, 0x4b, 0x55, 0x2c, 0x2e, 0xc5, 0xb1, 0xc4, 0xce, 0xc4, 0x81,
+	0xcc, 0xec, 0xf0, 0x4e, 0x38, 0x60, 0x3a, 0x72, 0x5b, 0x84, 0x2b, 0x36, 0x44, 0x74, 0xcb, 0xb4,
+	0xd3, 0xd6, 0xb9, 0xa8, 0xb0, 0x06, 0x36, 0xe3, 0x29, 0x23, 0xb4, 0x89, 0xc3, 0x93, 0x3c, 0xdd,
+	0x04, 0x18, 0x98, 0x71, 0xd4, 0x02, 0x8e, 0x02, 0xce, 0x14, 0xcd, 0x65, 0x7d, 0x4b, 0xed, 0xa2,
+	0xb1, 0xae, 0xc9, 0x5e, 0x11, 0xa8, 0x81, 0x3c, 0x1d, 0xa9, 0x94, 0xbd, 0x62, 0x47, 0x5f, 0x6b,
+	0x74, 0x8d, 0x94, 0xa3, 0xe6, 0x89, 0x80, 0x0a, 0x92, 0x0c, 0xfb, 0xa5, 0xa7, 0x9b, 0xae, 0xcd,
+	0x8c, 0x76, 0x8a, 0x0b, 0x01, 0xbc, 0xb0, 0x08, 0x7c, 0x9f, 0xb6, 0x4a, 0x3f, 0x83, 0x4f, 0x43,
+	0x6f, 0x49, 0x27, 0xc9, 0x8b, 0x39, 0xe8, 0x9d, 0x32, 0x4e, 0x6a, 0xd8, 0x5f, 0x29, 0xbe, 0x6b,
+	0x06, 0x75, 0xfc, 0xa6, 0x71, 0x27, 0x86, 0xdc, 0xb0, 0xa1, 0x7a, 0x13, 0x5b, 0x21, 0x7d, 0xdf,
+	0xb4, 0x72, 0xab, 0xf5, 0x13, 0x80, 0xe4, 0xe7, 0x2b, 0x56, 0x27, 0x4a, 0xde, 0x84, 0x6c, 0x60,
+	0xfd, 0xc5, 0xbf, 0x53, 0xe4, 0xcb, 0x48, 0xd1, 0x9b, 0x90, 0xec, 0xe9, 0xe5, 0x5f, 0xdf, 0x1e,
+	0x64, 0xbe, 0x7b, 0x7b, 0x90, 0xf9, 0xe7, 0xdb, 0x83, 0xcc, 0xef, 0xdf, 0x1d, 0x6c, 0x7c, 0xf7,
+	0xee, 0x60, 0xe3, 0xef, 0xef, 0x0e, 0x36, 0xa0, 0xe1, 0x07, 0x57, 0xc7, 0xe3, 0x97, 0xa3, 0xe9,
+	0x7c, 0x36, 0x7a, 0xe5, 0x05, 0xc7, 0x37, 0x97, 0xe1, 0xef, 0x82, 0xe7, 0x69, 0xd4, 0x0f, 0xae,
+	0x4e, 0x12, 0xf1, 0x07, 0x57, 0xfe, 0xc9, 0xcd, 0xe5, 0x89, 0xf8, 0x7f, 0xdd, 0x95, 0x7f, 0x22,
+	0xed, 0x2f, 0x8b, 0x42, 0xfe, 0xf2, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xaf, 0x15, 0xb9, 0x0e,
+	0x18, 0x14, 0x00, 0x00,
 }
 
 func (m *ContractId) Marshal() (dAtA []byte, err error) {
@@ -914,6 +1853,477 @@ func (m *ContractTransaction) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *Contract) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Contract) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Contract) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Address != nil {
+		{
+			size, err := m.Address.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintContract(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x52
+	}
+	if m.Creator != nil {
+		{
+			size, err := m.Creator.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintContract(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x4a
+	}
+	if m.CreateTime != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.CreateTime))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.UpdatePolicy != nil {
+		{
+			size, err := m.UpdatePolicy.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintContract(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.EndorsePolicy != nil {
+		{
+			size, err := m.EndorsePolicy.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintContract(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.Type != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.Type))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Status != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.RuntimeType != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.RuntimeType))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Version) > 0 {
+		i -= len(m.Version)
+		copy(dAtA[i:], m.Version)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.Version)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ContractList) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ContractList) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ContractList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Contracts) > 0 {
+		for iNdEx := len(m.Contracts) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Contracts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintContract(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Epoch) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Epoch) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Epoch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.NextEpochCreateHeight != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.NextEpochCreateHeight))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.ProposerVector) > 0 {
+		for iNdEx := len(m.ProposerVector) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.ProposerVector[iNdEx])
+			copy(dAtA[i:], m.ProposerVector[iNdEx])
+			i = encodeVarintContract(dAtA, i, uint64(len(m.ProposerVector[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.EpochID != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.EpochID))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Validator) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Validator) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Validator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.SelfDelegation) > 0 {
+		i -= len(m.SelfDelegation)
+		copy(dAtA[i:], m.SelfDelegation)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.SelfDelegation)))
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.UnbondingCompletionEpochID != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.UnbondingCompletionEpochID))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.UnbondingEpochID != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.UnbondingEpochID))
+		i--
+		dAtA[i] = 0x30
+	}
+	if len(m.DelegatorShares) > 0 {
+		i -= len(m.DelegatorShares)
+		copy(dAtA[i:], m.DelegatorShares)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.DelegatorShares)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Tokens) > 0 {
+		i -= len(m.Tokens)
+		copy(dAtA[i:], m.Tokens)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.Tokens)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Status != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Jailed {
+		i--
+		if m.Jailed {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.ValidatorAddress) > 0 {
+		i -= len(m.ValidatorAddress)
+		copy(dAtA[i:], m.ValidatorAddress)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.ValidatorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Delegation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Delegation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Delegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Shares) > 0 {
+		i -= len(m.Shares)
+		copy(dAtA[i:], m.Shares)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.Shares)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ValidatorAddress) > 0 {
+		i -= len(m.ValidatorAddress)
+		copy(dAtA[i:], m.ValidatorAddress)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.ValidatorAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DelegatorAddress) > 0 {
+		i -= len(m.DelegatorAddress)
+		copy(dAtA[i:], m.DelegatorAddress)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.DelegatorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *UnbondingDelegation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *UnbondingDelegation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *UnbondingDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Entries) > 0 {
+		for iNdEx := len(m.Entries) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Entries[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintContract(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.ValidatorAddress) > 0 {
+		i -= len(m.ValidatorAddress)
+		copy(dAtA[i:], m.ValidatorAddress)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.ValidatorAddress)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.DelegatorAddress) > 0 {
+		i -= len(m.DelegatorAddress)
+		copy(dAtA[i:], m.DelegatorAddress)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.DelegatorAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.EpochID) > 0 {
+		i -= len(m.EpochID)
+		copy(dAtA[i:], m.EpochID)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.EpochID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *UnbondingDelegationEntry) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *UnbondingDelegationEntry) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *UnbondingDelegationEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Amount) > 0 {
+		i -= len(m.Amount)
+		copy(dAtA[i:], m.Amount)
+		i = encodeVarintContract(dAtA, i, uint64(len(m.Amount)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.CompletionEpochID != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.CompletionEpochID))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.CreationEpochID != 0 {
+		i = encodeVarintContract(dAtA, i, uint64(m.CreationEpochID))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ValidatorVector) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ValidatorVector) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ValidatorVector) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Vector) > 0 {
+		for iNdEx := len(m.Vector) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Vector[iNdEx])
+			copy(dAtA[i:], m.Vector[iNdEx])
+			i = encodeVarintContract(dAtA, i, uint64(len(m.Vector[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DelegationInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DelegationInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DelegationInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Infos) > 0 {
+		for iNdEx := len(m.Infos) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Infos[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintContract(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintContract(dAtA []byte, offset int, v uint64) int {
 	offset -= sovContract(v)
 	base := offset
@@ -973,6 +2383,221 @@ func (m *ContractTransaction) Size() (n int) {
 	l = len(m.TxId)
 	if l > 0 {
 		n += 1 + l + sovContract(uint64(l))
+	}
+	return n
+}
+
+func (m *Contract) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	l = len(m.Version)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if m.RuntimeType != 0 {
+		n += 1 + sovContract(uint64(m.RuntimeType))
+	}
+	if m.Status != 0 {
+		n += 1 + sovContract(uint64(m.Status))
+	}
+	if m.Type != 0 {
+		n += 1 + sovContract(uint64(m.Type))
+	}
+	if m.EndorsePolicy != nil {
+		l = m.EndorsePolicy.Size()
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if m.UpdatePolicy != nil {
+		l = m.UpdatePolicy.Size()
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if m.CreateTime != 0 {
+		n += 1 + sovContract(uint64(m.CreateTime))
+	}
+	if m.Creator != nil {
+		l = m.Creator.Size()
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if m.Address != nil {
+		l = m.Address.Size()
+		n += 1 + l + sovContract(uint64(l))
+	}
+	return n
+}
+
+func (m *ContractList) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Contracts) > 0 {
+		for _, e := range m.Contracts {
+			l = e.Size()
+			n += 1 + l + sovContract(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *Epoch) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EpochID != 0 {
+		n += 1 + sovContract(uint64(m.EpochID))
+	}
+	if len(m.ProposerVector) > 0 {
+		for _, s := range m.ProposerVector {
+			l = len(s)
+			n += 1 + l + sovContract(uint64(l))
+		}
+	}
+	if m.NextEpochCreateHeight != 0 {
+		n += 1 + sovContract(uint64(m.NextEpochCreateHeight))
+	}
+	return n
+}
+
+func (m *Validator) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValidatorAddress)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if m.Jailed {
+		n += 2
+	}
+	if m.Status != 0 {
+		n += 1 + sovContract(uint64(m.Status))
+	}
+	l = len(m.Tokens)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	l = len(m.DelegatorShares)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if m.UnbondingEpochID != 0 {
+		n += 1 + sovContract(uint64(m.UnbondingEpochID))
+	}
+	if m.UnbondingCompletionEpochID != 0 {
+		n += 1 + sovContract(uint64(m.UnbondingCompletionEpochID))
+	}
+	l = len(m.SelfDelegation)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	return n
+}
+
+func (m *Delegation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DelegatorAddress)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	l = len(m.ValidatorAddress)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	l = len(m.Shares)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	return n
+}
+
+func (m *UnbondingDelegation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.EpochID)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	l = len(m.DelegatorAddress)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	l = len(m.ValidatorAddress)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	if len(m.Entries) > 0 {
+		for _, e := range m.Entries {
+			l = e.Size()
+			n += 1 + l + sovContract(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *UnbondingDelegationEntry) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CreationEpochID != 0 {
+		n += 1 + sovContract(uint64(m.CreationEpochID))
+	}
+	if m.CompletionEpochID != 0 {
+		n += 1 + sovContract(uint64(m.CompletionEpochID))
+	}
+	l = len(m.Amount)
+	if l > 0 {
+		n += 1 + l + sovContract(uint64(l))
+	}
+	return n
+}
+
+func (m *ValidatorVector) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Vector) > 0 {
+		for _, s := range m.Vector {
+			l = len(s)
+			n += 1 + l + sovContract(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *DelegationInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Infos) > 0 {
+		for _, e := range m.Infos {
+			l = e.Size()
+			n += 1 + l + sovContract(uint64(l))
+		}
 	}
 	return n
 }
@@ -1296,6 +2921,1411 @@ func (m *ContractTransaction) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.TxId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Contract) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Contract: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Contract: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Version = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RuntimeType", wireType)
+			}
+			m.RuntimeType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RuntimeType |= RuntimeType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= ContractStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			m.Type = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Type |= ContractType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndorsePolicy", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.EndorsePolicy == nil {
+				m.EndorsePolicy = &accesscontrol.Policy{}
+			}
+			if err := m.EndorsePolicy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdatePolicy", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.UpdatePolicy == nil {
+				m.UpdatePolicy = &accesscontrol.Policy{}
+			}
+			if err := m.UpdatePolicy.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreateTime", wireType)
+			}
+			m.CreateTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CreateTime |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Creator == nil {
+				m.Creator = &accesscontrol.SerializedMember{}
+			}
+			if err := m.Creator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Address == nil {
+				m.Address = &accesscontrol.SerializedMember{}
+			}
+			if err := m.Address.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ContractList) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ContractList: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ContractList: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Contracts", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Contracts = append(m.Contracts, &Contract{})
+			if err := m.Contracts[len(m.Contracts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Epoch) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Epoch: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Epoch: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochID", wireType)
+			}
+			m.EpochID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProposerVector", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProposerVector = append(m.ProposerVector, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NextEpochCreateHeight", wireType)
+			}
+			m.NextEpochCreateHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NextEpochCreateHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Validator) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Validator: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Validator: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Jailed", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Jailed = bool(v != 0)
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= BondStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tokens", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Tokens = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorShares", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DelegatorShares = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingEpochID", wireType)
+			}
+			m.UnbondingEpochID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UnbondingEpochID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingCompletionEpochID", wireType)
+			}
+			m.UnbondingCompletionEpochID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UnbondingCompletionEpochID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SelfDelegation", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SelfDelegation = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Delegation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Delegation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Delegation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DelegatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Shares", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Shares = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *UnbondingDelegation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UnbondingDelegation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UnbondingDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EpochID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DelegatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Entries", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Entries = append(m.Entries, &UnbondingDelegationEntry{})
+			if err := m.Entries[len(m.Entries)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *UnbondingDelegationEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UnbondingDelegationEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UnbondingDelegationEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreationEpochID", wireType)
+			}
+			m.CreationEpochID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CreationEpochID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CompletionEpochID", wireType)
+			}
+			m.CompletionEpochID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CompletionEpochID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Amount = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ValidatorVector) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ValidatorVector: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ValidatorVector: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Vector", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Vector = append(m.Vector, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipContract(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthContract
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DelegationInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowContract
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DelegationInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DelegationInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Infos", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowContract
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthContract
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthContract
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Infos = append(m.Infos, &Delegation{})
+			if err := m.Infos[len(m.Infos)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

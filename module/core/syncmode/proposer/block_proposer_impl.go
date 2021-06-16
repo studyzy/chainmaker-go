@@ -8,19 +8,22 @@ package proposer
 
 import (
 	"bytes"
+	"sync"
+	"time"
+
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	chainedbft "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
-	"time"
 )
 
 // BlockProposerImpl implements BlockProposer interface.
@@ -304,7 +307,8 @@ func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.B
 		bp.log.Warnf("generate new block failed, %s", err.Error())
 		return nil
 	}
-	bp.msgBus.Publish(msgbus.ProposedBlock, block)
+	_, rwSetMap, _ := bp.proposalCache.GetProposedBlock(block)
+	bp.msgBus.Publish(msgbus.ProposedBlock, &consensuspb.ProposalBlock{Block: block, TxsRwSet: rwSetMap})
 	//bp.log.Debugf("finalized block \n%s", utils.FormatBlock(block))
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
 	bp.log.Infof("proposer success [%d](txs:%d), time used(fetch:%d,dup:%d,vm:%v,total:%d)",
