@@ -185,6 +185,7 @@ func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Blo
 }
 
 func (impl *DPoSImpl) addBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
+	impl.log.Debugf("begin add balance ...")
 	before, err := impl.balanceOf(addr, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
@@ -195,6 +196,7 @@ func (impl *DPoSImpl) addBalanceRwSet(addr string, amount string, block *common.
 		return nil, fmt.Errorf("invalid amount: %s", amount)
 	}
 	after := before.Add(add, before)
+	impl.log.Debugf("end add balance ...")
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
@@ -203,10 +205,12 @@ func (impl *DPoSImpl) addBalanceRwSet(addr string, amount string, block *common.
 }
 
 func (impl *DPoSImpl) subBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
+	impl.log.Debugf("begin sub balance ...")
 	before, err := impl.balanceOf(addr, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
 	}
+	impl.log.Debugf("covert string to big.Int ...")
 	sub, ok := big.NewInt(0).SetString(amount, 10)
 	if !ok {
 		impl.log.Errorf("invalid amount: %s", amount)
@@ -217,6 +221,7 @@ func (impl *DPoSImpl) subBalanceRwSet(addr string, amount string, block *common.
 		return nil, fmt.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
 	}
 	after := before.Sub(before, sub)
+	impl.log.Debugf("end sub balance ...")
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
