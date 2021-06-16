@@ -525,7 +525,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 		kv, _ := iter.Value()
 		t.Logf("key:%s, value:%s\n", string(kv.Key), string(kv.Value))
 	}
-	assert.Equal(t, 3, count)
+	assert.Equal(t, 2, count)
 }
 
 func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {

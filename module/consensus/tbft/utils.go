@@ -8,10 +8,15 @@ package tbft
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	"encoding/base64"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/dpos"
+
+	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
+
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker-go/pb/protogo/config"
 
 	"chainmaker.org/chainmaker-go/logger"
 
@@ -19,6 +24,15 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"github.com/gogo/protobuf/proto"
 )
+
+func GetValidatorList(chainConfig *config.ChainConfig, store protocol.BlockchainStore) (validators []string, err error) {
+	if chainConfig.Consensus.Type == consensus.ConsensusType_TBFT {
+		return GetValidatorListFromConfig(chainConfig)
+	} else if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
+		return GetValidatorListFromLedger(store)
+	}
+	return nil, fmt.Errorf("unkonwn consensus type: %s", chainConfig.Consensus.Type)
+}
 
 func GetValidatorListFromConfig(chainConfig *config.ChainConfig) (validators []string, err error) {
 	nodes := chainConfig.Consensus.Nodes
@@ -30,11 +44,25 @@ func GetValidatorListFromConfig(chainConfig *config.ChainConfig) (validators []s
 	return validators, nil
 }
 
+func GetValidatorListFromLedger(store protocol.BlockchainStore) (validators []string, err error) {
+	epoch, err := dpos.GetLatestEpochInfo(store)
+	if err != nil {
+		return nil, err
+	}
+	nodeIDs, err := dpos.GetNodeIDsFromValidators(store, epoch.ProposerVector)
+	if err != nil {
+		return nil, err
+	}
+	return nodeIDs, nil
+}
+
 // VerifyBlockSignatures verifies whether the signatures in block
 // is qulified with the consensus algorithm. It should return nil
 // error when verify successfully, and return corresponding error
 // when failed.
-func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessControlProvider, block *common.Block) error {
+func VerifyBlockSignatures(chainConf protocol.ChainConf,
+	ac protocol.AccessControlProvider, block *common.Block, store protocol.BlockchainStore) error {
+
 	if block == nil || block.Header == nil || block.Header.BlockHeight < 0 ||
 		block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return fmt.Errorf("invalid block")
@@ -55,7 +83,7 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 		return err
 	}
 
-	validators, err := GetValidatorListFromConfig(chainConfig)
+	validators, err := GetValidatorList(chainConfig, store)
 	if err != nil {
 		return err
 	}

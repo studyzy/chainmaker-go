@@ -89,10 +89,16 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.CallContractLen()
 		case protocol.ContractMethodEmitEvent:
 			return s.EmitEvent()
+		// paillier
 		case protocol.ContractMethodGetPaillierOperationResultLen:
 			return s.GetPaillierResultLen()
 		case protocol.ContractMethodGetPaillierOperationResult:
 			return s.GetPaillierResult()
+		// bulletproofs
+		case protocol.ContractMethodGetBulletproofsResultLen:
+			return s.GetBulletProofsResultLen()
+		case protocol.ContractMethodGetBulletproofsResult:
+			return s.GetBulletProofsResult()
 		// kv
 		case protocol.ContractMethodGetStateLen:
 			return s.GetStateLen()
@@ -139,6 +145,26 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 		}
 		return protocol.ContractSdkSignalResultFail
 	})
+}
+
+// GetBulletProofsResultLen get bulletproofs operation result length from chain
+func (s *WaciInstance) GetBulletProofsResultLen() int32 {
+	return s.getBulletProofsResultCore(true)
+}
+
+// GetBulletProofsResult get bulletproofs operation result from chain
+func (s *WaciInstance) GetBulletProofsResult() int32 {
+	return s.getBulletProofsResultCore(false)
+}
+
+func (s *WaciInstance) getBulletProofsResultCore(isLen bool) int32 {
+	data, err := wacsi.BulletProofsOperation(s.RequestBody, s.Vm.Memory, s.GetStateCache, isLen)
+	s.GetStateCache = data // reset data
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 // EmitEvent emit event to chain
