@@ -15,6 +15,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
 	"chainmaker.org/chainmaker-go/common/serialize"
@@ -53,6 +54,7 @@ type Wacsi interface {
 
 	// kv iterator
 	KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
+	KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
 	KvIteratorHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
 	KvIteratorNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, contractName string, isLen bool) ([]byte, error)
 	KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
@@ -275,6 +277,34 @@ func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimCon
 	return nil
 }
 
+func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	startKey, _ := ec.GetString("start_key")
+	startField, _ := ec.GetString("start_field")
+	limitKey, _ := ec.GetString("limit_key")
+	limitField, _ := ec.GetString("limit_field")
+	valuePtr, _ := ec.GetInt32("value_ptr")
+	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil { //加判断
+		return err
+	}
+	//if err := protocol.CheckKeyFieldStr(limitKey, limitField); err != nil { //加判断
+	//	return err
+	//}
+
+	key := protocol.GetKeyStr(startKey, startField)
+	limit := protocol.GetKeyStr(limitKey, limitField)
+	iter, err := txSimContext.Select(contractName, key, limit)
+	if err != nil {
+		return fmt.Errorf("ctx query error, %s", err.Error())
+	}
+
+	index := atomic.AddInt32(&w.rowIndex, 1)
+	txSimContext.SetStateKvHandle(index, iter)
+	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(index))
+	return nil
+}
+
+
 func (*WacsiImpl) KvIteratorHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	kvIndex, _ := ec.GetInt32("rs_index")
@@ -316,9 +346,18 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 		if err != nil {
 			return nil, fmt.Errorf("ctx iterator next data error, %s", err.Error())
 		}
-		key := parseStateKey(kvRow.Key, contractname)
+		keyField := string(parseStateKey(kvRow.Key, contractname))
 		value := kvRow.Value
-		ec.AddString("key", string(key))
+
+		arrKey := strings.Split(keyField, "#")
+		key := arrKey[0]
+		field := ""
+		if len(arrKey)>1 {
+			field=arrKey[1]
+		}
+
+		ec.AddString("key", key)
+		ec.AddString("field",field)
 		ec.AddBytes("value", value)
 	}
 	kvBytes := ec.Marshal()
