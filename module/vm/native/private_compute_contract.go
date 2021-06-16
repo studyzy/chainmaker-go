@@ -517,10 +517,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
-	rwb, err := hex.DecodeString(params["rw_set"])
-	if err != nil {
-		return nil, err
-	}
+	rwb := []byte(params["rw_set"])
 	r.log.Debug("rwset bytes: ", rwb)
 	var rwSet commonPb.TxRWSet
 	if err := rwSet.Unmarshal(rwb); err != nil {
@@ -601,8 +598,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	}
 
 	fullCodes := make([]byte, len(headerCode) + len(contractCode))
-	fullCodes = append(fullCodes, headerCode...)
-	fullCodes = append(fullCodes, contractCode...)
+	copy(fullCodes, headerCode)
+	copy(fullCodes[len(headerCode):], contractCode)
 
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
