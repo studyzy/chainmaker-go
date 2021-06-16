@@ -1,7 +1,6 @@
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -31,9 +30,8 @@ func prove() error {
 	}
 	commitmentStr := ""
 	proofStr := ""
-
 	if openingStr == "" {
-		proof, commitment, opening, err := bulletproofs.ProveRandomOpening(uint64(valueX))
+		proof, commitment, opening, err := bulletproofsImpl.ProveRandomOpening(uint64(valueX))
 		if err != nil {
 			return err
 		}
@@ -45,7 +43,7 @@ func prove() error {
 		if err != nil {
 			return err
 		}
-		proof, commitment, err := bulletproofs.ProveSpecificOpening(uint64(valueX), opening)
+		proof, commitment, err := bulletproofsImpl.ProveSpecificOpening(uint64(valueX), opening)
 		if err != nil {
 			return err
 		}
