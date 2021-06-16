@@ -200,7 +200,8 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	fullCodes = append(fullCodes, code...)
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
-		err := fmt.Errorf("%s, param[code_hash] != codeHash of param[contract_code] in save contract interface", ErrParams.Error())
+		err := fmt.Errorf("%s, param[code_hash] %v != calculated hash of codes: %v, full codes: %v",
+			ErrParams.Error(), codeHash, calHash, fullCodes)
 		r.log.Errorf(err.Error())
 		return err
 	}
