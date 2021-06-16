@@ -515,7 +515,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		err := fmt.Errorf(
 			"%s, param[contract_name]=%s, params[version]=%s, param[code_hash]=%s, param[report_hash]=%s, "+
 				"params[user_cert]=%s, params[client_sign]=%s, params[payload]=%s, params[org_id]=%s,",
-			ErrParams.Error(), name, version, codeHash, reportHash, userCert, clientSign, payload, orgId)
+			ErrParams.Error(), name, version, codeHash, reportHash, userCert, clientSign, requestBytes, orgId)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -563,7 +563,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(clientSign))
 	evmResultBuffer.Write([]byte(orgId))
 	evmResultBuffer.Write(requestBytes)
-	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["report_sign"]), &crypto.SignOpts{
+	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["sign"]), &crypto.SignOpts{
 		Hash:         crypto.HASH_TYPE_SHA256,
 		UID:          "",
 		EncodingType: rsa.RSA_PSS,
