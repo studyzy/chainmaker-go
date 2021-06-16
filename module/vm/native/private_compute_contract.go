@@ -200,8 +200,8 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	fullCodes = append(fullCodes, code...)
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
-		err := fmt.Errorf("%s, param[code_hash] %v != calculated hash of codes: %v, full codes: %v",
-			ErrParams.Error(), codeHash, calHash, fullCodes)
+		err := fmt.Errorf("%s, param[code_hash] %x != calculated hash of codes: %x, full codes: %x",
+			ErrParams.Error(), []byte(codeHash), calHash, fullCodes)
 		r.log.Errorf(err.Error())
 		return err
 	}
@@ -434,6 +434,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	isDeployStr := params["is_deploy"]
 	codeHeader := params["code_header"]
 	cRes := []byte(params["result"])
+	r.log.Debugf("save data received code header len: %d, code header: %x", len(codeHeader), []byte(codeHeader))
 	var result commonPb.ContractResult
 	if err := result.Unmarshal(cRes); err != nil {
 		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
