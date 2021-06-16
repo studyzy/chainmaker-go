@@ -196,8 +196,8 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	}
 
 	fullCodes := make([]byte, len(codeHeader) + len(code))
-	fullCodes = append(fullCodes, codeHeader...)
-	fullCodes = append(fullCodes, code...)
+	copy(fullCodes, codeHeader)
+	copy(fullCodes[len(codeHeader):], code)
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
 		err := fmt.Errorf("%s, param[code_hash] %x != calculated hash of codes: %x, full codes: %x",
