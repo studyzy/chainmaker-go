@@ -169,6 +169,7 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
+	methodMap[commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
 	return methodMap
 }
 
@@ -727,6 +728,17 @@ func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, p
 	}
 	amount := decodeUint64FromBigEndian(bz)
 	return []byte(strconv.Itoa(int(amount))), nil
+}
+
+// ReadEpochBlockNumber() string				// 读取世代的出块数量
+// return string
+func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	num, err := getUnbondingEpochNumber(context)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("%d", num)), nil
 }
 
 // UpdateEpochBlockNumber() bool				// 更新世代的出块数量
