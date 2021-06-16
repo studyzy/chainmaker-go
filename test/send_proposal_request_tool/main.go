@@ -242,6 +242,9 @@ func main() {
 	//paillier
 	mainCmd.AddCommand(PaillierCMD())
 
+	// bulletproofs
+	mainCmd.AddCommand(BulletproofsCMD())
+
 	mainCmd.Execute()
 
 	if conn != nil {

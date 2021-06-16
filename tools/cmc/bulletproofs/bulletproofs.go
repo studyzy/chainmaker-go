@@ -1,8 +1,12 @@
 package bulletproofs
 
-import "github.com/spf13/cobra"
+import (
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
+	"github.com/spf13/cobra"
+)
 
 var (
+	bulletproofsImpl = bulletproofs.Helper().NewBulletproofs()
 	// genOpeningCMD flags
 	// proveCMD flags
 	openingStr string

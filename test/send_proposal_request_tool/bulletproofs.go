@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	// genOpeningCMD flags
+	bulletproofsImpl = bulletproofs.Helper().NewBulletproofs()
 
 	// proveCMD flags
 	openingStr string
@@ -69,7 +69,8 @@ func genOpeningCMD() *cobra.Command {
 }
 
 func genOpening() error {
-	opening, err := bulletproofs.PedersenRNG()
+
+	opening, err := bulletproofsImpl.PedersenRNG()
 	if err != nil {
 		return err
 	}
@@ -103,9 +104,8 @@ func prove() error {
 	}
 	commitmentStr := ""
 	proofStr := ""
-
 	if openingStr == "" {
-		proof, commitment, opening, err := bulletproofs.ProveRandomOpening(uint64(valueX))
+		proof, commitment, opening, err := bulletproofsImpl.ProveRandomOpening(uint64(valueX))
 		if err != nil {
 			return err
 		}
@@ -117,7 +117,7 @@ func prove() error {
 		if err != nil {
 			return err
 		}
-		proof, commitment, err := bulletproofs.ProveSpecificOpening(uint64(valueX), opening)
+		proof, commitment, err := bulletproofsImpl.ProveSpecificOpening(uint64(valueX), opening)
 		if err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func proveHandFunc() error {
 }
 
 func proveAfterAddNum(commitmentX, openingX []byte) error {
-	proof, commitment, err := bulletproofs.ProveAfterAddNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
+	proof, commitment, err := bulletproofsImpl.ProveAfterAddNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofs.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofsImpl.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterSubNum(commitmentX, openingX []byte) error {
-	proof, commitment, err := bulletproofs.ProveAfterSubNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, err := bulletproofsImpl.ProveAfterSubNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
 	if err != nil {
 		return err
 	}
@@ -258,7 +258,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofs.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofsImpl.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterMulNum(commitmentX, openingX []byte) error {
-	proof, commitment, opening, err := bulletproofs.ProveAfterMulNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, opening, err := bulletproofsImpl.ProveAfterMulNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
 	if err != nil {
 		return err
 	}
@@ -319,7 +319,7 @@ func pedersenVerify() error {
 		return err
 	}
 
-	ok, err := bulletproofs.PedersenVerify(commitment, opening, uint64(valueX))
+	ok, err := bulletproofsImpl.PedersenVerify(commitment, opening, uint64(valueX))
 	if err != nil {
 		return err
 	}
@@ -426,7 +426,7 @@ func openingHandleFunc() error {
 			return err
 		}
 
-		opening, err = bulletproofs.PedersenAddOpening(openingX, openingY)
+		opening, err = bulletproofsImpl.PedersenAddOpening(openingX, openingY)
 	case "PedersenSubOpening":
 		if openingYStr == "" {
 			return errors.New("invalid input, please check it")
@@ -436,12 +436,12 @@ func openingHandleFunc() error {
 			return err
 		}
 
-		opening, err = bulletproofs.PedersenSubOpening(openingX, openingY)
+		opening, err = bulletproofsImpl.PedersenSubOpening(openingX, openingY)
 	case "PedersenMulOpening":
 		if valueX == -1 {
 			return errors.New("invalid input, please check it")
 		}
-		opening, err = bulletproofs.PedersenMulOpening(openingX, uint64(valueX))
+		opening, err = bulletproofsImpl.PedersenMulOpening(openingX, uint64(valueX))
 	default:
 		return errors.New("method mismatch")
 	}
@@ -476,19 +476,19 @@ func pedersenCommitmentHandleFunc() error {
 		}
 		openingY, err = base64.StdEncoding.DecodeString(openingYStr)
 		commitmentY, err = base64.StdEncoding.DecodeString(commitmentYStr)
-		commitment, opening, err = bulletproofs.PedersenAddCommitmentWithOpening(commitmentX, commitmentY, openingX, openingY)
+		commitment, opening, err = bulletproofsImpl.PedersenAddCommitmentWithOpening(commitmentX, commitmentY, openingX, openingY)
 	case "PedersenSubCommitmentWithOpening":
 		if openingYStr == "" || commitmentYStr == "" {
 			return errors.New("invalid input, please check it")
 		}
 		openingY, err = base64.StdEncoding.DecodeString(openingYStr)
 		commitmentY, err = base64.StdEncoding.DecodeString(commitmentYStr)
-		commitment, opening, err = bulletproofs.PedersenSubCommitmentWithOpening(commitmentX, commitmentY, openingX, openingY)
+		commitment, opening, err = bulletproofsImpl.PedersenSubCommitmentWithOpening(commitmentX, commitmentY, openingX, openingY)
 	case "PedersenMulNumWithOpening":
 		if openingXStr == "" || openingYStr == "" || commitmentXStr == "" || commitmentYStr == "" {
 			return errors.New("invalid input, please check it")
 		}
-		commitment, opening, err = bulletproofs.PedersenMulNumWithOpening(commitmentX, openingX, uint64(valueX))
+		commitment, opening, err = bulletproofsImpl.PedersenMulNumWithOpening(commitmentX, openingX, uint64(valueX))
 	default:
 		return errors.New("method mismatch")
 	}
@@ -510,7 +510,7 @@ func pedersenNeg() error {
 			return err
 		}
 
-		neg, err := bulletproofs.PedersenNeg(commitment)
+		neg, err := bulletproofsImpl.PedersenNeg(commitment)
 		if err != nil {
 			return err
 		}
@@ -526,7 +526,7 @@ func pedersenNeg() error {
 			return err
 		}
 
-		neg, err := bulletproofs.PedersenNegOpening(opening)
+		neg, err := bulletproofsImpl.PedersenNegOpening(opening)
 		if err != nil {
 			return err
 		}
