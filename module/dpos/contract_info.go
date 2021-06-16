@@ -134,13 +134,14 @@ func (impl *DPoSImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 	prefix := native.ToUnbondingDelegationPrefix(epoch.EpochID)
 	iterRange := util.BytesPrefix(prefix)
+	impl.log.Debugf("begin select in completeUnbounding")
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("new select range failed, reason: %s", err)
 		return nil, err
 	}
 	defer iter.Release()
-
+	impl.log.Debugf("begin iter in completeUnbounding")
 	undelegations := make([]*commonpb.UnbondingDelegation, 0, 10)
 	for iter.Next() {
 		kv, err := iter.Value()
@@ -155,10 +156,13 @@ func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Blo
 		}
 		undelegations = append(undelegations, &undelegation)
 	}
+
 	rwSet := &commonpb.TxRWSet{
 		TxId: ModuleName,
 	}
+	impl.log.Debugf("begin create rwSet in completeUnbounding")
 	for _, undelegation := range undelegations {
+		impl.log.Debugf("unbounding entry: %s", undelegation.String())
 		for _, entry := range undelegation.Entries {
 			wSet, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, entry.Amount, block, blockTxRwSet)
 			if err != nil {
@@ -173,6 +177,10 @@ func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Blo
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
 		}
 	}
+	if len(rwSet.TxWrites) > 0 {
+		impl.log.Debugf("unbounding rwSet: %s", rwSet.String())
+	}
+	impl.log.Debugf("end in completeUnbounding ...")
 	return rwSet, nil
 }
 
