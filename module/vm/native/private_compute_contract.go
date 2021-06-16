@@ -455,7 +455,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	var signPairs []*commonPb.SignInfo
 	var orgIds []string
 	var payloadBytes []byte
-	r.log.Debugf("Sava data params: %v, isDeploy: %v", params, isDeploy)
+	//r.log.Debugf("Deploy request bytes: %v, isDeploy: %v", params[], isDeploy)
 	if isDeploy {
 		deployReq, err := r.getDeployRequest(params)
 		if err != nil {
@@ -1207,9 +1207,9 @@ func (r *PrivateComputeRuntime) getPrivateRequest(params map[string]string) (*co
 		return nil, err
 	}
 
-	privateReqBytes, err := hex.DecodeString(privateReq)
+	//privateReqBytes, err := hex.DecodeString(privateReq)
 	req := &commonPb.PrivateComputeRequest{}
-	if err := req.Unmarshal(privateReqBytes); err != nil {
+	if err := req.Unmarshal([]byte(privateReq)); err != nil {
 		return nil, err
 	}
 
@@ -1222,9 +1222,9 @@ func (r *PrivateComputeRuntime) getDeployRequest(params map[string]string) (*com
 		return nil, err
 	}
 
-	deployReqBytes, err := hex.DecodeString(deployReq)
+	//deployReqBytes, err := hex.DecodeString(deployReq)
 	req := &commonPb.PrivateDeployRequest{}
-	if err := req.Unmarshal(deployReqBytes); err != nil {
+	if err := req.Unmarshal([]byte(deployReq)); err != nil {
 		return nil, err
 	}
 
