@@ -127,16 +127,19 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 		return nil, timeLasts, fmt.Errorf("no txs in scheduled block, proposing block ends")
 	}
 
+	finalizeStartTick := utils.CurrentTimeMillisSeconds()
 	err = FinalizeBlock(
 		block,
 		txRWSetMap,
 		aclFailTxs,
 		bb.chainConf.ChainConfig().Crypto.Hash,
 		bb.log)
+	finalizeLasts := utils.CurrentTimeMillisSeconds() - finalizeStartTick
 	if err != nil {
 		return nil, timeLasts, fmt.Errorf("finalizeBlock block(%d,%s) error %s",
 			block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash), err)
 	}
+	timeLasts = append(timeLasts, finalizeLasts)
 	// get txs schedule timeout and put back to txpool
 	var txsTimeout = make([]*commonpb.Transaction, 0)
 	if len(txRWSetMap) < len(txBatch) {
