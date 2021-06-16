@@ -52,6 +52,13 @@ const (
 	keyRevNodeFormat        = "NR/%s"
 )
 
+const (
+	defaultDPoSMinSelfDelegation            = "250000000000000000000000"
+	defaultDPoSEpochBlockNumber             = 1000
+	defaultDPoSEpochValidatorNumber         = 4
+	defaultDPoSCompletionUnboundingEpochNum = 1
+)
+
 // CreateGenesis create genesis block (with read-write set) based on chain config
 func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWSet, error) {
 	var (
@@ -602,6 +609,22 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 	}
 	if len(config.nodeIDs) != len(config.candidates) {
 		return nil, fmt.Errorf("config nodeIDs and candidates not matched, nodeIDs num: %d, candidates: %d ", len(config.nodeIDs), len(config.candidates))
+	}
+	if len(config.minSelfDelegation) == 0 {
+		config.minSelfDelegation = defaultDPoSMinSelfDelegation
+	}
+	if config.eachEpochNum == 0 {
+		config.eachEpochNum = defaultDPoSEpochBlockNumber
+	}
+	if config.unbondingEpochNum == 0 {
+		config.unbondingEpochNum = defaultDPoSCompletionUnboundingEpochNum
+	}
+	if config.validatorNum == 0 {
+		config.validatorNum = defaultDPoSEpochValidatorNumber
+	}
+	if len(config.candidates) < int(config.validatorNum) {
+		return nil, fmt.Errorf("The number of candidates[%d] is less than "+
+			"the required number of validator[%d] ", len(config.candidates), config.validatorNum)
 	}
 	return config, nil
 }
