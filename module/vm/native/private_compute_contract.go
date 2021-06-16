@@ -429,7 +429,6 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	reportHash := params["report_hash"]
 	userCert := params["user_cert"]
 	clientSign := params["client_sign"]
-	payload := params["payload"]
 	orgId := params["org_id"]
 	isDeployStr := params["is_deploy"]
 	codeHeader := params["code_header"]
@@ -457,8 +456,10 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	var signPairs []*commonPb.SignInfo
 	var orgIds []string
 	var payloadBytes []byte
+	var requestBytes []byte
 	//r.log.Debugf("Deploy request bytes: %v, isDeploy: %v", params[], isDeploy)
 	if isDeploy {
+		requestBytes = []byte(params["deploy_req"])
 		deployReq, err := r.getDeployRequest(params)
 		if err != nil {
 			err := fmt.Errorf("get private deploy request from params failed, err: %v", err)
@@ -475,6 +476,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 			return nil, err
 		}
 	} else {
+		requestBytes = []byte(params["private_req"])
 		req, err := r.getPrivateRequest(params)
 		if err != nil {
 			err := fmt.Errorf("get private compute request from params failed, err: %v", err)
@@ -560,7 +562,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	evmResultBuffer.Write([]byte(userCert))
 	evmResultBuffer.Write([]byte(clientSign))
 	evmResultBuffer.Write([]byte(orgId))
-	evmResultBuffer.Write([]byte(payload))
+	evmResultBuffer.Write(requestBytes)
 	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["report_sign"]), &crypto.SignOpts{
 		Hash:         crypto.HASH_TYPE_SHA256,
 		UID:          "",
