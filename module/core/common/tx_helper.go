@@ -199,7 +199,6 @@ func NewVerifierTx(conf *VerifierTxConfig) *VerifierTx {
 // include if transaction is double spent, transaction signature
 func (vt *VerifierTx) verifierTxs(block *commonpb.Block) (txHashes [][]byte, txNewAdd []*commonpb.Transaction, errTxs []*commonpb.Transaction, err error) {
 
-	vt.log.Debugf("verifier Txs... height[%d], TxNum[%d]", block.Header.BlockHeight, len(block.Txs))
 	verifyBatchs := utils.DispatchTxVerifyTask(block.Txs)
 	resultTasks := make(map[int]VerifyBlockBatch)
 	stats := make(map[int]*VerifyStat)
