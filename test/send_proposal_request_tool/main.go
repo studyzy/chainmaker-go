@@ -262,6 +262,9 @@ func main() {
 	mainCmd.AddCommand(StakeGetDelegationsByAddress())
 	mainCmd.AddCommand(StakeGetDelegationByValidator())
 
+	// bulletproofs
+	mainCmd.AddCommand(BulletproofsCMD())
+
 	mainCmd.Execute()
 
 	if conn != nil {

@@ -1,7 +1,6 @@
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -45,7 +44,7 @@ func pedersenVerify() error {
 		return err
 	}
 
-	ok, err := bulletproofs.PedersenVerify(commitment, opening, uint64(valueX))
+	ok, err := bulletproofsImpl.PedersenVerify(commitment, opening, uint64(valueX))
 	if err != nil {
 		return err
 	}
