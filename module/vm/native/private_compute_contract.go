@@ -194,10 +194,11 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 		r.log.Errorf(err.Error())
 		return err
 	}
-
-	fullCodes := make([]byte, len(codeHeader) + len(code))
+	headerLen := len(codeHeader);
+	fullCodes := make([]byte, headerLen + len(code))
 	copy(fullCodes, codeHeader)
-	copy(fullCodes[len(codeHeader):], code)
+	copy(fullCodes[headerLen:], code)
+
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
 		err := fmt.Errorf("%s, param[code_hash] %x != calculated hash of codes: %x, full codes: %x",
@@ -376,9 +377,10 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	fullCodes := make([]byte, len(headerCode) + len(contractCode))
-	fullCodes = append(fullCodes, headerCode...)
-	fullCodes = append(fullCodes, contractCode...)
+	headerLen := len(headerCode);
+	fullCodes := make([]byte, headerLen + len(contractCode))
+	copy(fullCodes, headerCode)
+	copy(fullCodes[headerLen:], contractCode)
 
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codehash {
@@ -599,9 +601,10 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	fullCodes := make([]byte, len(headerCode) + len(contractCode))
+	headerLen := len(headerCode);
+	fullCodes := make([]byte, headerLen + len(contractCode))
 	copy(fullCodes, headerCode)
-	copy(fullCodes[len(headerCode):], contractCode)
+	copy(fullCodes[headerLen:], contractCode)
 
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
