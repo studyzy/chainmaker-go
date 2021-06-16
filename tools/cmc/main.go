@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
@@ -35,6 +36,7 @@ func main() {
 	mainCmd.AddCommand(archive.NewArchiveCMD())
 	mainCmd.AddCommand(query.NewQueryOnChainCMD())
 	mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
+	mainCmd.AddCommand(bulletproofs.BulletproofsCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

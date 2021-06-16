@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
@@ -19,16 +20,16 @@ type TxSchedulerFactory struct {
 }
 
 // NewTxScheduler building a transaction scheduler
-func (sf TxSchedulerFactory) NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) protocol.TxScheduler {
+func (sf TxSchedulerFactory) NewTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf, storeHelper conf.StoreHelper) protocol.TxScheduler {
 	if chainConf.ChainConfig().Scheduler != nil && chainConf.ChainConfig().Scheduler.EnableEvidence {
-		return newTxSchedulerEvidence(vmMgr, chainConf)
+		return newTxSchedulerEvidence(vmMgr, chainConf, storeHelper)
 	} else {
-		return newTxScheduler(vmMgr, chainConf)
+		return newTxScheduler(vmMgr, chainConf, storeHelper)
 	}
 }
 
 // newTxScheduler building a regular transaction scheduler
-func newTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxScheduler {
+func newTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf, storeHelper conf.StoreHelper) *TxScheduler {
 	log := logger.GetLoggerByChain(logger.MODULE_CORE, chainConf.ChainConfig().ChainId)
 	log.Debugf("use the common TxScheduler.")
 	var TxScheduler = &TxScheduler{
@@ -37,6 +38,7 @@ func newTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxS
 		scheduleFinishC: make(chan bool),
 		log:             log,
 		chainConf:       chainConf,
+		StoreHelper:     storeHelper,
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		TxScheduler.metricVMRunTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER_SCHEDULER, "metric_vm_run_time",
@@ -46,7 +48,7 @@ func newTxScheduler(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxS
 }
 
 // newTxSchedulerEvidence building a evidence transaction scheduler
-func newTxSchedulerEvidence(vmMgr protocol.VmManager, chainConf protocol.ChainConf) *TxSchedulerEvidence {
+func newTxSchedulerEvidence(vmMgr protocol.VmManager, chainConf protocol.ChainConf, storeHelper conf.StoreHelper) *TxSchedulerEvidence {
 	log := logger.GetLoggerByChain(logger.MODULE_CORE, chainConf.ChainConfig().ChainId)
 	log.Debugf("use the evidence TxScheduler.")
 	TxSchedulerEvidence := &TxSchedulerEvidence{
@@ -56,6 +58,7 @@ func newTxSchedulerEvidence(vmMgr protocol.VmManager, chainConf protocol.ChainCo
 			scheduleFinishC: make(chan bool),
 			log:             log,
 			chainConf:       chainConf,
+			StoreHelper:     storeHelper,
 		},
 	}
 
