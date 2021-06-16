@@ -233,7 +233,7 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 				return err
 			}
 		} else {
-			// TODO: record sql rw
+			// nothing sql rw record in result db
 		}
 	} else {
 		stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
@@ -374,7 +374,7 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 	s.Lock()
 	defer s.Unlock()
 	db := s.getContractDbHandle(contractName)
-	sql := "select * from state_infos where object_key between ? and ?"
+	sql := "select * from state_infos where object_key >= ? and object_key  < ?"
 	rows, err := db.QueryMulti(sql, startKey, limit)
 	if err != nil {
 		return nil, err
