@@ -166,8 +166,8 @@ func GetKeyStr(key string, field string) []byte {
 func GetKey(key []byte, field []byte) []byte {
 	var buf bytes.Buffer
 	buf.Write(key)
-	buf.Write([]byte(ContractStoreSeparator))
 	if len(field) > 0 {
+		buf.Write([]byte(ContractStoreSeparator))
 		buf.Write(field)
 	}
 	return buf.Bytes()
