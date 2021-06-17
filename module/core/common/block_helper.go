@@ -721,9 +721,6 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 				}
 			}
 		}
-		if panicErr != nil {
-			panic(panicErr)
-		}
 	}()
 
 	startTick := utils.CurrentTimeMillisSeconds()

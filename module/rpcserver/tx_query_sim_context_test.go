@@ -53,7 +53,7 @@ func TestTxQuerySimContext(t *testing.T) {
 	require.Equal(t, string(v2), "V3")
 	require.Equal(t, string(v3), "V1")
 
-	set := txSimContextImpl.GetTxRWSet()
+	set := txSimContextImpl.GetTxRWSet(true)
 	require.Equal(t, len(set.TxWrites), 3)
 	require.Equal(t, len(set.TxReads), 3)
 
