@@ -39,6 +39,7 @@ const (
 	EventDataMaxCount = 16
 
 	ContractKey            = ":K:"
+	ContractByteHeader     = ":H:"
 	ContractByteCode       = ":B:"
 	ContractVersion        = ":V:"
 	ContractRuntimeType    = ":R:"
