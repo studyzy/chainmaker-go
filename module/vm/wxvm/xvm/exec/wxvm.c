@@ -119,9 +119,8 @@ static void wasm_rt_allocate_memory(void* context,
   memory->max_pages = max_pages;
   memory->size = initial_pages * PAGE_SIZE;
   if (memory->size != 0) {
-    //memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     memory->data = (uint8_t*)malloc(memory->size);
-//    if (memory->data == MAP_FAILED) {
+    memset( memory->data,0,memory->size);
     if (memory->data == NULL) {
       wxvm_raise(TRAP_NO_MEMORY);
     }
@@ -131,8 +130,8 @@ static void wasm_rt_allocate_memory(void* context,
 }
 
 static void wasm_rt_free_memory(wasm_rt_memory_t* mem) {
-  //munmap(mem->data, mem->size);
   free(mem->data);
+  mem->data=NULL;
 }
 
 static uint32_t wasm_rt_grow_memory(void* context, wasm_rt_memory_t* memory, uint32_t delta) {
@@ -162,6 +161,7 @@ static void wasm_rt_allocate_table(void* context,
   table->max_size = max_elements;
   if (table->size != 0) {
     table->data = wxvm_malloc(table->size*sizeof(wasm_rt_elem_t));
+    memset(table->data,0,table->size*sizeof(wasm_rt_elem_t));
   }
   wxvm_context_t* ctx = context;
   ctx->table = table;
@@ -364,4 +364,5 @@ static void* wxvm_realloc(void* ptr, size_t size) {
 
 static void wxvm_free(void* ptr) {
   free(ptr);
+  ptr=NULL;
 }
