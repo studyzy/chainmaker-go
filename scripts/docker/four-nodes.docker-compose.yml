@@ -4,7 +4,7 @@ services:
   node1:
     container_name: cm-node1
     hostname: cm-node1
-    image: "chainmaker:v1.2.0"
+    image: "chainmaker:v1.2.1"
     restart: always
     working_dir: "/chainmaker-go/bin"
     command: "./chainmaker start -c ../config/wx-org1.chainmaker.org/chainmaker.yml > panic.log"
@@ -22,7 +22,7 @@ services:
   node2:
     container_name: cm-node2
     hostname: cm-node2
-    image: "chainmaker:v1.2.0"
+    image: "chainmaker:v1.2.1"
     restart: always
     working_dir: "/chainmaker-go/bin"
     command: "./chainmaker start -c ../config/wx-org2.chainmaker.org/chainmaker.yml > panic.log"
@@ -40,7 +40,7 @@ services:
   node3:
     container_name: cm-node3
     hostname: cm-node3
-    image: "chainmaker:v1.2.0"
+    image: "chainmaker:v1.2.1"
     restart: always
     working_dir: "/chainmaker-go/bin"
     command: "./chainmaker start -c ../config/wx-org3.chainmaker.org/chainmaker.yml > panic.log"
@@ -58,7 +58,7 @@ services:
   node4:
     container_name: cm-node4
     hostname: cm-node4
-    image: "chainmaker:v1.2.0"
+    image: "chainmaker:v1.2.1"
     restart: always
     working_dir: "/chainmaker-go/bin"
     command: "./chainmaker start -c ../config/wx-org4.chainmaker.org/chainmaker.yml > panic.log"
