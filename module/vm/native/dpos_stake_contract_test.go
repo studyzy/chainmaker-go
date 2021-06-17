@@ -2,6 +2,7 @@ package native
 
 import (
 	"github.com/stretchr/testify/require"
+	"sort"
 	"testing"
 )
 
@@ -71,4 +72,11 @@ func TestDPosStakeRuntime_GetAllValidator(t *testing.T) {
 
 func TestDPosStakeRuntime_Delegate(t *testing.T) {
 
+}
+
+
+func TestSortCollections(t *testing.T) {
+	c := Collections{"1", "2", "3", "400000000000000", "50000000000"}
+	sort.Sort(c)
+	require.Equal(t, c, Collections{"400000000000000", "50000000000", "3", "2", "1"})
 }
