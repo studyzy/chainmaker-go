@@ -11,7 +11,7 @@ import (
 )
 
 // CreateChainClientWithSDKConf create a chain client with sdk config file path
-func CreateChainClientWithSDKConf(sdkConfPath string) (*sdk.ChainClient, error) {
+func CreateChainClientWithSDKConf(sdkConfPath, chainId string) (*sdk.ChainClient, error) {
 	logger, _ := log.InitSugarLogger(&log.LogConfig{
 		Module:       "[SDK]",
 		LogPath:      "./sdk.log",
@@ -22,10 +22,23 @@ func CreateChainClientWithSDKConf(sdkConfPath string) (*sdk.ChainClient, error) 
 		LogInConsole: true,
 	})
 
-	cc, err := sdk.NewChainClient(
-		sdk.WithConfPath(sdkConfPath),
-		sdk.WithChainClientLogger(logger),
+	var (
+		cc  *sdk.ChainClient
+		err error
 	)
+
+	if chainId != "" {
+		cc, err = sdk.NewChainClient(
+			sdk.WithConfPath(sdkConfPath),
+			sdk.WithChainClientLogger(logger),
+			sdk.WithChainClientChainId(chainId),
+		)
+	} else {
+		cc, err = sdk.NewChainClient(
+			sdk.WithConfPath(sdkConfPath),
+			sdk.WithChainClientLogger(logger),
+		)
+	}
 	if err != nil {
 		return nil, err
 	}
