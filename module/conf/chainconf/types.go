@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/localconf"
 
 	"chainmaker.org/chainmaker-go/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
@@ -149,13 +150,12 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 				log.Errorf("check root certificate failed, %s", err.Error())
 				return err
 			}
-			mConfig.CaRoots[orgRoots.OrgId] = struct{}{}
 			block, _ := pem.Decode([]byte(root))
 			if block == nil {
 				return errors.New("root is empty")
 			}
 		}
-
+		mConfig.CaRoots[orgRoots.OrgId] = struct{}{}
 	}
 	return nil
 }

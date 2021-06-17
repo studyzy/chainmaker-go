@@ -126,8 +126,8 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 			if len(org.trustedRootCerts) <= 0 {
 				return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
 			}
-			ac.addOrg(org)
 		}
+		ac.addOrg(org)
 	}
 	localOrg := ac.getOrgByOrgId(localOrgId)
 	if localOrg == nil {
@@ -1061,14 +1061,14 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	if err != nil {
 		return nil, fmt.Errorf("authentication failed, not ac valid certificate from trusted CAs: %v", err)
 	}
-	trustMemberFlag := false
+	isTrustMember := false
 	for _, v := range ac.localTrustMembers {
 		if v.OrgId == mem.GetOrgId() {
-			trustMemberFlag = true
+			isTrustMember = true
 			break
 		}
 	}
-	if !trustMemberFlag {
+	if !isTrustMember {
 		orgIdFromCert := cert.Subject.Organization[0]
 		if mem.GetOrgId() != orgIdFromCert {
 			return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
