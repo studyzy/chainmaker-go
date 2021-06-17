@@ -120,7 +120,7 @@ function generate_config() {
     if  [ $NODE_CNT -eq 1 ]; then
         CONSENSUS_TYPE=0
     else
-        read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT): " tmp
+        read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT,5-DPOS): " tmp
         if  [ ! -z "$tmp" ] ;then
           if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] ;then
               CONSENSUS_TYPE=$tmp
