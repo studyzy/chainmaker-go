@@ -393,11 +393,13 @@ type StakeConfig struct {
 
 func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	var (
-		valNum   = make([]byte, 8)
-		epochNum = make([]byte, 8)
+		valNum                = make([]byte, 8)
+		epochNum              = make([]byte, 8)
+		completeUnboundingNum = make([]byte, 8)
 	)
 	binary.BigEndian.PutUint64(valNum, s.validatorNum)
 	binary.BigEndian.PutUint64(epochNum, s.eachEpochNum)
+	binary.BigEndian.PutUint64(completeUnboundingNum, s.unbondingEpochNum)
 
 	// 1. add property in rwSets
 	rwSets := []*commonPb.TxWrite{
@@ -419,7 +421,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 			Key:          []byte(keyUnbondingEpochNumber),
-			Value:        epochNum,
+			Value:        completeUnboundingNum,
 		},
 	}
 

@@ -1,6 +1,7 @@
 package bulletproofs
 
 import (
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"encoding/base64"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ func genOpeningCMD() *cobra.Command {
 }
 
 func genOpening() error {
-	opening, err := bulletproofsImpl.PedersenRNG()
+	opening, err := bulletproofs.Helper().NewBulletproofs().PedersenRNG()
 	if err != nil {
 		return err
 	}

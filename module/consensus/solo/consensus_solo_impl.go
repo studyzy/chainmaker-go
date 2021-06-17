@@ -92,7 +92,7 @@ func (consensus *ConsensusSoloImpl) OnMessage(message *msgbus.Message) {
 
 //handleProposedBlock process proposedblock msg
 func (consensus *ConsensusSoloImpl) handleProposedBlock(message *msgbus.Message) {
-	if _, ok := message.Payload.(*common.Block); !ok {
+	if _, ok := message.Payload.(*consensuspb.ProposalBlock); !ok {
 		clog.Errorf("id: %s ProposedBlock msg is invaild",
 			consensus.id)
 		return

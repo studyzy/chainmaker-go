@@ -13,6 +13,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.2
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
+	github.com/mr-tron/base58 v1.2.0
 	github.com/samkumar/hibe v0.0.0-20171013061409-c1cd171b6178
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0

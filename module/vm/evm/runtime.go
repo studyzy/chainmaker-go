@@ -155,6 +155,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	contractResult.Code = commonPb.ContractResultCode_OK
 	contractResult.GasUsed = int64(gasLeft - result.GasLeft)
 	contractResult.Result = result.ResultData
+	contractResult.ContractEvent = r.ContractEvent
 	return contractResult
 }
 

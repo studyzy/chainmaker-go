@@ -34,7 +34,7 @@ func newQueryArchivedHeightOnChainCMD() *cobra.Command {
 // runQueryArchivedHeightOnChainCMD `query archived height` command implementation
 func runQueryArchivedHeightOnChainCMD() error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return err
 	}

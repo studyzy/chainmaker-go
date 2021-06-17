@@ -8,13 +8,13 @@ else
   endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
-VERSION=V1.0.0
+VERSION=V1.2.1
 
 chainmaker:
 	@cd main && go build -mod=mod -o ../bin/chainmaker
 
 package:
-	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
+	@cd main && GOPATH=${GOPATH} go build -mod=mod -o ../bin/chainmaker
 	@mkdir -p ./release
 	@rm -rf ./tmp/chainmaker/
 	@mkdir -p ./tmp/chainmaker/
@@ -27,13 +27,13 @@ package:
 	@rm -rf ./tmp/
 
 compile:
-	@cd main && go build -o ../bin/chainmaker
+	@cd main && go build -mod=mod -o ../bin/chainmaker
 
 cmc:
-	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
+	@cd tools/cmc && GOPATH=${GOPATH} go build -mod=mod -o ../../bin/cmc
 
 scanner:
-	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner
+	@cd tools/scanner && GOPATH=${GOPATH} go build -mod=mod -o ../../bin/scanner
 
 dep: pb-dep mockgen-dep
 	@go get golang.org/x/tools/cmd/stringer
@@ -52,6 +52,7 @@ pb:
 	cd pb/proto && protoc -I=. --gogofaster_out=:../protogo --gogofaster_opt=paths=source_relative consensus/*.proto
 	cd pb/proto && protoc -I=. --gogofaster_out=:../protogo  --gogofaster_opt=paths=source_relative consensus/tbft/*.proto
 	cd pb/proto && protoc -I=. --gogofaster_out=:../protogo --gogofaster_opt=paths=source_relative config/*.proto
+	cd pb/proto && protoc -I=. --gogofaster_out=:../protogo --gogofaster_opt=paths=source_relative dpos/*.proto
 	cd pb/proto && protoc -I=. --gogofaster_out=plugins=grpc:../protogo --gogofaster_opt=paths=source_relative api/rpc_node.proto
 
 pb-dep:
@@ -95,11 +96,11 @@ mockgen-dep:
 
 docker-build:
 	docker build -t chainmaker -f ./DOCKER/Dockerfile .
-	docker tag chainmaker chainmaker:v1.1.1
+	docker tag chainmaker chainmaker:v1.2.1
 
 docker-build-dev: chainmaker
 	docker build -t chainmaker -f ./DOCKER/dev.Dockerfile .
-	docker tag chainmaker chainmaker:v1.1.1
+	docker tag chainmaker chainmaker:v1.2.1
 
 docker-compose-start: docker-compose-stop
 	docker-compose up -d
