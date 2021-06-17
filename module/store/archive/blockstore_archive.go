@@ -19,7 +19,7 @@ import (
 )
 
 const defaultMinUnArchiveBlockHeight = 10
-const defaultUnArchiveBlockHeight = 3//00000 //about 7 days block produces
+const defaultUnArchiveBlockHeight = 300000 //about 7 days block produces
 
 var (
 	HeightNotReachError          = errors.New("target archive height not reach")
