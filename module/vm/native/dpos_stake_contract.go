@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"sort"
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/logger"
@@ -169,6 +170,7 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
+	methodMap[commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
 	return methodMap
 }
 
@@ -652,9 +654,19 @@ func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext
 		return nil, err
 	}
 
+	// check minSelfDelegation over range
+	isOverRange, allowSelfDelegation, err := s.checkMinSelfDelegationOverRange(context, minSelfDelegation)
+	if err != nil {
+		s.log.Errorf(err.Error())
+		return nil, err
+	}
+	if isOverRange {
+		return []byte(allowSelfDelegation), fmt.Errorf("min self delegation change over range, biggest self delegation is: [%s]", allowSelfDelegation)
+	}
 	// put data
 	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation), []byte(minSelfDelegation))
 	if err != nil {
+		s.log.Errorf(err.Error())
 		return nil, err
 	}
 	return []byte(minSelfDelegation), nil
@@ -727,6 +739,17 @@ func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, p
 	}
 	amount := decodeUint64FromBigEndian(bz)
 	return []byte(strconv.Itoa(int(amount))), nil
+}
+
+// ReadEpochBlockNumber() string				// 读取世代的出块数量
+// return string
+func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	num, err := getUnbondingEpochNumber(context)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("%d", num)), nil
 }
 
 // UpdateEpochBlockNumber() bool				// 更新世代的出块数量
@@ -1150,6 +1173,52 @@ func (s *DPoSStakeRuntime) checkSenderAndOwner(context protocol.TxSimContext) er
 	return nil
 }
 
+func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(context protocol.TxSimContext, amount string) (bool, string, error) {
+	// convert int string to big int
+	amountValue, err := stringToBigInt(amount)
+	if err != nil {
+		return false, "", err
+	}
+
+	// get all validator
+	vc, err := getAllValidatorByPrefix(context, ToValidatorPrefix())
+
+	// 按照 SelfDelegation 排序
+	c := make(Collections, 0)
+	for _, v := range vc {
+		if v == nil {
+			s.log.Errorf("validator is nil", v)
+			continue
+		}
+		c = append(c, v.SelfDelegation)
+	}
+	sort.Sort(c)
+
+	// read epoch validator number
+	numBytes, err := s.ReadEpochValidatorNumber(context, nil)
+	if err != nil {
+		return false, "", err
+	}
+	n, err := strconv.Atoi(string(numBytes))
+	if err != nil {
+		return false, "", err
+	}
+	if n <= 0 {
+		return false, "", fmt.Errorf("validator number is 0")
+	}
+
+	// 顺位验证人个数的 self delegate 数量
+	value, err := stringToBigInt(c[n-1])
+	if err != nil {
+		return false, "", err
+	}
+	if value.Cmp(amountValue) < 0 {
+		return false, value.String(), nil
+	} else {
+		return true, value.String(), nil
+	}
+}
+
 func (s *DPoSStakeRuntime) checkNewValidatorNumberOverRange(context protocol.TxSimContext, amount int) error {
 	// get all candidates
 	bz, err := s.GetAllCandidates(context, nil)
@@ -1285,4 +1354,23 @@ func encodeUint64ToBigEndian(amount uint64) []byte {
 
 func decodeUint64FromBigEndian(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
+}
+
+// SelfDelegation array for sort
+type Collections []string
+
+func (s Collections) Len() int {
+	return len(s)
+}
+
+func (s Collections) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s Collections) Less(i, j int) bool {
+	// 优先按照weight排序，相同的情况下按照peerID从小到大排序（字符串）
+	x, _ := stringToBigInt(s[i])
+	y, _ := stringToBigInt(s[j])
+	val := x.Cmp(y)
+	return val > 0
 }
