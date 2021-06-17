@@ -17,7 +17,7 @@ var (
 const (
 	userAddrName        = "user_addr"
 	userAddrComments    = "address of the user"
-	amountName          = "amount "
+	amountName          = "amount"
 	amountValueComments = "amount of the value, the type is string"
 )
 
