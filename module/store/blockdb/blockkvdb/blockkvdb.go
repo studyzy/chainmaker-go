@@ -149,7 +149,7 @@ func (b *BlockKvDB) SetArchivedPivot(archivedPivot uint64) error {
 	return nil
 }
 
-// ShrinkBlocks remove ranged heightKey--SerializedMeta and txid--SerializedTx from kvdb
+// ShrinkBlocks remove ranged txid--SerializedTx from kvdb
 func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
 	var (
 		block *commonPb.Block

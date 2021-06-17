@@ -304,16 +304,39 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		blockInfos = append(blockInfos, bwsInfo)
 	}
 
-	if err := bs.ArchiveMgr.RestoreBlock(blockInfos); err != nil {
+	var err error
+	if err = bs.ArchiveMgr.RestoreBlock(blockInfos); err != nil {
 		return err
 	}
 
-	archivedPivot := uint64(blockInfos[0].Block.Header.BlockHeight)
-	if utils.IsConfBlock(blockInfos[0].Block) {
-		archivedPivot = archivedPivot + 1
+	index := int64(1)
+	pivotBlock := blockInfos[0].Block
+	archivedPivot := pivotBlock.Header.BlockHeight
+	curIsConf := utils.IsConfBlock(pivotBlock)
+	for curIsConf || index == 1 {
+		//consider restore height 1 and height 0 block
+		//1. height 1: this is a config block, archivedPivot should be 0
+		//2. height 1: this is not a config block, archivedPivot should be 0
+		//3. height 0: archivedPivot should be 0
+		if archivedPivot < 2 {
+			archivedPivot = 0
+			break
+		}
+
+		//we should not get block data only if it is config block
+		archivedPivot = pivotBlock.Header.BlockHeight - index
+		_, errb := bs.GetBlock(archivedPivot)
+		if errb == archive.ArchivedBlockError {
+			curIsConf = false
+			break
+		} else if errb != nil {
+			return errb
+		} else {
+			index = index + 1
+		}
 	}
 
-	return bs.ArchiveMgr.SetArchivedPivot(archivedPivot - 1)
+	return bs.ArchiveMgr.SetArchivedPivot(uint64(archivedPivot))
 }
 
 type commitBlock func(blockInfo *serialization.BlockWithSerializedInfo) error
