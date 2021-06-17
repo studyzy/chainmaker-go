@@ -25,6 +25,10 @@ const (
 	restoreBlockRequestTimeout = 20 // 20s
 )
 
+var (
+	configBlockArchiveError = errors.New("config block do not need archive")
+)
+
 func newRestoreCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "restore",
@@ -147,7 +151,7 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 	}
 
 	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
-	if err != nil {
+	if err != nil && err != configBlockArchiveError {
 		return err
 	}
 
