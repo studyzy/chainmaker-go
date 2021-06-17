@@ -11,13 +11,13 @@ import (
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/core/syncmode/proposer"
 	"chainmaker.org/chainmaker-go/core/syncmode/verifier"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
 	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/provider/conf"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"github.com/google/martian/log"
 )
@@ -46,21 +46,6 @@ type CoreEngine struct {
 	subscriber    *subscriber.EventSubscriber // block subsriber
 }
 
-type CoreEngineConfig struct {
-	ChainId         string
-	MsgBus          msgbus.MessageBus
-	ChainConf       protocol.ChainConf
-	TxPool          protocol.TxPool
-	VmMgr           protocol.VmManager
-	BlockchainStore protocol.BlockchainStore
-	SnapshotManager protocol.SnapshotManager
-	Identity        protocol.SigningMember
-	LedgerCache     protocol.LedgerCache
-	ProposalCache   protocol.ProposalCache // proposal cache
-	AC              protocol.AccessControlProvider
-	Subscriber      *subscriber.EventSubscriber
-}
-
 // NewCoreEngine new a core engine.
 func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	core := &CoreEngine{
@@ -75,23 +60,24 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	}
 
 	var schedulerFactory scheduler.TxSchedulerFactory
-	core.txScheduler = schedulerFactory.NewTxScheduler(cf.VmMgr, cf.ChainConf)
+	core.txScheduler = schedulerFactory.NewTxScheduler(cf.VmMgr, cf.ChainConf, cf.StoreHelper)
 	core.quitC = make(<-chan interface{})
 
 	var err error
 	// new a bock proposer
 	proposerConfig := proposer.BlockProposerConfig{
 		ChainId:         cf.ChainId,
-		TxPool:          core.txPool,
-		SnapshotManager: core.snapshotManager,
+		TxPool:          cf.TxPool,
+		SnapshotManager: cf.SnapshotManager,
 		MsgBus:          cf.MsgBus,
 		Identity:        cf.Identity,
 		LedgerCache:     cf.LedgerCache,
 		TxScheduler:     core.txScheduler,
-		ProposalCache:   core.proposedCache,
+		ProposalCache:   cf.ProposalCache,
 		ChainConf:       cf.ChainConf,
 		AC:              cf.AC,
 		BlockchainStore: cf.BlockchainStore,
+		StoreHelper:     cf.StoreHelper,
 	}
 	core.blockProposer, err = proposer.NewBlockProposer(proposerConfig, cf.Log)
 	if err != nil {
@@ -102,15 +88,16 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	verifierConfig := verifier.BlockVerifierConfig{
 		ChainId:         cf.ChainId,
 		MsgBus:          cf.MsgBus,
-		SnapshotManager: core.snapshotManager,
-		BlockchainStore: core.blockchainStore,
+		SnapshotManager: cf.SnapshotManager,
+		BlockchainStore: cf.BlockchainStore,
 		LedgerCache:     cf.LedgerCache,
 		TxScheduler:     core.txScheduler,
-		ProposedCache:   core.proposedCache,
+		ProposedCache:   cf.ProposalCache,
 		ChainConf:       cf.ChainConf,
 		AC:              cf.AC,
-		TxPool:          core.txPool,
+		TxPool:          cf.TxPool,
 		VmMgr:           cf.VmMgr,
+		StoreHelper:     cf.StoreHelper,
 	}
 	core.BlockVerifier, err = verifier.NewBlockVerifier(verifierConfig, cf.Log)
 	if err != nil {
@@ -120,15 +107,16 @@ func NewCoreEngine(cf *conf.CoreEngineConfig) (*CoreEngine, error) {
 	// new a block committer
 	committerConfig := common.BlockCommitterConfig{
 		ChainId:         cf.ChainId,
-		BlockchainStore: core.blockchainStore,
-		SnapshotManager: core.snapshotManager,
-		TxPool:          core.txPool,
+		BlockchainStore: cf.BlockchainStore,
+		SnapshotManager: cf.SnapshotManager,
+		TxPool:          cf.TxPool,
 		LedgerCache:     cf.LedgerCache,
-		ProposedCache:   core.proposedCache,
+		ProposedCache:   cf.ProposalCache,
 		ChainConf:       cf.ChainConf,
 		MsgBus:          cf.MsgBus,
 		Subscriber:      cf.Subscriber,
 		Verifier:        core.BlockVerifier,
+		StoreHelper:     cf.StoreHelper,
 	}
 	core.BlockCommitter, err = common.NewBlockCommitter(committerConfig, cf.Log)
 	if err != nil {

@@ -64,7 +64,7 @@ func saveCert() error {
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
 		commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		commonPb.PrivateComputeContractFunction_SAVE_CERT.String(),
+		commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String(),
 		pairs,
 		defaultSequence,
 	)

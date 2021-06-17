@@ -8,11 +8,13 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"chainmaker.org/chainmaker-go/common/crypto/paillier"
 	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
+	"strconv"
 	"sync/atomic"
 
 	"chainmaker.org/chainmaker-go/common/serialize"
@@ -46,6 +48,8 @@ type Wacsi interface {
 	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
 	// paillier
 	PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error)
+	// bulletproofs
+	BulletProofsOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error)
 
 	// kv iterator
 	KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
@@ -339,6 +343,127 @@ func (w *WacsiImpl) KvIteratorClose(requestBody []byte, contractName string, txS
 	kvRows.Release()
 	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(1))
 	return nil
+}
+
+func (*WacsiImpl) BulletProofsOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error) {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+
+	/*	bulletproofsFuncName:
+		| func  									|
+		|-------------------------------------------|
+		| BulletProofsOpTypePedersenAddNum 			|
+		| BulletProofsOpTypePedersenAddCommitment   |
+		| BulletProofsOpTypePedersenSubNum 			|
+		| BulletProofsOpTypePedersenSubCommitment   |
+		| BulletProofsOpTypePedersenMulNum 			|
+		| BulletProofsVerify					    |
+	*/
+	opTypeStr, _ := ec.GetString("bulletproofsFuncName")
+
+	/*  param1, param2:
+	| func  									| param1 	 | param2	  |
+	|-------------------------------------------|------------|------------|
+	| BulletProofsOpTypePedersenAddNum 			| commitment | num		  |
+	| BulletProofsOpTypePedersenAddCommitment   | commitment | commitment |
+	| BulletProofsOpTypePedersenSubNum 			| commitment | num		  |
+	| BulletProofsOpTypePedersenSubCommitment   | commitment | commitment |
+	| BulletProofsOpTypePedersenMulNum 			| commitment | num		  |
+	| BulletProofsVerify					    | proof 	 | commitment |
+	*/
+	param1, _ := ec.GetBytes("param1")
+	param2, _ := ec.GetBytes("param2")
+	valuePtr, _ := ec.GetInt32("value_ptr")
+
+	if !isLen {
+		copy(memory[valuePtr:valuePtr+int32(len(data))], data)
+		return nil, nil
+	}
+
+	resultBytes := make([]byte, 0)
+	var err error
+	switch opTypeStr {
+	case protocol.BulletProofsOpTypePedersenAddNum:
+		resultBytes, err = pedersenAddNum(param1, param2)
+	case protocol.BulletProofsOpTypePedersenAddCommitment:
+		resultBytes, err = pedersenAddCommitment(param1, param2)
+	case protocol.BulletProofsOpTypePedersenSubNum:
+		resultBytes, err = pedersenSubNum(param1, param2)
+	case protocol.BulletProofsOpTypePedersenSubCommitment:
+		resultBytes, err = pedersenSubCommitment(param1, param2)
+	case protocol.BulletProofsOpTypePedersenMulNum:
+		resultBytes, err = pedersenMulNum(param1, param2)
+	case protocol.BulletProofsVerify:
+		resultBytes, err = bulletproofsVerify(param1, param2)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(resultBytes))))
+	return resultBytes, nil
+}
+
+func pedersenAddNum(commitment, num interface{}) ([]byte, error) {
+	//bulletproofs.Helper().NewBulletproofs()
+	c := commitment.([]byte)
+	x, err := strconv.ParseInt(string(num.([]byte)), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return bulletproofs.Helper().NewBulletproofs().PedersenAddNum(c, uint64(x))
+}
+
+func pedersenAddCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
+	commitmentX := commitment1.([]byte)
+	commitmentY := commitment2.([]byte)
+
+	return bulletproofs.Helper().NewBulletproofs().PedersenAddCommitment(commitmentX, commitmentY)
+}
+
+func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
+	c := commitment.([]byte)
+	x, err := strconv.ParseInt(string(num.([]byte)), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return bulletproofs.Helper().NewBulletproofs().PedersenSubNum(c, uint64(x))
+}
+
+func pedersenSubCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
+	commitmentX := commitment1.([]byte)
+	commitmentY := commitment2.([]byte)
+	return bulletproofs.Helper().NewBulletproofs().PedersenSubCommitment(commitmentX, commitmentY)
+
+}
+
+func pedersenMulNum(commitment, num interface{}) ([]byte, error) {
+	c := commitment.([]byte)
+	x, err := strconv.ParseInt(string(num.([]byte)), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return bulletproofs.Helper().NewBulletproofs().PedersenMulNum(c, uint64(x))
+}
+
+func bulletproofsVerify(proof, commitment interface{}) ([]byte, error) {
+	p := proof.([]byte)
+	c := commitment.([]byte)
+	ok, err := bulletproofs.Helper().NewBulletproofs().Verify(p, c)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		// verify failed
+		return []byte("0"), nil
+	}
+
+	// verify success
+	return []byte("1"), nil
 }
 
 func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error) {

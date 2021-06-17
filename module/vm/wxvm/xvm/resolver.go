@@ -84,29 +84,29 @@ func (s *contextServiceResolver) cCallMethod(
 	}
 
 	reqItems := serialize.NewEasyCodecWithBytes(requestBuf).GetItems()
-	s.contextService.ctxId = ctxId
+	//	s.contextService.ctxId = ctxId
 	context.in = reqItems
 	context.requestBody = requestBuf
 	context.gasUsed = ctx.GasUsed()
 	switch method {
 	case "GetObject":
-		s.contextService.GetState()
+		s.contextService.GetState(ctxId)
 	case "PutObject":
-		s.contextService.PutState()
+		s.contextService.PutState(ctxId)
 	case "DeleteObject":
-		s.contextService.DeleteState()
+		s.contextService.DeleteState(ctxId)
 	case "NewIterator":
-		s.contextService.NewIterator()
+		s.contextService.NewIterator(ctxId)
 	case "GetCallArgs":
-		s.contextService.GetCallArgs()
+		s.contextService.GetCallArgs(ctxId)
 	case "SetOutput":
-		s.contextService.SetOutput()
+		s.contextService.SetOutput(ctxId)
 	case "ContractCall":
-		s.contextService.CallContract()
+		s.contextService.CallContract(ctxId)
 	case "LogMsg":
-		s.contextService.LogMessage()
+		s.contextService.LogMessage(ctxId)
 	case "EmitEvent":
-		s.contextService.EmitEvent()
+		s.contextService.EmitEvent(ctxId)
 	default:
 		s.contextService.logger.Errorw("no such method ", method)
 	}

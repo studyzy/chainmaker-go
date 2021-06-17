@@ -43,9 +43,10 @@ func (f Factory) NewConsensusEngine(
 	msgBus msgbus.MessageBus,
 	chainConf protocol.ChainConf,
 	store protocol.BlockchainStore,
-	helper protocol.HotStuffHelper) (protocol.ConsensusEngine, error) {
+	helper protocol.HotStuffHelper,
+	dpos protocol.DPoS) (protocol.ConsensusEngine, error) {
 	switch consensusType {
-	case consensuspb.ConsensusType_TBFT:
+	case consensuspb.ConsensusType_TBFT, consensuspb.ConsensusType_DPOS:
 		config := tbft.ConsensusTBFTImplConfig{
 			ChainID:     chainID,
 			Id:          id,
@@ -56,6 +57,7 @@ func (f Factory) NewConsensusEngine(
 			ChainConf:   chainConf,
 			NetService:  netService,
 			MsgBus:      msgBus,
+			Dpos:        dpos,
 		}
 		return tbft.New(config)
 	case consensuspb.ConsensusType_SOLO:
@@ -95,8 +97,8 @@ func VerifyBlockSignatures(
 ) error {
 	consensusType := chainConf.ChainConfig().Consensus.Type
 	switch consensusType {
-	case consensuspb.ConsensusType_TBFT:
-		return tbft.VerifyBlockSignatures(chainConf, ac, block)
+	case consensuspb.ConsensusType_TBFT, consensuspb.ConsensusType_DPOS:
+		return tbft.VerifyBlockSignatures(chainConf, ac, block, store)
 	case consensuspb.ConsensusType_RAFT:
 		return raft.VerifyBlockSignatures(block)
 	case consensuspb.ConsensusType_HOTSTUFF:
