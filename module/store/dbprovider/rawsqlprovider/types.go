@@ -14,4 +14,5 @@ type TableDDLGenerator interface {
 type TableDMLGenerator interface {
 	GetInsertSql() (string, []interface{})
 	GetUpdateSql() (string, []interface{})
+	GetCountSql() (string, []interface{})
 }
