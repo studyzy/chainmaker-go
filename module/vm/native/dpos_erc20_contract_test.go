@@ -7,13 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/mock"
+	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -30,7 +33,8 @@ const (
 var isFromAccount = false
 
 func TestDPoSRuntime_Owner(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	// 获取owner
 	result, err := dPoSRuntime.Owner(txSimContext, nil)
 	require.Nil(t, err)
@@ -38,7 +42,8 @@ func TestDPoSRuntime_Owner(t *testing.T) {
 }
 
 func TestDPoSRuntime_Decimals(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	result, err := dPoSRuntime.Decimals(txSimContext, nil)
 	require.Nil(t, err)
 	require.Equal(t, string(result), Decimals)
@@ -49,7 +54,8 @@ func TestDPoSRuntime_Mint(t *testing.T) {
 }
 
 func TestDPoSRuntime_Transfer(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	// 从owner中转出
 	params := make(map[string]string, 32)
 	params[paramNameTo] = TransferTo
@@ -60,7 +66,8 @@ func TestDPoSRuntime_Transfer(t *testing.T) {
 }
 
 func TestDPoSRuntime_BalanceOf(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	// 从owner中转出
 	params := make(map[string]string, 32)
 	params[paramNameTo] = TransferTo
@@ -83,7 +90,8 @@ func TestDPoSRuntime_BalanceOf(t *testing.T) {
 }
 
 func TestDPoSRuntime_TransferOwnership(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	params := make(map[string]string, 32)
 	params[paramNameTo] = TransferTo
 	result, err := dPoSRuntime.TransferOwnership(txSimContext, params)
@@ -96,7 +104,8 @@ func TestDPoSRuntime_TransferOwnership(t *testing.T) {
 }
 
 func TestDPoSRuntime_Approve(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	params := make(map[string]string, 32)
 	params[paramNameTo] = TransferFrom
 	params[paramNameValue] = ApproveValue
@@ -106,7 +115,8 @@ func TestDPoSRuntime_Approve(t *testing.T) {
 }
 
 func TestDPoSRuntime_Allowance(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	params := make(map[string]string, 32)
 	params[paramNameTo] = TransferFrom
 	params[paramNameValue] = ApproveValue
@@ -122,7 +132,8 @@ func TestDPoSRuntime_Allowance(t *testing.T) {
 }
 
 func TestDPoSRuntime_TransferFrom(t *testing.T) {
-	dPoSRuntime, txSimContext := initEnv(t)
+	dPoSRuntime, txSimContext, fn := initEnv(t)
+	defer fn()
 	// 首先进行转账，给From用户指定金额
 	params := make(map[string]string, 32)
 	params[paramNameTo] = TransferFrom
@@ -175,10 +186,29 @@ func TestOwnerCert(t *testing.T) {
 	require.Equal(t, address, Owner)
 }
 
-func initEnv(t *testing.T) (*DPoSRuntime, *TxSimContextMock) {
+func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 	dPoSRuntime := NewDPoSRuntime(NewLogger())
-	// 进行准备工作
-	txSimContext := NewTxSimContextMock()
+	ctrl := gomock.NewController(t)
+	txSimContext := mock.NewMockTxSimContext(ctrl)
+
+	cache := NewCacheMock()
+	txSimContext.EXPECT().Put(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name string, key []byte, value []byte) error {
+			cache.Put(name, string(key), value)
+			return nil
+		}).AnyTimes()
+	txSimContext.EXPECT().GetSender().DoAndReturn(func() *acPb.SerializedMember {
+		return &acPb.SerializedMember{
+			OrgId:      "wx-org1.chainmaker.org",
+			MemberInfo: ownerCert(),
+			IsFullCert: true,
+		}
+	}).AnyTimes()
+	txSimContext.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name string, key []byte) ([]byte, error) {
+			return cache.Get(name, string(key)), nil
+		}).AnyTimes()
+
 	err := dPoSRuntime.setOwner(txSimContext, Owner)
 	require.Nil(t, err)
 	err = dPoSRuntime.setDecimals(txSimContext, Decimals)
@@ -190,7 +220,7 @@ func initEnv(t *testing.T) (*DPoSRuntime, *TxSimContextMock) {
 	result, err := dPoSRuntime.Mint(txSimContext, params)
 	require.Nil(t, err)
 	require.Equal(t, string(result), TotalSupply)
-	return dPoSRuntime, txSimContext
+	return dPoSRuntime, txSimContext, func() { ctrl.Finish() }
 }
 
 func NewLogger() *logger.CMLogger {
@@ -202,20 +232,6 @@ type TxSimContextMock struct {
 	cache *CacheMock
 }
 
-func (t *TxSimContextMock) SetStateKvHandle(i int32, iterator protocol.StateIterator) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetStateKvHandle(i int32) (protocol.StateIterator, bool) {
-	panic("implement me")
-}
-
-func NewTxSimContextMock() *TxSimContextMock {
-	return &TxSimContextMock{
-		cache: NewCacheMock(),
-	}
-}
-
 func (t *TxSimContextMock) Get(name string, key []byte) ([]byte, error) {
 	return t.cache.Get(name, string(key)), nil
 }
@@ -223,96 +239,6 @@ func (t *TxSimContextMock) Get(name string, key []byte) ([]byte, error) {
 func (t *TxSimContextMock) Put(name string, key []byte, value []byte) error {
 	t.cache.Put(name, string(key), value)
 	return nil
-}
-
-func (t *TxSimContextMock) PutRecord(contractName string, value []byte) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) Del(name string, key []byte) error {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) Select(name string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetCurrentResult() []byte {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetTx() *commonPb.Transaction {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetBlockHeight() int64 {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetBlockProposer() []byte {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetTxResult() *commonPb.Result {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) SetTxResult(result *commonPb.Result) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetTxRWSet() *commonPb.TxRWSet {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetCreator(namespace string) *acPb.SerializedMember {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetSender() *acPb.SerializedMember {
-	// 生成证书
-	member := &acPb.SerializedMember{
-		OrgId:      "wx-org1.chainmaker.org",
-		MemberInfo: ownerCert(),
-		IsFullCert: true,
-	}
-	return member
-}
-
-func (t *TxSimContextMock) GetBlockchainStore() protocol.BlockchainStore {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetAccessControl() (protocol.AccessControlProvider, error) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetChainNodesInfoProvider() (protocol.ChainNodesInfoProvider, error) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetTxExecSeq() int {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) SetTxExecSeq(i int) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetDepth() int {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) SetStateSqlHandle(i int32, rows protocol.SqlRows) {
-	panic("implement me")
-}
-
-func (t *TxSimContextMock) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) {
-	panic("implement me")
 }
 
 func ownerCert() []byte {
@@ -326,6 +252,10 @@ func ownerCert() []byte {
 }
 
 const KeyFormat = "%s/%s"
+
+func realKey(name, key string) string {
+	return fmt.Sprintf(KeyFormat, name, key)
+}
 
 type CacheMock struct {
 	content map[string][]byte
@@ -343,8 +273,4 @@ func (c *CacheMock) Put(name, key string, value []byte) {
 
 func (c *CacheMock) Get(name, key string) []byte {
 	return c.content[realKey(name, key)]
-}
-
-func realKey(name, key string) string {
-	return fmt.Sprintf(KeyFormat, name, key)
 }
