@@ -248,7 +248,6 @@ func FinalizeBlock(
 			errC <- err
 		}
 		block.Header.DagHash = dagHash
-		logger.Debugf("calc dag hash finish [%s]", block.Header.DagHash)
 	}()
 
 	poolCapacity := runtime.NumCPU() * 4
