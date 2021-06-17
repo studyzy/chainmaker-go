@@ -90,7 +90,7 @@ func (h *ResultKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializ
 
 		//check whether block can be archived
 		if utils.IsConfBlock(blockInfo.Block) {
-			h.Logger.Warnf("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
+			h.Logger.Infof("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
 			continue
 		}
 

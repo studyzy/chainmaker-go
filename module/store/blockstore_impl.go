@@ -91,7 +91,7 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB)
+	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB, blockStore.storeConfig)
 
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
 	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
@@ -169,7 +169,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB)
+	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB, bs.storeConfig)
 
 	return nil
 }
@@ -309,11 +309,10 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		return err
 	}
 
-	index := int64(1)
+	curIsConf := true
 	pivotBlock := blockInfos[0].Block
 	archivedPivot := pivotBlock.Header.BlockHeight
-	curIsConf := utils.IsConfBlock(pivotBlock)
-	for curIsConf || index == 1 {
+	for curIsConf {
 		//consider restore height 1 and height 0 block
 		//1. height 1: this is a config block, archivedPivot should be 0
 		//2. height 1: this is not a config block, archivedPivot should be 0
@@ -324,15 +323,13 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		}
 
 		//we should not get block data only if it is config block
-		archivedPivot = pivotBlock.Header.BlockHeight - index
+		archivedPivot = archivedPivot - 1
 		_, errb := bs.GetBlock(archivedPivot)
 		if errb == archive.ArchivedBlockError {
 			curIsConf = false
 			break
 		} else if errb != nil {
 			return errb
-		} else {
-			index = index + 1
 		}
 	}
 

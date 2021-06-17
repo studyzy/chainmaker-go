@@ -40,21 +40,23 @@ type ArchiveMgr struct {
 	unarchiveBlockHeight uint64
 	blockDB              blockdb.BlockDB
 	resultDB             resultdb.ResultDB
+	storeConfig          *localconf.StorageConfig
 
 	logger *logImpl.CMLogger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
-func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB) *ArchiveMgr {
+func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB, storeConfig *localconf.StorageConfig) *ArchiveMgr {
 	archiveMgr := &ArchiveMgr{
 		archivedPivot: 0,
 		blockDB:       blockDB,
 		resultDB:      resultDB,
 		logger:        logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		storeConfig:   storeConfig,
 	}
 
 	unarchiveBlockHeight := uint64(0)
-	cfgUnArchiveBlockHeight := localconf.ChainMakerConfig.StorageConfig.UnArchiveBlockHeight
+	cfgUnArchiveBlockHeight := archiveMgr.storeConfig.UnArchiveBlockHeight
 	if cfgUnArchiveBlockHeight == 0 {
 		unarchiveBlockHeight = defaultUnArchiveBlockHeight
 		archiveMgr.logger.Infof("config UnArchiveBlockHeight not set, will set to defaultMinUnArchiveBlockHeight:[%d]", defaultUnArchiveBlockHeight)
