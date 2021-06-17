@@ -5,8 +5,11 @@ import "C"
 
 import (
 	"fmt"
+	"sync"
 	"unsafe"
 )
+
+var lock sync.Mutex
 
 // A Resolver resolves global and function symbols imported by wasm code
 type Resolver interface {
@@ -64,6 +67,8 @@ func newResolverBridge(r Resolver) *resolverBridge {
 
 //export wxvm_resolve_func
 func wxvm_resolve_func(env unsafe.Pointer, module, name *C.char) C.wasm_rt_func_handle_t {
+	lock.Lock()
+	defer lock.Unlock()
 	r := PointerRestore(uintptr(env)).(*resolverBridge)
 	moduleStr, nameStr := C.GoString(module), C.GoString(name)
 	key := moduleStr + ":" + nameStr

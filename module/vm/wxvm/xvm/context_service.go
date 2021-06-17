@@ -66,8 +66,8 @@ func (c *ContextService) DestroyContext(ctx *Context) {
 }
 
 // PutState implements Syscall interface
-func (c *ContextService) PutState() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) PutState(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	key, err1 := ec.GetString("key")
 	value, err2 := ec.GetString("value")
@@ -86,8 +86,9 @@ func (c *ContextService) PutState() int32 {
 }
 
 // GetState implements Syscall interface
-func (c *ContextService) GetState() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) GetState(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
+
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	key, err := ec.GetString("key")
 	if err != nil {
@@ -112,8 +113,8 @@ func (c *ContextService) GetState() int32 {
 	context.resp = items
 	return protocol.ContractSdkSignalResultSuccess
 }
-func (c *ContextService) EmitEvent() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) EmitEvent(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	topic, err := ec.GetString("topic")
 	if err != nil {
@@ -157,8 +158,8 @@ func (c *ContextService) EmitEvent() int32 {
 }
 
 // DeleteState implements Syscall interface
-func (c *ContextService) DeleteState() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) DeleteState(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	key, err := ec.GetString("key")
 	if err != nil {
@@ -177,8 +178,8 @@ func (c *ContextService) DeleteState() int32 {
 }
 
 // NewIterator implements Syscall interface
-func (c *ContextService) NewIterator() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) NewIterator(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	limit, err1 := ec.GetString("limit")
 	start, err2 := ec.GetString("start")
@@ -219,15 +220,15 @@ func (c *ContextService) NewIterator() int32 {
 }
 
 // GetCallArgs implements Syscall interface
-func (c *ContextService) GetCallArgs() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) GetCallArgs(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	context.resp = context.callArgs
 	return protocol.ContractSdkSignalResultSuccess
 }
 
 // SetOutput implements Syscall interface
-func (c *ContextService) SetOutput() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) SetOutput(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	code, err := ec.GetInt32("code")
 	if err != nil {
@@ -261,8 +262,8 @@ func (c *ContextService) SetOutput() int32 {
 }
 
 // CallContract implements Syscall interface
-func (c *ContextService) CallContract() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) CallContract(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 
 	contract, err1 := ec.GetString("contract")
@@ -291,8 +292,8 @@ func (c *ContextService) CallContract() int32 {
 }
 
 // LogMessage handle log entry from contract
-func (c *ContextService) LogMessage() int32 {
-	context, _ := c.Context(c.ctxId)
+func (c *ContextService) LogMessage(ctxId int64) int32 {
+	context, _ := c.Context(ctxId)
 	ec := serialize.NewEasyCodecWithItems(context.in)
 	msg, err := ec.GetString("msg")
 	if err != nil {
@@ -304,9 +305,9 @@ func (c *ContextService) LogMessage() int32 {
 	context.resp = msgItems
 	return protocol.ContractSdkSignalResultSuccess
 }
-func (c *ContextService) SuccessResult() int32 {
-	return c.SetOutput()
+func (c *ContextService) SuccessResult(ctxId int64) int32 {
+	return c.SetOutput(ctxId)
 }
-func (c *ContextService) ErrorResult() int32 {
-	return c.SetOutput()
+func (c *ContextService) ErrorResult(ctxId int64) int32 {
+	return c.SetOutput(ctxId)
 }
