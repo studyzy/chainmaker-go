@@ -91,14 +91,19 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB, blockStore.storeConfig)
+	archiveMgr, err := archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB, blockStore.storeConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	blockStore.ArchiveMgr = archiveMgr
 
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
-	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
+	if i, errbs := blockStore.getLastSavepoint(); errbs == nil && i > 0 {
 		//check savepoint and recover
-		err = blockStore.recover()
-		if err != nil {
-			return nil, err
+		errbs = blockStore.recover()
+		if errbs != nil {
+			return nil, errbs
 		}
 	} else {
 		logger.Info("binlog is empty, don't need recover")
@@ -169,9 +174,9 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB, bs.storeConfig)
+	bs.ArchiveMgr, err = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB, bs.storeConfig)
 
-	return nil
+	return err
 }
 func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	if genesisBlock.Block.Header.BlockHeight != 0 {
@@ -285,11 +290,7 @@ func (bs *BlockStoreImpl) GetArchivedPivot() uint64 {
 
 // ArchiveBlock the block after backup
 func (bs *BlockStoreImpl) ArchiveBlock(archiveHeight uint64) error {
-	if err := bs.ArchiveMgr.ArchiveBlock(archiveHeight); err != nil {
-		return err
-	}
-
-	return bs.ArchiveMgr.SetArchivedPivot(archiveHeight)
+	return bs.ArchiveMgr.ArchiveBlock(archiveHeight)
 }
 
 // RestoreBlocks restore blocks from outside serialized block data
@@ -304,36 +305,7 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		blockInfos = append(blockInfos, bwsInfo)
 	}
 
-	var err error
-	if err = bs.ArchiveMgr.RestoreBlock(blockInfos); err != nil {
-		return err
-	}
-
-	curIsConf := true
-	pivotBlock := blockInfos[0].Block
-	archivedPivot := pivotBlock.Header.BlockHeight
-	for curIsConf {
-		//consider restore height 1 and height 0 block
-		//1. height 1: this is a config block, archivedPivot should be 0
-		//2. height 1: this is not a config block, archivedPivot should be 0
-		//3. height 0: archivedPivot should be 0
-		if archivedPivot < 2 {
-			archivedPivot = 0
-			break
-		}
-
-		//we should not get block data only if it is config block
-		archivedPivot = archivedPivot - 1
-		_, errb := bs.GetBlock(archivedPivot)
-		if errb == archive.ArchivedBlockError {
-			curIsConf = false
-			break
-		} else if errb != nil {
-			return errb
-		}
-	}
-
-	return bs.ArchiveMgr.SetArchivedPivot(uint64(archivedPivot))
+	return bs.ArchiveMgr.RestoreBlock(blockInfos)
 }
 
 type commitBlock func(blockInfo *serialization.BlockWithSerializedInfo) error
