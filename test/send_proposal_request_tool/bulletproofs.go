@@ -23,10 +23,8 @@ var (
 
 	// pedersenMethodCMD
 	// openingMethodCMD
-	pedersenOpeningMethod string
 	// commitmentMethodCmd
-	pedersenCommitmentMethod string
-	pedersenNegMethod        string
+	pedersenNegMethod string
 )
 
 func BulletproofsCMD() *cobra.Command {
@@ -48,7 +46,7 @@ func BulletproofsCMD() *cobra.Command {
 	// Verify the validity of a commitment with respect to a value-opening pair
 	bulletproofsCmd.AddCommand(pedersenVerifyCMD())
 
-	bulletproofsCmd.AddCommand(pedersenMethodCMD())
+	bulletproofsCmd.AddCommand(pedersenNegCMD())
 
 	return bulletproofsCmd
 }
@@ -229,7 +227,7 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterSubNum(commitmentX, openingX []byte) error {
-	proof, commitment, err := bulletproofs.Helper().NewBulletproofs().ProveAfterSubNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, err := bulletproofs.Helper().NewBulletproofs().ProveAfterSubNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
@@ -269,7 +267,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterMulNum(commitmentX, openingX []byte) error {
-	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterMulNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterMulNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
@@ -331,65 +329,11 @@ func pedersenVerify() error {
 	}
 }
 
-func pedersenMethodCMD() *cobra.Command {
-	pedersenMethodCmd := &cobra.Command{
-		Use:   "pedersenMethod",
-		Short: "Bulletproofs pedersenMethodCmd command",
-		Long:  "Bulletproofs pedersenMethodCmd command",
-	}
-
-	pedersenMethodCmd.AddCommand(commitmentMethodCMD())
-	pedersenMethodCmd.AddCommand(negCMD())
-	pedersenMethodCmd.AddCommand(openingMethodCMD())
-
-	return pedersenMethodCmd
-}
-
-func openingMethodCMD() *cobra.Command {
-	openingMethodCmd := &cobra.Command{
-		Use:   "openingMethod",
-		Short: "Bulletproofs pedersenOpeningMethod command",
-		Long:  "Bulletproofs pedersenOpeningMethod command",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return openingHandleFunc()
-		},
-	}
-
-	flags := openingMethodCmd.Flags()
-	flags.StringVarP(&pedersenOpeningMethod, "method", "", "", "pedersen opening method: PedersenAddOpening PedersenSubOpening PedersenMulOpening")
-	flags.Int64VarP(&valueX, "valueX", "", -1, "valueY")
-	flags.StringVarP(&openingXStr, "openingX", "", "", "")
-	flags.StringVarP(&openingYStr, "openingY", "", "", "")
-
-	return openingMethodCmd
-}
-
-func commitmentMethodCMD() *cobra.Command {
-	commitmentMethodCmd := &cobra.Command{
-		Use:   "commitmentMethod",
-		Short: "Bulletproofs pedersenCommitmentMethod command",
-		Long:  "Bulletproofs pedersenCommitmentMethod command",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return pedersenCommitmentHandleFunc()
-		},
-	}
-
-	flags := commitmentMethodCmd.Flags()
-	flags.StringVarP(&pedersenCommitmentMethod, "method", "", "", "pedersen commitment method: PedersenAddCommitmentWithOpening PedersenSubCommitmentWithOpening PedersenMulNumWithOpening")
-	flags.Int64VarP(&valueX, "value", "", -1, "value")
-	flags.StringVarP(&commitmentXStr, "commitmentX", "", "", "")
-	flags.StringVarP(&commitmentYStr, "commitmentY", "", "", "")
-	flags.StringVarP(&openingXStr, "openingX", "", "", "")
-	flags.StringVarP(&openingYStr, "openingY", "", "", "")
-
-	return commitmentMethodCmd
-}
-
-func negCMD() *cobra.Command {
+func pedersenNegCMD() *cobra.Command {
 	negCmd := &cobra.Command{
 		Use:   "neg",
-		Short: "Bulletproofs commitmentMethodCmd command",
-		Long:  "Bulletproofs commitmentMethodCmd command",
+		Short: "Bulletproofs pedersenNegCMD command",
+		Long:  "Bulletproofs pedersenNegCMD command",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return pedersenNeg()
 		},
@@ -401,101 +345,6 @@ func negCMD() *cobra.Command {
 	flags.StringVarP(&openingXStr, "opening", "", "", "")
 
 	return negCmd
-}
-
-func openingHandleFunc() error {
-	if openingXStr == "" {
-		return errors.New("invalid input, please check it")
-	}
-
-	openingX, err := base64.StdEncoding.DecodeString(openingXStr)
-	if err != nil {
-		return err
-	}
-
-	var opening []byte
-	switch pedersenOpeningMethod {
-	case "PedersenAddOpening":
-		if openingYStr == "" {
-			return errors.New("invalid input, please check it")
-		}
-		openingY, err := base64.StdEncoding.DecodeString(openingYStr)
-		if err != nil {
-			return err
-		}
-
-		opening, err = bulletproofs.Helper().NewBulletproofs().PedersenAddOpening(openingX, openingY)
-	case "PedersenSubOpening":
-		if openingYStr == "" {
-			return errors.New("invalid input, please check it")
-		}
-		openingY, err := base64.StdEncoding.DecodeString(openingYStr)
-		if err != nil {
-			return err
-		}
-
-		opening, err = bulletproofs.Helper().NewBulletproofs().PedersenSubOpening(openingX, openingY)
-	case "PedersenMulOpening":
-		if valueX == -1 {
-			return errors.New("invalid input, please check it")
-		}
-		opening, err = bulletproofs.Helper().NewBulletproofs().PedersenMulOpening(openingX, uint64(valueX))
-	default:
-		return errors.New("method mismatch")
-	}
-
-	if err != nil {
-		return err
-	}
-
-	openingStr := base64.StdEncoding.EncodeToString(opening)
-	fmt.Printf("[%s]: [%s]\n", pedersenOpeningMethod, openingStr)
-	return nil
-}
-
-func pedersenCommitmentHandleFunc() error {
-	if openingXStr == "" || commitmentYStr == "" {
-		return errors.New("invalid input, please check it")
-	}
-	var err error
-	var openingX, openingY, commitmentX, commitmentY []byte
-	openingX, err = base64.StdEncoding.DecodeString(openingXStr)
-	commitmentX, err = base64.StdEncoding.DecodeString(commitmentXStr)
-	if err != nil {
-		return err
-	}
-
-	var commitment []byte
-	var opening []byte
-	switch pedersenCommitmentMethod {
-	case "PedersenAddCommitmentWithOpening":
-		if openingYStr == "" || commitmentYStr == "" {
-			return errors.New("invalid input, please check it")
-		}
-		openingY, err = base64.StdEncoding.DecodeString(openingYStr)
-		commitmentY, err = base64.StdEncoding.DecodeString(commitmentYStr)
-		commitment, opening, err = bulletproofs.Helper().NewBulletproofs().PedersenAddCommitmentWithOpening(commitmentX, commitmentY, openingX, openingY)
-	case "PedersenSubCommitmentWithOpening":
-		if openingYStr == "" || commitmentYStr == "" {
-			return errors.New("invalid input, please check it")
-		}
-		openingY, err = base64.StdEncoding.DecodeString(openingYStr)
-		commitmentY, err = base64.StdEncoding.DecodeString(commitmentYStr)
-		commitment, opening, err = bulletproofs.Helper().NewBulletproofs().PedersenSubCommitmentWithOpening(commitmentX, commitmentY, openingX, openingY)
-	case "PedersenMulNumWithOpening":
-		if openingXStr == "" || openingYStr == "" || commitmentXStr == "" || commitmentYStr == "" {
-			return errors.New("invalid input, please check it")
-		}
-		commitment, opening, err = bulletproofs.Helper().NewBulletproofs().PedersenMulNumWithOpening(commitmentX, openingX, uint64(valueX))
-	default:
-		return errors.New("method mismatch")
-	}
-
-	commitmentStr := base64.StdEncoding.EncodeToString(commitment)
-	openingStr := base64.StdEncoding.EncodeToString(opening)
-
-	fmt.Printf("%s:\ncommitment:[%s]\nopening:[%s]\n", pedersenCommitmentMethod, commitmentStr, openingStr)
-	return nil
 }
 
 func pedersenNeg() error {
