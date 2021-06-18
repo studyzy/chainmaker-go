@@ -101,15 +101,11 @@ func (kvi *kvIterator) Value() (*store.KV, error) {
 	}
 	return &store.KV{
 		ContractName: kv.ContractName,
-		Key:          constructStateKey(kv.ContractName, kv.ObjectKey),
+		Key:          kv.ObjectKey,
 		Value:        kv.ObjectValue,
 	}, nil
 }
 
 func (kvi *kvIterator) Release() {
 	kvi.rows.Close()
-}
-
-func constructStateKey(contractName string, key []byte) []byte {
-	return append(append([]byte(contractName), contractStoreSeparator), key...)
 }

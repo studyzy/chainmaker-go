@@ -533,10 +533,16 @@ func (i *kvi) Value() (*storePb.KV, error) {
 	}
 	return &storePb.KV{
 		ContractName: i.contractName,
-		Key:          i.iter.Key(),
+		Key:          parseStateKey(i.iter.Key(), i.contractName),
 		Value:        i.iter.Value(),
 	}, nil
 }
+
 func (i *kvi) Release() {
 	i.iter.Release()
+}
+
+// parseStateKey corresponding to the constructStateKey(),  delete contract name from leveldb key
+func parseStateKey(key []byte, contractName string) []byte {
+	return key[len(contractName)+1:]
 }

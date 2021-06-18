@@ -127,10 +127,11 @@ func (i *kvi) Value() (*storePb.KV, error) {
 	}
 	return &storePb.KV{
 		ContractName: i.contractName,
-		Key:          i.iter.Key(),
+		Key:          parseStateKey(i.iter.Key(), i.contractName),
 		Value:        i.iter.Value(),
 	}, nil
 }
+
 func (i *kvi) Release() {
 	i.iter.Release()
 }
@@ -188,6 +189,11 @@ func (s *StateKvDB) get(key []byte) ([]byte, error) {
 
 func constructStateKey(contractName string, key []byte) []byte {
 	return append(append([]byte(contractName), contractStoreSeparator), key...)
+}
+
+// parseStateKey corresponding to the constructStateKey(),  delete contract name from leveldb key
+func parseStateKey(key []byte, contractName string) []byte {
+	return key[len(contractName)+1:]
 }
 
 var errorSqldbOnly = errors.New("leveldb don't support this operation, please change to sql db")

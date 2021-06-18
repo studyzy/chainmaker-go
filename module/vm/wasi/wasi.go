@@ -343,16 +343,15 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 		if err != nil {
 			return nil, fmt.Errorf("ctx iterator next data error, %s", err.Error())
 		}
-		keyField := string(parseStateKey(kvRow.Key, contractname))
-		value := kvRow.Value
 
-		arrKey := strings.Split(keyField, "#")
+		arrKey := strings.Split(string(kvRow.Key), "#")
 		key := arrKey[0]
 		field := ""
 		if len(arrKey) > 1 {
 			field = arrKey[1]
 		}
 
+		value := kvRow.Value
 		ec.AddString("key", key)
 		ec.AddString("field", field)
 		ec.AddBytes("value", value)
@@ -360,11 +359,6 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 	kvBytes := ec.Marshal()
 	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(kvBytes))))
 	return kvBytes, nil
-}
-
-// parseStateKey corresponding to the constructStateKey(),  delete contract name from leveldb key
-func parseStateKey(key []byte, contractName string) []byte {
-	return key[len(contractName)+1:]
 }
 
 func (w *WacsiImpl) KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
