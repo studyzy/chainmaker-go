@@ -8,15 +8,12 @@ package common
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"encoding/hex"
-	"fmt"
-	"sync"
 
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
@@ -24,7 +21,12 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
+	"encoding/hex"
+	"fmt"
+	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
+	"runtime"
+	"sync"
 )
 
 const (
@@ -218,70 +220,115 @@ func FinalizeBlock(
 	hashType string,
 	logger protocol.Logger) error {
 
+	logger.Debugf("finalize block [%d], txNum [%d]", block.Header.BlockHeight, len(block.Txs))
 	if aclFailTxs != nil && len(aclFailTxs) > 0 {
 		// append acl check failed txs to the end of block.Txs
 		block.Txs = append(block.Txs, aclFailTxs...)
 	}
 
 	// TxCount contains acl verify failed txs and invoked contract txs
-	txCount := len(block.Txs)
-	block.Header.TxCount = int64(txCount)
-
-	// TxRoot/RwSetRoot
+	block.Header.TxCount = int64(len(block.Txs))
+	type txPacket struct {
+		index int
+		tx    *commonpb.Transaction
+	}
+	txPacketC := make(chan *txPacket, block.Header.TxCount)
+	finishC := make(chan bool)
+	errC := make(chan error)
+	txHashes := make([][]byte, block.Header.TxCount)
+	var goRoutinePool *ants.Pool
 	var err error
-	txHashes := make([][]byte, txCount)
-	for i, tx := range block.Txs {
-		// finalize tx, put rwsethash into tx.Result
-		rwSet := txRWSetMap[tx.Header.TxId]
-		if rwSet == nil {
-			rwSet = &commonpb.TxRWSet{
-				TxId:     tx.Header.TxId,
-				TxReads:  nil,
-				TxWrites: nil,
+	var txCount int
+	var lock sync.Mutex
+	go func() {
+		// DagDigest
+		dagHash, err := utils.CalcDagHash(hashType, block.Dag)
+		if err != nil {
+			logger.Warnf("get dag hash error %s", err)
+			errC <- err
+		}
+		block.Header.DagHash = dagHash
+	}()
+
+	poolCapacity := runtime.NumCPU() * 4
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
+		return err
+	}
+	defer goRoutinePool.Release()
+	go func() {
+		if block.Header.TxCount > 0 {
+			for i, tx := range block.Txs {
+				txMess := &txPacket{
+					index: i,
+					tx:    tx,
+				}
+				txPacketC <- txMess
 			}
+		} else {
+			finishC <- true
 		}
-		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
-		logger.DebugDynamic(func() string {
-			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
-		})
-		if err != nil {
+	}()
+	for {
+		select {
+		case packet := <-txPacketC:
+			err = goRoutinePool.Submit(func() {
+				tx := packet.tx
+				rwSet := txRWSetMap[tx.Header.TxId]
+				if rwSet == nil {
+					rwSet = &commonpb.TxRWSet{
+						TxId:     tx.Header.TxId,
+						TxReads:  nil,
+						TxWrites: nil,
+					}
+				}
+				rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+				logger.DebugDynamic(func() string {
+					return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+				})
+				if err != nil {
+					logger.Debugf("calc rwSet hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
+					errC <- err
+				}
+				if tx.Result == nil {
+					// in case tx.Result is nil, avoid panic
+					e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
+					logger.Error(e.Error())
+					errC <- e
+					return
+				}
+				tx.Result.RwSetHash = rwSetHash
+				// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
+				txHash, err := utils.CalcTxHash(hashType, tx)
+				if err != nil {
+					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
+					errC <- err
+				}
+				index := packet.index
+				lock.Lock()
+				txCount++
+				txHashes[index] = txHash
+				lock.Unlock()
+				if txCount == len(block.Txs) {
+					finishC <- true
+				}
+			})
+		case err = <-errC:
 			return err
+		case <-finishC:
+			block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
+			if err != nil {
+				logger.Warnf("get tx merkle root error %s", err)
+				return err
+			}
+			block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
+			if err != nil {
+				logger.Warnf("get rwset merkle root error %s", err)
+				return err
+			}
+			logger.Debugf("finalize block [%d] finish", block.Header.BlockHeight)
+			return nil
 		}
-		if tx.Result == nil {
-			// in case tx.Result is nil, avoid panic
-			e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
-			logger.Error(e.Error())
-			return e
-		}
-		tx.Result.RwSetHash = rwSetHash
-		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-		txHash, err := utils.CalcTxHash(hashType, tx)
-		if err != nil {
-			return err
-		}
-		txHashes[i] = txHash
 	}
-
-	block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
-	if err != nil {
-		logger.Warnf("get tx merkle root error %s", err)
-		return err
-	}
-	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
-	if err != nil {
-		logger.Warnf("get rwset merkle root error %s", err)
-		return err
-	}
-
-	// DagDigest
-	dagHash, err := utils.CalcDagHash(hashType, block.Dag)
-	if err != nil {
-		logger.Warnf("get dag hash error %s", err)
-		return err
-	}
-	block.Header.DagHash = dagHash
-
-	return nil
 }
 
 // IsTxCountValid, to check if txcount in block is valid
@@ -338,7 +385,7 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 func IsMerkleRootValid(block *commonpb.Block, txHashes [][]byte, hashType string) error {
 	txRoot, err := hash.GetMerkleRoot(hashType, txHashes)
 	if err != nil || !bytes.Equal(txRoot, block.Header.TxRoot) {
-		return fmt.Errorf("txroot expect %x, got %x", block.Header.TxRoot, txRoot)
+		return fmt.Errorf("txroot expect %x, got %x, err: %s", block.Header.TxRoot, txRoot, err.Error())
 	}
 	return nil
 }
@@ -562,7 +609,6 @@ func (vb *VerifierBlock) ValidateBlock(
 		}
 		contractEventMap[tx.Header.TxId] = events
 	}
-
 	// verify TxRoot
 	startRootsTick := utils.CurrentTimeMillisSeconds()
 	err = CheckBlockDigests(block, txHashes, hashType, vb.log)
