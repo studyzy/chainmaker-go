@@ -71,7 +71,7 @@ func newDumpCMD() *cobra.Command {
 // runDumpByHeightCMD `dump` command implementation
 func runDumpByHeightCMD(targetBlkHeight int64) error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 
 func calcTargetHeightByTime(t time.Time) (int64, error) {
 	targetTs := t.Unix()
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return -1, err
 	}

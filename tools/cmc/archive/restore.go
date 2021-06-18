@@ -25,6 +25,10 @@ const (
 	restoreBlockRequestTimeout = 20 // 20s
 )
 
+var (
+	configBlockArchiveError = errors.New("config block do not need archive")
+)
+
 func newRestoreCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "restore",
@@ -48,7 +52,7 @@ func newRestoreCMD() *cobra.Command {
 // runRestoreCMD `restore` command implementation
 func runRestoreCMD() error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return err
 	}
@@ -75,6 +79,9 @@ func runRestoreCMD() error {
 	}
 
 	//// 4.Restore Blocks
+	if archivedBlkHeightOnChain == 0 {
+		return nil
+	}
 	var barCount = archivedBlkHeightOnChain - restoreStartBlockHeight + 1
 	progress := uiprogress.New()
 	bar := progress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
@@ -144,7 +151,7 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 	}
 
 	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
-	if err != nil {
+	if err != nil && err != configBlockArchiveError {
 		return err
 	}
 
