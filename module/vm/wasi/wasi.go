@@ -257,10 +257,10 @@ func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimCon
 	limitKey, _ := ec.GetString("limit_key")
 	limitField, _ := ec.GetString("limit_field")
 	valuePtr, _ := ec.GetInt32("value_ptr")
-	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil { //加判断
+	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil {
 		return err
 	}
-	if err := protocol.CheckKeyFieldStr(limitKey, limitField); err != nil { //加判断
+	if err := protocol.CheckKeyFieldStr(limitKey, limitField); err != nil {
 		return err
 	}
 
@@ -282,7 +282,7 @@ func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSim
 	startKey, _ := ec.GetString("start_key")
 	startField, _ := ec.GetString("start_field")
 	valuePtr, _ := ec.GetInt32("value_ptr")
-	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil { //加判断
+	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil {
 		return err
 	}
 
