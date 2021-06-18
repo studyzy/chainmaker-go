@@ -281,19 +281,17 @@ func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSim
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	startKey, _ := ec.GetString("start_key")
 	startField, _ := ec.GetString("start_field")
-	limitKey, _ := ec.GetString("limit_key")
-	limitField, _ := ec.GetString("limit_field")
 	valuePtr, _ := ec.GetInt32("value_ptr")
 	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil { //加判断
 		return err
 	}
-	//if err := protocol.CheckKeyFieldStr(limitKey, limitField); err != nil { //加判断
-	//	return err
-	//}
 
-	key := protocol.GetKeyStr(startKey, startField)
-	limit := protocol.GetKeyStr(limitKey, limitField)
-	iter, err := txSimContext.Select(contractName, key, limit)
+	key := string(protocol.GetKeyStr(startKey, startField))
+
+	limitLast := key[len(key)-1] + 1
+	limit := key[:len(key)-1] + string(limitLast)
+
+	iter, err := txSimContext.Select(contractName, []byte(key), []byte(limit))
 	if err != nil {
 		return fmt.Errorf("ctx query error, %s", err.Error())
 	}
@@ -303,7 +301,6 @@ func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSim
 	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(index))
 	return nil
 }
-
 
 func (*WacsiImpl) KvIteratorHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
@@ -352,12 +349,12 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 		arrKey := strings.Split(keyField, "#")
 		key := arrKey[0]
 		field := ""
-		if len(arrKey)>1 {
-			field=arrKey[1]
+		if len(arrKey) > 1 {
+			field = arrKey[1]
 		}
 
 		ec.AddString("key", key)
-		ec.AddString("field",field)
+		ec.AddString("field", field)
 		ec.AddBytes("value", value)
 	}
 	kvBytes := ec.Marshal()
