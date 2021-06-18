@@ -230,11 +230,8 @@ func main() {
 	mainCmd.AddCommand(GetContractCMD())
 	mainCmd.AddCommand(SaveDataCMD())
 	mainCmd.AddCommand(GetDataCMD())
-	mainCmd.AddCommand(SaveContractCMD())
-	mainCmd.AddCommand(SaveQuoteCMD())
 	mainCmd.AddCommand(GetCertCMD())
 	mainCmd.AddCommand(GetDirCMD())
-	mainCmd.AddCommand(GetQuoteCMD())
 
 	//generate hash code
 	mainCmd.AddCommand(GenerateHashCMD())

@@ -60,6 +60,9 @@ var (
 
 	fileCache FileCacheReader     = NewFileCacheReader()
 	certCache CertFileCacheReader = NewCertFileCacheReader()
+
+	abiCache  FileCacheReader     = NewFileCacheReader()
+	outputResult bool
 )
 
 type KeyValuePair struct {
@@ -137,6 +140,7 @@ func ParallelCMD() *cobra.Command {
 	flags.StringVarP(&orgIDsString, "org-IDs", "I", "wx-org1,wx-org2", "specify user key path")
 	flags.BoolVarP(&checkResult, "check-result", "Y", false, "specify whether check result")
 	flags.BoolVarP(&recordLog, "record-log", "g", false, "specify whether record log")
+	flags.BoolVarP(&outputResult, "output-result", "", false, "output rpc result, eg: txid")
 
 	cmd.AddCommand(invokeCMD())
 	cmd.AddCommand(queryCMD())
@@ -163,6 +167,7 @@ func invokeCMD() *cobra.Command {
 	flags.StringVarP(&pairsString, "pairs", "a", "[{\"key\":\"key\",\"value\":\"counter1\",\"unique\":false}]", "specify pairs")
 	flags.StringVarP(&pairsFile, "pairs-file", "A", "", "specify pairs file, if used, set --pairs=\"\"")
 	flags.StringVarP(&method, "method", "m", "increase", "specify contract method")
+	flags.StringVarP(&abiPath, "abi-path", "", "", "abi file path")
 
 	return cmd
 }
@@ -566,6 +571,7 @@ type invokeHandler struct {
 var (
 	respStr     = "proposalRequest error, resp: %+v"
 	templateStr = "%s_%d_%d_%d"
+	resultStr     = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
 )
 
 func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey, orgId string, userCrtPath string, loopId int, ps []*KeyValuePair) error {
@@ -588,7 +594,19 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 		}
 	}
 
-	payloadBytes, err := constructPayload(contractName, method, pairs)
+	// 支持evm
+	//var err error
+	var abiData *[]byte
+	if abiPath != "" {
+		abiData = abiCache.Read(abiPath)
+		runTime = 5  //evm
+	}
+
+	method1, pairs1, err := makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
+
+	//fmt.Println("[exec_handle]orgId: ", orgId, ", userCrtPath: ", userCrtPath, ", loopId: ", loopId, ", method1: ", method1, ", pairs1: ", pairs1, ", method: ", method, ", pairs: ", pairs)
+
+	payloadBytes, err := constructPayload(contractName, method1, pairs1)
 	if err != nil {
 		return err
 	}
@@ -597,6 +615,11 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
 	if err != nil {
 		return err
+	}
+
+	if outputResult {
+		msg := fmt.Sprintf(resultStr, orgId, loopId, method1, txId, resp)
+		fmt.Println(msg)
 	}
 
 	if checkResult && resp.Code != commonPb.TxStatusCode_SUCCESS {
