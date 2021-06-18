@@ -137,19 +137,8 @@ func (b *BlockKvDB) GetArchivedPivot() (uint64, error) {
 	return b.archivedPivot, nil
 }
 
-// SetArchivedPivot set archived pivot
-func (b *BlockKvDB) SetArchivedPivot(archivedPivot uint64) error {
-	batch := types.NewUpdateBatch()
-	batch.Put([]byte(archivedPivotKey), constructBlockNumKey(archivedPivot))
-	if err := b.DbHandle.WriteBatch(batch, false); err != nil {
-		return err
-	}
 
-	b.archivedPivot = archivedPivot
-	return nil
-}
-
-// ShrinkBlocks remove ranged heightKey--SerializedMeta and txid--SerializedTx from kvdb
+// ShrinkBlocks remove ranged txid--SerializedTx from kvdb
 func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
 	var (
 		block *commonPb.Block
@@ -166,7 +155,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 
 	txIdsMap := make(map[uint64][]string)
 	startTime := utils.CurrentTimeMillisSeconds()
-	for height := endHeight; height >= startHeight; height-- {
+	for height := startHeight; height <= endHeight; height++ {
 		heightKey := constructBlockNumKey(height)
 		blk, err1 := b.getBlockByHeightBytes(heightKey)
 		if err1 != nil {
@@ -186,31 +175,33 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 			txIds = append(txIds, tx.Header.TxId)
 		}
 		txIdsMap[height] = txIds
+		//set archivedPivotKey to db
+		batch.Put([]byte(archivedPivotKey), constructBlockNumKey(height))
 		if err = b.DbHandle.WriteBatch(batch, false); err != nil {
 			return nil, err
 		}
-	}
 
-	beforeWrite := utils.CurrentTimeMillisSeconds()
+		b.archivedPivot = height
+	}
 
 	go b.compactRange()
 
-	writeTime := utils.CurrentTimeMillisSeconds() - beforeWrite
-	b.Logger.Infof("shrink block from [%d] to [%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
-		startHeight, endHeight, beforeWrite-startTime, writeTime,
-		utils.CurrentTimeMillisSeconds()-startTime)
+	usedTime := utils.CurrentTimeMillisSeconds() - startTime
+	b.Logger.Infof("shrink block from [%d] to [%d] time used: %d",
+		startHeight, endHeight, usedTime)
 	return txIdsMap, nil
 }
 
 // RestoreBlocks restore block data from outside to kvdb: txid--SerializedTx
 func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error {
 	startTime := utils.CurrentTimeMillisSeconds()
+	archivePivot := uint64(0)
 	for i := len(blockInfos) - 1; i >= 0; i-- {
 		blockInfo := blockInfos[i]
 
 		//check whether block can be archived
 		if utils.IsConfBlock(blockInfo.Block) {
-			b.Logger.Warnf("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
+			b.Logger.Infof("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
 			continue
 		}
 
@@ -231,19 +222,24 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 			batch.Put(constructTxIDKey(blockInfo.Block.Txs[index].Header.TxId), stx)
 		}
 
-		if err := b.DbHandle.WriteBatch(batch, false); err != nil {
+		archivePivot, err = b.getNextArchivePivot(blockInfo.Block)
+		if err != nil {
 			return err
 		}
-	}
 
-	beforeWrite := utils.CurrentTimeMillisSeconds()
+		batch.Put([]byte(archivedPivotKey), constructBlockNumKey(archivePivot))
+		err = b.DbHandle.WriteBatch(batch, false)
+		if err != nil {
+			return err
+		}
+		b.archivedPivot = archivePivot
+	}
 
 	go b.compactRange()
 
-	writeTime := utils.CurrentTimeMillisSeconds() - beforeWrite
-	b.Logger.Infof("shrink block from [%d] to [%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
-		blockInfos[len(blockInfos)-1].Block.Header.BlockHeight, blockInfos[0].Block.Header.BlockHeight, beforeWrite-startTime, writeTime,
-		utils.CurrentTimeMillisSeconds()-startTime)
+	usedTime := utils.CurrentTimeMillisSeconds() - startTime
+	b.Logger.Infof("shrink block from [%d] to [%d] time used: %d",
+		blockInfos[len(blockInfos)-1].Block.Header.BlockHeight, blockInfos[0].Block.Header.BlockHeight, usedTime)
 	return nil
 }
 
@@ -570,6 +566,32 @@ func (b *BlockKvDB) has(key []byte) (bool, error) {
 		return !isDelete, nil
 	}
 	return b.DbHandle.Has(key)
+}
+
+func (b *BlockKvDB) getNextArchivePivot(pivotBlock *commonPb.Block) (uint64, error) {
+	curIsConf := true
+	archivedPivot := uint64(pivotBlock.Header.BlockHeight)
+	for curIsConf {
+		//consider restore height 1 and height 0 block
+		//1. height 1: this is a config block, archivedPivot should be 0
+		//2. height 1: this is not a config block, archivedPivot should be 0
+		//3. height 0: archivedPivot should be 0
+		if archivedPivot < 2 {
+			archivedPivot = 0
+			break
+		}
+
+		//we should not get block data only if it is config block
+		archivedPivot = archivedPivot - 1
+		_, errb := b.GetBlock(int64(archivedPivot))
+		if errb == archive.ArchivedBlockError {
+			curIsConf = false
+			break
+		} else if errb != nil {
+			return 0, errb
+		}
+	}
+	return archivedPivot, nil
 }
 
 func constructBlockNumKey(blockNum uint64) []byte {

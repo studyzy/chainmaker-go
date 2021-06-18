@@ -167,6 +167,12 @@ func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, conf
 	default:
 		return nil, nil
 	}
+
+	//Get and update archive pivot
+	if _, err := blockDB.GetArchivedPivot(); err != nil {
+		return nil, err
+	}
+
 	return blockDB, nil
 }
 
