@@ -8,7 +8,6 @@ package store
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/store/archive"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -16,6 +15,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker-go/store/archive"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
@@ -292,7 +293,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 
 func createConfBlockAndRWSets(chainId string, height int64) (*commonPb.Block, []*commonPb.TxRWSet) {
 	block := createConfBlock(chainId, height)
-	txRWSets := []*commonPb.TxRWSet {
+	txRWSets := []*commonPb.TxRWSet{
 		{
 			TxId: block.Txs[0].Header.TxId,
 			TxWrites: []*commonPb.TxWrite{
@@ -802,7 +803,7 @@ func TestWriteBinlog(t *testing.T) {
 
 func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	var factory Factory
-	dbConf := getlvldbConfig("./")
+	dbConf := getlvldbConfig("")
 	dbConf.UnArchiveBlockHeight = 10
 	s, err := factory.NewStore(chainId, dbConf, log)
 	assert.Equal(t, nil, err)
@@ -818,11 +819,11 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
 	for i := 0; i < totalHeight; i++ {
 		var (
-			block *commonPb.Block
-			txRWSet  []*commonPb.TxRWSet
+			block   *commonPb.Block
+			txRWSet []*commonPb.TxRWSet
 		)
 
-		if i % 5 == 0 {
+		if i%5 == 0 {
 			block, txRWSet = createConfBlockAndRWSets(chainId, int64(i))
 		} else {
 			block, txRWSet = createBlockAndRWSets(chainId, int64(i), 10)
@@ -873,7 +874,7 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	//restore block
 	err = s.RestoreBlocks(blocksBytes)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(archiveHeight2 - 1), s.GetArchivedPivot())
+	assert.Equal(t, uint64(archiveHeight2-1), s.GetArchivedPivot())
 
 	verifyArchive(t, 10, blocks, s)
 

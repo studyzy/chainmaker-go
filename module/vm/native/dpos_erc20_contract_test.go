@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"fmt"
+	"testing"
+
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 const (
@@ -225,7 +226,7 @@ func (t *TxSimContextMock) Put(name string, key []byte, value []byte) error {
 	return nil
 }
 
-func (t *TxSimContextMock) PutRecord(contractName string, value []byte) {
+func (t *TxSimContextMock) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
 
@@ -265,7 +266,7 @@ func (t *TxSimContextMock) SetTxResult(result *commonPb.Result) {
 	panic("implement me")
 }
 
-func (t *TxSimContextMock) GetTxRWSet() *commonPb.TxRWSet {
+func (t *TxSimContextMock) GetTxRWSet(b bool) *commonPb.TxRWSet {
 	panic("implement me")
 }
 
