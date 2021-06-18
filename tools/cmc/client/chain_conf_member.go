@@ -28,7 +28,6 @@ func configTrustMemberCMD() *cobra.Command {
 	}
 	cmd.AddCommand(addTrustMemberCMD())
 	cmd.AddCommand(removeTrustMemberCMD())
-	cmd.AddCommand(updateTrustMemberCMD())
 
 	return cmd
 }
@@ -36,15 +35,15 @@ func configTrustMemberCMD() *cobra.Command {
 func addTrustMemberCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "add trust member ca cert",
-		Long:  "add trust member ca cert",
+		Short: "add trust member",
+		Long:  "add trust member",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return configTrustMember(addTrustMember)
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath, flagTrustMemberOrgId, flagTrustMemberRole, flagNodeId,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath, flagTrustMemberOrgId, flagTrustMemberRole, flagTrustMemberNodeId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -54,7 +53,7 @@ func addTrustMemberCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagTrustMemberOrgId)
 	cmd.MarkFlagRequired(flagTrustMemberCrtPath)
 	cmd.MarkFlagRequired(flagTrustMemberRole)
-	cmd.MarkFlagRequired(flagNodeId)
+	cmd.MarkFlagRequired(flagTrustMemberNodeId)
 	return cmd
 }
 
@@ -78,31 +77,6 @@ func removeTrustMemberCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustMemberOrgId)
 
-	return cmd
-}
-
-func updateTrustMemberCMD() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "update trust member ca cert",
-		Long:  "update trust member ca cert",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return configTrustMember(updateTrustMember)
-		},
-	}
-
-	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath, flagTrustMemberOrgId, flagTrustMemberRole, flagNodeId,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
-	})
-
-	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
-	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
-	cmd.MarkFlagRequired(flagTrustMemberOrgId)
-	cmd.MarkFlagRequired(flagTrustMemberCrtPath)
-	cmd.MarkFlagRequired(flagTrustMemberRole)
-	cmd.MarkFlagRequired(flagNodeId)
 	return cmd
 }
 
@@ -136,8 +110,6 @@ func configTrustMember(op int) error {
 		payloadBytes, err = client.CreateChainConfigTrustMemberAddPayload(trustMemberOrgId, trustMemberNodeId, trustMemberRole, string(trustMemberBytes))
 	case removeTrustMember:
 		payloadBytes, err = client.CreateChainConfigTrustMemberDeletePayload(trustMemberOrgId)
-	case updateTrustMember:
-		payloadBytes, err = client.CreateChainConfigTrustMemberUpdatePayload(trustMemberOrgId, trustMemberNodeId, trustMemberRole, string(trustMemberBytes))
 	default:
 		err = fmt.Errorf("invalid trust member operation")
 	}

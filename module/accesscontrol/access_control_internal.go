@@ -1057,22 +1057,28 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 		return []*bcx509.Certificate{cert}, nil
 	}
 
+	for _, v := range ac.localTrustMembers {
+		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
+		if certBlock == nil {
+			return nil, fmt.Errorf("setup member failed, none public key or certificate given")
+		}
+		trustMemberCert, err := bcx509.ParseCertificate(certBlock.Bytes)
+		if err == nil {
+			if string(trustMemberCert.Raw) == string(cert.Raw) {
+				return []*bcx509.Certificate{cert}, nil
+			}
+		}
+
+	}
+
 	certChains, err := cert.Verify(ac.opts)
 	if err != nil {
 		return nil, fmt.Errorf("authentication failed, not ac valid certificate from trusted CAs: %v", err)
 	}
-	isTrustMember := false
-	for _, v := range ac.localTrustMembers {
-		if v.OrgId == mem.GetOrgId() {
-			isTrustMember = true
-			break
-		}
-	}
-	if !isTrustMember {
-		orgIdFromCert := cert.Subject.Organization[0]
-		if mem.GetOrgId() != orgIdFromCert {
-			return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
-		}
+
+	orgIdFromCert := cert.Subject.Organization[0]
+	if mem.GetOrgId() != orgIdFromCert {
+		return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
 	}
 
 	org := ac.getOrgByOrgId(mem.GetOrgId())
@@ -1200,6 +1206,7 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 		ok = false
 		return
 	}
+
 	certChain, err = ac.verifyMember(remoteMember)
 	if err != nil {
 		ac.log.Warnf(authenticationFailedErrorTemplate, err)
@@ -1227,18 +1234,29 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 
 func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, endorsement *common.EndorsementEntry, msg []byte, memInfo string) bool {
 	// check CRL and certificate frozen list
-	err := ac.checkCRL(signerInfo.certChain)
-	if err != nil {
-		ac.log.Warnf("authentication failed, checking CRL returns error: %v", err)
-		return false
+
+	isTrustMember := false
+	for _, v := range ac.localTrustMembers {
+		if v.MemberInfo == memInfo {
+			isTrustMember = true
+			break
+		}
 	}
-	err = ac.checkCertFrozenList(signerInfo.certChain)
-	if err != nil {
-		ac.log.Warnf("authentication failed, checking certificate frozen list returns error: %v", err)
-		return false
+	if !isTrustMember {
+		err := ac.checkCRL(signerInfo.certChain)
+		if err != nil {
+			ac.log.Warnf("authentication failed, checking CRL returns error: %v", err)
+			return false
+		}
+		err = ac.checkCertFrozenList(signerInfo.certChain)
+		if err != nil {
+			ac.log.Warnf("authentication failed, checking certificate frozen list returns error: %v", err)
+			return false
+		}
+
+		ac.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
 	}
 
-	ac.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
 	if endorsement.Signer.OrgId != signerInfo.signer.GetOrgId() {
 		ac.log.Warnf("authentication failed, signer does not belong to the organization it claims [claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.signer.GetOrgId())
 		return false

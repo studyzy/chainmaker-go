@@ -9,6 +9,7 @@ package client
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +23,7 @@ func chainConfigCMD() *cobra.Command {
 	chainConfigCmd.AddCommand(updateBlockConfigCMD())
 	chainConfigCmd.AddCommand(configTrustRootCMD())
 	chainConfigCmd.AddCommand(configConsensueNodeCMD())
+	chainConfigCmd.AddCommand(configTrustMemberCMD())
 	return chainConfigCmd
 }
 

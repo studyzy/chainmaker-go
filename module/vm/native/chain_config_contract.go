@@ -7,6 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/sortedmap"
 	"chainmaker.org/chainmaker-go/logger"
@@ -15,11 +20,7 @@ import (
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -85,7 +86,6 @@ func registerChainConfigContractMethods(log *logger.CMLogger) map[string]Contrac
 	// [trust_Member]
 	trustMembersRuntime := &ChainTrustMembersRuntime{log: log}
 	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_ADD.String()] = trustMembersRuntime.TrustMemberAdd
-	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_UPDATE.String()] = trustMembersRuntime.TrustMemberUpdate
 	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_DELETE.String()] = trustMembersRuntime.TrustMemberDelete
 
 	// [consensus]
@@ -469,43 +469,6 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 		r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", orgId, memberInfo, role, nodeId)
 	}
 	return result, err
-}
-
-func (r *ChainTrustMembersRuntime) TrustMemberUpdate(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
-	// [start]
-	chainConfig, err := getChainConfig(txSimContext, params)
-	if err != nil {
-		r.log.Error(err)
-		return nil, err
-	}
-
-	orgId := params[paramNameOrgId]
-	memberInfo := params[paramNameMemberInfo]
-	role := params[paramNameRole]
-	nodeId := params[paramNameNodeId]
-	if utils.IsAnyBlank(memberInfo, orgId, role, nodeId) {
-		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found", ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
-		r.log.Error(err)
-		return nil, err
-	}
-
-	trustMembers := chainConfig.TrustMembers
-	for i, trustMember := range trustMembers {
-		if nodeId == trustMember.NodeId {
-			trustMembers[i] = &configPb.TrustMemberConfig{OrgId: orgId, MemberInfo: memberInfo, Role: role, NodeId: nodeId}
-			result, err = setChainConfig(txSimContext, chainConfig)
-			if err != nil {
-				r.log.Errorf("trust member add fail, %s, orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", err.Error(), orgId, memberInfo, role, nodeId)
-			} else {
-				r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", orgId, memberInfo, role, nodeId)
-			}
-			return result, err
-		}
-	}
-
-	err = fmt.Errorf("%s can not found orgId[%s]", ErrParams.Error(), orgId)
-	r.log.Error(err)
-	return nil, err
 }
 
 func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
