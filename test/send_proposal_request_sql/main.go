@@ -126,6 +126,9 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	if rs["id"] != id {
 		fmt.Println("result", rs)
 		panic("query by id error, id err")
+	} else {
+		fmt.Println("  【testInvokeSqlInsert】 pass")
+		fmt.Println("  【testQuerySqlById】 pass")
 	}
 
 	fmt.Println("// 4) 执行合约-sql update name=长安链chainmaker_update where id=" + id)
@@ -141,8 +144,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("result", rs)
 		panic("query update result error")
 	} else {
-		fmt.Println("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
-		fmt.Println("testInvokeSqlUpdate contract create invoke query test 【success】")
+		fmt.Println("  【testInvokeSqlUpdate】 pass")
 	}
 
 	fmt.Println("// 6) 范围查询 rang age 1~10")
@@ -158,6 +160,8 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	if result != "{}" {
 		fmt.Println("result", result)
 		panic("查询结果错误")
+	} else {
+		fmt.Println("  【testInvokeSqlDelete】 pass")
 	}
 	//// 9) 跨合约调用
 	testCrossCall(sk3, client, CHAIN1)
@@ -183,8 +187,7 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		if rs["name"] == "chainmaker_save_point" {
 			panic("testInvokeSqlUpdateRollbackDbSavePoint test 【fail】 query by id error, age err")
 		} else if rs["name"] == "长安链chainmaker" {
-			fmt.Println("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
-			fmt.Println("testInvokeSqlUpdateRollbackDbSavePoint test 【success】")
+			fmt.Println("  【testInvokeSqlUpdateRollbackDbSavePoint】 pass")
 		} else {
 			panic("error result")
 		}
@@ -206,8 +209,8 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	if rs["age"] != "100000" {
 		panic("query by id error, age err")
 	} else {
-		fmt.Println("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
-		fmt.Println("testInvokeSqlInsert test 【success】")
+		fmt.Println("  【testUpgrade】 pass")
+		fmt.Println("  【testInvokeSqlInsert】 pass")
 	}
 
 	// 异常功能测试
@@ -297,29 +300,17 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	fmt.Println("test success!!!")
 	fmt.Println("test success!!!")
 }
-func initWasmerTest() {
-	WasmPath = "../wasm/rust-fact-1.0.0.wasm"
-	WasmUpgradePath = "../wasm/rust-func-verify-1.0.0.wasm"
-	contractName = "contract0001"
-	runtimeType = commonPb.RuntimeType_WASMER
-}
 func initWasmerSqlTest() {
 	WasmPath = "../wasm/rust-sql-1.1.1.wasm"
 	WasmUpgradePath = "../wasm/rust-sql-1.1.1.wasm"
-	contractName = "contract100"
+	contractName = "contract110"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
 	WasmPath = "../wasm/go-sql-1.1.1.wasm"
 	WasmUpgradePath = "../wasm/go-sql-1.1.1.wasm"
-	contractName = "contract200"
+	contractName = "contract210"
 	runtimeType = commonPb.RuntimeType_GASM
-}
-func initWxwmTest() {
-	WasmPath = "../wasm/cpp-func-verify-1.0.0.wasm"
-	WasmUpgradePath = "../wasm/cpp-func-verify-1.0.0.wasm"
-	contractName = "contract300"
-	runtimeType = commonPb.RuntimeType_WXVM
 }
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 

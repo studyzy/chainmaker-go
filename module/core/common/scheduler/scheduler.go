@@ -47,18 +47,19 @@ type dagNeighbors map[int]bool
 
 func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction) protocol.TxSimContext {
 	return &txSimContextImpl{
-		txExecSeq:     snapshot.GetSnapshotSize(),
-		tx:            tx,
-		txReadKeyMap:  make(map[string]*commonpb.TxRead, 8),
-		txWriteKeyMap: make(map[string]*commonpb.TxWrite, 8),
-		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
-		kvRowCache:    make(map[int32]protocol.StateIterator, 0),
-		txWriteKeySql: make([]*commonpb.TxWrite, 0),
-		snapshot:      snapshot,
-		vmManager:     vmManager,
-		gasUsed:       0,
-		currentDepth:  0,
-		hisResult:     make([]*callContractResult, 0),
+		txExecSeq:        snapshot.GetSnapshotSize(),
+		tx:               tx,
+		txReadKeyMap:     make(map[string]*commonpb.TxRead, 8),
+		txWriteKeyMap:    make(map[string]*commonpb.TxWrite, 8),
+		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		txWriteKeySql:    make([]*commonpb.TxWrite, 0),
+		txWriteKeyDdlSql: make([]*commonpb.TxWrite, 0),
+		snapshot:         snapshot,
+		vmManager:        vmManager,
+		gasUsed:          0,
+		currentDepth:     0,
+		hisResult:        make([]*callContractResult, 0),
 	}
 }
 

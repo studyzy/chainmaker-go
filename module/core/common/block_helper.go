@@ -763,9 +763,6 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		if sqlErr := chain.storeHelper.RollBack(block, chain.blockchainStore); sqlErr != nil {
 			chain.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
 		}
-		if panicErr != nil {
-			panic(panicErr)
-		}
 	}()
 
 	startTick := utils.CurrentTimeMillisSeconds()

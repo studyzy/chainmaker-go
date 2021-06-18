@@ -95,15 +95,7 @@ func (s *SnapshotEvidence) ApplyTxSimContext(cache protocol.TxSimContext, runVmS
 	var txResult *commonPb.Result
 
 	// Only when the virtual machine is running normally can the read-write set be saved
-	if runVmSuccess {
-		txRWSet = cache.GetTxRWSet()
-	} else {
-		txRWSet = &commonPb.TxRWSet{
-			TxId:     tx.Header.TxId,
-			TxReads:  nil,
-			TxWrites: nil,
-		}
-	}
+	txRWSet = cache.GetTxRWSet(runVmSuccess)
 	txResult = cache.GetTxResult()
 
 	if txExecSeq >= len(s.delegate.txTable) {

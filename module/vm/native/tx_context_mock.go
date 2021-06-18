@@ -10,13 +10,13 @@ import (
 type dataStore map[string][]byte
 
 type TxContextMock struct {
-	lock          *sync.Mutex
+	lock     *sync.Mutex
 	cacheMap dataStore
 }
 
 func newTxContextMock(cache dataStore) *TxContextMock {
-	return &TxContextMock {
-		lock: &sync.Mutex{},
+	return &TxContextMock{
+		lock:     &sync.Mutex{},
 		cacheMap: cache,
 	}
 }
@@ -65,11 +65,10 @@ func (*TxContextMock) CallContract(contractId *commonPb.ContractId,
 	parameter map[string]string,
 	gasUsed uint64,
 	refTxType commonPb.TxType,
-	) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	panic("implement me")
 }
-
 
 func (*TxContextMock) GetCurrentResult() []byte {
 	panic("implement me")
@@ -78,7 +77,6 @@ func (*TxContextMock) GetCurrentResult() []byte {
 func (*TxContextMock) GetTx() *commonPb.Transaction {
 	panic("implement me")
 }
-
 
 func (mock *TxContextMock) GetBlockHeight() int64 {
 	return 0
@@ -92,7 +90,7 @@ func (mock *TxContextMock) SetTxResult(txResult *commonPb.Result) {
 	panic("implement me")
 }
 
-func (mock *TxContextMock) GetTxRWSet() *commonPb.TxRWSet {
+func (mock *TxContextMock) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	panic("implement me")
 }
 
@@ -132,8 +130,7 @@ func (mock *TxContextMock) GetBlockProposer() []byte {
 	panic("implement me")
 }
 
-
-func (mock *TxContextMock) PutRecord(contractName string, value []byte) {
+func (mock *TxContextMock) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
 
@@ -153,6 +150,6 @@ func (mock *TxContextMock) GetStateKvHandle(int32) (protocol.StateIterator, bool
 	panic("implement me")
 }
 
-func (mock *TxContextMock)  SetStateKvHandle(int32, protocol.StateIterator) {
+func (mock *TxContextMock) SetStateKvHandle(int32, protocol.StateIterator) {
 	panic("implement me")
 }

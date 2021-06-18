@@ -37,7 +37,7 @@ const (
 	//logDBBlockKeyPrefix = 'n'
 )
 
-// BlockStoreImpl provides an implementation of `protocal.BlockchainStore`.
+// BlockStoreImpl provides an implementation of `protocol.BlockchainStore`.
 type BlockStoreImpl struct {
 	blockDB         blockdb.BlockDB
 	stateDB         statedb.StateDB

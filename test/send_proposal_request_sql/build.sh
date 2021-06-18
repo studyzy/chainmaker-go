@@ -5,6 +5,5 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 cd ../../main
-rm -rf main
-rm -rf chainmaker
-go build -o chainmaker
+rm -rf ../bin/chainmaker
+go build -o ../bin/chainmaker

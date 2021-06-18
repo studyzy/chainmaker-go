@@ -116,6 +116,14 @@ const (
 	BulletProofsVerify                      = "BulletProofsVerify"
 )
 
+type SqlType int8
+
+const (
+	SqlTypeDdl SqlType = iota
+	SqlTypeDml
+	SqlTypeDql
+)
+
 //VmManager manage vm runtime
 type VmManager interface {
 	// GetAccessControl get accessControl manages policies and principles

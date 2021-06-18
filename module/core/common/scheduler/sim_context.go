@@ -19,21 +19,22 @@ import (
 
 // Storage interface for smart contracts
 type txSimContextImpl struct {
-	txExecSeq     int
-	txResult      *commonpb.Result
-	txRWSet       *commonpb.TxRWSet
-	tx            *commonpb.Transaction
-	txReadKeyMap  map[string]*commonpb.TxRead
-	txWriteKeyMap map[string]*commonpb.TxWrite
-	txWriteKeySql []*commonpb.TxWrite
-	snapshot      protocol.Snapshot
-	vmManager     protocol.VmManager
-	gasUsed       uint64 // only for callContract
-	currentDepth  int
-	currentResult []byte
-	hisResult     []*callContractResult
-	sqlRowCache   map[int32]protocol.SqlRows
-	kvRowCache    map[int32]protocol.StateIterator
+	txExecSeq        int
+	txResult         *commonpb.Result
+	txRWSet          *commonpb.TxRWSet
+	tx               *commonpb.Transaction
+	txReadKeyMap     map[string]*commonpb.TxRead
+	txWriteKeyMap    map[string]*commonpb.TxWrite
+	txWriteKeySql    []*commonpb.TxWrite
+	txWriteKeyDdlSql []*commonpb.TxWrite // record ddl vm run success or failure
+	snapshot         protocol.Snapshot
+	vmManager        protocol.VmManager
+	gasUsed          uint64 // only for callContract
+	currentDepth     int
+	currentResult    []byte
+	hisResult        []*callContractResult
+	sqlRowCache      map[int32]protocol.SqlRows
+	kvRowCache       map[int32]protocol.StateIterator
 }
 
 type callContractResult struct {
@@ -71,13 +72,16 @@ func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) er
 	return nil
 }
 
-func (s *txSimContextImpl) PutRecord(contractName string, value []byte) {
+func (s *txSimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	txWrite := &commonpb.TxWrite{
 		Key:          nil,
 		Value:        value,
 		ContractName: contractName,
 	}
 	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
+	if sqlType == protocol.SqlTypeDdl {
+		s.txWriteKeyDdlSql = append(s.txWriteKeyDdlSql, txWrite)
+	}
 }
 
 func (s *txSimContextImpl) Del(contractName string, key []byte) error {
@@ -164,15 +168,21 @@ func (s *txSimContextImpl) GetChainNodesInfoProvider() (protocol.ChainNodesInfoP
 }
 
 // GetTxRWSet return current transaction read write set
-func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
+func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 	if s.txRWSet != nil {
 		return s.txRWSet
 	}
 	s.txRWSet = &commonpb.TxRWSet{
 		TxId:     s.tx.Header.TxId,
-		TxReads:  make([]*commonpb.TxRead, 0, len(s.txReadKeyMap)),
-		TxWrites: make([]*commonpb.TxWrite, 0, len(s.txWriteKeyMap)),
+		TxReads:  nil,
+		TxWrites: nil,
 	}
+	if !runVmSuccess {
+		// ddl sql tx writes
+		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeyDdlSql...)
+		return s.txRWSet
+	}
+
 	{
 		txIds := make([]string, 0, len(s.txReadKeyMap))
 		for txId := range s.txReadKeyMap {
@@ -183,6 +193,7 @@ func (s *txSimContextImpl) GetTxRWSet() *commonpb.TxRWSet {
 			s.txRWSet.TxReads = append(s.txRWSet.TxReads, s.txReadKeyMap[k])
 		}
 	}
+
 	{
 		txIds := make([]string, 0, len(s.txWriteKeyMap))
 		for txId := range s.txWriteKeyMap {

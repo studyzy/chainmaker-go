@@ -33,7 +33,7 @@ type TxSimContext interface {
 	// Put key into cache
 	Put(name string, key []byte, value []byte) error
 	// PutRecord put sql state into cache
-	PutRecord(contractName string, value []byte)
+	PutRecord(contractName string, value []byte, sqlType SqlType)
 	// Delete key from cache
 	Del(name string, key []byte) error
 	// Select range query for key [start, limit)
@@ -54,7 +54,7 @@ type TxSimContext interface {
 	// Set the tx result
 	SetTxResult(*common.Result)
 	// Get the read and write set completed by the current transaction
-	GetTxRWSet() *common.TxRWSet
+	GetTxRWSet(runVmSuccess bool) *common.TxRWSet
 	// Get the creator of the contract
 	GetCreator(namespace string) *pbac.SerializedMember
 	// Get the invoker of the transaction

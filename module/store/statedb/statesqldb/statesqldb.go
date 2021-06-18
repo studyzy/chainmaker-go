@@ -172,8 +172,12 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
 			contractId.ContractName = address.String()
 		}
-		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
+		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
+			err2 := s.db.RollbackDbTransaction(txKey)
+			if err2 != nil {
+				return err2
+			}
 			return err
 		}
 	}
@@ -259,18 +263,12 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int6
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractId *commonPb.ContractId,
+func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.ContractId,
 	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
 	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
-	txKey := block.GetTxKey() + "_KV"
 	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
-	if err != nil {
-		return err
-	}
-	dbHandle := s.getContractDbHandle(contractId.ContractName)
-	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {
 		return err
 	}
@@ -286,13 +284,11 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 		if len(txWrite.Key) == 0 { //这是SQL语句
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
-				_, err = dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
+				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
+				err = dbTx.ChangeContextDb(writeDbName)
+				_, err = dbTx.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
 				if err != nil {
 					s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
-					err2 := dbHandle.RollbackDbTransaction(txKey)
-					if err2 != nil {
-						return err2
-					} //前面开启的事务，这里还是需要回滚一下
 					return err
 				}
 			}
@@ -307,23 +303,11 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 			s.logger.Debugf("try save state key[%s] to db[%s]", txWrite.Key, writeDbName)
 			if err = saveStateInfo(dbTx, stateInfo); err != nil {
 				s.logger.Errorf("save state key[%s] to db[%s] get error:%s", txWrite.Key, writeDbName, err.Error())
-				err2 := dbHandle.RollbackDbTransaction(txKey)
-				if err2 != nil {
-					return err2
-				}
 				return err
 			}
 		}
 	}
-	err = dbTx.ChangeContextDb(dbName)
-	if err != nil {
-		return err
-	}
-	err = dbHandle.CommitDbTransaction(txKey)
-	if err != nil {
-		return err
-	}
-	s.logger.Debugf("chain[%s]: commit state block[%d]",
+	s.logger.Debugf("chain[%s]: save state block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 }

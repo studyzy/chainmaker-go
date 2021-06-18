@@ -15,6 +15,10 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 )
 
+const (
+	contractStoreSeparator = '#'
+)
+
 // StateInfo defines mysql orm model, used to create mysql table 'state_infos'
 type StateInfo struct {
 	//ID           uint   `gorm:"primarykey"`
@@ -101,6 +105,7 @@ func (kvi *kvIterator) Value() (*store.KV, error) {
 		Value:        kv.ObjectValue,
 	}, nil
 }
+
 func (kvi *kvIterator) Release() {
 	kvi.rows.Close()
 }
