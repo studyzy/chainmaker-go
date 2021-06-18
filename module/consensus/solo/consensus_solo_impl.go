@@ -8,11 +8,12 @@ package solo
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"fmt"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 
 	"chainmaker.org/chainmaker-go/common/msgbus"
 	"chainmaker.org/chainmaker-go/protocol"
@@ -91,13 +92,14 @@ func (consensus *ConsensusSoloImpl) OnMessage(message *msgbus.Message) {
 
 //handleProposedBlock process proposedblock msg
 func (consensus *ConsensusSoloImpl) handleProposedBlock(message *msgbus.Message) {
-	if _, ok := message.Payload.(*common.Block); !ok {
+	if _, ok := message.Payload.(*consensuspb.ProposalBlock); !ok {
 		clog.Errorf("id: %s ProposedBlock msg is invaild",
 			consensus.id)
 		return
 	}
 
-	block := message.Payload.(*common.Block)
+	proposedBlock := message.Payload.(*consensuspb.ProposalBlock)
+	block := proposedBlock.Block
 	clog.Infof("handle proposedBlock start, id: %s, height: %d", consensus.id, block.Header.BlockHeight)
 	clog.Debugf("ProposedBlock block: %v", block)
 

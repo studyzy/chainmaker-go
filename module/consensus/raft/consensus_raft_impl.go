@@ -200,8 +200,8 @@ func (consensus *ConsensusRaftImpl) Stop() error {
 func (consensus *ConsensusRaftImpl) OnMessage(message *msgbus.Message) {
 	switch message.Topic {
 	case msgbus.ProposedBlock:
-		if block, ok := message.Payload.(*common.Block); ok {
-			consensus.proposedBlockC <- block
+		if proposedBlock, ok := message.Payload.(*consensuspb.ProposalBlock); ok {
+			consensus.proposedBlockC <- proposedBlock.Block
 		}
 	case msgbus.RecvConsensusMsg:
 		if msg, ok := message.Payload.(*netpb.NetMsg); ok {

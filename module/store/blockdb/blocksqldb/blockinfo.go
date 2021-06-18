@@ -82,6 +82,9 @@ func (b *BlockInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE block_infos set chain_id=?" +
 		" WHERE block_height=?", []interface{}{b.ChainId, b.BlockHeight}
 }
+func (b *BlockInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM block_infos WHERE block_height=?", []interface{}{b.BlockHeight}
+}
 func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 	blockInfo := &BlockInfo{
 		ChainId:        block.Header.ChainId,
