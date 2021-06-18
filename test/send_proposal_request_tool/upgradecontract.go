@@ -60,8 +60,8 @@ func upgradeContract() error {
 	if err != nil {
 		return err
 	}
-
-	method, pairs, err = makePairs("", abiPath, pairs, commonPb.RuntimeType(runTime))
+	var abiData *[]byte
+	method, pairs, err = makePairs("", abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 	if err != nil {
 		return fmt.Errorf("make pairs filure!")
 	}
