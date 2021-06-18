@@ -81,6 +81,7 @@ const (
 	ContractMethodDeleteState = "DeleteState"
 	// kv iterator author:whang1234
 	ContractMethodKvIterator        = "KvIterator"
+	ContractMethodKvPreIterator     = "KvPreIterator"
 	ContractMethodKvIteratorHasNext = "KvIteratorHasNext"
 	ContractMethodKvIteratorNextLen = "KvIteratorNextLen"
 	ContractMethodKvIteratorNext    = "KvIteratorNext"
@@ -139,6 +140,7 @@ type ContractWacsiKV interface {
 	PutState() int32
 	DeleteState() int32
 	KvIterator() int32
+	KvPreIterator() int32
 	KvIteratorClose() int32
 	KvIteratorNext() int32
 	KvIteratorHasNext() int32

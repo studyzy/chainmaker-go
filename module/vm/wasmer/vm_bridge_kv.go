@@ -59,6 +59,14 @@ func (s *WaciInstance) KvIterator() int32 {
 	}
 	return protocol.ContractSdkSignalResultSuccess
 }
+func (s *WaciInstance) KvPreIterator() int32 {
+	err := wacsi.KvPreIterator(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory)
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
+}
 
 //KvIteratorHasNext to determine whether db has next statement
 func (s *WaciInstance) KvIteratorHasNext() int32 {

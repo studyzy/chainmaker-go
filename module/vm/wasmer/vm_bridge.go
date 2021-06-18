@@ -129,6 +129,8 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.DeleteState()
 	case protocol.ContractMethodKvIterator:
 		return s.KvIterator()
+	case protocol.ContractMethodKvPreIterator:
+		return s.KvPreIterator()
 	case protocol.ContractMethodKvIteratorHasNext:
 		return s.KvIteratorHasNext()
 	case protocol.ContractMethodKvIteratorNextLen:
