@@ -20,8 +20,8 @@ import (
 )
 
 func TestContract_Fact(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/go-fact-1.2.1.wasm"
-	//test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.1.wasm"
+	//test.WasmFile = "../../../../test/wasm/go-fact-1.2.1.wasm"
+	test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.1.wasm"
 	//test.WasmFile = "D:/develop/workspace/chainMaker/chainmaker-go/module/vm/sdk/go/fact-go.wasm"
 	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_GASM)
 
@@ -38,9 +38,21 @@ func TestContract_Fact(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				invokeCallContractTestSave("test_put_pre_state", int32(i), contractId, txContext, byteCode)
+				invokeCallContractTestSave("test_iter", int32(i), contractId, txContext, byteCode)
+				invokeCallContractTestSave("test_iter_pre", int32(i), contractId, txContext, byteCode)
+
+				invokeCallContractTestSave("test_put_state", int32(i), contractId, txContext, byteCode)
+				invokeCallContractTestSave("test_kv_iterator", int32(i), contractId, txContext, byteCode)
+
 				invokeCallContractTestSave("save", int32(i), contractId, txContext, byteCode)
 				invokeCallContractTestSave("find_by_file_hash", int32(i), contractId, txContext, byteCode)
-				//invokeCallContractTestSave("functional_verify", int32(i), contractId, txContext, byteCode)
+
+				invokeCallContractTestSave("increase", int32(i), contractId, txContext, byteCode)
+				invokeCallContractTestSave("query", int32(i), contractId, txContext, byteCode)
+
+				invokeCallContractTestSave("functional_verify", int32(i), contractId, txContext, byteCode)
+
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%100 == 0 {
 					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
@@ -82,6 +94,6 @@ func invokeCallContractTestSave(method string, id int32, contractId *commonPb.Co
 		Log: logger.GetLogger(logger.MODULE_VM),
 	}
 	r := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
-	fmt.Println("【result】", r)
+	fmt.Printf("\n【result】 %+v \n\n", r)
 	return r
 }
