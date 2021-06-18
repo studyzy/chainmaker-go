@@ -91,12 +91,9 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	archiveMgr, err := archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB, blockStore.storeConfig)
-	if err != nil {
+	if err :=  blockStore.InitArchiveMgr(chainId); err != nil {
 		return nil, err
 	}
-
-	blockStore.ArchiveMgr = archiveMgr
 
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
 	if i, errbs := blockStore.getLastSavepoint(); errbs == nil && i > 0 {
@@ -174,7 +171,10 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	bs.ArchiveMgr, err = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB, bs.storeConfig)
+	err =  bs.InitArchiveMgr(block.Header.ChainId);
+	if err != nil {
+		return err
+	}
 
 	return err
 }
@@ -787,4 +787,17 @@ func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint
 	}
 
 	return height
+}
+
+func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
+	if bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB() {
+		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig)
+		if err != nil {
+			return err
+		}
+
+		bs.ArchiveMgr = archiveMgr
+	}
+
+	return nil
 }
