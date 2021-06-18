@@ -168,7 +168,7 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	if source == protocol.INTERNAL {
 		return commonErrors.ErrTxSource
 	}
-	pool.log.Debugw("AddTx", "txId", tx.Header.GetTxId(), "source", source)
+	pool.log.Debugf("AddTx,  txId: %s, source: %d", tx.Header.GetTxId(), source)
 
 	// 1. Determine if the tx pool is full or tx exist
 	if pool.isFull(tx) {
@@ -201,11 +201,11 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 // isFull Check whether the transaction pool is fullnal
 func (pool *txPoolImpl) isFull(tx *commonPb.Transaction) bool {
 	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= poolconf.MaxConfigTxPoolSize() {
-		pool.log.Errorw("AddTx configTxPool is full", "txId", tx.Header.GetTxId(), "configQueueSize", pool.queue.configTxsCount())
+		pool.log.Errorf("AddTx configTxPool is full, txId: %s, configQueueSize: %d", tx.Header.GetTxId(), pool.queue.configTxsCount())
 		return true
 	}
 	if pool.queue.commonTxsCount() >= poolconf.MaxCommonTxPoolSize() {
-		pool.log.Errorw("AddTx txPool is full", "txId", tx.Header.GetTxId(), "txQueueSize", pool.queue.commonTxsCount())
+		pool.log.Errorf("AddTx txPool is full, txId: %s, txQueueSize: %d", tx.Header.GetTxId(), pool.queue.commonTxsCount())
 		return true
 	}
 	return false
@@ -213,7 +213,6 @@ func (pool *txPoolImpl) isFull(tx *commonPb.Transaction) bool {
 
 func (pool *txPoolImpl) publish(signalType txpoolPb.SignalType) {
 	if pool.msgBus != nil {
-		pool.log.Debugw("publish", "signalType", signalType)
 		pool.msgBus.Publish(msgbus.TxPoolSignal, &txpoolPb.TxPoolSignal{
 			SignalType: signalType,
 			ChainId:    pool.chainId,
@@ -223,10 +222,10 @@ func (pool *txPoolImpl) publish(signalType txpoolPb.SignalType) {
 
 func (pool *txPoolImpl) broadcastTx(tx *commonPb.Transaction) {
 	if pool.msgBus != nil {
-		pool.log.Debugw("broadcastTx", "txId", tx.Header.GetTxId())
+		pool.log.Debugf("broadcastTx txId: %s", tx.Header.GetTxId())
 		txMsg, err := proto.Marshal(tx)
 		if err != nil {
-			pool.log.Errorw("broadcastTx proto.Marshal(tx) err", "err", err)
+			pool.log.Errorf("broadcastTx proto.Marshal(tx) err: %s", err)
 			return
 		}
 		netMsg := &netPb.NetMsg{
@@ -244,7 +243,7 @@ func (pool *txPoolImpl) updateAndPublishSignal() {
 	signalType := txpoolPb.SignalType_NO_EVENT
 	defer func() {
 		if signalType != txpoolPb.SignalType_NO_EVENT {
-			pool.log.Debugw("updateAndPublishSignal pool.publish", "signalType", signalType)
+			pool.log.Debugf("updateAndPublishSignal pool.publish signalType: %s", signalType)
 			pool.publish(signalType)
 		}
 		pool.setSignalStatus(signalType)
@@ -310,11 +309,11 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 
 	pool.queue.deleteTxsInPending(txs)
 	if len(configTxs) > 0 {
-		pool.log.Debugw("retryTxBatch config txs", "count", len(configTxs), "txIds", configTxIds)
+		pool.log.Debugf("retryTxBatch config txs count: %d, txIds: %v", len(configTxs), configTxIds)
 		pool.queue.addTxsToConfigQueue(&mempoolTxs{txs: configTxs, source: protocol.INTERNAL})
 	}
 	if len(commonTxs) > 0 {
-		pool.log.Debugw("retryTxBatch common txs", "count", len(commonTxs), "txIds", commonTxIds)
+		pool.log.Debugf("retryTxBatch common txs count: %d, txIds: %v", len(commonTxs), commonTxIds)
 		pool.queue.addTxsToCommonQueue(&mempoolTxs{txs: commonTxs, source: protocol.INTERNAL})
 	}
 	pool.log.Infof("retryTxs elapse time: %d", utils.CurrentTimeMillisSeconds()-start)
@@ -339,11 +338,11 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	}
 
 	if len(configTxIds) > 0 {
-		pool.log.Debugw("removeTxBatch config txs", "count", len(configTxIds), "txIds", configTxIds)
+		pool.log.Debugf("removeTxBatch config txs count: %d, txIds: %v", len(configTxIds), configTxIds)
 		pool.queue.deleteConfigTxs(configTxIds)
 	}
 	if len(commonTxIds) > 0 {
-		pool.log.Debugw("removeTxBatch common txs", "count", len(commonTxIds), "txIds", commonTxIds)
+		pool.log.Debugf("removeTxBatch common txs count: %d, txIds: %v", len(commonTxIds), commonTxIds)
 		pool.queue.deleteCommonTxs(commonTxIds)
 	}
 	pool.log.Infof("removeTxs elapse time: %d", utils.CurrentTimeMillisSeconds()-start)
@@ -353,7 +352,7 @@ func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction 
 	start := utils.CurrentTimeMillisSeconds()
 	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
-		pool.log.Infof("fetch txs from txpool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs), blockHeight, utils.CurrentTimeMillisSeconds()-start)
+		pool.log.Infof("fetch txs from txPool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs), blockHeight, utils.CurrentTimeMillisSeconds()-start)
 	}
 	return txs
 }
@@ -364,7 +363,7 @@ func (pool *txPoolImpl) TxExists(tx *commonPb.Transaction) bool {
 
 func (pool *txPoolImpl) metrics(msg string, startTime int64, endTime int64) {
 	if poolconf.IsMetrics() {
-		pool.log.Infow(msg, "internal", endTime-startTime, "startTime", startTime, "endTime", endTime)
+		pool.log.Infof(msg, "internal", endTime-startTime, "startTime", startTime, "endTime", endTime)
 	}
 }
 
@@ -379,11 +378,11 @@ func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockH
 // OnMessage Process messages from MsgBus
 func (pool *txPoolImpl) OnMessage(msg *msgbus.Message) {
 	if msg == nil {
-		pool.log.Errorw("receiveOnMessage msg OnMessage msg is empty")
+		pool.log.Errorf("receiveOnMessage msg OnMessage msg is empty")
 		return
 	}
 	if msg.Topic != msgbus.RecvTxPoolMsg {
-		pool.log.Errorw("receiveOnMessage msg topic is not msgbus.RecvTxPoolMsg")
+		pool.log.Errorf("receiveOnMessage msg topic is not msgbus.RecvTxPoolMsg")
 		return
 	}
 
@@ -392,13 +391,13 @@ func (pool *txPoolImpl) OnMessage(msg *msgbus.Message) {
 		bytes = msg.Payload.(*netPb.NetMsg).Payload
 	)
 	if err := proto.Unmarshal(bytes, &tx); err != nil {
-		pool.log.Errorw("receiveOnMessage proto.Unmarshal(bytes, tx) err", "err", err)
+		pool.log.Errorf("receiveOnMessage proto.Unmarshal(bytes, tx) err: %s", err)
 		return
 	}
 	if err := pool.AddTx(&tx, protocol.P2P); err != nil {
-		pool.log.Debugw("receiveOnMessage", "txId", tx.Header.TxId, "add failed", err.Error())
+		pool.log.Debugf("receiveOnMessage txId: %s, add failed: %s", tx.Header.TxId, err.Error())
 	}
-	pool.log.Debugw("receiveOnMessage", "txId", tx.Header.TxId, "add success", true)
+	pool.log.Debugf("receiveOnMessage txId: %s, add success", tx.Header.TxId)
 }
 
 func (pool *txPoolImpl) OnQuit() {
