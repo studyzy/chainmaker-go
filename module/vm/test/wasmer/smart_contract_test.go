@@ -32,8 +32,8 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/rust-fact-1.2.1.wasm"
-	//test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
+	//test.WasmFile = "../../../../test/wasm/rust-fact-1.2.1.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
@@ -45,20 +45,15 @@ func TestCallFact(t *testing.T) {
 	println("start") // 2.9m
 	start := time.Now().UnixNano() / 1e6
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1; i++ {
-		for j := 0; j < 1; j++ {
+	for i := 0; i < 100; i++ {
+		for j := 0; j < 10; j++ {
 			x++
 			y := x
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-
-				invokeFact("save", y, contractId, txContext, pool, bytes)
-				invokeFact("find_by_file_hash", y, contractId, txContext, pool, bytes)
-				//invokeFact("test_put_state", y, contractId, txContext, pool, bytes)
-				//invokeFact("test_kv_iterator", y, contractId, txContext, pool, bytes)
-				//invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
-
+				invokeFact("increase", y, contractId, txContext, pool, bytes)
+				invokeFact("query", y, contractId, txContext, pool, bytes)
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%1000 == 0 {
 					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
@@ -78,7 +73,7 @@ func TestCallFact(t *testing.T) {
 	runtime.GC()
 }
 
-func invokeFact(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeFact(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
 	txId := utils.GetRandTxId()
 	parameters["time"] = "567124123"
@@ -91,16 +86,46 @@ func invokeFact(method string, id int32, contractId *commonPb.ContractId, txCont
 	baseParam(parameters)
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
-	fmt.Println("【result】", r)
+	fmt.Printf("\n【result】 %+v \n\n\n", r)
+	return r
 }
 
-func TestFactContract(t *testing.T) {
-	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
+func TestFunctionalContract(t *testing.T) {
 	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
+	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	pool := wasmer.NewVmPoolManager("chain001")
+
 	invokeFactContract("save", contractId, txContext, pool, bytes)
 	r := invokeFactContract("find_by_file_hash", contractId, txContext, pool, bytes)
 	assert.Equal(t, string(r.Result), "{\"file_hash\":\"file_hash\",\"file_name\":\"file_name\",\"time\":\"1314520\"}")
+	fmt.Println("  【save】pass")
+	fmt.Println("  【find_by_file_hash】pass")
+
+	invokeFactContract("test_put_pre_state", contractId, txContext, pool, bytes)
+	r2 := invokeFactContract("test_iter_pre_field", contractId, txContext, pool, bytes)
+	r3 := invokeFactContract("test_iter_pre_key", contractId, txContext, pool, bytes)
+	assert.Equal(t, string(r2.Result), "14")
+	assert.Equal(t, string(r3.Result), "14")
+	fmt.Println("  【test_put_pre_state】pass")
+	fmt.Println("  【test_iter_pre_field】pass")
+	fmt.Println("  【test_iter_pre_key】pass")
+
+	invokeFactContract("test_put_state", contractId, txContext, pool, bytes)
+	r4 := invokeFactContract("test_kv_iterator", contractId, txContext, pool, bytes)
+	assert.Equal(t, string(r4.Result), "15")
+	fmt.Println("  【test_put_state】pass")
+	fmt.Println("  【test_kv_iterator】pass")
+
+	invokeFactContract("increase", contractId, txContext, pool, bytes)
+	r5 := invokeFactContract("query", contractId, txContext, pool, bytes)
+	assert.Equal(t, string(r5.Result), "1")
+	fmt.Println("  【increase】pass")
+	fmt.Println("  【query】pass")
+
+	r6 := invokeFactContract("functional_verify", contractId, txContext, pool, bytes)
+	assert.Equal(t, string(r6.Result), "ok")
+	fmt.Println("  【functional_verify】pass")
+	fmt.Println("  【test】pass")
 }
 
 func invokeFactContract(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
@@ -108,25 +133,11 @@ func invokeFactContract(method string, contractId *commonPb.ContractId, txContex
 	parameters["time"] = "1314520"
 	parameters["file_hash"] = "file_hash"
 	parameters["file_name"] = "file_name"
+	parameters["contract_name"] = test.ContractNameTest
+	baseParam(parameters)
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
-	return r
-}
-
-func TestCounterContract(t *testing.T) {
-	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
-	pool := wasmer.NewVmPoolManager("chain001")
-	invokeCounterContract("increase", contractId, txContext, pool, bytes)
-	invokeCounterContract("increase", contractId, txContext, pool, bytes)
-	r := invokeCounterContract("query", contractId, txContext, pool, bytes)
-	assert.Equal(t, string(r.Result), "2")
-}
-
-func invokeCounterContract(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
-	parameters := make(map[string]string)
-	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
-	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	fmt.Printf("\n【result】 %+v \n\n\n", r)
 	return r
 }
 
@@ -201,82 +212,4 @@ func baseParam(parameters map[string]string) {
 	parameters[protocol.ContractSenderRoleParam] = "SENDER_ROLE"
 	parameters[protocol.ContractSenderPkParam] = "SENDER_PK"
 	parameters[protocol.ContractBlockHeightParam] = "111"
-}
-
-func TestKVIteratorTest(t *testing.T) {
-	//test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
-	test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
-	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	println("bytes len", len(bytes))
-
-	pool := test.GetVmPoolManager()
-
-	invokeKvIterator("test_put_state", 1, contractId, txContext, pool, bytes)
-
-	// 调用
-	x := int32(0)
-	println("start") // 2.9m
-	start := time.Now().UnixNano() / 1e6
-	wg := sync.WaitGroup{}
-	for i := 0; i < 50; i++ {
-		for j := 0; j < 10; j++ {
-			x++
-			y := x
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				invokeKvIterator("test_get_state", y, contractId, txContext, pool, bytes)
-
-				end := time.Now().UnixNano() / 1e6
-				if (end-start)/1000 > 0 && y%1000 == 0 {
-					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
-				}
-			}()
-		}
-		wg.Wait()
-	}
-	end := time.Now().UnixNano() / 1e6
-
-	println("end1 ", start, end, end-start, end, (end-start)/500) // 2.9m
-	start = time.Now().UnixNano() / 1e6
-	wg = sync.WaitGroup{}
-	for i := 0; i < 50; i++ {
-		for j := 0; j < 10; j++ {
-			x++
-			y := x
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				invokeKvIterator("test_kv_iterator", y, contractId, txContext, pool, bytes)
-
-				end := time.Now().UnixNano() / 1e6
-				if (end-start)/1000 > 0 && y%1000 == 0 {
-					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
-				}
-			}()
-		}
-		wg.Wait()
-	}
-	end = time.Now().UnixNano() / 1e6
-	println("end2 ", start, end, end-start, end, (end-start)/500) // 2.9m
-
-	runtime.GC()
-}
-func invokeKvIterator(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	parameters := make(map[string]string)
-	parameters["key"] = "key"
-	parameters["field"] = "field"
-	parameters["val"] = "val"
-	parameters["start_count"] = "10000"
-	parameters["count"] = "20000"
-
-	parameters["start_key"] = "key"
-	parameters["start_field"] = "field10000"
-	parameters["limit_key"] = "key"
-	parameters["limit_field"] = "field20000"
-
-	baseParam(parameters)
-	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
-	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
-	//fmt.Println("【result】", r)
 }

@@ -33,7 +33,7 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
-var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 var isSql = false
 
 var txType = commonPb.TxType_INVOKE_USER_CONTRACT
