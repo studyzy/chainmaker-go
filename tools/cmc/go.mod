@@ -3,8 +3,9 @@ module chainmaker.org/chainmaker-go/tools/cmc
 go 1.15
 
 require (
-
-	chainmaker.org/chainmaker-sdk-go v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210621034028-d765d0e95b61
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210621040159-6e346b70135d
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
@@ -18,9 +19,4 @@ require (
 	gorm.io/driver/mysql v1.0.6
 	gorm.io/gorm v1.21.9
 	vuvuzela.io/crypto v0.0.0-20190327123840-80a93a3ed1d6
-)
-
-replace (
-
-	chainmaker.org/chainmaker-sdk-go => ../sdk
 )

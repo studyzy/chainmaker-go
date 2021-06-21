@@ -4,7 +4,8 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
-
+	chainmaker.org/chainmaker/common v0.0.0-20210608120544-684822d55c61 // indirect
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210608121517-b3fe5e4784c1
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e
 	github.com/spf13/cobra v1.1.1
@@ -13,8 +14,4 @@ require (
 	github.com/stretchr/testify v1.6.1
 )
 
-replace (
-
-	chainmaker.org/chainmaker-go/logger => ./../../logger
-
-)
+replace chainmaker.org/chainmaker-go/logger => ./../../logger

@@ -15,8 +15,8 @@ import (
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	sdkPbAc "chainmaker.org/chainmaker-sdk-go/pb/protogo/accesscontrol"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdkPbAc "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )

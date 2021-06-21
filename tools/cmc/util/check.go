@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 func CheckProposalRequestResp(resp *common.TxResponse, needContractResult bool) error {
