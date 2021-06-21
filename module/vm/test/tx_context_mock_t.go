@@ -33,7 +33,7 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
-var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 var isSql = false
 
 var txType = commonPb.TxType_INVOKE_USER_CONTRACT
@@ -147,7 +147,7 @@ type TxContextMockTest struct {
 	kvRowCache map[int32]protocol.StateIterator
 }
 
-func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
+func (s *TxContextMockTest) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
 func (s *TxContextMockTest) SetStateKvHandle(index int32, rows protocol.StateIterator) {
@@ -304,7 +304,7 @@ func (s *TxContextMockTest) SetTxResult(txResult *commonPb.Result) {
 	panic("implement me")
 }
 
-func (TxContextMockTest) GetTxRWSet() *commonPb.TxRWSet {
+func (TxContextMockTest) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	return &commonPb.TxRWSet{
 		TxId:     "txId",
 		TxReads:  nil,
@@ -533,10 +533,16 @@ func (i *kvi) Value() (*storePb.KV, error) {
 	}
 	return &storePb.KV{
 		ContractName: i.contractName,
-		Key:          i.iter.Key(),
+		Key:          parseStateKey(i.iter.Key(), i.contractName),
 		Value:        i.iter.Value(),
 	}, nil
 }
+
 func (i *kvi) Release() {
 	i.iter.Release()
+}
+
+// parseStateKey corresponding to the constructStateKey(),  delete contract name from leveldb key
+func parseStateKey(key []byte, contractName string) []byte {
+	return key[len(contractName)+1:]
 }

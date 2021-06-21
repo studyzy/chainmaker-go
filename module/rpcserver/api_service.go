@@ -209,14 +209,15 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	}
 
 	ctx := &txQuerySimContextImpl{
-		tx:              tx,
-		txReadKeyMap:    map[string]*commonPb.TxRead{},
-		txWriteKeyMap:   map[string]*commonPb.TxWrite{},
-		txWriteKeySql:   make([]*commonPb.TxWrite, 0),
-		sqlRowCache:     make(map[int32]protocol.SqlRows, 0),
-		kvRowCache:      make(map[int32]protocol.StateIterator, 0),
-		blockchainStore: store,
-		vmManager:       vmMgr,
+		tx:               tx,
+		txReadKeyMap:     map[string]*commonPb.TxRead{},
+		txWriteKeyMap:    map[string]*commonPb.TxWrite{},
+		txWriteKeySql:    make([]*commonPb.TxWrite, 0),
+		txWriteKeyDdlSql: make([]*commonPb.TxWrite, 0),
+		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		blockchainStore:  store,
+		vmManager:        vmMgr,
 	}
 
 	txResult, txStatusCode := vmMgr.RunContract(&commonPb.ContractId{ContractName: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Header.TxType)
@@ -280,13 +281,14 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 	}
 
 	ctx := &txQuerySimContextImpl{
-		tx:            tx,
-		txReadKeyMap:  map[string]*commonPb.TxRead{},
-		txWriteKeyMap: map[string]*commonPb.TxWrite{},
-		txWriteKeySql: make([]*commonPb.TxWrite, 0),
-		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
-		kvRowCache:    make(map[int32]protocol.StateIterator, 0),
-		vmManager:     vmMgr,
+		tx:               tx,
+		txReadKeyMap:     map[string]*commonPb.TxRead{},
+		txWriteKeyMap:    map[string]*commonPb.TxWrite{},
+		txWriteKeySql:    make([]*commonPb.TxWrite, 0),
+		txWriteKeyDdlSql: make([]*commonPb.TxWrite, 0),
+		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		vmManager:        vmMgr,
 	}
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)

@@ -15,6 +15,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
 	"chainmaker.org/chainmaker-go/common/serialize"
@@ -53,6 +54,7 @@ type Wacsi interface {
 
 	// kv iterator
 	KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
+	KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
 	KvIteratorHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
 	KvIteratorNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, contractName string, isLen bool) ([]byte, error)
 	KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
@@ -255,16 +257,41 @@ func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimCon
 	limitKey, _ := ec.GetString("limit_key")
 	limitField, _ := ec.GetString("limit_field")
 	valuePtr, _ := ec.GetInt32("value_ptr")
-	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil { //加判断
+	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil {
 		return err
 	}
-	if err := protocol.CheckKeyFieldStr(limitKey, limitField); err != nil { //加判断
+	if err := protocol.CheckKeyFieldStr(limitKey, limitField); err != nil {
 		return err
 	}
 
 	key := protocol.GetKeyStr(startKey, startField)
 	limit := protocol.GetKeyStr(limitKey, limitField)
 	iter, err := txSimContext.Select(contractName, key, limit)
+	if err != nil {
+		return fmt.Errorf("ctx query error, %s", err.Error())
+	}
+
+	index := atomic.AddInt32(&w.rowIndex, 1)
+	txSimContext.SetStateKvHandle(index, iter)
+	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(index))
+	return nil
+}
+
+func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+	ec := serialize.NewEasyCodecWithBytes(requestBody)
+	startKey, _ := ec.GetString("start_key")
+	startField, _ := ec.GetString("start_field")
+	valuePtr, _ := ec.GetInt32("value_ptr")
+	if err := protocol.CheckKeyFieldStr(startKey, startField); err != nil {
+		return err
+	}
+
+	key := string(protocol.GetKeyStr(startKey, startField))
+
+	limitLast := key[len(key)-1] + 1
+	limit := key[:len(key)-1] + string(limitLast)
+
+	iter, err := txSimContext.Select(contractName, []byte(key), []byte(limit))
 	if err != nil {
 		return fmt.Errorf("ctx query error, %s", err.Error())
 	}
@@ -316,19 +343,22 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 		if err != nil {
 			return nil, fmt.Errorf("ctx iterator next data error, %s", err.Error())
 		}
-		key := parseStateKey(kvRow.Key, contractname)
+
+		arrKey := strings.Split(string(kvRow.Key), "#")
+		key := arrKey[0]
+		field := ""
+		if len(arrKey) > 1 {
+			field = arrKey[1]
+		}
+
 		value := kvRow.Value
-		ec.AddString("key", string(key))
+		ec.AddString("key", key)
+		ec.AddString("field", field)
 		ec.AddBytes("value", value)
 	}
 	kvBytes := ec.Marshal()
 	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(len(kvBytes))))
 	return kvBytes, nil
-}
-
-// parseStateKey corresponding to the constructStateKey(),  delete contract name from leveldb key
-func parseStateKey(key []byte, contractName string) []byte {
-	return key[len(contractName)+1:]
 }
 
 func (w *WacsiImpl) KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
@@ -793,7 +823,7 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSim
 	if err != nil {
 		return fmt.Errorf("ctx execute update sql error, [%s], sql[%s]", err.Error(), sql)
 	}
-	txSimContext.PutRecord(contractName, []byte(sql))
+	txSimContext.PutRecord(contractName, []byte(sql), protocol.SqlTypeDml)
 	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(affectedCount)))
 	return nil
 }
@@ -815,7 +845,7 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql); err != nil {
 		return fmt.Errorf("ctx ExecDdlSql error, %s, sql[%s]", err.Error(), sql)
 	}
-	txSimContext.PutRecord(contractName, []byte(sql))
+	txSimContext.PutRecord(contractName, []byte(sql), protocol.SqlTypeDdl)
 	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
 	return nil
 }

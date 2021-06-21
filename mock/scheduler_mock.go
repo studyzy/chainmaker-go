@@ -334,7 +334,7 @@ func (mr *MockTxSimContextMockRecorder) GetTxExecSeq() *gomock.Call {
 }
 
 // GetTxRWSet mocks base method.
-func (m *MockTxSimContext) GetTxRWSet() *common.TxRWSet {
+func (m *MockTxSimContext) GetTxRWSet(runVmSuccess bool) *common.TxRWSet {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTxRWSet")
 	ret0, _ := ret[0].(*common.TxRWSet)
@@ -342,7 +342,7 @@ func (m *MockTxSimContext) GetTxRWSet() *common.TxRWSet {
 }
 
 // GetTxRWSet indicates an expected call of GetTxRWSet.
-func (mr *MockTxSimContextMockRecorder) GetTxRWSet() *gomock.Call {
+func (mr *MockTxSimContextMockRecorder) GetTxRWSet(runVmSuccess bool) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxRWSet", reflect.TypeOf((*MockTxSimContext)(nil).GetTxRWSet))
 }
@@ -376,7 +376,7 @@ func (mr *MockTxSimContextMockRecorder) Put(name, key, value interface{}) *gomoc
 }
 
 // PutRecord mocks base method.
-func (m *MockTxSimContext) PutRecord(contractName string, value []byte) {
+func (m *MockTxSimContext) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PutRecord", contractName, value)
 }

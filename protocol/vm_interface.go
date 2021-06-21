@@ -81,6 +81,7 @@ const (
 	ContractMethodDeleteState = "DeleteState"
 	// kv iterator author:whang1234
 	ContractMethodKvIterator        = "KvIterator"
+	ContractMethodKvPreIterator     = "KvPreIterator"
 	ContractMethodKvIteratorHasNext = "KvIteratorHasNext"
 	ContractMethodKvIteratorNextLen = "KvIteratorNextLen"
 	ContractMethodKvIteratorNext    = "KvIteratorNext"
@@ -115,6 +116,14 @@ const (
 	BulletProofsVerify                      = "BulletProofsVerify"
 )
 
+type SqlType int8
+
+const (
+	SqlTypeDdl SqlType = iota
+	SqlTypeDml
+	SqlTypeDql
+)
+
 //VmManager manage vm runtime
 type VmManager interface {
 	// GetAccessControl get accessControl manages policies and principles
@@ -139,6 +148,7 @@ type ContractWacsiKV interface {
 	PutState() int32
 	DeleteState() int32
 	KvIterator() int32
+	KvPreIterator() int32
 	KvIteratorClose() int32
 	KvIteratorNext() int32
 	KvIteratorHasNext() int32

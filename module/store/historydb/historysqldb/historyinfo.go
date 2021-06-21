@@ -41,6 +41,11 @@ func (b *StateHistoryInfo) GetUpdateSql() (string, []interface{}) {
 			 WHERE contract_name=? and state_key=? and tx_id=? and block_height=?`,
 		[]interface{}{b.ContractName, b.ContractName, b.StateKey, b.TxId, b.BlockHeight}
 }
+func (b *StateHistoryInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM state_history_infos" +
+			" WHERE contract_name=? and state_key=? and tx_id=? and block_height=?",
+		[]interface{}{b.ContractName, b.StateKey, b.TxId, b.BlockHeight}
+}
 
 // NewStateHistoryInfo construct a new HistoryInfo
 func NewStateHistoryInfo(contractName, txid string, stateKey []byte, blockHeight uint64) *StateHistoryInfo {
@@ -81,6 +86,11 @@ func (b *AccountTxHistoryInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE account_tx_history_infos set account_id=?" +
 		" WHERE account_id=? and block_height=? and tx_id=?", []interface{}{b.AccountId, b.AccountId, b.BlockHeight, b.TxId}
 }
+func (b *AccountTxHistoryInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM account_tx_history_infos" +
+			" WHERE account_id=? and block_height=? and tx_id=?",
+		[]interface{}{b.AccountId, b.BlockHeight, b.TxId}
+}
 
 type ContractTxHistoryInfo struct {
 	ContractName string `gorm:"size:128;primaryKey"`
@@ -115,4 +125,9 @@ func (b *ContractTxHistoryInfo) GetUpdateSql() (string, []interface{}) {
 set account_id=?
 WHERE contract_name=? and block_height=? and tx_id=?`,
 		[]interface{}{b.AccountId, b.ContractName, b.BlockHeight, b.TxId}
+}
+func (b *ContractTxHistoryInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM contract_tx_history_infos" +
+			" WHERE contract_name=? and block_height=? and tx_id=?",
+		[]interface{}{b.ContractName, b.BlockHeight, b.TxId}
 }

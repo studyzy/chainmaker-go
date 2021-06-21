@@ -1,12 +1,10 @@
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"github.com/spf13/cobra"
 )
 
 var (
-	bulletproofsImpl = bulletproofs.Helper().NewBulletproofs()
 	// genOpeningCMD flags
 	// proveCMD flags
 	openingStr string
@@ -22,10 +20,8 @@ var (
 
 	// pedersenMethodCMD
 	// openingMethodCMD
-	pedersenOpeningMethod string
 	// commitmentMethodCmd
-	pedersenCommitmentMethod string
-	pedersenNegMethod        string
+	pedersenNegMethod string
 )
 
 func BulletproofsCMD() *cobra.Command {
@@ -46,7 +42,7 @@ func BulletproofsCMD() *cobra.Command {
 	// Verify the validity of a commitment with respect to a value-opening pair
 	bulletproofsCmd.AddCommand(pedersenVerifyCMD())
 
-	bulletproofsCmd.AddCommand(pedersenMethodCMD())
+	bulletproofsCmd.AddCommand(pedersenNegCMD())
 
 	return bulletproofsCmd
 }

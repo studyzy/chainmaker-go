@@ -101,7 +101,7 @@ func (s *MockSimContextImpl) Put(contractName string, key []byte, value []byte) 
 	return nil
 }
 
-func (s *MockSimContextImpl) PutRecord(contractName string, value []byte) {
+func (s *MockSimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 }
 
 // 删除合约账户状态
@@ -116,7 +116,7 @@ func (s *MockSimContextImpl) Done() bool {
 func (s *MockSimContextImpl) GetTx() *commonPb.Transaction {
 	return s.tx
 }
-func (s *MockSimContextImpl) GetTxRWSet() *commonPb.TxRWSet {
+func (s *MockSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	return s.txRwSet
 }
 func (s *MockSimContextImpl) SetTxExecSeq(txExecSeq int) {

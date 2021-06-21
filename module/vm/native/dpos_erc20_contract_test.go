@@ -10,12 +10,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/mock"
 	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-go/protocol"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -226,19 +225,6 @@ func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 func NewLogger() *logger.CMLogger {
 	cmLogger := logger.GetLogger("DPoS")
 	return cmLogger
-}
-
-type TxSimContextMock struct {
-	cache *CacheMock
-}
-
-func (t *TxSimContextMock) Get(name string, key []byte) ([]byte, error) {
-	return t.cache.Get(name, string(key)), nil
-}
-
-func (t *TxSimContextMock) Put(name string, key []byte, value []byte) error {
-	t.cache.Put(name, string(key), value)
-	return nil
 }
 
 func ownerCert() []byte {

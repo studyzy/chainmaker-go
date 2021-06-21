@@ -1,6 +1,7 @@
 package bulletproofs
 
 import (
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -65,7 +66,7 @@ func proveHandFunc() error {
 }
 
 func proveAfterAddNum(commitmentX, openingX []byte) error {
-	proof, commitment, err := bulletproofsImpl.ProveAfterAddNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
+	proof, commitment, err := bulletproofs.Helper().NewBulletproofs().ProveAfterAddNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofsImpl.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterSubNum(commitmentX, openingX []byte) error {
-	proof, commitment, err := bulletproofsImpl.ProveAfterSubNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, err := bulletproofs.Helper().NewBulletproofs().ProveAfterSubNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
@@ -132,7 +133,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofsImpl.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
@@ -145,7 +146,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterMulNum(commitmentX, openingX []byte) error {
-	proof, commitment, opening, err := bulletproofsImpl.ProveAfterMulNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterMulNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}

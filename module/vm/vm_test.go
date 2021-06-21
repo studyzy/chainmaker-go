@@ -156,7 +156,7 @@ func (m mockMemCache) GetTx() *commonPb.Transaction {
 	}
 }
 
-func (m mockMemCache) GetTxRWSet() *commonPb.TxRWSet {
+func (m mockMemCache) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	return &commonPb.TxRWSet{
 		TxReads:  nil,
 		TxWrites: nil,

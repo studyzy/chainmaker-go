@@ -12,4 +12,4 @@ do
     echo "kill $p"
 done
 
-ps -ef|grep chainmaker
+ps -ef|grep chainmaker | grep "local-tbft"

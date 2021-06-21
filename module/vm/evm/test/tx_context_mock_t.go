@@ -102,7 +102,7 @@ func (s *TxContextMockTest) GetStateKvHandle(i int32) (protocol.StateIterator, b
 	panic("implement me")
 }
 
-func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
+func (s *TxContextMockTest) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
 
@@ -244,7 +244,7 @@ func (s *TxContextMockTest) SetTxResult(txResult *commonPb.Result) {
 	panic("implement me")
 }
 
-func (TxContextMockTest) GetTxRWSet() *commonPb.TxRWSet {
+func (TxContextMockTest) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	return &commonPb.TxRWSet{
 		TxId:     "txId",
 		TxReads:  nil,
