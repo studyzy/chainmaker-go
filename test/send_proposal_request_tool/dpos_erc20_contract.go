@@ -1,14 +1,18 @@
 package main
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"encoding/json"
+	_ "flag"
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
+	"io/ioutil"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/mr-tron/base58/base58"
 	"github.com/spf13/cobra"
+	"crypto/sha256"
 )
 
 var (
@@ -22,6 +26,57 @@ const (
 	amountName          = "amount"
 	amountValueComments = "amount of the value, the type is string"
 )
+
+
+func ERC20Cert2Address() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "erc20Cert2Address",
+		Short: "cert to address",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return calAddressFromCert()
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&certPath, "cert_path", "", "path of cert that will calculate address")
+
+	return cmd
+}
+
+func calAddressFromCert() error {
+	if len(certPath) == 0 {
+		panic("cert path is null")
+	}
+
+	certContent, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		panic(fmt.Errorf("read cert content failed, reason: %s", err))
+	}
+	cert, err := utils.ParseCert(certContent)
+	if err != nil {
+		panic(fmt.Errorf("parse cert failed, reason: %s", err))
+	}
+	pubkey, err := cert.PublicKey.Bytes()
+	if err != nil {
+		panic(fmt.Errorf("get pubkey failed from cert, reason: %s", err))
+	}
+	hash := sha256.Sum256(pubkey)
+	addr := base58.Encode(hash[:])
+	fmt.Printf("address: %s from cert: %s\n", addr, certPath)
+
+	result := &Result{
+		Code:    commonPb.TxStatusCode_SUCCESS,
+		Message: "success",
+		Result:    addr,
+	}
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(bytes))
+	return nil
+}
+
 
 func ERC20Mint() *cobra.Command {
 	cmd := &cobra.Command{
