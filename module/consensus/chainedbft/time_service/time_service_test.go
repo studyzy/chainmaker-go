@@ -31,7 +31,7 @@ func TestTimerService_AddEvent(t *testing.T) {
 	checkNoTimeOutEvent(t, firedCh)
 
 	// 2. sleep to fired timeout
-	time.Sleep(paceEvent.Duration * 6)
+	time.Sleep(paceEvent.Duration * 10)
 	checkTimeOutEvent(t, firedCh)
 
 	// 3. re-add paceEvent event

@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-func TestERC20Config_load(t *testing.T)  {
+func TestERC20Config_load(t *testing.T) {
 	/**
 	- key: erc20.total
 	  value: 1000000
@@ -27,7 +27,7 @@ func TestERC20Config_load(t *testing.T)  {
 	  value: 800000
 	- key: erc20.account:<addr2>
 	  value: 200000
-	 */
+	*/
 	var (
 		//stakeHash1 = sha256.Sum256([]byte("stake1"))
 		//stakeAddr1 = base58.Encode(stakeHash1[:])
@@ -38,32 +38,31 @@ func TestERC20Config_load(t *testing.T)  {
 		//stakeHash3 = sha256.Sum256([]byte("stake3"))
 		//stakeAddr3 = base58.Encode(stakeHash3[:])
 
-		stakeConfig = &StakeConfig{}
-		contractAddr = stakeConfig.getContractAddress()
+		contractAddr = getContractAddress()
 
-		hash = sha256.Sum256([]byte("owner"))
-	    owner = base58.Encode(hash[:])
+		hash  = sha256.Sum256([]byte("owner"))
+		owner = base58.Encode(hash[:])
 	)
 
 	var tests = []*commonPb.KeyValuePair{
 		{
-			Key: keyERC20Total,
+			Key:   keyERC20Total,
 			Value: "1000000",
 		},
 		{
-			Key: keyERC20Owner,
+			Key:   keyERC20Owner,
 			Value: owner,
 		},
 		{
-			Key: keyERC20Decimals,
+			Key:   keyERC20Decimals,
 			Value: "18",
 		},
 		{
-			Key: keyERC20Acc + owner,
+			Key:   keyERC20Acc + owner,
 			Value: "800000",
 		},
 		{
-			Key: keyERC20Acc + contractAddr,
+			Key:   keyERC20Acc + contractAddr,
 			Value: "200000",
 		},
 	}
@@ -82,4 +81,3 @@ func TestERC20Config_load(t *testing.T)  {
 	txWrites := erc20Config.toTxWrites()
 	require.Equal(t, 5, len(txWrites))
 }
-
