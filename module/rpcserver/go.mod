@@ -4,12 +4,12 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0
-	chainmaker.org/chainmaker-go/common v0.0.0
+
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
-	chainmaker.org/chainmaker-go/protocol v0.0.0
+
+
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
@@ -27,7 +27,7 @@ replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/blockchain => ../blockchain
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
-	chainmaker.org/chainmaker-go/common => ../../common
+
 	chainmaker.org/chainmaker-go/consensus => ../consensus
 	chainmaker.org/chainmaker-go/core => ../core
 	chainmaker.org/chainmaker-go/dpos => ../dpos
@@ -35,11 +35,11 @@ replace (
 	chainmaker.org/chainmaker-go/gasm => ../vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-	chainmaker.org/chainmaker-go/mock => ../../mock
+
 	chainmaker.org/chainmaker-go/monitor => ../monitor
 	chainmaker.org/chainmaker-go/net => ../net
-	chainmaker.org/chainmaker-go/pb/protogo => ../../pb/protogo
-	chainmaker.org/chainmaker-go/protocol => ../../protocol
+
+
 	chainmaker.org/chainmaker-go/provider => ./../provider
 	chainmaker.org/chainmaker-go/rpcserver => ../rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ../snapshot

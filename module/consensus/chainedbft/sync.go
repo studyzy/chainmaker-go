@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 
 	"chainmaker.org/chainmaker-go/logger"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 const (

@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 )
 
 func IsNative(contractName string, txType commonPb.TxType) bool {

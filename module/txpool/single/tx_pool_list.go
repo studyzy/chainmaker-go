@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	"chainmaker.org/chainmaker-go/common/linkedhashmap"
+	"chainmaker.org/chainmaker/common/linkedhashmap"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/prometheus/client_golang/prometheus"

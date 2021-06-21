@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker/common/helper"
 	"github.com/spf13/cobra"
 )
 

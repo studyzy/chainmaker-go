@@ -14,9 +14,9 @@ import (
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 //SafetyRules implementation to validate incoming qc and block, include commit rules(3-chain) and vote rules

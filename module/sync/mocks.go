@@ -10,14 +10,14 @@ package sync
 import (
 	"fmt"
 
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	syncPb "chainmaker.org/chainmaker/pb-go/sync"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var errStr = "implement me"

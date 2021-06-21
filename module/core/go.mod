@@ -4,14 +4,14 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/chainconf v0.0.0
-	chainmaker.org/chainmaker-go/common v0.0.0
+
 	chainmaker.org/chainmaker-go/consensus v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker-go/mock v0.0.0 // indirect
+
 	chainmaker.org/chainmaker-go/monitor v0.0.0
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
-	chainmaker.org/chainmaker-go/protocol v0.0.0
+
+
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
@@ -26,17 +26,17 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
-	chainmaker.org/chainmaker-go/common => ../../common
+
 	chainmaker.org/chainmaker-go/consensus => ../consensus
 	chainmaker.org/chainmaker-go/dpos => ../dpos
 	chainmaker.org/chainmaker-go/evm => ./../../module/vm/evm
 	chainmaker.org/chainmaker-go/gasm => ./../../module/vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-	chainmaker.org/chainmaker-go/mock => ../../mock
+
 	chainmaker.org/chainmaker-go/monitor => ../monitor
-	chainmaker.org/chainmaker-go/pb/protogo => ../../pb/protogo
-	chainmaker.org/chainmaker-go/protocol => ../../protocol
+
+
 	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/utils => ../utils

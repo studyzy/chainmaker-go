@@ -11,8 +11,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/hash"
 )
 
 var passStr = "KeyType:%s , test pass.\n"

@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/protocol"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // structure to store cached signers: speed up verification, support CRL

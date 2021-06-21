@@ -7,13 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 )
 

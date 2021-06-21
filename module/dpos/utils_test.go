@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	pbdpos "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
 	"github.com/stretchr/testify/require"
 )
 

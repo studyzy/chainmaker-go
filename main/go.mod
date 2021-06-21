@@ -18,7 +18,7 @@ replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../module/accesscontrol
 	chainmaker.org/chainmaker-go/blockchain => ../module/blockchain
 	chainmaker.org/chainmaker-go/chainconf => ./../module/conf/chainconf
-	chainmaker.org/chainmaker-go/common => ./../common
+
 	chainmaker.org/chainmaker-go/consensus => ./../module/consensus
 	chainmaker.org/chainmaker-go/core => ./../module/core
 	chainmaker.org/chainmaker-go/dpos => ../module/dpos
@@ -26,11 +26,10 @@ replace (
 	chainmaker.org/chainmaker-go/gasm => ../module/vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
-	chainmaker.org/chainmaker-go/mock => ../mock
+
 	chainmaker.org/chainmaker-go/monitor => ../module/monitor
 	chainmaker.org/chainmaker-go/net => ./../module/net
-	chainmaker.org/chainmaker-go/pb/protogo => ./../pb/protogo
-	chainmaker.org/chainmaker-go/protocol => ./../protocol
+
 	chainmaker.org/chainmaker-go/provider => ../module/provider
 	chainmaker.org/chainmaker-go/rpcserver => ./../module/rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ./../module/snapshot

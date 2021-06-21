@@ -8,7 +8,7 @@ package blockpool
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/utils"
 )
 

@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol/test"
+	"chainmaker.org/chainmaker/protocol/test"
 	"chainmaker.org/chainmaker-go/store/types"
 	"github.com/stretchr/testify/assert"
 )

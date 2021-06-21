@@ -16,11 +16,11 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/consensus"
+	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
 )

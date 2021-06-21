@@ -3,7 +3,7 @@ package syncmode
 import (
 	"chainmaker.org/chainmaker-go/core/provider"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const ConsensusTypeDPOS = "DPOS"

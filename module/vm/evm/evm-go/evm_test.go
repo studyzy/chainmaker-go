@@ -1,11 +1,11 @@
 package evm_go
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/evm/test"
-	pb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	pb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"

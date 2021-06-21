@@ -5,16 +5,16 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/chainconf v0.0.0
-	chainmaker.org/chainmaker-go/common v0.0.0
 	chainmaker.org/chainmaker-go/evm v0.0.0
 	chainmaker.org/chainmaker-go/gasm v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
-	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210621034028-d765d0e95b61
+	chainmaker.org/chainmaker/protocol v0.0.0-20210621034938-44d4b545b203
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/mr-tron/base58 v1.2.0
@@ -28,13 +28,12 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ../conf/chainconf
-	chainmaker.org/chainmaker-go/common => ../../common
+
 	chainmaker.org/chainmaker-go/evm => ./evm
 	chainmaker.org/chainmaker-go/gasm => ./gasm
 	chainmaker.org/chainmaker-go/localconf => ../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-	chainmaker.org/chainmaker-go/pb/protogo => ../../pb/protogo
-	chainmaker.org/chainmaker-go/protocol => ../../protocol
+
 	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/utils => ../utils
 	chainmaker.org/chainmaker-go/wasi => ./wasi

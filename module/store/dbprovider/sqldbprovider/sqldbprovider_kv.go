@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type KeyValue struct {

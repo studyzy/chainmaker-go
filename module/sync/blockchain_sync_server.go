@@ -12,15 +12,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	syncPb "chainmaker.org/chainmaker/pb-go/sync"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

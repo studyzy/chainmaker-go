@@ -3,7 +3,7 @@ module chainmaker.org/chainmaker-go/tools/cmc
 go 1.15
 
 require (
-	chainmaker.org/chainmaker-go/common v0.0.0
+
 	chainmaker.org/chainmaker-sdk-go v0.0.0
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/gogo/protobuf v1.3.2
@@ -21,6 +21,6 @@ require (
 )
 
 replace (
-	chainmaker.org/chainmaker-go/common => ../../common
+
 	chainmaker.org/chainmaker-sdk-go => ../sdk
 )

@@ -13,10 +13,10 @@ import (
 	"fmt"
 	"regexp"
 
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	"chainmaker.org/chainmaker-go/common/random/uuid"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/random/uuid"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

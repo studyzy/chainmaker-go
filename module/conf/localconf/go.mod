@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
+
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e
 	github.com/spf13/cobra v1.1.1
@@ -14,7 +14,7 @@ require (
 )
 
 replace (
-	chainmaker.org/chainmaker-go/common => ./../../../common
+
 	chainmaker.org/chainmaker-go/logger => ./../../logger
-	chainmaker.org/chainmaker-go/pb/protogo => ../../../pb/protogo
+
 )

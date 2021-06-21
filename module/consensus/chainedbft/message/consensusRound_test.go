@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 func TestCheckVoteDoneWithBlock2(t *testing.T) {

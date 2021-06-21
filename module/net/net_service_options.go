@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package net
 
-import "chainmaker.org/chainmaker-go/common/msgbus"
+import "chainmaker.org/chainmaker/common/msgbus"
 
 // NetServiceOption is a net service option.
 type NetServiceOption func(ns *NetService) error

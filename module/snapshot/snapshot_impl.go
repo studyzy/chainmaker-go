@@ -13,10 +13,10 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	"chainmaker.org/chainmaker-go/common/bitmap"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/common/bitmap"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // The record value is written by the SEQ corresponding to TX

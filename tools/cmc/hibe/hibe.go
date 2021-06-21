@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 
-	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
+	localhibe "chainmaker.org/chainmaker/common/crypto/hibe"
 	"github.com/samkumar/hibe"
 	"github.com/spf13/cobra"
 	"vuvuzela.io/crypto/bn256"

@@ -21,7 +21,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
 )
 

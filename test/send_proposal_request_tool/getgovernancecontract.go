@@ -11,8 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"

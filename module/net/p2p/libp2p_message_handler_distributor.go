@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package p2p
 
 import (
-	api "chainmaker.org/chainmaker-go/protocol"
+	api "chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
 )

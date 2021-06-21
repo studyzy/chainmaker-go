@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	dpospb "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker/pb-go/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
 	"chainmaker.org/chainmaker-go/vm/native"
 
 	"github.com/golang/protobuf/proto"

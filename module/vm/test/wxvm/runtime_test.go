@@ -12,10 +12,10 @@ package wxvm
 //	"testing"
 //	"time"
 //
-//	"chainmaker.org/chainmaker-go/common/random/uuid"
+//	"chainmaker.org/chainmaker/common/random/uuid"
 //	"chainmaker.org/chainmaker-go/logger"
-//	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-//	"chainmaker.org/chainmaker-go/protocol"
+//	commonPb "chainmaker.org/chainmaker/pb-go/common"
+//	"chainmaker.org/chainmaker/protocol"
 //	"chainmaker.org/chainmaker-go/vm/test"
 //	"chainmaker.org/chainmaker-go/wxvm"
 //	"chainmaker.org/chainmaker-go/wxvm/xvm"

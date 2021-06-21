@@ -8,8 +8,8 @@ package scheduler
 
 //
 //import (
-//	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-//	"chainmaker.org/chainmaker-go/protocol"
+//	commonpb "chainmaker.org/chainmaker/pb-go/common"
+//	"chainmaker.org/chainmaker/protocol"
 //	"crypto/sha256"
 //	"fmt"
 //	"github.com/stretchr/testify/require"

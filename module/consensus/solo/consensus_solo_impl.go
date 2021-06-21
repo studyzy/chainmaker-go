@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	"chainmaker.org/chainmaker/pb-go/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/common/msgbus"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/logger"

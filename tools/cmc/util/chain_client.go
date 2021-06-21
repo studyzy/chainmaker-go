@@ -6,7 +6,7 @@
 package util
 
 import (
-	"chainmaker.org/chainmaker-go/common/log"
+	"chainmaker.org/chainmaker/common/log"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 

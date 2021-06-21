@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/common/random/uuid"
+	"chainmaker.org/chainmaker/common/random/uuid"
 	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
