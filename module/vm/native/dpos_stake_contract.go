@@ -332,9 +332,9 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 	amount := params[paramAmount] // amount must be a integer
 
 	// check amount
-	if !assertStringAmountPositive(amount) {
-		s.log.Errorf("amount is less than 0")
-		return nil, fmt.Errorf("amount is less than 0")
+	if !assertStringAmountOverZero(amount) {
+		s.log.Errorf("amount is less than or equal to 0")
+		return nil, fmt.Errorf("amount is less than or equal to 0")
 	}
 	// 解析交易发送方地址
 	from, err := loadSenderAddress(context) // Use ERC20 parse method
@@ -783,9 +783,9 @@ func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext,
 	}
 
 	epochBlockNumber := params[paramEpochBlockNumber]
-	if !assertStringAmountPositive(epochBlockNumber) {
-		s.log.Errorf("epochBlockNumber less than 0")
-		return nil, fmt.Errorf("epochBlockNumber less than 0")
+	if !assertStringAmountOverZero(epochBlockNumber) {
+		s.log.Errorf("epochBlockNumber less than or equal to 0")
+		return nil, fmt.Errorf("epochBlockNumber less than or equal to 0")
 	}
 
 	// check sender and owner
@@ -1232,7 +1232,7 @@ func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(context protocol.TxSi
 	if err != nil {
 		return false, "", err
 	}
-	if value.Cmp(amountValue) < 0 {
+	if amountValue.Cmp(value) <= 0 {
 		return false, value.String(), nil
 	} else {
 		return true, value.String(), nil
@@ -1357,13 +1357,22 @@ func compareMinSelfDelegation(context protocol.TxSimContext, selfDelegation stri
 }
 
 // check amount params
-// amount > 0 return true else false
+// amount >= 0 return true else false
 func assertStringAmountPositive(amount string) bool {
 	amountValue, err := stringToBigInt(amount)
 	if err != nil {
 		return false
 	}
 	return amountValue.Cmp(big.NewInt(0)) >= 0
+}
+
+// amount > 0 return true else false
+func assertStringAmountOverZero(amount string) bool {
+	amountValue, err := stringToBigInt(amount)
+	if err != nil {
+		return false
+	}
+	return amountValue.Cmp(big.NewInt(0)) > 0
 }
 
 func encodeUint64ToBigEndian(amount uint64) []byte {
