@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/mr-tron/base58/base58"
@@ -113,6 +114,7 @@ func processRespWithTxId(resp *commonPb.TxResponse, txId string, err error) erro
 	if err != nil {
 		return err
 	}
+
 	fmt.Println(string(bytes))
 	return nil
 }
@@ -147,7 +149,10 @@ func balanceOf() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
 }
 
 func checkBase58Addr(addr string) error {
@@ -175,7 +180,10 @@ func owner() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
 }
 
 func ERC20Decimals() *cobra.Command {
@@ -198,18 +206,34 @@ func decimals() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
-}
-
-func processResult(resp *commonPb.TxResponse, err error) error {
 	if err != nil {
 		return err
+	}
+	return processResult(resp, nil)
+}
+
+func processResult(resp *commonPb.TxResponse, m proto.Message) error {
+	if m != nil {
+		err := proto.Unmarshal(resp.ContractResult.Result, m)
+		if err != nil {
+			return err
+		}
+	}
+	var queryResult string
+	if m != nil {
+		bz, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		queryResult = string(bz)
+	} else {
+		queryResult = resp.Message
 	}
 	result := &Result{
 		Code:                  resp.Code,
 		Message:               resp.Message,
 		TxId:                  txId,
-		ContractQueryResult:   string(resp.ContractResult.Result),
+		ContractQueryResult:   queryResult,
 		ContractResultMessage: resp.ContractResult.Message,
 	}
 	bytes, err := json.Marshal(result)

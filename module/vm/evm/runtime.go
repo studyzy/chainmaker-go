@@ -237,7 +237,7 @@ func (r *RuntimeInstance) emitContractEvent(result evm_go.ExecuteResult) error {
 	logsMap := result.StorageCache.Logs
 	for _, logs := range logsMap {
 		for _, log := range logs {
-			if len(log.Topics) > protocol.EventDataMaxCount {
+			if len(log.Topics) > protocol.EventDataMaxCount-1 {
 				return fmt.Errorf("too many event data")
 			}
 			contractEvent := &commonPb.ContractEvent{
@@ -247,7 +247,8 @@ func (r *RuntimeInstance) emitContractEvent(result evm_go.ExecuteResult) error {
 			}
 			topics := log.Topics
 			for index, topic := range topics {
-				//first topic in log as contract event data. In ChainMaker contract event,only has a topic filed.
+				//the first topic in log as contract event topic,others as event data.
+				//in ChainMaker contract event,only has one topic filed.
 				if index == 0 && topic != nil {
 					topicHexStr := hex.EncodeToString(topic)
 					if err := protocol.CheckTopicStr(topicHexStr); err != nil {

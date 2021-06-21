@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -214,7 +215,7 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 			return nil, err
 		}
 		// check stake's sum with erc20
-		stakeContractAddr := stakeConfig.getContractAddress()
+		stakeContractAddr := getContractAddress()
 		tokenInERC20, stackContractToken := erc20Config.loadToken(stakeContractAddr), stakeConfig.getSumToken()
 		if tokenInERC20 == nil || stackContractToken == nil {
 			return nil, fmt.Errorf("token of stake contract account[%s] is nil", stakeContractAddr)
@@ -289,7 +290,11 @@ func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
 			ContractName: contractName,
 		},
 	}
+
 	// 添加accounts的读写集
+	sort.SliceStable(e.accounts, func(i, j int) bool {
+		return e.accounts[i].address < e.accounts[j].address
+	})
 	for i := 0; i < len(e.accounts); i++ {
 		txWrites = append(txWrites, &commonPb.TxWrite{
 			Key:          []byte(fmt.Sprintf("B/%s", e.accounts[i].address)),
@@ -364,6 +369,9 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 		default:
 			if strings.HasPrefix(keyValuePair.Key, keyERC20Acc) {
 				accAddress := keyValuePair.Key[len(keyERC20Acc):]
+				if accAddress == commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String() {
+					accAddress = getContractAddress()
+				}
 				_, err := base58.Decode(accAddress)
 				if err != nil {
 					return nil, fmt.Errorf("account [%s] is not in base58 format", accAddress)
@@ -425,8 +433,12 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		},
 	}
 
-	// 2. add validatorInfo in rwSet
+	// 2. add validatorInfo, delegationInfo in rwSet
+	sort.SliceStable(s.candidates, func(i, j int) bool {
+		return s.candidates[i].PeerID < s.candidates[j].PeerID
+	})
 	validators := make([][]byte, 0, len(s.candidates))
+	delegations := make([][]byte, 0, len(s.candidates))
 	for _, candidate := range s.candidates {
 		bz, err := proto.Marshal(&commonPb.Validator{
 			Jailed:                     false,
@@ -442,19 +454,8 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 			return nil, err
 		}
 		validators = append(validators, bz)
-	}
-	for i, validator := range s.candidates {
-		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerID)),
-			Value:        validators[i],
-		})
-	}
 
-	// 3. add delegationInfo in rwSet
-	delegations := make([][]byte, 0, len(s.candidates))
-	for _, candidate := range s.candidates {
-		bz, err := proto.Marshal(&commonPb.Delegation{
+		delegateBz, err := proto.Marshal(&commonPb.Delegation{
 			DelegatorAddress: candidate.PeerID,
 			ValidatorAddress: candidate.PeerID,
 			Shares:           candidate.Weight,
@@ -462,9 +463,14 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		if err != nil {
 			return nil, err
 		}
-		delegations = append(delegations, bz)
+		delegations = append(delegations, delegateBz)
 	}
 	for i, validator := range s.candidates {
+		rwSets = append(rwSets, &commonPb.TxWrite{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerID)),
+			Value:        validators[i],
+		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerID, validator.PeerID)), // key: prefix|delegator|validator
@@ -512,7 +518,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 }
 
 // getContractAddress 返回质押合约地址
-func (s *StakeConfig) getContractAddress() string {
+func getContractAddress() string {
 	bz := sha256.Sum256([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()))
 	return base58.Encode(bz[:])
 }

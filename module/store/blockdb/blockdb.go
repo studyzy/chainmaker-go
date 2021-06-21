@@ -72,9 +72,6 @@ type BlockDB interface {
 	// GetArchivedPivot get archived pivot
 	GetArchivedPivot() (uint64, error)
 
-	// SetArchivedPivot set archived pivot
-	SetArchivedPivot(archivedPivot uint64) error
-
 	// ShrinkBlocks archive old blocks in an atomic operation
 	ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error)
 

@@ -146,7 +146,10 @@ func getAllCandidates() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, &commonPb.ValidatorVector{})
 }
 
 func StakeGetNodeID() *cobra.Command {
@@ -179,7 +182,10 @@ func getNodeID() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
 }
 
 func StakeGetEpochByID() *cobra.Command {
@@ -209,7 +215,10 @@ func getEpochByID() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, &commonPb.Epoch{})
 }
 
 func StakeGetLatestEpoch() *cobra.Command {
@@ -232,7 +241,10 @@ func getLatestEpoch() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, &commonPb.Epoch{})
 }
 
 func StakeGetDelegationsByAddress() *cobra.Command {
@@ -262,7 +274,10 @@ func getDelegationsByAddress() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, &commonPb.DelegationInfo{})
 }
 
 func StakeGetDelegationByValidator() *cobra.Command {
@@ -306,7 +321,10 @@ func getDelegationByValidator() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, &commonPb.Delegation{})
 }
 
 func StakeGetMinSelfDelegation() *cobra.Command {
@@ -329,7 +347,10 @@ func getMinSelfDelegation() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
 }
 
 func StakeGetEpochValidatorNumber() *cobra.Command {
@@ -352,7 +373,10 @@ func getEpochValidatorNumber() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
 }
 
 func StakeGetEpochBlockNumber() *cobra.Command {
@@ -375,5 +399,8 @@ func getEpochBlockNumber() error {
 	}
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
 		chainId, "", payloadBytes)
-	return processResult(resp, err)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
 }

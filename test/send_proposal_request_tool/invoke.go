@@ -55,7 +55,8 @@ func invoke() error {
 
 	testCode := commonPb.TxStatusCode_SUCCESS
 	var testMessage string
-	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime))
+	var abiData *[]byte
+	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 	if err != nil {
 		testCode = commonPb.TxStatusCode_CONTRACT_FAIL
 		testMessage = "make pairs filure!"

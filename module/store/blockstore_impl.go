@@ -91,14 +91,16 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB)
+	if err :=  blockStore.InitArchiveMgr(chainId); err != nil {
+		return nil, err
+	}
 
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
-	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
+	if i, errbs := blockStore.getLastSavepoint(); errbs == nil && i > 0 {
 		//check savepoint and recover
-		err = blockStore.recover()
-		if err != nil {
-			return nil, err
+		errbs = blockStore.recover()
+		if errbs != nil {
+			return nil, errbs
 		}
 	} else {
 		logger.Info("binlog is empty, don't need recover")
@@ -169,9 +171,12 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB)
+	err =  bs.InitArchiveMgr(block.Header.ChainId);
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return err
 }
 func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	if genesisBlock.Block.Header.BlockHeight != 0 {
@@ -285,11 +290,7 @@ func (bs *BlockStoreImpl) GetArchivedPivot() uint64 {
 
 // ArchiveBlock the block after backup
 func (bs *BlockStoreImpl) ArchiveBlock(archiveHeight uint64) error {
-	if err := bs.ArchiveMgr.ArchiveBlock(archiveHeight); err != nil {
-		return err
-	}
-
-	return bs.ArchiveMgr.SetArchivedPivot(archiveHeight)
+	return bs.ArchiveMgr.ArchiveBlock(archiveHeight)
 }
 
 // RestoreBlocks restore blocks from outside serialized block data
@@ -304,16 +305,7 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		blockInfos = append(blockInfos, bwsInfo)
 	}
 
-	if err := bs.ArchiveMgr.RestoreBlock(blockInfos); err != nil {
-		return err
-	}
-
-	archivedPivot := uint64(blockInfos[0].Block.Header.BlockHeight)
-	if utils.IsConfBlock(blockInfos[0].Block) {
-		archivedPivot = archivedPivot + 1
-	}
-
-	return bs.ArchiveMgr.SetArchivedPivot(archivedPivot - 1)
+	return bs.ArchiveMgr.RestoreBlock(blockInfos)
 }
 
 type commitBlock func(blockInfo *serialization.BlockWithSerializedInfo) error
@@ -795,4 +787,17 @@ func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint
 	}
 
 	return height
+}
+
+func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
+	if bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB() {
+		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig)
+		if err != nil {
+			return err
+		}
+
+		bs.ArchiveMgr = archiveMgr
+	}
+
+	return nil
 }

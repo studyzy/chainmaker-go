@@ -74,7 +74,8 @@ func query() error {
 	}
 
 	method_bck := method
-	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime))
+	var abiData *[]byte
+	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 	if err != nil {
 		err = returnResult(1, "make pairs filure!", 0, "error", "")
 		return err

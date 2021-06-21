@@ -51,10 +51,6 @@ func (db *BlockSqlDB) GetArchivedPivot() (uint64, error) {
 	return 0, NotImplementError
 }
 
-func (db *BlockSqlDB) SetArchivedPivot(archivedPivot uint64) error {
-	return NotImplementError
-}
-
 func (db *BlockSqlDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
 	return nil, NotImplementError
 }
