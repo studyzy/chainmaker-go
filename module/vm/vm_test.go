@@ -8,7 +8,7 @@ package vm
 
 import (
 	"bytes"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"testing"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type mockMemCache struct {

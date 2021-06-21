@@ -12,14 +12,14 @@ import (
 	"io/ioutil"
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	rootLog "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

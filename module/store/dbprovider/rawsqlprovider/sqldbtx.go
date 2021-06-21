@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
 )
 

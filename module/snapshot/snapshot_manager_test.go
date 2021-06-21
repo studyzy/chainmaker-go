@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )

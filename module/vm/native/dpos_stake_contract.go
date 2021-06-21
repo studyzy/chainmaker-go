@@ -15,8 +15,8 @@ import (
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/syndtr/goleveldb/leveldb/util"

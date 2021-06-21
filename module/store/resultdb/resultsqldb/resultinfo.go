@@ -8,7 +8,7 @@ package resultsqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 )
 

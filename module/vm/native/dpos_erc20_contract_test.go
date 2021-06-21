@@ -7,14 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"chainmaker.org/chainmaker/protocol/mock"
 	"fmt"
+	"github.com/golang/mock/gomock"
 	"testing"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	"chainmaker.org/chainmaker-go/protocol"
-	"github.com/golang/mock/gomock"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 )
 

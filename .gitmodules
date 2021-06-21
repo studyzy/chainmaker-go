@@ -1,9 +1,0 @@
-[submodule "common"]
-	path = common
-	url = git@git.code.tencent.com:ChainMaker/chainmaker-common.git
-[submodule "tools/sdk"]
-	path = tools/sdk
-	url = git@git.code.tencent.com:ChainMaker/chainmaker-sdk-go.git
-[submodule "pb/proto"]
-	path = pb/proto
-	url = git@git.code.tencent.com:ChainMaker/chainmaker-pb.git

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/paillier"
+	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"encoding/base64"
 	"errors"
 	"fmt"

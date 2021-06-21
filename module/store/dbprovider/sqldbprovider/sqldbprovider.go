@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm/logger"

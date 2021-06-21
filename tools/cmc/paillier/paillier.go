@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package paillier
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/paillier"
+	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"

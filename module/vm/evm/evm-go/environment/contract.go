@@ -17,7 +17,7 @@
 package environment
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
 )

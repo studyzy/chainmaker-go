@@ -1,7 +1,7 @@
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"log"

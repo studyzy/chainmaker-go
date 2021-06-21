@@ -8,8 +8,8 @@ package net
 
 import (
 	"chainmaker.org/chainmaker-go/net/p2p"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	api "chainmaker.org/chainmaker-go/protocol"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	api "chainmaker.org/chainmaker/protocol"
 )
 
 // Net is local net interface.

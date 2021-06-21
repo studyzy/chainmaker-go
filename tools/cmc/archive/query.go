@@ -18,8 +18,8 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-go/tools/cmc/types"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/store"
 )
 
 func newQueryOffChainCMD() *cobra.Command {

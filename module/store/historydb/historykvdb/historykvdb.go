@@ -10,7 +10,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"

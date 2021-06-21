@@ -8,9 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto"
-	localhibe "chainmaker.org/chainmaker-go/common/crypto/hibe"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/common/crypto"
+	localhibe "chainmaker.org/chainmaker/common/crypto/hibe"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"github.com/samkumar/hibe"

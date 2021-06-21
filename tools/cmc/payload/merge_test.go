@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"

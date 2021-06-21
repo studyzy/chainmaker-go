@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"testing"
 

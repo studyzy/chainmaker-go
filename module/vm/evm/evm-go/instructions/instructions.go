@@ -17,7 +17,7 @@
 package instructions
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/memory"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"

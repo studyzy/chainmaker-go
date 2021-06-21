@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"sync"
 
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 )
 
 func Dispatch(client *sdk.ChainClient, contractName, method string, params map[string]string) {

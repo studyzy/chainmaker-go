@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/panjf2000/ants/v2"

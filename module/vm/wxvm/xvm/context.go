@@ -1,9 +1,9 @@
 package xvm
 
 import (
-	"chainmaker.org/chainmaker-go/common/serialize"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/common/serialize"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type Context struct {

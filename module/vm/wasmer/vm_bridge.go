@@ -13,10 +13,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/wasi"
 
-	"chainmaker.org/chainmaker-go/common/serialize"
+	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 

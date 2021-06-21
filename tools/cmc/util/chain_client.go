@@ -6,8 +6,8 @@
 package util
 
 import (
-	"chainmaker.org/chainmaker-go/common/log"
-	sdk "chainmaker.org/chainmaker-sdk-go"
+	"chainmaker.org/chainmaker/common/log"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 // CreateChainClientWithSDKConf create a chain client with sdk config file path

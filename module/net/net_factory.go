@@ -8,7 +8,7 @@ package net
 
 import (
 	"chainmaker.org/chainmaker-go/net/p2p"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"io/ioutil"
 )

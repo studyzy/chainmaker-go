@@ -7,17 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package hotstuffmode
 
 import (
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/helper"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/proposer"
 	"chainmaker.org/chainmaker-go/core/hotstuffmode/verifier"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"github.com/google/martian/log"
 )

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"

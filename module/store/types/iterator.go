@@ -10,7 +10,7 @@ package types
 import (
 	"bytes"
 
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"

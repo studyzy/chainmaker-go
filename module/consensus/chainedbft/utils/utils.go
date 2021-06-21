@@ -11,11 +11,11 @@ import (
 	"math"
 	"time"
 
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consensus"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/protocol"
 	chainUtils "chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )

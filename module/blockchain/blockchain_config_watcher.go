@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/protocol"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var _ protocol.Watcher = (*Blockchain)(nil)

@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"strings"
 
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/spf13/cobra"
 )
 

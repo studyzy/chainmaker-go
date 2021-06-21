@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/common"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 //BlockPool store block and qc in memory

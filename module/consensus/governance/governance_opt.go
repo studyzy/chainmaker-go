@@ -13,10 +13,10 @@ import (
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )

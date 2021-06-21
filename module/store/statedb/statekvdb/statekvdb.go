@@ -11,14 +11,14 @@ import (
 	"errors"
 	"fmt"
 
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"

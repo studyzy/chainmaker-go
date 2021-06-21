@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

@@ -3,8 +3,8 @@ package dpos
 import (
 	"bytes"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
 )
 
 func (impl *DPoSImpl) getState(key []byte, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) ([]byte, error) {

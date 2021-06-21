@@ -1,11 +1,11 @@
 package native
 
 import (
-	"chainmaker.org/chainmaker-go/mock"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"

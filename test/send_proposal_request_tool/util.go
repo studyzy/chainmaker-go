@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -17,11 +17,11 @@ import (
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
-	"chainmaker.org/chainmaker-go/common/ca"
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )

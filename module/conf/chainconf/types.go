@@ -16,12 +16,12 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/helper"
+	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/golang/protobuf/proto"
 )

@@ -7,16 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 	"sync"
 
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 

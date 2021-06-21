@@ -1,7 +1,7 @@
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"encoding/base64"
 	"fmt"
 	"github.com/spf13/cobra"

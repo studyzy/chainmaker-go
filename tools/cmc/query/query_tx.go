@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 // newQueryTxOnChainCMD `query tx` command implementation

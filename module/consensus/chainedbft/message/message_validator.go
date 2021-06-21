@@ -9,7 +9,7 @@ package message
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 //ValidateMessageBasicInfo is an external api to check a msg's basic info
