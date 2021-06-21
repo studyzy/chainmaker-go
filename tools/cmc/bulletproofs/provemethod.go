@@ -106,7 +106,7 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterSubNum(commitmentX, openingX []byte) error {
-	proof, commitment, err := bulletproofs.Helper().NewBulletproofs().ProveAfterSubNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, err := bulletproofs.Helper().NewBulletproofs().ProveAfterSubNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 }
 
 func proveAfterMulNum(commitmentX, openingX []byte) error {
-	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterMulNum(uint64(valueX), uint64(valueY), commitmentX, openingX)
+	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterMulNum(uint64(valueX), uint64(valueY), openingX, commitmentX)
 	if err != nil {
 		return err
 	}
