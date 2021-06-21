@@ -14,7 +14,13 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker-go/mock"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	pbdpos "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker-go/vm/native"
+	"github.com/golang/protobuf/proto"
+
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -118,4 +124,45 @@ func TestRandPerm(t *testing.T) {
 		}
 		fmt.Println(randSlice)
 	}
+}
+
+func TestGetLatestEpochInfo(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := mock.NewMockBlockchainStore(ctrl)
+	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {
+		epoch := &commonpb.Epoch{EpochID: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
+			"vector1", "vector2", "vector3", "vector4"}}
+		return proto.Marshal(epoch)
+	}).AnyTimes()
+	epoch, err := GetLatestEpochInfo(mockStore)
+	require.NoError(t, err)
+	require.EqualValues(t, epoch.EpochID, 100)
+	require.EqualValues(t, epoch.NextEpochCreateHeight, 990)
+	require.EqualValues(t, epoch.ProposerVector, []string{
+		"vector1", "vector2", "vector3", "vector4",
+	})
+}
+
+func TestGetNodeIDsFromValidators(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	name := commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()
+	nodeIDs := make(map[string]string)
+	nodeIDs[name+string(native.ToNodeIDKey("val1"))] = "nodeId1"
+	nodeIDs[name+string(native.ToNodeIDKey("val2"))] = "nodeId2"
+	nodeIDs[name+string(native.ToNodeIDKey("val3"))] = "nodeId3"
+
+	mockStore := mock.NewMockBlockchainStore(ctrl)
+	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {
+		val, exist := nodeIDs[contractName+string(key)]
+		if exist {
+			return []byte(val), nil
+		}
+		return nil, fmt.Errorf("not find key: %s in contract: %s", key, contractName)
+	}).AnyTimes()
+	ids, err := GetNodeIDsFromValidators(mockStore, []string{"val1", "val2", "val3"})
+	require.NoError(t, err)
+	require.EqualValues(t, ids, []string{"nodeId1", "nodeId2", "nodeId3"})
 }

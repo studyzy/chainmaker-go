@@ -231,7 +231,7 @@ func (impl *DPoSImpl) subBalanceRwSet(addr string, amount string, block *common.
 
 func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {
 	key := []byte(native.BalanceKey(addr))
-	val, err := impl.getState(key, block, blockTxRwSet)
+	val, err := impl.getState(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), key, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
 	}
