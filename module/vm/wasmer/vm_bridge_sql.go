@@ -87,7 +87,7 @@ func (s *WaciInstance) RSClose() int32 {
 // ExecuteUpdate execute update and insert sql, allow single row change
 // as: update table set name = 'Tom' where uniqueKey='xxx'
 func (s *WaciInstance) ExecuteUpdate() int32 {
-	err := wacsi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.ChainId)
+	err := wacsi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.method, s.Sc.TxSimContext, s.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
