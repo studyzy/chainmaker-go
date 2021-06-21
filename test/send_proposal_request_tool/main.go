@@ -247,6 +247,7 @@ func main() {
 	mainCmd.AddCommand(ERC20Decimals())
 
 	//DPoS.Stake
+	mainCmd.AddCommand(StakeGetAllCandidates())
 	mainCmd.AddCommand(StakeDelegate())
 	mainCmd.AddCommand(StakeUnDelegate())
 	mainCmd.AddCommand(StakeSetNodeID())

@@ -8,17 +8,21 @@ package single
 
 import (
 	"fmt"
+	"math/rand"
+	"sync"
 	"testing"
 	"time"
-
-	"chainmaker.org/chainmaker-go/protocol/test"
-
-	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
+	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker-go/protocol/test"
+	"chainmaker.org/chainmaker-go/utils"
+
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,16 +30,23 @@ var log = &test.GoLogger{}
 
 func TestNewTxPoolImpl(t *testing.T) {
 	chainConf, _ := chainconf.NewChainConf(nil)
-	txPool, err := NewTxPoolImpl("", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet(), log)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	txPool, err := NewTxPoolImpl("", newMockBlockChainStore(ctrl).store, newMockMessageBus(ctrl), chainConf, newMockAccessControlProvider(ctrl), newMockNet(ctrl), log)
 	require.Nil(t, txPool)
 	require.EqualError(t, fmt.Errorf("no chainId in create txpool"), err.Error())
 
-	txPool, err = NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet(), log)
+	txPool, err = NewTxPoolImpl("test_chain", newMockBlockChainStore(ctrl).store, newMockMessageBus(ctrl), chainConf, newMockAccessControlProvider(ctrl), newMockNet(ctrl), log)
 	require.NotNil(t, txPool)
 	require.NoError(t, err)
 }
 
-func newTestPool(txCount uint32) protocol.TxPool {
+type testPool struct {
+	txPool protocol.TxPool
+	extTxs map[string]*commonPb.Transaction
+}
+
+func newTestPool(t *testing.T, txCount uint32) (*testPool, func()) {
 	chainConf, _ := chainconf.NewChainConf(nil)
 	chainConf.ChainConf = &configpb.ChainConfig{
 		Block:    &configpb.BlockConfig{},
@@ -47,16 +58,25 @@ func newTestPool(txCount uint32) protocol.TxPool {
 	localconf.ChainMakerConfig.TxPoolConfig.CacheThresholdCount = 1
 	localconf.ChainMakerConfig.LogConfig.SystemLog.LogLevels = make(map[string]string)
 	localconf.ChainMakerConfig.LogConfig.SystemLog.LogLevels["txpool"] = "ERROR"
-	txPool, _ := NewTxPoolImpl("test_chain", newMockBlockChainStore(), newMockMessageBus(), chainConf, newMockAccessControlProvider(), newMockNet(), log)
+	ctrl := gomock.NewController(t)
+	mockStore := newMockBlockChainStore(ctrl)
+	txPool, _ := NewTxPoolImpl("test_chain", mockStore.store, newMockMessageBus(ctrl), chainConf, newMockAccessControlProvider(ctrl), newMockNet(ctrl), log)
 	_ = txPool.Start()
-	return txPool
+	return &testPool{
+			txPool: txPool,
+			extTxs: mockStore.txs,
+		}, func() {
+			ctrl.Finish()
+			txPool.Stop()
+		}
 }
 
 func TestTxPoolImpl_AddTx(t *testing.T) {
 	commonTxs := generateTxs(30, false)
 	configTxs := generateTxs(30, true)
-	txPool := newTestPool(20)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 20)
+	txPool := testPool.txPool
+	defer fn()
 
 	// 2. add config txs
 	for _, tx := range configTxs[:10] {
@@ -86,7 +106,7 @@ func TestTxPoolImpl_AddTx(t *testing.T) {
 
 	// 6. add txs to blockchain
 	for _, tx := range commonTxs[20:25] {
-		imPool.blockchainStore.(*mockBlockChainStore).txs[tx.Header.TxId] = tx
+		testPool.extTxs[tx.Header.TxId] = tx
 	}
 
 	// 7. add txs[20:25] failed due to txs exist in blockchain
@@ -102,8 +122,9 @@ func TestTxPoolImpl_AddTx(t *testing.T) {
 }
 
 func TestFlushOrAddTxsToCache(t *testing.T) {
-	txPool := newTestPool(20)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 20)
+	txPool := testPool.txPool
+	defer fn()
 	rpcConfigTxs, _, _ := generateTxsBySource(10, true)
 	rpcCommonTxs, p2pCommonTxs, _ := generateTxsBySource(10, false)
 	imlPool := txPool.(*txPoolImpl)
@@ -135,8 +156,9 @@ func TestFlushOrAddTxsToCache(t *testing.T) {
 }
 
 func TestTxPoolImpl_AddTxsToPendingCache(t *testing.T) {
-	txPool := newTestPool(200)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 200)
+	txPool := testPool.txPool
+	defer fn()
 	imlPool := txPool.(*txPoolImpl)
 	commonTxs := generateTxs(50, false)
 
@@ -170,8 +192,9 @@ func TestTxPoolImpl_AddTxsToPendingCache(t *testing.T) {
 }
 
 func TestTxPoolImpl_GetTxByTxId(t *testing.T) {
-	txPool := newTestPool(20)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 20)
+	txPool := testPool.txPool
+	defer fn()
 	imlPool := txPool.(*txPoolImpl)
 	commonTxs := generateTxs(50, false)
 
@@ -213,8 +236,9 @@ func TestTxPoolImpl_GetTxByTxId(t *testing.T) {
 }
 
 func TestTxPoolImpl_GetTxsByTxIds(t *testing.T) {
-	txPool := newTestPool(20)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 20)
+	txPool := testPool.txPool
+	defer fn()
 	imlPool := txPool.(*txPoolImpl)
 	commonTxs := generateTxs(50, false)
 
@@ -254,8 +278,9 @@ func TestTxPoolImpl_GetTxsByTxIds(t *testing.T) {
 }
 
 func TestTxPoolImpl_FetchTxBatch(t *testing.T) {
-	txPool := newTestPool(2000)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 2000)
+	txPool := testPool.txPool
+	defer fn()
 	imlPool := txPool.(*txPoolImpl)
 	commonTxs := generateTxs(100, false)
 
@@ -272,8 +297,9 @@ func TestTxPoolImpl_FetchTxBatch(t *testing.T) {
 }
 
 func TestTxPoolImpl_RetryAndRemoveTxs(t *testing.T) {
-	txPool := newTestPool(2000)
-	defer txPool.Stop()
+	testPool, fn := newTestPool(t, 2000)
+	txPool := testPool.txPool
+	defer fn()
 	imlPool := txPool.(*txPoolImpl)
 	commonTxs := generateTxs(100, false)
 
@@ -312,85 +338,86 @@ func TestTxPoolImpl_RetryAndRemoveTxs(t *testing.T) {
 	//require.EqualValues(t, 0, imlPool.queue.pendingCache.Size())
 }
 
-//func TestPoolImplConcurrencyInvoke(t *testing.T) {
-//	txPool := newTestPool(2000000)
-//	defer txPool.Stop()
-//	imlPool := txPool.(*txPoolImpl)
-//	commonTxs := generateTxs(500000, false)
-//	txIds := make([]string, 0, len(commonTxs))
-//	for _, tx := range commonTxs {
-//		txIds = append(txIds, tx.Header.TxId)
-//	}
-//
-//	// 1. Concurrent Adding Transactions to txPool
-//	addBegin := utils.CurrentTimeMillisSeconds()
-//	workerNum := 100
-//	peerWorkerTxNum := len(commonTxs) / workerNum
-//	wg := sync.WaitGroup{}
-//	for i := 0; i < workerNum; i++ {
-//		wg.Add(1)
-//		go func(i int, txs []*common.Transaction) {
-//			for _, tx := range txs {
-//				txPool.AddTx(tx, protocol.RPC)
-//			}
-//			wg.Done()
-//			imlPool.log.Debugf("add txs done")
-//		}(i, commonTxs[i*peerWorkerTxNum:(i+1)*peerWorkerTxNum])
-//	}
-//
-//	// 2. Simulate the logic for generating blocks
-//	fetchTimes := make([]int64, 0, 100)
-//	go func() {
-//		height := int64(100)
-//		fetchTicker := time.NewTicker(time.Millisecond * 100)
-//		fetchTimer := time.NewTimer(2 * time.Minute)
-//		defer func() {
-//			fetchTimer.Stop()
-//			fetchTicker.Stop()
-//		}()
-//
-//	Loop:
-//		for {
-//			select {
-//			case <-fetchTicker.C:
-//				begin := utils.CurrentTimeMillisSeconds()
-//				txs := txPool.FetchTxBatch(height)
-//				fetchTimes = append(fetchTimes, utils.CurrentTimeMillisSeconds()-begin)
-//				imlPool.log.Debugf("fetch txs num: ", len(txs))
-//			case <-fetchTimer.C:
-//				break Loop
-//			}
-//		}
-//		imlPool.log.Debugf("time used: fetch txs: %v ", fetchTimes)
-//	}()
-//
-//	// 3. Simulation validates the logic of the block
-//	getTimes := make([]int64, 0, 100)
-//	go func() {
-//		getTicker := time.NewTicker(time.Millisecond * 80)
-//		getTimer := time.NewTimer(2 * time.Minute)
-//		defer func() {
-//			getTimer.Stop()
-//			getTicker.Stop()
-//		}()
-//
-//	Loop:
-//		for {
-//			select {
-//			case <-getTicker.C:
-//				start := rand.Intn(len(txIds) - 1000)
-//				begin := utils.CurrentTimeMillisSeconds()
-//				getTxs, _ := txPool.GetTxsByTxIds(txIds[start : start+1000])
-//				getTimes = append(getTimes, utils.CurrentTimeMillisSeconds()-begin)
-//				imlPool.log.Debugf("get txs num: ", len(getTxs))
-//			case <-getTimer.C:
-//				break Loop
-//			}
-//		}
-//		imlPool.log.Debugf("time used: get txs: %v ", getTimes)
-//	}()
-//
-//	wg.Wait()
-//	addEnd := utils.CurrentTimeMillisSeconds()
-//	imlPool.log.Debugf("time used: add txs: %d, txPool state: %s\n", addEnd-addBegin, imlPool.queue.status())
-//}
+func TestPoolImplConcurrencyInvoke(t *testing.T) {
+	testPool, fn := newTestPool(t, 2000000)
+	txPool := testPool.txPool
+	defer fn()
+	imlPool := txPool.(*txPoolImpl)
+	commonTxs := generateTxs(500000, false)
+	txIds := make([]string, 0, len(commonTxs))
+	for _, tx := range commonTxs {
+		txIds = append(txIds, tx.Header.TxId)
+	}
+
+	// 1. Concurrent Adding Transactions to txPool
+	addBegin := utils.CurrentTimeMillisSeconds()
+	workerNum := 100
+	peerWorkerTxNum := len(commonTxs) / workerNum
+	wg := sync.WaitGroup{}
+	for i := 0; i < workerNum; i++ {
+		wg.Add(1)
+		go func(i int, txs []*commonPb.Transaction) {
+			for _, tx := range txs {
+				txPool.AddTx(tx, protocol.RPC)
+			}
+			wg.Done()
+			imlPool.log.Debugf("add txs done")
+		}(i, commonTxs[i*peerWorkerTxNum:(i+1)*peerWorkerTxNum])
+	}
+
+	// 2. Simulate the logic for generating blocks
+	fetchTimes := make([]int64, 0, 100)
+	go func() {
+		height := int64(100)
+		fetchTicker := time.NewTicker(time.Millisecond * 100)
+		fetchTimer := time.NewTimer(2 * time.Minute)
+		defer func() {
+			fetchTimer.Stop()
+			fetchTicker.Stop()
+		}()
+
+	Loop:
+		for {
+			select {
+			case <-fetchTicker.C:
+				begin := utils.CurrentTimeMillisSeconds()
+				txs := txPool.FetchTxBatch(height)
+				fetchTimes = append(fetchTimes, utils.CurrentTimeMillisSeconds()-begin)
+				imlPool.log.Debugf("fetch txs num: ", len(txs))
+			case <-fetchTimer.C:
+				break Loop
+			}
+		}
+		imlPool.log.Debugf("time used: fetch txs: %v ", fetchTimes)
+	}()
+
+	// 3. Simulation validates the logic of the block
+	getTimes := make([]int64, 0, 100)
+	go func() {
+		getTicker := time.NewTicker(time.Millisecond * 80)
+		getTimer := time.NewTimer(2 * time.Minute)
+		defer func() {
+			getTimer.Stop()
+			getTicker.Stop()
+		}()
+
+	Loop:
+		for {
+			select {
+			case <-getTicker.C:
+				start := rand.Intn(len(txIds) - 1000)
+				begin := utils.CurrentTimeMillisSeconds()
+				getTxs, _ := txPool.GetTxsByTxIds(txIds[start : start+1000])
+				getTimes = append(getTimes, utils.CurrentTimeMillisSeconds()-begin)
+				imlPool.log.Debugf("get txs num: ", len(getTxs))
+			case <-getTimer.C:
+				break Loop
+			}
+		}
+		imlPool.log.Debugf("time used: get txs: %v ", getTimes)
+	}()
+
+	wg.Wait()
+	addEnd := utils.CurrentTimeMillisSeconds()
+	imlPool.log.Debugf("time used: add txs: %d, txPool state: %s\n", addEnd-addBegin, imlPool.queue.status())
+}

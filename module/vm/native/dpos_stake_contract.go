@@ -23,6 +23,18 @@ import (
 )
 
 const (
+	paramNodeID 	= "node_id"
+	paramAddress	= "address"
+	paramTo			= "to"
+	paramFrom		= "from"
+	paramAmount		= "amount"
+	paramEpochID 	= "epoch_id"
+	paramValidatorAddress		= "validator_address"
+	paramDelegatorAddress		= "delegator_address"
+	paramMinSelfDelegation		= "min_self_delegation"
+	paramEpochValidatorNumber	= "epoch_validator_number"
+	paramEpochBlockNumber 		= "epoch_block_number"
+
 	prefixValidator    = "V/"
 	prefixDelegation   = "D/"
 	prefixUnDelegation = "U/"
@@ -83,6 +95,7 @@ func ToUnbondingDelegationPrefix(epochID uint64) []byte {
 	return []byte(prefixUnDelegation + string(bz))
 }
 
+// ToReverseNodeIDKey - Key：NR + "/" + NodeID
 func ToReverseNodeIDKey(nodeID string) []byte {
 	return []byte(fmt.Sprintf(KeyRevNodeFormat, nodeID))
 }
@@ -178,14 +191,21 @@ type DPoSStakeRuntime struct {
 	log *logger.CMLogger
 }
 
+// 新建 stake Runtime
+func NewDPoSStakeRuntime(log *logger.CMLogger) *DPoSStakeRuntime {
+	return &DPoSStakeRuntime{
+		log: log,
+	}
+}
+
 // SetNodeID - 系统加入节点绑定自身身份
 func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "node_id")
+	err := checkParams(params, paramNodeID)
 	if err != nil {
 		return nil, err
 	}
-	nodeID := params["node_id"]
+	nodeID := params[paramNodeID]
 	// get message sender
 	sender, err := loadSenderAddress(context) // Use ERC20 parse method
 	if err != nil {
@@ -214,17 +234,17 @@ func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 		s.log.Errorf("context put key: [%s], value: [&s] error, error: ", reverseKey, sender, err)
 		return nil, err
 	}
-	return nil, nil
+	return []byte(nodeID), nil
 }
 
 // GetNodeID - 系统节点自身身份查询
 func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "address")
+	err := checkParams(params, paramAddress)
 	if err != nil {
 		return nil, err
 	}
-	address := params["address"]
+	address := params[paramAddress]
 	// construct kv pair
 	// key: 		N/{sender}	V: nodeID
 	key := ToNodeIDKey(address)
@@ -282,12 +302,12 @@ func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, param
 // return Validator
 func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "address")
+	err := checkParams(params, paramAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	address := params["address"]
+	address := params[paramAddress]
 	// 获取验证人数据
 	bz, err := getValidatorBytes(context, address)
 	if err != nil {
@@ -303,13 +323,13 @@ func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, 
 // return Delegation
 func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "to", "amount")
+	err := checkParams(params, paramTo, paramAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	to := params["to"]         // delegate target
-	amount := params["amount"] // amount must be a integer
+	to := params[paramTo]         // delegate target
+	amount := params[paramAmount] // amount must be a integer
 
 	// check amount
 	if !assertStringAmountPositive(amount) {
@@ -387,8 +407,8 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 	stakeAddr := StakeContractAddr()
 	// prepare params
 	transferParams := map[string]string{
-		"to":    stakeAddr,
-		"value": amount,
+		paramNameTo:    stakeAddr,
+		paramNameValue: amount,
 	}
 	_, err = erc20RunTime.Transfer(context, transferParams)
 	if err != nil {
@@ -417,12 +437,12 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 // return DelegationInfo
 func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "address")
+	err := checkParams(params, paramAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	address := params["address"]
+	address := params[paramAddress]
 	// 获取验证人数据
 	di, err := getDelegationsByAddress(context, address)
 	if err != nil {
@@ -437,13 +457,13 @@ func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext
 // return Delegation
 func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "delegator_address", "validator_address")
+	err := checkParams(params, paramDelegatorAddress, paramValidatorAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	delegatorAddress := params["delegator_address"]
-	validatorAddress := params["validator_address"]
+	delegatorAddress := params[paramDelegatorAddress]
+	validatorAddress := params[paramValidatorAddress]
 
 	// 获取验证人数据
 	bz, err := getDelegationBytes(context, delegatorAddress, validatorAddress)
@@ -460,13 +480,13 @@ func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimCo
 // return UnbondingDelegation
 func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "from", "amount")
+	err := checkParams(params, paramFrom, paramAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	undelegateValidatorAddress := params["from"]
-	amount := params["amount"]
+	undelegateValidatorAddress := params[paramFrom]
+	amount := params[paramAmount]
 
 	// check amount
 	if !assertStringAmountPositive(amount) {
@@ -602,12 +622,12 @@ func (s *DPoSStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params
 // return Epoch
 func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "epoch_id")
+	err := checkParams(params, paramEpochID)
 	if err != nil {
 		return nil, err
 	}
 
-	epochID := params["epoch_id"]
+	epochID := params[paramEpochID]
 	if !assertStringAmountPositive(epochID) {
 		s.log.Errorf("epoch_id less than 0")
 		return nil, fmt.Errorf("epoch_id less than 0")
@@ -636,12 +656,12 @@ func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, 
 // return string
 func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "min_self_delegation")
+	err := checkParams(params, paramMinSelfDelegation)
 	if err != nil {
 		return nil, err
 	}
 
-	minSelfDelegation := params["min_self_delegation"]
+	minSelfDelegation := params[paramMinSelfDelegation]
 	if !assertStringAmountPositive(minSelfDelegation) {
 		s.log.Errorf("minSelfDelegation less than 0")
 		return nil, fmt.Errorf("minSelfDelegation less than 0")
@@ -690,12 +710,12 @@ func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContex
 // return string
 func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "epoch_validator_number")
+	err := checkParams(params, paramEpochValidatorNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	epochValidatorNumber := params["epoch_validator_number"]
+	epochValidatorNumber := params[paramEpochValidatorNumber]
 	if !assertStringAmountPositive(epochValidatorNumber) {
 		s.log.Errorf("epochValidatorNumber less than 0")
 		return nil, fmt.Errorf("epochValidatorNumber less than 0")
@@ -757,12 +777,12 @@ func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.Tx
 // return nil
 func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	// check params
-	err := checkParams(params, "epoch_block_number")
+	err := checkParams(params, paramEpochBlockNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	epochBlockNumber := params["epoch_block_number"]
+	epochBlockNumber := params[paramEpochBlockNumber]
 	if !assertStringAmountPositive(epochBlockNumber) {
 		s.log.Errorf("epochBlockNumber less than 0")
 		return nil, fmt.Errorf("epochBlockNumber less than 0")
@@ -829,7 +849,7 @@ func getValidatorBytes(context protocol.TxSimContext, validatorAddress string) (
 		return nil, err
 	}
 	if len(bz) <= 0 {
-		return nil, fmt.Errorf("no susch validator as address: %s", validatorAddress)
+		return nil, fmt.Errorf("no such validator as address: %s", validatorAddress)
 	}
 	return bz, nil
 }
