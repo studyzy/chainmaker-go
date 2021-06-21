@@ -260,3 +260,16 @@ func (c *CacheMock) Put(name, key string, value []byte) {
 func (c *CacheMock) Get(name, key string) []byte {
 	return c.content[realKey(name, key)]
 }
+
+func (c *CacheMock) GetByKey(key string) []byte {
+	return c.content[key]
+}
+
+func (c *CacheMock) Keys() []string {
+	sc := make([]string, 0)
+	for k := range c.content {
+		sc = append(sc, k)
+	}
+	return sc
+}
+
