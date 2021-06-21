@@ -213,6 +213,11 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 		fmt.Println("  【testInvokeSqlInsert】 pass")
 	}
 
+	// 并发测试
+	for i := 500; i < 1000; i++ {
+		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
+	}
+
 	// 异常功能测试
 	if runtimeType == commonPb.RuntimeType_WASMER {
 		fmt.Println("\n// 1、建表、索引、视图等DDL语句只能在合约安装init_contract 和合约升级upgrade中使用。")

@@ -62,7 +62,7 @@ type Wacsi interface {
 	// sql operation
 	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
 	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error)
-	ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
+	ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
 	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error
 	RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
 	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
@@ -798,9 +798,12 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
 	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
-		return fmt.Errorf(" Query transaction cannot be updated")
+		return fmt.Errorf("query transaction cannot be execute dml")
+	}
+	if method == protocol.ContractUpgradeMethod {
+		return fmt.Errorf("upgrade contract transaction cannot be execute dml")
 	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
