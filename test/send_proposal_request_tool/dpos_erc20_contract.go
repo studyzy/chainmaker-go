@@ -1,23 +1,14 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	_ "flag"
 	"fmt"
-
-	"chainmaker.org/chainmaker-go/utils"
-
-	"chainmaker.org/chainmaker-go/utils"
-
 	"io/ioutil"
 
-	"io/ioutil"
-
+	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
-
-	"crypto/sha256"
-
-	"crypto/sha256"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/mr-tron/base58/base58"
