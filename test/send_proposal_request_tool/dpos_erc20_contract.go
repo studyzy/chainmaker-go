@@ -1,18 +1,21 @@
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	"encoding/json"
 	_ "flag"
 	"fmt"
 
-	"github.com/gogo/protobuf/proto"
+	"chainmaker.org/chainmaker-go/utils"
+
 	"io/ioutil"
+
+	"github.com/gogo/protobuf/proto"
+
+	"crypto/sha256"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/mr-tron/base58/base58"
 	"github.com/spf13/cobra"
-	"crypto/sha256"
 )
 
 var (
@@ -26,7 +29,6 @@ const (
 	amountName          = "amount"
 	amountValueComments = "amount of the value, the type is string"
 )
-
 
 func ERC20Cert2Address() *cobra.Command {
 	cmd := &cobra.Command{
@@ -67,7 +69,7 @@ func calAddressFromCert() error {
 	result := &Result{
 		Code:    commonPb.TxStatusCode_SUCCESS,
 		Message: "success",
-		Result:    addr,
+		Result:  addr,
 	}
 	bytes, err := json.Marshal(result)
 	if err != nil {
@@ -76,7 +78,6 @@ func calAddressFromCert() error {
 	fmt.Println(string(bytes))
 	return nil
 }
-
 
 func ERC20Mint() *cobra.Command {
 	cmd := &cobra.Command{
@@ -309,7 +310,7 @@ func processResult(resp *commonPb.TxResponse, m proto.Message) error {
 		}
 		queryResult = string(bz)
 	} else {
-		queryResult = resp.Message
+		queryResult = string(resp.ContractResult.Result)
 	}
 	result := &Result{
 		Code:                  resp.Code,
