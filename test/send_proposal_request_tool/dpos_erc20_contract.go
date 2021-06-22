@@ -7,9 +7,15 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 
+	"chainmaker.org/chainmaker-go/utils"
+
+	"io/ioutil"
+
 	"io/ioutil"
 
 	"github.com/gogo/protobuf/proto"
+
+	"crypto/sha256"
 
 	"crypto/sha256"
 
