@@ -1,17 +1,18 @@
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
+	"crypto/sha256"
 	"encoding/json"
 	_ "flag"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/utils"
+	"github.com/gogo/protobuf/proto"
 
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/mr-tron/base58/base58"
 	"github.com/spf13/cobra"
-	"crypto/sha256"
 )
 
 var (
@@ -25,7 +26,6 @@ const (
 	amountName          = "amount"
 	amountValueComments = "amount of the value, the type is string"
 )
-
 
 func ERC20Cert2Address() *cobra.Command {
 	cmd := &cobra.Command{
@@ -66,7 +66,7 @@ func calAddressFromCert() error {
 	result := &Result{
 		Code:    commonPb.TxStatusCode_SUCCESS,
 		Message: "success",
-		Result:    addr,
+		Result:  addr,
 	}
 	bytes, err := json.Marshal(result)
 	if err != nil {
@@ -75,7 +75,6 @@ func calAddressFromCert() error {
 	fmt.Println(string(bytes))
 	return nil
 }
-
 
 func ERC20Mint() *cobra.Command {
 	cmd := &cobra.Command{
@@ -267,6 +266,32 @@ func decimals() error {
 	return processResult(resp, nil)
 }
 
+func ERC20Total() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "erc20Total",
+		Short: "total supply of erc20",
+		Long:  " get total supply of tokens",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return total()
+		},
+	}
+	return cmd
+}
+
+func total() error {
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_TOTAL_SUPPLY.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
+	}
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		chainId, "", payloadBytes)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
+}
+
 func processResult(resp *commonPb.TxResponse, m proto.Message) error {
 	if m != nil {
 		err := proto.Unmarshal(resp.ContractResult.Result, m)
@@ -282,7 +307,7 @@ func processResult(resp *commonPb.TxResponse, m proto.Message) error {
 		}
 		queryResult = string(bz)
 	} else {
-		queryResult = resp.Message
+		queryResult = string(resp.ContractResult.Result)
 	}
 	result := &Result{
 		Code:                  resp.Code,
