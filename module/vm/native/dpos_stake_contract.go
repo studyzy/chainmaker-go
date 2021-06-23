@@ -598,10 +598,18 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		s.log.Errorf("save validator error: ", err.Error())
 		return nil, err
 	}
-	err = save(context, ToDelegationKey(sender, undelegateValidatorAddress), d)
-	if err != nil {
-		s.log.Errorf("save delegation error: ", err.Error())
-		return nil, err
+	if d.Shares == "0" {
+		err = delete(context, ToDelegationKey(sender, undelegateValidatorAddress))
+		if err != nil {
+			s.log.Errorf("delete delegation error: ", err.Error())
+			return nil, err
+		}
+	} else {
+		err = save(context, ToDelegationKey(sender, undelegateValidatorAddress), d)
+		if err != nil {
+			s.log.Errorf("save delegation error: ", err.Error())
+			return nil, err
+		}
 	}
 
 	return proto.Marshal(ud)
@@ -1312,6 +1320,15 @@ func save(context protocol.TxSimContext, key []byte, m proto.Message) error {
 		return err
 	}
 	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, bz)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 保存 message 对象
+func delete(context protocol.TxSimContext, key []byte) error {
+	err := context.Del(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key)
 	if err != nil {
 		return err
 	}
