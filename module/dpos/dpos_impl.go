@@ -26,7 +26,18 @@ func NewDPoSImpl(chainConf protocol.ChainConf, blockChainStore protocol.Blockcha
 	return &DPoSImpl{stateDB: blockChainStore, log: log, chainConf: chainConf}
 }
 
-func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
+func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) error {
+	consensusRwSets, err := impl.createDPoSRWSet(preBlkHash, proposedBlock)
+	if err != nil {
+		return err
+	}
+	if consensusRwSets != nil {
+		err = impl.addConsensusArgsToBlock(consensusRwSets, proposedBlock.Block)
+	}
+	return err
+}
+
+func (impl *DPoSImpl) createDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
 	impl.log.Debugf("begin createDPoS rwSet, blockInfo: %d:%x ",
 		proposedBlock.Block.Header.BlockHeight, proposedBlock.Block.Header.BlockHash)
 	// 1. judge consensus: DPoS
@@ -44,32 +55,27 @@ func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 	if err != nil {
 		return nil, err
 	}
-	impl.log.Debugf("create dpos 1111...")
 	if epoch.NextEpochCreateHeight != blockHeight {
 		impl.log.Debugf("create dpos 222 mismatch blockHeight..., epoch.NextEpochCreateHeight: %d, blockHeight: %d", epoch.NextEpochCreateHeight, blockHeight)
 		return nil, nil
 	}
-	impl.log.Debugf("create dpos 333")
 	// 3. create unbounding rwset
 	unboundingRwSet, err := impl.completeUnbonding(epoch, block, blockTxRwSet)
 	if err != nil {
 		impl.log.Errorf("create complete unbonding error, reason: %s", err)
 		return nil, err
 	}
-	impl.log.Debugf("create dpos 444")
 	// 4. create newEpoch
 	newEpoch, err := impl.createNewEpoch(blockHeight, epoch, preBlkHash)
 	if err != nil {
 		impl.log.Errorf("create new epoch error, reason: %s", err)
 		return nil, err
 	}
-	impl.log.Debugf("create dpos 555")
 	epochRwSet, err := impl.createEpochRwSet(newEpoch)
 	if err != nil {
 		impl.log.Errorf("create epoch rwSet error, reason: %s", err)
 		return nil, err
 	}
-	impl.log.Debugf("create dpos 666")
 	// 5. Aggregate read-write set
 	unboundingRwSet.TxWrites = append(unboundingRwSet.TxWrites, epochRwSet.TxWrites...)
 	impl.log.Debugf("end createDPoS rwSet: %v ", unboundingRwSet)
@@ -137,10 +143,10 @@ func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []
 	return vals, nil
 }
 
-func (impl *DPoSImpl) AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *common.Block) (*common.Block, error) {
+func (impl *DPoSImpl) addConsensusArgsToBlock(rwSet *common.TxRWSet, block *common.Block) error {
 	impl.log.Debugf("begin add consensus args to block ")
 	if !impl.isDPoSConsensus() {
-		return block, nil
+		return nil
 	}
 	consensusArgs := &consensus.BlockHeaderConsensusArgs{
 		ConsensusType: int64(consensus.ConsensusType_DPOS),
@@ -149,11 +155,11 @@ func (impl *DPoSImpl) AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *comm
 	argBytes, err := proto.Marshal(consensusArgs)
 	if err != nil {
 		impl.log.Errorf("marshal BlockHeaderConsensusArgs failed, reason: %s", err)
-		return nil, err
+		return err
 	}
 	block.Header.ConsensusArgs = argBytes
 	impl.log.Debugf("end add consensus args ")
-	return block, nil
+	return nil
 }
 
 func (impl *DPoSImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.BlockHeaderConsensusArgs {
@@ -178,7 +184,7 @@ func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[
 		return nil
 	}
 
-	localConsensus, err := impl.CreateDPoSRWSet(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
+	localConsensus, err := impl.createDPoSRWSet(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
 	if err != nil {
 		impl.log.Errorf("get DPoS txRwSets failed, reason: %s", err)
 		return err

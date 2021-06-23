@@ -9,7 +9,7 @@ require (
 	chainmaker.org/chainmaker-go/dpos v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker-go/mock v0.0.0-00010101000000-000000000000
+	chainmaker.org/chainmaker-go/mock v0.0.0
 	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
 	chainmaker.org/chainmaker-go/protocol v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
