@@ -254,7 +254,7 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofs.Helper().NewBulletproofs().ProveAfterSubCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
