@@ -17,3 +17,15 @@ func TestBytesEqual(t *testing.T) {
 	bz := make([]byte, 0)
 	require.True(t, bytes.Equal(bz, nil))
 }
+
+func TestDPoSImpl_VerifyConsensusArgs(t *testing.T) {
+
+}
+
+func TestDPoSImpl_CreateDPoSRWSet(t *testing.T) {
+
+}
+
+func TestDPoSImpl_CreateNewEpoch(t *testing.T) {
+
+}

@@ -66,7 +66,7 @@ func (impl *DPoSImpl) createDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 		return nil, nil
 	}
 	// 3. create unbounding rwset
-	unboundingRwSet, err := impl.completeUnbonding(epoch, block, blockTxRwSet)
+	unboundingRwSet, err := impl.completeUnbounding(epoch, block, blockTxRwSet)
 	if err != nil {
 		impl.log.Errorf("create complete unbonding error, reason: %s", err)
 		return nil, err
@@ -166,22 +166,6 @@ func (impl *DPoSImpl) addConsensusArgsToBlock(rwSet *common.TxRWSet, block *comm
 	block.Header.ConsensusArgs = argBytes
 	impl.log.Debugf("end add consensus args ")
 	return nil
-}
-
-func (impl *DPoSImpl) getConsensusArgsFromBlock(block *common.Block) *consensus.BlockHeaderConsensusArgs {
-	if !impl.isDPoSConsensus() {
-		return nil
-	}
-
-	consensusArgs := consensus.BlockHeaderConsensusArgs{}
-	if len(block.Header.ConsensusArgs) == 0 {
-		return nil
-	}
-	if err := proto.Unmarshal(block.Header.ConsensusArgs, &consensusArgs); err != nil {
-		impl.log.Errorf("proto unmarshal consensus args failed, reason: %s", err)
-		return nil
-	}
-	return &consensusArgs
 }
 
 func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (err error) {
