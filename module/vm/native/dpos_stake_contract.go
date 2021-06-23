@@ -23,17 +23,17 @@ import (
 )
 
 const (
-	paramNodeID 	= "node_id"
-	paramAddress	= "address"
-	paramTo			= "to"
-	paramFrom		= "from"
-	paramAmount		= "amount"
-	paramEpochID 	= "epoch_id"
-	paramValidatorAddress		= "validator_address"
-	paramDelegatorAddress		= "delegator_address"
-	paramMinSelfDelegation		= "min_self_delegation"
-	paramEpochValidatorNumber	= "epoch_validator_number"
-	paramEpochBlockNumber 		= "epoch_block_number"
+	paramNodeID               = "node_id"
+	paramAddress              = "address"
+	paramTo                   = "to"
+	paramFrom                 = "from"
+	paramAmount               = "amount"
+	paramEpochID              = "epoch_id"
+	paramValidatorAddress     = "validator_address"
+	paramDelegatorAddress     = "delegator_address"
+	paramMinSelfDelegation    = "min_self_delegation"
+	paramEpochValidatorNumber = "epoch_validator_number"
+	paramEpochBlockNumber     = "epoch_block_number"
 
 	prefixValidator    = "V/"
 	prefixDelegation   = "D/"
@@ -263,6 +263,21 @@ func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[s
 // GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人候选人
 // return ValidatorVector
 func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	collection, err := s.getAllCandidates(context)
+	if err != nil {
+		s.log.Errorf("get validator collection error: %s", err)
+		return nil, err
+	}
+	// 序列化
+	bz, err := proto.Marshal(collection)
+	if err != nil {
+		s.log.Errorf("marshal validator collection error: ", err.Error())
+		return nil, err
+	}
+	return bz, nil
+}
+
+func (s *DPoSStakeRuntime) getAllCandidates(context protocol.TxSimContext) (*commonPb.ValidatorVector, error) {
 	// 获取验证人数据
 	vc, err := getAllValidatorByPrefix(context, ToValidatorPrefix())
 	if err != nil {
@@ -287,14 +302,7 @@ func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, param
 		}
 		collection.Vector = append(collection.Vector, v.ValidatorAddress)
 	}
-
-	// 序列化
-	bz, err := proto.Marshal(collection)
-	if err != nil {
-		s.log.Errorf("marshal validator collection error: ", err.Error())
-		return nil, err
-	}
-	return bz, nil
+	return collection, nil
 }
 
 // GetValidatorByAddress() Validator		// 返回所有满足最低抵押条件验证人
@@ -567,6 +575,10 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 			return nil, err
 		}
 		if cmp == -1 {
+			if err := s.canDelete(context); err != nil {
+				return nil, err
+			}
+
 			if v.SelfDelegation == "0" {
 				updateValidatorStatus(v, commonPb.BondStatus_Unbonded)
 			} else {
@@ -613,6 +625,24 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 	}
 
 	return proto.Marshal(ud)
+}
+
+func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
+	if err != nil {
+		return err
+	}
+	amount := decodeUint64FromBigEndian(bz)
+
+	collection, err := s.getAllCandidates(context)
+	if err != nil {
+		return err
+	}
+	if amount > uint64(len(collection.Vector)-1) {
+		return fmt.Errorf("the number of candidates[%d] after the undelegate "+
+			"is less than the number of validators[%d]", len(collection.Vector)-1, amount)
+	}
+	return nil
 }
 
 // ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
