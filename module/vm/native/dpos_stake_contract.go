@@ -575,6 +575,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 			return nil, err
 		}
 		if cmp == -1 {
+			// 检查当前网络情况下，节点是否能退出
 			if err := s.canDelete(context); err != nil {
 				return nil, err
 			}
@@ -638,6 +639,7 @@ func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
 	if err != nil {
 		return err
 	}
+	// 如果共识中 当前节点退出后剩余节点数量 少于 共识所需的节点数量
 	if amount > uint64(len(collection.Vector)-1) {
 		return fmt.Errorf("the number of candidates[%d] after the undelegate "+
 			"is less than the number of validators[%d]", len(collection.Vector)-1, amount)
@@ -1444,7 +1446,6 @@ func (s Collections) Swap(i, j int) {
 }
 
 func (s Collections) Less(i, j int) bool {
-	// 优先按照weight排序，相同的情况下按照peerID从小到大排序（字符串）
 	x, _ := stringToBigInt(s[i])
 	y, _ := stringToBigInt(s[j])
 	val := x.Cmp(y)
