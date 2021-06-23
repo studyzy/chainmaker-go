@@ -202,6 +202,22 @@ func TestDPosStakeRuntime_UnDelegate(t *testing.T) {
 	bz, err = rt.Delegate(ctx, params)
 	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[SYSTEM_CONTRACT_DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
 	require.Equal(t, string(bz), "")
+
+	// test get delegation after all share undelegated
+	params = make(map[string]string, 32)
+	params[paramAddress] = "1"
+	bz, err = rt.GetDelegationsByAddress(ctx, params)
+	di := &commonPb.DelegationInfo{}
+	err = proto.Unmarshal(bz, di)
+	require.Nil(t, err)
+	require.Equal(t, di, initDelegationInfo(address1, address1, amount)) // validator self delegation
+
+	params = make(map[string]string, 32)
+	params[paramDelegatorAddress] = DelegateAddress
+	params[paramValidatorAddress] = address1
+	bz, err = rt.GetUserDelegationByValidator(ctx, params)
+	require.Nil(t, bz)
+	require.Equal(t, err, fmt.Errorf("no delegation as delegator: GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB, validdator: 1"))
 }
 
 func TestDPosStakeRuntime_ReadLatestEpoch(t *testing.T) {
@@ -326,6 +342,11 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 			return cache.Get(name, string(key)), nil
 		},
 	).AnyTimes()
+	txSimContext.EXPECT().Del(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(name string, key []byte) error {
+			return cache.Del(name, string(key))
+		},
+	).AnyTimes()
 	txSimContext.EXPECT().GetSender().DoAndReturn(
 		func() *acPb.SerializedMember {
 			return &acPb.SerializedMember{
@@ -404,6 +425,13 @@ func initValidator(t *testing.T, addr string) []byte {
 	bz, err := proto.Marshal(v)
 	require.Nil(t, err)
 	return bz
+}
+
+func initDelegationInfo(addr1, addr2 string, amount string) *commonPb.DelegationInfo {
+	d := newDelegation(addr1, addr2, amount)
+	di := &commonPb.DelegationInfo{}
+	di.Infos = append(di.Infos, d)
+	return di
 }
 
 func initDelegation(t *testing.T, addr string) []byte {

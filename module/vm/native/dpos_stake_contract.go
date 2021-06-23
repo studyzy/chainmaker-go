@@ -611,7 +611,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		return nil, err
 	}
 	if d.Shares == "0" {
-		err = delete(context, ToDelegationKey(sender, undelegateValidatorAddress))
+		err = del(context, ToDelegationKey(sender, undelegateValidatorAddress))
 		if err != nil {
 			s.log.Errorf("delete delegation error: ", err.Error())
 			return nil, err
@@ -1109,7 +1109,7 @@ func getDelegationBytes(context protocol.TxSimContext, delegatorAddress, validat
 		return nil, err
 	}
 	if len(bz) <= 0 {
-		return nil, fmt.Errorf("no susch validator as address: %s", validatorAddress)
+		return nil, fmt.Errorf("no delegation as delegator: %s, validdator: %s", delegatorAddress, validatorAddress)
 	}
 	return bz, nil
 }
@@ -1356,8 +1356,8 @@ func save(context protocol.TxSimContext, key []byte, m proto.Message) error {
 	return nil
 }
 
-// 保存 message 对象
-func delete(context protocol.TxSimContext, key []byte) error {
+// 删除 key
+func del(context protocol.TxSimContext, key []byte) error {
 	err := context.Del(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key)
 	if err != nil {
 		return err

@@ -261,6 +261,11 @@ func (c *CacheMock) Get(name, key string) []byte {
 	return c.content[realKey(name, key)]
 }
 
+func (c *CacheMock) Del(name, key string) error {
+	delete(c.content, realKey(name, key))
+	return nil
+}
+
 func (c *CacheMock) GetByKey(key string) []byte {
 	return c.content[key]
 }
