@@ -102,7 +102,6 @@ type Result struct {
 	GovernanceInfo        *consensusPb.GovernanceContract `json:"governanceInfo,omitempty"`
 	HibeExecMsg           string                          `json:"hibe_exec_msg,omitempty"`
 	CertAddress           *evm.Address                    `json:"certAddress,omitempty"`
-	Result                string                          `json:"result,omitempty"`
 }
 
 type SimpleRPCResult struct {
