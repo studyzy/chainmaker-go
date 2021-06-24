@@ -163,6 +163,20 @@ func (mr *MockAccessControlProviderMockRecorder) DeserializeMember(serializedMem
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeserializeMember", reflect.TypeOf((*MockAccessControlProvider)(nil).DeserializeMember), serializedMember)
 }
 
+// FindPolicyByResourceName mocks base method.
+func (m *MockAccessControlProvider) FindPolicyByResourceName(resourceName string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindPolicyByResourceName", resourceName)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// FindPolicyByResourceName indicates an expected call of FindPolicyByResourceName.
+func (mr *MockAccessControlProviderMockRecorder) FindPolicyByResourceName(resourceName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindPolicyByResourceName", reflect.TypeOf((*MockAccessControlProvider)(nil).FindPolicyByResourceName), resourceName)
+}
+
 // GetHashAlg mocks base method.
 func (m *MockAccessControlProvider) GetHashAlg() string {
 	m.ctrl.T.Helper()

@@ -61,7 +61,7 @@ type Rule string
 
 const ()
 
-// Principal contains all information related to one time verification
+	// Principal contains all information related to one time verification
 type Principal interface {
 	// GetResourceName returns resource name of the verification
 	GetResourceName() string
@@ -88,6 +88,8 @@ type AccessControlProvider interface {
 
 	// LookUpResourceNameByTxType returns resource name corresponding to the tx type
 	LookUpResourceNameByTxType(txType common.TxType) (string, error)
+
+	FindPolicyByResourceName(resourceName string) bool
 
 	// CreatePrincipal creates a principal for one time authentication
 	CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (Principal, error)

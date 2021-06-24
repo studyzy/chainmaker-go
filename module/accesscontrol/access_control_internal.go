@@ -303,8 +303,8 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
-	resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
 	resourceNamePolicyMap.Store(common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
@@ -340,8 +340,8 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(common.ManageUserContractFunction_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERT_ADD.String(), policyWrite)
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_QUERY.String(), policyRead)
+	//resourceNamePolicyMap.Store(common.CertManageFunction_CERT_ADD.String(), policyWrite)
+	//resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_QUERY.String(), policyRead)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
