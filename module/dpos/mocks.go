@@ -33,6 +33,9 @@ func newMockBlockChainStore(ctrl *gomock.Controller) protocol.BlockchainStore {
 			if bytes.Equal(key, []byte(native.KeyMinSelfDelegation)) {
 				return []byte("200000"), nil
 			}
+			if bytes.Equal(key, []byte(native.BalanceKey(native.StakeContractAddr()))) {
+				return []byte("10000"), nil
+			}
 			return nil, nil
 		}).AnyTimes()
 
