@@ -50,7 +50,11 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	dbHandle := db.getContractDbHandle(contractName)
 	err = dbHandle.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		db.logger.Panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state info sql db table fail:" + err.Error())
+	}
+	err = dbHandle.CreateTableIfNotExist(&StateRecordSql{})
+	if err != nil {
+		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
 	}
 	return nil
 }
@@ -445,6 +449,9 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
 		return err
 	}
 	db := s.getContractDbHandle(contractName)
+	// query ddl from db
+	NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, 0)
+
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
 	_, err = db.ExecSql(sql)
 	return err

@@ -251,6 +251,7 @@ WHERE type='table' AND name='%s'`, obj.GetTableName())
 }
 func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
 	sql := obj.GetCreateTableSql(p.dbType.LowerString())
+	p.log.Debugf("Exec sql: %s", sql)
 	_, err := p.db.Exec(sql)
 	if err != nil {
 		p.log.Error(err)
