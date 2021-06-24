@@ -31,7 +31,7 @@ func InvokeCMD() *cobra.Command {
 	flags.StringVarP(&pairsFile, "pairs-file", "A", "./pairs.json", "specify pairs file, if used, set --pairs=\"\"")
 	flags.StringVarP(&method, "method", "m", "increase", "specify contract method")
 	flags.Int32VarP(&runTime, "run-time", "", int32(commonPb.RuntimeType_GASM), "run-time")
-	flags.StringVarP(&abiPath, "api-path", "", "", "specify wasm path")
+	flags.StringVarP(&abiPath, "abi-path", "", "", "specify wasm path")
 
 	return cmd
 }

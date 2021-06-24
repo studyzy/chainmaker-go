@@ -18,15 +18,12 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker/sdk-go"
 	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/store"
 )
 
 const (
 	// Send Restore Block Request timeout
 	restoreBlockRequestTimeout = 20 // 20s
-)
-
-var (
-	configBlockArchiveError = errors.New("config block do not need archive")
 )
 
 func newRestoreCMD() *cobra.Command {
@@ -150,9 +147,17 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 		return err
 	}
 
-	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
-	if err != nil && err != configBlockArchiveError {
+	// only restore Not-Config-Block
+	var blkWithRWSetOffChain store.BlockWithRWSet
+	err = blkWithRWSetOffChain.Unmarshal(bInfo.BlockWithRWSet)
+	if err != nil {
 		return err
+	}
+	if !util.IsConfBlock(blkWithRWSetOffChain.Block) {
+		err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
+		if err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit().Error

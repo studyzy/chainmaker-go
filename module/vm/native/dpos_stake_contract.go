@@ -23,17 +23,17 @@ import (
 )
 
 const (
-	paramNodeID 	= "node_id"
-	paramAddress	= "address"
-	paramTo			= "to"
-	paramFrom		= "from"
-	paramAmount		= "amount"
-	paramEpochID 	= "epoch_id"
-	paramValidatorAddress		= "validator_address"
-	paramDelegatorAddress		= "delegator_address"
-	paramMinSelfDelegation		= "min_self_delegation"
-	paramEpochValidatorNumber	= "epoch_validator_number"
-	paramEpochBlockNumber 		= "epoch_block_number"
+	paramNodeID               = "node_id"
+	paramAddress              = "address"
+	paramTo                   = "to"
+	paramFrom                 = "from"
+	paramAmount               = "amount"
+	paramEpochID              = "epoch_id"
+	paramValidatorAddress     = "validator_address"
+	paramDelegatorAddress     = "delegator_address"
+	paramMinSelfDelegation    = "min_self_delegation"
+	paramEpochValidatorNumber = "epoch_validator_number"
+	paramEpochBlockNumber     = "epoch_block_number"
 
 	prefixValidator    = "V/"
 	prefixDelegation   = "D/"
@@ -263,6 +263,21 @@ func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[s
 // GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人候选人
 // return ValidatorVector
 func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	collection, err := s.getAllCandidates(context)
+	if err != nil {
+		s.log.Errorf("get validator collection error: %s", err)
+		return nil, err
+	}
+	// 序列化
+	bz, err := proto.Marshal(collection)
+	if err != nil {
+		s.log.Errorf("marshal validator collection error: ", err.Error())
+		return nil, err
+	}
+	return bz, nil
+}
+
+func (s *DPoSStakeRuntime) getAllCandidates(context protocol.TxSimContext) (*commonPb.ValidatorVector, error) {
 	// 获取验证人数据
 	vc, err := getAllValidatorByPrefix(context, ToValidatorPrefix())
 	if err != nil {
@@ -287,14 +302,7 @@ func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, param
 		}
 		collection.Vector = append(collection.Vector, v.ValidatorAddress)
 	}
-
-	// 序列化
-	bz, err := proto.Marshal(collection)
-	if err != nil {
-		s.log.Errorf("marshal validator collection error: ", err.Error())
-		return nil, err
-	}
-	return bz, nil
+	return collection, nil
 }
 
 // GetValidatorByAddress() Validator		// 返回所有满足最低抵押条件验证人
@@ -332,9 +340,9 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 	amount := params[paramAmount] // amount must be a integer
 
 	// check amount
-	if !assertStringAmountPositive(amount) {
-		s.log.Errorf("amount is less than 0")
-		return nil, fmt.Errorf("amount is less than 0")
+	if !assertStringAmountOverZero(amount) {
+		s.log.Errorf("amount is less than or equal to 0")
+		return nil, fmt.Errorf("amount is less than or equal to 0")
 	}
 	// 解析交易发送方地址
 	from, err := loadSenderAddress(context) // Use ERC20 parse method
@@ -567,6 +575,10 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 			return nil, err
 		}
 		if cmp == -1 {
+			if err := s.canDelete(context); err != nil {
+				return nil, err
+			}
+
 			if v.SelfDelegation == "0" {
 				updateValidatorStatus(v, commonPb.BondStatus_Unbonded)
 			} else {
@@ -598,13 +610,39 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		s.log.Errorf("save validator error: ", err.Error())
 		return nil, err
 	}
-	err = save(context, ToDelegationKey(sender, undelegateValidatorAddress), d)
-	if err != nil {
-		s.log.Errorf("save delegation error: ", err.Error())
-		return nil, err
+	if d.Shares == "0" {
+		err = del(context, ToDelegationKey(sender, undelegateValidatorAddress))
+		if err != nil {
+			s.log.Errorf("delete delegation error: ", err.Error())
+			return nil, err
+		}
+	} else {
+		err = save(context, ToDelegationKey(sender, undelegateValidatorAddress), d)
+		if err != nil {
+			s.log.Errorf("save delegation error: ", err.Error())
+			return nil, err
+		}
 	}
 
 	return proto.Marshal(ud)
+}
+
+func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
+	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
+	if err != nil {
+		return err
+	}
+	amount := decodeUint64FromBigEndian(bz)
+
+	collection, err := s.getAllCandidates(context)
+	if err != nil {
+		return err
+	}
+	if amount > uint64(len(collection.Vector)-1) {
+		return fmt.Errorf("the number of candidates[%d] after the undelegate "+
+			"is less than the number of validators[%d]", len(collection.Vector)-1, amount)
+	}
+	return nil
 }
 
 // ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
@@ -783,9 +821,9 @@ func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext,
 	}
 
 	epochBlockNumber := params[paramEpochBlockNumber]
-	if !assertStringAmountPositive(epochBlockNumber) {
-		s.log.Errorf("epochBlockNumber less than 0")
-		return nil, fmt.Errorf("epochBlockNumber less than 0")
+	if !assertStringAmountOverZero(epochBlockNumber) {
+		s.log.Errorf("epochBlockNumber less than or equal to 0")
+		return nil, fmt.Errorf("epochBlockNumber less than or equal to 0")
 	}
 
 	// check sender and owner
@@ -1071,7 +1109,7 @@ func getDelegationBytes(context protocol.TxSimContext, delegatorAddress, validat
 		return nil, err
 	}
 	if len(bz) <= 0 {
-		return nil, fmt.Errorf("no susch validator as address: %s", validatorAddress)
+		return nil, fmt.Errorf("no delegation as delegator: %s, validdator: %s", delegatorAddress, validatorAddress)
 	}
 	return bz, nil
 }
@@ -1232,7 +1270,7 @@ func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(context protocol.TxSi
 	if err != nil {
 		return false, "", err
 	}
-	if value.Cmp(amountValue) < 0 {
+	if amountValue.Cmp(value) <= 0 {
 		return false, value.String(), nil
 	} else {
 		return true, value.String(), nil
@@ -1318,6 +1356,15 @@ func save(context protocol.TxSimContext, key []byte, m proto.Message) error {
 	return nil
 }
 
+// 删除 key
+func del(context protocol.TxSimContext, key []byte) error {
+	err := context.Del(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // 将 数字字符串 转换为 big.Int
 func stringToBigInt(amount string) (*big.Int, error) {
 	v := &big.Int{}
@@ -1357,13 +1404,22 @@ func compareMinSelfDelegation(context protocol.TxSimContext, selfDelegation stri
 }
 
 // check amount params
-// amount > 0 return true else false
+// amount >= 0 return true else false
 func assertStringAmountPositive(amount string) bool {
 	amountValue, err := stringToBigInt(amount)
 	if err != nil {
 		return false
 	}
 	return amountValue.Cmp(big.NewInt(0)) >= 0
+}
+
+// amount > 0 return true else false
+func assertStringAmountOverZero(amount string) bool {
+	amountValue, err := stringToBigInt(amount)
+	if err != nil {
+		return false
+	}
+	return amountValue.Cmp(big.NewInt(0)) > 0
 }
 
 func encodeUint64ToBigEndian(amount uint64) []byte {

@@ -10,9 +10,10 @@ package utils
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"crypto/sha256"
+	"testing"
+
 	"github.com/mr-tron/base58/base58"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestERC20Config_load(t *testing.T) {
@@ -62,7 +63,7 @@ func TestERC20Config_load(t *testing.T) {
 			Value: "800000",
 		},
 		{
-			Key:   keyERC20Acc + contractAddr,
+			Key:   keyERC20Acc + commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 			Value: "200000",
 		},
 	}

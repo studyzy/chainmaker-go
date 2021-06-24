@@ -428,18 +428,11 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 	}
 
 	// add DPoS consensus args in block
-	consensusRwSets, err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock)
+	err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%s) Create DPoS RWSets failed, reason: %s",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
 		return
-	}
-	if consensusRwSets != nil {
-		if block, err = consensus.dpos.AddConsensusArgsToBlock(consensusRwSets, block); err != nil {
-			consensus.logger.Errorf("[%s](%d/%d/%s) AddConsensusArgsToBlock failed, reason: %s",
-				consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
-			return
-		}
 	}
 
 	// Add hash and signature to block
