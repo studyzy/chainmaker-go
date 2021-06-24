@@ -10,12 +10,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -125,7 +125,7 @@ func (h *ResultKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	if err != nil {
 		return nil, err
 	} else if bytes == nil {
-		return &commonPb.TxRWSet{}, nil
+		return nil, nil
 	}
 
 	var txRWSet commonPb.TxRWSet
