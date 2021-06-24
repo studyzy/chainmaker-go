@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	defaultDbType = "mysql"
+	defaultDbType                 = "mysql"
+	configBlockArchiveErrorString = "config block do not need archive"
 )
 
 var (
