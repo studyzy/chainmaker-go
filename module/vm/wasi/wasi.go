@@ -437,12 +437,12 @@ func (*WacsiImpl) BulletProofsOperation(requestBody []byte, memory []byte, data 
 func pedersenAddNum(commitment, num interface{}) ([]byte, error) {
 	//bulletproofs.Helper().NewBulletproofs()
 	c := commitment.([]byte)
-	x, err := strconv.ParseInt(string(num.([]byte)), 10, 64)
+	x, err := strconv.ParseUint(string(num.([]byte)), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenAddNum(c, uint64(x))
+	return bulletproofs.Helper().NewBulletproofs().PedersenAddNum(c, x)
 }
 
 func pedersenAddCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
@@ -454,12 +454,12 @@ func pedersenAddCommitment(commitment1, commitment2 interface{}) ([]byte, error)
 
 func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
 	c := commitment.([]byte)
-	x, err := strconv.ParseInt(string(num.([]byte)), 10, 64)
+	x, err := strconv.ParseUint(string(num.([]byte)), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenSubNum(c, uint64(x))
+	return bulletproofs.Helper().NewBulletproofs().PedersenSubNum(c, x)
 }
 
 func pedersenSubCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
@@ -471,12 +471,12 @@ func pedersenSubCommitment(commitment1, commitment2 interface{}) ([]byte, error)
 
 func pedersenMulNum(commitment, num interface{}) ([]byte, error) {
 	c := commitment.([]byte)
-	x, err := strconv.ParseInt(string(num.([]byte)), 10, 64)
+	x, err := strconv.ParseUint(string(num.([]byte)), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenMulNum(c, uint64(x))
+	return bulletproofs.Helper().NewBulletproofs().PedersenMulNum(c, x)
 }
 
 func bulletproofsVerify(proof, commitment interface{}) ([]byte, error) {
@@ -568,7 +568,12 @@ func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 		return nil, err
 	}
 
-	pt := new(big.Int).SetBytes(operandTwo.([]byte))
+	ptInt64, err := strconv.ParseInt(string(operandTwo.([]byte)), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	pt := new(big.Int).SetInt64(ptInt64)
+
 	result, err := pubKey.AddPlaintext(ct, pt)
 	if err != nil {
 		return nil, err
@@ -606,7 +611,12 @@ func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 		return nil, err
 	}
 
-	pt := new(big.Int).SetBytes(operandTwo.([]byte))
+	ptInt64, err := strconv.ParseInt(string(operandTwo.([]byte)), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	pt := new(big.Int).SetInt64(ptInt64)
+
 	result, err := pubKey.SubPlaintext(ct, pt)
 	if err != nil {
 		return nil, err
@@ -625,7 +635,12 @@ func numMul(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub)
 		return nil, err
 	}
 
-	pt := new(big.Int).SetBytes(operandTwo.([]byte))
+	ptInt64, err := strconv.ParseInt(string(operandTwo.([]byte)), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	pt := new(big.Int).SetInt64(ptInt64)
+
 	result, err := pubKey.NumMul(ct, pt)
 	if err != nil {
 		return nil, err

@@ -39,7 +39,7 @@ func delegation() error {
 			Value: userAddr,
 		},
 		{
-			Key:   "value",
+			Key:   "amount",
 			Value: amount,
 		},
 	}

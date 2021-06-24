@@ -73,6 +73,7 @@ func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]ContractF
 	//methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER_OWNERSHIP.String()] = dposRuntime.TransferOwnership
 	methodMap[commonPb.DPoSERC20ContractFunction_GET_OWNER.String()] = dposRuntime.Owner
 	methodMap[commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String()] = dposRuntime.Decimals
+	methodMap[commonPb.DPoSERC20ContractFunction_GET_TOTAL_SUPPLY.String()] = dposRuntime.Total
 	return methodMap
 }
 
@@ -360,22 +361,6 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 			return nil, fmt.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
 		}
 		afterFromBalance = utils.Sub(beforeFromBalance, val)
-		//if beforeTotalSupply.Cmp(val) > 0 {
-		//	r.log.Debugf("total supply will have balance after burn, before[%s] sub-value[%s]", beforeTotalSupply.String(), val.String())
-		//	afterTotalSupply = Sub(beforeTotalSupply, val)
-		//} else {
-		//	r.log.Warnf("total supply be zero after burn, before[%s] sub-value[%s]", beforeTotalSupply.String(), val.String())
-		//	afterTotalSupply = NewZeroBigInteger()
-		//}
-		//// 检查当前账号是否可燃烧殆尽
-		//if beforeFromBalance.Cmp(val) > 0 {
-		//	// 可以正常燃烧完成，即还有剩余
-		//	r.log.Debugf("address[%s] will have balance after burn, before[%s] sub-value[%s]", from, beforeTotalSupply.String(), val.String())
-		//	afterFromBalance = Sub(beforeFromBalance, val)
-		//} else {
-		//	r.log.Warnf("total supply be zero after burn, before[%s] sub-value[%s]", beforeTotalSupply.String(), val.String())
-		//	afterFromBalance = NewZeroBigInteger()
-		//}
 		// 重置总量和当前账号的值
 		// 写入到数据库
 		err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(afterTotalSupply.String()))
@@ -456,6 +441,16 @@ func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[s
 // return owner of DPoS
 func (r *DPoSRuntime) Owner(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	return owner(txSimContext)
+}
+
+// Total
+// return total supply of tokens
+func (r *DPoSRuntime) Total(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+	total, err := totalSupply(txSimContext)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(total.String()), nil
 }
 
 // Decimals

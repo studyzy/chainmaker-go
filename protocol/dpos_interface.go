@@ -6,8 +6,7 @@ import (
 )
 
 type DPoS interface {
-	CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensuspb.ProposalBlock) (*common.TxRWSet, error)
+	CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensuspb.ProposalBlock) error
 	VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) error
 	GetValidators() ([]string, error)
-	AddConsensusArgsToBlock(rwSet *common.TxRWSet, block *common.Block) (*common.Block, error)
 }

@@ -113,7 +113,7 @@ const (
 	BulletProofsOpTypePedersenSubNum        = "PedersenSubNum"
 	BulletProofsOpTypePedersenSubCommitment = "PedersenSubCommitment"
 	BulletProofsOpTypePedersenMulNum        = "PedersenMulNum"
-	BulletProofsVerify                      = "BulletProofsVerify"
+	BulletProofsVerify                      = "BulletproofsVerify"
 )
 
 type SqlType int8
