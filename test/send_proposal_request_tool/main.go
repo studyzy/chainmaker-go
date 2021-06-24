@@ -260,6 +260,7 @@ func main() {
 	mainCmd.AddCommand(StakeGetEpochBlockNumber())
 	mainCmd.AddCommand(StakeGetMinSelfDelegation())
 	mainCmd.AddCommand(StakeGetEpochValidatorNumber())
+	mainCmd.AddCommand(StakeGetUnbondingEpochNumber())
 	mainCmd.AddCommand(StakeGetDelegationsByAddress())
 	mainCmd.AddCommand(StakeGetDelegationByValidator())
 
