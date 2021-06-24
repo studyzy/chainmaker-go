@@ -858,9 +858,9 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 	if err := w.verifySql.VerifyDDLSql(sql); err != nil {
 		return fmt.Errorf("verify ddl sql error,  [%s], sql[%s]", err.Error(), sql)
 	}
-
+	//TODO: get current contract version
 	// execute
-	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql); err != nil {
+	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql,""); err != nil {
 		return fmt.Errorf("ctx ExecDdlSql error, %s, sql[%s]", err.Error(), sql)
 	}
 	txSimContext.PutRecord(contractName, []byte(sql), protocol.SqlTypeDdl)

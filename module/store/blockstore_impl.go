@@ -751,8 +751,8 @@ func (bs *BlockStoreImpl) QueryMulti(contractName, sql string, values ...interfa
 }
 
 //ExecDdlSql execute DDL SQL in a contract
-func (bs *BlockStoreImpl) ExecDdlSql(contractName, sql string) error {
-	return bs.stateDB.ExecDdlSql(contractName, sql)
+func (bs *BlockStoreImpl) ExecDdlSql(contractName, sql,version string) error {
+	return bs.stateDB.ExecDdlSql(contractName, sql,version)
 }
 
 //BeginDbTransaction 启用一个事务

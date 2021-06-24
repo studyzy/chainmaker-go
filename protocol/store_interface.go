@@ -134,7 +134,7 @@ type StateSqlOperation interface {
 	//不在事务中，直接查询状态数据库，返回多行结果
 	QueryMulti(contractName, sql string, values ...interface{}) (SqlRows, error)
 	//执行建表、修改表等DDL语句，不得在事务中运行
-	ExecDdlSql(contractName, sql string) error
+	ExecDdlSql(contractName, sql ,version string) error
 	//启用一个事务
 	BeginDbTransaction(txName string) (SqlDBTransaction, error)
 	//根据事务名，获得一个已经启用的事务

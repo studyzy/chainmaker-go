@@ -407,17 +407,17 @@ func (mr *MockBlockchainStoreMockRecorder) CommitDbTransaction(txName interface{
 }
 
 // ExecDdlSql mocks base method.
-func (m *MockBlockchainStore) ExecDdlSql(contractName, sql string) error {
+func (m *MockBlockchainStore) ExecDdlSql(contractName, sql, version string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecDdlSql", contractName, sql)
+	ret := m.ctrl.Call(m, "ExecDdlSql", contractName, sql, version)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ExecDdlSql indicates an expected call of ExecDdlSql.
-func (mr *MockBlockchainStoreMockRecorder) ExecDdlSql(contractName, sql interface{}) *gomock.Call {
+func (mr *MockBlockchainStoreMockRecorder) ExecDdlSql(contractName, sql, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecDdlSql", reflect.TypeOf((*MockBlockchainStore)(nil).ExecDdlSql), contractName, sql)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecDdlSql", reflect.TypeOf((*MockBlockchainStore)(nil).ExecDdlSql), contractName, sql, version)
 }
 
 // GetAccountTxHistory mocks base method.
@@ -912,17 +912,17 @@ func (mr *MockStateSqlOperationMockRecorder) CommitDbTransaction(txName interfac
 }
 
 // ExecDdlSql mocks base method.
-func (m *MockStateSqlOperation) ExecDdlSql(contractName, sql string) error {
+func (m *MockStateSqlOperation) ExecDdlSql(contractName, sql, version string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecDdlSql", contractName, sql)
+	ret := m.ctrl.Call(m, "ExecDdlSql", contractName, sql, version)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ExecDdlSql indicates an expected call of ExecDdlSql.
-func (mr *MockStateSqlOperationMockRecorder) ExecDdlSql(contractName, sql interface{}) *gomock.Call {
+func (mr *MockStateSqlOperationMockRecorder) ExecDdlSql(contractName, sql, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecDdlSql", reflect.TypeOf((*MockStateSqlOperation)(nil).ExecDdlSql), contractName, sql)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecDdlSql", reflect.TypeOf((*MockStateSqlOperation)(nil).ExecDdlSql), contractName, sql, version)
 }
 
 // GetDbTransaction mocks base method.
