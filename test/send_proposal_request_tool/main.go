@@ -255,6 +255,7 @@ func main() {
 	mainCmd.AddCommand(StakeSetNodeID())
 	mainCmd.AddCommand(StakeGetNodeID())
 	mainCmd.AddCommand(StakeGetEpochByID())
+	mainCmd.AddCommand(StakeGetSystemAddr())
 	mainCmd.AddCommand(StakeGetLatestEpoch())
 	mainCmd.AddCommand(StakeGetEpochBlockNumber())
 	mainCmd.AddCommand(StakeGetMinSelfDelegation())
