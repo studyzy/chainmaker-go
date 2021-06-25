@@ -183,6 +183,7 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
+	methodMap[commonPb.DPoSStakeContractFunction_READ_SYSTEM_CONTRACT_ADDR.String()] = DPoSStakeRuntime.ReadSystemContractAddr
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
 	return methodMap
@@ -800,6 +801,14 @@ func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, p
 	}
 	amount := decodeUint64FromBigEndian(bz)
 	return []byte(strconv.Itoa(int(amount))), nil
+}
+
+// ReadSystemContractAddr() string				// 读取stake系统合约的地址
+// return string
+func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	addr := StakeContractAddr()
+	return []byte(addr), nil
 }
 
 // ReadEpochBlockNumber() string				// 读取世代的出块数量
