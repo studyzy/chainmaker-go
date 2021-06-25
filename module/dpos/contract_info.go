@@ -183,19 +183,37 @@ func (impl *DPoSImpl) createUnboundingRwSet(undelegations []*commonpb.UnbondingD
 	rwSet := &commonpb.TxRWSet{
 		TxId: ModuleName,
 	}
+	var (
+		err               error
+		balances          = make(map[string]*big.Int, len(undelegations))
+		stakeContractAddr = native.StakeContractAddr()
+	)
 	for _, undelegation := range undelegations {
 		for _, entry := range undelegation.Entries {
-			wSet, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, entry.Amount, block, blockTxRwSet)
+			balance, ok := balances[undelegation.DelegatorAddress]
+			if !ok {
+				balance, err = impl.balanceOf(undelegation.DelegatorAddress, block, blockTxRwSet)
+				if err != nil {
+					return nil, err
+				}
+			}
+			wSet, afterBalance, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, balance, entry.Amount)
 			if err != nil {
 				return nil, err
 			}
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
+			balances[undelegation.DelegatorAddress] = afterBalance
 
-			stakeContractAddr := native.StakeContractAddr()
-			if wSet, err = impl.subBalanceRwSet(stakeContractAddr, entry.Amount, block, blockTxRwSet); err != nil {
+			if balance, ok = balances[stakeContractAddr]; !ok {
+				if balance, err = impl.balanceOf(stakeContractAddr, block, blockTxRwSet); err != nil {
+					return nil, err
+				}
+			}
+			if wSet, afterBalance, err = impl.subBalanceRwSet(stakeContractAddr, balance, entry.Amount); err != nil {
 				return nil, err
 			}
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
+			balances[stakeContractAddr] = afterBalance
 		}
 	}
 	if len(rwSet.TxWrites) > 0 {
@@ -204,44 +222,36 @@ func (impl *DPoSImpl) createUnboundingRwSet(undelegations []*commonpb.UnbondingD
 	return rwSet, nil
 }
 
-func (impl *DPoSImpl) addBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
-	before, err := impl.balanceOf(addr, block, blockTxRwSet)
-	if err != nil {
-		return nil, err
-	}
-	add, ok := big.NewInt(0).SetString(amount, 10)
+func (impl *DPoSImpl) addBalanceRwSet(addr string, balance *big.Int, addAmount string) (*commonpb.TxWrite, *big.Int, error) {
+	add, ok := big.NewInt(0).SetString(addAmount, 10)
 	if !ok {
-		impl.log.Errorf("invalid amount: %s", amount)
-		return nil, fmt.Errorf("invalid amount: %s", amount)
+		impl.log.Errorf("invalid amount: %s", addAmount)
+		return nil, nil, fmt.Errorf("invalid amount: %s", addAmount)
 	}
-	after := before.Add(add, before)
+	after := balance.Add(add, balance)
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
 		Value:        []byte(after.String()),
-	}, nil
+	}, after, nil
 }
 
-func (impl *DPoSImpl) subBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
-	before, err := impl.balanceOf(addr, block, blockTxRwSet)
-	if err != nil {
-		return nil, err
-	}
+func (impl *DPoSImpl) subBalanceRwSet(addr string, before *big.Int, amount string) (*commonpb.TxWrite, *big.Int, error) {
 	sub, ok := big.NewInt(0).SetString(amount, 10)
 	if !ok {
 		impl.log.Errorf("invalid amount: %s", amount)
-		return nil, fmt.Errorf("invalid amount: %s", amount)
+		return nil, nil, fmt.Errorf("invalid amount: %s", amount)
 	}
 	if before.Cmp(sub) < 0 {
 		impl.log.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
-		return nil, fmt.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
+		return nil, nil, fmt.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
 	}
 	after := before.Sub(before, sub)
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
 		Value:        []byte(after.String()),
-	}, nil
+	}, after, nil
 }
 
 func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {

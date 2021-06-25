@@ -84,7 +84,7 @@ func (l *txList) addTxs(tx *commonPb.Transaction, source protocol.TxSource, vali
 func (l *txList) Delete(txIds []string) {
 	l.rwLock.Lock()
 	defer l.rwLock.Unlock()
-	l.log.Debugf("remove txIds", "idsNum", len(txIds))
+	l.log.Debugf("remove txIds num: %d", len(txIds))
 	for _, txId := range txIds {
 		l.queue.Remove(txId)
 		l.pendingCache.Delete(txId)
