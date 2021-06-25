@@ -102,7 +102,6 @@ type Result struct {
 	GovernanceInfo        *consensusPb.GovernanceContract `json:"governanceInfo,omitempty"`
 	HibeExecMsg           string                          `json:"hibe_exec_msg,omitempty"`
 	CertAddress           *evm.Address                    `json:"certAddress,omitempty"`
-	Result                string                          `json:"result,omitempty"`
 }
 
 type SimpleRPCResult struct {
@@ -260,6 +259,7 @@ func main() {
 	mainCmd.AddCommand(StakeGetEpochBlockNumber())
 	mainCmd.AddCommand(StakeGetMinSelfDelegation())
 	mainCmd.AddCommand(StakeGetEpochValidatorNumber())
+	mainCmd.AddCommand(StakeGetUnbondingEpochNumber())
 	mainCmd.AddCommand(StakeGetDelegationsByAddress())
 	mainCmd.AddCommand(StakeGetDelegationByValidator())
 

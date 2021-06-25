@@ -404,3 +404,29 @@ func getEpochBlockNumber() error {
 	}
 	return processResult(resp, nil)
 }
+
+func StakeGetUnbondingEpochNumber() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "getUnbondingEpochNumber",
+		Short: "getUnbondingEpochNumber feature of the stake",
+		Long:  "Get the number of unbonding epoch number",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return getUnbondingEpochNumber()
+		},
+	}
+	return cmd
+}
+
+func getUnbondingEpochNumber() error {
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
+	}
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		chainId, "", payloadBytes)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
+}
