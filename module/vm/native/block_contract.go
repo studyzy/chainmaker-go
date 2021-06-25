@@ -481,10 +481,14 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 	if tx, err = r.getTxByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
+	} else if tx == nil {
+		return nil, nil
 	}
 
 	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
+	} else if block == nil {
+		return nil, nil
 	}
 
 	transactionInfo := &commonPb.TransactionInfo{
@@ -683,10 +687,9 @@ func (r *BlockRuntime) handleError(value interface{}, err error, chainId string)
 	vi := reflect.ValueOf(value)
 	if vi.Kind() == reflect.Ptr && vi.IsNil() {
 		errMsg := fmt.Sprintf("no such %s, chainId:%s", typeName, chainId)
-		r.log.Errorf(errMsg)
-		return errors.New(errMsg)
+		r.log.Warnf(errMsg)
+		return nil
 	}
-
 	return nil
 }
 
@@ -729,4 +732,3 @@ func (r *BlockRuntime) getValue(parameters map[string]string, key string) (strin
 	}
 	return value, nil
 }
-
