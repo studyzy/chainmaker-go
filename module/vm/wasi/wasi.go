@@ -27,7 +27,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 )
 
-var ErrorNotManageContract = fmt.Errorf("method not init_contract or upgrade")
+var ErrorNotManageContract = fmt.Errorf("method is not init_contract or upgrade")
 
 type Bool int32
 
@@ -108,7 +108,7 @@ func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext
 	}
 	value, err := txSimContext.Get(contractName, protocol.GetKeyStr(key, field))
 	if err != nil {
-		msg := fmt.Errorf("method getStateCore get fail. key=%s, field=%s, error:%s", key, field, err.Error())
+		msg := fmt.Errorf("[get state] fail. key=%s, field=%s, error:%s", key, field, err.Error())
 		return nil, msg
 	}
 	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(int32(len(value))))
@@ -150,24 +150,24 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 
 	// check param
 	if len(contractName) == 0 {
-		return nil, fmt.Errorf("CallContract contractName is null"), gasUsed
+		return nil, fmt.Errorf("[call contract] contract_name is null"), gasUsed
 	}
 	if len(method) == 0 {
-		return nil, fmt.Errorf("CallContract method is null"), gasUsed
+		return nil, fmt.Errorf("[call contract] method is null"), gasUsed
 	}
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
-		return nil, fmt.Errorf("expect less than %d parameters, but get %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
+		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
 	}
 	for _, item := range paramItem {
 		if len(item.Key) > protocol.DefaultStateLen {
-			return nil, fmt.Errorf("CallContract param expect Key length less than %d, but get %d", protocol.DefaultStateLen, len(item.Key)), gasUsed
+			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(item.Key)), gasUsed
 		}
 		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
 		if err != nil || !match {
-			return nil, fmt.Errorf("CallContract param expect Key no special characters, but get %s. letter, number, dot and underline are allowed", item.Key), gasUsed
+			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", item.Key), gasUsed
 		}
 		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
-			return nil, fmt.Errorf("expect Value length less than %d, but get %d", protocol.ParametersValueMaxLength, len(item.Value.(string))), gasUsed
+			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(item.Value.(string))), gasUsed
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
@@ -180,7 +180,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	result, code := txSimContext.CallContract(&common.ContractId{ContractName: contractName}, method, nil, paramMap, gasUsed, common.TxType_INVOKE_USER_CONTRACT)
 	gasUsed += uint64(result.GasUsed)
 	if code != common.TxStatusCode_SUCCESS {
-		return nil, fmt.Errorf("CallContract %s, , msg: %s", code.String(), result.Message), gasUsed
+		return nil, fmt.Errorf("[call contract] execute error code: %s, msg: %s", code.String(), result.Message), gasUsed
 	}
 	// set value length to memory
 	l := utils.IntToBytes(int32(len(result.Result)))
@@ -215,7 +215,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	topic, err := ec.GetString("topic")
 	if err != nil {
-		return nil, fmt.Errorf("emit event : get topic err")
+		return nil, fmt.Errorf("[emit event] get topic err")
 	}
 	if err := protocol.CheckTopicStr(topic); err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	for i := 1; i < len(req); i++ {
 		data := req[i].Value.(string)
 		eventData = append(eventData, data)
-		log.Debugf("EmitEvent EventData :%v", data)
+		log.Debugf("[emit event] event data :%v", data)
 	}
 
 	if err := protocol.CheckEventData(eventData); err != nil {
@@ -243,7 +243,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
 	count := utils.GetSqlStatementCount(ddl)
 	if count != 1 {
-		return nil, fmt.Errorf("contract event parameter error,exist sql injection")
+		return nil, fmt.Errorf("[emit event] contract event parameter error, exist sql injection")
 	}
 
 	return contractEvent, nil
@@ -268,7 +268,7 @@ func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimCon
 	limit := protocol.GetKeyStr(limitKey, limitField)
 	iter, err := txSimContext.Select(contractName, key, limit)
 	if err != nil {
-		return fmt.Errorf("ctx query error, %s", err.Error())
+		return fmt.Errorf("[kv iterator] select error, %s", err.Error())
 	}
 
 	index := atomic.AddInt32(&w.rowIndex, 1)
@@ -293,7 +293,7 @@ func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSim
 
 	iter, err := txSimContext.Select(contractName, []byte(key), []byte(limit))
 	if err != nil {
-		return fmt.Errorf("ctx query error, %s", err.Error())
+		return fmt.Errorf("[kv pre iterator] select error, %s", err.Error())
 	}
 
 	index := atomic.AddInt32(&w.rowIndex, 1)
@@ -310,7 +310,7 @@ func (*WacsiImpl) KvIteratorHasNext(requestBody []byte, txSimContext protocol.Tx
 	// get
 	kvRows, ok := txSimContext.GetStateKvHandle(kvIndex)
 	if !ok {
-		return fmt.Errorf("KvHasNext:ctx can not found rs_index[%d]", kvIndex)
+		return fmt.Errorf("[kv iterator has next] can not found rs_index[%d]", kvIndex)
 	}
 
 	index := boolFalse
@@ -329,7 +329,7 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 	// get handle
 	kvRows, ok := txSimContext.GetStateKvHandle(kvIndex)
 	if !ok {
-		return nil, fmt.Errorf("KvGetNextState:ctx can not found rs_index[%d]", kvIndex)
+		return nil, fmt.Errorf("[kv iterator next] can not found rs_index[%d]", kvIndex)
 	}
 	// get data
 	if !isLen {
@@ -341,7 +341,7 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 	if kvRows != nil {
 		kvRow, err := kvRows.Value()
 		if err != nil {
-			return nil, fmt.Errorf("ctx iterator next data error, %s", err.Error())
+			return nil, fmt.Errorf("[kv iterator next] iterator next data error, %s", err.Error())
 		}
 
 		arrKey := strings.Split(string(kvRow.Key), "#")
@@ -368,7 +368,7 @@ func (w *WacsiImpl) KvIteratorClose(requestBody []byte, contractName string, txS
 	// get
 	kvRows, ok := txSimContext.GetStateKvHandle(kvIndex)
 	if !ok {
-		return fmt.Errorf("kv close:ctx can not found rs_index[%d]", kvIndex)
+		return fmt.Errorf("[kv iterator close] ctx can not found rs_index[%d]", kvIndex)
 	}
 	kvRows.Release()
 	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(1))
@@ -528,7 +528,7 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 	case protocol.PaillierOpTypeNumMul:
 		resultBytes, err = numMul(operandOne, operandTwo, pubKey)
 	default:
-		return nil, errors.New("paillier operate failed")
+		return nil, errors.New("[paillier operate] the operate type is illegal, opTypeStr =" + opTypeStr)
 	}
 
 	if err != nil {
@@ -556,7 +556,7 @@ func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey pailli
 		return nil, err
 	}
 	if result == nil {
-		return nil, errors.New("paillier operate failed")
+		return nil, errors.New("[add ciphertext] operate failed")
 	}
 	return result.Marshal()
 }
@@ -598,7 +598,7 @@ func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey pailli
 		return nil, err
 	}
 	if result == nil {
-		return nil, errors.New("paillier operate failed")
+		return nil, errors.New("[sub ciphertext] operate failed")
 	}
 
 	return result.Marshal()
@@ -622,7 +622,7 @@ func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 		return nil, err
 	}
 	if result == nil {
-		return nil, errors.New("paillier operate failed")
+		return nil, errors.New("[sub plaintext] operate failed")
 	}
 
 	return result.Marshal()
@@ -646,7 +646,7 @@ func numMul(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub)
 		return nil, err
 	}
 	if result == nil {
-		return nil, errors.New("paillier operate failed")
+		return nil, errors.New("[num mul] operate failed")
 	}
 
 	return result.Marshal()
@@ -659,7 +659,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 
 	// verify
 	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
-		return fmt.Errorf("verify query sql error, %s", err.Error())
+		return fmt.Errorf("[execute query] verify sql error, %s", err.Error())
 	}
 
 	// execute query
@@ -668,13 +668,13 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
 		rows, err = txSimContext.GetBlockchainStore().QueryMulti(contractName, sql)
 		if err != nil {
-			return fmt.Errorf("ctx query error, %s", err.Error())
+			return fmt.Errorf("[execute query] error, %s", err.Error())
 		}
 	} else {
 		txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
 		transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
-			return fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
+			return fmt.Errorf("[execute query] get db transaction error, [%s]", err.Error())
 		}
 		changeCurrentDB(chainId, contractName, transaction)
 		rows, err = transaction.QueryMulti(sql)
@@ -693,7 +693,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 
 	// verify
 	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
-		return nil, fmt.Errorf("verify query one sql error, %s", err.Error())
+		return nil, fmt.Errorf("[execute query one] verify sql error, %s", err.Error())
 	}
 
 	// get len
@@ -704,13 +704,13 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 		if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
 			row, err = txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
 			if err != nil {
-				return nil, fmt.Errorf("ctx query one error, %s", err.Error())
+				return nil, fmt.Errorf("[execute query one] error, %s", err.Error())
 			}
 		} else {
 			txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
 			transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 			if err != nil {
-				return nil, fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
+				return nil, fmt.Errorf("[execute query one] get db transaction error, [%s]", err.Error())
 			}
 			changeCurrentDB(chainId, contractName, transaction)
 			row, err = transaction.QuerySingle(sql)
@@ -721,7 +721,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 		} else {
 			dataRow, err = row.Data()
 			if err != nil {
-				return nil, fmt.Errorf("ctx query get data to map error, %s", err.Error())
+				return nil, fmt.Errorf("[execute query one] ctx query get data to map error, %s", err.Error())
 			}
 		}
 		ec := serialize.NewEasyCodecWithMap(dataRow)
@@ -747,7 +747,7 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 	// get
 	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
 	if !ok {
-		return fmt.Errorf("ctx can not found rs_index[%d]", rsIndex)
+		return fmt.Errorf("[rs has next] ctx can not found rs_index[%d]", rsIndex)
 	}
 	index := boolFalse
 	if rows.Next() {
@@ -765,7 +765,7 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 	// get handle
 	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
 	if !ok {
-		return nil, fmt.Errorf("ctx can not found rs_index[%d]", rsIndex)
+		return nil, fmt.Errorf("[rs next] ctx can not found rs_index[%d]", rsIndex)
 	}
 
 	// get len
@@ -777,7 +777,7 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 		} else {
 			dataRow, err = rows.Data()
 			if err != nil {
-				return nil, fmt.Errorf("ctx query next data error, %s", err.Error())
+				return nil, fmt.Errorf("[rs next] query next data error, %s", err.Error())
 			}
 		}
 		ec := serialize.NewEasyCodecWithMap(dataRow)
@@ -803,19 +803,22 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 	// get
 	rows, ok := txSimContext.GetStateSqlHandle(rsIndex)
 	if !ok {
-		return fmt.Errorf("ctx can not found rs_index[%d]", rsIndex)
+		return fmt.Errorf("[rs close] ctx can not found rs_index[%d]", rsIndex)
 	}
 	var index int32 = 1
 	if err := rows.Close(); err != nil {
-		return fmt.Errorf("ctx close rows error, [%s]", err.Error())
+		return fmt.Errorf("[rs close] close rows error, [%s]", err.Error())
 	}
 	copy(memory[valuePtr:valuePtr+4], utils.IntToBytes(index))
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
 	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
-		return fmt.Errorf(" Query transaction cannot be updated")
+		return fmt.Errorf("[execute update] query transaction cannot be execute dml")
+	}
+	if method == protocol.ContractUpgradeMethod {
+		return fmt.Errorf("[execute update] upgrade contract transaction cannot be execute dml")
 	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
@@ -823,20 +826,20 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, txSim
 
 	// verify
 	if err := w.verifySql.VerifyDMLSql(sql); err != nil {
-		return fmt.Errorf("verify update sql error, [%s]", err.Error())
+		return fmt.Errorf("[execute update] verify update sql error, [%s], sql [%s]", err.Error(), sql)
 	}
 
 	txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
 	transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 	if err != nil {
-		return fmt.Errorf("ctx get db transaction error, [%s]", err.Error())
+		return fmt.Errorf("[execute update] ctx get db transaction error, [%s]", err.Error())
 	}
 
 	// execute
 	changeCurrentDB(chainId, contractName, transaction)
 	affectedCount, err := transaction.ExecSql(sql)
 	if err != nil {
-		return fmt.Errorf("ctx execute update sql error, [%s], sql[%s]", err.Error(), sql)
+		return fmt.Errorf("[execute update] execute error, [%s], sql[%s]", err.Error(), sql)
 	}
 	txSimContext.PutRecord(contractName, []byte(sql), protocol.SqlTypeDml)
 	copy(memory[ptr:ptr+4], utils.IntToBytes(int32(affectedCount)))
@@ -853,12 +856,12 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 
 	// verify
 	if err := w.verifySql.VerifyDDLSql(sql); err != nil {
-		return fmt.Errorf("verify ddl sql error,  [%s], sql[%s]", err.Error(), sql)
+		return fmt.Errorf("[execute ddl] verify ddl sql error,  [%s], sql[%s]", err.Error(), sql)
 	}
 
 	// execute
 	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql); err != nil {
-		return fmt.Errorf("ctx ExecDdlSql error, %s, sql[%s]", err.Error(), sql)
+		return fmt.Errorf("[execute ddl] execute error, %s, sql[%s]", err.Error(), sql)
 	}
 	txSimContext.PutRecord(contractName, []byte(sql), protocol.SqlTypeDdl)
 	copy(memory[ptr:ptr+4], utils.IntToBytes(0))
