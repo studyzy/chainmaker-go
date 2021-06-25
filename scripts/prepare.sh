@@ -202,6 +202,7 @@ function generate_config() {
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then
                 xsed "s%#\(.*\)- org_id:%\1- org_id:%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)node_id:%\1node_id:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)address:%\1address:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)root:%\1root:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml
