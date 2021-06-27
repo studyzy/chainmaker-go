@@ -1,3 +1,9 @@
+/*
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package native
 
 import (
@@ -10,21 +16,18 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
-	"regexp"
-	"sort"
-	"testing"
 )
 
 const (
-	DelegateAddress = "GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
+	DelegateAddress  = "GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
 	ValidatorAddress = "4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	NodeID = "NodeTestc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
+	NodeID           = "NodeTestc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
 
-	address1 = "1"
-	address2 = "2"
-	address3 = "3"
-	address4 = "4"
-	amount = "100000000"
+	address1     = "1"
+	address2     = "2"
+	address3     = "3"
+	address4     = "4"
+	amount       = "100000000"
 	biggerAmount = "1000000000"
 )
 
@@ -361,7 +364,7 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 			ks := cache.Keys()
 			iter := new(kvIterator)
 			for _, k := range ks {
-				ok, err := regexp.MatchString("^" + commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String() + "/" + string(startKey), k)
+				ok, err := regexp.MatchString("^"+commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()+"/"+string(startKey), k)
 				require.Nil(t, err)
 				if ok {
 					bz := cache.GetByKey(k)
@@ -386,7 +389,6 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address2, address2)), initDelegation(t, address2))
 	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address3, address3)), initDelegation(t, address3))
 	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address4, address4)), initDelegation(t, address4))
-
 
 	// init basic params
 	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), KeyMinSelfDelegation, []byte(amount))
@@ -450,8 +452,8 @@ func initUnbondingDelegation() *commonPb.UnbondingDelegation {
 
 func initEpoch(t *testing.T) []byte {
 	e := &commonPb.Epoch{
-		EpochID: 1,
-		ProposerVector: []string{address1, address2, address3, address4},
+		EpochID:               1,
+		ProposerVector:        []string{address1, address2, address3, address4},
 		NextEpochCreateHeight: 1,
 	}
 	bz, err := proto.Marshal(e)
@@ -461,17 +463,17 @@ func initEpoch(t *testing.T) []byte {
 
 func latestEpoch() *commonPb.Epoch {
 	return &commonPb.Epoch{
-		EpochID: 1,
-		ProposerVector: []string{address1, address2, address3, address4},
+		EpochID:               1,
+		ProposerVector:        []string{address1, address2, address3, address4},
 		NextEpochCreateHeight: 1,
 	}
 }
 
 // iter implement
 type kvIterator struct {
-	kvs []*store.KV
-	idx       int
-	count     int
+	kvs   []*store.KV
+	idx   int
+	count int
 }
 
 func (kvi *kvIterator) append(kv *store.KV) {

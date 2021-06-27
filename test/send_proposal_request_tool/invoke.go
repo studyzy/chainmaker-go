@@ -61,6 +61,8 @@ func invoke() error {
 		testCode = commonPb.TxStatusCode_CONTRACT_FAIL
 		testMessage = "make pairs filure!"
 	} else {
+		fmt.Println("pairs: ", pairs, ", method: ", method)
+
 		payloadBytes, err := constructPayload(contractName, method, pairs)
 		if err != nil {
 			return err

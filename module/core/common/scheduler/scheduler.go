@@ -443,19 +443,19 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 
 	// verify parameters
 	if len(parameters) > protocol.ParametersKeyMaxCount {
-		return errResult(result, fmt.Errorf("expect less than %d parameters, but get %d, tx id:%s", protocol.ParametersKeyMaxCount, len(parameters),
+		return errResult(result, fmt.Errorf("expect less than %d parameters, but got %d, tx id:%s", protocol.ParametersKeyMaxCount, len(parameters),
 			tx.Header.TxId))
 	}
 	for key, val := range parameters {
 		if len(key) > protocol.DefaultStateLen {
-			return errResult(result, fmt.Errorf("expect key length less than %d, but get %d, tx id:%s", protocol.DefaultStateLen, len(key), tx.Header.TxId))
+			return errResult(result, fmt.Errorf("expect key length less than %d, but got %d, tx id:%s", protocol.DefaultStateLen, len(key), tx.Header.TxId))
 		}
 		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {
-			return errResult(result, fmt.Errorf("expect key no special characters, but get key:[%s]. letter, number, dot and underline are allowed, tx id:[%s]", key, tx.Header.TxId))
+			return errResult(result, fmt.Errorf("expect key no special characters, but got key:[%s]. letter, number, dot and underline are allowed, tx id:[%s]", key, tx.Header.TxId))
 		}
 		if len(val) > protocol.ParametersValueMaxLength {
-			return errResult(result, fmt.Errorf("expect value length less than %d, but get %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId))
+			return errResult(result, fmt.Errorf("expect value length less than %d, but got %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId))
 		}
 	}
 	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contractId, method, byteCode, parameters, txSimContext, 0, tx.Header.TxType)

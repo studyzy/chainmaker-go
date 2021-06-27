@@ -66,7 +66,8 @@ func calAddressFromCert() error {
 	result := &Result{
 		Code:    commonPb.TxStatusCode_SUCCESS,
 		Message: "success",
-		Result:  addr,
+		ContractQueryResult:   addr,
+		ContractResultMessage: "success",
 	}
 	bytes, err := json.Marshal(result)
 	if err != nil {

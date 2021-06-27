@@ -3,6 +3,7 @@ module chainmaker.org/chainmaker-go/dpos
 go 1.15
 
 require (
+	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 
 

@@ -1,3 +1,9 @@
+/*
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package dpos
 
 import (
@@ -7,11 +13,13 @@ import (
 )
 
 func (impl *DPoSImpl) getState(contractName string, key []byte, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) ([]byte, error) {
-	for i := len(block.Txs) - 1; i >= 0; i-- {
-		rwSets := blockTxRwSet[block.Txs[i].Header.TxId]
-		for _, txWrite := range rwSets.TxWrites {
-			if txWrite.ContractName == contractName && bytes.Equal(txWrite.Key, key) {
-				return txWrite.Value, nil
+	if len(block.Txs) > 0 {
+		for i := len(block.Txs) - 1; i >= 0; i-- {
+			rwSets := blockTxRwSet[block.Txs[i].Header.TxId]
+			for _, txWrite := range rwSets.TxWrites {
+				if txWrite.ContractName == contractName && bytes.Equal(txWrite.Key, key) {
+					return txWrite.Value, nil
+				}
 			}
 		}
 	}

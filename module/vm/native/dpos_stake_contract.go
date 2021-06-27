@@ -1,8 +1,9 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
+
 package native
 
 import (
@@ -182,6 +183,7 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractF
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
+	methodMap[commonPb.DPoSStakeContractFunction_READ_SYSTEM_CONTRACT_ADDR.String()] = DPoSStakeRuntime.ReadSystemContractAddr
 	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
 	methodMap[commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
 	return methodMap
@@ -575,6 +577,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 			return nil, err
 		}
 		if cmp == -1 {
+			// 检查当前网络情况下，节点是否能退出
 			if err := s.canDelete(context); err != nil {
 				return nil, err
 			}
@@ -638,6 +641,7 @@ func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
 	if err != nil {
 		return err
 	}
+	// 如果共识中 当前节点退出后剩余节点数量 少于 共识所需的节点数量
 	if amount > uint64(len(collection.Vector)-1) {
 		return fmt.Errorf("the number of candidates[%d] after the undelegate "+
 			"is less than the number of validators[%d]", len(collection.Vector)-1, amount)
@@ -797,6 +801,14 @@ func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, p
 	}
 	amount := decodeUint64FromBigEndian(bz)
 	return []byte(strconv.Itoa(int(amount))), nil
+}
+
+// ReadSystemContractAddr() string				// 读取stake系统合约的地址
+// return string
+func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+	// get data
+	addr := StakeContractAddr()
+	return []byte(addr), nil
 }
 
 // ReadEpochBlockNumber() string				// 读取世代的出块数量
@@ -1444,7 +1456,6 @@ func (s Collections) Swap(i, j int) {
 }
 
 func (s Collections) Less(i, j int) bool {
-	// 优先按照weight排序，相同的情况下按照peerID从小到大排序（字符串）
 	x, _ := stringToBigInt(s[i])
 	y, _ := stringToBigInt(s[j])
 	val := x.Cmp(y)
