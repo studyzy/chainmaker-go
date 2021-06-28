@@ -57,6 +57,5 @@ func AttachFlags(cmd *cobra.Command, flags *pflag.FlagSet, names []string) {
 		if flag := flags.Lookup(name); flag != nil {
 			cmdFlags.AddFlag(flag)
 		}
-		cmd.MarkFlagRequired(name)
 	}
 }
