@@ -20,8 +20,8 @@ import (
 )
 
 func TestContract_Fact(t *testing.T) {
-	//test.WasmFile = "../../../../test/wasm/go-fact-1.2.1.wasm"
-	test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.1.wasm"
+	//test.WasmFile = "../../../../test/wasm/go-fact-1.2.0.wasm"
+	test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.0.wasm"
 	//test.WasmFile = "D:/develop/workspace/chainMaker/chainmaker-go/module/vm/sdk/go/fact-go.wasm"
 	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_GASM)
 
@@ -73,8 +73,11 @@ func invokeCallContractTestSave(method string, id int32, contractId *commonPb.Co
 }
 
 func TestFunctionalContract(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.1.wasm"
+	test.WasmFile = "../../../../test/wasm/go-func-verify-1.2.0.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_GASM)
+
+	invokeFunctionalContract("init_contract", contractId, txContext, bytes)
+	invokeFunctionalContract("upgrade", contractId, txContext, bytes)
 
 	invokeFunctionalContract("save", contractId, txContext, bytes)
 	r := invokeFunctionalContract("find_by_file_hash", contractId, txContext, bytes)
