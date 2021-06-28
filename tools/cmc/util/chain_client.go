@@ -6,22 +6,14 @@
 package util
 
 import (
-	"chainmaker.org/chainmaker-go/common/log"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
 // CreateChainClientWithSDKConf create a chain client with sdk config file path
 func CreateChainClientWithSDKConf(sdkConfPath, chainId string) (*sdk.ChainClient, error) {
-	logger, _ := log.InitSugarLogger(&log.LogConfig{
-		Module:       "[SDK]",
-		LogPath:      "./sdk.log",
-		LogLevel:     log.LEVEL_ERROR,
-		MaxAge:       30,
-		JsonFormat:   false,
-		ShowLine:     true,
-		LogInConsole: true,
-	})
-
 	var (
 		cc  *sdk.ChainClient
 		err error
@@ -30,13 +22,11 @@ func CreateChainClientWithSDKConf(sdkConfPath, chainId string) (*sdk.ChainClient
 	if chainId != "" {
 		cc, err = sdk.NewChainClient(
 			sdk.WithConfPath(sdkConfPath),
-			sdk.WithChainClientLogger(logger),
 			sdk.WithChainClientChainId(chainId),
 		)
 	} else {
 		cc, err = sdk.NewChainClient(
 			sdk.WithConfPath(sdkConfPath),
-			sdk.WithChainClientLogger(logger),
 		)
 	}
 	if err != nil {
@@ -49,4 +39,23 @@ func CreateChainClientWithSDKConf(sdkConfPath, chainId string) (*sdk.ChainClient
 		return nil, err
 	}
 	return cc, nil
+}
+
+func AttachAndRequiredFlags(cmd *cobra.Command, flags *pflag.FlagSet, names []string) {
+	cmdFlags := cmd.Flags()
+	for _, name := range names {
+		if flag := flags.Lookup(name); flag != nil {
+			cmdFlags.AddFlag(flag)
+		}
+		cmd.MarkFlagRequired(name)
+	}
+}
+
+func AttachFlags(cmd *cobra.Command, flags *pflag.FlagSet, names []string) {
+	cmdFlags := cmd.Flags()
+	for _, name := range names {
+		if flag := flags.Lookup(name); flag != nil {
+			cmdFlags.AddFlag(flag)
+		}
+	}
 }

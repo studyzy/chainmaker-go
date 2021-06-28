@@ -8,10 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
+	"strings"
+
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
+	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
 	"chainmaker.org/chainmaker-go/tools/cmc/cert"
 	"chainmaker.org/chainmaker-go/tools/cmc/client"
 	"chainmaker.org/chainmaker-go/tools/cmc/console"
@@ -25,7 +27,9 @@ func main() {
 	mainCmd := &cobra.Command{
 		Use:   "cmc",
 		Short: "ChainMaker CLI",
-		Long:  "ChainMaker CLI",
+		Long: strings.TrimSpace(`Command line interface for interacting with ChainMaker daemon.
+For detailed logs, please see ./sdk.log
+`),
 	}
 
 	mainCmd.AddCommand(key.KeyCMD())
