@@ -19,17 +19,17 @@ func TestWsetIteratorNextValue(t *testing.T) {
     }
     stringKeyMap,_ := makeStringKeyMap()
     tests := []*testData {
-        &testData{
-            data: make(map[string]interface{}),
-            wantNext: false,
+        {
+            data:      make(map[string]interface{}),
+            wantNext:  false,
             wantValue: nil,
         },
-        &testData{
-            data: stringKeyMap,
+        {
+            data:     stringKeyMap,
             wantNext: true,
-            wantValue: &store.KV{
+            wantValue: &store.KV {
                 ContractName: "a",
-                Key: []byte("a"),
+                Key:          []byte("a"),
                 Value: []byte("a"),
             },
         },
