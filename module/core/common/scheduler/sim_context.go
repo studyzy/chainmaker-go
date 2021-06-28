@@ -91,7 +91,6 @@ func (s *txSimContextImpl) Del(contractName string, key []byte) error {
 }
 
 func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
-	// 将来需要把txRwSet的最新状态填充到Iter中去，覆盖或者替换，才是完整的最新的Iter，否则就只是数据库的状态
 	// 1. get block's wset and filter wsets with startKey, limit
 	// 2. construct an iterator for wset
 	// 3. get store's iterator
