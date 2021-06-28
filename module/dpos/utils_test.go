@@ -108,6 +108,22 @@ func TestValidatorsElection(t *testing.T) {
 		fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerID, validators[i].Weight)
 	}
 	require.Equal(t, len(tests)-1, count)
+
+	validators, err = ValidatorsElection(tests, 5, seed, true)
+	require.Nil(t, err)
+	require.Equal(t, len(validators), 5)
+	for i := 0; i < 500; i++ {
+		tmp, err := ValidatorsElection(tests, 5, seed, true)
+		require.NoError(t, err)
+		for i, v := range validators {
+			if !strings.EqualFold(v.String(), tmp[i].String()) {
+				fmt.Println("expect: ", validators)
+				fmt.Println("actual: ", tmp)
+				require.False(t, true)
+			}
+		}
+		//require.EqualValues(t, validators, tmp)
+	}
 }
 
 func TestRandPerm(t *testing.T) {
