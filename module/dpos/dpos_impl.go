@@ -62,7 +62,6 @@ func (impl *DPoSImpl) createDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 		return nil, err
 	}
 	if epoch.NextEpochCreateHeight != blockHeight {
-		impl.log.Debugf("create dpos 222 mismatch blockHeight..., epoch.NextEpochCreateHeight: %d, blockHeight: %d", epoch.NextEpochCreateHeight, blockHeight)
 		return nil, nil
 	}
 	// 3. create unbounding rwset
@@ -145,7 +144,7 @@ func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []
 		impl.log.Errorf("select validators from candidates failed, reason: %s", err)
 		return nil, err
 	}
-	impl.log.Debugf("select validators: %v from candidates: %v", vals, candidates)
+	impl.log.Debugf("select validators: %v from candidates: %v by seed: %x", vals, candidates, seed)
 	return vals, nil
 }
 
@@ -195,7 +194,12 @@ func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[
 		impl.log.Debugf("end VerifyConsensusArgs")
 		return nil
 	}
-	return fmt.Errorf("consensus args verify mismatch, blockConsensus: %v, localConsensus: %v", block.Header.ConsensusArgs, localConsensus)
+	consensusArgs := &consensus.BlockHeaderConsensusArgs{}
+	if err = proto.Unmarshal(block.Header.ConsensusArgs, consensusArgs); err != nil {
+		return fmt.Errorf("unmarshal dpos consensusArgs from blockHeader failed,reason: %s ", err)
+	}
+	return fmt.Errorf("consensus args verify mismatch, blockConsensus: %v, "+
+		"localConsensus: %v by seed: %x", consensusArgs, localConsensus, block.Header.PreBlockHash)
 }
 
 func (impl *DPoSImpl) GetValidators() ([]string, error) {
