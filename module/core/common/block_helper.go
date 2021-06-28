@@ -8,7 +8,6 @@ package common
 
 import (
 	"bytes"
-
 	"chainmaker.org/chainmaker-go/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker-go/common/errors"
 	"chainmaker.org/chainmaker-go/common/msgbus"
