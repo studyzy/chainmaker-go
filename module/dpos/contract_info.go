@@ -1,3 +1,9 @@
+/*
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package dpos
 
 import (
@@ -97,7 +103,6 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 
 func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
 	id := make([]byte, 8)
-	currPreFix := []byte(native.KeyCurrentEpoch)
 	binary.BigEndian.PutUint64(id, epoch.EpochID)
 	bz, err := proto.Marshal(epoch)
 	if err != nil {
@@ -110,7 +115,7 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet
 		TxWrites: []*commonpb.TxWrite{
 			{
 				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-				Key:          currPreFix,
+				Key:          []byte(native.KeyCurrentEpoch),
 				Value:        bz,
 			},
 			{
@@ -131,17 +136,27 @@ func (impl *DPoSImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 	return nil, nil
 }
 
-func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) completeUnbounding(epoch *commonpb.Epoch,
+	block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
+	undelegations, err := impl.getUnboundingEntries(epoch)
+	if err != nil {
+		return nil, err
+	}
+
+	rwSet, err := impl.createUnboundingRwSet(undelegations, block, blockTxRwSet)
+	return rwSet, err
+}
+
+func (impl *DPoSImpl) getUnboundingEntries(epoch *common.Epoch) ([]*commonpb.UnbondingDelegation, error) {
 	prefix := native.ToUnbondingDelegationPrefix(epoch.EpochID)
 	iterRange := util.BytesPrefix(prefix)
-	impl.log.Debugf("begin select in completeUnbounding")
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("new select range failed, reason: %s", err)
 		return nil, err
 	}
 	defer iter.Release()
-	impl.log.Debugf("begin iter in completeUnbounding")
+
 	undelegations := make([]*commonpb.UnbondingDelegation, 0, 10)
 	for iter.Next() {
 		kv, err := iter.Value()
@@ -156,77 +171,87 @@ func (impl *DPoSImpl) completeUnbonding(epoch *commonpb.Epoch, block *common.Blo
 		}
 		undelegations = append(undelegations, &undelegation)
 	}
+	if len(undelegations) > 0 {
+		impl.log.Debugf("get unDelegations: %v", undelegations)
+	}
+	return undelegations, nil
+}
+
+func (impl *DPoSImpl) createUnboundingRwSet(undelegations []*commonpb.UnbondingDelegation,
+	block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 
 	rwSet := &commonpb.TxRWSet{
 		TxId: ModuleName,
 	}
-	impl.log.Debugf("begin create rwSet in completeUnbounding")
+	var (
+		err               error
+		balances          = make(map[string]*big.Int, len(undelegations))
+		stakeContractAddr = native.StakeContractAddr()
+	)
 	for _, undelegation := range undelegations {
-		impl.log.Debugf("unbounding entry: %s", undelegation.String())
 		for _, entry := range undelegation.Entries {
-			wSet, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, entry.Amount, block, blockTxRwSet)
+			balance, ok := balances[undelegation.DelegatorAddress]
+			if !ok {
+				balance, err = impl.balanceOf(undelegation.DelegatorAddress, block, blockTxRwSet)
+				if err != nil {
+					return nil, err
+				}
+			}
+			wSet, afterBalance, err := impl.addBalanceRwSet(undelegation.DelegatorAddress, balance, entry.Amount)
 			if err != nil {
 				return nil, err
 			}
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
+			balances[undelegation.DelegatorAddress] = afterBalance
 
-			stakeContractAddr := native.StakeContractAddr()
-			if wSet, err = impl.subBalanceRwSet(stakeContractAddr, entry.Amount, block, blockTxRwSet); err != nil {
+			if balance, ok = balances[stakeContractAddr]; !ok {
+				if balance, err = impl.balanceOf(stakeContractAddr, block, blockTxRwSet); err != nil {
+					return nil, err
+				}
+			}
+			if wSet, afterBalance, err = impl.subBalanceRwSet(stakeContractAddr, balance, entry.Amount); err != nil {
 				return nil, err
 			}
 			rwSet.TxWrites = append(rwSet.TxWrites, wSet)
+			balances[stakeContractAddr] = afterBalance
 		}
 	}
 	if len(rwSet.TxWrites) > 0 {
 		impl.log.Debugf("unbounding rwSet: %s", rwSet.String())
 	}
-	impl.log.Debugf("end in completeUnbounding ...")
 	return rwSet, nil
 }
 
-func (impl *DPoSImpl) addBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
-	impl.log.Debugf("begin add balance ...")
-	before, err := impl.balanceOf(addr, block, blockTxRwSet)
-	if err != nil {
-		return nil, err
-	}
-	add, ok := big.NewInt(0).SetString(amount, 10)
+func (impl *DPoSImpl) addBalanceRwSet(addr string, balance *big.Int, addAmount string) (*commonpb.TxWrite, *big.Int, error) {
+	add, ok := big.NewInt(0).SetString(addAmount, 10)
 	if !ok {
-		impl.log.Errorf("invalid amount: %s", amount)
-		return nil, fmt.Errorf("invalid amount: %s", amount)
+		impl.log.Errorf("invalid amount: %s", addAmount)
+		return nil, nil, fmt.Errorf("invalid amount: %s", addAmount)
 	}
-	after := before.Add(add, before)
-	impl.log.Debugf("end add balance ...")
+	after := balance.Add(add, balance)
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
 		Value:        []byte(after.String()),
-	}, nil
+	}, after, nil
 }
 
-func (impl *DPoSImpl) subBalanceRwSet(addr string, amount string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxWrite, error) {
-	impl.log.Debugf("begin sub balance ...")
-	before, err := impl.balanceOf(addr, block, blockTxRwSet)
-	if err != nil {
-		return nil, err
-	}
-	impl.log.Debugf("covert string to big.Int ...")
+func (impl *DPoSImpl) subBalanceRwSet(addr string, before *big.Int, amount string) (*commonpb.TxWrite, *big.Int, error) {
 	sub, ok := big.NewInt(0).SetString(amount, 10)
 	if !ok {
 		impl.log.Errorf("invalid amount: %s", amount)
-		return nil, fmt.Errorf("invalid amount: %s", amount)
+		return nil, nil, fmt.Errorf("invalid amount: %s", amount)
 	}
 	if before.Cmp(sub) < 0 {
 		impl.log.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
-		return nil, fmt.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
+		return nil, nil, fmt.Errorf("invalid sub amount, beforeAmount: %s, subAmount: %s", before.String(), sub.String())
 	}
 	after := before.Sub(before, sub)
-	impl.log.Debugf("end sub balance ...")
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		Key:          []byte(native.BalanceKey(addr)),
 		Value:        []byte(after.String()),
-	}, nil
+	}, after, nil
 }
 
 func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {

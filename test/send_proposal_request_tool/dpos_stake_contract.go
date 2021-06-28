@@ -247,6 +247,32 @@ func getLatestEpoch() error {
 	return processResult(resp, &commonPb.Epoch{})
 }
 
+func StakeGetSystemAddr() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "getSystemAddr",
+		Short: "getSystemAddr feature of the stake",
+		Long:  "Get the address of stake system contract",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return getSystemAddr()
+		},
+	}
+	return cmd
+}
+
+func getSystemAddr() error {
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_READ_SYSTEM_CONTRACT_ADDR.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
+	}
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		chainId, "", payloadBytes)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
+}
+
 func StakeGetDelegationsByAddress() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "getDelegationsByAddress",
@@ -394,6 +420,32 @@ func StakeGetEpochBlockNumber() *cobra.Command {
 func getEpochBlockNumber() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String(), pairs)
+	if err != nil {
+		log.Fatalf("create payload failed, err: %s", err)
+	}
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		chainId, "", payloadBytes)
+	if err != nil {
+		return err
+	}
+	return processResult(resp, nil)
+}
+
+func StakeGetUnbondingEpochNumber() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "getUnbondingEpochNumber",
+		Short: "getUnbondingEpochNumber feature of the stake",
+		Long:  "Get the number of unbonding epoch number",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return getUnbondingEpochNumber()
+		},
+	}
+	return cmd
+}
+
+func getUnbondingEpochNumber() error {
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
