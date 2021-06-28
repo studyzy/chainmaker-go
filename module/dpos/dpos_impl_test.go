@@ -10,6 +10,9 @@ import (
 	"bytes"
 	"testing"
 
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,9 +26,24 @@ func TestDPoSImpl_VerifyConsensusArgs(t *testing.T) {
 }
 
 func TestDPoSImpl_CreateDPoSRWSet(t *testing.T) {
+	impl, fn := initTestImpl(t)
+	defer fn()
 
+	proposedBlk := &consensuspb.ProposalBlock{Block: &commonpb.Block{Header: &commonpb.BlockHeader{BlockHeight: 99}}}
+	rwSet, err := impl.createDPoSRWSet(nil, proposedBlk)
+	require.NoError(t, err)
+	require.Nil(t, rwSet)
+
+	proposedBlk.Block.Header.BlockHeight = 100
+	rwSet, err = impl.createDPoSRWSet(nil, proposedBlk)
+	require.EqualError(t, err, "not found candidates from contract")
+	require.Nil(t, rwSet)
 }
 
 func TestDPoSImpl_CreateNewEpoch(t *testing.T) {
+
+}
+
+func TestDPoSImpl_selectValidators(t *testing.T) {
 
 }
