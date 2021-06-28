@@ -169,11 +169,21 @@ function generate_config() {
                 xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
             done
         else
-            for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+            ver=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' ')
+            version=${ver:1:2}
+            if [ $version == 11 ]; then
+                for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+                xsed  "/  seeds:/a\\
+        - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
+" node$i/chainmaker.yml
+                done
+            else
+              for ((k = $NODE_CNT; k > 0; k = k - 1)); do
                 xsed  "/  seeds:/a\\
                 \ \ \ \ - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
                 " node$i/chainmaker.yml
-            done
+              done
+            fi
         fi
 
 
