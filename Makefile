@@ -8,7 +8,7 @@ else
   endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
-VERSION=V1.2.1
+VERSION=V1.2.0
 
 chainmaker:
 	@cd main && go build -mod=mod -o ../bin/chainmaker
@@ -96,11 +96,11 @@ mockgen-dep:
 
 docker-build:
 	docker build -t chainmaker -f ./DOCKER/Dockerfile .
-	docker tag chainmaker chainmaker:v1.2.1
+	docker tag chainmaker chainmaker:v1.2.0
 
 docker-build-dev: chainmaker
 	docker build -t chainmaker -f ./DOCKER/dev.Dockerfile .
-	docker tag chainmaker chainmaker:v1.2.1
+	docker tag chainmaker chainmaker:v1.2.0
 
 docker-compose-start: docker-compose-stop
 	docker-compose up -d
