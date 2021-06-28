@@ -30,7 +30,7 @@ func (wi *WsetIterator) Next() bool {
 func (wi *WsetIterator) Value() (*store.KV, error) {
     var kv *store.KV
     var keyStr string
-    var ok bool
+    ok := true
     wi.stringKeySortedMap.Range(func(key string, val interface{}) (isContinue bool) {
         keyStr = key
         kv, ok = val.(*store.KV)
