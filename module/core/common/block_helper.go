@@ -240,7 +240,14 @@ func FinalizeBlock(
 	var err error
 	var txCount int
 	var lock sync.Mutex
-	go func() {
+	var wg sync.WaitGroup
+	poolCapacity := runtime.NumCPU() * 4
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
+		return err
+	}
+	defer goRoutinePool.Release()
+	goRoutinePool.Submit(func() {
+		wg.Add(1)
 		// DagDigest
 		dagHash, err := utils.CalcDagHash(hashType, block.Dag)
 		if err != nil {
@@ -248,26 +255,19 @@ func FinalizeBlock(
 			errC <- err
 		}
 		block.Header.DagHash = dagHash
-	}()
+		wg.Done()
+	})
 
-	poolCapacity := runtime.NumCPU() * 4
-	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
-		return err
-	}
-	defer goRoutinePool.Release()
-	go func() {
+	goRoutinePool.Submit(func() {
 		if block.Header.TxCount > 0 {
 			for i, tx := range block.Txs {
-				txMess := &txPacket{
-					index: i,
-					tx:    tx,
-				}
-				txPacketC <- txMess
+				txPacketC <- &txPacket{index: i, tx: tx}
 			}
 		} else {
 			finishC <- true
 		}
-	}()
+	})
+
 	for {
 		select {
 		case packet := <-txPacketC:
@@ -303,14 +303,13 @@ func FinalizeBlock(
 					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
 					errC <- err
 				}
-				index := packet.index
 				lock.Lock()
 				txCount++
-				txHashes[index] = txHash
-				lock.Unlock()
+				txHashes[packet.index] = txHash
 				if txCount == len(block.Txs) {
 					finishC <- true
 				}
+				lock.Unlock()
 			})
 		case err = <-errC:
 			return err
@@ -325,6 +324,7 @@ func FinalizeBlock(
 				logger.Warnf("get rwset merkle root error %s", err)
 				return err
 			}
+			wg.Wait()
 			logger.Debugf("finalize block [%d] finish", block.Header.BlockHeight)
 			return nil
 		}
