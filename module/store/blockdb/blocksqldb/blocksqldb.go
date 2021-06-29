@@ -44,11 +44,11 @@ func (db *BlockSqlDB) GetTxHeight(txId string) (uint64, error) {
 }
 
 func (db *BlockSqlDB) TxArchived(txId string) (bool, error) {
-	return false, NotImplementError
+	return false, nil
 }
 
 func (db *BlockSqlDB) GetArchivedPivot() (uint64, error) {
-	return 0, NotImplementError
+	return 0, nil
 }
 
 func (db *BlockSqlDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
