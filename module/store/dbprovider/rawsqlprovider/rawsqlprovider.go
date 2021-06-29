@@ -54,6 +54,7 @@ func ParseSqlDbType(str string) (types.EngineType, error) {
 }
 
 const UTF8_CHAR = "charset=utf8mb4"
+const DSN_ParseTime = "parseTime=True"
 
 func replaceMySqlDsn(dsn string, dbName string) string {
 	dsnPattern := regexp.MustCompile(
@@ -68,13 +69,16 @@ func replaceMySqlDsn(dsn string, dbName string) string {
 	start, end := matches[10], matches[11]
 	newDsn := dsn[:start] + dbName + dsn[end:]
 	if matches[12] == -1 {
-		return newDsn + "?" + UTF8_CHAR
+		return newDsn + "?" + UTF8_CHAR + "&" + DSN_ParseTime
 	}
 	par := dsn[matches[12]:]
-	if strings.Contains(par, "charset=") {
-		return newDsn
+	if !strings.Contains(par, "charset=") {
+		newDsn = newDsn + "&" + UTF8_CHAR
 	}
-	return newDsn + "&" + UTF8_CHAR
+	if !strings.Contains(par, "parseTime=") {
+		newDsn = newDsn + "&" + DSN_ParseTime
+	}
+	return newDsn
 }
 
 // NewSqlDBHandle construct a new SqlDBHandle
@@ -133,6 +137,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 			}
 			dbPath = filepath.Join(dbPath, "sqlite.db")
 		}
+		log.Debug("open a sqlite connect for path:", dbPath)
 		db, err := sql.Open("sqlite3", dbPath)
 		if err != nil {
 			log.Panicf("failed to open sqlite path:%s,get error:%s", dbPath, err)
@@ -144,6 +149,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 
 	log.Debug("inject ChainMaker logger into db logger.")
 	provider.log = log
+	provider.contextDbName = dbName
 	return provider
 }
 func (p *SqlDBHandle) createDatabase(dsn string, dbName string) error {
@@ -251,6 +257,7 @@ WHERE type='table' AND name='%s'`, obj.GetTableName())
 }
 func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
 	sql := obj.GetCreateTableSql(p.dbType.LowerString())
+	p.log.Debug("Exec ddl:", sql, "database:", p.contextDbName)
 	_, err := p.db.Exec(sql)
 	if err != nil {
 		p.log.Error(err)
