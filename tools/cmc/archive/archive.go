@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	defaultDbType = "mysql"
+	defaultDbType                 = "mysql"
+	configBlockArchiveErrorString = "config block do not need archive"
 )
 
 var (
@@ -85,15 +86,6 @@ func init() {
 	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
 	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
-}
-
-func attachFlags(cmd *cobra.Command, names []string) {
-	cmdFlags := cmd.Flags()
-	for _, name := range names {
-		if flag := flags.Lookup(name); flag != nil {
-			cmdFlags.AddFlag(flag)
-		}
-	}
 }
 
 // initDb Connecting database, migrate tables.

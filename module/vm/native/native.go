@@ -1,7 +1,7 @@
 /*
-Copyright (C) BABEC. All rights reserved.
-
-SPDX-License-Identifier: Apache-2.0
+ Copyright (C) BABEC. All rights reserved.
+ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+   SPDX-License-Identifier: Apache-2.0
 */
 
 package native
@@ -90,6 +90,11 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName str
 	if err != nil {
 		r.log.Error(err)
 		result.Message = err.Error()
+		return result
+	}
+
+	if len(bytes) == 0 {
+		result.Message = "not found"
 		return result
 	}
 

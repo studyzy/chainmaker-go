@@ -169,11 +169,21 @@ function generate_config() {
                 xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
             done
         else
-            for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+            ver=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' ')
+            version=${ver:1:2}
+            if [ $version == 11 ]; then
+                for ((k = $NODE_CNT; k > 0; k = k - 1)); do
                 xsed  "/  seeds:/a\\
-                \ \ \ \ - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
-                " node$i/chainmaker.yml
-            done
+        - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
+" node$i/chainmaker.yml
+                done
+            else
+                for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+                  xsed  "/  seeds:/a\\
+                  \ \ \ \ - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
+                  " node$i/chainmaker.yml
+                done
+            fi
         fi
 
 
@@ -202,6 +212,7 @@ function generate_config() {
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then
                 xsed "s%#\(.*\)- org_id:%\1- org_id:%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)node_id:%\1node_id:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)address:%\1address:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)root:%\1root:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml

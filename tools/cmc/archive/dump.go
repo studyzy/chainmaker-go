@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gosuri/uiprogress"
@@ -61,7 +62,7 @@ func newDumpCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
 	})
 
@@ -123,11 +124,11 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 	}
 	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks < blocks; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
-			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err != nil {
+			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err == nil {
+				batchStartBlkHeight = batchEndBlkHeight
+			} else if !strings.Contains(err.Error(), configBlockArchiveErrorString) {
 				return err
 			}
-
-			batchStartBlkHeight = batchEndBlkHeight
 		}
 
 		batchEndBlkHeight++
