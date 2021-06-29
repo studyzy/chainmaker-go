@@ -682,6 +682,10 @@ func (r *BlockRuntime) getTxRWSetsByBlock(store protocol.BlockchainStore, chainI
 			r.log.Errorf("get txRWset from store failed, [chainId:%s|txId:%s], %s", chainId, tx.Header.TxId, err.Error())
 			return nil, fmt.Errorf("get txRWset failed, %s", err)
 		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			r.log.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			txRWSet = &commonPb.TxRWSet{}
+		}
 		txRWSets = append(txRWSets, txRWSet)
 	}
 	return txRWSets, nil

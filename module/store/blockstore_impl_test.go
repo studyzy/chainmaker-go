@@ -801,86 +801,86 @@ func TestWriteBinlog(t *testing.T) {
 //	defer db.Close()
 //}
 //TODO houfa
-//func Test_blockchainStoreImpl_Archive(t *testing.T) {
-//	var factory Factory
-//	dbConf := getlvldbConfig("")
-//	dbConf.UnArchiveBlockHeight = 10
-//	s, err := factory.NewStore(chainId, dbConf, log)
-//	assert.Equal(t, nil, err)
-//	defer s.Close()
-//
-//	totalHeight := 60
-//	archiveHeight1 := 27
-//	archiveHeight2 := 30
-//	archiveHeight3 := 43
-//
-//	//Prepare block data
-//	blocks := make([]*commonPb.Block, 0, totalHeight)
-//	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
-//	for i := 0; i < totalHeight; i++ {
-//		var (
-//			block   *commonPb.Block
-//			txRWSet []*commonPb.TxRWSet
-//		)
-//
-//		if i%5 == 0 {
-//			block, txRWSet = createConfBlockAndRWSets(chainId, int64(i))
-//		} else {
-//			block, txRWSet = createBlockAndRWSets(chainId, int64(i), 10)
-//		}
-//
-//		err = s.PutBlock(block, txRWSet)
-//		assert.Equal(t, nil, err)
-//		blocks = append(blocks, block)
-//		txRWSetMp[block.Header.BlockHeight] = txRWSet
-//	}
-//
-//	verifyArchive(t, 0, blocks, s)
-//
-//	//archive block height1
-//	err = s.ArchiveBlock(uint64(archiveHeight1))
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
-//
-//	verifyArchive(t, 10, blocks, s)
-//
-//	//archive block height2 which is a config block
-//	err1 := s.ArchiveBlock(uint64(archiveHeight2))
-//	assert.True(t, err1 == archive.ConfigBlockArchiveError)
-//	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
-//
-//	verifyArchive(t, 15, blocks, s)
-//
-//	//archive block height3
-//	err = s.ArchiveBlock(uint64(archiveHeight3))
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, uint64(archiveHeight3), s.GetArchivedPivot())
-//
-//	verifyArchive(t, 25, blocks, s)
-//
-//	//Prepare restore data
-//	blocksBytes := make([][]byte, 0, archiveHeight3-archiveHeight2+1)
-//	for i := archiveHeight2; i <= archiveHeight3; i++ {
-//		blockBytes, _, err5 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
-//			Block:          blocks[i],
-//			TxRWSets:       txRWSetMp[blocks[i].Header.BlockHeight],
-//			ContractEvents: nil,
-//		})
-//
-//		assert.Equal(t, nil, err5)
-//		blocksBytes = append(blocksBytes, blockBytes)
-//	}
-//
-//	//restore block
-//	err = s.RestoreBlocks(blocksBytes)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, uint64(archiveHeight2-1), s.GetArchivedPivot())
-//
-//	verifyArchive(t, 10, blocks, s)
-//
-//	//wait kvdb compactrange
-//	time.Sleep(5 * time.Second)
-//}
+func Test_blockchainStoreImpl_Archive(t *testing.T) {
+	var factory Factory
+	dbConf := getlvldbConfig("")
+	dbConf.UnArchiveBlockHeight = 10
+	s, err := factory.NewStore(chainId, dbConf, log)
+	assert.Equal(t, nil, err)
+	defer s.Close()
+
+	totalHeight := 60
+	archiveHeight1 := 27
+	archiveHeight2 := 30
+	archiveHeight3 := 43
+
+	//Prepare block data
+	blocks := make([]*commonPb.Block, 0, totalHeight)
+	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
+	for i := 0; i < totalHeight; i++ {
+		var (
+			block   *commonPb.Block
+			txRWSet []*commonPb.TxRWSet
+		)
+
+		if i%5 == 0 {
+			block, txRWSet = createConfBlockAndRWSets(chainId, int64(i))
+		} else {
+			block, txRWSet = createBlockAndRWSets(chainId, int64(i), 10)
+		}
+
+		err = s.PutBlock(block, txRWSet)
+		assert.Equal(t, nil, err)
+		blocks = append(blocks, block)
+		txRWSetMp[block.Header.BlockHeight] = txRWSet
+	}
+
+	verifyArchive(t, 0, blocks, s)
+
+	//archive block height1
+	err = s.ArchiveBlock(uint64(archiveHeight1))
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
+
+	verifyArchive(t, 10, blocks, s)
+
+	//archive block height2 which is a config block
+	err1 := s.ArchiveBlock(uint64(archiveHeight2))
+	assert.True(t, err1 == archive.ConfigBlockArchiveError)
+	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
+
+	verifyArchive(t, 15, blocks, s)
+
+	//archive block height3
+	err = s.ArchiveBlock(uint64(archiveHeight3))
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight3), s.GetArchivedPivot())
+
+	verifyArchive(t, 25, blocks, s)
+
+	//Prepare restore data
+	blocksBytes := make([][]byte, 0, archiveHeight3-archiveHeight2+1)
+	for i := archiveHeight2; i <= archiveHeight3; i++ {
+		blockBytes, _, err5 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
+			Block:          blocks[i],
+			TxRWSets:       txRWSetMp[blocks[i].Header.BlockHeight],
+			ContractEvents: nil,
+		})
+
+		assert.Equal(t, nil, err5)
+		blocksBytes = append(blocksBytes, blockBytes)
+	}
+
+	//restore block
+	err = s.RestoreBlocks(blocksBytes)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight2-1), s.GetArchivedPivot())
+
+	verifyArchive(t, 10, blocks, s)
+
+	//wait kvdb compactrange
+	time.Sleep(5 * time.Second)
+}
 
 func verifyArchive(t *testing.T, confHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
 	archivedPivot := s.GetArchivedPivot()

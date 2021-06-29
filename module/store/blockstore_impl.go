@@ -460,6 +460,10 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 		if err != nil {
 			return nil, err
 		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", txId)
+			txRWSet = &commonPb.TxRWSet{}
+		}
 		txRWSets[i] = txRWSet
 		bs.logger.Debugf("getTxRWSetsByHeight, txid:%s", txId)
 
@@ -493,6 +497,10 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 		txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
 		if err != nil {
 			return nil, err
+		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			txRWSet = &commonPb.TxRWSet{}
 		}
 		blockWithRWSets.TxRWSets[i] = txRWSet
 		//}
