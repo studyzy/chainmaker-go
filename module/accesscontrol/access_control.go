@@ -204,10 +204,6 @@ func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, er
 		return true, nil
 	}
 
-	if strings.Compare(principal.GetResourceName(), "PRIVATE_COMPUTE") == 0 {
-		ac.log.Infof("verifyPricipal hit private_compute------")
-	}
-
 	p, err := ac.lookUpPolicyByResourceName(principal.GetResourceName())
 	if err != nil {
 		return false, fmt.Errorf("authentication fail: [%v]", err)
