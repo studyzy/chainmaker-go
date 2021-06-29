@@ -359,7 +359,7 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 	defer s.Unlock()
 	db := s.getContractDbHandle(contractName)
 	sql := "select * from state_infos where object_key >= ? and object_key  < ?"
-	rows, err := db.QueryMulti(sql, startKey, limit)
+	rows, err := db.QueryMulti(sql, string(startKey), string(limit))
 	if err != nil {
 		return nil, err
 	}
