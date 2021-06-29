@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -46,6 +47,37 @@ func TestCandidateInfos(t *testing.T) {
 	require.Equal(t, tests[3].PeerID, "peer1")
 	require.Equal(t, tests[4].PeerID, "peer2")
 	require.Equal(t, tests[5].PeerID, "peer3")
+}
+
+func TestValidatorsElection2(t *testing.T) {
+	var candidates = []*pbdpos.CandidateInfo{
+		{"3tPTFsFAYjtEkJa3MYfV63TK2uYP9e3DZq97KrZMYxhy", "25000000000000000000000"},
+		{"4WUXfiUpLkx7meaNu8TNS5rNM7YtZk6fkNWXihc54PbM", "250000000000000000000000"},
+		{"4yKy5YebxygcXuid6F2vnfMhpTL94qbJELLodbCMg1Tn", "250000000000000000000000"},
+		{"AwLW3zpAsmhMDMqp1DkCCFajh9pTTXHcpeBRZybRTF2X", "250000000000000000000000"},
+		{"3BugkfMLdgXsif1Zg9sCwi4BBxFxqdjEQNjCmYgtGAtr", "250000000000000000000000"},
+	}
+	seed := make([]byte, 32)
+	num, err := hex.Decode(seed, []byte("0efdfa8a4db5715fd03fa0ace3c01ca09e19b15a98e78cd05c09983921880282"))
+	require.NoError(t, err)
+	require.EqualValues(t, num, 32)
+	vals, err := ValidatorsElection(candidates, 4, seed, true)
+	require.NoError(t, err)
+	for _, v := range vals {
+		fmt.Println(v)
+	}
+	for i := 0; i < 3; i++ {
+		time.Sleep(time.Second * 2)
+		tmp, err := ValidatorsElection(candidates, 4, seed, true)
+		require.NoError(t, err)
+		for i, v := range vals {
+			if !strings.EqualFold(v.String(), tmp[i].String()) {
+				fmt.Println("expect: ", vals)
+				fmt.Println("actual: ", tmp)
+				require.False(t, true)
+			}
+		}
+	}
 }
 
 func TestValidatorsElection(t *testing.T) {

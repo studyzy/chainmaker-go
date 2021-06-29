@@ -8,14 +8,18 @@ package dpos
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/mock"
+	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/vm/native"
+
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -35,6 +39,16 @@ func newMockBlockChainStore(ctrl *gomock.Controller) protocol.BlockchainStore {
 			}
 			if bytes.Equal(key, []byte(native.BalanceKey(native.StakeContractAddr()))) {
 				return []byte("10000"), nil
+			}
+			if bytes.Equal(key, []byte(native.KeyCurrentEpoch)) {
+				epoch := &commonpb.Epoch{NextEpochCreateHeight: 100}
+				bz, err := proto.Marshal(epoch)
+				return bz, err
+			}
+			if bytes.Equal(key, []byte(native.KeyEpochBlockNumber)) {
+				bz := make([]byte, 8)
+				binary.BigEndian.PutUint64(bz, 4)
+				return bz, nil
 			}
 			return nil, nil
 		}).AnyTimes()

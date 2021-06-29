@@ -122,7 +122,7 @@ function generate_config() {
     else
         read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT,5-DPOS): " tmp
         if  [ ! -z "$tmp" ] ;then
-          if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] ;then
+          if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] || [ $tmp -eq 5 ] ;then
               CONSENSUS_TYPE=$tmp
           else
             echo "unknown consensus type [" $tmp "], so use default"
@@ -169,11 +169,21 @@ function generate_config() {
                 xsed "/  seeds:/a\    - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"" node$i/chainmaker.yml
             done
         else
-            for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+            ver=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' ')
+            version=${ver:1:2}
+            if [ $version == 11 ]; then
+                for ((k = $NODE_CNT; k > 0; k = k - 1)); do
                 xsed  "/  seeds:/a\\
-                \ \ \ \ - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
-                " node$i/chainmaker.yml
-            done
+        - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
+" node$i/chainmaker.yml
+                done
+            else
+                for ((k = $NODE_CNT; k > 0; k = k - 1)); do
+                  xsed  "/  seeds:/a\\
+                  \ \ \ \ - \"/ip4/127.0.0.1/tcp/$(($P2P_PORT_PREFIX+$k))/p2p/{org${k}_peerid}\"\\
+                  " node$i/chainmaker.yml
+                done
+            fi
         fi
 
 
@@ -202,9 +212,23 @@ function generate_config() {
 
             if  [ $NODE_CNT -eq 7 ] || [ $NODE_CNT -eq 13 ] || [ $NODE_CNT -eq 16 ]; then
                 xsed "s%#\(.*\)- org_id:%\1- org_id:%g" node$i/chainconfig/bc$j.yml
+                xsed "s%#\(.*\)node_id:%\1node_id:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)address:%\1address:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)root:%\1root:%g" node$i/chainconfig/bc$j.yml
                 xsed "s%#\(.*\)- \"%\1- \"%g" node$i/chainconfig/bc$j.yml
+
+                # dpos cancel kv annotation
+                if  [ $CONSENSUS_TYPE -eq 5 ]; then
+                    xsed "s%#\(.*\)- key:%\1- key:%g" node$i/chainconfig/bc$j.yml
+                    xsed "s%#\(.*\)value:%\1value:%g" node$i/chainconfig/bc$j.yml
+                fi
+            fi
+
+            # dpos update erc20.total and epochValidatorNum
+            if [ $CONSENSUS_TYPE -eq 5 ]; then
+               TOTAL=$(($NODE_CNT*2500000))
+               xsed "s%{erc20_total}%$TOTAL%g" node$i/chainconfig/bc$j.yml
+               xsed "s%{epochValidatorNum}%$NODE_CNT%g" node$i/chainconfig/bc$j.yml
             fi
 
             c=0
@@ -215,6 +239,12 @@ function generate_config() {
 
                 peerId=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/node/consensus1/consensus1.nodeid`
                 xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainconfig/bc$j.yml
+
+                # dpos modify node address
+                if  [ $CONSENSUS_TYPE -eq 5 ]; then
+                    peerAddr=`cat $BUILD_CRYPTO_CONFIG_PATH/$file/user/client1/client1.addr`
+                    xsed "s%{org${c}_peeraddr}%$peerAddr%g" node$i/chainconfig/bc$j.yml
+                fi
 
                 if  [ $j -eq 1 ]; then
                     xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainmaker.yml
