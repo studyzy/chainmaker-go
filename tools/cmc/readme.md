@@ -177,7 +177,7 @@ cp -r ../../config/crypto-config/ testdata/crypto-config
 # 上传 tee ca 证书
 ./cmc tee upload_ca_cert \
 --sdk-conf-path=./testdata/sdk_config.yml \
---report={your tee ca_cert file path}
+--ca_cert={your tee ca_cert file path}
 
 
 # 上传可信计算环境的report数据
