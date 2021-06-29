@@ -544,9 +544,6 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 }
 
 func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsements []*common.EndorsementEntry, resourceName string) (bool, error) {
-	if strings.Compare(resourceName, "PRIVATE_COMPUTE") == 0 {
-		ac.log.Infof("verifyPricipalPolicyRualAnyCase hit private_compute------")
-	}
 	orgList, roleList := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 	for _, endorsement := range endorsements {
 		if len(orgList) > 0 {
