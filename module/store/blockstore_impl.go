@@ -171,7 +171,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	err =  bs.InitArchiveMgr(block.Header.ChainId);
+	err = bs.InitArchiveMgr(block.Header.ChainId)
 	if err != nil {
 		return err
 	}
@@ -791,7 +791,7 @@ func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint
 
 func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
 	if bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB() {
-		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig)
+		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig, bs.logger)
 		if err != nil {
 			return err
 		}

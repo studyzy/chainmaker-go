@@ -32,15 +32,44 @@ type BlockSqlDB struct {
 }
 
 func (db *BlockSqlDB) GetHeightByHash(blockHash []byte) (uint64, error) {
-	return 0, NotImplementError
+	sql := "SELECT block_height FROM block_infos WHERE block_hash=?"
+	var height uint64
+	res, err := db.db.QuerySingle(sql, blockHash)
+	if err != nil {
+		return 0, err
+	}
+	err = res.ScanColumns(&height)
+	if err != nil {
+		return 0, err
+	}
+	return height, nil
 }
 
 func (db *BlockSqlDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
-	return nil, NotImplementError
+	sql := "SELECT * from block_infos WHERE block_height=?"
+	blockInfo, err := db.getBlockInfoBySql(sql, height)
+	if err != nil {
+		return nil, err
+	}
+	if blockInfo == nil && err == nil {
+		return nil, nil
+	}
+	return blockInfo.GetBlockHeader(), nil
 }
 
 func (db *BlockSqlDB) GetTxHeight(txId string) (uint64, error) {
-	return 0, NotImplementError
+	sql := "SELECT block_height FROM tx_infos WHERE tx_id=?"
+	var height uint64
+	res, err := db.db.QuerySingle(sql, txId)
+	if err != nil {
+		return 0, err
+	}
+	err = res.ScanColumns(&height)
+	if err != nil {
+		return 0, err
+	}
+	return height, nil
+
 }
 
 func (db *BlockSqlDB) TxArchived(txId string) (bool, error) {
