@@ -125,7 +125,7 @@ func (h *ResultKvDB) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	if err != nil {
 		return nil, err
 	} else if bytes == nil {
-		return &commonPb.TxRWSet{}, nil
+		return nil, nil
 	}
 
 	var txRWSet commonPb.TxRWSet

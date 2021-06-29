@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker-go/tools/cmc/tee"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -41,6 +42,7 @@ For detailed logs, please see ./sdk.log
 	mainCmd.AddCommand(query.NewQueryOnChainCMD())
 	mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
 	mainCmd.AddCommand(bulletproofs.BulletproofsCMD())
+	mainCmd.AddCommand(tee.NewTeeCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

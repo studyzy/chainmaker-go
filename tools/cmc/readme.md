@@ -170,3 +170,18 @@ cp -r ../../config/crypto-config/ testdata/crypto-config
 --client-key-file-paths=./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key \
 
 ```
+
+### tee 
+
+```sh
+# 上传 tee ca 证书
+./cmc tee upload_ca_cert \
+--sdk-conf-path=./testdata/sdk_config.yml \
+--report={your tee ca_cert file path}
+
+
+# 上传可信计算环境的report数据
+./cmc tee upload_report \
+--sdk-conf-path=./testdata/sdk_config.yml \
+--report={your tee report file path}
+```

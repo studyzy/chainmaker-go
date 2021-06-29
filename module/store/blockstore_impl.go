@@ -171,7 +171,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	err =  bs.InitArchiveMgr(block.Header.ChainId);
+	err = bs.InitArchiveMgr(block.Header.ChainId)
 	if err != nil {
 		return err
 	}
@@ -460,6 +460,10 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 		if err != nil {
 			return nil, err
 		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", txId)
+			txRWSet = &commonPb.TxRWSet{}
+		}
 		txRWSets[i] = txRWSet
 		bs.logger.Debugf("getTxRWSetsByHeight, txid:%s", txId)
 
@@ -493,6 +497,10 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 		txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
 		if err != nil {
 			return nil, err
+		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			txRWSet = &commonPb.TxRWSet{}
 		}
 		blockWithRWSets.TxRWSets[i] = txRWSet
 		//}
@@ -791,7 +799,7 @@ func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint
 
 func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
 	if bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB() {
-		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig)
+		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig, bs.logger)
 		if err != nil {
 			return err
 		}
