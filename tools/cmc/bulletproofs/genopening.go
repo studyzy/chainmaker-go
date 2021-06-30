@@ -1,9 +1,16 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"encoding/base64"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"github.com/spf13/cobra"
 )
 
