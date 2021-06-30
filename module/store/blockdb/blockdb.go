@@ -49,7 +49,7 @@ type BlockDB interface {
 	TxExists(txId string) (bool, error)
 
 	// TxArchived returns true if the tx archived, or returns false.
-   	TxArchived(txId string) (bool, error)
+	TxArchived(txId string) (bool, error)
 
 	// GetTxConfirmedTime retrieves time of the tx confirmed in the blockChain
 	GetTxConfirmedTime(txId string) (int64, error)
@@ -71,9 +71,6 @@ type BlockDB interface {
 
 	// GetArchivedPivot get archived pivot
 	GetArchivedPivot() (uint64, error)
-
-	// SetArchivedPivot set archived pivot
-	SetArchivedPivot(archivedPivot uint64) error
 
 	// ShrinkBlocks archive old blocks in an atomic operation
 	ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error)

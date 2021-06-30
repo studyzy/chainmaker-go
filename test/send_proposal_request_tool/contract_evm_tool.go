@@ -22,7 +22,7 @@ import (
 //	}
 //}
 
-var printEnable bool = true
+var printEnable bool = false
 
 type EvmAbi struct {
 	anonymous       bool         `json:"anonymous"`
@@ -173,25 +173,38 @@ func getStrval(value interface{}) string {
 	return key
 }
 
-func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, runtime commonPb.RuntimeType) (string, []*commonPb.KeyValuePair, error) {
+func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, runtime commonPb.RuntimeType, abiData *[]byte) (string, []*commonPb.KeyValuePair, error) {
 	if runtime != commonPb.RuntimeType_EVM {
 		return method, pairs, nil
 	}
 	data := ""
-	//fmt.Println("pairs: ", pairs)
-
-	var params []interface{}
-	abiJson, err := ioutil.ReadFile(abiPath)
-	if err != nil {
-		return method, nil, err
+	if printEnable {
+		fmt.Println("pairs: ", pairs, ", method: ", method)
+		fmt.Println("[start]abiPath: ", abiPath, ", abiData: ", abiData)
 	}
+
+	var abiJson []byte
+	var err error
+	var params []interface{}
+	if abiData == nil {
+		abiJson, err = ioutil.ReadFile(abiPath)
+		if printEnable {
+			fmt.Println("[readfile]abiData: ", abiData, ", abiJson: ", abiJson)
+		}
+		if err != nil {
+			return method, nil, err
+		}
+	} else {
+		abiJson = *abiData
+	}
+
 	myAbi, err := abi.JSON(strings.NewReader(string(abiJson)))
 	if err != nil {
 		return method, nil, err
 	}
 
 	if printEnable {
-		fmt.Println("pairs: ", pairs, ", method: ", method)
+		fmt.Println("myAbi: ", myAbi, ", abiJson: ", abiJson)
 	}
 
 	if len(pairs) > 0 {
@@ -223,9 +236,9 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 				break
 			}
 		}
-
-		fmt.Println("methodObj: ", methodObj)
-
+		if printEnable {
+			fmt.Println("methodObj: ", methodObj)
+		}
 		for _, paramMap := range methodObj {
 
 			for _, pair := range pairs {
@@ -239,7 +252,9 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 					case "address":
 						var add *evm.Address
 						ski := pair.Value
-						fmt.Println("[debug] pair.Key: ", pair.Key, "pair.Value:", pair.Value, ", ski:", ski, ", typeof(ski): ", reflect.TypeOf(ski))
+						if printEnable {
+							fmt.Println("[debug] pair.Key: ", pair.Key, "pair.Value:", pair.Value, ", ski:", ski, ", typeof(ski): ", reflect.TypeOf(ski))
+						}
 						if strings.LastIndex(pair.Value, ".crt") > -1 {
 							ski, err = getSki(pair.Value)
 							if err != nil {
@@ -251,7 +266,9 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 							}
 						} else {
 							add, err = getContractAddress(ski)
-							fmt.Println("[debug] pair.Key: ", pair.Key, "ski:", ski, ", add: ", add)
+							if printEnable {
+								fmt.Println("[debug] pair.Key: ", pair.Key, "ski:", ski, ", add: ", add)
+							}
 							if err != nil {
 								return method, nil, err
 							}

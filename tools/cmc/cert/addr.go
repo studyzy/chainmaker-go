@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"github.com/spf13/cobra"
 )
 

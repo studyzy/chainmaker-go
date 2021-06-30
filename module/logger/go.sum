@@ -1,5 +1,7 @@
-chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38 h1:QlykY15JoHq6LKrh9r+2Ll8Zv/9XzHe93NuBW/Q1Xxo=
-chainmaker.org/chainmaker/common v0.0.0-20210531062058-beb572d07e38/go.mod h1:/Xk1SQl6o4Jv35+gP+6DQOvHz0RxILCX/SGIO/QtpO8=
+chainmaker.org/chainmaker/common v0.0.0-20210608120544-684822d55c61 h1:FQhg3BUGqyLyAmTi1JNwePIAa3nfqyDTI6rcLwyAQsc=
+chainmaker.org/chainmaker/common v0.0.0-20210608120544-684822d55c61/go.mod h1:/Xk1SQl6o4Jv35+gP+6DQOvHz0RxILCX/SGIO/QtpO8=
+chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a h1:JjoKIZRZUiB7g4ncPp1Cke4dbCA+GlSzBw6SF2FEwDc=
+chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a/go.mod h1:/Xk1SQl6o4Jv35+gP+6DQOvHz0RxILCX/SGIO/QtpO8=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=

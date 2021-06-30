@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	evm "chainmaker.org/chainmaker/common/evmutils"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +18,7 @@ import (
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
+	evm "chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker/common/helper"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
@@ -230,17 +230,42 @@ func main() {
 	mainCmd.AddCommand(GetContractCMD())
 	mainCmd.AddCommand(SaveDataCMD())
 	mainCmd.AddCommand(GetDataCMD())
-	mainCmd.AddCommand(SaveContractCMD())
-	mainCmd.AddCommand(SaveQuoteCMD())
 	mainCmd.AddCommand(GetCertCMD())
 	mainCmd.AddCommand(GetDirCMD())
-	mainCmd.AddCommand(GetQuoteCMD())
 
 	//generate hash code
 	mainCmd.AddCommand(GenerateHashCMD())
 
 	//paillier
 	mainCmd.AddCommand(PaillierCMD())
+
+	//DPoS.erc20
+	mainCmd.AddCommand(ERC20Mint())
+	mainCmd.AddCommand(ERC20Transfer())
+	mainCmd.AddCommand(ERC20BalanceOf())
+	mainCmd.AddCommand(ERC20Owner())
+	mainCmd.AddCommand(ERC20Decimals())
+	mainCmd.AddCommand(ERC20Cert2Address())
+	mainCmd.AddCommand(ERC20Total())
+
+	//DPoS.Stake
+	mainCmd.AddCommand(StakeGetAllCandidates())
+	mainCmd.AddCommand(StakeDelegate())
+	mainCmd.AddCommand(StakeUnDelegate())
+	mainCmd.AddCommand(StakeSetNodeID())
+	mainCmd.AddCommand(StakeGetNodeID())
+	mainCmd.AddCommand(StakeGetEpochByID())
+	mainCmd.AddCommand(StakeGetSystemAddr())
+	mainCmd.AddCommand(StakeGetLatestEpoch())
+	mainCmd.AddCommand(StakeGetEpochBlockNumber())
+	mainCmd.AddCommand(StakeGetMinSelfDelegation())
+	mainCmd.AddCommand(StakeGetEpochValidatorNumber())
+	mainCmd.AddCommand(StakeGetUnbondingEpochNumber())
+	mainCmd.AddCommand(StakeGetDelegationsByAddress())
+	mainCmd.AddCommand(StakeGetDelegationByValidator())
+
+	// bulletproofs
+	mainCmd.AddCommand(BulletproofsCMD())
 
 	mainCmd.Execute()
 

@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var _ protocol.TxSimContext = (*MockSimContextImpl)(nil)
@@ -101,7 +101,7 @@ func (s *MockSimContextImpl) Put(contractName string, key []byte, value []byte) 
 	return nil
 }
 
-func (s *MockSimContextImpl) PutRecord(contractName string, value []byte) {
+func (s *MockSimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 }
 
 // 删除合约账户状态
@@ -116,7 +116,7 @@ func (s *MockSimContextImpl) Done() bool {
 func (s *MockSimContextImpl) GetTx() *commonPb.Transaction {
 	return s.tx
 }
-func (s *MockSimContextImpl) GetTxRWSet() *commonPb.TxRWSet {
+func (s *MockSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	return s.txRwSet
 }
 func (s *MockSimContextImpl) SetTxExecSeq(txExecSeq int) {
@@ -131,6 +131,15 @@ func (s *MockSimContextImpl) SetStateSqlHandle(index int32, rows protocol.SqlRow
 func (s *MockSimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
 	panic("impl me")
 }
+
+func (s *MockSimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
+	panic("impl me")
+}
+
+func (s *MockSimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIterator) {
+	panic("impl me")
+}
+
 func TestKey(t *testing.T) {
 	s0 := "你好"
 	b0 := []byte(s0)
@@ -183,8 +192,8 @@ func testSnapshot(t *testing.T, i int) {
 	wg := sync.WaitGroup{}
 
 	for i := 0; i < txCount; i++ {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			//fmt.Printf("tx:%d\t", i)
 			readKey := randKey()
 			writeKey := randKey()

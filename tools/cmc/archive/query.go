@@ -18,8 +18,8 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-go/tools/cmc/types"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/store"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/store"
 )
 
 func newQueryOffChainCMD() *cobra.Command {
@@ -46,7 +46,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 	return cmd
@@ -175,7 +175,7 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 	return cmd
@@ -189,7 +189,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 			if err != nil {
 				return err
 			}
@@ -244,7 +244,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 	return cmd
@@ -258,7 +258,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 			if err != nil {
 				return err
 			}
@@ -313,7 +313,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 	return cmd
@@ -347,7 +347,7 @@ func newQueryArchivedHeightOffChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest,
 	})
 	return cmd

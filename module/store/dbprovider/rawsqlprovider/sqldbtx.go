@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/store/types"
 )
 
 type SqlDBTx struct {
@@ -60,32 +60,43 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 		p.logger.Errorf("%v not a TableDMLGenerator", val)
 		return 0, errTypeConvert
 	}
-	update, args := value.GetUpdateSql()
-	p.logger.Debug("Exec sql:", update, args)
-	effect, err := p.db.Exec(update, args...)
+	countSql, args := value.GetCountSql()
+	p.logger.Debug("Query sql:", countSql, args)
+	row := p.db.QueryRow(countSql, args...)
+	if row.Err() != nil {
+		return 0, row.Err()
+	}
+	rowCount := int64(0)
+	err := row.Scan(&rowCount)
 	if err != nil {
-		p.logger.Error(err)
 		return 0, errSql
 	}
-	rowCount, err := effect.RowsAffected()
-	if err != nil {
-		p.logger.Error(err)
-		return 0, errSql
-	}
-	if rowCount != 0 {
-		return rowCount, nil
-	}
-	insert, args := value.GetInsertSql()
-	p.logger.Debug("Exec sql:", insert, args)
-	result, err := p.db.Exec(insert, args...)
-	if err != nil {
-		p.logger.Error(err)
-		return 0, errSql
-	}
-	rowCount, err = result.RowsAffected()
-	if err != nil {
-		p.logger.Error(err)
-		return 0, errSql
+	if rowCount == 0 { //数据库不存在对应数据，执行Insert操作
+		insert, args := value.GetInsertSql()
+		p.logger.Debug("Exec sql:", insert, args)
+		result, err := p.db.Exec(insert, args...)
+		if err != nil {
+			p.logger.Error(err)
+			return 0, errSql
+		}
+		rowCount, err = result.RowsAffected()
+		if err != nil {
+			p.logger.Error(err)
+			return 0, errSql
+		}
+	} else {
+		update, args := value.GetUpdateSql()
+		p.logger.Debug("Exec sql:", update, args)
+		effect, err := p.db.Exec(update, args...)
+		if err != nil {
+			p.logger.Error(err)
+			return 0, errSql
+		}
+		rowCount, err = effect.RowsAffected()
+		if err != nil {
+			p.logger.Error(err)
+			return 0, errSql
+		}
 	}
 	return rowCount, nil
 }

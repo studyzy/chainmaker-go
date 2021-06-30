@@ -370,18 +370,18 @@ func (sync *BlockChainSyncServer) validateAndCommitBlock(block *commonPb.Block) 
 	}
 	if err := sync.blockVerifier.VerifyBlock(block, protocol.SYNC_VERIFY); err != nil {
 		if err == commonErrors.ErrBlockHadBeenCommited {
-			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			sync.log.Warnf("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
 			return hasProcessed
 		}
-		sync.log.Errorf("fail to verify the block whose height is %d", block.Header.BlockHeight)
+		sync.log.Warnf("fail to verify the block whose height is %d, err: %s", block.Header.BlockHeight, err)
 		return validateFailed
 	}
 	if err := sync.blockCommitter.AddBlock(block); err != nil {
 		if err == commonErrors.ErrBlockHadBeenCommited {
-			sync.log.Infof("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
+			sync.log.Warnf("the block: %d has been committed in the blockChainStore ", block.Header.BlockHeight)
 			return hasProcessed
 		}
-		sync.log.Errorf("fail to commit the block whose height is %d", block.Header.BlockHeight)
+		sync.log.Warnf("fail to commit the block whose height is %d, err: %s", block.Header.BlockHeight, err)
 		return addErr
 	}
 	return ok

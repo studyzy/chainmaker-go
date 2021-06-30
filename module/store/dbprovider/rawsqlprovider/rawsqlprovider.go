@@ -10,9 +10,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,8 +17,11 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
+
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
 )
 
@@ -38,7 +38,7 @@ type SqlDBHandle struct {
 	log           protocol.Logger
 }
 
-func (p *SqlDBHandle) CompactRange(r util.Range) error {
+func (p *SqlDBHandle) CompactRange(start, limit []byte) error {
 	return errors.New("implement me")
 }
 
@@ -54,6 +54,7 @@ func ParseSqlDbType(str string) (types.EngineType, error) {
 }
 
 const UTF8_CHAR = "charset=utf8mb4"
+const DSN_ParseTime = "parseTime=True"
 
 func replaceMySqlDsn(dsn string, dbName string) string {
 	dsnPattern := regexp.MustCompile(
@@ -68,13 +69,16 @@ func replaceMySqlDsn(dsn string, dbName string) string {
 	start, end := matches[10], matches[11]
 	newDsn := dsn[:start] + dbName + dsn[end:]
 	if matches[12] == -1 {
-		return newDsn + "?" + UTF8_CHAR
+		return newDsn + "?" + UTF8_CHAR + "&" + DSN_ParseTime
 	}
 	par := dsn[matches[12]:]
-	if strings.Contains(par, "charset=") {
-		return newDsn
+	if !strings.Contains(par, "charset=") {
+		newDsn = newDsn + "&" + UTF8_CHAR
 	}
-	return newDsn + "&" + UTF8_CHAR
+	if !strings.Contains(par, "parseTime=") {
+		newDsn = newDsn + "&" + DSN_ParseTime
+	}
+	return newDsn
 }
 
 // NewSqlDBHandle construct a new SqlDBHandle
@@ -133,6 +137,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 			}
 			dbPath = filepath.Join(dbPath, "sqlite.db")
 		}
+		log.Debug("open a sqlite connect for path:", dbPath)
 		db, err := sql.Open("sqlite3", dbPath)
 		if err != nil {
 			log.Panicf("failed to open sqlite path:%s,get error:%s", dbPath, err)
@@ -144,6 +149,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 
 	log.Debug("inject ChainMaker logger into db logger.")
 	provider.log = log
+	provider.contextDbName = dbName
 	return provider
 }
 func (p *SqlDBHandle) createDatabase(dsn string, dbName string) error {
@@ -251,6 +257,7 @@ WHERE type='table' AND name='%s'`, obj.GetTableName())
 }
 func (p *SqlDBHandle) CreateTable(obj TableDDLGenerator) error {
 	sql := obj.GetCreateTableSql(p.dbType.LowerString())
+	p.log.Debug("Exec ddl:", sql, "database:", p.contextDbName)
 	_, err := p.db.Exec(sql)
 	if err != nil {
 		p.log.Error(err)
@@ -280,29 +287,41 @@ func (p *SqlDBHandle) Save(val interface{}) (int64, error) {
 		p.log.Errorf("%v not a TableDMLGenerator", val)
 		return 0, errTypeConvert
 	}
-	update, args := value.GetUpdateSql()
-	p.log.Debug("Exec sql:", update, args)
-	effect, err := p.db.Exec(update, args...)
+	countSql, args := value.GetCountSql()
+	p.log.Debug("Query sql:", countSql, args)
+	row := p.db.QueryRow(countSql, args...)
+	if row.Err() != nil {
+		return 0, row.Err()
+	}
+	rowCount := int64(0)
+	err := row.Scan(&rowCount)
 	if err != nil {
 		return 0, errSql
 	}
-	rowCount, err := effect.RowsAffected()
-	if err != nil {
-		return 0, errSql
+	if rowCount == 0 { //数据库不存在对应数据，执行Insert操作
+		insert, args := value.GetInsertSql()
+		p.log.Debug("Exec sql:", insert, args)
+		result, err := p.db.Exec(insert, args...)
+		if err != nil {
+			return 0, errSql
+		}
+		rowCount, err = result.RowsAffected()
+		if err != nil {
+			return 0, errSql
+		}
+	} else { //数据库存在，执行Update操作
+		update, args := value.GetUpdateSql()
+		p.log.Debug("Exec sql:", update, args)
+		effect, err := p.db.Exec(update, args...)
+		if err != nil {
+			return 0, errSql
+		}
+		rowCount, err = effect.RowsAffected()
+		if err != nil {
+			return 0, errSql
+		}
 	}
-	if rowCount != 0 {
-		return rowCount, nil
-	}
-	insert, args := value.GetInsertSql()
-	p.log.Debug("Exec sql:", insert, args)
-	result, err := p.db.Exec(insert, args...)
-	if err != nil {
-		return 0, errSql
-	}
-	rowCount, err = result.RowsAffected()
-	if err != nil {
-		return 0, errSql
-	}
+
 	return rowCount, nil
 }
 func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.SqlRow, error) {

@@ -18,18 +18,20 @@ import (
 
 // Storage interface for smart contracts, implement TxSimContext
 type txQuerySimContextImpl struct {
-	tx              *commonPb.Transaction
-	txResult        *commonPb.Result
-	txReadKeyMap    map[string]*commonPb.TxRead
-	txWriteKeyMap   map[string]*commonPb.TxWrite
-	txWriteKeySql   []*commonPb.TxWrite
-	blockchainStore protocol.BlockchainStore
-	vmManager       protocol.VmManager
-	gasUsed         uint64 // only for callContract
-	currentDepth    int
-	currentResult   []byte
-	hisResult       []*callContractResult
-	sqlRowCache     map[int32]protocol.SqlRows
+	tx               *commonPb.Transaction
+	txResult         *commonPb.Result
+	txReadKeyMap     map[string]*commonPb.TxRead
+	txWriteKeyMap    map[string]*commonPb.TxWrite
+	txWriteKeySql    []*commonPb.TxWrite
+	txWriteKeyDdlSql []*commonPb.TxWrite
+	blockchainStore  protocol.BlockchainStore
+	vmManager        protocol.VmManager
+	gasUsed          uint64 // only for callContract
+	currentDepth     int
+	currentResult    []byte
+	hisResult        []*callContractResult
+	sqlRowCache      map[int32]protocol.SqlRows
+	kvRowCache       map[int32]protocol.StateIterator
 }
 
 type callContractResult struct {
@@ -72,13 +74,16 @@ func (s *txQuerySimContextImpl) Put(contractName string, key []byte, value []byt
 	return nil
 }
 
-func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte) {
+func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	txWrite := &commonPb.TxWrite{
 		Key:          nil,
 		Value:        value,
 		ContractName: contractName,
 	}
 	s.txWriteKeySql = append(s.txWriteKeySql, txWrite)
+	if sqlType == protocol.SqlTypeDdl {
+		s.txWriteKeyDdlSql = append(s.txWriteKeyDdlSql, txWrite)
+	}
 }
 
 func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {
@@ -177,11 +182,16 @@ func (s *txQuerySimContextImpl) GetChainNodesInfoProvider() (protocol.ChainNodes
 	return s.vmManager.GetChainNodesInfoProvider(), nil
 }
 
-func (s *txQuerySimContextImpl) GetTxRWSet() *commonPb.TxRWSet {
+func (s *txQuerySimContextImpl) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	txRwSet := &commonPb.TxRWSet{
 		TxId:     s.tx.Header.TxId,
 		TxReads:  nil,
 		TxWrites: nil,
+	}
+	if !runVmSuccess {
+		// Query does not contain DDL
+		// txRwSet.TxWrites = append(txRwSet.TxWrites, s.txWriteKeyDdlSql...)
+		return txRwSet
 	}
 	for _, txRead := range s.txReadKeyMap {
 		txRwSet.TxReads = append(txRwSet.TxReads, txRead)
@@ -189,6 +199,7 @@ func (s *txQuerySimContextImpl) GetTxRWSet() *commonPb.TxRWSet {
 	for _, txWrite := range s.txWriteKeyMap {
 		txRwSet.TxWrites = append(txRwSet.TxWrites, txWrite)
 	}
+	txRwSet.TxWrites = append(txRwSet.TxWrites, s.txWriteKeySql...)
 	return txRwSet
 }
 
@@ -263,5 +274,14 @@ func (s *txQuerySimContextImpl) SetStateSqlHandle(index int32, rows protocol.Sql
 
 func (s *txQuerySimContextImpl) GetStateSqlHandle(index int32) (protocol.SqlRows, bool) {
 	data, ok := s.sqlRowCache[index]
+	return data, ok
+}
+
+func (s *txQuerySimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIterator) {
+	s.kvRowCache[index] = rows
+}
+
+func (s *txQuerySimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
+	data, ok := s.kvRowCache[index]
 	return data, ok
 }

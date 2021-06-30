@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blockkvdb"
@@ -30,7 +31,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statekvdb"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker/protocol"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -167,6 +167,12 @@ func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, conf
 	default:
 		return nil, nil
 	}
+
+	//Get and update archive pivot
+	if _, err := blockDB.GetArchivedPivot(); err != nil {
+		return nil, err
+	}
+
 	return blockDB, nil
 }
 

@@ -8,16 +8,19 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"testing"
 
 	"chainmaker.org/chainmaker-go/logger"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestProcessorReceivedBlocks(t *testing.T) {
-	ledger := NewMockLedgerCache(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	ledger := newMockLedgerCache(ctrl, &commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}})
 	mockVerifier := NewMockVerifyAndCommit(ledger)
 	processor := newProcessor(mockVerifier, ledger, logger.GetLogger(logger.MODULE_SYNC))
 
@@ -76,7 +79,9 @@ func TestProcessorReceivedBlocks(t *testing.T) {
 }
 
 func TestProcessorProcessBlockMsg(t *testing.T) {
-	ledger := NewMockLedgerCache(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	ledger := newMockLedgerCache(ctrl, &commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}})
 	mockVerifier := NewMockVerifyAndCommit(ledger)
 	processor := newProcessor(mockVerifier, ledger, logger.GetLogger(logger.MODULE_SYNC))
 
@@ -124,7 +129,9 @@ func TestProcessorProcessBlockMsg(t *testing.T) {
 }
 
 func TestDataDetection(t *testing.T) {
-	ledger := NewMockLedgerCache(&commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	ledger := newMockLedgerCache(ctrl, &commonPb.Block{Header: &commonPb.BlockHeader{BlockHeight: 100}})
 	mockVerifier := NewMockVerifyAndCommit(ledger)
 	processor := newProcessor(mockVerifier, ledger, logger.GetLogger(logger.MODULE_SYNC))
 

@@ -12,14 +12,14 @@ import (
 	"fmt"
 	"sync"
 
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
@@ -60,11 +60,12 @@ func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	if err != nil {
 		panic("init state sql db fail")
 	}
-	db.logger.Debug("try to create state db table: state_infos")
+	db.logger.Debug("try to create system state db table: state_infos")
 	err = db.db.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
 		panic("init state sql db table fail:" + err.Error())
 	}
+	db.logger.Debug("try to create system state db table: save_points")
 	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
 		panic("init state sql db table fail:" + err.Error())
@@ -172,15 +173,31 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
 			contractId.ContractName = address.String()
 		}
-		err = s.updateStateForContractInit(block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
+		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
+			err2 := s.db.RollbackDbTransaction(txKey)
+			if err2 != nil {
+				return err2
+			}
 			return err
 		}
-	}
-	//3. 不是新建合约，是普通的合约调用，则在事务中更新数据
-	for _, txRWSet := range txRWSets {
-		for _, txWrite := range txRWSet.TxWrites {
-			err = s.operateDbByWriteSet(dbTx, block, txWrite, processStateDbSqlOutside)
+	} else {
+		//3. 不是新建合约，是普通的合约调用，则在事务中更新数据
+		for _, txRWSet := range txRWSets {
+			for _, txWrite := range txRWSet.TxWrites {
+				err = s.operateDbByWriteSet(dbTx, block, txWrite, processStateDbSqlOutside)
+				if err != nil {
+					err2 := s.db.RollbackDbTransaction(txKey)
+					if err2 != nil {
+						return err2
+					}
+					return err
+				}
+			}
+		}
+		//3.5 处理BlockHeader中ConsensusArgs对应的合约状态数据更新
+		if len(block.Header.ConsensusArgs) > 0 {
+			err = s.updateConsensusArgs(dbTx, block)
 			if err != nil {
 				err2 := s.db.RollbackDbTransaction(txKey)
 				if err2 != nil {
@@ -188,17 +205,6 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 				}
 				return err
 			}
-		}
-	}
-	//3.5 处理BlockHeader中ConsensusArgs对应的合约状态数据更新
-	if len(block.Header.ConsensusArgs) > 0 {
-		err = s.updateConsensusArgs(dbTx, block)
-		if err != nil {
-			err2 := s.db.RollbackDbTransaction(txKey)
-			if err2 != nil {
-				return err2
-			}
-			return err
 		}
 	}
 	//4. 更新SavePoint
@@ -225,11 +231,15 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 			return err
 		}
 	}
-	if len(txWrite.Key) == 0 && !processStateDbSqlOutside { //是sql,而且没有在外面处理过，则在这里进行处理
-		sql := string(txWrite.Value)
-		if _, err := dbTx.ExecSql(sql); err != nil {
-			s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
-			return err
+	if len(txWrite.Key) == 0 { //是sql
+		if !processStateDbSqlOutside { // 没有在外面处理过，则在这里进行处理
+			sql := string(txWrite.Value)
+			if _, err := dbTx.ExecSql(sql); err != nil {
+				s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
+				return err
+			}
+		} else {
+			// nothing sql rw record in result db
 		}
 	} else {
 		stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
@@ -255,18 +265,12 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int6
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractId *commonPb.ContractId,
+func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.ContractId,
 	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
 	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
-	txKey := block.GetTxKey() + "_KV"
 	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
-	if err != nil {
-		return err
-	}
-	dbHandle := s.getContractDbHandle(contractId.ContractName)
-	dbTx, err := dbHandle.BeginDbTransaction(txKey)
 	if err != nil {
 		return err
 	}
@@ -282,13 +286,11 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 		if len(txWrite.Key) == 0 { //这是SQL语句
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
-				_, err = dbHandle.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
+				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
+				err = dbTx.ChangeContextDb(writeDbName)
+				_, err = dbTx.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
 				if err != nil {
 					s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
-					err2 := dbHandle.RollbackDbTransaction(txKey)
-					if err2 != nil {
-						return err2
-					} //前面开启的事务，这里还是需要回滚一下
 					return err
 				}
 			}
@@ -303,23 +305,11 @@ func (s *StateSqlDB) updateStateForContractInit(block *commonPb.Block, contractI
 			s.logger.Debugf("try save state key[%s] to db[%s]", txWrite.Key, writeDbName)
 			if err = saveStateInfo(dbTx, stateInfo); err != nil {
 				s.logger.Errorf("save state key[%s] to db[%s] get error:%s", txWrite.Key, writeDbName, err.Error())
-				err2 := dbHandle.RollbackDbTransaction(txKey)
-				if err2 != nil {
-					return err2
-				}
 				return err
 			}
 		}
 	}
-	err = dbTx.ChangeContextDb(dbName)
-	if err != nil {
-		return err
-	}
-	err = dbHandle.CommitDbTransaction(txKey)
-	if err != nil {
-		return err
-	}
-	s.logger.Debugf("chain[%s]: commit state block[%d]",
+	s.logger.Debugf("chain[%s]: save state block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 }
@@ -370,7 +360,7 @@ func (s *StateSqlDB) SelectObject(contractName string, startKey []byte, limit []
 	s.Lock()
 	defer s.Unlock()
 	db := s.getContractDbHandle(contractName)
-	sql := "select * from state_infos where object_key between ? and ?"
+	sql := "select * from state_infos where object_key >= ? and object_key  < ?"
 	rows, err := db.QueryMulti(sql, startKey, limit)
 	if err != nil {
 		return nil, err
@@ -481,6 +471,7 @@ func (s *StateSqlDB) CommitDbTransaction(txName string) error {
 func (s *StateSqlDB) RollbackDbTransaction(txName string) error {
 	s.Lock()
 	defer s.Unlock()
+	s.logger.Warnw("rollback db transaction:", txName)
 	return s.db.RollbackDbTransaction(txName)
 }
 

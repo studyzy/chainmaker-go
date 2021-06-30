@@ -158,8 +158,11 @@ func (h *LevelDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error
 }
 
 // CompactRange compacts the underlying DB for the given key range.
-func (h *LevelDBHandle) CompactRange(r util.Range) error {
-	return h.db.CompactRange(r)
+func (h *LevelDBHandle) CompactRange(start, limit []byte) error {
+	return h.db.CompactRange(util.Range{
+		Start: start,
+		Limit: limit,
+	})
 }
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges

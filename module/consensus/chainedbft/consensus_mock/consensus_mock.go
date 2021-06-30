@@ -436,6 +436,30 @@ type MockBlockchainStore struct {
 	rwMu sync.RWMutex
 }
 
+func (bs *MockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) GetArchivedPivot() uint64 {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (bs *MockBlockchainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
+}
+
 func NewMockMockBlockchainStore(gensis *commonPb.Block, cf *chainconf.ChainConf) *MockBlockchainStore {
 	bs := &MockBlockchainStore{
 		objectMap: make(map[string][]byte, 0),

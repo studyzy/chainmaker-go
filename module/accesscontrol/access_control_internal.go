@@ -301,6 +301,11 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
 	resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
 
+	//for private compute
+	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
+	resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+
 	// system contract interface resource definitions
 	resourceNamePolicyMap.Store(common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 

@@ -9,15 +9,15 @@ package rpcserver
 
 import (
 	"chainmaker.org/chainmaker-go/blockchain"
-	commonErr "chainmaker.org/chainmaker-go/common/errors"
+	commonErr "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	"chainmaker.org/chainmaker-go/protocol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native"
@@ -209,13 +209,15 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	}
 
 	ctx := &txQuerySimContextImpl{
-		tx:              tx,
-		txReadKeyMap:    map[string]*commonPb.TxRead{},
-		txWriteKeyMap:   map[string]*commonPb.TxWrite{},
-		txWriteKeySql:   make([]*commonPb.TxWrite, 0),
-		sqlRowCache:     make(map[int32]protocol.SqlRows, 0),
-		blockchainStore: store,
-		vmManager:       vmMgr,
+		tx:               tx,
+		txReadKeyMap:     map[string]*commonPb.TxRead{},
+		txWriteKeyMap:    map[string]*commonPb.TxWrite{},
+		txWriteKeySql:    make([]*commonPb.TxWrite, 0),
+		txWriteKeyDdlSql: make([]*commonPb.TxWrite, 0),
+		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		blockchainStore:  store,
+		vmManager:        vmMgr,
 	}
 
 	txResult, txStatusCode := vmMgr.RunContract(&commonPb.ContractId{ContractName: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Header.TxType)
@@ -230,7 +232,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
 			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
-		s.log.Error(errMsg)
+		s.log.Warn(errMsg)
 
 		resp.Code = txStatusCode
 		if txResult.Message == archive.ArchivedBlockError.Error() {
@@ -279,12 +281,14 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 	}
 
 	ctx := &txQuerySimContextImpl{
-		tx:            tx,
-		txReadKeyMap:  map[string]*commonPb.TxRead{},
-		txWriteKeyMap: map[string]*commonPb.TxWrite{},
-		txWriteKeySql: make([]*commonPb.TxWrite, 0),
-		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
-		vmManager:     vmMgr,
+		tx:               tx,
+		txReadKeyMap:     map[string]*commonPb.TxRead{},
+		txWriteKeyMap:    map[string]*commonPb.TxWrite{},
+		txWriteKeySql:    make([]*commonPb.TxWrite, 0),
+		txWriteKeyDdlSql: make([]*commonPb.TxWrite, 0),
+		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		vmManager:        vmMgr,
 	}
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)

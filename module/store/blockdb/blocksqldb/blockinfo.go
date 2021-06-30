@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package blocksqldb
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/json"
+	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"github.com/gogo/protobuf/proto"
@@ -81,6 +81,9 @@ func (b *BlockInfo) GetInsertSql() (string, []interface{}) {
 func (b *BlockInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE block_infos set chain_id=?" +
 		" WHERE block_height=?", []interface{}{b.ChainId, b.BlockHeight}
+}
+func (b *BlockInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM block_infos WHERE block_height=?", []interface{}{b.BlockHeight}
 }
 func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 	blockInfo := &BlockInfo{
@@ -157,26 +160,29 @@ func (b *BlockInfo) GetTxList() ([]string, error) {
 	}
 	return txList, nil
 }
+func (b *BlockInfo) GetBlockHeader() *commonPb.BlockHeader {
+	return &commonPb.BlockHeader{
+		ChainId:        b.ChainId,
+		BlockHeight:    b.BlockHeight,
+		PreBlockHash:   b.PreBlockHash,
+		BlockHash:      b.BlockHash,
+		PreConfHeight:  b.PreConfHeight,
+		BlockVersion:   b.BlockVersion,
+		DagHash:        b.DagHash,
+		RwSetRoot:      b.RwSetRoot,
+		TxRoot:         b.TxRoot,
+		BlockTimestamp: b.BlockTimestamp,
+		Proposer:       b.Proposer,
+		ConsensusArgs:  b.ConsensusArgs,
+		TxCount:        b.TxCount,
+		Signature:      b.Signature,
+	}
+}
 
 // GetBlock transfer the BlockInfo to commonPb.Block
 func (b *BlockInfo) GetBlock() (*commonPb.Block, error) {
 	block := &commonPb.Block{
-		Header: &commonPb.BlockHeader{
-			ChainId:        b.ChainId,
-			BlockHeight:    b.BlockHeight,
-			PreBlockHash:   b.PreBlockHash,
-			BlockHash:      b.BlockHash,
-			PreConfHeight:  b.PreConfHeight,
-			BlockVersion:   b.BlockVersion,
-			DagHash:        b.DagHash,
-			RwSetRoot:      b.RwSetRoot,
-			TxRoot:         b.TxRoot,
-			BlockTimestamp: b.BlockTimestamp,
-			Proposer:       b.Proposer,
-			ConsensusArgs:  b.ConsensusArgs,
-			TxCount:        b.TxCount,
-			Signature:      b.Signature,
-		},
+		Header: b.GetBlockHeader(),
 	}
 	if b.Dag != nil {
 		var dag commonPb.DAG

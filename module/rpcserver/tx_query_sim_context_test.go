@@ -35,6 +35,7 @@ func TestTxQuerySimContext(t *testing.T) {
 		txReadKeyMap:  make(map[string]*commonPb.TxRead, 8),
 		txWriteKeyMap: make(map[string]*commonPb.TxWrite, 8),
 		sqlRowCache:   make(map[int32]protocol.SqlRows, 0),
+		kvRowCache:    make(map[int32]protocol.StateIterator, 0),
 		txWriteKeySql: make([]*commonPb.TxWrite, 0),
 	}
 
@@ -52,7 +53,7 @@ func TestTxQuerySimContext(t *testing.T) {
 	require.Equal(t, string(v2), "V3")
 	require.Equal(t, string(v3), "V1")
 
-	set := txSimContextImpl.GetTxRWSet()
+	set := txSimContextImpl.GetTxRWSet(true)
 	require.Equal(t, len(set.TxWrites), 3)
 	require.Equal(t, len(set.TxReads), 3)
 

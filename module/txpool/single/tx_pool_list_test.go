@@ -14,9 +14,10 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,9 +65,11 @@ var testListLogName = "test_tx_list"
 func TestTxList_Put(t *testing.T) {
 	// 0. init source
 	txs := generateTxs(100, false)
-	blockChainStore := newMockBlockChainStore()
-	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore)
-	validateFunc := mockValidate(list, blockChainStore)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockStore := newMockBlockChainStore(ctrl)
+	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, mockStore.store)
+	validateFunc := mockValidate(list, mockStore.store)
 
 	// 1. put 30 rpc txs and check num in txList
 	list.Put(txs[:10], protocol.RPC, validateFunc)
@@ -87,7 +90,7 @@ func TestTxList_Put(t *testing.T) {
 
 	// 3. add txs in mockBlockChainStore
 	for _, tx := range txs[50:80] {
-		blockChainStore.txs[tx.Header.TxId] = tx
+		mockStore.txs[tx.Header.TxId] = tx
 	}
 
 	// 4. put txs[50:80] failed due to the txs has exist in blockchain when source = [RPC,P2P]
@@ -123,9 +126,11 @@ func TestTxList_Put(t *testing.T) {
 
 func TestTxList_Get(t *testing.T) {
 	txs := generateTxs(100, false)
-	blockChainStore := newMockBlockChainStore()
-	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore)
-	validateFunc := mockValidate(list, blockChainStore)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	blockChainStore := newMockBlockChainStore(ctrl)
+	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore.store)
+	validateFunc := mockValidate(list, blockChainStore.store)
 
 	// 1. put txs[:30] txs and check existence
 	list.Put(txs[:30], protocol.RPC, validateFunc)
@@ -155,9 +160,11 @@ func TestTxList_Get(t *testing.T) {
 
 func TestTxList_Has(t *testing.T) {
 	txs := generateTxs(100, false)
-	blockChainStore := newMockBlockChainStore()
-	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore)
-	validateFunc := mockValidate(list, blockChainStore)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	blockChainStore := newMockBlockChainStore(ctrl)
+	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore.store)
+	validateFunc := mockValidate(list, blockChainStore.store)
 
 	// 1. put txs[:30] txs and check existence
 	list.Put(txs[:30], protocol.RPC, validateFunc)
@@ -184,9 +191,11 @@ func TestTxList_Has(t *testing.T) {
 
 func TestTxList_Delete(t *testing.T) {
 	txs := generateTxs(100, false)
-	blockChainStore := newMockBlockChainStore()
-	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore)
-	validateFunc := mockValidate(list, blockChainStore)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	blockChainStore := newMockBlockChainStore(ctrl)
+	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore.store)
+	validateFunc := mockValidate(list, blockChainStore.store)
 
 	// 1. put txs[:30]
 	list.Put(txs[:30], protocol.RPC, validateFunc)
@@ -219,9 +228,11 @@ func TestTxList_Delete(t *testing.T) {
 
 func TestTxList_Fetch(t *testing.T) {
 	txs := generateTxs(100, false)
-	blockChainStore := newMockBlockChainStore()
-	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore)
-	validateFunc := mockValidate(list, blockChainStore)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	blockChainStore := newMockBlockChainStore(ctrl)
+	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore.store)
+	validateFunc := mockValidate(list, blockChainStore.store)
 
 	// 1. put txs[:30] and Fetch txs
 	list.Put(txs[:30], protocol.RPC, validateFunc)
@@ -263,9 +274,11 @@ func TestTxList_Fetch(t *testing.T) {
 
 func TestTxList_Fetch_Bench(t *testing.T) {
 	txs := generateTxs(1000000, false)
-	blockChainStore := newMockBlockChainStore()
-	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore)
-	validateFunc := mockValidate(list, blockChainStore)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	blockChainStore := newMockBlockChainStore(ctrl)
+	list := newTxList(logger.GetLogger(testListLogName), &sync.Map{}, blockChainStore.store)
+	validateFunc := mockValidate(list, blockChainStore.store)
 
 	// 1. put txs
 	beginPut := utils.CurrentTimeMillisSeconds()

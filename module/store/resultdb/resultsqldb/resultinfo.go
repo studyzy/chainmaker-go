@@ -54,6 +54,9 @@ func (b *ResultInfo) GetUpdateSql() (string, []interface{}) {
 			" WHERE tx_id=?",
 		[]interface{}{b.BlockHeight, b.TxIndex, b.Rwset, b.Status, b.Result, b.Message, b.TxId}
 }
+func (b *ResultInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM result_infos WHERE tx_id=?", []interface{}{b.TxId}
+}
 
 // NewResultInfo construct a new HistoryInfo
 func NewResultInfo(txid string, blockHeight int64, txIndex int, result *commonpb.ContractResult,

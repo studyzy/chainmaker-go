@@ -1,9 +1,9 @@
 package rpcserver
 
 import (
-	commonErr "chainmaker.org/chainmaker-go/common/errors"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonErr "chainmaker.org/chainmaker/common/errors"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"fmt"
 	"github.com/golang/protobuf/proto"
 )

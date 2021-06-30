@@ -8,11 +8,11 @@ package historysqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker/protocol"
 )
 
 // HistorySqlDB provider a implementation of `history.HistoryDB`
@@ -87,6 +87,9 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	}
 	for _, txRWSet := range txRWSets {
 		for _, w := range txRWSet.TxWrites {
+			if len(w.Key) == 0 {
+				continue
+			}
 			historyInfo := NewStateHistoryInfo(w.ContractName, txRWSet.TxId, w.Key, uint64(block.Header.BlockHeight))
 			_, err = dbtx.Save(historyInfo)
 			if err != nil {

@@ -241,7 +241,8 @@ func (p *BatchTxPool) createCommonTxBatch() {
 		TxIdsMap: txIds,
 		Size_:    int32(len(txs)),
 	}
-	p.log.Infof("create txBatch size: %d, batchId: %d, txMapLen: %d, txsLen: %d", batch.Size(), batch.BatchId, len(batch.TxIdsMap), len(batch.Txs))
+	p.log.Infof("create txBatch size: %d, batchId: %d, txMapLen: %d, txsLen: %d, totalTxCount: %d",
+		batch.Size(), batch.BatchId, len(batch.TxIdsMap), len(batch.Txs), atomic.LoadInt32(&p.currentTxCount)+int32(batch.Size()))
 
 	var (
 		err      error

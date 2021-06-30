@@ -7,16 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package proposer
 //
 //import (
-//	"chainmaker.org/chainmaker-go/common/random/uuid"
+//	"chainmaker.org/chainmaker/common/random/uuid"
 //	"chainmaker.org/chainmaker-go/core/cache"
 //	"chainmaker.org/chainmaker-go/localconf"
 //	"chainmaker.org/chainmaker-go/logger"
-//	"chainmaker.org/chainmaker-go/mock"
-//	acpb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-//	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-//	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
-//	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-//	txpoolpb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
+//	"chainmaker.org/chainmaker/protocol/mock"
+//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+//	commonpb "chainmaker.org/chainmaker/pb-go/common"
+//	configpb "chainmaker.org/chainmaker/pb-go/config"
+//	"chainmaker.org/chainmaker/pb-go/consensus"
+//	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
 //	"chainmaker.org/chainmaker-go/utils"
 //	"crypto/sha256"
 //	"fmt"

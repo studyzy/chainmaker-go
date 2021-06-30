@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker-go/store/archive"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/binlog"
@@ -27,7 +30,7 @@ import (
 	"github.com/tidwall/wal"
 )
 
-var chainId = "testchain1"
+var chainId = "ut1"
 
 //var dbType = types.MySQL
 //var dbType = types.LevelDb
@@ -75,8 +78,15 @@ func getSqlConfig() *localconf.StorageConfig {
 		Provider:    "sql",
 		SqlDbConfig: sqlconfig,
 	}
+	statedbConfig := &localconf.DbConfig{
+		Provider: "sql",
+		SqlDbConfig: &localconf.SqlDbConfig{
+			SqlDbType: "sqlite",
+			Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond())),
+		},
+	}
 	conf.BlockDbConfig = dbConfig
-	conf.StateDbConfig = dbConfig
+	conf.StateDbConfig = statedbConfig
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
 	conf.ContractEventDbConfig = dbConfig
@@ -88,7 +98,7 @@ func getMysqlConfig() *localconf.StorageConfig {
 	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	var sqlconfig = &localconf.SqlDbConfig{
 		SqlDbType: "mysql",
-		Dsn:       "root:123456@tcp(127.0.0.1)/",
+		Dsn:       "root:123@tcp(9.135.110.53)/",
 	}
 
 	dbConfig := &localconf.DbConfig{
@@ -103,9 +113,11 @@ func getMysqlConfig() *localconf.StorageConfig {
 
 	return conf
 }
-func getlvldbConfig() *localconf.StorageConfig {
+func getlvldbConfig(path string) *localconf.StorageConfig {
 	conf := &localconf.StorageConfig{}
-	path := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	if path == "" {
+		path = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	}
 	conf.StorePath = path
 
 	lvlConfig := &localconf.LevelDbConfig{
@@ -194,13 +206,46 @@ func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 
 	return block
 }
+
+func createConfBlock(chainId string, height int64) *commonPb.Block {
+	block := &commonPb.Block{
+		Header: &commonPb.BlockHeader{
+			ChainId:     chainId,
+			BlockHeight: height,
+		},
+		Txs: []*commonPb.Transaction{
+			{
+				Header: &commonPb.TxHeader{
+					ChainId: chainId,
+					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
+					TxId:    generateTxId(chainId, height, 0),
+					Sender: &acPb.SerializedMember{
+						OrgId: "org1",
+					},
+				},
+				Result: &commonPb.Result{
+					Code: commonPb.TxStatusCode_SUCCESS,
+					ContractResult: &commonPb.ContractResult{
+						Result: []byte("ok"),
+					},
+				},
+			},
+		},
+	}
+
+	block.Header.BlockHash = generateBlockHash(chainId, height)
+	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+
+	return block
+}
+
 func createContractMgrPayload() []byte {
 	p := commonPb.ContractMgmtPayload{
 		ChainId: chainId,
 		ContractId: &commonPb.ContractId{
 			ContractName:    defaultContractName,
 			ContractVersion: "1.0",
-			RuntimeType:     commonPb.RuntimeType_EVM,
+			RuntimeType:     commonPb.RuntimeType_WASMER,
 		},
 		Method:      "create",
 		Parameters:  nil,
@@ -253,6 +298,24 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
+func createConfBlockAndRWSets(chainId string, height int64) (*commonPb.Block, []*commonPb.TxRWSet) {
+	block := createConfBlock(chainId, height)
+	txRWSets := []*commonPb.TxRWSet{
+		{
+			TxId: block.Txs[0].Header.TxId,
+			TxWrites: []*commonPb.TxWrite{
+				{
+					Key:          []byte("key_0"),
+					Value:        []byte("value_0"),
+					ContractName: defaultContractName,
+				},
+			},
+		},
+	}
+
+	return block, txRWSets
+}
+
 var log = &test.GoLogger{}
 
 //func TestMain(m *testing.M) {
@@ -281,7 +344,7 @@ func Test_blockchainStoreImpl_GetBlockSqlDb(t *testing.T) {
 	testBlockchainStoreImpl_GetBlock(t, config1)
 }
 func Test_blockchainStoreImpl_GetBlockLevledb(t *testing.T) {
-	testBlockchainStoreImpl_GetBlock(t, getlvldbConfig())
+	testBlockchainStoreImpl_GetBlock(t, getlvldbConfig(""))
 }
 func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
 	var funcName = "get block"
@@ -348,6 +411,8 @@ func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.False(t, exist)
 }
+
+//初始化数据库：0创世区块，1合约创建区块，2-5合约调用区块
 func init5Blocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
@@ -364,8 +429,21 @@ func init5Blocks(s protocol.BlockchainStore) {
 }
 func init5ContractBlocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
+	genesis.TxRWSets = []*commonPb.TxRWSet{
+		{
+			TxWrites: []*commonPb.TxWrite{
+				{
+					Key:          []byte("key1"),
+					Value:        []byte("value1"),
+					ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+				},
+			},
+		},
+	}
+
 	s.InitGenesis(genesis)
 	b, rw := createInitContractBlockAndRWSets(chainId, 1)
+	fmt.Println("Is contract?", b.IsContractMgmtBlock())
 	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
 	s.PutBlock(b, rw)
@@ -513,7 +591,7 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 	var factory Factory
 	s, err := factory.newStore(chainId, getSqlConfig(), binlog.NewMemBinlog(), log)
 	defer s.Close()
-	init5Blocks(s)
+	init5ContractBlocks(s)
 	assert.Equal(t, nil, err)
 
 	iter, err := s.SelectObject(defaultContractName, []byte("key_2"), []byte("key_4"))
@@ -522,10 +600,11 @@ func Test_blockchainStoreImpl_SelectObject(t *testing.T) {
 	var count = 0
 	for iter.Next() {
 		count++
-		kv, _ := iter.Value()
+		kv, e := iter.Value()
+		assert.Nil(t, e)
 		t.Logf("key:%s, value:%s\n", string(kv.Key), string(kv.Value))
 	}
-	assert.Equal(t, 3, count)
+	assert.Equal(t, 2, count)
 }
 
 func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
@@ -554,7 +633,7 @@ func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 
 func Test_blockchainStoreImpl_getLastSavepoint(t *testing.T) {
 	var factory Factory
-	s, err := factory.newStore(chainId, config1, binlog.NewMemBinlog(), log)
+	s, err := factory.newStore(chainId, getSqlConfig(), binlog.NewMemBinlog(), log)
 	defer s.Close()
 	init5Blocks(s)
 	assert.Equal(t, nil, err)
@@ -638,7 +717,7 @@ func Test_blockchainStoreImpl_GetBlockWith100Tx(t *testing.T) {
 func Test_blockchainStoreImpl_recovory(t *testing.T) {
 	var factory Factory
 	blog := binlog.NewMemBinlog()
-	ldbConfig := getlvldbConfig()
+	ldbConfig := getlvldbConfig("")
 	s, err := factory.newStore(chainId, ldbConfig, blog, log)
 	//defer s.Close()
 	assert.Equal(t, nil, err)
@@ -744,3 +823,196 @@ func TestWriteBinlog(t *testing.T) {
 //	}
 //	defer db.Close()
 //}
+
+func Test_blockchainStoreImpl_Mysql_Archive(t *testing.T) {
+	var factory Factory
+	s, err := factory.newStore(chainId, getSqlConfig(), binlog.NewMemBinlog(), log)
+	assert.Equal(t, nil, err)
+	defer s.Close()
+
+	err = s.ArchiveBlock(0)
+	assert.Equal(t, nil, err)
+
+	err = s.RestoreBlocks(nil)
+	assert.Equal(t, nil, err)
+
+	archivedPivot := s.GetArchivedPivot()
+	assert.True(t, archivedPivot == 0)
+}
+
+
+func Test_blockchainStoreImpl_Archive(t *testing.T) {
+	var factory Factory
+	dbConf := getlvldbConfig("")
+	dbConf.UnArchiveBlockHeight = 10
+	s, err := factory.NewStore(chainId, dbConf, log)
+	assert.Equal(t, nil, err)
+	defer s.Close()
+
+	totalHeight := 60
+	archiveHeight1 := 27
+	archiveHeight2 := 30
+	archiveHeight3 := 43
+
+	//Prepare block data
+	blocks := make([]*commonPb.Block, 0, totalHeight)
+	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
+	for i := 0; i < totalHeight; i++ {
+		var (
+			block   *commonPb.Block
+			txRWSet []*commonPb.TxRWSet
+		)
+
+		if i%5 == 0 {
+			block, txRWSet = createConfBlockAndRWSets(chainId, int64(i))
+		} else {
+			block, txRWSet = createBlockAndRWSets(chainId, int64(i), 10)
+		}
+
+		err = s.PutBlock(block, txRWSet)
+		assert.Equal(t, nil, err)
+		blocks = append(blocks, block)
+		txRWSetMp[block.Header.BlockHeight] = txRWSet
+	}
+
+	verifyArchive(t, 0, blocks, s)
+
+	//archive block height1
+	err = s.ArchiveBlock(uint64(archiveHeight1))
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
+
+	verifyArchive(t, 10, blocks, s)
+
+	//archive block height2 which is a config block
+	err1 := s.ArchiveBlock(uint64(archiveHeight2))
+	assert.True(t, err1 == archive.ConfigBlockArchiveError)
+	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
+
+	verifyArchive(t, 15, blocks, s)
+
+	//archive block height3
+	err = s.ArchiveBlock(uint64(archiveHeight3))
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight3), s.GetArchivedPivot())
+
+	verifyArchive(t, 25, blocks, s)
+
+	//Prepare restore data
+	blocksBytes := make([][]byte, 0, archiveHeight3-archiveHeight2+1)
+	for i := archiveHeight2; i <= archiveHeight3; i++ {
+		blockBytes, _, err5 := serialization.SerializeBlock(&storePb.BlockWithRWSet{
+			Block:          blocks[i],
+			TxRWSets:       txRWSetMp[blocks[i].Header.BlockHeight],
+			ContractEvents: nil,
+		})
+
+		assert.Equal(t, nil, err5)
+		blocksBytes = append(blocksBytes, blockBytes)
+	}
+
+	//restore block
+	err = s.RestoreBlocks(blocksBytes)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(archiveHeight2-1), s.GetArchivedPivot())
+
+	verifyArchive(t, 10, blocks, s)
+
+	//wait kvdb compactrange
+	time.Sleep(5 * time.Second)
+}
+
+func verifyArchive(t *testing.T, confHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
+	archivedPivot := s.GetArchivedPivot()
+
+	if archivedPivot == 0 {
+		verifyUnarchivedHeight(t, archivedPivot, blocks, s)
+		verifyUnarchivedHeight(t, archivedPivot+1, blocks, s)
+		return
+	}
+
+	//verify store apis: archived height
+	verifyArchivedHeight(t, archivedPivot-1, blocks, s)
+
+	//verify store apis: archivedPivot height
+	verifyArchivedHeight(t, archivedPivot, blocks, s)
+
+	//verify store apis: conf block height
+	verifyUnarchivedHeight(t, confHeight, blocks, s)
+
+	//verify store apis: unarchived height
+	verifyUnarchivedHeight(t, archivedPivot+1, blocks, s)
+}
+
+func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
+	avBlk := blocks[avBlkHeight]
+	vbHeight, err1 := s.GetHeightByHash(avBlk.Header.BlockHash)
+	assert.True(t, err1 == nil)
+	assert.Equal(t, vbHeight, avBlkHeight)
+
+	header, err2 := s.GetBlockHeaderByHeight(avBlk.Header.BlockHeight)
+	assert.True(t, err2 == nil)
+	assert.True(t, bytes.Equal(header.BlockHash, avBlk.Header.BlockHash))
+
+	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Header.TxId)
+	assert.True(t, err4 == nil)
+	assert.Equal(t, vtHeight, avBlkHeight)
+
+	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Header.TxId)
+	assert.True(t, err5 == nil)
+	assert.Equal(t, avBlk.Header.ChainId, vtBlk.Header.ChainId)
+
+	vttx, err6 := s.GetTx(avBlk.Txs[0].Header.TxId)
+	assert.True(t, err6 == nil)
+	assert.Equal(t, avBlk.Header.ChainId, vttx.Header.ChainId)
+
+	vtBlk2, err7 := s.GetBlockByHash(avBlk.Hash())
+	assert.True(t, err7 == nil)
+	assert.Equal(t, avBlk.Header.ChainId, vtBlk2.Header.ChainId)
+
+	vtBlkRW, err8 := s.GetBlockWithRWSets(avBlk.Header.BlockHeight)
+	assert.True(t, err8 == nil)
+	assert.Equal(t, avBlk.Header.ChainId, vtBlkRW.Block.Header.ChainId)
+
+	vtBlkRWs, err9 := s.GetTxRWSetsByHeight(avBlk.Header.BlockHeight)
+	assert.True(t, err9 == nil)
+	assert.Equal(t, len(avBlk.Txs), len(vtBlkRWs))
+	if len(avBlk.Txs) > 0 {
+		assert.Equal(t, avBlk.Txs[0].Header.TxId, vtBlkRWs[0].TxId)
+	}
+}
+
+func verifyArchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.Block, s protocol.BlockchainStore) {
+	avBlk := blocks[avBlkHeight]
+	vbHeight, err1 := s.GetHeightByHash(avBlk.Header.BlockHash)
+	assert.True(t, err1 == nil)
+	assert.Equal(t, vbHeight, avBlkHeight)
+
+	header, err2 := s.GetBlockHeaderByHeight(avBlk.Header.BlockHeight)
+	assert.True(t, err2 == nil)
+	assert.True(t, bytes.Equal(header.BlockHash, avBlk.Header.BlockHash))
+
+	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Header.TxId)
+	assert.True(t, err4 == nil)
+	assert.Equal(t, vtHeight, avBlkHeight)
+
+	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Header.TxId)
+	assert.True(t, archive.ArchivedBlockError == err5)
+	assert.True(t, vtBlk == nil)
+
+	vttx, err6 := s.GetTx(avBlk.Txs[0].Header.TxId)
+	assert.True(t, archive.ArchivedTxError == err6)
+	assert.True(t, vttx == nil)
+
+	vtBlk2, err7 := s.GetBlockByHash(avBlk.Hash())
+	assert.True(t, archive.ArchivedBlockError == err7)
+	assert.True(t, vtBlk2 == nil)
+
+	vtBlkRW, err8 := s.GetBlockWithRWSets(avBlk.Header.BlockHeight)
+	assert.True(t, archive.ArchivedBlockError == err8)
+	assert.True(t, vtBlkRW == nil)
+
+	vtBlkRWs, err9 := s.GetTxRWSetsByHeight(avBlk.Header.BlockHeight)
+	assert.True(t, archive.ArchivedRWSetError == err9)
+	assert.True(t, vtBlkRWs == nil)
+}

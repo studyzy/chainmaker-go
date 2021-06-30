@@ -19,11 +19,11 @@ func TestReplaceMySqlDsn(t *testing.T) {
 		dbName string
 		result string
 	}{
-		{dsn: "root:123456@tcp(127.0.0.1:3306)/", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4"},
-		{dsn: "root:123456@tcp(127.0.0.1)/", dbName: "db1", result: "root:123456@tcp(127.0.0.1)/db1?charset=utf8mb4"},
-		{dsn: "root:123456@tcp(localhost)/", dbName: "db1", result: "root:123456@tcp(localhost)/db1?charset=utf8mb4"},
-		{dsn: "root:123456@tcp(127.0.0.1:3306)/mysql", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4"},
-		{dsn: "root:123456@tcp(127.0.0.1:3306)/mysql?charset=utf8mb4", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4"},
+		{dsn: "root:123456@tcp(127.0.0.1:3306)/", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4&parseTime=True"},
+		{dsn: "root:123456@tcp(127.0.0.1)/", dbName: "db1", result: "root:123456@tcp(127.0.0.1)/db1?charset=utf8mb4&parseTime=True"},
+		{dsn: "root:123456@tcp(localhost)/", dbName: "db1", result: "root:123456@tcp(localhost)/db1?charset=utf8mb4&parseTime=True"},
+		{dsn: "root:123456@tcp(127.0.0.1:3306)/mysql", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4&parseTime=True"},
+		{dsn: "root:123456@tcp(127.0.0.1:3306)/mysql?charset=utf8mb4", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4&parseTime=True"},
 		{dsn: "root:123456@tcp(127.0.0.1:3306)/mysql?parseTime=True&loc=Local", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?parseTime=True&loc=Local&charset=utf8mb4"},
 		{dsn: "root:123456@tcp(127.0.0.1:3306)/mysql?charset=utf8mb4&parseTime=True&loc=Local", dbName: "db1", result: "root:123456@tcp(127.0.0.1:3306)/db1?charset=utf8mb4&parseTime=True&loc=Local"},
 	}

@@ -2,9 +2,9 @@ package common
 //
 //import (
 //	"chainmaker.org/chainmaker-go/logger"
-//	"chainmaker.org/chainmaker-go/mock"
-//	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-//	"chainmaker.org/chainmaker-go/pb/protogo/config"
+//	"chainmaker.org/chainmaker/protocol/mock"
+//	commonpb "chainmaker.org/chainmaker/pb-go/common"
+//	"chainmaker.org/chainmaker/pb-go/config"
 //	"encoding/hex"
 //	"fmt"
 //	"github.com/golang/mock/gomock"

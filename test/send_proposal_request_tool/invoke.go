@@ -31,7 +31,7 @@ func InvokeCMD() *cobra.Command {
 	flags.StringVarP(&pairsFile, "pairs-file", "A", "./pairs.json", "specify pairs file, if used, set --pairs=\"\"")
 	flags.StringVarP(&method, "method", "m", "increase", "specify contract method")
 	flags.Int32VarP(&runTime, "run-time", "", int32(commonPb.RuntimeType_GASM), "run-time")
-	flags.StringVarP(&abiPath, "api-path", "", "", "specify wasm path")
+	flags.StringVarP(&abiPath, "abi-path", "", "", "specify wasm path")
 
 	return cmd
 }
@@ -55,11 +55,14 @@ func invoke() error {
 
 	testCode := commonPb.TxStatusCode_SUCCESS
 	var testMessage string
-	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime))
+	var abiData *[]byte
+	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 	if err != nil {
 		testCode = commonPb.TxStatusCode_CONTRACT_FAIL
 		testMessage = "make pairs filure!"
 	} else {
+		fmt.Println("pairs: ", pairs, ", method: ", method)
+
 		payloadBytes, err := constructPayload(contractName, method, pairs)
 		if err != nil {
 			return err

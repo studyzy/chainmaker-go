@@ -7,15 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 	"sync"
 
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 
@@ -93,7 +94,15 @@ type TxContextMockTest struct {
 	cacheMap map[string][]byte
 }
 
-func (s *TxContextMockTest) PutRecord(contractName string, value []byte) {
+func (s *TxContextMockTest) SetStateKvHandle(i int32, iterator protocol.StateIterator) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetStateKvHandle(i int32) (protocol.StateIterator, bool) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
 
@@ -235,7 +244,7 @@ func (s *TxContextMockTest) SetTxResult(txResult *commonPb.Result) {
 	panic("implement me")
 }
 
-func (TxContextMockTest) GetTxRWSet() *commonPb.TxRWSet {
+func (TxContextMockTest) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	return &commonPb.TxRWSet{
 		TxId:     "txId",
 		TxReads:  nil,
@@ -287,6 +296,34 @@ func BaseParam(parameters map[string]string) {
 }
 
 type mockBlockchainStore struct {
+}
+
+func (m mockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetLastChainConfig() (*configPb.ChainConfig, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetTxHeight(txId string) (uint64, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetArchivedPivot() uint64 {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) ArchiveBlock(archiveHeight uint64) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) RestoreBlocks(serializedBlocks [][]byte) error {
+	panic("implement me")
 }
 
 func (m mockBlockchainStore) QuerySingle(contractName, sql string, values ...interface{}) (protocol.SqlRow, error) {

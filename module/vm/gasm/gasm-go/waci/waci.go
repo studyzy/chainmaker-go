@@ -9,6 +9,7 @@ waci: WebAssembly Chainmaker Interface
 package waci
 
 import (
+	"chainmaker.org/chainmaker-go/wasi"
 	"fmt"
 	"reflect"
 
@@ -17,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/wasi"
 )
 
 const WaciModuleName = "env"
@@ -42,13 +42,13 @@ type WaciInstance struct {
 func (s *WaciInstance) LogMsg(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(msgPtr int32, msgLen int32) {
 		msg := vm.Memory[msgPtr : msgPtr+msgLen]
-		s.Log.Debugf("waci log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, msg)
+		s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, msg)
 	})
 }
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Log.Debugf("waci log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -56,7 +56,7 @@ func (s *WaciInstance) LogMessage() int32 {
 func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(requestHeaderPtr int32, requestHeaderLen int32, requestBodyPtr int32, requestBodyLen int32) int32 {
 		if requestHeaderLen == 0 {
-			s.Log.Errorf("waci log>>[%s] requestHeader is null.", s.TxSimContext.GetTx().Header.TxId)
+			s.Log.Errorf("gasm log>> [%s] requestHeader is null.", s.TxSimContext.GetTx().Header.TxId)
 			return protocol.ContractSdkSignalResultFail
 		}
 
@@ -89,10 +89,16 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.CallContractLen()
 		case protocol.ContractMethodEmitEvent:
 			return s.EmitEvent()
+		// paillier
 		case protocol.ContractMethodGetPaillierOperationResultLen:
 			return s.GetPaillierResultLen()
 		case protocol.ContractMethodGetPaillierOperationResult:
 			return s.GetPaillierResult()
+		// bulletproofs
+		case protocol.ContractMethodGetBulletproofsResultLen:
+			return s.GetBulletProofsResultLen()
+		case protocol.ContractMethodGetBulletproofsResult:
+			return s.GetBulletProofsResult()
 		// kv
 		case protocol.ContractMethodGetStateLen:
 			return s.GetStateLen()
@@ -102,6 +108,19 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 			return s.PutState()
 		case protocol.ContractMethodDeleteState:
 			return s.DeleteState()
+		//kv author:whang1234
+		case protocol.ContractMethodKvIterator:
+			return s.KvIterator()
+		case protocol.ContractMethodKvPreIterator:
+			return s.KvPreIterator()
+		case protocol.ContractMethodKvIteratorHasNext:
+			return s.KvIteratorHasNext()
+		case protocol.ContractMethodKvIteratorNextLen:
+			return s.KvIteratorNextLen()
+		case protocol.ContractMethodKvIteratorNext:
+			return s.KvIteratorNext()
+		case protocol.ContractMethodKvIteratorClose:
+			return s.KvIteratorClose()
 		//sql
 		case protocol.ContractMethodExecuteUpdate:
 			return s.ExecuteUpdate()
@@ -126,6 +145,26 @@ func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 		}
 		return protocol.ContractSdkSignalResultFail
 	})
+}
+
+// GetBulletProofsResultLen get bulletproofs operation result length from chain
+func (s *WaciInstance) GetBulletProofsResultLen() int32 {
+	return s.getBulletProofsResultCore(true)
+}
+
+// GetBulletProofsResult get bulletproofs operation result from chain
+func (s *WaciInstance) GetBulletProofsResult() int32 {
+	return s.getBulletProofsResultCore(false)
+}
+
+func (s *WaciInstance) getBulletProofsResultCore(isLen bool) int32 {
+	data, err := wacsi.BulletProofsOperation(s.RequestBody, s.Vm.Memory, s.GetStateCache, isLen)
+	s.GetStateCache = data // reset data
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
 }
 
 // EmitEvent emit event to chain
@@ -198,6 +237,6 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.ContractResult.Message += "error message: " + msg
 	}
 	s.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Log.Errorf("gasm log>> [%s] %s", s.ContractId.ContractName, msg)
+	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, s.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }

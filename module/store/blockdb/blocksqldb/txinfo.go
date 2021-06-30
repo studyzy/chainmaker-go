@@ -64,6 +64,9 @@ func (t *TxInfo) GetInsertSql() (string, []interface{}) {
 func (t *TxInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE tx_infos SET chain_id=? WHERE tx_id=?", []interface{}{t.ChainId, t.TxId}
 }
+func (b *TxInfo) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM tx_infos WHERE tx_id=?", []interface{}{b.TxId}
+}
 
 // NewTxInfo construct new `TxInfo`
 func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, offset uint32) (*TxInfo, error) {

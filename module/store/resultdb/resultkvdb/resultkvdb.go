@@ -7,16 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package resultkvdb
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"encoding/binary"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"encoding/binary"
-	"fmt"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
-	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const (
@@ -90,7 +90,7 @@ func (h *ResultKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializ
 
 		//check whether block can be archived
 		if utils.IsConfBlock(blockInfo.Block) {
-			h.Logger.Warnf("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
+			h.Logger.Infof("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
 			continue
 		}
 
@@ -194,9 +194,9 @@ func constructTxRWSetIDKey(txId string) []byte {
 
 func (h *ResultKvDB) compactRange() {
 	//trigger level compact
-	for i:= 1; i <= 1; i ++ {
+	for i := 1; i <= 1; i++ {
 		h.Logger.Infof("Do %dst time CompactRange", i)
-		if err := h.DbHandle.CompactRange(util.Range{Start: nil, Limit: nil}); err != nil {
+		if err := h.DbHandle.CompactRange(nil, nil); err != nil {
 			h.Logger.Warnf("resultdb level compact failed: %v", err)
 		}
 		//time.Sleep(2 * time.Second)

@@ -81,6 +81,7 @@ type ConsensusTBFTImpl struct {
 	logger           *logger.CMLogger
 	chainID          string
 	Id               string
+	dpos             protocol.DPoS
 	singer           protocol.SigningMember
 	ac               protocol.AccessControlProvider
 	dbHandle         protocol.DBHandle
@@ -102,7 +103,7 @@ type ConsensusTBFTImpl struct {
 	timeScheduler *timeScheduler
 	verifingBlock *common.Block // verifing block
 
-	proposedBlockC chan *common.Block
+	proposedBlockC chan *consensuspb.ProposalBlock
 	verifyResultC  chan *consensuspb.VerifyResult
 	blockHeightC   chan int64
 	externalMsgC   chan *tbftpb.TBFTMsg
@@ -119,6 +120,7 @@ type ConsensusTBFTImpl struct {
 type ConsensusTBFTImplConfig struct {
 	ChainID     string
 	Id          string
+	Dpos        protocol.DPoS
 	Signer      protocol.SigningMember
 	Ac          protocol.AccessControlProvider
 	DbHandle    protocol.DBHandle
@@ -143,6 +145,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 	consensus.chainConf = config.ChainConf
 	consensus.netService = config.NetService
 	consensus.msgbus = config.MsgBus
+	consensus.dpos = config.Dpos
 	consensus.closeC = make(chan struct{})
 
 	consensus.waldir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, walDir)
@@ -152,7 +155,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 	}
 	consensus.heightFirstIndex = 0
 
-	consensus.proposedBlockC = make(chan *common.Block, defaultChanCap)
+	consensus.proposedBlockC = make(chan *consensuspb.ProposalBlock, defaultChanCap)
 	consensus.verifyResultC = make(chan *consensuspb.VerifyResult, defaultChanCap)
 	consensus.blockHeightC = make(chan int64, defaultChanCap)
 	consensus.externalMsgC = make(chan *tbftpb.TBFTMsg, defaultChanCap)
@@ -226,8 +229,8 @@ func (consensus *ConsensusTBFTImpl) OnMessage(message *msgbus.Message) {
 
 	switch message.Topic {
 	case msgbus.ProposedBlock:
-		if block, ok := message.Payload.(*common.Block); ok {
-			consensus.proposedBlockC <- block
+		if proposedBlock, ok := message.Payload.(*consensuspb.ProposalBlock); ok {
+			consensus.proposedBlockC <- proposedBlock
 		}
 	case msgbus.VerifyResult:
 		if verifyResult, ok := message.Payload.(*consensuspb.VerifyResult); ok {
@@ -291,8 +294,15 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 
 	consensus.TimeoutPropose = timeoutPropose
 	consensus.TimeoutProposeDelta = timeoutProposeDelta
-	consensus.validatorSet.updateBlocksPerProposer(tbftBlocksPerProposer)
-
+	if consensus.chainConf.ChainConfig().Consensus.Type == consensuspb.ConsensusType_DPOS {
+		consensus.logger.Debugf("enter dpos to get proposers ...")
+		if validators, err = consensus.dpos.GetValidators(); err != nil {
+			return nil, nil, err
+		}
+	} else {
+		consensus.logger.Debugf("enter tbft to get proposers ...")
+		consensus.validatorSet.updateBlocksPerProposer(tbftBlocksPerProposer)
+	}
 	return consensus.validatorSet.updateValidators(validators)
 }
 
@@ -364,8 +374,8 @@ func (consensus *ConsensusTBFTImpl) handle() {
 	loop := true
 	for loop {
 		select {
-		case block := <-consensus.proposedBlockC:
-			consensus.handleProposedBlock(block)
+		case proposedBlock := <-consensus.proposedBlockC:
+			consensus.handleProposedBlock(proposedBlock)
 		case result := <-consensus.verifyResultC:
 			consensus.handleVerifyResult(result, false)
 		case height := <-consensus.blockHeightC:
@@ -385,10 +395,11 @@ func (consensus *ConsensusTBFTImpl) handle() {
 	}
 }
 
-func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
+func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensuspb.ProposalBlock) {
 	consensus.Lock()
 	defer consensus.Unlock()
 
+	block := proposedBlock.Block
 	consensus.logger.Debugf("[%s](%d/%d/%s) receive proposal from core engine (%d/%x/%d), isProposer: %v",
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 		block.Header.BlockHeight, block.Header.BlockHash, proto.Size(block), consensus.isProposer(consensus.Height, consensus.Round),
@@ -416,13 +427,24 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(block *common.Block) {
 		return
 	}
 
+	// add DPoS consensus args in block
+	err := consensus.dpos.CreateDPoSRWSet(block.Header.PreBlockHash, proposedBlock)
+	if err != nil {
+		consensus.logger.Errorf("[%s](%d/%d/%s) Create DPoS RWSets failed, reason: %s",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
+		return
+	}
+
 	// Add hash and signature to block
 	hash, sig, err := utils.SignBlock(consensus.chainConf.ChainConfig().Crypto.Hash, consensus.singer, block)
 	if err != nil {
 		consensus.logger.Errorf("[%s]sign block failed, %s", consensus.Id, err)
+		return
 	}
 	block.Header.BlockHash = hash[:]
 	block.Header.Signature = sig
+	consensus.logger.Infof("[%s]create proposal block[%d:%x] success",
+		consensus.Id, block.Header.BlockHeight, block.Header.BlockHash)
 
 	// Add proposal
 	proposal := NewProposal(consensus.Id, consensus.Height, consensus.Round, -1, block)
@@ -467,6 +489,11 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
 			height, hash, verifyResult.Code,
 		)
+		return
+	}
+
+	if err := consensus.dpos.VerifyConsensusArgs(verifyResult.VerifiedBlock, verifyResult.TxsRwSet); err != nil {
+		consensus.logger.Warnf("verify block DPoS consensus failed, reason: %s", err)
 		return
 	}
 
@@ -998,6 +1025,9 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height int64, round int32) {
 
 	// Broadcast prevote
 	// prevote := createPrevoteMsg(consensus.Id, consensus.Height, consensus.Round, hash)
+	if !consensus.validatorSet.hasValidator(consensus.Id) {
+		return
+	}
 	prevote := NewVote(tbftpb.VoteType_VotePrevote, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight {
 		consensus.logger.Infof("[%s](%v/%v/%v) switch IsPrevoteOldHeight: %v, prevote old height: %v",
@@ -1049,6 +1079,9 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height int64, round int32) {
 	}
 
 	// Broadcast precommit
+	if !consensus.validatorSet.hasValidator(consensus.Id) {
+		return
+	}
 	precommit := NewVote(tbftpb.VoteType_VotePrecommit, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight {
 		consensus.logger.Infof("[%s](%d/%d/%v) switch IsPrecommitOldHeight: %v, precommit old height: %v",

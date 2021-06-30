@@ -6,7 +6,6 @@
 package archive
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
@@ -20,8 +19,8 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 const (
@@ -59,11 +58,11 @@ func newDumpCMD() *cobra.Command {
 				return runDumpByHeightCMD(height)
 			}
 
-			return errors.New("invalid --target, eg. 100 (block height) or `2006-01-02 15:04:05` (date)")
+			return fmt.Errorf("invalid --target %s, eg. 100 (block height) or \"2006-01-02 15:04:05\" (date)", target)
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagTarget, flagBlocks, flagSecretKey,
 	})
 
@@ -73,7 +72,7 @@ func newDumpCMD() *cobra.Command {
 // runDumpByHeightCMD `dump` command implementation
 func runDumpByHeightCMD(targetBlkHeight int64) error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return err
 	}
@@ -112,28 +111,29 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 	if blocks < barCount {
 		barCount = blocks
 	}
-	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
+	progress := uiprogress.New()
+	bar := progress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("\nArchiving Blocks (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Archiving Blocks (%d/%d)", b.Current(), barCount)
 	})
-	uiprogress.Start()
+	progress.Start()
+	defer progress.Stop()
 	var batchStartBlkHeight, batchEndBlkHeight = archivedBlkHeightOnChain + 1, archivedBlkHeightOnChain + 1
 	if archivedBlkHeightOnChain == 0 {
 		batchStartBlkHeight = 0
 	}
 	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks < blocks; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
-			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err != nil {
+			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err == nil {
+				batchStartBlkHeight = batchEndBlkHeight
+			} else if !strings.Contains(err.Error(), configBlockArchiveErrorString) {
 				return err
 			}
-
-			batchStartBlkHeight = batchEndBlkHeight
 		}
 
 		batchEndBlkHeight++
 		bar.Incr()
 	}
-	uiprogress.Stop()
 	// do the rest of blocks
 	return runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight)
 }
@@ -164,10 +164,8 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 	for blk := startBlk; blk < endBlk; blk++ {
 		// blk is first row of new table, create new table
 		if blk%model.RowsPerBlockInfoTable() == 0 {
-			if err := model.CreateBlockInfoTable(db, model.BlockInfoTableNameByBlockHeight(blk)); err != nil {
-				if strings.Contains(err.Error(), "Error 1050") {
-					continue
-				}
+			err := model.CreateBlockInfoTableIfNotExists(db, model.BlockInfoTableNameByBlockHeight(blk))
+			if err != nil {
 				return err
 			}
 		}
@@ -200,10 +198,7 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 				return err
 			}
 
-			blkHeightBytes := make([]byte, 8)
-			binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkWithRWSet.Block.Header.BlockHeight))
-
-			sum, err := util.Hmac([]byte(chainId), blkHeightBytes, blkWithRWSetBytes, []byte(secretKey))
+			sum, err := hmac(chainId, blkWithRWSet.Block.Header.BlockHeight, blkWithRWSetBytes, secretKey)
 			if err != nil {
 				return err
 			}
@@ -261,7 +256,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 
 func calcTargetHeightByTime(t time.Time) (int64, error) {
 	targetTs := t.Unix()
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return -1, err
 	}

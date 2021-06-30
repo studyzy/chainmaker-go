@@ -695,6 +695,9 @@ func (ln *LibP2pNet) ChainNodesInfo(chainId string) ([]*api.ChainNodeInfo, error
 				}
 			} else {
 				conn := ln.libP2pHost.connManager.GetConn(pid)
+				if conn == nil || conn.RemoteMultiaddr() == nil {
+					continue
+				}
 				addrs = append(addrs, conn.RemoteMultiaddr().String())
 			}
 

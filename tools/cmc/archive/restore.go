@@ -16,8 +16,9 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/store"
 )
 
 const (
@@ -39,7 +40,7 @@ func newRestoreCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId, flagDbType, flagDbDest, flagSecretKey, flagStartBlockHeight,
 	})
 	return cmd
@@ -48,7 +49,7 @@ func newRestoreCMD() *cobra.Command {
 // runRestoreCMD `restore` command implementation
 func runRestoreCMD() error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 	if err != nil {
 		return err
 	}
@@ -75,12 +76,17 @@ func runRestoreCMD() error {
 	}
 
 	//// 4.Restore Blocks
+	if archivedBlkHeightOnChain == 0 {
+		return nil
+	}
 	var barCount = archivedBlkHeightOnChain - restoreStartBlockHeight + 1
-	bar := uiprogress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
+	progress := uiprogress.New()
+	bar := progress.AddBar(int(barCount)).AppendCompleted().PrependElapsed()
 	bar.PrependFunc(func(b *uiprogress.Bar) string {
-		return fmt.Sprintf("\nRestoring Blocks (%d/%d)", b.Current(), barCount)
+		return fmt.Sprintf("Restoring Blocks (%d/%d)", b.Current(), barCount)
 	})
-	uiprogress.Start()
+	progress.Start()
+	defer progress.Stop()
 	for height := archivedBlkHeightOnChain; height >= restoreStartBlockHeight; height-- {
 		if err := restoreBlock(cc, db, height); err != nil {
 			return err
@@ -88,7 +94,6 @@ func runRestoreCMD() error {
 
 		bar.Incr()
 	}
-	uiprogress.Stop()
 	return nil
 }
 
@@ -117,9 +122,13 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 		return err
 	}
 
-	err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
+	// verify hmac
+	sum, err := hmac(chainId, height, bInfo.BlockWithRWSet, secretKey)
 	if err != nil {
 		return err
+	}
+	if sum != bInfo.Hmac {
+		return fmt.Errorf("invalid HMAC signature, recalculate: %s from_db: %s", sum, bInfo.Hmac)
 	}
 
 	bInfo.IsArchived = false
@@ -136,6 +145,19 @@ func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
 	err = model.UpdateArchivedBlockHeight(tx, archivedBlkHeight)
 	if err != nil {
 		return err
+	}
+
+	// only restore Not-Config-Block
+	var blkWithRWSetOffChain store.BlockWithRWSet
+	err = blkWithRWSetOffChain.Unmarshal(bInfo.BlockWithRWSet)
+	if err != nil {
+		return err
+	}
+	if !util.IsConfBlock(blkWithRWSetOffChain.Block) {
+		err = restoreBlockOnChain(cc, bInfo.BlockWithRWSet)
+		if err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit().Error

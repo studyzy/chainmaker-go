@@ -13,7 +13,6 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
-	"github.com/gogo/protobuf/types"
 )
 
 var (
@@ -35,7 +34,7 @@ func (ti timeoutInfo) String() string {
 
 func (ti timeoutInfo) ToProto() *tbftpb.TimeoutInfo {
 	return &tbftpb.TimeoutInfo{
-		Duration: types.DurationProto(ti.Duration),
+		Duration: ti.Duration.Microseconds(),
 		Height:   ti.Height,
 		Round:    ti.Round,
 		Step:     ti.Step,
@@ -43,12 +42,8 @@ func (ti timeoutInfo) ToProto() *tbftpb.TimeoutInfo {
 }
 
 func newTimeoutInfoFromProto(ti *tbftpb.TimeoutInfo) timeoutInfo {
-	duration, err := types.DurationFromProto(ti.Duration)
-	if err != nil {
-		panic(err)
-	}
 	return timeoutInfo{
-		Duration: duration,
+		Duration: time.Duration(ti.Duration),
 		Height:   ti.Height,
 		Round:    ti.Round,
 		Step:     ti.Step,

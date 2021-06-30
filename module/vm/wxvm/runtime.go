@@ -46,16 +46,15 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		Message: "",
 	}
 
+	context := r.CtxService.MakeContext(contractId, txContext, contractResult, parameters)
 	execCode, err := r.CodeManager.GetExecCode(r.ChainId, contractId, byteCode, r.CtxService)
+	defer r.CtxService.DestroyContext(context)
+
 	if err != nil {
 		contractResult.Code = commonPb.ContractResultCode_FAIL
 		contractResult.Message = err.Error()
 		return
 	}
-
-	//var contextId int64 = 0
-	context := r.CtxService.MakeContext(contractId, txContext, contractResult, parameters)
-	defer r.CtxService.DestroyContext(context)
 
 	if inst, err := xvm.CreateInstance(context.ID, execCode, method, contractId, gasUsed, int64(protocol.GasLimit)); err != nil {
 		contractResult.Code = commonPb.ContractResultCode_FAIL

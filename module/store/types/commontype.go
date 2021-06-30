@@ -28,3 +28,6 @@ func (b *SavePoint) GetInsertSql() (string, []interface{}) {
 func (b *SavePoint) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE save_points set block_height=?", []interface{}{b.BlockHeight}
 }
+func (b *SavePoint) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM save_points", []interface{}{}
+}

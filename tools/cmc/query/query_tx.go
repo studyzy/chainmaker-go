@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 // newQueryTxOnChainCMD `query tx` command implementation
@@ -24,7 +24,7 @@ func newQueryTxOnChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath)
+			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
 			if err != nil {
 				return err
 			}
@@ -47,7 +47,7 @@ func newQueryTxOnChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId,
 	})
 	return cmd

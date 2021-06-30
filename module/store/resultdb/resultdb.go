@@ -7,13 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package resultdb
 
 import (
-	"chainmaker.org/chainmaker-go/store/serialization"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
 // ResultDB provides handle to rwSets instances
 type ResultDB interface {
-
 	InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error
 
 	// CommitBlock commits the block rwsets in an atomic operation

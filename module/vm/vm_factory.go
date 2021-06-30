@@ -53,7 +53,7 @@ func (f *Factory) NewVmManager(wxvmCodePathPrefix string, AccessControl protocol
 		AccessControl:          AccessControl,
 		ChainNodesInfoProvider: provider,
 		Log:                    log,
-		chainConf:              chainConf,
+		ChainConf:              chainConf,
 	}
 }
 
@@ -73,7 +73,7 @@ type ManagerImpl struct {
 	ChainNodesInfoProvider protocol.ChainNodesInfoProvider
 	ChainId                string
 	Log                    *logger.CMLogger
-	chainConf              protocol.ChainConf // chain config
+	ChainConf              protocol.ChainConf // chain config
 }
 
 func (m *ManagerImpl) GetAccessControl() protocol.AccessControlProvider {
@@ -172,7 +172,7 @@ func (m *ManagerImpl) runUserContract(contractId *commonPb.ContractId, method st
 
 	// init call user contract data
 	if refTxType == commonPb.TxType_INVOKE_USER_CONTRACT || refTxType == commonPb.TxType_QUERY_USER_CONTRACT {
-		excludeMethodList := make([]string, 3)
+		excludeMethodList := make([]string, 0)
 		excludeMethodList = append(excludeMethodList, protocol.ContractInitMethod)
 		excludeMethodList = append(excludeMethodList, protocol.ContractUpgradeMethod)
 		excludeMethodList = append(excludeMethodList, "")
@@ -548,7 +548,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 
 	// begin save point for sql
 	var dbTransaction protocol.SqlDBTransaction
-	if m.chainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
+	if m.ChainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
 		txKey := commonPb.GetTxKeyWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
 		dbTransaction, err = txContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
@@ -566,7 +566,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contractId *commonPb.ContractI
 	if runtimeContractResult.Code == commonPb.ContractResultCode_OK {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	} else {
-		if m.chainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
+		if m.ChainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_USER_CONTRACT {
 			err := dbTransaction.RollbackDbSavePoint(txId)
 			if err != nil {
 				m.Log.Warn("[%s] rollback db save point error, %s", txId, err.Error())

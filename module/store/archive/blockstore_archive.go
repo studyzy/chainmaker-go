@@ -7,14 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package archive
 
 import (
-	"chainmaker.org/chainmaker-go/store/blockdb"
-	"chainmaker.org/chainmaker-go/store/resultdb"
-	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/store/blockdb"
+	"chainmaker.org/chainmaker-go/store/resultdb"
+	"chainmaker.org/chainmaker-go/store/serialization"
+
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 )
 
 const defaultMinUnArchiveBlockHeight = 10
@@ -39,21 +40,22 @@ type ArchiveMgr struct {
 	unarchiveBlockHeight uint64
 	blockDB              blockdb.BlockDB
 	resultDB             resultdb.ResultDB
+	storeConfig          *localconf.StorageConfig
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
-func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB) *ArchiveMgr {
+func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB, storeConfig *localconf.StorageConfig, logger protocol.Logger) (*ArchiveMgr, error) {
 	archiveMgr := &ArchiveMgr{
-		archivedPivot:        0,
-		blockDB:              blockDB,
-		resultDB:             resultDB,
-		logger:               logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
+		blockDB:     blockDB,
+		resultDB:    resultDB,
+		logger:      logger,
+		storeConfig: storeConfig,
 	}
 
 	unarchiveBlockHeight := uint64(0)
-	cfgUnArchiveBlockHeight := localconf.ChainMakerConfig.StorageConfig.UnArchiveBlockHeight
+	cfgUnArchiveBlockHeight := archiveMgr.storeConfig.UnArchiveBlockHeight
 	if cfgUnArchiveBlockHeight == 0 {
 		unarchiveBlockHeight = defaultUnArchiveBlockHeight
 		archiveMgr.logger.Infof("config UnArchiveBlockHeight not set, will set to defaultMinUnArchiveBlockHeight:[%d]", defaultUnArchiveBlockHeight)
@@ -66,8 +68,11 @@ func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.Re
 	}
 
 	archiveMgr.unarchiveBlockHeight = unarchiveBlockHeight
+	if _, err := archiveMgr.GetArchivedPivot(); err != nil {
+		return nil, err
+	}
 
-	return archiveMgr
+	return archiveMgr, nil
 }
 
 // ArchiveBlock cache a block with given block height and update batch
@@ -77,8 +82,8 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 
 	var (
 		lastHeight, archivedPivot uint64
-		txIdsMap	map[uint64][]string
-		err error
+		txIdsMap                  map[uint64][]string
+		err                       error
 	)
 
 	if lastHeight, err = mgr.blockDB.GetLastSavepoint(); err != nil {
@@ -121,10 +126,15 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 		return nil
 	}
 
+	//make sure archivedPivot is latest
+	if _, err := mgr.GetArchivedPivot(); err != nil {
+		return err
+	}
+
 	total := len(blockInfos)
 	lastRestoreHeight := uint64(blockInfos[total-1].Block.Header.BlockHeight)
 	if lastRestoreHeight != mgr.archivedPivot {
-		mgr.logger.Errorf("restore last block height[%d] not match last archived height[%d]",
+		mgr.logger.Errorf("restore last block height[%d] not match node archived height[%d]",
 			blockInfos[total-1].Block.Header.BlockHeight, mgr.archivedPivot)
 		return RestoreHeightNotMatchError
 	}
@@ -157,7 +167,13 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 
 // GetArchivedPivot return restore block pivot
 func (mgr *ArchiveMgr) GetArchivedPivot() (uint64, error) {
-	return mgr.blockDB.GetArchivedPivot()
+	 archivedPivot, err := mgr.blockDB.GetArchivedPivot()
+	 if err != nil {
+	 	return 0, err
+	 }
+
+	 mgr.archivedPivot = archivedPivot
+	 return mgr.archivedPivot, nil
 }
 
 // GetMinUnArchiveBlockSize return unarchiveBlockHeight
@@ -165,22 +181,3 @@ func (mgr *ArchiveMgr) GetMinUnArchiveBlockSize() uint64 {
 	return mgr.unarchiveBlockHeight
 }
 
-// SetArchivedPivot set restore block pivot
-func (mgr *ArchiveMgr) SetArchivedPivot(pivot uint64) error {
-	mgr.Lock()
-	defer mgr.Unlock()
-
-	if err := mgr.blockDB.SetArchivedPivot(pivot); err != nil {
-		return err
-	}
-
-	mgr.archivedPivot = pivot
-	return nil
-}
-
-// IsArchiveHeight set restore block pivot
-func (mgr *ArchiveMgr) IsArchiveHeight(height uint64) bool {
-	mgr.Lock()
-	defer mgr.Unlock()
-	return height <= mgr.archivedPivot
-}

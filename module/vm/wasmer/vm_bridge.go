@@ -46,7 +46,7 @@ type WaciInstance struct {
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Sc.Log.Debugf("wacsi log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Sc.Log.Debugf("wasmer log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -57,14 +57,14 @@ func logMessage(context unsafe.Pointer, pointer int32, length int32) {
 	var memory = instanceContext.Memory().Data()
 
 	gotText := string(memory[pointer : pointer+length])
-	log.Debugf("wasm log>> " + gotText)
+	log.Debugf("wasmer log>> " + gotText)
 }
 
 // sysCall wasmer vm call chain entry
 //export sysCall
 func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen int32, requestBodyPtr int32, requestBodyLen int32) int32 {
 	if requestHeaderLen == 0 {
-		log.Error("wasm log>>requestHeader is null.")
+		log.Error("wasmer log>> requestHeader is null.")
 		return protocol.ContractSdkSignalResultFail
 	}
 	// get param from memory
@@ -108,10 +108,16 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.CallContractLen()
 	case protocol.ContractMethodEmitEvent:
 		return s.EmitEvent()
+		// paillier
 	case protocol.ContractMethodGetPaillierOperationResultLen:
 		return s.GetPaillierResultLen()
 	case protocol.ContractMethodGetPaillierOperationResult:
 		return s.GetPaillierResult()
+		// bulletproofs
+	case protocol.ContractMethodGetBulletproofsResultLen:
+		return s.GetBulletProofsResultLen()
+	case protocol.ContractMethodGetBulletproofsResult:
+		return s.GetBulletProofsResult()
 	// kv
 	case protocol.ContractMethodGetStateLen:
 		return s.GetStateLen()
@@ -121,6 +127,18 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		return s.PutState()
 	case protocol.ContractMethodDeleteState:
 		return s.DeleteState()
+	case protocol.ContractMethodKvIterator:
+		return s.KvIterator()
+	case protocol.ContractMethodKvPreIterator:
+		return s.KvPreIterator()
+	case protocol.ContractMethodKvIteratorHasNext:
+		return s.KvIteratorHasNext()
+	case protocol.ContractMethodKvIteratorNextLen:
+		return s.KvIteratorNextLen()
+	case protocol.ContractMethodKvIteratorNext:
+		return s.KvIteratorNext()
+	case protocol.ContractMethodKvIteratorClose:
+		return s.KvIteratorClose()
 	// sql
 	case protocol.ContractMethodExecuteUpdate:
 		return s.ExecuteUpdate()
@@ -188,6 +206,26 @@ func (s *WaciInstance) EmitEvent() int32 {
 	return protocol.ContractSdkSignalResultSuccess
 }
 
+// GetBulletProofsResultLen get bulletproofs operation result length from chain
+func (s *WaciInstance) GetBulletProofsResultLen() int32 {
+	return s.getBulletProofsResultCore(true)
+}
+
+// GetBulletProofsResult get bulletproofs operation result from chain
+func (s *WaciInstance) GetBulletProofsResult() int32 {
+	return s.getBulletProofsResultCore(false)
+}
+
+func (s *WaciInstance) getBulletProofsResultCore(isLen bool) int32 {
+	data, err := wacsi.BulletProofsOperation(s.RequestBody, s.Memory, s.Sc.GetStateCache, isLen)
+	s.Sc.GetStateCache = data // reset data
+	if err != nil {
+		s.recordMsg(err.Error())
+		return protocol.ContractSdkSignalResultFail
+	}
+	return protocol.ContractSdkSignalResultSuccess
+}
+
 // GetPaillierResultLen get paillier operation result length from chain
 func (s *WaciInstance) GetPaillierResultLen() int32 {
 	return s.getPaillierResultCore(true)
@@ -241,7 +279,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.Sc.ContractResult.Message += "error message: " + msg
 	}
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Sc.Log.Errorf("wasm log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
+	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }
 

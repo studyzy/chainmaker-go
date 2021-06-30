@@ -14,10 +14,10 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
@@ -37,7 +37,7 @@ const (
 	//logDBBlockKeyPrefix = 'n'
 )
 
-// BlockStoreImpl provides an implementation of `protocal.BlockchainStore`.
+// BlockStoreImpl provides an implementation of `protocol.BlockchainStore`.
 type BlockStoreImpl struct {
 	blockDB         blockdb.BlockDB
 	stateDB         statedb.StateDB
@@ -91,14 +91,16 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	blockStore.ArchiveMgr = archive.NewArchiveMgr(chainId, blockStore.blockDB, blockStore.resultDB)
+	if err :=  blockStore.InitArchiveMgr(chainId); err != nil {
+		return nil, err
+	}
 
 	//binlog 有SavePoint，不是空数据库，进行数据恢复
-	if i, err := blockStore.getLastSavepoint(); err == nil && i > 0 {
+	if i, errbs := blockStore.getLastSavepoint(); errbs == nil && i > 0 {
 		//check savepoint and recover
-		err = blockStore.recover()
-		if err != nil {
-			return nil, err
+		errbs = blockStore.recover()
+		if errbs != nil {
+			return nil, errbs
 		}
 	} else {
 		logger.Info("binlog is empty, don't need recover")
@@ -169,9 +171,12 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
-	bs.ArchiveMgr = archive.NewArchiveMgr(block.Header.ChainId, bs.blockDB, bs.resultDB)
+	err = bs.InitArchiveMgr(block.Header.ChainId)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return err
 }
 func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	if genesisBlock.Block.Header.BlockHeight != 0 {
@@ -279,21 +284,26 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 
 // GetArchivedPivot return archived pivot
 func (bs *BlockStoreImpl) GetArchivedPivot() uint64 {
+	if !bs.isSupportArchive() {
+		return 0
+	}
 	height, _ := bs.ArchiveMgr.GetArchivedPivot()
 	return height
 }
 
 // ArchiveBlock the block after backup
 func (bs *BlockStoreImpl) ArchiveBlock(archiveHeight uint64) error {
-	if err := bs.ArchiveMgr.ArchiveBlock(archiveHeight); err != nil {
-		return err
+	if !bs.isSupportArchive() {
+		return nil
 	}
-
-	return bs.ArchiveMgr.SetArchivedPivot(archiveHeight)
+	return bs.ArchiveMgr.ArchiveBlock(archiveHeight)
 }
 
 // RestoreBlocks restore blocks from outside serialized block data
 func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
+	if !bs.isSupportArchive() {
+		return nil
+	}
 	blockInfos := make([]*serialization.BlockWithSerializedInfo, 0, len(serializedBlocks))
 	for _, blockInfo := range serializedBlocks {
 		bwsInfo, err := serialization.DeserializeBlock(blockInfo)
@@ -304,16 +314,7 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		blockInfos = append(blockInfos, bwsInfo)
 	}
 
-	if err := bs.ArchiveMgr.RestoreBlock(blockInfos); err != nil {
-		return err
-	}
-
-	archivedPivot := uint64(blockInfos[0].Block.Header.BlockHeight)
-	if utils.IsConfBlock(blockInfos[0].Block) {
-		archivedPivot = archivedPivot + 1
-	}
-
-	return bs.ArchiveMgr.SetArchivedPivot(archivedPivot - 1)
+	return bs.ArchiveMgr.RestoreBlock(blockInfos)
 }
 
 type commitBlock func(blockInfo *serialization.BlockWithSerializedInfo) error
@@ -434,8 +435,8 @@ func (bs *BlockStoreImpl) GetContractTxHistory(contractName string) (protocol.Tx
 // GetTxRWSet returns an txRWSet for given txId, or returns nil if none exists.
 func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	var (
-		rwSet *commonPb.TxRWSet
-		err error
+		rwSet      *commonPb.TxRWSet
+		err        error
 		isArchived bool
 	)
 
@@ -467,6 +468,10 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 		txRWSet, err := bs.GetTxRWSet(txId)
 		if err != nil {
 			return nil, err
+		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", txId)
+			txRWSet = &commonPb.TxRWSet{}
 		}
 		txRWSets[i] = txRWSet
 		bs.logger.Debugf("getTxRWSetsByHeight, txid:%s", txId)
@@ -501,6 +506,10 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 		txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
 		if err != nil {
 			return nil, err
+		}
+		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			txRWSet = &commonPb.TxRWSet{}
 		}
 		blockWithRWSets.TxRWSets[i] = txRWSet
 		//}
@@ -795,4 +804,21 @@ func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint
 	}
 
 	return height
+}
+
+func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
+	if bs.isSupportArchive() {
+		archiveMgr, err := archive.NewArchiveMgr(chainId, bs.blockDB, bs.resultDB, bs.storeConfig, bs.logger)
+		if err != nil {
+			return err
+		}
+
+		bs.ArchiveMgr = archiveMgr
+	}
+
+	return nil
+}
+
+func (bs *BlockStoreImpl) isSupportArchive() bool {
+	return bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB()
 }

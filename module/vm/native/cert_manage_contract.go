@@ -310,7 +310,7 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 
 	certHasheStr := strings.TrimRight(certFullHashes.String(), ",")
 	r.log.Infof("certManage unfreeze success certHashes[%s]", certHasheStr)
-	return []byte(certHasheStr), nil
+	return []byte("Success"), nil
 }
 
 // Revoke certs revocation
