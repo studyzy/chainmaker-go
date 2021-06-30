@@ -1,25 +1,33 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package tee
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"io/ioutil"
 	"os"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func uploadCaCertCmd() *cobra.Command {
 	uploadCaCertCmd := &cobra.Command{
-		Use:   	"upload_ca_cert",
-		Long: 	"upload ca_cert of trust execute environment.",
-		Short: 	"upload ca_cert of trust execute environment.",
+		Use:   "upload_ca_cert",
+		Long:  "upload ca_cert of trust execute environment.",
+		Short: "upload ca_cert of trust execute environment.",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return cliUploadCaCert()
 		},
 	}
 
 	flags := &pflag.FlagSet{}
-	flags.StringVar(&caCertFile, "ca_cert", "",  "specify ca_cert filename")
+	flags.StringVar(&caCertFile, "ca_cert", "", "specify ca_cert filename")
 
 	uploadCaCertCmd.Flags().AddFlagSet(teeFlags)
 	uploadCaCertCmd.Flags().AddFlagSet(flags)
@@ -52,7 +60,7 @@ func cliUploadCaCert() error {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
 	}
 
-	_, err = client.SaveEnclaveCACert(string(cacertData),  "", true, 3)
+	_, err = client.SaveEnclaveCACert(string(cacertData), "", true, 3)
 	if err != nil {
 		return fmt.Errorf("save ca cert failed, %s", err.Error())
 	}
