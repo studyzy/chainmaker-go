@@ -76,7 +76,7 @@ func NewChainConf(opts ...Option) (*ChainConf, error) {
 
 // Genesis will create new genesis config block of chain.
 func Genesis(genesisFile string) (*config.ChainConfig, error) {
-	chainConfig := &config.ChainConfig{}
+	chainConfig := &config.ChainConfig{Contract: &config.ContractConfig{EnableSqlSupport: false}}
 	fileInfo := map[string]interface{}{}
 	v := viper.New()
 	v.SetConfigFile(genesisFile)
