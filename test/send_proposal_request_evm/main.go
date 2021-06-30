@@ -27,7 +27,6 @@ import (
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	evm "chainmaker.org/chainmaker/common/evmutils"
-	"chainmaker.org/chainmaker/common/helper"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"

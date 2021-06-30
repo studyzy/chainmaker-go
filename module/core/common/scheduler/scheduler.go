@@ -380,7 +380,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//	} else {
 	//		return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
 	//	}
-	//case commonpb.TxType_UPDATE_CHAIN_CONFIG:
+	//case commonpb.TxType_INVOKE_CONTRACT:
 	//	var payload commonpb.SystemContractPayload
 	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 	//		contractName = payload.ContractName

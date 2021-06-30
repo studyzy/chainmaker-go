@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,11 +18,9 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -44,7 +40,7 @@ func genCreateContractTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath
 		os.Exit(0)
 	}
 
-	return contructTxRequest(orgid, sk3, userCrtPath, commonPb.TxType_MANAGE_USER_CONTRACT,
+	return contructTxRequest(orgid, sk3, userCrtPath, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 }
 

@@ -26,7 +26,7 @@ func IsNativeTxType(txType commonPb.TxType) bool {
 	switch txType {
 	case commonPb.TxType_QUERY_CONTRACT,
 		commonPb.TxType_INVOKE_CONTRACT:
-		//commonPb.TxType_UPDATE_CHAIN_CONFIG:
+		//commonPb.TxType_INVOKE_CONTRACT:
 		return true
 	default:
 		return false

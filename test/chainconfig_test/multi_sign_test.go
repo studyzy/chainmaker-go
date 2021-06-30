@@ -32,7 +32,7 @@ func TestMultiSignReq(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_type", // 多签内的交易类型
-		Value: commonPb.TxType_UPDATE_CHAIN_CONFIG.String(),
+		Value: commonPb.TxType_INVOKE_CONTRACT.String(),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "deadline_block", // 过期的区块高度

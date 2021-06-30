@@ -72,7 +72,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	}
 
 	//txType := txContext.GetTx().Header.TxType
-	//if txType == commonPb.TxType_UPDATE_CHAIN_CONFIG {
+	//if txType == commonPb.TxType_INVOKE_CONTRACT {
 	//	if err := r.verifySequence(txContext); err != nil {
 	//		result.Message = fmt.Sprintf(err.Error()+",txType: %s", txType)
 	//		return result

@@ -15,33 +15,26 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"chainmaker.org/chainmaker-go/test/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"io/ioutil"
-	"log"
-	"os"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -704,7 +697,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method 
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -958,7 +951,7 @@ func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp == nil || resp.ContractResult == nil || strings.Contains(resp.Message, "no such transaction") {
 		time.Sleep(time.Second * 2)

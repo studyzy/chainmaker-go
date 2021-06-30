@@ -62,7 +62,7 @@ var restrainedResourceList = map[string]bool{
 var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
-	//common.TxType_UPDATE_CHAIN_CONFIG:  protocol.ResourceNameWriteData,
+	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE_BLOCK_INFO: protocol.ResourceNameReadData,
 	common.TxType_SUBSCRIBE_TX_INFO:    protocol.ResourceNameReadData,
 	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
