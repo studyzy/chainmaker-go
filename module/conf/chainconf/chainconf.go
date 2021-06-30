@@ -16,10 +16,10 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 
-	"chainmaker.org/chainmaker/common/json"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/json"
+	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/groupcache/lru"
@@ -76,7 +76,7 @@ func NewChainConf(opts ...Option) (*ChainConf, error) {
 
 // Genesis will create new genesis config block of chain.
 func Genesis(genesisFile string) (*config.ChainConfig, error) {
-	chainConfig := &config.ChainConfig{}
+	chainConfig := &config.ChainConfig{Contract: &config.ContractConfig{EnableSqlSupport: false}}
 	fileInfo := map[string]interface{}{}
 	v := viper.New()
 	v.SetConfigFile(genesisFile)
