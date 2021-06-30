@@ -7,17 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
-	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"io/ioutil"
 	"strconv"
 	"strings"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/chainconf"
+	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker-go/utils"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/logger"
@@ -36,7 +37,7 @@ var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user
 var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
 var isSql = false
 
-var txType = commonPb.TxType_INVOKE_USER_CONTRACT
+var txType = commonPb.TxType_INVOKE_CONTRACT
 var pool *wasmer.VmPoolManager
 
 const (
@@ -237,7 +238,7 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	return nil
 }
 
-func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte,
+func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
 	parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
@@ -257,13 +258,13 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		deep:         s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
-		contractName: contractId.ContractName,
+		contractName: contract.Name,
 		method:       method,
 		param:        parameter,
 	}
@@ -356,6 +357,14 @@ func BaseParam(parameters map[string]string) {
 }
 
 type mockBlockchainStore struct {
+}
+
+func (m mockBlockchainStore) GetContractByName(name string) (*commonPb.Contract, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetContractBytecode(name string) ([]byte, error) {
+	panic("implement me")
 }
 
 func (m mockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {

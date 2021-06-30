@@ -12,6 +12,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 )
@@ -56,13 +57,13 @@ func getContract() error {
 		return fmt.Errorf("marshal get contract payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_SYSTEM_CONTRACT, chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_CONTRACT, chainId, "", payloadBytes)
 	if err != nil {
-		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	contractInfo := &common.PrivateGetContract{}

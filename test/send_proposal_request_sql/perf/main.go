@@ -8,6 +8,15 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"strconv"
+	"sync"
+	"time"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
@@ -18,18 +27,10 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"context"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"io/ioutil"
-	"log"
-	"os"
-	"strconv"
-	"sync"
-	"time"
 )
 
 const (
@@ -270,7 +271,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	wasmBin, _ := ioutil.ReadFile(WasmPath)
 	var pairs []*commonPb.KeyValuePair
 
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
+	method := consts.ContractManager_INIT_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
@@ -332,7 +333,7 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	return txId
@@ -362,7 +363,7 @@ func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	}
 
 	txId = utils.GetRandTxId()
-	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	return txId
@@ -384,7 +385,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	}
 
 	txId = utils.GetRandTxId()
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if len(resp.ContractResult.Result) == 0 {
 		return ""
@@ -408,7 +409,7 @@ func testInvokeSqlBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	return txId
@@ -599,7 +600,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	result := &commonPb.TransactionInfo{}

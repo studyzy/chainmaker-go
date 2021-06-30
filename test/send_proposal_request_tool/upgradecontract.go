@@ -13,9 +13,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 )
 
 func UpgradeContractCMD() *cobra.Command {
@@ -97,7 +98,7 @@ func upgradeContract() error {
 	//
 	//}
 
-	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
+	method := consts.ContractManager_UPGRADE_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,

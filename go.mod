@@ -4,8 +4,8 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210630065752-c3d162425200
-	chainmaker.org/chainmaker/protocol v0.0.0-20210630070504-7defb9d4d49f
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf
+	chainmaker.org/chainmaker/protocol v0.0.0-20210630145934-f3aca07dc522
 	github.com/ethereum/go-ethereum v1.10.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20210113012101-fb4e108d2519 // indirect

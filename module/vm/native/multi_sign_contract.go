@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"fmt"
-	"github.com/gogo/protobuf/proto"
 )
 
 var (
@@ -56,30 +56,30 @@ type payloadInfo struct {
 // parsePayload unmarshal bytes
 func parsePayload(txType string, payloadBytes []byte) (*payloadInfo, error) {
 	switch txType {
-	case commonPb.TxType_MANAGE_USER_CONTRACT.String():
-		txType1 := commonPb.TxType(commonPb.TxType_value[txType])
-		payload := new(commonPb.ContractMgmtPayload)
-		err := proto.Unmarshal(payloadBytes, payload)
-		if err != nil {
-			return nil, err
-		}
-		return &payloadInfo{
-			txType:      txType1,
-			payload:     payload,
-			payloadType: KEY_ContractMgmtPayload,
-		}, nil
-	case commonPb.TxType_UPDATE_CHAIN_CONFIG.String(), commonPb.TxType_INVOKE_SYSTEM_CONTRACT.String():
-		txType1 := commonPb.TxType(commonPb.TxType_value[txType])
-		payload := new(commonPb.SystemContractPayload)
-		err := proto.Unmarshal(payloadBytes, payload)
-		if err != nil {
-			return nil, err
-		}
-		return &payloadInfo{
-			txType:      txType1,
-			payload:     payload,
-			payloadType: KEY_SystemContractPayload,
-		}, nil
+	//case commonPb.TxType_MANAGE_USER_CONTRACT.String():
+	//	txType1 := commonPb.TxType(commonPb.TxType_value[txType])
+	//	payload := new(commonPb.ContractMgmtPayload)
+	//	err := proto.Unmarshal(payloadBytes, payload)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	return &payloadInfo{
+	//		txType:      txType1,
+	//		payload:     payload,
+	//		payloadType: KEY_ContractMgmtPayload,
+	//	}, nil
+	//case commonPb.TxType_UPDATE_CHAIN_CONFIG.String(), commonPb.TxType_INVOKE_CONTRACT.String():
+	//	txType1 := commonPb.TxType(commonPb.TxType_value[txType])
+	//	payload := new(commonPb.SystemContractPayload)
+	//	err := proto.Unmarshal(payloadBytes, payload)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	return &payloadInfo{
+	//		txType:      txType1,
+	//		payload:     payload,
+	//		payloadType: KEY_SystemContractPayload,
+	//	}, nil
 	default:
 		return nil, fmt.Errorf("no support the tx_type, tx_type = %s", txType)
 	}

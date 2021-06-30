@@ -13,9 +13,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 )
 
 func CreateContractCMD() *cobra.Command {
@@ -95,20 +97,7 @@ func createContract() error {
 	//	wasmBin, err = hex.DecodeString(string(wasmBin))
 	//}
 	//var pairs []*commonPb.KeyValuePair
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "1.0.0",
-			RuntimeType:     commonPb.RuntimeType(runTime),
-		},
-		Method:      method,
-		Parameters:  pairs,
-		ByteCode:    wasmBin,
-		Endorsement: nil,
-	}
+	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
 	if endorsement, err := acSign(payload); err == nil {
 		payload.Endorsement = endorsement
@@ -121,7 +110,7 @@ func createContract() error {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err

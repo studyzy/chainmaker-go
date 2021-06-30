@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/core/provider/conf"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
@@ -327,16 +328,16 @@ func (ts *TxScheduler) Halt() {
 }
 
 func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxSimContext) (*commonpb.Result, error) {
-	var contractId *commonpb.ContractId
+	//var contractId *commonpb.ContractId
 	var contractName string
-	var runtimeType commonpb.RuntimeType
-	var contractVersion string
+	//var runtimeType commonpb.RuntimeType
+	//var contractVersion string
 	var method string
 	var byteCode []byte
 	var parameterPairs []*commonpb.KeyValuePair
 	var parameters map[string]string
-	var endorsements []*commonpb.EndorsementEntry
-	var sequence uint64
+	//var endorsements []*commonpb.EndorsementEntry
+	//var sequence uint64
 
 	result := &commonpb.Result{
 		Code: commonpb.TxStatusCode_SUCCESS,
@@ -349,7 +350,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	}
 
 	switch tx.Header.TxType {
-	case commonpb.TxType_QUERY_SYSTEM_CONTRACT, commonpb.TxType_QUERY_USER_CONTRACT:
+	case commonpb.TxType_QUERY_CONTRACT:
 		var payload commonpb.QueryPayload
 		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 			contractName = payload.ContractName
@@ -359,7 +360,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 		} else {
 			return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Header.TxId, err))
 		}
-	case commonpb.TxType_INVOKE_USER_CONTRACT:
+	case commonpb.TxType_INVOKE_CONTRACT:
 		var payload commonpb.TransactPayload
 		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 			contractName = payload.ContractName
@@ -369,77 +370,77 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 		} else {
 			return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Header.TxId, err))
 		}
-	case commonpb.TxType_INVOKE_SYSTEM_CONTRACT:
-		var payload commonpb.SystemContractPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
-		}
-	case commonpb.TxType_UPDATE_CHAIN_CONFIG:
-		var payload commonpb.SystemContractPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-			endorsements = payload.Endorsement
-			sequence = payload.Sequence
-
-			if endorsements == nil {
-				return errResult(result, fmt.Errorf("endorsements not found in config update payload, tx id:%s", tx.Header.TxId))
-			}
-			payload.Endorsement = nil
-			verifyPayloadBytes, err := proto.Marshal(&payload)
-
-			if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
-				return errResult(result, err)
-			}
-
-			ts.log.Debugf("chain config update [%d] [%v]", sequence, endorsements)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal system contract payload for tx %s, %s", tx.Header.TxId, err.Error()))
-		}
-	case commonpb.TxType_MANAGE_USER_CONTRACT:
-		var payload commonpb.ContractMgmtPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			if payload.ContractId == nil {
-				return errResult(result, fmt.Errorf("param is null"))
-			}
-			contractName = payload.ContractId.ContractName
-			runtimeType = payload.ContractId.RuntimeType
-			contractVersion = payload.ContractId.ContractVersion
-			method = payload.Method
-			byteCode = payload.ByteCode
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-			endorsements = payload.Endorsement
-
-			if endorsements == nil {
-				return errResult(result, fmt.Errorf("endorsements not found in contract mgmt payload, tx id:%s", tx.Header.TxId))
-			}
-
-			payload.Endorsement = nil
-			verifyPayloadBytes, err := proto.Marshal(&payload)
-
-			if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
-				return errResult(result, err)
-			}
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal contract mgmt payload for tx %s, %s", tx.Header.TxId, err.Error()))
-		}
+	//case commonpb.TxType_INVOKE_CONTRACT:
+	//	var payload commonpb.SystemContractPayload
+	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+	//		contractName = payload.ContractName
+	//		method = payload.Method
+	//		parameterPairs = payload.Parameters
+	//		parameters = ts.parseParameter(parameterPairs)
+	//	} else {
+	//		return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
+	//	}
+	//case commonpb.TxType_UPDATE_CHAIN_CONFIG:
+	//	var payload commonpb.SystemContractPayload
+	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+	//		contractName = payload.ContractName
+	//		method = payload.Method
+	//		parameterPairs = payload.Parameters
+	//		parameters = ts.parseParameter(parameterPairs)
+	//		endorsements = payload.Endorsement
+	//		sequence = payload.Sequence
+	//
+	//		if endorsements == nil {
+	//			return errResult(result, fmt.Errorf("endorsements not found in config update payload, tx id:%s", tx.Header.TxId))
+	//		}
+	//		payload.Endorsement = nil
+	//		verifyPayloadBytes, err := proto.Marshal(&payload)
+	//
+	//		if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
+	//			return errResult(result, err)
+	//		}
+	//
+	//		ts.log.Debugf("chain config update [%d] [%v]", sequence, endorsements)
+	//	} else {
+	//		return errResult(result, fmt.Errorf("failed to unmarshal system contract payload for tx %s, %s", tx.Header.TxId, err.Error()))
+	//	}
+	//case commonpb.TxType_MANAGE_USER_CONTRACT:
+	//	var payload commonpb.ContractMgmtPayload
+	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+	//		if payload.ContractId == nil {
+	//			return errResult(result, fmt.Errorf("param is null"))
+	//		}
+	//		contractName = payload.ContractId.ContractName
+	//		runtimeType = payload.ContractId.RuntimeType
+	//		contractVersion = payload.ContractId.ContractVersion
+	//		method = payload.Method
+	//		byteCode = payload.ByteCode
+	//		parameterPairs = payload.Parameters
+	//		parameters = ts.parseParameter(parameterPairs)
+	//		endorsements = payload.Endorsement
+	//
+	//		if endorsements == nil {
+	//			return errResult(result, fmt.Errorf("endorsements not found in contract mgmt payload, tx id:%s", tx.Header.TxId))
+	//		}
+	//
+	//		payload.Endorsement = nil
+	//		verifyPayloadBytes, err := proto.Marshal(&payload)
+	//
+	//		if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
+	//			return errResult(result, err)
+	//		}
+	//	} else {
+	//		return errResult(result, fmt.Errorf("failed to unmarshal contract mgmt payload for tx %s, %s", tx.Header.TxId, err.Error()))
+	//	}
 	default:
 		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Header.TxType))
 	}
 
-	contractId = &commonpb.ContractId{
-		ContractName:    contractName,
-		ContractVersion: contractVersion,
-		RuntimeType:     runtimeType,
-	}
+	//contract = &commonpb.ContractId{
+	//	ContractName:    contractName,
+	//	ContractVersion: contractVersion,
+	//	RuntimeType:     runtimeType,
+	//}
 
 	// verify parameters
 	if len(parameters) > protocol.ParametersKeyMaxCount {
@@ -458,7 +459,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 			return errResult(result, fmt.Errorf("expect value length less than %d, but got %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId))
 		}
 	}
-	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contractId, method, byteCode, parameters, txSimContext, 0, tx.Header.TxType)
+	contractResultPayload, txStatusCode := ts.VmManager.RunContract(&commonpb.Contract{Name: contractName}, method, byteCode, parameters, txSimContext, 0, tx.Header.TxType)
 
 	result.Code = txStatusCode
 	result.ContractResult = contractResultPayload

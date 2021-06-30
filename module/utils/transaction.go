@@ -123,7 +123,7 @@ func IsManageContractAsConfigTx(tx *commonPb.Transaction, enableSqlDB bool) bool
 	if tx == nil || tx.Header == nil {
 		return false
 	}
-	return enableSqlDB && tx.Header.TxType == commonPb.TxType_MANAGE_USER_CONTRACT
+	return enableSqlDB && tx.IsContractMgmtTx()
 }
 
 // IsConfigTx the transaction is a config transaction or not
@@ -131,7 +131,7 @@ func IsConfigTx(tx *commonPb.Transaction) bool {
 	if tx == nil || tx.Header == nil {
 		return false
 	}
-	return tx.Header.TxType == commonPb.TxType_UPDATE_CHAIN_CONFIG
+	return tx.IsConfigTx()
 }
 
 // IsValidConfigTx the transaction is a valid config transaction or not

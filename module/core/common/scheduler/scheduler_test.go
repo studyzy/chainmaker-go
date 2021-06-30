@@ -63,7 +63,7 @@ package scheduler
 //		Header: &commonpb.TxHeader{
 //			ChainId:        "",
 //			Sender:         nil,
-//			TxType:         commonpb.TxType_QUERY_USER_CONTRACT,
+//			TxType:         commonpb.TxType_QUERY_CONTRACT,
 //			TxId:           txId,
 //			Timestamp:      0,
 //			ExpirationTime: 0,

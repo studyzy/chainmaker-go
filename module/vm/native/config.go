@@ -20,12 +20,13 @@ func IsNativeContract(contractName string) bool {
 	return ok
 }
 
+//TODO: Devin: Remove it
 // IsNativeTxType return is native contract supported transaction type
 func IsNativeTxType(txType commonPb.TxType) bool {
 	switch txType {
-	case commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-		commonPb.TxType_UPDATE_CHAIN_CONFIG:
+	case commonPb.TxType_QUERY_CONTRACT,
+		commonPb.TxType_INVOKE_CONTRACT:
+		//commonPb.TxType_UPDATE_CHAIN_CONFIG:
 		return true
 	default:
 		return false

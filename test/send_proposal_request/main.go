@@ -24,6 +24,8 @@ import (
 	"github.com/mr-tron/base58/base58"
 
 	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker-go/test/common"
+
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker/common/ca"
@@ -317,7 +319,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	header := &commonPb.TxHeader{
 		ChainId:        CHAIN1,
 		Sender:         sender,
-		TxType:         commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		TxType:         commonPb.TxType_QUERY_CONTRACT,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
@@ -350,48 +352,16 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	return (*client).SendRequest(ctx, req)
 }
 func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string, wasmType int) {
-	txId := utils.GetRandTxId()
-	fmt.Printf("\n============ create contract [%s] ============\n", txId)
+
 	wasmPath := certWasmPath
 	wasmName := certContractName
 	if wasmType == 1 {
 		wasmPath = addWasmPath
 		wasmName = addContractName
 	}
-	wasmBin, err := ioutil.ReadFile(wasmPath)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	var (
-		method = commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
-		pairs  []*commonPb.KeyValuePair
-	)
 
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    wasmName,
-			ContractVersion: "1.0.0",
-			RuntimeType:     commonPb.RuntimeType_WASMER,
-		},
-		Method:      method,
-		Parameters:  pairs,
-		ByteCode:    wasmBin,
-		Endorsement: nil,
-	}
-	if endorsement, err := acSignWithManager(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("failed to sign endorsement, %s", err.Error())
-	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(marshalFailedStr, err.Error())
-	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes, 0)
-	fmt.Printf("testCreate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	common.CreateContract(sk3, &client, CHAIN1, wasmName, wasmPath, commonPb.RuntimeType_WASMER)
+
 }
 func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payloadBytes []byte, index int) *commonPb.TxResponse {
@@ -485,41 +455,42 @@ func initGRPCConn(useTLS bool, orgIdIndex int) (*grpc.ClientConn, error) {
 		return grpc.Dial(url, grpc.WithInsecure())
 	}
 }
-func acSignWithManager(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(msg)
-	signers := make([]protocol.SigningMember, 0)
-	for _, orgId := range orgIdList {
-		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-		file, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		sk, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-		file2, err := ioutil.ReadFile(userCrtPath)
-		fmt.Println("node", orgId, "crt", string(file2))
-		if err != nil {
-			panic(err)
-		}
-		// 获取peerId
-		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
-		fmt.Println("node", orgId, "peerId", peerId)
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      "wx-org" + numStr + ".chainmaker.org",
-			MemberInfo: file2,
-			IsFullCert: true,
-		}
-		signer := getSigner(sk, sender1)
-		signers = append(signers, signer)
-	}
-	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, crypto.CRYPTO_ALGO_SHA256)
-}
+
+//func acSignWithManager(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(msg)
+//	signers := make([]protocol.SigningMember, 0)
+//	for _, orgId := range orgIdList {
+//		numStr := strconv.Itoa(orgId)
+//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+//		file, err := ioutil.ReadFile(path)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+//		file2, err := ioutil.ReadFile(userCrtPath)
+//		fmt.Println("node", orgId, "crt", string(file2))
+//		if err != nil {
+//			panic(err)
+//		}
+//		// 获取peerId
+//		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
+//		fmt.Println("node", orgId, "peerId", peerId)
+//		// 构造Sender
+//		sender1 := &acPb.SerializedMember{
+//			OrgId:      "wx-org" + numStr + ".chainmaker.org",
+//			MemberInfo: file2,
+//			IsFullCert: true,
+//		}
+//		signer := getSigner(sk, sender1)
+//		signers = append(signers, signer)
+//	}
+//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, crypto.CRYPTO_ALGO_SHA256)
+//}
 
 func getKeysAndCertsPath(orgIdList []int) (keysFile, certsFile []string) {
 	keysFile = make([]string, 0, len(orgIdList))
@@ -539,7 +510,7 @@ func addCerts(count int) {
 		txId := utils.GetRandTxId()
 		sk, member := getUserSK(i+1, userKeyPaths[i], userCrtPaths[i])
 		resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{TxId: txId, ChainId: CHAIN1,
-			TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERT_ADD.String()})
+			TxType: commonPb.TxType_INVOKE_CONTRACT, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERT_ADD.String()})
 		if err == nil {
 			fmt.Printf("addCerts send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 			continue
@@ -642,7 +613,7 @@ func getChainConfig(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId s
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes, 0)
 	chainConfig := &configPb.ChainConfig{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, chainConfig); err != nil {

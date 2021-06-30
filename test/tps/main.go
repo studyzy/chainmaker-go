@@ -21,6 +21,10 @@ import (
 	"sync"
 	"time"
 
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
@@ -185,7 +189,7 @@ func testInvoke(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 		return txId
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp != nil {
 		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)

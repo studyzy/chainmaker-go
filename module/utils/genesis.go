@@ -145,13 +145,10 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
 	}
 
-	payload := &commonPb.SystemContractPayload{
-		ChainId:      cc.ChainId,
+	payload := &commonPb.TransactPayload{
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 		Method:       "Genesis",
 		Parameters:   make([]*commonPb.KeyValuePair, 0),
-		Sequence:     cc.Sequence,
-		Endorsement:  nil,
 	}
 	payload.Parameters = append(payload.Parameters, &commonPb.KeyValuePair{
 		Key:   commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
@@ -166,7 +163,7 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Header: &commonPb.TxHeader{
 			ChainId:        cc.ChainId,
 			Sender:         nil,
-			TxType:         commonPb.TxType_UPDATE_CHAIN_CONFIG,
+			TxType:         commonPb.TxType_INVOKE_CONTRACT,
 			TxId:           GetTxIdWithSeed(int64(defaultTimestamp)),
 			Timestamp:      defaultTimestamp,
 			ExpirationTime: -1,

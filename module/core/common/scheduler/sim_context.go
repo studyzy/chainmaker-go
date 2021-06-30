@@ -239,7 +239,7 @@ func (s *txSimContextImpl) SetTxResult(txResult *commonpb.Result) {
 }
 
 // Cross contract call
-func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonpb.TxType) (*commonpb.ContractResult, commonpb.TxStatusCode) {
+func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonpb.TxType) (*commonpb.ContractResult, commonpb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
@@ -258,13 +258,13 @@ func (s *txSimContextImpl) CallContract(contractId *commonpb.ContractId, method 
 		}
 		return contractResult, commonpb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		depth:        s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
-		contractName: contractId.ContractName,
+		contractName: contract.Name,
 		method:       method,
 		param:        parameter,
 	}

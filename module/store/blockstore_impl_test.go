@@ -18,6 +18,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/store/archive"
 
+	"chainmaker.org/chainmaker/pb-go/consts"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -145,6 +147,12 @@ func generateTxId(chainId string, height int64, index int) string {
 }
 
 func createConfigBlock(chainId string, height int64) *commonPb.Block {
+	payload := &commonPb.TransactPayload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		Method:       "SetConfig",
+		Parameters:   nil,
+	}
+	data, _ := payload.Marshal()
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -154,11 +162,12 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 			{
 				Header: &commonPb.TxHeader{
 					ChainId: chainId,
-					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
+					TxType:  commonPb.TxType_INVOKE_CONTRACT,
 					Sender: &acPb.SerializedMember{
 						OrgId: "org1",
 					},
 				},
+				RequestPayload: data,
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{
@@ -186,7 +195,7 @@ func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 		tx := &commonPb.Transaction{
 			Header: &commonPb.TxHeader{
 				ChainId: chainId,
-				TxType:  commonPb.TxType_INVOKE_USER_CONTRACT,
+				TxType:  commonPb.TxType_INVOKE_CONTRACT,
 				TxId:    generateTxId(chainId, height, i),
 				Sender: &acPb.SerializedMember{
 					OrgId: "org1",
@@ -240,24 +249,17 @@ func createConfBlock(chainId string, height int64) *commonPb.Block {
 }
 
 func createContractMgrPayload() []byte {
-	p := commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    defaultContractName,
-			ContractVersion: "1.0",
-			RuntimeType:     commonPb.RuntimeType_WASMER,
-		},
-		Method:      "create",
-		Parameters:  nil,
-		ByteCode:    nil,
-		Endorsement: nil,
+	p := commonPb.TransactPayload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+		Method:       consts.ContractManager_INIT_CONTRACT.String(),
+		Parameters:   nil,
 	}
 	d, _ := p.Marshal()
 	return d
 }
 func createInitContractBlockAndRWSets(chainId string, height int64) (*commonPb.Block, []*commonPb.TxRWSet) {
 	block := createBlock(chainId, height, 1)
-	block.Txs[0].Header.TxType = commonPb.TxType_MANAGE_USER_CONTRACT
+	block.Txs[0].Header.TxType = commonPb.TxType_INVOKE_CONTRACT
 	block.Txs[0].RequestPayload = createContractMgrPayload()
 	var txRWSets []*commonPb.TxRWSet
 	//建表脚本在写集

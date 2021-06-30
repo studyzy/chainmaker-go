@@ -63,14 +63,19 @@ func TestAddTxsToConfigQueue(t *testing.T) {
 
 	// 3. repeat put txs to common queue failed due to txIds exist in config queue
 	for _, tx := range rpcTxs.txs {
-		tx.Header.TxType = commonPb.TxType_INVOKE_USER_CONTRACT
+		tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
 	}
 	queue.addTxsToCommonQueue(rpcTxs)
 	queue.addTxsToCommonQueue(p2pTxs)
 	require.EqualValues(t, 30, queue.configTxsCount())
 	require.EqualValues(t, 0, queue.commonTxsCount())
 }
-
+func changeTx2ConfigTx(tx *commonPb.Transaction) {
+	payload, _ := tx.GetTransactPayload()
+	payload.ContractName = commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()
+	data, _ := payload.Marshal()
+	tx.RequestPayload = data
+}
 func TestAddTxsToCommonQueue(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -94,7 +99,8 @@ func TestAddTxsToCommonQueue(t *testing.T) {
 
 	// 3. repeat put txs to config queue failed due to txIds exist in common queue
 	for _, tx := range rpcTxs.txs {
-		tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		//tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		changeTx2ConfigTx(tx)
 	}
 	queue.addTxsToConfigQueue(rpcTxs)
 	queue.addTxsToConfigQueue(p2pTxs)
@@ -132,7 +138,8 @@ func TestGetInQueue(t *testing.T) {
 
 	// 3. modify p2pTxs txType to commonPb.TxType_UPDATE_CHAIN_CONFIG
 	for _, tx := range p2pTxs.txs {
-		tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		//tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		changeTx2ConfigTx(tx)
 	}
 
 	// 4. put txs to config queue and check existence
@@ -168,7 +175,8 @@ func TestHasInQueue(t *testing.T) {
 
 	// 3. modify p2pTxs txType to commonPb.TxType_UPDATE_CHAIN_CONFIG
 	for _, tx := range p2pTxs.txs {
-		tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		//tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		changeTx2ConfigTx(tx)
 	}
 
 	// 4. put txs to config queue and check existence
@@ -257,7 +265,8 @@ func TestAppendTxsToPendingCache(t *testing.T) {
 
 	// 4. modify p2pTxs txType to commonPb.TxType_UPDATE_CHAIN_CONFIG
 	for _, tx := range p2pTxs.txs {
-		tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		//tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		changeTx2ConfigTx(tx)
 	}
 
 	// 5. add txs to config queue and check appendTxsToPendingCache
@@ -290,7 +299,8 @@ func TestFetchInQueue(t *testing.T) {
 
 	// 3. modify p2pTxs txType to commonPb.TxType_UPDATE_CHAIN_CONFIG and push txs to config queue
 	for _, tx := range p2pTxs.txs {
-		tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		//tx.Header.TxType = commonPb.TxType_UPDATE_CHAIN_CONFIG
+		changeTx2ConfigTx(tx)
 	}
 	queue.addTxsToConfigQueue(p2pTxs)
 

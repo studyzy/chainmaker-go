@@ -35,6 +35,12 @@ func generateTxId(chainId string, height int64, index int) string {
 }
 
 func createConfigBlock(chainId string, height int64) *commonPb.Block {
+	payload := &commonPb.TransactPayload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		Method:       "SetConfig",
+		Parameters:   nil,
+	}
+	data, _ := payload.Marshal()
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -44,11 +50,12 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 			{
 				Header: &commonPb.TxHeader{
 					ChainId: chainId,
-					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
+					TxType:  commonPb.TxType_INVOKE_CONTRACT,
 					Sender: &acPb.SerializedMember{
 						OrgId: "org1",
 					},
 				},
+				RequestPayload: data,
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{

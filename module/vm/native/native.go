@@ -7,14 +7,14 @@
 package native
 
 import (
+	"errors"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"sync"
 )
 
 var (
@@ -57,11 +57,12 @@ func initContract(log *logger.CMLogger) map[string]Contract {
 	contracts[commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String()] = newPrivateComputeContact(log)
 	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()] = newDPoSERC20Contract(log)
 	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()] = newDPoSStakeContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_STATE.String()] = newContractManager(log)
 	return contracts
 }
 
 // Invoke verify and run Contract method
-func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName string, _ []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string, _ []byte, parameters map[string]string,
 	txContext protocol.TxSimContext) *commonPb.ContractResult {
 
 	result := &commonPb.ContractResult{
@@ -70,15 +71,15 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName str
 		Result:  nil,
 	}
 
-	txType := txContext.GetTx().Header.TxType
-	if txType == commonPb.TxType_UPDATE_CHAIN_CONFIG {
-		if err := r.verifySequence(txContext); err != nil {
-			result.Message = fmt.Sprintf(err.Error()+",txType: %s", txType)
-			return result
-		}
-	}
+	//txType := txContext.GetTx().Header.TxType
+	//if txType == commonPb.TxType_UPDATE_CHAIN_CONFIG {
+	//	if err := r.verifySequence(txContext); err != nil {
+	//		result.Message = fmt.Sprintf(err.Error()+",txType: %s", txType)
+	//		return result
+	//	}
+	//}
 
-	f, err := r.getContractFunc(contractId, methodName)
+	f, err := r.getContractFunc(contract, methodName)
 	if err != nil {
 		r.log.Error(err)
 		result.Message = err.Error()
@@ -136,18 +137,18 @@ func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error 
 	return nil
 }
 
-func (r *RuntimeInstance) getContractFunc(contractId *commonPb.ContractId, methodName string) (ContractFunc, error) {
-	if contractId == nil {
+func (r *RuntimeInstance) getContractFunc(contract *commonPb.Contract, methodName string) (ContractFunc, error) {
+	if contract == nil {
 		return nil, ErrContractIdIsNil
 	}
 
-	contractName := contractId.ContractName
-	contract := r.contracts[contractName]
-	if contract == nil {
+	contractName := contract.Name
+	contractInst := r.contracts[contractName]
+	if contractInst == nil {
 		return nil, ErrContractNotFound
 	}
 
-	f := contract.getMethod(methodName)
+	f := contractInst.getMethod(methodName)
 	if f == nil {
 		return nil, ErrMethodNotFound
 	}

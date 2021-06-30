@@ -1,12 +1,15 @@
 package common
 
 import (
+	"runtime"
+
+	"chainmaker.org/chainmaker/pb-go/consts"
+
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
-	"runtime"
 )
 
 type KVStoreHelper struct {
@@ -46,13 +49,14 @@ func (sql *SQLStoreHelper) RollBack(block *commonpb.Block, blockchainStore proto
 	}
 	// drop database if create contract fail
 	if len(block.Txs) == 1 && utils.IsManageContractAsConfigTx(block.Txs[0], true) {
-		var payload commonpb.ContractMgmtPayload
+		var payload commonpb.TransactPayload
 		if err = proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err != nil {
 			return err
 		}
-		if payload.ContractId != nil {
-			dbName := statesqldb.GetContractDbName(sql.chainId, payload.ContractId.ContractName)
-			blockchainStore.ExecDdlSql(payload.ContractId.ContractName, "drop database "+dbName)
+		contractName := payload.GetParameter(consts.ContractManager_Install_ContractName.String())
+		if len(contractName) != 0 {
+			dbName := statesqldb.GetContractDbName(sql.chainId, contractName)
+			blockchainStore.ExecDdlSql(contractName, "drop database "+dbName)
 		}
 	}
 	return nil

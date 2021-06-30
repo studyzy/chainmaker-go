@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"sync"
 
+	"chainmaker.org/chainmaker/pb-go/consts"
+
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/utils"
@@ -159,18 +161,18 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	//2. 如果是新建合约，则创建对应的数据库，并执行DDL
 	if block.IsContractMgmtBlock() {
 		//创建对应合约的数据库
-		payload := &commonPb.ContractMgmtPayload{}
+		payload := &commonPb.TransactPayload{}
 		err = payload.Unmarshal(block.Txs[0].RequestPayload)
 		if err != nil {
 			return err
 		}
 		contractId := &commonPb.ContractId{
-			ContractName:    payload.ContractId.ContractName,
-			ContractVersion: payload.ContractId.ContractVersion,
-			RuntimeType:     payload.ContractId.RuntimeType,
+			ContractName:    payload.GetParameter(consts.ContractManager_Install_ContractName.String()),
+			ContractVersion: payload.GetParameter(consts.ContractManager_Install_Version.String()),
+			RuntimeType:     commonPb.RuntimeType(commonPb.RuntimeType_value[payload.GetParameter(consts.ContractManager_Install_RuntimeType.String())]),
 		}
-		if payload.ContractId.RuntimeType == commonPb.RuntimeType_EVM {
-			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
+		if contractId.RuntimeType == commonPb.RuntimeType_EVM {
+			address, _ := evmutils.MakeAddressFromString(contractId.ContractName)
 			contractId.ContractName = address.String()
 		}
 		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
