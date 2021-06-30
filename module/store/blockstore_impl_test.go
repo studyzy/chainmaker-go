@@ -823,7 +823,24 @@ func TestWriteBinlog(t *testing.T) {
 //	}
 //	defer db.Close()
 //}
-//TODO houfa
+
+func Test_blockchainStoreImpl_Mysql_Archive(t *testing.T) {
+	var factory Factory
+	s, err := factory.newStore(chainId, getSqlConfig(), binlog.NewMemBinlog(), log)
+	assert.Equal(t, nil, err)
+	defer s.Close()
+
+	err = s.ArchiveBlock(0)
+	assert.Equal(t, nil, err)
+
+	err = s.RestoreBlocks(nil)
+	assert.Equal(t, nil, err)
+
+	archivedPivot := s.GetArchivedPivot()
+	assert.True(t, archivedPivot == 0)
+}
+
+
 func Test_blockchainStoreImpl_Archive(t *testing.T) {
 	var factory Factory
 	dbConf := getlvldbConfig("")
