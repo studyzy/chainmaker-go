@@ -42,13 +42,13 @@ type WaciInstance struct {
 func (s *WaciInstance) LogMsg(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(msgPtr int32, msgLen int32) {
 		msg := vm.Memory[msgPtr : msgPtr+msgLen]
-		s.Log.Debugf("waci log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, msg)
+		s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, msg)
 	})
 }
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Log.Debugf("waci log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -56,7 +56,7 @@ func (s *WaciInstance) LogMessage() int32 {
 func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(requestHeaderPtr int32, requestHeaderLen int32, requestBodyPtr int32, requestBodyLen int32) int32 {
 		if requestHeaderLen == 0 {
-			s.Log.Errorf("waci log>>[%s] requestHeader is null.", s.TxSimContext.GetTx().Header.TxId)
+			s.Log.Errorf("gasm log>> [%s] requestHeader is null.", s.TxSimContext.GetTx().Header.TxId)
 			return protocol.ContractSdkSignalResultFail
 		}
 
@@ -237,6 +237,6 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.ContractResult.Message += "error message: " + msg
 	}
 	s.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Log.Errorf("gasm log>> [%s] %s", s.ContractId.ContractName, msg)
+	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, s.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }

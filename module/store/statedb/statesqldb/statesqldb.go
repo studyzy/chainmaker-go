@@ -60,11 +60,12 @@ func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	if err != nil {
 		panic("init state sql db fail")
 	}
-	db.logger.Debug("try to create state db table: state_infos")
+	db.logger.Debug("try to create system state db table: state_infos")
 	err = db.db.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
 		panic("init state sql db table fail:" + err.Error())
 	}
+	db.logger.Debug("try to create system state db table: save_points")
 	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
 		panic("init state sql db table fail:" + err.Error())
@@ -180,11 +181,23 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			}
 			return err
 		}
-	}
-	//3. 不是新建合约，是普通的合约调用，则在事务中更新数据
-	for _, txRWSet := range txRWSets {
-		for _, txWrite := range txRWSet.TxWrites {
-			err = s.operateDbByWriteSet(dbTx, block, txWrite, processStateDbSqlOutside)
+	} else {
+		//3. 不是新建合约，是普通的合约调用，则在事务中更新数据
+		for _, txRWSet := range txRWSets {
+			for _, txWrite := range txRWSet.TxWrites {
+				err = s.operateDbByWriteSet(dbTx, block, txWrite, processStateDbSqlOutside)
+				if err != nil {
+					err2 := s.db.RollbackDbTransaction(txKey)
+					if err2 != nil {
+						return err2
+					}
+					return err
+				}
+			}
+		}
+		//3.5 处理BlockHeader中ConsensusArgs对应的合约状态数据更新
+		if len(block.Header.ConsensusArgs) > 0 {
+			err = s.updateConsensusArgs(dbTx, block)
 			if err != nil {
 				err2 := s.db.RollbackDbTransaction(txKey)
 				if err2 != nil {
@@ -192,17 +205,6 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 				}
 				return err
 			}
-		}
-	}
-	//3.5 处理BlockHeader中ConsensusArgs对应的合约状态数据更新
-	if len(block.Header.ConsensusArgs) > 0 {
-		err = s.updateConsensusArgs(dbTx, block)
-		if err != nil {
-			err2 := s.db.RollbackDbTransaction(txKey)
-			if err2 != nil {
-				return err2
-			}
-			return err
 		}
 	}
 	//4. 更新SavePoint

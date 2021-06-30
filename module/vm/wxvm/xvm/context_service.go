@@ -300,7 +300,7 @@ func (c *ContextService) LogMessage(ctxId int64) int32 {
 		context.err = fmt.Errorf("log message param[msg] is required:%d", c.ctxId)
 		return protocol.ContractSdkSignalResultFail
 	}
-	c.logger.Debugf("wxvm log >>[%s] [%d] %s", context.TxSimContext.GetTx().Header.TxId, c.ctxId, msg)
+	c.logger.Debugf("wxvm log>> [%s] %s", context.TxSimContext.GetTx().Header.TxId, msg)
 	msgItems := make([]*serialize.EasyCodecItem, 0)
 	context.resp = msgItems
 	return protocol.ContractSdkSignalResultSuccess

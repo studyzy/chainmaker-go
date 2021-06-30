@@ -12,7 +12,6 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
-	"time"
 
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
@@ -62,9 +61,10 @@ func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, seed []byte, outSo
 			newSelectArray = append(newSelectArray, infos[i])
 		}
 	}
+
 	// 从新的数组中选择n1个结果
 	// 理论上不需要再排序，因为最开始已经排序过
-	rand.Seed(time.Now().Unix()) // 设置种子
+	rand.Seed(int64(seedInt)) // 设置种子
 	selectM1IdxArray := rand.Perm(len(newSelectArray))[:n1]
 	for _, v := range selectM1IdxArray {
 		validators = append(validators, newSelectArray[v])

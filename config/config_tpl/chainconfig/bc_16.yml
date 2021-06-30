@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}    # 链标识
-version: v1.2.1         # 链版本
+version: v1.2.0         # 链版本
 sequence: 1             # 配置版本
 auth_type: "identity"   # 认证类型
 
@@ -95,6 +95,89 @@ consensus:
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
+  dpos_config: # DPoS
+    #ERC20合约配置
+    - key: erc20.total
+      value: "{erc20_total}"
+    - key: erc20.owner
+      value: "{org1_peeraddr}"
+    - key: erc20.decimals
+      value: "18"
+    - key: erc20.account:SYSTEM_CONTRACT_DPOS_STAKE
+      value: "{erc20_total}"
+    #Stake合约配置
+    - key: stake.minSelfDelegation
+      value: "2500000"
+    - key: stake.epochValidatorNum
+      value: "{epochValidatorNum}"
+    - key: stake.epochBlockNum
+      value: "10"
+    - key: stake.completionUnbondingEpochNum
+      value: "1"
+    - key: stake.candidate:"{org1_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org2_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org3_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org4_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org5_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org6_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org7_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org8_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org9_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org10_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org11_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org12_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org13_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org14_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org15_peeraddr}"
+      value: "2500000"
+    - key: stake.candidate:"{org16_peeraddr}"
+      value: "2500000"
+    - key: stake.nodeID:"{org1_peeraddr}"
+      value: "{org1_peerid}"
+    - key: stake.nodeID:"{org2_peeraddr}"
+      value: "{org2_peerid}"
+    - key: stake.nodeID:"{org3_peeraddr}"
+      value: "{org3_peerid}"
+    - key: stake.nodeID:"{org4_peeraddr}"
+      value: "{org4_peerid}"
+    - key: stake.nodeID:"{org5_peeraddr}"
+      value: "{org5_peerid}"
+    - key: stake.nodeID:"{org6_peeraddr}"
+      value: "{org6_peerid}"
+    - key: stake.nodeID:"{org7_peeraddr}"
+      value: "{org7_peerid}"
+    - key: stake.nodeID:"{org8_peeraddr}"
+      value: "{org8_peerid}"
+    - key: stake.nodeID:"{org9_peeraddr}"
+      value: "{org9_peerid}"
+    - key: stake.nodeID:"{org10_peeraddr}"
+      value: "{org10_peerid}"
+    - key: stake.nodeID:"{org11_peeraddr}"
+      value: "{org11_peerid}"
+    - key: stake.nodeID:"{org12_peeraddr}"
+      value: "{org12_peerid}"
+    - key: stake.nodeID:"{org13_peeraddr}"
+      value: "{org13_peerid}"
+    - key: stake.nodeID:"{org14_peeraddr}"
+      value: "{org14_peerid}"
+    - key: stake.nodeID:"{org15_peeraddr}"
+      value: "{org15_peerid}"
+    - key: stake.nodeID:"{org16_peeraddr}"
+      value: "{org16_peerid}"
 
 # 信任组织和根证书
 trust_roots:

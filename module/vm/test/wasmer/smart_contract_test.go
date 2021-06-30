@@ -32,8 +32,8 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	//test.WasmFile = "../../../../test/wasm/rust-fact-1.2.1.wasm"
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
+	//test.WasmFile = "../../../../test/wasm/rust-fact-1.2.0.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
 	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
@@ -91,9 +91,12 @@ func invokeFact(method string, id int32, contractId *commonPb.ContractId, txCont
 }
 
 func TestFunctionalContract(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	pool := wasmer.NewVmPoolManager("chain001")
+
+	invokeFactContract("init_contract", contractId, txContext, pool, bytes)
+	invokeFactContract("upgrade", contractId, txContext, pool, bytes)
 
 	invokeFactContract("save", contractId, txContext, pool, bytes)
 	r := invokeFactContract("find_by_file_hash", contractId, txContext, pool, bytes)

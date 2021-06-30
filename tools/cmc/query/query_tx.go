@@ -47,7 +47,7 @@ func newQueryTxOnChainCMD() *cobra.Command {
 		},
 	}
 
-	attachFlags(cmd, []string{
+	util.AttachAndRequiredFlags(cmd, flags, []string{
 		flagSdkConfPath, flagChainId,
 	})
 	return cmd

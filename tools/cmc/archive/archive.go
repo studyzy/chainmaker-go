@@ -88,15 +88,6 @@ func init() {
 	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
 }
 
-func attachFlags(cmd *cobra.Command, names []string) {
-	cmdFlags := cmd.Flags()
-	for _, name := range names {
-		if flag := flags.Lookup(name); flag != nil {
-			cmdFlags.AddFlag(flag)
-		}
-	}
-}
-
 // initDb Connecting database, migrate tables.
 func initDb() (*gorm.DB, error) {
 	// parse params

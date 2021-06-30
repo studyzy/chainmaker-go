@@ -11,8 +11,6 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
-	"testing"
-
 	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
 	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
 	_ "net/http/pprof"
@@ -55,11 +53,11 @@ import (
 //	println("end 【spend】", end-start)
 //	time.Sleep(time.Second * 5)
 //}
-func TestCallCounterPanic(t *testing.T) {
-	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	pool := wasmer.NewVmPoolManager("chain001")
-	invokeCounterPanic(contractId, txContext, pool, bytes)
-}
+//func TestCallCounterPanic(t *testing.T) {
+//	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
+//	pool := wasmer.NewVmPoolManager("chain001")
+//	invokeCounterPanic(contractId, txContext, pool, bytes)
+//}
 
 func invokeCounterQuery(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "query"

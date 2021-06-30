@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package archive
 
 import (
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
 
@@ -15,7 +16,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/serialization"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	logImpl "chainmaker.org/chainmaker-go/logger"
 )
 
 const defaultMinUnArchiveBlockHeight = 10
@@ -42,16 +42,16 @@ type ArchiveMgr struct {
 	resultDB             resultdb.ResultDB
 	storeConfig          *localconf.StorageConfig
 
-	logger *logImpl.CMLogger
+	logger protocol.Logger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
-func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB, storeConfig *localconf.StorageConfig) (*ArchiveMgr, error) {
+func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB, storeConfig *localconf.StorageConfig, logger protocol.Logger) (*ArchiveMgr, error) {
 	archiveMgr := &ArchiveMgr{
-		blockDB:       blockDB,
-		resultDB:      resultDB,
-		logger:        logImpl.GetLoggerByChain(logImpl.MODULE_STORAGE, chainId),
-		storeConfig:   storeConfig,
+		blockDB:     blockDB,
+		resultDB:    resultDB,
+		logger:      logger,
+		storeConfig: storeConfig,
 	}
 
 	unarchiveBlockHeight := uint64(0)

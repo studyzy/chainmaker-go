@@ -307,13 +307,13 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 }
 func initWasmerSqlTest() {
 	WasmPath = "../wasm/rust-sql-1.1.1.wasm"
-	WasmUpgradePath = "../wasm/rust-sql-1.1.1.wasm"
+	WasmUpgradePath = WasmPath
 	contractName = "contract110"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
 	WasmPath = "../wasm/go-sql-1.1.1.wasm"
-	WasmUpgradePath = "../wasm/go-sql-1.1.1.wasm"
+	WasmUpgradePath = WasmPath
 	contractName = "contract210"
 	runtimeType = commonPb.RuntimeType_GASM
 }

@@ -49,12 +49,3 @@ func init() {
 	flags.StringVar(&chainId, flagChainId, "", "Chain ID")
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
 }
-
-func attachFlags(cmd *cobra.Command, names []string) {
-	cmdFlags := cmd.Flags()
-	for _, name := range names {
-		if flag := flags.Lookup(name); flag != nil {
-			cmdFlags.AddFlag(flag)
-		}
-	}
-}

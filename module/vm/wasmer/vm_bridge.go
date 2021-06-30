@@ -46,7 +46,7 @@ type WaciInstance struct {
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Sc.Log.Debugf("wacsi log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Sc.Log.Debugf("wasmer log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -57,14 +57,14 @@ func logMessage(context unsafe.Pointer, pointer int32, length int32) {
 	var memory = instanceContext.Memory().Data()
 
 	gotText := string(memory[pointer : pointer+length])
-	log.Debugf("wasm log>> " + gotText)
+	log.Debugf("wasmer log>> " + gotText)
 }
 
 // sysCall wasmer vm call chain entry
 //export sysCall
 func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen int32, requestBodyPtr int32, requestBodyLen int32) int32 {
 	if requestHeaderLen == 0 {
-		log.Error("wasm log>>requestHeader is null.")
+		log.Error("wasmer log>> requestHeader is null.")
 		return protocol.ContractSdkSignalResultFail
 	}
 	// get param from memory
@@ -279,7 +279,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.Sc.ContractResult.Message += "error message: " + msg
 	}
 	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Sc.Log.Errorf("wasm log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
+	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }
 

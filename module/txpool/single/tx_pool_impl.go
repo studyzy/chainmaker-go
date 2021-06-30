@@ -177,6 +177,16 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	if pool.TxExists(tx) {
 		return commonErrors.ErrTxIdExist
 	}
+	var (
+		err   error
+		txMsg []byte
+	)
+	if source == protocol.RPC {
+		if txMsg, err = proto.Marshal(tx); err != nil {
+			pool.log.Errorf("broadcastTx proto.Marshal(tx) err: %s", err)
+			return err
+		}
+	}
 
 	// 2. store the transaction
 	memTx := &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
@@ -193,7 +203,7 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	}
 	// 3. broadcast the transaction
 	if source == protocol.RPC {
-		pool.broadcastTx(tx)
+		pool.broadcastTx(tx.Header.TxId, txMsg)
 	}
 	return nil
 }
@@ -220,14 +230,9 @@ func (pool *txPoolImpl) publish(signalType txpoolPb.SignalType) {
 	}
 }
 
-func (pool *txPoolImpl) broadcastTx(tx *commonPb.Transaction) {
+func (pool *txPoolImpl) broadcastTx(txId string, txMsg []byte) {
 	if pool.msgBus != nil {
-		pool.log.Debugf("broadcastTx txId: %s", tx.Header.GetTxId())
-		txMsg, err := proto.Marshal(tx)
-		if err != nil {
-			pool.log.Errorf("broadcastTx proto.Marshal(tx) err: %s", err)
-			return
-		}
+		pool.log.Debugf("broadcastTx txId: %s", txId)
 		netMsg := &netPb.NetMsg{
 			Payload: txMsg,
 			Type:    netPb.NetMsg_TX,

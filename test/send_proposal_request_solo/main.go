@@ -174,15 +174,15 @@ func runTest() {
 	fmt.Println("    【runTest】 pass", "txId", txId)
 }
 func initWasmerTest() {
-	WasmPath = "../wasm/rust-func-verify-1.2.1.wasm"
-	WasmUpgradePath = "../wasm/rust-func-verify-1.2.1.wasm"
+	WasmPath = "../wasm/rust-func-verify-1.2.0.wasm"
+	WasmUpgradePath = WasmPath
 	contractName = "contract101"
 	runtimeType = commonPb.RuntimeType_WASMER
 	printConfig("wasmer")
 }
 func initGasmTest() {
-	WasmPath = "../wasm/go-fact-1.2.1.wasm"
-	WasmUpgradePath = "../wasm/go-func-verify-1.2.1.wasm"
+	WasmPath = "../wasm/go-fact-1.2.0.wasm"
+	WasmUpgradePath = WasmPath
 	contractName = "contract201"
 	runtimeType = commonPb.RuntimeType_GASM
 	printConfig("gasm")

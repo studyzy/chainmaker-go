@@ -87,6 +87,9 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 	}
 	for _, txRWSet := range txRWSets {
 		for _, w := range txRWSet.TxWrites {
+			if len(w.Key) == 0 {
+				continue
+			}
 			historyInfo := NewStateHistoryInfo(w.ContractName, txRWSet.TxId, w.Key, uint64(block.Header.BlockHeight))
 			_, err = dbtx.Save(historyInfo)
 			if err != nil {
