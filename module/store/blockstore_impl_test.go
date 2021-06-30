@@ -215,7 +215,15 @@ func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 
 	return block
 }
-
+func createConfigPayload() []byte {
+	p := commonPb.TransactPayload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		Method:       commonPb.ConfigFunction_CORE_UPDATE.String(),
+		Parameters:   nil,
+	}
+	d, _ := p.Marshal()
+	return d
+}
 func createConfBlock(chainId string, height int64) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
@@ -226,12 +234,13 @@ func createConfBlock(chainId string, height int64) *commonPb.Block {
 			{
 				Header: &commonPb.TxHeader{
 					ChainId: chainId,
-					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
+					TxType:  commonPb.TxType_INVOKE_CONTRACT,
 					TxId:    generateTxId(chainId, height, 0),
 					Sender: &acPb.SerializedMember{
 						OrgId: "org1",
 					},
 				},
+				RequestPayload: createConfigPayload(),
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{

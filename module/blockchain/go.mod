@@ -18,9 +18,9 @@ require (
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210621163617-96969c854c55
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210627170802-6ae5d9ef7d3b
-	chainmaker.org/chainmaker/protocol v0.0.0-20210624151907-50fa3348c696
+	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf
+	chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511
 )
 
 replace (
