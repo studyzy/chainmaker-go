@@ -32,6 +32,7 @@ type txQuerySimContextImpl struct {
 	hisResult        []*callContractResult
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
+	blockVersion string
 }
 
 type callContractResult struct {
@@ -42,7 +43,9 @@ type callContractResult struct {
 	gasUsed      uint64
 	result       []byte
 }
-
+func (s *txQuerySimContextImpl) GetBlockVersion() string{
+	return s.blockVersion
+}
 // StateDB & ReadWriteSet
 func (s *txQuerySimContextImpl) Get(contractName string, key []byte) ([]byte, error) {
 	// Get from write set

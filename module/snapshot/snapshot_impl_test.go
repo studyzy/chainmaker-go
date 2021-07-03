@@ -41,6 +41,9 @@ func (s *MockSimContextImpl) GetTxExecSeq() int {
 func (s *MockSimContextImpl) GetDepth() int {
 	return s.currentDepth
 }
+func (s *MockSimContextImpl) GetBlockVersion() string {
+	return protocol.DefaultBlockVersion
+}
 
 func (s *MockSimContextImpl) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	panic(implement_me)

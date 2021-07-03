@@ -292,6 +292,20 @@ func (mr *MockContractWacsiKVMockRecorder) KvIteratorNext() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KvIteratorNext", reflect.TypeOf((*MockContractWacsiKV)(nil).KvIteratorNext))
 }
 
+// KvPreIterator mocks base method.
+func (m *MockContractWacsiKV) KvPreIterator() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KvPreIterator")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// KvPreIterator indicates an expected call of KvPreIterator.
+func (mr *MockContractWacsiKVMockRecorder) KvPreIterator() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KvPreIterator", reflect.TypeOf((*MockContractWacsiKV)(nil).KvPreIterator))
+}
+
 // LogMessage mocks base method.
 func (m *MockContractWacsiKV) LogMessage() int32 {
 	m.ctrl.T.Helper()

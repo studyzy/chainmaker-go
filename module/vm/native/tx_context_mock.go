@@ -25,7 +25,9 @@ func newTxContextMock(cache dataStore) *TxContextMock {
 		cacheMap: cache,
 	}
 }
-
+func (mock *TxContextMock)GetBlockVersion() string{
+	return protocol.DefaultBlockVersion
+}
 func (mock *TxContextMock) Get(name string, key []byte) ([]byte, error) {
 	mock.lock.Lock()
 	defer mock.lock.Unlock()

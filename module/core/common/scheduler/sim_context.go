@@ -35,6 +35,7 @@ type txSimContextImpl struct {
 	hisResult        []*callContractResult
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
+	blockVersion string
 }
 
 type callContractResult struct {
@@ -306,4 +307,7 @@ func (s *txSimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIter
 func (s *txSimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
 	data, ok := s.kvRowCache[index]
 	return data, ok
+}
+func (s *txSimContextImpl) GetBlockVersion() string{
+	return s.blockVersion
 }
