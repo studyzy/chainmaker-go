@@ -95,8 +95,8 @@ func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
 		AdditionalData: info.Meta.AdditionalData,
 	}
 	blockWithRWSet := &storePb.BlockWithRWSet{
-		Block:         block,
-		TxRWSets:      info.TxRWSets,
+		Block:          block,
+		TxRWSets:       info.TxRWSets,
 		ContractEvents: info.ContractEvents,
 	}
 	return blockWithRWSet, nil
