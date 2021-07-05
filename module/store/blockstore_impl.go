@@ -310,8 +310,11 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		if err != nil {
 			return err
 		}
-
-		blockInfos = append(blockInfos, bwsInfo)
+		_,s,err:=serialization.SerializeBlock(bwsInfo)
+		if err != nil {
+			return err
+		}
+		blockInfos = append(blockInfos, s)
 	}
 
 	return bs.ArchiveMgr.RestoreBlock(blockInfos)
@@ -732,7 +735,12 @@ func (bs *BlockStoreImpl) getBlockFromLog(num uint64) (*serialization.BlockWithS
 		bs.logger.Errorf("read log failed, err:%s", err)
 		return nil, err
 	}
-	return serialization.DeserializeBlock(bytes)
+	blockWithRWSet,err:= serialization.DeserializeBlock(bytes)
+	if err!=nil{
+		return nil, err
+	}
+	_,s,err:= serialization.SerializeBlock(blockWithRWSet)
+	return s,err
 }
 
 func (bs *BlockStoreImpl) deleteBlockFromLog(num uint64) error {
