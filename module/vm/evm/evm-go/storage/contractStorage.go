@@ -63,17 +63,24 @@ func (c *ContractStorage) CanTransfer(from, to, val *evmutils.Int) bool {
 }
 
 func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error) {
-
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 		versionKey := []byte(protocol.ContractVersion + address.String())
-		if contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey); err == nil {
+
+		contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey)
+		if contractVersion == nil || err != nil {
+			contractVersion, err = c.Ctx.Get(address.String(), []byte(protocol.ContractVersion))
+		}
+		if err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractName...)
 			versionedByteCodeKey = append(versionedByteCodeKey, contractVersion...)
 			code, err = c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey)
+			if code == nil || err != nil {
+				versionedByteCodeKey2 := append([]byte(protocol.ContractByteCode), contractVersion...)
+				code, err = c.Ctx.Get(string(contractName), versionedByteCodeKey2)
+			}
 			return code, err
-		} else {
-			log.Errorf("failed to get other contract byte code version, address [%s] , error :", address.String(), err.Error())
 		}
+		log.Errorf("failed to get other contract byte code version, address [%s] , error :", address.String(), err.Error())
 	}
 	log.Error("failed to get other contract  code :", err.Error())
 	return nil, err

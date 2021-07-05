@@ -27,8 +27,7 @@ import (
 )
 
 const (
-	DEFAULTDURATION = 1000     // default proposal duration, millis seconds
-	DEFAULTVERSION  = "v1.0.0" // default version of chain
+	DEFAULTDURATION = 1000 // default proposal duration, millis seconds
 )
 
 type BlockBuilderConf struct {
@@ -193,7 +192,7 @@ func InitNewBlock(
 			PreBlockHash:   lastBlock.Header.BlockHash,
 			BlockHash:      nil,
 			PreConfHeight:  preConfHeight,
-			BlockVersion:   getChainVersion(chainConf),
+			BlockVersion:   []byte(protocol.DefaultBlockVersion),
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
@@ -365,9 +364,10 @@ func IsRWSetHashValid(block *commonpb.Block, hashType string) error {
 
 // getChainVersion, get chain version from config.
 // If not access from config, use default value.
+// @Deprecated
 func getChainVersion(chainConf protocol.ChainConf) []byte {
 	if chainConf == nil || chainConf.ChainConfig() == nil {
-		return []byte(DEFAULTVERSION)
+		return []byte(protocol.DefaultBlockVersion)
 	}
 	return []byte(chainConf.ChainConfig().Version)
 }

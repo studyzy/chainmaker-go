@@ -32,6 +32,7 @@ type txQuerySimContextImpl struct {
 	hisResult        []*callContractResult
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
+	blockVersion     string
 }
 
 type callContractResult struct {
@@ -41,6 +42,10 @@ type callContractResult struct {
 	depth        int
 	gasUsed      uint64
 	result       []byte
+}
+
+func (s *txQuerySimContextImpl) GetBlockVersion() string {
+	return s.blockVersion
 }
 
 // StateDB & ReadWriteSet
@@ -96,15 +101,18 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {
-	if creatorByte, err := s.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
-		return nil
-	} else {
-		creator := &acPb.SerializedMember{}
-		if err = proto.Unmarshal(creatorByte, creator); err != nil {
-			return nil
-		}
-		return creator
+	creatorByte, err := s.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(protocol.ContractCreator+contractName))
+	if creatorByte == nil || err != nil {
+		creatorByte, err = s.Get(contractName, []byte(protocol.ContractCreator))
 	}
+	if err != nil {
+		return nil
+	}
+	creator := &acPb.SerializedMember{}
+	if err = proto.Unmarshal(creatorByte, creator); err != nil {
+		return nil
+	}
+	return creator
 }
 
 func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
