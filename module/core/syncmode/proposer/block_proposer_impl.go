@@ -446,6 +446,7 @@ func (bp *BlockProposerImpl) getDuration() time.Duration {
 
 // getChainVersion, get chain version from config.
 // If not access from config, use default value.
+// @Deprecated
 func (bp *BlockProposerImpl) getChainVersion() []byte {
 	if bp.chainConf == nil || bp.chainConf.ChainConfig() == nil {
 		return []byte(DEFAULTVERSION)

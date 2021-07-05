@@ -218,7 +218,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
 		blockchainStore:  store,
 		vmManager:        vmMgr,
-		blockVersion: protocol.DefaultBlockVersion,
+		blockVersion:     protocol.DefaultBlockVersion,
 	}
 
 	txResult, txStatusCode := vmMgr.RunContract(&commonPb.ContractId{ContractName: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Header.TxType)
@@ -290,6 +290,7 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
 		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
 		vmManager:        vmMgr,
+		blockVersion:     protocol.DefaultBlockVersion,
 	}
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)
