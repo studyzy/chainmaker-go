@@ -61,7 +61,7 @@ func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		gasUsed:          0,
 		currentDepth:     0,
 		hisResult:        make([]*callContractResult, 0),
-		blockVersion: blockVersion,
+		blockVersion:     blockVersion,
 	}
 }
 
@@ -94,7 +94,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 						return
 					}
 					ts.log.Debugf("run vm for tx id:%s", tx.Header.GetTxId())
-					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx,string(block.Header.BlockVersion))
+					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx, string(block.Header.BlockVersion))
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
@@ -231,7 +231,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
 					ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
-					txSimContext := NewTxSimContext(ts.VmManager, snapshot,tx, string(block.Header.BlockVersion))
+					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx, string(block.Header.BlockVersion))
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
