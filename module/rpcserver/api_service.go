@@ -290,6 +290,7 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
 		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
 		vmManager:        vmMgr,
+		blockVersion:     protocol.DefaultBlockVersion,
 	}
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)
