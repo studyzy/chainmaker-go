@@ -10,43 +10,42 @@ package client
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 const (
-	addTrustRoot = iota
-	removeTrustRoot
-	updateTrustRoot
+	addNodeOrg = iota
+	removeNodeOrg
+	updateNodeOrg
 )
 
-func configTrustRootCMD() *cobra.Command {
+func configConsensueNodeOrgCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "trustroot",
-		Short: "trust root command",
-		Long:  "trust root command",
+		Use:   "consensusnodeorg",
+		Short: "consensus node org management",
+		Long:  "consensus node org management",
 	}
-	cmd.AddCommand(addTrustRootCMD())
-	cmd.AddCommand(removeTrustRootCMD())
-	cmd.AddCommand(updateTrustRootCMD())
+	cmd.AddCommand(addConsensusNodeOrgCMD())
+	cmd.AddCommand(removeConsensusNodeOrgCMD())
+	cmd.AddCommand(updateConsensusNodeOrgCMD())
 
 	return cmd
 }
 
-func addTrustRootCMD() *cobra.Command {
+func addConsensusNodeOrgCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "add trust root ca cert",
-		Long:  "add trust root ca cert",
+		Short: "add consensus node org cmd",
+		Long:  "add consensus node org cmd",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return configTrustRoot(addTrustRoot)
+			return configConsensusNodeOrg(addNodeOrg)
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId, flagAdminOrgIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeIds, flagAdminOrgIds,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -54,24 +53,24 @@ func addTrustRootCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
-	cmd.MarkFlagRequired(flagTrustRootOrgId)
-	cmd.MarkFlagRequired(flagTrustRootCrtPath)
+	cmd.MarkFlagRequired(flagNodeOrgId)
+	cmd.MarkFlagRequired(flagNodeIds)
 
 	return cmd
 }
 
-func removeTrustRootCMD() *cobra.Command {
+func removeConsensusNodeOrgCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove",
-		Short: "remove trust root ca cert",
-		Long:  "remove trust root ca cert",
+		Short: "remove consensus node org cmd",
+		Long:  "remove consensus node org cmd",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return configTrustRoot(removeTrustRoot)
+			return configConsensusNodeOrg(removeNodeOrg)
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId, flagAdminOrgIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeId, flagAdminOrgIds,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -79,24 +78,23 @@ func removeTrustRootCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
-	cmd.MarkFlagRequired(flagTrustRootOrgId)
-	cmd.MarkFlagRequired(flagTrustRootCrtPath)
+	cmd.MarkFlagRequired(flagNodeOrgId)
 
 	return cmd
 }
 
-func updateTrustRootCMD() *cobra.Command {
+func updateConsensusNodeOrgCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "update trust root ca cert",
-		Long:  "update trust root ca cert",
+		Short: "update consensus node org cmd",
+		Long:  "update consensus node org cmd",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return configTrustRoot(updateTrustRoot)
+			return configConsensusNodeOrg(updateNodeOrg)
 		},
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId, flagAdminOrgIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeIdOld, flagNodeIds, flagAdminOrgIds,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
@@ -104,13 +102,14 @@ func updateTrustRootCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
-	cmd.MarkFlagRequired(flagTrustRootOrgId)
-	cmd.MarkFlagRequired(flagTrustRootCrtPath)
+	cmd.MarkFlagRequired(flagNodeOrgId)
+	cmd.MarkFlagRequired(flagNodeIds)
 
 	return cmd
 }
 
-func configTrustRoot(op int) error {
+func configConsensusNodeOrg(op int) error {
+	nodeIdSlice := strings.Split(nodeIds, ",")
 	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
@@ -124,27 +123,16 @@ func configTrustRoot(op int) error {
 	}
 	defer client.Stop()
 
-	var trustRootBytes []byte
-	if op == addTrustRoot || op == updateTrustRoot {
-		if trustRootPath == "" {
-			return fmt.Errorf("please specify trust root path")
-		}
-		trustRootBytes, err = ioutil.ReadFile(trustRootPath)
-		if err != nil {
-			return err
-		}
-	}
-
 	var payloadBytes []byte
 	switch op {
-	case addTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, string(trustRootBytes))
-	case removeTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootDeletePayload(trustRootOrgId)
-	case updateTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, string(trustRootBytes))
+	case addNodeOrg:
+		payloadBytes, err = client.CreateChainConfigConsensusNodeOrgAddPayload(nodeOrgId, nodeIdSlice)
+	case removeNodeOrg:
+		payloadBytes, err = client.CreateChainConfigConsensusNodeOrgDeletePayload(nodeOrgId)
+	case updateNodeOrg:
+		payloadBytes, err = client.CreateChainConfigConsensusNodeOrgUpdatePayload(nodeOrgId, nodeIdSlice)
 	default:
-		err = errors.New("invalid trust root operation")
+		err = errors.New("invalid node addres operation")
 	}
 	if err != nil {
 		return err
@@ -181,6 +169,6 @@ func configTrustRoot(op int) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("trustroot response %+v\n", resp)
+	fmt.Printf("consensusnodeorg response %+v\n", resp)
 	return nil
 }
