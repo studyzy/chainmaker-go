@@ -181,12 +181,8 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		TxReads:  nil,
 		TxWrites: nil,
 	}
-	if !runVmSuccess {
-		// ddl sql tx writes
-		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeyDdlSql...)
-		return s.txRWSet
-	}
 
+	// read set
 	{
 		txIds := make([]string, 0, len(s.txReadKeyMap))
 		for txId := range s.txReadKeyMap {
@@ -198,7 +194,8 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		}
 	}
 
-	{
+	// write set
+	if runVmSuccess {
 		txIds := make([]string, 0, len(s.txWriteKeyMap))
 		for txId := range s.txWriteKeyMap {
 			txIds = append(txIds, txId)
@@ -209,6 +206,9 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		}
 		// sql nil key tx writes
 		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeySql...)
+	} else {
+		// ddl sql tx writes
+		s.txRWSet.TxWrites = s.txWriteKeyDdlSql
 	}
 	return s.txRWSet
 }
