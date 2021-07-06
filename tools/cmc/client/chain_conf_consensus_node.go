@@ -8,9 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+
+	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
 const (
@@ -106,16 +110,30 @@ func updateConsensusNodeCMD() *cobra.Command {
 }
 
 func configConsensusNode(op int) error {
-	client, err := createClientWithConfig()
-	if err != nil {
-		return fmt.Errorf("create user client failed, %s", err.Error())
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminCrts := strings.Split(adminCrtFilePaths, ",")
+	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_KEY_AND_CERT_NOT_ENOUGH_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	adminClient, err := createAdminWithConfig(adminKeyFilePaths, adminCrtFilePaths)
-	if err != nil {
-		return fmt.Errorf("create admin client failed, %s", err.Error())
+	adminClients := make([]*sdk.ChainClient, len(adminKeys))
+	for i := range adminKeys {
+		var err error
+		if adminClients[i], err = createAdminWithConfig(adminKeys[i], adminCrts[i]); err != nil {
+			return fmt.Errorf(CREATE_ADMIN_CLIENT_FAILED_FORMAT, i, err)
+		}
 	}
-	defer adminClient.Stop()
+	defer func() {
+		for _, cli := range adminClients {
+			cli.Stop()
+		}
+	}()
+
+	client, err := createClientWithConfig()
+	if err != nil {
+		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err)
+	}
+	defer client.Stop()
 
 	var payloadBytes []byte
 	switch op {
@@ -126,24 +144,34 @@ func configConsensusNode(op int) error {
 	case updateNode:
 		payloadBytes, err = client.CreateChainConfigConsensusNodeIdUpdatePayload(nodeOrgId, nodeIdOld, nodeId)
 	default:
-		err = fmt.Errorf("invalid node addres operation")
+		err = errors.New("invalid node addres operation")
 	}
 	if err != nil {
 		return err
 	}
-	signedPayload, err := adminClient.SignChainConfigPayload(payloadBytes)
-	if err != nil {
-		return err
-	}
-	mergeSignedPayloadBytes, err := client.MergeChainConfigSignedPayload([][]byte{signedPayload})
-	if err != nil {
-		return err
-	}
-	resp, err := client.SendChainConfigUpdateRequest(mergeSignedPayloadBytes)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("add or remove request response %+v\n", resp)
 
+	signedPayloads := make([][]byte, len(adminClients))
+	for i, cli := range adminClients {
+		signedPayload, err := cli.SignChainConfigPayload(payloadBytes)
+		if err != nil {
+			return err
+		}
+		signedPayloads[i] = signedPayload
+	}
+
+	mergedSignedPayloadBytes, err := client.MergeChainConfigSignedPayload(signedPayloads)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayloadBytes)
+	if err != nil {
+		return err
+	}
+	err = checkProposalRequestResp(resp, true)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("consensusnode response %+v\n", resp)
 	return nil
 }
