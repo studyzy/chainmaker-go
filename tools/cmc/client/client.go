@@ -58,6 +58,7 @@ var (
 	nodeOrgId      string
 	nodeIdOld      string
 	nodeId         string
+	nodeIds        string
 	trustRootOrgId string
 	trustRootPath  string
 	certFilePaths  string
@@ -99,6 +100,7 @@ const (
 	flagNodeOrgId              = "node-org-id"
 	flagNodeIdOld              = "node-id-old"
 	flagNodeId                 = "node-id"
+	flagNodeIds                = "node-ids"
 	flagTrustRootOrgId         = "trust-root-org-id"
 	flagTrustRootCrtPath       = "trust-root-path"
 	flagCertFilePaths          = "cert-file-paths"
@@ -172,6 +174,7 @@ func init() {
 	flags.StringVar(&nodeOrgId, flagNodeOrgId, "", "specify node org id")
 	flags.StringVar(&nodeIdOld, flagNodeIdOld, "", "specify old node id")
 	flags.StringVar(&nodeId, flagNodeId, "", "specify node id(which will be added or update to")
+	flags.StringVar(&nodeIds, flagNodeIds, "", "specify node ids(which will be added or update to")
 
 	flags.StringVar(&trustRootOrgId, flagTrustRootOrgId, "", "specify the ca org id")
 	flags.StringVar(&trustRootPath, flagTrustRootCrtPath, "", "specify the ca file path")
