@@ -1,3 +1,9 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package bulletproofs
 
 import (
@@ -5,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+
 	"github.com/spf13/cobra"
 )
 

@@ -1,3 +1,10 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package tee
 
 import (
@@ -9,15 +16,15 @@ import (
 var (
 	caCertFile string
 	reportFile string
-	enclaveId string
+	enclaveId  string
 )
 
 var (
-	sdkConfPath string
+	sdkConfPath        string
 	clientKeyFilePaths string
 	clientCrtFilePaths string
-	orgId          string
-	chainId        string
+	orgId              string
+	chainId            string
 )
 
 var (
@@ -43,7 +50,6 @@ func NewTeeCMD() *cobra.Command {
 
 	return teeCmd
 }
-
 
 func createClientWithConfig() (*sdk.ChainClient, error) {
 	chainClient, err := sdk.NewChainClient(sdk.WithConfPath(sdkConfPath), sdk.WithUserKeyFilePath(clientKeyFilePaths),
