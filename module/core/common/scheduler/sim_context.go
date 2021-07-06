@@ -1,12 +1,13 @@
 /*
-Copyright (C) BABEC. All rights reserved.
-
-SPDX-License-Identifier: Apache-2.0
+ Copyright (C) BABEC. All rights reserved.
+ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+   SPDX-License-Identifier: Apache-2.0
 */
 
 package scheduler
 
 import (
+	"chainmaker.org/chainmaker-go/pb/protogo/store"
 	"errors"
 	"fmt"
 	"sort"
@@ -90,8 +91,36 @@ func (s *txSimContextImpl) Del(contractName string, key []byte) error {
 }
 
 func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
-	// 将来需要把txRwSet的最新状态填充到Iter中去，覆盖或者替换，才是完整的最新的Iter，否则就只是数据库的状态
-	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
+	// 1. get block's wset and filter wsets with startKey, limit
+	// 2. construct an iterator for wset
+	// 3. get store's iterator
+	// 4. construct an iterator which includes rwset iterator, store's iterator and a cache for store's iterator
+	wsetsMap := make(map[string]interface{})
+	txRWSets := s.snapshot.GetTxRWSetTable()
+	if len(txRWSets) == 0 {
+		return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
+	}
+	for _, txRWSet := range txRWSets {
+		for _, wset := range txRWSet.TxWrites {
+			if string(wset.Key) >= string(startKey) && string(wset.Key) < string(limit) {
+				wsetsMap[string(wset.Key)] = &store.KV{
+					Key: wset.Key,
+					Value: wset.Value,
+					ContractName: contractName,
+				}
+			}
+		}
+	}
+	if len(wsetsMap) == 0 {
+		return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
+	}
+	wsetIterator := NewWsetIterator(wsetsMap)
+	dbIterator, err := s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
+	if err != nil {
+		return nil, err
+	}
+	return NewSimContextIterator(wsetIterator, dbIterator), nil
+
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
