@@ -53,7 +53,14 @@ var (
 	trustRootPath  string
 	certFilePaths  string
 	certCrlPath    string
+
+	address			string
+	amount			string
+	delegator		string
+	validator		string
+	epochID			string
 )
+
 
 const (
 	flagConcurrency            = "concurrency"
@@ -86,6 +93,11 @@ const (
 	flagTrustRootCrtPath       = "trust-root-path"
 	flagCertFilePaths          = "cert-file-paths"
 	flagCertCrlPath            = "cert-crl-path"
+	flagAddress				   = "address"
+	flagAmount				   = "amount"
+	flagDelegator			   = "delegator"
+	flagValidator			   = "validator"
+	flagEpochID			   	   = "epoch-id"
 )
 
 func ClientCMD() *cobra.Command {
@@ -155,6 +167,13 @@ func init() {
 	// 证书管理
 	flags.StringVar(&certFilePaths, flagCertFilePaths, "", "specify cert file paths, use ',' to separate")
 	flags.StringVar(&certCrlPath, flagCertCrlPath, "", "specify cert crl path")
+
+	// dpos 系统合约
+	flags.StringVar(&address, flagAddress, "", "specify use address")
+	flags.StringVar(&amount, flagAmount, "", "specify amount")
+	flags.StringVar(&delegator, flagDelegator, "", "specify delegator address")
+	flags.StringVar(&validator, flagValidator, "", "specify validator address")
+	flags.StringVar(&epochID, flagEpochID, "", "specify epoch id")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
