@@ -3,7 +3,7 @@ module chainmaker.org/chainmaker-go
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
+	chainmaker.org/chainmaker/common v0.0.0-20210706082446-8e50c0e9480f
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210630065752-c3d162425200
 	chainmaker.org/chainmaker/protocol v0.0.0-20210630070504-7defb9d4d49f
 	github.com/ethereum/go-ethereum v1.10.4 // indirect
