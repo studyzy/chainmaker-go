@@ -6,8 +6,8 @@
 package scheduler
 
 import (
-    "chainmaker.org/chainmaker-go/pb/protogo/store"
-    "chainmaker.org/chainmaker-go/protocol"
+    "chainmaker.org/chainmaker/pb-go/store"
+    "chainmaker.org/chainmaker/protocol"
 )
 
 type SimContextIterator struct {

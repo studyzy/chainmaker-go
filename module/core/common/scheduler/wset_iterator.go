@@ -6,8 +6,8 @@
 package scheduler
 
 import (
-    "chainmaker.org/chainmaker-go/common/sortedmap"
-    "chainmaker.org/chainmaker-go/pb/protogo/store"
+    "chainmaker.org/chainmaker/common/sortedmap"
+    "chainmaker.org/chainmaker/pb-go/store"
     "fmt"
 )
 
