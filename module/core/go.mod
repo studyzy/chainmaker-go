@@ -11,7 +11,7 @@ require (
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a
+	chainmaker.org/chainmaker/common v0.0.0-20210706082446-8e50c0e9480f // indirect
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210627170802-6ae5d9ef7d3b
 	chainmaker.org/chainmaker/protocol v0.0.0-20210624151907-50fa3348c696
 	github.com/gogo/protobuf v1.3.2
