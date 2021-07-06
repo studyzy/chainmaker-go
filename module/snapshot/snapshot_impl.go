@@ -159,20 +159,9 @@ func (s *SnapshotImpl) ApplyTxSimContext(cache protocol.TxSimContext, runVmSucce
 	var txResult *commonPb.Result
 
 	// Only when the virtual machine is running normally can the read-write set be saved, or write fake conflicted key
-	if runVmSuccess {
-		txRWSet = cache.GetTxRWSet(true)
-	} else {
-		txRWSet = &commonPb.TxRWSet{
-			TxId:    tx.Header.TxId,
-			TxReads: nil,
-			TxWrites: []*commonPb.TxWrite{
-				{
-					Key:          ForceConflictedKey,
-					Value:        ForceConflictedValue,
-					ContractName: ForceConflictedContractName,
-				},
-			},
-		}
+	txRWSet = cache.GetTxRWSet(true)
+	if !runVmSuccess {
+		txRWSet.TxWrites = nil
 	}
 	txResult = cache.GetTxResult()
 
