@@ -7,7 +7,7 @@
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker-go/pb/protogo/store"
+	"chainmaker.org/chainmaker/pb-go/store"
 	"errors"
 	"fmt"
 	"sort"
