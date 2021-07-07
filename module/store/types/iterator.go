@@ -10,10 +10,10 @@ package types
 import (
 	"bytes"
 
-	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 )
 
 type HistoryIteratorImpl struct {
@@ -55,7 +55,7 @@ func (hs *HistoryIteratorImpl) Value() (*storePb.KeyModification, error) {
 		result.IsDelete = true
 	}
 	tx, _ := hs.blockStore.GetTxWithBlockInfo(txId.TxId)
-	result.Timestamp = tx.Transaction.Header.Timestamp
+	result.Timestamp = tx.Transaction.Payload.Timestamp
 	return &result, nil
 }
 func (hs *HistoryIteratorImpl) Release() {
@@ -84,7 +84,7 @@ func (hs *TxHistoryIteratorImpl) Value() (*storePb.TxHistory, error) {
 		BlockHeight: txId.BlockHeight,
 	}
 	tx, _ := hs.blockStore.GetTxWithBlockInfo(txId.TxId)
-	result.Timestamp = tx.Transaction.Header.Timestamp
+	result.Timestamp = tx.Transaction.Payload.Timestamp
 	result.BlockHash = tx.BlockHash
 	return &result, nil
 }

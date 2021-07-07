@@ -134,17 +134,17 @@ func getlvldbConfig(path string) *localconf.StorageConfig {
 	conf.DisableContractEventDB = true
 	return conf
 }
-func generateBlockHash(chainId string, height int64) []byte {
+func generateBlockHash(chainId string, height uint64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
 	return blockHash[:]
 }
 
-func generateTxId(chainId string, height int64, index int) string {
+func generateTxId(chainId string, height uint64, index int) string {
 	txIdBytes := sha256.Sum256([]byte(fmt.Sprintf("%s-%d-%d", chainId, height, index)))
 	return hex.EncodeToString(txIdBytes[:])
 }
 
-func createConfigBlock(chainId string, height int64) *commonPb.Block {
+func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -152,13 +152,18 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 		},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.TxHeader{
+				Payload: &commonPb.Payload{
 					ChainId: chainId,
-					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
-					Sender: &acPb.SerializedMember{
-						OrgId: "org1",
-					},
+					TxType:  commonPb.TxType_INVOKE_CONTRACT,
+
 				},
+				Sender: &commonPb.EndorsementEntry{
+					Signer:    &acPb.SerializedMember{
+						OrgId: "org1",
+						MemberInfo: []byte("User1"),
+					},
+					Signature: []byte("signature1"),
+				} ,
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{
@@ -170,11 +175,11 @@ func createConfigBlock(chainId string, height int64) *commonPb.Block {
 	}
 
 	block.Header.BlockHash = generateBlockHash(chainId, height)
-	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+	block.Txs[0].Payload.TxId = generateTxId(chainId, height, 0)
 	return block
 }
 
-func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
+func createBlock(chainId string, height uint64, txNum int) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -184,14 +189,19 @@ func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 	}
 	for i := 0; i < txNum; i++ {
 		tx := &commonPb.Transaction{
-			Header: &commonPb.TxHeader{
+			Payload: &commonPb.Payload{
 				ChainId: chainId,
-				TxType:  commonPb.TxType_INVOKE_USER_CONTRACT,
+				TxType:  commonPb.TxType_INVOKE_CONTRACT,
 				TxId:    generateTxId(chainId, height, i),
-				Sender: &acPb.SerializedMember{
-					OrgId: "org1",
-				},
+
 			},
+			Sender: &commonPb.EndorsementEntry{
+				Signer:    &acPb.SerializedMember{
+					OrgId: "org1",
+					MemberInfo: []byte("User1"),
+				},
+				Signature: []byte("signature1"),
+			} ,
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{
@@ -202,12 +212,12 @@ func createBlock(chainId string, height int64, txNum int) *commonPb.Block {
 		block.Txs = append(block.Txs, tx)
 	}
 	block.Header.BlockHash = generateBlockHash(chainId, height)
-	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+	block.Txs[0].Payload.TxId = generateTxId(chainId, height, 0)
 
 	return block
 }
 
-func createConfBlock(chainId string, height int64) *commonPb.Block {
+func createConfBlock(chainId string, height uint64) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -215,14 +225,19 @@ func createConfBlock(chainId string, height int64) *commonPb.Block {
 		},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.TxHeader{
+				Payload: &commonPb.Payload{
 					ChainId: chainId,
-					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
+					TxType:  commonPb.TxType_INVOKE_CONTRACT,
 					TxId:    generateTxId(chainId, height, 0),
-					Sender: &acPb.SerializedMember{
-						OrgId: "org1",
-					},
+					ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 				},
+				Sender: &commonPb.EndorsementEntry{
+					Signer:    &acPb.SerializedMember{
+						OrgId: "org1",
+						MemberInfo: []byte("User1"),
+					},
+					Signature: []byte("signature1"),
+				} ,
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{
@@ -234,35 +249,23 @@ func createConfBlock(chainId string, height int64) *commonPb.Block {
 	}
 
 	block.Header.BlockHash = generateBlockHash(chainId, height)
-	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+	block.Txs[0].Payload.TxId = generateTxId(chainId, height, 0)
 
 	return block
 }
 
-func createContractMgrPayload() []byte {
-	p := commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    defaultContractName,
-			ContractVersion: "1.0",
-			RuntimeType:     commonPb.RuntimeType_WASMER,
-		},
-		Method:      "create",
-		Parameters:  nil,
-		ByteCode:    nil,
-		Endorsement: nil,
-	}
-	d, _ := p.Marshal()
-	return d
+func createContractMgrPayload() *commonPb.Payload {
+	p,_:=commonPb.GenerateInstallContractPayload(defaultContractName,"1.0",commonPb.RuntimeType_WASMER,nil,nil)
+	return p
 }
-func createInitContractBlockAndRWSets(chainId string, height int64) (*commonPb.Block, []*commonPb.TxRWSet) {
+func createInitContractBlockAndRWSets(chainId string, height uint64) (*commonPb.Block, []*commonPb.TxRWSet) {
 	block := createBlock(chainId, height, 1)
-	block.Txs[0].Header.TxType = commonPb.TxType_MANAGE_USER_CONTRACT
-	block.Txs[0].RequestPayload = createContractMgrPayload()
+	block.Header.BlockType=commonPb.BlockType_CONTRACT_MGR_BLOCK
+	block.Txs[0].Payload = createContractMgrPayload()
 	var txRWSets []*commonPb.TxRWSet
 	//建表脚本在写集
 	txRWset := &commonPb.TxRWSet{
-		TxId: block.Txs[0].Header.TxId,
+		TxId: block.Txs[0].Payload.TxId,
 		TxWrites: []*commonPb.TxWrite{
 			{
 				Key:          nil,
@@ -275,7 +278,7 @@ func createInitContractBlockAndRWSets(chainId string, height int64) (*commonPb.B
 	return block, txRWSets
 }
 
-func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
+func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.Block, []*commonPb.TxRWSet) {
 	block := createBlock(chainId, height, txNum)
 	var txRWSets []*commonPb.TxRWSet
 
@@ -283,7 +286,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 		key := fmt.Sprintf("key_%d", i)
 		value := fmt.Sprintf("value_%d", i)
 		txRWset := &commonPb.TxRWSet{
-			TxId: block.Txs[i].Header.TxId,
+			TxId: block.Txs[i].Payload.TxId,
 			TxWrites: []*commonPb.TxWrite{
 				{
 					Key:          []byte(key),
@@ -298,11 +301,11 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) (*commonPb.Bl
 	return block, txRWSets
 }
 
-func createConfBlockAndRWSets(chainId string, height int64) (*commonPb.Block, []*commonPb.TxRWSet) {
+func createConfBlockAndRWSets(chainId string, height uint64) (*commonPb.Block, []*commonPb.TxRWSet) {
 	block := createConfBlock(chainId, height)
 	txRWSets := []*commonPb.TxRWSet{
 		{
-			TxId: block.Txs[0].Header.TxId,
+			TxId: block.Txs[0].Payload.TxId,
 			TxWrites: []*commonPb.TxWrite{
 				{
 					Key:          []byte("key_0"),
@@ -391,7 +394,7 @@ func Test_blockchainStoreImpl_PutBlock(t *testing.T) {
 		panic(err)
 	}
 	defer s.Close()
-	txRWSets[0].TxId = block5.Txs[0].Header.TxId
+	txRWSets[0].TxId = block5.Txs[0].Payload.TxId
 	err = s.PutBlock(block5, txRWSets)
 	assert.NotNil(t, err)
 }
@@ -435,7 +438,7 @@ func init5ContractBlocks(s protocol.BlockchainStore) {
 				{
 					Key:          []byte("key1"),
 					Value:        []byte("value1"),
-					ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+					ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 				},
 			},
 		},
@@ -522,12 +525,12 @@ func Test_blockchainStoreImpl_GetTx(t *testing.T) {
 	defer s.Close()
 	//assert.DeepEqual(t, s.GetTx(tests[0].block.Txs[0].TxId, )
 	init5ContractBlocks(s)
-	tx, err := s.GetTx(tests[0].block.Txs[0].Header.TxId)
+	tx, err := s.GetTx(tests[0].block.Txs[0].Payload.TxId)
 	assert.Equal(t, nil, err)
 	if tx == nil {
 		t.Error("Error, GetTx")
 	}
-	//assert.Equal(t, tx.Header.TxId, generateTxId(chainId, 1, 0))
+	//assert.Equal(t, tx.Payload.TxId, generateTxId(chainId, 1, 0))
 	//
 	////chain not exist
 	//tx, err = s.GetTx(generateTxId("not exist chain", 1, 0))
@@ -555,19 +558,19 @@ func Test_blockchainStoreImpl_HasTx(t *testing.T) {
 	}
 	defer s.Close()
 	init5Blocks(s)
-	exist, err := s.TxExists(tests[0].block.Txs[0].Header.TxId)
+	exist, err := s.TxExists(tests[0].block.Txs[0].Payload.TxId)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, true, exist)
-	exist, err = s.TxExists(tests[1].block.Txs[0].Header.TxId)
+	exist, err = s.TxExists(tests[1].block.Txs[0].Payload.TxId)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, true, exist)
-	exist, err = s.TxExists(tests[2].block.Txs[0].Header.TxId)
+	exist, err = s.TxExists(tests[2].block.Txs[0].Payload.TxId)
 	assert.Equal(t, true, exist)
 	assert.Equal(t, nil, err)
-	exist, err = s.TxExists(tests[3].block.Txs[0].Header.TxId)
+	exist, err = s.TxExists(tests[3].block.Txs[0].Payload.TxId)
 	assert.Equal(t, true, exist)
 	assert.Equal(t, nil, err)
-	exist, err = s.TxExists(tests[4].block.Txs[0].Header.TxId)
+	exist, err = s.TxExists(tests[4].block.Txs[0].Payload.TxId)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, false, exist)
 }
@@ -615,7 +618,7 @@ func Test_blockchainStoreImpl_TxRWSet(t *testing.T) {
 	assert.Equal(t, nil, err)
 	impl, ok := s.(*BlockStoreImpl)
 	assert.Equal(t, true, ok)
-	txid := block5.Txs[0].Header.TxId
+	txid := block5.Txs[0].Payload.TxId
 	txRWSetFromDB, err := impl.GetTxRWSet(txid)
 	assert.Equal(t, nil, err)
 	t.Log(txRWSetFromDB)
@@ -856,7 +859,7 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 
 	//Prepare block data
 	blocks := make([]*commonPb.Block, 0, totalHeight)
-	txRWSetMp := make(map[int64][]*commonPb.TxRWSet)
+	txRWSetMp := make(map[uint64][]*commonPb.TxRWSet)
 	for i := 0; i < totalHeight; i++ {
 		var (
 			block   *commonPb.Block
@@ -864,9 +867,9 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 		)
 
 		if i%5 == 0 {
-			block, txRWSet = createConfBlockAndRWSets(chainId, int64(i))
+			block, txRWSet = createConfBlockAndRWSets(chainId, uint64(i))
 		} else {
-			block, txRWSet = createBlockAndRWSets(chainId, int64(i), 10)
+			block, txRWSet = createBlockAndRWSets(chainId, uint64(i), 10)
 		}
 
 		err = s.PutBlock(block, txRWSet)
@@ -954,15 +957,15 @@ func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb
 	assert.True(t, err2 == nil)
 	assert.True(t, bytes.Equal(header.BlockHash, avBlk.Header.BlockHash))
 
-	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Header.TxId)
+	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Payload.TxId)
 	assert.True(t, err4 == nil)
 	assert.Equal(t, vtHeight, avBlkHeight)
 
-	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Header.TxId)
+	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Payload.TxId)
 	assert.True(t, err5 == nil)
 	assert.Equal(t, avBlk.Header.ChainId, vtBlk.Header.ChainId)
 
-	vttx, err6 := s.GetTx(avBlk.Txs[0].Header.TxId)
+	vttx, err6 := s.GetTx(avBlk.Txs[0].Payload.TxId)
 	assert.True(t, err6 == nil)
 	assert.Equal(t, avBlk.Header.ChainId, vttx.Header.ChainId)
 
@@ -978,7 +981,7 @@ func verifyUnarchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb
 	assert.True(t, err9 == nil)
 	assert.Equal(t, len(avBlk.Txs), len(vtBlkRWs))
 	if len(avBlk.Txs) > 0 {
-		assert.Equal(t, avBlk.Txs[0].Header.TxId, vtBlkRWs[0].TxId)
+		assert.Equal(t, avBlk.Txs[0].Payload.TxId, vtBlkRWs[0].TxId)
 	}
 }
 
@@ -992,15 +995,15 @@ func verifyArchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.B
 	assert.True(t, err2 == nil)
 	assert.True(t, bytes.Equal(header.BlockHash, avBlk.Header.BlockHash))
 
-	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Header.TxId)
+	vtHeight, err4 := s.GetTxHeight(avBlk.Txs[0].Payload.TxId)
 	assert.True(t, err4 == nil)
 	assert.Equal(t, vtHeight, avBlkHeight)
 
-	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Header.TxId)
+	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Payload.TxId)
 	assert.True(t, archive.ArchivedBlockError == err5)
 	assert.True(t, vtBlk == nil)
 
-	vttx, err6 := s.GetTx(avBlk.Txs[0].Header.TxId)
+	vttx, err6 := s.GetTx(avBlk.Txs[0].Payload.TxId)
 	assert.True(t, archive.ArchivedTxError == err6)
 	assert.True(t, vttx == nil)
 

@@ -14,10 +14,6 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
@@ -28,6 +24,10 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
@@ -346,12 +346,12 @@ func (bs *BlockStoreImpl) GetHeightByHash(blockHash []byte) (uint64, error) {
 }
 
 // GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
-func (bs *BlockStoreImpl) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (bs *BlockStoreImpl) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	return bs.blockDB.GetBlockHeaderByHeight(height)
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
-func (bs *BlockStoreImpl) GetBlock(height int64) (*commonPb.Block, error) {
+func (bs *BlockStoreImpl) GetBlock(height uint64) (*commonPb.Block, error) {
 	return bs.blockDB.GetBlock(height)
 }
 
@@ -457,7 +457,7 @@ func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 
 // GetTxRWSetsByHeight returns all the rwsets corresponding to the block,
 // or returns nil if zhe block does not exist
-func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet, error) {
+func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height uint64) ([]*commonPb.TxRWSet, error) {
 	blockStoreInfo, err := bs.blockDB.GetFilteredBlock(height)
 	if err != nil || blockStoreInfo == nil {
 		return nil, err
@@ -483,7 +483,7 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 
 // GetBlockWithRWSets returns the block and all the rwsets corresponding to the block,
 // or returns nil if zhe block does not exist
-func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (bs *BlockStoreImpl) GetBlockWithRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	block, err := bs.GetBlock(height)
 	if err != nil {
 		return nil, err
@@ -503,12 +503,12 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 		//go func(i int, tx *commonPb.Transaction) {
 		//	defer bs.workersSemaphore.Release(1)
 		//	defer batchWG.Done()
-		txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
+		txRWSet, err := bs.GetTxRWSet(tx.Payload.TxId)
 		if err != nil {
 			return nil, err
 		}
 		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
-			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Payload.TxId)
 			txRWSet = &commonPb.TxRWSet{}
 		}
 		blockWithRWSets.TxRWSets[i] = txRWSet

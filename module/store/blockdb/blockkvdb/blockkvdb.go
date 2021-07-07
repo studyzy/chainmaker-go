@@ -12,14 +12,14 @@ import (
 	"errors"
 	"fmt"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/sync/semaphore"
 )
@@ -88,13 +88,13 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	startPrepareTxs := utils.CurrentTimeMillisSeconds()
 	for index, txBytes := range blockInfo.GetSerializedTxs() {
 		tx := blockInfo.Block.Txs[index]
-		txIdKey := constructTxIDKey(tx.Header.TxId)
+		txIdKey := constructTxIDKey(tx.Payload.TxId)
 		batch.Put(txIdKey, txBytes)
 
-		blockTxIdKey := constructBlockTxIDKey(tx.Header.TxId)
+		blockTxIdKey := constructBlockTxIDKey(tx.Payload.TxId)
 		batch.Put(blockTxIdKey, heightKey)
 		b.Logger.Debugf("chain[%s]: blockInfo[%d] batch transaction index[%d] txid[%s]",
-			block.Header.ChainId, block.Header.BlockHeight, index, tx.Header.TxId)
+			block.Header.ChainId, block.Header.BlockHeight, index, tx.Payload.TxId)
 	}
 	elapsedPrepareTxs := utils.CurrentTimeMillisSeconds() - startPrepareTxs
 
@@ -171,8 +171,8 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 		txIds := make([]string, 0, len(blk.Txs))
 		for _, tx := range blk.Txs {
 			// delete tx data
-			batch.Delete(constructTxIDKey(tx.Header.TxId))
-			txIds = append(txIds, tx.Header.TxId)
+			batch.Delete(constructTxIDKey(tx.Payload.TxId))
+			txIds = append(txIds, tx.Payload.TxId)
 		}
 		txIdsMap[height] = txIds
 		//set archivedPivotKey to db
@@ -219,7 +219,7 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 		//verify imported block txs
 		for index, stx := range blockInfo.GetSerializedTxs() {
 			// put tx data
-			batch.Put(constructTxIDKey(blockInfo.Block.Txs[index].Header.TxId), stx)
+			batch.Put(constructTxIDKey(blockInfo.Block.Txs[index].Payload.TxId), stx)
 		}
 
 		archivePivot, err = b.getNextArchivePivot(blockInfo.Block)
@@ -276,7 +276,7 @@ func (b *BlockKvDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 }
 
 // GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
-func (b *BlockKvDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (b *BlockKvDB) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	vBytes, err := b.get(constructBlockNumKey(uint64(height)))
 	if err != nil {
 		return nil, err
@@ -296,7 +296,7 @@ func (b *BlockKvDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader,
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
-func (b *BlockKvDB) GetBlock(height int64) (*commonPb.Block, error) {
+func (b *BlockKvDB) GetBlock(height uint64) (*commonPb.Block, error) {
 	heightBytes := constructBlockNumKey(uint64(height))
 	return b.getBlockByHeightBytes(heightBytes)
 }
@@ -323,7 +323,7 @@ func (b *BlockKvDB) GetLastConfigBlock() (*commonPb.Block, error) {
 }
 
 // GetFilteredBlock returns a filtered block given it's block height, or return nil if none exists.
-func (b *BlockKvDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, error) {
+func (b *BlockKvDB) GetFilteredBlock(height uint64) (*storePb.SerializedBlock, error) {
 	heightKey := constructBlockNumKey(uint64(height))
 	bytes, err := b.get(heightKey)
 	if err != nil {
@@ -528,7 +528,7 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 	return &block, nil
 }
 
-func (b *BlockKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (b *BlockKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	b.Cache.AddBlock(blockHeight, batch)
 
@@ -583,7 +583,7 @@ func (b *BlockKvDB) getNextArchivePivot(pivotBlock *commonPb.Block) (uint64, err
 
 		//we should not get block data only if it is config block
 		archivedPivot = archivedPivot - 1
-		_, errb := b.GetBlock(int64(archivedPivot))
+		_, errb := b.GetBlock(uint64(archivedPivot))
 		if errb == archive.ArchivedBlockError {
 			curIsConf = false
 			break

@@ -10,7 +10,6 @@ package utils
 import (
 	"bytes"
 	"chainmaker.org/chainmaker/common/crypto/hash"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
@@ -112,14 +111,14 @@ func CalcBlockFingerPrint(block *commonPb.Block) BlockFingerPrint {
 	chainId := block.Header.ChainId
 	blockHeight := block.Header.BlockHeight
 	blockTimestamp := block.Header.BlockTimestamp
-	blockProposer := block.Header.Proposer
+	blockProposer,_ := block.Header.Proposer.Marshal()
 	preBlockHash := block.Header.PreBlockHash
 
 	return CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposer, preBlockHash)
 }
 
 // CalcFingerPrint calculate finger print
-func CalcFingerPrint(chainId string, height int64, timestamp int64, proposer []byte, preHash []byte) BlockFingerPrint {
+func CalcFingerPrint(chainId string, height uint64, timestamp int64, proposer []byte, preHash []byte) BlockFingerPrint {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%s-%v-%v-%v-%v", chainId, height, timestamp, proposer, preHash)))
 	return BlockFingerPrint(fmt.Sprintf("%x", h.Sum(nil)))
@@ -206,13 +205,12 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 	if err != nil {
 		return false, fmt.Errorf("fail to hash block: %v", err)
 	}
-	var serializedMember acPb.SerializedMember
-	err = proto.Unmarshal(b.Header.Proposer, &serializedMember)
+	var serializedMember =b.Header.Proposer
 	if err != nil {
 		return false, fmt.Errorf("signer is unknown: %v", err)
 	}
 	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    &serializedMember,
+		Signer:    serializedMember,
 		Signature: b.Header.Signature,
 	}}
 	principal, err := ac.CreatePrincipal(protocol.ResourceNameConsensusNode, endorsements, hashedBlock)

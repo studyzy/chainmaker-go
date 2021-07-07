@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -16,13 +17,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/common/evmutils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
@@ -159,18 +160,15 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	//2. 如果是新建合约，则创建对应的数据库，并执行DDL
 	if block.IsContractMgmtBlock() {
 		//创建对应合约的数据库
-		payload := &commonPb.ContractMgmtPayload{}
-		err = payload.Unmarshal(block.Txs[0].RequestPayload)
-		if err != nil {
-			return err
-		}
+		payload := block.Txs[0].Payload
+
 		contractId := &commonPb.ContractId{
-			ContractName:    payload.ContractId.ContractName,
-			ContractVersion: payload.ContractId.ContractVersion,
-			RuntimeType:     payload.ContractId.RuntimeType,
+			ContractName:    string(payload.GetParameter(consts.ContractManager_Install_ContractName.String())),
+			ContractVersion: string(payload.GetParameter(consts.ContractManager_Install_Version.String())),
+			RuntimeType:     commonPb.RuntimeType(  commonPb.RuntimeType_value[string( payload.GetParameter(consts.ContractManager_Install_RuntimeType.String()))]),
 		}
-		if payload.ContractId.RuntimeType == commonPb.RuntimeType_EVM {
-			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
+		if contractId.RuntimeType == commonPb.RuntimeType_EVM {
+			address, _ := evmutils.MakeAddressFromString(contractId.ContractName)
 			contractId.ContractName = address.String()
 		}
 		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
@@ -251,7 +249,7 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 	}
 	return nil
 }
-func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int64) error {
+func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint64) error {
 	err := dbTx.ChangeContextDb(s.dbName)
 	if err != nil {
 		return err

@@ -151,8 +151,8 @@ func (h *LevelDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error
 
 	wo := &opt.WriteOptions{Sync: sync}
 	if err := h.db.Write(levelBatch, wo); err != nil {
-		h.logger.Errorf("write batch to leveldbprovider failed")
-		return errors.Wrap(err, "error writing batch to leveldbprovider")
+		h.logger.Errorf("write batch to leveldb provider failed")
+		return errors.Wrap(err, "error writing batch to leveldb provider")
 	}
 	return nil
 }

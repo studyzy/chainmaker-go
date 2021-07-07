@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // BlockMysqlDB provider a implementation of `contracteventdb.ContractEventDB`
@@ -81,7 +81,7 @@ func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSeria
 	if err != nil {
 		return err
 	}
-	var preBlockHeight int64
+	var preBlockHeight uint64
 	single, err := c.db.QuerySingle("select block_height from " + BlockHeightIndexTableName + "  order by id desc limit 1")
 	if err != nil {
 		c.Logger.Errorf("failed to get block_height err%s", err)

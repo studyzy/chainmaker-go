@@ -33,10 +33,10 @@ type BlockDB interface {
 	GetHeightByHash(blockHash []byte) (uint64, error)
 
 	// GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
-	GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error)
+	GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error)
 
 	// GetBlock returns a block given it's block height, or returns nil if none exists.
-	GetBlock(height int64) (*commonPb.Block, error)
+	GetBlock(height uint64) (*commonPb.Block, error)
 
 	// GetTx retrieves a transaction by txid, or returns nil if none exists.
 	GetTx(txId string) (*commonPb.Transaction, error)
@@ -58,7 +58,7 @@ type BlockDB interface {
 	GetLastBlock() (*commonPb.Block, error)
 
 	// GetFilteredBlock returns a filtered block given it's block height, or return nil if none exists.
-	GetFilteredBlock(height int64) (*storePb.SerializedBlock, error)
+	GetFilteredBlock(height uint64) (*storePb.SerializedBlock, error)
 
 	// GetLastSavepoint reurns the last block height
 	GetLastSavepoint() (uint64, error)

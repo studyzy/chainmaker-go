@@ -8,11 +8,11 @@ package historysqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // HistorySqlDB provider a implementation of `history.HistoryDB`
@@ -112,12 +112,12 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 		accountTxInfo := &AccountTxHistoryInfo{
 			AccountId:   txSender,
 			BlockHeight: uint64(block.Header.BlockHeight),
-			TxId:        tx.Header.TxId,
+			TxId:        tx.Payload.TxId,
 		}
 		_, err = dbtx.Save(accountTxInfo)
 		if err != nil {
 			h.logger.Errorf("save account[%s] and tx[%s] info fail,rollback history save transaction,%s",
-				txSender, tx.Header.TxId, err.Error())
+				txSender, tx.Payload.TxId, err.Error())
 			err2 := h.db.RollbackDbTransaction(blockHashStr)
 			if err2 != nil {
 				return err2
@@ -127,19 +127,19 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 		var contractName string
 		contractName, err = tx.GetContractName()
 		if err != nil {
-			h.logger.Warnf("Tx[%s] don't have contract name since:%s", tx.Header.TxId, err.Error())
+			h.logger.Warnf("Tx[%s] don't have contract name since:%s", tx.Payload.TxId, err.Error())
 			continue
 		}
 		contractTxInfo := &ContractTxHistoryInfo{
 			ContractName: contractName,
 			BlockHeight:  uint64(block.Header.BlockHeight),
-			TxId:         tx.Header.TxId,
+			TxId:         tx.Payload.TxId,
 			AccountId:    txSender,
 		}
 		_, err = dbtx.Save(contractTxInfo)
 		if err != nil {
 			h.logger.Errorf("save contract[%s] and tx[%s] history info fail,rollback history save transaction,%s",
-				contractName, tx.Header.TxId, err.Error())
+				contractName, tx.Payload.TxId, err.Error())
 			err2 := h.db.RollbackDbTransaction(blockHashStr)
 			if err2 != nil {
 				return err2

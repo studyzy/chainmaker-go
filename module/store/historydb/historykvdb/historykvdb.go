@@ -10,11 +10,11 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const (
@@ -63,10 +63,10 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 	}
 	for _, tx := range block.Txs {
 		accountId := tx.GetSenderAccountId()
-		txId := tx.Header.TxId
+		txId := tx.Payload.TxId
 		contractName, err := tx.GetContractName()
 		if err != nil {
-			h.logger.Errorf("get contract name fail from tx[%s],err:%s", tx.Header.TxId, err.Error())
+			h.logger.Errorf("get contract name fail from tx[%s],err:%s", tx.Payload.TxId, err.Error())
 			continue
 		}
 		batch.Put(constructAcctTxHistKey(accountId, blockHeight, txId), []byte{})
@@ -99,7 +99,7 @@ func (h *HistoryKvDB) Close() {
 	h.dbHandle.Close()
 }
 
-func (h *HistoryKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (h *HistoryKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	h.cache.AddBlock(blockHeight, batch)
 	go func() {

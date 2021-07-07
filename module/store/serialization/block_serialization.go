@@ -55,7 +55,7 @@ func (b *BlockWithSerializedInfo) GetSerializedBlock() *storePb.SerializedBlock 
 		AdditionalData: block.AdditionalData,
 	}
 	for _, tx := range block.Txs {
-		meta.TxIds = append(meta.TxIds, tx.Header.TxId)
+		meta.TxIds = append(meta.TxIds, tx.Payload.TxId)
 	}
 	b.meta = meta
 	return meta

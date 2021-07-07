@@ -138,46 +138,42 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 	var (
 		err          error
 		ccBytes      []byte
-		payloadBytes []byte
+		//payloadBytes []byte
 	)
 
 	if ccBytes, err = proto.Marshal(cc); err != nil {
 		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
 	}
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      cc.ChainId,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 		Method:       "Genesis",
 		Parameters:   make([]*commonPb.KeyValuePair, 0),
 		Sequence:     cc.Sequence,
-		Endorsement:  nil,
 	}
 	payload.Parameters = append(payload.Parameters, &commonPb.KeyValuePair{
 		Key:   commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		Value: cc.String(),
+		Value: []byte(cc.String()),
 	})
 
-	if payloadBytes, err = proto.Marshal(payload); err != nil {
-		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
-	}
+	//if payloadBytes, err = proto.Marshal(payload); err != nil {
+	//	return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
+	//}
 
 	tx := &commonPb.Transaction{
-		Header: &commonPb.TxHeader{
+		Payload: &commonPb.Payload{
 			ChainId:        cc.ChainId,
-			Sender:         nil,
-			TxType:         commonPb.TxType_UPDATE_CHAIN_CONFIG,
+			TxType:         commonPb.TxType_INVOKE_CONTRACT,
 			TxId:           GetTxIdWithSeed(int64(defaultTimestamp)),
 			Timestamp:      defaultTimestamp,
 			ExpirationTime: -1,
 		},
-		RequestPayload:   payloadBytes,
-		RequestSignature: nil,
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code:    commonPb.ContractResultCode_OK,
-				Message: commonPb.ContractResultCode_OK.String(),
+				Code:    0,
+
 				Result:  ccBytes,
 			},
 			RwSetHash: nil,
@@ -351,18 +347,18 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 		keyValuePair := consensusExtConfig[i]
 		switch keyValuePair.Key {
 		case keyERC20Total:
-			config.total = NewBigInteger(keyValuePair.Value)
+			config.total = NewBigInteger(string(keyValuePair.Value))
 			if config.total == nil || config.total.Cmp(NewZeroBigInteger()) <= 0 {
 				return nil, fmt.Errorf("total config of dpos must more than zero")
 			}
 		case keyERC20Owner:
-			config.owner = keyValuePair.Value
+			config.owner =string(keyValuePair.Value)
 			_, err := base58.Decode(config.owner)
 			if err != nil {
 				return nil, fmt.Errorf("config of owner[%s] is not in base58 format", config.owner)
 			}
 		case keyERC20Decimals:
-			config.decimals = NewBigInteger(keyValuePair.Value)
+			config.decimals = NewBigInteger(string(keyValuePair.Value))
 			if config.decimals == nil || config.decimals.Cmp(NewZeroBigInteger()) < 0 {
 				return nil, fmt.Errorf("decimals config of dpos must more than -1")
 			}
@@ -376,7 +372,7 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 				if err != nil {
 					return nil, fmt.Errorf("account [%s] is not in base58 format", accAddress)
 				}
-				token := NewBigInteger(keyValuePair.Value)
+				token := NewBigInteger(string(keyValuePair.Value))
 				if token == nil || token.Cmp(NewZeroBigInteger()) <= 0 {
 					return nil, fmt.Errorf("token must more than zero, address[%s] token[%s]", accAddress, keyValuePair.Value)
 				}
@@ -580,36 +576,36 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 	for _, kv := range consensusExtConfig {
 		switch kv.Key {
 		case keyStakeEpochBlockNum:
-			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			val, err := strconv.ParseUint(string(kv.Value), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			config.eachEpochNum = val
 		case keyStakeEpochValidatorNum:
-			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			val, err := strconv.ParseUint(string(kv.Value), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			config.validatorNum = val
 		case keyStakeMinSelfDelegation:
-			if err := isValidBigInt(kv.Value); err != nil {
+			if err := isValidBigInt(string(kv.Value)); err != nil {
 				return nil, fmt.Errorf("%s error, reason: %s", keyStakeMinSelfDelegation, err)
 			}
-			config.minSelfDelegation = kv.Value
+			config.minSelfDelegation = string(kv.Value)
 		case keyStakeUnbondingEpochNum:
-			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			val, err := strconv.ParseUint(string(kv.Value), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			config.unbondingEpochNum = val
 		default:
 			if strings.HasPrefix(kv.Key, keyStakeCandidate) {
-				if err := config.setCandidate(kv.Key, kv.Value); err != nil {
+				if err := config.setCandidate(kv.Key, string(kv.Value)); err != nil {
 					return nil, err
 				}
 			}
 			if strings.HasPrefix(kv.Key, keyStakeConfigNodeID) {
-				if err := config.setNodeID(kv.Key, kv.Value); err != nil {
+				if err := config.setNodeID(kv.Key, string(kv.Value)); err != nil {
 					return nil, err
 				}
 			}

@@ -17,11 +17,11 @@ import (
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const (
@@ -154,7 +154,7 @@ func (s *StateKvDB) Close() {
 	s.DbHandle.Close()
 }
 
-func (s *StateKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (s *StateKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	s.Cache.AddBlock(blockHeight, batch)
 	go func() {

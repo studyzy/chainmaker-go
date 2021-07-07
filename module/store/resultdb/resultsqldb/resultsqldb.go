@@ -10,11 +10,11 @@ import (
 	"errors"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -81,7 +81,7 @@ func (h *ResultSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 	for i, txRWSet := range txRWSets {
 		tx := block.Txs[i]
 
-		resultInfo := NewResultInfo(tx.Header.TxId, block.Header.BlockHeight, i, tx.Result.ContractResult, txRWSet)
+		resultInfo := NewResultInfo(tx.Payload.TxId, block.Header.BlockHeight, uint32(i), tx.Result.ContractResult, txRWSet)
 		_, err = dbtx.Save(resultInfo)
 		if err != nil {
 			err2 := h.db.RollbackDbTransaction(blockHashStr)

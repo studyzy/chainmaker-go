@@ -15,8 +15,8 @@ import (
 // ResultInfo defines mysql orm model, used to create mysql table 'result_infos'
 type ResultInfo struct {
 	TxId        string `gorm:"size:128;primaryKey"`
-	BlockHeight int64
-	TxIndex     int
+	BlockHeight uint64
+	TxIndex     uint32
 	Rwset       []byte `gorm:"type:longblob"`
 	Status      int    `gorm:"default:0"`
 	Result      []byte `gorm:"type:blob"`
@@ -59,7 +59,7 @@ func (b *ResultInfo) GetCountSql() (string, []interface{}) {
 }
 
 // NewResultInfo construct a new HistoryInfo
-func NewResultInfo(txid string, blockHeight int64, txIndex int, result *commonpb.ContractResult,
+func NewResultInfo(txid string, blockHeight uint64, txIndex uint32, result *commonpb.ContractResult,
 	rw *commonpb.TxRWSet) *ResultInfo {
 	rwBytes, _ := proto.Marshal(rw)
 

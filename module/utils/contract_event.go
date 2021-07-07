@@ -18,7 +18,7 @@ const TopicTableColumnDdl = `id bigint unsigned NOT NULL AUTO_INCREMENT,chain_id
 const TopicTableUniqueKey = `UNIQUE KEY unique_index(chain_id,block_height,tx_id,event_index)`
 const TopicTableIndex = `INDEX index_chain_id (chain_id ASC),INDEX index_block_height (block_height ASC),INDEX index_tx_id (tx_id ASC),INDEX index_event_index (event_index ASC),INDEX index_topic (topic ASC),INDEX index_contract_name (contract_name ASC),INDEX index_contract_version (contract_version ASC)`
 
-func GenerateSaveContractEventDdl(t *commonPb.ContractEvent, chainId string, blockHeight int64, event_index int) string {
+func GenerateSaveContractEventDdl(t *commonPb.ContractEvent, chainId string, blockHeight uint64, event_index int) string {
 	var saveDdl string
 	var eventDataDdl string
 	var columnDdl string
@@ -31,7 +31,7 @@ func GenerateSaveContractEventDdl(t *commonPb.ContractEvent, chainId string, blo
 	for index, _ := range t.EventData {
 		columnDdl += fmt.Sprintf("data%s,", strconv.Itoa(index+1))
 	}
-	eventDataDdl += fmt.Sprintf("'%s', '%s','%s','%s','%s','%s','%s',", chainId, strconv.FormatInt(blockHeight, 10), t.Topic, t.TxId, strconv.Itoa(event_index), t.ContractName, t.ContractVersion)
+	eventDataDdl += fmt.Sprintf("'%s', '%d','%s','%s','%s','%s','%s',", chainId, blockHeight, t.Topic, t.TxId, strconv.Itoa(event_index), t.ContractName, t.ContractVersion)
 
 	for _, data := range t.EventData {
 		eventDataDdl += fmt.Sprintf("'%s',", data)
@@ -42,7 +42,7 @@ func GenerateSaveContractEventDdl(t *commonPb.ContractEvent, chainId string, blo
 
 	return saveDdl
 }
-func GenerateSaveBlockHeightWithTopicDdl(t *commonPb.ContractEvent, chainId string, blockHeight int64) string {
+func GenerateSaveBlockHeightWithTopicDdl(t *commonPb.ContractEvent, chainId string, blockHeight uint64) string {
 	var saveDdl string
 	var DataDdl string
 	var columnDdl string
@@ -52,17 +52,17 @@ func GenerateSaveBlockHeightWithTopicDdl(t *commonPb.ContractEvent, chainId stri
 	topicTableNameHash := sha256.Sum256([]byte(topicTableNameSrc))
 	topicTableNameHex := fmt.Sprintf("event%s", hex.EncodeToString(topicTableNameHash[:20])[5:])
 	columnDdl += fmt.Sprintf("chain_id,block_height,topic_table_name_src,topic_table_name_hex")
-	DataDdl += fmt.Sprintf("'%s','%s','%s','%s'", chainId, strconv.FormatInt(blockHeight, 10), topicTableNameSrc, topicTableNameHex)
+	DataDdl += fmt.Sprintf("'%s','%d','%s','%s'", chainId, blockHeight, topicTableNameSrc, topicTableNameHex)
 	saveDdl += fmt.Sprintf("INSERT IGNORE INTO  %s (%s) VALUES (%s);", tableName, columnDdl, DataDdl)
 	return saveDdl
 }
-func GenerateUpdateBlockHeightIndexDdl(blockHeight int64) string {
+func GenerateUpdateBlockHeightIndexDdl(blockHeight uint64) string {
 	var saveDdl string
 	var DataDdl string
 	var columnDdl string
 	tableName := `block_height_index`
 	columnDdl += `block_height`
-	DataDdl += fmt.Sprintf("'%s'", strconv.FormatInt(blockHeight, 10))
+	DataDdl += fmt.Sprintf("'%d'", blockHeight)
 	saveDdl += fmt.Sprintf("UPDATE %s SET %s = %s ;", tableName, columnDdl, DataDdl)
 	return saveDdl
 }

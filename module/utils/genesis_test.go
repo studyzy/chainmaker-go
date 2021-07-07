@@ -48,23 +48,23 @@ func TestERC20Config_load(t *testing.T) {
 	var tests = []*commonPb.KeyValuePair{
 		{
 			Key:   keyERC20Total,
-			Value: "1000000",
+			Value: []byte("1000000"),
 		},
 		{
 			Key:   keyERC20Owner,
-			Value: owner,
+			Value: []byte(owner),
 		},
 		{
 			Key:   keyERC20Decimals,
-			Value: "18",
+			Value: []byte("18"),
 		},
 		{
 			Key:   keyERC20Acc + owner,
-			Value: "800000",
+			Value: []byte("800000"),
 		},
 		{
 			Key:   keyERC20Acc + commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Value: "200000",
+			Value: []byte("200000"),
 		},
 	}
 	erc20Config, err := loadERC20Config(tests)

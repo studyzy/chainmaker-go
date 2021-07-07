@@ -144,7 +144,7 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 	}
 
 	//restore block info should be continuous
-	curHeight := int64(lastRestoreHeight)
+	curHeight := uint64(lastRestoreHeight)
 	for i := 0; i < total; i++ {
 		if blockInfos[total-i-1].Block.Header.BlockHeight != curHeight {
 			return InvalidateRestoreBlocksError

@@ -154,7 +154,7 @@ func (h *ResultKvDB) Close() {
 	h.DbHandle.Close()
 }
 
-func (h *ResultKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (h *ResultKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	h.Cache.AddBlock(blockHeight, batch)
 	go func() {

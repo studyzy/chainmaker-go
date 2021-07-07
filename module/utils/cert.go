@@ -20,7 +20,7 @@ func GetCertHash(orgId string, userCrtPEM []byte, hashType string) ([]byte, erro
 	member := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: userCrtPEM,
-		IsFullCert: true,
+		MemberType: acPb.MemberType_CERT,
 	}
 
 	certHash, err := getCertificateId(member.GetMemberInfo(), hashType)
