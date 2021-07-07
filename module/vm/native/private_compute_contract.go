@@ -7,17 +7,17 @@ package native
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	"chainmaker.org/chainmaker/common/crypto/tee"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/binary"
@@ -541,31 +541,90 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 	evmResultBuffer := bytes.NewBuffer([]byte{})
+
+	// Code
 	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.Code); err != nil {
 		return nil, err
 	}
+	// Result
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(result.Result))); err != nil {
+		return nil, err
+	}
 	evmResultBuffer.Write(result.Result)
-	if err := binary.Write(evmResultBuffer, binary.LittleEndian, result.GasUsed); err != nil {
+	// Gas
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint64(result.GasUsed)); err != nil {
+		return nil, err
+	}
+	// rsets
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxReads))); err != nil {
 		return nil, err
 	}
 	for i := 0; i < len(rwSet.TxReads); i++ {
+		// Key
+		if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxReads[i].Key))); err != nil {
+			return nil, err
+		}
 		evmResultBuffer.Write(rwSet.TxReads[i].Key)
+		// Value
+		if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxReads[i].Value))); err != nil {
+			return nil, err
+		}
 		evmResultBuffer.Write(rwSet.TxReads[i].Value)
-		//evmResultBuffer.Write([]byte(rwSet.TxReads[i].Version.RefTxId))
+		// Version
+		if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(0)); err != nil {
+			return nil, err
+		}
+		// evmResultBuffer.Write([]byte(rwSet.TxReads[i].Version.RefTxId))
+	}
+	// wsets
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxWrites))); err != nil {
+		return nil, err
 	}
 	for i := 0; i < len(rwSet.TxWrites); i++ {
+		// Key
+		if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxWrites[i].Key))); err != nil {
+			return nil, err
+		}
 		evmResultBuffer.Write(rwSet.TxWrites[i].Key)
+
+		// Value
+		if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxWrites[i].Value))); err != nil {
+			return nil, err
+		}
 		evmResultBuffer.Write(rwSet.TxWrites[i].Value)
 	}
+	// name
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(name))); err != nil {
+		return nil, err
+	}
 	evmResultBuffer.Write([]byte(name))
+	// version
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(version))); err != nil {
+		return nil, err
+	}
 	evmResultBuffer.Write([]byte(version))
+	// code hash
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(codeHash))); err != nil {
+		return nil, err
+	}
 	evmResultBuffer.Write([]byte(codeHash))
+	// report hash
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(reportHash))); err != nil {
+		return nil, err
+	}
 	evmResultBuffer.Write([]byte(reportHash))
-	evmResultBuffer.Write([]byte(userCert))
-	evmResultBuffer.Write([]byte(clientSign))
-	evmResultBuffer.Write([]byte(orgId))
+	// user request
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(requestBytes))); err != nil {
+		return nil, err
+	}
 	evmResultBuffer.Write(requestBytes)
-	b, err := pk.VerifyWithOpts(evmResultBuffer.Bytes(), []byte(params["sign"]), &crypto.SignOpts{
+	// code header
+	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(codeHeader))); err != nil {
+		return nil, err
+	}
+	evmResultBuffer.Write([]byte(codeHeader))
+	evmResultBytes := evmResultBuffer.Bytes()
+	b, err := pk.VerifyWithOpts(evmResultBytes, []byte(params["sign"]), &crypto.SignOpts{
 		Hash:         crypto.HASH_TYPE_SHA256,
 		UID:          "",
 		EncodingType: rsa.RSA_PSS,
