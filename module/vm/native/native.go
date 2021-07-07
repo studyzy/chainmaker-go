@@ -92,12 +92,6 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName str
 		result.Message = err.Error()
 		return result
 	}
-
-	if len(bytes) == 0 {
-		result.Message = "not found"
-		return result
-	}
-
 	result.Code = commonPb.ContractResultCode_OK
 	result.Message = commonPb.ContractResultCode_OK.String()
 	result.Result = bytes
