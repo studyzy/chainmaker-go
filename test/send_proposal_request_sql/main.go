@@ -21,6 +21,7 @@ import (
 	"chainmaker.org/chainmaker-go/test/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
@@ -28,7 +29,6 @@ import (
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -343,22 +343,22 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "age",
-			Value: age,
+			Value: []byte(age),
 		},
 		{
 			Key:   "name",
-			Value: "长安链chainmaker",
+			Value: []byte("长安链chainmaker"),
 		},
 		{
 			Key:   "id_card_no",
-			Value: "510623199202023323",
+			Value: []byte("510623199202023323"),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_insert",
 		Parameters:   pairs,
@@ -382,7 +382,7 @@ func InvokePrintHello(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "printhello",
 		Parameters:   pairs,
@@ -406,7 +406,7 @@ func InvokeDoubleSql(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "doubleSql",
 		Parameters:   pairs,
@@ -430,7 +430,7 @@ func InvokeUnpredictableSql(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "unpredictableSql",
 		Parameters:   pairs,
@@ -454,7 +454,7 @@ func InvokeCreatetable(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chain
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "createTable",
 		Parameters:   pairs,
@@ -478,7 +478,7 @@ func InvokeCreatedb(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "createDb",
 		Parameters:   pairs,
@@ -502,7 +502,7 @@ func InvokeCreateuesr(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "createUser",
 		Parameters:   pairs,
@@ -526,7 +526,7 @@ func InvokeAuoIncrement(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "autoIncrementSql",
 		Parameters:   pairs,
@@ -550,7 +550,7 @@ func InvokeCommit(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "commitSql",
 		Parameters:   pairs,
@@ -577,7 +577,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	fmt.Printf("\n============ get tx by txId [%s] ============\n", txId)
 
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte( txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
@@ -597,7 +597,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, txId string) {
 	fmt.Printf("\n============ testWaitTx [%s] ============\n", txId)
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
@@ -621,14 +621,14 @@ func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: id,
+			Value: []byte(id),
 		},
 		{
 			Key:   "name",
-			Value: "长安链chainmaker_update",
+			Value: []byte("长安链chainmaker_update"),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_update",
 		Parameters:   pairs,
@@ -654,14 +654,14 @@ func testInvokeSqlCommon(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, met
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: id,
+			Value: []byte(id),
 		},
 		{
 			Key:   "name",
-			Value: "长安链chainmaker_update",
+			Value: []byte("长安链chainmaker_update"),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -686,14 +686,14 @@ func testInvokeSqlUpdateRollbackDbSavePoint(sk3 crypto.PrivateKey, client *apiPb
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: id,
+			Value: []byte(id),
 		},
 		{
 			Key:   "name",
-			Value: "chainmaker_save_point",
+			Value: []byte("chainmaker_save_point"),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_update_rollback_save_point",
 		Parameters:   pairs,
@@ -718,18 +718,18 @@ func testCrossCall(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId s
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "contract_name",
-			Value: contractName,
+			Value: []byte(contractName),
 		},
 		{
 			Key:   "min_age",
-			Value: "4",
+			Value: []byte("4"),
 		},
 		{
 			Key:   "max_age",
-			Value: "7",
+			Value: []byte("7"),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_cross_call",
 		Parameters:   pairs,
@@ -755,10 +755,10 @@ func testInvokeSqlDelete(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: id,
+			Value: []byte(id),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_delete",
 		Parameters:   pairs,
@@ -784,11 +784,11 @@ func testQuerySqlById(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: id,
+			Value: []byte(id),
 		},
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_query_by_id",
 		Parameters:   pairs,
@@ -819,15 +819,15 @@ func testQuerySqlRangAge(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "max_age",
-			Value: "4",
+			Value: []byte("4"),
 		},
 		{
 			Key:   "min_age",
-			Value: "1",
+			Value: []byte("1"),
 		},
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_query_range_of_age",
 		Parameters:   pairs,
@@ -870,14 +870,13 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	sender := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		////IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
+	header := &commonPb.Payload{
 		ChainId:        chainId,
-		Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -885,9 +884,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -907,7 +905,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := (*client).SendRequest(ctx, req)
 
@@ -965,7 +963,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) []byte {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -980,7 +978,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 	return payloadBytes
 }
 
-//func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
 //	msg.Endorsement = nil
 //	bytes, _ := proto.Marshal(msg)
 //
@@ -1013,7 +1011,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 //		sender1 := &acPb.SerializedMember{
 //			OrgId:      "wx-org" + numStr + ".chainmaker.org",
 //			MemberInfo: file2,
-//			IsFullCert: true,
+//			//IsFullCert: true,
 //		}
 //
 //		signer := getSigner(sk, sender1)

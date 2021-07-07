@@ -8,9 +8,9 @@ package wasmer
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 )
 
@@ -30,7 +30,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	// contract response
 	contractResult = &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_OK,
+		Code:    0,
 		Result:  nil,
 		Message: "",
 	}

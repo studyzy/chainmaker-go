@@ -13,12 +13,11 @@ import (
 	"strconv"
 	"sync"
 
-
+	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker/protocol"
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 
 var testOrgId = "wx-org1.chainmaker.org"
@@ -59,7 +58,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 	sender := &acPb.SerializedMember{
 		OrgId:      testOrgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	txContext := TxContextMockTest{
@@ -75,9 +74,9 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.ContractVersion)...)
 
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey, []byte(contractId.ContractVersion))
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }

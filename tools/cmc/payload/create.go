@@ -76,7 +76,7 @@ func createContractMgmtPayloadCMD() *cobra.Command {
 }
 
 func createConfigUpdatePayload() error {
-	payload := &sdkPbCommon.SystemContractPayload{
+	payload := &sdkPbCommon.Payload{
 		ChainId:      chainId,
 		ContractName: contractName,
 		Method:       method,
@@ -130,7 +130,7 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType sd
 		pairs = append(pairs, kv)
 	}
 	payload := &sdkPbCommon.TransactPayload{
-		ContractName: sdkPbCommon.ContractName_SYSTEM_CONTRACT_STATE.String(),
+		ContractName: sdkPbCommon.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
 		Method:       consts.ContractManager_INIT_CONTRACT.String(),
 		Parameters:   pairs,
 	}

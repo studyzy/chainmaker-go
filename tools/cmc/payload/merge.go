@@ -75,7 +75,7 @@ func mergeSystemContractPayload() error {
 	if err != nil {
 		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, mergeInputs[0], err)
 	}
-	allPayload := &sdkPbCommon.SystemContractPayload{}
+	allPayload := &sdkPbCommon.Payload{}
 	if err := proto.Unmarshal(raw, allPayload); err != nil {
 		return fmt.Errorf("SystemContractPayload unmarshal error: %s", err)
 	}
@@ -83,10 +83,10 @@ func mergeSystemContractPayload() error {
 		return fmt.Errorf(ENDORSEMENT_INVALID_FORMAT, mergeInputs[0])
 	}
 	allPayloadCopy := proto.Clone(allPayload)
-	allPayloadCopy.(*sdkPbCommon.SystemContractPayload).Endorsement = nil
+	allPayloadCopy.(*sdkPbCommon.Payload).Endorsement = nil
 
 	if len(mergeInputs) > 1 {
-		allPayload, err = appendSystemContractEndorsements(allPayloadCopy.(*sdkPbCommon.SystemContractPayload), allPayload, mergeInputs[1:])
+		allPayload, err = appendSystemContractEndorsements(allPayloadCopy.(*sdkPbCommon.Payload), allPayload, mergeInputs[1:])
 		if err != nil {
 			return err
 		}
@@ -104,8 +104,8 @@ func mergeSystemContractPayload() error {
 	return nil
 }
 
-func appendSystemContractEndorsements(payladWithoutEndorse, allPayload *sdkPbCommon.SystemContractPayload,
-	mergeInputs []string) (*sdkPbCommon.SystemContractPayload, error) {
+func appendSystemContractEndorsements(payladWithoutEndorse, allPayload *sdkPbCommon.Payload,
+	mergeInputs []string) (*sdkPbCommon.Payload, error) {
 	if len(mergeInputs) == 0 {
 		return allPayload, nil
 	}
@@ -114,7 +114,7 @@ func appendSystemContractEndorsements(payladWithoutEndorse, allPayload *sdkPbCom
 		if err != nil {
 			return nil, fmt.Errorf(LOAD_FILE_ERROR_FORMAT, payloadPath, err)
 		}
-		payload := &sdkPbCommon.SystemContractPayload{}
+		payload := &sdkPbCommon.Payload{}
 		if err := proto.Unmarshal(raw, payload); err != nil {
 			return nil, fmt.Errorf("SystemContractPayload unmarshal error: %s", err)
 		}
@@ -122,7 +122,7 @@ func appendSystemContractEndorsements(payladWithoutEndorse, allPayload *sdkPbCom
 			return nil, fmt.Errorf(ENDORSEMENT_INVALID_FORMAT, payloadPath)
 		}
 		payloadCopy := proto.Clone(payload)
-		payloadCopy.(*sdkPbCommon.SystemContractPayload).Endorsement = nil
+		payloadCopy.(*sdkPbCommon.Payload).Endorsement = nil
 		if !checkPayloads(payladWithoutEndorse, payloadCopy) {
 			return nil, fmt.Errorf("SystemContractPayload invalid: %s", payloadPath)
 		}
@@ -140,7 +140,7 @@ func mergeContractMgmtPayload() error {
 	//if err != nil {
 	//	return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, mergeInputs[0], err)
 	//}
-	//allPayload := &sdkPbCommon.ContractMgmtPayload{}
+	//allPayload := &sdkPbCommon.Payload{}
 	//if err := proto.Unmarshal(raw, allPayload); err != nil {
 	//	return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
 	//}
@@ -148,10 +148,10 @@ func mergeContractMgmtPayload() error {
 	//	return fmt.Errorf(ENDORSEMENT_INVALID_FORMAT, mergeInputs[0])
 	//}
 	//allPayloadCopy := proto.Clone(allPayload)
-	//allPayloadCopy.(*sdkPbCommon.ContractMgmtPayload).Endorsement = nil
+	//allPayloadCopy.(*sdkPbCommon.Payload).Endorsement = nil
 	//
 	//if len(mergeInputs) > 1 {
-	//	allPayload, err = appendContractMgmtEndorsements(allPayloadCopy.(*sdkPbCommon.ContractMgmtPayload), allPayload, mergeInputs[1:])
+	//	allPayload, err = appendContractMgmtEndorsements(allPayloadCopy.(*sdkPbCommon.Payload), allPayload, mergeInputs[1:])
 	//	if err != nil {
 	//		return err
 	//	}
@@ -169,8 +169,8 @@ func mergeContractMgmtPayload() error {
 	return nil
 }
 
-//func appendContractMgmtEndorsements(payladWithoutEndorse, allPayload *sdkPbCommon.ContractMgmtPayload,
-//	mergeInputs []string) (*sdkPbCommon.ContractMgmtPayload, error) {
+//func appendContractMgmtEndorsements(payladWithoutEndorse, allPayload *sdkPbCommon.Payload,
+//	mergeInputs []string) (*sdkPbCommon.Payload, error) {
 //	if len(mergeInputs) == 0 {
 //		return allPayload, nil
 //	}
@@ -179,7 +179,7 @@ func mergeContractMgmtPayload() error {
 //		if err != nil {
 //			return nil, fmt.Errorf(LOAD_FILE_ERROR_FORMAT, payloadPath, err)
 //		}
-//		payload := &sdkPbCommon.ContractMgmtPayload{}
+//		payload := &sdkPbCommon.Payload{}
 //		if err := proto.Unmarshal(raw, payload); err != nil {
 //			return nil, fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
 //		}
@@ -187,7 +187,7 @@ func mergeContractMgmtPayload() error {
 //			return nil, fmt.Errorf(ENDORSEMENT_INVALID_FORMAT, payloadPath)
 //		}
 //		payloadCopy := proto.Clone(payload)
-//		payloadCopy.(*sdkPbCommon.ContractMgmtPayload).Endorsement = nil
+//		payloadCopy.(*sdkPbCommon.Payload).Endorsement = nil
 //		if !checkPayloads(payladWithoutEndorse, payloadCopy) {
 //			return nil, fmt.Errorf("ContractMgmtPayload invalid: %s", payloadPath)
 //		}

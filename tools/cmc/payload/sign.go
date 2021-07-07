@@ -76,7 +76,7 @@ func signSystemContractPayload() error {
 		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
 	}
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.Payload{}
 	if err := proto.Unmarshal(raw, payload); err != nil {
 		return fmt.Errorf("SystemContractPayload unmarshal error: %s", err)
 	}
@@ -107,7 +107,7 @@ func signContractMgmtPayload() error {
 	//	return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
 	//}
 	//
-	//payload := &sdkPbCommon.ContractMgmtPayload{}
+	//payload := &sdkPbCommon.Payload{}
 	//if err := proto.Unmarshal(raw, payload); err != nil {
 	//	return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
 	//}
@@ -178,7 +178,7 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 	sender := &sdkPbAc.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: certFile,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	return &sdkPbCommon.EndorsementEntry{

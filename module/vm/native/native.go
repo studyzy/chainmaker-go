@@ -107,7 +107,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error {
 	tx := txContext.GetTx()
 	payload := tx.Payload
-	//var config commonPb.SystemContractPayload
+	//var config commonPb.Payload
 	//err := proto.Unmarshal(payload, &config)
 	//if err != nil {
 	//	r.log.Errorw(ErrUnmarshalFailed.Error(), "Position", "SystemContractPayload Unmarshal", "err", err)

@@ -789,7 +789,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	sender := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
 
@@ -884,7 +884,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) []byte {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -899,7 +899,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 	return payloadBytes
 }
 
-//func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
 //	msg.Endorsement = nil
 //	bytes, _ := proto.Marshal(msg)
 //
@@ -932,7 +932,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 //		sender1 := &acPb.SerializedMember{
 //			OrgId:      "wx-org" + numStr + ".chainmaker.org",
 //			MemberInfo: file2,
-//			IsFullCert: true,
+//			//IsFullCert: true,
 //		}
 //
 //		signer := getSigner(sk, sender1)

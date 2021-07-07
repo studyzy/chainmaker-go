@@ -87,7 +87,7 @@ func getPayloadInfo() ([]byte, []byte) {
 	if chainConfig == nil {
 		panic("chainConfig is empty")
 	}
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      CHAIN1,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 		Method:       commonPb.ConfigFunction_CORE_UPDATE.String(),
@@ -198,7 +198,7 @@ func getContractCreatePayloadInfo() ([]byte, []byte) {
 	var payloadPairs []*commonPb.KeyValuePair
 
 	wasmBin, _ := hex.DecodeString(native.BytesCode)
-	payload := &commonPb.ContractMgmtPayload{
+	payload := &commonPb.Payload{
 		ChainId: CHAIN1,
 		ContractId: &commonPb.ContractId{
 			ContractName:    "contract2",

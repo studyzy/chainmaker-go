@@ -307,12 +307,12 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	sender := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: certId,
-		IsFullCert: false,
+		MemberType: acPb.MemberType_CERT_HASH,
 	}
 	senderFull := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 	// 构造Header
 	header := &commonPb.TxHeader{
@@ -323,7 +323,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
 	}
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		Method:       commonPb.CertManageFunction_CERTS_QUERY.String(),
 		Parameters:   pairs,
@@ -378,7 +378,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	sender := &acPb.SerializedMember{
 		OrgId:      orgIds[index],
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
 	// 构造Header
@@ -455,7 +455,7 @@ func initGRPCConn(useTLS bool, orgIdIndex int) (*grpc.ClientConn, error) {
 	}
 }
 
-//func acSignWithManager(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//func acSignWithManager(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
 //	msg.Endorsement = nil
 //	bytes, _ := proto.Marshal(msg)
 //	signers := make([]protocol.SigningMember, 0)
@@ -483,7 +483,7 @@ func initGRPCConn(useTLS bool, orgIdIndex int) (*grpc.ClientConn, error) {
 //		sender1 := &acPb.SerializedMember{
 //			OrgId:      "wx-org" + numStr + ".chainmaker.org",
 //			MemberInfo: file2,
-//			IsFullCert: true,
+//			//IsFullCert: true,
 //		}
 //		signer := getSigner(sk, sender1)
 //		signers = append(signers, signer)
@@ -540,7 +540,7 @@ func getUserSK(orgIDNum int, keyPath, certPath string) (crypto.PrivateKey, *acPb
 	sender := &acPb.SerializedMember{
 		OrgId:      fmt.Sprintf(OrgIdFormat, orgIDNum),
 		MemberInfo: file2,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 	return sk3, sender
 }
@@ -570,7 +570,7 @@ func updateSysRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, isTl
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
 	}
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      msg.ChainId,
 		ContractName: msg.ContractName,
 		Method:       msg.MethodName,
@@ -622,7 +622,7 @@ func getChainConfig(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId s
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -693,7 +693,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	senderFull := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	// 构造Header
@@ -706,7 +706,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 		ExpirationTime: 0,
 	}
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      msg.chainId,
 		ContractName: msg.contractName,
 		Method:       msg.method,
@@ -752,7 +752,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	return result, txId, nil
 }
 
-func aclSignSystemContract(msg commonPb.SystemContractPayload, orgIds, adminSignKeys, adminSignCrts []string) ([]*commonPb.EndorsementEntry, error) {
+func aclSignSystemContract(msg commonPb.Payload, orgIds, adminSignKeys, adminSignCrts []string) ([]*commonPb.EndorsementEntry, error) {
 	msg.Endorsement = nil
 	bytes, _ := proto.Marshal(&msg)
 
@@ -792,7 +792,7 @@ func aclSignSystemContract(msg commonPb.SystemContractPayload, orgIds, adminSign
 		sender1 := &acPb.SerializedMember{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
-			IsFullCert: true,
+			//IsFullCert: true,
 		}
 		signer := getSigner(sk3, sender1)
 		signers = append(signers, signer)

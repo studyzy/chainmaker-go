@@ -30,8 +30,8 @@ import (
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -258,7 +258,7 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	sender := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	// 构造Header

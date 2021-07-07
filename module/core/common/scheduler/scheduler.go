@@ -17,10 +17,10 @@ import (
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/utils"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -351,7 +351,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 
 	switch tx.Header.TxType {
 	case commonpb.TxType_QUERY_CONTRACT:
-		var payload commonpb.QueryPayload
+		var payload commonpb.Payload
 		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 			contractName = payload.ContractName
 			method = payload.Method
@@ -371,7 +371,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 			return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Header.TxId, err))
 		}
 	//case commonpb.TxType_INVOKE_CONTRACT:
-	//	var payload commonpb.SystemContractPayload
+	//	var payload commonpb.Payload
 	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 	//		contractName = payload.ContractName
 	//		method = payload.Method
@@ -381,7 +381,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//		return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
 	//	}
 	//case commonpb.TxType_INVOKE_CONTRACT:
-	//	var payload commonpb.SystemContractPayload
+	//	var payload commonpb.Payload
 	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 	//		contractName = payload.ContractName
 	//		method = payload.Method
@@ -405,7 +405,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//		return errResult(result, fmt.Errorf("failed to unmarshal system contract payload for tx %s, %s", tx.Header.TxId, err.Error()))
 	//	}
 	//case commonpb.TxType_MANAGE_USER_CONTRACT:
-	//	var payload commonpb.ContractMgmtPayload
+	//	var payload commonpb.Payload
 	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 	//		if payload.ContractId == nil {
 	//			return errResult(result, fmt.Errorf("param is null"))
@@ -526,7 +526,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 				Signer: &acpb.SerializedMember{
 					OrgId:      endorsement.Signer.OrgId,
 					MemberInfo: nil,
-					IsFullCert: true,
+					//IsFullCert: true,
 				},
 				Signature: endorsement.Signature,
 			}

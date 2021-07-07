@@ -200,7 +200,7 @@ func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 		return &acPb.SerializedMember{
 			OrgId:      "wx-org1.chainmaker.org",
 			MemberInfo: ownerCert(),
-			IsFullCert: true,
+			//IsFullCert: true,
 		}
 	}).AnyTimes()
 	txSimContext.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(

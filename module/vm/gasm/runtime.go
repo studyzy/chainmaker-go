@@ -12,12 +12,12 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/hostfunc"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/waci"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasi"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/groupcache/lru"
@@ -89,7 +89,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	}()
 
 	contractResult = &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_OK,
+		Code:    0,
 		Result:  nil,
 		Message: "",
 	}

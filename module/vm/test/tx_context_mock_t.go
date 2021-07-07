@@ -14,22 +14,22 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/pb-go/config"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var testOrgId = "wx-org1.chainmaker.org"
@@ -83,7 +83,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, pr
 	sender := &acPb.SerializedMember{
 		OrgId:      testOrgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	db, _ := leveldb.OpenFile("tmp/leveldb"+utils.GetRandTxId(), nil)
@@ -120,9 +120,9 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, pr
 	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.ContractVersion)...)
 
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey, []byte(contractId.ContractVersion))
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
+	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }

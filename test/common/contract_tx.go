@@ -9,7 +9,6 @@ package common
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,13 +16,13 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consts"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -60,22 +59,22 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Install_ContractName.String(),
-		Value: contractName,
+		Value: []byte(contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Install_Version.String(),
-		Value: "1.2.1",
+		Value: []byte("1.2.1"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Install_RuntimeType.String(),
-		Value: runtimeType.String(),
+		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Install_ByteCode.String(),
-		Value: base64.StdEncoding.EncodeToString(wasmBin),
+		Value: wasmBin,
 	})
-	payload := &commonPb.TransactPayload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+	payload := &commonPb.Payload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
 		Method:       consts.ContractManager_INIT_CONTRACT.String(),
 		Parameters:   pairs,
 	}
@@ -116,14 +115,14 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	sender := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		////IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -131,9 +130,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -153,7 +151,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := (*client).SendRequest(ctx, req)
 
@@ -191,11 +189,11 @@ func QueryUserContractInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, c
 
 	txId := utils.GetRandTxId()
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: consts.ContractManager_GetContractInfo_ContractName.String(), Value: contractName}
+	pair := &commonPb.KeyValuePair{Key: consts.ContractManager_GetContractInfo_ContractName.String(), Value: []byte( contractName)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), consts.ContractManager_GET_CONTRACT_INFO.String(), pairs)
+	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), consts.ContractManager_GET_CONTRACT_INFO.String(), pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -204,7 +202,7 @@ func QueryUserContractInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, c
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) []byte {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -228,22 +226,22 @@ func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Upgrade_ContractName.String(),
-		Value: contractName,
+		Value: []byte( contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Upgrade_Version.String(),
-		Value: "2.0.0",
+		Value: []byte("2.0.0"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Upgrade_RuntimeType.String(),
-		Value: runtimeType.String(),
+		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Upgrade_ByteCode.String(),
-		Value: base64.StdEncoding.EncodeToString(wasmBin),
+		Value: wasmBin,
 	})
-	payload := &commonPb.TransactPayload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+	payload := &commonPb.Payload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
 		Method:       consts.ContractManager_UPGRADE_CONTRACT.String(),
 		Parameters:   pairs,
 	}
@@ -280,10 +278,10 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   consts.ContractManager_Freeze_ContractName.String(),
-		Value: contractName,
+		Value: []byte(contractName),
 	})
-	payload := &commonPb.TransactPayload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(),
+	payload := &commonPb.Payload{
+		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
 		Method:       method,
 		Parameters:   pairs,
 	}

@@ -344,11 +344,11 @@ func IsNativeTx(tx *common.Transaction) (contract string, b bool) {
 	txType := tx.Payload.TxType
 	switch txType {
 	case common.TxType_INVOKE_CONTRACT:
-		payload:=tx.Payload
+		payload := tx.Payload
 		return payload.ContractName, IsNative(payload.ContractName)
 	//case common.TxType_MANAGE_USER_CONTRACT:
 	//	payloadBytes := tx.RequestPayload
-	//	payload := new(common.ContractMgmtPayload)
+	//	payload := new(common.Payload)
 	//	err := proto.Unmarshal(payloadBytes, payload)
 	//	if err != nil {
 	//		return "", false

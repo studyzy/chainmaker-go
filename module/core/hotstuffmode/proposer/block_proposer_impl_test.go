@@ -370,7 +370,7 @@ package proposer
 //			Sender: &acpb.SerializedMember{
 //				OrgId:      "wx-org1.chainmaker.org",
 //				MemberInfo: []byte("wx-org1.chainmaker.org"),
-//				IsFullCert: false,
+//				MemberType: acPb.MemberType_CERT_HASH,
 //			},
 //			TxType:         0,
 //			TxId:           txId,

@@ -42,7 +42,7 @@ func TestMergeConfigUpdatePayload(t *testing.T) {
 	raw, err := ioutil.ReadFile(mergeOutput)
 	assert.NoError(t, err)
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.Payload{}
 	err = proto.Unmarshal(raw, payload)
 	assert.NoError(t, err)
 
@@ -74,7 +74,7 @@ func TestMergeContractMgmtPayload(t *testing.T) {
 	//raw, err := ioutil.ReadFile(mergeOutput)
 	//assert.NoError(t, err)
 	//
-	//payload := &sdkPbCommon.SystemContractPayload{}
+	//payload := &sdkPbCommon.Payload{}
 	//err = proto.Unmarshal(raw, payload)
 	//assert.NoError(t, err)
 	//

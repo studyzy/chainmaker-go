@@ -7,8 +7,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -251,7 +251,7 @@ func (c *ContextService) SetOutput(ctxId int64) int32 {
 	}
 	switch code {
 	case 0:
-		context.ContractResult.Code = commonPb.ContractResultCode_OK
+		context.ContractResult.Code = 0
 	default:
 		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
 	}

@@ -359,7 +359,7 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 			return &acPb.SerializedMember{
 				OrgId:      "wx-org1.chainmaker.org",
 				MemberInfo: ownerCert(),
-				IsFullCert: true,
+				//IsFullCert: true,
 			}
 		},
 	).AnyTimes()

@@ -190,7 +190,7 @@ func performanceTestBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	for {
 		code := testGetTxByTxId(sk3, client, txId, CHAIN1)
 		code2 := testGetTxByTxId(sk3, client, txPreId, CHAIN1)
-		if code == commonPb.ContractResultCode_OK && code2 == commonPb.ContractResultCode_OK {
+		if code == 0 && code2 == 0 {
 			break
 		}
 		time.Sleep(time.Millisecond * 2000)
@@ -271,8 +271,8 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	var pairs []*commonPb.KeyValuePair
 
 	//method := consts.ContractManager_INIT_CONTRACT.String()
-	payload ,_:=commonPb.GenerateInstallContractPayload(contractName,"1.0.0",runtimeType,wasmBin,pairs)
-	//payload := &commonPb.ContractMgmtPayload{
+	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
+	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
 	//	ContractId: &commonPb.ContractId{
 	//		ContractName:    contractName,
@@ -434,7 +434,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	sender := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
 
@@ -527,7 +527,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) []byte {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -541,8 +541,9 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 
 	return payloadBytes
 }
+
 //
-//func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
 //	msg.Endorsement = nil
 //	bytes, _ := proto.Marshal(msg)
 //
@@ -573,7 +574,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 //		sender1 := &acPb.SerializedMember{
 //			OrgId:      "wx-org" + numStr + ".chainmaker.org",
 //			MemberInfo: file2,
-//			IsFullCert: true,
+//			//IsFullCert: true,
 //		}
 //
 //		signer := getSigner(sk, sender1)
@@ -588,7 +589,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 //	}
 //}
 
-func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) commonPb.ContractResultCode {
+func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) uint32 {
 	//now := time.Now()
 	//fmt.Printf("\n%d-%d-%dT %d:%d:%d============ get tx by txId [%s] ============\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), txId)
 

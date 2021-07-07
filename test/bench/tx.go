@@ -96,7 +96,7 @@ func genGetBlockByTxIDTxRequest(orgid string, sk3 crypto.PrivateKey, txid string
 		},
 	}
 
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: "query_system_contract",
 		Method:       "GET_BLOCK_BY_TX_ID",
 		Parameters:   pairs,
@@ -187,7 +187,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.Si
 	return signer
 }
 
-//func acSign(msg *commonPb.ContractMgmtPayload, orglist []string) ([]*commonPb.EndorsementEntry, error) {
+//func acSign(msg *commonPb.Payload, orglist []string) ([]*commonPb.EndorsementEntry, error) {
 //	msg.Endorsement = nil
 //	bytes, _ := proto.Marshal(msg)
 //

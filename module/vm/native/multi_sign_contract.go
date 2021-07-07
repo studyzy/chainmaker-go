@@ -58,7 +58,7 @@ func parsePayload(txType string, payloadBytes []byte) (*payloadInfo, error) {
 	switch txType {
 	//case commonPb.TxType_MANAGE_USER_CONTRACT.String():
 	//	txType1 := commonPb.TxType(commonPb.TxType_value[txType])
-	//	payload := new(commonPb.ContractMgmtPayload)
+	//	payload := new(commonPb.Payload)
 	//	err := proto.Unmarshal(payloadBytes, payload)
 	//	if err != nil {
 	//		return nil, err
@@ -70,7 +70,7 @@ func parsePayload(txType string, payloadBytes []byte) (*payloadInfo, error) {
 	//	}, nil
 	//case commonPb.TxType_INVOKE_CONTRACT.String(), commonPb.TxType_INVOKE_CONTRACT.String():
 	//	txType1 := commonPb.TxType(commonPb.TxType_value[txType])
-	//	payload := new(commonPb.SystemContractPayload)
+	//	payload := new(commonPb.Payload)
 	//	err := proto.Unmarshal(payloadBytes, payload)
 	//	if err != nil {
 	//		return nil, err

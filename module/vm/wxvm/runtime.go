@@ -8,9 +8,9 @@ package wxvm
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/wxvm/xvm"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/wxvm/xvm"
 	"runtime/debug"
 )
 
@@ -41,7 +41,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	}()
 
 	contractResult = &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_OK,
+		Code:    0,
 		Result:  nil,
 		Message: "",
 	}

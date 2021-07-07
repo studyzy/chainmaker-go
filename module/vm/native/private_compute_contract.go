@@ -194,8 +194,8 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 		r.log.Errorf(err.Error())
 		return err
 	}
-	headerLen := len(codeHeader);
-	fullCodes := make([]byte, headerLen + len(code))
+	headerLen := len(codeHeader)
+	fullCodes := make([]byte, headerLen+len(code))
 	copy(fullCodes, codeHeader)
 	copy(fullCodes[headerLen:], code)
 
@@ -377,8 +377,8 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	headerLen := len(headerCode);
-	fullCodes := make([]byte, headerLen + len(contractCode))
+	headerLen := len(headerCode)
+	fullCodes := make([]byte, headerLen+len(contractCode))
 	copy(fullCodes, headerCode)
 	copy(fullCodes[headerLen:], contractCode)
 
@@ -601,8 +601,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	headerLen := len(headerCode);
-	fullCodes := make([]byte, headerLen + len(contractCode))
+	headerLen := len(headerCode)
+	fullCodes := make([]byte, headerLen+len(contractCode))
 	copy(fullCodes, headerCode)
 	copy(fullCodes[headerLen:], contractCode)
 
@@ -1197,7 +1197,7 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 //		sender := &accesscontrol.SerializedMember{
 //			OrgId:      req.Payload.OrgId[i],
 //			MemberInfo: userCertPemBytes,
-//			IsFullCert: true,
+//			//IsFullCert: true,
 //		}
 //
 //		endorsements := []*commonPb.EndorsementEntry{{

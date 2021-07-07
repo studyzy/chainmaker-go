@@ -18,14 +18,13 @@ import (
 	"strings"
 	"sync/atomic"
 
-
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/serialize"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var ErrorNotManageContract = fmt.Errorf("method is not init_contract or upgrade")
@@ -196,7 +195,7 @@ func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []by
 	if contractResult.Code == common.ContractResultCode_FAIL {
 		return protocol.ContractSdkSignalResultFail
 	}
-	contractResult.Code = common.ContractResultCode_OK
+	contractResult.Code = 0
 	contractResult.Result = data
 	return protocol.ContractSdkSignalResultSuccess
 }

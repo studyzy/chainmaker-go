@@ -17,9 +17,9 @@
 package storage
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -66,10 +66,10 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 		versionKey := []byte(protocol.ContractVersion + address.String())
-		if contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey); err == nil {
+		if contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey); err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractName...)
 			versionedByteCodeKey = append(versionedByteCodeKey, contractVersion...)
-			code, err = c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey)
+			code, err = c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey)
 			return code, err
 		} else {
 			log.Errorf("failed to get other contract byte code version, address [%s] , error :", address.String(), err.Error())

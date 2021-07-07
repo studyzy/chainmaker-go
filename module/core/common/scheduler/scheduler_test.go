@@ -53,7 +53,7 @@ package scheduler
 //			Value: value,
 //		})
 //	}
-//	payload := &commonpb.QueryPayload{
+//	payload := &commonpb.Payload{
 //		ContractName: contractId.ContractName,
 //		Method:       "method",
 //		Parameters:   parameters,
