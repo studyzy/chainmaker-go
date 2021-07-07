@@ -117,7 +117,7 @@ func configConsensusNode(op int) error {
 	}
 
 	client, err := createClientWithConfig()
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "user cert havenot on chain yet, and try again") {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err)
 	}
 	defer client.Stop()

@@ -208,7 +208,7 @@ func createClientWithConfig() (*sdk.ChainClient, error) {
 	if enableCertHash {
 		err = chainClient.EnableCertHash()
 		if err != nil {
-			log.Fatal(err)
+			return chainClient, err
 		}
 	}
 
