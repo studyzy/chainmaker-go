@@ -13,9 +13,15 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
+	"chainmaker.org/chainmaker-go/common/crypto"
+	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	sdk "chainmaker.org/chainmaker-sdk-go"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/accesscontrol"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
 const (
@@ -116,19 +122,6 @@ func configTrustRoot(op int) error {
 		return fmt.Errorf(ADMIN_KEY_AND_CERT_NOT_ENOUGH_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	adminClients := make([]*sdk.ChainClient, len(adminKeys))
-	for i := range adminKeys {
-		var err error
-		if adminClients[i], err = createAdminWithConfig(adminKeys[i], adminCrts[i]); err != nil {
-			return fmt.Errorf(CREATE_ADMIN_CLIENT_FAILED_FORMAT, i, err)
-		}
-	}
-	defer func() {
-		for _, cli := range adminClients {
-			cli.Stop()
-		}
-	}()
-
 	client, err := createClientWithConfig()
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err)
@@ -161,9 +154,19 @@ func configTrustRoot(op int) error {
 		return err
 	}
 
-	signedPayloads := make([][]byte, len(adminClients))
-	for i, cli := range adminClients {
-		signedPayload, err := cli.SignChainConfigPayload(payloadBytes)
+	signedPayloads := make([][]byte, len(adminKeys))
+	baseOrgId := "wx-org%d.chainmaker.org"
+	for i := range adminKeys {
+		_, privKey, err := dealUserKey(adminKeys[i])
+		if err != nil {
+			return err
+		}
+		crtBytes, crt, err := dealUserCrt(adminCrts[i])
+		if err != nil {
+			return err
+		}
+
+		signedPayload, err := signChainConfigPayload(payloadBytes, crtBytes, privKey, crt, fmt.Sprintf(baseOrgId, i+1))
 		if err != nil {
 			return err
 		}
@@ -185,4 +188,82 @@ func configTrustRoot(op int) error {
 	}
 	fmt.Printf("trustroot response %+v\n", resp)
 	return nil
+}
+
+func signChainConfigPayload(payloadBytes, userCrtBytes []byte, privateKey crypto.PrivateKey, userCrt *bcx509.Certificate, orgId string) ([]byte, error) {
+	payload := &common.SystemContractPayload{}
+	if err := proto.Unmarshal(payloadBytes, payload); err != nil {
+		return nil, fmt.Errorf("unmarshal config update payload failed, %s", err)
+	}
+
+	signBytes, err := signTx(privateKey, userCrt, payloadBytes)
+	if err != nil {
+		return nil, fmt.Errorf("SignPayload failed, %s", err)
+	}
+
+	sender := &accesscontrol.SerializedMember{
+		OrgId:      orgId,
+		MemberInfo: userCrtBytes,
+		IsFullCert: true,
+	}
+
+	entry := &common.EndorsementEntry{
+		Signer:    sender,
+		Signature: signBytes,
+	}
+
+	payload.Endorsement = []*common.EndorsementEntry{
+		entry,
+	}
+
+	signedPayloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("marshal config update sigend payload failed, %s", err)
+	}
+
+	return signedPayloadBytes, nil
+}
+
+func signTx(privateKey crypto.PrivateKey, cert *bcx509.Certificate, msg []byte) ([]byte, error) {
+	var opts crypto.SignOpts
+	hashalgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+	if err != nil {
+		return nil, fmt.Errorf("invalid algorithm: %v", err)
+	}
+
+	opts.Hash = hashalgo
+	opts.UID = crypto.CRYPTO_DEFAULT_UID
+
+	return privateKey.SignWithOpts(msg, &opts)
+}
+
+func dealUserCrt(userCrtFilePath string) (userCrtBytes []byte, userCrt *bcx509.Certificate, err error) {
+
+	// 读取用户证书
+	userCrtBytes, err = ioutil.ReadFile(userCrtFilePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read user crt file failed, %s", err)
+	}
+
+	// 将证书转换为证书对象
+	userCrt, err = sdk.ParseCert(userCrtBytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ParseCert failed, %s", err)
+	}
+	return
+}
+
+func dealUserKey(userKeyFilePath string) (userKeyBytes []byte, privateKey crypto.PrivateKey, err error) {
+
+	// 从私钥文件读取用户私钥，转换为privateKey对象
+	userKeyBytes, err = ioutil.ReadFile(userKeyFilePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read user key file failed, %s", err)
+	}
+
+	privateKey, err = asym.PrivateKeyFromPEM(userKeyBytes, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse user key file to privateKey obj failed, %s", err)
+	}
+	return
 }

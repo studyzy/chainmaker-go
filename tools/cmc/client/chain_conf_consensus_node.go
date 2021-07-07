@@ -13,8 +13,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-
-	sdk "chainmaker.org/chainmaker-sdk-go"
 )
 
 const (
@@ -116,19 +114,6 @@ func configConsensusNode(op int) error {
 		return fmt.Errorf(ADMIN_KEY_AND_CERT_NOT_ENOUGH_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	adminClients := make([]*sdk.ChainClient, len(adminKeys))
-	for i := range adminKeys {
-		var err error
-		if adminClients[i], err = createAdminWithConfig(adminKeys[i], adminCrts[i]); err != nil {
-			return fmt.Errorf(CREATE_ADMIN_CLIENT_FAILED_FORMAT, i, err)
-		}
-	}
-	defer func() {
-		for _, cli := range adminClients {
-			cli.Stop()
-		}
-	}()
-
 	client, err := createClientWithConfig()
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err)
@@ -150,9 +135,19 @@ func configConsensusNode(op int) error {
 		return err
 	}
 
-	signedPayloads := make([][]byte, len(adminClients))
-	for i, cli := range adminClients {
-		signedPayload, err := cli.SignChainConfigPayload(payloadBytes)
+	signedPayloads := make([][]byte, len(adminKeys))
+	baseOrgId := "wx-org%d.chainmaker.org"
+	for i := range adminKeys {
+		_, privKey, err := dealUserKey(adminKeys[i])
+		if err != nil {
+			return err
+		}
+		crtBytes, crt, err := dealUserCrt(adminCrts[i])
+		if err != nil {
+			return err
+		}
+
+		signedPayload, err := signChainConfigPayload(payloadBytes, crtBytes, privKey, crt, fmt.Sprintf(baseOrgId, i+1))
 		if err != nil {
 			return err
 		}
