@@ -8,12 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/concurrentlru"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/localconf"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
@@ -301,13 +301,13 @@ func (ac *accessControl) DeserializeMember(serializedMember []byte) (protocol.Me
 		return nil, err
 	}
 
-	if !memberPb.IsFullCert {
+	if memberPb.MemberType!=pbac.MemberType_CERT {
 		memInfoBytes, ok := ac.lookUpCertCache(string(memberPb.MemberInfo))
 		if !ok {
 			return nil, fmt.Errorf("deserialize Member failed, unrecognized compressed certificate")
 		}
 		memberPb.MemberInfo = memInfoBytes
-		memberPb.IsFullCert = true
+		memberPb.MemberType = pbac.MemberType_CERT
 	}
 	return ac.NewMemberFromCertPem(memberPb.OrgId, string(memberPb.MemberInfo))
 }
@@ -393,7 +393,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 // NewMemberFromProto creates a member from SerializedMember
 func (ac *accessControl) NewMemberFromProto(serializedMember *pbac.SerializedMember) (protocol.Member, error) {
-	if serializedMember.IsFullCert {
+	if serializedMember.MemberType==pbac.MemberType_CERT {
 		return ac.NewMemberFromCertPem(serializedMember.OrgId, string(serializedMember.MemberInfo))
 	} else {
 		certPEM, ok := ac.lookUpCertCache(string(serializedMember.MemberInfo))

@@ -23,11 +23,11 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/consts"
 
+	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/common/json"
-	"chainmaker.org/chainmaker-go/localconf"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
@@ -526,7 +526,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 		ouList, err := ac.getSignerRoleList(entry.Signer.MemberInfo)
 		if err != nil {
 			var info string
-			if entry.Signer.IsFullCert {
+			if entry.Signer.MemberType==pbac.MemberType_CERT {
 				info = string(entry.Signer.MemberInfo)
 			} else {
 				info = hex.EncodeToString(entry.Signer.MemberInfo)
@@ -575,7 +575,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 }
 
 func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.SerializedMember) string {
-	if signer.IsFullCert {
+	if signer.MemberType==pbac.MemberType_CERT {
 		return string(signer.MemberInfo)
 	} else {
 		return hex.EncodeToString(signer.MemberInfo)
@@ -665,28 +665,28 @@ func (ac *accessControl) validateCrlVersion(crlPemBytes []byte, crl *pkix.Certif
 }
 
 func (ac *accessControl) systemContractCallbackCertManagementCase(payloadBytes []byte) error {
-	var payload common.SystemContractPayload
+	var payload common.Payload
 	err := proto.Unmarshal(payloadBytes, &payload)
 	if err != nil {
 		return fmt.Errorf("resolve payload failed: %v", err)
 	}
 	switch payload.Method {
 	case common.CertManageFunction_CERTS_FREEZE.String():
-		return ac.systemContractCallbackCertManagementCertFreezeCase(payload)
+		return ac.systemContractCallbackCertManagementCertFreezeCase(&payload)
 	case common.CertManageFunction_CERTS_UNFREEZE.String():
-		return ac.systemContractCallbackCertManagementCertUnfreezeCase(payload)
+		return ac.systemContractCallbackCertManagementCertUnfreezeCase(&payload)
 	case common.CertManageFunction_CERTS_REVOKE.String():
-		return ac.systemContractCallbackCertManagementCertRevokeCase(payload)
+		return ac.systemContractCallbackCertManagementCertRevokeCase(&payload)
 	default:
 		ac.log.Debugf("unwatched method [%s]", payload.Method)
 		return nil
 	}
 }
 
-func (ac *accessControl) systemContractCallbackCertManagementCertFreezeCase(payload common.SystemContractPayload) error {
+func (ac *accessControl) systemContractCallbackCertManagementCertFreezeCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
 		if param.Key == "certs" {
-			certList := strings.Replace(param.Value, ",", "\n", -1)
+			certList := strings.Replace(string(param.Value), ",", "\n", -1)
 			certBlock, rest := pem.Decode([]byte(certList))
 			for certBlock != nil {
 				ac.frozenList.Store(string(certBlock.Bytes), true)
@@ -699,10 +699,10 @@ func (ac *accessControl) systemContractCallbackCertManagementCertFreezeCase(payl
 	return nil
 }
 
-func (ac *accessControl) systemContractCallbackCertManagementCertUnfreezeCase(payload common.SystemContractPayload) error {
+func (ac *accessControl) systemContractCallbackCertManagementCertUnfreezeCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
 		if param.Key == "certs" {
-			certList := strings.Replace(param.Value, ",", "\n", -1)
+			certList := strings.Replace(string(param.Value), ",", "\n", -1)
 			certBlock, rest := pem.Decode([]byte(certList))
 			for certBlock != nil {
 				_, ok := ac.frozenList.Load(string(certBlock.Bytes))
@@ -718,10 +718,10 @@ func (ac *accessControl) systemContractCallbackCertManagementCertUnfreezeCase(pa
 	return nil
 }
 
-func (ac *accessControl) systemContractCallbackCertManagementCertRevokeCase(payload common.SystemContractPayload) error {
+func (ac *accessControl) systemContractCallbackCertManagementCertRevokeCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
 		if param.Key == "cert_crl" {
-			crl := strings.Replace(param.Value, ",", "\n", -1)
+			crl := strings.Replace(string(param.Value), ",", "\n", -1)
 			crls, err := ac.ValidateCRL([]byte(crl))
 			if err != nil {
 				return fmt.Errorf("update CRL failed, invalid CRLS: %v", err)
@@ -1149,11 +1149,11 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 			Signer: &pbac.SerializedMember{
 				OrgId:      endorsementEntry.Signer.OrgId,
 				MemberInfo: endorsementEntry.Signer.MemberInfo,
-				IsFullCert: endorsementEntry.Signer.IsFullCert,
+				MemberType: endorsementEntry.Signer.MemberType,
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.IsFullCert {
+		if endorsement.Signer.MemberType==pbac.MemberType_CERT {
 			ac.log.Debugf("target endorser uses full certificate")
 			memInfo = string(endorsement.Signer.MemberInfo)
 		} else {
@@ -1164,7 +1164,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 				continue
 			}
 			memInfo = string(memInfoBytes)
-			endorsement.Signer.IsFullCert = true
+			endorsement.Signer.MemberType=pbac.MemberType_CERT
 			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 
