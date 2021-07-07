@@ -8,28 +8,28 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"context"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
+	"github.com/gogo/protobuf/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -270,27 +270,27 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	wasmBin, _ := ioutil.ReadFile(WasmPath)
 	var pairs []*commonPb.KeyValuePair
 
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "1.0.0",
-			//RuntimeType:     commonPb.RuntimeType_GASM,
-			RuntimeType: runtimeType,
-		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   wasmBin,
-	}
-
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("testCreate failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
+	//method := consts.ContractManager_INIT_CONTRACT.String()
+	payload ,_:=commonPb.GenerateInstallContractPayload(contractName,"1.0.0",runtimeType,wasmBin,pairs)
+	//payload := &commonPb.ContractMgmtPayload{
+	//	ChainId: chainId,
+	//	ContractId: &commonPb.ContractId{
+	//		ContractName:    contractName,
+	//		ContractVersion: "1.0.0",
+	//		//RuntimeType:     commonPb.RuntimeType_GASM,
+	//		RuntimeType: runtimeType,
+	//	},
+	//	Method:     method,
+	//	Parameters: pairs,
+	//	ByteCode:   wasmBin,
+	//}
+	//
+	//if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
+	//	payload.Endorsement = endorsement
+	//} else {
+	//	log.Fatalf("testCreate failed to sign endorsement, %s", err.Error())
+	//	os.Exit(0)
+	//}
 
 	payloadBytes, err := proto.Marshal(payload)
 	if err != nil {
@@ -298,7 +298,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		os.Exit(0)
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -332,7 +332,7 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	return txId
@@ -362,7 +362,7 @@ func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	}
 
 	txId = utils.GetRandTxId()
-	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	return txId
@@ -384,7 +384,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	}
 
 	txId = utils.GetRandTxId()
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if len(resp.ContractResult.Result) == 0 {
 		return ""
@@ -408,7 +408,7 @@ func testInvokeSqlBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	return txId
@@ -541,52 +541,52 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 
 	return payloadBytes
 }
-
-func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(msg)
-
-	signers := make([]protocol.SigningMember, 0)
-	for _, orgId := range orgIdList {
-
-		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-		file, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		sk, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-		file2, err := ioutil.ReadFile(userCrtPath)
-		if err != nil {
-			panic(err)
-		}
-
-		// 获取peerId
-		_, err = helper.GetLibp2pPeerIdFromCert(file2)
-
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      "wx-org" + numStr + ".chainmaker.org",
-			MemberInfo: file2,
-			IsFullCert: true,
-		}
-
-		signer := getSigner(sk, sender1)
-		signers = append(signers, signer)
-	}
-
-	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
-}
-func panicNotEqual(a string, b string) {
-	if a != b {
-		panic(a + " not equal " + b)
-	}
-}
+//
+//func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(msg)
+//
+//	signers := make([]protocol.SigningMember, 0)
+//	for _, orgId := range orgIdList {
+//
+//		numStr := strconv.Itoa(orgId)
+//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+//		file, err := ioutil.ReadFile(path)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+//		file2, err := ioutil.ReadFile(userCrtPath)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// 获取peerId
+//		_, err = helper.GetLibp2pPeerIdFromCert(file2)
+//
+//		// 构造Sender
+//		sender1 := &acPb.SerializedMember{
+//			OrgId:      "wx-org" + numStr + ".chainmaker.org",
+//			MemberInfo: file2,
+//			IsFullCert: true,
+//		}
+//
+//		signer := getSigner(sk, sender1)
+//		signers = append(signers, signer)
+//	}
+//
+//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
+//}
+//func panicNotEqual(a string, b string) {
+//	if a != b {
+//		panic(a + " not equal " + b)
+//	}
+//}
 
 func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) commonPb.ContractResultCode {
 	//now := time.Now()
@@ -599,7 +599,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	result := &commonPb.TransactionInfo{}

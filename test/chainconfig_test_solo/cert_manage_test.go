@@ -30,7 +30,7 @@ func TestCertAdd(t *testing.T) {
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
 	sk, member := native.GetUserSK(1)
-	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_CONTRACT,
 		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERT_ADD.String(), Pairs: pairs})
 	processResults(resp, err)
 }
@@ -48,7 +48,7 @@ func TestCertDelete(t *testing.T) {
 	})
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_CONTRACT,
 		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERTS_DELETE.String(), Pairs: pairs})
 	processResults(resp, err)
 }
@@ -70,7 +70,7 @@ func TestCertQuery(t *testing.T) {
 	})
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
 		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERTS_QUERY.String(), Pairs: pairs})
 	processResults(resp, err)
 }
@@ -92,7 +92,7 @@ func TestCertQueryWithCertId(t *testing.T) {
 	})
 
 	sk, _ := native.GetUserSK(1)
-	resp, err := native.QueryRequestWithCertID(sk, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := native.QueryRequestWithCertID(sk, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
 		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERTS_QUERY.String(), Pairs: pairs})
 	processResults(resp, err)
 }

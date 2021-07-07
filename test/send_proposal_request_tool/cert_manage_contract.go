@@ -140,7 +140,7 @@ func certAdd() error {
 	if err != nil {
 		return err
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func certDelete() error {
 		return err
 	}
 
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func certQuery() error {
 	if err != nil {
 		return err
 	}
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err
@@ -248,7 +248,7 @@ func certFrozen() error {
 		Value: certs,
 	})
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_FREEZE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
@@ -291,7 +291,7 @@ func certUnfrozen() error {
 		Value: certHashes,
 	})
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_UNFREEZE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
@@ -325,7 +325,7 @@ func certRevocation() error {
 		Value: certCrl,
 	})
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_REVOKE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err

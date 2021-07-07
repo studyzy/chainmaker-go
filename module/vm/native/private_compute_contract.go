@@ -7,17 +7,17 @@ package native
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	"chainmaker.org/chainmaker/common/crypto/tee"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/binary"
@@ -624,7 +624,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	if result.Code != commonPb.ContractResultCode_OK {
+	if result.Code !=0 {
 		r.log.Infof("Compute result code != ok, return")
 		return nil, nil
 	}
@@ -1072,7 +1072,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string]string, chain
 	sender := &accesscontrol.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: userCertPemBytes,
-		IsFullCert: true,
+		MemberType: accesscontrol.MemberType_CERT,
 	}
 
 	endorsements := []*commonPb.EndorsementEntry{{
@@ -1141,7 +1141,7 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 		sender := &accesscontrol.SerializedMember{
 			OrgId:      orgId[i],
 			MemberInfo: userCertPemBytes,
-			IsFullCert: true,
+			MemberType: accesscontrol.MemberType_CERT,
 		}
 
 		endorsements := []*commonPb.EndorsementEntry{{

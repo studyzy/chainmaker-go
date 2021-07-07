@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )
@@ -46,7 +47,7 @@ func getBlockWithRWSetsByHash() error {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err

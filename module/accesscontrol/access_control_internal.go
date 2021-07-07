@@ -21,6 +21,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"chainmaker.org/chainmaker/pb-go/consts"
+
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
@@ -58,18 +60,16 @@ var restrainedResourceList = map[string]bool{
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_USER_CONTRACT:           protocol.ResourceNameReadData,
-	common.TxType_QUERY_SYSTEM_CONTRACT:         protocol.ResourceNameReadData,
-	common.TxType_INVOKE_USER_CONTRACT:          protocol.ResourceNameWriteData,
-	common.TxType_UPDATE_CHAIN_CONFIG:           protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_BLOCK_INFO:          protocol.ResourceNameReadData,
-	common.TxType_SUBSCRIBE_TX_INFO:             protocol.ResourceNameReadData,
-	common.TxType_INVOKE_SYSTEM_CONTRACT:        protocol.ResourceNameWriteData,
-	common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
+	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
+	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
+	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
+	common.TxType_SUBSCRIBE_BLOCK_INFO: protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE_TX_INFO:    protocol.ResourceNameReadData,
+	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
 
-	common.TxType_ARCHIVE_FULL_BLOCK: 			 protocol.ResourceNameArchive,
-	common.TxType_RESTORE_FULL_BLOCK: 			 protocol.ResourceNameArchive,
+	common.TxType_ARCHIVE_FULL_BLOCK: protocol.ResourceNameArchive,
+	common.TxType_RESTORE_FULL_BLOCK: protocol.ResourceNameArchive,
 }
 
 var (
@@ -333,11 +333,11 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
 	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
-	resourceNamePolicyMap.Store(common.ManageUserContractFunction_INIT_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ManageUserContractFunction_UPGRADE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ManageUserContractFunction_FREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ManageUserContractFunction_UNFREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ManageUserContractFunction_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(consts.ContractManager_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(consts.ContractManager_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(consts.ContractManager_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(consts.ContractManager_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(consts.ContractManager_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
 	resourceNamePolicyMap.Store(common.CertManageFunction_CERT_ADD.String(), policyWrite)

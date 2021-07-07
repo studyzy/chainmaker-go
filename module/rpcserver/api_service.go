@@ -8,6 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
+	"context"
+	"encoding/hex"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/blockchain"
 	commonErr "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -21,9 +25,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native"
-	"context"
-	"encoding/hex"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
@@ -149,9 +150,9 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 	}
 
 	switch tx.Header.TxType {
-	case commonPb.TxType_QUERY_SYSTEM_CONTRACT, commonPb.TxType_QUERY_USER_CONTRACT:
+	case commonPb.TxType_QUERY_CONTRACT:
 		return s.dealQuery(tx, source)
-	case commonPb.TxType_INVOKE_USER_CONTRACT, commonPb.TxType_UPDATE_CHAIN_CONFIG, commonPb.TxType_MANAGE_USER_CONTRACT, commonPb.TxType_INVOKE_SYSTEM_CONTRACT:
+	case commonPb.TxType_INVOKE_CONTRACT:
 		return s.dealTransact(tx, source)
 	case commonPb.TxType_ARCHIVE_FULL_BLOCK, commonPb.TxType_RESTORE_FULL_BLOCK:
 		return s.doArchive(tx)
@@ -220,7 +221,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		vmManager:        vmMgr,
 	}
 
-	txResult, txStatusCode := vmMgr.RunContract(&commonPb.ContractId{ContractName: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Header.TxType)
+	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Header.TxType)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != commonPb.ContractResultCode_FAIL {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
@@ -292,8 +293,8 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 	}
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)
-	txResult := runtimeInstance.Invoke(&commonPb.ContractId{
-		ContractName: payload.ContractName,
+	txResult := runtimeInstance.Invoke(&commonPb.Contract{
+		Name: payload.ContractName,
 	},
 		payload.Method,
 		nil,

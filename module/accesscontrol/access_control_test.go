@@ -935,7 +935,7 @@ func TestAccessControlLookUpResourceIdByTxType(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, acInst)
 
-	resourceId, err := acInst.LookUpResourceNameByTxType(common.TxType_INVOKE_USER_CONTRACT)
+	resourceId, err := acInst.LookUpResourceNameByTxType(common.TxType_INVOKE_CONTRACT)
 	require.Nil(t, err)
 	require.Equal(t, protocol.ResourceNameWriteData, resourceId)
 

@@ -39,5 +39,5 @@ func isConfigTx(tx *common.Transaction) bool {
 	if tx == nil || tx.Header == nil {
 		return false
 	}
-	return tx.Header.TxType == common.TxType_UPDATE_CHAIN_CONFIG
+	return tx.IsConfigTx()
 }

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strconv"
 
+
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -160,7 +161,7 @@ func multiSignReq() error {
 	if err != nil {
 		return err
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err
@@ -237,7 +238,7 @@ func multiSignVote() error {
 	if err != nil {
 		return err
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err
@@ -304,7 +305,7 @@ func getMultiSign() (*commonPb.TxResponse, *commonPb.MultiSignInfo, error) {
 		return nil, nil, err
 	}
 
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return nil, nil, err

@@ -7,14 +7,13 @@
 package native
 
 import (
+	"sync"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"sync"
 )
 
 var (
@@ -57,28 +56,29 @@ func initContract(log *logger.CMLogger) map[string]Contract {
 	contracts[commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String()] = newPrivateComputeContact(log)
 	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()] = newDPoSERC20Contract(log)
 	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()] = newDPoSStakeContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String()] = newContractManager(log)
 	return contracts
 }
 
 // Invoke verify and run Contract method
-func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName string, _ []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string, _ []byte, parameters map[string]string,
 	txContext protocol.TxSimContext) *commonPb.ContractResult {
 
 	result := &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_FAIL,
-		Message: "",
+		Code:    1,
+		Message: "contract internal error",
 		Result:  nil,
 	}
 
-	txType := txContext.GetTx().Header.TxType
-	if txType == commonPb.TxType_UPDATE_CHAIN_CONFIG {
-		if err := r.verifySequence(txContext); err != nil {
-			result.Message = fmt.Sprintf(err.Error()+",txType: %s", txType)
-			return result
-		}
-	}
+	//txType := txContext.GetTx().Header.TxType
+	//if txType == commonPb.TxType_INVOKE_CONTRACT {
+	//	if err := r.verifySequence(txContext); err != nil {
+	//		result.Message = fmt.Sprintf(err.Error()+",txType: %s", txType)
+	//		return result
+	//	}
+	//}
 
-	f, err := r.getContractFunc(contractId, methodName)
+	f, err := r.getContractFunc(contract, methodName)
 	if err != nil {
 		r.log.Error(err)
 		result.Message = err.Error()
@@ -98,27 +98,27 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, methodName str
 		return result
 	}
 
-	result.Code = commonPb.ContractResultCode_OK
-	result.Message = commonPb.ContractResultCode_OK.String()
+	result.Code = 0
+	result.Message = "OK"
 	result.Result = bytes
 	return result
 }
 
 func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error {
 	tx := txContext.GetTx()
-	payload := tx.RequestPayload
-	var config commonPb.SystemContractPayload
-	err := proto.Unmarshal(payload, &config)
-	if err != nil {
-		r.log.Errorw(ErrUnmarshalFailed.Error(), "Position", "SystemContractPayload Unmarshal", "err", err)
-		return ErrUnmarshalFailed
-	}
+	payload := tx.Payload
+	//var config commonPb.SystemContractPayload
+	//err := proto.Unmarshal(payload, &config)
+	//if err != nil {
+	//	r.log.Errorw(ErrUnmarshalFailed.Error(), "Position", "SystemContractPayload Unmarshal", "err", err)
+	//	return ErrUnmarshalFailed
+	//}
 
 	// chainId
-	if tx.Header.ChainId != config.ChainId {
-		r.log.Errorw("chainId is different", "tx chainId", tx.Header.ChainId, "payload chainId", config.ChainId)
-		return errors.New("chainId is different")
-	}
+	//if tx.Payload.ChainId != config.ChainId {
+	//	r.log.Errorw("chainId is different", "tx chainId", tx.Header.ChainId, "payload chainId", config.ChainId)
+	//	return errors.New("chainId is different")
+	//}
 
 	bytes, err := txContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
 	var chainConfig configPb.ChainConfig
@@ -128,26 +128,26 @@ func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error 
 		return ErrUnmarshalFailed
 	}
 
-	if config.Sequence != chainConfig.Sequence+1 {
+	if payload.Sequence != chainConfig.Sequence+1 {
 		// the sequence is not incre 1
-		r.log.Errorw(ErrSequence.Error(), "chainConfig", chainConfig.Sequence, "sdk chainConfig", config.Sequence)
+		r.log.Errorw(ErrSequence.Error(), "chainConfig", chainConfig.Sequence, "sdk chainConfig", payload.Sequence)
 		return ErrSequence
 	}
 	return nil
 }
 
-func (r *RuntimeInstance) getContractFunc(contractId *commonPb.ContractId, methodName string) (ContractFunc, error) {
-	if contractId == nil {
+func (r *RuntimeInstance) getContractFunc(contract *commonPb.Contract, methodName string) (ContractFunc, error) {
+	if contract == nil {
 		return nil, ErrContractIdIsNil
 	}
 
-	contractName := contractId.ContractName
-	contract := r.contracts[contractName]
-	if contract == nil {
+	contractName := contract.Name
+	contractInst := r.contracts[contractName]
+	if contractInst == nil {
 		return nil, ErrContractNotFound
 	}
 
-	f := contract.getMethod(methodName)
+	f := contractInst.getMethod(methodName)
 	if f == nil {
 		return nil, ErrMethodNotFound
 	}

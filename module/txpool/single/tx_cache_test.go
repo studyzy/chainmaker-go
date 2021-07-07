@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+
 	"github.com/stretchr/testify/require"
 
 	"chainmaker.org/chainmaker/protocol"
@@ -21,15 +22,24 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 	rpcTxs = &mempoolTxs{isConfigTxs: isConfig, source: protocol.RPC}
 	p2pTxs = &mempoolTxs{isConfigTxs: isConfig, source: protocol.P2P}
 	internalTxs = &mempoolTxs{isConfigTxs: isConfig, source: protocol.INTERNAL}
-	txType := commonPb.TxType_UPDATE_CHAIN_CONFIG
-	if !isConfig {
-		txType = commonPb.TxType_INVOKE_USER_CONTRACT
-	}
+	txType := commonPb.TxType_INVOKE_CONTRACT
+	//if !isConfig {
+	//	txType = commonPb.TxType_INVOKE_CONTRACT
+	//}
 
 	for i := 0; i < num; i++ {
-		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}})
-		p2pTxs.txs = append(p2pTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}})
-		internalTxs.txs = append(internalTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}})
+		payload := &commonPb.TransactPayload{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+			Method:       "SetConfig",
+			Parameters:   nil,
+		}
+		if !isConfig {
+			payload.ContractName = "userContract1"
+		}
+		data, _ := payload.Marshal()
+		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
+		p2pTxs.txs = append(p2pTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
+		internalTxs.txs = append(internalTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
 	}
 	return
 }
@@ -73,11 +83,11 @@ func TestIsFlushByTxCount(t *testing.T) {
 
 func TestIsFlushByTime(t *testing.T) {
 	cache := newTxCache()
-	cache.flushTimeOut = 20 * time.Microsecond
+	cache.flushTimeOut = 200 * time.Microsecond
 	require.True(t, cache.isFlushByTime())
 	cache.reset()
 	require.False(t, cache.isFlushByTime())
-	time.Sleep(time.Millisecond * 20)
+	time.Sleep(time.Millisecond * 200)
 	require.True(t, cache.isFlushByTime())
 }
 

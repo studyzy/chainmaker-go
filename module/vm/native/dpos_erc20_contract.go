@@ -7,15 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/mr-tron/base58/base58"
 )
 
@@ -539,10 +541,10 @@ func loadSenderAddress(txSimContext protocol.TxSimContext) (string, error) {
 	if sender != nil {
 		// 将sender转换为用户地址
 		var member []byte
-		if sender.IsFullCert {
+		if sender.MemberType==accesscontrol.MemberType_CERT {
 			// 长证书
 			member = sender.MemberInfo
-		} else {
+		} else if sender.MemberType==accesscontrol.MemberType_CERT_HASH{
 			// 短证书
 			memberInfoHex := hex.EncodeToString(sender.MemberInfo)
 			certInfo, err := getWholeCertInfo(txSimContext, memberInfoHex)
@@ -550,6 +552,8 @@ func loadSenderAddress(txSimContext protocol.TxSimContext) (string, error) {
 				return "", fmt.Errorf("can not load whole cert info , contract[%s] member[%s]", dposErc20ContractName, memberInfoHex)
 			}
 			member = certInfo.Cert
+		}else {
+			return "",errors.New("invalid member type")
 		}
 		return parseUserAddress(member)
 	}

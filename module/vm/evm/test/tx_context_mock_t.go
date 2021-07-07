@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"sync"
 
+
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
@@ -25,7 +26,7 @@ var testOrgId = "wx-org1.chainmaker.org"
 var CertFilePath = "./config/admin1.sing.crt"
 var ByteCodeFile = "./token.bin"
 
-var txType = commonPb.TxType_INVOKE_USER_CONTRACT
+var txType = commonPb.TxType_INVOKE_CONTRACT
 
 const (
 	ContractNameTest    = "contract01"

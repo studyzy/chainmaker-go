@@ -8,15 +8,16 @@ SPDX-License-Identifier: Apache-2.0
 package native_test
 
 import (
+	"encoding/hex"
+	"fmt"
+	"testing"
+
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
-	"encoding/hex"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"testing"
 )
 
 // 查询区块
@@ -41,7 +42,7 @@ func TestGetBlockByHeight(t *testing.T) {
 	}
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
 		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), MethodName: commonPb.QueryFunction_GET_BLOCK_BY_HEIGHT.String(), Pairs: pairs})
 
 	if err != nil {
@@ -93,7 +94,7 @@ func TestGetBlockByHash(t *testing.T) {
 	}
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
 		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), MethodName: commonPb.QueryFunction_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
 
 	if err != nil {

@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+
 	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
@@ -177,7 +178,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	// call contract
 	gasUsed += protocol.CallContractGasOnce
 	paramMap := ecData.ToMap()
-	result, code := txSimContext.CallContract(&common.ContractId{ContractName: contractName}, method, nil, paramMap, gasUsed, common.TxType_INVOKE_USER_CONTRACT)
+	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil, paramMap, gasUsed, common.TxType_INVOKE_CONTRACT)
 	gasUsed += uint64(result.GasUsed)
 	if code != common.TxStatusCode_SUCCESS {
 		return nil, fmt.Errorf("[call contract] execute error code: %s, msg: %s", code.String(), result.Message), gasUsed
@@ -665,7 +666,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	// execute query
 	var rows protocol.SqlRows
 	var err error
-	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_CONTRACT {
 		rows, err = txSimContext.GetBlockchainStore().QueryMulti(contractName, sql)
 		if err != nil {
 			return fmt.Errorf("[execute query] error, %s", err.Error())
@@ -701,7 +702,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 		// execute
 		var row protocol.SqlRow
 		var err error
-		if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+		if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_CONTRACT {
 			row, err = txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
 			if err != nil {
 				return nil, fmt.Errorf("[execute query one] error, %s", err.Error())
@@ -814,7 +815,7 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 }
 
 func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
-	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_USER_CONTRACT {
+	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_CONTRACT {
 		return fmt.Errorf("[execute update] query transaction cannot be execute dml")
 	}
 	if method == protocol.ContractUpgradeMethod {

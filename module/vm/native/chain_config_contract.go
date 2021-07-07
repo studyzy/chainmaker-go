@@ -8,13 +8,13 @@ package native
 
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/common/sortedmap"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/sortedmap"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
@@ -181,7 +181,7 @@ func (r *ChainConfigRuntime) GetChainConfigFromBlockHeight(txSimContext protocol
 		return nil, ErrParamsEmpty
 	}
 	blockHeightStr := params[paramNameChainBlockHeight]
-	blockHeight, err := strconv.ParseInt(blockHeightStr, 10, 0)
+	blockHeight, err := strconv.ParseUint(blockHeightStr, 10, 0)
 	if err != nil {
 		r.log.Error(err)
 		return nil, err
@@ -795,7 +795,7 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 
 	extConfigMap := make(map[string]string)
 	for _, v := range extConfig {
-		extConfigMap[v.Key] = v.Value
+		extConfigMap[v.Key] = string(v.Value)
 	}
 
 	// map is out of order, in order to ensure that each execution sequence is consistent, we need to sort
@@ -810,7 +810,7 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 		}
 		extConfig = append(extConfig, &commonPb.KeyValuePair{
 			Key:   key,
-			Value: value,
+			Value: []byte(value),
 		})
 		chainConfig.Consensus.ExtConfig = extConfig
 		changed = true
@@ -852,7 +852,7 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 
 	extConfigMap := make(map[string]string)
 	for _, v := range extConfig {
-		extConfigMap[v.Key] = v.Value
+		extConfigMap[v.Key] =string( v.Value)
 	}
 
 	for key, val := range params {
@@ -863,7 +863,7 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 			if key == config.Key {
 				extConfig[i] = &commonPb.KeyValuePair{
 					Key:   key,
-					Value: val,
+					Value: []byte(val),
 				}
 				chainConfig.Consensus.ExtConfig = extConfig
 				changed = true
@@ -903,7 +903,7 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 	}
 	extConfigMap := make(map[string]string)
 	for _, v := range extConfig {
-		extConfigMap[v.Key] = v.Value
+		extConfigMap[v.Key] = string(v.Value)
 	}
 
 	for key, _ := range params {

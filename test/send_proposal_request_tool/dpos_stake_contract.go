@@ -45,7 +45,7 @@ func delegation() error {
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		txId: "", chainId: chainId,
-		txType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		txType:       commonPb.TxType_INVOKE_CONTRACT,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		method:       commonPb.DPoSStakeContractFunction_DELEGATE.String(),
 		pairs:        params,
@@ -86,7 +86,7 @@ func undelegation() error {
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		txId: "", chainId: chainId,
-		txType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		txType:       commonPb.TxType_INVOKE_CONTRACT,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		method:       commonPb.DPoSStakeContractFunction_UNDELEGATE.String(),
 		pairs:        params,
@@ -118,7 +118,7 @@ func setNodeID() error {
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		chainId:      chainId,
-		txType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		txType:       commonPb.TxType_INVOKE_CONTRACT,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		method:       commonPb.DPoSStakeContractFunction_SET_NODE_ID.String(),
 		pairs:        params,
@@ -144,7 +144,7 @@ func getAllCandidates() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -180,7 +180,7 @@ func getNodeID() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -213,7 +213,7 @@ func getEpochByID() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -239,7 +239,7 @@ func getLatestEpoch() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -265,7 +265,7 @@ func getSystemAddr() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -298,7 +298,7 @@ func getDelegationsByAddress() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -345,7 +345,7 @@ func getDelegationByValidator() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -371,7 +371,7 @@ func getMinSelfDelegation() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -397,7 +397,7 @@ func getEpochValidatorNumber() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -423,7 +423,7 @@ func getEpochBlockNumber() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err
@@ -449,7 +449,7 @@ func getUnbondingEpochNumber() error {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 	if err != nil {
 		return err

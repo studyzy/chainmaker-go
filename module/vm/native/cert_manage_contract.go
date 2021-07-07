@@ -8,11 +8,11 @@ package native
 
 import (
 	"bytes"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/hex"
@@ -68,8 +68,8 @@ type CertManageRuntime struct {
 func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 
 	tx := txSimContext.GetTx()
-	sender := tx.Header.Sender
-	memberInfo := sender.GetMemberInfo()
+	sender := tx.Sender
+	memberInfo := sender.Signer.GetMemberInfo()
 
 	ac, err := txSimContext.GetAccessControl()
 	if err != nil {

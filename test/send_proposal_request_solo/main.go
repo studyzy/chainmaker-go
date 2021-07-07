@@ -8,24 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"io/ioutil"
 	"log"
 	"os"
@@ -33,6 +18,23 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/test/common"
+
+	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
+	"chainmaker.org/chainmaker/protocol"
+	"github.com/gogo/protobuf/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -243,47 +245,53 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 	time.Sleep(4 * time.Second)
 
 	// 冻结
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
 	// 解冻
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String())
+	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
 	// 冻结
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
 	// 解冻
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String())
+	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
 
 	// 冻结
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	// 吊销
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String())
+	common.RevokeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
-
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
-
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String())
+	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 }
 
@@ -301,7 +309,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	result := &commonPb.TransactionInfo{}
@@ -342,7 +350,7 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -376,7 +384,7 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -407,7 +415,7 @@ func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNo
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -442,7 +450,7 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -471,7 +479,7 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -499,7 +507,7 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -527,7 +535,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_BLOCK", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -550,7 +558,7 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_CHAIN_INFO", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	chainInfo := &discoveryPb.ChainInfo{}
@@ -563,82 +571,7 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 }
 
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-
-	txId := utils.GetRandTxId()
-
-	fmt.Printf("\n============ create contract %s [%s] ============\n", contractName, txId)
-
-	//wasmBin, _ := base64.StdEncoding.DecodeString(WasmPath)
-	wasmBin, _ := ioutil.ReadFile(WasmPath)
-	var pairs []*commonPb.KeyValuePair
-
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "1.0.0",
-			//RuntimeType:     commonPb.RuntimeType_GASM,
-			RuntimeType: runtimeType,
-		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   wasmBin,
-	}
-
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("testCreate failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-		os.Exit(0)
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes)
-
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
-	if resp.Code != 0 {
-		panic(resp.Message)
-	}
-}
-
-func testFreezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, method string) {
-	txId := utils.GetRandTxId()
-
-	fmt.Printf("\n============ [%s] contract [%s] ============\n", method, txId)
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName: contractName,
-			RuntimeType:  runtimeType,
-		},
-		Method: method,
-	}
-
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("testFreezeOrUnfreezeOrRevoke failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-		os.Exit(0)
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT, chainId, txId, payloadBytes)
-
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	common.CreateContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
 }
 
 func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
@@ -648,38 +581,7 @@ func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 	fmt.Println("============================================================")
 	fmt.Println("============================================================")
 
-	txId := utils.GetRandTxId()
-
-	wasmBin, _ := ioutil.ReadFile(WasmUpgradePath)
-	var pairs []*commonPb.KeyValuePair
-
-	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "2.0.0",
-			RuntimeType:     runtimeType,
-		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   wasmBin,
-	}
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("testUpgrade failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-		os.Exit(0)
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp := common.UpgradeContract(sk3, client, chainId, contractName, WasmUpgradePath, runtimeType)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 }
@@ -712,7 +614,7 @@ func testUpgradeInvokeSum(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -748,7 +650,7 @@ func testInvokeFactSave(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -772,7 +674,7 @@ func testInvokeMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		CHAIN1, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -795,7 +697,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method 
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -825,7 +727,7 @@ func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -855,7 +757,7 @@ func testQueryFindByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 		log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -997,48 +899,48 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 	return payloadBytes
 }
 
-func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(msg)
-
-	signers := make([]protocol.SigningMember, 0)
-	for _, orgId := range orgIdList {
-
-		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-		file, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		sk, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-		file2, err := ioutil.ReadFile(userCrtPath)
-		//fmt.Println("node", orgId, "crt", string(file2))
-		if err != nil {
-			panic(err)
-		}
-
-		// 获取peerId
-		_, err = helper.GetLibp2pPeerIdFromCert(file2)
-		//fmt.Println("node", orgId, "peerId", peerId)
-
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      "wx-org" + numStr + ".chainmaker.org",
-			MemberInfo: file2,
-			IsFullCert: true,
-		}
-
-		signer := getSigner(sk, sender1)
-		signers = append(signers, signer)
-	}
-
-	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
-}
+//func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(msg)
+//
+//	signers := make([]protocol.SigningMember, 0)
+//	for _, orgId := range orgIdList {
+//
+//		numStr := strconv.Itoa(orgId)
+//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+//		file, err := ioutil.ReadFile(path)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+//		file2, err := ioutil.ReadFile(userCrtPath)
+//		//fmt.Println("node", orgId, "crt", string(file2))
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// 获取peerId
+//		_, err = helper.GetLibp2pPeerIdFromCert(file2)
+//		//fmt.Println("node", orgId, "peerId", peerId)
+//
+//		// 构造Sender
+//		sender1 := &acPb.SerializedMember{
+//			OrgId:      "wx-org" + numStr + ".chainmaker.org",
+//			MemberInfo: file2,
+//			IsFullCert: true,
+//		}
+//
+//		signer := getSigner(sk, sender1)
+//		signers = append(signers, signer)
+//	}
+//
+//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
+//}
 
 func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, txId string) {
 	fmt.Printf("\n============ testWaitTx [%s] ============\n", txId)
@@ -1049,7 +951,7 @@ func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 
 	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp == nil || resp.ContractResult == nil || strings.Contains(resp.Message, "no such transaction") {
 		time.Sleep(time.Second * 2)

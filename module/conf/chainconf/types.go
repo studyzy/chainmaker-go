@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -16,14 +15,15 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/common/helper"
+	"chainmaker.org/chainmaker-go/localconf"
+
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
-	"github.com/golang/protobuf/proto"
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
@@ -321,45 +321,42 @@ func initChainConsensusVerifier(chainId string) {
 
 // IsNative whether the contractName is a native
 func IsNative(contractName string) bool {
-	switch contractName {
-	case common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		common.ContractName_SYSTEM_CONTRACT_QUERY.String(),
-		common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
-		common.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
-		common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
-		return true
-	default:
-		return false
-	}
+	_, ok := common.ContractName_value[contractName]
+	return ok
+	//switch contractName {
+	//case common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+	//	common.ContractName_SYSTEM_CONTRACT_QUERY.String(),
+	//	common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
+	//	common.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
+	//	common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
+	//	common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
+	//	return true
+	//default:
+	//	return false
+	//}
 }
 
 // IsNativeTx whether the transaction is a native
 func IsNativeTx(tx *common.Transaction) (contract string, b bool) {
-	if tx == nil || tx.Header == nil {
+	if tx == nil || tx.Payload == nil {
 		return "", false
 	}
-	txType := tx.Header.TxType
+	txType := tx.Payload.TxType
 	switch txType {
-	case common.TxType_INVOKE_SYSTEM_CONTRACT, common.TxType_UPDATE_CHAIN_CONFIG:
-		payloadBytes := tx.RequestPayload
-		payload := new(common.SystemContractPayload)
-		err := proto.Unmarshal(payloadBytes, payload)
-		if err != nil {
-			return "", false
-		}
+	case common.TxType_INVOKE_CONTRACT:
+		payload:=tx.Payload
 		return payload.ContractName, IsNative(payload.ContractName)
-	case common.TxType_MANAGE_USER_CONTRACT:
-		payloadBytes := tx.RequestPayload
-		payload := new(common.ContractMgmtPayload)
-		err := proto.Unmarshal(payloadBytes, payload)
-		if err != nil {
-			return "", false
-		}
-		if payload.ContractId == nil {
-			return "", false
-		}
-		return payload.ContractId.ContractName, IsNative(payload.ContractId.ContractName)
+	//case common.TxType_MANAGE_USER_CONTRACT:
+	//	payloadBytes := tx.RequestPayload
+	//	payload := new(common.ContractMgmtPayload)
+	//	err := proto.Unmarshal(payloadBytes, payload)
+	//	if err != nil {
+	//		return "", false
+	//	}
+	//	if payload.ContractId == nil {
+	//		return "", false
+	//	}
+	//	return payload.ContractId.ContractName, IsNative(payload.ContractId.ContractName)
 	default:
 		return "", false
 	}

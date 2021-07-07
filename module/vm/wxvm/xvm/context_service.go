@@ -276,7 +276,7 @@ func (c *ContextService) CallContract(ctxId int64) int32 {
 
 	ecArg := serialize.NewEasyCodecWithBytes(args)
 	paramMap := ecArg.ToMap()
-	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contract}, method, nil, paramMap, context.gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
+	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.Contract{Name: contract}, method, nil, paramMap, context.gasUsed, commonPb.TxType_INVOKE_CONTRACT)
 
 	ecParam := serialize.NewEasyCodec()
 	ecParam.AddInt32("code", int32(contractResult.Code))

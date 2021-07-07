@@ -102,32 +102,32 @@ func signSystemContractPayload() error {
 }
 
 func signContractMgmtPayload() error {
-	raw, err := ioutil.ReadFile(signInput)
-	if err != nil {
-		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
-	}
-
-	payload := &sdkPbCommon.ContractMgmtPayload{}
-	if err := proto.Unmarshal(raw, payload); err != nil {
-		return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
-	}
-
-	entry, err := sign(raw)
-	if err != nil {
-		return err
-	}
-	payload.Endorsement = []*sdkPbCommon.EndorsementEntry{
-		entry,
-	}
-
-	bytes, err := proto.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("ContractMgmtPayload marshal error: %s", err)
-	}
-
-	if err = ioutil.WriteFile(signOutput, bytes, 0600); err != nil {
-		return fmt.Errorf("Write to file %s error: %s", signOutput, err)
-	}
+	//raw, err := ioutil.ReadFile(signInput)
+	//if err != nil {
+	//	return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
+	//}
+	//
+	//payload := &sdkPbCommon.ContractMgmtPayload{}
+	//if err := proto.Unmarshal(raw, payload); err != nil {
+	//	return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
+	//}
+	//
+	//entry, err := sign(raw)
+	//if err != nil {
+	//	return err
+	//}
+	//payload.Endorsement = []*sdkPbCommon.EndorsementEntry{
+	//	entry,
+	//}
+	//
+	//bytes, err := proto.Marshal(payload)
+	//if err != nil {
+	//	return fmt.Errorf("ContractMgmtPayload marshal error: %s", err)
+	//}
+	//
+	//if err = ioutil.WriteFile(signOutput, bytes, 0600); err != nil {
+	//	return fmt.Errorf("Write to file %s error: %s", signOutput, err)
+	//}
 
 	return nil
 }

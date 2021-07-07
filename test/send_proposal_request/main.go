@@ -23,9 +23,12 @@ import (
 
 	"github.com/mr-tron/base58/base58"
 
+	"chainmaker.org/chainmaker-go/test/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
@@ -34,8 +37,6 @@ import (
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -317,7 +318,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	header := &commonPb.TxHeader{
 		ChainId:        CHAIN1,
 		Sender:         sender,
-		TxType:         commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+		TxType:         commonPb.TxType_QUERY_CONTRACT,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
@@ -350,48 +351,16 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	return (*client).SendRequest(ctx, req)
 }
 func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string, wasmType int) {
-	txId := utils.GetRandTxId()
-	fmt.Printf("\n============ create contract [%s] ============\n", txId)
+
 	wasmPath := certWasmPath
 	wasmName := certContractName
 	if wasmType == 1 {
 		wasmPath = addWasmPath
 		wasmName = addContractName
 	}
-	wasmBin, err := ioutil.ReadFile(wasmPath)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	var (
-		method = commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
-		pairs  []*commonPb.KeyValuePair
-	)
 
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    wasmName,
-			ContractVersion: "1.0.0",
-			RuntimeType:     commonPb.RuntimeType_WASMER,
-		},
-		Method:      method,
-		Parameters:  pairs,
-		ByteCode:    wasmBin,
-		Endorsement: nil,
-	}
-	if endorsement, err := acSignWithManager(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("failed to sign endorsement, %s", err.Error())
-	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(marshalFailedStr, err.Error())
-	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes, 0)
-	fmt.Printf("testCreate send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	common.CreateContract(sk3, &client, CHAIN1, wasmName, wasmPath, commonPb.RuntimeType_WASMER)
+
 }
 func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payloadBytes []byte, index int) *commonPb.TxResponse {
@@ -485,41 +454,42 @@ func initGRPCConn(useTLS bool, orgIdIndex int) (*grpc.ClientConn, error) {
 		return grpc.Dial(url, grpc.WithInsecure())
 	}
 }
-func acSignWithManager(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(msg)
-	signers := make([]protocol.SigningMember, 0)
-	for _, orgId := range orgIdList {
-		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-		file, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		sk, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-		file2, err := ioutil.ReadFile(userCrtPath)
-		fmt.Println("node", orgId, "crt", string(file2))
-		if err != nil {
-			panic(err)
-		}
-		// 获取peerId
-		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
-		fmt.Println("node", orgId, "peerId", peerId)
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      "wx-org" + numStr + ".chainmaker.org",
-			MemberInfo: file2,
-			IsFullCert: true,
-		}
-		signer := getSigner(sk, sender1)
-		signers = append(signers, signer)
-	}
-	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, crypto.CRYPTO_ALGO_SHA256)
-}
+
+//func acSignWithManager(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(msg)
+//	signers := make([]protocol.SigningMember, 0)
+//	for _, orgId := range orgIdList {
+//		numStr := strconv.Itoa(orgId)
+//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+//		file, err := ioutil.ReadFile(path)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+//		file2, err := ioutil.ReadFile(userCrtPath)
+//		fmt.Println("node", orgId, "crt", string(file2))
+//		if err != nil {
+//			panic(err)
+//		}
+//		// 获取peerId
+//		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
+//		fmt.Println("node", orgId, "peerId", peerId)
+//		// 构造Sender
+//		sender1 := &acPb.SerializedMember{
+//			OrgId:      "wx-org" + numStr + ".chainmaker.org",
+//			MemberInfo: file2,
+//			IsFullCert: true,
+//		}
+//		signer := getSigner(sk, sender1)
+//		signers = append(signers, signer)
+//	}
+//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, crypto.CRYPTO_ALGO_SHA256)
+//}
 
 func getKeysAndCertsPath(orgIdList []int) (keysFile, certsFile []string) {
 	keysFile = make([]string, 0, len(orgIdList))
@@ -539,7 +509,7 @@ func addCerts(count int) {
 		txId := utils.GetRandTxId()
 		sk, member := getUserSK(i+1, userKeyPaths[i], userCrtPaths[i])
 		resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{TxId: txId, ChainId: CHAIN1,
-			TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERT_ADD.String()})
+			TxType: commonPb.TxType_INVOKE_CONTRACT, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), MethodName: commonPb.CertManageFunction_CERT_ADD.String()})
 		if err == nil {
 			fmt.Printf("addCerts send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 			continue
@@ -642,7 +612,7 @@ func getChainConfig(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId s
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes, 0)
 	chainConfig := &configPb.ChainConfig{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, chainConfig); err != nil {
@@ -699,7 +669,7 @@ func trustRootAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId str
 	})
 
 	config := getChainConfig(sk3, client, chainId)
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_ADD.String(), pairs: pairs, oldSeq: config.Sequence})
 	if err != nil {
 		log.Fatalf("create update request failed, err: %s", err)
@@ -852,7 +822,7 @@ func nodeOrgAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 	})
 
 	config := getChainConfig(sk3, client, chainId)
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ORG_ADD.String(), pairs: pairs, oldSeq: config.Sequence})
 	if err != nil {
 		log.Fatalf("create configUpdateRequest error")
@@ -873,7 +843,7 @@ func nodeOrgDelete(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId st
 	})
 
 	config := getChainConfig(sk3, client, chainId)
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_NODE_ORG_DELETE.String(), pairs: pairs, oldSeq: config.Sequence})
 	if err != nil {
 		log.Fatalf("create configUpdateRequest error")
@@ -904,7 +874,7 @@ func consensusExtUpdate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chain
 	}
 
 	config := getChainConfig(sk3, client, chainId)
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
 		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), pairs: pairs, oldSeq: config.Sequence})
 	if err != nil {
 		log.Fatalf("send update request failed in consensusExtUpdate: %s", err)
@@ -931,7 +901,7 @@ func mint() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_MINT.String(),
 		Pairs:        params,
@@ -965,7 +935,7 @@ func transfer() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_TRANSFER.String(),
 		Pairs:        params,
@@ -1007,7 +977,7 @@ func transferFrom() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_TRANSFER_FROM.String(),
 		Pairs:        params,
@@ -1041,7 +1011,7 @@ func allowance(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1064,7 +1034,7 @@ func approve() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_APPROVE.String(),
 		Pairs:        params,
@@ -1094,7 +1064,7 @@ func burn() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_BURN.String(),
 		Pairs:        params,
@@ -1121,7 +1091,7 @@ func transferOwnership() {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
 		MethodName:   commonPb.DPoSERC20ContractFunction_TRANSFER_OWNERSHIP.String(),
 		Pairs:        params,
@@ -1144,7 +1114,7 @@ func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1156,7 +1126,7 @@ func decimals(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1174,7 +1144,7 @@ func balanceOf(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1197,7 +1167,7 @@ func delegate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_DELEGATE.String(),
 		Pairs:        params,
@@ -1231,7 +1201,7 @@ func undelegate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId: "", ChainId: CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_UNDELEGATE.String(),
 		Pairs:        params,
@@ -1254,7 +1224,7 @@ func getAllValidator(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1270,7 +1240,7 @@ func getValidatorByAddress(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1285,7 +1255,7 @@ func getDelagationsByAddress(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1307,7 +1277,7 @@ func getUserDelegationByValidator(sk3 crypto.PrivateKey, client apiPb.RpcNodeCli
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1323,7 +1293,7 @@ func readEpochByID(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	if len(resp.ContractResult.Result) > 0 {
 		e := &commonPb.Epoch{}
@@ -1345,7 +1315,7 @@ func readLatestEpoch(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	e := &commonPb.Epoch{}
 	err = proto.Unmarshal(resp.ContractResult.Result, e)
@@ -1368,7 +1338,7 @@ func setRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNode
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId:         "",
 		ChainId:      CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_SET_NODE_ID.String(),
 		Pairs:        params,
@@ -1398,7 +1368,7 @@ func getRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNode
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1409,7 +1379,7 @@ func readMinSelfDelegation(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1425,7 +1395,7 @@ func updateMinSelfDelegation(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId:         "",
 		ChainId:      CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION.String(),
 		Pairs:        params,
@@ -1449,7 +1419,7 @@ func readEpochValidatorNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1465,7 +1435,7 @@ func updateEpochValidatorNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClien
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId:         "",
 		ChainId:      CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String(),
 		Pairs:        params,
@@ -1489,7 +1459,7 @@ func readEpochBlockNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, "", payloadBytes, 0)
 	fmt.Println(resp)
 }
@@ -1505,7 +1475,7 @@ func updateEpochBlockNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
 		TxId:         "",
 		ChainId:      CHAIN1,
-		TxType:       commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
 		MethodName:   commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String(),
 		Pairs:        params,

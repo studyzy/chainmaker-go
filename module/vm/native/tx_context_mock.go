@@ -6,10 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
+	"sync"
+
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"sync"
 )
 
 type dataStore map[string][]byte
@@ -64,7 +65,7 @@ func (mock *TxContextMock) Del(name string, key []byte) error {
 	return nil
 }
 
-func (*TxContextMock) CallContract(contractId *commonPb.ContractId,
+func (*TxContextMock) CallContract(contract *commonPb.Contract,
 	method string,
 	byteCode []byte,
 	parameter map[string]string,
@@ -83,7 +84,7 @@ func (*TxContextMock) GetTx() *commonPb.Transaction {
 	panic("implement me")
 }
 
-func (mock *TxContextMock) GetBlockHeight() int64 {
+func (mock *TxContextMock) GetBlockHeight() uint64 {
 	return 0
 }
 

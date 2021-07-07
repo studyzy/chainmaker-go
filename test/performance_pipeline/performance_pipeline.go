@@ -274,7 +274,7 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 				MemberInfo: certId,
 				IsFullCert: false,
 			},
-			TxType:         commonPb.TxType_INVOKE_USER_CONTRACT,
+			TxType:         commonPb.TxType_INVOKE_CONTRACT,
 			TxId:           txId,
 			Timestamp:      time.Now().Unix(),
 			ExpirationTime: 0,

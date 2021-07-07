@@ -11,8 +11,9 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -65,9 +66,9 @@ func saveDir() error {
 		return fmt.Errorf("construct save dir payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, common.TxType_INVOKE_SYSTEM_CONTRACT, chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, common.TxType_INVOKE_CONTRACT, chainId, txId, payloadBytes)
 	if err != nil {
-		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	if resp.Code == common.TxStatusCode_SUCCESS {
@@ -93,7 +94,7 @@ func saveDir() error {
 	}
 
 	if resp.Code != common.TxStatusCode_SUCCESS || resp.Message != "OK" {
-		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	resultStruct := &Result{

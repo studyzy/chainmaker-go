@@ -42,12 +42,21 @@ func mockValidate(txList *txList, blockChainStore protocol.BlockchainStore) txVa
 
 func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 	txs := make([]*commonPb.Transaction, 0, num)
-	txType := commonPb.TxType_INVOKE_USER_CONTRACT
-	if isConfig {
-		txType = commonPb.TxType_UPDATE_CHAIN_CONFIG
-	}
+	txType := commonPb.TxType_INVOKE_CONTRACT
 	for i := 0; i < num; i++ {
-		txs = append(txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}})
+		payload := &commonPb.TransactPayload{
+			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+			Method:       "SetConfig",
+			Parameters:   nil,
+		}
+		if !isConfig {
+			payload.ContractName = "userContract1"
+		}
+		data, _ := payload.Marshal()
+		txs = append(txs, &commonPb.Transaction{
+			Header:         &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType},
+			RequestPayload: data},
+		)
 	}
 	return txs
 }

@@ -12,10 +12,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
-	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -72,9 +73,9 @@ func saveCert() error {
 		return fmt.Errorf("construct save cert payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT, chainId, "", payloadBytes)
 	if err != nil {
-		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	if resp.Code == commonPb.TxStatusCode_SUCCESS {
@@ -100,7 +101,7 @@ func saveCert() error {
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	resultStruct := &Result{
@@ -217,13 +218,13 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 		return nil, fmt.Errorf("GetTxByTxId marshal query payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT, chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT, chainId, txId, payloadBytes)
 	if err != nil {
-		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	transactionInfo := &commonPb.TransactionInfo{}

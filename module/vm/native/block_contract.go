@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -75,7 +76,7 @@ type BlockRuntime struct {
 }
 
 type BlockRuntimeParam struct {
-	height    int64
+	height    uint64
 	withRWSet string
 	hash      string
 	txId      string
@@ -118,7 +119,7 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -133,7 +134,7 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 	var block *commonPb.Block
 	var nodes []*discoveryPb.Node
 
-	if block, err = r.getBlockByHeight(store, chainId, -1); err != nil {
+	if block, err = r.getBlockByHeight(store, chainId, math.MaxUint64); err != nil {
 		return nil, err
 	} else if block == nil {
 		return nil, nil
@@ -167,7 +168,7 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -213,7 +214,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -257,7 +258,7 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -303,7 +304,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -347,7 +348,7 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -393,7 +394,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -439,7 +440,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -449,7 +450,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 	var block *commonPb.Block
 	var txRWSets []*commonPb.TxRWSet
 
-	if block, err = r.getBlockByHeight(store, chainId, -1); err != nil {
+	if block, err = r.getBlockByHeight(store, chainId, math.MaxUint64); err != nil {
 		return nil, err
 	} else if block == nil {
 		return nil, nil
@@ -485,7 +486,7 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 		return nil, err
 	}
 
-	chainId := txSimContext.GetTx().Header.ChainId
+	chainId := txSimContext.GetTx().Payload.ChainId
 
 	store := txSimContext.GetBlockchainStore()
 	if store == nil {
@@ -630,13 +631,13 @@ func (r *BlockRuntime) getChainNodeInfo(provider protocol.ChainNodesInfoProvider
 	return nodes, nil
 }
 
-func (r *BlockRuntime) getBlockByHeight(store protocol.BlockchainStore, chainId string, height int64) (*commonPb.Block, error) {
+func (r *BlockRuntime) getBlockByHeight(store protocol.BlockchainStore, chainId string, height uint64) (*commonPb.Block, error) {
 	var (
 		block *commonPb.Block
 		err   error
 	)
 
-	if height == -1 {
+	if height == math.MaxUint64 {
 		block, err = store.GetLastBlock()
 	} else {
 		block, err = store.GetBlock(height)
@@ -677,13 +678,13 @@ func (r *BlockRuntime) getTxByTxId(store protocol.BlockchainStore, chainId strin
 func (r *BlockRuntime) getTxRWSetsByBlock(store protocol.BlockchainStore, chainId string, block *commonPb.Block) ([]*commonPb.TxRWSet, error) {
 	var txRWSets []*commonPb.TxRWSet
 	for _, tx := range block.Txs {
-		txRWSet, err := store.GetTxRWSet(tx.Header.TxId)
+		txRWSet, err := store.GetTxRWSet(tx.Payload.TxId)
 		if err != nil {
-			r.log.Errorf("get txRWset from store failed, [chainId:%s|txId:%s], %s", chainId, tx.Header.TxId, err.Error())
+			r.log.Errorf("get txRWset from store failed, [chainId:%s|txId:%s], %s", chainId, tx.Payload.TxId, err.Error())
 			return nil, fmt.Errorf("get txRWset failed, %s", err)
 		}
 		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
-			r.log.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			r.log.Errorf("not found rwset data in database by txid=%d, please check database", tx.Payload.TxId)
 			txRWSet = &commonPb.TxRWSet{}
 		}
 		txRWSets = append(txRWSets, txRWSet)
@@ -728,7 +729,7 @@ func (r *BlockRuntime) validateParams(parameters map[string]string, keyNames ...
 		switch keyName {
 		case paramNameBlockHeight:
 			value, _ := r.getValue(parameters, paramNameBlockHeight)
-			param.height, err = strconv.ParseInt(value, 10, 64)
+			param.height, err = strconv.ParseUint(value, 10, 64)
 		case paramNameWithRWSet:
 			param.withRWSet, err = r.getValue(parameters, paramNameWithRWSet)
 		case paramNameBlockHash:

@@ -8,9 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,6 +18,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
@@ -58,8 +60,8 @@ var (
 
 	nodeNum int
 
-	fileCache FileCacheReader     = NewFileCacheReader()
-	certCache CertFileCacheReader = NewCertFileCacheReader()
+	fileCache = NewFileCacheReader()
+	certCache = NewCertFileCacheReader()
 
 	abiCache  FileCacheReader     = NewFileCacheReader()
 	outputResult bool
@@ -507,7 +509,7 @@ func (t *Thread) Start() {
 
 			index := atomic.AddInt32(&t.statistician.completedCount, 1)
 			t.statistician.completedTimes[index-1] = elapsed.Milliseconds()
-			t.statistician.completedState[index-1] = (err == nil)
+			t.statistician.completedState[index-1] = err == nil
 			t.statistician.completedId[index-1] = t.index
 
 			if recordLog && err != nil {
@@ -611,7 +613,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 		return err
 	}
 
-	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
 		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
 	if err != nil {
 		return err
@@ -663,7 +665,7 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 		return err
 	}
 
-	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_QUERY_USER_CONTRACT,
+	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_QUERY_CONTRACT,
 		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
 	if err != nil {
 		return err
@@ -690,7 +692,7 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
+	method := consts.ContractManager_INIT_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
@@ -743,7 +745,7 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
+	method := consts.ContractManager_UPGRADE_CONTRACT.String()
 
 	payload := &commonPb.ContractMgmtPayload{
 		ChainId: chainId,
