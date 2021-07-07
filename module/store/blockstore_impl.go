@@ -822,3 +822,9 @@ func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
 func (bs *BlockStoreImpl) isSupportArchive() bool {
 	return bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB()
 }
+func (bs *BlockStoreImpl) GetContractByName(name string) (*commonPb.Contract, error) {
+	return utils.GetContractByName(bs.stateDB.ReadObject, name)
+}
+func (bs *BlockStoreImpl) GetContractBytecode(name string) ([]byte, error) {
+	return utils.GetContractBytecode(bs.stateDB.ReadObject, name)
+}
