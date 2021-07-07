@@ -45,11 +45,12 @@ func addConsensusNodeCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeId,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeId, flagAdminOrgIds,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
+	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagNodeOrgId)
@@ -108,9 +109,10 @@ func updateConsensusNodeCMD() *cobra.Command {
 }
 
 func configConsensusNode(op int) error {
+	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminKeys) != len(adminCrts) {
+	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 || len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_KEY_AND_CERT_NOT_ENOUGH_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
@@ -136,7 +138,6 @@ func configConsensusNode(op int) error {
 	}
 
 	signedPayloads := make([][]byte, len(adminKeys))
-	baseOrgId := "wx-org%d.chainmaker.org"
 	for i := range adminKeys {
 		_, privKey, err := dealUserKey(adminKeys[i])
 		if err != nil {
@@ -147,7 +148,7 @@ func configConsensusNode(op int) error {
 			return err
 		}
 
-		signedPayload, err := signChainConfigPayload(payloadBytes, crtBytes, privKey, crt, fmt.Sprintf(baseOrgId, i+1))
+		signedPayload, err := signChainConfigPayload(payloadBytes, crtBytes, privKey, crt, adminOrgIdSlice[i])
 		if err != nil {
 			return err
 		}
