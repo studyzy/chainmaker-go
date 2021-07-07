@@ -41,7 +41,7 @@ func getLastBlock() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "withRWSet",
-			Value: w,
+			Value: []byte(w),
 		},
 	}
 

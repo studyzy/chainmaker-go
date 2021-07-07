@@ -40,7 +40,7 @@ func getChainConfigByBlockHeight() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_height",
-		Value: strconv.Itoa(int(blockHeight)),
+		Value: []byte(strconv.Itoa(int(blockHeight))),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_GET_CHAIN_CONFIG_AT.String(), pairs)
 	if err != nil {

@@ -49,30 +49,30 @@ func blockUpdate() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timestamp_verify",
-		Value: strconv.FormatBool(txTimestampVerify),
+		Value: []byte(strconv.FormatBool(txTimestampVerify)),
 	})
 	if txTimeout > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_timeout",
-			Value: strconv.Itoa(txTimeout),
+			Value: []byte(strconv.Itoa(txTimeout)),
 		})
 	}
 	if blockTxCapacity > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "block_tx_capacity",
-			Value: strconv.Itoa(blockTxCapacity),
+			Value: []byte(strconv.Itoa(blockTxCapacity)),
 		})
 	}
 	if blockSize > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "block_size",
-			Value: strconv.Itoa(blockSize),
+			Value: []byte(strconv.Itoa(blockSize)),
 		})
 	}
 	if blockInterval > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "block_interval",
-			Value: strconv.Itoa(blockInterval),
+			Value: []byte(strconv.Itoa(blockInterval)),
 		})
 	}
 

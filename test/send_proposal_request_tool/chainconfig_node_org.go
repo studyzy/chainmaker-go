@@ -84,11 +84,11 @@ func nodeOrgAdd() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeOrgOrgId,
+		Value: []byte(nodeOrgOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_ids",
-		Value: nodeOrgAddresses,
+		Value: []byte(nodeOrgAddresses),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
@@ -119,11 +119,11 @@ func nodeOrgUpdate() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeOrgOrgId,
+		Value: []byte(nodeOrgOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_ids",
-		Value: nodeOrgAddresses,
+		Value: []byte(nodeOrgAddresses),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
@@ -154,7 +154,7 @@ func nodeOrgDelete() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeOrgOrgId,
+		Value: []byte(nodeOrgOrgId),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,

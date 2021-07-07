@@ -129,7 +129,7 @@ func certAdd() error {
 	txId := utils.GetRandTxId()
 	pairs := make([]*commonPb.KeyValuePair, 0)
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		Method:       commonPb.CertManageFunction_CERT_ADD.String(),
@@ -172,10 +172,10 @@ func certDelete() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certHash,
-		Value: certHashes,
+		Value: []byte(certHashes),
 	})
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		Method:       commonPb.CertManageFunction_CERTS_DELETE.String(),
@@ -212,7 +212,7 @@ func certQuery() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certHash,
-		Value: certHashes,
+		Value: []byte(certHashes),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), commonPb.CertManageFunction_CERTS_QUERY.String(), pairs)
 	if err != nil {
@@ -245,7 +245,7 @@ func certFrozen() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "certs",
-		Value: certs,
+		Value: []byte(certs),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
@@ -284,11 +284,11 @@ func certUnfrozen() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "certs",
-		Value: certs,
+		Value: []byte(certs),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certHash,
-		Value: certHashes,
+		Value: []byte(certHashes),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
@@ -322,7 +322,7 @@ func certRevocation() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certCrlStr,
-		Value: certCrl,
+		Value: []byte(certCrl),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,

@@ -35,7 +35,7 @@ func GetTxByTxIdCMD() *cobra.Command {
 
 func getTxByTxId() error {
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 

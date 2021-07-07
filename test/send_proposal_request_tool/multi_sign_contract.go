@@ -104,15 +104,15 @@ func multiSignReq() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_type", // 多签内的交易类型
-		Value: txType,
+		Value: []byte(txType),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "deadline_block", // 过期的区块高度
-		Value: strconv.Itoa(deadlineBlock),
+		Value: []byte(strconv.Itoa(deadlineBlock)),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "payload",
-		Value: payload,
+		Value: []byte(payload),
 	})
 
 	multiPayloadBytes, err := hex.DecodeString(payload)
@@ -124,7 +124,7 @@ func multiSignReq() error {
 	payloadHash, err := utils.GetCertificateIdFromDER(multiPayloadBytes, "SHA256")
 
 	if txType == "UPDATE_CHAIN_CONFIG" {
-		contractPayload := &commonPb.SystemContractPayload{}
+		contractPayload := &commonPb.Payload{}
 		err := proto.Unmarshal(multiPayloadBytes, contractPayload)
 		if err != nil {
 			return err
@@ -147,10 +147,10 @@ func multiSignReq() error {
 	voteInfoBytes, err := proto.Marshal(voteInfo)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "vote_info",
-		Value: hex.EncodeToString(voteInfoBytes),
+		Value: voteInfoBytes,
 	})
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
 		Method:       commonPb.MultiSignFunction_REQ.String(),
@@ -189,13 +189,13 @@ func multiSignVote() error {
 	if multiTxId != "" {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_id",
-			Value: multiTxId,
+			Value: []byte(multiTxId),
 		})
 	}
 	if payloadHash != "" {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   payloadHashStr,
-			Value: payloadHash,
+			Value: []byte(payloadHash),
 		})
 	}
 	_, multiSignInfo, err := getMultiSign()
@@ -224,10 +224,10 @@ func multiSignVote() error {
 	voteInfoBytes, err := proto.Marshal(voteInfo)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "vote_info",
-		Value: hex.EncodeToString(voteInfoBytes),
+		Value: voteInfoBytes,
 	})
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
 		Method:       commonPb.MultiSignFunction_VOTE.String(),
@@ -288,13 +288,13 @@ func getMultiSign() (*commonPb.TxResponse, *commonPb.MultiSignInfo, error) {
 	if multiTxId != "" {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_id",
-			Value: multiTxId,
+			Value: []byte(multiTxId),
 		})
 	}
 	if payloadHash != "" {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   payloadHashStr,
-			Value: payloadHash,
+			Value: []byte(payloadHash),
 		})
 	}
 	if len(pairs) == 0 {
@@ -310,7 +310,7 @@ func getMultiSign() (*commonPb.TxResponse, *commonPb.MultiSignInfo, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if resp.Code == commonPb.TxStatusCode_SUCCESS && resp.ContractResult.Code == commonPb.ContractResultCode_OK {
+	if resp.Code == commonPb.TxStatusCode_SUCCESS && resp.ContractResult.Code == 0 {
 		multiSignInfo := new(commonPb.MultiSignInfo)
 		result := resp.ContractResult.Result
 		err = proto.Unmarshal(result, multiSignInfo)

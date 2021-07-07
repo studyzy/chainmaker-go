@@ -97,7 +97,7 @@ func consensusExtAdd() error {
 	for i, key := range consensusExtKeyArray {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   key,
-			Value: consensusExtValueArray[i],
+			Value: []byte(consensusExtValueArray[i]),
 		})
 	}
 
@@ -137,7 +137,7 @@ func consensusExtUpdate() error {
 	for i, key := range consensusExtKeyArray {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   key,
-			Value: consensusExtValueArray[i],
+			Value: []byte(consensusExtValueArray[i]),
 		})
 	}
 

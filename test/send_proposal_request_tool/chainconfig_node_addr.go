@@ -87,11 +87,11 @@ func nodeAddrAdd() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeAddrOrgId,
+		Value: []byte(nodeAddrOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_ids",
-		Value: nodeAddresses,
+		Value: []byte(nodeAddresses),
 	})
 
 	fmt.Println("pairs: ", pairs)
@@ -123,15 +123,15 @@ func nodeAddrUpdate() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeAddrOrgId,
+		Value: []byte(nodeAddrOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_id",
-		Value: nodeOldAddress,
+		Value: []byte(nodeOldAddress),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "new_node_id",
-		Value: nodeNewAddress,
+		Value: []byte(nodeNewAddress),
 	})
 
 	fmt.Println("pairs: ", pairs)
@@ -163,11 +163,11 @@ func nodeAddrDelete() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeAddrOrgId,
+		Value: []byte(nodeAddrOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_id",
-		Value: nodeOldAddress,
+		Value: []byte(nodeOldAddress),
 	})
 
 	fmt.Println("pairs: ", pairs)

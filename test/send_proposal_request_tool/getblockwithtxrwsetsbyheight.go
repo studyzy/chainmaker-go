@@ -39,7 +39,7 @@ func getBlockWithRWSetsByHeight() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.Itoa(height),
+			Value: []byte(strconv.Itoa(height)),
 		},
 	}
 

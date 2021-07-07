@@ -40,7 +40,7 @@ func QueryCMD() *cobra.Command {
 	return cmd
 }
 
-func returnResult(code commonPb.TxStatusCode, message string, contractCode commonPb.ContractResultCode, contractMessage string, data string) error {
+func returnResult(code commonPb.TxStatusCode, message string, contractCode uint32, contractMessage string, data string) error {
 	var result *Result
 	result = &Result{
 		Code:                  code,

@@ -36,11 +36,11 @@ func delegation() error {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: userAddr,
+			Value: []byte(userAddr),
 		},
 		{
 			Key:   "amount",
-			Value: amount,
+			Value: []byte(amount),
 		},
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
@@ -77,11 +77,11 @@ func undelegation() error {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
-			Value: userAddr,
+			Value: []byte(userAddr),
 		},
 		{
 			Key:   "amount",
-			Value: amount,
+			Value: []byte(amount),
 		},
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
@@ -113,7 +113,7 @@ func setNodeID() error {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "node_id",
-			Value: nodeID,
+			Value: []byte(nodeID),
 		},
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
@@ -174,7 +174,7 @@ func getNodeID() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "address",
-		Value: userAddr,
+		Value: []byte(userAddr),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(), pairs)
 	if err != nil {
@@ -207,7 +207,7 @@ func getEpochByID() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "epoch_id",
-		Value: epochID,
+		Value: []byte(epochID),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String(), pairs)
 	if err != nil {
@@ -292,7 +292,7 @@ func getDelegationsByAddress() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "address",
-		Value: userAddr,
+		Value: []byte(userAddr),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String(), pairs)
 	if err != nil {
@@ -334,11 +334,11 @@ func getDelegationByValidator() error {
 	pairs = append(pairs,
 		&commonPb.KeyValuePair{
 			Key:   "delegator_address",
-			Value: delegatorAddr,
+			Value: []byte(delegatorAddr),
 		},
 		&commonPb.KeyValuePair{
 			Key:   "validator_address",
-			Value: validatorAddr,
+			Value: []byte(validatorAddr),
 		},
 	)
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String(), pairs)

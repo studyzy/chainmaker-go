@@ -84,11 +84,11 @@ func trustRootAdd() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: trustRootOrgId,
+		Value: []byte(trustRootOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "root",
-		Value: trustRootCrt,
+		Value: []byte(trustRootCrt),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
@@ -119,11 +119,11 @@ func trustRootUpdate() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: trustRootOrgId,
+		Value: []byte(trustRootOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "root",
-		Value: trustRootCrt,
+		Value: []byte(trustRootCrt),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
@@ -154,7 +154,7 @@ func trustRootDelete() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: trustRootOrgId,
+		Value: []byte(trustRootOrgId),
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,

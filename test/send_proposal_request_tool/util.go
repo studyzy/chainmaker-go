@@ -27,7 +27,7 @@ import (
 )
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -81,8 +81,8 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func acSign(msg *commonPb.ContractMgmtPayload) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
+func acSign(msg *commonPb.Payload) ([]*commonPb.EndorsementEntry, error) {
+	//msg.Endorsement = nil
 	bytes, _ := proto.Marshal(msg)
 
 	signers := make([]protocol.SigningMember, 0)
@@ -117,7 +117,7 @@ func acSign(msg *commonPb.ContractMgmtPayload) ([]*commonPb.EndorsementEntry, er
 		sender1 := &acPb.SerializedMember{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
-			IsFullCert: true,
+			//IsFullCert: true,
 		}
 
 		signer, err := getSigner(sk, sender1)

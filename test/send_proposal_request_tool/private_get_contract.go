@@ -19,7 +19,7 @@ import (
 
 var (
 	codeHash string
-	contractCode string
+	//contractCode string
 )
 
 func GetContractCMD() *cobra.Command {

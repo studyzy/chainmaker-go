@@ -38,7 +38,7 @@ func getBlockWithRWSetsByHash() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 	}
 

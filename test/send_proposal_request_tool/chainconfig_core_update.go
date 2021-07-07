@@ -44,13 +44,13 @@ func coreUpdate() error {
 	if txSchedulerTimeout > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_scheduler_timeout",
-			Value: strconv.Itoa(txSchedulerTimeout),
+			Value: []byte(strconv.Itoa(txSchedulerTimeout)),
 		})
 	}
 	if txSchedulerValidateTimeout > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_scheduler_validate_timeout",
-			Value: strconv.Itoa(txSchedulerValidateTimeout),
+			Value: []byte(strconv.Itoa(txSchedulerValidateTimeout)),
 		})
 	}
 

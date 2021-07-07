@@ -70,8 +70,8 @@ func saveData() error {
 	if resp.Code == common.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &common.ContractResult{
-				Code:    common.ContractResultCode_OK,
-				Message: common.ContractResultCode_OK.String(),
+				Code:    0,
+				Message: "OK",
 				Result:  []byte(txId),
 			}
 		} else {
@@ -80,7 +80,7 @@ func saveData() error {
 				return fmt.Errorf("get sync result failed, %s", err.Error())
 			}
 
-			if contractResult.Code != common.ContractResultCode_OK {
+			if contractResult.Code != 0 {
 				resp.Code = common.TxStatusCode_CONTRACT_FAIL
 				resp.Message = contractResult.Message
 			}

@@ -81,8 +81,8 @@ func saveCert() error {
 	if resp.Code == commonPb.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &commonPb.ContractResult{
-				Code:    commonPb.ContractResultCode_OK,
-				Message: commonPb.ContractResultCode_OK.String(),
+				Code:    0,
+				Message: "OK",
 				Result:  []byte(txId),
 			}
 		} else {
@@ -91,7 +91,7 @@ func saveCert() error {
 				return fmt.Errorf("get sync result failed, %s", err.Error())
 			}
 
-			if contractResult.Code != commonPb.ContractResultCode_OK {
+			if contractResult.Code != 0 {
 				resp.Code = commonPb.TxStatusCode_CONTRACT_FAIL
 				resp.Message = contractResult.Message
 			}
@@ -130,7 +130,7 @@ func saveCert() error {
 
 func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) ([]byte, error) {
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: contractName,
 		Method:       method,
@@ -150,7 +150,7 @@ func paramsMap2KVPairs(params map[string]string) (kvPairs []*commonPb.KeyValuePa
 	for key, val := range params {
 		kvPair := &commonPb.KeyValuePair{
 			Key:   key,
-			Value: val,
+			Value: []byte(val),
 		}
 
 		kvPairs = append(kvPairs, kvPair)
@@ -168,7 +168,7 @@ func checkProposalRequestResp(resp *commonPb.TxResponse, needContractResult bool
 		return fmt.Errorf("contract result is nil")
 	}
 
-	if resp.ContractResult != nil && resp.ContractResult.Code != commonPb.ContractResultCode_OK {
+	if resp.ContractResult != nil && resp.ContractResult.Code != 0 {
 		return errors.New(resp.ContractResult.Message)
 	}
 
@@ -210,7 +210,7 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 		[]*commonPb.KeyValuePair{
 			{
 				Key:   "txId",
-				Value: txId,
+				Value: []byte(txId),
 			},
 		},
 	)
@@ -236,7 +236,7 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 }
 
 func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,

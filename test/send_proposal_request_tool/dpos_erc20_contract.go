@@ -100,11 +100,11 @@ func mint() error {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: userAddr,
+			Value: []byte(userAddr),
 		},
 		{
 			Key:   "value",
-			Value: amount,
+			Value: []byte(amount),
 		},
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
@@ -139,11 +139,11 @@ func transfer() error {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: userAddr,
+			Value: []byte(userAddr),
 		},
 		{
 			Key:   "value",
-			Value: amount,
+			Value: []byte(amount),
 		},
 	}
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
@@ -195,7 +195,7 @@ func balanceOf() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "owner",
-			Value: userAddr,
+			Value: []byte(userAddr),
 		},
 	}
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(), pairs)

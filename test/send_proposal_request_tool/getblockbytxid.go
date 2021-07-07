@@ -8,10 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"encoding/json"
 	"fmt"
-
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -43,11 +42,11 @@ func getBlockByTxId() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "txId",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "withRWSet",
-			Value: w,
+			Value: []byte(w),
 		},
 	}
 

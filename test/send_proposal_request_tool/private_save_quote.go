@@ -53,7 +53,7 @@ func saveQuote() error {
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
 		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_SAVE_QUOTE.String(),
+		"SAVE_QUOTE",// common.PrivateComputeContractFunction_SAVE_QUOTE.String(),
 		pairs,
 		defaultSequence,
 	)
@@ -69,8 +69,8 @@ func saveQuote() error {
 	if resp.Code == common.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &common.ContractResult{
-				Code:    common.ContractResultCode_OK,
-				Message: common.ContractResultCode_OK.String(),
+				Code:    0,
+				Message: "OK",
 				Result:  []byte(txId),
 			}
 		} else {
@@ -79,7 +79,7 @@ func saveQuote() error {
 				return fmt.Errorf("get sync result failed, %s", err.Error())
 			}
 
-			if contractResult.Code != common.ContractResultCode_OK {
+			if contractResult.Code != 0 {
 				resp.Code = common.TxStatusCode_CONTRACT_FAIL
 				resp.Message = contractResult.Message
 			}

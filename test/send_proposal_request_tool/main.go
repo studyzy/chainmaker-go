@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	evm "chainmaker.org/chainmaker/common/evmutils"
@@ -26,7 +27,6 @@ import (
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -87,7 +87,7 @@ var (
 type Result struct {
 	Code                  commonPb.TxStatusCode           `json:"code"`
 	Message               string                          `json:"message,omitempty"`
-	ContractResultCode    commonPb.ContractResultCode     `json:"contractResultCode"`
+	ContractResultCode    uint32     `json:"contractResultCode"`
 	ContractResultMessage string                          `json:"contractResultMessage,omitempty"`
 	ContractQueryResult   string                          `json:"contractQueryResult"`
 	TxId                  string                          `json:"txId,omitempty"`
@@ -293,7 +293,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	senderFull := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	var sender *acPb.SerializedMember
@@ -305,16 +305,16 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 		sender = &acPb.SerializedMember{
 			OrgId:      senderFull.OrgId,
 			MemberInfo: certId,
-			IsFullCert: false,
+			MemberType: acPb.MemberType_CERT_HASH,
 		}
 	} else {
 		sender = senderFull
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
+	header := &commonPb.Payload{
 		ChainId:        chainId,
-		Sender:         sender,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -322,9 +322,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload:    header,
+		Sender: &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -342,7 +341,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 		return nil, err
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := client.SendRequest(ctx, req)
 	return processResp(result, err)
@@ -384,7 +383,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	senderFull := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 	var sender = senderFull
 	if useShortCrt {
@@ -395,22 +394,19 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 		sender = &acPb.SerializedMember{
 			OrgId:      orgId,
 			MemberInfo: id,
-			IsFullCert: false,
+			MemberType: acPb.MemberType_CERT_HASH,
 		}
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
+	payload := &commonPb.Payload{
 		ChainId:        chainId,
-		Sender:         sender,
+		//Sender:         sender,
 		TxType:         msg.txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
-	}
 
-	payload := &commonPb.SystemContractPayload{
-		ChainId:      chainId,
 		ContractName: msg.contractName,
 		Method:       msg.method,
 		Parameters:   msg.pairs,
@@ -421,16 +417,16 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	if err != nil {
 		panic(err)
 	}
-	payload.Endorsement = entries
+	//payload.Endorsement = entries
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, "", err
-	}
+	//payloadBytes, err := proto.Marshal(payload)
+	//if err != nil {
+	//	return nil, "", err
+	//}
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload:    payload,
+		Sender: &commonPb.EndorsementEntry{Signer: sender},
+		Endorsers: entries,
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -448,7 +444,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 		return nil, "", err
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := client.SendRequest(ctx, req)
 	if err != nil {
@@ -464,8 +460,8 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 // orgIds 组织列表(多个用逗号隔开)
 // adminSignKeys 管理员私钥列表(多个用逗号隔开)
 // adminSignCrts 管理员证书列表(多个用逗号隔开)
-func aclSign(msg commonPb.SystemContractPayload, orgIds, adminSignKeys, adminSignCrts string) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
+func aclSign(msg commonPb.Payload, orgIds, adminSignKeys, adminSignCrts string) ([]*commonPb.EndorsementEntry, error) {
+	//msg.Endorsement = nil
 	bytes, _ := proto.Marshal(&msg)
 
 	signers := make([]protocol.SigningMember, 0)
@@ -504,7 +500,7 @@ func aclSign(msg commonPb.SystemContractPayload, orgIds, adminSignKeys, adminSig
 		sender1 := &acPb.SerializedMember{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
-			IsFullCert: true,
+			//IsFullCert: true,
 		}
 
 		signer, err := getSigner(sk3, sender1)
@@ -541,7 +537,7 @@ func aclSignOne(bytes []byte, orgId, adminSignKey, adminSignCrt string) (*common
 	sender1 := &acPb.SerializedMember{
 		OrgId:      orgId,
 		MemberInfo: file2,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	signer, err := getSigner(sk3, sender1)
