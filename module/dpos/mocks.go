@@ -11,12 +11,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"chainmaker.org/chainmaker/protocol/mock"
+	native "chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/vm/native"
+	"chainmaker.org/chainmaker/protocol/mock"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
