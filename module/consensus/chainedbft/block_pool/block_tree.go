@@ -35,7 +35,7 @@ func (bn *BlockNode) GetChildren() []string {
 //this struct is not thread safety.
 type BlockTree struct {
 	idToNode       map[string]*BlockNode // store block and its' children blockHash
-	heightToBlocks map[int64][]*common.Block
+	heightToBlocks map[uint64][]*common.Block
 	rootBlock      *common.Block // The latest block is committed to the chain
 	prunedBlocks   []string      // Caches the block hash that will be deleted
 	maxPrunedSize  int           // The maximum number of cached blocks that will be deleted
@@ -48,7 +48,7 @@ func NewBlockTree(rootBlock *common.Block, maxPrunedSize int) *BlockTree {
 		rootBlock:      rootBlock,
 		prunedBlocks:   make([]string, 0, maxPrunedSize),
 		maxPrunedSize:  maxPrunedSize,
-		heightToBlocks: make(map[int64][]*common.Block),
+		heightToBlocks: make(map[uint64][]*common.Block),
 	}
 	blockTree.idToNode[string(rootBlock.Header.BlockHash)] = &BlockNode{
 		block:    rootBlock,
@@ -177,7 +177,7 @@ func (bt *BlockTree) cleanBlock(blockId string) {
 	}
 }
 
-func (bt *BlockTree) GetBlocks(height int64) []*common.Block {
+func (bt *BlockTree) GetBlocks(height uint64) []*common.Block {
 	return bt.heightToBlocks[height]
 }
 

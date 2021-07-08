@@ -13,16 +13,16 @@ import (
 	"fmt"
 	"sort"
 
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
+	chainUtils "chainmaker.org/chainmaker-go/utils"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol"
-	chainUtils "chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -103,7 +103,7 @@ func (cbi *ConsensusChainedBftImpl) processProposedBlock(block *common.Block) {
 	if !cbi.isValidProposer(level, cbi.selfIndexInEpoch) {
 		return
 	}
-	if int64(height) != block.Header.BlockHeight {
+	if uint64(height) != block.Header.BlockHeight {
 		cbi.logger.Warnf(`service id [%v] selfIndexInEpoch [%v] receive proposed block height [%v]
 		 not equal to smr.height [%v]`, cbi.id, cbi.selfIndexInEpoch, block.Header.BlockHeight, height)
 		return
@@ -928,7 +928,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.logger.Debugf("processBlockCommitted received has committed block, height:%d, hash:%x",
 		block.Header.BlockHeight, block.Header.BlockHash)
 	// 1. check base commit block info
-	if int64(cbi.commitHeight) >= block.Header.BlockHeight {
+	if uint64(cbi.commitHeight) >= block.Header.BlockHeight {
 		cbi.logger.Warnf("service selfIndexInEpoch [%v] block:[%d:%x] has been committed",
 			cbi.selfIndexInEpoch, block.Header.BlockHeight, block.Header.BlockHash)
 		return

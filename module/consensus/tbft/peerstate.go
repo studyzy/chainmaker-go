@@ -25,7 +25,7 @@ type PeerStateService struct {
 	sync.Mutex
 	logger *logger.CMLogger
 	Id     string
-	Height int64
+	Height uint64
 	Round  int32
 	Step   tbftpb.Step
 
@@ -297,7 +297,7 @@ func (pcs *PeerStateService) sendPrecommit(precommit *Vote) {
 
 }
 
-func (pcs *PeerStateService) sendStateOfHeight(height int64) {
+func (pcs *PeerStateService) sendStateOfHeight(height uint64) {
 	state := pcs.tbftImpl.consensusStateCache.getConsensusState(pcs.Height)
 	if state == nil {
 		return

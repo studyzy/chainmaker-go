@@ -86,7 +86,6 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	}
 	logStr += fmt.Sprintf("used gas %d ", gas)
 	contractResult.GasUsed = gas
-
 	if err != nil {
 		contractResult.Code = 1
 		msg := fmt.Sprintf("contract invoke failed, %s", err.Error())

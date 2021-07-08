@@ -18,7 +18,7 @@ type ConsensusState struct {
 	logger *logger.CMLogger
 	Id     string
 
-	Height int64
+	Height uint64
 	Round  int32
 	Step   tbftpb.Step
 
@@ -68,14 +68,14 @@ func (cs *ConsensusState) toProto() *tbftpb.ConsensusState {
 
 type consensusStateCache struct {
 	sync.Mutex
-	size  int64
-	cache map[int64]*ConsensusState
+	size  uint64
+	cache map[uint64]*ConsensusState
 }
 
-func newConsensusStateCache(size int64) *consensusStateCache {
+func newConsensusStateCache(size uint64) *consensusStateCache {
 	return &consensusStateCache{
 		size:  size,
-		cache: make(map[int64]*ConsensusState, size),
+		cache: make(map[uint64]*ConsensusState, size),
 	}
 }
 
@@ -91,7 +91,7 @@ func (cache *consensusStateCache) addConsensusState(state *ConsensusState) {
 	cache.gc(state.Height)
 }
 
-func (cache *consensusStateCache) getConsensusState(height int64) *ConsensusState {
+func (cache *consensusStateCache) getConsensusState(height uint64) *ConsensusState {
 	cache.Lock()
 	defer cache.Unlock()
 
@@ -102,7 +102,7 @@ func (cache *consensusStateCache) getConsensusState(height int64) *ConsensusStat
 	return nil
 }
 
-func (cache *consensusStateCache) gc(height int64) {
+func (cache *consensusStateCache) gc(height uint64) {
 	for k := range cache.cache {
 		if k < (height - cache.size) {
 			delete(cache.cache, k)
