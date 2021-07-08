@@ -12,6 +12,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 const CREATE_USER_FAILED_FORMAT = "create user client failed, %s"
@@ -41,7 +43,7 @@ func getChainInfoCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId,
-		flagParams, flagTimeout, flagClientCrtFilePaths, flagClientKeyFilePaths, flagEnableCertHash,
+		flagParams, flagTimeout, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagEnableCertHash,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -61,7 +63,7 @@ func getBlockByHeightCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagOrgId, flagChainId, flagBlockHeight, flagWithRWSet,
-		flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -83,7 +85,7 @@ func getTxByTxIdCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagOrgId, flagChainId, flagTxId,
-		flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -97,7 +99,7 @@ func getChainInfo() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
 	}
@@ -125,7 +127,7 @@ func getBlockByHeight() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
 	}
@@ -153,7 +155,7 @@ func getTxByTxId() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
 	}
