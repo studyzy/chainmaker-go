@@ -1,12 +1,14 @@
 /*
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package dposmgr
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -149,23 +151,23 @@ func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amou
 
 // main implement here
 type DPoSStakeContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func (d *DPoSStakeContract) getMethod(methodName string) ContractFunc {
+func (d *DPoSStakeContract) GetMethod(methodName string) common.ContractFunc {
 	return d.methods[methodName]
 }
 
-func newDPoSStakeContract(log *logger.CMLogger) *DPoSStakeContract {
+func NewDPoSStakeContract(log *logger.CMLogger) *DPoSStakeContract {
 	return &DPoSStakeContract{
 		log:     log,
 		methods: registerDPoSStakeContractMethods(log),
 	}
 }
 
-func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// implement
 	DPoSStakeRuntime := &DPoSStakeRuntime{log: log}
 	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_CANDIDATES.String()] = DPoSStakeRuntime.GetAllCandidates

@@ -9,6 +9,16 @@ package native
 import (
 	"sync"
 
+	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
+	"chainmaker.org/chainmaker-go/vm/native/certmgr"
+	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
+	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker-go/vm/native/contractmgr"
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+	"chainmaker.org/chainmaker-go/vm/native/government"
+	"chainmaker.org/chainmaker-go/vm/native/multisign"
+	"chainmaker.org/chainmaker-go/vm/native/prvcompute"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
@@ -23,7 +33,7 @@ var (
 
 type RuntimeInstance struct {
 	// contracts map[contractName]Contract
-	contracts map[string]Contract
+	contracts map[string]common.Contract
 	log       *logger.CMLogger
 }
 
@@ -46,17 +56,17 @@ func GetRuntimeInstance(chainId string) *RuntimeInstance {
 	return instance
 }
 
-func initContract(log *logger.CMLogger) map[string]Contract {
-	contracts := make(map[string]Contract, 64)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()] = newChainConfigContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String()] = newBlockContact(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String()] = newCertManageContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()] = newGovernmentContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String()] = newMultiSignContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String()] = newPrivateComputeContact(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()] = newDPoSERC20Contract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()] = newDPoSStakeContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String()] = newContractManager(log)
+func initContract(log *logger.CMLogger) map[string]common.Contract {
+	contracts := make(map[string]common.Contract, 64)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()] = chainconfigmgr.NewChainConfigContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String()] = blockcontract.NewBlockContact(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()] = government.NewGovernmentContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String()] = prvcompute.NewPrivateComputeContact(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
+	contracts[commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String()] = contractmgr.NewContractManager(log)
 	return contracts
 }
 
@@ -124,32 +134,32 @@ func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error 
 	var chainConfig configPb.ChainConfig
 	err = proto.Unmarshal(bytes, &chainConfig)
 	if err != nil {
-		r.log.Errorw(ErrUnmarshalFailed.Error(), "Position", "configPb.ChainConfig Unmarshal", "err", err)
-		return ErrUnmarshalFailed
+		r.log.Errorw(common.ErrUnmarshalFailed.Error(), "Position", "configPb.ChainConfig Unmarshal", "err", err)
+		return common.ErrUnmarshalFailed
 	}
 
 	if payload.Sequence != chainConfig.Sequence+1 {
 		// the sequence is not incre 1
-		r.log.Errorw(ErrSequence.Error(), "chainConfig", chainConfig.Sequence, "sdk chainConfig", payload.Sequence)
-		return ErrSequence
+		r.log.Errorw(common.ErrSequence.Error(), "chainConfig", chainConfig.Sequence, "sdk chainConfig", payload.Sequence)
+		return common.ErrSequence
 	}
 	return nil
 }
 
-func (r *RuntimeInstance) getContractFunc(contract *commonPb.Contract, methodName string) (ContractFunc, error) {
+func (r *RuntimeInstance) getContractFunc(contract *commonPb.Contract, methodName string) (common.ContractFunc, error) {
 	if contract == nil {
-		return nil, ErrContractIdIsNil
+		return nil, common.ErrContractIdIsNil
 	}
 
 	contractName := contract.Name
 	contractInst := r.contracts[contractName]
 	if contractInst == nil {
-		return nil, ErrContractNotFound
+		return nil, common.ErrContractNotFound
 	}
 
-	f := contractInst.getMethod(methodName)
+	f := contractInst.GetMethod(methodName)
 	if f == nil {
-		return nil, ErrMethodNotFound
+		return nil, common.ErrMethodNotFound
 	}
 	return f, nil
 }

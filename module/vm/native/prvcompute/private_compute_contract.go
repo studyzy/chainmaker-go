@@ -1,14 +1,16 @@
 /*
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
-
-SPDX-License-Identifier: Apache-2.0
-*/
-package native
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package prvcompute
 
 import (
 	"bytes"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
@@ -37,23 +39,23 @@ const (
 )
 
 type PrivateComputeContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newPrivateComputeContact(log *logger.CMLogger) *PrivateComputeContract {
+func NewPrivateComputeContact(log *logger.CMLogger) *PrivateComputeContract {
 	return &PrivateComputeContract{
 		log:     log,
 		methods: registerPrivateComputeContractMethods(log),
 	}
 }
 
-func (p *PrivateComputeContract) getMethod(methodName string) ContractFunc {
+func (p *PrivateComputeContract) GetMethod(methodName string) common.ContractFunc {
 	return p.methods[methodName]
 }
 
-func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	queryMethodMap := make(map[string]ContractFunc, 64)
+func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	privateComputeRuntime := &PrivateComputeRuntime{log: log}
 	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CONTRACT.String()] = privateComputeRuntime.GetContract
@@ -111,7 +113,7 @@ func (r *PrivateComputeRuntime) VerifyByEnclaveCert(context protocol.TxSimContex
 
 func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key string) ([]byte, error) {
 	if strings.TrimSpace(key) == "" {
-		err := fmt.Errorf("%s, key is empty", ErrParams.Error())
+		err := fmt.Errorf("%s, key is empty", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -132,14 +134,14 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 //	version := params["version"]
 //	if utils.IsAnyBlank(name, code, codeHash, version) {
 //		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
-//			ErrParams.Error(), name, code, codeHash, version)
+//			common.ErrParams.Error(), name, code, codeHash, version)
 //		r.log.Errorf(err.Error())
 //		return nil, err
 //	}
 //
 //	calHash := sha256.Sum256([]byte(code))
 //	if string(calHash[:]) != codeHash {
-//		err := fmt.Errorf("%s, param[code_hash] != codeHash of param[contract_code] in save contract interface", ErrParams.Error())
+//		err := fmt.Errorf("%s, param[code_hash] != codeHash of param[contract_code] in save contract interface", common.ErrParams.Error())
 //		r.log.Errorf(err.Error())
 //		return nil, err
 //	}
@@ -190,7 +192,7 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	codeHeader, code []byte, codeHash string) error {
 	if utils.IsAnyBlank(name, version, string(codeHeader), string(code), codeHash) {
 		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
-			ErrParams.Error(), name, code, codeHash, version)
+			common.ErrParams.Error(), name, code, codeHash, version)
 		r.log.Errorf(err.Error())
 		return err
 	}
@@ -202,7 +204,7 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
 		err := fmt.Errorf("%s, param[code_hash] %x != calculated hash of codes: %x, full codes: %x",
-			ErrParams.Error(), []byte(codeHash), calHash, fullCodes)
+			common.ErrParams.Error(), []byte(codeHash), calHash, fullCodes)
 		r.log.Errorf(err.Error())
 		return err
 	}
@@ -262,14 +264,14 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 //	version := params["version"]
 //	if utils.IsAnyBlank(name, code, hash, version) {
 //		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
-//			ErrParams.Error(), name, code, hash, version)
+//			common.ErrParams.Error(), name, code, hash, version)
 //		r.log.Errorf(err.Error())
 //		return nil, err
 //	}
 //
 //	calHash := sha256.Sum256([]byte(code))
 //	if string(calHash[:]) != hash {
-//		err := fmt.Errorf("%s, param hash[%v] != param contract_code hash[%v] in save contract interface", ErrParams.Error(), []byte(hash), calHash)
+//		err := fmt.Errorf("%s, param hash[%v] != param contract_code hash[%v] in save contract interface", common.ErrParams.Error(), []byte(hash), calHash)
 //		r.log.Errorf(err.Error())
 //		return nil, err
 //	}
@@ -326,14 +328,14 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	name := params["contract_name"]
 	if utils.IsAnyBlank(name) {
-		err := fmt.Errorf("%s, param[contract_name] of get contract not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
 	codehash := params["code_hash"]
 	if utils.IsAnyBlank(codehash) {
-		err := fmt.Errorf("%s, param[code_hash] of get contract not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[code_hash] of get contract not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -385,7 +387,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codehash {
 		err := fmt.Errorf("%s, param codehash[%v] != contract code codehash[%v] in get contract interface",
-			ErrParams.Error(), []byte(codehash), calHash)
+			common.ErrParams.Error(), []byte(codehash), calHash)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -400,14 +402,14 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	key := params["order_id"]
 	if utils.IsAnyBlank(key) {
-		err := fmt.Errorf("%s, param[order_id] of save dir  not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[order_id] of save dir  not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
 	value := params["private_dir"]
 	if utils.IsAnyBlank(value) {
-		err := fmt.Errorf("%s, param[private_key] of save dir not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[private_key] of save dir not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -517,7 +519,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		err := fmt.Errorf(
 			"%s, param[contract_name]=%s, params[version]=%s, param[code_hash]=%s, param[report_hash]=%s, "+
 				"params[user_cert]=%s, params[client_sign]=%s, params[payload]=%s, params[org_id]=%s,",
-			ErrParams.Error(), name, version, codeHash, reportHash, userCert, clientSign, requestBytes, orgId)
+			common.ErrParams.Error(), name, version, codeHash, reportHash, userCert, clientSign, requestBytes, orgId)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -608,7 +610,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 
 	calHash := sha256.Sum256(fullCodes)
 	if string(calHash[:]) != codeHash {
-		err := fmt.Errorf("%s, param[code_hash] != hash of contract code in get contract interface", ErrParams.Error())
+		err := fmt.Errorf("%s, param[code_hash] != hash of contract code in get contract interface", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -670,7 +672,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
 	key := []byte(params["key"])
 	if utils.IsAnyBlank(params["key"]) {
-		err := fmt.Errorf("%s,param[private_key] of get data  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param[private_key] of get data  not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -705,7 +707,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveCACert(context protocol.TxSimContext,
 	// PEM 格式的证书
 	caCertPEM := params["ca_cert"]
 	if utils.IsAnyBlank(caCertPEM) {
-		err := fmt.Errorf("%s,param[ca_cert] does not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param[ca_cert] does not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -845,7 +847,7 @@ func (r *PrivateComputeRuntime) GetEnclaveEncryptPubKey(context protocol.TxSimCo
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param[ca_cert] of save cert  not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -866,7 +868,7 @@ func (r *PrivateComputeRuntime) GetEnclaveVerificationPubKey(context protocol.Tx
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param['ca_cert'] of save cert  not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['ca_cert'] of save cert  not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -888,7 +890,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 	enclaveId := params["enclave_id"]
 	report := params["report"]
 	if utils.IsAnyBlank(enclaveId, report) {
-		err := fmt.Errorf("%s,param['enclave_id'] or param['report'] does not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] or param['report'] does not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -913,7 +915,7 @@ func (r *PrivateComputeRuntime) GetEnclaveReport(context protocol.TxSimContext, 
 	// get params
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -936,7 +938,7 @@ func (r *PrivateComputeRuntime) GetEnclaveChallenge(context protocol.TxSimContex
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -957,7 +959,7 @@ func (r *PrivateComputeRuntime) GetEnclaveSignature(context protocol.TxSimContex
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -978,7 +980,7 @@ func (r *PrivateComputeRuntime) GetEnclaveProof(context protocol.TxSimContext, p
 	// 证书二进制数据
 	enclaveId := params["enclave_id"]
 	if utils.IsAnyBlank(enclaveId) {
-		err := fmt.Errorf("%s,param['enclave_id'] not found", ErrParams.Error())
+		err := fmt.Errorf("%s,param['enclave_id'] not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}

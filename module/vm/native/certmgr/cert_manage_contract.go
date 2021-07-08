@@ -1,15 +1,17 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package certmgr
 
 import (
 	"bytes"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -31,23 +33,23 @@ const (
 )
 
 type CertManageContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newCertManageContract(log *logger.CMLogger) *CertManageContract {
+func NewCertManageContract(log *logger.CMLogger) *CertManageContract {
 	return &CertManageContract{
 		log:     log,
 		methods: registerCertManageContractMethods(log),
 	}
 }
 
-func (c *CertManageContract) getMethod(methodName string) ContractFunc {
+func (c *CertManageContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerCertManageContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerCertManageContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	certManageRuntime := &CertManageRuntime{log: log}
 	methodMap[commonPb.CertManageFunction_CERT_ADD.String()] = certManageRuntime.Add
@@ -101,7 +103,7 @@ func (r *CertManageRuntime) Delete(txSimContext protocol.TxSimContext, params ma
 	certHashesStr := params[paramNameCertHashes]
 
 	if utils.IsAnyBlank(certHashesStr) {
-		err = fmt.Errorf("%s, delete cert require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		err = fmt.Errorf("%s, delete cert require param [%s] not found", common.ErrParams.Error(), paramNameCertHashes)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -137,7 +139,7 @@ func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map
 	certHashesStr := params[paramNameCertHashes]
 
 	if utils.IsAnyBlank(certHashesStr) {
-		err = fmt.Errorf("%s, query cert require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		err = fmt.Errorf("%s, query cert require param [%s] not found", common.ErrParams.Error(), paramNameCertHashes)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -184,7 +186,7 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 	certsStr := params[paramNameCerts]
 
 	if utils.IsAnyBlank(certsStr) {
-		err = fmt.Errorf("%s, freeze cert require param [%s] not found", ErrParams.Error(), paramNameCerts)
+		err = fmt.Errorf("%s, freeze cert require param [%s] not found", common.ErrParams.Error(), paramNameCerts)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -224,8 +226,8 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 
 	marshal, err := json.Marshal(freezeKeyArray)
@@ -266,7 +268,7 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 	certHashesStr := params[paramNameCertHashes]
 
 	if utils.IsAllBlank(certsStr, certHashesStr) {
-		err = fmt.Errorf("%s, unfreeze cert require param [%s or %s] not found", ErrParams.Error(), paramNameCerts, paramNameCertHashes)
+		err = fmt.Errorf("%s, unfreeze cert require param [%s or %s] not found", common.ErrParams.Error(), paramNameCerts, paramNameCertHashes)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -293,8 +295,8 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 
 	marshal, err := json.Marshal(freezeKeyArray)
@@ -404,8 +406,8 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 
 	crlBytesResult, err := json.Marshal(crlKeyList)

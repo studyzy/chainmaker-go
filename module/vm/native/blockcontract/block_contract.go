@@ -1,14 +1,16 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package blockcontract
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"chainmaker.org/chainmaker/protocol"
@@ -35,23 +37,23 @@ var (
 )
 
 type BlockContact struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newBlockContact(log *logger.CMLogger) *BlockContact {
+func NewBlockContact(log *logger.CMLogger) *BlockContact {
 	return &BlockContact{
 		log:     log,
 		methods: registerBlockContactMethods(log),
 	}
 }
 
-func (c *BlockContact) getMethod(methodName string) ContractFunc {
+func (c *BlockContact) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerBlockContactMethods(log *logger.CMLogger) map[string]ContractFunc {
-	queryMethodMap := make(map[string]ContractFunc, 64)
+func registerBlockContactMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	blockRuntime := &BlockRuntime{log: log}
 	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetBlockByHeight
 	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = blockRuntime.GetBlockWithTxRWSetsByHeight

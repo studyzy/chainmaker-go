@@ -1,12 +1,14 @@
 /*
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package dposmgr
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/hex"
@@ -46,23 +48,23 @@ var (
 )
 
 type DPoSERC20Contract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newDPoSERC20Contract(log *logger.CMLogger) *DPoSERC20Contract {
+func NewDPoSERC20Contract(log *logger.CMLogger) *DPoSERC20Contract {
 	return &DPoSERC20Contract{
 		log:     log,
 		methods: registerDPoSERC20ContractMethods(log),
 	}
 }
 
-func (c *DPoSERC20Contract) getMethod(methodName string) ContractFunc {
+func (c *DPoSERC20Contract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// [DPoS]
 	dposRuntime := NewDPoSRuntime(log)
 	methodMap[commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String()] = dposRuntime.BalanceOf
@@ -94,12 +96,12 @@ func NewDPoSRuntime(log *logger.CMLogger) *DPoSRuntime {
 // return balance of ${owner}
 func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if owner, ok := params[paramNameOwner]; ok {
 		if owner == "" {
 			r.log.Errorf("contract[%s] param [%s] is nil", dposErc20ContractName, paramNameOwner)
-			return nil, ErrParams
+			return nil, common.ErrParams
 		}
 		bigInteger, err := balanceOf(txSimContext, owner)
 		if err != nil {
@@ -121,7 +123,7 @@ func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[s
 // return token value of ${sender} after transfer
 func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if to, ok := params[paramNameTo]; ok {
 		if value, ok := params[paramNameValue]; ok {
@@ -156,7 +158,7 @@ func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[st
 // return token value of ${from} after transfer
 func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if to, ok := params[paramNameTo]; ok {
 		if from, ok := params[paramNameFrom]; ok {
@@ -212,7 +214,7 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 // return token value for ${sender} to ${to}
 func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if approveTo, ok := params[paramNameTo]; ok {
 		// 判断value是否合法
@@ -246,7 +248,7 @@ func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[str
 // return newest token of ${to} after mint
 func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if mintTo, ok := params[paramNameTo]; ok {
 		if value, ok := params[paramNameValue]; ok {
@@ -317,7 +319,7 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 // return balance of sender after burn
 func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if value, ok := params[paramNameValue]; ok {
 		val, err := loadAndCheckValue(value)
@@ -384,7 +386,7 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 // return new owner
 func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if to, ok := params[paramNameTo]; ok {
 		// 获取当前用户
@@ -418,7 +420,7 @@ func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, para
 // return value of approve
 func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	if to, ok := params[paramNameTo]; ok {
 		// 检查是否有from

@@ -1,15 +1,17 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package chainconfigmgr
 
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/sortedmap"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -49,23 +51,23 @@ var (
 )
 
 type ChainConfigContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newChainConfigContract(log *logger.CMLogger) *ChainConfigContract {
+func NewChainConfigContract(log *logger.CMLogger) *ChainConfigContract {
 	return &ChainConfigContract{
 		log:     log,
 		methods: registerChainConfigContractMethods(log),
 	}
 }
 
-func (c *ChainConfigContract) getMethod(methodName string) ContractFunc {
+func (c *ChainConfigContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerChainConfigContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerChainConfigContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// [core]
 	coreRuntime := &ChainCoreRuntime{log: log}
 	methodMap[commonPb.ConfigFunction_CORE_UPDATE.String()] = coreRuntime.CoreUpdate
@@ -112,7 +114,7 @@ func registerChainConfigContractMethods(log *logger.CMLogger) map[string]Contrac
 
 func getChainConfig(txSimContext protocol.TxSimContext, params map[string]string) (*configPb.ChainConfig, error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
 	bytes, err := txSimContext.Get(chainConfigContractName, []byte(keyChainConfig))
 	if err != nil {
@@ -177,8 +179,8 @@ func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, 
 // GetChainConfigAt get chain config from less than or equal to block height
 func (r *ChainConfigRuntime) GetChainConfigFromBlockHeight(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
 	if params == nil {
-		r.log.Error(ErrParamsEmpty)
-		return nil, ErrParamsEmpty
+		r.log.Error(common.ErrParamsEmpty)
+		return nil, common.ErrParamsEmpty
 	}
 	blockHeightStr := params[paramNameChainBlockHeight]
 	blockHeight, err := strconv.ParseUint(blockHeightStr, 10, 0)
@@ -223,8 +225,8 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 			return nil, err
 		}
 		if parseUint > defaultConfigMaxValidateTimeout {
-			r.log.Error(ErrOutOfRange)
-			return nil, ErrOutOfRange
+			r.log.Error(common.ErrOutOfRange)
+			return nil, common.ErrOutOfRange
 		}
 		chainConfig.Core.TxSchedulerTimeout = parseUint
 		changed = true
@@ -237,16 +239,16 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 			return nil, err
 		}
 		if parseUint > defaultConfigMaxSchedulerTimeout {
-			r.log.Error(ErrOutOfRange)
-			return nil, ErrOutOfRange
+			r.log.Error(common.ErrOutOfRange)
+			return nil, common.ErrOutOfRange
 		}
 		chainConfig.Core.TxSchedulerValidateTimeout = parseUint
 		changed = true
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -298,8 +300,8 @@ func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, para
 	}
 
 	if !(changed1 || changed2 || changed3 || changed4 || changed5) {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -328,7 +330,7 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 	orgId := params[paramNameOrgId]
 	rootCaCrt := params[paramNameRoot]
 	if utils.IsAnyBlank(orgId, rootCaCrt) {
-		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", ErrParams.Error(), paramNameOrgId, paramNameRoot)
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -380,7 +382,7 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 		}
 	}
 
-	err = fmt.Errorf("%s can not found orgId[%s]", ErrParams.Error(), orgId)
+	err = fmt.Errorf("%s can not found orgId[%s]", common.ErrParams.Error(), orgId)
 	r.log.Error(err)
 	return nil, err
 }
@@ -489,8 +491,8 @@ func (r *ChainConsensusRuntime) NodeIdAdd(txSimContext protocol.TxSimContext, pa
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -666,8 +668,8 @@ func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, p
 		return result, err
 	}
 
-	r.log.Error(ErrParams)
-	return nil, ErrParams
+	r.log.Error(common.ErrParams)
+	return nil, common.ErrParams
 }
 
 // NodeOrgUpdate update nodeOrg
@@ -720,8 +722,8 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -821,8 +823,8 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -873,8 +875,8 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -906,7 +908,7 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 		extConfigMap[v.Key] = string(v.Value)
 	}
 
-	for key, _ := range params {
+	for key := range params {
 		if _, ok := extConfigMap[key]; !ok {
 			continue
 		}
@@ -921,8 +923,8 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 	}
 	chainConfig.Consensus.ExtConfig = extConfig
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -1009,8 +1011,8 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 		return nil, parseParamErr
 	}
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -1092,8 +1094,8 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -1172,8 +1174,8 @@ func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSim
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 	// [end]
 	result, err = setChainConfig(txSimContext, chainConfig)

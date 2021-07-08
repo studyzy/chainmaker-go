@@ -5,9 +5,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package native
+package contractmgr
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -36,23 +37,23 @@ var (
 )
 
 type ContractManager struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newContractManager(log *logger.CMLogger) *ContractManager {
+func NewContractManager(log *logger.CMLogger) *ContractManager {
 	return &ContractManager{
 		log:     log,
 		methods: registerContractManagerMethods(log),
 	}
 }
 
-func (c *ContractManager) getMethod(methodName string) ContractFunc {
+func (c *ContractManager) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerContractManagerMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerContractManagerMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	runtime := &ContractManagerRuntime{log: log}
 	methodMap[consts.ContractManager_INIT_CONTRACT.String()] = runtime.installContract
 	methodMap[consts.ContractManager_UPGRADE_CONTRACT.String()] = runtime.upgradeContract
@@ -137,7 +138,7 @@ type ContractManagerRuntime struct {
 //GetContractInfo 根据合约名字查询合约的详细信息
 func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, name string) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
-		err := fmt.Errorf("%s, param[contract_name] of get contract not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -145,7 +146,7 @@ func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, 
 }
 func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimContext, name string) ([]byte, error) {
 	if utils.IsAnyBlank(name) {
-		err := fmt.Errorf("%s, param[contract_name] of get contract not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -246,7 +247,7 @@ func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, n
 
 func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimContext, name string, oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
-		err := fmt.Errorf("%s, param[contract_name] of get contract not found", ErrParams.Error())
+		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
