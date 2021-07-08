@@ -30,7 +30,7 @@ func newQueryBlockByHeightOnChainCMD() *cobra.Command {
 				return err
 			}
 			//// 1.Chain Client
-			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "")
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 			if err != nil {
 				return err
 			}
@@ -77,7 +77,7 @@ func newQueryBlockByHashOnChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "")
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 			if err != nil {
 				return err
 			}
@@ -128,7 +128,7 @@ func newQueryBlockByTxIdOnChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "")
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 			if err != nil {
 				return err
 			}

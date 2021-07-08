@@ -37,6 +37,7 @@ func updateBlockIntervalCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 		flagBlockInterval,
@@ -51,7 +52,7 @@ func updateBlockIntervalCMD() *cobra.Command {
 }
 
 func updateBlockInterval() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}

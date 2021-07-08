@@ -53,8 +53,10 @@ var (
 	adminKeyFilePaths string
 	adminCrtFilePaths string
 
-	userTlsKeyFilePath string
-	userTlsCrtFilePath string
+	userTlsKeyFilePath  string
+	userTlsCrtFilePath  string
+	userSignKeyFilePath string
+	userSignCrtFilePath string
 
 	blockInterval  int
 	nodeOrgId      string
@@ -90,6 +92,8 @@ const (
 	flagAdminCrtFilePaths      = "admin-crt-file-paths"
 	flagUserTlsKeyFilePath     = "user-tlskey-file-path"
 	flagUserTlsCrtFilePath     = "user-tlscrt-file-path"
+	flagUserSignKeyFilePath    = "user-signkey-file-path"
+	flagUserSignCrtFilePath    = "user-signcrt-file-path"
 	flagTimeout                = "timeout"
 	flagBlockInterval          = "block-interval"
 	flagNodeOrgId              = "node-org-id"
@@ -158,6 +162,8 @@ func init() {
 
 	flags.StringVar(&userTlsKeyFilePath, flagUserTlsKeyFilePath, "", "specify user tls key file path for chainclient tls connection")
 	flags.StringVar(&userTlsCrtFilePath, flagUserTlsCrtFilePath, "", "specify user tls cert file path for chainclient tls connection")
+	flags.StringVar(&userSignKeyFilePath, flagUserSignKeyFilePath, "", "specify user sign key file path to sign tx")
+	flags.StringVar(&userSignCrtFilePath, flagUserSignCrtFilePath, "", "specify user sign cert file path to sign tx")
 
 	// 链配置
 	flags.IntVar(&blockInterval, flagBlockInterval, 2000, "block interval timeout in milliseconds, default 2000ms")
@@ -213,6 +219,7 @@ func getChainMakerServerVersionCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId,
 		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
@@ -223,7 +230,7 @@ func getChainMakerServerVersionCMD() *cobra.Command {
 }
 
 func getChainMakerServerVersion() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}
