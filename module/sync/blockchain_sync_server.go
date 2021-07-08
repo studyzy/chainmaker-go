@@ -12,10 +12,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
@@ -114,13 +114,13 @@ func (sync *BlockChainSyncServer) initSyncConfIfRequire() {
 	}
 	sync.conf = NewBlockSyncServerConf()
 	if localconf.ChainMakerConfig.SyncConfig.BlockPoolSize > 0 {
-		sync.conf.SetBlockPoolSize(int64(localconf.ChainMakerConfig.SyncConfig.BlockPoolSize))
+		sync.conf.SetBlockPoolSize(uint64(localconf.ChainMakerConfig.SyncConfig.BlockPoolSize))
 	}
 	if localconf.ChainMakerConfig.SyncConfig.WaitTimeOfBlockRequestMsg > 0 {
 		sync.conf.SetWaitTimeOfBlockRequestMsg(int64(localconf.ChainMakerConfig.SyncConfig.WaitTimeOfBlockRequestMsg))
 	}
 	if localconf.ChainMakerConfig.SyncConfig.BatchSizeFromOneNode > 0 {
-		sync.conf.SetBatchSizeFromOneNode(int64(localconf.ChainMakerConfig.SyncConfig.BatchSizeFromOneNode))
+		sync.conf.SetBatchSizeFromOneNode(uint64(localconf.ChainMakerConfig.SyncConfig.BatchSizeFromOneNode))
 	}
 	if localconf.ChainMakerConfig.SyncConfig.LivenessTick > 0 {
 		sync.conf.SetLivenessTicker(localconf.ChainMakerConfig.SyncConfig.LivenessTick)
@@ -174,7 +174,7 @@ func (sync *BlockChainSyncServer) blockSyncMsgHandler(from string, msg []byte, m
 
 func (sync *BlockChainSyncServer) handleNodeStatusReq(from string) error {
 	var (
-		height int64
+		height uint64
 		bz     []byte
 		err    error
 	)
@@ -183,7 +183,7 @@ func (sync *BlockChainSyncServer) handleNodeStatusReq(from string) error {
 	}
 	archivedHeight := sync.blockChainStore.GetArchivedPivot()
 	sync.log.Debugf("receive node status request from node [%s]", from)
-	if bz, err = proto.Marshal(&syncPb.BlockHeightBCM{BlockHeight: height, ArchivedHeight: int64(archivedHeight)}); err != nil {
+	if bz, err = proto.Marshal(&syncPb.BlockHeightBCM{BlockHeight: height, ArchivedHeight: archivedHeight}); err != nil {
 		return err
 	}
 	return sync.sendMsg(syncPb.SyncMsg_NODE_STATUS_RESP, bz, from)
@@ -221,7 +221,7 @@ func (sync *BlockChainSyncServer) sendBlocks(req *syncPb.BlockSyncReq, from stri
 		err error
 		blk *commonPb.Block
 	)
-	for i := int64(0); i < req.BatchSize; i++ {
+	for i := uint64(0); i < req.BatchSize; i++ {
 		if blk, err = sync.blockChainStore.GetBlock(req.BlockHeight + i); err != nil {
 			return err
 		}
@@ -243,7 +243,7 @@ func (sync *BlockChainSyncServer) sendInfos(req *syncPb.BlockSyncReq, from strin
 		err       error
 		blkRwInfo *storePb.BlockWithRWSet
 	)
-	for i := int64(0); i < req.BatchSize; i++ {
+	for i := uint64(0); i < req.BatchSize; i++ {
 		if blkRwInfo, err = sync.blockChainStore.GetBlockWithRWSets(req.BlockHeight + i); err != nil {
 			return err
 		}
