@@ -109,7 +109,7 @@ func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Serialized
 }
 
 func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
-	return s.tx.Header.Sender
+	return s.tx.Payload.Sender
 }
 
 func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
@@ -185,7 +185,7 @@ func (s *txQuerySimContextImpl) GetChainNodesInfoProvider() (protocol.ChainNodes
 
 func (s *txQuerySimContextImpl) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	txRwSet := &commonPb.TxRWSet{
-		TxId:     s.tx.Header.TxId,
+		TxId:     s.tx.Payload.TxId,
 		TxReads:  nil,
 		TxWrites: nil,
 	}
@@ -231,7 +231,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
+			Code:    1,
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
@@ -239,7 +239,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
+			Code:    1,
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}

@@ -11,11 +11,10 @@ import (
 	"testing"
 	"time"
 
-
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *mempoolTxs) {
@@ -28,7 +27,7 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 	//}
 
 	for i := 0; i < num; i++ {
-		payload := &commonPb.TransactPayload{
+		payload := &commonPb.Payload{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 			Method:       "SetConfig",
 			Parameters:   nil,

@@ -183,7 +183,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
+			Code:    1,
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
@@ -191,7 +191,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
+			Code:    1,
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}

@@ -12,11 +12,11 @@ import (
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	"chainmaker.org/chainmaker/common/linkedhashmap"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/linkedhashmap"
+	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -69,14 +69,14 @@ func (l *txList) addTxs(tx *commonPb.Transaction, source protocol.TxSource, vali
 	defer l.rwLock.Unlock()
 	if validate == nil || validate(tx, source) == nil {
 		if source != protocol.INTERNAL {
-			if val, ok := l.pendingCache.Load(tx.Header.TxId); ok && val != nil {
+			if val, ok := l.pendingCache.Load(tx.Payload.TxId); ok && val != nil {
 				return
 			}
 		}
-		if l.queue.Get(tx.Header.TxId) != nil {
+		if l.queue.Get(tx.Payload.TxId) != nil {
 			return
 		}
-		l.queue.Add(tx.Header.TxId, tx)
+		l.queue.Add(tx.Payload.TxId, tx)
 	}
 }
 
@@ -115,8 +115,8 @@ func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
 			l.queue.Remove(txId)
 		}
 		for _, val := range cacheKVs {
-			l.queue.Remove(val.tx.Header.TxId)
-			l.pendingCache.Store(val.tx.Header.TxId, val)
+			l.queue.Remove(val.tx.Payload.TxId)
+			l.pendingCache.Store(val.tx.Payload.TxId, val)
 		}
 		l.rwLock.Unlock()
 		l.log.Debugf("eliminate data, elapse time: %d", utils.CurrentTimeMillisSeconds()-begin)
@@ -161,7 +161,7 @@ func (l *txList) getTxsFromQueue(count int, blockHeight int64, validate func(tx 
 }
 
 func (l *txList) monitor(tx *commonPb.Transaction, len int) {
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	isConfigTx := utils.IsConfigTx(tx)
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled && chainId != "" {
@@ -210,8 +210,8 @@ func (l *txList) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeigh
 	l.rwLock.Lock()
 	defer l.rwLock.Unlock()
 	for _, tx := range txs {
-		l.pendingCache.Store(tx.Header.TxId, &valInPendingCache{tx: tx, inBlockHeight: blockHeight})
-		l.queue.Remove(tx.Header.TxId)
+		l.pendingCache.Store(tx.Payload.TxId, &valInPendingCache{tx: tx, inBlockHeight: blockHeight})
+		l.queue.Remove(tx.Payload.TxId)
 	}
 }
 

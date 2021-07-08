@@ -53,19 +53,19 @@ func genInvokeContractTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "time",
-			Value: fmt.Sprintf("%d", utils.CurrentTimeMillisSeconds()),
+			Value: []byte(fmt.Sprintf("%d", utils.CurrentTimeMillisSeconds())),
 		},
 		{
 			Key:   "id",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "hash",
-			Value: txId,
+			Value: []byte(txId),
 		},
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "save",
 		Parameters:   pairs,
@@ -88,11 +88,11 @@ func genGetBlockByTxIDTxRequest(orgid string, sk3 crypto.PrivateKey, txid string
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "txId",
-			Value: txid,
+			Value: []byte(txid),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -132,9 +132,9 @@ func contructTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath string, 
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -142,9 +142,8 @@ func contructTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath string, 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -162,9 +161,9 @@ func contructTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath string, 
 		return nil, err
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
-	fmt.Printf("gen tx success. id %v", req.Header.TxId)
+	fmt.Printf("gen tx success. id %v", req.Payload.TxId)
 
 	return req, nil
 }

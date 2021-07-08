@@ -131,7 +131,7 @@ func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeCli
 			},
 		}
 
-		payload := &commonPb.TransactPayload{
+		payload := &commonPb.Payload{
 			ContractName: contractName,
 			Method:       "transfer",
 			Parameters:   pairs,
@@ -160,7 +160,7 @@ func testPerformanceModeBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 			},
 		}
 
-		payload := &commonPb.TransactPayload{
+		payload := &commonPb.Payload{
 			ContractName: contractName,
 			Method:       "balance",
 			Parameters:   pairs,
@@ -542,7 +542,7 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -608,7 +608,7 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -685,7 +685,7 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -767,7 +767,7 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -843,7 +843,7 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -917,7 +917,7 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -979,7 +979,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,

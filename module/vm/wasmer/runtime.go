@@ -41,7 +41,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		r.log.Debugf(logStr)
 		panicErr := recover()
 		if panicErr != nil {
-			contractResult.Code = commonPb.ContractResultCode_FAIL
+			contractResult.Code = 1
 			contractResult.Message = fmt.Sprint(panicErr)
 			if instanceInfo != nil {
 				instanceInfo.errCount++
@@ -88,7 +88,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	contractResult.GasUsed = int64(gas)
 
 	if err != nil {
-		contractResult.Code = commonPb.ContractResultCode_FAIL
+		contractResult.Code = 1
 		msg := fmt.Sprintf("contract invoke failed, %s", err.Error())
 		r.log.Errorf(msg)
 		contractResult.Message = msg

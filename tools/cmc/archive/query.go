@@ -80,7 +80,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 
 			if blkWithRWSet.Block != nil {
 				for idx, tx := range blkWithRWSet.Block.Txs {
-					if tx.Header.TxId == args[0] {
+					if tx.Payload.TxId == args[0] {
 						txInfo = &common.TransactionInfo{
 							Transaction: tx,
 							BlockHeight: uint64(blkWithRWSet.Block.Header.BlockHeight),

@@ -203,7 +203,7 @@ func (s *SnapshotImpl) apply(tx *commonPb.Transaction, txRWSet *commonPb.TxRWSet
 	s.txRWSetTable = append(s.txRWSetTable, txRWSet)
 
 	// Add to tx result map
-	s.txResultMap[tx.Header.TxId] = txResult
+	s.txResultMap[tx.Payload.TxId] = txResult
 
 	// Add to transaction table
 	s.txTable = append(s.txTable, tx)

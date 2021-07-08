@@ -116,7 +116,7 @@ func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error 
 
 	// chainId
 	//if tx.Payload.ChainId != config.ChainId {
-	//	r.log.Errorw("chainId is different", "tx chainId", tx.Header.ChainId, "payload chainId", config.ChainId)
+	//	r.log.Errorw("chainId is different", "tx chainId", tx.Payload.ChainId, "payload chainId", config.ChainId)
 	//	return errors.New("chainId is different")
 	//}
 

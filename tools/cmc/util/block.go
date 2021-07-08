@@ -36,7 +36,7 @@ func isValidConfigTx(tx *common.Transaction) bool {
 
 // isConfigTx the transaction is a config transaction or not
 func isConfigTx(tx *common.Transaction) bool {
-	if tx == nil || tx.Header == nil {
+	if tx == nil || tx.Payload == nil {
 		return false
 	}
 	return tx.IsConfigTx()

@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -236,7 +236,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 	} else {
 		s.ContractResult.Message += "error message: " + msg
 	}
-	s.ContractResult.Code = commonPb.ContractResultCode_FAIL
+	s.ContractResult.Code = 1
 	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, s.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }

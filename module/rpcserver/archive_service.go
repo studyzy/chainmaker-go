@@ -9,7 +9,7 @@ import (
 )
 
 func (s *ApiService) doArchive(tx *commonPb.Transaction) *commonPb.TxResponse {
-	switch tx.Header.TxType {
+	switch tx.Payload.TxType {
 	case commonPb.TxType_ARCHIVE_FULL_BLOCK:
 		return s.doArchiveBlock(tx)
 	case commonPb.TxType_RESTORE_FULL_BLOCK:
@@ -32,7 +32,7 @@ func (s *ApiService) doArchiveBlock(tx *commonPb.Transaction) *commonPb.TxRespon
 		resp    = &commonPb.TxResponse{}
 	)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 
 	if store, err = s.chainMakerServer.GetStore(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_STORE
@@ -76,7 +76,7 @@ func (s *ApiService) doRestoreBlock(tx *commonPb.Transaction) *commonPb.TxRespon
 		resp    = &commonPb.TxResponse{}
 	)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 
 	if store, err = s.chainMakerServer.GetStore(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_STORE

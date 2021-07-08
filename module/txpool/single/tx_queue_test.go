@@ -20,17 +20,17 @@ import (
 
 func mockValidateInQueue(queue *txQueue, blockChainStore protocol.BlockchainStore) txValidateFunc {
 	return func(tx *commonPb.Transaction, source protocol.TxSource) error {
-		if _, ok := queue.pendingCache.Load(tx.Header.TxId); ok {
+		if _, ok := queue.pendingCache.Load(tx.Payload.TxId); ok {
 			return fmt.Errorf("tx exist in txpool")
 		}
-		if queue.commonTxQueue.queue.Get(tx.Header.TxId) != nil {
+		if queue.commonTxQueue.queue.Get(tx.Payload.TxId) != nil {
 			return fmt.Errorf("tx exist in txpool")
 		}
-		if queue.configTxQueue.queue.Get(tx.Header.TxId) != nil {
+		if queue.configTxQueue.queue.Get(tx.Payload.TxId) != nil {
 			return fmt.Errorf("tx exist in txpool")
 		}
 		if blockChainStore != nil {
-			if exist, _ := blockChainStore.TxExists(tx.Header.TxId); exist {
+			if exist, _ := blockChainStore.TxExists(tx.Payload.TxId); exist {
 				return fmt.Errorf("tx exist in blockchain")
 			}
 		}
@@ -63,7 +63,7 @@ func TestAddTxsToConfigQueue(t *testing.T) {
 
 	// 3. repeat put txs to common queue failed due to txIds exist in config queue
 	for _, tx := range rpcTxs.txs {
-		tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
+		tx.Payload.TxType = commonPb.TxType_INVOKE_CONTRACT
 	}
 	queue.addTxsToCommonQueue(rpcTxs)
 	queue.addTxsToCommonQueue(p2pTxs)
@@ -99,7 +99,7 @@ func TestAddTxsToCommonQueue(t *testing.T) {
 
 	// 3. repeat put txs to config queue failed due to txIds exist in common queue
 	for _, tx := range rpcTxs.txs {
-		//tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
+		//tx.Payload.TxType = commonPb.TxType_INVOKE_CONTRACT
 		changeTx2ConfigTx(tx)
 	}
 	queue.addTxsToConfigQueue(rpcTxs)
@@ -119,33 +119,33 @@ func TestGetInQueue(t *testing.T) {
 	// 1. put txs to queue and check existence
 	queue.addTxsToCommonQueue(rpcTxs)
 	for _, tx := range rpcTxs.txs {
-		txInPool, inBlockHeight := queue.get(tx.Header.TxId)
+		txInPool, inBlockHeight := queue.get(tx.Payload.TxId)
 		require.EqualValues(t, txInPool, tx)
 		require.EqualValues(t, 0, inBlockHeight)
 	}
 
 	// 2. check not existence
 	for _, tx := range internalTxs.txs {
-		txInPool, inBlockHeight := queue.get(tx.Header.TxId)
+		txInPool, inBlockHeight := queue.get(tx.Payload.TxId)
 		require.Nil(t, txInPool)
 		require.EqualValues(t, -1, inBlockHeight)
 	}
 	for _, tx := range p2pTxs.txs {
-		txInPool, inBlockHeight := queue.get(tx.Header.TxId)
+		txInPool, inBlockHeight := queue.get(tx.Payload.TxId)
 		require.Nil(t, txInPool)
 		require.EqualValues(t, -1, inBlockHeight)
 	}
 
 	// 3. modify p2pTxs txType to commonPb.TxType_INVOKE_CONTRACT
 	for _, tx := range p2pTxs.txs {
-		//tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
+		//tx.Payload.TxType = commonPb.TxType_INVOKE_CONTRACT
 		changeTx2ConfigTx(tx)
 	}
 
 	// 4. put txs to config queue and check existence
 	queue.addTxsToConfigQueue(p2pTxs)
 	for _, tx := range p2pTxs.txs {
-		txInPool, inBlockHeight := queue.get(tx.Header.TxId)
+		txInPool, inBlockHeight := queue.get(tx.Payload.TxId)
 		require.EqualValues(t, txInPool, tx)
 		require.EqualValues(t, 0, inBlockHeight)
 	}
@@ -175,7 +175,7 @@ func TestHasInQueue(t *testing.T) {
 
 	// 3. modify p2pTxs txType to commonPb.TxType_INVOKE_CONTRACT
 	for _, tx := range p2pTxs.txs {
-		//tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
+		//tx.Payload.TxType = commonPb.TxType_INVOKE_CONTRACT
 		changeTx2ConfigTx(tx)
 	}
 
@@ -265,7 +265,7 @@ func TestAppendTxsToPendingCache(t *testing.T) {
 
 	// 4. modify p2pTxs txType to commonPb.TxType_INVOKE_CONTRACT
 	for _, tx := range p2pTxs.txs {
-		//tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
+		//tx.Payload.TxType = commonPb.TxType_INVOKE_CONTRACT
 		changeTx2ConfigTx(tx)
 	}
 
@@ -299,7 +299,7 @@ func TestFetchInQueue(t *testing.T) {
 
 	// 3. modify p2pTxs txType to commonPb.TxType_INVOKE_CONTRACT and push txs to config queue
 	for _, tx := range p2pTxs.txs {
-		//tx.Header.TxType = commonPb.TxType_INVOKE_CONTRACT
+		//tx.Payload.TxType = commonPb.TxType_INVOKE_CONTRACT
 		changeTx2ConfigTx(tx)
 	}
 	queue.addTxsToConfigQueue(p2pTxs)

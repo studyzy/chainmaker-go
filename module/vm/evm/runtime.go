@@ -39,7 +39,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	// contract response
 	contractResult = &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_FAIL,
+		Code:    1,
 		Result:  nil,
 		Message: "",
 	}
@@ -47,7 +47,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	defer func() {
 		if err := recover(); err != nil {
 			r.Log.Errorf("failed to invoke evm, tx id:%s, error:%s", txId, err)
-			contractResult.Code = commonPb.ContractResultCode_FAIL
+			contractResult.Code = 1
 			if e, ok := err.(error); ok {
 				contractResult.Message = e.Error()
 			} else if e, ok := err.(string); ok {
@@ -223,7 +223,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 }
 
 func (r *RuntimeInstance) errorResult(contractResult *commonPb.ContractResult, err error, errMsg string) *commonPb.ContractResult {
-	contractResult.Code = commonPb.ContractResultCode_FAIL
+	contractResult.Code = 1
 	if err != nil {
 		errMsg += ", " + err.Error()
 	}

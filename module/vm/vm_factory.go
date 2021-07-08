@@ -89,7 +89,7 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_FAIL,
+		Code:    1,
 		Result:  nil,
 		Message: "",
 	}
@@ -156,7 +156,7 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 		//revokeKey      = []byte(protocol.ContractRevoke + contractName)
 		//runtimeTypeKey = []byte(protocol.ContractRuntimeType + contractName)
 	)
-	contractResult = &commonPb.ContractResult{Code: commonPb.ContractResultCode_FAIL}
+	contractResult = &commonPb.ContractResult{Code: 1}
 	if status == commonPb.ContractStatus_UNKNOWN { // 只传入的ContractName，其他属性需要从DB获取
 		dbContract, err := utils.GetContractByName(txContext.Get, contractName)
 		if err != nil {
@@ -483,7 +483,7 @@ func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code c
 func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string]string,
 	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	contractId := contract.GetContractId()
-	contractResult := &commonPb.ContractResult{Code: commonPb.ContractResultCode_FAIL}
+	contractResult := &commonPb.ContractResult{Code: 1}
 	txId := txContext.GetTx().Header.TxId
 	txType := txContext.GetTx().Header.TxType
 	runtimeType := contract.RuntimeType

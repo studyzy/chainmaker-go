@@ -24,15 +24,15 @@ import (
 func mockValidate(txList *txList, blockChainStore protocol.BlockchainStore) txValidateFunc {
 	return func(tx *commonPb.Transaction, source protocol.TxSource) error {
 		if source != protocol.INTERNAL {
-			if val, ok := txList.pendingCache.Load(tx.Header.TxId); ok && val != nil {
+			if val, ok := txList.pendingCache.Load(tx.Payload.TxId); ok && val != nil {
 				return fmt.Errorf("tx exist in txpool")
 			}
 		}
-		if txList.queue.Get(tx.Header.TxId) != nil {
+		if txList.queue.Get(tx.Payload.TxId) != nil {
 			return fmt.Errorf("tx exist in txpool")
 		}
 		if blockChainStore != nil {
-			if exist, _ := blockChainStore.TxExists(tx.Header.TxId); exist {
+			if exist, _ := blockChainStore.TxExists(tx.Payload.TxId); exist {
 				return fmt.Errorf("tx exist in blockchain")
 			}
 		}
@@ -44,7 +44,7 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 	txs := make([]*commonPb.Transaction, 0, num)
 	txType := commonPb.TxType_INVOKE_CONTRACT
 	for i := 0; i < num; i++ {
-		payload := &commonPb.TransactPayload{
+		payload := &commonPb.Payload{
 			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
 			Method:       "SetConfig",
 			Parameters:   nil,
@@ -64,7 +64,7 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 func getTxIds(txs []*commonPb.Transaction) []string {
 	txIds := make([]string, 0, len(txs))
 	for _, tx := range txs {
-		txIds = append(txIds, tx.Header.TxId)
+		txIds = append(txIds, tx.Payload.TxId)
 	}
 	return txIds
 }
@@ -99,7 +99,7 @@ func TestTxList_Put(t *testing.T) {
 
 	// 3. add txs in mockBlockChainStore
 	for _, tx := range txs[50:80] {
-		mockStore.txs[tx.Header.TxId] = tx
+		mockStore.txs[tx.Payload.TxId] = tx
 	}
 
 	// 4. put txs[50:80] failed due to the txs has exist in blockchain when source = [RPC,P2P]
@@ -115,7 +115,7 @@ func TestTxList_Put(t *testing.T) {
 
 	// 5. put txs[80:90] succeed due to not check the tx existence in pendingCache when source = [INTERNAL]
 	for _, tx := range txs[80:90] {
-		list.pendingCache.Store(tx.Header.TxId, &valInPendingCache{0, tx})
+		list.pendingCache.Store(tx.Payload.TxId, &valInPendingCache{0, tx})
 	}
 	list.Put(txs[80:90], protocol.RPC, validateFunc)
 	list.Put(txs[80:90], protocol.P2P, validateFunc)
@@ -144,24 +144,24 @@ func TestTxList_Get(t *testing.T) {
 	// 1. put txs[:30] txs and check existence
 	list.Put(txs[:30], protocol.RPC, validateFunc)
 	for _, tx := range txs[:30] {
-		tx, inBlockHeight := list.Get(tx.Header.TxId)
+		tx, inBlockHeight := list.Get(tx.Payload.TxId)
 		require.NotNil(t, tx)
 		require.EqualValues(t, 0, inBlockHeight)
 	}
 
 	// 2. check txs[30:100] not exist in txList
 	for _, tx := range txs[30:100] {
-		tx, inBlockHeight := list.Get(tx.Header.TxId)
+		tx, inBlockHeight := list.Get(tx.Payload.TxId)
 		require.Nil(t, tx)
 		require.EqualValues(t, -1, inBlockHeight)
 	}
 
 	// 3. put txs[30:40] to pending cache and check txs[30:40] exist in pendingCache in the txList
 	for _, tx := range txs[30:40] {
-		list.pendingCache.Store(tx.Header.TxId, &valInPendingCache{inBlockHeight: 999, tx: tx})
+		list.pendingCache.Store(tx.Payload.TxId, &valInPendingCache{inBlockHeight: 999, tx: tx})
 	}
 	for _, tx := range txs[30:40] {
-		txInPool, inBlockHeight := list.Get(tx.Header.TxId)
+		txInPool, inBlockHeight := list.Get(tx.Payload.TxId)
 		require.EqualValues(t, tx, txInPool)
 		require.EqualValues(t, 999, inBlockHeight)
 	}
@@ -178,23 +178,23 @@ func TestTxList_Has(t *testing.T) {
 	// 1. put txs[:30] txs and check existence
 	list.Put(txs[:30], protocol.RPC, validateFunc)
 	for _, tx := range txs[:30] {
-		require.True(t, list.Has(tx.Header.TxId, true))
-		require.True(t, list.Has(tx.Header.TxId, false))
+		require.True(t, list.Has(tx.Payload.TxId, true))
+		require.True(t, list.Has(tx.Payload.TxId, false))
 	}
 
 	// 2. put txs[30:40] in pendingCache in txList and check existence
 	for _, tx := range txs[30:40] {
-		list.pendingCache.Store(tx.Header.TxId, &valInPendingCache{0, tx})
+		list.pendingCache.Store(tx.Payload.TxId, &valInPendingCache{0, tx})
 	}
 	for _, tx := range txs[30:40] {
-		require.True(t, list.Has(tx.Header.TxId, true))
-		require.False(t, list.Has(tx.Header.TxId, false))
+		require.True(t, list.Has(tx.Payload.TxId, true))
+		require.False(t, list.Has(tx.Payload.TxId, false))
 	}
 
 	// 3. check not existence in txList
 	for _, tx := range txs[40:] {
-		require.False(t, list.Has(tx.Header.TxId, true))
-		require.False(t, list.Has(tx.Header.TxId, false))
+		require.False(t, list.Has(tx.Payload.TxId, true))
+		require.False(t, list.Has(tx.Payload.TxId, false))
 	}
 }
 
@@ -213,13 +213,13 @@ func TestTxList_Delete(t *testing.T) {
 	list.Delete(getTxIds(txs[:10]))
 	require.EqualValues(t, 20, list.Size())
 	for _, tx := range txs[:10] {
-		require.False(t, list.Has(tx.Header.TxId, true))
-		require.False(t, list.Has(tx.Header.TxId, false))
+		require.False(t, list.Has(tx.Payload.TxId, true))
+		require.False(t, list.Has(tx.Payload.TxId, false))
 	}
 
 	// 2. put txs[30:50] in the pendingCache in txList
 	for _, tx := range txs[30:50] {
-		list.pendingCache.Store(tx.Header.TxId, &valInPendingCache{0, tx})
+		list.pendingCache.Store(tx.Payload.TxId, &valInPendingCache{0, tx})
 	}
 	//require.EqualValues(t, 20, len(list.pendingCache))
 	list.Delete(getTxIds(txs[30:40]))

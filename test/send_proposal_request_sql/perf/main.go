@@ -113,7 +113,7 @@ func main() {
 func other(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	txId := "9e36eaedfcbe43a792fb516b1d2c9adb49049f247a044399ab5accc61cc7d880"
 	code := testGetTxByTxId(sk3, client, txId, CHAIN1)
-	if code == commonPb.ContractResultCode_FAIL {
+	if code == 1 {
 		fmt.Println("查询失败")
 	} else {
 		fmt.Println("查询成功")
@@ -314,14 +314,14 @@ func testInvokeSqlInsert(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "number",
-			Value: number,
+			Value: []byte(number),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_insert",
 		Parameters:   pairs,
@@ -343,14 +343,14 @@ func testInvokeSqlUpdate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "id",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "number",
-			Value: number,
+			Value: []byte(number),
 		},
 	}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_update",
 		Parameters:   pairs,
@@ -372,7 +372,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	txId := utils.GetRandTxId()
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -397,7 +397,7 @@ func testInvokeSqlBlank(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "sql_blank",
 		Parameters:   pairs,
@@ -439,9 +439,9 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -449,9 +449,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -469,7 +468,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := (*client).SendRequest(ctx, req)
 
@@ -594,7 +593,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	//fmt.Printf("\n%d-%d-%dT %d:%d:%d============ get tx by txId [%s] ============\n", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), txId)
 
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
@@ -607,16 +606,16 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	err := proto.Unmarshal(resp.ContractResult.Result, result)
 	if err != nil {
 		fmt.Println(err)
-		return commonPb.ContractResultCode_FAIL
+		return 1
 	}
 	if result.Transaction == nil {
-		return commonPb.ContractResultCode_FAIL
+		return 1
 	}
 	if result.Transaction.Result == nil {
-		return commonPb.ContractResultCode_FAIL
+		return 1
 	}
 	if result.Transaction.Result.ContractResult == nil {
-		return commonPb.ContractResultCode_FAIL
+		return 1
 	}
 	return result.Transaction.Result.ContractResult.Code
 }

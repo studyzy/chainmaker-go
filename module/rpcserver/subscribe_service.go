@@ -11,13 +11,13 @@ import (
 	"errors"
 	"fmt"
 
+	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker-go/subscriber/model"
 	commonErr "chainmaker.org/chainmaker/common/errors"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker-go/subscriber/model"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -100,7 +100,7 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.
 
 	eventCh := make(chan model.NewContractEvent)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if eventSubscriber, err = s.chainMakerServer.GetEventSubscribe(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_SUBSCRIBER
 		errMsg = s.getErrMsg(errCode, err)
@@ -167,7 +167,7 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
 	s.log.Infof("Recv block subscribe request: [start:%d]/[end:%d]/[txType:%d]/[txIds:%+v]",
 		payload.StartBlock, payload.EndBlock, payload.TxType, payload.TxIds)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_STORE
 		errMsg = s.getErrMsg(errCode, err)
@@ -285,7 +285,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 	s.log.Infof("Recv block subscribe request: [start:%d]/[end:%d]/[withRWSet:%v]",
 		payload.StartBlock, payload.EndBlock, payload.WithRwSet)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_STORE
 		errMsg = s.getErrMsg(errCode, err)
@@ -345,7 +345,7 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 
 	blockCh := make(chan model.NewBlockEvent)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if eventSubscriber, err = s.chainMakerServer.GetEventSubscribe(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_SUBSCRIBER
 		errMsg = s.getErrMsg(errCode, err)
@@ -430,7 +430,7 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 
 	blockCh := make(chan model.NewBlockEvent)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if eventSubscriber, err = s.chainMakerServer.GetEventSubscribe(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_SUBSCRIBER
 		errMsg = s.getErrMsg(errCode, err)
@@ -737,17 +737,17 @@ func (s *ApiService) sendSubscribeTx(server apiPb.RpcNode_SubscribeServer,
 }
 
 func (s *ApiService) checkIsContinue(tx *commonPb.Transaction, txType commonPb.TxType, txIds []string, txIdsMap map[string]struct{}) bool {
-	if txType != -1 && tx.Header.TxType != txType {
+	if txType != -1 && tx.Payload.TxType != txType {
 		return true
 	}
 
 	if len(txIds) > 0 {
-		_, ok := txIdsMap[tx.Header.TxId]
+		_, ok := txIdsMap[tx.Payload.TxId]
 		if !ok {
 			return true
 		}
 
-		delete(txIdsMap, tx.Header.TxId)
+		delete(txIdsMap, tx.Payload.TxId)
 	}
 
 	return false

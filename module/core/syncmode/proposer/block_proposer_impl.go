@@ -11,17 +11,17 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -337,7 +337,7 @@ func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*
 			defer wg.Done()
 			result := make([]*commonpb.Transaction, 0)
 			for _, tx := range b {
-				exist, err := bp.blockchainStore.TxExists(tx.Header.TxId)
+				exist, err := bp.blockchainStore.TxExists(tx.Payload.TxId)
 				if err == nil && !exist {
 					result = append(result, tx)
 				}

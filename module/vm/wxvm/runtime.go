@@ -29,8 +29,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	defer func() {
 		if err := recover(); err != nil {
-			r.Log.Errorf("invoke wxvm panic, tx id:%s, error:%s", tx.Header.TxId, err)
-			contractResult.Code = commonPb.ContractResultCode_FAIL
+			r.Log.Errorf("invoke wxvm panic, tx id:%s, error:%s", tx.Payload.TxId, err)
+			contractResult.Code = 1
 			if e, ok := err.(error); ok {
 				contractResult.Message = e.Error()
 			} else if e, ok := err.(string); ok {
@@ -51,17 +51,17 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	defer r.CtxService.DestroyContext(context)
 
 	if err != nil {
-		contractResult.Code = commonPb.ContractResultCode_FAIL
+		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		return
 	}
 
 	if inst, err := xvm.CreateInstance(context.ID, execCode, method, contractId, gasUsed, int64(protocol.GasLimit)); err != nil {
-		contractResult.Code = commonPb.ContractResultCode_FAIL
+		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		return
 	} else if err = inst.Exec(); err != nil {
-		contractResult.Code = commonPb.ContractResultCode_FAIL
+		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		return
 	} else {

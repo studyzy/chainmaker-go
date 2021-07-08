@@ -135,7 +135,7 @@ func (b *Benchmarker) ProcessTxSend(index int64) {
 		res, err := b.Sender.SendTxByClientIndex(b.Url, tx, index)
 		if nil != err {
 			atomic.AddInt64(b.Metrics.TxTotalFail, 1)
-			log.Printf("send tx error: %s , %+v", tx.Header.TxId, err)
+			log.Printf("send tx error: %s , %+v", tx.Payload.TxId, err)
 
 			continue
 		}
@@ -155,11 +155,11 @@ func (b *Benchmarker) ProcessTxSend(index int64) {
 					atomic.AddInt64(b.Metrics.TxOtherFail, 1)
 				}
 			*/
-			log.Printf("tx error: %s , code:%d, msg:%s", tx.Header.TxId, res.Code, res.Message)
+			log.Printf("tx error: %s , code:%d, msg:%s", tx.Payload.TxId, res.Code, res.Message)
 		} else {
 			atomic.AddInt64(b.Metrics.TxSucc, 1)
 			if (*b.Metrics.TxSucc)%int64(updateHeightTxCount) == 0 {
-				go b.updateBlockHeight(index, tx.Header.TxId)
+				go b.updateBlockHeight(index, tx.Payload.TxId)
 			}
 		}
 	}

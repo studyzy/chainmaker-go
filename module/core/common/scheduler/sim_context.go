@@ -107,7 +107,7 @@ func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMembe
 }
 
 func (s *txSimContextImpl) GetSender() *acpb.SerializedMember {
-	return s.tx.Header.Sender
+	return s.tx.Payload.Sender
 }
 
 func (s *txSimContextImpl) putIntoReadSet(contractName string, key []byte, value []byte) {
@@ -173,7 +173,7 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		return s.txRWSet
 	}
 	s.txRWSet = &commonpb.TxRWSet{
-		TxId:     s.tx.Header.TxId,
+		TxId:     s.tx.Payload.TxId,
 		TxReads:  nil,
 		TxWrites: nil,
 	}

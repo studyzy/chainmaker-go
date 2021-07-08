@@ -13,18 +13,18 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/blockchain"
-	commonErr "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker-go/store/archive"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native"
+	commonErr "chainmaker.org/chainmaker/common/errors"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/store/archive"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker-go/vm/native"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
@@ -101,7 +101,7 @@ func (s *ApiService) validate(tx *commonPb.Transaction) (errCode commonErr.ErrCo
 		bc  *blockchain.Blockchain
 	)
 
-	_, err = s.chainMakerServer.GetChainConf(tx.Header.ChainId)
+	_, err = s.chainMakerServer.GetChainConf(tx.Payload.ChainId)
 	if err != nil {
 		errCode = commonErr.ERR_CODE_GET_CHAIN_CONF
 		errMsg = s.getErrMsg(errCode, err)
@@ -109,7 +109,7 @@ func (s *ApiService) validate(tx *commonPb.Transaction) (errCode commonErr.ErrCo
 		return
 	}
 
-	bc, err = s.chainMakerServer.GetBlockchain(tx.Header.ChainId)
+	bc, err = s.chainMakerServer.GetBlockchain(tx.Payload.ChainId)
 	if err != nil {
 		errCode = commonErr.ERR_CODE_GET_BLOCKCHAIN
 		errMsg = s.getErrMsg(errCode, err)
@@ -117,10 +117,10 @@ func (s *ApiService) validate(tx *commonPb.Transaction) (errCode commonErr.ErrCo
 		return
 	}
 
-	if err = utils.VerifyTxWithoutPayload(tx, tx.Header.ChainId, bc.GetAccessControl()); err != nil {
+	if err = utils.VerifyTxWithoutPayload(tx, tx.Payload.ChainId, bc.GetAccessControl()); err != nil {
 		errCode = commonErr.ERR_CODE_TX_VERIFY_FAILED
-		errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Header.TxId,
-			hex.EncodeToString(tx.Header.Sender.MemberInfo))
+		errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Payload.TxId,
+			hex.EncodeToString(tx.Payload.Sender.MemberInfo))
 		s.log.Error(errMsg)
 		return
 	}
@@ -140,7 +140,7 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		resp    = &commonPb.TxResponse{}
 	)
 
-	if tx.Header.ChainId != SYSTEM_CHAIN {
+	if tx.Payload.ChainId != SYSTEM_CHAIN {
 		errCode, errMsg = s.validate(tx)
 		if errCode != commonErr.ERR_CODE_OK {
 			resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
@@ -149,7 +149,7 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		}
 	}
 
-	switch tx.Header.TxType {
+	switch tx.Payload.TxType {
 	case commonPb.TxType_QUERY_CONTRACT:
 		return s.dealQuery(tx, source)
 	case commonPb.TxType_INVOKE_CONTRACT:
@@ -170,13 +170,13 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		err     error
 		errMsg  string
 		errCode commonErr.ErrCode
-		payload commonPb.TransactPayload
+		payload commonPb.Payload
 		store   protocol.BlockchainStore
 		vmMgr   protocol.VmManager
 		resp    = &commonPb.TxResponse{}
 	)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 
 	if store, err = s.chainMakerServer.GetStore(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_STORE
@@ -221,9 +221,9 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		vmManager:        vmMgr,
 	}
 
-	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Header.TxType)
+	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Payload.TxType)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != commonPb.ContractResultCode_FAIL {
+		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
 		} else {
 			s.metricQueryCounter.WithLabelValues(chainId, "false").Inc()
@@ -232,7 +232,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
-			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
+			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Payload.TxType, txResult.Message)
 		s.log.Warn(errMsg)
 
 		resp.Code = txStatusCode
@@ -247,7 +247,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		return resp
 	}
 
-	if txResult.Code == commonPb.ContractResultCode_FAIL {
+	if txResult.Code == 1 {
 		resp.Code = commonPb.TxStatusCode_CONTRACT_FAIL
 		resp.Message = commonPb.TxStatusCode_CONTRACT_FAIL.String()
 		resp.ContractResult = txResult
@@ -266,11 +266,11 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		err     error
 		errMsg  string
 		errCode commonErr.ErrCode
-		payload commonPb.TransactPayload
+		payload commonPb.Payload
 		resp    = &commonPb.TxResponse{}
 	)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 
 	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
 		errCode = commonErr.ERR_CODE_SYSTEM_CONTRACT_PB_UNMARSHAL
@@ -303,14 +303,14 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 	)
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		if txResult.Code != commonPb.ContractResultCode_FAIL {
+		if txResult.Code != 1 {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
 		} else {
 			s.metricQueryCounter.WithLabelValues(chainId, "false").Inc()
 		}
 	}
 
-	if txResult.Code == commonPb.ContractResultCode_FAIL {
+	if txResult.Code == 1 {
 		resp.Code = commonPb.TxStatusCode_CONTRACT_FAIL
 		resp.Message = commonPb.TxStatusCode_CONTRACT_FAIL.String()
 		resp.ContractResult = txResult
@@ -353,13 +353,13 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 		return s.doSpvLogin(tx, resp)
 	}
 
-	err = s.chainMakerServer.AddTx(tx.Header.ChainId, tx, source)
+	err = s.chainMakerServer.AddTx(tx.Payload.ChainId, tx, source)
 
-	s.incInvokeCounter(tx.Header.ChainId, err)
+	s.incInvokeCounter(tx.Payload.ChainId, err)
 
 	if err != nil {
 		s.log.Warnf("Add tx failed, %s, chainId:%s, txId:%s",
-			err.Error(), tx.Header.ChainId, tx.Header.TxId)
+			err.Error(), tx.Payload.ChainId, tx.Payload.TxId)
 
 		errCode = commonErr.ERR_CODE_TX_ADD_FAILED
 		errMsg = s.getErrMsg(errCode, err)
@@ -370,7 +370,7 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 
 	}
 
-	s.log.Debugf("Add tx success, chainId:%s, txId:%s", tx.Header.ChainId, tx.Header.TxId)
+	s.log.Debugf("Add tx success, chainId:%s, txId:%s", tx.Payload.ChainId, tx.Payload.TxId)
 
 	errCode = commonErr.ERR_CODE_OK
 	resp.Code = commonPb.TxStatusCode_SUCCESS
@@ -396,7 +396,7 @@ func (s *ApiService) doSpvLogin(tx *commonPb.Transaction, resp *commonPb.TxRespo
 		store  protocol.BlockchainStore
 	)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 
 	if store, err = s.chainMakerServer.GetStore(chainId); err != nil {
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
@@ -406,7 +406,7 @@ func (s *ApiService) doSpvLogin(tx *commonPb.Transaction, resp *commonPb.TxRespo
 		return resp
 	}
 
-	exist, err := store.TxExists(tx.Header.TxId)
+	exist, err := store.TxExists(tx.Payload.TxId)
 	if err != nil {
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 		errMsg = fmt.Sprintf("%s", err.Error())

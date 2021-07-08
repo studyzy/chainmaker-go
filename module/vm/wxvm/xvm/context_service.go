@@ -244,7 +244,7 @@ func (c *ContextService) SetOutput(ctxId int64) int32 {
 	if err == nil {
 		context.ContractResult.Result = []byte(result)
 	}
-	if context.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+	if context.ContractResult.Code == 1 {
 		items := make([]*serialize.EasyCodecItem, 0)
 		context.resp = items
 		return protocol.ContractSdkSignalResultSuccess
@@ -253,7 +253,7 @@ func (c *ContextService) SetOutput(ctxId int64) int32 {
 	case 0:
 		context.ContractResult.Code = 0
 	default:
-		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
+		context.ContractResult.Code = 1
 	}
 	items := make([]*serialize.EasyCodecItem, 0)
 

@@ -221,7 +221,7 @@ func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
 	_, _ = file.WriteString("\n")
 
 	fmt.Printf("Received a transaction, chainId:%s, txId:%s\n",
-		tx.Header.ChainId, tx.Header.TxId)
+		tx.Payload.ChainId, tx.Payload.TxId)
 	return nil
 }
 

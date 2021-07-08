@@ -47,13 +47,13 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 
 	// 2. check existence in recorder
 	for i, tx := range batch9.Txs {
-		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.True(t, ok)
 		require.EqualValues(t, i, txIndex)
 		require.EqualValues(t, 9, batchId)
 	}
 	for i, tx := range batch10.Txs {
-		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.True(t, ok)
 		require.EqualValues(t, i, txIndex)
 		require.EqualValues(t, 10, batchId)
@@ -62,12 +62,12 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	// 3. remove batch from recorder and check existence
 	recorder.RemoveRecordWithBatch(&batch9)
 	for _, tx := range batch9.Txs {
-		batchId, _, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, _, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.False(t, ok)
 		require.EqualValues(t, -1, batchId)
 	}
 	for i, tx := range batch10.Txs {
-		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.True(t, ok)
 		require.EqualValues(t, i, txIndex)
 		require.EqualValues(t, 10, batchId)

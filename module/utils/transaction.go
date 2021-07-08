@@ -53,7 +53,7 @@ func CalcUnsignedTxRequestBytes(txReq *commonPb.TxRequest) ([]byte, error) {
 //	return completeTxBytes, nil
 //}
 
-// CalcTxHash calculate transaction hash, include tx.Header, tx.signature, tx.Payload, tx.Result
+// CalcTxHash calculate transaction hash, include tx.Payload, tx.signature, tx.Payload, tx.Result
 func CalcTxHash(hashType string, t *commonPb.Transaction) ([]byte, error) {
 	//txBytes, err := CalcUnsignedCompleteTxBytes(t)
 	txBytes, err := t.Marshal()

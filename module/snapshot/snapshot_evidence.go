@@ -132,7 +132,7 @@ func (s *SnapshotEvidence) apply(tx *commonPb.Transaction, txRWSet *commonPb.TxR
 	s.delegate.txRWSetTable = append(s.delegate.txRWSetTable, txRWSet)
 
 	// Add to tx result map
-	s.delegate.txResultMap[tx.Header.TxId] = txResult
+	s.delegate.txResultMap[tx.Payload.TxId] = txResult
 
 	// Add to transaction table
 	s.delegate.txTable = append(s.delegate.txTable, tx)

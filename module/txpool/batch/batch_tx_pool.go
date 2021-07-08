@@ -13,6 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
+	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
@@ -20,8 +22,6 @@ import (
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/txpool/poolconf"
-	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -316,7 +316,7 @@ func (p *BatchTxPool) generateTxsInfoFromBatch(batch *txpoolPb.TxBatch) (map[str
 	txsHeightInfo := make(map[string]int64)
 
 	for _, tx := range batch.Txs {
-		txsRet[tx.Header.TxId] = tx
+		txsRet[tx.Payload.TxId] = tx
 	}
 	return txsRet, txsHeightInfo
 }
@@ -341,7 +341,7 @@ func (p *BatchTxPool) TxExists(tx *commonPb.Transaction) bool {
 		p.log.Errorf("batch tx pool not started, start it first pls")
 		return false
 	}
-	_, _, exist := p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Header.TxId)
+	_, _, exist := p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Payload.TxId)
 	return exist
 }
 

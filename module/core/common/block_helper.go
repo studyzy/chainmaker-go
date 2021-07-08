@@ -8,18 +8,18 @@ package common
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -143,7 +143,7 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 	if len(txRWSetMap) < len(txBatch) {
 		// if tx not in txRWSetMap, tx should be put back to txpool
 		for _, tx := range txBatch {
-			if _, ok := txRWSetMap[tx.Header.TxId]; !ok {
+			if _, ok := txRWSetMap[tx.Payload.TxId]; !ok {
 				txsTimeout = append(txsTimeout, tx)
 			}
 		}
@@ -231,10 +231,10 @@ func FinalizeBlock(
 	txHashes := make([][]byte, txCount)
 	for i, tx := range block.Txs {
 		// finalize tx, put rwsethash into tx.Result
-		rwSet := txRWSetMap[tx.Header.TxId]
+		rwSet := txRWSetMap[tx.Payload.TxId]
 		if rwSet == nil {
 			rwSet = &commonpb.TxRWSet{
-				TxId:     tx.Header.TxId,
+				TxId:     tx.Payload.TxId,
 				TxReads:  nil,
 				TxWrites: nil,
 			}
@@ -248,12 +248,12 @@ func FinalizeBlock(
 		}
 		if tx.Result == nil {
 			// in case tx.Result is nil, avoid panic
-			e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
+			e := fmt.Errorf("tx(%s) result == nil", tx.Payload.TxId)
 			logger.Error(e.Error())
 			return e
 		}
 		tx.Result.RwSetHash = rwSetHash
-		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
+		// calculate complete tx hash, include tx.Payload, tx.Payload, tx.Result
 		txHash, err := utils.CalcTxHash(hashType, tx)
 		if err != nil {
 			return err
@@ -324,10 +324,10 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 	txSet := make(map[string]struct{})
 	exist := struct{}{}
 	for _, tx := range txs {
-		if tx == nil || tx.Header == nil {
+		if tx == nil || tx.Payload == nil {
 			return true
 		}
-		txSet[tx.Header.TxId] = exist
+		txSet[tx.Payload.TxId] = exist
 	}
 	// length of set < length of txs, means txs have duplicate tx
 	return len(txSet) < len(txs)
@@ -556,10 +556,10 @@ func (vb *VerifierBlock) ValidateBlock(
 	contractEventMap := make(map[string][]*commonpb.ContractEvent)
 	for _, tx := range block.Txs {
 		var events []*commonpb.ContractEvent
-		if result, ok := txResultMap[tx.Header.TxId]; ok {
+		if result, ok := txResultMap[tx.Payload.TxId]; ok {
 			events = result.ContractResult.ContractEvent
 		}
-		contractEventMap[tx.Header.TxId] = events
+		contractEventMap[tx.Payload.TxId] = events
 	}
 	// verify TxRoot
 	startRootsTick := utils.CurrentTimeMillisSeconds()
@@ -764,14 +764,14 @@ func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height in
 	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
 	keepTxs := make(map[string]struct{}, len(block.Txs))
 	for _, tx := range block.Txs {
-		keepTxs[tx.Header.TxId] = struct{}{}
+		keepTxs[tx.Payload.TxId] = struct{}{}
 	}
 	for _, b := range proposedBlocks {
 		if bytes.Equal(b.Header.BlockHash, block.Header.BlockHash) {
 			continue
 		}
 		for _, tx := range b.Txs {
-			if _, ok := keepTxs[tx.Header.TxId]; !ok {
+			if _, ok := keepTxs[tx.Payload.TxId]; !ok {
 				txRetry = append(txRetry, tx)
 			}
 		}

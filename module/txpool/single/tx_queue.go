@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 )
 
 type txValidateFunc func(tx *commonPb.Transaction, source protocol.TxSource) error
@@ -48,7 +48,7 @@ func (queue *txQueue) addTxsToCommonQueue(memTxs *mempoolTxs) {
 
 func (queue *txQueue) deleteTxsInPending(txIds []*commonPb.Transaction) {
 	for _, tx := range txIds {
-		queue.pendingCache.Delete(tx.Header.TxId)
+		queue.pendingCache.Delete(tx.Payload.TxId)
 	}
 }
 
@@ -106,10 +106,10 @@ func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, block
 }
 
 func (queue *txQueue) has(tx *commonPb.Transaction, checkPending bool) bool {
-	if queue.commonTxQueue.Has(tx.Header.TxId, checkPending) {
+	if queue.commonTxQueue.Has(tx.Payload.TxId, checkPending) {
 		return true
 	}
-	return queue.configTxQueue.Has(tx.Header.TxId, checkPending)
+	return queue.configTxQueue.Has(tx.Payload.TxId, checkPending)
 }
 
 func (queue *txQueue) status() string {

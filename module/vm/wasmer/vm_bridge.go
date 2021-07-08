@@ -13,11 +13,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/wasi"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	"chainmaker.org/chainmaker/common/serialize"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // #include <stdlib.h>
@@ -278,7 +277,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 	} else {
 		s.Sc.ContractResult.Message += "error message: " + msg
 	}
-	s.Sc.ContractResult.Code = commonPb.ContractResultCode_FAIL
+	s.Sc.ContractResult.Code = 1
 	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
 	return protocol.ContractSdkSignalResultFail
 }
