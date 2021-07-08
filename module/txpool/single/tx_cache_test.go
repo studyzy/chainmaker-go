@@ -27,18 +27,16 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 	//}
 
 	for i := 0; i < num; i++ {
-		payload := &commonPb.Payload{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-			Method:       "SetConfig",
-			Parameters:   nil,
-		}
+
+		contractName := commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()
+
 		if !isConfig {
-			payload.ContractName = "userContract1"
+			contractName = "userContract1"
 		}
-		data, _ := payload.Marshal()
-		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Header: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
-		p2pTxs.txs = append(p2pTxs.txs, &commonPb.Transaction{Header: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
-		internalTxs.txs = append(internalTxs.txs, &commonPb.Transaction{Header: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
+
+		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Payload: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType, Method: "SetConfig", ContractName: contractName}})
+		p2pTxs.txs = append(p2pTxs.txs, &commonPb.Transaction{Payload: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType, Method: "SetConfig", ContractName: contractName}})
+		internalTxs.txs = append(internalTxs.txs, &commonPb.Transaction{Payload: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType, Method: "SetConfig", ContractName: contractName}})
 	}
 	return
 }

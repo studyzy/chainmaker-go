@@ -369,7 +369,7 @@ func TestPoolImplConcurrencyInvoke(t *testing.T) {
 	// 2. Simulate the logic for generating blocks
 	fetchTimes := make([]int64, 0, 100)
 	go func() {
-		height := int64(100)
+		height := uint64(100)
 		fetchTicker := time.NewTicker(time.Millisecond * 100)
 		fetchTimer := time.NewTimer(2 * time.Minute)
 		defer func() {
