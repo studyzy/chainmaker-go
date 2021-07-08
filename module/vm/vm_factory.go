@@ -484,8 +484,8 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	contractId := contract.GetContractId()
 	contractResult := &commonPb.ContractResult{Code: 1}
-	txId := txContext.GetTx().Header.TxId
-	txType := txContext.GetTx().Header.TxType
+	txId := txContext.GetTx().Payload.TxId
+	txType := txContext.GetTx().Payload.TxType
 	runtimeType := contract.RuntimeType
 	var runtimeInstance RuntimeInstance
 	var err error
@@ -561,7 +561,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 	}
 
 	parameters[protocol.ContractTxIdParam] = txId
-	parameters[protocol.ContractBlockHeightParam] = strconv.FormatInt(txContext.GetBlockHeight(), 10)
+	parameters[protocol.ContractBlockHeightParam] = strconv.FormatUint(txContext.GetBlockHeight(), 10)
 
 	// calc the gas used by byte code
 	// gasUsed := uint64(GasPerByte * len(byteCode))
@@ -601,16 +601,17 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 
 func getFullCertMember(sender *acPb.SerializedMember, txContext protocol.TxSimContext) (*acPb.SerializedMember, commonPb.TxStatusCode) {
 	// If the certificate in the transaction is hash, the original certificate is retrieved
-	if !sender.IsFullCert {
+	if sender.MemberType == acPb.MemberType_CERT_HASH {
 		memberInfoHex := hex.EncodeToString(sender.MemberInfo)
-		if fullCertMemberInfo, err := txContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
+		var fullCertMemberInfo []byte
+		var err error
+		if fullCertMemberInfo, err = txContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
 			return nil, commonPb.TxStatusCode_GET_SENDER_CERT_FAILED
-		} else {
-			sender = &acPb.SerializedMember{
-				OrgId:      sender.OrgId,
-				MemberInfo: fullCertMemberInfo,
-				//IsFullCert: true,
-			}
+		}
+		sender = &acPb.SerializedMember{
+			OrgId:      sender.OrgId,
+			MemberInfo: fullCertMemberInfo,
+			MemberType: acPb.MemberType_CERT,
 		}
 	}
 	return sender, commonPb.TxStatusCode_SUCCESS

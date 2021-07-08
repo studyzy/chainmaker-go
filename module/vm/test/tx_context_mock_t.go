@@ -94,7 +94,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, pr
 		},
 	}
 
-	txContext := TxContextMockTest{
+	txContext := &TxContextMockTest{
 		lock:  &sync.Mutex{},
 		lock2: &sync.Mutex{},
 		vmManager: &vm.ManagerImpl{
@@ -124,7 +124,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, pr
 	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
 	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
-	return &contractId, &txContext, bytes
+	return &contractId, txContext, bytes
 }
 
 // test
@@ -280,21 +280,18 @@ func (s *TxContextMockTest) GetCurrentResult() []byte {
 
 func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Header: &commonPb.Payload{
+		Payload: &commonPb.Payload {
 			ChainId:        ChainIdTest,
-			Sender:         s.GetSender(),
 			TxType:         txType,
 			TxId:           "abcdef12345678",
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		RequestPayload:   nil,
-		RequestSignature: nil,
 		Result:           nil,
 	}
 }
 
-func (*TxContextMockTest) GetBlockHeight() int64 {
+func (*TxContextMockTest) GetBlockHeight() uint64 {
 	return 0
 }
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {
@@ -371,7 +368,7 @@ func (m mockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (m mockBlockchainStore) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	panic("implement me")
 }
 
@@ -455,7 +452,7 @@ func (m mockBlockchainStore) BlockExists(blockHash []byte) (bool, error) {
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) GetBlock(height int64) (*commonPb.Block, error) {
+func (m mockBlockchainStore) GetBlock(height uint64) (*commonPb.Block, error) {
 	panic("implement me")
 }
 
@@ -467,7 +464,7 @@ func (m mockBlockchainStore) GetBlockByTx(txId string) (*commonPb.Block, error) 
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) GetBlockWithRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (m mockBlockchainStore) GetBlockWithRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	panic("implement me")
 }
 
@@ -515,7 +512,7 @@ func (m mockBlockchainStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) 
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet, error) {
+func (m mockBlockchainStore) GetTxRWSetsByHeight(height uint64) ([]*commonPb.TxRWSet, error) {
 	panic("implement me")
 }
 
