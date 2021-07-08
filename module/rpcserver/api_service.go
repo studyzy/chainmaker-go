@@ -9,18 +9,18 @@ package rpcserver
 
 import (
 	"chainmaker.org/chainmaker-go/blockchain"
-	commonErr "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker-go/store/archive"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native"
+	commonErr "chainmaker.org/chainmaker/common/errors"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/store/archive"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker-go/vm/native"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -232,7 +232,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
 			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Header.TxType, txResult.Message)
-		s.log.Warn(errMsg)
+		s.log.Error(errMsg)
 
 		resp.Code = txStatusCode
 		if txResult.Message == archive.ArchivedBlockError.Error() {
