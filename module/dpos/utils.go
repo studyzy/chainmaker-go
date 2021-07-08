@@ -7,18 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
 
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker-go/vm/native"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -51,7 +51,7 @@ func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, seed []byte, outSo
 	seedInt := binary.LittleEndian.Uint64(seed)
 	rand.Seed(int64(seedInt)) // 设置种子
 	selectM0IdxMap := sliceToMap(rand.Perm(m0)[:n0])
-	for k, _ := range selectM0IdxMap {
+	for k := range selectM0IdxMap {
 		validators = append(validators, infos[k])
 	}
 	// 构建新的数组
@@ -115,10 +115,10 @@ func (s CandidateInfos) Less(i, j int) bool {
 }
 
 func GetLatestEpochInfo(store protocol.BlockchainStore) (*common.Epoch, error) {
-	val, err := store.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyCurrentEpoch))
+	val, err := store.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(dposmgr.KeyCurrentEpoch))
 	if err != nil {
 		return nil, fmt.Errorf("read contract: %s key: %s, error: %s",
-			commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), native.KeyCurrentEpoch, err)
+			commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), dposmgr.KeyCurrentEpoch, err)
 	}
 	epoch := commonpb.Epoch{}
 	if err = proto.Unmarshal(val, &epoch); err != nil {
@@ -133,7 +133,7 @@ func GetNodeIDsFromValidators(store protocol.BlockchainStore, validators []strin
 	}
 	nodeIDs := make([]string, 0, len(validators))
 	for _, validator := range validators {
-		nodeID, err := store.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), native.ToNodeIDKey(validator))
+		nodeID, err := store.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), dposmgr.ToNodeIDKey(validator))
 		if err != nil || len(nodeID) == 0 {
 			return nil, fmt.Errorf("read nodeID of the validator[%s] failed, reason: %s", validator, err)
 		}

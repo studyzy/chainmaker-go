@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -15,10 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/protocol/mock"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
-	"chainmaker.org/chainmaker-go/vm/native"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/protobuf/proto"
 
 	"github.com/golang/mock/gomock"
@@ -198,9 +198,9 @@ func TestGetNodeIDsFromValidators(t *testing.T) {
 
 	name := commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()
 	nodeIDs := make(map[string]string)
-	nodeIDs[name+string(native.ToNodeIDKey("val1"))] = "nodeId1"
-	nodeIDs[name+string(native.ToNodeIDKey("val2"))] = "nodeId2"
-	nodeIDs[name+string(native.ToNodeIDKey("val3"))] = "nodeId3"
+	nodeIDs[name+string(dposmgr.ToNodeIDKey("val1"))] = "nodeId1"
+	nodeIDs[name+string(dposmgr.ToNodeIDKey("val2"))] = "nodeId2"
+	nodeIDs[name+string(dposmgr.ToNodeIDKey("val3"))] = "nodeId3"
 
 	mockStore := mock.NewMockBlockchainStore(ctrl)
 	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {

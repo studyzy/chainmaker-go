@@ -141,7 +141,7 @@ func (c *ContextService) EmitEvent(ctxId int64) int32 {
 		ContractName:    context.ContractId.ContractName,
 		ContractVersion: context.ContractId.ContractVersion,
 		Topic:           topic,
-		TxId:            context.TxSimContext.GetTx().Header.TxId,
+		TxId:            context.TxSimContext.GetTx().Payload.TxId,
 		EventData:       eventData,
 	}
 	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
@@ -300,7 +300,7 @@ func (c *ContextService) LogMessage(ctxId int64) int32 {
 		context.err = fmt.Errorf("log message param[msg] is required:%d", c.ctxId)
 		return protocol.ContractSdkSignalResultFail
 	}
-	c.logger.Debugf("wxvm log>> [%s] %s", context.TxSimContext.GetTx().Header.TxId, msg)
+	c.logger.Debugf("wxvm log>> [%s] %s", context.TxSimContext.GetTx().Payload.TxId, msg)
 	msgItems := make([]*serialize.EasyCodecItem, 0)
 	context.resp = msgItems
 	return protocol.ContractSdkSignalResultSuccess

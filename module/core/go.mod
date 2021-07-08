@@ -12,8 +12,8 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf
-	chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115
+	chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/martian v2.1.0+incompatible
 	github.com/panjf2000/ants/v2 v2.4.3

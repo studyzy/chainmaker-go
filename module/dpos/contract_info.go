@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
-	"chainmaker.org/chainmaker-go/vm/native"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -45,7 +45,7 @@ func (impl *DPoSImpl) getNodeIDsFromValidators(epoch *common.Epoch) ([]string, e
 
 // getAllCandidateInfo get all candidates from ledger
 func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
-	prefix := native.ToValidatorPrefix()
+	prefix := dposmgr.ToValidatorPrefix()
 	iterRange := util.BytesPrefix(prefix)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
@@ -53,7 +53,7 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 		return nil, err
 	}
 	defer iter.Release()
-	minSelfDelegationBz, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(native.KeyMinSelfDelegation))
+	minSelfDelegationBz, err := impl.stateDB.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(dposmgr.KeyMinSelfDelegation))
 	if err != nil {
 		impl.log.Errorf("get selfMinDelegation from contract %s failed, reason: %s", commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), err)
 		return nil, err
@@ -115,12 +115,12 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet
 		TxWrites: []*commonpb.TxWrite{
 			{
 				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-				Key:          []byte(native.KeyCurrentEpoch),
+				Key:          []byte(dposmgr.KeyCurrentEpoch),
 				Value:        bz,
 			},
 			{
 				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-				Key:          native.ToEpochKey(fmt.Sprintf("%d", epoch.EpochID)),
+				Key:          dposmgr.ToEpochKey(fmt.Sprintf("%d", epoch.EpochID)),
 				Value:        bz,
 			},
 		},
@@ -148,7 +148,7 @@ func (impl *DPoSImpl) completeUnbounding(epoch *commonpb.Epoch,
 }
 
 func (impl *DPoSImpl) getUnboundingEntries(epoch *common.Epoch) ([]*commonpb.UnbondingDelegation, error) {
-	prefix := native.ToUnbondingDelegationPrefix(epoch.EpochID)
+	prefix := dposmgr.ToUnbondingDelegationPrefix(epoch.EpochID)
 	iterRange := util.BytesPrefix(prefix)
 	iter, err := impl.stateDB.SelectObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
@@ -186,7 +186,7 @@ func (impl *DPoSImpl) createUnboundingRwSet(undelegations []*commonpb.UnbondingD
 	var (
 		err               error
 		balances          = make(map[string]*big.Int, len(undelegations))
-		stakeContractAddr = native.StakeContractAddr()
+		stakeContractAddr = dposmgr.StakeContractAddr()
 	)
 	for _, undelegation := range undelegations {
 		for _, entry := range undelegation.Entries {
@@ -231,7 +231,7 @@ func (impl *DPoSImpl) addBalanceRwSet(addr string, balance *big.Int, addAmount s
 	after := balance.Add(add, balance)
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		Key:          []byte(native.BalanceKey(addr)),
+		Key:          []byte(dposmgr.BalanceKey(addr)),
 		Value:        []byte(after.String()),
 	}, after, nil
 }
@@ -249,13 +249,13 @@ func (impl *DPoSImpl) subBalanceRwSet(addr string, before *big.Int, amount strin
 	after := before.Sub(before, sub)
 	return &commonpb.TxWrite{
 		ContractName: commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		Key:          []byte(native.BalanceKey(addr)),
+		Key:          []byte(dposmgr.BalanceKey(addr)),
 		Value:        []byte(after.String()),
 	}, after, nil
 }
 
 func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {
-	key := []byte(native.BalanceKey(addr))
+	key := []byte(dposmgr.BalanceKey(addr))
 	val, err := impl.getState(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), key, block, blockTxRwSet)
 	if err != nil {
 		return nil, err

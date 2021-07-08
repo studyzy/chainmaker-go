@@ -7,13 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"chainmaker.org/chainmaker/pb-go/common"
-
-	"chainmaker.org/chainmaker-go/vm/native"
 )
 
 func TestDPoSImpl_GetState(t *testing.T) {
@@ -21,15 +20,15 @@ func TestDPoSImpl_GetState(t *testing.T) {
 	defer fn()
 
 	contractName := "test_contract"
-	key1 := []byte(native.BalanceKey("addr1"))
-	key2 := []byte(native.BalanceKey("addr2"))
-	key3 := []byte(native.BalanceKey("addr3"))
+	key1 := []byte(dposmgr.BalanceKey("addr1"))
+	key2 := []byte(dposmgr.BalanceKey("addr2"))
+	key3 := []byte(dposmgr.BalanceKey("addr3"))
 
 	blk := &common.Block{
 		Txs: []*common.Transaction{
-			{Header: &common.TxHeader{TxId: "tx1"}},
-			{Header: &common.TxHeader{TxId: "tx2"}},
-			{Header: &common.TxHeader{TxId: "tx3"}},
+			{Payload: &common.Payload{TxId: "tx1"}},
+			{Payload: &common.Payload{TxId: "tx2"}},
+			{Payload: &common.Payload{TxId: "tx3"}},
 		},
 	}
 	blkRwSets := make(map[string]*common.TxRWSet, 3)

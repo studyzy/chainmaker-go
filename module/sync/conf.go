@@ -21,8 +21,8 @@ type BlockSyncServerConf struct {
 	nodeStatusTick    time.Duration // The ticker to request node status from other peers, unit nanosecond
 	dataDetectionTick time.Duration // The ticker to check data in processor
 
-	blockPoolSize        int64 // Maximum number of blocks to be processed in scheduler
-	batchSizeFromOneNode int64 // The number of blocks received from each node in a request
+	blockPoolSize        uint64 // Maximum number of blocks to be processed in scheduler
+	batchSizeFromOneNode uint64 // The number of blocks received from each node in a request
 
 }
 
@@ -40,7 +40,7 @@ func NewBlockSyncServerConf() *BlockSyncServerConf {
 	}
 }
 
-func (c *BlockSyncServerConf) SetBlockPoolSize(n int64) *BlockSyncServerConf {
+func (c *BlockSyncServerConf) SetBlockPoolSize(n uint64) *BlockSyncServerConf {
 	c.blockPoolSize = n
 	return c
 }
@@ -48,7 +48,7 @@ func (c *BlockSyncServerConf) SetWaitTimeOfBlockRequestMsg(n int64) *BlockSyncSe
 	c.timeOut = time.Duration(n) * time.Second
 	return c
 }
-func (c *BlockSyncServerConf) SetBatchSizeFromOneNode(n int64) *BlockSyncServerConf {
+func (c *BlockSyncServerConf) SetBatchSizeFromOneNode(n uint64) *BlockSyncServerConf {
 	c.batchSizeFromOneNode = n
 	return c
 }

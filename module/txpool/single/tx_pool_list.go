@@ -8,6 +8,7 @@ package single
 
 import (
 	"fmt"
+	"math"
 	"sync"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -57,9 +58,9 @@ func (l *txList) Put(txs []*commonPb.Transaction, source protocol.TxSource, vali
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if utils.IsConfigTx(txs[0]) {
-			go l.metricTxPoolSize.WithLabelValues(txs[0].Header.ChainId, "config").Set(float64(l.queue.Size()))
+			go l.metricTxPoolSize.WithLabelValues(txs[0].Payload.ChainId, "config").Set(float64(l.queue.Size()))
 		} else {
-			go l.metricTxPoolSize.WithLabelValues(txs[0].Header.ChainId, "normal").Set(float64(l.queue.Size()))
+			go l.metricTxPoolSize.WithLabelValues(txs[0].Payload.ChainId, "normal").Set(float64(l.queue.Size()))
 		}
 	}
 }
@@ -93,7 +94,7 @@ func (l *txList) Delete(txIds []string) {
 }
 
 // Fetch Gets a list of stored transactions
-func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error, blockHeight int64) ([]*commonPb.Transaction, []string) {
+func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error, blockHeight uint64) ([]*commonPb.Transaction, []string) {
 	queueLen := l.queue.Size()
 	if queueLen < count {
 		count = queueLen
@@ -130,7 +131,7 @@ func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
 	return txs, txIds
 }
 
-func (l *txList) getTxsFromQueue(count int, blockHeight int64, validate func(tx *commonPb.Transaction) error) (
+func (l *txList) getTxsFromQueue(count int, blockHeight uint64, validate func(tx *commonPb.Transaction) error) (
 	cacheKVs []*valInPendingCache, txs []*commonPb.Transaction, txIds []string, errKeys []string) {
 
 	txs = make([]*commonPb.Transaction, 0, count)
@@ -189,7 +190,7 @@ func (l *txList) Has(txId string, checkPending bool) (exist bool) {
 // inBlockHeight: return -1 when the transaction does not exist,
 // return 0 when the transaction is in the queue to wait to be generate block,
 // return positive integer, indicating that the tx is in an unchained block.
-func (l *txList) Get(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
+func (l *txList) Get(txId string) (tx *commonPb.Transaction, inBlockHeight uint64) {
 	if pendingVal, ok := l.pendingCache.Load(txId); ok && pendingVal != nil {
 		l.log.Debugw(fmt.Sprintf("txList Get Transaction by txId = %s in pendingCache", txId), "exist", true)
 		val := pendingVal.(*valInPendingCache)
@@ -203,10 +204,10 @@ func (l *txList) Get(txId string) (tx *commonPb.Transaction, inBlockHeight int64
 		return val.(*commonPb.Transaction), 0
 	}
 	l.log.Debugw(fmt.Sprintf("txList Get Transaction by txId = %s", txId), "exist", false)
-	return nil, -1
+	return nil, math.MaxUint64
 }
 
-func (l *txList) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
+func (l *txList) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight uint64) {
 	l.rwLock.Lock()
 	defer l.rwLock.Unlock()
 	for _, tx := range txs {
