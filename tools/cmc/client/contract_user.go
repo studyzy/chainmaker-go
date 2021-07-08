@@ -64,7 +64,7 @@ func createUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
-		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -91,7 +91,7 @@ func invokeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagSendTimes, flagEnableCertHash,
-		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -112,8 +112,8 @@ func invokeContractTimesCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagSendTimes,
-		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagClientKeyFilePaths,
-		flagClientCrtFilePaths, flagEnableCertHash,
+		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagEnableCertHash,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -135,8 +135,8 @@ func getUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagSendTimes,
-		flagContractName, flagMethod, flagParams, flagTimeout, flagClientCrtFilePaths,
-		flagClientKeyFilePaths, flagEnableCertHash,
+		flagContractName, flagMethod, flagParams, flagTimeout, flagUserTlsCrtFilePath,
+		flagUserTlsKeyFilePath, flagEnableCertHash,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -158,7 +158,7 @@ func upgradeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
-		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -185,7 +185,7 @@ func freezeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -209,7 +209,7 @@ func unfreezeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -233,7 +233,7 @@ func revokeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -264,7 +264,7 @@ func createUserContract() error {
 		}
 	}
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -394,7 +394,7 @@ func invokeUserContract() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -417,7 +417,7 @@ func invokeContractTimes() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -441,7 +441,7 @@ func getUserContract() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -497,7 +497,7 @@ func upgradeUserContract() error {
 		}
 	}
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -570,7 +570,7 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		}
 	}
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
