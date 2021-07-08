@@ -26,10 +26,95 @@ type BlockWithSerializedInfo struct {
 	ContractEvents           []*commonPb.ContractEvent
 	SerializedContractEvents [][]byte
 }
+type blockWithSerializedInfo2 struct {
+	Block              *commonPb.Block
+	TxRWSets           []*commonPb.TxRWSet
+	meta               *storePb.SerializedBlock //Block without Txs
+	serializedMeta     []byte
+	serializedTxs      [][]byte
+	serializedTxRWSets [][]byte
+}
+
+func (b *blockWithSerializedInfo2) GetSerializedBlock() *storePb.SerializedBlock {
+	if b.meta != nil {
+		return b.meta
+	}
+	block := b.Block
+	meta := &storePb.SerializedBlock{
+		Header:         block.Header,
+		Dag:            block.Dag,
+		TxIds:          make([]string, 0, len(block.Txs)),
+		AdditionalData: block.AdditionalData,
+	}
+	for _, tx := range block.Txs {
+		meta.TxIds = append(meta.TxIds, tx.Header.TxId)
+	}
+	b.meta = meta
+	return meta
+}
+func (b *blockWithSerializedInfo2) GetSerializedMeta() []byte {
+	if len(b.serializedMeta) > 0 {
+		return b.serializedMeta
+	}
+	b.meta = b.GetSerializedBlock()
+	b.serializedMeta, _ = b.meta.Marshal()
+	return b.serializedMeta
+}
+func (b *blockWithSerializedInfo2) GetSerializedTxs() [][]byte {
+	if len(b.serializedTxs) > 0 {
+		return b.serializedTxs
+	}
+	b.serializedTxs = [][]byte{}
+	for _, tx := range b.Block.Txs {
+		txData, _ := tx.Marshal()
+		b.serializedTxs = append(b.serializedTxs, txData)
+	}
+	return b.serializedTxs
+}
+func (b *blockWithSerializedInfo2) GetSerializedTxRWSets() [][]byte {
+	if len(b.serializedTxRWSets) > 0 {
+		return b.serializedTxRWSets
+	}
+	b.serializedTxRWSets = [][]byte{}
+	for _, rwset := range b.TxRWSets {
+		txData, _ := rwset.Marshal()
+		b.serializedTxRWSets = append(b.serializedTxRWSets, txData)
+	}
+	return b.serializedTxRWSets
+}
 
 // SerializeBlock serialized a BlockWithRWSet and return serialized data
 // which combined as a BlockWithSerializedInfo
 func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithSerializedInfo, error) {
+	data, info, err := serializeBlockParallel(blockWithRWSet)
+	//if err!=nil{
+	//	data,info,err=serializeBlockSequence(blockWithRWSet)
+	//}
+	return data, info, err
+}
+
+//串行序列化
+//func serializeBlockSequence(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithSerializedInfo, error) {
+//	info2 := &blockWithSerializedInfo2{}
+//	info2.Block = blockWithRWSet.Block
+//	info2.TxRWSets = blockWithRWSet.TxRWSets
+//	data, err := blockWithRWSet.Marshal()
+//	info := &BlockWithSerializedInfo{
+//		Block:                    info2.Block,
+//		Meta:                     info2.GetSerializedBlock(),
+//		SerializedMeta:           info2.GetSerializedMeta(),
+//		Txs:                      info2.Block.Txs,
+//		SerializedTxs:            info2.GetSerializedTxs(),
+//		TxRWSets:                 info2.TxRWSets,
+//		SerializedTxRWSets:       info2.GetSerializedTxRWSets(),
+//		ContractEvents:           nil,
+//		SerializedContractEvents: nil,
+//	}
+//
+//	return data, info, err
+//}
+//并行序列化
+func serializeBlockParallel(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithSerializedInfo, error) {
 	buf := proto.NewBuffer(nil)
 	block := blockWithRWSet.Block
 	txRWSets := blockWithRWSet.TxRWSets
@@ -73,6 +158,16 @@ func SerializeBlock(blockWithRWSet *storePb.BlockWithRWSet) ([]byte, *BlockWithS
 
 // DeserializeBlock returns a deserialized block for given serialized bytes
 func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
+	b, err := deserializeBlockParallel(serializedBlock)
+	if err != nil {
+		b, err = deserializeBlockSequence(serializedBlock)
+	}
+	return b, err
+}
+
+//并行反序列化
+func deserializeBlockParallel(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
+
 	info := &BlockWithSerializedInfo{}
 	buf := proto.NewBuffer(serializedBlock)
 	var err error
@@ -99,6 +194,17 @@ func DeserializeBlock(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
 		TxRWSets:       info.TxRWSets,
 		ContractEvents: info.ContractEvents,
 	}
+	return blockWithRWSet, nil
+}
+func deserializeBlockSequence(serializedBlock []byte) (*storePb.BlockWithRWSet, error) {
+	blockWithRWSet := &storePb.BlockWithRWSet{}
+	err := blockWithRWSet.Unmarshal(serializedBlock)
+	if err != nil {
+		return nil, err
+	}
+	//info := &BlockWithSerializedInfo{}
+	//info.Block = blockWithRWSet.Block
+	//info.TxRWSets = blockWithRWSet.TxRWSets
 	return blockWithRWSet, nil
 }
 
