@@ -9,11 +9,19 @@ package client
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 
-	sdk "chainmaker.org/chainmaker-sdk-go"
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"chainmaker.org/chainmaker-go/common/crypto"
+	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	sdk "chainmaker.org/chainmaker-sdk-go"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/accesscontrol"
+	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
 )
 
 var (
@@ -40,6 +48,7 @@ var (
 	withRWSet      bool
 	txId           string
 
+	adminOrgIds        string
 	adminKeyFilePaths  string
 	adminCrtFilePaths  string
 	clientKeyFilePaths string
@@ -49,6 +58,7 @@ var (
 	nodeOrgId      string
 	nodeIdOld      string
 	nodeId         string
+	nodeIds        string
 	trustRootOrgId string
 	trustRootPath  string
 	certFilePaths  string
@@ -73,6 +83,7 @@ const (
 	flagRuntimeType            = "runtime-type"
 	flagChainId                = "chain-id"
 	flagSendTimes              = "send-times"
+	flagAdminOrgIds            = "admin-org-ids"
 	flagAdminKeyFilePaths      = "admin-key-file-paths"
 	flagAdminCrtFilePaths      = "admin-crt-file-paths"
 	flagClientKeyFilePaths     = "client-key-file-paths"
@@ -82,6 +93,7 @@ const (
 	flagNodeOrgId              = "node-org-id"
 	flagNodeIdOld              = "node-id-old"
 	flagNodeId                 = "node-id"
+	flagNodeIds                = "node-ids"
 	flagTrustRootOrgId         = "trust-root-org-id"
 	flagTrustRootCrtPath       = "trust-root-path"
 	flagCertFilePaths          = "cert-file-paths"
@@ -138,6 +150,7 @@ func init() {
 	//    - 使用逗号','分割
 	//    - 列表中的key与crt需一一对应
 	//    - 如果只有一对，将采用单签模式；如果有多对，将采用多签模式，第一对用于发起多签请求，其余的用于多签投票
+	flags.StringVar(&adminOrgIds, flagAdminOrgIds, "", "specify admin org IDs, use ',' to separate")
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
 	flags.StringVar(&clientKeyFilePaths, flagClientKeyFilePaths, "", "specify client key file paths, use ',' to separate")
@@ -149,6 +162,7 @@ func init() {
 	flags.StringVar(&nodeOrgId, flagNodeOrgId, "", "specify node org id")
 	flags.StringVar(&nodeIdOld, flagNodeIdOld, "", "specify old node id")
 	flags.StringVar(&nodeId, flagNodeId, "", "specify node id(which will be added or update to")
+	flags.StringVar(&nodeIds, flagNodeIds, "", "specify node ids(which will be added or update to")
 
 	flags.StringVar(&trustRootOrgId, flagTrustRootOrgId, "", "specify the ca org id")
 	flags.StringVar(&trustRootPath, flagTrustRootCrtPath, "", "specify the ca file path")
@@ -178,7 +192,7 @@ func createClientWithConfig() (*sdk.ChainClient, error) {
 	if enableCertHash {
 		err = chainClient.EnableCertHash()
 		if err != nil {
-			log.Fatal(err)
+			return chainClient, err
 		}
 	}
 
@@ -236,4 +250,82 @@ func getChainMakerServerVersion() error {
 	}
 	fmt.Printf("current chainmaker server version: %s \n", version)
 	return nil
+}
+
+func signChainConfigPayload(payloadBytes, userCrtBytes []byte, privateKey crypto.PrivateKey, userCrt *bcx509.Certificate, orgId string) ([]byte, error) {
+	payload := &common.SystemContractPayload{}
+	if err := proto.Unmarshal(payloadBytes, payload); err != nil {
+		return nil, fmt.Errorf("unmarshal config update payload failed, %s", err)
+	}
+
+	signBytes, err := signTx(privateKey, userCrt, payloadBytes)
+	if err != nil {
+		return nil, fmt.Errorf("SignPayload failed, %s", err)
+	}
+
+	sender := &accesscontrol.SerializedMember{
+		OrgId:      orgId,
+		MemberInfo: userCrtBytes,
+		IsFullCert: true,
+	}
+
+	entry := &common.EndorsementEntry{
+		Signer:    sender,
+		Signature: signBytes,
+	}
+
+	payload.Endorsement = []*common.EndorsementEntry{
+		entry,
+	}
+
+	signedPayloadBytes, err := proto.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("marshal config update sigend payload failed, %s", err)
+	}
+
+	return signedPayloadBytes, nil
+}
+
+func signTx(privateKey crypto.PrivateKey, cert *bcx509.Certificate, msg []byte) ([]byte, error) {
+	var opts crypto.SignOpts
+	hashalgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+	if err != nil {
+		return nil, fmt.Errorf("invalid algorithm: %v", err)
+	}
+
+	opts.Hash = hashalgo
+	opts.UID = crypto.CRYPTO_DEFAULT_UID
+
+	return privateKey.SignWithOpts(msg, &opts)
+}
+
+func dealUserCrt(userCrtFilePath string) (userCrtBytes []byte, userCrt *bcx509.Certificate, err error) {
+
+	// 读取用户证书
+	userCrtBytes, err = ioutil.ReadFile(userCrtFilePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read user crt file failed, %s", err)
+	}
+
+	// 将证书转换为证书对象
+	userCrt, err = sdk.ParseCert(userCrtBytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ParseCert failed, %s", err)
+	}
+	return
+}
+
+func dealUserKey(userKeyFilePath string) (userKeyBytes []byte, privateKey crypto.PrivateKey, err error) {
+
+	// 从私钥文件读取用户私钥，转换为privateKey对象
+	userKeyBytes, err = ioutil.ReadFile(userKeyFilePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read user key file failed, %s", err)
+	}
+
+	privateKey, err = asym.PrivateKeyFromPEM(userKeyBytes, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse user key file to privateKey obj failed, %s", err)
+	}
+	return
 }
