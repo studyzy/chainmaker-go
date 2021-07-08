@@ -103,8 +103,8 @@ func (c *ContractStorage) GetCodeHash(address *evmutils.Int) (codeHase *evmutils
 
 func (c *ContractStorage) GetBlockHash(block *evmutils.Int) (*evmutils.Int, error) {
 	currentHight := c.Ctx.GetBlockHeight() - 1
-	high := evmutils.MinI(currentHight, block.Int64())
-	Block, err := c.Ctx.GetBlockchainStore().GetBlock(high)
+	high := evmutils.MinI(int64(currentHight), block.Int64())
+	Block, err := c.Ctx.GetBlockchainStore().GetBlock(uint64(high))
 	if err != nil {
 		return evmutils.New(0), err
 	}

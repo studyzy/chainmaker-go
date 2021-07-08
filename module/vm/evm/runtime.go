@@ -35,7 +35,7 @@ type RuntimeInstance struct {
 // Invoke contract by call vm, implement protocol.RuntimeInstance
 func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
 	txSimContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
-	txId := txSimContext.GetTx().GetHeader().TxId
+	txId := txSimContext.GetTx().Payload.TxId
 
 	// contract response
 	contractResult = &commonPb.ContractResult{
@@ -130,7 +130,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 			Block: environment.Block{
 				Coinbase:   creatorAddress, //proposer ski
 				Timestamp:  evmutils.New(lastBlock.Header.BlockTimestamp),
-				Number:     evmutils.New(lastBlock.Header.BlockHeight), // height
+				Number:     evmutils.New(int64(lastBlock.Header.BlockHeight)), // height
 				Difficulty: evmutils.New(0),
 				GasLimit:   evmutils.New(protocol.GasLimit),
 			},
@@ -153,7 +153,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	}
 
 	contractResult.Code = 0
-	contractResult.GasUsed = int64(gasLeft - result.GasLeft)
+	contractResult.GasUsed = gasLeft - result.GasLeft
 	contractResult.Result = result.ResultData
 	contractResult.ContractEvent = r.ContractEvent
 	return contractResult
@@ -163,12 +163,12 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	if result.ExitOpCode == opcodes.REVERT {
 		err = fmt.Errorf("revert instruction was encountered during execution")
 		r.Log.Errorf("revert instruction encountered in contract [%s] execution，tx: [%s], error: [%s]",
-			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId, err.Error())
+			r.ContractId.ContractName, r.TxSimContext.GetTx().Payload.TxId, err.Error())
 		panic(err)
 	}
 	if err != nil {
 		r.Log.Errorf("error encountered in contract [%s] execution，tx: [%s], error: [%s]",
-			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId, err.Error())
+			r.ContractId.ContractName, r.TxSimContext.GetTx().Payload.TxId, err.Error())
 		panic(err)
 	}
 	//emit  contract event
@@ -190,7 +190,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 			panic(err)
 		}
 		r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
-			r.ContractId.ContractName, r.TxSimContext.GetTx().Header.TxId)
+			r.ContractId.ContractName, r.TxSimContext.GetTx().Payload.TxId)
 	}
 	// save address -> contractName,version
 	if r.Method == protocol.ContractInitMethod || r.Method == protocol.ContractUpgradeMethod {
@@ -241,7 +241,7 @@ func (r *RuntimeInstance) emitContractEvent(result evm_go.ExecuteResult) error {
 				return fmt.Errorf("too many event data")
 			}
 			contractEvent := &commonPb.ContractEvent{
-				TxId:            r.TxSimContext.GetTx().Header.TxId,
+				TxId:            r.TxSimContext.GetTx().Payload.TxId,
 				ContractName:    r.ContractId.ContractName,
 				ContractVersion: r.ContractId.ContractVersion,
 			}

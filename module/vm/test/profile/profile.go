@@ -18,10 +18,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -83,7 +83,7 @@ func startPerf() {
 	}
 
 	finishNum := int64(0)
-	var gas int64
+	var gas uint64
 	start := time.Now().UnixNano() / 1e6
 	for i := int64(0); i < totalCallTimes; {
 		var createNum int64
