@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 const (
@@ -165,7 +167,7 @@ func configConsensusNodeOrg(op int) error {
 	if err != nil {
 		return err
 	}
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return err
 	}

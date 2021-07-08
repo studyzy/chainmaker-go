@@ -12,9 +12,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
-	"github.com/spf13/cobra"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
@@ -297,7 +299,7 @@ func createUserContract() error {
 		//	return fmt.Errorf("admin0 SendMultiSignReq failed, %s", err.Error())
 		//}
 		//
-		//err = checkProposalRequestResp(resp, true)
+		//err = util.CheckProposalRequestResp(resp, true)
 		//if err != nil {
 		//	return fmt.Errorf("admin0 checkProposalRequestResp failed, %s", err.Error())
 		//}
@@ -319,7 +321,7 @@ func createUserContract() error {
 		//		return fmt.Errorf("admin%d SendMultiSignVote failed, %s", i, err.Error())
 		//	}
 		//
-		//	err = checkProposalRequestResp(resp, true)
+		//	err = util.CheckProposalRequestResp(resp, true)
 		//	if err != nil {
 		//		return fmt.Errorf("admin%d checkProposalRequestResp failed, %s", i, err.Error())
 		//	}
@@ -350,7 +352,7 @@ func createUserContract() error {
 		//	return fmt.Errorf("SendContractManageRequest failed, %s", err.Error())
 		//}
 		//
-		//err = checkProposalRequestResp(resp, true)
+		//err = util.CheckProposalRequestResp(resp, true)
 		//if err != nil {
 		//	return fmt.Errorf("checkProposalRequestResp failed, %s", err.Error())
 		//}
@@ -375,7 +377,7 @@ func createUserContract() error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}
@@ -537,7 +539,7 @@ func upgradeUserContract() error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}
@@ -611,7 +613,7 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}

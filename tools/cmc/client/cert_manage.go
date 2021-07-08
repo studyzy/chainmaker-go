@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 func certManageCMD() *cobra.Command {
@@ -146,7 +148,7 @@ func freezeOrUnfreezeCert(which int) error {
 	if err != nil {
 		return fmt.Errorf("send cert manage request failed, %s", err.Error())
 	}
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf("check proposal request resp failed, %s", err.Error())
 	}
@@ -181,7 +183,7 @@ func revokeCert() error {
 	if err != nil {
 		return fmt.Errorf("send cert manage request failed, %s", err.Error())
 	}
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf("check proposal request resp failed, %s", err.Error())
 	}

@@ -24,7 +24,7 @@ func newQueryTxOnChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "")
 			if err != nil {
 				return err
 			}
