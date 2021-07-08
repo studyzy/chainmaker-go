@@ -15,6 +15,7 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -142,16 +143,13 @@ func (m mockMemCache) Del(contractName string, key []byte) error {
 
 func (m mockMemCache) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Header: &commonPb.Payload{
-			ChainId:        "chain1",
-			Sender:         nil,
-			TxType:         0,
-			TxId:           "",
-			Timestamp:      0,
+		Payload: &commonPb.Payload {
+			ChainId: "chain1",
+			TxType: commonPb.TxType_INVOKE_CONTRACT,
+			TxId: "",
+			Timestamp: time.Now().Unix(),
 			ExpirationTime: 0,
 		},
-		RequestPayload:   nil,
-		RequestSignature: nil,
 		Result:           nil,
 	}
 }
