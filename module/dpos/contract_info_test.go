@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"fmt"
 	"math/big"
 	"os"
@@ -14,9 +15,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/store"
-	"chainmaker.org/chainmaker-go/vm/native"
+	"chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
@@ -32,7 +32,7 @@ func initTestImpl(t *testing.T) (*DPoSImpl, func()) {
 }
 
 func TestGetStakeAddr(t *testing.T) {
-	fmt.Println(native.StakeContractAddr())
+	fmt.Println(dposmgr.StakeContractAddr())
 }
 
 func TestDPoSImpl_addBalanceRwSet(t *testing.T) {
@@ -56,9 +56,9 @@ func TestDPoSImpl_addBalanceRwSet(t *testing.T) {
 	// 3. testAddr have balance in the blockChain and block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), Key: []byte(native.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
-	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Header: &common.TxHeader{TxId: "tx1"}}}}, blockRwSet)
+	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
 	rwSet, _, err = impl.addBalanceRwSet(testAddr, balance, "10000")
 	require.NoError(t, err)
@@ -85,9 +85,9 @@ func TestDPoSImpl_SubBalanceRwSet(t *testing.T) {
 	// 3. sub 1000 from block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), Key: []byte(native.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
-	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Header: &common.TxHeader{TxId: "tx1"}}}}, blockRwSet)
+	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
 	rwSet, _, err = impl.subBalanceRwSet(testAddr, balance, "1000")
 	require.NoError(t, err)
@@ -249,7 +249,7 @@ func generateBlockWithStakeConfig() (*common.Block, []*common.TxRWSet) {
 		blk = &common.Block{
 			Header: &common.BlockHeader{ChainId: "test-chain", BlockHeight: 0},
 			Txs: []*common.Transaction{
-				{Header: &common.TxHeader{TxId: "config-tx"}},
+				{Payload: &common.Payload{TxId: "config-tx"}},
 			},
 		}
 		rwSet = make([]*common.TxRWSet, 0, 1)
@@ -258,14 +258,14 @@ func generateBlockWithStakeConfig() (*common.Block, []*common.TxRWSet) {
 		TxWrites: []*common.TxWrite{
 			{
 				ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-				Key:          []byte(native.KeyMinSelfDelegation), Value: []byte(testSelfMinDelegation),
+				Key:          []byte(dposmgr.KeyMinSelfDelegation), Value: []byte(testSelfMinDelegation),
 			},
 		},
 	})
 	return blk, rwSet
 }
 
-func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight int64) (*common.Block, []*common.TxRWSet) {
+func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight uint64) (*common.Block, []*common.TxRWSet) {
 	var (
 		blk = &common.Block{
 			Header: &common.BlockHeader{ChainId: "test-chain", BlockHeight: blockHeight},
@@ -276,7 +276,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight i
 	for i := 0; i < txNum; i++ {
 		txId := fmt.Sprintf("txId-%d", i+1)
 		blk.Txs = append(blk.Txs, &common.Transaction{
-			Header: &common.TxHeader{TxId: txId},
+			Payload: &common.Payload{TxId: txId},
 		})
 
 		valAddr := fmt.Sprintf("validatorAddr-%d-%d", base, i+1)
@@ -292,7 +292,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight i
 			TxWrites: []*common.TxWrite{
 				{
 					ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-					Key:          native.ToValidatorKey(valAddr), Value: bz,
+					Key:          dposmgr.ToValidatorKey(valAddr), Value: bz,
 				},
 			},
 		})
@@ -300,7 +300,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight i
 	return blk, rwSet
 }
 
-func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight int64, completeEpoch uint64) (*common.Block, []*common.TxRWSet) {
+func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, completeEpoch uint64) (*common.Block, []*common.TxRWSet) {
 	var (
 		blk = &common.Block{
 			Header: &common.BlockHeader{ChainId: "test-chain", BlockHeight: blockHeight},
@@ -311,7 +311,7 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight int64, c
 	for i := 0; i < txNum; i++ {
 		txId := fmt.Sprintf("txId-%d", i+1)
 		blk.Txs = append(blk.Txs, &common.Transaction{
-			Header: &common.TxHeader{TxId: txId},
+			Payload: &common.Payload{TxId: txId},
 		})
 
 		delAddr := fmt.Sprintf("delegatorAddr-%d-%d", base, i+1)
@@ -330,7 +330,7 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight int64, c
 			TxWrites: []*common.TxWrite{
 				{
 					ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-					Key:          native.ToUnbondingDelegationKey(completeEpoch, delAddr, valAddr), Value: bz,
+					Key:          dposmgr.ToUnbondingDelegationKey(completeEpoch, delAddr, valAddr), Value: bz,
 				},
 			},
 		})
