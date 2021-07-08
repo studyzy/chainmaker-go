@@ -190,7 +190,7 @@ func (bp *BlockProposerImpl) startProposingLoop() {
  * Only for *BFT consensus
  * if node is proposer, and node is not propose right now, and last proposed block is committed, then return true
  */
-func (bp *BlockProposerImpl) shouldProposeByBFT(height int64) bool {
+func (bp *BlockProposerImpl) shouldProposeByBFT(height uint64) bool {
 	if !bp.isIdle() {
 		// concurrent control, proposer is proposing now
 		bp.log.Debugf("proposer is busy, not propose [%d] ", height)
@@ -245,7 +245,7 @@ func (bp *BlockProposerImpl) proposeBlock() {
 }
 
 // proposing, propose a block in new height
-func (bp *BlockProposerImpl) proposing(height int64, preHash []byte) *commonpb.Block {
+func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.Block {
 	startTick := utils.CurrentTimeMillisSeconds()
 	defer bp.yieldProposing()
 
@@ -383,7 +383,7 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 // OnReceiveChainedBFTProposal, to check if this proposer should propose a new block
 // Only for chained bft consensus
 func (bp *BlockProposerImpl) OnReceiveChainedBFTProposal(proposal *chainedbft.BuildProposal) {
-	proposingHeight := int64(proposal.Height)
+	proposingHeight := proposal.Height
 	preHash := proposal.PreHash
 	if !bp.shouldProposeByChainedBFT(proposingHeight, preHash) {
 		bp.log.Infof("not a legal proposal request [%d](%x)", proposingHeight, preHash)
@@ -500,7 +500,7 @@ func (bp *BlockProposerImpl) isSelfProposer() bool {
  * shouldProposeByChainedBFT, check if node should propose new block
  * Only for chained bft consensus
  */
-func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height int64, preHash []byte) bool {
+func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height uint64, preHash []byte) bool {
 	committedBlock := bp.ledgerCache.GetLastCommittedBlock()
 	if committedBlock == nil {
 		bp.log.Errorf("no committed block found")

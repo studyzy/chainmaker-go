@@ -166,11 +166,11 @@ func (p *MockProposer) ClearTheBlock(block *commonPb.Block) {
 	panic("implement me")
 }
 
-func (p *MockProposer) ClearProposedBlockAt(height int64) {
+func (p *MockProposer) ClearProposedBlockAt(height uint64) {
 	panic("implement me")
 }
 
-func (p *MockProposer) GetProposedBlocksAt(height int64) []*commonPb.Block {
+func (p *MockProposer) GetProposedBlocksAt(height uint64) []*commonPb.Block {
 	panic("implement me")
 }
 
@@ -182,31 +182,31 @@ func (p *MockProposer) SetProposedBlock(b *commonPb.Block, rwSetMap map[string]*
 	panic("implement me")
 }
 
-func (p *MockProposer) GetSelfProposedBlockAt(height int64) *commonPb.Block {
+func (p *MockProposer) GetSelfProposedBlockAt(height uint64) *commonPb.Block {
 	panic("implement me")
 }
 
-func (p *MockProposer) GetProposedBlockByHashAndHeight(hash []byte, height int64) (*commonPb.Block, map[string]*commonPb.TxRWSet) {
+func (p *MockProposer) GetProposedBlockByHashAndHeight(hash []byte, height uint64) (*commonPb.Block, map[string]*commonPb.TxRWSet) {
 	panic("implement me")
 }
 
-func (p *MockProposer) HasProposedBlockAt(height int64) bool {
+func (p *MockProposer) HasProposedBlockAt(height uint64) bool {
 	panic("implement me")
 }
 
-func (p *MockProposer) IsProposedAt(height int64) bool {
+func (p *MockProposer) IsProposedAt(height uint64) bool {
 	panic("implement me")
 }
 
-func (p *MockProposer) SetProposedAt(height int64) {
+func (p *MockProposer) SetProposedAt(height uint64) {
 	panic("implement me")
 }
 
-func (p *MockProposer) ResetProposedAt(height int64) {
+func (p *MockProposer) ResetProposedAt(height uint64) {
 	panic("implement me")
 }
 
-func (p *MockProposer) KeepProposedBlock(hash []byte, height int64) []*commonPb.Block {
+func (p *MockProposer) KeepProposedBlock(hash []byte, height uint64) []*commonPb.Block {
 	panic("implement me")
 }
 
@@ -257,7 +257,7 @@ func (b *MockProposer) CreateBlock(height uint64, perHash []byte) *commonPb.Bloc
 	block.Header.BlockHash = blockHash[:]
 
 	// txHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", blockHash, 0)))
-	// block.Txs[0].Header.TxId = string(txHash[:])
+	// block.Txs[0].Payload.TxId = string(txHash[:])
 
 	return block
 }
@@ -490,8 +490,8 @@ func (bs *MockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 	return bs.blockList[len(bs.blockList)-1], nil
 }
 
-func (bs *MockBlockchainStore) GetBlockAt(height int64) (*commonPb.Block, error) {
-	if height > int64(len(bs.blockList)-1) {
+func (bs *MockBlockchainStore) GetBlockAt(height uint64) (*commonPb.Block, error) {
+	if height > uint64(len(bs.blockList)-1) {
 		return nil, fmt.Errorf("has not block")
 	}
 	return bs.blockList[height], nil

@@ -108,7 +108,7 @@ func (m MockStore) GetHeightByHash(blockHash []byte) (uint64, error) {
 	panic("implement me")
 }
 
-func (m MockStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (m MockStore) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	panic("implement me")
 }
 
@@ -200,7 +200,7 @@ func (m MockStore) GetBlock(height uint64) (*commonPb.Block, error) {
 	return nil, fmt.Errorf("block not find")
 }
 
-func (m MockStore) GetBlockWithRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (m MockStore) GetBlockWithRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	panic(errStr)
 }
 
@@ -225,7 +225,7 @@ func (m MockStore) GetBlockByTx(txId string) (*commonPb.Block, error) {
 	panic(errStr)
 }
 
-func (m MockStore) GetBlockWithTxRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (m MockStore) GetBlockWithTxRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	panic(errStr)
 }
 
@@ -249,7 +249,7 @@ func (m MockStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	panic(errStr)
 }
 
-func (m MockStore) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet, error) {
+func (m MockStore) GetTxRWSetsByHeight(height uint64) ([]*commonPb.TxRWSet, error) {
 	panic(errStr)
 }
 

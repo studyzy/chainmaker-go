@@ -35,8 +35,8 @@ package common
 //	block.Txs = txs
 //
 //	var txRWSetMap = make(map[string]*commonpb.TxRWSet, 3)
-//	txRWSetMap[tx0.Header.TxId] = &commonpb.TxRWSet{
-//		TxId: tx0.Header.TxId,
+//	txRWSetMap[tx0.Payload.TxId] = &commonpb.TxRWSet{
+//		TxId: tx0.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{{
 //			ContractName: contractId.ContractName,
 //			Key:          []byte("K1"),
@@ -62,7 +62,7 @@ package common
 //	}
 //	tx0.Result = result
 //	txResultMap := make(map[string]*commonpb.Result, 1)
-//	txResultMap[tx0.Header.TxId] = result
+//	txResultMap[tx0.Payload.TxId] = result
 //
 //	log := logger.GetLoggerByChain(logger.MODULE_CORE, "chain1")
 //
@@ -76,9 +76,9 @@ package common
 //
 //	txsMap := make(map[string]*commonpb.Transaction)
 //
-//	txsMap[tx0.Header.TxId] = tx0
+//	txsMap[tx0.Payload.TxId] = tx0
 //
-//	txPool.EXPECT().GetTxsByTxIds([]string{tx0.Header.TxId}).Return(txsMap, nil)
+//	txPool.EXPECT().GetTxsByTxIds([]string{tx0.Payload.TxId}).Return(txsMap, nil)
 //	config := &config.ChainConfig{
 //		ChainId: "chain1",
 //		Crypto: &config.CryptoConfig{

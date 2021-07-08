@@ -11,7 +11,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210708095431-3ed1d2a0d58e
-	chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543
+	chainmaker.org/chainmaker/protocol v0.0.0-20210708155243-a1e51440c9e4
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/kr/pretty v0.2.0 // indirect

@@ -392,7 +392,7 @@ package proposer
 //	}
 //}
 //
-//func createNewTestBlock(height int64) *commonpb.Block {
+//func createNewTestBlock(height uint64) *commonpb.Block {
 //	var hash = []byte("0123456789")
 //	var version = []byte("0")
 //	var block = &commonpb.Block{

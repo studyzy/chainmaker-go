@@ -161,7 +161,7 @@ package scheduler
 //	txTable[0] = tx0
 //	txTable[1] = tx1
 //	txRWSetTable[0] = &commonpb.TxRWSet{
-//		TxId: tx0.Header.TxId,
+//		TxId: tx0.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{{
 //			ContractName: contractId.ContractName,
 //			Key:          []byte("K1"),
@@ -174,7 +174,7 @@ package scheduler
 //		}},
 //	}
 //	txRWSetTable[1] = &commonpb.TxRWSet{
-//		TxId: tx1.Header.TxId,
+//		TxId: tx1.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{
 //			{
 //				ContractName: contractId.ContractName,

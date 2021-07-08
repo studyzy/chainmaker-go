@@ -63,7 +63,7 @@ func (b *Blocker) createBlock(height uint64) *common.Block {
 	block.Header.BlockHash = blockHash[:]
 
 	// txHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", blockHash, 0)))
-	// block.Txs[0].Header.TxId = string(txHash[:])
+	// block.Txs[0].Payload.TxId = string(txHash[:])
 
 	return block
 }

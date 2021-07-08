@@ -39,7 +39,7 @@ type VerifyStat struct {
 	SigCount    int
 }
 
-func ValidateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transaction, blockHeight int64,
+func ValidateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transaction, blockHeight uint64,
 	stat *VerifyStat, newAddTxs []*commonpb.Transaction, block *commonpb.Block,
 	consensusType consensuspb.ConsensusType, hashType string, store protocol.BlockchainStore,
 	chainId string, ac protocol.AccessControlProvider) error {
@@ -250,7 +250,7 @@ func (vt *VerifierTx) verifierTxs(block *commonpb.Block) (txHashes [][]byte, txN
 	return txHashes, txNewAdd, nil, nil
 }
 
-func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*commonpb.Transaction, txsHeightRet map[string]int64, stat *VerifyStat, block *commonpb.Block) ([][]byte, []*commonpb.Transaction, error) {
+func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*commonpb.Transaction, txsHeightRet map[string]uint64, stat *VerifyStat, block *commonpb.Block) ([][]byte, []*commonpb.Transaction, error) {
 	txHashes := make([][]byte, 0)
 	newAddTxs := make([]*commonpb.Transaction, 0) // tx that verified and not in txpool, need to be added to txpool
 	for _, tx := range txs {
