@@ -17,15 +17,15 @@ import (
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/consensus_mock"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
@@ -37,12 +37,12 @@ const LoadConfigErrorFmt = "load config error:%v"
 var configPath = "../../../config/"
 
 var chainedBftNode []*ConsensusChainedBftImpl
-var nodeConfigEnv []string = []string{"wx-org1", "wx-org2", "wx-org3", "wx-org4"}
+var nodeConfigEnv = []string{"wx-org1", "wx-org2", "wx-org3", "wx-org4"}
 var coreNode []*consensus_mock.MockCoreEngine
 var nodeLocalConf []*localconf.CMConfig
 var nodeChainConf []*chainconf.ChainConf
 
-var nodeLists []string = []string{
+var nodeLists = []string{
 	"QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4",
 	"QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH",
 	"QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45",
@@ -171,7 +171,7 @@ func InitGenesis(chainid string) *commonPb.Block {
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.TxHeader{
+				Header: &commonPb.Payload{
 					ChainId: chainid,
 				},
 			},

@@ -29,7 +29,7 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		txId := utils.GetRandTxId()
 		batch9.TxIdsMap[txId] = int32(i)
-		batch9.Txs[i] = &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txId}}
+		batch9.Txs[i] = &commonPb.Transaction{Header: &commonPb.Payload{TxId: txId}}
 	}
 	recorder.AddRecordWithBatch(&batch9)
 
@@ -41,7 +41,7 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		txId := utils.GetRandTxId()
 		batch10.TxIdsMap[txId] = int32(i)
-		batch10.Txs[i] = &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txId}}
+		batch10.Txs[i] = &commonPb.Transaction{Header: &commonPb.Payload{TxId: txId}}
 	}
 	recorder.AddRecordWithBatch(&batch10)
 

@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"testing"
 
+	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,7 +37,7 @@ func TestGetBlockByHeight(t *testing.T) {
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -89,7 +89,7 @@ func TestGetBlockByHash(t *testing.T) {
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 

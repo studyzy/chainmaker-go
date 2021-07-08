@@ -9,10 +9,10 @@ package main
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"log"
-	"strings"
-
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"github.com/spf13/cobra"
+	"log"
+	"strconv"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -30,15 +30,21 @@ func SubscribeTxCMD() *cobra.Command {
 }
 
 func subscribeTx() error {
-	var ids []string
-	if len(txIds) > 0 {
-		ids = strings.Split(txIds, ",")
-	}
-	payload := &commonPb.SubscribeTxPayload{
-		StartBlock: startBlock,
-		EndBlock:   endBlock,
-		TxType:     commonPb.TxType(txType),
-		TxIds:      ids,
+	//var ids []string
+	//if len(txIds) > 0 {
+	//	ids = strings.Split(txIds, ",")
+	//}
+	payload := &commonPb.Payload{
+		Parameters: []*commonPb.KeyValuePair{
+			{Key: consts.SubscribeTxPayload_StartBlock.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
+			{Key: consts.SubscribeTxPayload_EndBlock.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
+			{Key: consts.SubscribeTxPayload_TxType.String(), Value: []byte(commonPb.TxType(txType).String())},
+			{Key: consts.SubscribeTxPayload_TxIds.String(), Value: []byte(txIds)},
+		},
+		//StartBlock: startBlock,
+		//EndBlock:   endBlock,
+		//TxType:     commonPb.TxType(txType),
+		//TxIds:      ids,
 	}
 
 	payloadBytes, err := proto.Marshal(payload)

@@ -96,7 +96,7 @@ func query() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//}

@@ -262,9 +262,9 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -272,9 +272,8 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -289,7 +288,7 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 		log.Fatalf("sign failed, %s", err.Error())
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 	return req
 }
 

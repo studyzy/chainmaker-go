@@ -178,7 +178,7 @@ func testSnapshot(t *testing.T, i int) {
 
 	txSimContext := &MockSimContextImpl{
 		tx: &commonPb.Transaction{
-			Header: &commonPb.TxHeader{
+			Header: &commonPb.Payload{
 				TxId: "tx id in snapshot",
 			},
 		},

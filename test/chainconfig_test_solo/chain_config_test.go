@@ -15,14 +15,11 @@ import (
 	"fmt"
 	"testing"
 
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-
+	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
+	"chainmaker.org/chainmaker-go/utils"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/protocol"
-	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -137,7 +134,7 @@ func TestUpdateBlock(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timestamp_verify",
-		Value: "false",
+		Value: []byte("false"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timeout",

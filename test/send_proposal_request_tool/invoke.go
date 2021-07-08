@@ -8,12 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
 
 	"github.com/spf13/cobra"
 )
@@ -94,7 +93,7 @@ func invoke() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//}

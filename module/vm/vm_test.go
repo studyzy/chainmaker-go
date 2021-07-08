@@ -75,7 +75,7 @@ func (m *mockMemCache) putIntoWriteSet(contractName string, key []byte, value []
 
 	m.txRwSet.TxWrites = append(m.txRwSet.TxWrites, &commonPb.TxWrite{
 		Key:   finalKey,
-		Value: value,
+		Value: []byte(value),
 	})
 }
 
@@ -83,7 +83,7 @@ func (m *mockMemCache) getFromReadSet(contractName string, key []byte) ([]byte, 
 	finalKey := getFinalKey(contractName, key)
 
 	txRWSet := m.txRwSet
-	for index, _ := range txRWSet.TxReads {
+	for index := range txRWSet.TxReads {
 		txRead := txRWSet.TxReads[len(txRWSet.TxReads)-index-1]
 		if bytes.Compare(txRead.Key, finalKey) == 0 {
 			return txRead.Value, true
@@ -96,7 +96,7 @@ func (m *mockMemCache) getFromWriteSet(contractName string, key []byte) ([]byte,
 	finalKey := getFinalKey(contractName, key)
 
 	txRWSet := m.txRwSet
-	for index, _ := range txRWSet.TxWrites {
+	for index := range txRWSet.TxWrites {
 		txWrite := txRWSet.TxWrites[len(txRWSet.TxWrites)-index-1]
 		if bytes.Compare(txWrite.Key, finalKey) == 0 {
 			return txWrite.Value, true
@@ -142,7 +142,7 @@ func (m mockMemCache) Del(contractName string, key []byte) error {
 
 func (m mockMemCache) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Header: &commonPb.TxHeader{
+		Header: &commonPb.Payload{
 			ChainId:        "chain1",
 			Sender:         nil,
 			TxType:         0,

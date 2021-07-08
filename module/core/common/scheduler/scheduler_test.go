@@ -50,7 +50,7 @@ package scheduler
 //	for key, value := range parameterMap {
 //		parameters = append(parameters, &commonpb.KeyValuePair{
 //			Key:   key,
-//			Value: value,
+//			Value: []byte(value),
 //		})
 //	}
 //	payload := &commonpb.Payload{

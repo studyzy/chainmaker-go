@@ -17,7 +17,7 @@ import (
 func TestTxQuerySimContext(t *testing.T) {
 
 	tx := &commonPb.Transaction{
-		Header: &commonPb.TxHeader{
+		Header: &commonPb.Payload{
 			ChainId:        "",
 			Sender:         nil,
 			TxType:         0,

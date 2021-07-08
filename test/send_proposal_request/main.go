@@ -32,7 +32,7 @@ import (
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
+
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -275,7 +275,7 @@ func testCertQuery(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "cert_hashes",
-		Value: certId,
+		Value: []byte(certId),
 	})
 	resp, err := QueryRequestWithCertID(sk3, &client, "", pairs)
 	if err == nil {
@@ -315,27 +315,25 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 		//IsFullCert: true,
 	}
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        CHAIN1,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: CHAIN1,
+		//Sender:         sender,
 		TxType:         commonPb.TxType_QUERY_CONTRACT,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
-	}
-	payload := &commonPb.Payload{
+
 		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
 		Method:       commonPb.CertManageFunction_CERTS_QUERY.String(),
 		Parameters:   pairs,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(marshalFailedStr, err.Error())
-	}
+	//payloadBytes, err := proto.Marshal(payload)
+	//if err != nil {
+	//	log.Fatalf(marshalFailedStr, err.Error())
+	//}
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
@@ -347,7 +345,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	if err != nil {
 		log.Fatalf(signFailedStr, err.Error())
 	}
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 	return (*client).SendRequest(ctx, req)
 }
 func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string, wasmType int) {
@@ -382,18 +380,17 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 		//MemberInfo: []byte(pubKeyString),
 	}
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
 	}
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
@@ -406,7 +403,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	if err != nil {
 		log.Fatalf(signFailedStr, err.Error())
 	}
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 	result, err := client.SendRequest(ctx, req)
 	if err == nil {
 		return result
@@ -562,28 +559,25 @@ func updateSysRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, isTl
 		msg.TxId = utils.GetRandTxId()
 	}
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        msg.ChainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: msg.ChainId,
+		//Sender:         sender,
 		TxType:         msg.TxType,
 		TxId:           msg.TxId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
-	}
-	payload := &commonPb.Payload{
-		ChainId:      msg.ChainId,
+
 		ContractName: msg.ContractName,
 		Method:       msg.MethodName,
 		Parameters:   msg.Pairs,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf(marshalFailedStr, err.Error())
-	}
+	//payloadBytes, err := proto.Marshal(payload)
+	//if err != nil {
+	//	log.Fatalf(marshalFailedStr, err.Error())
+	//}
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
@@ -600,7 +594,7 @@ func updateSysRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, isTl
 	if err != nil {
 		panic(err)
 	}
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 	fmt.Println(req)
 	return client.SendRequest(ctx, req)
 }
@@ -652,7 +646,7 @@ func trustRootAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId str
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: trustRootOrgId,
+		Value: []byte(trustRootOrgId),
 	})
 	file, err := os.Open(trustRootCrtPath)
 	if err != nil {
@@ -665,7 +659,7 @@ func trustRootAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId str
 	}
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "root",
-		Value: string(bz),
+		Value: bz,
 	})
 
 	config := getChainConfig(sk3, client, chainId)
@@ -697,37 +691,33 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        msg.chainId,
-		Sender:         senderFull,
+	header := &commonPb.Payload{
+		ChainId: msg.chainId,
+		//Sender:         senderFull,
 		TxType:         msg.txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
-	}
 
-	payload := &commonPb.Payload{
-		ChainId:      msg.chainId,
 		ContractName: msg.contractName,
 		Method:       msg.method,
 		Parameters:   msg.pairs,
 		Sequence:     msg.oldSeq + 1,
 	}
-	adminSignKeys, adminSignCrts := getKeysAndCertsPath([]int{1, 2, 3, 4})
-	entries, err := aclSignSystemContract(*payload, orgIds, adminSignKeys, adminSignCrts)
-	if err != nil {
-		panic(err)
-	}
-	payload.Endorsement = entries
+	//adminSignKeys, adminSignCrts := getKeysAndCertsPath([]int{1, 2, 3, 4})
+	//entries, err := aclSignSystemContract(*payload, orgIds, adminSignKeys, adminSignCrts)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//payload.Endorsement = entries
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, "", err
-	}
+	//payloadBytes, err := proto.Marshal(payload)
+	//if err != nil {
+	//	return nil, "", err
+	//}
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: senderFull},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -740,7 +730,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	if err != nil {
 		log.Fatalf("sign msg failed")
 	}
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := client.SendRequest(ctx, req)
 	if err != nil {
@@ -752,59 +742,59 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	return result, txId, nil
 }
 
-func aclSignSystemContract(msg commonPb.Payload, orgIds, adminSignKeys, adminSignCrts []string) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(&msg)
-
-	signers := make([]protocol.SigningMember, 0)
-	orgIdArray := orgIds
-	adminSignKeyArray := adminSignKeys
-	adminSignCrtArray := adminSignCrts
-
-	if len(adminSignKeyArray) != len(adminSignCrtArray) {
-		return nil, errors.New(fmt.Sprintf("admin key len is not equal to crt len: %d, %d", len(adminSignKeyArray), len(adminSignCrtArray)))
-	}
-	if len(adminSignKeyArray) != len(orgIdArray) {
-		return nil, errors.New(fmt.Sprintf("admin key len:[%d] is not equal to orgId len:[%d]", len(adminSignKeyArray), len(orgIdArray)))
-	}
-
-	for i, key := range adminSignKeyArray {
-		file, err := ioutil.ReadFile(key)
-		if err != nil {
-			panic(err)
-		}
-		sk3, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		file2, err := ioutil.ReadFile(adminSignCrtArray[i])
-		fmt.Println("node", i, "crt", string(file2))
-		if err != nil {
-			panic(err)
-		}
-
-		// 获取peerId
-		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
-		fmt.Println("node", i, "peerId", peerId)
-
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      orgIdArray[i],
-			MemberInfo: file2,
-			//IsFullCert: true,
-		}
-		signer := getSigner(sk3, sender1)
-		signers = append(signers, signer)
-	}
-
-	endorsements, err := accesscontrol.MockSignWithMultipleNodes(bytes, signers, crypto.CRYPTO_ALGO_SHA256)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("endorsements:\n%v\n", endorsements)
-	return endorsements, nil
-}
+//func aclSignSystemContract(msg commonPb.Payload, orgIds, adminSignKeys, adminSignCrts []string) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(&msg)
+//
+//	signers := make([]protocol.SigningMember, 0)
+//	orgIdArray := orgIds
+//	adminSignKeyArray := adminSignKeys
+//	adminSignCrtArray := adminSignCrts
+//
+//	if len(adminSignKeyArray) != len(adminSignCrtArray) {
+//		return nil, errors.New(fmt.Sprintf("admin key len is not equal to crt len: %d, %d", len(adminSignKeyArray), len(adminSignCrtArray)))
+//	}
+//	if len(adminSignKeyArray) != len(orgIdArray) {
+//		return nil, errors.New(fmt.Sprintf("admin key len:[%d] is not equal to orgId len:[%d]", len(adminSignKeyArray), len(orgIdArray)))
+//	}
+//
+//	for i, key := range adminSignKeyArray {
+//		file, err := ioutil.ReadFile(key)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk3, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		file2, err := ioutil.ReadFile(adminSignCrtArray[i])
+//		fmt.Println("node", i, "crt", string(file2))
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// 获取peerId
+//		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
+//		fmt.Println("node", i, "peerId", peerId)
+//
+//		// 构造Sender
+//		sender1 := &acPb.SerializedMember{
+//			OrgId:      orgIdArray[i],
+//			MemberInfo: file2,
+//			//IsFullCert: true,
+//		}
+//		signer := getSigner(sk3, sender1)
+//		signers = append(signers, signer)
+//	}
+//
+//	endorsements, err := accesscontrol.MockSignWithMultipleNodes(bytes, signers, crypto.CRYPTO_ALGO_SHA256)
+//	if err != nil {
+//		return nil, err
+//	}
+//	fmt.Printf("endorsements:\n%v\n", endorsements)
+//	return endorsements, nil
+//}
 
 func nodeOrgAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId string) error {
 	// 构造Payload
@@ -814,11 +804,11 @@ func nodeOrgAdd(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeOrgOrgId,
+		Value: []byte(nodeOrgOrgId),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "node_ids",
-		Value: nodeOrgAddresses,
+		Value: []byte(nodeOrgAddresses),
 	})
 
 	config := getChainConfig(sk3, client, chainId)
@@ -839,7 +829,7 @@ func nodeOrgDelete(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId st
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "org_id",
-		Value: nodeOrgOrgId,
+		Value: []byte(nodeOrgOrgId),
 	})
 
 	config := getChainConfig(sk3, client, chainId)
@@ -869,7 +859,7 @@ func consensusExtUpdate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chain
 	for i, key := range consensusExtKeyArray {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   key,
-			Value: consensusExtValueArray[i],
+			Value: []byte(consensusExtValueArray[i]),
 		})
 	}
 
@@ -892,11 +882,11 @@ func mint() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 		{
 			Key:   "value",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -926,11 +916,11 @@ func transfer() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 		{
 			Key:   "value",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -964,15 +954,15 @@ func transferFrom() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
-			Value: dposParamAllowancer,
+			Value: []byte(dposParamAllowancer),
 		},
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 		{
 			Key:   "value",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1000,11 +990,11 @@ func allowance(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
-			Value: fromAddr,
+			Value: []byte(fromAddr),
 		},
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 	}
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String(), pairs)
@@ -1025,11 +1015,11 @@ func approve() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 		{
 			Key:   "value",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1059,7 +1049,7 @@ func burn() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "value",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1086,7 +1076,7 @@ func transferOwnership() {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1137,7 +1127,7 @@ func balanceOf(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "owner",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 	}
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(), pairs)
@@ -1158,11 +1148,11 @@ func delegate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "to",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 		{
 			Key:   "amount",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1192,11 +1182,11 @@ func undelegate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "from",
-			Value: toAddr,
+			Value: []byte(toAddr),
 		},
 		{
 			Key:   "amount",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1234,7 +1224,7 @@ func getValidatorByAddress(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "address",
-		Value: toAddr,
+		Value: []byte(toAddr),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String(), pairs)
 	if err != nil {
@@ -1249,7 +1239,7 @@ func getDelagationsByAddress(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "address",
-		Value: dposParamValue,
+		Value: []byte(dposParamValue),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String(), pairs)
 	if err != nil {
@@ -1266,11 +1256,11 @@ func getUserDelegationByValidator(sk3 crypto.PrivateKey, client apiPb.RpcNodeCli
 	pairs = append(pairs,
 		&commonPb.KeyValuePair{
 			Key:   "delegator_address",
-			Value: value,
+			Value: []byte(value),
 		},
 		&commonPb.KeyValuePair{
 			Key:   "validator_address",
-			Value: toAddress,
+			Value: []byte(toAddress),
 		},
 	)
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String(), pairs)
@@ -1287,7 +1277,7 @@ func readEpochByID(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "epoch_id",
-		Value: dposParamValue,
+		Value: []byte(dposParamValue),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String(), pairs)
 	if err != nil {
@@ -1332,7 +1322,7 @@ func setRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNode
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "node_id",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1362,7 +1352,7 @@ func getRelationshipForAddrAndNodeId(sk3 crypto.PrivateKey, client apiPb.RpcNode
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "address",
-		Value: toAddr,
+		Value: []byte(toAddr),
 	})
 	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), commonPb.DPoSStakeContractFunction_GET_NODE_ID.String(), pairs)
 	if err != nil {
@@ -1389,7 +1379,7 @@ func updateMinSelfDelegation(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) 
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "min_self_delegation",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1429,7 +1419,7 @@ func updateEpochValidatorNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClien
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "epoch_validator_number",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{
@@ -1469,7 +1459,7 @@ func updateEpochBlockNumber(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	params := []*commonPb.KeyValuePair{
 		{
 			Key:   "epoch_block_number",
-			Value: value,
+			Value: []byte(value),
 		},
 	}
 	resp, err := updateSysRequest(sk, member, true, &native.InvokeContractMsg{

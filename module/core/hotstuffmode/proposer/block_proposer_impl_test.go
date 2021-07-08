@@ -305,7 +305,7 @@ package proposer
 //	block.Dag = dag
 //	confKV := &commonpb.KeyValuePair{
 //		Key:   "IsExtreme",
-//		Value: "true",
+//		Value: []byte("true"),
 //	}
 //	kvs := make([]*commonpb.KeyValuePair, 1)
 //	kvs[0] = confKV
@@ -353,7 +353,7 @@ package proposer
 //	pairs := []*commonpb.KeyValuePair{
 //		{
 //			Key:   "file_hash",
-//			Value: txId[len(txId)/2:],
+//			Value: []byte(txId)[len(txId)/2:],
 //		},
 //	}
 //	return &commonpb.TransactPayload{

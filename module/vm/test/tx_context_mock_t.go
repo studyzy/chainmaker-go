@@ -280,7 +280,7 @@ func (s *TxContextMockTest) GetCurrentResult() []byte {
 
 func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Header: &commonPb.TxHeader{
+		Header: &commonPb.Payload{
 			ChainId:        ChainIdTest,
 			Sender:         s.GetSender(),
 			TxType:         txType,

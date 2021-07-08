@@ -2,6 +2,7 @@ package main
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"log"
@@ -20,9 +21,13 @@ func SubscribeContractEvent() *cobra.Command {
 }
 
 func subscribeContractEvent() error {
-	payload := &commonPb.SubscribeContractEventPayload{
-		Topic:        topic,
-		ContractName: contractName,
+	payload := &commonPb.Payload{
+		Parameters: []*commonPb.KeyValuePair{
+			{Key: consts.SubscribeContractEventPayload_Topic.String(), Value: []byte(topic)},
+			{Key: consts.SubscribeContractEventPayload_ContractName.String(), Value: []byte(contractName)},
+		},
+		//Topic:        topic,
+		//ContractName: contractName,
 	}
 
 	payloadBytes, err := proto.Marshal(payload)

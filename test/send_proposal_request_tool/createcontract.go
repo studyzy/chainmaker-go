@@ -90,7 +90,7 @@ func createContract() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//	wasmBin, err = hex.DecodeString(string(wasmBin))

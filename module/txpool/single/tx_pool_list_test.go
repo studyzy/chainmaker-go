@@ -54,7 +54,7 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 		}
 		data, _ := payload.Marshal()
 		txs = append(txs, &commonPb.Transaction{
-			Header:         &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType},
+			Header:         &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType},
 			RequestPayload: data},
 		)
 	}

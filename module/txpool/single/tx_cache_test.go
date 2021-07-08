@@ -36,9 +36,9 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 			payload.ContractName = "userContract1"
 		}
 		data, _ := payload.Marshal()
-		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
-		p2pTxs.txs = append(p2pTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
-		internalTxs.txs = append(internalTxs.txs, &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
+		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Header: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
+		p2pTxs.txs = append(p2pTxs.txs, &commonPb.Transaction{Header: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
+		internalTxs.txs = append(internalTxs.txs, &commonPb.Transaction{Header: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType}, RequestPayload: data})
 	}
 	return
 }

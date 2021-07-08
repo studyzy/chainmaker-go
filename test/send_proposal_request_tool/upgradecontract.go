@@ -91,13 +91,13 @@ func upgradeContract() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//	wasmBin, err = hex.DecodeString(string(wasmBin))
 	//
 	//}
-payload,_:=GenerateUpgradeContractPayload(contractName,version,commonPb.RuntimeType(runTime),wasmBin,pairs)
+	payload, _ := GenerateUpgradeContractPayload(contractName, version, commonPb.RuntimeType(runTime), wasmBin, pairs)
 	//method := consts.ContractManager_UPGRADE_CONTRACT.String()
 	//
 	//payload := &commonPb.Payload{

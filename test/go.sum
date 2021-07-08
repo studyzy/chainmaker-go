@@ -6,10 +6,14 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf h1:ZpBHo38Txf
 chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210706171157-e6dca957a232 h1:d7Q04J0IzI7ByfKAdEhA1Lf32Sz6k7A82qkfySMYPm4=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210706171157-e6dca957a232/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708024946-64e9e52d1a2b h1:tyS3uhJbcJa78G4X1/1OLd3/vob7T7W4PG6sqk5mLWk=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708024946-64e9e52d1a2b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511 h1:1n+699k6P4i4Hf6dx46e/WHsVbeulB73/nwj4OJIRuM=
 chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511/go.mod h1:yk8TYTK3ZVn+CisdgAcix1DVYNmjNpVbBR9IGbBbAH0=
 chainmaker.org/chainmaker/protocol v0.0.0-20210706172914-ccc59fc46e71 h1:9ZlAFQc3kcIHkSFEJN6nFCFPbO9YOi/M3RlgXW1h7MA=
 chainmaker.org/chainmaker/protocol v0.0.0-20210706172914-ccc59fc46e71/go.mod h1:4WvDQCYZJSieUduADcFir17MEx0UvBcoWIkBfBdNOKw=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708025149-8c8e9d0bdd73 h1:g2iQ2JJxIXxm5ZGlnhhSl+hMQsgCItVVMEml7JBfGTc=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708025149-8c8e9d0bdd73/go.mod h1:mCoBvQ9ZcJy2LXCCg96Ct9rLU/cJ76fAReMMAH3uMEw=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=

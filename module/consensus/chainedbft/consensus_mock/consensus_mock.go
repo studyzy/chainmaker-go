@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -244,7 +244,7 @@ func (b *MockProposer) CreateBlock(height int64, perHash []byte) *commonPb.Block
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.TxHeader{
+				Header: &commonPb.Payload{
 					ChainId: b.chainid,
 				},
 			},

@@ -303,7 +303,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	fmt.Println("========================================================================================================")
 
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
@@ -340,11 +340,11 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "txId",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   fieldWithRWSet,
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -374,11 +374,11 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.FormatInt(height, 10),
+			Value: []byte(strconv.FormatInt(height, 10)),
 		},
 		{
 			Key:   fieldWithRWSet,
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -409,7 +409,7 @@ func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNo
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.FormatInt(height, 10),
+			Value: []byte(strconv.FormatInt(height, 10)),
 		},
 	}
 
@@ -440,11 +440,11 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 		{
 			Key:   fieldWithRWSet,
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -473,7 +473,7 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 	}
 
@@ -501,7 +501,7 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   fieldWithRWSet,
-			Value: "true",
+			Value: []byte("true"),
 		},
 	}
 
@@ -529,7 +529,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   fieldWithRWSet,
-			Value: "true",
+			Value: []byte("true"),
 		},
 	}
 
@@ -596,11 +596,11 @@ func testUpgradeInvokeSum(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "arg1",
-			Value: "1",
+			Value: []byte("1"),
 		},
 		{
 			Key:   "arg2",
-			Value: "2",
+			Value: []byte("2"),
 		},
 	}
 	payload := &commonPb.Payload{
@@ -628,15 +628,15 @@ func testInvokeFactSave(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "file_hash",
-			Value: fileHash,
+			Value: []byte(fileHash),
 		},
 		{
 			Key:   "time",
-			Value: "1615188470000",
+			Value: []byte("1615188470000"),
 		},
 		{
 			Key:   "file_name",
-			Value: "长安链chainmaker",
+			Value: []byte("长安链chainmaker"),
 		},
 	}
 	payload := &commonPb.Payload{
@@ -713,7 +713,7 @@ func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "contract_name",
-			Value: contractName,
+			Value: []byte(contractName),
 		},
 	}
 	payload := &commonPb.Payload{
@@ -742,7 +742,7 @@ func testQueryFindByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "file_hash",
-			Value: fileHash,
+			Value: []byte(fileHash),
 		},
 	}
 
@@ -794,9 +794,9 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -804,9 +804,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -826,7 +825,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := (*client).SendRequest(ctx, req)
 
@@ -945,7 +944,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, txId string) {
 	fmt.Printf("\n============ testWaitTx [%s] ============\n", txId)
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 

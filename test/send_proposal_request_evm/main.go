@@ -119,15 +119,15 @@ func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeCli
 		pairs := []*commonPb.KeyValuePair{
 			{
 				Key:   "from",
-				Value: strconv.Itoa(i),
+				Value: []byte(strconv.Itoa(i)),
 			},
 			{
 				Key:   "to",
-				Value: strconv.Itoa(i + 1000),
+				Value: []byte(strconv.Itoa(i + 1000)),
 			},
 			{
 				Key:   "amount",
-				Value: "1",
+				Value: []byte("1"),
 			},
 		}
 
@@ -156,7 +156,7 @@ func testPerformanceModeBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 		pairs := []*commonPb.KeyValuePair{
 			{
 				Key:   "from",
-				Value: strconv.Itoa(i),
+				Value: []byte(strconv.Itoa(i)),
 			},
 		}
 
@@ -238,7 +238,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	fmt.Printf("\n============ get tx by txId [%s] ============\n", txId)
 
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
@@ -257,11 +257,11 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "txId",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -286,11 +286,11 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.FormatInt(height, 10),
+			Value: []byte(strconv.FormatInt(height, 10)),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -316,7 +316,7 @@ func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNo
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.FormatInt(height, 10),
+			Value: []byte(strconv.FormatInt(height, 10)),
 		},
 	}
 
@@ -342,11 +342,11 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
@@ -370,7 +370,7 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 	}
 
@@ -394,7 +394,7 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "withRWSet",
-			Value: "true",
+			Value: []byte("true"),
 		},
 	}
 
@@ -418,7 +418,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "withRWSet",
-			Value: "true",
+			Value: []byte("true"),
 		},
 	}
 
@@ -524,7 +524,7 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -533,11 +533,11 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -590,7 +590,7 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -599,11 +599,11 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -667,7 +667,7 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -676,11 +676,11 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -749,7 +749,7 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -758,11 +758,11 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -825,7 +825,7 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -834,11 +834,11 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -899,7 +899,7 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -908,11 +908,11 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -961,7 +961,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -970,11 +970,11 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
@@ -1025,9 +1025,9 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -1035,9 +1035,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -1057,7 +1056,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := (*client).SendRequest(ctx, req)
 

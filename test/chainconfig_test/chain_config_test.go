@@ -22,9 +22,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker/protocol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -139,7 +139,7 @@ func TestUpdateBlock(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timestamp_verify",
-		Value: "true",
+		Value: []byte("true"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timeout",
