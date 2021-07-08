@@ -40,6 +40,7 @@ func queryChainConfigCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash,
 		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
@@ -50,7 +51,7 @@ func queryChainConfigCMD() *cobra.Command {
 }
 
 func queryChainConfig() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}

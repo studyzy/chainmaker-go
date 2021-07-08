@@ -13,16 +13,19 @@ import (
 )
 
 // CreateChainClient create a chain client with sdk config file path.
-// sdkConfPath must not empty. chainId, orgId, userTlsCrtPath, userTlsKeyPath will overwrite sdk config
-// generated from sdkConfPath if they are not empty string, otherwise sdk config will not be overwritten.
-func CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtPath,
-	userTlsKeyPath string) (*sdk.ChainClient, error) {
+// sdkConfPath must not empty. chainId, orgId, userTlsCrtPath, userTlsKeyPath, userSignCrtPath, userSignKeyPath
+// will overwrite sdk config generated from sdkConfPath if they are not empty string,
+// otherwise sdk config will not be overwritten.
+func CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtPath, userTlsKeyPath,
+	userSignCrtPath, userSignKeyPath string) (*sdk.ChainClient, error) {
 	cc, err := sdk.NewChainClient(
 		sdk.WithConfPath(sdkConfPath),
 		sdk.WithChainClientChainId(chainId),
 		sdk.WithChainClientOrgId(orgId),
 		sdk.WithUserCrtFilePath(userTlsCrtPath),
 		sdk.WithUserKeyFilePath(userTlsKeyPath),
+		sdk.WithUserSingCrtFilePath(userSignCrtPath),
+		sdk.WithUserSignKeyFilePath(userSignKeyPath),
 	)
 	if err != nil {
 		return nil, err
