@@ -13,6 +13,9 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210627170802-6ae5d9ef7d3b h1:/MgdlMsDBK
 chainmaker.org/chainmaker/pb-go v0.0.0-20210627170802-6ae5d9ef7d3b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf h1:ZpBHo38TxfCRAv4AqbITf7UOd7EL354pthpogtizQyY=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210706171157-e6dca957a232/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115 h1:vbrZrxHN1FvQtvQP/h+KOzfnntQBO3ImYVkE0EJaiKc=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210609024825-0db378505f4e/go.mod h1:z5pspOMvtvlpu1Q7Jt/R7UhbtIsXM3OT7L03yRudsA8=
 chainmaker.org/chainmaker/protocol v0.0.0-20210621034938-44d4b545b203/go.mod h1:SSgr1Oy8Ht8Rz/zZeWFUjrVyZRHxxj2ko+vCVOCbgDs=
 chainmaker.org/chainmaker/protocol v0.0.0-20210621154052-96abe04f2e02 h1:9S6nqY1TSLFXMizsMEFjjXTiaNyin9G8wkH81FIj2+g=
@@ -27,6 +30,9 @@ chainmaker.org/chainmaker/protocol v0.0.0-20210630150646-5b785096f167 h1:O5Li1zw
 chainmaker.org/chainmaker/protocol v0.0.0-20210630150646-5b785096f167/go.mod h1:yk8TYTK3ZVn+CisdgAcix1DVYNmjNpVbBR9IGbBbAH0=
 chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511 h1:1n+699k6P4i4Hf6dx46e/WHsVbeulB73/nwj4OJIRuM=
 chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511/go.mod h1:yk8TYTK3ZVn+CisdgAcix1DVYNmjNpVbBR9IGbBbAH0=
+chainmaker.org/chainmaker/protocol v0.0.0-20210706172914-ccc59fc46e71/go.mod h1:4WvDQCYZJSieUduADcFir17MEx0UvBcoWIkBfBdNOKw=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543 h1:wJrbvFVJ/fAd0gExWePtEuYhCgZfMK+Gi7Ei9DQXflE=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543/go.mod h1:dH8VU8w+lR6WOA5JWU6G/NSdpPaKrYSIyyFA363uIjc=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
