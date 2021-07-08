@@ -8,7 +8,7 @@ package raft
 
 // SnapshotHeight stores block height in raft snapshot.
 type SnapshotHeight struct {
-	Height int64
+	Height uint64
 }
 
 // AdditionalData contains consensus specified data to be store in block

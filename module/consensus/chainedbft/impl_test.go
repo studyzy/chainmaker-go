@@ -171,7 +171,7 @@ func InitGenesis(chainid string) *commonPb.Block {
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.Payload{
+				Payload: &commonPb.Payload{
 					ChainId: chainid,
 				},
 			},

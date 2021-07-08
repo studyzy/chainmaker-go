@@ -23,10 +23,10 @@ type validatorSet struct {
 	sync.Mutex
 	logger            *logger.CMLogger
 	Validators        []string
-	blocksPerProposer int64
+	blocksPerProposer uint64
 }
 
-func newValidatorSet(logger *logger.CMLogger, validators []string, blocksPerProposer int64) *validatorSet {
+func newValidatorSet(logger *logger.CMLogger, validators []string, blocksPerProposer uint64) *validatorSet {
 	sort.SliceStable(validators, func(i, j int) bool {
 		return validators[i] < validators[j]
 	})
@@ -94,7 +94,7 @@ func (valSet *validatorSet) hasValidator(validator string) bool {
 	return false
 }
 
-func (valSet *validatorSet) GetProposer(height int64, round int32) (validator string, err error) {
+func (valSet *validatorSet) GetProposer(height uint64, round int32) (validator string, err error) {
 	if valSet.isNilOrEmpty() {
 		return "", ErrInvalidIndex
 	}
@@ -147,7 +147,7 @@ func (valSet *validatorSet) updateValidators(validators []string) (addedValidato
 	return
 }
 
-func (valSet *validatorSet) updateBlocksPerProposer(blocks int64) error {
+func (valSet *validatorSet) updateBlocksPerProposer(blocks uint64) error {
 	valSet.Lock()
 	defer valSet.Unlock()
 

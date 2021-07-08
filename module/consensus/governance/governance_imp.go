@@ -17,7 +17,7 @@ import (
 
 type GovernanceContractImp struct {
 	log                *logger.CMLogger
-	Height             int64 //Cache height
+	Height             uint64 //Cache height
 	store              protocol.BlockchainStore
 	ledger             protocol.LedgerCache
 	governmentContract *consensusPb.GovernanceContract //Cache government data

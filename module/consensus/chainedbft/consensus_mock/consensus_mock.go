@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package consensus_mock
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -28,16 +29,16 @@ import (
 )
 
 type MockLedger struct {
-	chainId            string                      // 链ID标识
-	lastProposedBlock  map[int64][]*commonPb.Block // 当前提案的区块，同一块高度可能会产生多个提案区块
-	lastCommittedBlock *commonPb.Block             // 账本最新区块链
+	chainId            string                       // 链ID标识
+	lastProposedBlock  map[uint64][]*commonPb.Block // 当前提案的区块，同一块高度可能会产生多个提案区块
+	lastCommittedBlock *commonPb.Block              // 账本最新区块链
 	rwMu               sync.RWMutex
 }
 
 func NewLedger(chainid string, block *commonPb.Block) *MockLedger {
 	l := &MockLedger{
 		chainId:            chainid,
-		lastProposedBlock:  make(map[int64][]*commonPb.Block),
+		lastProposedBlock:  make(map[uint64][]*commonPb.Block),
 		lastCommittedBlock: block,
 	}
 	l.lastProposedBlock[0] = append(l.lastProposedBlock[0], block)
@@ -57,7 +58,7 @@ func (l *MockLedger) GetLastCommittedBlock() *commonPb.Block {
 	return l.lastCommittedBlock
 }
 
-func (l *MockLedger) CurrentHeight() (int64, error) {
+func (l *MockLedger) CurrentHeight() (uint64, error) {
 	return l.lastCommittedBlock.Header.BlockHeight, nil
 }
 
@@ -92,14 +93,14 @@ type MockCommitter struct {
 	store        *MockBlockchainStore
 	msgBus       msgbus.MessageBus
 	log          *logger.CMLogger
-	commitEventC chan int64
+	commitEventC chan uint64
 }
 
 func NewMockCommitter(ledgerCache protocol.LedgerCache,
 	store *MockBlockchainStore,
 	msgbus msgbus.MessageBus,
 	log *logger.CMLogger,
-	commitEventC chan int64) *MockCommitter {
+	commitEventC chan uint64) *MockCommitter {
 	return &MockCommitter{
 		ledgerCache:  ledgerCache,
 		store:        store,
@@ -225,7 +226,7 @@ func NewMockProposer(chainid string,
 	}
 }
 
-func (b *MockProposer) CreateBlock(height int64, perHash []byte) *commonPb.Block {
+func (b *MockProposer) CreateBlock(height uint64, perHash []byte) *commonPb.Block {
 	b.Lock()
 	defer b.Unlock()
 
@@ -239,12 +240,12 @@ func (b *MockProposer) CreateBlock(height int64, perHash []byte) *commonPb.Block
 			Signature:    []byte(""),
 			BlockHash:    []byte(""),
 			PreBlockHash: perHash,
-			Proposer:     []byte(b.id),
+			Proposer:     &accesscontrol.SerializedMember{MemberInfo: []byte(b.id)},
 		},
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.Payload{
+				Payload: &commonPb.Payload{
 					ChainId: b.chainid,
 				},
 			},
@@ -274,11 +275,11 @@ type MockCoreEngine struct {
 	Committer     *MockCommitter
 	blockProposer *MockProposer
 
-	height            int64
+	height            uint64
 	canPropose        bool
 	reachingConsensus bool
 	Ledger            protocol.LedgerCache
-	commitEventC      chan int64
+	commitEventC      chan uint64
 	isCreateBlock     bool
 
 	logger *logger.CMLogger
@@ -291,7 +292,7 @@ func NewMockCoreEngine(t *testing.T, id string,
 	store *MockBlockchainStore,
 	iscreate bool) *MockCoreEngine {
 	logger := logger.GetLogger(logger.MODULE_CORE)
-	commitEventC := make(chan int64, 1)
+	commitEventC := make(chan uint64, 1)
 	ce := &MockCoreEngine{
 		t:             t,
 		id:            id,
@@ -336,7 +337,7 @@ func (ce *MockCoreEngine) GetID() string {
 	return ce.id
 }
 
-func (ce *MockCoreEngine) GetHeight() int64 {
+func (ce *MockCoreEngine) GetHeight() uint64 {
 	return ce.height
 }
 
@@ -363,7 +364,7 @@ func (ce *MockCoreEngine) OnMessage(msg *msgbus.Message) {
 		bp := msg.Payload.(*chainedbftpb.BuildProposal)
 		ce.canPropose = bp.IsProposer
 		if ce.canPropose && ce.isCreateBlock {
-			block := ce.Proposer.CreateBlock(int64(bp.Height), bp.PreHash)
+			block := ce.Proposer.CreateBlock(uint64(bp.Height), bp.PreHash)
 			ce.logger.Infof("MockCoreEngine id: %s ProposedBlock block: %v", ce.id, block)
 			ce.msgbus.Publish(msgbus.ProposedBlock, block)
 		}
@@ -440,7 +441,7 @@ func (bs *MockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error)
 	panic("implement me")
 }
 
-func (bs *MockBlockchainStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (bs *MockBlockchainStore) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	panic("implement me")
 }
 
