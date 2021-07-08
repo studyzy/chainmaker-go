@@ -26,6 +26,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"runtime"
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -236,8 +237,7 @@ func FinalizeBlock(
 	txHashes := make([][]byte, block.Header.TxCount)
 	var goRoutinePool *ants.Pool
 	var err error
-	var txCount int
-	var lock sync.Mutex
+	var txCount int64
 	var wg sync.WaitGroup
 	poolCapacity := runtime.NumCPU() * 4
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
@@ -303,13 +303,11 @@ func FinalizeBlock(
 					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
 					errC <- err
 				}
-				lock.Lock()
-				txCount++
 				txHashes[packet.index] = txHash
-				if txCount == len(block.Txs) {
+				atomic.AddInt64(&txCount, 1)
+				if txCount == int64(len(block.Txs)) {
 					finishC <- true
 				}
-				lock.Unlock()
 			})
 		case err = <-errC:
 			return err
