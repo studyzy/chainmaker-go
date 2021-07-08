@@ -58,7 +58,7 @@ func (s *MockSimContextImpl) Select(namespace string, startKey []byte, limit []b
 	panic(implement_me)
 }
 
-func (s *MockSimContextImpl) GetBlockHeight() int64 {
+func (s *MockSimContextImpl) GetBlockHeight() uint64 {
 	panic(implement_me)
 }
 
@@ -178,7 +178,7 @@ func testSnapshot(t *testing.T, i int) {
 
 	txSimContext := &MockSimContextImpl{
 		tx: &commonPb.Transaction{
-			Header: &commonPb.Payload{
+			Payload: &commonPb.Payload{
 				TxId: "tx id in snapshot",
 			},
 		},
