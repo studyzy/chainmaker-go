@@ -295,6 +295,14 @@ func BaseParam(parameters map[string]string) {
 type mockBlockchainStore struct {
 }
 
+func (m mockBlockchainStore) GetContractByName(name string) (*commonPb.Contract, error) {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetContractBytecode(name string) ([]byte, error) {
+	panic("implement me")
+}
+
 func (m mockBlockchainStore) GetHeightByHash(blockHash []byte) (uint64, error) {
 	panic("implement me")
 }
