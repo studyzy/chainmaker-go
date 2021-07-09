@@ -38,7 +38,7 @@ type txQuerySimContextImpl struct {
 type callContractResult struct {
 	contractName string
 	method       string
-	param        map[string]string
+	param        map[string][]byte
 	depth        int
 	gasUsed      uint64
 	result       []byte
@@ -109,10 +109,10 @@ func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Serialized
 }
 
 func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
-	return s.tx.Payload.Sender
+	return s.tx.Sender.Signer
 }
 
-func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
+func (s *txQuerySimContextImpl) GetBlockHeight() uint64 {
 	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
 		return 0
 	} else {
@@ -120,7 +120,7 @@ func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
 	}
 }
 
-func (s *txQuerySimContextImpl) GetBlockProposer() []byte {
+func (s *txQuerySimContextImpl) GetBlockProposer() *acPb.SerializedMember {
 	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
 		return nil
 	} else {
@@ -226,7 +226,8 @@ func constructKey(contractName string, key []byte) string {
 	return contractName + string(key)
 }
 
-func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
+	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
