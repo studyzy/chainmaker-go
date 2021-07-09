@@ -49,7 +49,7 @@ func newRestoreCMD() *cobra.Command {
 // runRestoreCMD `restore` command implementation
 func runRestoreCMD() error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 	if err != nil {
 		return err
 	}

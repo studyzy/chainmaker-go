@@ -19,6 +19,7 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto"
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdk "chainmaker.org/chainmaker-sdk-go"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/accesscontrol"
 	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
@@ -48,11 +49,14 @@ var (
 	withRWSet      bool
 	txId           string
 
-	adminOrgIds        string
-	adminKeyFilePaths  string
-	adminCrtFilePaths  string
-	clientKeyFilePaths string
-	clientCrtFilePaths string
+	adminOrgIds       string
+	adminKeyFilePaths string
+	adminCrtFilePaths string
+
+	userTlsKeyFilePath  string
+	userTlsCrtFilePath  string
+	userSignKeyFilePath string
+	userSignCrtFilePath string
 
 	blockInterval  int
 	nodeOrgId      string
@@ -63,6 +67,12 @@ var (
 	trustRootPath  string
 	certFilePaths  string
 	certCrlPath    string
+
+	address			string
+	amount			string
+	delegator		string
+	validator		string
+	epochID			string
 )
 
 const (
@@ -86,8 +96,10 @@ const (
 	flagAdminOrgIds            = "admin-org-ids"
 	flagAdminKeyFilePaths      = "admin-key-file-paths"
 	flagAdminCrtFilePaths      = "admin-crt-file-paths"
-	flagClientKeyFilePaths     = "client-key-file-paths"
-	flagClientCrtFilePaths     = "client-crt-file-paths"
+	flagUserTlsKeyFilePath     = "user-tlskey-file-path"
+	flagUserTlsCrtFilePath     = "user-tlscrt-file-path"
+	flagUserSignKeyFilePath    = "user-signkey-file-path"
+	flagUserSignCrtFilePath    = "user-signcrt-file-path"
 	flagTimeout                = "timeout"
 	flagBlockInterval          = "block-interval"
 	flagNodeOrgId              = "node-org-id"
@@ -98,6 +110,11 @@ const (
 	flagTrustRootCrtPath       = "trust-root-path"
 	flagCertFilePaths          = "cert-file-paths"
 	flagCertCrlPath            = "cert-crl-path"
+	flagAddress				   = "address"
+	flagAmount				   = "amount"
+	flagDelegator			   = "delegator"
+	flagValidator			   = "validator"
+	flagEpochID			   	   = "epoch-id"
 )
 
 func ClientCMD() *cobra.Command {
@@ -153,8 +170,11 @@ func init() {
 	flags.StringVar(&adminOrgIds, flagAdminOrgIds, "", "specify admin org IDs, use ',' to separate")
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
-	flags.StringVar(&clientKeyFilePaths, flagClientKeyFilePaths, "", "specify client key file paths, use ',' to separate")
-	flags.StringVar(&clientCrtFilePaths, flagClientCrtFilePaths, "", "specify client cert file paths, use ',' to separate")
+
+	flags.StringVar(&userTlsKeyFilePath, flagUserTlsKeyFilePath, "", "specify user tls key file path for chainclient tls connection")
+	flags.StringVar(&userTlsCrtFilePath, flagUserTlsCrtFilePath, "", "specify user tls cert file path for chainclient tls connection")
+	flags.StringVar(&userSignKeyFilePath, flagUserSignKeyFilePath, "", "specify user sign key file path to sign tx")
+	flags.StringVar(&userSignCrtFilePath, flagUserSignCrtFilePath, "", "specify user sign cert file path to sign tx")
 
 	// 链配置
 	flags.IntVar(&blockInterval, flagBlockInterval, 2000, "block interval timeout in milliseconds, default 2000ms")
@@ -169,6 +189,13 @@ func init() {
 	// 证书管理
 	flags.StringVar(&certFilePaths, flagCertFilePaths, "", "specify cert file paths, use ',' to separate")
 	flags.StringVar(&certCrlPath, flagCertCrlPath, "", "specify cert crl path")
+
+	// dpos 系统合约
+	flags.StringVar(&address, flagAddress, "", "specify use address")
+	flags.StringVar(&amount, flagAmount, "", "specify amount")
+	flags.StringVar(&delegator, flagDelegator, "", "specify delegator address")
+	flags.StringVar(&validator, flagValidator, "", "specify validator address")
+	flags.StringVar(&epochID, flagEpochID, "", "specify epoch id")
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {
@@ -178,25 +205,6 @@ func attachFlags(cmd *cobra.Command, names []string) {
 			cmdFlags.AddFlag(flag)
 		}
 	}
-}
-
-// 创建ChainClient（使用配置文件）
-func createClientWithConfig() (*sdk.ChainClient, error) {
-	chainClient, err := sdk.NewChainClient(sdk.WithConfPath(sdkConfPath), sdk.WithUserKeyFilePath(clientKeyFilePaths),
-		sdk.WithUserCrtFilePath(clientCrtFilePaths), sdk.WithChainClientOrgId(orgId), sdk.WithChainClientChainId(chainId))
-	if err != nil {
-		return nil, err
-	}
-
-	//启用证书压缩（开启证书压缩可以减小交易包大小，提升处理性能）
-	if enableCertHash {
-		err = chainClient.EnableCertHash()
-		if err != nil {
-			return chainClient, err
-		}
-	}
-
-	return chainClient, nil
 }
 
 func createAdminWithConfig(adminKeyFilePath, adminCrtFilePath string) (*sdk.ChainClient, error) {
@@ -229,8 +237,9 @@ func getChainMakerServerVersionCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId,
-		flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -239,7 +248,7 @@ func getChainMakerServerVersionCMD() *cobra.Command {
 }
 
 func getChainMakerServerVersion() error {
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}
