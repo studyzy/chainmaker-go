@@ -33,5 +33,3 @@ tools
 .DS_Store
 /module/vm/test/*/tmp/
 nohup.out
-tools/cmc/testdata
-tools/cmc/cmc
