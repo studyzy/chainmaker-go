@@ -304,8 +304,8 @@ func FinalizeBlock(
 					errC <- err
 				}
 				txHashes[packet.index] = txHash
-				atomic.AddInt64(&txCount, 1)
-				if txCount == int64(len(block.Txs)) {
+				newTxCount := atomic.AddInt64(&txCount, 1)
+				if newTxCount == int64(len(block.Txs)) {
 					finishC <- true
 				}
 			})
