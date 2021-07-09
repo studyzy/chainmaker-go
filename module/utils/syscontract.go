@@ -14,8 +14,14 @@ const (
 	PrefixContractByteCode = "ContractByteCode:"
 )
 
+func GetContractDbKey(contractName string) []byte {
+	return []byte(PrefixContractInfo + contractName)
+}
+func GetContractByteCodeDbKey(contractName string) []byte {
+	return []byte(PrefixContractByteCode + contractName)
+}
 func GetContractByName(readObject func(contractName string, key []byte) ([]byte, error), name string) (*commonPb.Contract, error) {
-	key := []byte(PrefixContractInfo + name)
+	key := GetContractDbKey(name)
 	value, err := readObject(commonPb.SystemContract_CONTRACT_MANAGE.String(), key)
 	if err != nil {
 		return nil, err
@@ -28,6 +34,6 @@ func GetContractByName(readObject func(contractName string, key []byte) ([]byte,
 	return contract, nil
 }
 func GetContractBytecode(readObject func(contractName string, key []byte) ([]byte, error), name string) ([]byte, error) {
-	key := []byte(PrefixContractByteCode + name)
+	key := GetContractByteCodeDbKey(name)
 	return readObject(commonPb.SystemContract_CONTRACT_MANAGE.String(), key)
 }

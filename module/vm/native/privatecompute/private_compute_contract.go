@@ -35,7 +35,16 @@ import (
 )
 
 const (
-	ComputeResult = "private_compute_result"
+	ComputeResult       = "private_compute_result"
+	ContractKey         = ":K:"
+	ContractByteHeader  = ":H:"
+	ContractByteCode    = ":B:"
+	ContractVersion     = ":V:"
+	ContractRuntimeType = ":R:"
+	ContractCreator     = ":C:"
+	ContractFreeze      = ":F:"
+	ContractRevoke      = ":RV:"
+	ContractAddress     = ":A:"
 )
 
 type PrivateComputeContract struct {
@@ -224,7 +233,7 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	}
 
 	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
-	versionKey := []byte(protocol.ContractVersion)
+	versionKey := []byte(ContractVersion)
 	versionInCtx, err := context.Get(combinationName, versionKey)
 	if err != nil {
 		err := fmt.Errorf("unable to find latest version for contract[%s], system error:%s", name, err.Error())
@@ -243,13 +252,13 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 		return err
 	}
 
-	key := append([]byte(protocol.ContractByteCode), []byte(version)...)
+	key := append([]byte(ContractByteCode), []byte(version)...)
 	if err := context.Put(combinationName, key, []byte(code)); err != nil {
 		r.log.Errorf("Put compute contract[%s] failed, err: %s", err.Error(), name)
 		return err
 	}
 
-	headerKey := append([]byte(protocol.ContractByteHeader), []byte(version)...)
+	headerKey := append([]byte(ContractByteHeader), []byte(version)...)
 	if err := context.Put(combinationName, headerKey, []byte(codeHeader)); err != nil {
 		r.log.Errorf("Put compute contract[%s] failed, err: %s", err.Error(), name)
 		return err
@@ -343,7 +352,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 	}
 
 	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
-	version, err := context.Get(combinationName, []byte(protocol.ContractVersion))
+	version, err := context.Get(combinationName, []byte(ContractVersion))
 	if err != nil {
 		r.log.Errorf("Unable to find latest version for contract[%s], system error:%s.", name, err.Error())
 		return nil, err
@@ -355,7 +364,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 	}
 
 	var result commonPb.PrivateGetContract
-	key := append([]byte(protocol.ContractByteCode), version...)
+	key := append([]byte(ContractByteCode), version...)
 	contractCode, err := context.Get(combinationName, key)
 	if err != nil {
 		r.log.Errorf("Read contract[%s] failed.", name)
@@ -368,7 +377,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	headerKey := append([]byte(protocol.ContractByteHeader), version...)
+	headerKey := append([]byte(ContractByteHeader), version...)
 	headerCode, err := context.Get(combinationName, headerKey)
 	if err != nil {
 		r.log.Errorf("Read contract code header[%s] failed.", name)
@@ -585,14 +594,14 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	r.log.Debug("verify ContractResult success")
 
 	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
-	key := append([]byte(protocol.ContractByteCode), version...)
+	key := append([]byte(ContractByteCode), version...)
 	contractCode, err := context.Get(combinationName, key)
 	if err != nil || len(contractCode) == 0 {
 		r.log.Errorf("Read contract[%s] failed.", name)
 		return nil, err
 	}
 
-	headerKey := append([]byte(protocol.ContractByteHeader), version...)
+	headerKey := append([]byte(ContractByteHeader), version...)
 	headerCode, err := context.Get(combinationName, headerKey)
 	if err != nil {
 		r.log.Errorf("Save data: read contract code header[%s] failed.", name)

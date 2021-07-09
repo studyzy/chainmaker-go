@@ -9,7 +9,6 @@ package test
 import (
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -115,14 +114,16 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 		db:         db,
 		kvRowCache: make(map[int32]protocol.StateIterator),
 	}
+	data, _ := contractId.Marshal()
+	key := utils.GetContractDbKey(contractId.Name)
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
+	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
+	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 
-	versionKey := []byte(protocol.ContractVersion + ContractNameTest)
-	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
-	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
-
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
+	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, txContext, bytes
 }

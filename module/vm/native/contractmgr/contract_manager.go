@@ -22,10 +22,6 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 )
 
-const (
-	PrefixContractInfo     = "Contract:"
-	PrefixContractByteCode = "ContractByteCode:"
-)
 
 var (
 	ContractName             = commonPb.SystemContract_CONTRACT_MANAGE.String()
@@ -152,7 +148,7 @@ func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimConte
 
 //GetAllContracts 查询所有合约的详细信息
 func (r *ContractManagerRuntime) GetAllContracts(context protocol.TxSimContext) ([]*commonPb.Contract, error) {
-	keyPrefix := []byte(PrefixContractInfo)
+	keyPrefix := []byte(utils.PrefixContractInfo)
 	it, err := context.Select(commonPb.SystemContract_CONTRACT_MANAGE.String(), keyPrefix, keyPrefix)
 	if err != nil {
 		return nil, err
@@ -176,23 +172,23 @@ func (r *ContractManagerRuntime) GetAllContracts(context protocol.TxSimContext) 
 //安装新合约
 func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, name, version string, byteCode []byte,
 	runTime commonPb.RuntimeType, initParameters map[string][]byte) (*commonPb.Contract, error) {
-	key := []byte(PrefixContractInfo + name)
+	key := utils.GetContractDbKey(name)
 	//check name exist
 	existContract, _ := context.Get(ContractName, key)
 	if len(existContract) > 0 { //exist
 		return nil, errContractExist
 	}
 	contract := &commonPb.Contract{
-		Name:          name,
-		Version:       version,
-		RuntimeType:   runTime,
-		Status:        commonPb.ContractStatus_NORMAL,
-		Creator:       context.GetSender(),
+		Name:        name,
+		Version:     version,
+		RuntimeType: runTime,
+		Status:      commonPb.ContractStatus_NORMAL,
+		Creator:     context.GetSender(),
 	}
 	cdata, _ := contract.Marshal()
 
 	context.Put(ContractName, key, cdata)
-	byteCodeKey := []byte(PrefixContractByteCode + name)
+	byteCodeKey := utils.GetContractByteCodeDbKey(name)
 	context.Put(ContractName, byteCodeKey, byteCode)
 	//实例化合约，并init合约，产生读写集
 	context.CallContract(contract, protocol.ContractInitMethod, byteCode, initParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
@@ -202,7 +198,7 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 //升级现有合约
 func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, name, version string, byteCode []byte,
 	runTime commonPb.RuntimeType, upgradeParameters map[string][]byte) (*commonPb.Contract, error) {
-	key := []byte(PrefixContractInfo + name)
+	key := utils.GetContractDbKey(name)
 	//check name exist
 	existContract, _ := context.Get(ContractName, key)
 	if len(existContract) == 0 { //not exist
@@ -221,7 +217,7 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 	cdata, _ := contract.Marshal()
 	context.Put(ContractName, key, cdata)
 	//update Contract Bytecode
-	byteCodeKey := []byte(PrefixContractByteCode + name)
+	byteCodeKey := utils.GetContractByteCodeDbKey(name)
 	context.Put(ContractName, byteCodeKey, byteCode)
 	//运行新合约的upgrade方法，产生读写集
 	context.CallContract(contract, protocol.ContractUpgradeMethod, byteCode, upgradeParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
@@ -251,7 +247,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		return nil, errContractStatusInvalid
 	}
 	contract.Status = newStatus
-	key := []byte(PrefixContractInfo + name)
+	key := utils.GetContractDbKey(name)
 	cdata, _ := contract.Marshal()
 	err = context.Put(ContractName, key, cdata)
 	if err != nil {

@@ -184,40 +184,42 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 			//fmt.Println("n k val", n, k, val, val.String())
 		}
 	}
-	if len(result.StorageCache.Destructs) > 0 {
-		revokeKey := []byte(protocol.ContractRevoke + r.ContractId.Name)
-		if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(r.ContractId.Name)); err != nil {
-			panic(err)
-		}
-		r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
-			r.ContractId.Name, r.TxSimContext.GetTx().Payload.TxId)
-	}
+	//TODO：Devin:销毁一个合约是在ContractManage合约中去操作的，这里能操作系统合约的状态数据？
+	//if len(result.StorageCache.Destructs) > 0 {
+	//	revokeKey := []byte(protocol.ContractRevoke + r.ContractId.Name)
+	//	if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(r.ContractId.Name)); err != nil {
+	//		panic(err)
+	//	}
+	//	r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
+	//		r.ContractId.Name, r.TxSimContext.GetTx().Payload.TxId)
+	//}
+	//TODO:Devin:合约的安装升级只更新自己的合约状态数据，系统合约那边自己管理，不需要在这里操作。
 	// save address -> contractName,version
-	if r.Method == protocol.ContractInitMethod || r.Method == protocol.ContractUpgradeMethod {
-		if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractAddress), []byte(r.ContractId.Name)); err != nil {
-			r.Log.Errorf("failed to save contractName %s", err.Error())
-			panic(err)
-		}
-		versionKey := []byte(protocol.ContractVersion + r.Address.String())
-		//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.Version)); err != nil {
-		if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(r.ContractId.Version)); err != nil {
-			r.Log.Errorf("failed to save ContractVersion %s", err.Error())
-			panic(err)
-		}
-		// if is create/upgrade contract then override solidity byteCode
-		if len(result.ByteCodeBody) > 0 && len(result.ByteCodeHead) > 0 {
-			// save byteCodeBody
-			versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.ContractId.Name), []byte(r.ContractId.Version)...)
-			//if err := r.TxSimContext.Put(r.ContractId.Name, versionedByteCodeKey, result.ByteCodeBody); err != nil {
-			if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
-				r.Log.Errorf("failed to save byte code body %s", err.Error())
-				panic(err)
-			}
-		} else {
-			r.Log.Errorf("failed to parse evm byte code, head length = %d, body length = %d", len(result.ByteCodeHead), len(result.ByteCodeBody))
-			panic(err)
-		}
-	}
+	//if r.Method == protocol.ContractInitMethod || r.Method == protocol.ContractUpgradeMethod {
+	//	if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractAddress), []byte(r.ContractId.Name)); err != nil {
+	//		r.Log.Errorf("failed to save contractName %s", err.Error())
+	//		panic(err)
+	//	}
+	//	versionKey := []byte(protocol.ContractVersion + r.Address.String())
+	//	//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.Version)); err != nil {
+	//	if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(r.ContractId.Version)); err != nil {
+	//		r.Log.Errorf("failed to save ContractVersion %s", err.Error())
+	//		panic(err)
+	//	}
+	//	// if is create/upgrade contract then override solidity byteCode
+	//	if len(result.ByteCodeBody) > 0 && len(result.ByteCodeHead) > 0 {
+	//		// save byteCodeBody
+	//		versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.ContractId.Name), []byte(r.ContractId.Version)...)
+	//		//if err := r.TxSimContext.Put(r.ContractId.Name, versionedByteCodeKey, result.ByteCodeBody); err != nil {
+	//		if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
+	//			r.Log.Errorf("failed to save byte code body %s", err.Error())
+	//			panic(err)
+	//		}
+	//	} else {
+	//		r.Log.Errorf("failed to parse evm byte code, head length = %d, body length = %d", len(result.ByteCodeHead), len(result.ByteCodeBody))
+	//		panic(err)
+	//	}
+	//}
 
 	r.Log.Debug("result:", result.ResultData)
 }

@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"sync"
 
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
@@ -69,14 +69,16 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxC
 		sender:    sender,
 		cacheMap:  make(map[string][]byte),
 	}
-
-	versionKey := []byte(protocol.ContractVersion + ContractNameTest)
-	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
-	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
-
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	data, _ := contractId.Marshal()
+	key := utils.GetContractDbKey(contractId.Name)
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
+	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
+	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
+	//
+	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
+	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }
@@ -282,14 +284,14 @@ func (s *TxContextMockTest) GetDepth() int {
 }
 
 func BaseParam(parameters map[string][]byte) {
-	parameters[protocol.ContractTxIdParam] = "TX_ID"
-	parameters[protocol.ContractCreatorOrgIdParam] = "org_a"
-	parameters[protocol.ContractCreatorRoleParam] = "admin"
-	parameters[protocol.ContractCreatorPkParam] = "1234567890abcdef1234567890abcdef"
-	parameters[protocol.ContractSenderOrgIdParam] = "org_b"
-	parameters[protocol.ContractSenderRoleParam] = "user"
-	parameters[protocol.ContractSenderPkParam] = "11223344556677889900aabbccddeeff"
-	parameters[protocol.ContractBlockHeightParam] = "1"
+	parameters[protocol.ContractTxIdParam] = []byte("TX_ID")
+	parameters[protocol.ContractCreatorOrgIdParam] = []byte( "org_a")
+	parameters[protocol.ContractCreatorRoleParam] = []byte("admin")
+	parameters[protocol.ContractCreatorPkParam] = []byte("1234567890abcdef1234567890abcdef")
+	parameters[protocol.ContractSenderOrgIdParam] = []byte("org_b")
+	parameters[protocol.ContractSenderRoleParam] = []byte( "user")
+	parameters[protocol.ContractSenderPkParam] = []byte("11223344556677889900aabbccddeeff")
+	parameters[protocol.ContractBlockHeightParam] = []byte( "1")
 }
 
 type mockBlockchainStore struct {
