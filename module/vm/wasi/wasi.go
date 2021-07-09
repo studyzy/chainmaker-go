@@ -192,7 +192,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 }
 
 func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []byte) int32 {
-	if contractResult.Code == common.ContractResultCode_FAIL {
+	if contractResult.Code == uint32(protocol.ContractResultCode_FAIL) {
 		return protocol.ContractSdkSignalResultFail
 	}
 	contractResult.Code = 0
@@ -201,7 +201,7 @@ func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []by
 }
 
 func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte) int32 {
-	contractResult.Code = common.ContractResultCode_FAIL
+	contractResult.Code = uint32(protocol.ContractResultCode_FAIL)
 	if len(contractResult.Message) > 0 {
 		contractResult.Message += ". contract message:" + string(data)
 	} else {
@@ -237,7 +237,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 		ContractName:    contractId.ContractName,
 		ContractVersion: contractId.ContractVersion,
 		Topic:           topic,
-		TxId:            txSimContext.GetTx().Header.TxId,
+		TxId:            txSimContext.GetTx().Payload.TxId,
 		EventData:       eventData,
 	}
 	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
@@ -665,7 +665,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	// execute query
 	var rows protocol.SqlRows
 	var err error
-	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_CONTRACT {
+	if txSimContext.GetTx().Payload.TxType == common.TxType_QUERY_CONTRACT {
 		rows, err = txSimContext.GetBlockchainStore().QueryMulti(contractName, sql)
 		if err != nil {
 			return fmt.Errorf("[execute query] error, %s", err.Error())
@@ -701,7 +701,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 		// execute
 		var row protocol.SqlRow
 		var err error
-		if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_CONTRACT {
+		if txSimContext.GetTx().Payload.TxType == common.TxType_QUERY_CONTRACT {
 			row, err = txSimContext.GetBlockchainStore().QuerySingle(contractName, sql)
 			if err != nil {
 				return nil, fmt.Errorf("[execute query one] error, %s", err.Error())
@@ -814,7 +814,7 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 }
 
 func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
-	if txSimContext.GetTx().GetHeader().TxType == common.TxType_QUERY_CONTRACT {
+	if txSimContext.GetTx().Payload.TxType == common.TxType_QUERY_CONTRACT {
 		return fmt.Errorf("[execute update] query transaction cannot be execute dml")
 	}
 	if method == protocol.ContractUpgradeMethod {

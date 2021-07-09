@@ -45,7 +45,7 @@ type WaciInstance struct {
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Sc.Log.Debugf("wasmer log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Sc.Log.Debugf("wasmer log>> [%s] %s", s.Sc.TxSimContext.GetTx().Payload.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 

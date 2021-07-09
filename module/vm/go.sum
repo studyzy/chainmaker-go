@@ -17,6 +17,12 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf h1:ZpBHo38Txf
 chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210706171157-e6dca957a232 h1:d7Q04J0IzI7ByfKAdEhA1Lf32Sz6k7A82qkfySMYPm4=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210706171157-e6dca957a232/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708024946-64e9e52d1a2b h1:tyS3uhJbcJa78G4X1/1OLd3/vob7T7W4PG6sqk5mLWk=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708024946-64e9e52d1a2b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115 h1:vbrZrxHN1FvQtvQP/h+KOzfnntQBO3ImYVkE0EJaiKc=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708095431-3ed1d2a0d58e h1:7gn6e+FJaRHqdPTWImxKlg5XwfsJk9A7VQxX+IwMBTE=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210708095431-3ed1d2a0d58e/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210609024825-0db378505f4e h1:2mH+jRZIICNdjZCKREWazMJHoz213SItnr/qKW4g6Ic=
 chainmaker.org/chainmaker/protocol v0.0.0-20210609024825-0db378505f4e/go.mod h1:z5pspOMvtvlpu1Q7Jt/R7UhbtIsXM3OT7L03yRudsA8=
 chainmaker.org/chainmaker/protocol v0.0.0-20210621034938-44d4b545b203 h1:MKcXZ7QzvdZsdYfJ+6FA4fCv+K6oszTKedjXmT5ToRo=
@@ -31,6 +37,10 @@ chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511 h1:1n+699k
 chainmaker.org/chainmaker/protocol v0.0.0-20210630150922-63cd365c6511/go.mod h1:yk8TYTK3ZVn+CisdgAcix1DVYNmjNpVbBR9IGbBbAH0=
 chainmaker.org/chainmaker/protocol v0.0.0-20210706172914-ccc59fc46e71 h1:9ZlAFQc3kcIHkSFEJN6nFCFPbO9YOi/M3RlgXW1h7MA=
 chainmaker.org/chainmaker/protocol v0.0.0-20210706172914-ccc59fc46e71/go.mod h1:4WvDQCYZJSieUduADcFir17MEx0UvBcoWIkBfBdNOKw=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708034656-3fcc955608fc h1:dkCerkYlwEPH620xUgIZEPvjHtTbMUeUt8SU1sO/y34=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708034656-3fcc955608fc/go.mod h1:mCoBvQ9ZcJy2LXCCg96Ct9rLU/cJ76fAReMMAH3uMEw=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543 h1:wJrbvFVJ/fAd0gExWePtEuYhCgZfMK+Gi7Ei9DQXflE=
+chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543/go.mod h1:dH8VU8w+lR6WOA5JWU6G/NSdpPaKrYSIyyFA363uIjc=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -1100,6 +1110,7 @@ golang.org/x/net v0.0.0-20201224014010-6772e930b67b/go.mod h1:m0MpNAwzfU5UDzcl9v
 golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
 golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 h1:qWPm9rbaAMKs8Bq/9LRpbMqxWRVUAQwMI9fVrssnTfw=
 golang.org/x/net v0.0.0-20210226172049-e18ecbb05110/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
+golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 h1:4nGaVu0QrbjT/AK2PRLuQfQuh6DJve+pELhqTdAj3x0=
 golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4/go.mod h1:p54w0d4576C0XHj96bSt6lcn1PtDYWL6XObtHCRCNQM=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=

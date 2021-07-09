@@ -13,8 +13,8 @@ import (
 
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var defaultHashType = "SHA256"
@@ -23,7 +23,7 @@ var defaultHashType = "SHA256"
 type ProposalCache struct {
 	// block height -> block hash -> block with rw set
 	// since one block height may have multiple block proposals
-	lastProposedBlock map[int64]map[string]*blockProposal
+	lastProposedBlock map[uint64]map[string]*blockProposal
 	rwMu              sync.RWMutex
 	chainConf         protocol.ChainConf
 	ledgerCache       protocol.LedgerCache
@@ -43,7 +43,7 @@ type blockProposal struct {
 // One ProposalCache for one chain.
 func NewProposalCache(chainConf protocol.ChainConf, ledgerCache protocol.LedgerCache) protocol.ProposalCache {
 	pc := &ProposalCache{
-		lastProposedBlock: make(map[int64]map[string]*blockProposal),
+		lastProposedBlock: make(map[uint64]map[string]*blockProposal),
 		chainConf:         chainConf,
 		ledgerCache:       ledgerCache,
 	}
@@ -51,7 +51,7 @@ func NewProposalCache(chainConf protocol.ChainConf, ledgerCache protocol.LedgerC
 }
 
 // ClearProposedBlockAt clear proposed blocks with height.
-func (pc *ProposalCache) ClearProposedBlockAt(height int64) {
+func (pc *ProposalCache) ClearProposedBlockAt(height uint64) {
 	pc.rwMu.Lock()
 	defer pc.rwMu.Unlock()
 	delete(pc.lastProposedBlock, height)
@@ -77,7 +77,7 @@ func (pc *ProposalCache) GetProposedBlock(b *commonpb.Block) (*commonpb.Block, m
 // GetProposedBlocksAt get all proposed blocks at a specific height.
 // It is possible that generate several proposal blocks in one height
 // because of some unpredictable situation of consensus.
-func (pc *ProposalCache) GetProposedBlocksAt(height int64) []*commonpb.Block {
+func (pc *ProposalCache) GetProposedBlocksAt(height uint64) []*commonpb.Block {
 	pc.rwMu.RLock()
 	defer pc.rwMu.RUnlock()
 	if proposedBlocks, ok := pc.lastProposedBlock[height]; ok {
@@ -91,7 +91,7 @@ func (pc *ProposalCache) GetProposedBlocksAt(height int64) []*commonpb.Block {
 }
 
 // GetProposedBlockByHashAndHeight get proposed block by block hash and block height.
-func (pc *ProposalCache) GetProposedBlockByHashAndHeight(hash []byte, height int64) (*commonpb.Block, map[string]*commonpb.TxRWSet) {
+func (pc *ProposalCache) GetProposedBlockByHashAndHeight(hash []byte, height uint64) (*commonpb.Block, map[string]*commonpb.TxRWSet) {
 	if hash == nil || height < 0 {
 		return nil, nil
 	}
@@ -147,7 +147,7 @@ func (pc *ProposalCache) ClearTheBlock(block *commonpb.Block) {
 }
 
 // GetSelfProposedBlockAt get proposed block that is proposed by node itself.
-func (pc *ProposalCache) GetSelfProposedBlockAt(height int64) *commonpb.Block {
+func (pc *ProposalCache) GetSelfProposedBlockAt(height uint64) *commonpb.Block {
 	pc.rwMu.RLock()
 	defer pc.rwMu.RUnlock()
 	if proposedBlocks, ok := pc.lastProposedBlock[height]; ok {
@@ -161,7 +161,7 @@ func (pc *ProposalCache) GetSelfProposedBlockAt(height int64) *commonpb.Block {
 }
 
 // HasProposedBlockAt return if a proposed block has cached in current consensus height.
-func (pc *ProposalCache) HasProposedBlockAt(height int64) bool {
+func (pc *ProposalCache) HasProposedBlockAt(height uint64) bool {
 	pc.rwMu.RLock()
 	defer pc.rwMu.RUnlock()
 	_, ok := pc.lastProposedBlock[height]
@@ -169,7 +169,7 @@ func (pc *ProposalCache) HasProposedBlockAt(height int64) bool {
 }
 
 // IsProposedAt return if this node has proposed a block as proposer.
-func (pc *ProposalCache) IsProposedAt(height int64) bool {
+func (pc *ProposalCache) IsProposedAt(height uint64) bool {
 	pc.rwMu.RLock()
 	defer pc.rwMu.RUnlock()
 	if proposedBlocks, ok := pc.lastProposedBlock[height]; ok {
@@ -183,7 +183,7 @@ func (pc *ProposalCache) IsProposedAt(height int64) bool {
 }
 
 // SetProposedAt to mark this node has proposed a block as proposer.
-func (pc *ProposalCache) SetProposedAt(height int64) {
+func (pc *ProposalCache) SetProposedAt(height uint64) {
 	pc.rwMu.Lock()
 	defer pc.rwMu.Unlock()
 	if proposedBlocks, ok := pc.lastProposedBlock[height]; ok {
@@ -197,7 +197,7 @@ func (pc *ProposalCache) SetProposedAt(height int64) {
 }
 
 // ResetProposedAt reset propose status of this node.
-func (pc *ProposalCache) ResetProposedAt(height int64) {
+func (pc *ProposalCache) ResetProposedAt(height uint64) {
 	pc.rwMu.Lock()
 	defer pc.rwMu.Unlock()
 	if proposedBlocks, ok := pc.lastProposedBlock[height]; ok {
@@ -211,7 +211,7 @@ func (pc *ProposalCache) ResetProposedAt(height int64) {
 }
 
 // Remove proposed block in height except the specific block.
-func (pc *ProposalCache) KeepProposedBlock(hash []byte, height int64) []*commonpb.Block {
+func (pc *ProposalCache) KeepProposedBlock(hash []byte, height uint64) []*commonpb.Block {
 	blocks := make([]*commonpb.Block, 0)
 	pc.rwMu.Lock()
 	defer pc.rwMu.Unlock()
@@ -227,7 +227,7 @@ func (pc *ProposalCache) KeepProposedBlock(hash []byte, height int64) []*commonp
 	return blocks
 }
 
-func (pc *ProposalCache) DiscardAboveHeight(baseHeight int64) []*commonpb.Block {
+func (pc *ProposalCache) DiscardAboveHeight(baseHeight uint64) []*commonpb.Block {
 	pc.rwMu.Lock()
 	defer pc.rwMu.Unlock()
 	delBlocks := make([]*commonpb.Block, 0)

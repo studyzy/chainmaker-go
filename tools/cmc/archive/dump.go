@@ -228,7 +228,7 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 }
 
 // archiveBlockOnChain Build & Sign & Send a ArchiveBlockRequest
-func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
+func archiveBlockOnChain(cc *sdk.ChainClient, height uint64) error {
 	var (
 		err                error
 		payload            []byte

@@ -76,7 +76,7 @@ func (cs *chainedbftSMR) forwardNewHeightIfNeed() {
 	lastBlock := cs.chainStore.getCurrentCertifiedBlock()
 	cs.logger.Debugf("forwardNewHeightIfNeed to chainStore state, smr height [%v],"+
 		" chainStore height [%v]", cs.getHeight(), lastBlock.Header.BlockHeight)
-	if cs.getHeight() > 0 && int64(cs.getHeight()) != lastBlock.Header.BlockHeight {
+	if cs.getHeight() > 0 && uint64(cs.getHeight()) != lastBlock.Header.BlockHeight {
 		cs.logger.Warnf("mismatched height [%v], expected [%v]",
 			lastBlock.Header.BlockHeight, cs.getHeight())
 		return

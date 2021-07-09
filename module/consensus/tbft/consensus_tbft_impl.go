@@ -30,27 +30,27 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/msgbus"
 
 	"chainmaker.org/chainmaker-go/logger"
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
 )
 
-var clog *zap.SugaredLogger = zap.S()
+var clog = zap.S()
 
 var (
 	defaultChanCap                 = 1000
 	nilHash                        = []byte("NilHash")
 	consensusStateKey              = []byte("ConsensusStateKey")
 	walDir                         = "tbftwal"
-	defaultConsensusStateCacheSize = int64(10)
+	defaultConsensusStateCacheSize = uint64(10)
 )
 
 const (
 	DefaultTimeoutPropose      = 30 * time.Second // Timeout of waitting for a proposal before prevoting nil
 	DefaultTimeoutProposeDelta = 1 * time.Second  // Increased time delta of TimeoutPropose between rounds
-	DefaultBlocksPerProposer   = int64(1)         // The number of blocks each proposer can propose
+	DefaultBlocksPerProposer   = uint64(1)        // The number of blocks each proposer can propose
 	TimeoutPrevote             = 1 * time.Second  // Timeout of waitting for >2/3 prevote
 	TimeoutPrevoteDelta        = 1 * time.Second  // Increased time delta of TimeoutPrevote between round
 	TimeoutPrecommit           = 1 * time.Second  // Timeout of waitting for >2/3 precommit
@@ -105,7 +105,7 @@ type ConsensusTBFTImpl struct {
 
 	proposedBlockC chan *consensuspb.ProposalBlock
 	verifyResultC  chan *consensuspb.VerifyResult
-	blockHeightC   chan int64
+	blockHeightC   chan uint64
 	externalMsgC   chan *tbftpb.TBFTMsg
 	internalMsgC   chan *tbftpb.TBFTMsg
 
@@ -157,7 +157,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 
 	consensus.proposedBlockC = make(chan *consensuspb.ProposalBlock, defaultChanCap)
 	consensus.verifyResultC = make(chan *consensuspb.VerifyResult, defaultChanCap)
-	consensus.blockHeightC = make(chan int64, defaultChanCap)
+	consensus.blockHeightC = make(chan uint64, defaultChanCap)
 	consensus.externalMsgC = make(chan *tbftpb.TBFTMsg, defaultChanCap)
 	consensus.internalMsgC = make(chan *tbftpb.TBFTMsg, defaultChanCap)
 
@@ -306,10 +306,11 @@ func (consensus *ConsensusTBFTImpl) updateChainConfig() (addedValidators []strin
 	return consensus.validatorSet.updateValidators(validators)
 }
 
-func (consensus *ConsensusTBFTImpl) extractConsensusConfig(config *config.ConsensusConfig) (validators []string, timeoutPropose time.Duration, timeoutProposeDelta time.Duration, tbftBlocksPerProposer int64, err error) {
+func (consensus *ConsensusTBFTImpl) extractConsensusConfig(config *config.ConsensusConfig) (validators []string,
+	timeoutPropose time.Duration, timeoutProposeDelta time.Duration, tbftBlocksPerProposer uint64, err error) {
 	timeoutPropose = DefaultTimeoutPropose
 	timeoutProposeDelta = DefaultTimeoutProposeDelta
-	tbftBlocksPerProposer = int64(1)
+	tbftBlocksPerProposer = uint64(1)
 
 	validators, err = GetValidatorListFromConfig(consensus.chainConf.ChainConfig())
 	if err != nil {
@@ -321,11 +322,11 @@ func (consensus *ConsensusTBFTImpl) extractConsensusConfig(config *config.Consen
 	for _, v := range config.ExtConfig {
 		switch v.Key {
 		case protocol.TBFT_propose_timeout_key:
-			timeoutPropose, err = consensus.extractProposeTimeout(v.Value)
+			timeoutPropose, err = consensus.extractProposeTimeout(string(v.Value))
 		case protocol.TBFT_propose_delta_timeout_key:
-			timeoutProposeDelta, err = consensus.extractProposeTimeoutDelta(v.Value)
+			timeoutProposeDelta, err = consensus.extractProposeTimeoutDelta(string(v.Value))
 		case protocol.TBFT_blocks_per_proposer:
-			tbftBlocksPerProposer, err = consensus.extractBlocksPerProposer(v.Value)
+			tbftBlocksPerProposer, err = consensus.extractBlocksPerProposer(string(v.Value))
 		}
 
 		if err != nil {
@@ -354,8 +355,8 @@ func (consensus *ConsensusTBFTImpl) extractProposeTimeoutDelta(value string) (ti
 	return
 }
 
-func (consensus *ConsensusTBFTImpl) extractBlocksPerProposer(value string) (tbftBlocksPerProposer int64, err error) {
-	if tbftBlocksPerProposer, err = strconv.ParseInt(value, 10, 32); err != nil {
+func (consensus *ConsensusTBFTImpl) extractBlocksPerProposer(value string) (tbftBlocksPerProposer uint64, err error) {
+	if tbftBlocksPerProposer, err = strconv.ParseUint(value, 10, 32); err != nil {
 		consensus.logger.Infof("[%s](%d/%d/%v) update chain config, parse BlocksPerProposer error: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
 		return
@@ -505,7 +506,7 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 	consensus.enterPrevote(consensus.Height, consensus.Round)
 }
 
-func (consensus *ConsensusTBFTImpl) handleBlockHeight(height int64) {
+func (consensus *ConsensusTBFTImpl) handleBlockHeight(height uint64) {
 	consensus.Lock()
 	defer consensus.Unlock()
 
@@ -599,7 +600,7 @@ func (consensus *ConsensusTBFTImpl) procPropose(msg *tbftpb.TBFTMsg) {
 	consensus.msgbus.PublishSafe(msgbus.VerifyBlock, proposal.Block)
 }
 
-func (consensus *ConsensusTBFTImpl) canReceiveProposal(height int64, round int32) bool {
+func (consensus *ConsensusTBFTImpl) canReceiveProposal(height uint64, round int32) bool {
 	if consensus.Height != height || consensus.Round != round || consensus.Step < tbftpb.Step_Propose {
 		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid proposal: (%d/%d)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
@@ -768,7 +769,7 @@ func (consensus *ConsensusTBFTImpl) CommitTimeout(round int32) time.Duration {
 }
 
 // AddTimeout adds timeout event to timeScheduler
-func (consensus *ConsensusTBFTImpl) AddTimeout(duration time.Duration, height int64, round int32, step tbftpb.Step) {
+func (consensus *ConsensusTBFTImpl) AddTimeout(duration time.Duration, height uint64, round int32, step tbftpb.Step) {
 	consensus.timeScheduler.AddTimeoutInfo(timeoutInfo{duration, height, round, step})
 }
 
@@ -877,7 +878,7 @@ func (consensus *ConsensusTBFTImpl) addPrecommitVote(vote *Vote) {
 }
 
 // enterNewHeight enter `height`
-func (consensus *ConsensusTBFTImpl) enterNewHeight(height int64, replayMode bool) {
+func (consensus *ConsensusTBFTImpl) enterNewHeight(height uint64, replayMode bool) {
 	consensus.logger.Infof("[%s]attempt enter new height to (%d)", consensus.Id, height)
 	if consensus.Height >= height {
 		consensus.logger.Errorf("[%s](%v/%v/%v) invalid enter invalid new height to (%v)",
@@ -925,7 +926,7 @@ func (consensus *ConsensusTBFTImpl) enterNewHeight(height int64, replayMode bool
 }
 
 // enterNewRound enter `round` at `height`
-func (consensus *ConsensusTBFTImpl) enterNewRound(height int64, round int32) {
+func (consensus *ConsensusTBFTImpl) enterNewRound(height uint64, round int32) {
 	consensus.logger.Debugf("[%s] attempt enterNewRound to (%d/%d)", consensus.Id, height, round)
 	if consensus.Height > height ||
 		consensus.Round > round ||
@@ -944,7 +945,7 @@ func (consensus *ConsensusTBFTImpl) enterNewRound(height int64, round int32) {
 	consensus.enterPropose(height, round)
 }
 
-func (consensus *ConsensusTBFTImpl) enterPropose(height int64, round int32) {
+func (consensus *ConsensusTBFTImpl) enterPropose(height uint64, round int32) {
 	consensus.logger.Debugf("[%s] attempt enterPropose to (%d/%d)", consensus.Id, height, round)
 	if consensus.Height != height ||
 		consensus.Round > round ||
@@ -983,7 +984,7 @@ func (consensus *ConsensusTBFTImpl) enterPropose(height int64, round int32) {
 }
 
 // enterPrevote enter `prevote` phase
-func (consensus *ConsensusTBFTImpl) enterPrevote(height int64, round int32) {
+func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 	if consensus.Height != height ||
 		consensus.Round > round ||
 		(consensus.Round == round && consensus.Step != tbftpb.Step_Propose) {
@@ -1002,7 +1003,7 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height int64, round int32) {
 	// Disable propose
 	consensus.sendProposeState(false)
 
-	var hash []byte = nilHash
+	var hash = nilHash
 	if consensus.Proposal != nil {
 		hash = consensus.Proposal.Block.Header.BlockHash
 	}
@@ -1042,7 +1043,7 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height int64, round int32) {
 }
 
 // enterPrecommit enter `precommit` phase
-func (consensus *ConsensusTBFTImpl) enterPrecommit(height int64, round int32) {
+func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 	if consensus.Height != height ||
 		consensus.Round > round ||
 		(consensus.Round == round && consensus.Step != tbftpb.Step_Prevote) {
@@ -1104,7 +1105,7 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height int64, round int32) {
 }
 
 // enterCommit enter `Commit` phase
-func (consensus *ConsensusTBFTImpl) enterCommit(height int64, round int32) {
+func (consensus *ConsensusTBFTImpl) enterCommit(height uint64, round int32) {
 	if consensus.Height != height ||
 		consensus.Round > round ||
 		(consensus.Round == round && consensus.Step != tbftpb.Step_Precommit) {
@@ -1158,7 +1159,7 @@ func isNilHash(hash []byte) bool {
 
 // isProposer returns true if this node is proposer at `height` and `round`,
 // and returns false otherwise
-func (consensus *ConsensusTBFTImpl) isProposer(height int64, round int32) bool {
+func (consensus *ConsensusTBFTImpl) isProposer(height uint64, round int32) bool {
 	proposer, _ := consensus.validatorSet.GetProposer(height, round)
 
 	if proposer == consensus.Id {
@@ -1508,7 +1509,7 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 	return nil
 }
 
-func (consensus *ConsensusTBFTImpl) deleteWalEntry(num int64, index uint64) error {
+func (consensus *ConsensusTBFTImpl) deleteWalEntry(num uint64, index uint64) error {
 
 	//Block height is begin from zero,Delete the block data every 10 blocks. If the block height is 10, there are 11 blocks in total and delete the consensus state data of the first 10 blocks
 	i := num % 10

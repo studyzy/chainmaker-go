@@ -13,11 +13,11 @@ import (
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -97,7 +97,7 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
 		case RoundTimeoutMill:
-			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+			if v, err := strconv.ParseUint(string(oneConf.Value), 10, 64); err == nil {
 				if v < MinimumTimeOutMill {
 					log.Warnf("%s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
 					continue
@@ -105,7 +105,7 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 				newRoundTimeoutMill = v
 			}
 		case RoundTimeoutIntervalMill:
-			if v, err := strconv.ParseUint(oneConf.Value, 10, 64); err == nil {
+			if v, err := strconv.ParseUint(string(oneConf.Value), 10, 64); err == nil {
 				if v < MinimumIntervalTimeOutMill {
 					log.Warnf("%s is too minimun, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
 					continue
@@ -113,7 +113,7 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 				newRoundTimeoutIntervalMill = v
 			}
 		case CachedLen:
-			cachedLen, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			cachedLen, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
 			if err != nil {
 				continue
 			}
@@ -155,12 +155,12 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
 		case CachedLen:
-			cachedLen, err := strconv.ParseInt(oneConf.Value, 10, 64)
+			cachedLen, err := strconv.ParseInt(string(oneConf.Value), 10, 64)
 			if err != nil || cachedLen < 0 {
 				return false, fmt.Errorf("set CachedLen err")
 			}
 		case BlockNumPerEpoch:
-			newBlockNumPerEpoch, err = strconv.ParseInt(oneConf.Value, 10, 64)
+			newBlockNumPerEpoch, err = strconv.ParseInt(string(oneConf.Value), 10, 64)
 			if err != nil {
 				return false, fmt.Errorf("set BlockNumPerEpoch err: %s", err)
 			}
@@ -168,7 +168,7 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 				return false, fmt.Errorf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0, actual: %d", newBlockNumPerEpoch)
 			}
 		case RoundTimeoutMill:
-			v, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
 			if err != nil {
 				return false, fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutMill, err)
 			}
@@ -176,7 +176,7 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 				return false, fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
 			}
 		case RoundTimeoutIntervalMill:
-			v, err := strconv.ParseUint(oneConf.Value, 10, 64)
+			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
 			if err != nil {
 				return false, fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutIntervalMill, err)
 			}

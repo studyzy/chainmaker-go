@@ -75,7 +75,7 @@ func (bp *BlockPool) InsertQC(qc *chainedbftpb.QuorumCert) error {
 	return nil
 }
 
-func (bp *BlockPool) GetBlocks(height int64) []*common.Block {
+func (bp *BlockPool) GetBlocks(height uint64) []*common.Block {
 	return bp.blockTree.GetBlocks(height)
 }
 

@@ -15,12 +15,12 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/protocol/mock"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -156,7 +156,7 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -207,7 +207,7 @@ func TestVerifyBlockSignaturesOneNodeFail(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -268,7 +268,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -337,7 +337,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{

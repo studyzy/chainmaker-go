@@ -9,6 +9,7 @@ package snapshot
 
 import (
 	"errors"
+	"math"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
@@ -148,9 +149,9 @@ func (s *SnapshotEvidence) IsSealed() bool {
 }
 
 // get block height for current snapshot
-func (s *SnapshotEvidence) GetBlockHeight() int64 {
+func (s *SnapshotEvidence) GetBlockHeight() uint64 {
 	if s.delegate == nil {
-		return -1
+		return math.MaxUint64
 	}
 	return s.delegate.GetBlockHeight()
 }
@@ -193,10 +194,10 @@ func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 	if isSql {
 		for i := 0; i < txCount; i++ {
 			dag.Vertexes[i] = &commonPb.DAG_Neighbor{
-				Neighbors: make([]int32, 0, 1),
+				Neighbors: make([]uint32, 0, 1),
 			}
 			if i != 0 {
-				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, int32(i-1))
+				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, uint32(i-1))
 			}
 		}
 	} else {
@@ -216,5 +217,5 @@ func (s *SnapshotEvidence) GetBlockProposer() []byte {
 	if s.delegate == nil {
 		return nil
 	}
-	return s.delegate.blockProposer
+	return s.delegate.blockProposer.MemberInfo
 }

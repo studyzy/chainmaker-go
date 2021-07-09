@@ -37,8 +37,8 @@ package common
 //	txRWSetMap := make(map[string]*commonpb.TxRWSet)
 //	tx0 := block.Txs[0]
 //	contractName := "testContract"
-//	txRWSetMap[tx0.Header.TxId] = &commonpb.TxRWSet{
-//		TxId:     tx0.Header.TxId,
+//	txRWSetMap[tx0.Payload.TxId] = &commonpb.TxRWSet{
+//		TxId:     tx0.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{{
 //			ContractName: contractName,
 //			Key:          []byte("K1"),
@@ -54,7 +54,7 @@ package common
 //	// Mock blockChain Store
 //	store := mock.NewMockBlockchainStore(ctl)
 //	txRWSets := []*commonpb.TxRWSet {
-//		txRWSetMap[tx0.Header.TxId],
+//		txRWSetMap[tx0.Payload.TxId],
 //	}
 //	log.Infof("init block(%d,%s)", block.Header.BlockHeight, hex.EncodeToString(block.Header.BlockHash))
 //	store.EXPECT().PutBlock(block, txRWSets).Return(nil)
@@ -75,7 +75,7 @@ package common
 //	}
 //}
 //
-//func createNewTestBlock(height int64) *commonpb.Block {
+//func createNewTestBlock(height uint64) *commonpb.Block {
 //	var hash = []byte("0123456789")
 //	var version = []byte("0")
 //	var block = &commonpb.Block{

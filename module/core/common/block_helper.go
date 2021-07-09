@@ -17,6 +17,7 @@ import (
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/common/msgbus"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
@@ -74,7 +75,7 @@ func NewBlockBuilder(conf *BlockBuilderConf) *BlockBuilder {
 	return creatorBlock
 }
 
-func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, txBatch []*commonpb.Transaction) (*commonpb.Block, []int64, error) {
+func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte, txBatch []*commonpb.Transaction) (*commonpb.Block, []int64, error) {
 	timeLasts := make([]int64, 0)
 	currentHeight, _ := bb.ledgerCache.CurrentHeight()
 	lastBlock := bb.findLastBlockFromCache(proposingHeight, preHash, currentHeight)
@@ -160,7 +161,7 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 	return block, timeLasts, nil
 }
 
-func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight int64, preHash []byte, currentHeight int64) *commonpb.Block {
+func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight uint64, preHash []byte, currentHeight uint64) *commonpb.Block {
 	var lastBlock *commonpb.Block
 	if currentHeight+1 == proposingHeight {
 		lastBlock = bb.ledgerCache.GetLastCommittedBlock()
@@ -198,7 +199,7 @@ func InitNewBlock(
 			RwSetRoot:      nil,
 			TxRoot:         nil,
 			BlockTimestamp: utils.CurrentTimeSeconds(),
-			Proposer:       proposer,
+			Proposer:       &accesscontrol.SerializedMember{MemberInfo: proposer},
 			ConsensusArgs:  nil,
 			TxCount:        0,
 			Signature:      nil,
@@ -224,7 +225,7 @@ func FinalizeBlock(
 
 	// TxCount contains acl verify failed txs and invoked contract txs
 	txCount := len(block.Txs)
-	block.Header.TxCount = int64(txCount)
+	block.Header.TxCount = uint32(txCount)
 
 	// TxRoot/RwSetRoot
 	var err error
@@ -285,14 +286,14 @@ func FinalizeBlock(
 
 // IsTxCountValid, to check if txcount in block is valid
 func IsTxCountValid(block *commonpb.Block) error {
-	if block.Header.TxCount != int64(len(block.Txs)) {
+	if block.Header.TxCount != uint32(len(block.Txs)) {
 		return fmt.Errorf("txcount expect %d, got %d", block.Header.TxCount, len(block.Txs))
 	}
 	return nil
 }
 
 // IsHeightValid, to check if block height is valid
-func IsHeightValid(block *commonpb.Block, currentHeight int64) error {
+func IsHeightValid(block *commonpb.Block, currentHeight uint64) error {
 	if currentHeight+1 != block.Header.BlockHeight {
 		return fmt.Errorf("height expect %d, got %d", currentHeight+1, block.Header.BlockHeight)
 	}
@@ -372,7 +373,7 @@ func getChainVersion(chainConf protocol.ChainConf) []byte {
 	return []byte(chainConf.ChainConfig().Version)
 }
 
-func VerifyHeight(height int64, ledgerCache protocol.LedgerCache) error {
+func VerifyHeight(height uint64, ledgerCache protocol.LedgerCache) error {
 	currentHeight, err := ledgerCache.CurrentHeight()
 	if err != nil {
 		return err
@@ -519,7 +520,7 @@ func (vb *VerifierBlock) ValidateBlock(
 	if err != nil {
 		return nil, nil, timeLasts, fmt.Errorf("simulate %s", err)
 	}
-	if block.Header.TxCount != int64(len(txRWSetMap)) {
+	if block.Header.TxCount != uint32(len(txRWSetMap)) {
 		return nil, nil, timeLasts, fmt.Errorf("simulate txcount expect %d, got %d",
 			block.Header.TxCount, len(txRWSetMap))
 	}
@@ -574,7 +575,7 @@ func (vb *VerifierBlock) ValidateBlock(
 }
 
 func CheckPreBlock(block *commonpb.Block, lastBlock *commonpb.Block, err error,
-	lastBlockHash []byte, proposedHeight int64) error {
+	lastBlockHash []byte, proposedHeight uint64) error {
 
 	if err = IsHeightValid(block, proposedHeight); err != nil {
 		return err
@@ -758,7 +759,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	return nil
 }
 
-func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height int64) []*commonpb.Transaction {
+func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height uint64) []*commonpb.Transaction {
 	proposedBlocks := chain.proposalCache.GetProposedBlocksAt(height)
 	txRetry := make([]*commonpb.Transaction, 0, localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize)
 	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
@@ -780,7 +781,7 @@ func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height in
 }
 
 func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block, lastProposed *commonpb.Block,
-	err error, height int64, rwSetMap map[string]*commonpb.TxRWSet, conEventMap map[string][]*commonpb.ContractEvent) error {
+	err error, height uint64, rwSetMap map[string]*commonpb.TxRWSet, conEventMap map[string][]*commonpb.ContractEvent) error {
 	if lastProposed != nil {
 		return nil
 	}

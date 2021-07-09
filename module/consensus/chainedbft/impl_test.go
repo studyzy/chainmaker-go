@@ -171,7 +171,7 @@ func InitGenesis(chainid string) *commonPb.Block {
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.Payload{
+				Payload: &commonPb.Payload{
 					ChainId: chainid,
 				},
 			},
@@ -354,7 +354,7 @@ func cfgChainedBftNode(t *testing.T) {
 //}
 
 //testInsertProposal tests InsertProposal function
-func testInsertProposal(height int64, round int64,
+func testInsertProposal(height uint64, round int64,
 	msg *chainedbft.ConsensusMsg, t *testing.T) {
 	for i := 0; i < len(chainedBftNode); i++ {
 		inserted, _ := chainedBftNode[i].msgPool.InsertProposal(uint64(height),
@@ -364,7 +364,7 @@ func testInsertProposal(height int64, round int64,
 }
 
 //testGetProposal tests GetProposal function
-func testGetProposal(height int64, round int64, t *testing.T) {
+func testGetProposal(height uint64, round int64, t *testing.T) {
 	for i := 0; i < len(chainedBftNode); i++ {
 		msg := chainedBftNode[i].msgPool.GetProposal(uint64(height), uint64(round))
 		assert.NotNil(t, msg)
@@ -390,7 +390,7 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 }
 
 //testEndorseBlock tests endorse proposal block
-//func testEndorseBlock(height int64, level int64,
+//func testEndorseBlock(height uint64, level int64,
 //	block *commonPb.Block, t *testing.T) {
 //	endorsePayload0 := chainedBftNode[0].constructVote(uint64(height), uint64(level), 0, block)
 //	assert.NotNil(t, endorsePayload0)

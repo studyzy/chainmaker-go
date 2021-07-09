@@ -279,7 +279,7 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
 }
 
-func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height int64) string {
+func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height uint64) string {
 	fmt.Printf("\n============ get block by height [%d] ============\n", height)
 	// 构造Payload
 
@@ -310,7 +310,7 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	return hex.EncodeToString(blockInfo.Block.Header.BlockHash)
 }
 
-func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height int64) string {
+func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height uint64) string {
 	fmt.Printf("\n============ get block with txRWsets by height [%d] ============\n", height)
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{

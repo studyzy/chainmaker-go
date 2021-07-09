@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package cache
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
@@ -24,11 +25,11 @@ func TestLedger(t *testing.T) {
 	b := ledgerCache.GetLastCommittedBlock()
 	b.Header.BlockHeight = 100
 	ledgerCache.SetLastCommittedBlock(b)
-	require.Equal(t, int64(100), modulea.getBlock().Header.BlockHeight)
+	require.Equal(t, uint64(100), modulea.getBlock().Header.BlockHeight)
 	b = modulea.getBlock()
 	b.Header.BlockHeight = 200
 	modulea.updateBlock(b)
-	require.Equal(t, int64(200), moduleb.getBlock().Header.BlockHeight)
+	require.Equal(t, uint64(200), moduleb.getBlock().Header.BlockHeight)
 }
 
 type moduleA struct {
@@ -59,7 +60,7 @@ func (m *moduleB) getBlock() *commonpb.Block {
 	return m.ledgerCache.GetLastCommittedBlock()
 }
 
-func CreateNewTestBlock(height int64) *commonpb.Block {
+func CreateNewTestBlock(height uint64) *commonpb.Block {
 	var hash = []byte("0123456789")
 	var version = []byte("0")
 	var block = &commonpb.Block{
@@ -74,7 +75,7 @@ func CreateNewTestBlock(height int64) *commonpb.Block {
 			RwSetRoot:      hash,
 			TxRoot:         hash,
 			BlockTimestamp: 0,
-			Proposer:       hash,
+			Proposer:       &accesscontrol.SerializedMember{MemberInfo: hash},
 			ConsensusArgs:  nil,
 			TxCount:        1,
 			Signature:      []byte(""),
@@ -94,16 +95,17 @@ func CreateNewTestBlock(height int64) *commonpb.Block {
 func CreateNewTestTx() *commonpb.Transaction {
 	var hash = []byte("0123456789")
 	return &commonpb.Transaction{
-		Header: &commonpb.TxHeader{
-			ChainId:        "",
-			Sender:         nil,
+		Payload: &commonpb.Payload{
+			ChainId: "",
+			//Sender:         nil,
 			TxType:         0,
 			TxId:           "",
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		RequestPayload:   hash,
-		RequestSignature: hash,
+		//RequestPayload:   hash,
+		//RequestSignature: hash,
+		Sender: &commonpb.EndorsementEntry{Signature: hash},
 		Result: &commonpb.Result{
 			Code:           commonpb.TxStatusCode_SUCCESS,
 			ContractResult: nil,

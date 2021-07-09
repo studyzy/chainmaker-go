@@ -21,7 +21,6 @@ import (
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -342,34 +341,34 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	result := &commonpb.Result{
 		Code: commonpb.TxStatusCode_SUCCESS,
 		ContractResult: &commonpb.ContractResult{
-			Code:    commonpb.ContractResultCode_OK,
+			Code:    0,
 			Result:  nil,
 			Message: "",
 		},
 		RwSetHash: nil,
 	}
-
+	payload := tx.Payload
 	switch tx.Payload.TxType {
 	case commonpb.TxType_QUERY_CONTRACT:
-		var payload commonpb.Payload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Payload.TxId, err))
-		}
+		//var payload commonpb.Payload
+		//if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+		contractName = payload.ContractName
+		method = payload.Method
+		parameterPairs = payload.Parameters
+		parameters = ts.parseParameter(parameterPairs)
+		//} else {
+		//	return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Payload.TxId, err))
+		//}
 	case commonpb.TxType_INVOKE_CONTRACT:
-		var payload commonpb.TransactPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Payload.TxId, err))
-		}
+		//var payload commonpb.TransactPayload
+		//if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+		contractName = payload.ContractName
+		method = payload.Method
+		parameterPairs = payload.Parameters
+		parameters = ts.parseParameter(parameterPairs)
+		//} else {
+		//	return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Payload.TxId, err))
+		//}
 	//case commonpb.TxType_INVOKE_CONTRACT:
 	//	var payload commonpb.Payload
 	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
@@ -474,7 +473,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 func errResult(result *commonpb.Result, err error) (*commonpb.Result, error) {
 	result.ContractResult.Message = err.Error()
 	result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-	result.ContractResult.Code = commonpb.ContractResultCode_FAIL
+	result.ContractResult.Code = 1
 	return result, err
 }
 func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string]string {
@@ -493,7 +492,7 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) m
 			continue
 		}
 		value := parameterPairs[i].Value
-		parameters[key] = value
+		parameters[key] = string(value)
 	}
 	return parameters
 }
@@ -519,7 +518,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 		if endorsement == nil || endorsement.Signer == nil {
 			return fmt.Errorf("failed to get endorsement signer for tx: %s, endorsement: %+v", tx.Payload.TxId, endorsement)
 		}
-		if endorsement.Signer.IsFullCert {
+		if endorsement.Signer.MemberType == acpb.MemberType_CERT {
 			fullCertEndorsements = append(fullCertEndorsements, endorsement)
 		} else {
 			fullCertEndorsement := &commonpb.EndorsementEntry{
@@ -552,11 +551,11 @@ func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
 	dagString := "digraph DAG {\n"
 	for i, ns := range dag.Vertexes {
 		if len(ns.Neighbors) == 0 {
-			dagString += fmt.Sprintf("id_%s -> begin;\n", txs[i].Header.TxId[:8])
+			dagString += fmt.Sprintf("id_%s -> begin;\n", txs[i].Payload.TxId[:8])
 			continue
 		}
 		for _, n := range ns.Neighbors {
-			dagString += fmt.Sprintf("id_%s -> id_%s;\n", txs[i].Header.TxId[:8], txs[n].Header.TxId[:8])
+			dagString += fmt.Sprintf("id_%s -> id_%s;\n", txs[i].Payload.TxId[:8], txs[n].Payload.TxId[:8])
 		}
 	}
 	dagString += "}"
