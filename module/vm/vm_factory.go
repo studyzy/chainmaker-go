@@ -61,7 +61,7 @@ func (f *Factory) NewVmManager(wxvmCodePathPrefix string, AccessControl protocol
 // Interface of smart contract engine runtime
 type RuntimeInstance interface {
 	// start vm runtime with invoke, call “method”
-	Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string]string,
+	Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 		txContext protocol.TxSimContext, gasUsed uint64) *commonPb.ContractResult
 }
 
@@ -85,7 +85,7 @@ func (m *ManagerImpl) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvide
 	return m.ChainNodesInfoProvider
 }
 
-func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string]string,
+func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
@@ -101,7 +101,7 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 	}
 
 	if parameters == nil {
-		parameters = make(map[string]string)
+		parameters = make(map[string][]byte)
 	}
 
 	// return error if contract has been revoked
@@ -129,7 +129,7 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 }
 
 // runNativeContract invoke native contract
-func (m *ManagerImpl) runNativeContract(contract *commonPb.Contract, method string, parameters map[string]string,
+func (m *ManagerImpl) runNativeContract(contract *commonPb.Contract, method string, parameters map[string][]byte,
 	txContext protocol.TxSimContext) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	runtimeInstance := native.GetRuntimeInstance(m.ChainId)
@@ -143,7 +143,7 @@ func (m *ManagerImpl) runNativeContract(contract *commonPb.Contract, method stri
 }
 
 // runUserContract invoke user contract
-func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string]string,
+func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
 
 	var (
@@ -157,7 +157,7 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 		//runtimeTypeKey = []byte(protocol.ContractRuntimeType + contractName)
 	)
 	contractResult = &commonPb.ContractResult{Code: 1}
-	if status == commonPb.ContractStatus_UNKNOWN { // 只传入的ContractName，其他属性需要从DB获取
+	if status == commonPb.ContractStatus_ALL { // 只传入的ContractName，其他属性需要从DB获取
 		dbContract, err := utils.GetContractByName(txContext.Get, contractName)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
@@ -212,7 +212,7 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 
 	//byteCode, _ = txContext.GetBlockchainStore().GetContractBytecode(contractName)
 	//contract, _ := txContext.GetBlockchainStore().GetContractByName(contractName)
-	//contractId.ContractVersion = contract.Version
+	//contractId.Version = contract.Version
 	//contractId.RuntimeType = contract.RuntimeType
 	//version = contract.Version
 	//runtimeType = int(contract.RuntimeType)
@@ -373,7 +373,7 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 	//	contractResult.Code = 0
 	//	return contractResult, commonPb.TxStatusCode_SUCCESS
 	//}
-	//contractId.ContractVersion = version
+	//contractId.Version = version
 
 	return m.invokeUserContractByRuntime(myContract, method, parameters, txContext, byteCode, gasUsed)
 }
@@ -428,16 +428,16 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 	}
 
 	if v.requireFormatVersion {
-		if contractId.ContractVersion == "" {
+		if contractId.Version == "" {
 			contractResult.Message = fmt.Sprintf("%s please provide the param[version] of the contract[%s]", msgPre, contractId.Name)
 			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else {
-			if len(contractId.ContractVersion) > protocol.DefaultVersionLen {
+			if len(contractId.Version) > protocol.DefaultVersionLen {
 				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] too long, should be less than %d", msgPre, contractId, protocol.DefaultVersionLen)
 				return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION, resultVersion)
 			}
 
-			match, err := regexp.MatchString(protocol.DefaultVersionRegex, contractId.ContractVersion)
+			match, err := regexp.MatchString(protocol.DefaultVersionRegex, contractId.Version)
 			if err != nil || !match {
 				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", msgPre, contractId, protocol.DefaultVersionRegex)
 				return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION, resultVersion)
@@ -480,9 +480,8 @@ func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code c
 	return contractResult, code, nil, version, 0
 }
 
-func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string]string,
+func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string][]byte,
 	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
-	contractId := contract.GetContractId()
 	contractResult := &commonPb.ContractResult{Code: 1}
 	txId := txContext.GetTx().Payload.TxId
 	txType := txContext.GetTx().Payload.TxType
@@ -491,7 +490,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 	var err error
 	switch runtimeType {
 	case commonPb.RuntimeType_WASMER:
-		runtimeInstance, err = m.WasmerVmPoolManager.NewRuntimeInstance(contractId, byteCode)
+		runtimeInstance, err = m.WasmerVmPoolManager.NewRuntimeInstance(contract, byteCode)
 		if err != nil {
 			contractResult.Message = fmt.Sprintf("failed to create vm runtime, contract: %s, %s", contract.Name, err.Error())
 			return contractResult, commonPb.TxStatusCode_CREATE_RUNTIME_INSTANCE_FAILED
@@ -514,7 +513,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 			ChainId:      m.ChainId,
 			TxSimContext: txContext,
 			Method:       method,
-			ContractId:   contractId,
+			ContractId:   contract,
 		}
 	default:
 		contractResult.Message = fmt.Sprintf("no such vm runtime %q", runtimeType)
@@ -526,7 +525,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 	creator := contract.Creator
 
 	if creator == nil {
-		contractResult.Message = fmt.Sprintf("creator is empty for contract:%s", contractId.Name)
+		contractResult.Message = fmt.Sprintf("creator is empty for contract:%s", contract.Name)
 		return contractResult, commonPb.TxStatusCode_GET_CREATOR_FAILED
 	}
 
@@ -545,9 +544,9 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 		contractResult.Message = fmt.Sprintf("failed to unmarshal sender %q", runtimeType)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_SENDER_FAILED
 	} else {
-		parameters[protocol.ContractSenderOrgIdParam] = senderMember.GetOrgId()
-		parameters[protocol.ContractSenderRoleParam] = string(senderMember.GetRole()[0])
-		parameters[protocol.ContractSenderPkParam] = hex.EncodeToString(senderMember.GetSKI())
+		parameters[protocol.ContractSenderOrgIdParam] = []byte(senderMember.GetOrgId())
+		parameters[protocol.ContractSenderRoleParam] = []byte(senderMember.GetRole()[0])
+		parameters[protocol.ContractSenderPkParam] = senderMember.GetSKI()
 	}
 
 	// Get three items in the certificate: orgid PK role
@@ -555,24 +554,24 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 		contractResult.Message = fmt.Sprintf("failed to unmarshal creator %q", creator)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_CREATOR_FAILED
 	} else {
-		parameters[protocol.ContractCreatorOrgIdParam] = creator.OrgId
-		parameters[protocol.ContractCreatorRoleParam] = string(creatorMember.GetRole()[0])
-		parameters[protocol.ContractCreatorPkParam] = hex.EncodeToString(creatorMember.GetSKI())
+		parameters[protocol.ContractCreatorOrgIdParam] = []byte( creator.OrgId)
+		parameters[protocol.ContractCreatorRoleParam] = []byte(creatorMember.GetRole()[0])
+		parameters[protocol.ContractCreatorPkParam] = creatorMember.GetSKI()
 	}
 
-	parameters[protocol.ContractTxIdParam] = txId
-	parameters[protocol.ContractBlockHeightParam] = strconv.FormatUint(txContext.GetBlockHeight(), 10)
+	parameters[protocol.ContractTxIdParam] = []byte(txId)
+	parameters[protocol.ContractBlockHeightParam] = []byte(strconv.FormatUint(txContext.GetBlockHeight(), 10))
 
 	// calc the gas used by byte code
 	// gasUsed := uint64(GasPerByte * len(byteCode))
 
 	m.Log.Debugf("invoke vm, tx id:%s, tx type:%+v, contractId:%+v, method:%+v, runtime type:%+v, byte code len:%+v, params:%+v",
-		txId, txType, contractId, method, runtimeType, len(byteCode), len(parameters))
+		txId, txType, contract, method, runtimeType, len(byteCode), len(parameters))
 
 	// begin save point for sql
 	var dbTransaction protocol.SqlDBTransaction
 	if m.ChainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_CONTRACT {
-		txKey := commonPb.GetTxKeyWith(txContext.GetBlockProposer(), txContext.GetBlockHeight())
+		txKey := commonPb.GetTxKeyWith(txContext.GetBlockProposer().MemberInfo, txContext.GetBlockHeight())
 		dbTransaction, err = txContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
 			contractResult.Message = fmt.Sprintf("get db transaction from [%s] error %+v", txKey, err)
@@ -585,7 +584,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 		//txContext.Put(contractId.Name, []byte("target"), []byte("mysql")) // for dag
 	}
 
-	runtimeContractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, gasUsed)
+	runtimeContractResult := runtimeInstance.Invoke(contract, method, byteCode, parameters, txContext, gasUsed)
 	if runtimeContractResult.Code == 0 {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	} else {

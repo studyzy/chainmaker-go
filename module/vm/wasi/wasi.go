@@ -46,7 +46,7 @@ type Wacsi interface {
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
 	// emit event
-	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error)
+	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.Contract, log *logger.CMLogger) (*common.ContractEvent, error)
 	// paillier
 	PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error)
 	// bulletproofs
@@ -211,7 +211,7 @@ func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte
 }
 
 // EmitEvent emit event to chain
-func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.ContractId, log *logger.CMLogger) (*common.ContractEvent, error) {
+func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.Contract, log *logger.CMLogger) (*common.ContractEvent, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	topic, err := ec.GetString("topic")
 	if err != nil {
@@ -235,7 +235,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 
 	contractEvent := &common.ContractEvent{
 		ContractName:    contractId.Name,
-		ContractVersion: contractId.ContractVersion,
+		ContractVersion: contractId.Version,
 		Topic:           topic,
 		TxId:            txSimContext.GetTx().Payload.TxId,
 		EventData:       eventData,
@@ -671,7 +671,7 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 			return fmt.Errorf("[execute query] error, %s", err.Error())
 		}
 	} else {
-		txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+		txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer().MemberInfo, txSimContext.GetBlockHeight())
 		transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
 			return fmt.Errorf("[execute query] get db transaction error, [%s]", err.Error())
@@ -707,7 +707,7 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 				return nil, fmt.Errorf("[execute query one] error, %s", err.Error())
 			}
 		} else {
-			txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+			txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer().MemberInfo, txSimContext.GetBlockHeight())
 			transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 			if err != nil {
 				return nil, fmt.Errorf("[execute query one] get db transaction error, [%s]", err.Error())
@@ -715,9 +715,9 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 			changeCurrentDB(chainId, contractName, transaction)
 			row, err = transaction.QuerySingle(sql)
 		}
-		var dataRow map[string]string
+		var dataRow map[string][]byte
 		if row.IsEmpty() {
-			dataRow = make(map[string]string, 0)
+			dataRow = make(map[string][]byte, 0)
 		} else {
 			dataRow, err = row.Data()
 			if err != nil {
@@ -770,10 +770,10 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 
 	// get len
 	if isLen {
-		var dataRow map[string]string
+		var dataRow map[string][]byte
 		var err error
 		if rows == nil {
-			dataRow = make(map[string]string, 0)
+			dataRow = make(map[string][]byte, 0)
 		} else {
 			dataRow, err = rows.Data()
 			if err != nil {
@@ -829,7 +829,7 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 		return fmt.Errorf("[execute update] verify update sql error, [%s], sql [%s]", err.Error(), sql)
 	}
 
-	txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer(), txSimContext.GetBlockHeight())
+	txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer().MemberInfo, txSimContext.GetBlockHeight())
 	transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 	if err != nil {
 		return fmt.Errorf("[execute update] ctx get db transaction error, [%s]", err.Error())

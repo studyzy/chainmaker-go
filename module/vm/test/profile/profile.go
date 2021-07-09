@@ -187,7 +187,7 @@ func startPerf() {
 
 func invokeContractOfGasm(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext,
 	byteCode []byte) (contractResult *commonPb.ContractResult) {
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	test.BaseParam(parameters)
 	//parameters["contract_name"] = test.ContractNameTest
 	//parameters["method"] = "query"
@@ -201,7 +201,7 @@ func invokeContractOfGasm(method string, contractId *commonPb.Contract, txContex
 
 func invokeContractOfWasmer(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext,
 	pool *wasmer.VmPoolManager, byteCode []byte) (contractResult *commonPb.ContractResult) {
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	test.BaseParam(parameters)
 	//parameters["key"] = "key"
 

@@ -281,7 +281,7 @@ func (s *TxContextMockTest) GetDepth() int {
 	return s.currentDepth
 }
 
-func BaseParam(parameters map[string]string) {
+func BaseParam(parameters map[string][]byte) {
 	parameters[protocol.ContractTxIdParam] = "TX_ID"
 	parameters[protocol.ContractCreatorOrgIdParam] = "org_a"
 	parameters[protocol.ContractCreatorRoleParam] = "admin"

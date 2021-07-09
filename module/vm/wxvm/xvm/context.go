@@ -8,7 +8,7 @@ import (
 
 type Context struct {
 	ID             int64
-	Parameters     map[string]string
+	Parameters     map[string][]byte
 	TxSimContext   protocol.TxSimContext
 	ContractId     *commonPb.Contract
 	ContractResult *commonPb.ContractResult

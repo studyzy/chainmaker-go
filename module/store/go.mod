@@ -6,9 +6,9 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
+	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210709093937-9b3b422e24b1
-	chainmaker.org/chainmaker/protocol v0.0.0-20210709094426-ab3cc85a9553
+	chainmaker.org/chainmaker/protocol v0.0.0-20210709160022-a53a6f34d763
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect

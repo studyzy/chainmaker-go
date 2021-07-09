@@ -42,7 +42,7 @@ func (c *ContextService) Context(id int64) (*Context, bool) {
 }
 
 func (c *ContextService) MakeContext(contractId *commonPb.Contract, txSimContext protocol.TxSimContext,
-	contractResult *commonPb.ContractResult, parameters map[string]string) *Context {
+	contractResult *commonPb.ContractResult, parameters map[string][]byte) *Context {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.ctxId++
@@ -77,7 +77,7 @@ func (c *ContextService) PutState(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 
-	context.TxSimContext.Put(context.ContractId.ContractName, []byte(key), []byte(value))
+	context.TxSimContext.Put(context.ContractId.Name, []byte(key), []byte(value))
 
 	items := make([]*serialize.EasyCodecItem, 0)
 
@@ -96,7 +96,7 @@ func (c *ContextService) GetState(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 
-	value, err := context.TxSimContext.Get(context.ContractId.ContractName, []byte(key))
+	value, err := context.TxSimContext.Get(context.ContractId.Name, []byte(key))
 	if err != nil {
 		context.err = err
 		return protocol.ContractSdkSignalResultFail
@@ -138,8 +138,8 @@ func (c *ContextService) EmitEvent(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 	contractEvent := &commonPb.ContractEvent{
-		ContractName:    context.ContractId.ContractName,
-		ContractVersion: context.ContractId.ContractVersion,
+		ContractName:    context.ContractId.Name,
+		ContractVersion: context.ContractId.Version,
 		Topic:           topic,
 		TxId:            context.TxSimContext.GetTx().Payload.TxId,
 		EventData:       eventData,
@@ -166,7 +166,7 @@ func (c *ContextService) DeleteState(ctxId int64) int32 {
 		context.err = fmt.Errorf("delete state request have no key:%d", c.ctxId)
 		return protocol.ContractSdkSignalResultFail
 	}
-	err = context.TxSimContext.Del(context.ContractId.ContractName, []byte(key))
+	err = context.TxSimContext.Del(context.ContractId.Name, []byte(key))
 	if err != nil {
 		context.err = err
 		return protocol.ContractSdkSignalResultFail
@@ -194,7 +194,7 @@ func (c *ContextService) NewIterator(ctxId int64) int32 {
 	if capLimit <= 0 {
 		capLimit = DefaultCap
 	}
-	iter, _ := context.TxSimContext.Select(context.ContractId.ContractName, []byte(start), []byte(limit))
+	iter, _ := context.TxSimContext.Select(context.ContractId.Name, []byte(start), []byte(limit))
 
 	//out := new(IteratorResponse)
 	out := make([]*serialize.EasyCodecItem, 0)

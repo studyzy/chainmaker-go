@@ -356,7 +356,7 @@ func IsNativeTx(tx *common.Transaction) (contract string, b bool) {
 	//	if payload.ContractId == nil {
 	//		return "", false
 	//	}
-	//	return payload.ContractId.ContractName, IsNative(payload.ContractId.ContractName)
+	//	return payload.ContractId.Name, IsNative(payload.ContractId.Name)
 	default:
 		return "", false
 	}

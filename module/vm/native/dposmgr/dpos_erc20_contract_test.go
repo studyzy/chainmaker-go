@@ -38,15 +38,16 @@ func TestDPoSRuntime_Owner(t *testing.T) {
 	// 获取owner
 	result, err := dPoSRuntime.Owner(txSimContext, nil)
 	require.Nil(t, err)
-	require.Equal(t, string(result), Owner)
+	require.Equal(t, string(result), string(Owner))
 }
 
 func TestDPoSRuntime_Decimals(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
 	result, err := dPoSRuntime.Decimals(txSimContext, nil)
+	t.Logf("Result:%s", string(result))
 	require.Nil(t, err)
-	require.Equal(t, string(result), Decimals)
+	require.Equal(t, string(result), string(Decimals))
 }
 
 func TestDPoSRuntime_Mint(t *testing.T) {
@@ -86,7 +87,7 @@ func TestDPoSRuntime_BalanceOf(t *testing.T) {
 	params[paramNameOwner] = TransferTo
 	result, err = dPoSRuntime.BalanceOf(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), TransferValue)
+	require.EqualValues(t, result, TransferValue)
 }
 
 func TestDPoSRuntime_TransferOwnership(t *testing.T) {
@@ -96,11 +97,11 @@ func TestDPoSRuntime_TransferOwnership(t *testing.T) {
 	params[paramNameTo] = TransferTo
 	result, err := dPoSRuntime.TransferOwnership(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), TransferTo)
+	require.EqualValues(t, string(result), TransferTo)
 	// 查询新的owner
 	result, err = dPoSRuntime.Owner(txSimContext, nil)
 	require.Nil(t, err)
-	require.Equal(t, string(result), TransferTo)
+	require.EqualValues(t, string(result), TransferTo)
 }
 
 func TestDPoSRuntime_Approve(t *testing.T) {
@@ -111,7 +112,7 @@ func TestDPoSRuntime_Approve(t *testing.T) {
 	params[paramNameValue] = ApproveValue
 	result, err := dPoSRuntime.Approve(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), ApproveValue)
+	require.EqualValues(t, string(result), ApproveValue)
 }
 
 func TestDPoSRuntime_Allowance(t *testing.T) {
@@ -122,13 +123,13 @@ func TestDPoSRuntime_Allowance(t *testing.T) {
 	params[paramNameValue] = ApproveValue
 	result, err := dPoSRuntime.Approve(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), ApproveValue)
+	require.EqualValues(t, string(result), ApproveValue)
 	params = make(map[string][]byte, 32)
 	params[paramNameFrom] = Owner
 	params[paramNameTo] = TransferFrom
 	result, err = dPoSRuntime.Allowance(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), ApproveValue)
+	require.EqualValues(t, string(result), ApproveValue)
 }
 
 func TestDPoSRuntime_TransferFrom(t *testing.T) {
@@ -158,7 +159,7 @@ func TestDPoSRuntime_TransferFrom(t *testing.T) {
 	isFromAccount = true
 	result, err = dPoSRuntime.Approve(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), ApproveValue)
+	require.EqualValues(t, string(result), ApproveValue)
 	isFromAccount = false
 	// 再次进行转账操作
 	params = make(map[string][]byte, 32)
@@ -167,14 +168,14 @@ func TestDPoSRuntime_TransferFrom(t *testing.T) {
 	params[paramNameValue] = TransferValue
 	result, err = dPoSRuntime.TransferFrom(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), "2000000")
+	require.EqualValues(t, string(result), "2000000")
 	// 再次进行allowance查询
 	params = make(map[string][]byte, 32)
 	params[paramNameFrom] = TransferFrom
 	params[paramNameTo] = Owner
 	result, err = dPoSRuntime.Allowance(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), "1000000")
+	require.EqualValues(t, string(result), "1000000")
 }
 
 func TestOwnerCert(t *testing.T) {
@@ -183,7 +184,7 @@ func TestOwnerCert(t *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(address)
-	require.Equal(t, address, Owner)
+	require.EqualValues(t, address, Owner)
 }
 
 func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
@@ -219,7 +220,7 @@ func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 	params[paramNameValue] = TotalSupply
 	result, err := dPoSRuntime.Mint(txSimContext, params)
 	require.Nil(t, err)
-	require.Equal(t, string(result), TotalSupply)
+	require.Equal(t, string(result), string(TotalSupply))
 	return dPoSRuntime, txSimContext, func() { ctrl.Finish() }
 }
 

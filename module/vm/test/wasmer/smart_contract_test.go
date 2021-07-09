@@ -74,14 +74,14 @@ func TestCallFact(t *testing.T) {
 }
 
 func invokeFact(method string, id int32, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	txId := utils.GetRandTxId()
-	parameters["time"] = "567124123"
-	parameters["file_hash"] = "file_hash"
-	parameters["file_name"] = txId
-	parameters["tx_id"] = txId
-	parameters["forever"] = "true"
-	parameters["contract_name"] = test.ContractNameTest
+	parameters["time"] = []byte("567124123")
+	parameters["file_hash"] = []byte("file_hash")
+	parameters["file_name"] = []byte(txId)
+	parameters["tx_id"] = []byte( txId)
+	parameters["forever"] = []byte("true")
+	parameters["contract_name"] = []byte(test.ContractNameTest)
 
 	baseParam(parameters)
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
@@ -132,11 +132,11 @@ func TestFunctionalContract(t *testing.T) {
 }
 
 func invokeFactContract(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
-	parameters := make(map[string]string)
-	parameters["time"] = "1314520"
-	parameters["file_hash"] = "file_hash"
-	parameters["file_name"] = "file_name"
-	parameters["contract_name"] = test.ContractNameTest
+	parameters := make(map[string][]byte)
+	parameters["time"] = []byte("1314520")
+	parameters["file_hash"] = []byte( "file_hash")
+	parameters["file_name"] = []byte("file_name")
+	parameters["contract_name"] = []byte(test.ContractNameTest)
 	baseParam(parameters)
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
@@ -206,13 +206,13 @@ func TestCallHelloWorldUseOrigin(t *testing.T) {
 	time.Sleep(time.Second * 2)
 }
 
-func baseParam(parameters map[string]string) {
-	parameters[protocol.ContractTxIdParam] = "TX_ID"
-	parameters[protocol.ContractCreatorOrgIdParam] = "CREATOR_ORG_ID"
-	parameters[protocol.ContractCreatorRoleParam] = "CREATOR_ROLE"
-	parameters[protocol.ContractCreatorPkParam] = "CREATOR_PK"
-	parameters[protocol.ContractSenderOrgIdParam] = "SENDER_ORG_ID"
-	parameters[protocol.ContractSenderRoleParam] = "SENDER_ROLE"
-	parameters[protocol.ContractSenderPkParam] = "SENDER_PK"
-	parameters[protocol.ContractBlockHeightParam] = "111"
+func baseParam(parameters map[string][]byte) {
+	parameters[protocol.ContractTxIdParam] = []byte("TX_ID")
+	parameters[protocol.ContractCreatorOrgIdParam] = []byte("CREATOR_ORG_ID")
+	parameters[protocol.ContractCreatorRoleParam] = []byte("CREATOR_ROLE")
+	parameters[protocol.ContractCreatorPkParam] = []byte("CREATOR_PK")
+	parameters[protocol.ContractSenderOrgIdParam] = []byte("SENDER_ORG_ID")
+	parameters[protocol.ContractSenderRoleParam] = []byte("SENDER_ROLE")
+	parameters[protocol.ContractSenderPkParam] = []byte("SENDER_PK")
+	parameters[protocol.ContractBlockHeightParam] = []byte("111")
 }

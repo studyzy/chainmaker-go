@@ -278,7 +278,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.Sc.ContractResult.Message += "error message: " + msg
 	}
 	s.Sc.ContractResult.Code = 1
-	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
+	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.ContractId.Name, msg)
 	return protocol.ContractSdkSignalResultFail
 }
 

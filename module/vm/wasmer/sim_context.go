@@ -27,7 +27,7 @@ type SimContext struct {
 	Instance       *wasm.Instance
 
 	method        string
-	parameters    map[string]string
+	parameters    map[string][]byte
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
 	ChainId       string
@@ -62,7 +62,7 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 
 	runtimeSdkType := sdkType.ToI32()
 	if int32(commonPb.RuntimeType_WASMER) == runtimeSdkType {
-		sc.parameters[protocol.ContractContextPtrParam] = strconv.Itoa(int(sc.CtxPtr))
+		sc.parameters[protocol.ContractContextPtrParam] = []byte( strconv.Itoa(int(sc.CtxPtr)))
 		ec := serialize.NewEasyCodecWithMap(sc.parameters)
 		bytes = ec.Marshal()
 	} else {

@@ -85,9 +85,9 @@ func TestFormatKey(t *testing.T) {
 
 func TestStakeContractAddr(t *testing.T) {
 	// test StakeContractAddr
-	StakeContractAddress := "BPoXnWti3XvkXY2TjFBhozqWasDP5BRvcUYNA86YgosQ"
+	StakeContractAddress := "FmGvrEHewSTDUHR4sDTCoxVq1JRRJU9QYUVsEy13zf2X"
 	stakeContractAddress := StakeContractAddr()
-	require.Equal(t, StakeContractAddress, stakeContractAddress)
+	require.EqualValues(t, StakeContractAddress, stakeContractAddress)
 }
 
 func TestDPosStakeRuntime_NodeID(t *testing.T) {
@@ -151,7 +151,7 @@ func TestDPosStakeRuntime_Delegate(t *testing.T) {
 	params[paramTo] = []byte(address1)
 	params[paramAmount] = []byte(biggerAmount)
 	bz, err = rt.Delegate(ctx, params)
-	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[SYSTEM_CONTRACT_DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
+	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
 	require.Equal(t, string(bz), "")
 }
 
@@ -208,7 +208,7 @@ func TestDPosStakeRuntime_UnDelegate(t *testing.T) {
 	params[paramTo] = []byte( address1)
 	params[paramAmount] = []byte(biggerAmount)
 	bz, err = rt.Delegate(ctx, params)
-	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[SYSTEM_CONTRACT_DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
+	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
 	require.Equal(t, string(bz), "")
 
 	// test get delegation after all share undelegated

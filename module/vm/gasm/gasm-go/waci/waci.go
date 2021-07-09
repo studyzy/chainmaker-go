@@ -237,6 +237,6 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.ContractResult.Message += "error message: " + msg
 	}
 	s.ContractResult.Code = 1
-	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().GetPayload().TxId, s.ContractId.ContractName, msg)
+	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().GetPayload().TxId, s.ContractId.Name, msg)
 	return protocol.ContractSdkSignalResultFail
 }

@@ -64,9 +64,9 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	}
 
 	contractId := commonPb.Contract{
-		ContractName:    ContractNameTest,
-		ContractVersion: ContractVersionTest,
-		RuntimeType:     runtimeType,
+		Name:        ContractNameTest,
+		Version:     ContractVersionTest,
+		RuntimeType: runtimeType,
 	}
 
 	wxvmCodeManager := xvm.NewCodeManager(ChainIdTest, "tmp/wxvm-data")
@@ -118,10 +118,10 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 
 	versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
-	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.ContractVersion)...)
+	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 
 	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
 	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, txContext, bytes
@@ -164,7 +164,7 @@ func (s *TxContextMockTest) GetStateKvHandle(index int32) (protocol.StateIterato
 	return data, ok
 }
 
-func (s *TxContextMockTest) GetBlockProposer() []byte {
+func (s *TxContextMockTest) GetBlockProposer() *acPb.SerializedMember {
 	panic("implement me")
 }
 
@@ -179,7 +179,7 @@ func (s *TxContextMockTest) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) 
 type callContractResult struct {
 	contractName string
 	method       string
-	param        map[string]string
+	param        map[string][]byte
 	deep         int
 	gasUsed      uint64
 	result       []byte
@@ -239,7 +239,7 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 }
 
 func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
-	parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
@@ -342,15 +342,15 @@ func (s *TxContextMockTest) GetDepth() int {
 	return s.currentDepth
 }
 
-func BaseParam(parameters map[string]string) {
-	parameters[protocol.ContractTxIdParam] = "TX_ID"
-	parameters[protocol.ContractCreatorOrgIdParam] = "CREATOR_ORG_ID"
-	parameters[protocol.ContractCreatorRoleParam] = "CREATOR_ROLE"
-	parameters[protocol.ContractCreatorPkParam] = "CREATOR_PK"
-	parameters[protocol.ContractSenderOrgIdParam] = "SENDER_ORG_ID"
-	parameters[protocol.ContractSenderRoleParam] = "SENDER_ROLE"
-	parameters[protocol.ContractSenderPkParam] = "SENDER_PK"
-	parameters[protocol.ContractBlockHeightParam] = "111"
+func BaseParam(parameters map[string][]byte) {
+	parameters[protocol.ContractTxIdParam] = []byte("TX_ID")
+	parameters[protocol.ContractCreatorOrgIdParam] = []byte("CREATOR_ORG_ID")
+	parameters[protocol.ContractCreatorRoleParam] = []byte("CREATOR_ROLE")
+	parameters[protocol.ContractCreatorPkParam] = []byte("CREATOR_PK")
+	parameters[protocol.ContractSenderOrgIdParam] = []byte("SENDER_ORG_ID")
+	parameters[protocol.ContractSenderRoleParam] = []byte("SENDER_ROLE")
+	parameters[protocol.ContractSenderPkParam] = []byte("SENDER_PK")
+	parameters[protocol.ContractBlockHeightParam] = []byte("111")
 }
 
 type mockBlockchainStore struct {

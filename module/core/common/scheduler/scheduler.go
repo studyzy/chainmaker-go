@@ -409,9 +409,9 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//		if payload.ContractId == nil {
 	//			return errResult(result, fmt.Errorf("param is null"))
 	//		}
-	//		contractName = payload.ContractId.ContractName
+	//		contractName = payload.ContractId.Name
 	//		runtimeType = payload.ContractId.RuntimeType
-	//		contractVersion = payload.ContractId.ContractVersion
+	//		contractVersion = payload.ContractId.Version
 	//		method = payload.Method
 	//		byteCode = payload.ByteCode
 	//		parameterPairs = payload.Parameters
@@ -497,7 +497,7 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) m
 	return parameters
 }
 
-func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string]string) error {
+func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string][]byte) error {
 	var ac protocol.AccessControlProvider
 	var targetOrgId string
 	var err error
@@ -508,7 +508,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 		return fmt.Errorf("failed to get access control from tx sim context for tx: %s, error: %s", tx.Payload.TxId, err.Error())
 	}
 	if orgId, ok := parameters[protocol.ConfigNameOrgId]; ok {
-		targetOrgId = orgId
+		targetOrgId = string(orgId)
 	} else {
 		targetOrgId = ""
 	}

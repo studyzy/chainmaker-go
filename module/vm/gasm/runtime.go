@@ -43,7 +43,7 @@ func putContractDecodedMod(chainId string, contractId *commonPb.Contract, mod *w
 			modCache: lru.New(LruCacheSize),
 		}
 	}
-	modName := chainId + contractId.Name + protocol.ContractStoreSeparator + contractId.ContractVersion
+	modName := chainId + contractId.Name + protocol.ContractStoreSeparator + contractId.Version
 	inst.modCache.Add(modName, mod)
 }
 
@@ -57,7 +57,7 @@ func getContractDecodedMod(chainId string, contractId *commonPb.Contract) *wasm.
 		}
 	}
 
-	modName := chainId + contractId.Name + protocol.ContractStoreSeparator + contractId.ContractVersion
+	modName := chainId + contractId.Name + protocol.ContractStoreSeparator + contractId.Version
 	if mod, ok := inst.modCache.Get(modName); ok {
 		return mod.(*wasm.Module)
 	}
@@ -71,7 +71,7 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 	tx := txContext.GetTx()
 
@@ -164,7 +164,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		return
 	}
 
-	parameters[protocol.ContractContextPtrParam] = "0" // 兼容rust
+	parameters[protocol.ContractContextPtrParam] = []byte("0") // 兼容rust
 	if uint64(commonPb.RuntimeType_GASM) == runtimeSdkType[0] {
 		ec := serialize.NewEasyCodecWithMap(parameters)
 		paramMarshalBytes = ec.Marshal()

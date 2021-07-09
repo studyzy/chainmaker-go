@@ -95,14 +95,14 @@ func NewVmPoolManager(chainId string) *VmPoolManager {
 // NewRuntimeInstance init vm pool and check byteCode correctness
 func (m *VmPoolManager) NewRuntimeInstance(contractId *commonPb.Contract, byteCode []byte) (*RuntimeInstance, error) {
 	var err error
-	if contractId == nil || contractId.Name == "" || contractId.ContractVersion == "" {
+	if contractId == nil || contractId.Name == "" || contractId.Version == "" {
 		err = fmt.Errorf("contract id is nil")
 		m.log.Warn(err)
 		return nil, err
 	}
 
 	if byteCode == nil || len(byteCode) == 0 {
-		err = fmt.Errorf("[%s_%s], byte code is nil", contractId.Name, contractId.ContractVersion)
+		err = fmt.Errorf("[%s_%s], byte code is nil", contractId.Name, contractId.Version)
 		m.log.Warn(err)
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (m *VmPoolManager) NewRuntimeInstance(contractId *commonPb.Contract, byteCo
 
 func (m *VmPoolManager) getVmPool(contractId *commonPb.Contract, byteCode []byte) (*vmPool, error) {
 	var err error
-	key := contractId.Name + "_" + contractId.ContractVersion
+	key := contractId.Name + "_" + contractId.Version
 
 	pool, ok := m.instanceMap[key]
 	if !ok {
@@ -208,12 +208,12 @@ func (p *vmPool) RevertInstance(instance *wrappedInstance) {
 
 func newVmPool(contractId *commonPb.Contract, byteCode []byte, log *logger.CMLogger) (*vmPool, error) {
 	if ok := wasm.Validate(byteCode); !ok {
-		return nil, fmt.Errorf("[%s_%s], byte code validation failed", contractId.Name, contractId.ContractVersion)
+		return nil, fmt.Errorf("[%s_%s], byte code validation failed", contractId.Name, contractId.Version)
 	}
 
 	module, err := wasm.Compile(byteCode)
 	if err != nil {
-		return nil, fmt.Errorf("[%s_%s], byte code compile failed", contractId.Name, contractId.ContractVersion)
+		return nil, fmt.Errorf("[%s_%s], byte code compile failed", contractId.Name, contractId.Version)
 	}
 
 	vmPool := &vmPool{
@@ -235,7 +235,7 @@ func newVmPool(contractId *commonPb.Contract, byteCode []byte, log *logger.CMLog
 
 	instance, err := vmPool.newInstanceFromModule()
 	if err != nil {
-		return nil, fmt.Errorf("[%s_%s], byte code compile failed, %s", contractId.Name, contractId.ContractVersion, err.Error())
+		return nil, fmt.Errorf("[%s_%s], byte code compile failed, %s", contractId.Name, contractId.Version, err.Error())
 	}
 
 	instance.wasmInstance.Close()
@@ -251,7 +251,7 @@ func newVmPool(contractId *commonPb.Contract, byteCode []byte, log *logger.CMLog
 func (p *vmPool) startRefreshingLoop() {
 
 	refreshTimer := time.NewTimer(defaultRefreshTime)
-	key := p.contractId.Name + "_" + p.contractId.ContractVersion
+	key := p.contractId.Name + "_" + p.contractId.Version
 	for {
 		select {
 		case <-p.applySignalC:
@@ -440,7 +440,7 @@ func (p *vmPool) close() {
 
 // close the contract vm pool
 func (m *VmPoolManager) closeAVmPool(contractId *commonPb.Contract) {
-	key := contractId.Name + "_" + contractId.ContractVersion
+	key := contractId.Name + "_" + contractId.Version
 	pool, ok := m.instanceMap[key]
 	if ok {
 		m.log.Infof("close pool %s", key)
@@ -460,7 +460,7 @@ func (m *VmPoolManager) closeAllVmPool() {
 // reset a contract vm pool install
 func (m *VmPoolManager) resetAVmPool(contractId *commonPb.Contract) {
 
-	key := contractId.Name + "_" + contractId.ContractVersion
+	key := contractId.Name + "_" + contractId.Version
 	pool, ok := m.instanceMap[key]
 	if ok {
 		m.log.Infof("reset pool %s", key)

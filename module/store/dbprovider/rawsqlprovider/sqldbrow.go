@@ -29,7 +29,7 @@ func (r *SqlDBRow) ScanColumns(dest ...interface{}) error {
 	return nil
 }
 
-func (row *SqlDBRow) Data() (map[string]string, error) {
+func (row *SqlDBRow) Data() (map[string][]byte, error) {
 	defer row.rows.Close()
 	return convertRows2Map(row.rows)
 }
@@ -47,8 +47,8 @@ func (r *emptyRow) ScanColumns(dest ...interface{}) error {
 //func (row *emptyRow) ScanObject(dest interface{}) error {
 //	return nil
 //}
-func (row *emptyRow) Data() (map[string]string, error) {
-	return make(map[string]string), nil
+func (row *emptyRow) Data() (map[string][]byte, error) {
+	return make(map[string][]byte), nil
 }
 func (row *emptyRow) IsEmpty() bool {
 	return true
@@ -81,11 +81,11 @@ func (r *SqlDBRows) Close() error {
 func (r *SqlDBRows) ScanColumns(dest ...interface{}) error {
 	return r.rows.Scan(dest...)
 }
-func (r *SqlDBRows) Data() (map[string]string, error) {
+func (r *SqlDBRows) Data() (map[string][]byte, error) {
 	return convertRows2Map(r.rows)
 }
 
-func convertRows2Map(rows *sql.Rows) (map[string]string, error) {
+func convertRows2Map(rows *sql.Rows) (map[string][]byte, error) {
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -101,14 +101,14 @@ func convertRows2Map(rows *sql.Rows) (map[string]string, error) {
 		return nil, errRow
 	}
 	var value string
-	resultC := map[string]string{}
+	resultC := map[string][]byte{}
 	for i, col := range values {
 		if col == nil {
 			value = ""
 		} else {
 			value = string(col)
 		}
-		resultC[cols[i]] = value
+		resultC[cols[i]] = []byte(value)
 	}
 	return resultC, nil
 }

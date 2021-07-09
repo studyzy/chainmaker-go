@@ -58,7 +58,7 @@ func (c *CodeManager) lookupMemCache(keyId string) (exec.Code, bool) {
 
 func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contract) (string, bool) {
 	filePath := chainId + protocol.ContractStoreSeparator + contractId.Name
-	fileName := contractId.ContractVersion + ".so"
+	fileName := contractId.Version + ".so"
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 	if !fileExists(libPath) {
 		return "", false
@@ -69,7 +69,7 @@ func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contr
 func (c *CodeManager) makeDiskCache(chainId string, contractId *commonPb.Contract, codebuf []byte) (string, error) {
 	startTime := time.Now()
 	filePath := chainId + protocol.ContractStoreSeparator + contractId.Name
-	fileName := contractId.ContractVersion + ".so"
+	fileName := contractId.Version + ".so"
 	basePath := filepath.Join(c.basedir, filePath)
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 
@@ -101,7 +101,7 @@ func (c *CodeManager) GetExecCode(chainId string, contractId *commonPb.Contract,
 
 	contractKeyId := chainId + protocol.ContractStoreSeparator +
 		contractId.Name + protocol.ContractStoreSeparator +
-		contractId.ContractVersion
+		contractId.Version
 
 	execCode, ok := c.lookupMemCache(contractKeyId)
 	if ok {
