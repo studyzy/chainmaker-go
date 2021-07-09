@@ -494,8 +494,8 @@ func (hvs *heightRoundVoteSet) addRound(round int32) {
 		panic(fmt.Errorf("round %d alread exists", round))
 	}
 
-	prevotes := NewVoteSet(hvs.logger, tbftpb.VoteType_VotePrevote, hvs.Height, round, hvs.validators)
-	precommits := NewVoteSet(hvs.logger, tbftpb.VoteType_VotePrecommit, hvs.Height, round, hvs.validators)
+	prevotes := NewVoteSet(hvs.logger, tbftpb.VoteType_VOTE_PREVOTE, hvs.Height, round, hvs.validators)
+	precommits := NewVoteSet(hvs.logger, tbftpb.VoteType_VOTE_PRECOMMIT, hvs.Height, round, hvs.validators)
 	hvs.RoundVoteSets[round] = newRoundVoteSet(hvs.Height, round, prevotes, precommits)
 }
 
@@ -514,9 +514,9 @@ func (hvs *heightRoundVoteSet) getVoteSet(round int32, voteType tbftpb.VoteType)
 	}
 
 	switch voteType {
-	case tbftpb.VoteType_VotePrevote:
+	case tbftpb.VoteType_VOTE_PREVOTE:
 		return rvs.Prevotes
-	case tbftpb.VoteType_VotePrecommit:
+	case tbftpb.VoteType_VOTE_PRECOMMIT:
 		return rvs.Precommits
 	default:
 		// This should not happen
@@ -525,11 +525,11 @@ func (hvs *heightRoundVoteSet) getVoteSet(round int32, voteType tbftpb.VoteType)
 }
 
 func (hvs *heightRoundVoteSet) prevotes(round int32) *VoteSet {
-	return hvs.getVoteSet(round, tbftpb.VoteType_VotePrevote)
+	return hvs.getVoteSet(round, tbftpb.VoteType_VOTE_PREVOTE)
 }
 
 func (hvs *heightRoundVoteSet) precommits(round int32) *VoteSet {
-	return hvs.getVoteSet(round, tbftpb.VoteType_VotePrecommit)
+	return hvs.getVoteSet(round, tbftpb.VoteType_VOTE_PRECOMMIT)
 }
 
 func (hvs *heightRoundVoteSet) addVote(vote *Vote) (added bool, err error) {

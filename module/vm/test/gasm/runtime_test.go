@@ -14,9 +14,9 @@ import (
 
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/vm/test"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/vm/test"
 )
 
 func TestContract_Fact(t *testing.T) {
@@ -54,7 +54,7 @@ func TestContract_Fact(t *testing.T) {
 	//time.Sleep(time.Second * 5) // 73m
 }
 
-func invokeCallContractTestSave(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) *commonPb.ContractResult {
+func invokeCallContractTestSave(method string, id int32, contractId *commonPb.Contract, txContext protocol.TxSimContext, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
 	test.BaseParam(parameters)
 	parameters["app_id"] = "app_id"
@@ -112,7 +112,7 @@ func TestFunctionalContract(t *testing.T) {
 	fmt.Println("  【test】pass")
 }
 
-func invokeFunctionalContract(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) *commonPb.ContractResult {
+func invokeFunctionalContract(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
 	parameters["time"] = "1314520"
 	parameters["file_hash"] = "file_hash"

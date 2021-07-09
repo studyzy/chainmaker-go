@@ -19,15 +19,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	Owner            = "GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
-	TransferTo       = "4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	TransferFrom     = "9WqpbNL8q2qfo67WMjEB1iFrKb1VsGRgim4eW49R5fhj"
-	Decimals         = "18"
-	TotalSupply      = "100000000"
-	TransferValue    = "1000000"
-	TransferBigValue = "3000000"
-	ApproveValue     = "2000000"
+var (
+	Owner            = []byte("GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB")
+	TransferTo       = []byte("4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4")
+	TransferFrom     = []byte("9WqpbNL8q2qfo67WMjEB1iFrKb1VsGRgim4eW49R5fhj")
+	Decimals         = []byte("18")
+	TotalSupply      = []byte("100000000")
+	TransferValue    = []byte("1000000")
+	TransferBigValue = []byte( "3000000")
+	ApproveValue     = []byte("2000000")
 )
 
 var isFromAccount = false
@@ -57,7 +57,7 @@ func TestDPoSRuntime_Transfer(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
 	// 从owner中转出
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = TransferTo
 	params[paramNameValue] = TransferValue
 	result, err := dPoSRuntime.Transfer(txSimContext, params)
@@ -69,20 +69,20 @@ func TestDPoSRuntime_BalanceOf(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
 	// 从owner中转出
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = TransferTo
 	params[paramNameValue] = TransferValue
 	result, err := dPoSRuntime.Transfer(txSimContext, params)
 	require.Nil(t, err)
 	require.Equal(t, string(result), "99000000")
 	// 查询owner的balance
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameOwner] = Owner
 	result, err = dPoSRuntime.BalanceOf(txSimContext, params)
 	require.Nil(t, err)
 	require.Equal(t, string(result), "99000000")
 	// 查询to的balance
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameOwner] = TransferTo
 	result, err = dPoSRuntime.BalanceOf(txSimContext, params)
 	require.Nil(t, err)
@@ -92,7 +92,7 @@ func TestDPoSRuntime_BalanceOf(t *testing.T) {
 func TestDPoSRuntime_TransferOwnership(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = TransferTo
 	result, err := dPoSRuntime.TransferOwnership(txSimContext, params)
 	require.Nil(t, err)
@@ -106,7 +106,7 @@ func TestDPoSRuntime_TransferOwnership(t *testing.T) {
 func TestDPoSRuntime_Approve(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = TransferFrom
 	params[paramNameValue] = ApproveValue
 	result, err := dPoSRuntime.Approve(txSimContext, params)
@@ -117,13 +117,13 @@ func TestDPoSRuntime_Approve(t *testing.T) {
 func TestDPoSRuntime_Allowance(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = TransferFrom
 	params[paramNameValue] = ApproveValue
 	result, err := dPoSRuntime.Approve(txSimContext, params)
 	require.Nil(t, err)
 	require.Equal(t, string(result), ApproveValue)
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameFrom] = Owner
 	params[paramNameTo] = TransferFrom
 	result, err = dPoSRuntime.Allowance(txSimContext, params)
@@ -135,14 +135,14 @@ func TestDPoSRuntime_TransferFrom(t *testing.T) {
 	dPoSRuntime, txSimContext, fn := initEnv(t)
 	defer fn()
 	// 首先进行转账，给From用户指定金额
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = TransferFrom
 	params[paramNameValue] = TransferBigValue
 	result, err := dPoSRuntime.Transfer(txSimContext, params)
 	require.Nil(t, err)
 	require.Equal(t, string(result), "97000000")
 	// 使用owner用户进行transferFrom操作
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameFrom] = TransferFrom
 	params[paramNameTo] = TransferTo
 	params[paramNameValue] = TransferValue
@@ -151,7 +151,7 @@ func TestDPoSRuntime_TransferFrom(t *testing.T) {
 	require.NotNil(t, err)
 	require.Nil(t, result)
 	// 进行批准
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameTo] = Owner
 	params[paramNameValue] = ApproveValue
 	// 此处需要进行设置，表示本次操作是由
@@ -161,7 +161,7 @@ func TestDPoSRuntime_TransferFrom(t *testing.T) {
 	require.Equal(t, string(result), ApproveValue)
 	isFromAccount = false
 	// 再次进行转账操作
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameFrom] = TransferFrom
 	params[paramNameTo] = TransferTo
 	params[paramNameValue] = TransferValue
@@ -169,7 +169,7 @@ func TestDPoSRuntime_TransferFrom(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, string(result), "2000000")
 	// 再次进行allowance查询
-	params = make(map[string]string, 32)
+	params = make(map[string][]byte, 32)
 	params[paramNameFrom] = TransferFrom
 	params[paramNameTo] = Owner
 	result, err = dPoSRuntime.Allowance(txSimContext, params)
@@ -209,12 +209,12 @@ func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 			return cache.Get(name, string(key)), nil
 		}).AnyTimes()
 
-	err := dPoSRuntime.setOwner(txSimContext, Owner)
+	err := dPoSRuntime.setOwner(txSimContext, string(Owner))
 	require.Nil(t, err)
-	err = dPoSRuntime.setDecimals(txSimContext, Decimals)
+	err = dPoSRuntime.setDecimals(txSimContext, string(Decimals))
 	require.Nil(t, err)
 	// 增发指定数量的token
-	params := make(map[string]string, 32)
+	params := make(map[string][]byte, 32)
 	params[paramNameTo] = Owner
 	params[paramNameValue] = TotalSupply
 	result, err := dPoSRuntime.Mint(txSimContext, params)

@@ -196,7 +196,7 @@ func TestGetNodeIDsFromValidators(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	name := commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()
+	name := commonpb.SystemContract_DPOS_STAKE.String()
 	nodeIDs := make(map[string]string)
 	nodeIDs[name+string(dposmgr.ToNodeIDKey("val1"))] = "nodeId1"
 	nodeIDs[name+string(dposmgr.ToNodeIDKey("val2"))] = "nodeId2"

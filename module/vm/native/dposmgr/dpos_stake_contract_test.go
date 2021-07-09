@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
+var (
 	DelegateAddress  = "GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
 	ValidatorAddress = "4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
 	NodeID           = "NodeTestc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
@@ -95,16 +95,16 @@ func TestDPosStakeRuntime_NodeID(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// set NodeID
-	params := make(map[string]string, 32)
-	params[paramNodeID] = paramNodeID
+	params := make(map[string][]byte, 32)
+	params[paramNodeID] = []byte( paramNodeID)
 	bz, err := rt.SetNodeID(ctx, params)
 	require.Equal(t, string(bz), paramNodeID)
 	require.Nil(t, err)
 	// get NodeID
 	addr, err := loadSenderAddress(ctx)
 	require.Nil(t, err)
-	params = make(map[string]string, 32)
-	params[paramAddress] = addr
+	params = make(map[string][]byte, 32)
+	params[paramAddress] = []byte(addr)
 	bz, err = rt.GetNodeID(ctx, params)
 	// asert equal
 	require.Equal(t, string(bz), paramNodeID)
@@ -126,8 +126,8 @@ func TestDPosStakeRuntime_GetValidatorByAddress(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramAddress] = "1"
+	params := make(map[string][]byte, 32)
+	params[paramAddress] = []byte("1")
 	bz, err := rt.GetValidatorByAddress(ctx, params)
 	require.Nil(t, err)
 	require.Equal(t, bz, initValidator(t, "1"))
@@ -137,9 +137,9 @@ func TestDPosStakeRuntime_Delegate(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramTo] = address1
-	params[paramAmount] = amount
+	params := make(map[string][]byte, 32)
+	params[paramTo] = []byte(address1)
+	params[paramAmount] = []byte( amount)
 	bz, err := rt.Delegate(ctx, params)
 	require.Nil(t, err)
 	d := &commonPb.Delegation{}
@@ -148,8 +148,8 @@ func TestDPosStakeRuntime_Delegate(t *testing.T) {
 	require.Equal(t, d, newDelegation("GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB", address1, amount))
 
 	// test over range
-	params[paramTo] = address1
-	params[paramAmount] = biggerAmount
+	params[paramTo] = []byte(address1)
+	params[paramAmount] = []byte(biggerAmount)
 	bz, err = rt.Delegate(ctx, params)
 	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[SYSTEM_CONTRACT_DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
 	require.Equal(t, string(bz), "")
@@ -159,8 +159,8 @@ func TestDPosStakeRuntime_GetDelegationsByAddress(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramAddress] = "1"
+	params := make(map[string][]byte, 32)
+	params[paramAddress] = []byte("1")
 	bz, err := rt.GetDelegationsByAddress(ctx, params)
 	d := &commonPb.DelegationInfo{}
 	d.Infos = append(d.Infos, newDelegation(address1, address1, amount))
@@ -173,8 +173,8 @@ func TestDPosStakeRuntime_GetUserDelegationByValidator(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramAddress] = "1"
+	params := make(map[string][]byte, 32)
+	params[paramAddress] = []byte("1")
 	bz, err := rt.GetDelegationsByAddress(ctx, params)
 	d := &commonPb.DelegationInfo{}
 	d.Infos = append(d.Infos, newDelegation(address1, address1, amount))
@@ -188,15 +188,15 @@ func TestDPosStakeRuntime_UnDelegate(t *testing.T) {
 	defer fn()
 	// call api
 	// prepare
-	params := make(map[string]string, 32)
-	params[paramTo] = address1
-	params[paramAmount] = amount
+	params := make(map[string][]byte, 32)
+	params[paramTo] = []byte(address1)
+	params[paramAmount] = []byte(amount)
 	_, err := rt.Delegate(ctx, params)
 	require.Nil(t, err)
 	// test logic
-	params = make(map[string]string, 32)
-	params[paramFrom] = address1
-	params[paramAmount] = amount
+	params = make(map[string][]byte, 32)
+	params[paramFrom] = []byte(address1)
+	params[paramAmount] = []byte(amount)
 	bz, err := rt.UnDelegate(ctx, params)
 	require.Nil(t, err)
 	d := &commonPb.UnbondingDelegation{}
@@ -205,24 +205,24 @@ func TestDPosStakeRuntime_UnDelegate(t *testing.T) {
 	require.Equal(t, d, initUnbondingDelegation())
 
 	// test over range
-	params[paramTo] = address1
-	params[paramAmount] = biggerAmount
+	params[paramTo] = []byte( address1)
+	params[paramAmount] = []byte(biggerAmount)
 	bz, err = rt.Delegate(ctx, params)
 	require.Equal(t, err, fmt.Errorf("address balance is not enough, contract[SYSTEM_CONTRACT_DPOS_ERC20] address[GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB] balance[0] value[1000000000]"))
 	require.Equal(t, string(bz), "")
 
 	// test get delegation after all share undelegated
-	params = make(map[string]string, 32)
-	params[paramAddress] = "1"
+	params = make(map[string][]byte, 32)
+	params[paramAddress] = []byte("1")
 	bz, err = rt.GetDelegationsByAddress(ctx, params)
 	di := &commonPb.DelegationInfo{}
 	err = proto.Unmarshal(bz, di)
 	require.Nil(t, err)
 	require.Equal(t, di, initDelegationInfo(address1, address1, amount)) // validator self delegation
 
-	params = make(map[string]string, 32)
-	params[paramDelegatorAddress] = DelegateAddress
-	params[paramValidatorAddress] = address1
+	params = make(map[string][]byte, 32)
+	params[paramDelegatorAddress] = []byte(DelegateAddress)
+	params[paramValidatorAddress] = []byte(address1)
 	bz, err = rt.GetUserDelegationByValidator(ctx, params)
 	require.Nil(t, bz)
 	require.Equal(t, err, fmt.Errorf("no delegation as delegator: GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB, validdator: 1"))
@@ -260,15 +260,15 @@ func TestDPosStakeRuntime_UpdateEpochValidatorNumber(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramEpochValidatorNumber] = "4"
+	params := make(map[string][]byte, 32)
+	params[paramEpochValidatorNumber] = []byte("4")
 	bz, err := rt.UpdateEpochValidatorNumber(ctx, params)
 	require.Nil(t, err)
 	require.Equal(t, string(bz), "4")
 
 	// test over range case
-	params = make(map[string]string, 32)
-	params[paramEpochValidatorNumber] = "5"
+	params = make(map[string][]byte, 32)
+	params[paramEpochValidatorNumber] = []byte("5")
 	bz, err = rt.UpdateEpochValidatorNumber(ctx, params)
 	require.Equal(t, err, fmt.Errorf("new validator amount is over range, current all candidates number is: [4]"))
 	require.Equal(t, string(bz), "")
@@ -287,15 +287,15 @@ func TestDPosStakeRuntime_UpdateMinSelfDelegation(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramMinSelfDelegation] = amount
+	params := make(map[string][]byte, 32)
+	params[paramMinSelfDelegation] = []byte(amount)
 	bz, err := rt.UpdateMinSelfDelegation(ctx, params)
 	require.Nil(t, err)
 	require.Equal(t, string(bz), amount)
 
 	// test over range
-	params = make(map[string]string, 32)
-	params[paramMinSelfDelegation] = biggerAmount
+	params = make(map[string][]byte, 32)
+	params[paramMinSelfDelegation] = []byte(biggerAmount)
 	bz, err = rt.UpdateMinSelfDelegation(ctx, params)
 	require.Equal(t, err, fmt.Errorf("min self delegation change over range, biggest self delegation is: [100000000]"))
 	require.Equal(t, string(bz), amount)
@@ -314,14 +314,14 @@ func TestDPosStakeRuntime_UpdateEpochBlockNumber(t *testing.T) {
 	rt, ctx, fn := setUp(t)
 	defer fn()
 	// call api
-	params := make(map[string]string, 32)
-	params[paramEpochBlockNumber] = "1"
+	params := make(map[string][]byte, 32)
+	params[paramEpochBlockNumber] = []byte("1")
 	bz, err := rt.UpdateEpochBlockNumber(ctx, params)
 	require.Nil(t, err)
 	require.Equal(t, string(bz), "1")
 
 	// test over range case
-	params[paramEpochBlockNumber] = "0"
+	params[paramEpochBlockNumber] = []byte("0")
 	bz, err = rt.UpdateEpochBlockNumber(ctx, params)
 	require.Equal(t, err, fmt.Errorf("epochBlockNumber less than or equal to 0"))
 	require.Nil(t, bz)
@@ -369,7 +369,7 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 			ks := cache.Keys()
 			iter := new(kvIterator)
 			for _, k := range ks {
-				ok, err := regexp.MatchString("^"+commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()+"/"+string(startKey), k)
+				ok, err := regexp.MatchString("^"+commonPb.SystemContract_DPOS_STAKE.String()+"/"+string(startKey), k)
 				require.Nil(t, err)
 				if ok {
 					bz := cache.GetByKey(k)
@@ -384,37 +384,37 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 	).AnyTimes()
 	// init stake contract
 	// init 4 validator
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToValidatorKey(address1)), initValidator(t, address1))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToValidatorKey(address2)), initValidator(t, address2))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToValidatorKey(address3)), initValidator(t, address3))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToValidatorKey(address4)), initValidator(t, address4))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToValidatorKey(address1)), initValidator(t, address1))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToValidatorKey(address2)), initValidator(t, address2))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToValidatorKey(address3)), initValidator(t, address3))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToValidatorKey(address4)), initValidator(t, address4))
 
 	// init 4 delegation
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address1, address1)), initDelegation(t, address1))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address2, address2)), initDelegation(t, address2))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address3, address3)), initDelegation(t, address3))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), string(ToDelegationKey(address4, address4)), initDelegation(t, address4))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToDelegationKey(address1, address1)), initDelegation(t, address1))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToDelegationKey(address2, address2)), initDelegation(t, address2))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToDelegationKey(address3, address3)), initDelegation(t, address3))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), string(ToDelegationKey(address4, address4)), initDelegation(t, address4))
 
 	// init basic params
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), KeyMinSelfDelegation, []byte(amount))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), KeyCompletionUnbondingEpochNumber, encodeUint64ToBigEndian(1))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), KeyEpochValidatorNumber, encodeUint64ToBigEndian(4))
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), KeyEpochBlockNumber, encodeUint64ToBigEndian(1))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), KeyMinSelfDelegation, []byte(amount))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), KeyCompletionUnbondingEpochNumber, encodeUint64ToBigEndian(1))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), KeyEpochValidatorNumber, encodeUint64ToBigEndian(4))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), KeyEpochBlockNumber, encodeUint64ToBigEndian(1))
 
 	// init epoch
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), KeyCurrentEpoch, initEpoch(t))
+	cache.Put(commonPb.SystemContract_DPOS_STAKE.String(), KeyCurrentEpoch, initEpoch(t))
 
 	// init erc20
 	// init owner
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), KeyOwner, []byte("GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"))
+	cache.Put(commonPb.SystemContract_DPOS_ERC20.String(), KeyOwner, []byte("GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"))
 
 	// init balance
-	cache.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), BalanceKey("GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"), []byte(amount))
+	cache.Put(commonPb.SystemContract_DPOS_ERC20.String(), BalanceKey("GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"), []byte(amount))
 
 	//err = dPoSRuntime.setDecimals(txSimContext, Decimals)
 	//require.Nil(t, err)
 	// 增发指定数量的token
-	//params := make(map[string]string, 32)
+	//params := make(map[string][]byte, 32)
 	//params[paramNameTo] = Owner
 	//params[paramNameValue] = TotalSupply
 	//result, err := dPoSRuntime.Mint(txSimContext, params)
@@ -425,7 +425,7 @@ func setUp(t *testing.T) (*DPoSStakeRuntime, protocol.TxSimContext, func()) {
 
 func initValidator(t *testing.T, addr string) []byte {
 	v := newValidator(addr)
-	v.Status = commonPb.BondStatus_Bonded
+	v.Status = commonPb.BondStatus_BONDED
 	v.Tokens = amount
 	v.DelegatorShares = amount
 	v.SelfDelegation = amount

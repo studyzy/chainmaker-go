@@ -40,7 +40,7 @@ type txSimContextImpl struct {
 type callContractResult struct {
 	contractName string
 	method       string
-	param        map[string]string
+	param        map[string][]byte
 	depth        int
 	gasUsed      uint64
 	result       []byte
@@ -95,7 +95,7 @@ func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
-	if creatorByte, err := s.Get(commonpb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
+	if creatorByte, err := s.Get(commonpb.SystemContract_CONTRACT_MANAGE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
 		return nil
 	} else {
 		creator := &acpb.SerializedMember{}
@@ -214,7 +214,7 @@ func (s *txSimContextImpl) GetBlockHeight() uint64 {
 	return s.snapshot.GetBlockHeight()
 }
 
-func (s *txSimContextImpl) GetBlockProposer() []byte {
+func (s *txSimContextImpl) GetBlockProposer() *acpb.SerializedMember {
 	return s.snapshot.GetBlockProposer()
 }
 
@@ -239,7 +239,9 @@ func (s *txSimContextImpl) SetTxResult(txResult *commonpb.Result) {
 }
 
 // Cross contract call
-func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonpb.TxType) (*commonpb.ContractResult, commonpb.TxStatusCode) {
+func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method string, byteCode []byte,
+	parameter map[string][]byte, gasUsed uint64, refTxType commonpb.TxType) (
+	*commonpb.ContractResult, commonpb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {

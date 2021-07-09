@@ -64,7 +64,7 @@ func saveCert() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
+		commonPb.SystemContract_PRIVATE_COMPUTE.String(),
 		commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String(),
 		pairs,
 		defaultSequence,
@@ -205,7 +205,7 @@ func getSyncResult(txId string) (*commonPb.ContractResult, error) {
 func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 
 	payloadBytes, err := constructQueryPayload(
-		commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(),
+		commonPb.SystemContract_CHAIN_QUERY.String(),
 		commonPb.QueryFunction_GET_TX_BY_TX_ID.String(),
 		[]*commonPb.KeyValuePair{
 			{

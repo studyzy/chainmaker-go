@@ -66,10 +66,10 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 
 	if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 		versionKey := []byte(protocol.ContractVersion + address.String())
-		if contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey); err == nil {
+		if contractVersion, err := c.Ctx.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey); err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractName...)
 			versionedByteCodeKey = append(versionedByteCodeKey, contractVersion...)
-			code, err = c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey)
+			code, err = c.Ctx.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey)
 			return code, err
 		} else {
 			log.Errorf("failed to get other contract byte code version, address [%s] , error :", address.String(), err.Error())

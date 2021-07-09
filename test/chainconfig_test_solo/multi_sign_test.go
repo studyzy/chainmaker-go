@@ -64,7 +64,7 @@ func TestMultiSignReq(t *testing.T) {
 	// 直接请求
 	sk, member := native.GetUserSK(1)
 	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
-		TxId: txId, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_REQ.String(), Pairs: pairs})
+		TxId: txId, ContractName: commonPb.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_REQ.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -84,7 +84,7 @@ func getPayloadInfo() ([]byte, []byte) {
 	}
 	payload := &commonPb.Payload{
 		ChainId:      CHAIN1,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 		Method:       commonPb.ConfigFunction_CORE_UPDATE.String(),
 		Parameters:   payloadPairs,
 		Sequence:     chainConfig.Sequence,
@@ -160,7 +160,7 @@ func TestMultiSignVote(t *testing.T) {
 
 	sk, member := native.GetUserSK(signerIndex)
 	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
-		TxId: txId, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_VOTE.String(), Pairs: pairs})
+		TxId: txId, ContractName: commonPb.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_VOTE.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -185,6 +185,6 @@ func TestMultiSignQuery(t *testing.T) {
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT, ChainId: CHAIN1,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_QUERY.String(), Pairs: pairs})
+		ContractName: commonPb.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_QUERY.String(), Pairs: pairs})
 	processResults(resp, err)
 }

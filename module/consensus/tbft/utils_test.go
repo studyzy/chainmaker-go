@@ -174,8 +174,8 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 	chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
-	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
-	vote := NewVote(tbftpb.VoteType_VotePrecommit, org1NodeId, blockHeight, 0, blockHash[:])
+	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
+	vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, org1NodeId, blockHeight, 0, blockHash[:])
 	added, err := voteSet.AddVote(vote)
 	require.Nil(t, err)
 	require.True(t, added)
@@ -225,8 +225,8 @@ func TestVerifyBlockSignaturesOneNodeFail(t *testing.T) {
 	// chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	// validators, _ := GetValidatorListFromConfig(chainConfig)
 	// validatorSet := newValidatorSet(validators)
-	// voteSet := NewVoteSet(tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
-	// vote := NewVote(tbftpb.VoteType_VotePrecommit, org1Id, blockHeight, 0, blockHash[:])
+	// voteSet := NewVoteSet(tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
+	// vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, org1Id, blockHeight, 0, blockHash[:])
 	// voteSet.AddVote(vote)
 	// qc := mustMarshal(voteSet.ToProto())
 	// block.AdditionalData.ExtraData[protocol.TBFTAddtionalDataKey] = qc
@@ -286,7 +286,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 	chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
-	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
+	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
 
 	nodes := []string{
 		org1NodeId,
@@ -295,7 +295,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 		"QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",
 	}
 	for _, id := range nodes {
-		vote := NewVote(tbftpb.VoteType_VotePrecommit, id, blockHeight, 0, blockHash[:])
+		vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, id, blockHeight, 0, blockHash[:])
 		voteSet.AddVote(vote)
 	}
 	qc := mustMarshal(voteSet.ToProto())
@@ -355,7 +355,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 	chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
-	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
+	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
 
 	nodes := []string{
 		org1NodeId,
@@ -364,7 +364,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 		// "QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",
 	}
 	for _, id := range nodes {
-		vote := NewVote(tbftpb.VoteType_VotePrecommit, id, blockHeight, 0, blockHash[:])
+		vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, id, blockHeight, 0, blockHash[:])
 		voteSet.AddVote(vote)
 	}
 	qc := mustMarshal(voteSet.ToProto())

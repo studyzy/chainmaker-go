@@ -7,10 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package wasmertest
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
 	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
 	_ "net/http/pprof"
@@ -59,7 +59,7 @@ import (
 //	invokeCounterPanic(contractId, txContext, pool, bytes)
 //}
 
-func invokeCounterQuery(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterQuery(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "query"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -69,7 +69,7 @@ func invokeCounterQuery(contractId *commonPb.ContractId, txContext protocol.TxSi
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeCounterIncrease(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterIncrease(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "increase"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -79,7 +79,7 @@ func invokeCounterIncrease(contractId *commonPb.ContractId, txContext protocol.T
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeCounterPanic(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterPanic(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "calc_json"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -91,7 +91,7 @@ func invokeCounterPanic(contractId *commonPb.ContractId, txContext protocol.TxSi
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeCounterCalcJson(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterCalcJson(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "calc_json"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -127,7 +127,7 @@ func invokeCounterCalcJson(contractId *commonPb.ContractId, txContext protocol.T
 
 }
 
-func invokeCounterGetCalc(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterGetCalc(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "set_store"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -144,7 +144,7 @@ func invokeCounterGetCalc(contractId *commonPb.ContractId, txContext protocol.Tx
 	runtime, _ = pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
-func invokeCounterCallSelf(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterCallSelf(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "set_store"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -160,7 +160,7 @@ func invokeCounterCallSelf(contractId *commonPb.ContractId, txContext protocol.T
 	runtime, _ = pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
-func invokeCounterSetStore(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterSetStore(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "set_store"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -171,7 +171,7 @@ func invokeCounterSetStore(contractId *commonPb.ContractId, txContext protocol.T
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
-func invokeCounterGetStore(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterGetStore(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "get_store"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -181,7 +181,7 @@ func invokeCounterGetStore(contractId *commonPb.ContractId, txContext protocol.T
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
-func invokeCounterDeleteStore(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterDeleteStore(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "delete_store"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -192,7 +192,7 @@ func invokeCounterDeleteStore(contractId *commonPb.ContractId, txContext protoco
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeCounterCallContractIncrease(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterCallContractIncrease(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "call_contract_test"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -202,7 +202,7 @@ func invokeCounterCallContractIncrease(contractId *commonPb.ContractId, txContex
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
-func invokeCounterCallContractIncreaseForever(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterCallContractIncreaseForever(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "call_contract_test"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -213,7 +213,7 @@ func invokeCounterCallContractIncreaseForever(contractId *commonPb.ContractId, t
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
-func invokeCounterCallContractIncreaseSelf(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterCallContractIncreaseSelf(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "call_contract_self"
 	parameters := make(map[string]string)
 	baseParam(parameters)
@@ -224,7 +224,7 @@ func invokeCounterCallContractIncreaseSelf(contractId *commonPb.ContractId, txCo
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeCounterCallContractQuery(contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
+func invokeCounterCallContractQuery(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
 	method := "call_contract_test"
 	parameters := make(map[string]string)
 	baseParam(parameters)

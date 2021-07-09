@@ -38,8 +38,8 @@ func getQuote() error {
 	})
 
 	payloadBytes, err := constructQueryPayload(
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		"GET_QUOTE",// common.PrivateComputeContractFunction_GET_QUOTE.String(),
+		common.SystemContract_PRIVATE_COMPUTE.String(),
+		"GET_QUOTE", // common.PrivateComputeContractFunction_GET_QUOTE.String(),
 		pairs,
 	)
 	if err != nil {

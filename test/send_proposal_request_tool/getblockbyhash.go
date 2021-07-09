@@ -51,7 +51,7 @@ func getBlockByHash() error {
 		},
 	}
 
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
 	if err != nil {
 		return err
 	}

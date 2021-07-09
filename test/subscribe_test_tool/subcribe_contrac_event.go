@@ -23,8 +23,8 @@ func SubscribeContractEvent() *cobra.Command {
 func subscribeContractEvent() error {
 	payload := &commonPb.Payload{
 		Parameters: []*commonPb.KeyValuePair{
-			{Key: consts.SubscribeContractEventPayload_Topic.String(), Value: []byte(topic)},
-			{Key: consts.SubscribeContractEventPayload_ContractName.String(), Value: []byte(contractName)},
+			{Key: consts.SubscribeContractEventPayload_TOPIC.String(), Value: []byte(topic)},
+			{Key: consts.SubscribeContractEventPayload_CONTRACT_NAME.String(), Value: []byte(contractName)},
 		},
 		//Topic:        topic,
 		//ContractName: contractName,

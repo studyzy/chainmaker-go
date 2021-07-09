@@ -646,7 +646,7 @@ func (ac *accessControl) validateCrlVersion(crlPemBytes []byte, crl *pkix.Certif
 			return fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPemBytes))
 		}
 		ac.log.Debugf("AKI is ASN1 encoded: %v", isASN1Encoded)
-		crlOldBytes, err := ac.dataStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), aki)
+		crlOldBytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), aki)
 		if err != nil {
 			return fmt.Errorf("lookup CRL [%s] failed: %v", hex.EncodeToString(aki), err)
 		}
@@ -775,7 +775,7 @@ func (ac *accessControl) lookUpCertCache(certId string) ([]byte, bool) {
 			return nil, false
 		}
 		certIdHex := hex.EncodeToString([]byte(certId))
-		cert, err := ac.dataStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certIdHex))
+		cert, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(certIdHex))
 		if err != nil {
 			ac.log.Debugf("fail to load compressed certificate from local storage [%s]", certIdHex)
 			return nil, false
@@ -833,7 +833,7 @@ func (ac *accessControl) loadCRL() error {
 		return nil
 	}
 
-	crlAKIList, err := ac.dataStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
+	crlAKIList, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
 	if err != nil {
 		return fmt.Errorf("fail to update CRL list: %v", err)
 	}
@@ -857,7 +857,7 @@ func (ac *accessControl) loadCRL() error {
 
 func (ac *accessControl) storeCrls(crlAKIs []string) error {
 	for _, crlAKI := range crlAKIs {
-		crlbytes, err := ac.dataStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(crlAKI))
+		crlbytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(crlAKI))
 		if err != nil {
 			return fmt.Errorf("fail to load CRL [%s]: %v", hex.EncodeToString([]byte(crlAKI)), err)
 		}
@@ -912,7 +912,7 @@ func (ac *accessControl) loadCertFrozenList() error {
 		return nil
 	}
 
-	certList, err := ac.dataStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
+	certList, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
 	if err != nil {
 		return fmt.Errorf("update frozen certificate list failed: %v", err)
 	}
@@ -927,7 +927,7 @@ func (ac *accessControl) loadCertFrozenList() error {
 	}
 
 	for _, certID := range certIDs {
-		certBytes, err := ac.dataStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certID))
+		certBytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(certID))
 		if err != nil {
 			return fmt.Errorf("load frozen certificate failed: %s", certID)
 		}

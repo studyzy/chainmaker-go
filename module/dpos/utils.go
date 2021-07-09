@@ -115,10 +115,10 @@ func (s CandidateInfos) Less(i, j int) bool {
 }
 
 func GetLatestEpochInfo(store protocol.BlockchainStore) (*common.Epoch, error) {
-	val, err := store.ReadObject(commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(dposmgr.KeyCurrentEpoch))
+	val, err := store.ReadObject(commonpb.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyCurrentEpoch))
 	if err != nil {
 		return nil, fmt.Errorf("read contract: %s key: %s, error: %s",
-			commonpb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), dposmgr.KeyCurrentEpoch, err)
+			commonpb.SystemContract_DPOS_STAKE.String(), dposmgr.KeyCurrentEpoch, err)
 	}
 	epoch := commonpb.Epoch{}
 	if err = proto.Unmarshal(val, &epoch); err != nil {
@@ -133,7 +133,7 @@ func GetNodeIDsFromValidators(store protocol.BlockchainStore, validators []strin
 	}
 	nodeIDs := make([]string, 0, len(validators))
 	for _, validator := range validators {
-		nodeID, err := store.ReadObject(common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), dposmgr.ToNodeIDKey(validator))
+		nodeID, err := store.ReadObject(common.SystemContract_DPOS_STAKE.String(), dposmgr.ToNodeIDKey(validator))
 		if err != nil || len(nodeID) == 0 {
 			return nil, fmt.Errorf("read nodeID of the validator[%s] failed, reason: %s", validator, err)
 		}

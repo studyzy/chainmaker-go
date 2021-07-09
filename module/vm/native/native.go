@@ -7,6 +7,7 @@
 package native
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
@@ -17,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker-go/vm/native/government"
 	"chainmaker.org/chainmaker-go/vm/native/multisign"
-	"chainmaker.org/chainmaker-go/vm/native/prvcompute"
 
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -58,20 +58,20 @@ func GetRuntimeInstance(chainId string) *RuntimeInstance {
 
 func initContract(log *logger.CMLogger) map[string]common.Contract {
 	contracts := make(map[string]common.Contract, 64)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()] = chainconfigmgr.NewChainConfigContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String()] = blockcontract.NewBlockContact(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()] = government.NewGovernmentContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String()] = prvcompute.NewPrivateComputeContact(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
-	contracts[commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String()] = contractmgr.NewContractManager(log)
+	contracts[commonPb.SystemContract_CHAIN_CONFIG.String()] = chainconfigmgr.NewChainConfigContract(log)
+	contracts[commonPb.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContact(log)
+	contracts[commonPb.SystemContract_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
+	contracts[commonPb.SystemContract_GOVERNANCE.String()] = government.NewGovernmentContract(log)
+	contracts[commonPb.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
+	contracts[commonPb.SystemContract_PRIVATE_COMPUTE.String()] = privatecompute.NewPrivateComputeContact(log)
+	contracts[commonPb.SystemContract_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
+	contracts[commonPb.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
+	contracts[commonPb.SystemContract_CONTRACT_MANAGE.String()] = contractmgr.NewContractManager(log)
 	return contracts
 }
 
 // Invoke verify and run Contract method
-func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string, _ []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string, _ []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext) *commonPb.ContractResult {
 
 	result := &commonPb.ContractResult{
@@ -130,7 +130,7 @@ func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error 
 	//	return errors.New("chainId is different")
 	//}
 
-	bytes, err := txContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	bytes, err := txContext.Get(commonPb.SystemContract_CHAIN_CONFIG.String(), []byte(commonPb.SystemContract_CHAIN_CONFIG.String()))
 	var chainConfig configPb.ChainConfig
 	err = proto.Unmarshal(bytes, &chainConfig)
 	if err != nil {

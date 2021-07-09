@@ -44,7 +44,7 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 	txs := make([]*commonPb.Transaction, 0, num)
 	txType := commonPb.TxType_INVOKE_CONTRACT
 	for i := 0; i < num; i++ {
-		contractName := commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()
+		contractName := commonPb.SystemContract_CHAIN_CONFIG.String()
 
 		if !isConfig {
 			contractName = "userContract1"

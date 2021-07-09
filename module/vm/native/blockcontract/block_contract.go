@@ -85,7 +85,7 @@ type BlockRuntimeParam struct {
 }
 
 // GetNodeChainList return list of chain
-func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -112,7 +112,7 @@ func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, para
 	return chainListBytes, nil
 }
 
-func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -160,7 +160,7 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 	return chainInfoBytes, nil
 }
 
-func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -206,7 +206,7 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 
 }
 
-func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -250,7 +250,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 
 }
 
-func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -296,7 +296,7 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 
 }
 
-func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -340,7 +340,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 
 }
 
-func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -386,7 +386,7 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 
 }
 
-func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -432,7 +432,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 
 }
 
-func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -478,7 +478,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 
 }
 
-func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -524,7 +524,7 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 }
 
-func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
 
@@ -549,7 +549,7 @@ func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, param
 	return blockWithRWSetBytes, nil
 }
 
-func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	var err error
 
 	// check params
@@ -567,7 +567,7 @@ func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, param
 	return []byte(resultBlockHeight), nil
 }
 
-func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	var err error
 	var errMsg string
 	// check params
@@ -592,7 +592,7 @@ func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, param
 	return []byte(resultBlockHeight), nil
 }
 
-func (a *BlockRuntime) GetBlockHeaderByHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (a *BlockRuntime) GetBlockHeaderByHeight(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	var err error
 	var errMsg string
 	// check params
@@ -694,7 +694,7 @@ func (r *BlockRuntime) getTxRWSetsByBlock(store protocol.BlockchainStore, chainI
 	return txRWSets, nil
 }
 
-func (r *BlockRuntime) GetArchiveBlockHeight(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (r *BlockRuntime) GetArchiveBlockHeight(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	blockHeight := strconv.FormatInt(int64(context.GetBlockchainStore().GetArchivedPivot()), 10)
 
 	r.log.Infof("get archive block height success blockHeight[%s] ", blockHeight)
@@ -716,7 +716,7 @@ func (r *BlockRuntime) handleError(value interface{}, err error, chainId string)
 	return nil
 }
 
-func (r *BlockRuntime) validateParams(parameters map[string]string, keyNames ...string) (*BlockRuntimeParam, error) {
+func (r *BlockRuntime) validateParams(parameters map[string][]byte, keyNames ...string) (*BlockRuntimeParam, error) {
 	var (
 		errMsg string
 		err    error
@@ -746,12 +746,12 @@ func (r *BlockRuntime) validateParams(parameters map[string]string, keyNames ...
 	return param, nil
 }
 
-func (r *BlockRuntime) getValue(parameters map[string]string, key string) (string, error) {
+func (r *BlockRuntime) getValue(parameters map[string][]byte, key string) (string, error) {
 	value, ok := parameters[key]
 	if !ok {
 		errMsg := fmt.Sprintf("miss params %s", key)
 		r.log.Error(errMsg)
 		return "", errors.New(errMsg)
 	}
-	return value, nil
+	return string(value), nil
 }

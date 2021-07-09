@@ -35,7 +35,7 @@ func getNodeChainList() error {
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_NODE_CHAIN_LIST", pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_NODE_CHAIN_LIST", pairs)
 	if err != nil {
 		return err
 	}

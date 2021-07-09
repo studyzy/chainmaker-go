@@ -16,12 +16,12 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 
 	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
 	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
@@ -73,7 +73,7 @@ func TestCallFact(t *testing.T) {
 	runtime.GC()
 }
 
-func invokeFact(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
+func invokeFact(method string, id int32, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
 	txId := utils.GetRandTxId()
 	parameters["time"] = "567124123"
@@ -131,7 +131,7 @@ func TestFunctionalContract(t *testing.T) {
 	fmt.Println("  【test】pass")
 }
 
-func invokeFactContract(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
+func invokeFactContract(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string]string)
 	parameters["time"] = "1314520"
 	parameters["file_hash"] = "file_hash"

@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"errors"
 	"math"
 
@@ -213,9 +214,9 @@ func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 }
 
 // Get Block Proposer for current snapshot
-func (s *SnapshotEvidence) GetBlockProposer() []byte {
+func (s *SnapshotEvidence) GetBlockProposer() *accesscontrol.SerializedMember {
 	if s.delegate == nil {
 		return nil
 	}
-	return s.delegate.blockProposer.MemberInfo
+	return s.delegate.blockProposer
 }

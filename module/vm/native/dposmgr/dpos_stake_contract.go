@@ -105,7 +105,7 @@ func ToReverseNodeIDKey(nodeID string) []byte {
 
 // StakeContractAddr - convert stake contract name string to address: base58.Encode(sha256(stake_contract_name))
 func StakeContractAddr() string {
-	stakeAddrHash := sha256.Sum256([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()))
+	stakeAddrHash := sha256.Sum256([]byte(commonPb.SystemContract_DPOS_STAKE.String()))
 	stakeAddr := base58.Encode(stakeAddrHash[:])
 	return stakeAddr
 }
@@ -114,7 +114,7 @@ func newValidator(validatorAddress string) *commonPb.Validator {
 	return &commonPb.Validator{
 		ValidatorAddress:           validatorAddress,
 		Jailed:                     false,
-		Status:                     commonPb.BondStatus_Unbonded,
+		Status:                     commonPb.BondStatus_UNBONDED,
 		Tokens:                     "0",
 		DelegatorShares:            "0",
 		UnbondingEpochID:           math.MaxInt64,
@@ -203,13 +203,13 @@ func NewDPoSStakeRuntime(log *logger.CMLogger) *DPoSStakeRuntime {
 }
 
 // SetNodeID - 系统加入节点绑定自身身份
-func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramNodeID)
 	if err != nil {
 		return nil, err
 	}
-	nodeID := params[paramNodeID]
+	nodeID := string(params[paramNodeID])
 	// get message sender
 	sender, err := loadSenderAddress(context) // Use ERC20 parse method
 	if err != nil {
@@ -222,7 +222,7 @@ func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 	reverseKey := ToReverseNodeIDKey(nodeID)
 	key := ToNodeIDKey(sender)
 	// check reverseKey, check nodeIDKey is unnecessary
-	if val, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), reverseKey); err != nil {
+	if val, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), reverseKey); err != nil {
 		s.log.Errorf("query state from context failed, reason: %s", err)
 		return nil, fmt.Errorf("query state from context failed, reason: %s", err)
 	} else if len(val) > 0 {
@@ -230,11 +230,11 @@ func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 		return nil, fmt.Errorf("the nodeID:[%s] has been set by [%s]", nodeID, val)
 	}
 	// save to context
-	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, []byte(nodeID)); err != nil {
+	if err := context.Put(commonPb.SystemContract_DPOS_STAKE.String(), key, []byte(nodeID)); err != nil {
 		s.log.Errorf("context put key: [%s], value: [&s] error, error: ", key, nodeID, err)
 		return nil, err
 	}
-	if err := context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), reverseKey, []byte(sender)); err != nil {
+	if err := context.Put(commonPb.SystemContract_DPOS_STAKE.String(), reverseKey, []byte(sender)); err != nil {
 		s.log.Errorf("context put key: [%s], value: [&s] error, error: ", reverseKey, sender, err)
 		return nil, err
 	}
@@ -242,18 +242,18 @@ func (s *DPoSStakeRuntime) SetNodeID(context protocol.TxSimContext, params map[s
 }
 
 // GetNodeID - 系统节点自身身份查询
-func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramAddress)
 	if err != nil {
 		return nil, err
 	}
-	address := params[paramAddress]
+	address := string(params[paramAddress])
 	// construct kv pair
 	// key: 		N/{sender}	V: nodeID
 	key := ToNodeIDKey(address)
 	// check reverseKey, check nodeIDKey is unnecessary
-	if val, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key); err != nil {
+	if val, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), key); err != nil {
 		s.log.Errorf("query nodeID from context failed, error: %s", err)
 		return nil, fmt.Errorf("query nodeID from context failed, error: %s", err)
 	} else if len(val) <= 0 {
@@ -266,7 +266,7 @@ func (s *DPoSStakeRuntime) GetNodeID(context protocol.TxSimContext, params map[s
 
 // GetAllValidator() []ValidatorAddress		// 返回所有满足最低抵押条件验证人候选人
 // return ValidatorVector
-func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetAllCandidates(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	collection, err := s.getAllCandidates(context)
 	if err != nil {
 		s.log.Errorf("get validator collection error: %s", err)
@@ -301,7 +301,7 @@ func (s *DPoSStakeRuntime) getAllCandidates(context protocol.TxSimContext) (*com
 			s.log.Errorf("compare min self delegation error, amount: %s", v.SelfDelegation)
 			return nil, fmt.Errorf("convert self delegate string to integer error, amount: %s, err: %s", v.SelfDelegation, err.Error())
 		}
-		if v.Jailed == true || cmp == -1 || v.Status != commonPb.BondStatus_Bonded {
+		if v.Jailed == true || cmp == -1 || v.Status != commonPb.BondStatus_BONDED {
 			continue
 		}
 		collection.Vector = append(collection.Vector, v.ValidatorAddress)
@@ -312,14 +312,14 @@ func (s *DPoSStakeRuntime) getAllCandidates(context protocol.TxSimContext) (*com
 // GetValidatorByAddress() Validator		// 返回所有满足最低抵押条件验证人
 // @params["address"]
 // return Validator
-func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	address := params[paramAddress]
+	address := string(params[paramAddress])
 	// 获取验证人数据
 	bz, err := getValidatorBytes(context, address)
 	if err != nil {
@@ -333,15 +333,15 @@ func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, 
 // @params["to"] 		抵押的目标验证人
 // @params["amount"]	抵押数量，乘上erc20合约 decimal 的结果值，比如用户认知的1USD，系统内是 1 * 10 ^ 18
 // return Delegation
-func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramTo, paramAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	to := params[paramTo]         // delegate target
-	amount := params[paramAmount] // amount must be a integer
+	to := string(params[paramTo])         // delegate target
+	amount := string(params[paramAmount]) // amount must be a integer
 
 	// check amount
 	if !assertStringAmountOverZero(amount) {
@@ -405,10 +405,10 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 			s.log.Errorf("compare min self delegation error: ", err.Error())
 			return nil, err
 		}
-		if v.Status != commonPb.BondStatus_Bonded && cmp >= 0 {
-			updateValidatorStatus(v, commonPb.BondStatus_Bonded)
-		} else if v.Status != commonPb.BondStatus_Bonded && cmp == -1 {
-			updateValidatorStatus(v, commonPb.BondStatus_Unbonding)
+		if v.Status != commonPb.BondStatus_BONDED && cmp >= 0 {
+			updateValidatorStatus(v, commonPb.BondStatus_BONDED)
+		} else if v.Status != commonPb.BondStatus_BONDED && cmp == -1 {
+			updateValidatorStatus(v, commonPb.BondStatus_UNBONDING)
 		}
 	}
 
@@ -418,9 +418,9 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 	// stake 地址
 	stakeAddr := StakeContractAddr()
 	// prepare params
-	transferParams := map[string]string{
-		paramNameTo:    stakeAddr,
-		paramNameValue: amount,
+	transferParams := map[string][]byte{
+		paramNameTo:    []byte(stakeAddr),
+		paramNameValue: []byte(amount),
 	}
 	_, err = erc20RunTime.Transfer(context, transferParams)
 	if err != nil {
@@ -447,14 +447,14 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 // GetDelegationsByAddress() []Delegation		// 返回所有 Delegation
 // @params["address"]
 // return DelegationInfo
-func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	address := params[paramAddress]
+	address := string(params[paramAddress])
 	// 获取验证人数据
 	di, err := getDelegationsByAddress(context, address)
 	if err != nil {
@@ -467,15 +467,15 @@ func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext
 // GetUserDelegationByValidator() Delegation		// 返回所有 Delegation
 // @params["validator_address"]
 // return Delegation
-func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramDelegatorAddress, paramValidatorAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	delegatorAddress := params[paramDelegatorAddress]
-	validatorAddress := params[paramValidatorAddress]
+	delegatorAddress := string(params[paramDelegatorAddress])
+	validatorAddress := string(params[paramValidatorAddress])
 
 	// 获取验证人数据
 	bz, err := getDelegationBytes(context, delegatorAddress, validatorAddress)
@@ -490,15 +490,15 @@ func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimCo
 // @params["from"] 		解质押的验证人
 // @params["amount"] 	解质押数量，1 * 10 ^ 18
 // return UnbondingDelegation
-func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramFrom, paramAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	undelegateValidatorAddress := params[paramFrom]
-	amount := params[paramAmount]
+	undelegateValidatorAddress := string(params[paramFrom])
+	amount := string(params[paramAmount])
 
 	// check amount
 	if !assertStringAmountPositive(amount) {
@@ -585,9 +585,9 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 			}
 
 			if v.SelfDelegation == "0" {
-				updateValidatorStatus(v, commonPb.BondStatus_Unbonded)
+				updateValidatorStatus(v, commonPb.BondStatus_UNBONDED)
 			} else {
-				updateValidatorStatus(v, commonPb.BondStatus_Unbonding)
+				updateValidatorStatus(v, commonPb.BondStatus_UNBONDING)
 			}
 		}
 	}
@@ -633,7 +633,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 }
 
 func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
 	if err != nil {
 		return err
 	}
@@ -653,8 +653,8 @@ func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
 
 // ReadEpochByID() []ValidatorAddress				// 读取当前世代数据
 // return Epoch
-func (s *DPoSStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyCurrentEpoch))
+func (s *DPoSStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyCurrentEpoch))
 	if err != nil {
 		return nil, err
 	}
@@ -664,19 +664,19 @@ func (s *DPoSStakeRuntime) ReadLatestEpoch(context protocol.TxSimContext, params
 // ReadEpochByID() []ValidatorAddress				// 读取指定ID的世代数据
 // @params["epoch_id"] 查询的世代ID
 // return Epoch
-func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramEpochID)
 	if err != nil {
 		return nil, err
 	}
 
-	epochID := params[paramEpochID]
+	epochID := string(params[paramEpochID])
 	if !assertStringAmountPositive(epochID) {
 		s.log.Errorf("epoch_id less than 0")
 		return nil, fmt.Errorf("epoch_id less than 0")
 	}
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToEpochKey(epochID))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToEpochKey(epochID))
 	if err != nil {
 		return nil, err
 	}
@@ -685,9 +685,9 @@ func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params m
 
 // ReadMinSelfDelegation() string				// 读取验证人最少抵押token数量
 // return string
-func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation))
 	if err != nil {
 		return nil, err
 	}
@@ -698,14 +698,14 @@ func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, 
 // UpdateMinSelfDelegation() string
 // @params["min_self_delegation"]
 // return string
-func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramMinSelfDelegation)
 	if err != nil {
 		return nil, err
 	}
 
-	minSelfDelegation := params[paramMinSelfDelegation]
+	minSelfDelegation := string(params[paramMinSelfDelegation])
 	if !assertStringAmountPositive(minSelfDelegation) {
 		s.log.Errorf("minSelfDelegation less than 0")
 		return nil, fmt.Errorf("minSelfDelegation less than 0")
@@ -728,7 +728,7 @@ func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext
 		return []byte(allowSelfDelegation), fmt.Errorf("min self delegation change over range, biggest self delegation is: [%s]", allowSelfDelegation)
 	}
 	// put data
-	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation), []byte(minSelfDelegation))
+	err = context.Put(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation), []byte(minSelfDelegation))
 	if err != nil {
 		s.log.Errorf(err.Error())
 		return nil, err
@@ -738,9 +738,9 @@ func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext
 
 // ReadEpochValidatorNumber() string				// 读取每个世代验证人数量
 // return string
-func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
 	if err != nil {
 		return nil, err
 	}
@@ -752,14 +752,14 @@ func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContex
 // UpdateEpochValidatorNumber() string
 // @params["epoch_validator_number"]
 // return string
-func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramEpochValidatorNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	epochValidatorNumber := params[paramEpochValidatorNumber]
+	epochValidatorNumber := string(params[paramEpochValidatorNumber])
 	if !assertStringAmountPositive(epochValidatorNumber) {
 		s.log.Errorf("epochValidatorNumber less than 0")
 		return nil, fmt.Errorf("epochValidatorNumber less than 0")
@@ -786,7 +786,7 @@ func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimCont
 	// big endian encode
 	bigEndianAmount := encodeUint64ToBigEndian(uint64(amount))
 	// put data
-	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber), bigEndianAmount)
+	err = context.Put(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber), bigEndianAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -795,9 +795,9 @@ func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimCont
 
 // ReadEpochBlockNumber() string				// 读取世代的出块数量
 // return string
-func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber))
 	if err != nil {
 		return nil, err
 	}
@@ -807,7 +807,7 @@ func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, p
 
 // ReadSystemContractAddr() string				// 读取stake系统合约的地址
 // return string
-func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	addr := StakeContractAddr()
 	return []byte(addr), nil
@@ -815,7 +815,7 @@ func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext,
 
 // ReadEpochBlockNumber() string				// 读取世代的出块数量
 // return string
-func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	num, err := getUnbondingEpochNumber(context)
 	if err != nil {
@@ -827,14 +827,14 @@ func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.Tx
 // UpdateEpochBlockNumber() bool				// 更新世代的出块数量
 // @params["epoch_block_number"]
 // return nil
-func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext, params map[string]string) ([]byte, error) {
+func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramEpochBlockNumber)
 	if err != nil {
 		return nil, err
 	}
 
-	epochBlockNumber := params[paramEpochBlockNumber]
+	epochBlockNumber := string(params[paramEpochBlockNumber])
 	if !assertStringAmountOverZero(epochBlockNumber) {
 		s.log.Errorf("epochBlockNumber less than or equal to 0")
 		return nil, fmt.Errorf("epochBlockNumber less than or equal to 0")
@@ -855,13 +855,13 @@ func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext,
 	// big endian encode
 	bigEndianAmount := encodeUint64ToBigEndian(uint64(amount))
 	// put data
-	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber), bigEndianAmount)
+	err = context.Put(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber), bigEndianAmount)
 	return []byte(epochBlockNumber), nil
 }
 
 // 获取或创建 validator
 func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Validator, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -874,7 +874,7 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 		if delegatorAddress == validatorAddress {
 			return v, nil
 		}
-		if v.Status != commonPb.BondStatus_Bonded || v.Jailed == true {
+		if v.Status != commonPb.BondStatus_BONDED || v.Jailed == true {
 			return nil, fmt.Errorf("validator in wrong status, jailed: %v, status: %s", v.Jailed, v.Status)
 		}
 		return v, nil
@@ -885,7 +885,7 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 			return nil, fmt.Errorf("no such validator, validator address: %s", validatorAddress)
 		} else {
 			key := ToNodeIDKey(validatorAddress)
-			if bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key); err != nil || len(bz) == 0 {
+			if bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), key); err != nil || len(bz) == 0 {
 				return nil, fmt.Errorf("not set validator nodeID, you should first set nodeID with validator")
 			}
 			v = newValidator(validatorAddress)
@@ -896,7 +896,7 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 
 // 返回 validator 字节数据
 func getValidatorBytes(context protocol.TxSimContext, validatorAddress string) ([]byte, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +908,7 @@ func getValidatorBytes(context protocol.TxSimContext, validatorAddress string) (
 
 // 返回 validator 对象
 func getValidator(context protocol.TxSimContext, validatorAddress string) (*commonPb.Validator, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1047,7 +1047,7 @@ func calcAmountByShare(tokens string, shares string, share string) (*big.Int, er
 
 // 获取或创建 delegation
 func getOrCreateDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Delegation, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1068,7 +1068,7 @@ func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress str
 	// 获取地址所有抵押数据
 	iterRange := util.BytesPrefix(ToDelegationPrefix(delegatorAddress))
 	// TODO search scope has no memory data
-	iter, err := context.Select(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
+	iter, err := context.Select(commonPb.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1100,7 +1100,7 @@ func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress str
 
 // 返回 delegation 信息
 func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*commonPb.Delegation, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1118,7 +1118,7 @@ func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAdd
 
 // 返回 delegation 字节数据
 func getDelegationBytes(context protocol.TxSimContext, delegatorAddress, validatorAddress string) ([]byte, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1145,7 +1145,7 @@ func updateDelegateShares(delegate *commonPb.Delegation, shares *big.Int) error 
 
 // 获取或创建 unbonding delegation
 func getOrCreateUnbondingDelegation(context protocol.TxSimContext, epochID uint64, delegatorAddress, validatorAddress string) (*commonPb.UnbondingDelegation, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1163,7 +1163,7 @@ func getOrCreateUnbondingDelegation(context protocol.TxSimContext, epochID uint6
 
 // 获取 unbonding delegation
 func getUnbondingDelegation(context protocol.TxSimContext, epochID uint64, delegatorAddress, validatorAddress string) (*commonPb.UnbondingDelegation, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1313,7 +1313,7 @@ func (s *DPoSStakeRuntime) checkNewValidatorNumberOverRange(context protocol.TxS
 func getAllValidatorByPrefix(context protocol.TxSimContext, prefix []byte) ([]*commonPb.Validator, error) {
 	// 获取所有验证人数据
 	iterRange := util.BytesPrefix(prefix)
-	iter, err := context.Select(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
+	iter, err := context.Select(commonPb.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1337,7 +1337,7 @@ func getAllValidatorByPrefix(context protocol.TxSimContext, prefix []byte) ([]*c
 
 // 返回 unstake 完成需要的 epoch 数
 func getUnbondingEpochNumber(context protocol.TxSimContext) (uint64, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyCompletionUnbondingEpochNumber))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyCompletionUnbondingEpochNumber))
 	if err != nil {
 		return 0, err
 	}
@@ -1346,7 +1346,7 @@ func getUnbondingEpochNumber(context protocol.TxSimContext) (uint64, error) {
 
 // 获得最少抵押数量的基础配置
 func getMinSelfDelegation(context protocol.TxSimContext) (*big.Int, error) {
-	bz, err := context.Get(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation))
+	bz, err := context.Get(commonPb.SystemContract_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation))
 	if err != nil {
 		return nil, err
 	}
@@ -1363,7 +1363,7 @@ func save(context protocol.TxSimContext, key []byte, m proto.Message) error {
 	if err != nil {
 		return err
 	}
-	err = context.Put(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key, bz)
+	err = context.Put(commonPb.SystemContract_DPOS_STAKE.String(), key, bz)
 	if err != nil {
 		return err
 	}
@@ -1372,7 +1372,7 @@ func save(context protocol.TxSimContext, key []byte, m proto.Message) error {
 
 // 删除 key
 func del(context protocol.TxSimContext, key []byte) error {
-	err := context.Del(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(), key)
+	err := context.Del(commonPb.SystemContract_DPOS_STAKE.String(), key)
 	if err != nil {
 		return err
 	}
@@ -1390,12 +1390,12 @@ func stringToBigInt(amount string) (*big.Int, error) {
 }
 
 // 检查入参
-func checkParams(params map[string]string, keys ...string) error {
+func checkParams(params map[string][]byte, keys ...string) error {
 	if params == nil {
 		return fmt.Errorf("params is nil")
 	}
 	for _, key := range keys {
-		if params[key] == "" {
+		if _, ok := params[key]; !ok {
 			return fmt.Errorf("params has no such key: [%s]", key)
 		}
 	}

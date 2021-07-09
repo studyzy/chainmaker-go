@@ -32,7 +32,7 @@ func ChainConfigGetChainConfigCMD() *cobra.Command {
 func getChainConfig() error {
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_GET_CHAIN_CONFIG.String(), pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_GET_CHAIN_CONFIG.String(), pairs)
 	if err != nil {
 		return err
 	}

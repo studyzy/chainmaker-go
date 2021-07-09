@@ -334,7 +334,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	var method string
 	var byteCode []byte
 	var parameterPairs []*commonpb.KeyValuePair
-	var parameters map[string]string
+	var parameters map[string][]byte
 	//var endorsements []*commonpb.EndorsementEntry
 	//var sequence uint64
 
@@ -476,8 +476,8 @@ func errResult(result *commonpb.Result, err error) (*commonpb.Result, error) {
 	result.ContractResult.Code = 1
 	return result, err
 }
-func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string]string {
-	parameters := make(map[string]string, 16)
+func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string][]byte {
+	parameters := make(map[string][]byte, 16)
 	for i := 0; i < len(parameterPairs); i++ {
 		key := parameterPairs[i].Key
 		// ignore the following input from the user's invoke parameters
@@ -492,7 +492,7 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) m
 			continue
 		}
 		value := parameterPairs[i].Value
-		parameters[key] = string(value)
+		parameters[key] = value
 	}
 	return parameters
 }
@@ -530,7 +530,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 				Signature: endorsement.Signature,
 			}
 			memberInfoHex := hex.EncodeToString(endorsement.Signer.MemberInfo)
-			if fullMemberInfo, err := txSimContext.Get(commonpb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
+			if fullMemberInfo, err := txSimContext.Get(commonpb.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
 				return fmt.Errorf("failed to get full cert from tx sim context for tx: %s, error: %s", tx.Payload.TxId, err.Error())
 			} else {
 				fullCertEndorsement.Signer.MemberInfo = fullMemberInfo

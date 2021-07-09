@@ -23,17 +23,17 @@ import (
 
 // RuntimeInstance evm runtime
 type RuntimeInstance struct {
-	Method        string               // invoke contract method
-	ChainId       string               // chain id
-	Address       *evmutils.Int        //address
-	ContractId    *commonPb.ContractId // contract info
+	Method        string             // invoke contract method
+	ChainId       string             // chain id
+	Address       *evmutils.Int      //address
+	ContractId    *commonPb.Contract // contract info
 	Log           *logger.CMLogger
 	TxSimContext  protocol.TxSimContext
 	ContractEvent []*commonPb.ContractEvent
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string]string,
 	txSimContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 	txId := txSimContext.GetTx().Payload.TxId
 
@@ -106,7 +106,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 	}
 
 	// contract
-	address, err := evmutils.MakeAddressFromString(contractId.ContractName) // reference vm_factory.go RunContract
+	address, err := evmutils.MakeAddressFromString(contractId.Name) // reference vm_factory.go RunContract
 
 	if err != nil {
 		return r.errorResult(contractResult, err, "make address fail")
@@ -186,7 +186,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	}
 	if len(result.StorageCache.Destructs) > 0 {
 		revokeKey := []byte(protocol.ContractRevoke + r.ContractId.ContractName)
-		if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), revokeKey, []byte(r.ContractId.ContractName)); err != nil {
+		if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(r.ContractId.ContractName)); err != nil {
 			panic(err)
 		}
 		r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
@@ -200,7 +200,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 		}
 		versionKey := []byte(protocol.ContractVersion + r.Address.String())
 		//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.ContractId.ContractVersion)); err != nil {
-		if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey, []byte(r.ContractId.ContractVersion)); err != nil {
+		if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(r.ContractId.ContractVersion)); err != nil {
 			r.Log.Errorf("failed to save ContractVersion %s", err.Error())
 			panic(err)
 		}
@@ -209,7 +209,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 			// save byteCodeBody
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.ContractId.ContractName), []byte(r.ContractId.ContractVersion)...)
 			//if err := r.TxSimContext.Put(r.ContractId.ContractName, versionedByteCodeKey, result.ByteCodeBody); err != nil {
-			if err := r.TxSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
+			if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
 				r.Log.Errorf("failed to save byte code body %s", err.Error())
 				panic(err)
 			}

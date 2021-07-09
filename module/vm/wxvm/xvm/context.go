@@ -10,7 +10,7 @@ type Context struct {
 	ID             int64
 	Parameters     map[string]string
 	TxSimContext   protocol.TxSimContext
-	ContractId     *commonPb.ContractId
+	ContractId     *commonPb.Contract
 	ContractResult *commonPb.ContractResult
 
 	callArgs      []*serialize.EasyCodecItem

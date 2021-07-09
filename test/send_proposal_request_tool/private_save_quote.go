@@ -52,8 +52,8 @@ func saveQuote() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		"SAVE_QUOTE",// common.PrivateComputeContractFunction_SAVE_QUOTE.String(),
+		common.SystemContract_PRIVATE_COMPUTE.String(),
+		"SAVE_QUOTE", // common.PrivateComputeContractFunction_SAVE_QUOTE.String(),
 		pairs,
 		defaultSequence,
 	)

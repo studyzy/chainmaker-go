@@ -41,7 +41,7 @@ func (c *ContextService) Context(id int64) (*Context, bool) {
 	return ctx, ok
 }
 
-func (c *ContextService) MakeContext(contractId *commonPb.ContractId, txSimContext protocol.TxSimContext,
+func (c *ContextService) MakeContext(contractId *commonPb.Contract, txSimContext protocol.TxSimContext,
 	contractResult *commonPb.ContractResult, parameters map[string]string) *Context {
 	c.lock.Lock()
 	defer c.lock.Unlock()

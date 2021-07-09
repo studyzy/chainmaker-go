@@ -27,7 +27,7 @@ var wacsi = wasi.NewWacsi()
 
 type WaciInstance struct {
 	TxSimContext   protocol.TxSimContext
-	ContractId     *commonPb.ContractId
+	ContractId     *commonPb.Contract
 	ContractResult *commonPb.ContractResult
 	Log            *logger.CMLogger
 	Vm             *wasm.VirtualMachine

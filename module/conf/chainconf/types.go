@@ -321,15 +321,15 @@ func initChainConsensusVerifier(chainId string) {
 
 // IsNative whether the contractName is a native
 func IsNative(contractName string) bool {
-	_, ok := common.ContractName_value[contractName]
+	_, ok := common.SystemContract_value[contractName]
 	return ok
 	//switch contractName {
-	//case common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-	//	common.ContractName_SYSTEM_CONTRACT_QUERY.String(),
-	//	common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
-	//	common.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
-	//	common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
-	//	common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
+	//case common.SystemContract_CHAIN_CONFIG.String(),
+	//	common.SystemContract_CHAIN_QUERY.String(),
+	//	common.SystemContract_CERT_MANAGE.String(),
+	//	common.SystemContract_MULTI_SIGN.String(),
+	//	common.SystemContract_GOVERNANCE.String(),
+	//	common.SystemContract_PRIVATE_COMPUTE.String():
 	//	return true
 	//default:
 	//	return false

@@ -45,7 +45,7 @@ func getLastBlock() error {
 		},
 	}
 
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_BLOCK", pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
 	if err != nil {
 		return err
 	}

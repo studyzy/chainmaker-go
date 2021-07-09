@@ -71,7 +71,7 @@ func (cs *chainedbftSMR) initCommittee(validators []*types.Validator) {
 	cs.committee = newCommittee(peers)
 }
 
-//forwardNewHeightIfNeed resets the consensus smr by chainStore, and update state to ConsStateType_NewHeight
+//forwardNewHeightIfNeed resets the consensus smr by chainStore, and update state to ConsStateType_NEW_HEIGHT
 func (cs *chainedbftSMR) forwardNewHeightIfNeed() {
 	lastBlock := cs.chainStore.getCurrentCertifiedBlock()
 	cs.logger.Debugf("forwardNewHeightIfNeed to chainStore state, smr height [%v],"+
@@ -82,7 +82,7 @@ func (cs *chainedbftSMR) forwardNewHeightIfNeed() {
 		return
 	}
 
-	cs.state = chainedbftpb.ConsStateType_NewHeight
+	cs.state = chainedbftpb.ConsStateType_NEW_HEIGHT
 	level, err := utils.GetLevelFromBlock(lastBlock)
 	if err != nil {
 		cs.logger.Errorf("get level from block error: %s, block %v", err, lastBlock)

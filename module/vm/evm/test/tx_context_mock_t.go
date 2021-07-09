@@ -37,16 +37,16 @@ var bytes []byte
 var file []byte
 
 // 初始化上下文和wasm字节码
-func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *TxContextMockTest, []byte) {
+func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxContextMockTest, []byte) {
 	if bytes == nil {
 		bytes, _ = wasm.ReadBytes(ByteCodeFile)
 		fmt.Printf("byteCode file size=%d\n", len(bytes))
 	}
 
-	contractId := commonPb.ContractId{
-		ContractName:    ContractNameTest,
-		ContractVersion: ContractVersionTest,
-		RuntimeType:     runtimeType,
+	contractId := commonPb.Contract{
+		Name:        ContractNameTest,
+		Version:     ContractVersionTest,
+		RuntimeType: runtimeType,
 	}
 	if file == nil {
 		var err error
@@ -72,11 +72,11 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, *T
 
 	versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
-	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.ContractVersion)...)
+	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }
@@ -110,7 +110,7 @@ func (s *TxContextMockTest) Select(name string, startKey []byte, limit []byte) (
 	panic("implement me")
 }
 
-func (s *TxContextMockTest) GetBlockProposer() []byte {
+func (s *TxContextMockTest) GetBlockProposer() *acPb.SerializedMember {
 	panic("implement me")
 }
 
@@ -125,7 +125,7 @@ func (s *TxContextMockTest) GetStateSqlHandle(i int32) (protocol.SqlRows, bool) 
 type callContractResult struct {
 	contractName string
 	method       string
-	param        map[string]string
+	param        map[string][]byte
 	deep         int
 	gasUsed      uint64
 	result       []byte
@@ -177,8 +177,8 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.cacheMap[k] = nil
 	return nil
 }
-func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte,
-	parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *TxContextMockTest) CallContract(contractId *commonPb.Contract, method string, byteCode []byte,
+	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
@@ -203,7 +203,7 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.ContractId, method
 		deep:         s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
-		contractName: contractId.ContractName,
+		contractName: contractId.Name,
 		method:       method,
 		param:        parameter,
 	}
@@ -230,7 +230,7 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 	}
 }
 
-func (*TxContextMockTest) GetBlockHeight() int64 {
+func (*TxContextMockTest) GetBlockHeight() uint64 {
 	return 0
 }
 func (s *TxContextMockTest) GetTxResult() *commonPb.Result {

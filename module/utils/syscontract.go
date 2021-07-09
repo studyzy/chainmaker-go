@@ -16,7 +16,7 @@ const (
 
 func GetContractByName(readObject func(contractName string, key []byte) ([]byte, error), name string) (*commonPb.Contract, error) {
 	key := []byte(PrefixContractInfo + name)
-	value, err := readObject(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), key)
+	value, err := readObject(commonPb.SystemContract_CONTRACT_MANAGE.String(), key)
 	if err != nil {
 		return nil, err
 	}
@@ -29,5 +29,5 @@ func GetContractByName(readObject func(contractName string, key []byte) ([]byte,
 }
 func GetContractBytecode(readObject func(contractName string, key []byte) ([]byte, error), name string) ([]byte, error) {
 	key := []byte(PrefixContractByteCode + name)
-	return readObject(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), key)
+	return readObject(commonPb.SystemContract_CONTRACT_MANAGE.String(), key)
 }

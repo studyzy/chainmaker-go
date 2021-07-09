@@ -66,7 +66,7 @@ func (s IntSlice64) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s IntSlice64) Less(i, j int) bool { return s[i] < s[j] }
 
 func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*consensusPb.GovernanceContract, error) {
-	contractName := commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()
+	contractName := commonPb.SystemContract_GOVERNANCE.String()
 	bz, err := store.ReadObject(contractName, []byte(contractName))
 	if err != nil {
 		log.Errorf("ReadObject.Get err!contractName=%v,err=%v", contractName, err)
@@ -263,7 +263,7 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 
 func getChainConfigFromChainStore(store protocol.BlockchainStore) (*configPb.ChainConfig, error) {
 	log.Debugf("get chainConfig from chainStore")
-	contractName := commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()
+	contractName := commonPb.SystemContract_CHAIN_CONFIG.String()
 	bz, err := store.ReadObject(contractName, []byte(contractName))
 	if err != nil {
 		log.Errorf("store.ReadObject err!contractName=%v,err=%v", contractName, err)
@@ -465,7 +465,7 @@ func getChainConfigFromBlock(block *commonPb.Block, proposalCache protocol.Propo
 
 	//get from rwSetMap,contract data
 	var value []byte
-	getChainConfigContractName := commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()
+	getChainConfigContractName := commonPb.SystemContract_CHAIN_CONFIG.String()
 	for _, rwSet := range rwSetMap {
 		for _, txWriteItem := range rwSet.TxWrites {
 			if txWriteItem.ContractName == getChainConfigContractName && getChainConfigContractName == string(txWriteItem.Key) {
@@ -571,7 +571,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 
 func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceContract, oldBytes []byte) (*commonPb.TxRWSet, error) {
 	txRWSet := &commonPb.TxRWSet{
-		TxId:     commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
+		TxId:     commonPb.SystemContract_GOVERNANCE.String(),
 		TxReads:  make([]*commonPb.TxRead, 0, 0),
 		TxWrites: make([]*commonPb.TxWrite, 0, 1),
 	}
@@ -579,7 +579,7 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	var (
 		err          error
 		pbccPayload  []byte
-		contractName = commonPb.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String()
+		contractName = commonPb.SystemContract_GOVERNANCE.String()
 	)
 	log.Debugf("begin getGovernanceContractTxRWSet ...")
 	// 1. check for changes

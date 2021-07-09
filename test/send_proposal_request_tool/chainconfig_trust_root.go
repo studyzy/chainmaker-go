@@ -92,7 +92,7 @@ func trustRootAdd() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_ADD.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_ADD.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func trustRootUpdate() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_UPDATE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_UPDATE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func trustRootDelete() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_DELETE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_TRUST_ROOT_DELETE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}

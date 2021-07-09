@@ -22,7 +22,7 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string]string,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
 	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().Payload.TxId)

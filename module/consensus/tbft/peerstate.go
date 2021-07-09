@@ -193,7 +193,7 @@ func (pcs *PeerStateService) sendProposalOfRound() {
 	// Send proposal
 	if pcs.tbftImpl.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
-		pcs.Step >= tbftpb.Step_Propose {
+		pcs.Step >= tbftpb.Step_PROPOSE {
 		pcs.sendProposal(pcs.tbftImpl.Proposal)
 	}
 }
@@ -311,7 +311,7 @@ func (pcs *PeerStateService) sendProposalInState(state *ConsensusState) {
 	// Send Proposal
 	if state.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
-		pcs.Step >= tbftpb.Step_Propose {
+		pcs.Step >= tbftpb.Step_PROPOSE {
 		pcs.sendProposal(state.Proposal)
 	}
 }

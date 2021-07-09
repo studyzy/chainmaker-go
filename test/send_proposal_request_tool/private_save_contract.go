@@ -52,8 +52,8 @@ func saveContract() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		"SAVE_CONTRACT",	//common.PrivateComputeContractFunction_SAVE_CONTRACT.String(),
+		common.SystemContract_PRIVATE_COMPUTE.String(),
+		"SAVE_CONTRACT", //common.PrivateComputeContractFunction_SAVE_CONTRACT.String(),
 		pairs,
 		defaultSequence,
 	)

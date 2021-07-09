@@ -234,7 +234,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	}
 
 	contractEvent := &common.ContractEvent{
-		ContractName:    contractId.ContractName,
+		ContractName:    contractId.Name,
 		ContractVersion: contractId.ContractVersion,
 		Topic:           topic,
 		TxId:            txSimContext.GetTx().Payload.TxId,

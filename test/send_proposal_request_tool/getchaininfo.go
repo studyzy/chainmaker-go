@@ -35,7 +35,7 @@ func getChainInfo() error {
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_CHAIN_INFO", pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
 	if err != nil {
 		return err
 	}

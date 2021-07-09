@@ -51,7 +51,7 @@ package gasmtest
 //	//time.Sleep(time.Second * 5) // 73m
 //}
 //
-//func invokeCallContractCallContract(method string, id int32, contractId *commonPb.ContractId, txContext protocol.TxSimContext, byteCode []byte) {
+//func invokeCallContractCallContract(method string, id int32, contractId *commonPb.Contract, txContext protocol.TxSimContext, byteCode []byte) {
 //	parameters := make(map[string]string)
 //	test.BaseParam(parameters)
 //	parameters["contract_name"] = test.ContractNameTest

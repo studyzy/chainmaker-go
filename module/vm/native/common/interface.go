@@ -9,7 +9,7 @@ package common
 
 import "chainmaker.org/chainmaker/protocol"
 
-type ContractFunc func(context protocol.TxSimContext, params map[string]string) ([]byte, error)
+type ContractFunc func(context protocol.TxSimContext, params map[string][]byte) ([]byte, error)
 
 // Contract define native Contract interface
 type Contract interface {

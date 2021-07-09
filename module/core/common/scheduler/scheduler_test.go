@@ -54,7 +54,7 @@ package scheduler
 //		})
 //	}
 //	payload := &commonpb.Payload{
-//		ContractName: contractId.ContractName,
+//		ContractName: contractId.Name,
 //		Method:       "method",
 //		Parameters:   parameters,
 //	}
@@ -163,12 +163,12 @@ package scheduler
 //	txRWSetTable[0] = &commonpb.TxRWSet{
 //		TxId: tx0.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K1"),
 //			Value:        []byte("V"),
 //		}},
 //		TxWrites: []*commonpb.TxWrite{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K2"),
 //			Value:        []byte("V"),
 //		}},
@@ -177,18 +177,18 @@ package scheduler
 //		TxId: tx1.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{
 //			{
-//				ContractName: contractId.ContractName,
+//				ContractName: contractId.Name,
 //				Key:          []byte("K2"),
 //				Value:        []byte("V"),
 //			},
 //			{
-//				ContractName: contractId.ContractName,
+//				ContractName: contractId.Name,
 //				Key:          []byte("K2"),
 //				Value:        []byte("V"),
 //			},
 //		},
 //		TxWrites: []*commonpb.TxWrite{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K3"),
 //			Value:        []byte("V"),
 //		}},

@@ -19,13 +19,13 @@ func ValidateMessageBasicInfo(payload *chainedbft.ConsensusPayload) error {
 	}
 
 	switch payload.Type {
-	case chainedbft.MessageType_ProposalMessage:
+	case chainedbft.MessageType_PROPOSAL_MESSAGE:
 		return validateProposalBasicInfo(payload)
-	case chainedbft.MessageType_VoteMessage:
+	case chainedbft.MessageType_VOTE_MESSAGE:
 		return validateVoteBasicInfo(payload)
-	case chainedbft.MessageType_BlockFetchMessage:
+	case chainedbft.MessageType_BLOCK_FETCH_MESSAGE:
 		return validateBlockFetchBasicInfo(payload)
-	case chainedbft.MessageType_BlockFetchRespMessage:
+	case chainedbft.MessageType_BLOCK_FETCH_RESP_MESSAGE:
 		return validateBlockFetchRespBasicInfo(payload)
 	}
 	return nil
@@ -113,7 +113,7 @@ func validateBlockFetchRespBasicInfo(payload *chainedbft.ConsensusPayload) error
 	if blockFetchResp == nil {
 		return fmt.Errorf("nil block fetch rsp msg")
 	}
-	if blockFetchResp.Status == chainedbft.BlockFetchStatus_Succeeded &&
+	if blockFetchResp.Status == chainedbft.BlockFetchStatus_SUCCEEDED &&
 		blockFetchResp.Blocks == nil {
 		return fmt.Errorf("empty blocks from block fetch rsp msg")
 	}

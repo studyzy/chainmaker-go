@@ -47,7 +47,7 @@ func (cr *consensusRound) checkAnyVotes(round uint64, voteType chainedbft.Messag
 func (cr *consensusRound) insertVote(round uint64, msg *chainedbft.ConsensusMsg, minVotesForQc int) (bool, error) {
 	if _, ok := cr.msgs[round]; !ok {
 		cr.msgs[round] = make(map[chainedbft.MessageType]*votePool)
-		cr.msgs[round][chainedbft.MessageType_VoteMessage] = newVotePool(cr.size)
+		cr.msgs[round][chainedbft.MessageType_VOTE_MESSAGE] = newVotePool(cr.size)
 	}
 	roundMsgs := cr.msgs[round]
 	return roundMsgs[msg.Payload.Type].insertVote(msg, minVotesForQc)
@@ -72,14 +72,14 @@ func (cr *consensusRound) getQCVotes(round uint64) []*chainedbft.VoteData {
 	if _, ok := cr.msgs[round]; !ok {
 		return nil
 	}
-	return cr.msgs[round][chainedbft.MessageType_VoteMessage].getQCVotes()
+	return cr.msgs[round][chainedbft.MessageType_VOTE_MESSAGE].getQCVotes()
 }
 
 //getLastValidRound returns the latest valid round at which enough votes received
 func (cr *consensusRound) getLastValidRound() int64 {
 	lastValidRound := int64(-1)
 	for round := range cr.msgs {
-		_, _, done := cr.checkVoteDone(round, chainedbft.MessageType_VoteMessage)
+		_, _, done := cr.checkVoteDone(round, chainedbft.MessageType_VOTE_MESSAGE)
 		if done && lastValidRound < int64(round) {
 			lastValidRound = int64(round)
 		}

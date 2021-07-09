@@ -2,12 +2,12 @@ package xvm
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/compile"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"golang.org/x/sync/singleflight"
 	"io"
@@ -56,8 +56,8 @@ func (c *CodeManager) lookupMemCache(keyId string) (exec.Code, bool) {
 	}
 }
 
-func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.ContractId) (string, bool) {
-	filePath := chainId + protocol.ContractStoreSeparator + contractId.ContractName
+func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contract) (string, bool) {
+	filePath := chainId + protocol.ContractStoreSeparator + contractId.Name
 	fileName := contractId.ContractVersion + ".so"
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 	if !fileExists(libPath) {
@@ -66,19 +66,19 @@ func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contr
 	return libPath, true
 }
 
-func (c *CodeManager) makeDiskCache(chainId string, contractId *commonPb.ContractId, codebuf []byte) (string, error) {
+func (c *CodeManager) makeDiskCache(chainId string, contractId *commonPb.Contract, codebuf []byte) (string, error) {
 	startTime := time.Now()
-	filePath := chainId + protocol.ContractStoreSeparator + contractId.ContractName
+	filePath := chainId + protocol.ContractStoreSeparator + contractId.Name
 	fileName := contractId.ContractVersion + ".so"
 	basePath := filepath.Join(c.basedir, filePath)
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 
 	os.MkdirAll(basePath, 0755)
 	if err := c.CompileCode(codebuf, libPath); err != nil {
-		c.log.Errorf("failed to compile wxvm code for contract %s", contractId.ContractName, err.Error())
+		c.log.Errorf("failed to compile wxvm code for contract %s", contractId.Name, err.Error())
 		return "", err
 	}
-	c.log.Infof("compile wxvm code for contract %s,  time used %v", contractId.ContractName, time.Since(startTime))
+	c.log.Infof("compile wxvm code for contract %s,  time used %v", contractId.Name, time.Since(startTime))
 	return libPath, nil
 }
 
@@ -96,11 +96,11 @@ func (c *CodeManager) makeMemCache(contractKeyId string, libPath string,
 
 	return execCode, nil
 }
-func (c *CodeManager) GetExecCode(chainId string, contractId *commonPb.ContractId,
+func (c *CodeManager) GetExecCode(chainId string, contractId *commonPb.Contract,
 	byteCode []byte, contextService *ContextService) (exec.Code, error) {
 
 	contractKeyId := chainId + protocol.ContractStoreSeparator +
-		contractId.ContractName + protocol.ContractStoreSeparator +
+		contractId.Name + protocol.ContractStoreSeparator +
 		contractId.ContractVersion
 
 	execCode, ok := c.lookupMemCache(contractKeyId)

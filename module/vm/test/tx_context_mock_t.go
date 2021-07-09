@@ -57,13 +57,13 @@ var bytes []byte
 var file []byte
 
 // 初始化上下文和wasm字节码
-func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, protocol.TxSimContext, []byte) {
+func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, protocol.TxSimContext, []byte) {
 	if bytes == nil {
 		bytes, _ = wasm.ReadBytes(WasmFile)
 		fmt.Printf("Wasm file size=%d\n", len(bytes))
 	}
 
-	contractId := commonPb.ContractId{
+	contractId := commonPb.Contract{
 		ContractName:    ContractNameTest,
 		ContractVersion: ContractVersionTest,
 		RuntimeType:     runtimeType,
@@ -120,9 +120,9 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.ContractId, pr
 	runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.ContractVersion)...)
 
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
-	txContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.ContractVersion))
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, txContext, bytes
 }

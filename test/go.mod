@@ -7,9 +7,9 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210708024946-64e9e52d1a2b
-	chainmaker.org/chainmaker/protocol v0.0.0-20210708025149-8c8e9d0bdd73
+	chainmaker.org/chainmaker/common v0.0.0-20210709115912-8dab6685aa64
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210709093937-9b3b422e24b1
+	chainmaker.org/chainmaker/protocol v0.0.0-20210709122802-b03fd5d6fa21
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3 // indirect

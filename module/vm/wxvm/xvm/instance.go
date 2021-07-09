@@ -1,13 +1,13 @@
 package xvm
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"errors"
 )
 
-func CreateInstance(contextId int64, code exec.Code, method string, contractId *commonPb.ContractId, gasUsed uint64, gasLimit int64) (*wxvmInstance, error) {
+func CreateInstance(contextId int64, code exec.Code, method string, contractId *commonPb.Contract, gasUsed uint64, gasLimit int64) (*wxvmInstance, error) {
 	execCtx, err := code.NewContext(&exec.ContextConfig{
 		GasLimit: gasLimit,
 	})

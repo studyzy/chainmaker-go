@@ -70,7 +70,7 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc.String(), syncInfo.HighestTC.String())
 
 	consensusPayload := &chainedbftpb.ConsensusPayload{
-		Type: chainedbftpb.MessageType_ProposalMessage,
+		Type: chainedbftpb.MessageType_PROPOSAL_MESSAGE,
 		Data: &chainedbftpb.ConsensusPayload_ProposalMsg{proposalMsg},
 	}
 	return consensusPayload
@@ -119,7 +119,7 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 		SyncInfo: syncInfo,
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
-		Type: chainedbftpb.MessageType_VoteMessage,
+		Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 		Data: &chainedbftpb.ConsensusPayload_VoteMsg{vote},
 	}
 	return consensusPayload, nil
@@ -138,7 +138,7 @@ func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(reqID uint64, endBloc
 		LockedBLock: lockedBlock,
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
-		Type: chainedbftpb.MessageType_BlockFetchMessage,
+		Type: chainedbftpb.MessageType_BLOCK_FETCH_MESSAGE,
 		Data: &chainedbftpb.ConsensusPayload_BlockFetchMsg{msg},
 	}
 	return consensusPayload
@@ -154,7 +154,7 @@ func (cbi *ConsensusChainedBftImpl) constructBlockFetchRespMsg(blocks []*chained
 		AuthorIdx: cbi.selfIndexInEpoch,
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
-		Type: chainedbftpb.MessageType_BlockFetchRespMessage,
+		Type: chainedbftpb.MessageType_BLOCK_FETCH_RESP_MESSAGE,
 		Data: &chainedbftpb.ConsensusPayload_BlockFetchRespMsg{msg},
 	}
 	return consensusPayload

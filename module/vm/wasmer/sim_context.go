@@ -11,17 +11,17 @@ import (
 	"strconv"
 	"sync"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
+	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 
 // SimContext record the contract context
 type SimContext struct {
 	TxSimContext   protocol.TxSimContext
-	ContractId     *commonPb.ContractId
+	ContractId     *commonPb.Contract
 	ContractResult *commonPb.ContractResult
 	Log            *logger.CMLogger
 	Instance       *wasm.Instance

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -125,11 +126,11 @@ func runTest() {
 	// 4) 根据TxId查交易
 	testGetTxByTxId(sk3, &client, txId, CHAIN1)
 
-	// 5) 根据区块高度查区块，若height为-1，表示查当前区块
-	hash := testGetBlockByHeight(sk3, &client, CHAIN1, -1)
+	// 5) 根据区块高度查区块，若height为max，表示查当前区块
+	hash := testGetBlockByHeight(sk3, &client, CHAIN1, math.MaxUint64)
 
 	// 6) 根据区块高度查区块（包含读写集），若height为-1，表示查当前区块
-	testGetBlockWithTxRWSetsByHeight(sk3, &client, CHAIN1, -1)
+	testGetBlockWithTxRWSetsByHeight(sk3, &client, CHAIN1, math.MaxUint64)
 
 	// 7) 根据区块哈希查区块
 	testGetBlockByHash(sk3, &client, CHAIN1, hash)
@@ -307,7 +308,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -348,7 +349,7 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -374,7 +375,7 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: []byte(strconv.FormatInt(height, 10)),
+			Value: []byte(strconv.FormatUint(height, 10)),
 		},
 		{
 			Key:   fieldWithRWSet,
@@ -382,7 +383,7 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -409,11 +410,11 @@ func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNo
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: []byte(strconv.FormatInt(height, 10)),
+			Value: []byte(strconv.FormatUint(height, 10)),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -448,7 +449,7 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -477,7 +478,7 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -505,7 +506,7 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -533,7 +534,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_BLOCK", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -556,7 +557,7 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_CHAIN_INFO", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -948,7 +949,7 @@ func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)

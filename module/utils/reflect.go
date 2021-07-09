@@ -16,8 +16,9 @@ import (
 // UpdateField set the key in data by params[key] to struct public field
 // return if the field has been changed
 // such as key->field: block_height -> BlockHeight
-func UpdateField(params map[string]string, key string, config interface{}) (bool, error) {
-	if value, ok := params[key]; ok {
+func UpdateField(params map[string][]byte, key string, config interface{}) (bool, error) {
+	if valueB, ok := params[key]; ok {
+		value := string(valueB)
 		structElem := reflect.ValueOf(config).Elem()
 		fieldName := ToCamelCase(key)
 		field := structElem.FieldByName(fieldName)

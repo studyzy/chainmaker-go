@@ -99,7 +99,7 @@ func (s *SnapshotImpl) GetTxRWSetTable() []*commonPb.TxRWSet {
 		for _, txRead := range txRWSet.TxReads {
 			if strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) ||
 				strings.HasPrefix(string(txRead.Key), protocol.ContractCreator) ||
-				txRead.ContractName == commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String() {
+				txRead.ContractName == commonPb.SystemContract_CERT_MANAGE.String() {
 				txRead.Value = nil
 			}
 		}
@@ -223,8 +223,8 @@ func (s *SnapshotImpl) GetBlockHeight() uint64 {
 }
 
 // Get Block Proposer for current snapshot
-func (s *SnapshotImpl) GetBlockProposer() []byte {
-	return s.blockProposer.MemberInfo
+func (s *SnapshotImpl) GetBlockProposer() *accesscontrol.SerializedMember {
+	return s.blockProposer
 }
 
 // seal the snapshot

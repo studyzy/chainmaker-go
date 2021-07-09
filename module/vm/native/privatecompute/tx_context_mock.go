@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package prvcompute
+package privatecompute
 
 import (
 	"sync"
@@ -69,7 +69,7 @@ func (mock *TxContextMock) Del(name string, key []byte) error {
 func (*TxContextMock) CallContract(contract *commonPb.Contract,
 	method string,
 	byteCode []byte,
-	parameter map[string]string,
+	parameter map[string][]byte,
 	gasUsed uint64,
 	refTxType commonPb.TxType,
 ) (*commonPb.ContractResult, commonPb.TxStatusCode) {
@@ -133,7 +133,7 @@ func (mock *TxContextMock) GetDepth() int {
 	panic("implement me")
 }
 
-func (mock *TxContextMock) GetBlockProposer() []byte {
+func (mock *TxContextMock) GetBlockProposer() *acPb.SerializedMember {
 	panic("implement me")
 }
 

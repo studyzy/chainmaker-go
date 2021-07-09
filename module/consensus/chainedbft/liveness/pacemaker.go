@@ -104,7 +104,7 @@ func (p *Pacemaker) UpdateTC(tc *chainedbftpb.QuorumCert) {
 }
 
 // ProcessCertificates Push status of consensus to the next block height or level, and set
-// a local timeout `ConsStateType_PaceMaker` when a new level is reached.
+// a local timeout `ConsStateType_PACE_MAKER` when a new level is reached.
 // height The height of the received QC
 // hqcLevel The highest QC in local node
 // htcLevel The tc level in incoming msg(proposal or vote),
@@ -158,7 +158,7 @@ func (p *Pacemaker) ProcessCertificates(qc *chainedbftpb.QuorumCert, tc *chained
 func (p *Pacemaker) setupTimeout() {
 	diff, duration := p.getTimeDuration(timeservice.ROUND_TIMEOUT)
 	newLevelEvent := &timeservice.TimerEvent{
-		State:      chainedbftpb.ConsStateType_PaceMaker,
+		State:      chainedbftpb.ConsStateType_PACE_MAKER,
 		Index:      p.selfIndexInEpoch,
 		Level:      p.currentLevel,
 		Height:     p.height,

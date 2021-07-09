@@ -38,12 +38,12 @@ package common
 //	txRWSetMap[tx0.Payload.TxId] = &commonpb.TxRWSet{
 //		TxId: tx0.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K1"),
 //			Value:        []byte("V"),
 //		}},
 //		TxWrites: []*commonpb.TxWrite{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K2"),
 //			Value:        []byte("V"),
 //		}},

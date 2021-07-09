@@ -64,7 +64,7 @@ func main() {
 func startPerf() {
 	test.WasmFile = wasmFilePath
 	test.CertFilePath = certFilePath
-	var contractId *commonPb.ContractId
+	var contractId *commonPb.Contract
 	var txContext protocol.TxSimContext
 	var byteCode []byte
 	var vmTypeInt int
@@ -185,7 +185,7 @@ func startPerf() {
 	}
 }
 
-func invokeContractOfGasm(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext,
+func invokeContractOfGasm(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext,
 	byteCode []byte) (contractResult *commonPb.ContractResult) {
 	parameters := make(map[string]string)
 	test.BaseParam(parameters)
@@ -199,7 +199,7 @@ func invokeContractOfGasm(method string, contractId *commonPb.ContractId, txCont
 	return runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeContractOfWasmer(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext,
+func invokeContractOfWasmer(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext,
 	pool *wasmer.VmPoolManager, byteCode []byte) (contractResult *commonPb.ContractResult) {
 	parameters := make(map[string]string)
 	test.BaseParam(parameters)

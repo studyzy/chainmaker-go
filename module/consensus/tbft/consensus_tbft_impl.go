@@ -420,7 +420,7 @@ func (consensus *ConsensusTBFTImpl) handleProposedBlock(proposedBlock *consensus
 		return
 	}
 
-	if consensus.Step != tbftpb.Step_Propose {
+	if consensus.Step != tbftpb.Step_PROPOSE {
 		consensus.logger.Warnf("[%s](%d/%d/%s) receive proposal from core engine (%d/%x), step error",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 			block.Header.BlockHeight, block.Header.BlockHash,
@@ -476,7 +476,7 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 	}
 
 	if consensus.Height != height ||
-		consensus.Step != tbftpb.Step_Propose ||
+		consensus.Step != tbftpb.Step_PROPOSE ||
 		!bytes.Equal(consensus.VerifingProposal.Block.Header.BlockHash, hash) {
 		consensus.logger.Warnf("[%s](%d/%d/%s) %x receive verify result (%d/%x) error",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
@@ -601,7 +601,7 @@ func (consensus *ConsensusTBFTImpl) procPropose(msg *tbftpb.TBFTMsg) {
 }
 
 func (consensus *ConsensusTBFTImpl) canReceiveProposal(height uint64, round int32) bool {
-	if consensus.Height != height || consensus.Round != round || consensus.Step < tbftpb.Step_Propose {
+	if consensus.Height != height || consensus.Round != round || consensus.Step < tbftpb.Step_PROPOSE {
 		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid proposal: (%d/%d)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 		return false
@@ -631,7 +631,7 @@ func (consensus *ConsensusTBFTImpl) procPrevote(msg *tbftpb.TBFTMsg) {
 
 	if consensus.Height != prevote.Height ||
 		consensus.Round > prevote.Round ||
-		(consensus.Round == prevote.Round && consensus.Step > tbftpb.Step_Prevote) {
+		(consensus.Round == prevote.Round && consensus.Step > tbftpb.Step_PREVOTE) {
 		errMsg := fmt.Sprintf("[%s](%d/%d/%s) receive invalid vote %s(%d/%d/%s)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 			prevote.Voter, prevote.Height, prevote.Round, prevote.Type)
@@ -672,7 +672,7 @@ func (consensus *ConsensusTBFTImpl) procPrecommit(msg *tbftpb.TBFTMsg) {
 
 	if consensus.Height != precommit.Height ||
 		consensus.Round > precommit.Round ||
-		(consensus.Round == precommit.Round && consensus.Step > tbftpb.Step_Precommit) {
+		(consensus.Round == precommit.Round && consensus.Step > tbftpb.Step_PRECOMMIT) {
 		consensus.logger.Debugf("[%s](%d/%d/%s) receive invalid precommit %s(%d/%d)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 			precommit.Voter, precommit.Height, precommit.Round,
@@ -719,7 +719,7 @@ func (consensus *ConsensusTBFTImpl) handleTimeout(ti timeoutInfo, replayMode boo
 		consensus.saveWalEntry(ti)
 	}
 	switch ti.Step {
-	case tbftpb.Step_Prevote:
+	case tbftpb.Step_PREVOTE:
 		consensus.enterPrevote(ti.Height, ti.Round)
 	}
 }
@@ -790,9 +790,9 @@ func (consensus *ConsensusTBFTImpl) addVote(vote *Vote, replayMode bool) error {
 	}
 
 	switch vote.Type {
-	case tbftpb.VoteType_VotePrevote:
+	case tbftpb.VoteType_VOTE_PREVOTE:
 		consensus.addPrevoteVote(vote)
-	case tbftpb.VoteType_VotePrecommit:
+	case tbftpb.VoteType_VOTE_PRECOMMIT:
 		consensus.addPrecommitVote(vote)
 	}
 
@@ -804,7 +804,7 @@ func (consensus *ConsensusTBFTImpl) addVote(vote *Vote, replayMode bool) error {
 }
 
 func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
-	if consensus.Step != tbftpb.Step_Prevote {
+	if consensus.Step != tbftpb.Step_PREVOTE {
 		consensus.logger.Infof("[%s](%d/%d/%s) addVote prevote %v at inappropriate step",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 		return
@@ -840,7 +840,7 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 }
 
 func (consensus *ConsensusTBFTImpl) addPrecommitVote(vote *Vote) {
-	if consensus.Step != tbftpb.Step_Precommit {
+	if consensus.Step != tbftpb.Step_PRECOMMIT {
 		consensus.logger.Infof("[%s](%d/%d/%s) addVote precommit %v at inappropriate step",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, vote)
 		return
@@ -917,7 +917,7 @@ func (consensus *ConsensusTBFTImpl) enterNewHeight(height uint64, replayMode boo
 	consensus.ConsensusState = NewConsensusState(consensus.logger, consensus.Id)
 	consensus.Height = height
 	consensus.Round = 0
-	consensus.Step = tbftpb.Step_NewHeight
+	consensus.Step = tbftpb.Step_NEW_HEIGHT
 	consensus.heightRoundVoteSet = newHeightRoundVoteSet(
 		consensus.logger, consensus.Height, consensus.Round, consensus.validatorSet)
 	consensus.metrics = NewHeightMetrics(consensus.Height)
@@ -930,7 +930,7 @@ func (consensus *ConsensusTBFTImpl) enterNewRound(height uint64, round int32) {
 	consensus.logger.Debugf("[%s] attempt enterNewRound to (%d/%d)", consensus.Id, height, round)
 	if consensus.Height > height ||
 		consensus.Round > round ||
-		(consensus.Round == round && consensus.Step != tbftpb.Step_NewHeight) {
+		(consensus.Round == round && consensus.Step != tbftpb.Step_NEW_HEIGHT) {
 		consensus.logger.Infof("[%s](%v/%v/%v) enter new round invalid(%v/%v)",
 
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
@@ -938,7 +938,7 @@ func (consensus *ConsensusTBFTImpl) enterNewRound(height uint64, round int32) {
 	}
 	consensus.Height = height
 	consensus.Round = round
-	consensus.Step = tbftpb.Step_NewRound
+	consensus.Step = tbftpb.Step_NEW_ROUND
 	consensus.Proposal = nil
 	consensus.VerifingProposal = nil
 	consensus.metrics.SetEnterNewRoundTime(consensus.Round)
@@ -949,16 +949,16 @@ func (consensus *ConsensusTBFTImpl) enterPropose(height uint64, round int32) {
 	consensus.logger.Debugf("[%s] attempt enterPropose to (%d/%d)", consensus.Id, height, round)
 	if consensus.Height != height ||
 		consensus.Round > round ||
-		(consensus.Round == round && consensus.Step != tbftpb.Step_NewRound) {
+		(consensus.Round == round && consensus.Step != tbftpb.Step_NEW_ROUND) {
 		consensus.logger.Infof("[%s](%v/%v/%v) enter invalid propose(%v/%v)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 		return
 	}
 
 	// Step into Propose
-	consensus.Step = tbftpb.Step_Propose
+	consensus.Step = tbftpb.Step_PROPOSE
 	consensus.metrics.SetEnterProposalTime(consensus.Round)
-	consensus.AddTimeout(consensus.ProposeTimeout(round), height, round, tbftpb.Step_Prevote)
+	consensus.AddTimeout(consensus.ProposeTimeout(round), height, round, tbftpb.Step_PREVOTE)
 
 	//Simulate a node which delay when Propose
 	if localconf.ChainMakerConfig.DebugConfig.IsProposeDelay {
@@ -987,7 +987,7 @@ func (consensus *ConsensusTBFTImpl) enterPropose(height uint64, round int32) {
 func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 	if consensus.Height != height ||
 		consensus.Round > round ||
-		(consensus.Round == round && consensus.Step != tbftpb.Step_Propose) {
+		(consensus.Round == round && consensus.Step != tbftpb.Step_PROPOSE) {
 		consensus.logger.Infof("[%s](%v/%v/%v) enter invalid prevote(%v/%v)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 		return
@@ -997,7 +997,7 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 
 	// Enter StepPrevote
-	consensus.Step = tbftpb.Step_Prevote
+	consensus.Step = tbftpb.Step_PREVOTE
 	consensus.metrics.SetEnterPrevoteTime(consensus.Round)
 
 	// Disable propose
@@ -1029,12 +1029,12 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 	if !consensus.validatorSet.hasValidator(consensus.Id) {
 		return
 	}
-	prevote := NewVote(tbftpb.VoteType_VotePrevote, consensus.Id, consensus.Height, consensus.Round, hash)
+	prevote := NewVote(tbftpb.VoteType_VOTE_PREVOTE, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight {
 		consensus.logger.Infof("[%s](%v/%v/%v) switch IsPrevoteOldHeight: %v, prevote old height: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 			localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight, consensus.Height-1)
-		prevote = NewVote(tbftpb.VoteType_VotePrevote, consensus.Id, consensus.Height-1, consensus.Round, hash)
+		prevote = NewVote(tbftpb.VoteType_VOTE_PREVOTE, consensus.Id, consensus.Height-1, consensus.Round, hash)
 	}
 	consensus.signVote(prevote)
 	prevoteProto := createPrevoteMsg(prevote)
@@ -1046,7 +1046,7 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 	if consensus.Height != height ||
 		consensus.Round > round ||
-		(consensus.Round == round && consensus.Step != tbftpb.Step_Prevote) {
+		(consensus.Round == round && consensus.Step != tbftpb.Step_PREVOTE) {
 		consensus.logger.Infof("[%s](%v/%v/%v) enter precommit invalid(%v/%v)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 		return
@@ -1056,7 +1056,7 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 
 	// Enter StepPrecommit
-	consensus.Step = tbftpb.Step_Precommit
+	consensus.Step = tbftpb.Step_PRECOMMIT
 	consensus.metrics.SetEnterPrecommitTime(consensus.Round)
 
 	voteSet := consensus.heightRoundVoteSet.prevotes(consensus.Round)
@@ -1083,12 +1083,12 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 	if !consensus.validatorSet.hasValidator(consensus.Id) {
 		return
 	}
-	precommit := NewVote(tbftpb.VoteType_VotePrecommit, consensus.Id, consensus.Height, consensus.Round, hash)
+	precommit := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight {
 		consensus.logger.Infof("[%s](%d/%d/%v) switch IsPrecommitOldHeight: %v, precommit old height: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
 			localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight, consensus.Height-1)
-		precommit = NewVote(tbftpb.VoteType_VotePrecommit, consensus.Id, consensus.Height-1, consensus.Round, hash)
+		precommit = NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, consensus.Id, consensus.Height-1, consensus.Round, hash)
 	}
 	consensus.signVote(precommit)
 	precommitProto := createPrecommitMsg(precommit)
@@ -1108,7 +1108,7 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 func (consensus *ConsensusTBFTImpl) enterCommit(height uint64, round int32) {
 	if consensus.Height != height ||
 		consensus.Round > round ||
-		(consensus.Round == round && consensus.Step != tbftpb.Step_Precommit) {
+		(consensus.Round == round && consensus.Step != tbftpb.Step_PRECOMMIT) {
 		consensus.logger.Infof("[%s](%d/%d/%s) enterCommit invalid(%v/%v)",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 		return
@@ -1118,7 +1118,7 @@ func (consensus *ConsensusTBFTImpl) enterCommit(height uint64, round int32) {
 		consensus.Id, consensus.Height, consensus.Round, consensus.Step, height, round)
 
 	// Enter StepCommit
-	consensus.Step = tbftpb.Step_Commit
+	consensus.Step = tbftpb.Step_COMMIT
 	consensus.metrics.SetEnterCommitTime(consensus.Round)
 	consensus.logger.Infof("[%s] consensus cost: %s", consensus.Id, consensus.metrics.roundString(consensus.Round))
 
@@ -1130,7 +1130,7 @@ func (consensus *ConsensusTBFTImpl) enterCommit(height uint64, round int32) {
 	}
 
 	if isNilHash(hash) {
-		// consensus.AddTimeout(consensus.CommitTimeout(round), consensus.Height, round+1, tbftpb.Step_NewRound)
+		// consensus.AddTimeout(consensus.CommitTimeout(round), consensus.Height, round+1, tbftpb.Step_NEW_ROUND)
 		consensus.enterNewRound(consensus.Height, round+1)
 	} else {
 		// Proposal block hash must be match with precommited block hash
@@ -1395,13 +1395,13 @@ func (consensus *ConsensusTBFTImpl) saveWalEntry(entry interface{}) {
 	var data []byte
 	switch m := entry.(type) {
 	case *Proposal:
-		walType = tbftpb.WalEntryType_ProposalEntry
+		walType = tbftpb.WalEntryType_PROPOSAL_ENTRY
 		data = mustMarshal(m.ToProto())
 	case *Vote:
-		walType = tbftpb.WalEntryType_VoteEntry
+		walType = tbftpb.WalEntryType_VOTE_ENTRY
 		data = mustMarshal(m.ToProto())
 	case timeoutInfo:
-		walType = tbftpb.WalEntryType_TimeoutEntry
+		walType = tbftpb.WalEntryType_TIMEOUT_ENTRY
 		data = mustMarshal(m.ToProto())
 		consensus.logger.Debugf("[%s](%d/%d/%s) save wal timeout data length: %v, timeout: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, len(data), m)
@@ -1475,12 +1475,12 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 		for i := entry.HeightFirstIndex; i <= lastIndex; i++ {
 			consensus.logger.Debugf("[%d] replay entry type: %s, Data.len: %d", consensus.Id, entry.Type, len(entry.Data))
 			switch entry.Type {
-			case tbftpb.WalEntryType_TimeoutEntry:
+			case tbftpb.WalEntryType_TIMEOUT_ENTRY:
 				timeoutInfoProto := new(tbftpb.TimeoutInfo)
 				mustUnmarshal(entry.Data, timeoutInfoProto)
 				timeoutInfo := newTimeoutInfoFromProto(timeoutInfoProto)
 				consensus.handleTimeout(timeoutInfo, true)
-			case tbftpb.WalEntryType_ProposalEntry:
+			case tbftpb.WalEntryType_PROPOSAL_ENTRY:
 				proposalProto := new(tbftpb.Proposal)
 				mustUnmarshal(entry.Data, proposalProto)
 				proposal := NewProposalFromProto(proposalProto)
@@ -1490,7 +1490,7 @@ func (consensus *ConsensusTBFTImpl) replayWal() error {
 					Code:          consensuspb.VerifyResult_SUCCESS,
 				}
 				consensus.handleVerifyResult(verifyResult, true)
-			case tbftpb.WalEntryType_VoteEntry:
+			case tbftpb.WalEntryType_VOTE_ENTRY:
 				voteProto := new(tbftpb.Vote)
 				mustUnmarshal(entry.Data, voteProto)
 				vote := NewVoteFromProto(voteProto)

@@ -56,7 +56,7 @@ func TestDPoSImpl_addBalanceRwSet(t *testing.T) {
 	// 3. testAddr have balance in the blockChain and block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: common.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
 	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestDPoSImpl_SubBalanceRwSet(t *testing.T) {
 	// 3. sub 1000 from block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: common.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
 	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
@@ -257,7 +257,7 @@ func generateBlockWithStakeConfig() (*common.Block, []*common.TxRWSet) {
 	rwSet = append(rwSet, &common.TxRWSet{
 		TxWrites: []*common.TxWrite{
 			{
-				ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+				ContractName: common.SystemContract_DPOS_STAKE.String(),
 				Key:          []byte(dposmgr.KeyMinSelfDelegation), Value: []byte(testSelfMinDelegation),
 			},
 		},
@@ -283,7 +283,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 		validator := &common.Validator{
 			ValidatorAddress: valAddr,
 			Jailed:           false,
-			Status:           common.BondStatus_Bonded,
+			Status:           common.BondStatus_BONDED,
 			SelfDelegation:   testSelfMinDelegation,
 		}
 		bz, err := proto.Marshal(validator)
@@ -291,7 +291,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
 				{
-					ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+					ContractName: common.SystemContract_DPOS_STAKE.String(),
 					Key:          dposmgr.ToValidatorKey(valAddr), Value: bz,
 				},
 			},
@@ -329,7 +329,7 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
 				{
-					ContractName: common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+					ContractName: common.SystemContract_DPOS_STAKE.String(),
 					Key:          dposmgr.ToUnbondingDelegationKey(completeEpoch, delAddr, valAddr), Value: bz,
 				},
 			},
