@@ -10,8 +10,8 @@ package contractmgr
 import (
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"regexp"
 
 	"chainmaker.org/chainmaker/pb-go/consts"
 
@@ -25,10 +25,7 @@ import (
 
 var (
 	ContractName             = commonPb.SystemContract_CONTRACT_MANAGE.String()
-	errContractExist         = errors.New("contract exist")
-	errContractNotExist      = errors.New("contract not exist")
-	errContractVersionExist  = errors.New("contract version exist")
-	errContractStatusInvalid = errors.New("contract status invalid")
+
 )
 
 type ContractManager struct {
@@ -172,6 +169,12 @@ func (r *ContractManagerRuntime) GetAllContracts(context protocol.TxSimContext) 
 //安装新合约
 func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, name, version string, byteCode []byte,
 	runTime commonPb.RuntimeType, initParameters map[string][]byte) (*commonPb.Contract, error) {
+	if !checkContractName(name) {
+		return nil, errInvalidContractName
+	}
+	if runTime == commonPb.RuntimeType_EVM && !checkEvmAddress(name) {
+		return nil, errInvalidEvmContractName
+	}
 	key := utils.GetContractDbKey(name)
 	//check name exist
 	existContract, _ := context.Get(ContractName, key)
@@ -254,4 +257,12 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		return nil, err
 	}
 	return contract, nil
+}
+func checkContractName(name string) bool {
+	reg := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
+	return reg.Match([]byte(name))
+}
+func checkEvmAddress(addr string) bool {
+	reg := regexp.MustCompile("^(0x)?[0-9a-fA-F]{40}$")
+	return reg.Match([]byte(addr))
 }

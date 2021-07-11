@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sort"
@@ -14,7 +15,6 @@ import (
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 )
 
 // Storage interface for smart contracts
@@ -95,15 +95,12 @@ func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
-	if creatorByte, err := s.Get(commonpb.SystemContract_CONTRACT_MANAGE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
+	contract, err := utils.GetContractByName(s.Get, contractName)
+	if err != nil {
+		//TODO log
 		return nil
-	} else {
-		creator := &acpb.SerializedMember{}
-		if err = proto.Unmarshal(creatorByte, creator); err != nil {
-			return nil
-		}
-		return creator
 	}
+	return contract.Creator
 }
 
 func (s *txSimContextImpl) GetSender() *acpb.SerializedMember {

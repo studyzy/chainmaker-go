@@ -5,9 +5,9 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210709115912-8dab6685aa64
+	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210709093937-9b3b422e24b1
-	chainmaker.org/chainmaker/protocol v0.0.0-20210709122802-b03fd5d6fa21
+	chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc
 	github.com/Workiva/go-datastructures v1.0.52
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
