@@ -47,7 +47,7 @@ func (f *Factory) NewVmManager(wxvmCodePathPrefix string, accessControl protocol
 	wxvmCodeManager := xvm.NewCodeManager(chainId, wxvmCodeDir)
 	wxvmContextService := xvm.NewContextService(chainId)
 
-	return &ManagerImpl{
+	return &VmManagerImpl{
 		ChainId:                chainId,
 		WasmerVmPoolManager:    wasmerVmPoolManager,
 		WxvmCodeManager:        wxvmCodeManager,
@@ -66,7 +66,7 @@ type RuntimeInstance interface {
 		txContext protocol.TxSimContext, gasUsed uint64) *commonPb.ContractResult
 }
 
-type ManagerImpl struct {
+type VmManagerImpl struct {
 	WasmerVmPoolManager    *wasmer.VmPoolManager
 	WxvmCodeManager        *xvm.CodeManager
 	WxvmContextService     *xvm.ContextService
@@ -78,15 +78,15 @@ type ManagerImpl struct {
 	ChainConf              protocol.ChainConf // chain config
 }
 
-func (m *ManagerImpl) GetAccessControl() protocol.AccessControlProvider {
+func (m *VmManagerImpl) GetAccessControl() protocol.AccessControlProvider {
 	return m.AccessControl
 }
 
-func (m *ManagerImpl) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvider {
+func (m *VmManagerImpl) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvider {
 	return m.ChainNodesInfoProvider
 }
 
-func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
@@ -135,21 +135,20 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 }
 
 // runNativeContract invoke native contract
-func (m *ManagerImpl) runNativeContract(contract *commonPb.Contract, method string, parameters map[string][]byte,
+func (m *VmManagerImpl) runNativeContract(contract *commonPb.Contract, method string, parameters map[string][]byte,
 	txContext protocol.TxSimContext) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	runtimeInstance := native.GetRuntimeInstance(m.ChainId)
 	runtimeContractResult := runtimeInstance.Invoke(contract, method, nil, parameters, txContext)
 
-	if runtimeContractResult.Code == 0 {
+	if runtimeContractResult.Code == uint32(protocol.ContractResultCode_OK) {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
-	} else {
-		return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
+	return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 }
 
 // runUserContract invoke user contract
-func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
 
 	var (
@@ -158,7 +157,7 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 		status       = contract.Status
 	)
 	contractResult = &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
-	if status == commonPb.ContractStatus_ALL { // 只传入的ContractName，其他属性需要从DB获取
+	if status == commonPb.ContractStatus_ALL {
 		dbContract, err := utils.GetContractByName(txContext.Get, contractName)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
@@ -274,7 +273,7 @@ func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code c
 	return contractResult, code, nil, version, 0
 }
 
-func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string][]byte,
+func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string][]byte,
 	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	contractResult := &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
 	txId := txContext.GetTx().Payload.TxId
@@ -410,7 +409,7 @@ func getFullCertMember(sender *acPb.SerializedMember, txContext protocol.TxSimCo
 	return sender, commonPb.TxStatusCode_SUCCESS
 }
 
-func (m *ManagerImpl) isUserContract(refTxType commonPb.TxType) bool {
+func (m *VmManagerImpl) isUserContract(refTxType commonPb.TxType) bool {
 	switch refTxType {
 	case
 		commonPb.TxType_INVOKE_CONTRACT,

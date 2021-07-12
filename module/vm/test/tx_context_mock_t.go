@@ -96,7 +96,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	txContext := &TxContextMockTest{
 		lock:  &sync.Mutex{},
 		lock2: &sync.Mutex{},
-		vmManager: &vm.ManagerImpl{
+		vmManager: &vm.VmManagerImpl{
 			WasmerVmPoolManager:    GetVmPoolManager(),
 			WxvmCodeManager:        wxvmCodeManager,
 			WxvmContextService:     wxvmContextService,
