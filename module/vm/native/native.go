@@ -75,7 +75,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	txContext protocol.TxSimContext) *commonPb.ContractResult {
 
 	result := &commonPb.ContractResult{
-		Code:    1,
+		Code:    uint32(protocol.ContractResultCode_FAIL),
 		Message: "contract internal error",
 		Result:  nil,
 	}
