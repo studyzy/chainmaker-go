@@ -8,13 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 )
 
 // Storage interface for smart contracts, implement TxSimContext
@@ -97,15 +97,21 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {
-	if creatorByte, err := s.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
+	contract, err := utils.GetContractByName(s.Get, contractName)
+	if err != nil {
+		//TODO log error
 		return nil
-	} else {
-		creator := &acPb.SerializedMember{}
-		if err = proto.Unmarshal(creatorByte, creator); err != nil {
-			return nil
-		}
-		return creator
 	}
+	return contract.Creator
+	//if creatorByte, err := s.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
+	//	return nil
+	//} else {
+	//	creator := &acPb.SerializedMember{}
+	//	if err = proto.Unmarshal(creatorByte, creator); err != nil {
+	//		return nil
+	//	}
+	//	return creator
+	//}
 }
 
 func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
@@ -245,6 +251,13 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
+	}
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
 	}
 	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 

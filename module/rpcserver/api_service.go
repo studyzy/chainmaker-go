@@ -208,9 +208,18 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		blockchainStore:  store,
 		vmManager:        vmMgr,
 	}
-
-	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: payload.ContractName}, payload.Method,
-		nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Payload.TxType)
+	contract, err := store.GetContractByName(payload.ContractName)
+	if err != nil {
+		resp.Message = err.Error()
+		return resp
+	}
+	bytecode, err := store.GetContractBytecode(payload.ContractName)
+	if err != nil {
+		resp.Message = err.Error()
+		return resp
+	}
+	txResult, txStatusCode := vmMgr.RunContract(contract, payload.Method,
+		bytecode, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Payload.TxType)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
