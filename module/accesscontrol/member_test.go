@@ -159,9 +159,6 @@ func TestMemberSerialize(t *testing.T) {
 	member, err := acInst.NewMemberFromCertPem(org2Name, orgList[org2Name].consensusNode.certificate)
 	require.Nil(t, err)
 	require.NotNil(t, member)
-	serializedMember, err := member.Serialize(true)
-	require.Nil(t, err)
-	require.NotNil(t, serializedMember)
 }
 
 func TestMemberGetSerializedMember(t *testing.T) {
@@ -184,7 +181,7 @@ func TestMemberGetSerializedMember(t *testing.T) {
 	member, err := acInst.NewMemberFromCertPem(org2Name, orgList[org2Name].consensusNode.certificate)
 	require.Nil(t, err)
 	require.NotNil(t, member)
-	serializedMember, err := member.GetSerializedMember(true)
+	serializedMember, err := member.GetSerializedMember()
 	require.Nil(t, err)
 	require.NotNil(t, serializedMember)
 }

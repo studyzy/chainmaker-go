@@ -23,7 +23,6 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"io/ioutil"
 	"strings"
 	"sync"
@@ -44,8 +43,6 @@ const (
 	MemberMode   AuthMode = "white list" // white list mode
 	IdentityMode AuthMode = "identity"   // attribute-authorization mode
 
-	IdentityTypeCert      IdentityType = "certificate"
-	IdentityTypePublicKey IdentityType = "public key"
 )
 
 var _ protocol.AccessControlProvider = (*accessControl)(nil)
@@ -58,7 +55,7 @@ type accessControl struct {
 	// hash algorithm configured for this chain
 	hashType string
 	// authentication type: x509 certificate or plain public key
-	identityType IdentityType
+	identityType pbac.MemberType
 
 	// data store for chain data
 	dataStore protocol.BlockchainStore
@@ -102,7 +99,6 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
 		hashType:              chainConfig.GetCrypto().GetHash(),
-		identityType:          "",
 		dataStore:             store,
 		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
 		certCache:             concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
@@ -294,22 +290,17 @@ func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
 }
 
 // DeserializeMember converts bytes to Member
-func (ac *accessControl) DeserializeMember(serializedMember []byte) (protocol.Member, error) {
-	memberPb := &pbac.SerializedMember{}
-	err := proto.Unmarshal(serializedMember, memberPb)
-	if err != nil {
-		return nil, err
-	}
+func (ac *accessControl) DeserializeMember(serializedMember *pbac.SerializedMember) (protocol.Member, error) {
 
-	if memberPb.MemberType!=pbac.MemberType_CERT {
-		memInfoBytes, ok := ac.lookUpCertCache(string(memberPb.MemberInfo))
+	if serializedMember.MemberType != pbac.MemberType_CERT {
+		memInfoBytes, ok := ac.lookUpCertCache(string(serializedMember.MemberInfo))
 		if !ok {
 			return nil, fmt.Errorf("deserialize Member failed, unrecognized compressed certificate")
 		}
-		memberPb.MemberInfo = memInfoBytes
-		memberPb.MemberType = pbac.MemberType_CERT
+		serializedMember.MemberInfo = memInfoBytes
+		serializedMember.MemberType = pbac.MemberType_CERT
 	}
-	return ac.NewMemberFromCertPem(memberPb.OrgId, string(memberPb.MemberInfo))
+	return ac.NewMemberFromCertPem(serializedMember.OrgId, string(serializedMember.MemberInfo))
 }
 
 // GetLocalOrgId returns local organization id
@@ -352,7 +343,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 		newMember.id = certPEM
 		newMember.cert = certificate
 		newMember.pk = pk
-		newMember.identityType = IdentityTypePublicKey
+		newMember.identityType = pbac.MemberType_PUBLIC_KEY
 		return &newMember, nil
 	}
 
@@ -384,7 +375,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 		newMember.role = append(newMember.role, protocol.Role(ou))
 
-		newMember.identityType = IdentityTypeCert
+		newMember.identityType = pbac.MemberType_CERT
 		return &newMember, nil
 	}
 
@@ -393,7 +384,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 // NewMemberFromProto creates a member from SerializedMember
 func (ac *accessControl) NewMemberFromProto(serializedMember *pbac.SerializedMember) (protocol.Member, error) {
-	if serializedMember.MemberType==pbac.MemberType_CERT {
+	if serializedMember.MemberType == pbac.MemberType_CERT {
 		return ac.NewMemberFromCertPem(serializedMember.OrgId, string(serializedMember.MemberInfo))
 	} else {
 		certPEM, ok := ac.lookUpCertCache(string(serializedMember.MemberInfo))

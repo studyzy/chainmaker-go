@@ -165,7 +165,7 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 			return nil, fmt.Errorf("multiple public key for member %s", root.OrgId)
 		}
 		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
-		ac.identityType = IdentityTypePublicKey
+		ac.identityType = pbac.MemberType_PUBLIC_KEY
 	}
 
 	var certificates, certificateChain []*bcx509.Certificate
@@ -182,7 +182,7 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 		if len(cert.Signature) == 0 {
 			return nil, fmt.Errorf("invalid certificate [SN: %s]", cert.SerialNumber)
 		}
-		ac.identityType = IdentityTypeCert
+		ac.identityType = pbac.MemberType_CERT
 		certificates = append(certificates, cert)
 
 		pemBlock, rest = pem.Decode(rest)
@@ -248,7 +248,7 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
-	if ac.identityType == IdentityTypePublicKey {
+	if ac.identityType == pbac.MemberType_PUBLIC_KEY {
 		pk, errPubKey := asym.PublicKeyFromPEM([]byte(root.Root))
 		if errPubKey != nil {
 			return nil, fmt.Errorf("update configuration failed, invalid public key for organization %s", root.OrgId)
@@ -259,7 +259,7 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *confi
 
 		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
 	}
-	if ac.identityType == IdentityTypeCert {
+	if ac.identityType == pbac.MemberType_CERT {
 		pemBlock, rest := pem.Decode([]byte(root.Root))
 		for pemBlock != nil {
 			cert, errCert := bcx509.ParseCertificate(pemBlock.Bytes)
@@ -526,7 +526,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 		ouList, err := ac.getSignerRoleList(entry.Signer.MemberInfo)
 		if err != nil {
 			var info string
-			if entry.Signer.MemberType==pbac.MemberType_CERT {
+			if entry.Signer.MemberType == pbac.MemberType_CERT {
 				info = string(entry.Signer.MemberInfo)
 			} else {
 				info = hex.EncodeToString(entry.Signer.MemberInfo)
@@ -575,7 +575,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 }
 
 func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.SerializedMember) string {
-	if signer.MemberType==pbac.MemberType_CERT {
+	if signer.MemberType == pbac.MemberType_CERT {
 		return string(signer.MemberInfo)
 	} else {
 		return hex.EncodeToString(signer.MemberInfo)
@@ -1065,7 +1065,7 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	if err != nil {
 		return nil, err
 	}
-	if ac.authMode == MemberMode || ac.identityType == IdentityTypePublicKey { // white list mode or public key mode
+	if ac.authMode == MemberMode || ac.identityType == pbac.MemberType_PUBLIC_KEY { // white list mode or public key mode
 		return []*bcx509.Certificate{cert}, nil
 	}
 
@@ -1153,7 +1153,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.MemberType==pbac.MemberType_CERT {
+		if endorsement.Signer.MemberType == pbac.MemberType_CERT {
 			ac.log.Debugf("target endorser uses full certificate")
 			memInfo = string(endorsement.Signer.MemberInfo)
 		} else {
@@ -1164,7 +1164,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 				continue
 			}
 			memInfo = string(memInfoBytes)
-			endorsement.Signer.MemberType=pbac.MemberType_CERT
+			endorsement.Signer.MemberType = pbac.MemberType_CERT
 			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 

@@ -15,14 +15,14 @@ import (
 	"testing"
 	"time"
 
-	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1028,7 +1028,7 @@ func TestAccessControlNewMemberFromProto(t *testing.T) {
 	require.NotNil(t, acInst)
 	signingMember := acInst.GetLocalSigningMember()
 	require.NotNil(t, signingMember)
-	signerRead, err := signingMember.GetSerializedMember(true)
+	signerRead, err := signingMember.GetSerializedMember()
 	signer, err := acInst.NewMemberFromProto(signerRead)
 	require.Nil(t, err)
 	require.NotNil(t, signer)
@@ -1093,7 +1093,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// read
 	sigRead, err := acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err := acsMap[org1Name].commonNode.GetSerializedMember(true)
+	signerRead, err := acsMap[org1Name].commonNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementReadZephyrus := &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1104,15 +1104,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
-	commonNodeSigner, err := acsMap[org1Name].acInst.NewMemberFromProto(signerRead)
-	require.Nil(t, err)
-	commonNodeSignerCached, err := acsMap[org2Name].acInst.NewMemberFromProto(signerRead)
-	require.Nil(t, err)
-	commonNodeSignerBytes, err := commonNodeSigner.Serialize(true)
-	require.Nil(t, err)
-	commonNodeSignerCachedBytes, err := commonNodeSignerCached.Serialize(true)
-	require.Nil(t, err)
-	require.Equal(t, string(commonNodeSignerBytes), string(commonNodeSignerCachedBytes))
 	validEndorsements, err := acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 1)
@@ -1120,7 +1111,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// read invalid
 	sigRead, err = acsMap[org5Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org5Name].commonNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org5Name].commonNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead := &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1134,7 +1125,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// wrong signer
 	sigRead, err = acsMap[org5Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org2Name].commonNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org2Name].commonNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1148,7 +1139,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// write
 	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].admin.GetSerializedMember(true)
+	signerRead, err = acsMap[org1Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1161,7 +1152,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	require.Equal(t, true, ok)
 	sigRead, err = acsMap[org1Name].client.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].client.GetSerializedMember(true)
+	signerRead, err = acsMap[org1Name].client.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1175,7 +1166,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// invalid
 	sigRead, err = acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].commonNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org1Name].commonNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1189,7 +1180,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// P2P
 	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].consensusNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org1Name].consensusNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1202,7 +1193,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	require.Equal(t, true, ok)
 	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org4Name].commonNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org4Name].commonNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1216,7 +1207,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// invalid
 	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].admin.GetSerializedMember(true)
+	signerRead, err = acsMap[org1Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1230,7 +1221,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// consensus
 	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].consensusNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org1Name].consensusNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1244,7 +1235,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// invalid
 	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org4Name].commonNode.GetSerializedMember(true)
+	signerRead, err = acsMap[org4Name].commonNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1258,7 +1249,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// self
 	sigRead, err = acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org4Name].admin.GetSerializedMember(true)
+	signerRead, err = acsMap[org4Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1275,7 +1266,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// invalid
 	sigRead, err = acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org3Name].admin.GetSerializedMember(true)
+	signerRead, err = acsMap[org3Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementRead = &common.EndorsementEntry{
 		Signer:    signerRead,
@@ -1292,7 +1283,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// majority
 	sigEurus, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerEurus, err := acsMap[org4Name].admin.GetSerializedMember(true)
+	signerEurus, err := acsMap[org4Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementEurus := &common.EndorsementEntry{
 		Signer:    signerEurus,
@@ -1300,7 +1291,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	}
 	sigAuster, err := acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerAuster, err := acsMap[org3Name].admin.GetSerializedMember(true)
+	signerAuster, err := acsMap[org3Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementAuster := &common.EndorsementEntry{
 		Signer:    signerAuster,
@@ -1308,7 +1299,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	}
 	sigZephyrus, err := acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerZephyrus, err := acsMap[org1Name].admin.GetSerializedMember(true)
+	signerZephyrus, err := acsMap[org1Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementZephyrus := &common.EndorsementEntry{
 		Signer:    signerZephyrus,
@@ -1316,7 +1307,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	}
 	sigBoreas, err := acsMap[org2Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerBoreas, err := acsMap[org2Name].admin.GetSerializedMember(true)
+	signerBoreas, err := acsMap[org2Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementBoreas := &common.EndorsementEntry{
 		Signer:    signerBoreas,
@@ -1347,7 +1338,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// abnormal
 	sigThuellai, err := acsMap[org5Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerThuellai, err := acsMap[org5Name].admin.GetSerializedMember(true)
+	signerThuellai, err := acsMap[org5Name].admin.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementThuellai := &common.EndorsementEntry{
 		Signer:    signerThuellai,
@@ -1475,7 +1466,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	// consensus
 	sigZephyrusConsensus, err := acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerZephyrusConsensus, err := acsMap[org1Name].consensusNode.GetSerializedMember(true)
+	signerZephyrusConsensus, err := acsMap[org1Name].consensusNode.GetSerializedMember()
 	require.Nil(t, err)
 	endorsementZephyrusConsensus := &common.EndorsementEntry{
 		Signer:    signerZephyrusConsensus,

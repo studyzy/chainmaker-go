@@ -25,7 +25,6 @@ func MockAccessControl() protocol.AccessControlProvider {
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
 		hashType:              "",
-		identityType:          "",
 		dataStore:             nil,
 		memberCache:           concurrentlru.New(0),
 		certCache:             concurrentlru.New(0),
@@ -48,7 +47,6 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
 		hashType:              hashAlg,
-		identityType:          "",
 		dataStore:             nil,
 		memberCache:           concurrentlru.New(0),
 		certCache:             concurrentlru.New(0),
@@ -71,7 +69,7 @@ func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, has
 		if err != nil {
 			return nil, err
 		}
-		signerSerial, err := signer.GetSerializedMember(true)
+		signerSerial, err := signer.GetSerializedMember()
 		if err != nil {
 			return nil, err
 		}
