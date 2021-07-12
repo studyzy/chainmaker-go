@@ -309,6 +309,20 @@ func (mr *MockAccessControlProviderMockRecorder) NewSigningMemberFromCertFile(or
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewSigningMemberFromCertFile", reflect.TypeOf((*MockAccessControlProvider)(nil).NewSigningMemberFromCertFile), orgId, prvKeyFile, password, certFile)
 }
 
+// ResourcePolicyExists mocks base method.
+func (m *MockAccessControlProvider) ResourcePolicyExists(resourceName string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourcePolicyExists", resourceName)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ResourcePolicyExists indicates an expected call of ResourcePolicyExists.
+func (mr *MockAccessControlProviderMockRecorder) ResourcePolicyExists(resourceName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourcePolicyExists", reflect.TypeOf((*MockAccessControlProvider)(nil).ResourcePolicyExists), resourceName)
+}
+
 // ValidateCRL mocks base method.
 func (m *MockAccessControlProvider) ValidateCRL(crl []byte) ([]*pkix.CertificateList, error) {
 	m.ctrl.T.Helper()

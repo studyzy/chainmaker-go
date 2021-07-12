@@ -373,11 +373,37 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 		}
 	case commonpb.TxType_INVOKE_SYSTEM_CONTRACT:
 		var payload commonpb.SystemContractPayload
+		var ac protocol.AccessControlProvider
 		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
 			contractName = payload.ContractName
 			method = payload.Method
 			parameterPairs = payload.Parameters
 			parameters = ts.parseParameter(parameterPairs)
+
+			if ac, err = txSimContext.GetAccessControl(); err != nil {
+				ts.log.Errorf("failed to get access control from tx sim context for tx: %s, error: %s, contract[%s], method[%s]", tx.Header.TxId, err.Error(), contractName, method)
+				return errResult(result, fmt.Errorf("failed to get access control from tx sim context for tx: %s, error: %s", tx.Header.TxId, err.Error()))
+			}
+
+			if !ac.ResourcePolicyExists(method) {
+				ts.log.Infof("policy not found for invoke_system_contract, contract[%s], method[%s], skip acVerify here", contractName, method)
+			} else {
+				endorsements = payload.Endorsement
+				sequence = payload.Sequence
+
+				if endorsements == nil {
+					return errResult(result, fmt.Errorf("endorsements not found in invoke system contract payload, tx id:%s", tx.Header.TxId))
+				}
+				payload.Endorsement = nil
+				verifyPayloadBytes, err := proto.Marshal(&payload)
+
+				if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
+					ts.log.Infof("verify fail when invoke system contract[%s],method[%s]", contractName, method)
+					return errResult(result, err)
+				}
+
+				ts.log.Debugf("invoke system contract [%d] [%v]", sequence, endorsements)
+			}
 		} else {
 			return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
 		}

@@ -88,6 +88,9 @@ type AccessControlProvider interface {
 
 	// LookUpResourceNameByTxType returns resource name corresponding to the tx type
 	LookUpResourceNameByTxType(txType common.TxType) (string, error)
+	
+	//ResourcePolicyExists checks whether there is corresponding policy configured for the given resource name
+	ResourcePolicyExists(resourceName string) bool
 
 	// CreatePrincipal creates a principal for one time authentication
 	CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (Principal, error)

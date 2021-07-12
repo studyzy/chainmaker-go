@@ -222,6 +222,16 @@ func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (strin
 	}
 }
 
+// ResourcePolicyExists checks whether there is corresponding policy configured for the given resource name
+func (ac *accessControl) ResourcePolicyExists(resourceName string) bool {
+	_, ok := ac.resourceNamePolicyMap.Load(resourceName)
+	if !ok {
+		ac.log.Debugf("policy not found for resource %s", resourceName)
+		return false
+	}
+	return true
+}
+
 // GetValidEndorsements filters all endorsement entries and returns all valid ones
 func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
