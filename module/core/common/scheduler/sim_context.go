@@ -257,6 +257,13 @@ func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method stri
 		}
 		return contractResult, commonpb.TxStatusCode_CONTRACT_FAIL
 	}
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonpb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
+	}
 	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
