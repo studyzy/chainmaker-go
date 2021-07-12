@@ -44,7 +44,7 @@ package scheduler
 //	}
 //}
 //
-//func newTx(txId string, contractId *commonpb.ContractId, parameterMap map[string]string) *commonpb.Transaction {
+//func newTx(txId string, contractId *commonpb.Contract, parameterMap map[string]string) *commonpb.Transaction {
 //
 //	var parameters []*commonpb.KeyValuePair
 //	for key, value := range parameterMap {
@@ -111,7 +111,7 @@ package scheduler
 //	}
 //}
 //
-//func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonpb.Transaction, *mock.MockSnapshot, *TxSchedulerImpl, *commonpb.ContractId, *commonpb.Block) {
+//func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonpb.Transaction, *mock.MockSnapshot, *TxSchedulerImpl, *commonpb.Contract, *commonpb.Block) {
 //	var txRWSetTable = make([]*commonpb.TxRWSet, 2)
 //	var txTable = make([]*commonpb.Transaction, 2)
 //
@@ -128,7 +128,7 @@ package scheduler
 //
 //	scheduler := NewTxScheduler(vmMgr, chainConf)
 //
-//	contractId := &commonpb.ContractId{
+//	contractId := &commonpb.Contract{
 //		ContractName:    "ContractName",
 //		ContractVersion: "1",
 //		RuntimeType:     commonpb.RuntimeType_WASMER,

@@ -22,7 +22,7 @@ package common
 //
 //func txPrepare(t *testing.T) (*VerifierTx, *commonpb.Block) {
 //	block := newBlock()
-//	contractId := &commonpb.ContractId{
+//	contractId := &commonpb.Contract{
 //		ContractName:    "ContractName",
 //		ContractVersion: "1",
 //		RuntimeType:     commonpb.RuntimeType_WASMER,
