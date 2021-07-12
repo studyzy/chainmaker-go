@@ -167,7 +167,6 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		err     error
 		errMsg  string
 		errCode commonErr.ErrCode
-		payload commonPb.Payload
 		store   protocol.BlockchainStore
 		vmMgr   protocol.VmManager
 		resp    = &commonPb.TxResponse{}
@@ -208,18 +207,23 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		blockchainStore:  store,
 		vmManager:        vmMgr,
 	}
-	contract, err := store.GetContractByName(payload.ContractName)
+
+	contract, err := store.GetContractByName(tx.Payload.ContractName)
 	if err != nil {
 		resp.Message = err.Error()
 		return resp
 	}
-	bytecode, err := store.GetContractBytecode(payload.ContractName)
+	bytecode, err := store.GetContractBytecode(tx.Payload.ContractName)
 	if err != nil {
 		resp.Message = err.Error()
 		return resp
 	}
-	txResult, txStatusCode := vmMgr.RunContract(contract, payload.Method,
-		bytecode, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Payload.TxType)
+	txResult, txStatusCode := vmMgr.RunContract(contract, tx.Payload.Method,
+		bytecode, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
+
+	//txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: tx.Payload.ContractName}, tx.Payload.Method,
+	//	nil, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
+
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
@@ -230,7 +234,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
-			txStatusCode, txResult.Code, payload.ContractName, payload.Method, tx.Payload.TxType, txResult.Message)
+			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method, tx.Payload.TxType, txResult.Message)
 		s.log.Warn(errMsg)
 
 		resp.Code = txStatusCode
@@ -261,7 +265,6 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 // dealSystemChainQuery - deal system chain query
 func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protocol.VmManager) *commonPb.TxResponse {
 	var (
-		payload commonPb.Payload
 		resp    = &commonPb.TxResponse{}
 	)
 
@@ -280,11 +283,11 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)
 	txResult := runtimeInstance.Invoke(&commonPb.Contract{
-		Name: payload.ContractName,
+		Name: tx.Payload.ContractName,
 	},
-		payload.Method,
+		tx.Payload.Method,
 		nil,
-		s.kvPair2Map(payload.Parameters),
+		s.kvPair2Map(tx.Payload.Parameters),
 		ctx,
 	)
 

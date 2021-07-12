@@ -29,7 +29,7 @@ func (s *ApiService) getArchiveBlockHeight(params []*commonPb.KeyValuePair) (uin
 		return 0, errors.New("params count != 1")
 	}
 
-	key := consts.ArchiveBlockPayload_BlockHeight.String()
+	key := consts.ArchiveBlockPayload_BLOCK_HEIGHT.String()
 	if params[0].Key != key {
 		return 0, errors.New(fmt.Sprintf("invalid key, must be %s", key))
 	}
@@ -90,7 +90,7 @@ func (s *ApiService) getRestoreBlock(params []*commonPb.KeyValuePair) ([]byte, e
 		return nil, errors.New("params count != 1")
 	}
 
-	key := consts.RestoreBlockPayload_FullBlock.String()
+	key := consts.RestoreBlockPayload_FULL_BLOCK.String()
 	if params[0].Key != key {
 		return nil, errors.New(fmt.Sprintf("invalid key, must be %s", key))
 	}
