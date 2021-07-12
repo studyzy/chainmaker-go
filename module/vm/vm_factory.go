@@ -1,5 +1,6 @@
 /*
 Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
@@ -34,8 +35,8 @@ type Factory struct {
 }
 
 // NewVmManager get vm runtime manager
-func (f *Factory) NewVmManager(wxvmCodePathPrefix string, AccessControl protocol.AccessControlProvider,
-	provider protocol.ChainNodesInfoProvider, chainConf protocol.ChainConf) protocol.VmManager {
+func (f *Factory) NewVmManager(wxvmCodePathPrefix string, accessControl protocol.AccessControlProvider,
+	chainNodesInfoProvider protocol.ChainNodesInfoProvider, chainConf protocol.ChainConf) protocol.VmManager {
 
 	chainId := chainConf.ChainConfig().ChainId
 	log := logger.GetLoggerByChain(logger.MODULE_VM, chainId)
@@ -51,8 +52,8 @@ func (f *Factory) NewVmManager(wxvmCodePathPrefix string, AccessControl protocol
 		WasmerVmPoolManager:    wasmerVmPoolManager,
 		WxvmCodeManager:        wxvmCodeManager,
 		WxvmContextService:     wxvmContextService,
-		AccessControl:          AccessControl,
-		ChainNodesInfoProvider: provider,
+		AccessControl:          accessControl,
+		ChainNodesInfoProvider: chainNodesInfoProvider,
 		Log:                    log,
 		ChainConf:              chainConf,
 	}
@@ -105,11 +106,11 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 	}
 	if contract.Status == commonPb.ContractStatus_REVOKED {
 		// return error if contract has been revoked
-		//revokeKey := []byte(protocol.ContractRevoke + contractName)
-		//if revokeInfo, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey); err != nil {
-		//	contractResult.Message = fmt.Sprintf("unable to find revoke info for contract:%s,  error:%s", contractName, err.Error())
-		//	return contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED
-		//} else if len(revokeInfo) != 0 {
+		// revokeKey := []byte(protocol.ContractRevoke + contractName)
+		// if revokeInfo, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey); err != nil {
+		//	  contractResult.Message = fmt.Sprintf("unable to find revoke info for contract:%s,  error:%s", contractName, err.Error())
+		//	  return contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED
+		// } else if len(revokeInfo) != 0 {
 		contractResult.Message = fmt.Sprintf("failed to run user contract, %s has been revoked.", contractName)
 		return contractResult, commonPb.TxStatusCode_CONTRACT_REVOKE_FAILED
 	}
@@ -120,12 +121,12 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 			return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_METHOD
 		}
 		return m.runNativeContract(contract, method, parameters, txContext)
-	} else if m.isUserContract(refTxType) {
-		return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed, refTxType)
-	} else {
+	}
+	if !m.isUserContract(refTxType) {
 		contractResult.Message = fmt.Sprintf("bad contract call %s, transaction type %s", contractName, refTxType)
 		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_TRANSACTION_TYPE
 	}
+	return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed, refTxType)
 }
 
 // runNativeContract invoke native contract
