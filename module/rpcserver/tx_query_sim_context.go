@@ -232,7 +232,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    1,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
@@ -240,7 +240,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    1,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}

@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -172,7 +173,7 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code:    0,
+				Code:    uint32(protocol.ContractResultCode_OK),
 
 				Result:  ccBytes,
 			},
