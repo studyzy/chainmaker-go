@@ -125,8 +125,13 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 		contractResult.Message = fmt.Sprintf("bad contract call %s, transaction type %s", contractName, refTxType)
 		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_TRANSACTION_TYPE
 	}
+	// byteCode should have value
+	if len(byteCode) == 0 {
+		contractResult.Message = fmt.Sprintf("contract %s has no byte code, transaction type %s", contractName, refTxType)
+		return contractResult, commonPb.TxStatusCode_CONTRACT_BYTE_CODE_NOT_EXIST_FAILED
+	}
 
-	return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed, refTxType)
+	return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed)
 }
 
 // runNativeContract invoke native contract
@@ -145,7 +150,7 @@ func (m *ManagerImpl) runNativeContract(contract *commonPb.Contract, method stri
 
 // runUserContract invoke user contract
 func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
-	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
+	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
 
 	var (
 		myContract   = contract
@@ -159,13 +164,6 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
 		}
 		myContract = dbContract
-	}
-	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(txContext.Get, contractName)
-		if err != nil {
-			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
-		}
-		byteCode = dbByteCode
 	}
 
 	return m.invokeUserContractByRuntime(myContract, method, parameters, txContext, byteCode, gasUsed)
