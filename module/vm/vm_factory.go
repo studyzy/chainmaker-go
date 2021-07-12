@@ -104,13 +104,12 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 	if parameters == nil {
 		parameters = make(map[string][]byte)
 	}
+
+	if contract.Status == commonPb.ContractStatus_FROZEN {
+		contractResult.Message = fmt.Sprintf("failed to run user contract, %s has been frozen.", contractName)
+		return contractResult, commonPb.TxStatusCode_CONTRACT_FREEZE_FAILED
+	}
 	if contract.Status == commonPb.ContractStatus_REVOKED {
-		// return error if contract has been revoked
-		// revokeKey := []byte(protocol.ContractRevoke + contractName)
-		// if revokeInfo, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey); err != nil {
-		//	  contractResult.Message = fmt.Sprintf("unable to find revoke info for contract:%s,  error:%s", contractName, err.Error())
-		//	  return contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED
-		// } else if len(revokeInfo) != 0 {
 		contractResult.Message = fmt.Sprintf("failed to run user contract, %s has been revoked.", contractName)
 		return contractResult, commonPb.TxStatusCode_CONTRACT_REVOKE_FAILED
 	}
@@ -126,6 +125,7 @@ func (m *ManagerImpl) RunContract(contract *commonPb.Contract, method string, by
 		contractResult.Message = fmt.Sprintf("bad contract call %s, transaction type %s", contractName, refTxType)
 		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_TRANSACTION_TYPE
 	}
+
 	return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed, refTxType)
 }
 
@@ -151,11 +151,6 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 		myContract   = contract
 		contractName = contract.Name
 		status       = contract.Status
-		//versionKey     = []byte(protocol.ContractVersion + contractName)
-		//creatorKey     = []byte(protocol.ContractCreator + contractName)
-		//freezeKey      = []byte(protocol.ContractFreeze + contractName)
-		//revokeKey      = []byte(protocol.ContractRevoke + contractName)
-		//runtimeTypeKey = []byte(protocol.ContractRuntimeType + contractName)
 	)
 	contractResult = &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
 	if status == commonPb.ContractStatus_ALL { // 只传入的ContractName，其他属性需要从DB获取
@@ -172,209 +167,6 @@ func (m *ManagerImpl) runUserContract(contract *commonPb.Contract, method string
 		}
 		byteCode = dbByteCode
 	}
-	// return msg if contract has been frozen
-	if myContract.Status != commonPb.ContractStatus_NORMAL {
-		contractResult.Message = fmt.Sprintf("failed to run user contract, %s has been frozen.", contractName)
-		return contractResult, commonPb.TxStatusCode_CONTRACT_FREEZE_FAILED
-	}
-
-	//if refTxType == commonPb.TxType_MANAGE_USER_CONTRACT &&
-	//	(method == commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String() ||
-	//		method == commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String()) {
-	//	// nothing
-	//} else if freezeInfo, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), freezeKey); err != nil {
-	//	contractResult.Message = fmt.Sprintf("unable to find freeze info for contract:%s,  error:%s", contractName, err.Error())
-	//	return contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED
-	//} else if len(freezeInfo) != 0 {
-	//	contractResult.Message = fmt.Sprintf("failed to run user contract, %s has been frozen.", contractName)
-	//	return contractResult, commonPb.TxStatusCode_CONTRACT_FREEZE_FAILED
-	//}
-
-	// init call user contract data
-	//if refTxType == commonPb.TxType_INVOKE_CONTRACT || refTxType == commonPb.TxType_QUERY_CONTRACT {
-	//excludeMethodList := make([]string, 0)
-	//excludeMethodList = append(excludeMethodList, protocol.ContractInitMethod)
-	//excludeMethodList = append(excludeMethodList, protocol.ContractUpgradeMethod)
-	//excludeMethodList = append(excludeMethodList, "")
-	//
-	//vt := &verifyType{
-	//	requireVersion:       true,
-	//	requireExcludeMethod: true,
-	//	requireByteCode:      true,
-	//	requireRuntimeType:   true,
-	//	excludeMethodList:    excludeMethodList,
-	//	currentMethod:        method,
-	//}
-	//
-	//result, code, byteCodeTmp, versionTmp, runtimeTypeTmp := vt.commonVerify(txContext, contractId, contractResult)
-	//if code != commonPb.TxStatusCode_SUCCESS {
-	//	return result, code
-	//}
-
-	//byteCode, _ = txContext.GetBlockchainStore().GetContractBytecode(contractName)
-	//contract, _ := txContext.GetBlockchainStore().GetContractByName(contractName)
-	//contractId.Version = contract.Version
-	//contractId.RuntimeType = contract.RuntimeType
-	//version = contract.Version
-	//runtimeType = int(contract.RuntimeType)
-	//}
-
-	// manager contract logic
-	//switch method {
-	//case consts.ContractManager_INIT_CONTRACT.String():
-	//	method = protocol.ContractInitMethod
-	//	vt := &verifyType{
-	//		requireVersion:       false,
-	//		requireNullVersion:   true,
-	//		requireExcludeMethod: false,
-	//		currentMethod:        method,
-	//		requireFormatVersion: true,
-	//	}
-	//	result, code, _, _, _ := vt.commonVerify(txContext, contract, contractResult)
-	//	if code != commonPb.TxStatusCode_SUCCESS {
-	//		return result, code
-	//	}
-	//
-	//	// If you call the constructor, you need to take byteCode in the parameter
-	//	if byteCode == nil {
-	//		contractResult.Message = fmt.Sprintf("please provide the bytecode of the contract:%+v while creating contract", contract)
-	//		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_BYTE_CODE
-	//	}
-	//
-	//	if contractId.RuntimeType != commonPb.RuntimeType_INVALID {
-	//		runtimeType = int(contractId.RuntimeType)
-	//	} else {
-	//		contractResult.Message = fmt.Sprintf("please provide the runtime type of the contract:%+v while creating contract", contractId)
-	//		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_RUNTIME_TYPE
-	//	}
-	//
-	//	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+contractName), []byte(version)...) // <contract name>:B:<contract version>
-	//	// save versioned byteCode
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(version)); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store byte code for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//
-	//	// save versioned byteCode
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, byteCode); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store byte code for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//
-	//	// save sender
-	//	if senderByte, err := proto.Marshal(txContext.GetTx().Header.Sender); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store creator for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	} else {
-	//		if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), creatorKey, senderByte); err != nil {
-	//			contractResult.Message = fmt.Sprintf("failed to store creator for contract:%s, error:%s", contractName, err.Error())
-	//			return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//		}
-	//	}
-	//
-	//	// save runtime type
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(runtimeType))); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store runtime contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//	m.Log.Infof("create contract begin %+v, %+v, byte code len %d", contractId, parameters, len(byteCode))
-	//case consts.ContractManager_UPGRADE_CONTRACT.String():
-	//	method = protocol.ContractUpgradeMethod
-	//	vt := &verifyType{
-	//		requireVersion:       true,
-	//		requireNullVersion:   false,
-	//		requireExcludeMethod: false,
-	//		requireRuntimeType:   true,
-	//		currentMethod:        method,
-	//		requireFormatVersion: true,
-	//	}
-	//	result, code, _, _, runtimeTypeTmp := vt.commonVerify(txContext, contractId, contractResult)
-	//	if code != commonPb.TxStatusCode_SUCCESS {
-	//		return result, code
-	//	}
-	//	runtimeType = runtimeTypeTmp
-	//
-	//	// If you call the constructor, you need to take byteCode in the parameter
-	//	if byteCode == nil {
-	//		contractResult.Message = fmt.Sprintf("please provide the bytecode of the contract:%+v while upgrading", contractId)
-	//		return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_BYTE_CODE
-	//	}
-	//
-	//	versionedByteCodeKey := append([]byte(protocol.ContractByteCode+contractName), []byte(version)...) // <contract name>:B:<contract version>
-	//	// check version exists
-	//	if byteCodeInContext, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to get byte code in tx context for contract %s, %s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_INTERNAL_ERROR
-	//	} else if len(byteCodeInContext) > 0 {
-	//		contractResult.Message = fmt.Sprintf("the contract version [%s][%s] already exists.", contractName, version)
-	//		return contractResult, commonPb.TxStatusCode_CONTRACT_VERSION_EXIST_FAILED
-	//	}
-	//
-	//	// save versioned byteCode
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(version)); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store byte code for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//
-	//	// save versioned byteCode
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, byteCode); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store byte code for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//
-	//	// save runtime type
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(runtimeType))); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store runtime contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//	m.Log.Infof("upgrade contract begin %+v, %+v, byte code len %d", contractId, parameters, len(byteCode))
-	//case commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String():
-	//	vt := &verifyType{requireVersion: true}
-	//	result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
-	//	if code != commonPb.TxStatusCode_SUCCESS {
-	//		return result, code
-	//	}
-	//
-	//	// add freeze target
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), freezeKey, []byte(contractName)); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store freeze target for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//	m.Log.Infof("contract[%s] freeze finish.", contractName)
-	//	contractResult.Code = 0
-	//	return contractResult, commonPb.TxStatusCode_SUCCESS
-	//case commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String():
-	//	vt := &verifyType{requireVersion: true}
-	//	result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
-	//	if code != commonPb.TxStatusCode_SUCCESS {
-	//		return result, code
-	//	}
-	//
-	//	// del freeze target
-	//	if err := txContext.Del(commonPb.SystemContract_CONTRACT_MANAGE.String(), freezeKey); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store unfreeze target for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//	m.Log.Infof("contract[%s] unfreeze finish.", contractName)
-	//	contractResult.Code = 0
-	//	return contractResult, commonPb.TxStatusCode_SUCCESS
-	//case commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String():
-	//	vt := &verifyType{requireVersion: true}
-	//	result, code, _, _, _ := vt.commonVerify(txContext, contractId, contractResult)
-	//	if code != commonPb.TxStatusCode_SUCCESS {
-	//		return result, code
-	//	}
-	//
-	//	// add revoke target
-	//	if err := txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(contractName)); err != nil {
-	//		contractResult.Message = fmt.Sprintf("failed to store revoke target for contract:%s, error:%s", contractName, err.Error())
-	//		return contractResult, commonPb.TxStatusCode_PUT_INTO_TX_CONTEXT_FAILED
-	//	}
-	//	m.Log.Infof("contract[%s] revoke finish.", contractName)
-	//	contractResult.Code = 0
-	//	return contractResult, commonPb.TxStatusCode_SUCCESS
-	//}
-	//contractId.Version = version
 
 	return m.invokeUserContractByRuntime(myContract, method, parameters, txContext, byteCode, gasUsed)
 }
