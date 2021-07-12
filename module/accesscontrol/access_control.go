@@ -289,20 +289,6 @@ func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
 	return false
 }
 
-// DeserializeMember converts bytes to Member
-func (ac *accessControl) DeserializeMember(serializedMember *pbac.SerializedMember) (protocol.Member, error) {
-
-	if serializedMember.MemberType != pbac.MemberType_CERT {
-		memInfoBytes, ok := ac.lookUpCertCache(string(serializedMember.MemberInfo))
-		if !ok {
-			return nil, fmt.Errorf("deserialize Member failed, unrecognized compressed certificate")
-		}
-		serializedMember.MemberInfo = memInfoBytes
-		serializedMember.MemberType = pbac.MemberType_CERT
-	}
-	return ac.NewMemberFromCertPem(serializedMember.OrgId, string(serializedMember.MemberInfo))
-}
-
 // GetLocalOrgId returns local organization id
 func (ac *accessControl) GetLocalOrgId() string {
 	return ac.localOrg.id
