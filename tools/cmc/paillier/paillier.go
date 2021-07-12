@@ -66,8 +66,7 @@ func genKey() error {
 	if err != nil {
 		return err
 	}
-	keyGenerator := paillier.Helper().NewKeyGenerator()
-	prvKey, err := keyGenerator.GenKey()
+	prvKey, err := paillier.GenKey()
 	if err != nil {
 		return err
 	}

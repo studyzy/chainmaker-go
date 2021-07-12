@@ -32,44 +32,7 @@ func PaillierCMD() *cobra.Command {
 	paillierCmd.AddCommand(keyGenCMD())
 	paillierCmd.AddCommand(encryptCMD())
 	paillierCmd.AddCommand(decryptCMD())
-	paillierCmd.AddCommand(getPtBytesCMD())
 	return paillierCmd
-}
-
-func getPtBytesCMD() *cobra.Command {
-	getPtBytesCMD := &cobra.Command{
-		Use:   "getPtBytes",
-		Short: "returns the base64Str of the plaintext bytes",
-		Long:  "returns the base64Str of the plaintext bytes",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return getPlaintextBytes()
-		},
-	}
-
-	flags := getPtBytesCMD.Flags()
-	flags.StringVarP(&plaintext, "pt", "", "", "Plaintext")
-
-	return getPtBytesCMD
-}
-
-func getPlaintextBytes() error {
-	if plaintext == "" {
-		return errors.New("invalid plaintext, please check it")
-	}
-
-	bigPt, ok := new(big.Int).SetString(plaintext, 10)
-	if !ok {
-		return errors.New("invalid plaintext, please check it")
-	}
-
-	ptBytes := bigPt.Bytes()
-	if ptBytes == nil {
-		return errors.New("invalid plaintext, please check it")
-	}
-
-	encodeBytes := base64.StdEncoding.EncodeToString(ptBytes)
-	fmt.Printf("The bytes2str of [%s] is [%s]\n", plaintext, encodeBytes)
-	return nil
 }
 
 func keyGenCMD() *cobra.Command {
@@ -120,8 +83,7 @@ func decryptCMD() *cobra.Command {
 }
 
 func generatePrvPubKeys() error {
-	KeyGenerator := paillier.Helper().NewKeyGenerator()
-	prvKey, err := KeyGenerator.GenKey()
+	prvKey, err := paillier.GenKey()
 	if err != nil {
 		return err
 	}
@@ -142,12 +104,12 @@ func generatePrvPubKeys() error {
 	}
 
 	fmt.Printf("paillier pubKey: [%s]\n", pubKeyBytes)
-	fmt.Printf("paillier prvKey: [%s]\n", prvKeyBytes)
+	fmt.Printf("paillier prvKey: \n%s", prvKeyBytes)
 	return nil
 }
 
 func paillierEncrypt() error {
-	pubKey := paillier.Helper().NewPubKey()
+	pubKey := new(paillier.PubKey)
 	err := pubKey.Unmarshal([]byte(pubKeyStr))
 	if err != nil {
 		return err
@@ -169,13 +131,13 @@ func paillierEncrypt() error {
 }
 
 func paillierDecrypt() error {
-	prvKey := paillier.Helper().NewPrvKey()
+	prvKey := new(paillier.PrvKey)
 
 	if err := prvKey.Unmarshal([]byte(prvKeyStr)); err != nil {
 		return err
 	}
 
-	ct := paillier.Helper().NewCiphertext()
+	ct := new(paillier.Ciphertext)
 	base64Decode, err := base64.StdEncoding.DecodeString(ciphertextStr)
 	if err != nil {
 		return err
