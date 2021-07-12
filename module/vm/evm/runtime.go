@@ -33,7 +33,7 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txSimContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 	txId := txSimContext.GetTx().Payload.TxId
 
@@ -106,19 +106,19 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 	}
 
 	// contract
-	address, err := evmutils.MakeAddressFromString(contractId.Name) // reference vm_factory.go RunContract
+	address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
 
 	if err != nil {
 		return r.errorResult(contractResult, err, "make address fail")
 	}
 	codeHash := evmutils.BytesDataToEVMIntHash(byteCode)
-	contract := environment.Contract{
+	eContract := environment.Contract{
 		Address: address,
 		Code:    byteCode,
 		Hash:    codeHash,
 	}
 	r.Address = address
-	r.Contract = contractId
+	r.Contract = contract
 	// new evm instance
 	lastBlock, _ := txSimContext.GetBlockchainStore().GetLastBlock()
 	externalStore := &storage.ContractStorage{Ctx: txSimContext}
@@ -134,7 +134,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 				Difficulty: evmutils.New(0),
 				GasLimit:   evmutils.New(protocol.GasLimit),
 			},
-			Contract:    contract,
+			Contract:    eContract,
 			Transaction: evmTransaction,
 			Message: environment.Message{
 				Caller: senderAddress,
