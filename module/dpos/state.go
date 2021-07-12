@@ -15,7 +15,7 @@ import (
 func (impl *DPoSImpl) getState(contractName string, key []byte, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) ([]byte, error) {
 	if len(block.Txs) > 0 {
 		for i := len(block.Txs) - 1; i >= 0; i-- {
-			rwSets := blockTxRwSet[block.Txs[i].Header.TxId]
+			rwSets := blockTxRwSet[block.Txs[i].Payload.TxId]
 			for _, txWrite := range rwSets.TxWrites {
 				if txWrite.ContractName == contractName && bytes.Equal(txWrite.Key, key) {
 					return txWrite.Value, nil

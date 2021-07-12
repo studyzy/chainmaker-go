@@ -8,6 +8,7 @@ package common
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"github.com/stretchr/testify/require"
@@ -43,7 +44,7 @@ func TestFinalizeBlock_Async(t *testing.T) {
 
 }
 
-func createBlock(height int64) *commonpb.Block {
+func createBlock(height uint64) *commonpb.Block {
 	var hash = []byte("0123456789")
 	var version = []byte("0")
 	var block = &commonpb.Block{
@@ -58,7 +59,7 @@ func createBlock(height int64) *commonpb.Block {
 			RwSetRoot:      hash,
 			TxRoot:         hash,
 			BlockTimestamp: 0,
-			Proposer:       hash,
+			Proposer:       &accesscontrol.SerializedMember{MemberInfo: hash},
 			ConsensusArgs:  nil,
 			TxCount:        1,
 			Signature:      []byte(""),
@@ -73,18 +74,17 @@ func createBlock(height int64) *commonpb.Block {
 }
 
 func createNewTestTx(txID string) *commonpb.Transaction {
-	var hash = []byte("0123456789")
+	//var hash = []byte("0123456789")
 	return &commonpb.Transaction{
-		Header: &commonpb.TxHeader{
+		Payload: &commonpb.Payload{
 			ChainId:        "Chain1",
-			Sender:         nil,
 			TxType:         0,
 			TxId:           txID,
 			Timestamp:      CurrentTimeMillisSeconds(),
 			ExpirationTime: 0,
 		},
-		RequestPayload:   hash,
-		RequestSignature: hash,
+		//RequestPayload:   hash,
+		//RequestSignature: hash,
 		Result: &commonpb.Result{
 			Code:           commonpb.TxStatusCode_SUCCESS,
 			ContractResult: nil,

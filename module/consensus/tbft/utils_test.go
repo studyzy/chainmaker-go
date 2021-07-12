@@ -15,12 +15,12 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/protocol/mock"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -156,7 +156,7 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -174,8 +174,8 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 	chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
-	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
-	vote := NewVote(tbftpb.VoteType_VotePrecommit, org1NodeId, blockHeight, 0, blockHash[:])
+	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
+	vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, org1NodeId, blockHeight, 0, blockHash[:])
 	added, err := voteSet.AddVote(vote)
 	require.Nil(t, err)
 	require.True(t, added)
@@ -207,7 +207,7 @@ func TestVerifyBlockSignaturesOneNodeFail(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -225,8 +225,8 @@ func TestVerifyBlockSignaturesOneNodeFail(t *testing.T) {
 	// chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	// validators, _ := GetValidatorListFromConfig(chainConfig)
 	// validatorSet := newValidatorSet(validators)
-	// voteSet := NewVoteSet(tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
-	// vote := NewVote(tbftpb.VoteType_VotePrecommit, org1Id, blockHeight, 0, blockHash[:])
+	// voteSet := NewVoteSet(tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
+	// vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, org1Id, blockHeight, 0, blockHash[:])
 	// voteSet.AddVote(vote)
 	// qc := mustMarshal(voteSet.ToProto())
 	// block.AdditionalData.ExtraData[protocol.TBFTAddtionalDataKey] = qc
@@ -268,7 +268,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -286,7 +286,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 	chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
-	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
+	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
 
 	nodes := []string{
 		org1NodeId,
@@ -295,7 +295,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 		"QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",
 	}
 	for _, id := range nodes {
-		vote := NewVote(tbftpb.VoteType_VotePrecommit, id, blockHeight, 0, blockHash[:])
+		vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, id, blockHeight, 0, blockHash[:])
 		voteSet.AddVote(vote)
 	}
 	qc := mustMarshal(voteSet.ToProto())
@@ -337,7 +337,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 		},
 	}, nil)
 
-	var blockHeight int64 = 10
+	var blockHeight uint64 = 10
 	blockHash := sha1.Sum(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
@@ -355,7 +355,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 	chainConfig, _ := chainConf.GetChainConfigFromFuture(blockHeight)
 	validators, _ := GetValidatorListFromConfig(chainConfig)
 	validatorSet := newValidatorSet(cmLogger, validators, 1)
-	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VotePrecommit, blockHeight, 0, validatorSet)
+	voteSet := NewVoteSet(cmLogger, tbftpb.VoteType_VOTE_PRECOMMIT, blockHeight, 0, validatorSet)
 
 	nodes := []string{
 		org1NodeId,
@@ -364,7 +364,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 		// "QmUryDgjNoxfMXHdDRFZ5Pe55R1vxTPA3ZgCteHze2ET27",
 	}
 	for _, id := range nodes {
-		vote := NewVote(tbftpb.VoteType_VotePrecommit, id, blockHeight, 0, blockHash[:])
+		vote := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, id, blockHeight, 0, blockHash[:])
 		voteSet.AddVote(vote)
 	}
 	qc := mustMarshal(voteSet.ToProto())

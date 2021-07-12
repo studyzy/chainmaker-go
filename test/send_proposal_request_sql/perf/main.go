@@ -274,7 +274,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
-	//	ContractId: &commonPb.ContractId{
+	//	Contract: &commonPb.Contract{
 	//		ContractName:    contractName,
 	//		ContractVersion: "1.0.0",
 	//		//RuntimeType:     commonPb.RuntimeType_GASM,
@@ -597,7 +597,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)

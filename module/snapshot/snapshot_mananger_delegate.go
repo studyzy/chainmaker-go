@@ -10,9 +10,9 @@ package snapshot
 import (
 	"sync"
 
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 )
 
 type ManagerDelegate struct {
@@ -29,11 +29,11 @@ func (m *ManagerDelegate) calcSnapshotFingerPrint(snapshot *SnapshotImpl) utils.
 	blockTimestamp := snapshot.blockTimestamp
 	blockProposer := snapshot.blockProposer
 	preBlockHash := snapshot.preBlockHash
-
-	return utils.CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposer, preBlockHash)
+	blockProposerBytes, _ := blockProposer.Marshal()
+	return utils.CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposerBytes, preBlockHash)
 }
 
-func (m *ManagerDelegate) makeSnapshotImpl(block *commonPb.Block, blockHeight int64) *SnapshotImpl {
+func (m *ManagerDelegate) makeSnapshotImpl(block *commonPb.Block, blockHeight uint64) *SnapshotImpl {
 	// If the corresponding Snapshot does not exist, create one
 	txCount := len(block.Txs) // as map init size
 	snapshotImpl := &SnapshotImpl{

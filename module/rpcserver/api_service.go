@@ -23,9 +23,7 @@ import (
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
 )
@@ -43,8 +41,7 @@ type ApiService struct {
 	subscriberRateLimiter *rate.Limiter
 	metricQueryCounter    *prometheus.CounterVec
 	metricInvokeCounter   *prometheus.CounterVec
-
-	ctx context.Context
+	ctx 				  context.Context
 }
 
 // NewApiService - new ApiService object
@@ -88,10 +85,10 @@ func NewApiService(chainMakerServer *blockchain.ChainMakerServer, ctx context.Co
 func (s *ApiService) SendRequest(ctx context.Context, req *commonPb.TxRequest) (*commonPb.TxResponse, error) {
 
 	return s.invoke(&commonPb.Transaction{
-		Header:           req.Header,
-		RequestPayload:   req.Payload,
-		RequestSignature: req.Signature,
-		Result:           nil}, protocol.RPC), nil
+		Payload:   	req.Payload,
+		Sender:     req.Sender,
+		Endorsers:  req.Endorsers,
+		Result:     nil}, protocol.RPC), nil
 }
 
 // validate tx
@@ -120,7 +117,7 @@ func (s *ApiService) validate(tx *commonPb.Transaction) (errCode commonErr.ErrCo
 	if err = utils.VerifyTxWithoutPayload(tx, tx.Payload.ChainId, bc.GetAccessControl()); err != nil {
 		errCode = commonErr.ERR_CODE_TX_VERIFY_FAILED
 		errMsg = fmt.Sprintf("%s, %s, txId:%s, sender:%s", errCode.String(), err.Error(), tx.Payload.TxId,
-			hex.EncodeToString(tx.Payload.Sender.MemberInfo))
+			hex.EncodeToString(tx.Sender.Signer.MemberInfo))
 		s.log.Error(errMsg)
 		return
 	}
@@ -196,17 +193,8 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		return resp
 	}
 
-	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
-		errCode = commonErr.ERR_CODE_SYSTEM_CONTRACT_PB_UNMARSHAL
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		resp.Message = errMsg
-		return resp
-	}
-
 	if chainId == SYSTEM_CHAIN {
-		return s.dealSystemChainQuery(tx, vmMgr, source)
+		return s.dealSystemChainQuery(tx, vmMgr)
 	}
 
 	ctx := &txQuerySimContextImpl{
@@ -221,7 +209,8 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		vmManager:        vmMgr,
 	}
 
-	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: payload.ContractName}, payload.Method, nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Payload.TxType)
+	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: payload.ContractName}, payload.Method,
+		nil, s.kvPair2Map(payload.Parameters), ctx, 0, tx.Payload.TxType)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
@@ -261,25 +250,13 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 }
 
 // dealSystemChainQuery - deal system chain query
-func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protocol.VmManager, source protocol.TxSource) *commonPb.TxResponse {
+func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protocol.VmManager) *commonPb.TxResponse {
 	var (
-		err     error
-		errMsg  string
-		errCode commonErr.ErrCode
 		payload commonPb.Payload
 		resp    = &commonPb.TxResponse{}
 	)
 
 	chainId := tx.Payload.ChainId
-
-	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
-		errCode = commonErr.ERR_CODE_SYSTEM_CONTRACT_PB_UNMARSHAL
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		resp.Message = errMsg
-		return resp
-	}
 
 	ctx := &txQuerySimContextImpl{
 		tx:               tx,
@@ -324,8 +301,8 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 }
 
 // kvPair2Map - change []*commonPb.KeyValuePair to map[string]string
-func (s *ApiService) kvPair2Map(kvPair []*commonPb.KeyValuePair) map[string]string {
-	kvMap := make(map[string]string)
+func (s *ApiService) kvPair2Map(kvPair []*commonPb.KeyValuePair) map[string][]byte {
+	kvMap := make(map[string][]byte)
 
 	for _, kv := range kvPair {
 		kvMap[kv.Key] = kv.Value
@@ -343,16 +320,6 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 		resp    = &commonPb.TxResponse{}
 	)
 
-	// whether modify tx payload
-	if localconf.ChainMakerConfig.DebugConfig.IsModifyTxPayload {
-		tx.RequestPayload = append(tx.RequestPayload, byte(0)) // append zero byte
-	}
-
-	// spv logic
-	if localconf.ChainMakerConfig.NodeConfig.Type == "spv" {
-		return s.doSpvLogin(tx, resp)
-	}
-
 	err = s.chainMakerServer.AddTx(tx.Payload.ChainId, tx, source)
 
 	s.incInvokeCounter(tx.Payload.ChainId, err)
@@ -367,7 +334,6 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 		resp.Message = errMsg
 		return resp
-
 	}
 
 	s.log.Debugf("Add tx success, chainId:%s, txId:%s", tx.Payload.ChainId, tx.Payload.TxId)
@@ -387,70 +353,6 @@ func (s *ApiService) incInvokeCounter(chainId string, err error) {
 			s.metricInvokeCounter.WithLabelValues(chainId, "false").Inc()
 		}
 	}
-}
-
-func (s *ApiService) doSpvLogin(tx *commonPb.Transaction, resp *commonPb.TxResponse) *commonPb.TxResponse {
-	var (
-		err    error
-		errMsg string
-		store  protocol.BlockchainStore
-	)
-
-	chainId := tx.Payload.ChainId
-
-	if store, err = s.chainMakerServer.GetStore(chainId); err != nil {
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		errMsg = fmt.Sprintf("%s", err.Error())
-		s.log.Error(errMsg)
-		resp.Message = errMsg
-		return resp
-	}
-
-	exist, err := store.TxExists(tx.Payload.TxId)
-	if err != nil {
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		errMsg = fmt.Sprintf("%s", err.Error())
-		s.log.Error(errMsg)
-		resp.Message = errMsg
-		return resp
-	}
-
-	if exist {
-		resp.Code = commonPb.TxStatusCode_SUCCESS
-		resp.Message = commonErr.ERR_CODE_OK.String()
-		return resp
-	}
-
-	txMsg, err := proto.Marshal(tx)
-	if err != nil {
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		errMsg = fmt.Sprintf("%s", err.Error())
-		s.log.Error(errMsg)
-		resp.Message = errMsg
-		return resp
-	}
-
-	netService, err := s.chainMakerServer.GetNetService(chainId)
-	if err != nil {
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		errMsg = fmt.Sprintf("%s", err.Error())
-		s.log.Error(errMsg)
-		resp.Message = errMsg
-		return resp
-	}
-
-	err = netService.BroadcastMsg(txMsg, netPb.NetMsg_TX)
-	if err != nil {
-		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
-		errMsg = fmt.Sprintf("%s", err.Error())
-		s.log.Error(errMsg)
-		resp.Message = errMsg
-		return resp
-	}
-
-	resp.Code = commonPb.TxStatusCode_SUCCESS
-	resp.Message = commonErr.ERR_CODE_OK.String()
-	return resp
 }
 
 // RefreshLogLevelsConfig - refresh log level

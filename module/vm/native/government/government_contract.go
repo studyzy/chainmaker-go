@@ -1,13 +1,15 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package government
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 
@@ -19,23 +21,23 @@ const (
 )
 
 type GovernmentContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newGovernmentContract(log *logger.CMLogger) *GovernmentContract {
+func NewGovernmentContract(log *logger.CMLogger) *GovernmentContract {
 	return &GovernmentContract{
 		log:     log,
 		methods: registerGovernmentContractMethods(log),
 	}
 }
 
-func (c *GovernmentContract) getMethod(methodName string) ContractFunc {
+func (c *GovernmentContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerGovernmentContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerGovernmentContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	governmentRuntime := &GovernmentRuntime{log: log}
 	methodMap[commonPb.QueryFunction_GET_GOVERNANCE_CONTRACT.String()] = governmentRuntime.GetGovernmentContract
@@ -46,7 +48,7 @@ type GovernmentRuntime struct {
 	log *logger.CMLogger
 }
 
-func (r *GovernmentRuntime) GetGovernmentContract(txSimContext protocol.TxSimContext, parameters map[string]string) ([]byte, error) {
+func (r *GovernmentRuntime) GetGovernmentContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	store := txSimContext.GetBlockchainStore()
 	governmentContractName := GovernmentContractName
 	bytes, err := store.ReadObject(governmentContractName, []byte(governmentContractName))

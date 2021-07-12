@@ -71,7 +71,7 @@ func TestNextHeightToReq(t *testing.T) {
 	sch := newScheduler(NewMockSender(), mockLedger, 100, time.Second, time.Second*3, 2, logger.GetLogger(logger.MODULE_SYNC))
 
 	// 1. add block status
-	for i := int64(0); i < 5; i++ {
+	for i := uint64(0); i < 5; i++ {
 		sch.blockStates[100+i] = newBlock
 	}
 

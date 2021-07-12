@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -107,7 +108,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 		},
 		Dag: &commonPb.DAG{
 			Vertexes: []*commonPb.DAG_Neighbor{
-				&commonPb.DAG_Neighbor{
+				{
 					Neighbors: nil,
 				},
 			},
@@ -147,13 +148,13 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 
 	payload := &commonPb.Payload{
 		ChainId:      cc.ChainId,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 		Method:       "Genesis",
 		Parameters:   make([]*commonPb.KeyValuePair, 0),
 		Sequence:     cc.Sequence,
 	}
 	payload.Parameters = append(payload.Parameters, &commonPb.KeyValuePair{
-		Key:   commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		Key:   commonPb.SystemContract_CHAIN_CONFIG.String(),
 		Value: []byte(cc.String()),
 	})
 
@@ -172,7 +173,7 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code:    0,
+				Code:    uint32(protocol.ContractResultCode_OK),
 
 				Result:  ccBytes,
 			},
@@ -268,7 +269,7 @@ func (e *ERC20Config) addAccount(address string, token *BigInteger) error {
 
 // toTxWrites convert to TxWrites
 func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
-	contractName := commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()
+	contractName := commonPb.SystemContract_DPOS_ERC20.String()
 	txWrites := []*commonPb.TxWrite{
 		{
 			Key:          []byte("OWN"), // equal with native.KeyOwner
@@ -365,7 +366,7 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 		default:
 			if strings.HasPrefix(keyValuePair.Key, keyERC20Acc) {
 				accAddress := keyValuePair.Key[len(keyERC20Acc):]
-				if accAddress == commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String() {
+				if accAddress == commonPb.SystemContract_DPOS_STAKE.String() {
 					accAddress = getContractAddress()
 				}
 				_, err := base58.Decode(accAddress)
@@ -408,22 +409,22 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	// 1. add property in rwSets
 	rwSets := []*commonPb.TxWrite{
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyMinSelfDelegation),
 			Value:        []byte(s.minSelfDelegation),
 		},
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyEpochValidatorNumber),
 			Value:        valNum,
 		},
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyEpochBlockNumber),
 			Value:        epochNum,
 		},
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyUnbondingEpochNumber),
 			Value:        completeUnboundingNum,
 		},
@@ -438,7 +439,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	for _, candidate := range s.candidates {
 		bz, err := proto.Marshal(&commonPb.Validator{
 			Jailed:                     false,
-			Status:                     commonPb.BondStatus_Bonded,
+			Status:                     commonPb.BondStatus_BONDED,
 			Tokens:                     candidate.Weight,
 			ValidatorAddress:           candidate.PeerID,
 			DelegatorShares:            candidate.Weight,
@@ -463,12 +464,12 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	}
 	for i, validator := range s.candidates {
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerID)),
 			Value:        validators[i],
 		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerID, validator.PeerID)), // key: prefix|delegator|validator
 			Value:        delegations[i],                                                               // val: delegation info
 		})
@@ -488,24 +489,24 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		return nil, err
 	}
 	rwSets = append(rwSets, &commonPb.TxWrite{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 		Key:          []byte(keyCurrentEpoch), // key: prefix
 		Value:        epochInfo,               // val: epochInfo
 	})
 	rwSets = append(rwSets, &commonPb.TxWrite{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 		Key:          []byte(fmt.Sprintf(keyEpochFormat, "0")), // key: prefix|epochID
 		Value:        epochInfo,                                // val: epochInfo
 	})
 
 	for _, addr := range valAddrs {
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyNodeIDFormat, addr)), // key: prefix|addr
 			Value:        []byte(s.nodeIDs[addr]),                    // val: nodeID
 		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyRevNodeFormat, s.nodeIDs[addr])), // key: prefix|nodeID
 			Value:        []byte(addr),                                           // val: addr
 		})
@@ -515,7 +516,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 
 // getContractAddress 返回质押合约地址
 func getContractAddress() string {
-	bz := sha256.Sum256([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()))
+	bz := sha256.Sum256([]byte(commonPb.SystemContract_DPOS_STAKE.String()))
 	return base58.Encode(bz[:])
 }
 
@@ -644,9 +645,9 @@ func isValidBigInt(val string) error {
 func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) ([]*commonPb.TxWrite, error) {
 	txWrites := make([]*commonPb.TxWrite, 0)
 	txWrites = append(txWrites, &commonPb.TxWrite{
-		Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
+		Key:          []byte(commonPb.SystemContract_CHAIN_CONFIG.String()),
 		Value:        chainConfigBytes,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 	})
 	if erc20Config != nil {
 		erc20ConfigTxWrites := erc20Config.toTxWrites()

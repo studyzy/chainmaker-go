@@ -10,14 +10,14 @@ package sync
 import (
 	"chainmaker.org/chainmaker/common/msgbus"
 	mbusmock "chainmaker.org/chainmaker/common/msgbus/mock"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
+	syncPb "chainmaker.org/chainmaker/pb-go/sync"
 	"chainmaker.org/chainmaker/protocol/mock"
 	"fmt"
 	"github.com/golang/mock/gomock"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	syncPb "chainmaker.org/chainmaker/pb-go/sync"
 
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -93,7 +93,7 @@ func (m MockNet) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvider {
 }
 
 type MockStore struct {
-	blocks map[int64]*commonPb.Block
+	blocks map[uint64]*commonPb.Block
 }
 
 func (m MockStore) GetContractByName(name string) (*commonPb.Contract, error) {
@@ -108,7 +108,7 @@ func (m MockStore) GetHeightByHash(blockHash []byte) (uint64, error) {
 	panic("implement me")
 }
 
-func (m MockStore) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (m MockStore) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	panic("implement me")
 }
 
@@ -179,7 +179,7 @@ func (m MockStore) GetContractTxHistory(contractName string) (protocol.TxHistory
 }
 
 func NewMockStore() *MockStore {
-	return &MockStore{blocks: make(map[int64]*commonPb.Block)}
+	return &MockStore{blocks: make(map[uint64]*commonPb.Block)}
 }
 
 func (m MockStore) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
@@ -193,14 +193,14 @@ func (m MockStore) BlockExists(blockHash []byte) (bool, error) {
 
 }
 
-func (m MockStore) GetBlock(height int64) (*commonPb.Block, error) {
+func (m MockStore) GetBlock(height uint64) (*commonPb.Block, error) {
 	if blk, exist := m.blocks[height]; exist {
 		return blk, nil
 	}
 	return nil, fmt.Errorf("block not find")
 }
 
-func (m MockStore) GetBlockWithRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (m MockStore) GetBlockWithRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	panic(errStr)
 }
 
@@ -225,7 +225,7 @@ func (m MockStore) GetBlockByTx(txId string) (*commonPb.Block, error) {
 	panic(errStr)
 }
 
-func (m MockStore) GetBlockWithTxRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (m MockStore) GetBlockWithTxRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	panic(errStr)
 }
 
@@ -249,7 +249,7 @@ func (m MockStore) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 	panic(errStr)
 }
 
-func (m MockStore) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet, error) {
+func (m MockStore) GetTxRWSetsByHeight(height uint64) ([]*commonPb.TxRWSet, error) {
 	panic(errStr)
 }
 
@@ -327,7 +327,7 @@ func newMockLedgerCache(ctrl *gomock.Controller, blk *commonPb.Block) protocol.L
 	mockLedger.EXPECT().GetLastCommittedBlock().DoAndReturn(func() *commonPb.Block {
 		return lastCommitBlk
 	}).AnyTimes()
-	mockLedger.EXPECT().CurrentHeight().DoAndReturn(func() (int64, error) {
+	mockLedger.EXPECT().CurrentHeight().DoAndReturn(func() (uint64, error) {
 		return lastCommitBlk.Header.BlockHeight, nil
 	}).AnyTimes()
 	mockLedger.EXPECT().SetLastCommittedBlock(gomock.Any()).DoAndReturn(func(blk *commonPb.Block) {
@@ -379,13 +379,13 @@ func newMockCommitter(ctrl *gomock.Controller, mockLedger protocol.LedgerCache) 
 
 func newMockBlockChainStore(ctrl *gomock.Controller) protocol.BlockchainStore {
 	mockStore := mock.NewMockBlockchainStore(ctrl)
-	blocks := make(map[int64]*commonPb.Block)
+	blocks := make(map[uint64]*commonPb.Block)
 	mockStore.EXPECT().PutBlock(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(blk *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
 			blocks[blk.Header.BlockHeight] = blk
 			return nil
 		}).AnyTimes()
-	mockStore.EXPECT().GetBlock(gomock.Any()).DoAndReturn(func(height int64) (*commonPb.Block, error) {
+	mockStore.EXPECT().GetBlock(gomock.Any()).DoAndReturn(func(height uint64) (*commonPb.Block, error) {
 		if blk, exist := blocks[height]; exist {
 			return blk, nil
 		}

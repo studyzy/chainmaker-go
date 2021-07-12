@@ -21,7 +21,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -114,7 +113,7 @@ func GetContractDbName(chainId, contractName string) string {
 
 //getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
 func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
-	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
+	if _, ok := commonPb.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(dbConfig, chainId)
 	}
 	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
@@ -162,15 +161,15 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		//创建对应合约的数据库
 		payload := block.Txs[0].Payload
 
-		contractId := &commonPb.ContractId{
-			ContractName:    string(payload.GetParameter(consts.ContractManager_Install_ContractName.String())),
-			ContractVersion: string(payload.GetParameter(consts.ContractManager_Install_Version.String())),
-			RuntimeType:     commonPb.RuntimeType(  commonPb.RuntimeType_value[string( payload.GetParameter(consts.ContractManager_Install_RuntimeType.String()))]),
+		contractId := &commonPb.Contract{
+			Name:        string(payload.GetParameter(consts.ContractManager_Install_CONTRACT_NAME.String())),
+			Version:     string(payload.GetParameter(consts.ContractManager_Install_CONTRACT_VERSION.String())),
+			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String()))]),
 		}
-		if contractId.RuntimeType == commonPb.RuntimeType_EVM {
-			address, _ := evmutils.MakeAddressFromString(contractId.ContractName)
-			contractId.ContractName = address.String()
-		}
+		//if contractId.RuntimeType == commonPb.RuntimeType_EVM {
+		//	address, _ := evmutils.MakeAddressFromString(contractId.Name)
+		//	contractId.Name = address.String()
+		//}
 		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
 			err2 := s.db.RollbackDbTransaction(txKey)
@@ -263,12 +262,12 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.ContractId,
+func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.Contract,
 	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
-	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
-	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
-	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
+	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.Name)
+	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.Name)
+	err := s.initContractDb(contractId.Name) //创建合约的数据库和KV表
 	if err != nil {
 		return err
 	}
@@ -492,8 +491,8 @@ func (s *StateSqlDB) updateConsensusArgs(dbTx protocol.SqlDBTransaction, block *
 	return nil
 }
 func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
-	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	val, err := s.ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return nil, err
 	}

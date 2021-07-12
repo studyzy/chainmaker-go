@@ -16,9 +16,9 @@ import (
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	rootLog "chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
@@ -360,12 +360,12 @@ func (v *VmWatcher) Module() string {
 }
 
 func (v *VmWatcher) ContractNames() []string {
-	return []string{commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String()}
+	return []string{commonPb.SystemContract_CERT_MANAGE.String()}
 }
 
 func (v *VmWatcher) Callback(contractName string, payloadBytes []byte) error {
 	switch contractName {
-	case commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String():
+	case commonPb.SystemContract_CERT_MANAGE.String():
 		return v.ns.localNet.CheckRevokeTlsCerts(v.ns.ac, payloadBytes)
 	default:
 		return nil

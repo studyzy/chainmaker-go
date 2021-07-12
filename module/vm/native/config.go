@@ -16,7 +16,7 @@ func IsNative(contractName string, txType commonPb.TxType) bool {
 
 // IsNativeContract return is native contract name
 func IsNativeContract(contractName string) bool {
-	_, ok := commonPb.ContractName_value[contractName]
+	_, ok := commonPb.SystemContract_value[contractName]
 	return ok
 }
 

@@ -236,8 +236,8 @@ func (s *StateKvDB) operateDbByWriteSet(batch protocol.StoreBatcher, txWrite *co
 	}
 }
 func (s *StateKvDB) GetChainConfig() (*configPb.ChainConfig, error) {
-	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	val, err := s.ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return nil, err
 	}

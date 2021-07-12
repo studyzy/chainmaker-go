@@ -63,7 +63,7 @@ func TestERC20Config_load(t *testing.T) {
 			Value: []byte("800000"),
 		},
 		{
-			Key:   keyERC20Acc + commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			Key:   keyERC20Acc + commonPb.SystemContract_DPOS_STAKE.String(),
 			Value: []byte("200000"),
 		},
 	}

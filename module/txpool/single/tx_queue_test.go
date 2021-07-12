@@ -71,10 +71,8 @@ func TestAddTxsToConfigQueue(t *testing.T) {
 	require.EqualValues(t, 0, queue.commonTxsCount())
 }
 func changeTx2ConfigTx(tx *commonPb.Transaction) {
-	payload, _ := tx.GetTransactPayload()
-	payload.ContractName = commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()
-	data, _ := payload.Marshal()
-	tx.RequestPayload = data
+	payload := tx.Payload
+	payload.ContractName = commonPb.SystemContract_CHAIN_CONFIG.String()
 }
 func TestAddTxsToCommonQueue(t *testing.T) {
 	ctrl := gomock.NewController(t)

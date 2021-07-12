@@ -52,7 +52,7 @@ func saveData() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
+		common.SystemContract_PRIVATE_COMPUTE.String(),
 		common.PrivateComputeContractFunction_SAVE_DATA.String(),
 		pairs,
 		defaultSequence,

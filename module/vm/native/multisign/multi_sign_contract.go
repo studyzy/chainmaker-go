@@ -1,12 +1,14 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package multisign
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/logger"
@@ -20,23 +22,23 @@ var (
 
 // MultiSignContract multiSign Contract
 type MultiSignContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newMultiSignContract(log *logger.CMLogger) *MultiSignContract {
+func NewMultiSignContract(log *logger.CMLogger) *MultiSignContract {
 	return &MultiSignContract{
 		log:     log,
 		methods: registerMultiSignContractMethods(log),
 	}
 }
 
-func (c *MultiSignContract) getMethod(methodName string) ContractFunc {
+func (c *MultiSignContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerMultiSignContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerMultiSignContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 
 	return methodMap
 }

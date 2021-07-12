@@ -49,7 +49,7 @@ func getContract() error {
 	})
 
 	payloadBytes, err := constructQueryPayload(
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
+		common.SystemContract_PRIVATE_COMPUTE.String(),
 		common.PrivateComputeContractFunction_GET_CONTRACT.String(),
 		pairs,
 	)

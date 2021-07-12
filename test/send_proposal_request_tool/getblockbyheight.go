@@ -47,11 +47,11 @@ func getBlockByHeight() error {
 		},
 		{
 			Key:   "withRWSet",
-			Value:[]byte( w),
+			Value: []byte( w),
 		},
 	}
 
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func coreUpdate() error {
 	}
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CORE_UPDATE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CORE_UPDATE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}

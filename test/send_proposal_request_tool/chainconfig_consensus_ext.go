@@ -102,7 +102,7 @@ func consensusExtAdd() error {
 	}
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_ADD.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_ADD.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func consensusExtUpdate() error {
 	}
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func consensusExtDelete() error {
 	}
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_DELETE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CONSENSUS_EXT_DELETE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}

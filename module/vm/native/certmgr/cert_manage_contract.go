@@ -1,15 +1,17 @@
 /*
-Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package certmgr
 
 import (
 	"bytes"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -31,23 +33,23 @@ const (
 )
 
 type CertManageContract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newCertManageContract(log *logger.CMLogger) *CertManageContract {
+func NewCertManageContract(log *logger.CMLogger) *CertManageContract {
 	return &CertManageContract{
 		log:     log,
 		methods: registerCertManageContractMethods(log),
 	}
 }
 
-func (c *CertManageContract) getMethod(methodName string) ContractFunc {
+func (c *CertManageContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerCertManageContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerCertManageContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	certManageRuntime := &CertManageRuntime{log: log}
 	methodMap[commonPb.CertManageFunction_CERT_ADD.String()] = certManageRuntime.Add
@@ -65,7 +67,7 @@ type CertManageRuntime struct {
 }
 
 // Add cert add
-func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 
 	tx := txSimContext.GetTx()
 	sender := tx.Sender
@@ -84,7 +86,7 @@ func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[s
 		return nil, err
 	}
 
-	err = txSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHash), memberInfo)
+	err = txSimContext.Put(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHash), memberInfo)
 	if err != nil {
 		r.log.Errorf("certManage add cert failed, err: %s", err.Error())
 		return nil, err
@@ -95,20 +97,20 @@ func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[s
 }
 
 // Delete cert delete
-func (r *CertManageRuntime) Delete(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *CertManageRuntime) Delete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 
 	// verify params
-	certHashesStr := params[paramNameCertHashes]
+	certHashesStr := string(params[paramNameCertHashes])
 
 	if utils.IsAnyBlank(certHashesStr) {
-		err = fmt.Errorf("%s, delete cert require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		err = fmt.Errorf("%s, delete cert require param [%s] not found", common.ErrParams.Error(), paramNameCertHashes)
 		r.log.Error(err)
 		return nil, err
 	}
 
 	certHashes := strings.Split(certHashesStr, ",")
 	for _, certHash := range certHashes {
-		bytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHash))
+		bytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHash))
 		if err != nil {
 			r.log.Errorf("certManage delete the certHash failed, certHash[%s], err: %s", certHash, err.Error())
 			return nil, err
@@ -119,7 +121,7 @@ func (r *CertManageRuntime) Delete(txSimContext protocol.TxSimContext, params ma
 			return nil, errors.New("certManage delete the certHash is err")
 		}
 
-		err = txSimContext.Del(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHash))
+		err = txSimContext.Del(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHash))
 		if err != nil {
 			r.log.Errorf("certManage txSimContext.Del failed, certHash[%s] err: %s", certHash, err.Error())
 			return nil, err
@@ -131,13 +133,13 @@ func (r *CertManageRuntime) Delete(txSimContext protocol.TxSimContext, params ma
 }
 
 // Query certs query
-func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 
 	// verify params
-	certHashesStr := params[paramNameCertHashes]
+	certHashesStr := string(params[paramNameCertHashes])
 
 	if utils.IsAnyBlank(certHashesStr) {
-		err = fmt.Errorf("%s, query cert require param [%s] not found", ErrParams.Error(), paramNameCertHashes)
+		err = fmt.Errorf("%s, query cert require param [%s] not found", common.ErrParams.Error(), paramNameCertHashes)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -145,7 +147,7 @@ func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map
 	certHashes := strings.Split(certHashesStr, ",")
 	certInfos := make([]*commonPb.CertInfo, len(certHashes))
 	for i, certHash := range certHashes {
-		certBytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHash))
+		certBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHash))
 		if err != nil {
 			r.log.Errorf("certManage delete the certHash failed, certHash[%s] err: %s", certHash, err.Error())
 			return nil, err
@@ -170,7 +172,7 @@ func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map
 }
 
 // Freeze certs
-func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	// verify params
 	changed := false
 
@@ -181,10 +183,10 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 
 	// the full cert
 	var certFullHashes bytes.Buffer
-	certsStr := params[paramNameCerts]
+	certsStr := string(params[paramNameCerts])
 
 	if utils.IsAnyBlank(certsStr) {
-		err = fmt.Errorf("%s, freeze cert require param [%s] not found", ErrParams.Error(), paramNameCerts)
+		err = fmt.Errorf("%s, freeze cert require param [%s] not found", common.ErrParams.Error(), paramNameCerts)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -198,7 +200,7 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 			continue
 		}
 		certHashKey := protocol.CertFreezeKeyPrefix + certHash
-		certHashBytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHashKey))
+		certHashBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHashKey))
 		if err != nil {
 			r.log.Warnf("txSimContext get certHashKey certHashKey[%s], err:", certHashKey, err.Error())
 			continue
@@ -210,7 +212,7 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 			continue
 		}
 
-		err = txSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHashKey), []byte(cert))
+		err = txSimContext.Put(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHashKey), []byte(cert))
 		if err != nil {
 			r.log.Errorf("txSimContext.Put err, err: %s", err.Error())
 			continue
@@ -224,8 +226,8 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 
 	marshal, err := json.Marshal(freezeKeyArray)
@@ -233,7 +235,7 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 		r.log.Errorf("freezeKeyArray err: ", err.Error())
 		return nil, err
 	}
-	err = txSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey), marshal)
+	err = txSimContext.Put(commonPb.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey), marshal)
 	if err != nil {
 		r.log.Errorf("txSimContext put CERT_FREEZE_KEY err ", err.Error())
 		return nil, err
@@ -246,7 +248,7 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 }
 
 // Unfreeze certs unfreeze
-func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	// verify params
 	changed := false
 
@@ -262,11 +264,11 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 
 	// the full cert
 	var certFullHashes bytes.Buffer
-	certsStr := params[paramNameCerts]
-	certHashesStr := params[paramNameCertHashes]
+	certsStr := string(params[paramNameCerts])
+	certHashesStr := string(params[paramNameCertHashes])
 
 	if utils.IsAllBlank(certsStr, certHashesStr) {
-		err = fmt.Errorf("%s, unfreeze cert require param [%s or %s] not found", ErrParams.Error(), paramNameCerts, paramNameCertHashes)
+		err = fmt.Errorf("%s, unfreeze cert require param [%s or %s] not found", common.ErrParams.Error(), paramNameCerts, paramNameCertHashes)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -293,8 +295,8 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 
 	marshal, err := json.Marshal(freezeKeyArray)
@@ -302,7 +304,7 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 		r.log.Errorf("freezeKeyArray err: ", err.Error())
 		return nil, err
 	}
-	err = txSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey), marshal)
+	err = txSimContext.Put(commonPb.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey), marshal)
 	if err != nil {
 		r.log.Errorf("txSimContext put CERT_FREEZE_KEY err: ", err.Error())
 		return nil, err
@@ -314,7 +316,7 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 }
 
 // Revoke certs revocation
-func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 
 	// verify params
 	changed := false
@@ -340,7 +342,7 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 		return nil, errors.New("certManage crlList is empty")
 	}
 
-	crlBytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
+	crlBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
 	if err != nil {
 		r.log.Errorf("get certManage crlList fail err: ", err.Error())
 		return nil, fmt.Errorf("get certManage crlList failed, err: %s", err)
@@ -371,7 +373,7 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 		}
 
 		existed := false
-		crtListBytes1, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(key))
+		crtListBytes1, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(key))
 		if err != nil {
 			r.log.Warnf("certManage txSimContext crtList err: ", err.Error())
 			continue
@@ -388,7 +390,7 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 			Bytes:   crtListBytes,
 		})
 
-		err = txSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(key), toMemory)
+		err = txSimContext.Put(commonPb.SystemContract_CERT_MANAGE.String(), []byte(key), toMemory)
 		if err != nil {
 			r.log.Errorf("certManage save crl certs err: ", err.Error())
 			return nil, err
@@ -404,8 +406,8 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 	}
 
 	if !changed {
-		r.log.Error(ErrParams)
-		return nil, ErrParams
+		r.log.Error(common.ErrParams)
+		return nil, common.ErrParams
 	}
 
 	crlBytesResult, err := json.Marshal(crlKeyList)
@@ -413,7 +415,7 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 		r.log.Errorf("certManage marshal crlKeyList err: ", err.Error())
 		return nil, err
 	}
-	err = txSimContext.Put(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey), crlBytesResult)
+	err = txSimContext.Put(commonPb.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey), crlBytesResult)
 	if err != nil {
 		r.log.Errorf("certManage txSimContext put CertRevokeKey err: ", err.Error())
 		return nil, err
@@ -441,7 +443,7 @@ func (r *CertManageRuntime) getFreezeKeyArray(txSimContext protocol.TxSimContext
 
 	// the freeze key array
 	freezeKeyArray := make([]string, 0)
-	freezeKeyArrayBytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
+	freezeKeyArrayBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
 	if err != nil {
 		r.log.Errorf("txSimContext get CERT_FREEZE_KEY err: ", err.Error())
 		return "", nil, err
@@ -459,7 +461,7 @@ func (r *CertManageRuntime) getFreezeKeyArray(txSimContext protocol.TxSimContext
 
 func (r *CertManageRuntime) recoverFrozenCert(txSimContext protocol.TxSimContext, certHash string, freezeKeyArray []string, certFullHashes bytes.Buffer, changed bool) ([]string, bool) {
 	certHashKey := protocol.CertFreezeKeyPrefix + certHash
-	certHashBytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHashKey))
+	certHashBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHashKey))
 	if err != nil {
 		r.log.Warnf("txSimContext get certHashKey err certHashKey[%s] err: ", certHashKey, err.Error())
 		return nil, changed
@@ -471,7 +473,7 @@ func (r *CertManageRuntime) recoverFrozenCert(txSimContext protocol.TxSimContext
 		return nil, changed
 	}
 
-	err = txSimContext.Del(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHashKey))
+	err = txSimContext.Del(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHashKey))
 	if err != nil {
 		r.log.Warnf("certManage unfreeze txSimContext.Del failed, certHash[%s] err:%s", certHash, err.Error())
 		return nil, changed

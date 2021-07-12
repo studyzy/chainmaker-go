@@ -12,7 +12,7 @@ import (
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
-	err := wacsi.ExecuteQuery(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.ChainId)
+	err := wacsi.ExecuteQuery(s.RequestBody, s.ContractId.Name, s.TxSimContext, s.Vm.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -31,7 +31,7 @@ func (s *WaciInstance) ExecuteQueryOne() int32 {
 }
 
 func (s *WaciInstance) executeQueryOneCore(isLen bool) int32 {
-	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.ChainId, isLen)
+	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.ContractId.Name, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.ChainId, isLen)
 	s.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
@@ -83,7 +83,7 @@ func (s *WaciInstance) RSClose() int32 {
 // ExecuteUpdate execute update and insert sql, allow single row change
 // as: update table set name = 'Tom' where uniqueKey='xxx'
 func (s *WaciInstance) ExecuteUpdate() int32 {
-	err := wacsi.ExecuteUpdate(s.RequestBody, s.ContractId.ContractName, s.Method, s.TxSimContext, s.Vm.Memory, s.ChainId)
+	err := wacsi.ExecuteUpdate(s.RequestBody, s.ContractId.Name, s.Method, s.TxSimContext, s.Vm.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -102,7 +102,7 @@ func (s *WaciInstance) ExecuteUpdate() int32 {
 // You must have a primary key to create a table
 func (s *WaciInstance) ExecuteDDL() int32 {
 	//wacsi.IsManageContract()
-	err := wacsi.ExecuteDDL(s.RequestBody, s.ContractId.ContractName, s.TxSimContext, s.Vm.Memory, s.Method)
+	err := wacsi.ExecuteDDL(s.RequestBody, s.ContractId.Name, s.TxSimContext, s.Vm.Memory, s.Method)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail

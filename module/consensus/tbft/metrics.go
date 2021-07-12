@@ -79,12 +79,12 @@ func (r *roundMetrics) AppendPersistStateDuration(step string, d time.Duration) 
 }
 
 type heightMetrics struct {
-	height             int64
+	height             uint64
 	enterNewHeightTime time.Time
 	rounds             map[int32]*roundMetrics
 }
 
-func NewHeightMetrics(height int64) *heightMetrics {
+func NewHeightMetrics(height uint64) *heightMetrics {
 	return &heightMetrics{
 		height: height,
 		rounds: make(map[int32]*roundMetrics),
@@ -92,7 +92,7 @@ func NewHeightMetrics(height int64) *heightMetrics {
 }
 
 type heightMetricsJson struct {
-	Height             int64
+	Height             uint64
 	EnterNewHeightTime string
 	Rounds             map[int32]*roundMetricsJson
 }

@@ -22,15 +22,15 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
-	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().GetHeader().GetTxId())
+	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().Payload.TxId)
 	startTime := utils.CurrentTimeMillisSeconds()
 
 	// contract response
 	contractResult = &commonPb.ContractResult{
-		Code:    0,
+		Code:    uint32(protocol.ContractResultCode_OK),
 		Result:  nil,
 		Message: "",
 	}
@@ -85,8 +85,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		err = fmt.Errorf("contract invoke failed, out of gas %d/%d", gas, int64(protocol.GasLimit))
 	}
 	logStr += fmt.Sprintf("used gas %d ", gas)
-	contractResult.GasUsed = int64(gas)
-
+	contractResult.GasUsed = gas
 	if err != nil {
 		contractResult.Code = 1
 		msg := fmt.Sprintf("contract invoke failed, %s", err.Error())
@@ -96,6 +95,6 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		return contractResult
 	}
 	contractResult.ContractEvent = sc.ContractEvent
-	contractResult.GasUsed = int64(gas)
+	contractResult.GasUsed = gas
 	return contractResult
 }

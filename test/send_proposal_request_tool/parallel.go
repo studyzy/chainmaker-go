@@ -63,7 +63,7 @@ var (
 	fileCache = NewFileCacheReader()
 	certCache = NewCertFileCacheReader()
 
-	abiCache  FileCacheReader     = NewFileCacheReader()
+	abiCache     = NewFileCacheReader()
 	outputResult bool
 )
 
@@ -690,15 +690,15 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 		return err
 	}
 	var pairs []*commonPb.KeyValuePair
-	payload,_:=commonPb.GenerateInstallContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
-		"1.0.0",commonPb.RuntimeType(runTime),wasmBin,pairs)
+	payload, _ := commonPb.GenerateInstallContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
+		"1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
 	//
 	//method := consts.ContractManager_INIT_CONTRACT.String()
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
-	//	ContractId: &commonPb.ContractId{
+	//	Contract: &commonPb.Contract{
 	//		ContractName:    fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
 	//		ContractVersion: "1.0.0",
 	//		RuntimeType:     commonPb.RuntimeType(runTime),
@@ -777,26 +777,26 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_ContractName.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_Version.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_VERSION.String(),
 		Value: []byte(version),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_RuntimeType.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_RUNTIME_TYPE.String(),
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_ByteCode.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String(),
 		Value: bytecode,
 	})
 	for _, kv := range initParameters {
 		pairs = append(pairs, kv)
 	}
 	payload := &commonPb.Payload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
+		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
 		Method:       consts.ContractManager_UPGRADE_CONTRACT.String(),
 		Parameters:   pairs,
 	}

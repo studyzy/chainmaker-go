@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sort"
@@ -14,7 +15,6 @@ import (
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 )
 
 // Storage interface for smart contracts
@@ -40,7 +40,7 @@ type txSimContextImpl struct {
 type callContractResult struct {
 	contractName string
 	method       string
-	param        map[string]string
+	param        map[string][]byte
 	depth        int
 	gasUsed      uint64
 	result       []byte
@@ -95,19 +95,16 @@ func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
-	if creatorByte, err := s.Get(commonpb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
+	contract, err := utils.GetContractByName(s.Get, contractName)
+	if err != nil {
+		//TODO log
 		return nil
-	} else {
-		creator := &acpb.SerializedMember{}
-		if err = proto.Unmarshal(creatorByte, creator); err != nil {
-			return nil
-		}
-		return creator
 	}
+	return contract.Creator
 }
 
 func (s *txSimContextImpl) GetSender() *acpb.SerializedMember {
-	return s.tx.Payload.Sender
+	return s.tx.Sender.GetSigner()
 }
 
 func (s *txSimContextImpl) putIntoReadSet(contractName string, key []byte, value []byte) {
@@ -210,11 +207,11 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 }
 
 // Get the height of the corresponding block
-func (s *txSimContextImpl) GetBlockHeight() int64 {
+func (s *txSimContextImpl) GetBlockHeight() uint64 {
 	return s.snapshot.GetBlockHeight()
 }
 
-func (s *txSimContextImpl) GetBlockProposer() []byte {
+func (s *txSimContextImpl) GetBlockProposer() *acpb.SerializedMember {
 	return s.snapshot.GetBlockProposer()
 }
 
@@ -239,12 +236,14 @@ func (s *txSimContextImpl) SetTxResult(txResult *commonpb.Result) {
 }
 
 // Cross contract call
-func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonpb.TxType) (*commonpb.ContractResult, commonpb.TxStatusCode) {
+func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method string, byteCode []byte,
+	parameter map[string][]byte, gasUsed uint64, refTxType commonpb.TxType) (
+	*commonpb.ContractResult, commonpb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonpb.ContractResult{
-			Code:    commonpb.ContractResultCode_FAIL,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
@@ -252,7 +251,7 @@ func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method stri
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonpb.ContractResult{
-			Code:    commonpb.ContractResultCode_FAIL,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}

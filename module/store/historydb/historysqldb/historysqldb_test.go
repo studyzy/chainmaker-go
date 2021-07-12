@@ -50,9 +50,9 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 		Txs: []*commonPb.Transaction{
 			{
 				Payload: &commonPb.Payload{
-					ChainId: chainId,
-					TxType:  commonPb.TxType_INVOKE_CONTRACT,
-					ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+					ChainId:      chainId,
+					TxType:       commonPb.TxType_INVOKE_CONTRACT,
+					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
 					Signer:    &acPb.SerializedMember{

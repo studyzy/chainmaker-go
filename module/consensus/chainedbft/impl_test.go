@@ -89,8 +89,8 @@ func initChainConf(filePath string, t *testing.T) (*chainconf.ChainConf, error) 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	store := mock.NewMockBlockchainStore(ctrl)
-	store.EXPECT().ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
+	store.EXPECT().ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
 	nodecf, _ := chainconf.NewChainConf(
 		chainconf.WithBlockchainStore(store),
 	)
@@ -171,7 +171,7 @@ func InitGenesis(chainid string) *commonPb.Block {
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.Payload{
+				Payload: &commonPb.Payload{
 					ChainId: chainid,
 				},
 			},
@@ -354,7 +354,7 @@ func cfgChainedBftNode(t *testing.T) {
 //}
 
 //testInsertProposal tests InsertProposal function
-func testInsertProposal(height int64, round int64,
+func testInsertProposal(height uint64, round int64,
 	msg *chainedbft.ConsensusMsg, t *testing.T) {
 	for i := 0; i < len(chainedBftNode); i++ {
 		inserted, _ := chainedBftNode[i].msgPool.InsertProposal(uint64(height),
@@ -364,7 +364,7 @@ func testInsertProposal(height int64, round int64,
 }
 
 //testGetProposal tests GetProposal function
-func testGetProposal(height int64, round int64, t *testing.T) {
+func testGetProposal(height uint64, round int64, t *testing.T) {
 	for i := 0; i < len(chainedBftNode); i++ {
 		msg := chainedBftNode[i].msgPool.GetProposal(uint64(height), uint64(round))
 		assert.NotNil(t, msg)
@@ -390,7 +390,7 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 }
 
 //testEndorseBlock tests endorse proposal block
-//func testEndorseBlock(height int64, level int64,
+//func testEndorseBlock(height uint64, level int64,
 //	block *commonPb.Block, t *testing.T) {
 //	endorsePayload0 := chainedBftNode[0].constructVote(uint64(height), uint64(level), 0, block)
 //	assert.NotNil(t, endorsePayload0)
@@ -501,13 +501,13 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 //		panic(err)
 //	}
 //	chainedBftNode[0].smr.forwardNewHeightIfNeed()
-//	assert.Equal(t, chainedbft.ConsStateType_NewHeight, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_HEIGHT, chainedBftNode[0].smr.state)
 //
 //	chainedBftNode[0].processNewHeight(chainedBftNode[0].smr.getHeight(), chainedBftNode[0].smr.getCurrentLevel())
-//	assert.Equal(t, chainedbft.ConsStateType_NewLevel, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_LEVEL, chainedBftNode[0].smr.state)
 //
 //	chainedBftNode[0].processNewLevel(chainedBftNode[0].smr.getHeight(), chainedBftNode[0].smr.getCurrentLevel()+1)
-//	assert.Equal(t, chainedbft.ConsStateType_Propose, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_PROPOSE, chainedBftNode[0].smr.state)
 //
 //}
 
@@ -522,7 +522,7 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 //		timeservice.GetEventTimeout(timeservice.VOTE_BLOCK_TIMEOUT, int32(cs.smr.getCurrentLevel()))
 //	time.Sleep(duration)
 //
-//	assert.Equal(t, chainedbft.ConsStateType_Propose, cs.smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_PROPOSE, cs.smr.state)
 //
 //	cs.Stop()
 //}
@@ -551,7 +551,7 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 //
 //	time.Sleep(3 * time.Second)
 //
-//	assert.Equal(t, chainedbft.ConsStateType_Propose, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_PROPOSE, chainedBftNode[0].smr.state)
 //
 //	chainedBftNode[0].Stop()
 //}
@@ -572,7 +572,7 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 //	chainedBftNode[0].selfIndexInEpoch = math.MaxInt32
 //
 //	chainedBftNode[0].processNewHeight(chainedBftNode[0].smr.getHeight(), chainedBftNode[0].smr.getCurrentLevel())
-//	assert.Equal(t, chainedbft.ConsStateType_NewHeight, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_HEIGHT, chainedBftNode[0].smr.state)
 //	chainedBftNode[0].selfIndexInEpoch = origin
 //}
 
@@ -588,12 +588,12 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 //	}
 //	chainedBftNode[0].smr.forwardNewHeightIfNeed()
 //
-//	assert.Equal(t, chainedbft.ConsStateType_NewHeight, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_HEIGHT, chainedBftNode[0].smr.state)
 //
 //	//mismatch height
 //	chainedBftNode[0].processNewHeight(chainedBftNode[0].smr.getHeight()+1,
 //		chainedBftNode[0].smr.getCurrentLevel())
-//	assert.Equal(t, chainedbft.ConsStateType_NewHeight, chainedBftNode[0].smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_HEIGHT, chainedBftNode[0].smr.state)
 //}
 
 //TestProcessNewRound tests processNewRound function
@@ -610,12 +610,12 @@ func signMsg(payload *chainedbft.ConsensusPayload, singer protocol.SigningMember
 //	chainedBftNode[0].smr.forwardNewHeightIfNeed()
 //
 //	cs := chainedBftNode[0]
-//	assert.Equal(t, chainedbft.ConsStateType_NewHeight, cs.smr.state)
-//	cs.smr.state = chainedbft.ConsStateType_NewLevel
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_HEIGHT, cs.smr.state)
+//	cs.smr.state = chainedbft.ConsStateType_NEW_LEVEL
 //
 //	//mismatch height
 //	cs.processNewLevel(cs.smr.getHeight()+1, cs.smr.getCurrentLevel())
-//	assert.Equal(t, chainedbft.ConsStateType_NewLevel, cs.smr.state)
+//	assert.Equal(t, chainedbft.ConsStateType_NEW_LEVEL, cs.smr.state)
 //}
 
 //func TestInitTimeOutConfig(t *testing.T) {

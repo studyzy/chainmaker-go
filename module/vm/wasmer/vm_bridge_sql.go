@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var rowIndex int32 = 0
@@ -16,7 +16,7 @@ var verifySql = &types.StandardSqlVerify{}
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
-	err := wacsi.ExecuteQuery(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.ChainId)
+	err := wacsi.ExecuteQuery(s.RequestBody, s.Sc.ContractId.Name, s.Sc.TxSimContext, s.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -35,7 +35,7 @@ func (s *WaciInstance) ExecuteQueryOne() int32 {
 }
 
 func (s *WaciInstance) executeQueryOneCore(isLen bool) int32 {
-	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.ChainId, isLen)
+	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.Sc.ContractId.Name, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.ChainId, isLen)
 	s.Sc.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())
@@ -87,7 +87,7 @@ func (s *WaciInstance) RSClose() int32 {
 // ExecuteUpdate execute update and insert sql, allow single row change
 // as: update table set name = 'Tom' where uniqueKey='xxx'
 func (s *WaciInstance) ExecuteUpdate() int32 {
-	err := wacsi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.method, s.Sc.TxSimContext, s.Memory, s.ChainId)
+	err := wacsi.ExecuteUpdate(s.RequestBody, s.Sc.ContractId.Name, s.Sc.method, s.Sc.TxSimContext, s.Memory, s.ChainId)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -105,7 +105,7 @@ func (s *WaciInstance) ExecuteUpdate() int32 {
 //
 // You must have a primary key to create a table
 func (s *WaciInstance) ExecuteDDL() int32 {
-	err := wacsi.ExecuteDDL(s.RequestBody, s.Sc.ContractId.ContractName, s.Sc.TxSimContext, s.Memory, s.Sc.method)
+	err := wacsi.ExecuteDDL(s.RequestBody, s.Sc.ContractId.Name, s.Sc.TxSimContext, s.Memory, s.Sc.method)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail

@@ -1,10 +1,11 @@
 /*
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package privatecompute
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
@@ -45,8 +46,8 @@ func TestSaveEnclaveCaCert(t *testing.T) {
 	// 读取CA证书
 	certCaPem := readFileData(certCaFilename, t)
 
-	params := map[string]string{}
-	params["ca_cert"] = string(certCaPem)
+	params := map[string][]byte{}
+	params["ca_cert"] = []byte(certCaPem)
 	result, err := privateComputeRuntime.SaveEnclaveCACert(mockCtx, params)
 	if err != nil {
 		t.Fatalf("Save enclave ca cert error: %v", err)
@@ -66,9 +67,9 @@ func TestSaveEnclaveReport(t *testing.T) {
 	// 读取report
 	report := readFileData(reportFilename, t)
 
-	params := map[string]string{}
-	params["enclave_id"] = "global_enclave_id"
-	params["report"] = string(report)
+	params := map[string][]byte{}
+	params["enclave_id"] = []byte("global_enclave_id")
+	params["report"] = report
 	_, err := privateComputeRuntime.SaveEnclaveReport(mockCtx, params)
 	if err != nil {
 		t.Fatalf("Save enclave report error: %v", err)
@@ -86,9 +87,9 @@ func TestSaveEnclaveReport(t *testing.T) {
 //
 //	ds := map[string][]byte{}
 //	mockCtx := newTxContextMock(ds)
-//	reportKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
+//	reportKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
 //	ds[reportKey] = report
-//	caCertKey := commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String() + "::ca_cert"
+//	caCertKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + "::ca_cert"
 //	ds[caCertKey] = caCertPem
 //
 //	proofFile, err := os.Open(proofFilename)

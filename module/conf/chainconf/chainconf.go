@@ -165,7 +165,7 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 // latestChainConfig load latest chainConfig
 func (c *ChainConf) latestChainConfig() error {
 	// load chain config from store
-	bytes, err := c.blockchainStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), []byte(common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	bytes, err := c.blockchainStore.ReadObject(common.SystemContract_CHAIN_CONFIG.String(), []byte(common.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return err
 	}

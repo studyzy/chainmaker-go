@@ -31,9 +31,9 @@ func SubscribeBlockCMD() *cobra.Command {
 func subscribeBlock() error {
 	payload := &commonPb.Payload{
 		Parameters: []*commonPb.KeyValuePair{
-			{Key: consts.SubscribeBlockPayload_StartBlock.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
-			{Key: consts.SubscribeBlockPayload_EndBlock.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
-			{Key: consts.SubscribeBlockPayload_WithRwSet.String(), Value: []byte(strconv.FormatBool(withRwSet))},
+			{Key: consts.SubscribeBlockPayload_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
+			{Key: consts.SubscribeBlockPayload_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
+			{Key: consts.SubscribeBlockPayload_WITH_RWSET.String(), Value: []byte(strconv.FormatBool(withRwSet))},
 		},
 		//StartBlock: startBlock,
 		//EndBlock:   endBlock,

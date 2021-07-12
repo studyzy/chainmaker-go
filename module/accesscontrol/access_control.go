@@ -464,12 +464,12 @@ func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
 }
 
 func (ac *accessControl) ContractNames() []string {
-	return []string{common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String()}
+	return []string{common.SystemContract_CERT_MANAGE.String()}
 }
 
 func (ac *accessControl) Callback(contractName string, payloadBytes []byte) error {
 	switch contractName {
-	case common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String():
+	case common.SystemContract_CERT_MANAGE.String():
 		return ac.systemContractCallbackCertManagementCase(payloadBytes)
 	default:
 		ac.log.Debugf("unwatched smart contract [%s]", contractName)

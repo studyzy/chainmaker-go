@@ -29,8 +29,8 @@ type blockWithPeerInfo struct {
 }
 
 type processor struct {
-	queue          map[int64]blockWithPeerInfo // Information about the blocks will be processed
-	hasCommitBlock int64                       // Number of blocks that have been commit
+	queue          map[uint64]blockWithPeerInfo // Information about the blocks will be processed
+	hasCommitBlock uint64                       // Number of blocks that have been commit
 
 	log         *logger.CMLogger
 	ledgerCache protocol.LedgerCache // Provides the latest chain state for the node
@@ -41,7 +41,7 @@ func newProcessor(verify verifyAndAddBlock, ledgerCache protocol.LedgerCache, lo
 	return &processor{
 		ledgerCache:       ledgerCache,
 		verifyAndAddBlock: verify,
-		queue:             make(map[int64]blockWithPeerInfo),
+		queue:             make(map[uint64]blockWithPeerInfo),
 		log:               log,
 	}
 }
@@ -105,12 +105,12 @@ func (pro *processor) handleDataDetection() {
 	}
 }
 
-func (pro *processor) lastCommitBlockHeight() int64 {
+func (pro *processor) lastCommitBlockHeight() uint64 {
 	return pro.ledgerCache.GetLastCommittedBlock().Header.BlockHeight
 }
 
-func (pro *processor) hasProcessedBlock() int64 {
-	return atomic.LoadInt64(&pro.hasCommitBlock)
+func (pro *processor) hasProcessedBlock() uint64 {
+	return atomic.LoadUint64(&pro.hasCommitBlock)
 }
 
 func (pro *processor) getServiceState() string {

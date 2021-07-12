@@ -11,13 +11,13 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol/mock"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/mock/gomock"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
 	"chainmaker.org/chainmaker-go/dpos"
+	"chainmaker.org/chainmaker/common/msgbus"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -46,7 +46,7 @@ func TestNewConsensusEngine(t *testing.T) {
 
 	signer := mock.NewMockSigningMember(ctrl)
 	ledgerCache := mock.NewMockLedgerCache(ctrl)
-	ledgerCache.EXPECT().CurrentHeight().AnyTimes().Return(int64(1), nil)
+	ledgerCache.EXPECT().CurrentHeight().AnyTimes().Return(uint64(1), nil)
 	chainConf := mock.NewMockChainConf(ctrl)
 	chainConf.EXPECT().ChainConfig().AnyTimes().Return(&configpb.ChainConfig{
 		Consensus: &configpb.ConsensusConfig{

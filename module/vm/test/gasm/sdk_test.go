@@ -39,7 +39,7 @@ package gasmtest
 //	byteCode, err := ioutil.ReadFile("C:\\workspace\\chainmaker-go\\module\\vm\\sdk\\c\\counter-c.wasm")
 //	require.NoError(t, err)
 //
-//	contractId := &commonPb.ContractId{
+//	contractId := &commonPb.Contract{
 //		ContractName:    "",
 //		ContractVersion: "",
 //		RuntimeType:     0,
@@ -97,7 +97,7 @@ package gasmtest
 //
 //	byteCode, err := ioutil.ReadFile("C:\\workspace\\chainmaker-go\\module\\vm\\sdk\\go\\counter-go.wasm")
 //	require.NoError(t, err)
-//	contractId := &commonPb.ContractId{
+//	contractId := &commonPb.Contract{
 //		ContractName:    "",
 //		ContractVersion: "",
 //		RuntimeType:     0,

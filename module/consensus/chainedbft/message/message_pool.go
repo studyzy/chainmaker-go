@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 //MsgPool manages all of consensus messages received for protocol
@@ -38,7 +38,7 @@ func (mp *MsgPool) InsertVote(height uint64, round uint64, voteMsg *chainedbft.C
 	if voteMsg == nil || voteMsg.Payload == nil {
 		return false, fmt.Errorf("nil vote msg or nil payload")
 	}
-	if voteMsg.Payload.Type != chainedbft.MessageType_VoteMessage {
+	if voteMsg.Payload.Type != chainedbft.MessageType_VOTE_MESSAGE {
 		return false, fmt.Errorf("wrong vote type %v", voteMsg.Payload.Type)
 	}
 
@@ -92,7 +92,7 @@ func (mp *MsgPool) CheckAnyVotes(height uint64, round uint64) bool {
 	if _, ok := mp.msgs[height]; !ok {
 		return false
 	}
-	return mp.msgs[height].checkAnyVotes(round, chainedbft.MessageType_VoteMessage, mp.minVotesForQc)
+	return mp.msgs[height].checkAnyVotes(round, chainedbft.MessageType_VOTE_MESSAGE, mp.minVotesForQc)
 }
 
 //CheckVotesDone is an external api to check whether self have received enough votes for a valid block or change view
@@ -103,7 +103,7 @@ func (mp *MsgPool) CheckVotesDone(height uint64, round uint64) ([]byte, bool, bo
 	if _, ok := mp.msgs[height]; !ok {
 		return nil, false, false
 	}
-	return mp.msgs[height].checkVoteDone(round, chainedbft.MessageType_VoteMessage)
+	return mp.msgs[height].checkVoteDone(round, chainedbft.MessageType_VOTE_MESSAGE)
 }
 
 //GetLastValidRound is an external api to get latest valid round at height

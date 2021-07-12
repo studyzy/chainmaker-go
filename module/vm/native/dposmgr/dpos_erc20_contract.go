@@ -1,12 +1,14 @@
 /*
-Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-SPDX-License-Identifier: Apache-2.0
-*/
-
-package native
+package dposmgr
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/hex"
@@ -42,27 +44,27 @@ const (
 )
 
 var (
-	dposErc20ContractName = commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()
+	dposErc20ContractName = commonPb.SystemContract_DPOS_ERC20.String()
 )
 
 type DPoSERC20Contract struct {
-	methods map[string]ContractFunc
+	methods map[string]common.ContractFunc
 	log     *logger.CMLogger
 }
 
-func newDPoSERC20Contract(log *logger.CMLogger) *DPoSERC20Contract {
+func NewDPoSERC20Contract(log *logger.CMLogger) *DPoSERC20Contract {
 	return &DPoSERC20Contract{
 		log:     log,
 		methods: registerDPoSERC20ContractMethods(log),
 	}
 }
 
-func (c *DPoSERC20Contract) getMethod(methodName string) ContractFunc {
+func (c *DPoSERC20Contract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]ContractFunc {
-	methodMap := make(map[string]ContractFunc, 64)
+func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+	methodMap := make(map[string]common.ContractFunc, 64)
 	// [DPoS]
 	dposRuntime := NewDPoSRuntime(log)
 	methodMap[commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String()] = dposRuntime.BalanceOf
@@ -92,26 +94,27 @@ func NewDPoSRuntime(log *logger.CMLogger) *DPoSRuntime {
 // BalanceOf return balance(token) of owner
 // params["owner"]:${owner}
 // return balance of ${owner}
-func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if owner, ok := params[paramNameOwner]; ok {
-		if owner == "" {
-			r.log.Errorf("contract[%s] param [%s] is nil", dposErc20ContractName, paramNameOwner)
-			return nil, ErrParams
-		}
-		bigInteger, err := balanceOf(txSimContext, owner)
-		if err != nil {
-			r.log.Errorf("load balance of owner[%s] error: %s", owner, err.Error())
-			return nil, err
-		}
-		if bigInteger == nil {
-			bigInteger = utils.NewZeroBigInteger()
-		}
-		return []byte(bigInteger.String()), nil
+	owner := string(params[paramNameOwner])
+	//if owner, ok := params[paramNameOwner]; ok {
+	if owner == "" {
+		r.log.Errorf("contract[%s] param [%s] is nil", dposErc20ContractName, paramNameOwner)
+		return nil, common.ErrParams
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameOwner)
+	bigInteger, err := balanceOf(txSimContext, owner)
+	if err != nil {
+		r.log.Errorf("load balance of owner[%s] error: %s", owner, err.Error())
+		return nil, err
+	}
+	if bigInteger == nil {
+		bigInteger = utils.NewZeroBigInteger()
+	}
+	return []byte(bigInteger.String()), nil
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameOwner)
 }
 
 // Transfer
@@ -119,33 +122,35 @@ func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[s
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value of ${sender} after transfer
-func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if to, ok := params[paramNameTo]; ok {
-		if value, ok := params[paramNameValue]; ok {
-			val, err := loadAndCheckValue(value)
-			if err != nil {
-				// 转账的值不正确
-				r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
-				return nil, err
-			}
-			// 获取当前用户
-			from, err := loadSenderAddress(txSimContext)
-			if err != nil {
-				r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-				return nil, err
-			}
-			result, err := transfer(txSimContext, from, to, val)
-			if err != nil {
-				r.log.Errorf("transfer from [%s] to [%s] failed: %s", from, to, err.Error())
-			}
-			return result, err
-		}
-		return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	to := string(params[paramNameTo])
+	value := string(params[paramNameValue])
+	//if to, ok := params[paramNameTo]; ok {
+	//	if value, ok := params[paramNameValue]; ok {
+	val, err := loadAndCheckValue(value)
+	if err != nil {
+		// 转账的值不正确
+		r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
+		return nil, err
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
+	// 获取当前用户
+	from, err := loadSenderAddress(txSimContext)
+	if err != nil {
+		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+		return nil, err
+	}
+	result, err = transfer(txSimContext, from, to, val)
+	if err != nil {
+		r.log.Errorf("transfer from [%s] to [%s] failed: %s", from, to, err.Error())
+	}
+	return result, err
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // TransferFrom 交易的发送者，从from的账号中转移指定数目的token给to账户
@@ -154,23 +159,26 @@ func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[st
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value of ${from} after transfer
-func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if to, ok := params[paramNameTo]; ok {
-		if from, ok := params[paramNameFrom]; ok {
-			if value, ok := params[paramNameValue]; ok {
-				val, err := loadAndCheckValue(value)
-				if err != nil {
-					// 转账的值不正确
-					r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
-					return nil, err
-				}
-				// 获取当前用户
-				sender, err := loadSenderAddress(txSimContext)
-				if err != nil {
-					r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+	from := string(params[paramNameFrom])
+	to := string(params[paramNameTo])
+	value := string(params[paramNameValue])
+	//if to, ok := params[paramNameTo]; ok {
+	//	if from, ok := params[paramNameFrom]; ok {
+	//		if value, ok := params[paramNameValue]; ok {
+	val, err := loadAndCheckValue(value)
+	if err != nil {
+		// 转账的值不正确
+		r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
+		return nil, err
+	}
+	// 获取当前用户
+	sender, err := loadSenderAddress(txSimContext)
+	if err != nil {
+		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
 					return nil, err
 				}
 				// 检查当前用户是否获得授权
@@ -190,19 +198,19 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 					return nil, fmt.Errorf("address approve is not enough, contract[%s] sender[%s] from[%s] approve[%s] value[%s]",
 						dposErc20ContractName, sender, from, approveVal.String(), val.String())
 				}
-				// 将授权值重置，然后进行转账操作
-				newApproveVal := utils.Sub(approveVal, val)
-				err = setApproveValue(txSimContext, from, sender, newApproveVal)
-				if err != nil {
-					return nil, err
-				}
-				return transfer(txSimContext, from, to, val)
-			}
-			return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
-		}
-		return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameFrom)
+	// 将授权值重置，然后进行转账操作
+	newApproveVal := utils.Sub(approveVal, val)
+	err = setApproveValue(txSimContext, from, sender, newApproveVal)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
+	return transfer(txSimContext, from, to, val)
+	//}
+	//		return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	//	}
+	//	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameFrom)
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Approve
@@ -210,56 +218,60 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value for ${sender} to ${to}
-func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Approve(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if approveTo, ok := params[paramNameTo]; ok {
-		// 判断value是否合法
-		if value, ok := params[paramNameValue]; ok {
-			val, err := loadAndCheckValue(value)
-			if err != nil {
-				// 授权的值不正确
-				r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
-				return nil, err
-			}
-			// 获取当前用户
-			from, err := loadSenderAddress(txSimContext)
-			if err != nil {
-				r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-				return nil, err
-			}
-			err = setApproveValue(txSimContext, from, approveTo, val)
-			if err != nil {
-				return nil, err
-			}
-			return []byte(val.String()), nil
-		}
-		return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	approveTo := string(params[paramNameTo])
+	value := string(params[paramNameValue])
+	//if approveTo, ok := params[paramNameTo]; ok {
+	// 判断value是否合法
+	//if value, ok := params[paramNameValue]; ok {
+	val, err := loadAndCheckValue(value)
+	if err != nil {
+		// 授权的值不正确
+		r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
+		return nil, err
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
+	// 获取当前用户
+	from, err := loadSenderAddress(txSimContext)
+	if err != nil {
+		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+		return nil, err
+	}
+	err = setApproveValue(txSimContext, from, approveTo, val)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(val.String()), nil
+	//}
+	//	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Mint 增发
 // params["to"]:${to}
 // params["value"]:${value}
 // return newest token of ${to} after mint
-func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if mintTo, ok := params[paramNameTo]; ok {
-		if value, ok := params[paramNameValue]; ok {
-			val, err := loadAndCheckValue(value)
-			if err != nil {
-				// 增发的值不正确
-				r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
-				return nil, err
-			}
-			// 获取当前用户
-			from, err := loadSenderAddress(txSimContext)
-			if err != nil {
-				r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+	mintTo := string(params[paramNameTo])
+	value := string(params[paramNameValue])
+	//if mintTo, ok := params[paramNameTo]; ok {
+	//	if value, ok := params[paramNameValue]; ok {
+	val, err := loadAndCheckValue(value)
+	if err != nil {
+		// 增发的值不正确
+		r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
+		return nil, err
+	}
+	// 获取当前用户
+	from, err := loadSenderAddress(txSimContext)
+	if err != nil {
+		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
 				return nil, err
 			}
 			// 当前用户必须是Owner
@@ -296,40 +308,42 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 			// 增发给具体用户
 			newToBalance := utils.Sum(toBalance, val)
 			// 写入到数据库
-			err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(newTotalSupply.String()))
-			if err != nil {
-				return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
-			}
-			err = txSimContext.Put(dposErc20ContractName, []byte(BalanceKey(mintTo)), []byte(newToBalance.String()))
-			if err != nil {
-				return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
-			}
-			// 返回增发后该账户的值
-			return []byte(newToBalance.String()), nil
-		}
-		return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(newTotalSupply.String()))
+	if err != nil {
+		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
+	err = txSimContext.Put(dposErc20ContractName, []byte(BalanceKey(mintTo)), []byte(newToBalance.String()))
+	if err != nil {
+		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
+	}
+	// 返回增发后该账户的值
+	return []byte(newToBalance.String()), nil
+	//}
+	//	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Burn 交易的发送者燃烧一定数量的代币，最多可燃烧殆尽
 // params["value"]:${value}
 // return balance of sender after burn
-func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if value, ok := params[paramNameValue]; ok {
-		val, err := loadAndCheckValue(value)
-		if err != nil {
-			// 燃烧的值不正确
-			r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
-			return nil, err
-		}
-		// 获取当前用户
-		from, err := loadSenderAddress(txSimContext)
-		if err != nil {
-			r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+	value := string(params[paramNameValue])
+
+	//if value, ok := params[paramNameValue]; ok {
+	val, err := loadAndCheckValue(value)
+	if err != nil {
+		// 燃烧的值不正确
+		r.log.Errorf("contract[%s] param [%s] is illegal", dposErc20ContractName, paramNameValue)
+		return nil, err
+	}
+	// 获取当前用户
+	from, err := loadSenderAddress(txSimContext)
+	if err != nil {
+		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
 			return nil, err
 		}
 		// 获取当前用户的token数量
@@ -365,89 +379,93 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 		afterFromBalance = utils.Sub(beforeFromBalance, val)
 		// 重置总量和当前账号的值
 		// 写入到数据库
-		err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(afterTotalSupply.String()))
-		if err != nil {
-			return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
-		}
-		err = txSimContext.Put(dposErc20ContractName, []byte(BalanceKey(from)), []byte(afterFromBalance.String()))
-		if err != nil {
-			return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
-		}
-		// 返回燃烧后的值
-		return []byte(afterFromBalance.String()), nil
+	err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(afterTotalSupply.String()))
+	if err != nil {
+		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
+	err = txSimContext.Put(dposErc20ContractName, []byte(BalanceKey(from)), []byte(afterFromBalance.String()))
+	if err != nil {
+		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
+	}
+	// 返回燃烧后的值
+	return []byte(afterFromBalance.String()), nil
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
 }
 
 // TransferOwnership 转移拥有者给其他账户
 // params["to"]:${to}
 // return new owner
-func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if to, ok := params[paramNameTo]; ok {
-		// 获取当前用户
-		from, err := loadSenderAddress(txSimContext)
-		if err != nil {
-			r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-			return nil, err
-		}
-		// 当前用户必须是Owner
-		owner, err := owner(txSimContext)
-		if err != nil {
-			r.log.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
+	to := string(params[paramNameTo])
+
+	//if to, ok := params[paramNameTo]; ok {
+	// 获取当前用户
+	from, err := loadSenderAddress(txSimContext)
+	if err != nil {
+		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+		return nil, err
+	}
+	// 当前用户必须是Owner
+	owner, err := owner(txSimContext)
+	if err != nil {
+		r.log.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
 			return nil, fmt.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
-		}
-		if !strings.EqualFold(string(owner), from) {
-			r.log.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
-				dposErc20ContractName, string(owner), from)
-			return nil, fmt.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
-				dposErc20ContractName, string(owner), from)
-		}
-		// 将owner设置魏to
-		// 返回新的owner
-		return setOwner(txSimContext, to)
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
+	if !strings.EqualFold(string(owner), from) {
+		r.log.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
+			dposErc20ContractName, string(owner), from)
+		return nil, fmt.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
+			dposErc20ContractName, string(owner), from)
+	}
+	// 将owner设置魏to
+	// 返回新的owner
+	return setOwner(txSimContext, to)
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Allowance
 // params["from"]:${from}
 // params["to"]:${to}
 // return value of approve
-func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	if params == nil {
-		return nil, ErrParamsEmpty
+		return nil, common.ErrParamsEmpty
 	}
-	if to, ok := params[paramNameTo]; ok {
-		// 检查是否有from
-		var fromAddress string
-		if from, ok := params[paramNameFrom]; ok {
-			fromAddress = from
-		} else {
-			// 获取当前用户
-			sender, err := loadSenderAddress(txSimContext)
-			if err != nil {
-				r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-				return nil, err
-			}
-			fromAddress = sender
+	to := string(params[paramNameTo])
+	from := string(params[paramNameFrom])
+	//if to, ok := params[paramNameTo]; ok {
+	// 检查是否有from
+	var fromAddress string
+	if len(from) != 0 {
+		fromAddress = from
+	} else {
+		// 获取当前用户
+		sender, err := loadSenderAddress(txSimContext)
+		if err != nil {
+			r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
+			return nil, err
 		}
-		return allowance(txSimContext, fromAddress, to)
+		fromAddress = sender
 	}
-	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
+	return allowance(txSimContext, fromAddress, to)
+	//}
+	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Owner
 // return owner of DPoS
-func (r *DPoSRuntime) Owner(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Owner(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	return owner(txSimContext)
 }
 
 // Total
 // return total supply of tokens
-func (r *DPoSRuntime) Total(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Total(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	total, err := totalSupply(txSimContext)
 	if err != nil {
 		return nil, err
@@ -457,7 +475,7 @@ func (r *DPoSRuntime) Total(txSimContext protocol.TxSimContext, params map[strin
 
 // Decimals
 // return decimals of DPoS
-func (r *DPoSRuntime) Decimals(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *DPoSRuntime) Decimals(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	decimalsBytes, err := txSimContext.Get(dposErc20ContractName, []byte(KeyDecimals))
 	if err != nil {
 		r.log.Errorf("load [%s] from cache failed, %s", KeyDecimals, err.Error())
@@ -578,7 +596,7 @@ func parseUserAddress(member []byte) (string, error) {
 }
 
 func getWholeCertInfo(txSimContext protocol.TxSimContext, certHash string) (*commonPb.CertInfo, error) {
-	certBytes, err := txSimContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(certHash))
+	certBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHash))
 	if err != nil {
 		return nil, err
 	}

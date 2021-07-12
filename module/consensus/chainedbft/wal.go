@@ -59,11 +59,11 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 			continue
 		}
 		switch msg.Msg.Payload.Type {
-		case chainedbftpb.MessageType_ProposalMessage:
+		case chainedbftpb.MessageType_PROPOSAL_MESSAGE:
 			if err := cbi.processProposal(msg.Msg); err == nil {
 				cbi.addProposalWalIndexByReplay(msg.Msg.Payload.GetProposalMsg().ProposalData.Height, index)
 			}
-		case chainedbftpb.MessageType_VoteMessage:
+		case chainedbftpb.MessageType_VOTE_MESSAGE:
 			cbi.processVote(msg.Msg)
 		}
 	}
@@ -71,7 +71,7 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 	return true
 }
 
-func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight int64) {
+func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight uint64) {
 	var nextProposalIndex uint64
 	if val, exist := cbi.proposalWalIndex.Load(uint64(commitHeight + 1)); exist {
 		nextProposalIndex = val.(uint64)

@@ -261,15 +261,15 @@ func (pool *txPoolImpl) updateAndPublishSignal() {
 	}
 }
 
-func (pool *txPoolImpl) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
+func (pool *txPoolImpl) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight uint64) {
 	return pool.queue.get(txId)
 }
 
-func (pool *txPoolImpl) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]int64) {
+func (pool *txPoolImpl) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]uint64) {
 	start := utils.CurrentTimeMillisSeconds()
 	var (
 		txsRet       = make(map[string]*commonPb.Transaction, len(txIds))
-		txsHeightRet = make(map[string]int64, len(txIds))
+		txsHeightRet = make(map[string]uint64, len(txIds))
 	)
 	for _, txId := range txIds {
 		if tx, inBlockHeight := pool.queue.get(txId); tx != nil {
@@ -353,7 +353,7 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	pool.log.Infof("removeTxs elapse time: %d", utils.CurrentTimeMillisSeconds()-start)
 }
 
-func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
+func (pool *txPoolImpl) FetchTxBatch(blockHeight uint64) []*commonPb.Transaction {
 	start := utils.CurrentTimeMillisSeconds()
 	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
@@ -372,7 +372,7 @@ func (pool *txPoolImpl) metrics(msg string, startTime int64, endTime int64) {
 	}
 }
 
-func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
+func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight uint64) {
 	if len(txs) == 0 {
 		return
 	}

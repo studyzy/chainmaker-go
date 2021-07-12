@@ -45,7 +45,7 @@ type WaciInstance struct {
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Sc.Log.Debugf("wasmer log>> [%s] %s", s.Sc.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Sc.Log.Debugf("wasmer log>> [%s] %s", s.Sc.TxSimContext.GetTx().Payload.TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -196,7 +196,7 @@ func (s *WaciInstance) callContractCore(isLen bool) int32 {
 
 // EmitEvent emit event to chain
 func (s *WaciInstance) EmitEvent() int32 {
-	contractEvent, err := wacsi.EmitEvent(s.RequestBody, s.Sc.TxSimContext, s.Sc.ContractId, s.Sc.Log)
+	contractEvent, err := wacsi.EmitEvent(s.RequestBody, s.Sc.TxSimContext, s.Sc.Contract, s.Sc.Log)
 	if err != nil {
 		s.recordMsg(err.Error())
 		return protocol.ContractSdkSignalResultFail
@@ -278,7 +278,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 		s.Sc.ContractResult.Message += "error message: " + msg
 	}
 	s.Sc.ContractResult.Code = 1
-	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.ContractId.ContractName, msg)
+	s.Sc.Log.Errorf("wasmer log>> [%s] %s", s.Sc.Contract.Name, msg)
 	return protocol.ContractSdkSignalResultFail
 }
 

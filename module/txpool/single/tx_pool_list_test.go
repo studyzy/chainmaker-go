@@ -44,18 +44,15 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 	txs := make([]*commonPb.Transaction, 0, num)
 	txType := commonPb.TxType_INVOKE_CONTRACT
 	for i := 0; i < num; i++ {
-		payload := &commonPb.Payload{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-			Method:       "SetConfig",
-			Parameters:   nil,
-		}
+		contractName := commonPb.SystemContract_CHAIN_CONFIG.String()
+
 		if !isConfig {
-			payload.ContractName = "userContract1"
+			contractName = "userContract1"
 		}
-		data, _ := payload.Marshal()
 		txs = append(txs, &commonPb.Transaction{
-			Header:         &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType},
-			RequestPayload: data},
+			Payload: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType,
+				Method: "SetConfig", ContractName: contractName},
+		},
 		)
 	}
 	return txs

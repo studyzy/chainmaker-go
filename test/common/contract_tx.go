@@ -58,23 +58,23 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	wasmBin, _ := ioutil.ReadFile(wasmPath)
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_ContractName.String(),
+		Key:   consts.ContractManager_Install_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_Version.String(),
+		Key:   consts.ContractManager_Install_CONTRACT_VERSION.String(),
 		Value: []byte("1.2.1"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_RuntimeType.String(),
+		Key:   consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String(),
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_ByteCode.String(),
+		Key:   consts.ContractManager_Install_CONTRACT_BYTE_CODE.String(),
 		Value: wasmBin,
 	})
 	payload := &commonPb.Payload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
+		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
 		Method:       consts.ContractManager_INIT_CONTRACT.String(),
 		Parameters:   pairs,
 	}
@@ -189,11 +189,11 @@ func QueryUserContractInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, c
 
 	txId := utils.GetRandTxId()
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: consts.ContractManager_GetContractInfo_ContractName.String(), Value: []byte( contractName)}
+	pair := &commonPb.KeyValuePair{Key: consts.ContractManager_GetContractInfo_CONTRACT_NAME.String(), Value: []byte( contractName)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(), consts.ContractManager_GET_CONTRACT_INFO.String(), pairs)
+	payloadBytes := constructPayload(commonPb.SystemContract_CONTRACT_MANAGE.String(), consts.ContractManager_GET_CONTRACT_INFO.String(), pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -225,23 +225,23 @@ func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	wasmBin, _ := ioutil.ReadFile(wasmUpgradePath)
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_ContractName.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_NAME.String(),
 		Value: []byte( contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_Version.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_VERSION.String(),
 		Value: []byte("2.0.0"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_RuntimeType.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_RUNTIME_TYPE.String(),
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_ByteCode.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String(),
 		Value: wasmBin,
 	})
 	payload := &commonPb.Payload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
+		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
 		Method:       consts.ContractManager_UPGRADE_CONTRACT.String(),
 		Parameters:   pairs,
 	}
@@ -277,11 +277,11 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 	fmt.Printf("\n============ [%s] contract [%s] ============\n", method, txId)
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Freeze_ContractName.String(),
+		Key:   consts.ContractManager_Freeze_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
 	payload := &commonPb.Payload{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_USER_CONTRACT_MANAGE.String(),
+		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
 		Method:       method,
 		Parameters:   pairs,
 	}

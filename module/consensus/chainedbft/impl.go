@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
@@ -23,6 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
@@ -200,7 +200,7 @@ func (cbi *ConsensusChainedBftImpl) startConsensus() {
 	}
 	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
 	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
-		cbi.smr.updateState(chainedbftpb.ConsStateType_Propose)
+		cbi.smr.updateState(chainedbftpb.ConsStateType_PROPOSE)
 		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.chainStore.getCurrentQC().BlockID)
 	}
 }
@@ -279,9 +279,9 @@ func (cbi *ConsensusChainedBftImpl) protocolLoop() {
 				continue
 			}
 			switch msg.Payload.Type {
-			case chainedbftpb.MessageType_ProposalMessage:
+			case chainedbftpb.MessageType_PROPOSAL_MESSAGE:
 				cbi.onReceivedProposal(msg)
-			case chainedbftpb.MessageType_VoteMessage:
+			case chainedbftpb.MessageType_VOTE_MESSAGE:
 				cbi.onReceivedVote(msg)
 			default:
 				cbi.logger.Warnf("service selfIndexInEpoch [%v] received non-protocol msg %v", cbi.selfIndexInEpoch, msg.Payload.Type)
@@ -300,9 +300,9 @@ func (cbi *ConsensusChainedBftImpl) syncLoop() {
 				continue
 			}
 			switch msg.Payload.Type {
-			case chainedbftpb.MessageType_BlockFetchMessage:
+			case chainedbftpb.MessageType_BLOCK_FETCH_MESSAGE:
 				cbi.onReceiveBlockFetch(msg)
-			case chainedbftpb.MessageType_BlockFetchRespMessage:
+			case chainedbftpb.MessageType_BLOCK_FETCH_RESP_MESSAGE:
 				cbi.onReceiveBlockFetchRsp(msg)
 			default:
 				cbi.logger.Warnf("service selfIndexInEpoch [%v] received non-sync msg %v", cbi.selfIndexInEpoch, msg.Payload.Type)
@@ -363,22 +363,22 @@ func (cbi *ConsensusChainedBftImpl) onConsensusMsg(msg *chainedbftpb.ConsensusMs
 	defer t.Stop()
 
 	switch msg.Payload.Type {
-	case chainedbftpb.MessageType_ProposalMessage:
+	case chainedbftpb.MessageType_PROPOSAL_MESSAGE:
 		select {
 		case cbi.protocolMsgCh <- msg:
 		case <-t.C:
 		}
-	case chainedbftpb.MessageType_VoteMessage:
+	case chainedbftpb.MessageType_VOTE_MESSAGE:
 		select {
 		case cbi.protocolMsgCh <- msg:
 		case <-t.C:
 		}
-	case chainedbftpb.MessageType_BlockFetchMessage:
+	case chainedbftpb.MessageType_BLOCK_FETCH_MESSAGE:
 		select {
 		case cbi.syncMsgCh <- msg:
 		case <-t.C:
 		}
-	case chainedbftpb.MessageType_BlockFetchRespMessage:
+	case chainedbftpb.MessageType_BLOCK_FETCH_RESP_MESSAGE:
 		select {
 		case cbi.syncMsgCh <- msg:
 		case <-t.C:
@@ -398,7 +398,7 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 	}
 	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s", te.State.String(), te.Height, te.Level, te.Duration.String())
 	switch te.State {
-	case chainedbftpb.ConsStateType_PaceMaker:
+	case chainedbftpb.ConsStateType_PACE_MAKER:
 		cbi.processLocalTimeout(te.Height, te.Level)
 	default:
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] received invalid event %v", cbi.selfIndexInEpoch, te)
