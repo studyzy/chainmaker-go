@@ -22,7 +22,7 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
 	tx := txContext.GetTx()
@@ -46,8 +46,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		Message: "",
 	}
 
-	context := r.CtxService.MakeContext(contractId, txContext, contractResult, parameters)
-	execCode, err := r.CodeManager.GetExecCode(r.ChainId, contractId, byteCode, r.CtxService)
+	context := r.CtxService.MakeContext(contract, txContext, contractResult, parameters)
+	execCode, err := r.CodeManager.GetExecCode(r.ChainId, contract, byteCode, r.CtxService)
 	defer r.CtxService.DestroyContext(context)
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		return
 	}
 
-	if inst, err := xvm.CreateInstance(context.ID, execCode, method, contractId, gasUsed, int64(protocol.GasLimit)); err != nil {
+	if inst, err := xvm.CreateInstance(context.ID, execCode, method, contract, gasUsed, int64(protocol.GasLimit)); err != nil {
 		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		return

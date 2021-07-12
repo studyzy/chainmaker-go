@@ -7,7 +7,7 @@ import (
 	"errors"
 )
 
-func CreateInstance(contextId int64, code exec.Code, method string, contractId *commonPb.Contract, gasUsed uint64, gasLimit int64) (*wxvmInstance, error) {
+func CreateInstance(contextId int64, code exec.Code, method string, contract *commonPb.Contract, gasUsed uint64, gasLimit int64) (*wxvmInstance, error) {
 	execCtx, err := code.NewContext(&exec.ContextConfig{
 		GasLimit: gasLimit,
 	})
