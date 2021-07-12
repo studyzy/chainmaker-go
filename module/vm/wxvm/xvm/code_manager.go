@@ -56,9 +56,9 @@ func (c *CodeManager) lookupMemCache(keyId string) (exec.Code, bool) {
 	}
 }
 
-func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contract) (string, bool) {
-	filePath := chainId + protocol.ContractStoreSeparator + contractId.Name
-	fileName := contractId.Version + ".so"
+func (c *CodeManager) lookupDiskCache(chainId string, contract *commonPb.Contract) (string, bool) {
+	filePath := chainId + protocol.ContractStoreSeparator + contract.Name
+	fileName := contract.Version + ".so"
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 	if !fileExists(libPath) {
 		return "", false
@@ -66,19 +66,19 @@ func (c *CodeManager) lookupDiskCache(chainId string, contractId *commonPb.Contr
 	return libPath, true
 }
 
-func (c *CodeManager) makeDiskCache(chainId string, contractId *commonPb.Contract, codebuf []byte) (string, error) {
+func (c *CodeManager) makeDiskCache(chainId string, contract *commonPb.Contract, codebuf []byte) (string, error) {
 	startTime := time.Now()
-	filePath := chainId + protocol.ContractStoreSeparator + contractId.Name
-	fileName := contractId.Version + ".so"
+	filePath := chainId + protocol.ContractStoreSeparator + contract.Name
+	fileName := contract.Version + ".so"
 	basePath := filepath.Join(c.basedir, filePath)
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 
 	os.MkdirAll(basePath, 0755)
 	if err := c.CompileCode(codebuf, libPath); err != nil {
-		c.log.Errorf("failed to compile wxvm code for contract %s", contractId.Name, err.Error())
+		c.log.Errorf("failed to compile wxvm code for contract %s", contract.Name, err.Error())
 		return "", err
 	}
-	c.log.Infof("compile wxvm code for contract %s,  time used %v", contractId.Name, time.Since(startTime))
+	c.log.Infof("compile wxvm code for contract %s,  time used %v", contract.Name, time.Since(startTime))
 	return libPath, nil
 }
 
@@ -96,12 +96,12 @@ func (c *CodeManager) makeMemCache(contractKeyId string, libPath string,
 
 	return execCode, nil
 }
-func (c *CodeManager) GetExecCode(chainId string, contractId *commonPb.Contract,
+func (c *CodeManager) GetExecCode(chainId string, contract *commonPb.Contract,
 	byteCode []byte, contextService *ContextService) (exec.Code, error) {
 
 	contractKeyId := chainId + protocol.ContractStoreSeparator +
-		contractId.Name + protocol.ContractStoreSeparator +
-		contractId.Version
+		contract.Name + protocol.ContractStoreSeparator +
+		contract.Version
 
 	execCode, ok := c.lookupMemCache(contractKeyId)
 	if ok {
@@ -118,8 +118,8 @@ func (c *CodeManager) GetExecCode(chainId string, contractId *commonPb.Contract,
 		}
 		var libPath string
 		var err error
-		if libPath, ok = c.lookupDiskCache(chainId, contractId); !ok {
-			if libPath, err = c.makeDiskCache(chainId, contractId, byteCode); err != nil {
+		if libPath, ok = c.lookupDiskCache(chainId, contract); !ok {
+			if libPath, err = c.makeDiskCache(chainId, contract, byteCode); err != nil {
 				return nil, err
 			}
 		}

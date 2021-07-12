@@ -96,7 +96,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	txContext := &TxContextMockTest{
 		lock:  &sync.Mutex{},
 		lock2: &sync.Mutex{},
-		vmManager: &vm.ManagerImpl{
+		vmManager: &vm.VmManagerImpl{
 			WasmerVmPoolManager:    GetVmPoolManager(),
 			WxvmCodeManager:        wxvmCodeManager,
 			WxvmContextService:     wxvmContextService,
@@ -245,7 +245,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    1,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
@@ -253,11 +253,18 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    1,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
+	}
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
 	}
 	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 

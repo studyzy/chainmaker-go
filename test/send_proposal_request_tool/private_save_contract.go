@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -69,7 +70,7 @@ func saveContract() error {
 	if resp.Code == common.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &common.ContractResult{
-				Code:    0,
+				Code:    uint32(protocol.ContractResultCode_OK),
 				Message: "OK",
 				Result:  []byte(txId),
 			}

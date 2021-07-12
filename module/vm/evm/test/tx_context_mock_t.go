@@ -179,13 +179,13 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.cacheMap[k] = nil
 	return nil
 }
-func (s *TxContextMockTest) CallContract(contractId *commonPb.Contract, method string, byteCode []byte,
+func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
 	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    1,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
@@ -193,19 +193,26 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.Contract, method s
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    1,
+			Code:    uint32(protocol.ContractResultCode_FAIL),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
+	}
+	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		deep:         s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
-		contractName: contractId.Name,
+		contractName: contract.Name,
 		method:       method,
 		param:        parameter,
 	}
@@ -228,7 +235,7 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		Result:           nil,
+		Result: nil,
 	}
 }
 
@@ -285,13 +292,13 @@ func (s *TxContextMockTest) GetDepth() int {
 
 func BaseParam(parameters map[string][]byte) {
 	parameters[protocol.ContractTxIdParam] = []byte("TX_ID")
-	parameters[protocol.ContractCreatorOrgIdParam] = []byte( "org_a")
+	parameters[protocol.ContractCreatorOrgIdParam] = []byte("org_a")
 	parameters[protocol.ContractCreatorRoleParam] = []byte("admin")
 	parameters[protocol.ContractCreatorPkParam] = []byte("1234567890abcdef1234567890abcdef")
 	parameters[protocol.ContractSenderOrgIdParam] = []byte("org_b")
-	parameters[protocol.ContractSenderRoleParam] = []byte( "user")
+	parameters[protocol.ContractSenderRoleParam] = []byte("user")
 	parameters[protocol.ContractSenderPkParam] = []byte("11223344556677889900aabbccddeeff")
-	parameters[protocol.ContractBlockHeightParam] = []byte( "1")
+	parameters[protocol.ContractBlockHeightParam] = []byte("1")
 }
 
 type mockBlockchainStore struct {

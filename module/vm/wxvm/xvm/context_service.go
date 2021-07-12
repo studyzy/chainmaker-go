@@ -41,7 +41,7 @@ func (c *ContextService) Context(id int64) (*Context, bool) {
 	return ctx, ok
 }
 
-func (c *ContextService) MakeContext(contractId *commonPb.Contract, txSimContext protocol.TxSimContext,
+func (c *ContextService) MakeContext(contract *commonPb.Contract, txSimContext protocol.TxSimContext,
 	contractResult *commonPb.ContractResult, parameters map[string][]byte) *Context {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -50,7 +50,7 @@ func (c *ContextService) MakeContext(contractId *commonPb.Contract, txSimContext
 		ID:             c.ctxId,
 		Parameters:     parameters,
 		TxSimContext:   txSimContext,
-		ContractId:     contractId,
+		ContractId:     contract,
 		ContractResult: contractResult,
 	}
 	c.ctxMap[ctx.ID] = ctx
