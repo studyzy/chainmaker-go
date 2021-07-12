@@ -222,8 +222,8 @@ func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (strin
 	}
 }
 
-// FindPolicyByResourceName check if there is corresponding policy configured for the resource name
-func (ac *accessControl) FindPolicyByResourceName(resourceName string) bool {
+// ResourcePolicyExists checks whether there is corresponding policy configured for the given resource name
+func (ac *accessControl) ResourcePolicyExists(resourceName string) bool {
 	_, ok := ac.resourceNamePolicyMap.Load(resourceName)
 	if !ok {
 		ac.log.Debugf("do not find access policy for resource %s", resourceName)

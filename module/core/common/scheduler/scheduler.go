@@ -385,7 +385,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 				return errResult(result, fmt.Errorf("failed to get access control from tx sim context for tx: %s, error: %s", tx.Header.TxId, err.Error()))
 			}
 
-			if !ac.FindPolicyByResourceName(method) {
+			if !ac.ResourcePolicyExists(method) {
 				ts.log.Infof("policy not found for invoke_system_contract, contract[%s], method[%s], skip acVerify here", contractName, method)
 			} else {
 				endorsements = payload.Endorsement
