@@ -434,7 +434,11 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	default:
 		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Payload.TxType))
 	}
-
+	contract, err := utils.GetContractByName(txSimContext.Get, contractName)
+	if err != nil {
+		ts.log.Errorf("Get contract info by name[%s] error:%s", contractName, err)
+		return nil, err
+	}
 	//contract = &commonpb.Contract{
 	//	ContractName:    contractName,
 	//	ContractVersion: contractVersion,
@@ -458,7 +462,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 			return errResult(result, fmt.Errorf("expect value length less than %d, but got %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Payload.TxId))
 		}
 	}
-	contractResultPayload, txStatusCode := ts.VmManager.RunContract(&commonpb.Contract{Name: contractName}, method, byteCode, parameters, txSimContext, 0, tx.Payload.TxType)
+	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contract, method, byteCode, parameters, txSimContext, 0, tx.Payload.TxType)
 
 	result.Code = txStatusCode
 	result.ContractResult = contractResultPayload
