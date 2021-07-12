@@ -118,7 +118,7 @@ func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
-	//	ContractId: &commonPb.Contract{
+	//	Contract: &commonPb.Contract{
 	//		ContractName:    contractName,
 	//		ContractVersion: "1.0.0",
 	//		//RuntimeType:     commonPb.RuntimeType_GASM,

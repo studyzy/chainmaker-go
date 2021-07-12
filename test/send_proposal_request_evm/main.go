@@ -473,7 +473,7 @@ func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 //
 //	payload := &commonPb.Payload{
 //		ChainId: chainId,
-//		ContractId: &commonPb.Contract{
+//		Contract: &commonPb.Contract{
 //			ContractName: contractName,
 //			RuntimeType:  runtimeType,
 //		},

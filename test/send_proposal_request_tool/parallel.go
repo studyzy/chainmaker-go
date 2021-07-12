@@ -698,7 +698,7 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
-	//	ContractId: &commonPb.Contract{
+	//	Contract: &commonPb.Contract{
 	//		ContractName:    fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
 	//		ContractVersion: "1.0.0",
 	//		RuntimeType:     commonPb.RuntimeType(runTime),

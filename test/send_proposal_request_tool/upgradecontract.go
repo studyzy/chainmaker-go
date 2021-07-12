@@ -102,7 +102,7 @@ func upgradeContract() error {
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
-	//	ContractId: &commonPb.Contract{
+	//	Contract: &commonPb.Contract{
 	//		ContractName:    contractName,
 	//		ContractVersion: version,
 	//		RuntimeType:     commonPb.RuntimeType(runTime),

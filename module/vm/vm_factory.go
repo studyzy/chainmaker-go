@@ -516,7 +516,7 @@ func (m *ManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, m
 			ChainId:      m.ChainId,
 			TxSimContext: txContext,
 			Method:       method,
-			ContractId:   contract,
+			Contract:     contract,
 		}
 	default:
 		contractResult.Message = fmt.Sprintf("no such vm runtime %q", runtimeType)
