@@ -208,21 +208,21 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		vmManager:        vmMgr,
 	}
 
-	contract, err := store.GetContractByName(tx.Payload.ContractName)
-	if err != nil {
-		resp.Message = err.Error()
-		return resp
-	}
-	bytecode, err := store.GetContractBytecode(tx.Payload.ContractName)
-	if err != nil {
-		resp.Message = err.Error()
-		return resp
-	}
-	txResult, txStatusCode := vmMgr.RunContract(contract, tx.Payload.Method,
-		bytecode, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
+	//contract, err := store.GetContractByName(tx.Payload.ContractName)
+	//if err != nil {
+	//	resp.Message = err.Error()
+	//	return resp
+	//}
+	//bytecode, err := store.GetContractBytecode(tx.Payload.ContractName)
+	//if err != nil {
+	//	resp.Message = err.Error()
+	//	return resp
+	//}
+	//txResult, txStatusCode := vmMgr.RunContract(contract, tx.Payload.Method,
+	//	bytecode, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
 
-	//txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: tx.Payload.ContractName}, tx.Payload.Method,
-	//	nil, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
+	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: tx.Payload.ContractName}, tx.Payload.Method,
+		nil, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
