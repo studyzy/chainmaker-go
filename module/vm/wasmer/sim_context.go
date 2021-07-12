@@ -21,7 +21,7 @@ import (
 // SimContext record the contract context
 type SimContext struct {
 	TxSimContext   protocol.TxSimContext
-	ContractId     *commonPb.Contract
+	Contract     	*commonPb.Contract
 	ContractResult *commonPb.ContractResult
 	Log            *logger.CMLogger
 	Instance       *wasm.Instance
