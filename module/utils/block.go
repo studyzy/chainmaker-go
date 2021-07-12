@@ -73,28 +73,31 @@ func FormatBlock(b *commonPb.Block) string {
 // calcUnsignedBlockBytes calculate unsigned block bytes
 // since dag & txs are already included in block header, we can safely set this two field to nil
 func calcUnsignedBlockBytes(b *commonPb.Block) ([]byte, error) {
-	block := &commonPb.Block{
-		Header: &commonPb.BlockHeader{
-			ChainId:        b.Header.ChainId,
-			BlockHeight:    b.Header.BlockHeight,
-			PreBlockHash:   b.Header.PreBlockHash,
-			BlockHash:      nil,
-			PreConfHeight:  b.Header.PreConfHeight,
-			BlockVersion:   b.Header.BlockVersion,
-			DagHash:        b.Header.DagHash,
-			RwSetRoot:      b.Header.RwSetRoot,
-			TxRoot:         b.Header.TxRoot,
-			BlockTimestamp: b.Header.BlockTimestamp,
-			Proposer:       b.Header.Proposer,
-			ConsensusArgs:  b.Header.ConsensusArgs,
-			TxCount:        b.Header.TxCount,
-			Signature:      nil,
-		},
-		Dag: nil,
-		Txs: nil,
-	}
-
-	blockBytes, err := proto.Marshal(block)
+	//block := &commonPb.Block{
+	//	Header: &commonPb.BlockHeader{
+	//		ChainId:        b.Header.ChainId,
+	//		BlockHeight:    b.Header.BlockHeight,
+	//		PreBlockHash:   b.Header.PreBlockHash,
+	//		BlockHash:      nil,
+	//		PreConfHeight:  b.Header.PreConfHeight,
+	//		BlockVersion:   b.Header.BlockVersion,
+	//		DagHash:        b.Header.DagHash,
+	//		RwSetRoot:      b.Header.RwSetRoot,
+	//		TxRoot:         b.Header.TxRoot,
+	//		BlockTimestamp: b.Header.BlockTimestamp,
+	//		Proposer:       b.Header.Proposer,
+	//		ConsensusArgs:  b.Header.ConsensusArgs,
+	//		TxCount:        b.Header.TxCount,
+	//		Signature:      nil,
+	//	},
+	//	Dag: nil,
+	//	Txs: nil,
+	//}
+	//BlockHash就是HeaderHash，所以这里只需要把Header的Signature和BlockHash字段去掉，再序列化计算Hash即可。
+	header := *b.Header
+	header.Signature = nil
+	header.BlockHash = nil
+	blockBytes, err := proto.Marshal(&header)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +114,10 @@ func CalcBlockFingerPrint(block *commonPb.Block) BlockFingerPrint {
 	chainId := block.Header.ChainId
 	blockHeight := block.Header.BlockHeight
 	blockTimestamp := block.Header.BlockTimestamp
-	blockProposer,_ := block.Header.Proposer.Marshal()
+	var blockProposer []byte
+	if block.Header.Proposer != nil {
+		blockProposer, _ = block.Header.Proposer.Marshal()
+	}
 	preBlockHash := block.Header.PreBlockHash
 
 	return CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposer, preBlockHash)
