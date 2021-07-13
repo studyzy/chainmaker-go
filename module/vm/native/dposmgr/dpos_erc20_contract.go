@@ -10,6 +10,7 @@ package dposmgr
 import (
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -67,17 +68,18 @@ func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]common.Co
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// [DPoS]
 	dposRuntime := NewDPoSRuntime(log)
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String()] = dposRuntime.BalanceOf
-	methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER.String()] = dposRuntime.Transfer
-	//methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER_FROM.String()] = dposRuntime.TransferFrom
-	//methodMap[commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String()] = dposRuntime.Allowance
-	//methodMap[commonPb.DPoSERC20ContractFunction_APPROVE.String()] = dposRuntime.Approve
-	methodMap[commonPb.DPoSERC20ContractFunction_MINT.String()] = dposRuntime.Mint
-	//methodMap[commonPb.DPoSERC20ContractFunction_BURN.String()] = dposRuntime.Burn
-	//methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER_OWNERSHIP.String()] = dposRuntime.TransferOwnership
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_OWNER.String()] = dposRuntime.Owner
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String()] = dposRuntime.Decimals
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_TOTAL_SUPPLY.String()] = dposRuntime.Total
+
+	methodMap[consts.DPoSERC20_GET_BALANCEOF.String()] = dposRuntime.BalanceOf
+	methodMap[consts.DPoSERC20_TRANSFER.String()] = dposRuntime.Transfer
+	//methodMap[consts.DPoSERC20_TRANSFER_FROM.String()] = dposRuntime.TransferFrom
+	//methodMap[consts.DPoSERC20_GET_ALLOWANCE.String()] = dposRuntime.Allowance
+	//methodMap[consts.DPoSERC20_APPROVE.String()] = dposRuntime.Approve
+	methodMap[consts.DPoSERC20_MINT.String()] = dposRuntime.Mint
+	//methodMap[consts.DPoSERC20_BURN.String()] = dposRuntime.Burn
+	//methodMap[consts.DPoSERC20_TRANSFER_OWNERSHIP.String()] = dposRuntime.TransferOwnership
+	methodMap[consts.DPoSERC20_GET_OWNER.String()] = dposRuntime.Owner
+	methodMap[consts.DPoSERC20_GET_DECIMALS.String()] = dposRuntime.Decimals
+	methodMap[consts.DPoSERC20_GET_TOTAL_SUPPLY.String()] = dposRuntime.Total
 	return methodMap
 }
 

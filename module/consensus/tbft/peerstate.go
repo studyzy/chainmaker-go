@@ -141,7 +141,7 @@ func (pcs *PeerStateService) gossipState(state *tbftpb.GossipState) {
 	// }
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_state,
+		Type: tbftpb.TBFTMsgType_MSG_STATE,
 		Msg:  mustMarshal(state),
 	}
 

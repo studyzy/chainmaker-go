@@ -39,7 +39,7 @@ func subscribeTx() error {
 			{Key: consts.SubscribeTxPayload_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
 			{Key: consts.SubscribeTxPayload_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
 			{Key: consts.SubscribeTxPayload_TX_TYPE.String(), Value: []byte(commonPb.TxType(txType).String())},
-			{Key: consts.SubscribeTxPayload_TXIDS.String(), Value: []byte(txIds)},
+			{Key: consts.SubscribeTxPayload_TX_IDS.String(), Value: []byte(txIds)},
 		},
 		//StartBlock: startBlock,
 		//EndBlock:   endBlock,

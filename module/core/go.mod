@@ -12,7 +12,7 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210713015752-33fec271c90a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210713083111-ba49f19e233a
 	chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/martian v2.1.0+incompatible
@@ -25,21 +25,12 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
-
 	chainmaker.org/chainmaker-go/consensus => ../consensus
-	chainmaker.org/chainmaker-go/dpos => ../dpos
-	chainmaker.org/chainmaker-go/evm => ./../../module/vm/evm
-	chainmaker.org/chainmaker-go/gasm => ./../../module/vm/gasm
+	chainmaker.org/chainmaker-go/consensus/dpos => ./../consensus/dpos
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-
 	chainmaker.org/chainmaker-go/monitor => ../monitor
-
 	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/utils => ../utils
-	chainmaker.org/chainmaker-go/vm => ./../../module/vm
-	chainmaker.org/chainmaker-go/wasi => ./../../module/vm/wasi
-	chainmaker.org/chainmaker-go/wasmer => ./../../module/vm/wasmer
-	chainmaker.org/chainmaker-go/wxvm => ./../../module/vm/wxvm
 )

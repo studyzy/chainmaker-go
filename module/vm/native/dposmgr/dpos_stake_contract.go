@@ -9,6 +9,7 @@ package dposmgr
 
 import (
 	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -170,24 +171,25 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]common.Co
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// implement
 	DPoSStakeRuntime := &DPoSStakeRuntime{log: log}
-	methodMap[commonPb.DPoSStakeContractFunction_GET_ALL_CANDIDATES.String()] = DPoSStakeRuntime.GetAllCandidates
-	methodMap[commonPb.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String()] = DPoSStakeRuntime.GetValidatorByAddress
-	methodMap[commonPb.DPoSStakeContractFunction_DELEGATE.String()] = DPoSStakeRuntime.Delegate
-	methodMap[commonPb.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String()] = DPoSStakeRuntime.GetDelegationsByAddress
-	methodMap[commonPb.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String()] = DPoSStakeRuntime.GetUserDelegationByValidator
-	methodMap[commonPb.DPoSStakeContractFunction_UNDELEGATE.String()] = DPoSStakeRuntime.UnDelegate
-	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String()] = DPoSStakeRuntime.ReadEpochByID
-	methodMap[commonPb.DPoSStakeContractFunction_READ_LATEST_EPOCH.String()] = DPoSStakeRuntime.ReadLatestEpoch
-	methodMap[commonPb.DPoSStakeContractFunction_SET_NODE_ID.String()] = DPoSStakeRuntime.SetNodeID
-	methodMap[commonPb.DPoSStakeContractFunction_GET_NODE_ID.String()] = DPoSStakeRuntime.GetNodeID
-	methodMap[commonPb.DPoSStakeContractFunction_READ_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.ReadMinSelfDelegation
-	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.UpdateMinSelfDelegation
-	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
-	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
-	methodMap[commonPb.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
-	methodMap[commonPb.DPoSStakeContractFunction_READ_SYSTEM_CONTRACT_ADDR.String()] = DPoSStakeRuntime.ReadSystemContractAddr
-	//methodMap[commonPb.DPoSStakeContractFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
-	methodMap[commonPb.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
+
+	methodMap[consts.DPoSStake_GET_ALL_CANDIDATES.String()] = DPoSStakeRuntime.GetAllCandidates
+	methodMap[consts.DPoSStake_GET_VALIDATOR_BY_ADDRESS.String()] = DPoSStakeRuntime.GetValidatorByAddress
+	methodMap[consts.DPoSStake_DELEGATE.String()] = DPoSStakeRuntime.Delegate
+	methodMap[consts.DPoSStake_GET_DELEGATIONS_BY_ADDRESS.String()] = DPoSStakeRuntime.GetDelegationsByAddress
+	methodMap[consts.DPoSStake_GET_USER_DELEGATION_BY_VALIDATOR.String()] = DPoSStakeRuntime.GetUserDelegationByValidator
+	methodMap[consts.DPoSStake_UNDELEGATE.String()] = DPoSStakeRuntime.UnDelegate
+	methodMap[consts.DPoSStake_READ_EPOCH_BY_ID.String()] = DPoSStakeRuntime.ReadEpochByID
+	methodMap[consts.DPoSStake_READ_LATEST_EPOCH.String()] = DPoSStakeRuntime.ReadLatestEpoch
+	methodMap[consts.DPoSStake_SET_NODE_ID.String()] = DPoSStakeRuntime.SetNodeID
+	methodMap[consts.DPoSStake_GET_NODE_ID.String()] = DPoSStakeRuntime.GetNodeID
+	methodMap[consts.DPoSStake_READ_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.ReadMinSelfDelegation
+	//methodMap[consts.DPoSStake_UPDATE_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.UpdateMinSelfDelegation
+	methodMap[consts.DPoSStake_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
+	//methodMap[consts.DPoSStake_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
+	methodMap[consts.DPoSStake_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
+	methodMap[consts.DPoSStake_READ_SYSTEM_CONTRACT_ADDR.String()] = DPoSStakeRuntime.ReadSystemContractAddr
+	//methodMap[consts.DPoSStake_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
+	methodMap[consts.DPoSStake_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
 	return methodMap
 }
 
