@@ -8,16 +8,17 @@ SPDX-License-Identifier: Apache-2.0
 package cert
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 
-	sdk "chainmaker.org/chainmaker-sdk-go"
-
+	"chainmaker.org/chainmaker-go/common/crypto"
+	hashAlo "chainmaker.org/chainmaker-go/common/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/common/evmutils"
+	sdk "chainmaker.org/chainmaker-sdk-go"
+
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
 )
@@ -84,10 +85,16 @@ func certToUserAddrInStake() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get pubkey failed from cert, reason: %s", err)
 			}
-			hash := sha256.Sum256(pubkey)
-			addr := base58.Encode(hash[:])
+			var (
+				hashBz []byte
+			)
+			if cert.SignatureAlgorithm == bcx509.SM3WithSM2 {
+				hashBz, err = hashAlo.GetByStrType(crypto.CRYPTO_ALGO_SM3, pubkey)
+			} else {
+				hashBz, err = hashAlo.GetByStrType(crypto.CRYPTO_ALGO_SHA256, pubkey)
+			}
+			addr := base58.Encode(hashBz[:])
 			fmt.Printf("address: %s \n\nfrom cert: %s\n", addr, certPath)
-
 			return nil
 		},
 	}
