@@ -46,7 +46,7 @@ func getData() error {
 
 	payloadBytes, err := constructQueryPayload(
 		common.SystemContract_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_GET_DATA.String(),
+		consts.PrivateCompute_GET_DATA.String(),
 		pairs,
 	)
 	if err != nil {

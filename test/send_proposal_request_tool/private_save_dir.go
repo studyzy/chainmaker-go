@@ -58,7 +58,7 @@ func saveDir() error {
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
 		common.SystemContract_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_SAVE_DIR.String(),
+		consts.PrivateCompute_SAVE_DIR.String(),
 		pairs,
 		defaultSequence,
 	)

@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210713033153-38d533e9114d
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210713083111-ba49f19e233a
 	chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2

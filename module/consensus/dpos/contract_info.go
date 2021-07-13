@@ -7,15 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/binary"
 	"fmt"
 	"math/big"
 
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )

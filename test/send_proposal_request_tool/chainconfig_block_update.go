@@ -77,7 +77,7 @@ func blockUpdate() error {
 	}
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_BLOCK_UPDATE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CHAIN_CONFIG.String(), method: consts.ChainConfigManager_BLOCK_UPDATE.String(), pairs: pairs, oldSeq: seq})
 
 	if err != nil {
 		return err

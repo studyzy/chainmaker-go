@@ -40,7 +40,7 @@ func getDir() error {
 
 	payloadBytes, err := constructQueryPayload(
 		common.SystemContract_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_GET_DIR.String(),
+		consts.PrivateCompute_GET_DIR.String(),
 		pairs,
 	)
 	if err != nil {
