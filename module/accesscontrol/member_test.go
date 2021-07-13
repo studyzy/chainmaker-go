@@ -139,28 +139,6 @@ func TestMemberGetCertificate(t *testing.T) {
 	require.NotNil(t, cert)
 }
 
-func TestMemberSerialize(t *testing.T) {
-	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
-	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
-
-	td, cleanFunc, err := createTempDirWithCleanFunc()
-	require.Nil(t, err)
-	defer cleanFunc()
-	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	localPrivKeyFile := filepath.Join(td, tempOrg1KeyFileName)
-	localCertFile := filepath.Join(td, tempOrg1CertFileName)
-	err = ioutil.WriteFile(localPrivKeyFile, []byte(orgList[org1Name].consensusNode.sk), os.ModePerm)
-	require.Nil(t, err)
-	err = ioutil.WriteFile(localCertFile, []byte(orgList[org1Name].consensusNode.certificate), os.ModePerm)
-	require.Nil(t, err)
-	acInst, err := newAccessControlWithChainConfigPb(localPrivKeyFile, "", localCertFile, chainConf, org1Name, nil, logger)
-	require.Nil(t, err)
-	require.NotNil(t, acInst)
-	member, err := acInst.NewMemberFromCertPem(org2Name, orgList[org2Name].consensusNode.certificate)
-	require.Nil(t, err)
-	require.NotNil(t, member)
-}
-
 func TestMemberGetMember(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
@@ -181,9 +159,9 @@ func TestMemberGetMember(t *testing.T) {
 	member, err := acInst.NewMemberFromCertPem(org2Name, orgList[org2Name].consensusNode.certificate)
 	require.Nil(t, err)
 	require.NotNil(t, member)
-	serializedMember, err := member.GetSerializedMember()
+	pbMember, err := member.GetMember()
 	require.Nil(t, err)
-	require.NotNil(t, Member)
+	require.NotNil(t, pbMember)
 }
 
 func TestMemberSignAndVerify(t *testing.T) {

@@ -69,7 +69,7 @@ func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, has
 		if err != nil {
 			return nil, err
 		}
-		signerSerial, err := signer.GetMember(true)
+		signerSerial, err := signer.GetMember()
 		if err != nil {
 			return nil, err
 		}

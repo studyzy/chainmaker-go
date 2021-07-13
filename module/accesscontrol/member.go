@@ -94,7 +94,7 @@ func (m *member) Verify(hashType string, msg []byte, sig []byte) error {
 	return nil
 }
 
-func (m *member) GetSerializedMember() (*pbac.SerializedMember, error) {
+func (m *member) GetMember() (*pbac.Member, error) {
 	var pemStruct *pem.Block
 	switch m.identityType {
 	case pbac.MemberType_CERT:
@@ -110,7 +110,7 @@ func (m *member) GetSerializedMember() (*pbac.SerializedMember, error) {
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute certificate identity")
 		}
-		return &pbac.SerializedMember{
+		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: id,
 			MemberType: pbac.MemberType_CERT_HASH,
@@ -118,7 +118,7 @@ func (m *member) GetSerializedMember() (*pbac.SerializedMember, error) {
 	case pbac.MemberType_PUBLIC_KEY:
 		pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "PUBLIC KEY"}
 		certPEM := pem.EncodeToMemory(pemStruct)
-		return &pbac.SerializedMember{
+		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: certPEM,
 			MemberType: pbac.MemberType_PUBLIC_KEY,
