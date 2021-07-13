@@ -8,8 +8,8 @@ require (
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210709093937-9b3b422e24b1
-	chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210713033153-38d533e9114d
+	chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.4.3
 	github.com/stretchr/testify v1.7.0
