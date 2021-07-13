@@ -828,5 +828,6 @@ func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
 }
 
 func (bs *BlockStoreImpl) isSupportArchive() bool {
-	return bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB()
+	return bs.storeConfig.BlockDbConfig.IsKVDB() &&
+		(bs.storeConfig.ResultDbConfig!=nil &&bs.storeConfig.ResultDbConfig.IsKVDB())
 }
