@@ -8,6 +8,16 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/hex"
+	"encoding/pem"
+	"fmt"
+	"io/ioutil"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/concurrentlru"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
@@ -18,16 +28,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/hex"
-	"encoding/pem"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"io/ioutil"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
 const unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
@@ -294,14 +295,14 @@ func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
 }
 
 // DeserializeMember converts bytes to Member
-func (ac *accessControl) DeserializeMember(serializedMember []byte) (protocol.Member, error) {
-	memberPb := &pbac.SerializedMember{}
-	err := proto.Unmarshal(serializedMember, memberPb)
+func (ac *accessControl) DeserializeMember(Member []byte) (protocol.Member, error) {
+	memberPb := &pbac.Member{}
+	err := proto.Unmarshal(Member, memberPb)
 	if err != nil {
 		return nil, err
 	}
 
-	if memberPb.MemberType!=pbac.MemberType_CERT {
+	if memberPb.MemberType != pbac.MemberType_CERT {
 		memInfoBytes, ok := ac.lookUpCertCache(string(memberPb.MemberInfo))
 		if !ok {
 			return nil, fmt.Errorf("deserialize Member failed, unrecognized compressed certificate")
@@ -391,19 +392,19 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 	return nil, fmt.Errorf("setup member failed, invalid public key or certificate")
 }
 
-// NewMemberFromProto creates a member from SerializedMember
-func (ac *accessControl) NewMemberFromProto(serializedMember *pbac.SerializedMember) (protocol.Member, error) {
-	if serializedMember.MemberType==pbac.MemberType_CERT {
-		return ac.NewMemberFromCertPem(serializedMember.OrgId, string(serializedMember.MemberInfo))
+// NewMemberFromProto creates a member from Member
+func (ac *accessControl) NewMemberFromProto(Member *pbac.Member) (protocol.Member, error) {
+	if Member.MemberType == pbac.MemberType_CERT {
+		return ac.NewMemberFromCertPem(Member.OrgId, string(Member.MemberInfo))
 	} else {
-		certPEM, ok := ac.lookUpCertCache(string(serializedMember.MemberInfo))
+		certPEM, ok := ac.lookUpCertCache(string(Member.MemberInfo))
 		if !ok {
 			return nil, fmt.Errorf("setup member failed, fail to look up certificate ID")
 		}
 		if certPEM == nil {
 			return nil, fmt.Errorf("setup member failed, unknown certificate ID")
 		}
-		return ac.NewMemberFromCertPem(serializedMember.OrgId, string(certPEM))
+		return ac.NewMemberFromCertPem(Member.OrgId, string(certPEM))
 	}
 }
 

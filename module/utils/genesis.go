@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -18,11 +17,13 @@ import (
 	"strconv"
 	"strings"
 
+	"chainmaker.org/chainmaker/protocol"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
-	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
+	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
 )
@@ -137,8 +138,8 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 
 func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 	var (
-		err          error
-		ccBytes      []byte
+		err     error
+		ccBytes []byte
 		//payloadBytes []byte
 	)
 
@@ -173,9 +174,9 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code:    uint32(protocol.ContractResultCode_OK),
+				Code: uint32(protocol.ContractResultCode_OK),
 
-				Result:  ccBytes,
+				Result: ccBytes,
 			},
 			RwSetHash: nil,
 		},
@@ -353,7 +354,7 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 				return nil, fmt.Errorf("total config of dpos must more than zero")
 			}
 		case keyERC20Owner:
-			config.owner =string(keyValuePair.Value)
+			config.owner = string(keyValuePair.Value)
 			_, err := base58.Decode(config.owner)
 			if err != nil {
 				return nil, fmt.Errorf("config of owner[%s] is not in base58 format", config.owner)
@@ -432,7 +433,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 
 	// 2. add validatorInfo, delegationInfo in rwSet
 	sort.SliceStable(s.candidates, func(i, j int) bool {
-		return s.candidates[i].PeerID < s.candidates[j].PeerID
+		return s.candidates[i].PeerId < s.candidates[j].PeerId
 	})
 	validators := make([][]byte, 0, len(s.candidates))
 	delegations := make([][]byte, 0, len(s.candidates))
@@ -441,7 +442,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 			Jailed:                     false,
 			Status:                     commonPb.BondStatus_BONDED,
 			Tokens:                     candidate.Weight,
-			ValidatorAddress:           candidate.PeerID,
+			ValidatorAddress:           candidate.PeerId,
 			DelegatorShares:            candidate.Weight,
 			SelfDelegation:             candidate.Weight,
 			UnbondingEpochID:           math.MaxInt64,
@@ -453,8 +454,8 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		validators = append(validators, bz)
 
 		delegateBz, err := proto.Marshal(&commonPb.Delegation{
-			DelegatorAddress: candidate.PeerID,
-			ValidatorAddress: candidate.PeerID,
+			DelegatorAddress: candidate.PeerId,
+			ValidatorAddress: candidate.PeerId,
 			Shares:           candidate.Weight,
 		})
 		if err != nil {
@@ -465,12 +466,12 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	for i, validator := range s.candidates {
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerID)),
+			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerId)),
 			Value:        validators[i],
 		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: commonPb.SystemContract_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerID, validator.PeerID)), // key: prefix|delegator|validator
+			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerId, validator.PeerId)), // key: prefix|delegator|validator
 			Value:        delegations[i],                                                               // val: delegation info
 		})
 	}
@@ -478,7 +479,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	// 4. add epoch info
 	valAddrs := make([]string, 0, len(s.candidates))
 	for _, v := range s.candidates {
-		valAddrs = append(valAddrs, v.PeerID)
+		valAddrs = append(valAddrs, v.PeerId)
 	}
 	epochInfo, err := proto.Marshal(&commonPb.Epoch{
 		EpochID:               0,
@@ -538,7 +539,7 @@ func (s *StakeConfig) setCandidate(key, value string) error {
 		return fmt.Errorf("stake.candidate amount error, reason: %s", err)
 	}
 	s.candidates = append(s.candidates, &dpospb.CandidateInfo{
-		PeerID: values[1], Weight: value,
+		PeerId: values[1], Weight: value,
 	})
 	return nil
 }

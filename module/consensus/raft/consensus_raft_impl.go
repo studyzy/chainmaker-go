@@ -22,17 +22,17 @@ import (
 	"github.com/thoas/go-funk"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	netpb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 	etcdraft "go.etcd.io/etcd/raft/v3"
@@ -301,7 +301,7 @@ func (consensus *ConsensusRaftImpl) serve() error {
 				}
 			}
 
-			serializeMember, err := consensus.singer.GetSerializedMember(true)
+			serializeMember, err := consensus.singer.GetMember(true)
 			if err != nil {
 				consensus.logger.Errorf("[%x] get serialize member failed: %v", consensus.Id, err)
 				return err

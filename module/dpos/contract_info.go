@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
+	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -93,7 +93,7 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 		impl.log.Debugf("mixture candidatesInfo: %s", vals[i].String())
 		if !vals[i].Jailed && vals[i].Status == commonpb.BondStatus_BONDED && selfDelegation.Cmp(minSelfDelegation) >= 0 {
 			candidates = append(candidates, &dpospb.CandidateInfo{
-				PeerID: vals[i].ValidatorAddress,
+				PeerId: vals[i].ValidatorAddress,
 				Weight: vals[i].Tokens,
 			})
 		}

@@ -15,9 +15,9 @@ import (
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	bftUtils "chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/utils"
 )
 
 //func TestSafetyRules_VoteRules(t *testing.T) {
@@ -27,7 +27,7 @@ import (
 //		BlockHash:   []byte(utils.GetRandTxId()),
 //		BlockHeight: 100,
 //	}}
-//	rootQc := &chainedbft.QuorumCert{BlockID: rootBlk.Header.BlockHash, Height: 100, Level: 100}
+//	rootQc := &chainedbft.QuorumCert{BlockId: rootBlk.Header.BlockHash, Height: 100, Level: 100}
 //	require.NoError(t, bftUtils.AddConsensusArgstoBlock(rootBlk, 100, nil), "add consensus args failed")
 //	blkPool := blockpool.NewBlockPool(rootBlk, rootQc, 10)
 //	safeRules := NewSafetyRules(log, blkPool, &consensus_mock.MockBlockchainStore{})
@@ -36,12 +36,12 @@ import (
 //	require.True(t, safeRules.SafeNode(101, rootQc))
 //
 //	// 3. validate qc but not have block data
-//	qc101 := &chainedbft.QuorumCert{BlockID: []byte(utils.GetRandTxId()), Height: 101, Level: 101}
+//	qc101 := &chainedbft.QuorumCert{BlockId: []byte(utils.GetRandTxId()), Height: 101, Level: 101}
 //	require.False(t, safeRules.VoteRules(102, qc101))
 //
 //	// 4. add 101 block to pool, but not have consensus data
 //	block101 := &common.Block{Header: &common.BlockHeader{
-//		BlockHash:    qc101.BlockID,
+//		BlockHash:    qc101.BlockId,
 //		BlockHeight:  101,
 //		PreBlockHash: rootBlk.Header.BlockHash,
 //	}}
@@ -66,7 +66,7 @@ import (
 //		BlockHash:   []byte(utils.GetRandTxId()),
 //		BlockHeight: 100,
 //	}}
-//	rootQc := &chainedbft.QuorumCert{BlockID: rootBlk.Header.BlockHash, Height: 100, Level: 100}
+//	rootQc := &chainedbft.QuorumCert{BlockId: rootBlk.Header.BlockHash, Height: 100, Level: 100}
 //	require.NoError(t, bftUtils.AddConsensusArgstoBlock(rootBlk, 100, nil), "add consensus args failed")
 //	blkPool := blockpool.NewBlockPool(rootBlk, rootQc, 10)
 //	safeRules := NewSafetyRules(log, blkPool)
@@ -75,23 +75,23 @@ import (
 //	blk101 := &common.Block{Header: &common.BlockHeader{
 //		BlockHash:    []byte(utils.GetRandTxId()),
 //		BlockHeight:  101,
-//		PreBlockHash: rootQc.BlockID,
+//		PreBlockHash: rootQc.BlockId,
 //	}}
-//	qc101 := &chainedbft.QuorumCert{BlockID: blk101.Header.BlockHash, Height: 101, Level: 101}
+//	qc101 := &chainedbft.QuorumCert{BlockId: blk101.Header.BlockHash, Height: 101, Level: 101}
 //	require.NoError(t, bftUtils.AddConsensusArgstoBlock(blk101, 101, nil))
 //	blk102 := &common.Block{Header: &common.BlockHeader{
 //		BlockHash:    []byte(utils.GetRandTxId()),
 //		BlockHeight:  102,
-//		PreBlockHash: qc101.BlockID,
+//		PreBlockHash: qc101.BlockId,
 //	}}
-//	qc102 := &chainedbft.QuorumCert{BlockID: blk102.Header.BlockHash, Height: 102, Level: 102}
+//	qc102 := &chainedbft.QuorumCert{BlockId: blk102.Header.BlockHash, Height: 102, Level: 102}
 //	require.NoError(t, bftUtils.AddConsensusArgstoBlock(blk102, 102, nil))
 //	blk103 := &common.Block{Header: &common.BlockHeader{
 //		BlockHash:    []byte(utils.GetRandTxId()),
 //		BlockHeight:  103,
-//		PreBlockHash: qc102.BlockID,
+//		PreBlockHash: qc102.BlockId,
 //	}}
-//	qc103 := &chainedbft.QuorumCert{BlockID: blk103.Header.BlockHash, Height: 103, Level: 103}
+//	qc103 := &chainedbft.QuorumCert{BlockId: blk103.Header.BlockHash, Height: 103, Level: 103}
 //	require.NoError(t, bftUtils.AddConsensusArgstoBlock(blk103, 103, nil))
 //
 //	// 3. update qc101 but not have block data
@@ -124,7 +124,7 @@ func TestSafetyRules_CommitRules(t *testing.T) {
 		BlockHash:   []byte(utils.GetRandTxId()),
 		BlockHeight: 100,
 	}}
-	rootQc := &chainedbft.QuorumCert{BlockID: rootBlk.Header.BlockHash, Height: 100, Level: 100}
+	rootQc := &chainedbft.QuorumCert{BlockId: rootBlk.Header.BlockHash, Height: 100, Level: 100}
 	require.NoError(t, bftUtils.AddConsensusArgstoBlock(rootBlk, 100, nil), "add consensus args failed")
 	blkPool := blockpool.NewBlockPool(rootBlk, rootQc, 10)
 	safeRules := NewSafetyRules(log, blkPool, &consensus_mock.MockBlockchainStore{})
@@ -133,23 +133,23 @@ func TestSafetyRules_CommitRules(t *testing.T) {
 	blk101 := &common.Block{Header: &common.BlockHeader{
 		BlockHash:    []byte(utils.GetRandTxId()),
 		BlockHeight:  101,
-		PreBlockHash: rootQc.BlockID,
+		PreBlockHash: rootQc.BlockId,
 	}}
-	qc101 := &chainedbft.QuorumCert{BlockID: blk101.Header.BlockHash, Height: 101, Level: 101}
+	qc101 := &chainedbft.QuorumCert{BlockId: blk101.Header.BlockHash, Height: 101, Level: 101}
 	require.NoError(t, bftUtils.AddConsensusArgstoBlock(blk101, 101, nil))
 	blk102 := &common.Block{Header: &common.BlockHeader{
 		BlockHash:    []byte(utils.GetRandTxId()),
 		BlockHeight:  102,
-		PreBlockHash: qc101.BlockID,
+		PreBlockHash: qc101.BlockId,
 	}}
-	qc102 := &chainedbft.QuorumCert{BlockID: blk102.Header.BlockHash, Height: 102, Level: 102}
+	qc102 := &chainedbft.QuorumCert{BlockId: blk102.Header.BlockHash, Height: 102, Level: 102}
 	require.NoError(t, bftUtils.AddConsensusArgstoBlock(blk102, 102, nil))
 	blk103 := &common.Block{Header: &common.BlockHeader{
 		BlockHash:    []byte(utils.GetRandTxId()),
 		BlockHeight:  103,
-		PreBlockHash: qc102.BlockID,
+		PreBlockHash: qc102.BlockId,
 	}}
-	qc103 := &chainedbft.QuorumCert{BlockID: blk103.Header.BlockHash, Height: 103, Level: 103}
+	qc103 := &chainedbft.QuorumCert{BlockId: blk103.Header.BlockHash, Height: 103, Level: 103}
 	require.NoError(t, bftUtils.AddConsensusArgstoBlock(blk103, 103, nil))
 
 	// 3. commit qc101 failed, because all ancestors have been submitted

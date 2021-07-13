@@ -53,7 +53,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 	}
 	for _, v := range validatorsMembers {
 		validators = append(validators, &types.Validator{
-			Index: uint64(v.Index), NodeID: v.NodeID,
+			Index: uint64(v.Index), NodeID: v.NodeId,
 		})
 	}
 
@@ -74,7 +74,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 		members = membersInterface.([]*consensusPb.GovernanceMember)
 	}
 	for _, v := range members {
-		if v.NodeID == cbi.id {
+		if v.NodeId == cbi.id {
 			epoch.index = uint64(v.Index)
 			break
 		}
