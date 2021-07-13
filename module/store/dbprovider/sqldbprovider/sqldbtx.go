@@ -10,7 +10,7 @@ package sqldbprovider
 import (
 	"sync"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
 	"gorm.io/gorm"
 )

@@ -15,12 +15,12 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/mock"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol/mock"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	configpb "chainmaker.org/chainmaker/pb-go/config"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 )
 

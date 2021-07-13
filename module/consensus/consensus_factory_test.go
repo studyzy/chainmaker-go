@@ -11,15 +11,15 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/mock"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	"chainmaker.org/chainmaker/protocol/mock"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	"github.com/golang/mock/gomock"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
 	"chainmaker.org/chainmaker-go/dpos"
-	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/protocol"
+	configpb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const (

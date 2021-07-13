@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"

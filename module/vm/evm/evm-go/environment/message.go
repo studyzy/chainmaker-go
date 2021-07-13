@@ -17,7 +17,7 @@
 package environment
 
 import (
-	"chainmaker.org/chainmaker-go/common/evmutils"
+	"chainmaker.org/chainmaker/common/evmutils"
 )
 
 type Message struct {

@@ -20,9 +20,8 @@ import (
 	"chainmaker.org/chainmaker-go/common/crypto/asym"
 	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/accesscontrol"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
+
 )
 
 var (

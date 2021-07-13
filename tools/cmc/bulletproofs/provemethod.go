@@ -7,11 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package bulletproofs
 
 import (
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"github.com/spf13/cobra"
 )
 

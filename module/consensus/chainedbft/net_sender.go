@@ -10,11 +10,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/net"
+	"chainmaker.org/chainmaker/pb-go/net"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
 )
 

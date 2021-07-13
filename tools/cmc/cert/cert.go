@@ -18,13 +18,13 @@ import (
 	"strings"
 	"time"
 
-	"chainmaker.org/chainmaker-go/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/crypto/x509"
 
-	"chainmaker.org/chainmaker-go/common/random/uuid"
+	"chainmaker.org/chainmaker/common/random/uuid"
 
-	"chainmaker.org/chainmaker-go/common/cert"
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/cert"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
 	"github.com/spf13/cobra"
 )
 

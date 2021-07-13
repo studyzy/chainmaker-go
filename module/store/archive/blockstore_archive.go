@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package archive
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
 

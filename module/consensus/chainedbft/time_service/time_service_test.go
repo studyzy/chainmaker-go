@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 func TestTimerService_AddEvent(t *testing.T) {
@@ -31,8 +31,7 @@ func TestTimerService_AddEvent(t *testing.T) {
 	checkNoTimeOutEvent(t, firedCh)
 
 	// 2. sleep to fired timeout
-	time.Sleep(paceEvent.Duration * 6)
-
+	time.Sleep(paceEvent.Duration * 10)
 	checkTimeOutEvent(t, firedCh)
 
 	// 3. re-add paceEvent event

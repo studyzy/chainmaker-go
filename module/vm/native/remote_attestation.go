@@ -7,11 +7,11 @@ package native
 
 import (
 	"bytes"
-	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
-	"chainmaker.org/chainmaker-go/common/crypto/asym/rsa"
-	"chainmaker.org/chainmaker-go/common/crypto/tee"
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
+	bccrypto "chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
+	"chainmaker.org/chainmaker/common/crypto/tee"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"

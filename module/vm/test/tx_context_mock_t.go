@@ -8,7 +8,7 @@ package test
 
 import (
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
+	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -21,10 +21,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"

@@ -9,8 +9,8 @@ package batch
 import (
 	"sync"
 
-	"chainmaker.org/chainmaker-go/common/sortedmap"
-	txpoolPb "chainmaker.org/chainmaker-go/pb/protogo/txpool"
+	"chainmaker.org/chainmaker/common/sortedmap"
+	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
 )
 
 type nodeBatchPool struct {

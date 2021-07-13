@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/vm/native"
 )

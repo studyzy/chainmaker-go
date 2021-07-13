@@ -13,13 +13,14 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker/protocol/test"
+
 	"chainmaker.org/chainmaker-go/chainconf"
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configpb "chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/protocol/test"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configpb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/golang/mock/gomock"

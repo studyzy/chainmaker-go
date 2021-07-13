@@ -10,8 +10,8 @@ import (
 	"bytes"
 	"testing"
 
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 
 	"github.com/stretchr/testify/require"
 )

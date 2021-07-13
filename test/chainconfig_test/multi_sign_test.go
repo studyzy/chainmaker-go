@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"testing"
 
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/stretchr/testify/require"
 

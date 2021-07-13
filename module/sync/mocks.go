@@ -8,16 +8,16 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"chainmaker.org/chainmaker/common/msgbus"
+	mbusmock "chainmaker.org/chainmaker/common/msgbus/mock"
+	"chainmaker.org/chainmaker/protocol/mock"
 	"fmt"
-
-	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/mock"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	netPb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
-	"chainmaker.org/chainmaker-go/protocol"
-
 	"github.com/golang/mock/gomock"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	syncPb "chainmaker.org/chainmaker/pb-go/sync"
+
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var errStr = "implement me"
@@ -75,7 +75,7 @@ func newMockLedgerCache(ctrl *gomock.Controller, blk *commonPb.Block) protocol.L
 }
 
 func newMockMessageBus(ctrl *gomock.Controller) msgbus.MessageBus {
-	mockMsgBus := mock.NewMockMessageBus(ctrl)
+	mockMsgBus := mbusmock.NewMockMessageBus(ctrl)
 	mockMsgBus.EXPECT().Register(gomock.Any(), gomock.Any()).AnyTimes()
 	return mockMsgBus
 }

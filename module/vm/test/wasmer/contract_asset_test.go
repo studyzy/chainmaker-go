@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package wasmertest
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/wasmer"
 
 	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上

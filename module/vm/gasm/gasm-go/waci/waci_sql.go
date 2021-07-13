@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package waci
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // ExecuteQuery execute query sql, return result set index

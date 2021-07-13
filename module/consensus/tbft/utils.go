@@ -13,15 +13,15 @@ import (
 
 	"chainmaker.org/chainmaker-go/dpos"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
+	"chainmaker.org/chainmaker/pb-go/consensus"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	tbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/tbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

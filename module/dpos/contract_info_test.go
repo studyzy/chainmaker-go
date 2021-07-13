@@ -14,7 +14,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/vm/native"
 

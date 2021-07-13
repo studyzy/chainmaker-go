@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	"chainmaker.org/chainmaker-go/common/msgbus"
-	"chainmaker.org/chainmaker-go/mock"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
-
+	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/mock/gomock"
+
+	"chainmaker.org/chainmaker/common/msgbus"
+	msgbusmock "chainmaker.org/chainmaker/common/msgbus/mock"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type mockBlockChainStore struct {
@@ -37,7 +39,7 @@ func newMockBlockChainStore(ctrl *gomock.Controller) *mockBlockChainStore {
 }
 
 func newMockMessageBus(ctrl *gomock.Controller) msgbus.MessageBus {
-	mockMsgBus := mock.NewMockMessageBus(ctrl)
+	mockMsgBus := msgbusmock.NewMockMessageBus(ctrl)
 	mockMsgBus.EXPECT().Register(gomock.Any(), gomock.Any()).AnyTimes()
 	mockMsgBus.EXPECT().Publish(gomock.Any(), gomock.Any()).AnyTimes()
 	return mockMsgBus

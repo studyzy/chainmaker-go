@@ -9,7 +9,7 @@ package dpos
 import (
 	"bytes"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 func (impl *DPoSImpl) getState(contractName string, key []byte, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) ([]byte, error) {

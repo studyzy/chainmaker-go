@@ -9,14 +9,14 @@ package main
 
 import (
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/common/ca"
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
-	"chainmaker.org/chainmaker-go/common/helper"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/helper"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"context"
 	"encoding/json"
@@ -211,6 +211,11 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	} else {
 		fmt.Println("  【testUpgrade】 pass")
 		fmt.Println("  【testInvokeSqlInsert】 pass")
+	}
+
+	// 并发测试
+	for i := 500; i < 1000; i++ {
+		txId = testInvokeSqlInsert(sk3, client, CHAIN1, strconv.Itoa(i))
 	}
 
 	// 异常功能测试

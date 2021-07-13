@@ -11,13 +11,13 @@ import (
 	"fmt"
 	"sync"
 
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	chainedbftpb "chainmaker.org/chainmaker-go/pb/protogo/consensus/chainedbft"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 )
 

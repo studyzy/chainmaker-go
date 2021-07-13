@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/mock"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	pbdpos "chainmaker.org/chainmaker-go/pb/protogo/dpos"
+	"chainmaker.org/chainmaker/protocol/mock"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
 	"chainmaker.org/chainmaker-go/vm/native"
 	"github.com/golang/protobuf/proto"
 

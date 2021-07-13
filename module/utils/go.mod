@@ -3,9 +3,9 @@ module chainmaker.org/chainmaker-go/utils
 go 1.15
 
 require (
-	chainmaker.org/chainmaker-go/common v0.0.0
-	chainmaker.org/chainmaker-go/pb/protogo v0.0.0
-	chainmaker.org/chainmaker-go/protocol v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210621034028-d765d0e95b61
+	chainmaker.org/chainmaker/protocol v0.0.0-20210621154052-96abe04f2e02
 	github.com/gogo/protobuf v1.3.2
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb
@@ -13,10 +13,4 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/studyzy/sqlparse v0.0.0-20210520090832-d40c792e1576
 	google.golang.org/grpc v1.37.0 // indirect
-)
-
-replace (
-	chainmaker.org/chainmaker-go/common => ../../common
-	chainmaker.org/chainmaker-go/pb/protogo => ../../pb/protogo
-	chainmaker.org/chainmaker-go/protocol => ../../protocol
 )

@@ -9,7 +9,7 @@ package batch
 import (
 	"time"
 
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/msgbus"
 )
 
 type Option func(p *BatchTxPool) error

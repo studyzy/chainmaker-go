@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package serialization
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"sync"
 
 	"github.com/gogo/protobuf/proto"

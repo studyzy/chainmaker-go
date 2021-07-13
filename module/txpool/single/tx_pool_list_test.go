@@ -11,10 +11,11 @@ import (
 	"sync"
 	"testing"
 
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

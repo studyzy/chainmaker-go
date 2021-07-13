@@ -7,9 +7,9 @@ package common
 
 import (
 	"bytes"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 	"github.com/prometheus/common/log"

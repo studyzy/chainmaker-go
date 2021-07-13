@@ -8,22 +8,25 @@ package common
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	commonErrors "chainmaker.org/chainmaker-go/common/errors"
-	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	commonpb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
+	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
+	"runtime"
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -222,64 +225,113 @@ func FinalizeBlock(
 	}
 
 	// TxCount contains acl verify failed txs and invoked contract txs
-	txCount := len(block.Txs)
-	block.Header.TxCount = int64(txCount)
-
-	// TxRoot/RwSetRoot
+	block.Header.TxCount = int64(len(block.Txs))
+	type txPacket struct {
+		index int
+		tx    *commonpb.Transaction
+	}
+	txPacketC := make(chan *txPacket, block.Header.TxCount)
+	finishC := make(chan bool)
+	errC := make(chan error)
+	txHashes := make([][]byte, block.Header.TxCount)
+	var goRoutinePool *ants.Pool
 	var err error
-	txHashes := make([][]byte, txCount)
-	for i, tx := range block.Txs {
-		// finalize tx, put rwsethash into tx.Result
-		rwSet := txRWSetMap[tx.Header.TxId]
-		if rwSet == nil {
-			rwSet = &commonpb.TxRWSet{
-				TxId:     tx.Header.TxId,
-				TxReads:  nil,
-				TxWrites: nil,
+	var txCount int64
+	var wg sync.WaitGroup
+	poolCapacity := runtime.NumCPU() * 4
+	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
+		return err
+	}
+	defer goRoutinePool.Release()
+
+	wg.Add(1)
+	goRoutinePool.Submit(
+		func() {
+			// DagDigest
+			dagHash, err := utils.CalcDagHash(hashType, block.Dag)
+			if err != nil {
+				logger.Warnf("get dag hash error %s", err)
+				errC <- err
 			}
-		}
-		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
-		logger.DebugDynamic(func() string {
-			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+			block.Header.DagHash = dagHash
+			wg.Done()
 		})
-		if err != nil {
+
+	goRoutinePool.Submit(func() {
+		if block.Header.TxCount > 0 {
+			for i, tx := range block.Txs {
+				txPacketC <- &txPacket{index: i, tx: tx}
+			}
+		} else {
+			finishC <- true
+		}
+	})
+
+	for {
+		select {
+		case packet := <-txPacketC:
+			err = goRoutinePool.Submit(func() {
+				tx := packet.tx
+				rwSet := txRWSetMap[tx.Header.TxId]
+				if rwSet == nil {
+					rwSet = &commonpb.TxRWSet{
+						TxId:     tx.Header.TxId,
+						TxReads:  nil,
+						TxWrites: nil,
+					}
+				}
+				rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+				logger.DebugDynamic(func() string {
+					return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+				})
+				if err != nil {
+					logger.Debugf("calc rwSet hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
+					errC <- err
+				}
+				if tx.Result == nil {
+					// in case tx.Result is nil, avoid panic
+					e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
+					logger.Error(e.Error())
+					errC <- e
+					return
+				}
+				tx.Result.RwSetHash = rwSetHash
+				// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
+				txHash, err := utils.CalcTxHash(hashType, tx)
+				if err != nil {
+					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
+					errC <- err
+				}
+				txHashes[packet.index] = txHash
+				newTxCount := atomic.AddInt64(&txCount, 1)
+				if newTxCount == int64(len(block.Txs)) {
+					finishC <- true
+				}
+			})
+		case err = <-errC:
 			return err
+		case <-finishC:
+			//merkleTxStart := utils.CurrentTimeMillisSeconds()
+			block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
+			//merkleTxCost := utils.CurrentTimeMillisSeconds() - merkleTxStart
+			//logger.Debugf("build tx root merkle tree cost[%d], txNum[%d] \n", merkleTxCost, block.Header.TxCount)
+			if err != nil {
+				logger.Warnf("get tx merkle root error %s", err)
+				return err
+			}
+			//merkleStart := utils.CurrentTimeMillisSeconds()
+			block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
+			//merkleCost := utils.CurrentTimeMillisSeconds() - merkleStart
+			//logger.Debugf("build merkle tree cost[%d], txNum[%d] \n", merkleCost, block.Header.TxCount)
+			if err != nil {
+				logger.Warnf("get rwset merkle root error %s", err)
+				return err
+			}
+			wg.Wait()
+			logger.Debugf("finalize block [%d] finish", block.Header.BlockHeight)
+			return nil
 		}
-		if tx.Result == nil {
-			// in case tx.Result is nil, avoid panic
-			e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
-			logger.Error(e.Error())
-			return e
-		}
-		tx.Result.RwSetHash = rwSetHash
-		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-		txHash, err := utils.CalcTxHash(hashType, tx)
-		if err != nil {
-			return err
-		}
-		txHashes[i] = txHash
 	}
-
-	block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
-	if err != nil {
-		logger.Warnf("get tx merkle root error %s", err)
-		return err
-	}
-	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
-	if err != nil {
-		logger.Warnf("get rwset merkle root error %s", err)
-		return err
-	}
-
-	// DagDigest
-	dagHash, err := utils.CalcDagHash(hashType, block.Dag)
-	if err != nil {
-		logger.Warnf("get dag hash error %s", err)
-		return err
-	}
-	block.Header.DagHash = dagHash
-
-	return nil
 }
 
 // IsTxCountValid, to check if txcount in block is valid

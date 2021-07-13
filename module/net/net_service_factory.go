@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // NetServiceFactory is a net service instance factory.

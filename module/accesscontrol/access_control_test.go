@@ -15,13 +15,13 @@ import (
 	"testing"
 	"time"
 
-	bccrypto "chainmaker.org/chainmaker-go/common/crypto"
+	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
-	pbac "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/config"
-	"chainmaker.org/chainmaker-go/protocol"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )

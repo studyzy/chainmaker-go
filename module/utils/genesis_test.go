@@ -8,10 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"crypto/sha256"
 	"testing"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"github.com/mr-tron/base58/base58"
 	"github.com/stretchr/testify/require"
 )

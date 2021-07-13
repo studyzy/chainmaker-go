@@ -19,13 +19,13 @@ import (
 	"chainmaker.org/chainmaker-go/store/archive"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	storePb "chainmaker.org/chainmaker-go/pb/protogo/store"
-	"chainmaker.org/chainmaker-go/protocol"
-	"chainmaker.org/chainmaker-go/protocol/test"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/tidwall/wal"
 )

@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"encoding/json"
 	"fmt"
 	"strconv"

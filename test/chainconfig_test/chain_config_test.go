@@ -12,16 +12,16 @@ SPDX-License-Identifier: Apache-2.0
 package native_test
 
 import (
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	apiPb "chainmaker.org/chainmaker-go/pb/protogo/api"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/protocol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"

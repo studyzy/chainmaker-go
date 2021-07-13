@@ -1,7 +1,7 @@
 package xvm
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
 	"errors"

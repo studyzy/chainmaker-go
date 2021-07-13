@@ -9,11 +9,11 @@ package utils
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/common/crypto/hash"
-	acPb "chainmaker.org/chainmaker-go/pb/protogo/accesscontrol"
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	consensusPb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"fmt"
 	"github.com/gogo/protobuf/proto"

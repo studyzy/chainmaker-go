@@ -10,7 +10,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/mr-tron/base58/base58"
 	"github.com/spf13/cobra"
 )

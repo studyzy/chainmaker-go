@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
-	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
-	syncPb "chainmaker.org/chainmaker-go/pb/protogo/sync"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	syncPb "chainmaker.org/chainmaker/pb-go/sync"
 	"github.com/Workiva/go-datastructures/queue"
 )
 

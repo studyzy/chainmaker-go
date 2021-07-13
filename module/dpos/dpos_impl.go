@@ -13,10 +13,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	"chainmaker.org/chainmaker-go/pb/protogo/common"
-	"chainmaker.org/chainmaker-go/pb/protogo/consensus"
-	"chainmaker.org/chainmaker-go/pb/protogo/dpos"
-	"chainmaker.org/chainmaker-go/protocol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/pb-go/dpos"
+	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/native"
 	"github.com/golang/protobuf/proto"
 )
