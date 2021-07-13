@@ -368,19 +368,19 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 	return nil, fmt.Errorf("setup member failed, invalid public key or certificate")
 }
 
-// NewMemberFromProto creates a member from SerializedMember
-func (ac *accessControl) NewMemberFromProto(serializedMember *pbac.SerializedMember) (protocol.Member, error) {
-	if serializedMember.MemberType == pbac.MemberType_CERT {
-		return ac.NewMemberFromCertPem(serializedMember.OrgId, string(serializedMember.MemberInfo))
+// NewMemberFromProto creates a member from Member
+func (ac *accessControl) NewMemberFromProto(Member *pbac.Member) (protocol.Member, error) {
+	if Member.MemberType == pbac.MemberType_CERT {
+		return ac.NewMemberFromCertPem(Member.OrgId, string(Member.MemberInfo))
 	} else {
-		certPEM, ok := ac.lookUpCertCache(string(serializedMember.MemberInfo))
+		certPEM, ok := ac.lookUpCertCache(string(Member.MemberInfo))
 		if !ok {
 			return nil, fmt.Errorf("setup member failed, fail to look up certificate ID")
 		}
 		if certPEM == nil {
 			return nil, fmt.Errorf("setup member failed, unknown certificate ID")
 		}
-		return ac.NewMemberFromCertPem(serializedMember.OrgId, string(certPEM))
+		return ac.NewMemberFromCertPem(Member.OrgId, string(certPEM))
 	}
 }
 

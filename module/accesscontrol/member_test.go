@@ -161,7 +161,7 @@ func TestMemberSerialize(t *testing.T) {
 	require.NotNil(t, member)
 }
 
-func TestMemberGetSerializedMember(t *testing.T) {
+func TestMemberGetMember(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
@@ -183,7 +183,7 @@ func TestMemberGetSerializedMember(t *testing.T) {
 	require.NotNil(t, member)
 	serializedMember, err := member.GetSerializedMember()
 	require.Nil(t, err)
-	require.NotNil(t, serializedMember)
+	require.NotNil(t, Member)
 }
 
 func TestMemberSignAndVerify(t *testing.T) {

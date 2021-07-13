@@ -574,7 +574,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)", resourceName)
 }
 
-func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.SerializedMember) string {
+func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.Member) string {
 	if signer.MemberType == pbac.MemberType_CERT {
 		return string(signer.MemberInfo)
 	} else {
@@ -1146,7 +1146,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 	var memInfo string
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
-			Signer: &pbac.SerializedMember{
+			Signer: &pbac.Member{
 				OrgId:      endorsementEntry.Signer.OrgId,
 				MemberInfo: endorsementEntry.Signer.MemberInfo,
 				MemberType: endorsementEntry.Signer.MemberType,

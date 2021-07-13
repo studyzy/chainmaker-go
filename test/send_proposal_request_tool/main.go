@@ -290,19 +290,19 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		//IsFullCert: true,
 	}
 
-	var sender *acPb.SerializedMember
+	var sender *acPb.Member
 	if useShortCrt {
 		certId, err := utils.GetCertificateId(senderFull.MemberInfo, hashAlgo)
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute the identity for certificate [%v]", err)
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      senderFull.OrgId,
 			MemberInfo: certId,
 			MemberType: acPb.MemberType_CERT_HASH,
@@ -380,7 +380,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	}
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		//IsFullCert: true,
@@ -391,7 +391,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 		if err != nil {
 			return nil, "", err
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      orgId,
 			MemberInfo: id,
 			MemberType: acPb.MemberType_CERT_HASH,
@@ -497,7 +497,7 @@ func aclSign(msg commonPb.Payload, orgIds, adminSignKeys, adminSignCrts string) 
 		fmt.Println("node", i, "peerId", peerId)
 
 		// 构造Sender
-		sender1 := &acPb.SerializedMember{
+		sender1 := &acPb.Member{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
 			//IsFullCert: true,
@@ -534,7 +534,7 @@ func aclSignOne(bytes []byte, orgId, adminSignKey, adminSignCrt string) (*common
 	}
 
 	// 构造Sender
-	sender1 := &acPb.SerializedMember{
+	sender1 := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file2,
 		//IsFullCert: true,
@@ -553,7 +553,7 @@ func signWith(msg []byte, signer protocol.SigningMember, hashType string) (*comm
 	if err != nil {
 		return nil, err
 	}
-	signerSerial, err := signer.GetSerializedMember(true)
+	signerSerial, err := signer.GetMember(true)
 	if err != nil {
 		return nil, err
 	}

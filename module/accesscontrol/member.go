@@ -100,7 +100,7 @@ func (m *member) GetSerializedMember() (*pbac.SerializedMember, error) {
 	case pbac.MemberType_CERT:
 		pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "CERTIFICATE"}
 		certPEM := pem.EncodeToMemory(pemStruct)
-		return &pbac.SerializedMember{
+		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: certPEM,
 			MemberType: pbac.MemberType_CERT,

@@ -240,7 +240,7 @@ func (b *MockProposer) CreateBlock(height uint64, perHash []byte) *commonPb.Bloc
 			Signature:    []byte(""),
 			BlockHash:    []byte(""),
 			PreBlockHash: perHash,
-			Proposer:     &accesscontrol.SerializedMember{MemberInfo: []byte(b.id)},
+			Proposer:     &accesscontrol.Member{MemberInfo: []byte(b.id)},
 		},
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{

@@ -55,7 +55,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxC
 			panic("file is nil" + err.Error())
 		}
 	}
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      testOrgId,
 		MemberInfo: file,
 		//IsFullCert: true,
@@ -91,8 +91,8 @@ type TxContextMockTest struct {
 	currentResult []byte
 	hisResult     []*callContractResult
 
-	sender   *acPb.SerializedMember
-	creator  *acPb.SerializedMember
+	sender   *acPb.Member
+	creator  *acPb.Member
 	cacheMap map[string][]byte
 }
 
@@ -112,7 +112,7 @@ func (s *TxContextMockTest) Select(name string, startKey []byte, limit []byte) (
 	panic("implement me")
 }
 
-func (s *TxContextMockTest) GetBlockProposer() *acPb.SerializedMember {
+func (s *TxContextMockTest) GetBlockProposer() *acPb.Member {
 	panic("implement me")
 }
 
@@ -179,7 +179,7 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.cacheMap[k] = nil
 	return nil
 }
-func (s *TxContextMockTest) CallContract(contractId *commonPb.Contract, method string, byteCode []byte,
+func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
 	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
@@ -199,13 +199,20 @@ func (s *TxContextMockTest) CallContract(contractId *commonPb.Contract, method s
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
+	}
+	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		deep:         s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
-		contractName: contractId.Name,
+		contractName: contract.Name,
 		method:       method,
 		param:        parameter,
 	}
@@ -228,7 +235,7 @@ func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		Result:           nil,
+		Result: nil,
 	}
 }
 
@@ -251,11 +258,11 @@ func (TxContextMockTest) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	}
 }
 
-func (s *TxContextMockTest) GetCreator(namespace string) *acPb.SerializedMember {
+func (s *TxContextMockTest) GetCreator(namespace string) *acPb.Member {
 	return s.creator
 }
 
-func (s *TxContextMockTest) GetSender() *acPb.SerializedMember {
+func (s *TxContextMockTest) GetSender() *acPb.Member {
 	return s.sender
 }
 
@@ -285,13 +292,13 @@ func (s *TxContextMockTest) GetDepth() int {
 
 func BaseParam(parameters map[string][]byte) {
 	parameters[protocol.ContractTxIdParam] = []byte("TX_ID")
-	parameters[protocol.ContractCreatorOrgIdParam] = []byte( "org_a")
+	parameters[protocol.ContractCreatorOrgIdParam] = []byte("org_a")
 	parameters[protocol.ContractCreatorRoleParam] = []byte("admin")
 	parameters[protocol.ContractCreatorPkParam] = []byte("1234567890abcdef1234567890abcdef")
 	parameters[protocol.ContractSenderOrgIdParam] = []byte("org_b")
-	parameters[protocol.ContractSenderRoleParam] = []byte( "user")
+	parameters[protocol.ContractSenderRoleParam] = []byte("user")
 	parameters[protocol.ContractSenderPkParam] = []byte("11223344556677889900aabbccddeeff")
-	parameters[protocol.ContractBlockHeightParam] = []byte( "1")
+	parameters[protocol.ContractBlockHeightParam] = []byte("1")
 }
 
 type mockBlockchainStore struct {
