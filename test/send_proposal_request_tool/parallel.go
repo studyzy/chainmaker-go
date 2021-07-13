@@ -789,7 +789,7 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String(),
 		Value: bytecode,
 	})
 	for _, kv := range initParameters {

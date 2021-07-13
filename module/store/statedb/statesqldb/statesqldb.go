@@ -162,9 +162,9 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		payload := block.Txs[0].Payload
 
 		contractId := &commonPb.Contract{
-			Name:        string(payload.GetParameter(consts.ContractManager_Install_CONTRACT_NAME.String())),
-			Version:     string(payload.GetParameter(consts.ContractManager_Install_CONTRACT_VERSION.String())),
-			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String()))]),
+			Name:        string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_NAME.String())),
+			Version:     string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_VERSION.String())),
+			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String()))]),
 		}
 		//if contractId.RuntimeType == commonPb.RuntimeType_EVM {
 		//	address, _ := evmutils.MakeAddressFromString(contractId.Name)
