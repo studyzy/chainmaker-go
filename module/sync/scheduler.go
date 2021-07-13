@@ -35,10 +35,10 @@ type scheduler struct {
 	lastRequest       time.Time             // The last time which block request was sent
 	pendingRecvHeight uint64                // The next block to be processed, all smaller blocks have been processed
 
-	maxPendingBlocks   uint64        // The maximum number of blocks allowed to be processed simultaneously (including: New, Pending, Received);
-	batchSizeInEachReq uint64        // Number of blocks requested per request
-	peerReqTimeout     time.Duration // The maximum timeout for a node response
-	reqTimeThreshold   time.Duration // When the difference between the height of the node and the latest height of peers is 1, the time interval for requesting
+	maxPendingBlocks    uint64        // The maximum number of blocks allowed to be processed simultaneously (including: New, Pending, Received);
+	BatchesizeInEachReq uint64        // Number of blocks requested per request
+	peerReqTimeout      time.Duration // The maximum timeout for a node response
+	reqTimeThreshold    time.Duration // When the difference between the height of the node and the latest height of peers is 1, the time interval for requesting
 
 	log    *logger.CMLogger
 	sender syncSender
@@ -46,7 +46,7 @@ type scheduler struct {
 }
 
 func newScheduler(sender syncSender, ledger protocol.LedgerCache,
-	maxNum uint64, timeOut, reqTimeThreshold time.Duration, batchSize uint64, log *logger.CMLogger) *scheduler {
+	maxNum uint64, timeOut, reqTimeThreshold time.Duration, Batchesize uint64, log *logger.CMLogger) *scheduler {
 
 	currHeight, err := ledger.CurrentHeight()
 	if err != nil {
@@ -57,10 +57,10 @@ func newScheduler(sender syncSender, ledger protocol.LedgerCache,
 		ledger: ledger,
 		sender: sender,
 
-		peerReqTimeout:     timeOut,
-		maxPendingBlocks:   maxNum,
-		batchSizeInEachReq: batchSize,
-		reqTimeThreshold:   reqTimeThreshold,
+		peerReqTimeout:      timeOut,
+		maxPendingBlocks:    maxNum,
+		BatchesizeInEachReq: Batchesize,
+		reqTimeThreshold:    reqTimeThreshold,
 
 		peers:             make(map[string]uint64),
 		blockStates:       make(map[uint64]blockState),
@@ -168,7 +168,7 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		return nil, nil
 	}
 	if bz, err = proto.Marshal(&syncPb.BlockSyncReq{
-		BlockHeight: pendingHeight, BatchSize: sch.batchSizeInEachReq,
+		BlockHeight: pendingHeight, BatchSize: sch.BatchesizeInEachReq,
 	}); err != nil {
 		return nil, err
 	}
@@ -178,12 +178,12 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		return nil, nil
 	}
 	sch.lastRequest = time.Now()
-	for i := pendingHeight; i <= sch.peers[peer] && i < sch.batchSizeInEachReq+pendingHeight; i++ {
+	for i := pendingHeight; i <= sch.peers[peer] && i < sch.BatchesizeInEachReq+pendingHeight; i++ {
 		sch.blockStates[i] = pendingBlock
 		sch.pendingTime[i] = sch.lastRequest
 		sch.pendingBlocks[i] = peer
 	}
-	sch.log.Debugf("request block[height: %d] from node [%s], batchSizeInReq: %d", pendingHeight, peer, sch.batchSizeInEachReq)
+	sch.log.Debugf("request block[height: %d] from node [%s], BatchesizeInReq: %d", pendingHeight, peer, sch.BatchesizeInEachReq)
 	if err := sch.sender.sendMsg(syncPb.SyncMsg_BLOCK_SYNC_REQ, bz, peer); err != nil {
 		return nil, err
 	}
@@ -274,11 +274,11 @@ func (sch *scheduler) handleSyncedBlockMsg(msg *SyncedBlockMsg) (queue.Item, err
 	if err := proto.Unmarshal(msg.msg, &blkBatch); err != nil {
 		return nil, err
 	}
-	if len(blkBatch.GetBlockBatch().Batchs) == 0 {
+	if len(blkBatch.GetBlockBatch().Batches) == 0 {
 		return nil, nil
 	}
 	needToProcess := false
-	for _, blk := range blkBatch.GetBlockBatch().Batchs {
+	for _, blk := range blkBatch.GetBlockBatch().Batches {
 		delete(sch.pendingBlocks, blk.Header.BlockHeight)
 		delete(sch.pendingTime, blk.Header.BlockHeight)
 		if _, exist := sch.blockStates[blk.Header.BlockHeight]; exist {
@@ -291,7 +291,7 @@ func (sch *scheduler) handleSyncedBlockMsg(msg *SyncedBlockMsg) (queue.Item, err
 	}
 	if needToProcess {
 		return &ReceivedBlocks{
-			blks: blkBatch.GetBlockBatch().Batchs,
+			blks: blkBatch.GetBlockBatch().Batches,
 			from: msg.from}, nil
 	}
 	return nil, nil

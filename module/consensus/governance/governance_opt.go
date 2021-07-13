@@ -214,7 +214,7 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 	for _, nid := range nodeIds {
 		member := &consensusPb.GovernanceMember{
 			Index:  int64(index),
-			NodeID: nid,
+			NodeId: nid,
 		}
 		members = append(members, member)
 		index++
@@ -496,7 +496,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 	isChange := false
 	oldMembersMap := make(map[string]*consensusPb.GovernanceMember, len(GovernanceContract.Members))
 	for _, member := range GovernanceContract.Members {
-		oldMembersMap[member.NodeID] = member
+		oldMembersMap[member.NodeId] = member
 	}
 
 	var (
@@ -524,7 +524,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 			//use new index
 			member := &consensusPb.GovernanceMember{
 				Index:  index,
-				NodeID: nid,
+				NodeId: nid,
 			}
 			members = append(members, member)
 			index++
@@ -614,7 +614,7 @@ func GetProposer(level uint64, NodeProposeRound uint64, validators []*consensusP
 	index := (level / NodeProposeRound) % uint64(len(validators))
 	newMember := &consensusPb.GovernanceMember{
 		Index:  validators[index].Index,
-		NodeID: validators[index].NodeID,
+		NodeId: validators[index].NodeId,
 	}
 	log.Debugf("GetProposer newMember[%v] level[%v]", newMember, level)
 	return newMember, nil

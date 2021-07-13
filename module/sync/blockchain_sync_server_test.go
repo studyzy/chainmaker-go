@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	syncPb "chainmaker.org/chainmaker/pb-go/sync"
@@ -46,7 +45,7 @@ func getBlockReq(t *testing.T, height, batchSize uint64) []byte {
 
 func getBlockResp(t *testing.T, height uint64) []byte {
 	bz, err := proto.Marshal(&syncPb.SyncBlockBatch{
-		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batchs: []*commonPb.Block{
+		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batches: []*commonPb.Block{
 			{Header: &commonPb.BlockHeader{BlockHeight: height}},
 		}}},
 	})

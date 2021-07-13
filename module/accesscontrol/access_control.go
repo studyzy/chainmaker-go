@@ -8,6 +8,16 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/hex"
+	"encoding/pem"
+	"fmt"
+	"io/ioutil"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/concurrentlru"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
@@ -18,16 +28,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"crypto/x509"
-	"crypto/x509/pkix"
-	"encoding/hex"
-	"encoding/pem"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"io/ioutil"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
 const unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
@@ -301,7 +302,7 @@ func (ac *accessControl) DeserializeMember(Member []byte) (protocol.Member, erro
 		return nil, err
 	}
 
-	if memberPb.MemberType!=pbac.MemberType_CERT {
+	if memberPb.MemberType != pbac.MemberType_CERT {
 		memInfoBytes, ok := ac.lookUpCertCache(string(memberPb.MemberInfo))
 		if !ok {
 			return nil, fmt.Errorf("deserialize Member failed, unrecognized compressed certificate")
@@ -393,7 +394,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 // NewMemberFromProto creates a member from Member
 func (ac *accessControl) NewMemberFromProto(Member *pbac.Member) (protocol.Member, error) {
-	if Member.MemberType==pbac.MemberType_CERT {
+	if Member.MemberType == pbac.MemberType_CERT {
 		return ac.NewMemberFromCertPem(Member.OrgId, string(Member.MemberInfo))
 	} else {
 		certPEM, ok := ac.lookUpCertCache(string(Member.MemberInfo))

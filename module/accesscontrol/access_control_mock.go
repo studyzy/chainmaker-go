@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"sync"
+
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"sync"
 )
 
 var mockAcLogger = logger.GetLogger(logger.MODULE_ACCESS)

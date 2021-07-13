@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"encoding/pem"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/utils"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/protocol"
-	"encoding/pem"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -105,7 +106,7 @@ func (m *member) Serialize(isFullCert bool) ([]byte, error) {
 		Member = &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: info,
-			MemberType:pbac.MemberType_CERT,
+			MemberType: pbac.MemberType_CERT,
 		}
 	} else {
 		id, err := utils.GetCertificateIdFromDER(m.cert.Raw, m.hashType)
@@ -116,7 +117,7 @@ func (m *member) Serialize(isFullCert bool) ([]byte, error) {
 		Member = &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: id,
-			MemberType:pbac.MemberType_CERT_HASH,
+			MemberType: pbac.MemberType_CERT_HASH,
 		}
 	}
 
@@ -135,7 +136,7 @@ func (m *member) GetMember(isFullCert bool) (*pbac.Member, error) {
 		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: certPEM,
-			MemberType:pbac.MemberType_CERT,
+			MemberType: pbac.MemberType_CERT,
 		}, nil
 	} else {
 		id, err := utils.GetCertificateIdFromDER(m.cert.Raw, m.hashType)
@@ -146,7 +147,7 @@ func (m *member) GetMember(isFullCert bool) (*pbac.Member, error) {
 		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: id,
-			MemberType:pbac.MemberType_CERT_HASH,
+			MemberType: pbac.MemberType_CERT_HASH,
 		}, nil
 	}
 }

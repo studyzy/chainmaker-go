@@ -7,13 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package consensus_mock
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"

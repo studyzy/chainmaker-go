@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"fmt"
 	"math/big"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store"
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/golang/mock/gomock"

@@ -526,7 +526,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 		ouList, err := ac.getSignerRoleList(entry.Signer.MemberInfo)
 		if err != nil {
 			var info string
-			if entry.Signer.MemberType==pbac.MemberType_CERT {
+			if entry.Signer.MemberType == pbac.MemberType_CERT {
 				info = string(entry.Signer.MemberInfo)
 			} else {
 				info = hex.EncodeToString(entry.Signer.MemberInfo)
@@ -575,7 +575,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 }
 
 func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.Member) string {
-	if signer.MemberType==pbac.MemberType_CERT {
+	if signer.MemberType == pbac.MemberType_CERT {
 		return string(signer.MemberInfo)
 	} else {
 		return hex.EncodeToString(signer.MemberInfo)
@@ -1153,7 +1153,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.MemberType==pbac.MemberType_CERT {
+		if endorsement.Signer.MemberType == pbac.MemberType_CERT {
 			ac.log.Debugf("target endorser uses full certificate")
 			memInfo = string(endorsement.Signer.MemberInfo)
 		} else {
@@ -1164,7 +1164,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 				continue
 			}
 			memInfo = string(memInfoBytes)
-			endorsement.Signer.MemberType=pbac.MemberType_CERT
+			endorsement.Signer.MemberType = pbac.MemberType_CERT
 			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 
