@@ -592,7 +592,7 @@ func txContextGet(txContext protocol.TxSimContext, contractName string, key stri
 	result, err := txContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), newKey)
 	if result == nil || err != nil {
 		result, err = txContext.Get(contractName, []byte(key))
-		if err != nil && strings.Contains(err.Error(), "Table") {
+		if err != nil && strings.Contains(err.Error(), "sql query error") {
 			return nil, nil
 		}
 	}
@@ -603,7 +603,7 @@ func txContextGetVersionBytecode(txContext protocol.TxSimContext, contractName s
 	result, err := txContext.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionedByteCodeKey)
 	if result == nil || err != nil {
 		result, err = txContext.Get(contractName, []byte(protocol.ContractByteCode+version))
-		if err != nil && strings.Contains(err.Error(), "Table") {
+		if err != nil && strings.Contains(err.Error(), "sql query error") {
 			return nil, nil
 		}
 	}

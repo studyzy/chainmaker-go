@@ -70,7 +70,7 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 		contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey)
 		if contractVersion == nil || err != nil {
 			contractVersion, err = c.Ctx.Get(address.String(), []byte(protocol.ContractVersion))
-			if err != nil && strings.Contains(err.Error(), "Table") {
+			if err != nil && strings.Contains(err.Error(), "sql query error") {
 				err = nil
 			}
 		}
@@ -81,7 +81,7 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 			if code == nil || err != nil {
 				versionedByteCodeKey2 := append([]byte(protocol.ContractByteCode), contractVersion...)
 				code, err = c.Ctx.Get(string(contractName), versionedByteCodeKey2)
-				if err != nil && strings.Contains(err.Error(), "Table") {
+				if err != nil && strings.Contains(err.Error(), "sql query error") {
 					err = nil
 				}
 			}
