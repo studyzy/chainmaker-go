@@ -17,8 +17,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdk "chainmaker.org/chainmaker-sdk-go"
-	"chainmaker.org/chainmaker-sdk-go/pb/protogo/common"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 const CREATE_USER_FAILED_FORMAT = "create user client failed, %s"

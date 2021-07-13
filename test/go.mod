@@ -4,12 +4,12 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
-
-
 	chainmaker.org/chainmaker-go/utils v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210630065752-c3d162425200
+	chainmaker.org/chainmaker/protocol v0.0.0-20210713153356-560ce3780e4d
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3 // indirect
@@ -17,8 +17,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
-	golang.org/x/sys v0.0.0-20210305034016-7844c3c200c3 // indirect
 	google.golang.org/genproto v0.0.0-20210303154014-9728d6b83eeb // indirect
 	google.golang.org/grpc v1.37.0
 )
@@ -29,7 +27,6 @@ replace (
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
 	chainmaker.org/chainmaker-go/net => ../module/net
-
 
 	chainmaker.org/chainmaker-go/utils => ../module/utils
 

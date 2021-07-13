@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,12 +18,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"chainmaker.org/chainmaker-go/common/crypto"
-	"chainmaker.org/chainmaker-go/common/crypto/asym"
-	bcx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	sdk "chainmaker.org/chainmaker/sdk-go"
-
 )
 
 var (
