@@ -5,7 +5,6 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/chainconf v0.0.0
-	chainmaker.org/chainmaker-go/dpos v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
@@ -30,12 +29,11 @@ replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ./../../module/accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
 
-	chainmaker.org/chainmaker-go/dpos => ./../../module/dpos
 	chainmaker.org/chainmaker-go/evm => ./../../module/vm/evm
 	chainmaker.org/chainmaker-go/gasm => ./../../module/vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ./../logger
-
+	chainmaker.org/chainmaker-go/vm/native => ./../../module/vm/native
 	chainmaker.org/chainmaker-go/store => ./../../module/store
 	chainmaker.org/chainmaker-go/utils => ../utils
 	chainmaker.org/chainmaker-go/vm => ./../../module/vm

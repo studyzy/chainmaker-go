@@ -25,21 +25,12 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
-
 	chainmaker.org/chainmaker-go/consensus => ../consensus
-	chainmaker.org/chainmaker-go/dpos => ../dpos
-	chainmaker.org/chainmaker-go/evm => ./../../module/vm/evm
-	chainmaker.org/chainmaker-go/gasm => ./../../module/vm/gasm
+	chainmaker.org/chainmaker-go/consensus/dpos => ./../consensus/dpos
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-
 	chainmaker.org/chainmaker-go/monitor => ../monitor
-
 	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/utils => ../utils
-	chainmaker.org/chainmaker-go/vm => ./../../module/vm
-	chainmaker.org/chainmaker-go/wasi => ./../../module/vm/wasi
-	chainmaker.org/chainmaker-go/wasmer => ./../../module/vm/wasmer
-	chainmaker.org/chainmaker-go/wxvm => ./../../module/vm/wxvm
 )
