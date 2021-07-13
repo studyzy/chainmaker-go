@@ -51,7 +51,7 @@ func (s *MockSimContextImpl) GetCurrentResult() []byte {
 	panic(implement_me)
 }
 
-func (s *MockSimContextImpl) GetCreator(namespace string) *acPb.SerializedMember {
+func (s *MockSimContextImpl) GetCreator(namespace string) *acPb.Member {
 	panic(implement_me)
 }
 
@@ -63,7 +63,7 @@ func (s *MockSimContextImpl) GetBlockHeight() uint64 {
 	panic(implement_me)
 }
 
-func (s *MockSimContextImpl) GetBlockProposer() *acPb.SerializedMember {
+func (s *MockSimContextImpl) GetBlockProposer() *acPb.Member {
 	panic(implement_me)
 }
 
@@ -75,7 +75,7 @@ func (s *MockSimContextImpl) SetTxResult(result *commonPb.Result) {
 	s.txResult = result
 }
 
-func (s *MockSimContextImpl) GetSender() *acPb.SerializedMember {
+func (s *MockSimContextImpl) GetSender() *acPb.Member {
 	panic(implement_me)
 }
 

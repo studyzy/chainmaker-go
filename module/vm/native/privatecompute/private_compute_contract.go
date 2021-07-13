@@ -1082,7 +1082,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string][]byte, chain
 		return false, err
 	}
 
-	sender := &accesscontrol.SerializedMember{
+	sender := &accesscontrol.Member{
 		OrgId:      orgId,
 		MemberInfo: userCertPemBytes,
 		MemberType: accesscontrol.MemberType_CERT,
@@ -1151,7 +1151,7 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 			return false, err
 		}
 
-		sender := &accesscontrol.SerializedMember{
+		sender := &accesscontrol.Member{
 			OrgId:      orgId[i],
 			MemberInfo: userCertPemBytes,
 			MemberType: accesscontrol.MemberType_CERT,
@@ -1207,7 +1207,7 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 //			return false, err
 //		}
 //
-//		sender := &accesscontrol.SerializedMember{
+//		sender := &accesscontrol.Member{
 //			OrgId:      req.Payload.OrgId[i],
 //			MemberInfo: userCertPemBytes,
 //			//IsFullCert: true,

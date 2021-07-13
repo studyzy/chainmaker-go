@@ -17,3 +17,7 @@ type MemberGetter interface {
 func GetMemberPubKeySA(member *accesscontrol.Member, getter MemberGetter) ([]byte, uint32) {
 	return []byte("pubkey"), uint32(member.MemberType)
 }
+
+//func GetMemberPubKeySA(member *accesscontrol.Member,getter MemberGetter) ([]byte,uint32){
+//	return []byte("pubkey"),member.SignatureAlgorithm
+//}

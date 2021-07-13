@@ -46,7 +46,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.SerializedMember{
+				Signer:    &acPb.Member{
 					OrgId: "org1",
 					MemberInfo: []byte("User1"),
 				},

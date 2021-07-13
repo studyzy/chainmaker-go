@@ -34,7 +34,7 @@ type SnapshotImpl struct {
 
 	chainId        string
 	blockTimestamp int64
-	blockProposer  *accesscontrol.SerializedMember
+	blockProposer  *accesscontrol.Member
 	blockHeight    uint64
 	preBlockHash   []byte
 
@@ -226,7 +226,7 @@ func (s *SnapshotImpl) GetBlockHeight() uint64 {
 }
 
 // Get Block Proposer for current snapshot
-func (s *SnapshotImpl) GetBlockProposer() *accesscontrol.SerializedMember {
+func (s *SnapshotImpl) GetBlockProposer() *accesscontrol.Member {
 	return s.blockProposer
 }
 

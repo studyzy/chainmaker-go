@@ -49,7 +49,7 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{Signer:
-				&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
+				&acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
 				},
 					Signature: []byte("sign1"),
 				},
@@ -86,7 +86,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 				TxId:    generateTxId(chainId, height, i),
 			},
 			Sender: &commonPb.EndorsementEntry{Signer:
-			&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
+			&acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
 			},
 				Signature: []byte("sign1"),
 			},
@@ -146,7 +146,7 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 
 				},
 				Sender: &commonPb.EndorsementEntry{Signer:
-				&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
+				&acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
 				},
 					Signature: []byte("sign1"),
 				},

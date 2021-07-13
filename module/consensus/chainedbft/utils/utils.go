@@ -177,7 +177,7 @@ func VerifyDataSign(data []byte, signEnrty *common.EndorsementEntry,
 	return nil
 }
 
-//GetUidFromProtoSigner get uid from SerializedMember using netservice
+//GetUidFromProtoSigner get uid from Member using netservice
 func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService, ac protocol.AccessControlProvider) (string, error) {
 	if signerpb == nil {
 		return "", fmt.Errorf("signer is nil")

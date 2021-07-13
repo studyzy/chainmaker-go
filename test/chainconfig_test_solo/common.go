@@ -72,7 +72,7 @@ func InitGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -99,7 +99,7 @@ type InvokeContractMsg struct {
 	Pairs        []*commonPb.KeyValuePair
 }
 
-func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, client *apiPb.RpcNodeClient, msg *InvokeContractMsg) (*commonPb.TxResponse, error) {
+func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.Member, client *apiPb.RpcNodeClient, msg *InvokeContractMsg) (*commonPb.TxResponse, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(5*time.Second)))
 	defer cancel()
 
@@ -144,7 +144,7 @@ func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, client *
 }
 
 // 获取用户私钥
-func GetUserSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
+func GetUserSK(index int) (crypto.PrivateKey, *acPb.Member) {
 	numStr := strconv.Itoa(index)
 
 	keyPath := fmt.Sprintf(UserKeyPathFmt, numStr)
@@ -162,7 +162,7 @@ func GetUserSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
 		panic(err)
 	}
 
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      fmt.Sprintf(OrgIdFormat, numStr),
 		MemberInfo: file2,
 		MemberType: acPb.MemberType_CERT,
@@ -172,7 +172,7 @@ func GetUserSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
 }
 
 // 获取admin的私钥
-func GetAdminSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
+func GetAdminSK(index int) (crypto.PrivateKey, *acPb.Member) {
 	numStr := strconv.Itoa(index)
 
 	path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
@@ -197,7 +197,7 @@ func GetAdminSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
 	fmt.Println("node", numStr, "peerId", peerId)
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      fmt.Sprintf(OrgIdFormat, numStr),
 		MemberInfo: file2,
 		MemberType: acPb.MemberType_CERT,

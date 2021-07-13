@@ -36,42 +36,42 @@ func TestHostFunction_Call(t *testing.T) {
 	assert.Equal(t, int32(1), int32(vm.OperandStack.Pop()))
 }
 
-func TestNativeFunction_Call(t *testing.T) {
-	n := &NativeFunction{
-		Signature: &FunctionType{},
-		Body: []byte{
-			byte(OptCodeI64Const), 0x05, byte(OptCodeReturn),
-		},
-	}
-	vm := &VirtualMachine{
-		OperandStack: NewVirtualMachineOperandStack(),
-		ActiveContext: &NativeFunctionContext{
-			PC: 1000,
-		},
-	}
-	n.Call(vm)
-	assert.Equal(t, uint64(0x05), vm.OperandStack.Pop())
-	assert.Equal(t, uint64(1000), vm.ActiveContext.PC)
-}
+//func TestNativeFunction_Call(t *testing.T) {
+//	n := &NativeFunction{
+//		Signature: &FunctionType{},
+//		Body: []byte{
+//			byte(OptCodeI64Const), 0x05, byte(OptCodeReturn),
+//		},
+//	}
+//	vm := &VirtualMachine{
+//		OperandStack: NewVirtualMachineOperandStack(),
+//		ActiveContext: &NativeFunctionContext{
+//			PC: 1000,
+//		},
+//	}
+//	n.Call(vm)
+//	assert.Equal(t, uint64(0x05), vm.OperandStack.Pop())
+//	assert.Equal(t, uint64(1000), vm.ActiveContext.PC)
+//}
 
-func TestVirtualMachine_execNativeFunction(t *testing.T) {
-	n := &NativeFunction{
-		Signature: &FunctionType{},
-		Body: []byte{
-			byte(OptCodeI64Const), 0x05,
-			byte(OptCodeI64Const), 0x01,
-			byte(OptCodeReturn),
-		},
-	}
-	vm := &VirtualMachine{
-		OperandStack: NewVirtualMachineOperandStack(),
-		ActiveContext: &NativeFunctionContext{
-			Function: n,
-		},
-	}
-
-	vm.execNativeFunction()
-	assert.Equal(t, uint64(4), vm.ActiveContext.PC)
-	assert.Equal(t, uint64(0x01), vm.OperandStack.Pop())
-	assert.Equal(t, uint64(0x05), vm.OperandStack.Pop())
-}
+//func TestVirtualMachine_execNativeFunction(t *testing.T) {
+//	n := &NativeFunction{
+//		Signature: &FunctionType{},
+//		Body: []byte{
+//			byte(OptCodeI64Const), 0x05,
+//			byte(OptCodeI64Const), 0x01,
+//			byte(OptCodeReturn),
+//		},
+//	}
+//	vm := &VirtualMachine{
+//		OperandStack: NewVirtualMachineOperandStack(),
+//		ActiveContext: &NativeFunctionContext{
+//			Function: n,
+//		},
+//	}
+//
+//	vm.execNativeFunction()
+//	assert.Equal(t, uint64(4), vm.ActiveContext.PC)
+//	assert.Equal(t, uint64(0x01), vm.OperandStack.Pop())
+//	assert.Equal(t, uint64(0x05), vm.OperandStack.Pop())
+//}

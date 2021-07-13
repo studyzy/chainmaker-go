@@ -9,4 +9,5 @@ require (
 	github.com/thoas/go-funk v0.9.0 // indirect
 	github.com/tidwall/wal v0.1.4 // indirect
 	go.etcd.io/etcd/server/v3 v3.5.0 // indirect
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210713033153-38d533e9114d // indirect
 )

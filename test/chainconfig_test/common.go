@@ -78,7 +78,7 @@ func InitGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -105,7 +105,7 @@ type InvokeContractMsg struct {
 	Pairs        []*commonPb.KeyValuePair
 }
 
-func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, client *apiPb.RpcNodeClient, msg *InvokeContractMsg) (*commonPb.TxResponse, error) {
+func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.Member, client *apiPb.RpcNodeClient, msg *InvokeContractMsg) (*commonPb.TxResponse, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(5*time.Second)))
 	defer cancel()
 
@@ -173,13 +173,13 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	}
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      DefaultOrgId,
 		MemberInfo: certId,
 		MemberType: acPb.MemberType_CERT_HASH,
 	}
 
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      DefaultOrgId,
 		MemberInfo: file,
 		////IsFullCert: true,
@@ -226,7 +226,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	return (*client).SendRequest(ctx, req)
 }
 
-func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, msg *InvokeContractMsg, oldSeq uint64) (*commonPb.TxResponse, error) {
+func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *InvokeContractMsg, oldSeq uint64) (*commonPb.TxResponse, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Fatalln(err)
@@ -307,7 +307,7 @@ func aclSign(msg *commonPb.Payload) ([]*commonPb.EndorsementEntry, error) {
 }
 
 // 获取用户私钥
-func GetUserSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
+func GetUserSK(index int) (crypto.PrivateKey, *acPb.Member) {
 	numStr := strconv.Itoa(index)
 
 	keyPath := fmt.Sprintf(UserKeyPathFmt, numStr)
@@ -325,7 +325,7 @@ func GetUserSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
 		panic(err)
 	}
 
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      fmt.Sprintf(OrgIdFormat, numStr),
 		MemberInfo: file2,
 		////IsFullCert: true,
@@ -335,7 +335,7 @@ func GetUserSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
 }
 
 // 获取admin的私钥
-func GetAdminSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
+func GetAdminSK(index int) (crypto.PrivateKey, *acPb.Member) {
 	numStr := strconv.Itoa(index)
 
 	path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
@@ -360,7 +360,7 @@ func GetAdminSK(index int) (crypto.PrivateKey, *acPb.SerializedMember) {
 	fmt.Println("node", numStr, "peerId", peerId)
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      fmt.Sprintf(OrgIdFormat, numStr),
 		MemberInfo: file2,
 		////IsFullCert: true,
@@ -385,7 +385,7 @@ func signWith(msg []byte, signer protocol.SigningMember, hashType string) (*comm
 	if err != nil {
 		return nil, err
 	}
-	signerSerial, err := signer.GetSerializedMember(true)
+	signerSerial, err := signer.GetMember(true)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +395,7 @@ func signWith(msg []byte, signer protocol.SigningMember, hashType string) (*comm
 	}, nil
 }
 
-func UpdateSysRequest(sk3 crypto.PrivateKey, sender *acPb.SerializedMember, msg *InvokeContractMsg) (*commonPb.TxResponse, error) {
+func UpdateSysRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *InvokeContractMsg) (*commonPb.TxResponse, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Fatalln(err)
