@@ -110,7 +110,7 @@ func SignConsensusMsg(msg *chainedbftpb.ConsensusMsg, hashType string,
 	if err != nil {
 		return fmt.Errorf("sign data failed, err %v data %v", err, data)
 	}
-	serializeMember, err := signer.GetSerializedMember(true)
+	serializeMember, err := signer.GetMember(true)
 	if err != nil {
 		return fmt.Errorf("get signer serializeMember failed, err %v", err)
 	}
@@ -177,8 +177,8 @@ func VerifyDataSign(data []byte, signEnrty *common.EndorsementEntry,
 	return nil
 }
 
-//GetUidFromProtoSigner get uid from SerializedMember using netservice
-func GetUidFromProtoSigner(signerpb *pbac.SerializedMember, netservice protocol.NetService, ac protocol.AccessControlProvider) (string, error) {
+//GetUidFromProtoSigner get uid from Member using netservice
+func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService, ac protocol.AccessControlProvider) (string, error) {
 	if signerpb == nil {
 		return "", fmt.Errorf("signer is nil")
 	}

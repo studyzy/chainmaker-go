@@ -59,7 +59,7 @@ func createBlock(height uint64) *commonpb.Block {
 			RwSetRoot:      hash,
 			TxRoot:         hash,
 			BlockTimestamp: 0,
-			Proposer:       &accesscontrol.SerializedMember{MemberInfo: hash},
+			Proposer:       &accesscontrol.Member{MemberInfo: hash},
 			ConsensusArgs:  nil,
 			TxCount:        1,
 			Signature:      []byte(""),

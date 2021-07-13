@@ -367,7 +367,7 @@ package proposer
 //	return &commonpb.Transaction{
 //		Header: &commonpb.TxHeader{
 //			ChainId: "chain1",
-//			Sender: &acpb.SerializedMember{
+//			Sender: &acpb.Member{
 //				OrgId:      "wx-org1.chainmaker.org",
 //				MemberInfo: []byte("wx-org1.chainmaker.org"),
 //				MemberType: acPb.MemberType_CERT_HASH,

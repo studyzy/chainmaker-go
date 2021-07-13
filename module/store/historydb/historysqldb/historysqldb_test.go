@@ -42,7 +42,7 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 			},
@@ -55,7 +55,7 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
+					Signer:    &acPb.Member{
 						OrgId: "org1",
 						MemberInfo: []byte("Admin"),
 					},
@@ -84,11 +84,10 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 				MemberType:         0,
-				SignatureAlgorithm: 0,
 			},
 		},
 	}
@@ -105,7 +104,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 				Parameters:   nil,
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.SerializedMember{
+				Signer:    &acPb.Member{
 					OrgId: "org1",
 					MemberInfo: []byte("User"+ strconv.Itoa(i)),
 				},
@@ -159,11 +158,10 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 				MemberType:         0,
-				SignatureAlgorithm: 0,
 			},
 		},
 		Txs: []*commonPb.Transaction{
@@ -173,7 +171,7 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
+					Signer:    &acPb.Member{
 						OrgId: "org1",
 						MemberInfo: []byte("User1"),
 					},

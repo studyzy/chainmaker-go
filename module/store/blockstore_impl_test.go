@@ -149,7 +149,7 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 			},
@@ -162,7 +162,7 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 					TxId: generateTxId(chainId, height, 0),
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
+					Signer:    &acPb.Member{
 						OrgId: "org1",
 						MemberInfo: []byte("User1"),
 					},
@@ -188,7 +188,7 @@ func createBlock(chainId string, height uint64, txNum int) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 			},
@@ -204,7 +204,7 @@ func createBlock(chainId string, height uint64, txNum int) *commonPb.Block {
 
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.SerializedMember{
+				Signer:    &acPb.Member{
 					OrgId: "org1",
 					MemberInfo: []byte("User1"),
 				},
@@ -230,7 +230,7 @@ func createConfBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 			},
@@ -244,7 +244,7 @@ func createConfBlock(chainId string, height uint64) *commonPb.Block {
 					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
+					Signer:    &acPb.Member{
 						OrgId: "org1",
 						MemberInfo: []byte("User1"),
 					},

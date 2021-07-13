@@ -91,7 +91,7 @@ func (m *member) Verify(hashType string, msg []byte, sig []byte) error {
 }
 
 func (m *member) Serialize(isFullCert bool) ([]byte, error) {
-	var serializedMember *pbac.SerializedMember
+	var Member *pbac.Member
 	if isFullCert {
 		var pemStruct *pem.Block
 		if m.identityType == IdentityTypePublicKey {
@@ -102,7 +102,7 @@ func (m *member) Serialize(isFullCert bool) ([]byte, error) {
 
 		info := pem.EncodeToMemory(pemStruct)
 
-		serializedMember = &pbac.SerializedMember{
+		Member = &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: info,
 			MemberType:pbac.MemberType_CERT,
@@ -113,17 +113,17 @@ func (m *member) Serialize(isFullCert bool) ([]byte, error) {
 			return nil, fmt.Errorf("fail to compute certificate identity")
 		}
 
-		serializedMember = &pbac.SerializedMember{
+		Member = &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: id,
 			MemberType:pbac.MemberType_CERT_HASH,
 		}
 	}
 
-	return proto.Marshal(serializedMember)
+	return proto.Marshal(Member)
 }
 
-func (m *member) GetSerializedMember(isFullCert bool) (*pbac.SerializedMember, error) {
+func (m *member) GetMember(isFullCert bool) (*pbac.Member, error) {
 	if isFullCert {
 		var pemStruct *pem.Block
 		if m.identityType == IdentityTypePublicKey {
@@ -132,7 +132,7 @@ func (m *member) GetSerializedMember(isFullCert bool) (*pbac.SerializedMember, e
 			pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "CERTIFICATE"}
 		}
 		certPEM := pem.EncodeToMemory(pemStruct)
-		return &pbac.SerializedMember{
+		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: certPEM,
 			MemberType:pbac.MemberType_CERT,
@@ -143,7 +143,7 @@ func (m *member) GetSerializedMember(isFullCert bool) (*pbac.SerializedMember, e
 			return nil, fmt.Errorf("fail to compute certificate identity")
 		}
 
-		return &pbac.SerializedMember{
+		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: id,
 			MemberType:pbac.MemberType_CERT_HASH,

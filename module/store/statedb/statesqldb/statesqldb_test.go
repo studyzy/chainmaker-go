@@ -42,11 +42,10 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 				MemberType:         0,
-				SignatureAlgorithm: 0,
 			},
 		},
 		Txs: []*commonPb.Transaction{
@@ -57,7 +56,7 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
+					Signer:    &acPb.Member{
 						OrgId: "org1",
 						MemberInfo: []byte("User1"),
 					},
@@ -102,11 +101,10 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
+			Proposer: &acPb.Member{
 				OrgId:              "org1",
 				MemberInfo:         []byte("User1"),
 				MemberType:         0,
-				SignatureAlgorithm: 0,
 			},
 		},
 	}
@@ -119,7 +117,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.SerializedMember{
+				Signer:    &acPb.Member{
 					OrgId: "org1",
 					MemberInfo: []byte("User1"),
 				},
@@ -182,7 +180,7 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
+					Signer:    &acPb.Member{
 						OrgId: "org1",
 						MemberInfo: []byte("User1"),
 					},

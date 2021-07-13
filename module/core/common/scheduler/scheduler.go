@@ -526,7 +526,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 			fullCertEndorsements = append(fullCertEndorsements, endorsement)
 		} else {
 			fullCertEndorsement := &commonpb.EndorsementEntry{
-				Signer: &acpb.SerializedMember{
+				Signer: &acpb.Member{
 					OrgId:      endorsement.Signer.OrgId,
 					MemberInfo: nil,
 					//IsFullCert: true,

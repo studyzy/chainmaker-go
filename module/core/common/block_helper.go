@@ -199,7 +199,7 @@ func InitNewBlock(
 			RwSetRoot:      nil,
 			TxRoot:         nil,
 			BlockTimestamp: utils.CurrentTimeSeconds(),
-			Proposer:       &accesscontrol.SerializedMember{MemberInfo: proposer},
+			Proposer:       &accesscontrol.Member{MemberInfo: proposer},
 			ConsensusArgs:  nil,
 			TxCount:        0,
 			Signature:      nil,

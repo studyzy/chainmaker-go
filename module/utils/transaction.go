@@ -221,8 +221,8 @@ func verifyTxSender(tx *commonPb.Transaction) error {
 
 // verify transaction header
 func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
-	defaultTxIdLen := 64            // txId的长度
-	defaultTxIdReg := "^[a-z0-9]+$" // txId的字符串的正则表达式[数字+小写字母]（^[a-z0-9]{64}$）
+	defaultTxIdLen := 64                              // txId的长度
+	defaultTxIdReg := "^[a-zA-Z0-9_]{1,64}$" // txId的字符串的正则表达式与普通参数命名规则相同
 	// 1. header not null
 	if header == nil {
 		return errors.New("tx header is nil")
@@ -232,7 +232,7 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 		return fmt.Errorf("chain id [%s] is incorrect, wanted [%s]", header.ChainId, targetChainId)
 	}
 	// 3. tx id length is 64
-	if len(header.TxId) != defaultTxIdLen {
+	if len(header.TxId) > defaultTxIdLen {
 		return fmt.Errorf("tx id length is incorrect, wanted %d", defaultTxIdLen)
 	}
 	// 4. tx id only contains [a-z0-9]
@@ -241,7 +241,7 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 		return fmt.Errorf("check tx id failed, %s", err)
 	}
 	if !match {
-		return errors.New("check tx id failed, only [a-z0-9] are allowed")
+		return errors.New("check tx id failed, only [a-zA-Z0-9_] are allowed")
 	}
 	// 5. timestamp (in seconds) before expiration time
 	if header.ExpirationTime != 0 && header.ExpirationTime <= header.Timestamp {
