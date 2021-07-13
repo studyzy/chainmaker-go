@@ -22,6 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/protocol"
+	"strings"
 )
 
 var log = logger.GetLogger(logger.MODULE_VM)
@@ -69,6 +70,9 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 		contractVersion, err := c.Ctx.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), versionKey)
 		if contractVersion == nil || err != nil {
 			contractVersion, err = c.Ctx.Get(address.String(), []byte(protocol.ContractVersion))
+			if err != nil && strings.Contains(err.Error(), "sql query error") {
+				err = nil
+			}
 		}
 		if err == nil {
 			versionedByteCodeKey := append([]byte(protocol.ContractByteCode), contractName...)
@@ -77,6 +81,9 @@ func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error
 			if code == nil || err != nil {
 				versionedByteCodeKey2 := append([]byte(protocol.ContractByteCode), contractVersion...)
 				code, err = c.Ctx.Get(string(contractName), versionedByteCodeKey2)
+				if err != nil && strings.Contains(err.Error(), "sql query error") {
+					err = nil
+				}
 			}
 			return code, err
 		}
