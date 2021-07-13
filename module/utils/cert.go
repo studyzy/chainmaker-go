@@ -17,7 +17,7 @@ import (
 
 // GetCertHash get certificate hash
 func GetCertHash(orgId string, userCrtPEM []byte, hashType string) ([]byte, error) {
-	member := &acPb.SerializedMember{
+	member := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: userCrtPEM,
 		MemberType: acPb.MemberType_CERT,

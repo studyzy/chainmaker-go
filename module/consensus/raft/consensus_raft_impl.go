@@ -301,7 +301,7 @@ func (consensus *ConsensusRaftImpl) serve() error {
 				}
 			}
 
-			serializeMember, err := consensus.singer.GetSerializedMember(true)
+			serializeMember, err := consensus.singer.GetMember(true)
 			if err != nil {
 				consensus.logger.Errorf("[%x] get serialize member failed: %v", consensus.Id, err)
 				return err

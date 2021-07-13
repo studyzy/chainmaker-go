@@ -391,7 +391,7 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 	}
 }
 
-func getFullCertMember(sender *acPb.SerializedMember, txContext protocol.TxSimContext) (*acPb.SerializedMember, commonPb.TxStatusCode) {
+func getFullCertMember(sender *acPb.Member, txContext protocol.TxSimContext) (*acPb.Member, commonPb.TxStatusCode) {
 	// If the certificate in the transaction is hash, the original certificate is retrieved
 	if sender.MemberType == acPb.MemberType_CERT_HASH {
 		memberInfoHex := hex.EncodeToString(sender.MemberInfo)
@@ -400,7 +400,7 @@ func getFullCertMember(sender *acPb.SerializedMember, txContext protocol.TxSimCo
 		if fullCertMemberInfo, err = txContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
 			return nil, commonPb.TxStatusCode_GET_SENDER_CERT_FAILED
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      sender.OrgId,
 			MemberInfo: fullCertMemberInfo,
 			MemberType: acPb.MemberType_CERT,

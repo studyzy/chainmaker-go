@@ -222,7 +222,7 @@ func verifyTxSender(tx *commonPb.Transaction) error {
 // verify transaction header
 func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 	defaultTxIdLen := 64                              // txId的长度
-	defaultTxIdReg := "^[a-zA-Z_][a-zA-Z0-9_]{0,63}$" // txId的字符串的正则表达式与普通参数命名规则相同
+	defaultTxIdReg := "^[a-zA-Z0-9_]{1,64}$" // txId的字符串的正则表达式与普通参数命名规则相同
 	// 1. header not null
 	if header == nil {
 		return errors.New("tx header is nil")

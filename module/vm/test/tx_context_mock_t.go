@@ -79,7 +79,7 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 			panic("file is nil" + err.Error())
 		}
 	}
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      testOrgId,
 		MemberInfo: file,
 		//IsFullCert: true,
@@ -142,8 +142,8 @@ type TxContextMockTest struct {
 	currentResult []byte
 	hisResult     []*callContractResult
 
-	sender     *acPb.SerializedMember
-	creator    *acPb.SerializedMember
+	sender     *acPb.Member
+	creator    *acPb.Member
 	cacheMap   map[string][]byte
 	db         *leveldb.DB
 	kvRowCache map[int32]protocol.StateIterator
@@ -165,7 +165,7 @@ func (s *TxContextMockTest) GetStateKvHandle(index int32) (protocol.StateIterato
 	return data, ok
 }
 
-func (s *TxContextMockTest) GetBlockProposer() *acPb.SerializedMember {
+func (s *TxContextMockTest) GetBlockProposer() *acPb.Member {
 	panic("implement me")
 }
 
@@ -318,11 +318,11 @@ func (TxContextMockTest) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	}
 }
 
-func (s *TxContextMockTest) GetCreator(namespace string) *acPb.SerializedMember {
+func (s *TxContextMockTest) GetCreator(namespace string) *acPb.Member {
 	return s.creator
 }
 
-func (s *TxContextMockTest) GetSender() *acPb.SerializedMember {
+func (s *TxContextMockTest) GetSender() *acPb.Member {
 	return s.sender
 }
 

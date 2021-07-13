@@ -21,7 +21,7 @@ func TestCalcBlockFingerPrint(t *testing.T) {
 	fp1 := CalcBlockFingerPrint(b1)
 	t.Log(fp1)
 	h2 := *h1
-	h2.Proposer = &accesscontrol.SerializedMember{OrgId: "org1", MemberInfo: []byte("User1")}
+	h2.Proposer = &accesscontrol.Member{OrgId: "org1", MemberInfo: []byte("User1")}
 	b2 := &common.Block{Header: &h2}
 	fp2 := CalcBlockFingerPrint(b2)
 	assert.NotEqual(t, fp1, fp2)

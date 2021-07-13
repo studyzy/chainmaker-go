@@ -255,7 +255,7 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	}
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		//IsFullCert: true,
@@ -292,7 +292,7 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	return req
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())

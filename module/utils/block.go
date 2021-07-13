@@ -211,12 +211,12 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 	if err != nil {
 		return false, fmt.Errorf("fail to hash block: %v", err)
 	}
-	var serializedMember =b.Header.Proposer
+	var Member =b.Header.Proposer
 	if err != nil {
 		return false, fmt.Errorf("signer is unknown: %v", err)
 	}
 	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    serializedMember,
+		Signer:    Member,
 		Signature: b.Header.Signature,
 	}}
 	principal, err := ac.CreatePrincipal(protocol.ResourceNameConsensusNode, endorsements, hashedBlock)

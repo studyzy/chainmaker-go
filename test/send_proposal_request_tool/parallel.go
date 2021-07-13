@@ -812,19 +812,19 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	file := fileCache.Read(userCrtPath)
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: *file,
 		//IsFullCert: true,
 	}
 
-	var sender *acPb.SerializedMember
+	var sender *acPb.Member
 	if useShortCrt {
 		certId, err := certCache.Read(userCrtPath, senderFull.MemberInfo, hashAlgo)
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute the identity for certificate [%v]", err)
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      senderFull.OrgId,
 			MemberInfo: *certId,
 			MemberType: acPb.MemberType_CERT_HASH,
