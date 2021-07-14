@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"

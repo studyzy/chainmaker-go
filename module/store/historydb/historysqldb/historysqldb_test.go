@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
@@ -43,8 +45,8 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 			ChainId:     chainId,
 			BlockHeight: height,
 			Proposer: &acPb.Member{
-				OrgId:              "org1",
-				MemberInfo:         []byte("User1"),
+				OrgId:      "org1",
+				MemberInfo: []byte("User1"),
 			},
 		},
 		Txs: []*commonPb.Transaction{
@@ -55,12 +57,12 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.Member{
-						OrgId: "org1",
+					Signer: &acPb.Member{
+						OrgId:      "org1",
 						MemberInfo: []byte("Admin"),
 					},
 					Signature: []byte("signature1"),
-				} ,
+				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{
@@ -85,9 +87,9 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 			ChainId:     chainId,
 			BlockHeight: height,
 			Proposer: &acPb.Member{
-				OrgId:              "org1",
-				MemberInfo:         []byte("User1"),
-				MemberType:         0,
+				OrgId:      "org1",
+				MemberInfo: []byte("User1"),
+				MemberType: 0,
 			},
 		},
 	}
@@ -96,20 +98,20 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 
 		tx := &commonPb.Transaction{
 			Payload: &commonPb.Payload{
-				ChainId: chainId,
-				TxId:    generateTxId(chainId, height, i),
-				TxType: commonPb.TxType_INVOKE_CONTRACT,
+				ChainId:      chainId,
+				TxId:         generateTxId(chainId, height, i),
+				TxType:       commonPb.TxType_INVOKE_CONTRACT,
 				ContractName: "contract1",
 				Method:       "Function1",
 				Parameters:   nil,
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.Member{
-					OrgId: "org1",
-					MemberInfo: []byte("User"+ strconv.Itoa(i)),
+				Signer: &acPb.Member{
+					OrgId:      "org1",
+					MemberInfo: []byte("User" + strconv.Itoa(i)),
 				},
 				Signature: []byte("signature1"),
-			} ,
+			},
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{
@@ -159,24 +161,23 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 			ChainId:     chainId,
 			BlockHeight: height,
 			Proposer: &acPb.Member{
-				OrgId:              "org1",
-				MemberInfo:         []byte("User1"),
-				MemberType:         0,
+				OrgId:      "org1",
+				MemberInfo: []byte("User1"),
+				MemberType: 0,
 			},
 		},
 		Txs: []*commonPb.Transaction{
 			{
 				Payload: &commonPb.Payload{
 					ChainId: chainId,
-
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.Member{
-						OrgId: "org1",
+					Signer: &acPb.Member{
+						OrgId:      "org1",
 						MemberInfo: []byte("User1"),
 					},
 					Signature: []byte("signature1"),
-				} ,
+				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{

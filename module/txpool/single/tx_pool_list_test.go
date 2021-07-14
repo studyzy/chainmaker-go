@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/logger"
