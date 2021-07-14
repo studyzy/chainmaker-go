@@ -7,7 +7,7 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210713083111-ba49f19e233a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210714022452-927e37f54347
 	chainmaker.org/chainmaker/protocol v0.0.0-20210713085720-581ac111fb8c
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
