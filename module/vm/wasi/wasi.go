@@ -159,15 +159,17 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
 	}
 	for _, item := range paramItem {
-		if len(item.Key) > protocol.DefaultStateLen {
-			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(item.Key)), gasUsed
+		key := item.Key
+		val := item.Value.([]byte)
+		if len(key) > protocol.DefaultStateLen {
+			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key)), gasUsed
 		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
+		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {
-			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", item.Key), gasUsed
+			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", key), gasUsed
 		}
-		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
-			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(item.Value.(string))), gasUsed
+		if len(val) > protocol.ParametersValueMaxLength {
+			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
