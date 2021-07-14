@@ -8,12 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
-	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -34,9 +31,6 @@ func systemContractCMD() *cobra.Command {
 	systemContractCmd.AddCommand(getChainInfoCMD())
 	systemContractCmd.AddCommand(getBlockByHeightCMD())
 	systemContractCmd.AddCommand(getTxByTxIdCMD())
-
-	// DPoS crt file to hash address
-	systemContractCmd.AddCommand(crtToHash())
 
 	// DPoS-erc20 contract
 	systemContractCmd.AddCommand(erc20Mint())
@@ -215,43 +209,6 @@ func getTxByTxId() error {
 	fmt.Printf("get block by height resp: %+v\n", resp)
 
 	return nil
-}
-
-func crtToHash() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "crt-hash",
-		Short: "crt hash feature of the DPoS",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			if len(userTlsCrtFilePath) == 0 {
-				return fmt.Errorf("cert path is null")
-			}
-			certContent, err := ioutil.ReadFile(userTlsCrtFilePath)
-			if err != nil {
-				return fmt.Errorf("read cert content failed, reason: %s", err)
-			}
-			cert, err := sdk.ParseCert(certContent)
-			if err != nil {
-				return fmt.Errorf("parse cert failed, reason: %s", err)
-			}
-			pubkey, err := cert.PublicKey.Bytes()
-			if err != nil {
-				return fmt.Errorf("get pubkey failed from cert, reason: %s", err)
-			}
-			hash := sha256.Sum256(pubkey)
-			addr := base58.Encode(hash[:])
-			fmt.Printf("address: %s \nfrom cert: %s\n", addr, userTlsCrtFilePath)
-
-			return nil
-		},
-	}
-
-	attachFlags(cmd, []string{
-		flagUserTlsCrtFilePath,
-	})
-
-	cmd.MarkFlagRequired(flagUserTlsCrtFilePath)
-
-	return cmd
 }
 
 func erc20Mint() *cobra.Command {

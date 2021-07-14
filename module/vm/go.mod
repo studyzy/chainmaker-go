@@ -12,7 +12,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
+	chainmaker.org/chainmaker/common v0.0.0-20210713154110-113f1480d094
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210630065752-c3d162425200
 	chainmaker.org/chainmaker/protocol v0.0.0-20210713153356-560ce3780e4d
 	github.com/gogo/protobuf v1.3.2

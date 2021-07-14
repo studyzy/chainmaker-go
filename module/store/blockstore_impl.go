@@ -14,10 +14,6 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
@@ -28,6 +24,10 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
@@ -140,18 +140,22 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		return err
 	}
 	//4. 初始化历史数据库
-	err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
-	if err != nil {
-		bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
-			block.Header.ChainId, block.Header.BlockHeight)
-		return err
+	if !bs.storeConfig.DisableHistoryDB {
+		err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
+		if err != nil {
+			bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
+				block.Header.ChainId, block.Header.BlockHeight)
+			return err
+		}
 	}
 	//5. 初始化Result数据库
-	err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
-	if err != nil {
-		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
-			block.Header.ChainId, block.Header.BlockHeight)
-		return err
+	if !bs.storeConfig.DisableResultDB {
+		err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
+		if err != nil {
+			bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
+				block.Header.ChainId, block.Header.BlockHeight)
+			return err
+		}
 	}
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
