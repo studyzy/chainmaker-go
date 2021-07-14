@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -543,9 +544,13 @@ func stakeGetValidatorByAddress() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get-validator failed, %s", err.Error())
 			}
-
+			val := &common.Validator{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, val); err != nil {
+				fmt.Println("unmarshal validatorInfo failed")
+				return nil
+			}
+			resp.ContractResult.Result = []byte(val.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -588,7 +593,11 @@ func stakeDelegate() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("delegate failed, %s", err.Error())
 			}
-
+			info := &common.Delegation{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal delegate info failed, %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -636,9 +645,13 @@ func stakeGetDelegationsByAddress() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get-delegations-by-address failed, %s", err.Error())
 			}
-
+			delegateInfo := &common.DelegationInfo{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, delegateInfo); err != nil {
+				fmt.Println("unmarshal delegateInfo failed: ", err)
+				return nil
+			}
+			resp.ContractResult.Result = []byte(delegateInfo.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -681,9 +694,12 @@ func stakeGetUserDelegationByValidator() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get-user-delegation-by-validator failed, %s", err.Error())
 			}
-
+			info := &common.Delegation{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal delegate info failed, %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -727,7 +743,11 @@ func stakeUnDelegate() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("undelegate failed, %s", err.Error())
 			}
-
+			info := &common.UnbondingDelegation{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal UnbondingDelegation info failed, %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -775,7 +795,11 @@ func stakeReadEpochByID() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read-epoch-by-id failed, %s", err.Error())
 			}
-
+			info := &common.Epoch{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal epoch err: %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -820,7 +844,11 @@ func stakeReadLatestEpoch() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read-latest-epoch failed, %s", err.Error())
 			}
-
+			info := &common.Epoch{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal epoch err: %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
