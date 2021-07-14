@@ -20,6 +20,8 @@ import (
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/test/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"

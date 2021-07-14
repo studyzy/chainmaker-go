@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -33,7 +35,7 @@ func TestGetBlockByHeight(t *testing.T) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: "0",
+			Value: []byte("0"),
 		},
 		{
 			Key:   "withRWSet",
@@ -85,7 +87,7 @@ func TestGetBlockByHash(t *testing.T) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: "54d54331b4a341353c19b82ec7ad4a6f15b78c9cc4ba8caa84759d1805f4ad1f",
+			Value: []byte("54d54331b4a341353c19b82ec7ad4a6f15b78c9cc4ba8caa84759d1805f4ad1f"),
 		},
 		{
 			Key:   "withRWSet",

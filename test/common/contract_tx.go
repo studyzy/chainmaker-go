@@ -189,11 +189,11 @@ func QueryUserContractInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, c
 
 	txId := utils.GetRandTxId()
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: syscontract.ContractManageFunction_GetContractInfo_CONTRACT_NAME.String(), Value: []byte(contractName)}
+	pair := &commonPb.KeyValuePair{Key: syscontract.GetContractInfo_CONTRACT_NAME.String(), Value: []byte(contractName)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(syscontract.SystemContract_CONTRACT_MANAGE.String(), syscontract.ContractManageFunction_GET_CONTRACT_INFO.String(), pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CONTRACT_MANAGE.String(), syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String(), pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -277,7 +277,7 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 	fmt.Printf("\n============ [%s] contract [%s] ============\n", method, txId)
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   syscontract.ContractManageFunction_Freeze_CONTRACT_NAME.String(),
+		Key:   syscontract.FreezeContract_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
 	payload := &commonPb.Payload{

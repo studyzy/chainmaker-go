@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
@@ -271,7 +273,7 @@ func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	var pairs []*commonPb.KeyValuePair
 
 	//method := syscontract.ContractManageFunction_INIT_CONTRACT.String()
-	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
 	//	Contract: &commonPb.Contract{

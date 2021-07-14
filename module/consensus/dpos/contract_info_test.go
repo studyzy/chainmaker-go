@@ -162,13 +162,13 @@ func TestDPoSImpl_CreateUnboundingRwSet(t *testing.T) {
 	require.EqualValues(t, int(lastAddrBalance2.Uint64()), 2000)
 }
 
-func createUndelegationEntries() []*common.UnbondingDelegation {
+func createUndelegationEntries() []*syscontract.UnbondingDelegation {
 	delAddr1 := fmt.Sprintf("delegatorAddr-%d", 1)
 	valAddr1 := fmt.Sprintf("validatorAddr-%d", 1)
 	delAddr2 := fmt.Sprintf("delegatorAddr-%d", 2)
 	valAddr2 := fmt.Sprintf("validatorAddr-%d", 2)
 
-	entries := make([]*common.UnbondingDelegation, 0, 4)
+	entries := make([]*syscontract.UnbondingDelegation, 0, 4)
 	for i := 0; i < 4; i++ {
 		delAddr := delAddr1
 		valAddr := valAddr1
@@ -176,9 +176,9 @@ func createUndelegationEntries() []*common.UnbondingDelegation {
 			delAddr = delAddr2
 			valAddr = valAddr2
 		}
-		entry := &common.UnbondingDelegation{
+		entry := &syscontract.UnbondingDelegation{
 			EpochID: "8", DelegatorAddress: delAddr, ValidatorAddress: valAddr,
-			Entries: []*common.UnbondingDelegationEntry{
+			Entries: []*syscontract.UnbondingDelegationEntry{
 				{CreationEpochID: 1, CompletionEpochID: 8, Amount: "1000"},
 			},
 		}
@@ -281,10 +281,10 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 		})
 
 		valAddr := fmt.Sprintf("validatorAddr-%d-%d", base, i+1)
-		validator := &common.Validator{
+		validator := &syscontract.Validator{
 			ValidatorAddress: valAddr,
 			Jailed:           false,
-			Status:           common.BondStatus_BONDED,
+			Status:           syscontract.BondStatus_BONDED,
 			SelfDelegation:   testSelfMinDelegation,
 		}
 		bz, err := proto.Marshal(validator)
@@ -317,11 +317,11 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 
 		delAddr := fmt.Sprintf("delegatorAddr-%d-%d", base, i+1)
 		valAddr := fmt.Sprintf("validatorAddr-%d-%d", base, i+1)
-		entry := &common.UnbondingDelegation{
+		entry := &syscontract.UnbondingDelegation{
 			EpochID:          fmt.Sprintf("%d", completeEpoch),
 			DelegatorAddress: delAddr,
 			ValidatorAddress: valAddr,
-			Entries: []*common.UnbondingDelegationEntry{
+			Entries: []*syscontract.UnbondingDelegationEntry{
 				{CreationEpochID: completeEpoch - 1, CompletionEpochID: completeEpoch, Amount: "1000"},
 			},
 		}

@@ -114,7 +114,7 @@ func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 	var pairs []*commonPb.KeyValuePair
 
 	//method := commonPb.TxType_MANAGE_USER_CONTRACT.String()
-	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
 
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,

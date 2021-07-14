@@ -17,21 +17,18 @@ import (
 	"os"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-
-	"chainmaker.org/chainmaker/common/json"
-
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/json"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -166,17 +163,17 @@ func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, method 
 			break
 		}
 		switch method {
-		case consts.SubscribeManage_SUBSCRIBE_BLOCK.String():
+		case syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String():
 			err := recvBlock(f, result)
 			if err != nil {
 				break
 			}
-		case consts.SubscribeManage_SUBSCRIBE_TX.String():
+		case syscontract.SubscribeFunction_SUBSCRIBE_TX.String():
 			err := recvTx(f, result)
 			if err != nil {
 				break
 			}
-		case consts.SubscribeManage_SUBSCRIBE_CONTRACT_EVENT.String():
+		case syscontract.SubscribeFunction_SUBSCRIBE_CONTRACT_EVENT.String():
 			err := recvContractEvent(f, result)
 			if err != nil {
 				break

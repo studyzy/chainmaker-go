@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker/protocol/test"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"

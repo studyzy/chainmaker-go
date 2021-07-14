@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"chainmaker.org/chainmaker/pb-go/consts"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/mr-tron/base58/base58"
@@ -896,9 +895,10 @@ func mint() {
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
-		MethodName:   consts.DPoSERC20_MINT.String(),
+		MethodName:   syscontract.DPoSERC20Function_MINT.String(),
 		Pairs:        params,
 	})
+
 	if err == nil {
 		fmt.Printf("mint send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 		return
@@ -930,7 +930,7 @@ func transfer() {
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
-		MethodName:   consts.DPoSERC20_TRANSFER.String(),
+		MethodName:   syscontract.DPoSERC20Function_TRANSFER.String(),
 		Pairs:        params,
 	})
 	if err == nil {
@@ -972,7 +972,7 @@ func transferFrom() {
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
-		MethodName:   consts.DPoSERC20_TRANSFER_FROM.String(),
+		MethodName:   syscontract.DPoSERC20Function_TRANSFER_FROM.String(),
 		Pairs:        params,
 	})
 	if err == nil {
@@ -1000,7 +1000,7 @@ func allowance(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 			Value: []byte(toAddr),
 		},
 	}
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), consts.DPoSERC20_GET_ALLOWANCE.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_ALLOWANCE.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -1029,7 +1029,7 @@ func approve() {
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
-		MethodName:   consts.DPoSERC20_APPROVE.String(),
+		MethodName:   syscontract.DPoSERC20Function_APPROVE.String(),
 		Pairs:        params,
 	})
 	if err == nil {
@@ -1059,7 +1059,7 @@ func burn() {
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
-		MethodName:   consts.DPoSERC20_BURN.String(),
+		MethodName:   syscontract.DPoSERC20Function_BURN.String(),
 		Pairs:        params,
 	})
 	if err == nil {
@@ -1086,7 +1086,7 @@ func transferOwnership() {
 		TxId: "", ChainId: CHAIN1,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
-		MethodName:   consts.DPoSERC20_TRANSFER_OWNERSHIP.String(),
+		MethodName:   syscontract.DPoSERC20Function_TRANSFER_OWNERSHIP.String(),
 		Pairs:        params,
 	})
 	if err == nil {
@@ -1103,7 +1103,7 @@ func transferOwnership() {
 //owner 获得token拥有者
 func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), consts.DPoSERC20_GET_OWNER.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_OWNER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -1115,7 +1115,7 @@ func owner(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 //decimals 获得decimals
 func decimals(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), consts.DPoSERC20_GET_DECIMALS.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_DECIMALS.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -1133,7 +1133,7 @@ func balanceOf(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
 			Value: []byte(toAddr),
 		},
 	}
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), consts.DPoSERC20_GET_BALANCEOF.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_BALANCEOF.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}

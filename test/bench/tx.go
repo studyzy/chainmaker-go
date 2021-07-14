@@ -32,7 +32,7 @@ func genCreateContractTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath
 	fmt.Printf("\n============ create contract [%s] ============\n", txId)
 
 	wasmBin, _ := ioutil.ReadFile(wasmPath)
-	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", contractType, wasmBin, nil)
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", contractType, wasmBin, nil)
 
 	payloadBytes, err := proto.Marshal(payload)
 	if err != nil {
