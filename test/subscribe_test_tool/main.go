@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -140,9 +141,9 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType, _ string, payloadBytes []byte) (*commonPb.TxResponse, error) {
+func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, method string, _ string, payloadBytes []byte) (*commonPb.TxResponse, error) {
 
-	req := generateReq(sk3, txType, payloadBytes)
+	req := generateReq(sk3, method, payloadBytes)
 	res, err := client.Subscribe(context.Background(), req)
 	if err != nil {
 		log.Fatalf("subscribe contract event failed, %s", err.Error())
@@ -164,18 +165,18 @@ func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType 
 			log.Println(err)
 			break
 		}
-		switch txType {
-		case commonPb.TxType_SUBSCRIBE_BLOCK_INFO:
+		switch method {
+		case consts.SubscribeManage_SUBSCRIBE_BLOCK.String():
 			err := recvBlock(f, result)
 			if err != nil {
 				break
 			}
-		case commonPb.TxType_SUBSCRIBE_TX_INFO:
+		case consts.SubscribeManage_SUBSCRIBE_TX.String():
 			err := recvTx(f, result)
 			if err != nil {
 				break
 			}
-		case commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO:
+		case consts.SubscribeManage_SUBSCRIBE_CONTRACT_EVENT.String():
 			err := recvContractEvent(f, result)
 			if err != nil {
 				break
@@ -247,7 +248,7 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	return nil
 }
 
-func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []byte) *commonPb.TxRequest {
+func generateReq(sk3 crypto.PrivateKey, method string, payloadBytes []byte) *commonPb.TxRequest {
 	txId := utils.GetRandTxId()
 	file, err := ioutil.ReadFile(userCrtPath)
 	if err != nil {
@@ -265,7 +266,8 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	header := &commonPb.Payload{
 		ChainId: chainId,
 		//Sender:         sender,
-		TxType:         txType,
+		TxType:         commonPb.TxType_SUBSCRIBE,
+		Method:         method,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,

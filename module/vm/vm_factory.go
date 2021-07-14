@@ -90,7 +90,7 @@ func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, 
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
-		Code:    uint32(protocol.ContractResultCode_FAIL),
+		Code:    uint32(1),
 		Result:  nil,
 		Message: "",
 	}
@@ -128,7 +128,7 @@ func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, 
 	// byteCode should have value
 	if len(byteCode) == 0 {
 		contractResult.Message = fmt.Sprintf("contract %s has no byte code, transaction type %s", contractName, refTxType)
-		return contractResult, commonPb.TxStatusCode_CONTRACT_BYTECODE_NOT_EXIST_FAILED
+		return contractResult, commonPb.TxStatusCode_CONTRACT_BYTE_CODE_NOT_EXIST_FAILED
 	}
 
 	return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed)
@@ -141,7 +141,7 @@ func (m *VmManagerImpl) runNativeContract(contract *commonPb.Contract, method st
 	runtimeInstance := native.GetRuntimeInstance(m.ChainId)
 	runtimeContractResult := runtimeInstance.Invoke(contract, method, nil, parameters, txContext)
 
-	if runtimeContractResult.Code == uint32(protocol.ContractResultCode_OK) {
+	if runtimeContractResult.Code == uint32(0) {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	}
 	return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
@@ -156,7 +156,7 @@ func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method stri
 		contractName = contract.Name
 		status       = contract.Status
 	)
-	contractResult = &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
+	contractResult = &commonPb.ContractResult{Code: uint32(1)}
 	if status == commonPb.ContractStatus_ALL {
 		dbContract, err := utils.GetContractByName(txContext.Get, contractName)
 		if err != nil {
@@ -275,7 +275,7 @@ func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code c
 
 func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string][]byte,
 	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
-	contractResult := &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
+	contractResult := &commonPb.ContractResult{Code: uint32(1)}
 	txId := txContext.GetTx().Payload.TxId
 	txType := txContext.GetTx().Payload.TxType
 	runtimeType := contract.RuntimeType

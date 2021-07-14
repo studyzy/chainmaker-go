@@ -87,33 +87,33 @@ consensus:
       value: "10"
     - key: stake.completionUnbondingEpochNum
       value: "1"
-    - key: stake.candidate:"{org1_peeraddr}"
+    - key: stake.candidate:{org1_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org2_peeraddr}"
+    - key: stake.candidate:{org2_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org3_peeraddr}"
+    - key: stake.candidate:{org3_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org4_peeraddr}"
+    - key: stake.candidate:{org4_peeraddr}
       value: "2500000"
-#    - key: stake.candidate:"{org5_peeraddr}"
+    #    - key: stake.candidate:{org5_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:"{org6_peeraddr}"
+    #    - key: stake.candidate:{org6_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:"{org7_peeraddr}"
+    #    - key: stake.candidate:{org7_peeraddr}
 #      value: "2500000"
-    - key: stake.nodeID:"{org1_peeraddr}"
+    - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
-    - key: stake.nodeID:"{org2_peeraddr}"
+    - key: stake.nodeID:{org2_peeraddr}
       value: "{org2_peerid}"
-    - key: stake.nodeID:"{org3_peeraddr}"
+    - key: stake.nodeID:{org3_peeraddr}
       value: "{org3_peerid}"
-    - key: stake.nodeID:"{org4_peeraddr}"
+    - key: stake.nodeID:{org4_peeraddr}
       value: "{org4_peerid}"
-#    - key: stake.nodeID:"{org5_peeraddr}"
+#    - key: stake.nodeID:{org5_peeraddr}
 #      value: "{org5_peerid}"
-#    - key: stake.nodeID:"{org6_peeraddr}"
+#    - key: stake.nodeID:{org6_peeraddr}
 #      value: "{org6_peerid}"
-#    - key: stake.nodeID:"{org7_peeraddr}"
+#    - key: stake.nodeID:{org7_peeraddr}
 #      value: "{org7_peerid}"
 
 # 信任组织和根证书

@@ -151,7 +151,7 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		return s.dealQuery(tx, source)
 	case commonPb.TxType_INVOKE_CONTRACT:
 		return s.dealTransact(tx, source)
-	case commonPb.TxType_ARCHIVE_FULL_BLOCK, commonPb.TxType_RESTORE_FULL_BLOCK:
+	case commonPb.TxType_ARCHIVE:
 		return s.doArchive(tx)
 	default:
 		return &commonPb.TxResponse{
@@ -206,6 +206,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
 		blockchainStore:  store,
 		vmManager:        vmMgr,
+		blockVersion:     protocol.DefaultBlockVersion,
 	}
 
 	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: tx.Payload.ContractName}, tx.Payload.Method,
@@ -222,7 +223,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
 			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method, tx.Payload.TxType, txResult.Message)
-		s.log.Warn(errMsg)
+		s.log.Error(errMsg)
 
 		resp.Code = txStatusCode
 		if txResult.Message == archive.ArchivedBlockError.Error() {
@@ -266,6 +267,7 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
 		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
 		vmManager:        vmMgr,
+		blockVersion:     protocol.DefaultBlockVersion,
 	}
 
 	runtimeInstance := native.GetRuntimeInstance(chainId)

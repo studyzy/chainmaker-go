@@ -28,7 +28,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 )
 
 const unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
@@ -45,8 +44,6 @@ const (
 	MemberMode   AuthMode = "white list" // white list mode
 	IdentityMode AuthMode = "identity"   // attribute-authorization mode
 
-	IdentityTypeCert      IdentityType = "certificate"
-	IdentityTypePublicKey IdentityType = "public key"
 )
 
 var _ protocol.AccessControlProvider = (*accessControl)(nil)
@@ -59,7 +56,7 @@ type accessControl struct {
 	// hash algorithm configured for this chain
 	hashType string
 	// authentication type: x509 certificate or plain public key
-	identityType IdentityType
+	identityType pbac.MemberType
 
 	// data store for chain data
 	dataStore protocol.BlockchainStore
@@ -103,7 +100,6 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
 		hashType:              chainConfig.GetCrypto().GetHash(),
-		identityType:          "",
 		dataStore:             store,
 		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
 		certCache:             concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
@@ -223,6 +219,16 @@ func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (strin
 	}
 }
 
+// ResourcePolicyExists checks whether there is corresponding policy configured for the given resource name
+func (ac *accessControl) ResourcePolicyExists(resourceName string) bool {
+	_, ok := ac.resourceNamePolicyMap.Load(resourceName)
+	if !ok {
+		ac.log.Debugf("policy not found for resource %s", resourceName)
+		return false
+	}
+	return true
+}
+
 // GetValidEndorsements filters all endorsement entries and returns all valid ones
 func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
@@ -294,25 +300,6 @@ func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
 	return false
 }
 
-// DeserializeMember converts bytes to Member
-func (ac *accessControl) DeserializeMember(Member []byte) (protocol.Member, error) {
-	memberPb := &pbac.Member{}
-	err := proto.Unmarshal(Member, memberPb)
-	if err != nil {
-		return nil, err
-	}
-
-	if memberPb.MemberType != pbac.MemberType_CERT {
-		memInfoBytes, ok := ac.lookUpCertCache(string(memberPb.MemberInfo))
-		if !ok {
-			return nil, fmt.Errorf("deserialize Member failed, unrecognized compressed certificate")
-		}
-		memberPb.MemberInfo = memInfoBytes
-		memberPb.MemberType = pbac.MemberType_CERT
-	}
-	return ac.NewMemberFromCertPem(memberPb.OrgId, string(memberPb.MemberInfo))
-}
-
 // GetLocalOrgId returns local organization id
 func (ac *accessControl) GetLocalOrgId() string {
 	return ac.localOrg.id
@@ -353,7 +340,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 		newMember.id = certPEM
 		newMember.cert = certificate
 		newMember.pk = pk
-		newMember.identityType = IdentityTypePublicKey
+		newMember.identityType = pbac.MemberType_PUBLIC_KEY
 		return &newMember, nil
 	}
 
@@ -385,7 +372,7 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 		newMember.role = append(newMember.role, protocol.Role(ou))
 
-		newMember.identityType = IdentityTypeCert
+		newMember.identityType = pbac.MemberType_CERT
 		return &newMember, nil
 	}
 

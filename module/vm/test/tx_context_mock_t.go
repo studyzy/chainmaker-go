@@ -148,7 +148,9 @@ type TxContextMockTest struct {
 	db         *leveldb.DB
 	kvRowCache map[int32]protocol.StateIterator
 }
-
+func (s *TxContextMockTest) GetBlockVersion() uint32 {
+	return protocol.DefaultBlockVersion
+}
 func (s *TxContextMockTest) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
@@ -245,7 +247,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
@@ -253,7 +255,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}

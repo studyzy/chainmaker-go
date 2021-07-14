@@ -97,7 +97,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   []byte(cc.Version),
+			BlockVersion:   protocol.DefaultBlockVersion, //兼容v1.1.0，否则添加新节点会导致创世快不一致。
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
@@ -174,7 +174,7 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code: uint32(protocol.ContractResultCode_OK),
+				Code: uint32(0),
 
 				Result: ccBytes,
 			},
@@ -661,5 +661,24 @@ func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig
 		}
 		txWrites = append(txWrites, stakeConfigTxWrites...)
 	}
+	//初始化系统合约的Contract状态数据
+	for name := range commonPb.SystemContract_value {
+		txWrites = append(txWrites, initSysContractTxWrite(name))
+	}
 	return txWrites, nil
+}
+func initSysContractTxWrite(name string) *commonPb.TxWrite {
+	contract := &commonPb.Contract{
+		Name:        name,
+		Version:     "v1",
+		RuntimeType: commonPb.RuntimeType_NATIVE,
+		Status:      commonPb.ContractStatus_NORMAL,
+		Creator:     nil,
+	}
+	data, _ := contract.Marshal()
+	return &commonPb.TxWrite{
+		Key:          GetContractDbKey(name),
+		Value:        data,
+		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
+	}
 }

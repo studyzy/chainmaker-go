@@ -16,7 +16,6 @@ import (
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 )
 
 var _ protocol.Member = (*member)(nil)
@@ -38,7 +37,7 @@ type member struct {
 	role []protocol.Role
 
 	// authentication type: x509 certificate or plain public key
-	identityType IdentityType
+	identityType pbac.MemberType
 
 	// hash type from chain configuration
 	hashType string
@@ -57,7 +56,7 @@ func (m *member) GetRole() []protocol.Role {
 }
 
 func (m *member) GetSKI() []byte {
-	if m.identityType == IdentityTypeCert {
+	if m.identityType == pbac.MemberType_CERT || m.identityType == pbac.MemberType_CERT_HASH {
 		return m.cert.SubjectKeyId
 	} else {
 		return m.cert.Raw
@@ -70,7 +69,7 @@ func (m *member) GetCertificate() (*bcx509.Certificate, error) {
 
 func (m *member) Verify(hashType string, msg []byte, sig []byte) error {
 	var opts bccrypto.SignOpts
-	if m.identityType == IdentityTypePublicKey {
+	if m.identityType == pbac.MemberType_PUBLIC_KEY {
 		opts.Hash = bccrypto.HashAlgoMap[hashType]
 		opts.UID = bccrypto.CRYPTO_DEFAULT_UID
 	} else {
@@ -91,65 +90,37 @@ func (m *member) Verify(hashType string, msg []byte, sig []byte) error {
 	return nil
 }
 
-func (m *member) Serialize(isFullCert bool) ([]byte, error) {
-	var Member *pbac.Member
-	if isFullCert {
-		var pemStruct *pem.Block
-		if m.identityType == IdentityTypePublicKey {
-			pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "PUBLIC KEY"}
-		} else {
-			pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "CERTIFICATE"}
-		}
-
-		info := pem.EncodeToMemory(pemStruct)
-
-		Member = &pbac.Member{
-			OrgId:      m.orgId,
-			MemberInfo: info,
-			MemberType: pbac.MemberType_CERT,
-		}
-	} else {
-		id, err := utils.GetCertificateIdFromDER(m.cert.Raw, m.hashType)
-		if err != nil {
-			return nil, fmt.Errorf("fail to compute certificate identity")
-		}
-
-		Member = &pbac.Member{
-			OrgId:      m.orgId,
-			MemberInfo: id,
-			MemberType: pbac.MemberType_CERT_HASH,
-		}
-	}
-
-	return proto.Marshal(Member)
-}
-
-func (m *member) GetMember(isFullCert bool) (*pbac.Member, error) {
-	if isFullCert {
-		var pemStruct *pem.Block
-		if m.identityType == IdentityTypePublicKey {
-			pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "PUBLIC KEY"}
-		} else {
-			pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "CERTIFICATE"}
-		}
+func (m *member) GetMember() (*pbac.Member, error) {
+	var pemStruct *pem.Block
+	switch m.identityType {
+	case pbac.MemberType_CERT:
+		pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "CERTIFICATE"}
 		certPEM := pem.EncodeToMemory(pemStruct)
 		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: certPEM,
 			MemberType: pbac.MemberType_CERT,
 		}, nil
-	} else {
+	case pbac.MemberType_CERT_HASH:
 		id, err := utils.GetCertificateIdFromDER(m.cert.Raw, m.hashType)
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute certificate identity")
 		}
-
 		return &pbac.Member{
 			OrgId:      m.orgId,
 			MemberInfo: id,
 			MemberType: pbac.MemberType_CERT_HASH,
 		}, nil
+	case pbac.MemberType_PUBLIC_KEY:
+		pemStruct = &pem.Block{Bytes: m.cert.Raw, Type: "PUBLIC KEY"}
+		certPEM := pem.EncodeToMemory(pemStruct)
+		return &pbac.Member{
+			OrgId:      m.orgId,
+			MemberInfo: certPEM,
+			MemberType: pbac.MemberType_PUBLIC_KEY,
+		}, nil
 	}
+	return nil, fmt.Errorf("member's identity type is unsupport")
 }
 
 type signingMember struct {
@@ -164,7 +135,7 @@ type signingMember struct {
 // When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
 func (sm *signingMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	var opts bccrypto.SignOpts
-	if sm.identityType == IdentityTypePublicKey {
+	if sm.identityType == pbac.MemberType_PUBLIC_KEY {
 		opts.Hash = bccrypto.HashAlgoMap[hashType]
 		opts.UID = bccrypto.CRYPTO_DEFAULT_UID
 	} else {
