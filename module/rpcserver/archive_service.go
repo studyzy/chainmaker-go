@@ -11,10 +11,16 @@ import (
 )
 
 func (s *ApiService) doArchive(tx *commonPb.Transaction) *commonPb.TxResponse {
-	switch tx.Payload.TxType {
-	case commonPb.TxType_ARCHIVE_FULL_BLOCK:
+	if tx.Payload.TxType != commonPb.TxType_ARCHIVE {
+		return &commonPb.TxResponse{
+			Code:    commonPb.TxStatusCode_INTERNAL_ERROR,
+			Message: commonErr.ERR_CODE_TXTYPE.String(),
+		}
+	}
+	switch tx.Payload.Method {
+	case consts.ArchiveManage_ARCHIVE_BLOCK.String():
 		return s.doArchiveBlock(tx)
-	case commonPb.TxType_RESTORE_FULL_BLOCK:
+	case consts.ArchiveManage_RESTORE_BLOCK.String():
 		return s.doRestoreBlock(tx)
 	default:
 		return &commonPb.TxResponse{
@@ -29,7 +35,7 @@ func (s *ApiService) getArchiveBlockHeight(params []*commonPb.KeyValuePair) (uin
 		return 0, errors.New("params count != 1")
 	}
 
-	key := consts.ArchiveBlockPayload_BLOCK_HEIGHT.String()
+	key := consts.ArchiveManage_ArchiveBlock_BLOCK_HEIGHT.String()
 	if params[0].Key != key {
 		return 0, errors.New(fmt.Sprintf("invalid key, must be %s", key))
 	}
@@ -90,7 +96,7 @@ func (s *ApiService) getRestoreBlock(params []*commonPb.KeyValuePair) ([]byte, e
 		return nil, errors.New("params count != 1")
 	}
 
-	key := consts.RestoreBlockPayload_FULL_BLOCK.String()
+	key := consts.ArchiveManage_RestoreBlock_FULL_BLOCK.String()
 	if params[0].Key != key {
 		return nil, errors.New(fmt.Sprintf("invalid key, must be %s", key))
 	}

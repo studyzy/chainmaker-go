@@ -23,8 +23,8 @@ func SubscribeContractEvent() *cobra.Command {
 func subscribeContractEvent() error {
 	payload := &commonPb.Payload{
 		Parameters: []*commonPb.KeyValuePair{
-			{Key: consts.SubscribeContractEventPayload_TOPIC.String(), Value: []byte(topic)},
-			{Key: consts.SubscribeContractEventPayload_CONTRACT_NAME.String(), Value: []byte(contractName)},
+			{Key: consts.SubscribeManage_SubscribeContractEvent_TOPIC.String(), Value: []byte(topic)},
+			{Key: consts.SubscribeManage_SubscribeContractEvent_CONTRACT_NAME.String(), Value: []byte(contractName)},
 		},
 		//Topic:        topic,
 		//ContractName: contractName,
@@ -35,7 +35,7 @@ func subscribeContractEvent() error {
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	_, err = subscribeRequest(sk3, client, commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO, chainId, payloadBytes)
+	_, err = subscribeRequest(sk3, client, consts.SubscribeManage_SUBSCRIBE_CONTRACT_EVENT.String(), chainId, payloadBytes)
 	if err != nil {
 		return err
 	}

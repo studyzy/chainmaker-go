@@ -36,10 +36,10 @@ func subscribeTx() error {
 	//}
 	payload := &commonPb.Payload{
 		Parameters: []*commonPb.KeyValuePair{
-			{Key: consts.SubscribeTxPayload_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
-			{Key: consts.SubscribeTxPayload_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
-			{Key: consts.SubscribeTxPayload_TX_TYPE.String(), Value: []byte(commonPb.TxType(txType).String())},
-			{Key: consts.SubscribeTxPayload_TX_IDS.String(), Value: []byte(txIds)},
+			{Key: consts.SubscribeManage_SubscribeTx_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
+			{Key: consts.SubscribeManage_SubscribeTx_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
+			{Key: consts.SubscribeManage_SubscribeTx_TX_TYPE.String(), Value: []byte(commonPb.TxType(txType).String())},
+			{Key: consts.SubscribeManage_SubscribeTx_TX_IDS.String(), Value: []byte(txIds)},
 		},
 		//StartBlock: startBlock,
 		//EndBlock:   endBlock,
@@ -52,7 +52,7 @@ func subscribeTx() error {
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	_, err = subscribeRequest(sk3, client, commonPb.TxType_SUBSCRIBE_TX_INFO, chainId, payloadBytes)
+	_, err = subscribeRequest(sk3, client, consts.SubscribeManage_SUBSCRIBE_TX.String(), chainId, payloadBytes)
 	if err != nil {
 		return err
 	}

@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210714055243-e02c9a0323b2
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210714051256-38632e18c4b3
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6
 	chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0 // indirect
 	chainmaker.org/chainmaker/sdk-go v0.0.0-20210714072720-5792f9ee59ff
 	github.com/c-bata/go-prompt v0.2.6

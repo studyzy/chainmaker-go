@@ -151,7 +151,7 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		return s.dealQuery(tx, source)
 	case commonPb.TxType_INVOKE_CONTRACT:
 		return s.dealTransact(tx, source)
-	case commonPb.TxType_ARCHIVE_FULL_BLOCK, commonPb.TxType_RESTORE_FULL_BLOCK:
+	case commonPb.TxType_ARCHIVE:
 		return s.doArchive(tx)
 	default:
 		return &commonPb.TxResponse{

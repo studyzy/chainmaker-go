@@ -62,7 +62,7 @@ func (m *moduleB) getBlock() *commonpb.Block {
 
 func CreateNewTestBlock(height uint64) *commonpb.Block {
 	var hash = []byte("0123456789")
-	var version = []byte("0")
+	var version = uint32(1)
 	var block = &commonpb.Block{
 		Header: &commonpb.BlockHeader{
 			ChainId:        "Chain1",

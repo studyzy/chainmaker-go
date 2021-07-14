@@ -63,13 +63,13 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
 	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_BLOCK_INFO: protocol.ResourceNameReadData,
-	common.TxType_SUBSCRIBE_TX_INFO:    protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
+	//common.TxType_SUBSCRIBE:    protocol.ResourceNameReadData,
 	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
+	//common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
 
-	common.TxType_ARCHIVE_FULL_BLOCK: protocol.ResourceNameArchive,
-	common.TxType_RESTORE_FULL_BLOCK: protocol.ResourceNameArchive,
+	common.TxType_ARCHIVE: protocol.ResourceNameArchive,
+	//common.TxType_ARCHIVE: protocol.ResourceNameArchive,
 }
 
 var (
