@@ -531,19 +531,19 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 func (b *BlockKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
 	//update cache
 	b.Cache.AddBlock(blockHeight, batch)
+	go func() {
+		startWriteBatchTime := utils.CurrentTimeMillisSeconds()
+		err := b.DbHandle.WriteBatch(batch, false)
+		endWriteBatchTime := utils.CurrentTimeMillisSeconds()
+		b.Logger.Infof("write block db, block[%d], time used:%d",
+			blockHeight, endWriteBatchTime-startWriteBatchTime)
 
-	startWriteBatchTime := utils.CurrentTimeMillisSeconds()
-	err := b.DbHandle.WriteBatch(batch, false)
-	endWriteBatchTime := utils.CurrentTimeMillisSeconds()
-	b.Logger.Infof("write block db, block[%d], time used:%d",
-		blockHeight, endWriteBatchTime-startWriteBatchTime)
-
-	if err != nil {
-		panic(fmt.Sprintf("Error writing leveldb: %s", err))
-	}
-	//db committed, clean cache
-	b.Cache.DelBlock(blockHeight)
-
+		if err != nil {
+			panic(fmt.Sprintf("Error writing leveldb: %s", err))
+		}
+		//db committed, clean cache
+		b.Cache.DelBlock(blockHeight)
+	}()
 	return nil
 }
 
