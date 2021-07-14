@@ -55,10 +55,6 @@ func (m *member) GetRole() []protocol.Role {
 	return m.role
 }
 
-func (m *member) SetUsingCertHash() {
-	m.identityType = pbac.MemberType_CERT_HASH
-}
-
 func (m *member) GetSKI() []byte {
 	if m.identityType == pbac.MemberType_CERT || m.identityType == pbac.MemberType_CERT_HASH {
 		return m.cert.SubjectKeyId

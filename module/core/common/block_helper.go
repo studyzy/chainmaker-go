@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
@@ -177,7 +176,7 @@ func InitNewBlock(
 	chainId string,
 	chainConf protocol.ChainConf) (*commonpb.Block, error) {
 	// get node pk from identity
-	proposer, err := identity.Serialize(true)
+	proposer, err := identity.GetMember()
 	if err != nil {
 		return nil, fmt.Errorf("identity serialize failed, %s", err)
 	}
@@ -199,7 +198,7 @@ func InitNewBlock(
 			RwSetRoot:      nil,
 			TxRoot:         nil,
 			BlockTimestamp: utils.CurrentTimeSeconds(),
-			Proposer:       &accesscontrol.Member{MemberInfo: proposer},
+			Proposer:       proposer,
 			ConsensusArgs:  nil,
 			TxCount:        0,
 			Signature:      nil,
