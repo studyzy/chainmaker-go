@@ -71,10 +71,10 @@ func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimCont
 	return json.Marshal(contracts)
 }
 func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_Install_CONTRACT_NAME.String()])
-	version := string(parameters[consts.ContractManager_Install_CONTRACT_VERSION.String()])
-	byteCode := parameters[consts.ContractManager_Install_CONTRACT_BYTE_CODE.String()]
-	runtime := parameters[consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String()]
+	name := string(parameters[consts.ContractManager_Init_CONTRACT_NAME.String()])
+	version := string(parameters[consts.ContractManager_Init_CONTRACT_VERSION.String()])
+	byteCode := parameters[consts.ContractManager_Init_CONTRACT_BYTECODE.String()]
+	runtime := parameters[consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String()]
 	runtimeInt := commonPb.RuntimeType_value[string(runtime)]
 	runtimeType := commonPb.RuntimeType(runtimeInt)
 	contract, err := r.InstallContract(txSimContext, name, version, byteCode, runtimeType, parameters)
@@ -86,7 +86,7 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	name := string(parameters[consts.ContractManager_Upgrade_CONTRACT_NAME.String()])
 	version := string(parameters[consts.ContractManager_Upgrade_CONTRACT_VERSION.String()])
-	byteCode := parameters[consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String()]
+	byteCode := parameters[consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String()]
 	runtime := string(parameters[consts.ContractManager_Upgrade_CONTRACT_RUNTIME_TYPE.String()])
 	runtimeInt := commonPb.RuntimeType_value[runtime]
 	runtimeType := commonPb.RuntimeType(runtimeInt)

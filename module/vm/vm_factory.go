@@ -128,7 +128,7 @@ func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, 
 	// byteCode should have value
 	if len(byteCode) == 0 {
 		contractResult.Message = fmt.Sprintf("contract %s has no byte code, transaction type %s", contractName, refTxType)
-		return contractResult, commonPb.TxStatusCode_CONTRACT_BYTE_CODE_NOT_EXIST_FAILED
+		return contractResult, commonPb.TxStatusCode_CONTRACT_BYTECODE_NOT_EXIST_FAILED
 	}
 
 	return m.runUserContract(contract, method, byteCode, parameters, txContext, gasUsed)
