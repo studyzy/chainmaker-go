@@ -165,7 +165,7 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 			return nil, fmt.Errorf("multiple public key for member %s", root.OrgId)
 		}
 		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
-		ac.identityType = IdentityTypePublicKey
+		ac.identityType = pbac.MemberType_PUBLIC_KEY
 	}
 
 	var certificates, certificateChain []*bcx509.Certificate
@@ -182,7 +182,7 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 		if len(cert.Signature) == 0 {
 			return nil, fmt.Errorf("invalid certificate [SN: %s]", cert.SerialNumber)
 		}
-		ac.identityType = IdentityTypeCert
+		ac.identityType = pbac.MemberType_CERT
 		certificates = append(certificates, cert)
 
 		pemBlock, rest = pem.Decode(rest)
@@ -248,7 +248,7 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
-	if ac.identityType == IdentityTypePublicKey {
+	if ac.identityType == pbac.MemberType_PUBLIC_KEY {
 		pk, errPubKey := asym.PublicKeyFromPEM([]byte(root.Root))
 		if errPubKey != nil {
 			return nil, fmt.Errorf("update configuration failed, invalid public key for organization %s", root.OrgId)
@@ -259,7 +259,7 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *confi
 
 		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
 	}
-	if ac.identityType == IdentityTypeCert {
+	if ac.identityType == pbac.MemberType_CERT {
 		pemBlock, rest := pem.Decode([]byte(root.Root))
 		for pemBlock != nil {
 			cert, errCert := bcx509.ParseCertificate(pemBlock.Bytes)
@@ -1066,7 +1066,7 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	if err != nil {
 		return nil, err
 	}
-	if ac.authMode == MemberMode || ac.identityType == IdentityTypePublicKey { // white list mode or public key mode
+	if ac.authMode == MemberMode || ac.identityType == pbac.MemberType_PUBLIC_KEY { // white list mode or public key mode
 		return []*bcx509.Certificate{cert}, nil
 	}
 

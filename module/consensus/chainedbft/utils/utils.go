@@ -110,7 +110,7 @@ func SignConsensusMsg(msg *chainedbftpb.ConsensusMsg, hashType string,
 	if err != nil {
 		return fmt.Errorf("sign data failed, err %v data %v", err, data)
 	}
-	serializeMember, err := signer.GetMember(true)
+	serializeMember, err := signer.GetMember()
 	if err != nil {
 		return fmt.Errorf("get signer serializeMember failed, err %v", err)
 	}

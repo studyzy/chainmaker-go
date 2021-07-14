@@ -1212,7 +1212,7 @@ func (consensus *ConsensusTBFTImpl) signProposal(proposal *Proposal) error {
 		return err
 	}
 
-	serializeMember, err := consensus.singer.GetMember(true)
+	serializeMember, err := consensus.singer.GetMember()
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%v) get serialize member failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
@@ -1235,7 +1235,7 @@ func (consensus *ConsensusTBFTImpl) signVote(vote *Vote) error {
 		return err
 	}
 
-	serializeMember, err := consensus.singer.GetMember(true)
+	serializeMember, err := consensus.singer.GetMember()
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%v) get serialize member failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)

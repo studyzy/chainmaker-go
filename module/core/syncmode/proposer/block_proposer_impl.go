@@ -8,6 +8,7 @@ package proposer
 
 import (
 	"bytes"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"sync"
 	"time"
 
@@ -58,7 +59,7 @@ type BlockProposerImpl struct {
 	finishProposeC chan bool // channel to receive signal to yield propose block
 
 	metricBlockPackageTime *prometheus.HistogramVec
-	proposer               []byte // this node identity
+	proposer               *pbac.Member
 
 	blockBuilder *common.BlockBuilder
 	storeHelper  conf.StoreHelper
@@ -108,7 +109,7 @@ func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol
 	}
 
 	var err error
-	blockProposerImpl.proposer, err = blockProposerImpl.identity.Serialize(true)
+	blockProposerImpl.proposer, err = blockProposerImpl.identity.GetMember()
 	if err != nil {
 		blockProposerImpl.log.Warnf("identity serialize failed, %s", err)
 		return nil, err
