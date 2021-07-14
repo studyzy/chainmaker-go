@@ -105,6 +105,15 @@ func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, 
 		parameters = make(map[string][]byte)
 	}
 
+	if len(contract.Version) == 0 {
+		var err error
+		contract, err = utils.GetContractByName(txContext.Get, contractName)
+		if err != nil {
+			contractResult.Message = fmt.Sprintf("query contract[%s] error", contractName)
+			return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_CONTRACT_NAME
+		}
+	}
+
 	if contract.Status == commonPb.ContractStatus_FROZEN {
 		contractResult.Message = fmt.Sprintf("failed to run user contract, %s has been frozen.", contractName)
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FREEZE_FAILED
@@ -347,7 +356,7 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 		contractResult.Message = fmt.Sprintf("failed to unmarshal creator %q", creator)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_CREATOR_FAILED
 	} else {
-		parameters[protocol.ContractCreatorOrgIdParam] = []byte( creator.OrgId)
+		parameters[protocol.ContractCreatorOrgIdParam] = []byte(creator.OrgId)
 		parameters[protocol.ContractCreatorRoleParam] = []byte(creatorMember.GetRole()[0])
 		parameters[protocol.ContractCreatorPkParam] = creatorMember.GetSKI()
 	}

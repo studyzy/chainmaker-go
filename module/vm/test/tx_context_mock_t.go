@@ -62,12 +62,6 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 		fmt.Printf("Wasm file size=%d\n", len(bytes))
 	}
 
-	contractId := commonPb.Contract{
-		Name:        ContractNameTest,
-		Version:     ContractVersionTest,
-		RuntimeType: runtimeType,
-	}
-
 	wxvmCodeManager := xvm.NewCodeManager(ChainIdTest, "tmp/wxvm-data")
 	wxvmContextService := xvm.NewContextService(ChainIdTest)
 	log := logger.GetLoggerByChain(logger.MODULE_VM, ChainIdTest)
@@ -85,6 +79,12 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 		//IsFullCert: true,
 	}
 
+	contractId := commonPb.Contract{
+		Name:        ContractNameTest,
+		Version:     ContractVersionTest,
+		RuntimeType: runtimeType,
+		Creator:     sender,
+	}
 	db, _ := leveldb.OpenFile("tmp/leveldb"+utils.GetRandTxId(), nil)
 
 	chainConf := &chainconf.ChainConf{
@@ -117,6 +117,8 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	data, _ := contractId.Marshal()
 	key := utils.GetContractDbKey(contractId.Name)
 	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	byteCodeKey := utils.GetContractByteCodeDbKey(contractId.Name)
+	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), byteCodeKey, bytes)
 	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
@@ -148,6 +150,7 @@ type TxContextMockTest struct {
 	db         *leveldb.DB
 	kvRowCache map[int32]protocol.StateIterator
 }
+
 func (s *TxContextMockTest) GetBlockVersion() uint32 {
 	return protocol.DefaultBlockVersion
 }
@@ -290,14 +293,14 @@ func (s *TxContextMockTest) GetCurrentResult() []byte {
 
 func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Payload: &commonPb.Payload {
+		Payload: &commonPb.Payload{
 			ChainId:        ChainIdTest,
 			TxType:         txType,
 			TxId:           "abcdef12345678",
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		Result:           nil,
+		Result: nil,
 	}
 }
 
@@ -498,7 +501,7 @@ func (m mockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   nil,
+			BlockVersion:   0,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
