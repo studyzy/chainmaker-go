@@ -98,7 +98,7 @@ func configTrustMember(op int) error {
 		if flagTrustMemberCrtPath == "" {
 			return fmt.Errorf("please specify trust member path")
 		}
-		trustMemberBytes, err = ioutil.ReadFile(flagTrustMemberCrtPath)
+		trustMemberBytes, err = ioutil.ReadFile(trustMemberInfoPath)
 		if err != nil {
 			return err
 		}
