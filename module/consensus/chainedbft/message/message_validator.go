@@ -40,7 +40,7 @@ func validateProposalBasicInfo(payload *chainedbft.ConsensusPayload) error {
 	if proposalMsg.SyncInfo == nil {
 		return fmt.Errorf("nil sync info in proposal msg")
 	}
-	if proposalMsg.SyncInfo.HighestQC == nil {
+	if proposalMsg.SyncInfo.HighestQc == nil {
 		return fmt.Errorf("nil highest qc in sync info within proposal msg")
 	}
 
@@ -63,7 +63,7 @@ func validateProposalBasicInfo(payload *chainedbft.ConsensusPayload) error {
 	if proposal.Proposer == nil {
 		return fmt.Errorf("nil proposer address in proposal msg")
 	}
-	if proposal.JustifyQC == nil {
+	if proposal.JustifyQc == nil {
 		return fmt.Errorf("nil justify qc in proposal msg")
 	}
 	return nil
@@ -78,7 +78,7 @@ func validateVoteBasicInfo(payload *chainedbft.ConsensusPayload) error {
 	if voteMsg.SyncInfo == nil {
 		return fmt.Errorf("nil sync info in vote msg")
 	}
-	if voteMsg.SyncInfo.HighestQC == nil {
+	if voteMsg.SyncInfo.HighestQc == nil {
 		return fmt.Errorf("nil highest qc in sync info within vote msg")
 	}
 
@@ -86,7 +86,7 @@ func validateVoteBasicInfo(payload *chainedbft.ConsensusPayload) error {
 	if vote == nil {
 		return fmt.Errorf("nil vote data")
 	}
-	if !vote.NewView && vote.BlockID == nil {
+	if !vote.NewView && vote.BlockId == nil {
 		return fmt.Errorf("not voted for newView and block")
 	}
 	if vote.Author == nil {
@@ -101,7 +101,7 @@ func validateBlockFetchBasicInfo(payload *chainedbft.ConsensusPayload) error {
 	if blockFetchMsg == nil {
 		return fmt.Errorf("nil block fetch msg")
 	}
-	if blockFetchMsg.BlockID == nil {
+	if blockFetchMsg.BlockId == nil {
 		return fmt.Errorf("nil block id")
 	}
 	return nil
@@ -119,7 +119,7 @@ func validateBlockFetchRespBasicInfo(payload *chainedbft.ConsensusPayload) error
 	}
 
 	for _, pair := range blockFetchResp.Blocks {
-		if pair.Block == nil || pair.QC == nil {
+		if pair.Block == nil || pair.Qc == nil {
 			return fmt.Errorf("nil block or nil qc in block pair from block fetch rsp msg")
 		}
 		if pair.Block.Header == nil {

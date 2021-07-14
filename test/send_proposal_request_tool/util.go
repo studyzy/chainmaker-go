@@ -41,7 +41,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 	return payloadBytes, nil
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) (protocol.SigningMember, error) {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMember, error) {
 	skPEM, err := sk3.String()
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func acSign(msg *commonPb.Payload) ([]*commonPb.EndorsementEntry, error) {
 		}
 
 		// 构造Sender
-		sender1 := &acPb.SerializedMember{
+		sender1 := &acPb.Member{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
 			//IsFullCert: true,

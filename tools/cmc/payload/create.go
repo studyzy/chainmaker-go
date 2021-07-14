@@ -111,19 +111,19 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType sd
 	initParameters []*sdkPbCommon.KeyValuePair) (*sdkPbCommon.Payload, error) {
 	var pairs []*sdkPbCommon.KeyValuePair
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_NAME.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_NAME.String(),
 		Value: contractName,
 	})
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_VERSION.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_VERSION.String(),
 		Value: version,
 	})
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String(),
 		Value: runtimeType.String(),
 	})
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_BYTE_CODE.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_BYTECODE.String(),
 		Value: base64.StdEncoding.EncodeToString(bytecode),
 	})
 	for _, kv := range initParameters {

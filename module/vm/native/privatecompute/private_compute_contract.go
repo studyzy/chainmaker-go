@@ -19,6 +19,7 @@ import (
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"crypto/x509"
@@ -67,22 +68,23 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]comm
 	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	privateComputeRuntime := &PrivateComputeRuntime{log: log}
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CONTRACT.String()] = privateComputeRuntime.GetContract
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DATA.String()] = privateComputeRuntime.GetData
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String()] = privateComputeRuntime.SaveEnclaveCACert
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.GetEnclaveProof
-	queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveEncryptPubKey
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveVerificationPubKey
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.GetEnclaveReport
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.GetEnclaveChallenge
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.GetEnclaveSignature
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_REMOTE_ATTESTATION.String()] = privateComputeRuntime.SaveRemoteAttestation
+
+	queryMethodMap[consts.PrivateCompute_GET_CONTRACT.String()] = privateComputeRuntime.GetContract
+	queryMethodMap[consts.PrivateCompute_GET_DATA.String()] = privateComputeRuntime.GetData
+	queryMethodMap[consts.PrivateCompute_SAVE_CA_CERT.String()] = privateComputeRuntime.SaveEnclaveCACert
+	queryMethodMap[consts.PrivateCompute_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
+	queryMethodMap[consts.PrivateCompute_SAVE_DATA.String()] = privateComputeRuntime.SaveData
+	queryMethodMap[consts.PrivateCompute_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
+	queryMethodMap[consts.PrivateCompute_GET_DIR.String()] = privateComputeRuntime.GetDir
+	queryMethodMap[consts.PrivateCompute_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
+	queryMethodMap[consts.PrivateCompute_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.GetEnclaveProof
+	queryMethodMap[consts.PrivateCompute_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
+	queryMethodMap[consts.PrivateCompute_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveEncryptPubKey
+	queryMethodMap[consts.PrivateCompute_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveVerificationPubKey
+	queryMethodMap[consts.PrivateCompute_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.GetEnclaveReport
+	queryMethodMap[consts.PrivateCompute_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.GetEnclaveChallenge
+	queryMethodMap[consts.PrivateCompute_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.GetEnclaveSignature
+	queryMethodMap[consts.PrivateCompute_SAVE_REMOTE_ATTESTATION.String()] = privateComputeRuntime.SaveRemoteAttestation
 
 	return queryMethodMap
 }
@@ -1082,7 +1084,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string][]byte, chain
 		return false, err
 	}
 
-	sender := &accesscontrol.SerializedMember{
+	sender := &accesscontrol.Member{
 		OrgId:      orgId,
 		MemberInfo: userCertPemBytes,
 		MemberType: accesscontrol.MemberType_CERT,
@@ -1151,7 +1153,7 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 			return false, err
 		}
 
-		sender := &accesscontrol.SerializedMember{
+		sender := &accesscontrol.Member{
 			OrgId:      orgId[i],
 			MemberInfo: userCertPemBytes,
 			MemberType: accesscontrol.MemberType_CERT,
@@ -1207,7 +1209,7 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 //			return false, err
 //		}
 //
-//		sender := &accesscontrol.SerializedMember{
+//		sender := &accesscontrol.Member{
 //			OrgId:      req.Payload.OrgId[i],
 //			MemberInfo: userCertPemBytes,
 //			//IsFullCert: true,

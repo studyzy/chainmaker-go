@@ -12,6 +12,7 @@ import (
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consts"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"context"
 	"crypto/x509"
@@ -877,7 +878,7 @@ func (ln *LibP2pNet) CheckRevokeTlsCerts(ac api.AccessControlProvider, certManag
 		return fmt.Errorf("resolve payload failed: %v", err)
 	}
 	switch payload.Method {
-	case commonPb.CertManageFunction_CERTS_REVOKE.String():
+	case consts.CertManage_CERTS_REVOKE.String():
 		return ln.checkRevokeTlsCertsCertsRevokeMethod(ac, &payload)
 	default:
 		return nil

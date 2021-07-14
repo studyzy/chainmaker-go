@@ -4,9 +4,9 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210709093937-9b3b422e24b1
-	chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc // indirect
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210706173158-3315f50af4de
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210713083111-ba49f19e233a
+	chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f // indirect
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210713031105-381cc5eb5995
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/consensys/gurvy v0.3.8 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
@@ -19,6 +19,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/tools v0.1.4 // indirect
 	gorm.io/driver/mysql v1.0.6
 	gorm.io/gorm v1.21.9
 	vuvuzela.io/crypto v0.0.0-20190327123840-80a93a3ed1d6

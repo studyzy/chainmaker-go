@@ -327,7 +327,7 @@ func (ts *TxScheduler) Halt() {
 }
 
 func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxSimContext) (*commonpb.Result, error) {
-	//var contractId *commonpb.ContractId
+	//var contractId *commonpb.Contract
 	var contractName string
 	//var runtimeType commonpb.RuntimeType
 	//var contractVersion string
@@ -341,7 +341,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	result := &commonpb.Result{
 		Code: commonpb.TxStatusCode_SUCCESS,
 		ContractResult: &commonpb.ContractResult{
-			Code:    0,
+			Code:    uint32(protocol.ContractResultCode_OK),
 			Result:  nil,
 			Message: "",
 		},
@@ -406,12 +406,12 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//case commonpb.TxType_MANAGE_USER_CONTRACT:
 	//	var payload commonpb.Payload
 	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-	//		if payload.ContractId == nil {
+	//		if payload.Contract == nil {
 	//			return errResult(result, fmt.Errorf("param is null"))
 	//		}
-	//		contractName = payload.ContractId.Name
-	//		runtimeType = payload.ContractId.RuntimeType
-	//		contractVersion = payload.ContractId.Version
+	//		contractName = payload.Contract.Name
+	//		runtimeType = payload.Contract.RuntimeType
+	//		contractVersion = payload.Contract.Version
 	//		method = payload.Method
 	//		byteCode = payload.ByteCode
 	//		parameterPairs = payload.Parameters
@@ -434,8 +434,12 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	default:
 		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Payload.TxType))
 	}
-
-	//contract = &commonpb.ContractId{
+	contract, err := utils.GetContractByName(txSimContext.Get, contractName)
+	if err != nil {
+		ts.log.Errorf("Get contract info by name[%s] error:%s", contractName, err)
+		return nil, err
+	}
+	//contract = &commonpb.Contract{
 	//	ContractName:    contractName,
 	//	ContractVersion: contractVersion,
 	//	RuntimeType:     runtimeType,
@@ -458,7 +462,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 			return errResult(result, fmt.Errorf("expect value length less than %d, but got %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Payload.TxId))
 		}
 	}
-	contractResultPayload, txStatusCode := ts.VmManager.RunContract(&commonpb.Contract{Name: contractName}, method, byteCode, parameters, txSimContext, 0, tx.Payload.TxType)
+	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contract, method, byteCode, parameters, txSimContext, 0, tx.Payload.TxType)
 
 	result.Code = txStatusCode
 	result.ContractResult = contractResultPayload
@@ -522,7 +526,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 			fullCertEndorsements = append(fullCertEndorsements, endorsement)
 		} else {
 			fullCertEndorsement := &commonpb.EndorsementEntry{
-				Signer: &acpb.SerializedMember{
+				Signer: &acpb.Member{
 					OrgId:      endorsement.Signer.OrgId,
 					MemberInfo: nil,
 					//IsFullCert: true,

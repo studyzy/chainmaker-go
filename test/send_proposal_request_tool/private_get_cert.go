@@ -39,7 +39,7 @@ func getCert() error {
 
 	payloadBytes, err := constructQueryPayload(
 		common.SystemContract_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_GET_CA_CERT.String(),
+		consts.PrivateCompute_GET_CA_CERT.String(),
 		pairs,
 	)
 

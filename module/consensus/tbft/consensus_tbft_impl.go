@@ -696,13 +696,13 @@ func (consensus *ConsensusTBFTImpl) handleConsensusMsg(msg *tbftpb.TBFTMsg) {
 	defer consensus.Unlock()
 
 	switch msg.Type {
-	case tbftpb.TBFTMsgType_propose:
+	case tbftpb.TBFTMsgType_MSG_PROPOSE:
 		consensus.procPropose(msg)
-	case tbftpb.TBFTMsgType_prevote:
+	case tbftpb.TBFTMsgType_MSG_PREVOTE:
 		consensus.procPrevote(msg)
-	case tbftpb.TBFTMsgType_precommit:
+	case tbftpb.TBFTMsgType_MSG_PRECOMMIT:
 		consensus.procPrecommit(msg)
-	case tbftpb.TBFTMsgType_state:
+	case tbftpb.TBFTMsgType_MSG_STATE:
 		// Async is ok
 		go consensus.gossip.onRecvState(msg)
 	}
@@ -1212,7 +1212,7 @@ func (consensus *ConsensusTBFTImpl) signProposal(proposal *Proposal) error {
 		return err
 	}
 
-	serializeMember, err := consensus.singer.GetSerializedMember(true)
+	serializeMember, err := consensus.singer.GetMember(true)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%v) get serialize member failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
@@ -1235,7 +1235,7 @@ func (consensus *ConsensusTBFTImpl) signVote(vote *Vote) error {
 		return err
 	}
 
-	serializeMember, err := consensus.singer.GetSerializedMember(true)
+	serializeMember, err := consensus.singer.GetMember(true)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%v) get serialize member failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)

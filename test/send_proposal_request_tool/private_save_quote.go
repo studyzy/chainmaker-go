@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"chainmaker.org/chainmaker/protocol"
 	"encoding/json"
 	"fmt"
 
@@ -53,7 +54,7 @@ func saveQuote() error {
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
 		common.SystemContract_PRIVATE_COMPUTE.String(),
-		"SAVE_QUOTE", // common.PrivateComputeContractFunction_SAVE_QUOTE.String(),
+		"SAVE_QUOTE", // consts.PrivateCompute_SAVE_QUOTE.String(),
 		pairs,
 		defaultSequence,
 	)
@@ -69,7 +70,7 @@ func saveQuote() error {
 	if resp.Code == common.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &common.ContractResult{
-				Code:    0,
+				Code:    uint32(protocol.ContractResultCode_OK),
 				Message: "OK",
 				Result:  []byte(txId),
 			}

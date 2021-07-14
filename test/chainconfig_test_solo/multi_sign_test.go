@@ -85,7 +85,7 @@ func getPayloadInfo() ([]byte, []byte) {
 	payload := &commonPb.Payload{
 		ChainId:      CHAIN1,
 		ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
-		Method:       commonPb.ConfigFunction_CORE_UPDATE.String(),
+		Method:       consts.ChainConfigManager_CORE_UPDATE.String(),
 		Parameters:   payloadPairs,
 		Sequence:     chainConfig.Sequence,
 		Endorsement:  nil,

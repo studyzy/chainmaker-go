@@ -214,7 +214,7 @@ func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 }
 
 // Get Block Proposer for current snapshot
-func (s *SnapshotEvidence) GetBlockProposer() *accesscontrol.SerializedMember {
+func (s *SnapshotEvidence) GetBlockProposer() *accesscontrol.Member {
 	if s.delegate == nil {
 		return nil
 	}

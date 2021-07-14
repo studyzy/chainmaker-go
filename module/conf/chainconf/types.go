@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -240,7 +241,7 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 
 		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
-			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+			if resourceName != consts.ChainConfigManager_NODE_ID_UPDATE.String() && resourceName != consts.ChainConfigManager_NODE_ID_UPDATE.String() && resourceName != consts.ChainConfigManager_TRUST_ROOT_UPDATE.String() {
 				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}
@@ -353,10 +354,10 @@ func IsNativeTx(tx *common.Transaction) (contract string, b bool) {
 	//	if err != nil {
 	//		return "", false
 	//	}
-	//	if payload.ContractId == nil {
+	//	if payload.Contract == nil {
 	//		return "", false
 	//	}
-	//	return payload.ContractId.Name, IsNative(payload.ContractId.Name)
+	//	return payload.Contract.Name, IsNative(payload.Contract.Name)
 	default:
 		return "", false
 	}

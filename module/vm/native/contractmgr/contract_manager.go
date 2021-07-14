@@ -71,10 +71,10 @@ func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimCont
 	return json.Marshal(contracts)
 }
 func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_Install_CONTRACT_NAME.String()])
-	version := string(parameters[consts.ContractManager_Install_CONTRACT_VERSION.String()])
-	byteCode := parameters[consts.ContractManager_Install_CONTRACT_BYTE_CODE.String()]
-	runtime := parameters[consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String()]
+	name := string(parameters[consts.ContractManager_Init_CONTRACT_NAME.String()])
+	version := string(parameters[consts.ContractManager_Init_CONTRACT_VERSION.String()])
+	byteCode := parameters[consts.ContractManager_Init_CONTRACT_BYTECODE.String()]
+	runtime := parameters[consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String()]
 	runtimeInt := commonPb.RuntimeType_value[string(runtime)]
 	runtimeType := commonPb.RuntimeType(runtimeInt)
 	contract, err := r.InstallContract(txSimContext, name, version, byteCode, runtimeType, parameters)
@@ -86,7 +86,7 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	name := string(parameters[consts.ContractManager_Upgrade_CONTRACT_NAME.String()])
 	version := string(parameters[consts.ContractManager_Upgrade_CONTRACT_VERSION.String()])
-	byteCode := parameters[consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String()]
+	byteCode := parameters[consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String()]
 	runtime := string(parameters[consts.ContractManager_Upgrade_CONTRACT_RUNTIME_TYPE.String()])
 	runtimeInt := commonPb.RuntimeType_value[runtime]
 	runtimeType := commonPb.RuntimeType(runtimeInt)
@@ -194,7 +194,23 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 	byteCodeKey := utils.GetContractByteCodeDbKey(name)
 	context.Put(ContractName, byteCodeKey, byteCode)
 	//实例化合约，并init合约，产生读写集
-	context.CallContract(contract, protocol.ContractInitMethod, byteCode, initParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
+	result, statusCode := context.CallContract(contract, protocol.ContractInitMethod, byteCode, initParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
+	if statusCode != commonPb.TxStatusCode_SUCCESS {
+		return nil, errContractInitFail
+	}
+	if result.Code > 0 { //throw error
+		return nil, errContractInitFail
+	}
+	if runTime == commonPb.RuntimeType_EVM {
+		//save bytecode body
+		//EVM的特殊处理，在调用构造函数后会返回真正需要存的字节码，这里将之前的字节码覆盖
+		if len(result.Result) > 0 {
+			err := context.Put(ContractName, byteCodeKey, result.Result)
+			if err != nil {
+				return nil, errContractInitFail
+			}
+		}
+	}
 	return contract, nil
 }
 
@@ -223,7 +239,23 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 	byteCodeKey := utils.GetContractByteCodeDbKey(name)
 	context.Put(ContractName, byteCodeKey, byteCode)
 	//运行新合约的upgrade方法，产生读写集
-	context.CallContract(contract, protocol.ContractUpgradeMethod, byteCode, upgradeParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
+	result, statusCode := context.CallContract(contract, protocol.ContractUpgradeMethod, byteCode, upgradeParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
+	if statusCode != commonPb.TxStatusCode_SUCCESS {
+		return nil, errContractUpgradeFail
+	}
+	if result.Code > 0 { //throw error
+		return nil, errContractUpgradeFail
+	}
+	if runTime == commonPb.RuntimeType_EVM {
+		//save bytecode body
+		//EVM的特殊处理，在调用构造函数后会返回真正需要存的字节码，这里将之前的字节码覆盖
+		if len(result.Result) > 0 {
+			err := context.Put(ContractName, byteCodeKey, result.Result)
+			if err != nil {
+				return nil, errContractUpgradeFail
+			}
+		}
+	}
 	return contract, nil
 }
 func (r *ContractManagerRuntime) FreezeContract(context protocol.TxSimContext, name string) (*commonPb.Contract, error) {

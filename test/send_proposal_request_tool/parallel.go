@@ -698,7 +698,7 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
-	//	ContractId: &commonPb.Contract{
+	//	Contract: &commonPb.Contract{
 	//		ContractName:    fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
 	//		ContractVersion: "1.0.0",
 	//		RuntimeType:     commonPb.RuntimeType(runTime),
@@ -789,7 +789,7 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String(),
 		Value: bytecode,
 	})
 	for _, kv := range initParameters {
@@ -812,19 +812,19 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	file := fileCache.Read(userCrtPath)
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: *file,
 		//IsFullCert: true,
 	}
 
-	var sender *acPb.SerializedMember
+	var sender *acPb.Member
 	if useShortCrt {
 		certId, err := certCache.Read(userCrtPath, senderFull.MemberInfo, hashAlgo)
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute the identity for certificate [%v]", err)
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      senderFull.OrgId,
 			MemberInfo: *certId,
 			MemberType: acPb.MemberType_CERT_HASH,

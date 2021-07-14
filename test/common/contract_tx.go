@@ -58,19 +58,19 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	wasmBin, _ := ioutil.ReadFile(wasmPath)
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_NAME.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_VERSION.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_VERSION.String(),
 		Value: []byte("1.2.1"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String(),
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_BYTE_CODE.String(),
+		Key:   consts.ContractManager_Init_CONTRACT_BYTECODE.String(),
 		Value: wasmBin,
 	})
 	payload := &commonPb.Payload{
@@ -112,7 +112,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 
 	// 构造Sender
 	//pubKeyString, _ := sk3.PublicKey().String()
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		////IsFullCert: true,
@@ -167,7 +167,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	return result
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -237,7 +237,7 @@ func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTE_CODE.String(),
+		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String(),
 		Value: wasmBin,
 	})
 	payload := &commonPb.Payload{

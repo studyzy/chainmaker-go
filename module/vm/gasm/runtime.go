@@ -89,7 +89,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 	}()
 
 	contractResult = &commonPb.ContractResult{
-		Code:    0,
+		Code:    uint32(protocol.ContractResultCode_OK),
 		Result:  nil,
 		Message: "",
 	}

@@ -8,15 +8,16 @@ package dpos
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/binary"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
 	"chainmaker.org/chainmaker-go/logger"
 
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/pb-go/dpos"
+	"chainmaker.org/chainmaker/pb-go/consensus/dpos"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/protobuf/proto"
 )
@@ -119,7 +120,7 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	}
 	proposer := make([]string, 0, len(validators))
 	for _, val := range validators {
-		proposer = append(proposer, val.PeerID)
+		proposer = append(proposer, val.PeerId)
 	}
 
 	// 4. create NewEpoch

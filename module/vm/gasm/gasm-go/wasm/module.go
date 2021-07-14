@@ -198,7 +198,7 @@ func (m *Module) resolveImports(externModules map[string]*Module) error {
 			}
 		case 0x03: // global
 			if err := m.applyGlobalImport(em, es); err != nil {
-				return fmt.Errorf("applyGlobalImport: %w", is.Name, err)
+				return fmt.Errorf("applyGlobalImport: %s  %v", is.Name, err)
 			}
 		default:
 			return fmt.Errorf("%s invalid kind of import: %#x", is.Name, is.Desc.Kind)

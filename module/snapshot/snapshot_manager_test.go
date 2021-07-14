@@ -62,7 +62,7 @@ func createNewBlock(height uint64, timeStamp int64) *commonPb.Block {
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			BlockTimestamp: timeStamp,
-			Proposer:       &accesscontrol.SerializedMember{MemberInfo: []byte{1, 2, 3}},
+			Proposer:       &accesscontrol.Member{MemberInfo: []byte{1, 2, 3}},
 			ConsensusArgs:  nil,
 			TxCount:        0,
 			Signature:      nil,

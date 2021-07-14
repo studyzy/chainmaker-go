@@ -25,7 +25,7 @@ func TestTimerService_AddEvent(t *testing.T) {
 	// 1. add paceEvent and check no timeOut event
 	paceEvent := TimerEvent{
 		Duration: time.Millisecond,
-		State:    chainedbftpb.ConsStateType_PACE_MAKER,
+		State:    chainedbftpb.ConsStateType_PACEMAKER,
 	}
 	timerService.AddEvent(&paceEvent)
 	checkNoTimeOutEvent(t, firedCh)

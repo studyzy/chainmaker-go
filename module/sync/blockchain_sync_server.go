@@ -226,7 +226,7 @@ func (sync *BlockChainSyncServer) sendBlocks(req *syncPb.BlockSyncReq, from stri
 			return err
 		}
 		if bz, err = proto.Marshal(&syncPb.SyncBlockBatch{
-			Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batchs: []*commonPb.Block{blk}}},
+			Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batches: []*commonPb.Block{blk}}},
 		}); err != nil {
 			return err
 		}

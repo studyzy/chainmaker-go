@@ -7,17 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
 
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
+	pbdpos "chainmaker.org/chainmaker/pb-go/consensus/dpos"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/protobuf/proto"
 )
@@ -105,10 +106,10 @@ func (s CandidateInfos) Swap(i, j int) {
 }
 
 func (s CandidateInfos) Less(i, j int) bool {
-	// 优先按照weight排序，相同的情况下按照peerID从小到大排序（字符串）
+	// 优先按照weight排序，相同的情况下按照PeerId从小到大排序（字符串）
 	wi, wj := utils.NewBigInteger(s[i].Weight), utils.NewBigInteger(s[j].Weight)
 	if val := wi.Cmp(wj); val == 0 {
-		return strings.Compare(s[i].PeerID, s[j].PeerID) < 0
+		return strings.Compare(s[i].PeerId, s[j].PeerId) < 0
 	} else {
 		return val > 0
 	}

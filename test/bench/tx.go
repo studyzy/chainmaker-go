@@ -125,7 +125,7 @@ func contructTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath string, 
 
 	// 构造Sender
 	//pubKeyString, _ := sk3.PublicKey().String()
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      orgid,
 		MemberInfo: file,
 		//MemberInfo: []byte(pubKeyString),
@@ -168,7 +168,7 @@ func contructTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath string, 
 	return req, nil
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -216,7 +216,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.Si
 //		fmt.Println("node", orgid, "peerId", peerId)
 //
 //		// 构造Sender
-//		sender1 := &acPb.SerializedMember{
+//		sender1 := &acPb.Member{
 //			OrgId:      orgid,
 //			MemberInfo: file2,
 //		}

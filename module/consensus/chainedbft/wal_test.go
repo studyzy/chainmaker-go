@@ -88,7 +88,7 @@ func TestSaveWal(t *testing.T) {
 	// 1. add entry: vote and proposal
 	voteBlock := chainedbftpb.VoteMsg{
 		VoteData: &chainedbftpb.VoteData{
-			Level: 1, Height: 1, AuthorIdx: 1, BlockID: []byte(utils.GetRandTxId()),
+			Level: 1, Height: 1, AuthorIdx: 1, BlockId: []byte(utils.GetRandTxId()),
 		},
 	}
 	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{

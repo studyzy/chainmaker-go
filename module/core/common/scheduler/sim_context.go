@@ -94,7 +94,7 @@ func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []
 	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
 }
 
-func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
+func (s *txSimContextImpl) GetCreator(contractName string) *acpb.Member {
 	contract, err := utils.GetContractByName(s.Get, contractName)
 	if err != nil {
 		//TODO log
@@ -103,7 +103,7 @@ func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMembe
 	return contract.Creator
 }
 
-func (s *txSimContextImpl) GetSender() *acpb.SerializedMember {
+func (s *txSimContextImpl) GetSender() *acpb.Member {
 	return s.tx.Sender.GetSigner()
 }
 
@@ -211,7 +211,7 @@ func (s *txSimContextImpl) GetBlockHeight() uint64 {
 	return s.snapshot.GetBlockHeight()
 }
 
-func (s *txSimContextImpl) GetBlockProposer() *acpb.SerializedMember {
+func (s *txSimContextImpl) GetBlockProposer() *acpb.Member {
 	return s.snapshot.GetBlockProposer()
 }
 
@@ -256,6 +256,13 @@ func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method stri
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
 		return contractResult, commonpb.TxStatusCode_CONTRACT_FAIL
+	}
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonpb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
 	}
 	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 

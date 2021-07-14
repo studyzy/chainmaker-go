@@ -14,6 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consts"
 	"chainmaker.org/chainmaker/protocol"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -52,13 +53,14 @@ func registerCertManageContractMethods(log *logger.CMLogger) map[string]common.C
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	certManageRuntime := &CertManageRuntime{log: log}
-	methodMap[commonPb.CertManageFunction_CERT_ADD.String()] = certManageRuntime.Add
-	methodMap[commonPb.CertManageFunction_CERTS_DELETE.String()] = certManageRuntime.Delete
-	methodMap[commonPb.CertManageFunction_CERTS_FREEZE.String()] = certManageRuntime.Freeze
-	methodMap[commonPb.CertManageFunction_CERTS_UNFREEZE.String()] = certManageRuntime.Unfreeze
-	methodMap[commonPb.CertManageFunction_CERTS_REVOKE.String()] = certManageRuntime.Revoke
+
+	methodMap[consts.CertManage_CERT_ADD.String()] = certManageRuntime.Add
+	methodMap[consts.CertManage_CERTS_DELETE.String()] = certManageRuntime.Delete
+	methodMap[consts.CertManage_CERTS_FREEZE.String()] = certManageRuntime.Freeze
+	methodMap[consts.CertManage_CERTS_UNFREEZE.String()] = certManageRuntime.Unfreeze
+	methodMap[consts.CertManage_CERTS_REVOKE.String()] = certManageRuntime.Revoke
 	// query
-	methodMap[commonPb.CertManageFunction_CERTS_QUERY.String()] = certManageRuntime.Query
+	methodMap[consts.CertManage_CERTS_QUERY.String()] = certManageRuntime.Query
 	return methodMap
 }
 

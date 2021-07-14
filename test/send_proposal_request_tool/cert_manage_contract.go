@@ -132,7 +132,7 @@ func certAdd() error {
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: commonPb.SystemContract_CERT_MANAGE.String(),
-		Method:       commonPb.CertManageFunction_CERT_ADD.String(),
+		Method:       consts.CertManage_CERT_ADD.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
@@ -178,7 +178,7 @@ func certDelete() error {
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: commonPb.SystemContract_CERT_MANAGE.String(),
-		Method:       commonPb.CertManageFunction_CERTS_DELETE.String(),
+		Method:       consts.CertManage_CERTS_DELETE.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
@@ -214,7 +214,7 @@ func certQuery() error {
 		Key:   certHash,
 		Value: []byte(certHashes),
 	})
-	payloadBytes, err := constructPayload(commonPb.SystemContract_CERT_MANAGE.String(), commonPb.CertManageFunction_CERTS_QUERY.String(), pairs)
+	payloadBytes, err := constructPayload(commonPb.SystemContract_CERT_MANAGE.String(), consts.CertManage_CERTS_QUERY.String(), pairs)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func certFrozen() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.SystemContract_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_FREEZE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CERT_MANAGE.String(), method: consts.CertManage_CERTS_FREEZE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -292,7 +292,7 @@ func certUnfrozen() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.SystemContract_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_UNFREEZE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CERT_MANAGE.String(), method: consts.CertManage_CERTS_UNFREEZE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -326,7 +326,7 @@ func certRevocation() error {
 	})
 
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
-		contractName: commonPb.SystemContract_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_REVOKE.String(), pairs: pairs, oldSeq: seq})
+		contractName: commonPb.SystemContract_CERT_MANAGE.String(), method: consts.CertManage_CERTS_REVOKE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
