@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/consts"
 	"encoding/json"
 	"fmt"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
@@ -34,7 +35,7 @@ func FreezeContractCMD() *cobra.Command {
 func freezeContract() error {
 	txId := utils.GetRandTxId()
 
-	method := consts.ContractManager_FREEZE_CONTRACT.String()
+	method := syscontract.ContractManageFunction_FREEZE_CONTRACT.String()
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
@@ -91,11 +92,11 @@ func UnfreezeContractCMD() *cobra.Command {
 func unfreezeContract() error {
 	txId := utils.GetRandTxId()
 
-	method := consts.ContractManager_UNFREEZE_CONTRACT.String()
+	method := syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()
 
 	payload := &commonPb.Payload{
-		ChainId: chainId,
-			ContractName: contractName,
+		ChainId:      chainId,
+		ContractName: contractName,
 
 		Method: method,
 	}
@@ -147,11 +148,11 @@ func RevokeContractCMD() *cobra.Command {
 func RevokeContract() error {
 	txId := utils.GetRandTxId()
 
-	method := consts.ContractManager_REVOKE_CONTRACT.String()
+	method := syscontract.ContractManageFunction_REVOKE_CONTRACT.String()
 
 	payload := &commonPb.Payload{
-		ChainId: chainId,
-			ContractName: contractName,
+		ChainId:      chainId,
+		ContractName: contractName,
 
 		Method: method,
 	}

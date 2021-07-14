@@ -72,7 +72,7 @@ func TestAddTxsToConfigQueue(t *testing.T) {
 }
 func changeTx2ConfigTx(tx *commonPb.Transaction) {
 	payload := tx.Payload
-	payload.ContractName = commonPb.SystemContract_CHAIN_CONFIG.String()
+	payload.ContractName = syscontract.SystemContract_CHAIN_CONFIG.String()
 }
 func TestAddTxsToCommonQueue(t *testing.T) {
 	ctrl := gomock.NewController(t)

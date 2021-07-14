@@ -43,7 +43,7 @@ func TestGetBlockByHeight(t *testing.T) {
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CHAIN_QUERY.String(), MethodName: consts.BlockQuery_GET_BLOCK_BY_HEIGHT.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String(), Pairs: pairs})
 
 	if err != nil {
 		statusErr, ok := status.FromError(err)
@@ -95,7 +95,7 @@ func TestGetBlockByHash(t *testing.T) {
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CHAIN_QUERY.String(), MethodName: consts.BlockQuery_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
 
 	if err != nil {
 		statusErr, ok := status.FromError(err)

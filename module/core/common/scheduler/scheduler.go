@@ -20,6 +20,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -536,7 +537,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 				Signature: endorsement.Signature,
 			}
 			memberInfoHex := hex.EncodeToString(endorsement.Signer.MemberInfo)
-			if fullMemberInfo, err := txSimContext.Get(commonpb.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
+			if fullMemberInfo, err := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
 				return fmt.Errorf("failed to get full cert from tx sim context for tx: %s, error: %s", tx.Payload.TxId, err.Error())
 			} else {
 				fullCertEndorsement.Signer.MemberInfo = fullMemberInfo

@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"log"
+	"strconv"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consts"
 	"github.com/spf13/cobra"
-	"log"
-	"strconv"
 
 	"github.com/gogo/protobuf/proto"
 )

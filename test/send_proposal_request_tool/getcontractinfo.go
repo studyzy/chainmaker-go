@@ -33,7 +33,7 @@ func getContractInfo() error {
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_CONTRACT_INFO", pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CONTRACT_INFO", pairs)
 	if err != nil {
 		return err
 	}

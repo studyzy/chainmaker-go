@@ -15,6 +15,8 @@ import (
 	"regexp"
 	"strconv"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/evm"
@@ -161,18 +163,18 @@ func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method stri
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
 
 	var (
-		myContract   = contract
-		contractName = contract.Name
-		status       = contract.Status
+		myContract = contract
+		//contractName = contract.Name
+		//status       = contract.Status
 	)
 	contractResult = &commonPb.ContractResult{Code: uint32(1)}
-	if status == commonPb.ContractStatus_ALL {
-		dbContract, err := utils.GetContractByName(txContext.Get, contractName)
-		if err != nil {
-			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
-		}
-		myContract = dbContract
-	}
+	//if status == commonPb.ContractStatus_ALL {
+	//	dbContract, err := utils.GetContractByName(txContext.Get, contractName)
+	//	if err != nil {
+	//		return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+	//	}
+	//	myContract = dbContract
+	//}
 
 	return m.invokeUserContractByRuntime(myContract, method, parameters, txContext, byteCode, gasUsed)
 }
@@ -196,7 +198,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 	msgPre := "verify fail,"
 
 	if v.requireVersion {
-		//if versionInContext, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey); err != nil {
+		//if versionInContext, err := txContext.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey); err != nil {
 		//	contractResult.Message = fmt.Sprintf("%s unable to find latest version for contract[%s], system error:%s", msgPre, contractName, err.Error())
 		//	return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		//} else if len(versionInContext) == 0 {
@@ -209,7 +211,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 	}
 
 	if v.requireNullVersion {
-		//if versionInContext, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey); err != nil {
+		//if versionInContext, err := txContext.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey); err != nil {
 		//	contractResult.Message = fmt.Sprintf("%s unable to find latest version for contract[%s], system error:%s", msgPre, contractName, err.Error())
 		//	return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		//} else if versionInContext != nil {
@@ -263,7 +265,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 	runtimeType := 0
 	if v.requireRuntimeType {
 		//runtimeTypeKey := []byte(protocol.ContractRuntimeType + contractName)
-		//if runtimeTypeBytes, err := txContext.Get(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey); err != nil {
+		//if runtimeTypeBytes, err := txContext.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey); err != nil {
 		//	contractResult.Message = fmt.Sprintf("%s failed to find runtime type %s, system error: %s", msgPre, contractName, err.Error())
 		//	return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		//} else if runtimeTypeTmp, err := strconv.Atoi(string(runtimeTypeBytes)); err != nil {
@@ -406,7 +408,7 @@ func getFullCertMember(sender *acPb.Member, txContext protocol.TxSimContext) (*a
 		memberInfoHex := hex.EncodeToString(sender.MemberInfo)
 		var fullCertMemberInfo []byte
 		var err error
-		if fullCertMemberInfo, err = txContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
+		if fullCertMemberInfo, err = txContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
 			return nil, commonPb.TxStatusCode_GET_SENDER_CERT_FAILED
 		}
 		sender = &acPb.Member{

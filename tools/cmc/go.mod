@@ -4,9 +4,9 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210714055243-e02c9a0323b2
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111
 	chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0 // indirect
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210714072720-5792f9ee59ff
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210714085802-149c1d33d4e5
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/consensys/gurvy v0.3.8 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect

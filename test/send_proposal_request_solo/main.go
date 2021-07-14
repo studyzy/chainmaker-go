@@ -247,7 +247,7 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 
 	// 冻结
 	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
@@ -255,7 +255,7 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 
 	// 解冻
 	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
@@ -263,7 +263,7 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 
 	// 冻结
 	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
@@ -271,7 +271,7 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 
 	// 解冻
 	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
@@ -279,20 +279,20 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 
 	// 冻结
 	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	// 吊销
 	common.RevokeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	testInvokeFactSave(sk3, &client, CHAIN1)
 	testQueryFindByHash(sk3, &client, CHAIN1)
 	time.Sleep(4 * time.Second)
 	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_FREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, consts.ContractManager_UNFREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String())
 	time.Sleep(4 * time.Second)
 }
 
@@ -308,7 +308,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -349,7 +349,7 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
@@ -383,7 +383,7 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -414,7 +414,7 @@ func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNo
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -449,7 +449,7 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -478,7 +478,7 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -506,7 +506,7 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -534,7 +534,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -557,7 +557,7 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
@@ -949,7 +949,7 @@ func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)

@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
@@ -64,8 +66,8 @@ func saveCert() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		commonPb.SystemContract_PRIVATE_COMPUTE.String(),
-		consts.PrivateCompute_SAVE_CA_CERT.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(),
 		pairs,
 		defaultSequence,
 	)
@@ -205,8 +207,8 @@ func getSyncResult(txId string) (*commonPb.ContractResult, error) {
 func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 
 	payloadBytes, err := constructQueryPayload(
-		commonPb.SystemContract_CHAIN_QUERY.String(),
-		consts.BlockQuery_GET_TX_BY_TX_ID.String(),
+		syscontract.SystemContract_CHAIN_QUERY.String(),
+		syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(),
 		[]*commonPb.KeyValuePair{
 			{
 				Key:   "txId",

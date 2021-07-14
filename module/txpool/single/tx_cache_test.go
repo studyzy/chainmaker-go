@@ -28,7 +28,7 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 
 	for i := 0; i < num; i++ {
 
-		contractName := commonPb.SystemContract_CHAIN_CONFIG.String()
+		contractName := syscontract.SystemContract_CHAIN_CONFIG.String()
 
 		if !isConfig {
 			contractName = "userContract1"

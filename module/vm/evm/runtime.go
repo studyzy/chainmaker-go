@@ -187,7 +187,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	//TODO：Devin:销毁一个合约是在ContractManage合约中去操作的，这里能操作系统合约的状态数据？
 	//if len(result.StorageCache.Destructs) > 0 {
 	//	revokeKey := []byte(protocol.ContractRevoke + r.Contract.Name)
-	//	if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(r.Contract.Name)); err != nil {
+	//	if err := r.TxSimContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(r.Contract.Name)); err != nil {
 	//		panic(err)
 	//	}
 	//	r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
@@ -202,7 +202,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	//	}
 	//	versionKey := []byte(protocol.ContractVersion + r.Address.String())
 	//	//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.Contract.Version)); err != nil {
-	//	if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(r.Contract.Version)); err != nil {
+	//	if err := r.TxSimContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(r.Contract.Version)); err != nil {
 	//		r.Log.Errorf("failed to save ContractVersion %s", err.Error())
 	//		panic(err)
 	//	}
@@ -211,7 +211,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	//		// save byteCodeBody
 	//		versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.Contract.Name), []byte(r.Contract.Version)...)
 	//		//if err := r.TxSimContext.Put(r.Contract.Name, versionedByteCodeKey, result.ByteCodeBody); err != nil {
-	//		if err := r.TxSimContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
+	//		if err := r.TxSimContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
 	//			r.Log.Errorf("failed to save byte code body %s", err.Error())
 	//			panic(err)
 	//		}

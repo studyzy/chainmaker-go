@@ -16,7 +16,7 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"fmt"
@@ -47,7 +47,7 @@ const (
 )
 
 var (
-	chainConfigContractName = commonPb.SystemContract_CHAIN_CONFIG.String()
+	chainConfigContractName = syscontract.SystemContract_CHAIN_CONFIG.String()
 	keyChainConfig          = chainConfigContractName
 )
 
@@ -72,39 +72,39 @@ func registerChainConfigContractMethods(log *logger.CMLogger) map[string]common.
 	// [core]
 	coreRuntime := &ChainCoreRuntime{log: log}
 
-	methodMap[consts.ChainConfigManager_CORE_UPDATE.String()] = coreRuntime.CoreUpdate
+	methodMap[syscontract.ChainConfigFunction_CORE_UPDATE.String()] = coreRuntime.CoreUpdate
 
 	// [block]
 	blockRuntime := &ChainBlockRuntime{log: log}
-	methodMap[consts.ChainConfigManager_BLOCK_UPDATE.String()] = blockRuntime.BlockUpdate
+	methodMap[syscontract.ChainConfigFunction_BLOCK_UPDATE.String()] = blockRuntime.BlockUpdate
 
 	// [trust_root]
 	trustRootsRuntime := &ChainTrustRootsRuntime{log: log}
-	methodMap[consts.ChainConfigManager_TRUST_ROOT_ADD.String()] = trustRootsRuntime.TrustRootAdd
-	methodMap[consts.ChainConfigManager_TRUST_ROOT_UPDATE.String()] = trustRootsRuntime.TrustRootUpdate
-	methodMap[consts.ChainConfigManager_TRUST_ROOT_DELETE.String()] = trustRootsRuntime.TrustRootDelete
+	methodMap[syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String()] = trustRootsRuntime.TrustRootAdd
+	methodMap[syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String()] = trustRootsRuntime.TrustRootUpdate
+	methodMap[syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String()] = trustRootsRuntime.TrustRootDelete
 
 	// [consensus]
 	consensusRuntime := &ChainConsensusRuntime{log: log}
-	methodMap[consts.ChainConfigManager_NODE_ID_ADD.String()] = consensusRuntime.NodeIdAdd
-	methodMap[consts.ChainConfigManager_NODE_ID_UPDATE.String()] = consensusRuntime.NodeIdUpdate
-	methodMap[consts.ChainConfigManager_NODE_ID_DELETE.String()] = consensusRuntime.NodeIdDelete
-	methodMap[consts.ChainConfigManager_NODE_ORG_ADD.String()] = consensusRuntime.NodeOrgAdd
-	methodMap[consts.ChainConfigManager_NODE_ORG_UPDATE.String()] = consensusRuntime.NodeOrgUpdate
-	methodMap[consts.ChainConfigManager_NODE_ORG_DELETE.String()] = consensusRuntime.NodeOrgDelete
-	methodMap[consts.ChainConfigManager_CONSENSUS_EXT_ADD.String()] = consensusRuntime.ConsensusExtAdd
-	methodMap[consts.ChainConfigManager_CONSENSUS_EXT_UPDATE.String()] = consensusRuntime.ConsensusExtUpdate
-	methodMap[consts.ChainConfigManager_CONSENSUS_EXT_DELETE.String()] = consensusRuntime.ConsensusExtDelete
+	methodMap[syscontract.ChainConfigFunction_NODE_ID_ADD.String()] = consensusRuntime.NodeIdAdd
+	methodMap[syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()] = consensusRuntime.NodeIdUpdate
+	methodMap[syscontract.ChainConfigFunction_NODE_ID_DELETE.String()] = consensusRuntime.NodeIdDelete
+	methodMap[syscontract.ChainConfigFunction_NODE_ORG_ADD.String()] = consensusRuntime.NodeOrgAdd
+	methodMap[syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String()] = consensusRuntime.NodeOrgUpdate
+	methodMap[syscontract.ChainConfigFunction_NODE_ORG_DELETE.String()] = consensusRuntime.NodeOrgDelete
+	methodMap[syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String()] = consensusRuntime.ConsensusExtAdd
+	methodMap[syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String()] = consensusRuntime.ConsensusExtUpdate
+	methodMap[syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String()] = consensusRuntime.ConsensusExtDelete
 
 	// [permission]
-	methodMap[consts.ChainConfigManager_PERMISSION_ADD.String()] = consensusRuntime.ResourcePolicyAdd
-	methodMap[consts.ChainConfigManager_PERMISSION_UPDATE.String()] = consensusRuntime.ResourcePolicyUpdate
-	methodMap[consts.ChainConfigManager_PERMISSION_DELETE.String()] = consensusRuntime.ResourcePolicyDelete
+	methodMap[syscontract.ChainConfigFunction_PERMISSION_ADD.String()] = consensusRuntime.ResourcePolicyAdd
+	methodMap[syscontract.ChainConfigFunction_PERMISSION_UPDATE.String()] = consensusRuntime.ResourcePolicyUpdate
+	methodMap[syscontract.ChainConfigFunction_PERMISSION_DELETE.String()] = consensusRuntime.ResourcePolicyDelete
 
 	// [chainConfig]
 	ChainConfigRuntime := &ChainConfigRuntime{log: log}
-	methodMap[consts.ChainConfigManager_GET_CHAIN_CONFIG.String()] = ChainConfigRuntime.GetChainConfig
-	methodMap[consts.ChainConfigManager_GET_CHAIN_CONFIG_AT.String()] = ChainConfigRuntime.GetChainConfigFromBlockHeight
+	methodMap[syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String()] = ChainConfigRuntime.GetChainConfig
+	methodMap[syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String()] = ChainConfigRuntime.GetChainConfigFromBlockHeight
 
 	//// [archive]
 	//archiveStoreRuntime := &ArchiveStoreRuntime{log: log}

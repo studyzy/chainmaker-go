@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker/pb-go/consts"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
@@ -573,7 +574,7 @@ type invokeHandler struct {
 var (
 	respStr     = "proposalRequest error, resp: %+v"
 	templateStr = "%s_%d_%d_%d"
-	resultStr     = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
+	resultStr   = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
 )
 
 func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey, orgId string, userCrtPath string, loopId int, ps []*KeyValuePair) error {
@@ -601,7 +602,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 	var abiData *[]byte
 	if abiPath != "" {
 		abiData = abiCache.Read(abiPath)
-		runTime = 5  //evm
+		runTime = 5 //evm
 	}
 
 	method1, pairs1, err := makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
@@ -655,7 +656,7 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 		} else {
 			pairs = append(pairs, &commonPb.KeyValuePair{
 				Key:   p.Key,
-				Value:[]byte( p.Value),
+				Value: []byte(p.Value),
 			})
 		}
 	}
@@ -694,7 +695,7 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 		"1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
 	//
-	//method := consts.ContractManager_INIT_CONTRACT.String()
+	//method := syscontract.ContractManageFunction_INIT_CONTRACT.String()
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
@@ -746,8 +747,8 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 	}
 
 	var pairs []*commonPb.KeyValuePair
-	payload,_:=GenerateUpgradeContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
-		version,commonPb.RuntimeType(runTime),wasmBin,pairs)
+	payload, _ := GenerateUpgradeContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
+		version, commonPb.RuntimeType(runTime), wasmBin, pairs)
 
 	//if endorsement, err := acSign(payload); err == nil {
 	//	payload.Endorsement = endorsement
@@ -777,27 +778,27 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_NAME.String(),
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_VERSION.String(),
+		Key:   syscontract.UpgradeContract_CONTRACT_VERSION.String(),
 		Value: []byte(version),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_RUNTIME_TYPE.String(),
+		Key:   syscontract.UpgradeContract_CONTRACT_RUNTIME_TYPE.String(),
 		Value: []byte(runtimeType.String()),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String(),
+		Key:   syscontract.UpgradeContract_CONTRACT_BYTECODE.String(),
 		Value: bytecode,
 	})
 	for _, kv := range initParameters {
 		pairs = append(pairs, kv)
 	}
 	payload := &commonPb.Payload{
-		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
-		Method:       consts.ContractManager_UPGRADE_CONTRACT.String(),
+		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
+		Method:       syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(),
 		Parameters:   pairs,
 	}
 	return payload, nil
@@ -835,7 +836,7 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 
 	// 构造Header
 	header := &commonPb.Payload{
-		ChainId:        msg.chainId,
+		ChainId: msg.chainId,
 		//Sender:         sender,
 		TxType:         msg.txType,
 		TxId:           msg.txId,
@@ -844,7 +845,7 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	}
 
 	req := &commonPb.TxRequest{
-		Payload:    header,
+		Payload: header,
 		Sender: &commonPb.EndorsementEntry{
 			Signer: sender,
 		},

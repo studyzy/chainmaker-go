@@ -21,7 +21,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/crypto/asym"
@@ -304,49 +304,50 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
 
-	//resourceNamePolicyMap.Store(consts.PrivateCompute_SAVE_CA_CERT.String(), policyConfig)
-	//resourceNamePolicyMap.Store(consts.PrivateCompute_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_GET_CHAIN_CONFIG.String(), policyRead)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_CORE_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_BLOCK_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_TRUST_ROOT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_TRUST_ROOT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_NODE_ID_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_NODE_ID_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_NODE_ORG_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_NODE_ORG_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_NODE_ORG_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_CONSENSUS_EXT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_CONSENSUS_EXT_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_CONSENSUS_EXT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_PERMISSION_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_PERMISSION_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_PERMISSION_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	resourceNamePolicyMap.Store(consts.ChainConfigManager_NODE_ID_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(consts.ContractManager_INIT_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_UPGRADE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_FREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_UNFREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
+
+	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	//resourceNamePolicyMap.Store(consts.CertManage_CERT_ADD.String(), policyWrite)
-	//resourceNamePolicyMap.Store(consts.CertManage_CERTS_QUERY.String(), policyRead)
-	resourceNamePolicyMap.Store(consts.CertManage_CERTS_FREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(consts.CertManage_CERTS_UNFREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(consts.CertManage_CERTS_DELETE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(consts.CertManage_CERTS_REVOKE.String(), policyAdmin)
+	//resourceNamePolicyMap.Store(consts.CertManageFunction_CERT_ADD.String(), policyWrite)
+	//resourceNamePolicyMap.Store(consts.CertManageFunction_CERTS_QUERY.String(), policyRead)
+	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 
 	// Archive
 	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
@@ -400,7 +401,7 @@ func (ac *accessControl) checkResourcePolicyRule(resourcePolicy *config.Resource
 
 func (ac *accessControl) checkResourcePolicyRuleSelfCase(resourcePolicy *config.ResourcePolicy) bool {
 	switch resourcePolicy.ResourceName {
-	case consts.ChainConfigManager_TRUST_ROOT_UPDATE.String(), consts.ChainConfigManager_NODE_ID_UPDATE.String():
+	case syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
 		return true
 	default:
 		ac.log.Errorf("bad configuration: the access rule of [%s] should not be [%s]", resourcePolicy.ResourceName, resourcePolicy.Policy.Rule)
@@ -647,7 +648,7 @@ func (ac *accessControl) validateCrlVersion(crlPemBytes []byte, crl *pkix.Certif
 			return fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPemBytes))
 		}
 		ac.log.Debugf("AKI is ASN1 encoded: %v", isASN1Encoded)
-		crlOldBytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), aki)
+		crlOldBytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), aki)
 		if err != nil {
 			return fmt.Errorf("lookup CRL [%s] failed: %v", hex.EncodeToString(aki), err)
 		}
@@ -672,11 +673,11 @@ func (ac *accessControl) systemContractCallbackCertManagementCase(payloadBytes [
 		return fmt.Errorf("resolve payload failed: %v", err)
 	}
 	switch payload.Method {
-	case consts.CertManage_CERTS_FREEZE.String():
+	case syscontract.CertManageFunction_CERTS_FREEZE.String():
 		return ac.systemContractCallbackCertManagementCertFreezeCase(&payload)
-	case consts.CertManage_CERTS_UNFREEZE.String():
+	case syscontract.CertManageFunction_CERTS_UNFREEZE.String():
 		return ac.systemContractCallbackCertManagementCertUnfreezeCase(&payload)
-	case consts.CertManage_CERTS_REVOKE.String():
+	case syscontract.CertManageFunction_CERTS_REVOKE.String():
 		return ac.systemContractCallbackCertManagementCertRevokeCase(&payload)
 	default:
 		ac.log.Debugf("unwatched method [%s]", payload.Method)
@@ -776,7 +777,7 @@ func (ac *accessControl) lookUpCertCache(certId string) ([]byte, bool) {
 			return nil, false
 		}
 		certIdHex := hex.EncodeToString([]byte(certId))
-		cert, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(certIdHex))
+		cert, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certIdHex))
 		if err != nil {
 			ac.log.Debugf("fail to load compressed certificate from local storage [%s]", certIdHex)
 			return nil, false
@@ -834,7 +835,7 @@ func (ac *accessControl) loadCRL() error {
 		return nil
 	}
 
-	crlAKIList, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
+	crlAKIList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
 	if err != nil {
 		return fmt.Errorf("fail to update CRL list: %v", err)
 	}
@@ -858,7 +859,7 @@ func (ac *accessControl) loadCRL() error {
 
 func (ac *accessControl) storeCrls(crlAKIs []string) error {
 	for _, crlAKI := range crlAKIs {
-		crlbytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(crlAKI))
+		crlbytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(crlAKI))
 		if err != nil {
 			return fmt.Errorf("fail to load CRL [%s]: %v", hex.EncodeToString([]byte(crlAKI)), err)
 		}
@@ -913,7 +914,7 @@ func (ac *accessControl) loadCertFrozenList() error {
 		return nil
 	}
 
-	certList, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
+	certList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
 	if err != nil {
 		return fmt.Errorf("update frozen certificate list failed: %v", err)
 	}
@@ -928,7 +929,7 @@ func (ac *accessControl) loadCertFrozenList() error {
 	}
 
 	for _, certID := range certIDs {
-		certBytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(certID))
+		certBytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certID))
 		if err != nil {
 			return fmt.Errorf("load frozen certificate failed: %s", certID)
 		}

@@ -3,7 +3,7 @@ package common
 import (
 	"runtime"
 
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/utils"
@@ -52,7 +52,7 @@ func (sql *SQLStoreHelper) RollBack(block *commonpb.Block, blockchainStore proto
 		//if err = proto.Unmarshal(block.Txs[0].RequestPayload, &payload); err != nil {
 		//	return err
 		//}
-		contractName := string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_NAME.String()))
+		contractName := string(payload.GetParameter(syscontract.InitContract_CONTRACT_NAME.String()))
 		if len(contractName) != 0 {
 			dbName := statesqldb.GetContractDbName(sql.chainId, contractName)
 			blockchainStore.ExecDdlSql(contractName, "drop database "+dbName)

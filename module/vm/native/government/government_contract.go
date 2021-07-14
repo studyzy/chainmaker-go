@@ -10,7 +10,7 @@ package government
 import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 
 	"chainmaker.org/chainmaker/protocol"
@@ -40,7 +40,7 @@ func registerGovernmentContractMethods(log *logger.CMLogger) map[string]common.C
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	governmentRuntime := &GovernmentRuntime{log: log}
-	methodMap[consts.BlockQuery_GET_GOVERNANCE_CONTRACT.String()] = governmentRuntime.GetGovernmentContract
+	methodMap[syscontract.ChainQueryFunction_GET_GOVERNANCE_CONTRACT.String()] = governmentRuntime.GetGovernmentContract
 	return methodMap
 }
 

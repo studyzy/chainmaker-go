@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"strconv"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consts"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
-	"strconv"
 )
 
 func SubscribeBlockCMD() *cobra.Command {

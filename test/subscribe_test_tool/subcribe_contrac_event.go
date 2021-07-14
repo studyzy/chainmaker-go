@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consts"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 func SubscribeContractEvent() *cobra.Command {

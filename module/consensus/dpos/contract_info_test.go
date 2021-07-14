@@ -17,6 +17,7 @@ import (
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
@@ -56,7 +57,7 @@ func TestDPoSImpl_addBalanceRwSet(t *testing.T) {
 	// 3. testAddr have balance in the blockChain and block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: syscontract.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
 	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
@@ -85,7 +86,7 @@ func TestDPoSImpl_SubBalanceRwSet(t *testing.T) {
 	// 3. sub 1000 from block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: syscontract.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
 	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
@@ -100,7 +101,7 @@ func TestDPoSImpl_CompleteUnbounding(t *testing.T) {
 	impl, fn := initTestImpl(t)
 	defer fn()
 
-	rwSet, err := impl.completeUnbounding(&common.Epoch{}, &common.Block{}, nil)
+	rwSet, err := impl.completeUnbounding(&syscontract.Epoch{}, &common.Block{}, nil)
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(rwSet.TxWrites))
 }
@@ -109,23 +110,23 @@ func TestDPoSImpl_GetUnboundingEntries(t *testing.T) {
 	impl, fn := initDPoSWithStore(t)
 	defer fn()
 
-	entries, err := impl.getUnboundingEntries(&common.Epoch{EpochID: 10})
+	entries, err := impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(entries))
 
 	blk, blkRwSet := generateUnboundingBlock(t, 4, 10, 1, 10)
 	require.NoError(t, impl.stateDB.PutBlock(blk, blkRwSet))
-	entries, err = impl.getUnboundingEntries(&common.Epoch{EpochID: 10})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 4, len(entries))
 
 	blk, blkRwSet = generateUnboundingBlock(t, 4, 10, 2, 20)
 	require.NoError(t, impl.stateDB.PutBlock(blk, blkRwSet))
-	entries, err = impl.getUnboundingEntries(&common.Epoch{EpochID: 20})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 20})
 	require.NoError(t, err)
 	require.EqualValues(t, 4, len(entries))
 
-	entries, err = impl.getUnboundingEntries(&common.Epoch{EpochID: 30})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 30})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(entries))
 }
@@ -257,7 +258,7 @@ func generateBlockWithStakeConfig() (*common.Block, []*common.TxRWSet) {
 	rwSet = append(rwSet, &common.TxRWSet{
 		TxWrites: []*common.TxWrite{
 			{
-				ContractName: common.SystemContract_DPOS_STAKE.String(),
+				ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 				Key:          []byte(dposmgr.KeyMinSelfDelegation), Value: []byte(testSelfMinDelegation),
 			},
 		},
@@ -291,7 +292,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
 				{
-					ContractName: common.SystemContract_DPOS_STAKE.String(),
+					ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 					Key:          dposmgr.ToValidatorKey(valAddr), Value: bz,
 				},
 			},
@@ -329,7 +330,7 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
 				{
-					ContractName: common.SystemContract_DPOS_STAKE.String(),
+					ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 					Key:          dposmgr.ToUnbondingDelegationKey(completeEpoch, delAddr, valAddr), Value: bz,
 				},
 			},

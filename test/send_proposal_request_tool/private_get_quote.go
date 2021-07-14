@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"github.com/spf13/cobra"
 )
 
@@ -38,8 +39,8 @@ func getQuote() error {
 	})
 
 	payloadBytes, err := constructQueryPayload(
-		common.SystemContract_PRIVATE_COMPUTE.String(),
-		"GET_QUOTE", // consts.PrivateCompute_GET_QUOTE.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		"GET_QUOTE", // syscontract.PrivateComputeFunction_GET_QUOTE.String(),
 		pairs,
 	)
 	if err != nil {

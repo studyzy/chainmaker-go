@@ -8,12 +8,13 @@
 package contractmgr
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/common"
 	"encoding/json"
 	"fmt"
 	"regexp"
 
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker-go/vm/native/common"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
 
@@ -22,10 +23,8 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 )
 
-
 var (
-	ContractName             = commonPb.SystemContract_CONTRACT_MANAGE.String()
-
+	ContractName = syscontract.SystemContract_CONTRACT_MANAGE.String()
 )
 
 type ContractManager struct {
@@ -47,16 +46,17 @@ func (c *ContractManager) GetMethod(methodName string) common.ContractFunc {
 func registerContractManagerMethods(log *logger.CMLogger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	runtime := &ContractManagerRuntime{log: log}
-	methodMap[consts.ContractManager_INIT_CONTRACT.String()] = runtime.installContract
-	methodMap[consts.ContractManager_UPGRADE_CONTRACT.String()] = runtime.upgradeContract
-	methodMap[consts.ContractManager_FREEZE_CONTRACT.String()] = runtime.freezeContract
-	methodMap[consts.ContractManager_UNFREEZE_CONTRACT.String()] = runtime.unfreezeContract
-	methodMap[consts.ContractManager_REVOKE_CONTRACT.String()] = runtime.revokeContract
-	methodMap[consts.ContractManager_GET_CONTRACT_INFO.String()] = runtime.getContractInfo
+	methodMap[syscontract.ContractManageFunction_INIT_CONTRACT.String()] = runtime.installContract
+	methodMap[syscontract.ContractManageFunction_UPGRADE_CONTRACT.String()] = runtime.upgradeContract
+	methodMap[syscontract.ContractManageFunction_FREEZE_CONTRACT.String()] = runtime.freezeContract
+	methodMap[syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()] = runtime.unfreezeContract
+	methodMap[syscontract.ContractManageFunction_REVOKE_CONTRACT.String()] = runtime.revokeContract
+	methodMap[syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String()] = runtime.getContractInfo
 	return methodMap
+
 }
 func (r *ContractManagerRuntime) getContractInfo(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_GetContractInfo_CONTRACT_NAME.String()])
+	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
 	contract, err := r.GetContractInfo(txSimContext, name)
 	if err != nil {
 		return nil, err
@@ -71,10 +71,10 @@ func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimCont
 	return json.Marshal(contracts)
 }
 func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_Init_CONTRACT_NAME.String()])
-	version := string(parameters[consts.ContractManager_Init_CONTRACT_VERSION.String()])
-	byteCode := parameters[consts.ContractManager_Init_CONTRACT_BYTECODE.String()]
-	runtime := parameters[consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String()]
+	name := string(parameters[syscontract.InitContract_CONTRACT_NAME.String()])
+	version := string(parameters[syscontract.InitContract_CONTRACT_VERSION.String()])
+	byteCode := parameters[syscontract.InitContract_CONTRACT_BYTECODE.String()]
+	runtime := parameters[syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String()]
 	runtimeInt := commonPb.RuntimeType_value[string(runtime)]
 	runtimeType := commonPb.RuntimeType(runtimeInt)
 	contract, err := r.InstallContract(txSimContext, name, version, byteCode, runtimeType, parameters)
@@ -84,10 +84,10 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 	return contract.Marshal()
 }
 func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_Upgrade_CONTRACT_NAME.String()])
-	version := string(parameters[consts.ContractManager_Upgrade_CONTRACT_VERSION.String()])
-	byteCode := parameters[consts.ContractManager_Upgrade_CONTRACT_BYTECODE.String()]
-	runtime := string(parameters[consts.ContractManager_Upgrade_CONTRACT_RUNTIME_TYPE.String()])
+	name := string(parameters[syscontract.UpgradeContract_CONTRACT_NAME.String()])
+	version := string(parameters[syscontract.UpgradeContract_CONTRACT_VERSION.String()])
+	byteCode := parameters[syscontract.UpgradeContract_CONTRACT_BYTECODE.String()]
+	runtime := string(parameters[syscontract.UpgradeContract_CONTRACT_RUNTIME_TYPE.String()])
 	runtimeInt := commonPb.RuntimeType_value[runtime]
 	runtimeType := commonPb.RuntimeType(runtimeInt)
 	contract, err := r.UpgradeContract(txSimContext, name, version, byteCode, runtimeType, parameters)
@@ -97,7 +97,7 @@ func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimCont
 	return contract.Marshal()
 }
 func (r *ContractManagerRuntime) freezeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_GetContractInfo_CONTRACT_NAME.String()])
+	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
 	contract, err := r.FreezeContract(txSimContext, name)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (r *ContractManagerRuntime) freezeContract(txSimContext protocol.TxSimConte
 	return json.Marshal(contract)
 }
 func (r *ContractManagerRuntime) unfreezeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_GetContractInfo_CONTRACT_NAME.String()])
+	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
 	contract, err := r.UnfreezeContract(txSimContext, name)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (r *ContractManagerRuntime) unfreezeContract(txSimContext protocol.TxSimCon
 	return json.Marshal(contract)
 }
 func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[consts.ContractManager_GetContractInfo_CONTRACT_NAME.String()])
+	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
 	contract, err := r.RevokeContract(txSimContext, name)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimConte
 //GetAllContracts 查询所有合约的详细信息
 func (r *ContractManagerRuntime) GetAllContracts(context protocol.TxSimContext) ([]*commonPb.Contract, error) {
 	keyPrefix := []byte(utils.PrefixContractInfo)
-	it, err := context.Select(commonPb.SystemContract_CONTRACT_MANAGE.String(), keyPrefix, keyPrefix)
+	it, err := context.Select(syscontract.SystemContract_CONTRACT_MANAGE.String(), keyPrefix, keyPrefix)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker/pb-go/consts"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -22,6 +21,7 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consts"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 

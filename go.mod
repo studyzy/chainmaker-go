@@ -3,12 +3,8 @@ module chainmaker.org/chainmaker-go
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210713080429-d7b7b392ccef // indirect
-	chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f // indirect
-	github.com/Workiva/go-datastructures v1.0.53 // indirect
-	github.com/syndtr/goleveldb v1.0.0 // indirect
-	github.com/thoas/go-funk v0.9.0 // indirect
-	github.com/tidwall/wal v0.1.4 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.0 // indirect
-	golang.org/x/tools v0.1.4 // indirect
+	chainmaker.org/chainmaker/common v0.0.0-20210709021103-f99567e14ced // indirect
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210630065752-c3d162425200 // indirect
+	chainmaker.org/chainmaker/protocol v0.0.0-20210708034514-6bb717a6e9e6 // indirect
+	github.com/spf13/cobra v1.2.1 // indirect
 )

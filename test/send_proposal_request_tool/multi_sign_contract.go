@@ -152,7 +152,7 @@ func multiSignReq() error {
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
-		ContractName: commonPb.SystemContract_MULTI_SIGN.String(),
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       commonPb.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
@@ -229,7 +229,7 @@ func multiSignVote() error {
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
-		ContractName: commonPb.SystemContract_MULTI_SIGN.String(),
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       commonPb.MultiSignFunction_VOTE.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
@@ -300,7 +300,7 @@ func getMultiSign() (*commonPb.TxResponse, *commonPb.MultiSignInfo, error) {
 	if len(pairs) == 0 {
 		return nil, nil, errors.New("params is emtpy")
 	}
-	payloadBytes, err := constructPayload(commonPb.SystemContract_MULTI_SIGN.String(), commonPb.MultiSignFunction_QUERY.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_MULTI_SIGN.String(), commonPb.MultiSignFunction_QUERY.String(), pairs)
 	if err != nil {
 		return nil, nil, err
 	}

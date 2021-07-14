@@ -18,6 +18,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/protobuf/proto"
 )
@@ -92,10 +93,10 @@ func (impl *DPoSImpl) isDPoSConsensus() bool {
 	return impl.chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS
 }
 
-func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epoch, seed []byte) (*common.Epoch, error) {
+func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *syscontract.Epoch, seed []byte) (*syscontract.Epoch, error) {
 	impl.log.Debugf("begin create new epoch in blockHeight: %d", proposalHeight)
 	// 1. get property: epochBlockNum
-	epochBlockNumBz, err := impl.stateDB.ReadObject(common.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochBlockNumber))
+	epochBlockNumBz, err := impl.stateDB.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochBlockNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
@@ -124,7 +125,7 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 	}
 
 	// 4. create NewEpoch
-	newEpoch := &common.Epoch{
+	newEpoch := &syscontract.Epoch{
 		EpochID:               oldEpoch.EpochID + 1,
 		NextEpochCreateHeight: proposalHeight + epochBlockNum,
 		ProposerVector:        proposer,
@@ -134,7 +135,7 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *common.Epo
 }
 
 func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
-	valNumBz, err := impl.stateDB.ReadObject(common.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochValidatorNumber))
+	valNumBz, err := impl.stateDB.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochValidatorNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err

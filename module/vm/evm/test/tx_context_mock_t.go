@@ -71,14 +71,14 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxC
 	}
 	data, _ := contractId.Marshal()
 	key := utils.GetContractDbKey(contractId.Name)
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data)
 	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 	//
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }

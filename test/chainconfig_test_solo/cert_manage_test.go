@@ -31,7 +31,7 @@ func TestCertAdd(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	sk, member := native.GetUserSK(1)
 	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CERT_MANAGE.String(), MethodName: consts.CertManage_CERT_ADD.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CERT_MANAGE.String(), MethodName: syscontract.CertManageFunction_CERT_ADD.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -49,7 +49,7 @@ func TestCertDelete(t *testing.T) {
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CERT_MANAGE.String(), MethodName: consts.CertManage_CERTS_DELETE.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CERT_MANAGE.String(), MethodName: syscontract.CertManageFunction_CERTS_DELETE.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -71,7 +71,7 @@ func TestCertQuery(t *testing.T) {
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CERT_MANAGE.String(), MethodName: consts.CertManage_CERTS_QUERY.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CERT_MANAGE.String(), MethodName: syscontract.CertManageFunction_CERTS_QUERY.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -93,7 +93,7 @@ func TestCertQueryWithCertId(t *testing.T) {
 
 	sk, _ := native.GetUserSK(1)
 	resp, err := native.QueryRequestWithCertID(sk, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CERT_MANAGE.String(), MethodName: consts.CertManage_CERTS_QUERY.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CERT_MANAGE.String(), MethodName: syscontract.CertManageFunction_CERTS_QUERY.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 

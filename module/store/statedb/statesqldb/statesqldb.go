@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package statesqldb
 
 import (
-	"chainmaker.org/chainmaker/pb-go/consts"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 
@@ -113,7 +114,7 @@ func GetContractDbName(chainId, contractName string) string {
 
 //getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
 func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
-	if _, ok := commonPb.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
+	if _, ok := syscontract.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(dbConfig, chainId)
 	}
 	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
@@ -157,14 +158,14 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	}
 
 	//2. 如果是新建合约，则创建对应的数据库，并执行DDL
-	if block.IsContractMgmtBlock() {
+	if utils.IsContractMgmtBlock(block) {
 		//创建对应合约的数据库
 		payload := block.Txs[0].Payload
 
 		contractId := &commonPb.Contract{
-			Name:        string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_NAME.String())),
-			Version:     string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_VERSION.String())),
-			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(consts.ContractManager_Init_CONTRACT_RUNTIME_TYPE.String()))]),
+			Name:        string(payload.GetParameter(syscontract.InitContract_CONTRACT_NAME.String())),
+			Version:     string(payload.GetParameter(syscontract.InitContract_CONTRACT_VERSION.String())),
+			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String()))]),
 		}
 		//if contractId.RuntimeType == commonPb.RuntimeType_EVM {
 		//	address, _ := evmutils.MakeAddressFromString(contractId.Name)
@@ -491,8 +492,8 @@ func (s *StateSqlDB) updateConsensusArgs(dbTx protocol.SqlDBTransaction, block *
 	return nil
 }
 func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
-	val, err := s.ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
-		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String()))
+	val, err := s.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return nil, err
 	}

@@ -98,7 +98,7 @@ func upgradeContract() error {
 	//
 	//}
 	payload, _ := GenerateUpgradeContractPayload(contractName, version, commonPb.RuntimeType(runTime), wasmBin, pairs)
-	//method := consts.ContractManager_UPGRADE_CONTRACT.String()
+	//method := syscontract.ContractManageFunction_UPGRADE_CONTRACT.String()
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,

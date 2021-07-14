@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/utils"
@@ -236,8 +238,8 @@ func (s *StateKvDB) operateDbByWriteSet(batch protocol.StoreBatcher, txWrite *co
 	}
 }
 func (s *StateKvDB) GetChainConfig() (*configPb.ChainConfig, error) {
-	val, err := s.ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
-		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String()))
+	val, err := s.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return nil, err
 	}

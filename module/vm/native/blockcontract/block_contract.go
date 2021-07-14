@@ -8,21 +8,22 @@
 package blockcontract
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/vm/native/common"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/consts"
-	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	"chainmaker.org/chainmaker/protocol"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/vm/native/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/protocol"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -57,21 +58,21 @@ func registerBlockContactMethods(log *logger.CMLogger) map[string]common.Contrac
 	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	blockRuntime := &BlockRuntime{log: log}
 
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetBlockByHeight
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = blockRuntime.GetBlockWithTxRWSetsByHeight
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_BY_HASH.String()] = blockRuntime.GetBlockByHash
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String()] = blockRuntime.GetBlockWithTxRWSetsByHash
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_BY_TX_ID.String()] = blockRuntime.GetBlockByTxId
-	queryMethodMap[consts.BlockQuery_GET_TX_BY_TX_ID.String()] = blockRuntime.GetTxByTxId
-	queryMethodMap[consts.BlockQuery_GET_LAST_CONFIG_BLOCK.String()] = blockRuntime.GetLastConfigBlock
-	queryMethodMap[consts.BlockQuery_GET_LAST_BLOCK.String()] = blockRuntime.GetLastBlock
-	queryMethodMap[consts.BlockQuery_GET_CHAIN_INFO.String()] = blockRuntime.GetChainInfo
-	queryMethodMap[consts.BlockQuery_GET_NODE_CHAIN_LIST.String()] = blockRuntime.GetNodeChainList
-	queryMethodMap[consts.BlockQuery_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
-	queryMethodMap[consts.BlockQuery_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
-	queryMethodMap[consts.BlockQuery_GET_ARCHIVED_BLOCK_HEIGHT.String()] = blockRuntime.GetArchiveBlockHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetBlockByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = blockRuntime.GetBlockWithTxRWSetsByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String()] = blockRuntime.GetBlockByHash
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String()] = blockRuntime.GetBlockWithTxRWSetsByHash
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String()] = blockRuntime.GetBlockByTxId
+	queryMethodMap[syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String()] = blockRuntime.GetTxByTxId
+	queryMethodMap[syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String()] = blockRuntime.GetLastConfigBlock
+	queryMethodMap[syscontract.ChainQueryFunction_GET_LAST_BLOCK.String()] = blockRuntime.GetLastBlock
+	queryMethodMap[syscontract.ChainQueryFunction_GET_CHAIN_INFO.String()] = blockRuntime.GetChainInfo
+	queryMethodMap[syscontract.ChainQueryFunction_GET_NODE_CHAIN_LIST.String()] = blockRuntime.GetNodeChainList
+	queryMethodMap[syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String()] = blockRuntime.GetArchiveBlockHeight
 	return queryMethodMap
 }
 

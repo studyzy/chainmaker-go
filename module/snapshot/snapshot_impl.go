@@ -106,7 +106,7 @@ func (s *SnapshotImpl) GetTxRWSetTable() []*commonPb.TxRWSet {
 	//	for _, txRead := range txRWSet.TxReads {
 	//		if strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) ||
 	//			strings.HasPrefix(string(txRead.Key), protocol.ContractCreator) ||
-	//			txRead.ContractName == commonPb.SystemContract_CERT_MANAGE.String() {
+	//			txRead.ContractName == syscontract.SystemContract_CERT_MANAGE.String() {
 	//			txRead.Value = nil
 	//		}
 	//	}

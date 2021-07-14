@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -1261,7 +1261,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
-	ok, err = utils.VerifyConfigUpdateTx(consts.ChainConfigManager_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name, acsMap[org2Name].acInst)
+	ok, err = utils.VerifyConfigUpdateTx(syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name, acsMap[org2Name].acInst)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	// invalid
@@ -1278,7 +1278,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
-	ok, err = utils.VerifyConfigUpdateTx(consts.ChainConfigManager_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name, acsMap[org2Name].acInst)
+	ok, err = utils.VerifyConfigUpdateTx(syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name, acsMap[org2Name].acInst)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
 	// majority
@@ -1322,7 +1322,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
-	principalRead, err = acInst.CreatePrincipal(consts.ChainConfigManager_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
+	principalRead, err = acInst.CreatePrincipal(syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
@@ -1353,7 +1353,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
-	ok, err = utils.VerifyConfigUpdateTx(consts.ChainConfigManager_CORE_UPDATE.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementZephyrus, endorsementEurus}, []byte(msg), "", acsMap[org2Name].acInst)
+	ok, err = utils.VerifyConfigUpdateTx(syscontract.ChainConfigFunction_CORE_UPDATE.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementZephyrus, endorsementEurus}, []byte(msg), "", acsMap[org2Name].acInst)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	// invalid
@@ -1365,7 +1365,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 2)
-	ok, err = utils.VerifyConfigUpdateTx(consts.ChainConfigManager_CORE_UPDATE.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementAuster}, []byte(msg), "", acsMap[org2Name].acInst)
+	ok, err = utils.VerifyConfigUpdateTx(syscontract.ChainConfigFunction_CORE_UPDATE.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementAuster}, []byte(msg), "", acsMap[org2Name].acInst)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
 	// all
@@ -1388,11 +1388,11 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	require.Equal(t, false, ok)
 	// mock sign
 	endorsements, err := MockSignWithMultipleNodes([]byte(msg), []protocol.SigningMember{acsMap[org1Name].admin, acsMap[org2Name].admin, acsMap[org4Name].admin}, acInst.GetHashAlg())
-	ok, err = utils.VerifyConfigUpdateTx(consts.ChainConfigManager_CORE_UPDATE.String(), endorsements, []byte(msg), "", acsMap[org2Name].acInst)
+	ok, err = utils.VerifyConfigUpdateTx(syscontract.ChainConfigFunction_CORE_UPDATE.String(), endorsements, []byte(msg), "", acsMap[org2Name].acInst)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	endorsements, err = MockSignWithMultipleNodes([]byte(msg), []protocol.SigningMember{acsMap[org2Name].admin, acsMap[org4Name].admin}, acInst.GetHashAlg())
-	ok, err = utils.VerifyConfigUpdateTx(consts.ChainConfigManager_CORE_UPDATE.String(), endorsements, []byte(msg), "", acsMap[org2Name].acInst)
+	ok, err = utils.VerifyConfigUpdateTx(syscontract.ChainConfigFunction_CORE_UPDATE.String(), endorsements, []byte(msg), "", acsMap[org2Name].acInst)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
 	// threshold

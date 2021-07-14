@@ -18,6 +18,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/concurrentlru"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
@@ -461,12 +463,12 @@ func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
 }
 
 func (ac *accessControl) ContractNames() []string {
-	return []string{common.SystemContract_CERT_MANAGE.String()}
+	return []string{syscontract.SystemContract_CERT_MANAGE.String()}
 }
 
 func (ac *accessControl) Callback(contractName string, payloadBytes []byte) error {
 	switch contractName {
-	case common.SystemContract_CERT_MANAGE.String():
+	case syscontract.SystemContract_CERT_MANAGE.String():
 		return ac.systemContractCallbackCertManagementCase(payloadBytes)
 	default:
 		ac.log.Debugf("unwatched smart contract [%s]", contractName)

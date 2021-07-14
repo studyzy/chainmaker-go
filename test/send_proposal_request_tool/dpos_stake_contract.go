@@ -2,6 +2,7 @@ package main
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"github.com/spf13/cobra"
 )
 
@@ -46,8 +47,8 @@ func delegation() error {
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		txId: "", chainId: chainId,
 		txType:       commonPb.TxType_INVOKE_CONTRACT,
-		contractName: commonPb.SystemContract_DPOS_STAKE.String(),
-		method:       consts.DPoSStake_DELEGATE.String(),
+		contractName: syscontract.SystemContract_DPOS_STAKE.String(),
+		method:       syscontract.DPoSStakeFunction_DELEGATE.String(),
 		pairs:        params,
 	})
 	return processRespWithTxId(resp, txId, err)
@@ -87,8 +88,8 @@ func undelegation() error {
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		txId: "", chainId: chainId,
 		txType:       commonPb.TxType_INVOKE_CONTRACT,
-		contractName: commonPb.SystemContract_DPOS_STAKE.String(),
-		method:       consts.DPoSStake_UNDELEGATE.String(),
+		contractName: syscontract.SystemContract_DPOS_STAKE.String(),
+		method:       syscontract.DPoSStakeFunction_UNDELEGATE.String(),
 		pairs:        params,
 	})
 	return processRespWithTxId(resp, txId, err)
@@ -119,8 +120,8 @@ func setNodeID() error {
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		chainId:      chainId,
 		txType:       commonPb.TxType_INVOKE_CONTRACT,
-		contractName: commonPb.SystemContract_DPOS_STAKE.String(),
-		method:       consts.DPoSStake_SET_NODE_ID.String(),
+		contractName: syscontract.SystemContract_DPOS_STAKE.String(),
+		method:       syscontract.DPoSStakeFunction_SET_NODE_ID.String(),
 		pairs:        params,
 	})
 	return processRespWithTxId(resp, txId, err)
@@ -140,7 +141,7 @@ func StakeGetAllCandidates() *cobra.Command {
 
 func getAllCandidates() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_GET_ALL_CANDIDATES.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_GET_ALL_CANDIDATES.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -149,7 +150,7 @@ func getAllCandidates() error {
 	if err != nil {
 		return err
 	}
-	return processResult(resp, &commonPb.ValidatorVector{})
+	return processResult(resp, &syscontract.ValidatorVector{})
 }
 
 func StakeGetNodeID() *cobra.Command {
@@ -176,7 +177,7 @@ func getNodeID() error {
 		Key:   "address",
 		Value: []byte(userAddr),
 	})
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_GET_NODE_ID.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_GET_NODE_ID.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -209,7 +210,7 @@ func getEpochByID() error {
 		Key:   "epoch_id",
 		Value: []byte(epochID),
 	})
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_EPOCH_BY_ID.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_EPOCH_BY_ID.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -218,7 +219,7 @@ func getEpochByID() error {
 	if err != nil {
 		return err
 	}
-	return processResult(resp, &commonPb.Epoch{})
+	return processResult(resp, &syscontract.Epoch{})
 }
 
 func StakeGetLatestEpoch() *cobra.Command {
@@ -235,7 +236,7 @@ func StakeGetLatestEpoch() *cobra.Command {
 
 func getLatestEpoch() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_LATEST_EPOCH.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_LATEST_EPOCH.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -244,7 +245,7 @@ func getLatestEpoch() error {
 	if err != nil {
 		return err
 	}
-	return processResult(resp, &commonPb.Epoch{})
+	return processResult(resp, &syscontract.Epoch{})
 }
 
 func StakeGetSystemAddr() *cobra.Command {
@@ -261,7 +262,7 @@ func StakeGetSystemAddr() *cobra.Command {
 
 func getSystemAddr() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_SYSTEM_CONTRACT_ADDR.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_SYSTEM_CONTRACT_ADDR.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -294,7 +295,7 @@ func getDelegationsByAddress() error {
 		Key:   "address",
 		Value: []byte(userAddr),
 	})
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_GET_DELEGATIONS_BY_ADDRESS.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_GET_DELEGATIONS_BY_ADDRESS.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -303,7 +304,7 @@ func getDelegationsByAddress() error {
 	if err != nil {
 		return err
 	}
-	return processResult(resp, &commonPb.DelegationInfo{})
+	return processResult(resp, &syscontract.DelegationInfo{})
 }
 
 func StakeGetDelegationByValidator() *cobra.Command {
@@ -341,7 +342,7 @@ func getDelegationByValidator() error {
 			Value: []byte(validatorAddr),
 		},
 	)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_GET_USER_DELEGATION_BY_VALIDATOR.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_GET_USER_DELEGATION_BY_VALIDATOR.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -350,7 +351,7 @@ func getDelegationByValidator() error {
 	if err != nil {
 		return err
 	}
-	return processResult(resp, &commonPb.Delegation{})
+	return processResult(resp, &syscontract.Delegation{})
 }
 
 func StakeGetMinSelfDelegation() *cobra.Command {
@@ -367,7 +368,7 @@ func StakeGetMinSelfDelegation() *cobra.Command {
 
 func getMinSelfDelegation() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_MIN_SELF_DELEGATION.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_MIN_SELF_DELEGATION.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -393,7 +394,7 @@ func StakeGetEpochValidatorNumber() *cobra.Command {
 
 func getEpochValidatorNumber() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_EPOCH_VALIDATOR_NUMBER.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_EPOCH_VALIDATOR_NUMBER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -419,7 +420,7 @@ func StakeGetEpochBlockNumber() *cobra.Command {
 
 func getEpochBlockNumber() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_EPOCH_BLOCK_NUMBER.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_EPOCH_BLOCK_NUMBER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -445,7 +446,7 @@ func StakeGetUnbondingEpochNumber() *cobra.Command {
 
 func getUnbondingEpochNumber() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_STAKE.String(), consts.DPoSStake_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_STAKE.String(), syscontract.DPoSStakeFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}

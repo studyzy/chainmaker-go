@@ -17,8 +17,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	pbdpos "chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/protobuf/proto"
 
@@ -180,7 +180,7 @@ func TestGetLatestEpochInfo(t *testing.T) {
 	defer ctrl.Finish()
 	mockStore := mock.NewMockBlockchainStore(ctrl)
 	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {
-		epoch := &commonpb.Epoch{EpochID: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
+		epoch := &syscontract.Epoch{EpochID: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
 			"vector1", "vector2", "vector3", "vector4"}}
 		return proto.Marshal(epoch)
 	}).AnyTimes()
@@ -197,7 +197,7 @@ func TestGetNodeIDsFromValidators(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	name := commonpb.SystemContract_DPOS_STAKE.String()
+	name := syscontract.SystemContract_DPOS_STAKE.String()
 	nodeIDs := make(map[string]string)
 	nodeIDs[name+string(dposmgr.ToNodeIDKey("val1"))] = "nodeId1"
 	nodeIDs[name+string(dposmgr.ToNodeIDKey("val2"))] = "nodeId2"

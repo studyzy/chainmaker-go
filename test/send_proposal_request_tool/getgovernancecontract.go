@@ -33,7 +33,7 @@ func ChainConfigGetGovernanceContractCMD() *cobra.Command {
 func getGovernanceContract() error {
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_GOVERNANCE.String(), consts.BlockQuery_GET_GOVERNANCE_CONTRACT.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_GOVERNANCE.String(), syscontract.ChainQueryFunction_GET_GOVERNANCE_CONTRACT.String(), pairs)
 	if err != nil {
 		return err
 	}

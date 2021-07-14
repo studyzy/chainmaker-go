@@ -241,7 +241,7 @@ func createConfBlock(chainId string, height uint64) *commonPb.Block {
 					ChainId:      chainId,
 					TxType:       commonPb.TxType_INVOKE_CONTRACT,
 					TxId:         generateTxId(chainId, height, 0),
-					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
 					Signer:    &acPb.Member{
@@ -452,7 +452,7 @@ func init5ContractBlocks(s protocol.BlockchainStore) []*commonPb.Block{
 				{
 					Key:          []byte("key1"),
 					Value:        []byte("value1"),
-					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 				},
 			},
 		},
