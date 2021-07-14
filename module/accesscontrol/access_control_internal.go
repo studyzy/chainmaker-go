@@ -308,6 +308,9 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
 	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
+	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_MEMBER_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_MEMBER_DELETE.String(), policyConfig)
+
 	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_ADD.String(), policyConfig)
 	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
