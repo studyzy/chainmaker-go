@@ -7,16 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
+	"fmt"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 //  statistic the time consuming of finalizeBlock between sync and async
