@@ -341,7 +341,7 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	result := &commonpb.Result{
 		Code: commonpb.TxStatusCode_SUCCESS,
 		ContractResult: &commonpb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_OK),
+			Code:    uint32(0),
 			Result:  nil,
 			Message: "",
 		},

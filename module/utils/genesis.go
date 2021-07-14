@@ -97,7 +97,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   []byte(cc.Version),
+			BlockVersion:   protocol.DefaultBlockVersion,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
@@ -174,7 +174,7 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code: uint32(protocol.ContractResultCode_OK),
+				Code: uint32(0),
 
 				Result: ccBytes,
 			},

@@ -141,7 +141,7 @@ func (m *VmManagerImpl) runNativeContract(contract *commonPb.Contract, method st
 	runtimeInstance := native.GetRuntimeInstance(m.ChainId)
 	runtimeContractResult := runtimeInstance.Invoke(contract, method, nil, parameters, txContext)
 
-	if runtimeContractResult.Code == uint32(protocol.ContractResultCode_OK) {
+	if runtimeContractResult.Code == uint32(0) {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
 	}
 	return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL

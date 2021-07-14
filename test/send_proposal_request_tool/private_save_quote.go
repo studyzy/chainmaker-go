@@ -70,7 +70,7 @@ func saveQuote() error {
 	if resp.Code == common.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &common.ContractResult{
-				Code:    uint32(protocol.ContractResultCode_OK),
+				Code:    uint32(0),
 				Message: "OK",
 				Result:  []byte(txId),
 			}
