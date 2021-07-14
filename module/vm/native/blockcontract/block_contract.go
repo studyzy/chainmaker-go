@@ -140,8 +140,6 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 
 	if block, err = r.getBlockByHeight(store, chainId, math.MaxUint64); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if nodes, err = r.getChainNodeInfo(provider, chainId); err != nil {
@@ -184,8 +182,6 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 
 	if block, err = r.getBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -230,8 +226,6 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 
 	if block, err = r.getBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
@@ -274,8 +268,6 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 
 	if block, err = r.getBlockByHash(store, chainId, param.hash); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -320,8 +312,6 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 
 	if block, err = r.getBlockByHash(store, chainId, param.hash); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
@@ -364,8 +354,6 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 
 	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -410,8 +398,6 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 
 	if block, err = r.getLastConfigBlock(store, chainId); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -456,8 +442,6 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 
 	if block, err = r.getBlockByHeight(store, chainId, math.MaxUint64); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -502,14 +486,10 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 	if tx, err = r.getTxByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
-	} else if tx == nil {
-		return nil, nil
 	}
 
 	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	transactionInfo := &commonPb.TransactionInfo{
@@ -711,9 +691,9 @@ func (r *BlockRuntime) handleError(value interface{}, err error, chainId string)
 	}
 	vi := reflect.ValueOf(value)
 	if vi.Kind() == reflect.Ptr && vi.IsNil() {
-		errMsg := fmt.Sprintf("no such %s, chainId:%s", typeName, chainId)
-		r.log.Warnf(errMsg)
-		return nil
+		errMsg := fmt.Errorf("no such %s, chainId:%s", typeName, chainId)
+		r.log.Warnf(errMsg.Error())
+		return errMsg
 	}
 	return nil
 }

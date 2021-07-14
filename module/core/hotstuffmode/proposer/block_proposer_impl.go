@@ -80,8 +80,7 @@ type BlockProposerConfig struct {
 }
 
 const (
-	DEFAULTDURATION = 1000     // default proposal duration, millis seconds
-	DEFAULTVERSION  = "v1.0.0" // default version of chain
+	DEFAULTDURATION = 1000 // default proposal duration, millis seconds
 )
 
 func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol.BlockProposer, error) {
@@ -445,11 +444,13 @@ func (bp *BlockProposerImpl) getDuration() time.Duration {
 
 // getChainVersion, get chain version from config.
 // If not access from config, use default value.
-func (bp *BlockProposerImpl) getChainVersion() []byte {
-	if bp.chainConf == nil || bp.chainConf.ChainConfig() == nil {
-		return []byte(DEFAULTVERSION)
-	}
-	return []byte(bp.chainConf.ChainConfig().Version)
+// @Deprecated
+func (bp *BlockProposerImpl) getChainVersion() uint32 {
+	//if bp.chainConf == nil || bp.chainConf.ChainConfig() == nil {
+	//	return []byte(protocol.DefaultBlockVersion)
+	//}
+	//return []byte(bp.chainConf.ChainConfig().Version)
+	return protocol.DefaultBlockVersion
 }
 
 // setNotIdle, set not idle status

@@ -90,7 +90,7 @@ func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, 
 	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
-		Code:    uint32(protocol.ContractResultCode_FAIL),
+		Code:    uint32(1),
 		Result:  nil,
 		Message: "",
 	}
@@ -156,7 +156,7 @@ func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method stri
 		contractName = contract.Name
 		status       = contract.Status
 	)
-	contractResult = &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
+	contractResult = &commonPb.ContractResult{Code: uint32(1)}
 	if status == commonPb.ContractStatus_ALL {
 		dbContract, err := utils.GetContractByName(txContext.Get, contractName)
 		if err != nil {
@@ -275,7 +275,7 @@ func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code c
 
 func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string][]byte,
 	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
-	contractResult := &commonPb.ContractResult{Code: uint32(protocol.ContractResultCode_FAIL)}
+	contractResult := &commonPb.ContractResult{Code: uint32(1)}
 	txId := txContext.GetTx().Payload.TxId
 	txType := txContext.GetTx().Payload.TxType
 	runtimeType := contract.RuntimeType

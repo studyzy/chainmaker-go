@@ -30,6 +30,8 @@ chainmaker.org/chainmaker/protocol v0.0.0-20210714055611-4a75b89dc23a h1:MKP5n15
 chainmaker.org/chainmaker/protocol v0.0.0-20210714055611-4a75b89dc23a/go.mod h1:AXG9SUS4SDHx383h5E9oUbuwJz0doRA+cx/OYXeTWNo=
 chainmaker.org/chainmaker/protocol v0.0.0-20210714060010-3ba6ddb827ba h1:ngoBWVxbPrfivWtztQmB94pGM6ErWGgGrBBPBl2tbGE=
 chainmaker.org/chainmaker/protocol v0.0.0-20210714060010-3ba6ddb827ba/go.mod h1:AXG9SUS4SDHx383h5E9oUbuwJz0doRA+cx/OYXeTWNo=
+chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0 h1:0ZIuFJdKaWIvz9RSu/DaTkxEkCKFyHVMYq/8wPdjDj8=
+chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0/go.mod h1:AXG9SUS4SDHx383h5E9oUbuwJz0doRA+cx/OYXeTWNo=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=

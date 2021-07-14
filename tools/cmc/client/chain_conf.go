@@ -11,6 +11,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 func chainConfigCMD() *cobra.Command {
@@ -22,7 +24,8 @@ func chainConfigCMD() *cobra.Command {
 	chainConfigCmd.AddCommand(queryChainConfigCMD())
 	chainConfigCmd.AddCommand(updateBlockConfigCMD())
 	chainConfigCmd.AddCommand(configTrustRootCMD())
-	chainConfigCmd.AddCommand(configConsensueNodeCMD())
+	chainConfigCmd.AddCommand(configConsensueNodeIdCMD())
+	chainConfigCmd.AddCommand(configConsensueNodeOrgCMD())
 	return chainConfigCmd
 }
 
@@ -37,8 +40,9 @@ func queryChainConfigCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash,
-		flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -47,7 +51,7 @@ func queryChainConfigCMD() *cobra.Command {
 }
 
 func queryChainConfig() error {
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}

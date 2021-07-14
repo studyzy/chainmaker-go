@@ -97,7 +97,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   protocol.DefaultBlockVersion,
+			BlockVersion:   protocol.DefaultBlockVersion, //兼容v1.1.0，否则添加新节点会导致创世快不一致。
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,

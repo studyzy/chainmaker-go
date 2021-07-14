@@ -51,6 +51,7 @@ func CertCMD() *cobra.Command {
 	certCmd.AddCommand(createCertCrlCMD())
 	certCmd.AddCommand(nodeIdCMD())
 	certCmd.AddCommand(addrCMD())
+	certCmd.AddCommand(certToUserAddrInStake())
 	return certCmd
 }
 
