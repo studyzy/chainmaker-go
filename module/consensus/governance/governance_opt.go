@@ -13,11 +13,11 @@ import (
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -86,7 +86,7 @@ func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*conse
 
 	return &GovernanceContract, nil
 }
-func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (update bool) {
+func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, governanceContract *consensusPb.GovernanceContract) (update bool) {
 	isChg := false
 	conConf := chainConfig.Consensus
 
@@ -120,21 +120,21 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 			newCachedLen = cachedLen
 		}
 	}
-	if newCachedLen != 0 && GovernanceContract.CachedLen != newCachedLen {
-		GovernanceContract.CachedLen = newCachedLen
+	if newCachedLen != 0 && governanceContract.CachedLen != newCachedLen {
+		governanceContract.CachedLen = newCachedLen
 		isChg = true
 	}
-	if newRoundTimeoutMill != 0 && GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
-		GovernanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
+	if newRoundTimeoutMill != 0 && governanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
+		governanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
 		isChg = true
 	}
-	if newRoundTimeoutIntervalMill != 0 && GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
-		GovernanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
+	if newRoundTimeoutIntervalMill != 0 && governanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+		governanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
 	return isChg
 }
-func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
+func checkChainConfig(chainConfig *configPb.ChainConfig, governanceContract *consensusPb.GovernanceContract) (bool, error) {
 	var err error
 	nodes := chainConfig.Consensus.Nodes
 	tempMap := map[string]int{}
@@ -164,7 +164,7 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 			if err != nil {
 				return false, fmt.Errorf("set BlockNumPerEpoch err: %s", err)
 			}
-			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newBlockNumPerEpoch > 0 {
+			if governanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newBlockNumPerEpoch > 0 {
 				return false, fmt.Errorf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0, actual: %d", newBlockNumPerEpoch)
 			}
 		case RoundTimeoutMill:
@@ -222,7 +222,7 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 	sort.Sort(indexedGovernanceMember(members))
 
 	// 2. create GovernanceContract
-	GovernanceContract := &consensusPb.GovernanceContract{
+	governanceContract := &consensusPb.GovernanceContract{
 		EpochId:           0,
 		Type:              consensusType,
 		CurMaxIndex:       int64(index),
@@ -240,21 +240,21 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 		NextValidators:    nil,
 		ConfigSequence:    chainConfig.Sequence,
 	}
-	updateGovContractFromConfig(chainConfig, GovernanceContract)
+	updateGovContractFromConfig(chainConfig, governanceContract)
 
-	if GovernanceContract.N > GovernanceContract.ValidatorNum {
-		GovernanceContract.N = GovernanceContract.ValidatorNum
+	if governanceContract.N > governanceContract.ValidatorNum {
+		governanceContract.N = governanceContract.ValidatorNum
 	}
-	GovernanceContract.MinQuorumForQc = (2*GovernanceContract.N + 1) / 3
-	if GovernanceContract.MinQuorumForQc < ConstMinQuorumForQc {
-		log.Errorf("Set minQuorumForQc err!MinQuorumForQc=%v", GovernanceContract.MinQuorumForQc)
-		GovernanceContract.MinQuorumForQc = ConstMinQuorumForQc
+	governanceContract.MinQuorumForQc = (2*governanceContract.N + 1) / 3
+	if governanceContract.MinQuorumForQc < ConstMinQuorumForQc {
+		log.Errorf("Set minQuorumForQc err!MinQuorumForQc=%v", governanceContract.MinQuorumForQc)
+		governanceContract.MinQuorumForQc = ConstMinQuorumForQc
 	}
 
-	bytesSeed, _ := proto.Marshal(GovernanceContract)
-	validators := createValidators(GovernanceContract, bytesSeed)
-	GovernanceContract.Validators = validators
-	return GovernanceContract, nil
+	bytesSeed, _ := proto.Marshal(governanceContract)
+	validators := createValidators(governanceContract, bytesSeed)
+	governanceContract.Validators = validators
+	return governanceContract, nil
 }
 
 func getChainConfigFromChainStore(store protocol.BlockchainStore) (*configPb.ChainConfig, error) {
@@ -566,8 +566,8 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	}
 
 	// 2. create txRWSet for the new government contract
-	var oldGovernanceContract consensusPb.GovernanceContract
-	if err = proto.Unmarshal(oldBytes, &oldGovernanceContract); err != nil {
+	var oldGovernanceContract *consensusPb.GovernanceContract
+	if err = proto.Unmarshal(oldBytes, oldGovernanceContract); err != nil {
 		return nil, err
 	}
 	log.Debugf("GovernanceContract change older contract:[%s]", oldGovernanceContract.String())
