@@ -661,5 +661,24 @@ func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig
 		}
 		txWrites = append(txWrites, stakeConfigTxWrites...)
 	}
+	//初始化系统合约的Contract状态数据
+	for name := range commonPb.SystemContract_value {
+		txWrites = append(txWrites, initSysContractTxWrite(name))
+	}
 	return txWrites, nil
+}
+func initSysContractTxWrite(name string) *commonPb.TxWrite {
+	contract := &commonPb.Contract{
+		Name:        name,
+		Version:     "v1",
+		RuntimeType: commonPb.RuntimeType_NATIVE,
+		Status:      commonPb.ContractStatus_NORMAL,
+		Creator:     nil,
+	}
+	data, _ := contract.Marshal()
+	return &commonPb.TxWrite{
+		Key:          GetContractDbKey(name),
+		Value:        data,
+		ContractName: commonPb.SystemContract_CONTRACT_MANAGE.String(),
+	}
 }
