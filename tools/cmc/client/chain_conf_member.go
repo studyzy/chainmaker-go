@@ -68,14 +68,14 @@ func removeTrustMemberCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath, flagTrustMemberOrgId,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath, flagTrustMemberNodeId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
-	cmd.MarkFlagRequired(flagTrustMemberOrgId)
+	cmd.MarkFlagRequired(flagTrustMemberNodeId)
 
 	return cmd
 }
@@ -109,7 +109,7 @@ func configTrustMember(op int) error {
 	case addTrustMember:
 		payloadBytes, err = client.CreateChainConfigTrustMemberAddPayload(trustMemberOrgId, trustMemberNodeId, trustMemberRole, string(trustMemberBytes))
 	case removeTrustMember:
-		payloadBytes, err = client.CreateChainConfigTrustMemberDeletePayload(trustMemberOrgId)
+		payloadBytes, err = client.CreateChainConfigTrustMemberDeletePayload(trustMemberNodeId)
 	default:
 		err = fmt.Errorf("invalid trust member operation")
 	}
