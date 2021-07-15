@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
@@ -17,6 +16,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker/protocol"
 
@@ -154,6 +155,9 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 		Method:       "Genesis",
 		Parameters:   make([]*commonPb.KeyValuePair, 0),
 		Sequence:     cc.Sequence,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
+		TxId:         GetTxIdWithSeed(int64(defaultTimestamp)),
+		Timestamp:    defaultTimestamp,
 	}
 	payload.Parameters = append(payload.Parameters, &commonPb.KeyValuePair{
 		Key:   syscontract.SystemContract_CHAIN_CONFIG.String(),
@@ -165,13 +169,7 @@ func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 	//}
 
 	tx := &commonPb.Transaction{
-		Payload: &commonPb.Payload{
-			ChainId:        cc.ChainId,
-			TxType:         commonPb.TxType_INVOKE_CONTRACT,
-			TxId:           GetTxIdWithSeed(int64(defaultTimestamp)),
-			Timestamp:      defaultTimestamp,
-			ExpirationTime: -1,
-		},
+		Payload: payload,
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{

@@ -545,7 +545,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 		fmt.Printf(logTempUnmarshalBlockInfoFailed, err)
 		os.Exit(0)
 	}
-	fmt.Printf(logTempSendBlock, resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
+	fmt.Printf(logTempSendBlock, resp.ContractResult.Code, resp.ContractResult.Message)
 }
 
 func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {

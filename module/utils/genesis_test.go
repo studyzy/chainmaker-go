@@ -95,3 +95,10 @@ func TestGenConfigTxRWSet(t *testing.T) {
 		t.Logf("[%s]\t%s\t%x", write.ContractName, write.Key, write.Value)
 	}
 }
+func TestCreateGenesis(t *testing.T) {
+	chainConfig := &config.ChainConfig{ChainId: "chain1", Crypto: &config.CryptoConfig{Hash: "SM3"}, Consensus: &config.ConsensusConfig{Type: consensus.ConsensusType_SOLO}}
+	genesis, _, err := CreateGenesis(chainConfig)
+	t.Log(genesis)
+	assert.Nil(t, err)
+	assert.True(t, IsConfBlock(genesis))
+}
