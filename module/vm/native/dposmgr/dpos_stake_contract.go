@@ -118,8 +118,8 @@ func newValidator(validatorAddress string) *syscontract.Validator {
 		Status:                     syscontract.BondStatus_UNBONDED,
 		Tokens:                     "0",
 		DelegatorShares:            "0",
-		UnbondingEpochID:           math.MaxInt64,
-		UnbondingCompletionEpochID: math.MaxInt64,
+		UnbondingEpochId:           math.MaxInt64,
+		UnbondingCompletionEpochId: math.MaxInt64,
 		SelfDelegation:             "0",
 	}
 }
@@ -135,7 +135,7 @@ func newDelegation(delegatorAddress, validatorAddress string, shares string) *sy
 func newUnbondingDelegation(EpochID uint64, DelegatorAddress, ValidatorAddress string) *syscontract.UnbondingDelegation {
 	UnbondingDelegationEntry := make([]*syscontract.UnbondingDelegationEntry, 0)
 	return &syscontract.UnbondingDelegation{
-		EpochID:          strconv.Itoa(int(EpochID)),
+		EpochId:          strconv.Itoa(int(EpochID)),
 		DelegatorAddress: DelegatorAddress,
 		ValidatorAddress: ValidatorAddress,
 		Entries:          UnbondingDelegationEntry,
@@ -144,8 +144,8 @@ func newUnbondingDelegation(EpochID uint64, DelegatorAddress, ValidatorAddress s
 
 func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amount string) *syscontract.UnbondingDelegationEntry {
 	return &syscontract.UnbondingDelegationEntry{
-		CreationEpochID:   CreationEpochID,
-		CompletionEpochID: CompletionEpochID,
+		CreationEpochId:   CreationEpochID,
+		CompletionEpochId: CompletionEpochID,
 		Amount:            amount,
 	}
 }
@@ -538,9 +538,9 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		s.log.Errorf("get completion epoch error: ", err.Error())
 		return nil, err
 	}
-	completeEpoch := epochNum + epoch.EpochID
+	completeEpoch := epochNum + epoch.EpochId
 	// new entry
-	entry := newUnbondingDelegationEntry(epoch.EpochID, completeEpoch, amount)
+	entry := newUnbondingDelegationEntry(epoch.EpochId, completeEpoch, amount)
 	// update delegation
 	ud, err := getOrCreateUnbondingDelegation(context, completeEpoch, sender, undelegateValidatorAddress)
 	if err != nil {

@@ -457,7 +457,7 @@ func initUnbondingDelegation() *syscontract.UnbondingDelegation {
 
 func initEpoch(t *testing.T) []byte {
 	e := &syscontract.Epoch{
-		EpochID:               1,
+		EpochId:               1,
 		ProposerVector:        []string{address1, address2, address3, address4},
 		NextEpochCreateHeight: 1,
 	}
@@ -468,7 +468,7 @@ func initEpoch(t *testing.T) []byte {
 
 func latestEpoch() *syscontract.Epoch {
 	return &syscontract.Epoch{
-		EpochID:               1,
+		EpochId:               1,
 		ProposerVector:        []string{address1, address2, address3, address4},
 		NextEpochCreateHeight: 1,
 	}
