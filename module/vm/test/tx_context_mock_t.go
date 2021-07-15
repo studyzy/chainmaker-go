@@ -13,8 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/config"
