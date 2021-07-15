@@ -89,7 +89,7 @@ func TestSerializeBlock(t *testing.T) {
 		bytes, blockInfo, err := SerializeBlock(block)
 		assert.Nil(t, err)
 		assert.Equal(t, blockInfo.Block.String(), block.Block.String())
-		assert.Equal(t, len(block.Block.Txs), len(blockInfo.GetSerializedTxs()))
+		assert.Equal(t, len(block.Block.Txs), len(blockInfo.SerializedTxs))
 		assert.Equal(t, len(block.TxRWSets), len(blockInfo.TxRWSets))
 		result, err := DeserializeBlock(bytes)
 		assert.Nil(t, err)

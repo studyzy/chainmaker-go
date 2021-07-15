@@ -62,12 +62,6 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 		fmt.Printf("Wasm file size=%d\n", len(bytes))
 	}
 
-	contractId := commonPb.Contract{
-		Name:        ContractNameTest,
-		Version:     ContractVersionTest,
-		RuntimeType: runtimeType,
-	}
-
 	wxvmCodeManager := xvm.NewCodeManager(ChainIdTest, "tmp/wxvm-data")
 	wxvmContextService := xvm.NewContextService(ChainIdTest)
 	log := logger.GetLoggerByChain(logger.MODULE_VM, ChainIdTest)
@@ -85,6 +79,12 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 		//IsFullCert: true,
 	}
 
+	contractId := commonPb.Contract{
+		Name:        ContractNameTest,
+		Version:     ContractVersionTest,
+		RuntimeType: runtimeType,
+		Creator:     sender,
+	}
 	db, _ := leveldb.OpenFile("tmp/leveldb"+utils.GetRandTxId(), nil)
 
 	chainConf := &chainconf.ChainConf{
@@ -116,14 +116,16 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	}
 	data, _ := contractId.Marshal()
 	key := utils.GetContractDbKey(contractId.Name)
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	byteCodeKey := utils.GetContractByteCodeDbKey(contractId.Name)
+	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), byteCodeKey, bytes)
 	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, txContext, bytes
 }
@@ -149,6 +151,9 @@ type TxContextMockTest struct {
 	kvRowCache map[int32]protocol.StateIterator
 }
 
+func (s *TxContextMockTest) GetBlockVersion() uint32 {
+	return protocol.DefaultBlockVersion
+}
 func (s *TxContextMockTest) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
@@ -245,7 +250,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
@@ -253,7 +258,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
@@ -288,14 +293,14 @@ func (s *TxContextMockTest) GetCurrentResult() []byte {
 
 func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Payload: &commonPb.Payload {
+		Payload: &commonPb.Payload{
 			ChainId:        ChainIdTest,
 			TxType:         txType,
 			TxId:           "abcdef12345678",
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		Result:           nil,
+		Result: nil,
 	}
 }
 
@@ -496,7 +501,7 @@ func (m mockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   nil,
+			BlockVersion:   0,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,

@@ -48,7 +48,7 @@ func getChainConfig() *configPb.ChainConfig {
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT, ChainId: CHAIN1,
-		ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(), MethodName: commonPb.ConfigFunction_GET_CHAIN_CONFIG.String(), Pairs: pairs})
+		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(), MethodName: syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), Pairs: pairs})
 	if err == nil {
 		result := &configPb.ChainConfig{}
 		err = proto.Unmarshal(resp.ContractResult.Result, result)
@@ -87,7 +87,7 @@ func TestGetChainConfigAt(t *testing.T) {
 	})
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(), MethodName: commonPb.ConfigFunction_GET_CHAIN_CONFIG_AT.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(), MethodName: syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String(), Pairs: pairs})
 	if err == nil {
 		fmt.Println(resp.ContractResult)
 		result := &configPb.ChainConfig{}
@@ -120,7 +120,7 @@ func TestUpdateCore(t *testing.T) {
 		Value: "20",
 	})
 
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_CORE_UPDATE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_CORE_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 更新Block配置
@@ -153,7 +153,7 @@ func TestUpdateBlock(t *testing.T) {
 		Value: "1500",
 	})
 
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_BLOCK_UPDATE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 根证书添加
@@ -194,7 +194,7 @@ oFhb8+WMRqqeAKNx61E5panzjqZR2ntvZ8AzvJpy7zUYtRZXeuQCQgHxil885sxo
 -----END CERTIFICATE-----
 	`,
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_TRUST_ROOT_ADD.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), pairs, chainConfig.Sequence)
 }
 
 // 根证书更新
@@ -236,7 +236,7 @@ uL8dAwVUqvB/iQ==
 `,
 	})
 
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_TRUST_ROOT_UPDATE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 根证书删除
@@ -252,7 +252,7 @@ func TestDeleteTrustRoot(t *testing.T) {
 		Key:   orgId,
 		Value: "wx-org2",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_TRUST_ROOT_DELETE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点地址添加
@@ -272,7 +272,7 @@ func TestAddNodeId(t *testing.T) {
 		Key:   "node_ids",
 		Value: "QmdT1qXbJNovCSaXproaBCBAtecYshWHm2FELgd8A9M5WZ,QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ID_ADD.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_NODE_ID_ADD.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点地址更新
@@ -297,7 +297,7 @@ func TestUpdateNodeId(t *testing.T) {
 		Value: "QmQZn3pZCcuEf34FSvucqkvVJEvfzpNjQTk17HS6CYMR35",
 	})
 
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ID_UPDATE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点地址删除
@@ -317,7 +317,7 @@ func TestDeleteNodeId(t *testing.T) {
 		Key:   "node_id",
 		Value: "QmPvhNFs29t1wyR989chECm8MrGj3w9f8qtuetoiLzxiyT",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ID_DELETE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点机构添加
@@ -338,7 +338,7 @@ func TestAddNodeOrg(t *testing.T) {
 		Value: "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi",
 	})
 
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ORG_ADD.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点机构更新
@@ -358,7 +358,7 @@ func TestUpdateNodeOrg(t *testing.T) {
 		Key:   "node_ids",
 		Value: "QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ORG_UPDATE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 节点机构删除
@@ -374,7 +374,7 @@ func TestDeleteNodeOrg(t *testing.T) {
 		Key:   orgId,
 		Value: "wx-org5.chainmaker.org",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_NODE_ORG_DELETE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), pairs, chainConfig.Sequence)
 }
 
 // 共识扩展字段的添加
@@ -390,7 +390,7 @@ func TestAddConsensusExt(t *testing.T) {
 		Key:   orgId,
 		Value: "wx-org31111111",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_CONSENSUS_EXT_ADD.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), pairs, chainConfig.Sequence)
 }
 
 // 共识扩展字段的更新
@@ -410,7 +410,7 @@ func TestUpdateConsensusExt(t *testing.T) {
 		Key:   "aa",
 		Value: "chain01_ext",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), pairs, chainConfig.Sequence)
 }
 
 // 共识扩展字段的删除
@@ -430,7 +430,7 @@ func TestDeleteConsensusExt(t *testing.T) {
 		Key:   "aa",
 		Value: "chain01_ext",
 	})
-	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_CONSENSUS_EXT_DELETE.String(), pairs, chainConfig.Sequence)
+	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), pairs, chainConfig.Sequence)
 }
 
 //// 权限添加
@@ -457,7 +457,7 @@ func TestDeleteConsensusExt(t *testing.T) {
 //		Key:   commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String(),
 //		Value: string(pbStr),
 //	})
-//	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_PERMISSION_ADD.String(), pairs, chainConfig.Sequence)
+//	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_PERMISSION_ADD.String(), pairs, chainConfig.Sequence)
 //}
 //
 //// 权限修改
@@ -485,7 +485,7 @@ func TestDeleteConsensusExt(t *testing.T) {
 //		Key:   commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String(),
 //		Value: string(pbStr),
 //	})
-//	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_PERMISSION_UPDATE.String(), pairs, chainConfig.Sequence)
+//	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), pairs, chainConfig.Sequence)
 //}
 //
 //// 权限删除
@@ -498,7 +498,7 @@ func TestDeleteConsensusExt(t *testing.T) {
 //	// 构造Payload
 //	var pairs []*commonPb.KeyValuePair
 //	pairs = append(pairs, &commonPb.KeyValuePair{
-//		Key: commonPb.ConfigFunction_CORE_UPDATE.String(),
+//		Key: syscontract.ChainConfigFunction_CORE_UPDATE.String(),
 //	})
-//	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, commonPb.SystemContract_CHAIN_CONFIG.String(), commonPb.ConfigFunction_PERMISSION_DELETE.String(), pairs, chainConfig.Sequence)
+//	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), pairs, chainConfig.Sequence)
 //}

@@ -125,11 +125,8 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 			return err
 		}
 		var contractName string
-		contractName, err = tx.GetContractName()
-		if err != nil {
-			h.logger.Warnf("Tx[%s] don't have contract name since:%s", tx.Payload.TxId, err.Error())
-			continue
-		}
+		contractName = tx.Payload.ContractName
+
 		contractTxInfo := &ContractTxHistoryInfo{
 			ContractName: contractName,
 			BlockHeight:  uint64(block.Header.BlockHeight),

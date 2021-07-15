@@ -8,18 +8,6 @@ package privatecompute
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	"chainmaker.org/chainmaker/common/crypto/tee"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/binary"
@@ -32,6 +20,20 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/crypto/tee"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const (
@@ -67,22 +69,23 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]comm
 	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	privateComputeRuntime := &PrivateComputeRuntime{log: log}
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CONTRACT.String()] = privateComputeRuntime.GetContract
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DATA.String()] = privateComputeRuntime.GetData
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String()] = privateComputeRuntime.SaveEnclaveCACert
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.GetEnclaveProof
-	queryMethodMap[commonPb.PrivateComputeContractFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveEncryptPubKey
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveVerificationPubKey
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.GetEnclaveReport
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.GetEnclaveChallenge
-	queryMethodMap[commonPb.PrivateComputeContractFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.GetEnclaveSignature
-	queryMethodMap[commonPb.PrivateComputeContractFunction_SAVE_REMOTE_ATTESTATION.String()] = privateComputeRuntime.SaveRemoteAttestation
+
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_CONTRACT.String()] = privateComputeRuntime.GetContract
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_DATA.String()] = privateComputeRuntime.GetData
+	queryMethodMap[syscontract.PrivateComputeFunction_SAVE_CA_CERT.String()] = privateComputeRuntime.SaveEnclaveCACert
+	queryMethodMap[syscontract.PrivateComputeFunction_SAVE_DIR.String()] = privateComputeRuntime.SaveDir
+	queryMethodMap[syscontract.PrivateComputeFunction_SAVE_DATA.String()] = privateComputeRuntime.SaveData
+	queryMethodMap[syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String()] = privateComputeRuntime.SaveEnclaveReport
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_DIR.String()] = privateComputeRuntime.GetDir
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_CA_CERT.String()] = privateComputeRuntime.GetEnclaveCACert
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_ENCLAVE_PROOF.String()] = privateComputeRuntime.GetEnclaveProof
+	queryMethodMap[syscontract.PrivateComputeFunction_CHECK_CALLER_CERT_AUTH.String()] = privateComputeRuntime.CheckCallerCertAuth
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_ENCLAVE_ENCRYPT_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveEncryptPubKey
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_ENCLAVE_VERIFICATION_PUB_KEY.String()] = privateComputeRuntime.GetEnclaveVerificationPubKey
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_ENCLAVE_REPORT.String()] = privateComputeRuntime.GetEnclaveReport
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_ENCLAVE_CHALLENGE.String()] = privateComputeRuntime.GetEnclaveChallenge
+	queryMethodMap[syscontract.PrivateComputeFunction_GET_ENCLAVE_SIGNATURE.String()] = privateComputeRuntime.GetEnclaveSignature
+	queryMethodMap[syscontract.PrivateComputeFunction_SAVE_REMOTE_ATTESTATION.String()] = privateComputeRuntime.SaveRemoteAttestation
 
 	return queryMethodMap
 }
@@ -92,7 +95,7 @@ type PrivateComputeRuntime struct {
 }
 
 func (r *PrivateComputeRuntime) VerifyByEnclaveCert(context protocol.TxSimContext, enclaveId []byte, data []byte, sign []byte) (bool, error) {
-	enclaveCert, err := context.Get(commonPb.SystemContract_PRIVATE_COMPUTE.String(), enclaveId)
+	enclaveCert, err := context.Get(syscontract.SystemContract_PRIVATE_COMPUTE.String(), enclaveId)
 	if err != nil {
 		r.log.Errorf("%s, get enclave cert[%s] failed", err.Error(), enclaveId)
 		return false, err
@@ -127,7 +130,7 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 		return nil, err
 	}
 
-	value, err := context.Get(commonPb.SystemContract_PRIVATE_COMPUTE.String(), []byte(key))
+	value, err := context.Get(syscontract.SystemContract_PRIVATE_COMPUTE.String(), []byte(key))
 	if err != nil {
 		r.log.Errorf("Get key: %s from context failed, err: %s", key, err.Error())
 		return nil, err
@@ -169,7 +172,7 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 //		return nil, err
 //	}
 //
-//	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
+//	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 //	versionKey := []byte(protocol.ContractVersion)
 //	versionInCtx, err := context.Get(combinationName, versionKey)
 //	if err != nil {
@@ -232,7 +235,7 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 		return err
 	}
 
-	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
+	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 	versionKey := []byte(ContractVersion)
 	versionInCtx, err := context.Get(combinationName, versionKey)
 	if err != nil {
@@ -300,7 +303,7 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 //		return nil, err
 //	}
 //
-//	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
+//	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 //	versionKey := []byte(protocol.ContractVersion)
 //	versionInCtx, err := context.Get(combinationName, versionKey)
 //	if err != nil {
@@ -351,7 +354,7 @@ func (r *PrivateComputeRuntime) GetContract(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
+	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 	version, err := context.Get(combinationName, []byte(ContractVersion))
 	if err != nil {
 		r.log.Errorf("Unable to find latest version for contract[%s], system error:%s.", name, err.Error())
@@ -425,7 +428,7 @@ func (r *PrivateComputeRuntime) SaveDir(context protocol.TxSimContext, params ma
 		return nil, err
 	}
 
-	if err := context.Put(commonPb.SystemContract_PRIVATE_COMPUTE.String(), []byte(key), []byte(value)); err != nil {
+	if err := context.Put(syscontract.SystemContract_PRIVATE_COMPUTE.String(), []byte(key), []byte(value)); err != nil {
 		r.log.Errorf("Put private dir failed, err: %s", err.Error())
 		return nil, err
 	}
@@ -468,7 +471,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	if err != nil {
 		return nil, err
 	}
-	var signPairs []*commonPb.SignInfo
+	var signPairs []*syscontract.SignInfo
 	var orgIds []string
 	var payloadBytes []byte
 	var requestBytes []byte
@@ -542,7 +545,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 	// verify sign
-	combinedKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + "global_enclave_id"
+	combinedKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + "global_enclave_id"
 	pkPEM, err := context.Get(combinedKey, []byte("verification_pub_key"))
 	if err != nil {
 		r.log.Errorf("get verification_pub_key error: %s", err.Error())
@@ -593,7 +596,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	}
 	r.log.Debug("verify ContractResult success")
 
-	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
+	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 	key := append([]byte(ContractByteCode), version...)
 	contractCode, err := context.Get(combinationName, key)
 	if err != nil || len(contractCode) == 0 {
@@ -637,7 +640,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
-	if result.Code !=0 {
+	if result.Code != 0 {
 		r.log.Infof("Compute result code != ok, return")
 		return nil, nil
 	}
@@ -693,7 +696,7 @@ func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params ma
 	//	name = ""
 	//}
 
-	combinationName := commonPb.SystemContract_PRIVATE_COMPUTE.String() + name
+	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 	value, err := context.Get(combinationName, key)
 	if err != nil {
 		r.log.Errorf("Get key: %s from context failed, err: %s", key, err.Error())
@@ -705,7 +708,7 @@ func (r *PrivateComputeRuntime) GetData(context protocol.TxSimContext, params ma
 
 func (r *PrivateComputeRuntime) GetEnclaveCACert(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 
-	caCertPEM, err := context.Get(commonPb.SystemContract_PRIVATE_COMPUTE.String(), []byte("ca_cert"))
+	caCertPEM, err := context.Get(syscontract.SystemContract_PRIVATE_COMPUTE.String(), []byte("ca_cert"))
 	if err != nil {
 		r.log.Errorf("get enclave ca cert failed: %v", err.Error())
 		return nil, err
@@ -723,7 +726,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveCACert(context protocol.TxSimContext,
 		return nil, err
 	}
 
-	if err := context.Put(commonPb.SystemContract_PRIVATE_COMPUTE.String(), []byte("ca_cert"), []byte(caCertPEM)); err != nil {
+	if err := context.Put(syscontract.SystemContract_PRIVATE_COMPUTE.String(), []byte("ca_cert"), []byte(caCertPEM)); err != nil {
 		r.log.Errorf("save enclave ca cert failed: %v", err.Error())
 		return nil, err
 	}
@@ -771,7 +774,7 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	enclaveId := "global_enclave_id"
 
 	// get report from chain
-	enclaveIdKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	enclaveIdKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	reportFromChain, err := context.Get(enclaveIdKey, []byte("report"))
 	if err != nil {
 		err := fmt.Errorf("get enclave 'report' from chain error: %v", err)
@@ -780,7 +783,7 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 	}
 
 	// get ca_cert from chain
-	caCertPem, err := context.Get(commonPb.SystemContract_PRIVATE_COMPUTE.String(), []byte("ca_cert"))
+	caCertPem, err := context.Get(syscontract.SystemContract_PRIVATE_COMPUTE.String(), []byte("ca_cert"))
 	if err != nil {
 		err := fmt.Errorf("get enclave 'ca_cert' from chain error: %v", err)
 		r.log.Errorf(err.Error())
@@ -864,7 +867,7 @@ func (r *PrivateComputeRuntime) GetEnclaveEncryptPubKey(context protocol.TxSimCo
 	}
 
 	// get data from chain
-	combinedKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	combinedKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	pemEncryptPubKey, err := context.Get(combinedKey, []byte("encrypt_pub_key"))
 	if err != nil {
 		err := fmt.Errorf("get 'encrypt_pub_key' from chain error: %v", err)
@@ -885,7 +888,7 @@ func (r *PrivateComputeRuntime) GetEnclaveVerificationPubKey(context protocol.Tx
 	}
 
 	// get data from chain
-	combinedKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	combinedKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	pemVerificationPubKey, err := context.Get(combinedKey, []byte("verification_pub_key"))
 	if err != nil {
 		err := fmt.Errorf("get 'verification_pub_key' from chain error: %v", err)
@@ -912,7 +915,7 @@ func (r *PrivateComputeRuntime) SaveEnclaveReport(context protocol.TxSimContext,
 	}
 	r.log.Debugf("Save enclave report start, orginal report data: %s, decoded report data: %s", report, reportStr)
 	// save report into chain
-	enclaveIdKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	enclaveIdKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	if err := context.Put(enclaveIdKey, []byte("report"), []byte(reportStr)); err != nil {
 		err := fmt.Errorf("save enclave 'report' failed, err: %s", err.Error())
 		r.log.Errorf(err.Error())
@@ -932,7 +935,7 @@ func (r *PrivateComputeRuntime) GetEnclaveReport(context protocol.TxSimContext, 
 	}
 
 	// get data from chain
-	enclaveIdKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	enclaveIdKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	report, err := context.Get(enclaveIdKey, []byte("report"))
 	if err != nil {
 		err := fmt.Errorf("get 'report' from chain error: %v", err)
@@ -955,7 +958,7 @@ func (r *PrivateComputeRuntime) GetEnclaveChallenge(context protocol.TxSimContex
 	}
 
 	// get data from chain
-	enclaveIdKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	enclaveIdKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	challenge, err := context.Get(enclaveIdKey, []byte("challenge"))
 	if err != nil {
 		err := fmt.Errorf("get 'challenge' from chain error: %v", err)
@@ -976,7 +979,7 @@ func (r *PrivateComputeRuntime) GetEnclaveSignature(context protocol.TxSimContex
 	}
 
 	// get data from chain
-	combinedKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	combinedKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	signature, err := context.Get(combinedKey, []byte("signature"))
 	if err != nil {
 		err := fmt.Errorf("get 'signature' from chain error: %v", err)
@@ -997,7 +1000,7 @@ func (r *PrivateComputeRuntime) GetEnclaveProof(context protocol.TxSimContext, p
 	}
 
 	// get data from chain
-	combinedKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
+	combinedKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + enclaveId
 	proof, err := context.Get(combinedKey, []byte("proof"))
 	if err != nil {
 		err := fmt.Errorf("get 'proof' from chain error: %v", err)
@@ -1017,7 +1020,7 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 	signPairStr := params["sign_pairs"]
 	payloadByteStr := params["payload"]
 	orgIdStr := params["org_ids"]
-	var signPairs []*commonPb.SignInfo
+	var signPairs []*syscontract.SignInfo
 	err = json.Unmarshal([]byte(signPairStr), &signPairs)
 	if err != nil {
 		return nil, err
@@ -1028,7 +1031,7 @@ func (r *PrivateComputeRuntime) CheckCallerCertAuth(ctx protocol.TxSimContext, p
 		return nil, err
 	}
 	payloadBytes := make([]byte, hex.DecodedLen(len(payloadByteStr)))
-	_, err =hex.Decode(payloadBytes, []byte(payloadByteStr))
+	_, err = hex.Decode(payloadBytes, []byte(payloadByteStr))
 	if err != nil {
 		return nil, err
 	}
@@ -1110,7 +1113,7 @@ func (r *PrivateComputeRuntime) verifyCallerAuth(params map[string][]byte, chain
 	return true, nil
 }
 
-func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) {  //todo delete
+func (r *PrivateComputeRuntime) getOrgId(payLoad []byte) (string, error) { //todo delete
 	result := make(map[string]string, 0)
 
 	if err := json.Unmarshal(payLoad, &result); err != nil {
@@ -1135,7 +1138,7 @@ func (r *PrivateComputeRuntime) getParamValue(parameters map[string][]byte, key 
 	return string(value), nil
 }
 
-func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.SignInfo, orgId []string,
+func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*syscontract.SignInfo, orgId []string,
 	payloadBytes []byte, ac protocol.AccessControlProvider) (bool, error) {
 	for i, certPair := range signPairs {
 		clientSignBytes, err := hex.DecodeString(certPair.ClientSign)
@@ -1235,14 +1238,14 @@ func (r *PrivateComputeRuntime) verifyMultiCallerAuth(signPairs []*commonPb.Sign
 //	return true, nil
 //}
 
-func (r *PrivateComputeRuntime) getPrivateRequest(params map[string][]byte) (*commonPb.PrivateComputeRequest, error) {
+func (r *PrivateComputeRuntime) getPrivateRequest(params map[string][]byte) (*syscontract.PrivateComputeRequest, error) {
 	privateReq, err := r.getParamValue(params, "private_req")
 	if err != nil {
 		return nil, err
 	}
 
 	//privateReqBytes, err := hex.DecodeString(privateReq)
-	req := &commonPb.PrivateComputeRequest{}
+	req := &syscontract.PrivateComputeRequest{}
 	if err := req.Unmarshal([]byte(privateReq)); err != nil {
 		return nil, err
 	}
@@ -1250,14 +1253,14 @@ func (r *PrivateComputeRuntime) getPrivateRequest(params map[string][]byte) (*co
 	return req, nil
 }
 
-func (r *PrivateComputeRuntime) getDeployRequest(params map[string][]byte) (*commonPb.PrivateDeployRequest, error) {
+func (r *PrivateComputeRuntime) getDeployRequest(params map[string][]byte) (*syscontract.PrivateDeployRequest, error) {
 	deployReq, err := r.getParamValue(params, "deploy_req")
 	if err != nil {
 		return nil, err
 	}
 
 	//deployReqBytes, err := hex.DecodeString(deployReq)
-	req := &commonPb.PrivateDeployRequest{}
+	req := &syscontract.PrivateDeployRequest{}
 	if err := req.Unmarshal([]byte(deployReq)); err != nil {
 		return nil, err
 	}

@@ -52,11 +52,11 @@ func (s *ApiService) Subscribe(request *commonPb.TxRequest, server apiPb.RpcNode
 //	}
 //
 //	switch req.Header.TxType {
-//	case commonPb.TxType_SUBSCRIBE_BLOCK_INFO:
+//	case commonPb.TxType_SUBSCRIBE:
 //		return s.dealBlockSubscription(tx, server)
-//	case commonPb.TxType_SUBSCRIBE_TX_INFO:
+//	case commonPb.TxType_SUBSCRIBE:
 //		return s.dealTxSubscription(tx, server)
-//	case commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO:
+//	case commonPb.TxType_SUBSCRIBE:
 //		return s.dealContractEventSubscription(tx, server)
 //	}
 //

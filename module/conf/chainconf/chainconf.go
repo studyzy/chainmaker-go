@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"errors"
 	"fmt"
 
@@ -149,12 +150,12 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 	// For v1.1 to be compatible with v1.0, check resource policies
 	for _, rp := range chainConfig.ResourcePolicies {
 		switch rp.ResourceName {
-		case common.ConfigFunction_NODE_ID_ADD.String():
-			rp.ResourceName = common.ConfigFunction_NODE_ID_ADD.String()
-		case common.ConfigFunction_NODE_ID_UPDATE.String():
-			rp.ResourceName = common.ConfigFunction_NODE_ID_UPDATE.String()
-		case common.ConfigFunction_NODE_ID_DELETE.String():
-			rp.ResourceName = common.ConfigFunction_NODE_ID_DELETE.String()
+		case syscontract.ChainConfigFunction_NODE_ID_ADD.String():
+			rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_ADD.String()
+		case syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
+			rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()
+		case syscontract.ChainConfigFunction_NODE_ID_DELETE.String():
+			rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_DELETE.String()
 		default:
 			continue
 		}
@@ -165,7 +166,7 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 // latestChainConfig load latest chainConfig
 func (c *ChainConf) latestChainConfig() error {
 	// load chain config from store
-	bytes, err := c.blockchainStore.ReadObject(common.SystemContract_CHAIN_CONFIG.String(), []byte(common.SystemContract_CHAIN_CONFIG.String()))
+	bytes, err := c.blockchainStore.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(), []byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return err
 	}

@@ -158,7 +158,7 @@ func (p *Pacemaker) ProcessCertificates(qc *chainedbftpb.QuorumCert, tc *chained
 func (p *Pacemaker) setupTimeout() {
 	diff, duration := p.getTimeDuration(timeservice.ROUND_TIMEOUT)
 	newLevelEvent := &timeservice.TimerEvent{
-		State:      chainedbftpb.ConsStateType_PACE_MAKER,
+		State:      chainedbftpb.ConsStateType_PACEMAKER,
 		Index:      p.selfIndexInEpoch,
 		Level:      p.currentLevel,
 		Height:     p.height,

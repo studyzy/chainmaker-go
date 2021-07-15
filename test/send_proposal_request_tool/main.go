@@ -553,7 +553,7 @@ func signWith(msg []byte, signer protocol.SigningMember, hashType string) (*comm
 	if err != nil {
 		return nil, err
 	}
-	signerSerial, err := signer.GetMember(true)
+	signerSerial, err := signer.GetMember()
 	if err != nil {
 		return nil, err
 	}

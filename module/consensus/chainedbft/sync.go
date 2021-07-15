@@ -26,7 +26,7 @@ func (ob orderBlocks) Len() int { return len(ob) }
 func (ob orderBlocks) Swap(i, j int) { ob[i], ob[j] = ob[j], ob[i] }
 
 //Less checks the ith object's level < the jth object's level
-func (ob orderBlocks) Less(i, j int) bool { return ob[i].QC.Level < ob[j].QC.Level }
+func (ob orderBlocks) Less(i, j int) bool { return ob[i].Qc.Level < ob[j].Qc.Level }
 
 //blockSyncReq defines a block sync request
 type blockSyncReq struct {

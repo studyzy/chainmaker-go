@@ -7,7 +7,10 @@
 
 package utils
 
-import commonPb "chainmaker.org/chainmaker/pb-go/common"
+import (
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+)
 
 const (
 	PrefixContractInfo     = "Contract:"
@@ -22,7 +25,7 @@ func GetContractByteCodeDbKey(contractName string) []byte {
 }
 func GetContractByName(readObject func(contractName string, key []byte) ([]byte, error), name string) (*commonPb.Contract, error) {
 	key := GetContractDbKey(name)
-	value, err := readObject(commonPb.SystemContract_CONTRACT_MANAGE.String(), key)
+	value, err := readObject(syscontract.SystemContract_CONTRACT_MANAGE.String(), key)
 	if err != nil {
 		return nil, err
 	}
@@ -35,5 +38,5 @@ func GetContractByName(readObject func(contractName string, key []byte) ([]byte,
 }
 func GetContractBytecode(readObject func(contractName string, key []byte) ([]byte, error), name string) ([]byte, error) {
 	key := GetContractByteCodeDbKey(name)
-	return readObject(commonPb.SystemContract_CONTRACT_MANAGE.String(), key)
+	return readObject(syscontract.SystemContract_CONTRACT_MANAGE.String(), key)
 }

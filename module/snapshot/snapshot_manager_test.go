@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"fmt"
 	"testing"
+
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -58,7 +59,7 @@ func createNewBlock(height uint64, timeStamp int64) *commonPb.Block {
 			BlockHeight:    height,
 			PreBlockHash:   nil,
 			BlockHash:      nil,
-			BlockVersion:   nil,
+			BlockVersion:   0,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			BlockTimestamp: timeStamp,

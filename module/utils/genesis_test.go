@@ -8,9 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"crypto/sha256"
 	"testing"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/mr-tron/base58/base58"
 	"github.com/stretchr/testify/require"
@@ -63,7 +68,7 @@ func TestERC20Config_load(t *testing.T) {
 			Value: []byte("800000"),
 		},
 		{
-			Key:   keyERC20Acc + commonPb.SystemContract_DPOS_STAKE.String(),
+			Key:   keyERC20Acc + syscontract.SystemContract_DPOS_STAKE.String(),
 			Value: []byte("200000"),
 		},
 	}
@@ -81,4 +86,12 @@ func TestERC20Config_load(t *testing.T) {
 	require.Nil(t, err)
 	txWrites := erc20Config.toTxWrites()
 	require.Equal(t, 5, len(txWrites))
+}
+func TestGenConfigTxRWSet(t *testing.T) {
+	chainConfig := &config.ChainConfig{ChainId: "chain1", Consensus: &config.ConsensusConfig{Type: consensus.ConsensusType_SOLO}}
+	rwset, err := genConfigTxRWSet(chainConfig)
+	assert.Nil(t, err)
+	for _, write := range rwset.TxWrites {
+		t.Logf("[%s]\t%s\t%x", write.ContractName, write.Key, write.Value)
+	}
 }

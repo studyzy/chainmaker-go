@@ -8,6 +8,10 @@ package common
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -17,19 +21,14 @@ import (
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"encoding/hex"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
 )
 
 const (
-	DEFAULTDURATION = 1000     // default proposal duration, millis seconds
-	DEFAULTVERSION  = "v1.0.0" // default version of chain
+	DEFAULTDURATION = 1000 // default proposal duration, millis seconds
 )
 
 type BlockBuilderConf struct {
@@ -177,7 +176,7 @@ func InitNewBlock(
 	chainId string,
 	chainConf protocol.ChainConf) (*commonpb.Block, error) {
 	// get node pk from identity
-	proposer, err := identity.Serialize(true)
+	proposer, err := identity.GetMember()
 	if err != nil {
 		return nil, fmt.Errorf("identity serialize failed, %s", err)
 	}
@@ -194,12 +193,12 @@ func InitNewBlock(
 			PreBlockHash:   lastBlock.Header.BlockHash,
 			BlockHash:      nil,
 			PreConfHeight:  preConfHeight,
-			BlockVersion:   getChainVersion(chainConf),
+			BlockVersion:   protocol.DefaultBlockVersion,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
 			BlockTimestamp: utils.CurrentTimeSeconds(),
-			Proposer:       &accesscontrol.Member{MemberInfo: proposer},
+			Proposer:       proposer,
 			ConsensusArgs:  nil,
 			TxCount:        0,
 			Signature:      nil,
@@ -254,7 +253,7 @@ func FinalizeBlock(
 			return e
 		}
 		tx.Result.RwSetHash = rwSetHash
-		// calculate complete tx hash, include tx.Payload, tx.Payload, tx.Result
+		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
 		txHash, err := utils.CalcTxHash(hashType, tx)
 		if err != nil {
 			return err
@@ -366,12 +365,13 @@ func IsRWSetHashValid(block *commonpb.Block, hashType string) error {
 
 // getChainVersion, get chain version from config.
 // If not access from config, use default value.
-func getChainVersion(chainConf protocol.ChainConf) []byte {
-	if chainConf == nil || chainConf.ChainConfig() == nil {
-		return []byte(DEFAULTVERSION)
-	}
-	return []byte(chainConf.ChainConfig().Version)
-}
+// @Deprecated
+//func getChainVersion(chainConf protocol.ChainConf) []byte {
+//	if chainConf == nil || chainConf.ChainConfig() == nil {
+//		return []byte(protocol.DefaultBlockVersion)
+//	}
+//	return []byte(chainConf.ChainConfig().Version)
+//}
 
 func VerifyHeight(height uint64, ledgerCache protocol.LedgerCache) error {
 	currentHeight, err := ledgerCache.CurrentHeight()

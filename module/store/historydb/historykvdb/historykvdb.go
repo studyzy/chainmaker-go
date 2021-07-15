@@ -64,11 +64,8 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 	for _, tx := range block.Txs {
 		accountId := tx.GetSenderAccountId()
 		txId := tx.Payload.TxId
-		contractName, err := tx.GetContractName()
-		if err != nil {
-			h.logger.Errorf("get contract name fail from tx[%s],err:%s", tx.Payload.TxId, err.Error())
-			continue
-		}
+		contractName := tx.Payload.ContractName
+
 		batch.Put(constructAcctTxHistKey(accountId, blockHeight, txId), []byte{})
 		batch.Put(constructContractTxHistKey(contractName, blockHeight, txId), []byte{})
 	}

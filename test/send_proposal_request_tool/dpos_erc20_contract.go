@@ -11,6 +11,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"github.com/mr-tron/base58/base58"
 	"github.com/spf13/cobra"
 )
@@ -64,8 +65,8 @@ func calAddressFromCert() error {
 	fmt.Printf("address: %s from cert: %s\n", addr, certPath)
 
 	result := &Result{
-		Code:    commonPb.TxStatusCode_SUCCESS,
-		Message: "success",
+		Code:                  commonPb.TxStatusCode_SUCCESS,
+		Message:               "success",
 		ContractQueryResult:   addr,
 		ContractResultMessage: "success",
 	}
@@ -110,8 +111,8 @@ func mint() error {
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		txId: "", chainId: chainId,
 		txType:       commonPb.TxType_INVOKE_CONTRACT,
-		contractName: commonPb.SystemContract_DPOS_ERC20.String(),
-		method:       commonPb.DPoSERC20ContractFunction_MINT.String(),
+		contractName: syscontract.SystemContract_DPOS_ERC20.String(),
+		method:       syscontract.DPoSERC20Function_MINT.String(),
 		pairs:        params,
 	})
 	return processRespWithTxId(resp, txId, err)
@@ -149,8 +150,8 @@ func transfer() error {
 	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{
 		txId: "", chainId: chainId,
 		txType:       commonPb.TxType_INVOKE_CONTRACT,
-		contractName: commonPb.SystemContract_DPOS_ERC20.String(),
-		method:       commonPb.DPoSERC20ContractFunction_TRANSFER.String(),
+		contractName: syscontract.SystemContract_DPOS_ERC20.String(),
+		method:       syscontract.DPoSERC20Function_TRANSFER.String(),
 		pairs:        params,
 	})
 	return processRespWithTxId(resp, txId, err)
@@ -198,7 +199,7 @@ func balanceOf() error {
 			Value: []byte(userAddr),
 		},
 	}
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_BALANCEOF.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -229,7 +230,7 @@ func ERC20Owner() *cobra.Command {
 
 func owner() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_OWNER.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_OWNER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -255,7 +256,7 @@ func ERC20Decimals() *cobra.Command {
 
 func decimals() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_DECIMALS.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
@@ -281,7 +282,7 @@ func ERC20Total() *cobra.Command {
 
 func total() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_DPOS_ERC20.String(), commonPb.DPoSERC20ContractFunction_GET_TOTAL_SUPPLY.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_TOTAL_SUPPLY.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}

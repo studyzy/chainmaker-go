@@ -44,9 +44,12 @@ net:
     cert_file:     ../config-sql/wx-org2/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
-  max_txpool_size: 50000 # 普通交易池上限
+  pool_type: "batch"
+  max_txpool_size: 100000 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
+  batch_max_size: 1000 # 批次最大大小
+  batch_create_timeout: 1000 # 创建批次超时时间，单位毫秒
 
 rpc:
   provider: grpc

@@ -7,17 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
 
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/pb-go/common"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
+	pbdpos "chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/protobuf/proto"
 )
@@ -105,22 +105,22 @@ func (s CandidateInfos) Swap(i, j int) {
 }
 
 func (s CandidateInfos) Less(i, j int) bool {
-	// 优先按照weight排序，相同的情况下按照peerID从小到大排序（字符串）
+	// 优先按照weight排序，相同的情况下按照PeerId从小到大排序（字符串）
 	wi, wj := utils.NewBigInteger(s[i].Weight), utils.NewBigInteger(s[j].Weight)
 	if val := wi.Cmp(wj); val == 0 {
-		return strings.Compare(s[i].PeerID, s[j].PeerID) < 0
+		return strings.Compare(s[i].PeerId, s[j].PeerId) < 0
 	} else {
 		return val > 0
 	}
 }
 
-func GetLatestEpochInfo(store protocol.BlockchainStore) (*common.Epoch, error) {
-	val, err := store.ReadObject(commonpb.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyCurrentEpoch))
+func GetLatestEpochInfo(store protocol.BlockchainStore) (*syscontract.Epoch, error) {
+	val, err := store.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyCurrentEpoch))
 	if err != nil {
 		return nil, fmt.Errorf("read contract: %s key: %s, error: %s",
-			commonpb.SystemContract_DPOS_STAKE.String(), dposmgr.KeyCurrentEpoch, err)
+			syscontract.SystemContract_DPOS_STAKE.String(), dposmgr.KeyCurrentEpoch, err)
 	}
-	epoch := commonpb.Epoch{}
+	epoch := syscontract.Epoch{}
 	if err = proto.Unmarshal(val, &epoch); err != nil {
 		return nil, fmt.Errorf("unmarshal epoch failed, reason: %s", err)
 	}
@@ -133,7 +133,7 @@ func GetNodeIDsFromValidators(store protocol.BlockchainStore, validators []strin
 	}
 	nodeIDs := make([]string, 0, len(validators))
 	for _, validator := range validators {
-		nodeID, err := store.ReadObject(common.SystemContract_DPOS_STAKE.String(), dposmgr.ToNodeIDKey(validator))
+		nodeID, err := store.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), dposmgr.ToNodeIDKey(validator))
 		if err != nil || len(nodeID) == 0 {
 			return nil, fmt.Errorf("read nodeID of the validator[%s] failed, reason: %s", validator, err)
 		}

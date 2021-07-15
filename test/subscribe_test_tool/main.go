@@ -17,20 +17,18 @@ import (
 	"os"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-
-	"chainmaker.org/chainmaker/common/json"
-
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/json"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -140,9 +138,9 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType, _ string, payloadBytes []byte) (*commonPb.TxResponse, error) {
+func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, method string, _ string, payloadBytes []byte) (*commonPb.TxResponse, error) {
 
-	req := generateReq(sk3, txType, payloadBytes)
+	req := generateReq(sk3, method, payloadBytes)
 	res, err := client.Subscribe(context.Background(), req)
 	if err != nil {
 		log.Fatalf("subscribe contract event failed, %s", err.Error())
@@ -164,18 +162,18 @@ func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType 
 			log.Println(err)
 			break
 		}
-		switch txType {
-		case commonPb.TxType_SUBSCRIBE_BLOCK_INFO:
+		switch method {
+		case syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String():
 			err := recvBlock(f, result)
 			if err != nil {
 				break
 			}
-		case commonPb.TxType_SUBSCRIBE_TX_INFO:
+		case syscontract.SubscribeFunction_SUBSCRIBE_TX.String():
 			err := recvTx(f, result)
 			if err != nil {
 				break
 			}
-		case commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO:
+		case syscontract.SubscribeFunction_SUBSCRIBE_CONTRACT_EVENT.String():
 			err := recvContractEvent(f, result)
 			if err != nil {
 				break
@@ -247,7 +245,7 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	return nil
 }
 
-func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []byte) *commonPb.TxRequest {
+func generateReq(sk3 crypto.PrivateKey, method string, payloadBytes []byte) *commonPb.TxRequest {
 	txId := utils.GetRandTxId()
 	file, err := ioutil.ReadFile(userCrtPath)
 	if err != nil {
@@ -265,7 +263,8 @@ func generateReq(sk3 crypto.PrivateKey, txType commonPb.TxType, payloadBytes []b
 	header := &commonPb.Payload{
 		ChainId: chainId,
 		//Sender:         sender,
-		TxType:         txType,
+		TxType:         commonPb.TxType_SUBSCRIBE,
+		Method:         method,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,

@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -16,8 +15,10 @@ import (
 	"testing"
 	"time"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	pbdpos "chainmaker.org/chainmaker/pb-go/dpos"
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+
+	pbdpos "chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/golang/protobuf/proto"
 
@@ -41,12 +42,12 @@ func TestCandidateInfos(t *testing.T) {
 	require.Equal(t, tests[3].Weight, "100")
 	require.Equal(t, tests[4].Weight, "100")
 	require.Equal(t, tests[5].Weight, "0")
-	require.Equal(t, tests[0].PeerID, "peer5")
-	require.Equal(t, tests[1].PeerID, "peer4")
-	require.Equal(t, tests[2].PeerID, "peer0")
-	require.Equal(t, tests[3].PeerID, "peer1")
-	require.Equal(t, tests[4].PeerID, "peer2")
-	require.Equal(t, tests[5].PeerID, "peer3")
+	require.Equal(t, tests[0].PeerId, "peer5")
+	require.Equal(t, tests[1].PeerId, "peer4")
+	require.Equal(t, tests[2].PeerId, "peer0")
+	require.Equal(t, tests[3].PeerId, "peer1")
+	require.Equal(t, tests[4].PeerId, "peer2")
+	require.Equal(t, tests[5].PeerId, "peer3")
 }
 
 func TestValidatorsElection2(t *testing.T) {
@@ -113,7 +114,7 @@ func TestValidatorsElection(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, len(validators), 5)
 	for i := 0; i < len(validators); i++ {
-		fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerID, validators[i].Weight)
+		fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerId, validators[i].Weight)
 	}
 	for i := 0; i < 10; i++ {
 		fmt.Println("----------------------------------")
@@ -121,7 +122,7 @@ func TestValidatorsElection(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, len(validators), i+1)
 		for i := 0; i < len(validators); i++ {
-			fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerID, validators[i].Weight)
+			fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerId, validators[i].Weight)
 		}
 	}
 	fmt.Println("----------------------------------")
@@ -130,14 +131,14 @@ func TestValidatorsElection(t *testing.T) {
 	require.Equal(t, len(validators), len(tests)-1)
 	var count = 0
 	for i := 0; i < len(validators); i++ {
-		peerID := validators[i].PeerID
+		PeerId := validators[i].PeerId
 		for j := 0; j < len(tests); j++ {
-			if strings.EqualFold(peerID, tests[j].PeerID) {
+			if strings.EqualFold(PeerId, tests[j].PeerId) {
 				count++
 				break
 			}
 		}
-		fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerID, validators[i].Weight)
+		fmt.Printf("%v -> %s -> %s \n", i+1, validators[i].PeerId, validators[i].Weight)
 	}
 	require.Equal(t, len(tests)-1, count)
 
@@ -179,7 +180,7 @@ func TestGetLatestEpochInfo(t *testing.T) {
 	defer ctrl.Finish()
 	mockStore := mock.NewMockBlockchainStore(ctrl)
 	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {
-		epoch := &commonpb.Epoch{EpochID: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
+		epoch := &syscontract.Epoch{EpochID: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
 			"vector1", "vector2", "vector3", "vector4"}}
 		return proto.Marshal(epoch)
 	}).AnyTimes()
@@ -196,7 +197,7 @@ func TestGetNodeIDsFromValidators(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	name := commonpb.SystemContract_DPOS_STAKE.String()
+	name := syscontract.SystemContract_DPOS_STAKE.String()
 	nodeIDs := make(map[string]string)
 	nodeIDs[name+string(dposmgr.ToNodeIDKey("val1"))] = "nodeId1"
 	nodeIDs[name+string(dposmgr.ToNodeIDKey("val2"))] = "nodeId2"

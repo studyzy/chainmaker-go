@@ -8,9 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
+
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/spf13/cobra"
 )
@@ -45,8 +47,8 @@ func getData() error {
 	})
 
 	payloadBytes, err := constructQueryPayload(
-		common.SystemContract_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_GET_DATA.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.PrivateComputeFunction_GET_DATA.String(),
 		pairs,
 	)
 	if err != nil {

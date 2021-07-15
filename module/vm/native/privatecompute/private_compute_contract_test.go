@@ -87,9 +87,9 @@ func TestSaveEnclaveReport(t *testing.T) {
 //
 //	ds := map[string][]byte{}
 //	mockCtx := newTxContextMock(ds)
-//	reportKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
+//	reportKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + "global_enclave_id::report"
 //	ds[reportKey] = report
-//	caCertKey := commonPb.SystemContract_PRIVATE_COMPUTE.String() + "::ca_cert"
+//	caCertKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + "::ca_cert"
 //	ds[caCertKey] = caCertPem
 //
 //	proofFile, err := os.Open(proofFilename)

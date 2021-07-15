@@ -22,7 +22,7 @@ type BlockInfo struct {
 	PreBlockHash       []byte `gorm:"size:128"`
 	BlockHash          []byte `gorm:"size:128;index:idx_hash"`
 	PreConfHeight      uint64 `gorm:"default:0"`
-	BlockVersion       []byte `gorm:"size:128"`
+	BlockVersion       uint32 `gorm:"default:1"`
 	DagHash            []byte `gorm:"size:128"`
 	RwSetRoot          []byte `gorm:"size:128"`
 	TxRoot             []byte `gorm:"size:128"`
@@ -51,7 +51,7 @@ func (b *BlockInfo) GetCreateTableSql(dbType string) string {
 		return `CREATE TABLE block_infos (chain_id varchar(128),block_height bigint,pre_block_hash varbinary(128),
 block_hash varbinary(128),
 pre_conf_height bigint DEFAULT 0,
-block_version varbinary(128),
+block_version int,
 dag_hash varbinary(128),
 rw_set_root varbinary(128),
 tx_root varbinary(128),
@@ -73,7 +73,7 @@ default character set utf8`
 	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
 		return `CREATE TABLE block_infos (
     chain_id text,block_height integer,pre_block_hash blob,block_hash blob,
-    pre_conf_height integer DEFAULT 0,block_version blob,dag_hash blob,
+    pre_conf_height integer DEFAULT 0,block_version integer,dag_hash blob,
     rw_set_root blob,tx_root blob,block_timestamp integer DEFAULT 0,
 proposer_org_id varchar(128),
 proposer_member_info blob,

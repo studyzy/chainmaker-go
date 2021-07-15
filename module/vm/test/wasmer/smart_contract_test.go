@@ -32,8 +32,8 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	//test.WasmFile = "../../../../test/wasm/rust-fact-1.2.0.wasm"
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+	//test.WasmFile = "../../../../test/wasm/rust-fact-2.0.0.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
@@ -79,7 +79,7 @@ func invokeFact(method string, id int32, contractId *commonPb.Contract, txContex
 	parameters["time"] = []byte("567124123")
 	parameters["file_hash"] = []byte("file_hash")
 	parameters["file_name"] = []byte(txId)
-	parameters["tx_id"] = []byte( txId)
+	parameters["tx_id"] = []byte(txId)
 	parameters["forever"] = []byte("true")
 	parameters["contract_name"] = []byte(test.ContractNameTest)
 
@@ -91,7 +91,7 @@ func invokeFact(method string, id int32, contractId *commonPb.Contract, txContex
 }
 
 func TestFunctionalContract(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	pool := wasmer.NewVmPoolManager("chain001")
 
@@ -134,7 +134,7 @@ func TestFunctionalContract(t *testing.T) {
 func invokeFactContract(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string][]byte)
 	parameters["time"] = []byte("1314520")
-	parameters["file_hash"] = []byte( "file_hash")
+	parameters["file_hash"] = []byte("file_hash")
 	parameters["file_name"] = []byte("file_name")
 	parameters["contract_name"] = []byte(test.ContractNameTest)
 	baseParam(parameters)

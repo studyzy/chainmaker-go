@@ -13,7 +13,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 
@@ -111,19 +111,19 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType sd
 	initParameters []*sdkPbCommon.KeyValuePair) (*sdkPbCommon.Payload, error) {
 	var pairs []*sdkPbCommon.KeyValuePair
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_NAME.String(),
+		Key:   syscontract.InitContract_CONTRACT_NAME.String(),
 		Value: contractName,
 	})
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_VERSION.String(),
+		Key:   syscontract.InitContract_CONTRACT_VERSION.String(),
 		Value: version,
 	})
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_RUNTIME_TYPE.String(),
+		Key:   syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String(),
 		Value: runtimeType.String(),
 	})
 	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   consts.ContractManager_Install_CONTRACT_BYTE_CODE.String(),
+		Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
 		Value: base64.StdEncoding.EncodeToString(bytecode),
 	})
 	for _, kv := range initParameters {
@@ -131,7 +131,7 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType sd
 	}
 	payload := &sdkPbCommon.TransactPayload{
 		ContractName: sdkPbCommon.SystemContract_CONTRACT_MANAGE.String(),
-		Method:       consts.ContractManager_INIT_CONTRACT.String(),
+		Method:       syscontract.ContractManageFunction_INIT_CONTRACT.String(),
 		Parameters:   pairs,
 	}
 	return payload, nil

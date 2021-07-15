@@ -8,13 +8,15 @@
 package dposmgr
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
@@ -44,7 +46,7 @@ const (
 )
 
 var (
-	dposErc20ContractName = commonPb.SystemContract_DPOS_ERC20.String()
+	dposErc20ContractName = syscontract.SystemContract_DPOS_ERC20.String()
 )
 
 type DPoSERC20Contract struct {
@@ -67,17 +69,17 @@ func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]common.Co
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// [DPoS]
 	dposRuntime := NewDPoSRuntime(log)
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_BALANCEOF.String()] = dposRuntime.BalanceOf
-	methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER.String()] = dposRuntime.Transfer
-	//methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER_FROM.String()] = dposRuntime.TransferFrom
-	//methodMap[commonPb.DPoSERC20ContractFunction_GET_ALLOWANCE.String()] = dposRuntime.Allowance
-	//methodMap[commonPb.DPoSERC20ContractFunction_APPROVE.String()] = dposRuntime.Approve
-	methodMap[commonPb.DPoSERC20ContractFunction_MINT.String()] = dposRuntime.Mint
-	//methodMap[commonPb.DPoSERC20ContractFunction_BURN.String()] = dposRuntime.Burn
-	//methodMap[commonPb.DPoSERC20ContractFunction_TRANSFER_OWNERSHIP.String()] = dposRuntime.TransferOwnership
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_OWNER.String()] = dposRuntime.Owner
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_DECIMALS.String()] = dposRuntime.Decimals
-	methodMap[commonPb.DPoSERC20ContractFunction_GET_TOTAL_SUPPLY.String()] = dposRuntime.Total
+	methodMap[syscontract.DPoSERC20Function_GET_BALANCEOF.String()] = dposRuntime.BalanceOf
+	methodMap[syscontract.DPoSERC20Function_TRANSFER.String()] = dposRuntime.Transfer
+	//methodMap[syscontract.DPoSERC20Function_TRANSFER_FROM.String()] = dposRuntime.TransferFrom
+	//methodMap[syscontract.DPoSERC20Function_GET_ALLOWANCE.String()] = dposRuntime.Allowance
+	//methodMap[syscontract.DPoSERC20Function_APPROVE.String()] = dposRuntime.Approve
+	methodMap[syscontract.DPoSERC20Function_MINT.String()] = dposRuntime.Mint
+	//methodMap[syscontract.DPoSERC20Function_BURN.String()] = dposRuntime.Burn
+	//methodMap[syscontract.DPoSERC20Function_TRANSFER_OWNERSHIP.String()] = dposRuntime.TransferOwnership
+	methodMap[syscontract.DPoSERC20Function_GET_OWNER.String()] = dposRuntime.Owner
+	methodMap[syscontract.DPoSERC20Function_GET_DECIMALS.String()] = dposRuntime.Decimals
+	methodMap[syscontract.DPoSERC20Function_GET_TOTAL_SUPPLY.String()] = dposRuntime.Total
 	return methodMap
 }
 
@@ -179,25 +181,25 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 	sender, err := loadSenderAddress(txSimContext)
 	if err != nil {
 		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-					return nil, err
-				}
-				// 检查当前用户是否获得授权
-				approveVal, err := approveValue(txSimContext, from, sender)
-				if err != nil {
-					r.log.Errorf("load approve from[%s] for[%s] failed, %s", from, sender, err.Error())
-					return nil, err
-				}
-				if approveVal == nil {
-					r.log.Errorf("load approve from[%s] for[%s] is zero", from, sender)
-					return nil, fmt.Errorf("load approve from[%s] for[%s] is zero", from, sender)
-				}
-				// 判断授权是否满足
-				if approveVal.Cmp(val) < 0 {
-					r.log.Errorf("address approve is not enough, contract[%s] sender[%s] from[%s] approve[%s] value[%s]",
-						dposErc20ContractName, sender, from, approveVal.String(), val.String())
-					return nil, fmt.Errorf("address approve is not enough, contract[%s] sender[%s] from[%s] approve[%s] value[%s]",
-						dposErc20ContractName, sender, from, approveVal.String(), val.String())
-				}
+		return nil, err
+	}
+	// 检查当前用户是否获得授权
+	approveVal, err := approveValue(txSimContext, from, sender)
+	if err != nil {
+		r.log.Errorf("load approve from[%s] for[%s] failed, %s", from, sender, err.Error())
+		return nil, err
+	}
+	if approveVal == nil {
+		r.log.Errorf("load approve from[%s] for[%s] is zero", from, sender)
+		return nil, fmt.Errorf("load approve from[%s] for[%s] is zero", from, sender)
+	}
+	// 判断授权是否满足
+	if approveVal.Cmp(val) < 0 {
+		r.log.Errorf("address approve is not enough, contract[%s] sender[%s] from[%s] approve[%s] value[%s]",
+			dposErc20ContractName, sender, from, approveVal.String(), val.String())
+		return nil, fmt.Errorf("address approve is not enough, contract[%s] sender[%s] from[%s] approve[%s] value[%s]",
+			dposErc20ContractName, sender, from, approveVal.String(), val.String())
+	}
 	// 将授权值重置，然后进行转账操作
 	newApproveVal := utils.Sub(approveVal, val)
 	err = setApproveValue(txSimContext, from, sender, newApproveVal)
@@ -272,42 +274,42 @@ func (r *DPoSRuntime) Mint(txSimContext protocol.TxSimContext, params map[string
 	from, err := loadSenderAddress(txSimContext)
 	if err != nil {
 		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-				return nil, err
-			}
-			// 当前用户必须是Owner
-			owner, err := owner(txSimContext)
-			if err != nil {
-				r.log.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
-				return nil, fmt.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
-			}
-			if !strings.EqualFold(string(owner), from) {
-				r.log.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
-					dposErc20ContractName, string(owner), from)
-				return nil, fmt.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
-					dposErc20ContractName, string(owner), from)
-			}
-			// 增发即增加具体值和总量
-			// 获取总量
-			totalSupply, err := totalSupply(txSimContext)
-			if err != nil {
-				r.log.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
-				return nil, fmt.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
-			}
-			if totalSupply == nil {
-				// 默认设置为0
-				totalSupply = utils.NewZeroBigInteger()
-			}
-			// 获取增发用户原始的值
-			toBalance, err := balanceOf(txSimContext, mintTo)
-			if err != nil {
-				r.log.Errorf("load to address balance error, contract[%s] address[%s]", dposErc20ContractName, mintTo)
-				return nil, fmt.Errorf("load to address balance error, contract[%s] address[%s]", dposErc20ContractName, mintTo)
-			}
-			// 重设总量
-			newTotalSupply := utils.Sum(totalSupply, val)
-			// 增发给具体用户
-			newToBalance := utils.Sum(toBalance, val)
-			// 写入到数据库
+		return nil, err
+	}
+	// 当前用户必须是Owner
+	owner, err := owner(txSimContext)
+	if err != nil {
+		r.log.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
+		return nil, fmt.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
+	}
+	if !strings.EqualFold(string(owner), from) {
+		r.log.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
+			dposErc20ContractName, string(owner), from)
+		return nil, fmt.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
+			dposErc20ContractName, string(owner), from)
+	}
+	// 增发即增加具体值和总量
+	// 获取总量
+	totalSupply, err := totalSupply(txSimContext)
+	if err != nil {
+		r.log.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
+		return nil, fmt.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
+	}
+	if totalSupply == nil {
+		// 默认设置为0
+		totalSupply = utils.NewZeroBigInteger()
+	}
+	// 获取增发用户原始的值
+	toBalance, err := balanceOf(txSimContext, mintTo)
+	if err != nil {
+		r.log.Errorf("load to address balance error, contract[%s] address[%s]", dposErc20ContractName, mintTo)
+		return nil, fmt.Errorf("load to address balance error, contract[%s] address[%s]", dposErc20ContractName, mintTo)
+	}
+	// 重设总量
+	newTotalSupply := utils.Sum(totalSupply, val)
+	// 增发给具体用户
+	newToBalance := utils.Sum(toBalance, val)
+	// 写入到数据库
 	err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(newTotalSupply.String()))
 	if err != nil {
 		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
@@ -344,41 +346,41 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 	from, err := loadSenderAddress(txSimContext)
 	if err != nil {
 		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
-			return nil, err
-		}
-		// 获取当前用户的token数量
-		beforeFromBalance, err := balanceOf(txSimContext, from)
-		if err != nil {
-			r.log.Errorf("load address balance error, contract[%s] address[%s]", dposErc20ContractName, from)
-			return nil, fmt.Errorf("load address balance error, contract[%s] address[%s]", dposErc20ContractName, from)
-		}
-		if beforeFromBalance == nil {
-			r.log.Errorf("load address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
-			return nil, fmt.Errorf("load address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
-		}
-		// 处理总量
-		beforeTotalSupply, err := totalSupply(txSimContext)
-		if err != nil {
-			r.log.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
-			return nil, fmt.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
-		}
-		// 检查是否会燃烧殆尽
-		var afterTotalSupply, afterFromBalance *utils.BigInteger
-		// 检查总量是否够燃烧
-		if beforeTotalSupply.Cmp(val) < 0 {
-			r.log.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
-			return nil, fmt.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
-		}
-		// 计算燃烧后的值
-		afterTotalSupply = utils.Sub(beforeTotalSupply, val)
-		// 检查当前账号总量是否够燃烧
-		if beforeFromBalance.Cmp(val) < 0 {
-			r.log.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
-			return nil, fmt.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
-		}
-		afterFromBalance = utils.Sub(beforeFromBalance, val)
-		// 重置总量和当前账号的值
-		// 写入到数据库
+		return nil, err
+	}
+	// 获取当前用户的token数量
+	beforeFromBalance, err := balanceOf(txSimContext, from)
+	if err != nil {
+		r.log.Errorf("load address balance error, contract[%s] address[%s]", dposErc20ContractName, from)
+		return nil, fmt.Errorf("load address balance error, contract[%s] address[%s]", dposErc20ContractName, from)
+	}
+	if beforeFromBalance == nil {
+		r.log.Errorf("load address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
+		return nil, fmt.Errorf("load address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
+	}
+	// 处理总量
+	beforeTotalSupply, err := totalSupply(txSimContext)
+	if err != nil {
+		r.log.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
+		return nil, fmt.Errorf("load contract[%s] total supply failed, err: %s", dposErc20ContractName, err.Error())
+	}
+	// 检查是否会燃烧殆尽
+	var afterTotalSupply, afterFromBalance *utils.BigInteger
+	// 检查总量是否够燃烧
+	if beforeTotalSupply.Cmp(val) < 0 {
+		r.log.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
+		return nil, fmt.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
+	}
+	// 计算燃烧后的值
+	afterTotalSupply = utils.Sub(beforeTotalSupply, val)
+	// 检查当前账号总量是否够燃烧
+	if beforeFromBalance.Cmp(val) < 0 {
+		r.log.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
+		return nil, fmt.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
+	}
+	afterFromBalance = utils.Sub(beforeFromBalance, val)
+	// 重置总量和当前账号的值
+	// 写入到数据库
 	err = txSimContext.Put(dposErc20ContractName, []byte(totalSupplyKey()), []byte(afterTotalSupply.String()))
 	if err != nil {
 		return nil, fmt.Errorf("txSimContext put failed, err: %s", err.Error())
@@ -413,7 +415,7 @@ func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, para
 	owner, err := owner(txSimContext)
 	if err != nil {
 		r.log.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
-			return nil, fmt.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
+		return nil, fmt.Errorf("load contract[%s] owner failed, err: %s", dposErc20ContractName, err.Error())
 	}
 	if !strings.EqualFold(string(owner), from) {
 		r.log.Errorf("contract[%s]'s owner is not sender, owner[%s] sender[%s]",
@@ -559,10 +561,10 @@ func loadSenderAddress(txSimContext protocol.TxSimContext) (string, error) {
 	if sender != nil {
 		// 将sender转换为用户地址
 		var member []byte
-		if sender.MemberType==accesscontrol.MemberType_CERT {
+		if sender.MemberType == accesscontrol.MemberType_CERT {
 			// 长证书
 			member = sender.MemberInfo
-		} else if sender.MemberType==accesscontrol.MemberType_CERT_HASH{
+		} else if sender.MemberType == accesscontrol.MemberType_CERT_HASH {
 			// 短证书
 			memberInfoHex := hex.EncodeToString(sender.MemberInfo)
 			certInfo, err := getWholeCertInfo(txSimContext, memberInfoHex)
@@ -570,8 +572,8 @@ func loadSenderAddress(txSimContext protocol.TxSimContext) (string, error) {
 				return "", fmt.Errorf("can not load whole cert info , contract[%s] member[%s]", dposErc20ContractName, memberInfoHex)
 			}
 			member = certInfo.Cert
-		}else {
-			return "",errors.New("invalid member type")
+		} else {
+			return "", errors.New("invalid member type")
 		}
 		return parseUserAddress(member)
 	}
@@ -596,7 +598,7 @@ func parseUserAddress(member []byte) (string, error) {
 }
 
 func getWholeCertInfo(txSimContext protocol.TxSimContext, certHash string) (*commonPb.CertInfo, error) {
-	certBytes, err := txSimContext.Get(commonPb.SystemContract_CERT_MANAGE.String(), []byte(certHash))
+	certBytes, err := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHash))
 	if err != nil {
 		return nil, err
 	}

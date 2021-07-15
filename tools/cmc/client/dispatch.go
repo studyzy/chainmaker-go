@@ -11,8 +11,9 @@ import (
 	"fmt"
 	"sync"
 
-	sdk "chainmaker.org/chainmaker/sdk-go"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 func Dispatch(client *sdk.ChainClient, contractName, method string, params map[string]string) {
@@ -31,9 +32,9 @@ func DispatchTimes(client *sdk.ChainClient, contractName, method string, params 
 	var (
 		wgSendReq sync.WaitGroup
 	)
-	times := maxi(1, sendTimes)
+	times := util.MaxInt(1, sendTimes)
 	wgSendReq.Add(times)
-	txId := GetRandTxId()
+	txId := sdk.GetRandTxId()
 	for i := 0; i < times; i++ {
 		go runInvokeContractOnce(client, contractName, method, params, &wgSendReq, txId)
 	}
