@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -96,7 +97,7 @@ func createContract() error {
 	//	wasmBin, err = hex.DecodeString(string(wasmBin))
 	//}
 	//var pairs []*commonPb.KeyValuePair
-	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
 	//if endorsement, err := acSign(payload); err == nil {
 	//	payload.Endorsement = endorsement

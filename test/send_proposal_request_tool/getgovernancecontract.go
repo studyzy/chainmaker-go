@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 

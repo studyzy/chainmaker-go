@@ -149,7 +149,11 @@ func (consensus *ConsensusSoloImpl) handleVerifyResult(message *msgbus.Message) 
 	clog.Infof("handle verifyResult start, id: %s verifyResult: %s BlockInfo: %v",
 		consensus.id, verifyResult.Code, verifyResult.VerifiedBlock.Header.BlockHeight)
 	clog.DebugDynamic(func() string {
-		return fmt.Sprintf("verifyingBlock: %v", consensus.verifyingBlock)
+		str := fmt.Sprintf("verifyingBlock: %v", consensus.verifyingBlock)
+		if len(str) > 2048 {
+			str = str[:2048] + " ......"
+		}
+		return str
 	})
 
 	if consensus.verifyingBlock == nil {

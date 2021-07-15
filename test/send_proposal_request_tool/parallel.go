@@ -691,7 +691,7 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 		return err
 	}
 	var pairs []*commonPb.KeyValuePair
-	payload, _ := commonPb.GenerateInstallContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
+	payload, _ := utils.GenerateInstallContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
 		"1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
 	//
