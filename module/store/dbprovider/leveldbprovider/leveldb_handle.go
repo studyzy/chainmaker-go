@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol"
@@ -35,8 +36,9 @@ const (
 
 // LevelDBHandle encapsulated handle to leveldb
 type LevelDBHandle struct {
-	db     *leveldb.DB
-	logger protocol.Logger
+	writeLock sync.Mutex
+	db        *leveldb.DB
+	logger    protocol.Logger
 }
 
 func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig,
@@ -139,6 +141,8 @@ func (h *LevelDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error
 	if batch.Len() == 0 {
 		return nil
 	}
+	h.writeLock.Lock()
+	defer h.writeLock.Unlock()
 	levelBatch := &leveldb.Batch{}
 	for k, v := range batch.KVs() {
 		key := []byte(k)
@@ -180,5 +184,7 @@ func (h *LevelDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 
 // Close closes the leveldb
 func (h *LevelDBHandle) Close() error {
+	h.writeLock.Lock()
+	defer h.writeLock.Unlock()
 	return h.db.Close()
 }
