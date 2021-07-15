@@ -8,6 +8,8 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"errors"
 	"fmt"
 	"math/big"
@@ -15,9 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
-
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
-	"chainmaker.org/chainmaker/common/crypto/paillier"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
@@ -159,9 +158,8 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
 		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
 	}
-	for _, item := range paramItem {
-		key := item.Key
-
+	paramMap := ecData.ToMap()
+	for key, val := range paramMap {
 		if len(key) > protocol.DefaultStateLen {
 			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key)), gasUsed
 		}
@@ -169,11 +167,8 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 		if err != nil || !match {
 			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", key), gasUsed
 		}
-		if item.ValueType == serialize.EasyValueType_BYTES {
-			val := item.Value.([]byte)
-			if len(val) > protocol.ParametersValueMaxLength {
-				return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
-			}
+		if len(val) > protocol.ParametersValueMaxLength {
+			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
@@ -182,7 +177,6 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 
 	// call contract
 	gasUsed += protocol.CallContractGasOnce
-	paramMap := ecData.ToMap()
 
 	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil, paramMap, gasUsed, txSimContext.GetTx().Payload.TxType)
 	gasUsed += uint64(result.GasUsed)
