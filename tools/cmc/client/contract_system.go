@@ -296,7 +296,7 @@ func erc20Transfer() *cobra.Command {
 		flagAddress, flagAmount,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -342,7 +342,7 @@ func erc20BalanceOf() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -386,7 +386,7 @@ func erc20Owner() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -428,7 +428,7 @@ func erc20Decimals() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -470,7 +470,7 @@ func erc20Total() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -512,7 +512,7 @@ func stakeGetAllCandidates() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -559,7 +559,7 @@ func stakeGetValidatorByAddress() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -660,7 +660,7 @@ func stakeGetDelegationsByAddress() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -708,7 +708,7 @@ func stakeGetUserDelegationByValidator() *cobra.Command {
 		flagDelegator, flagValidator,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagDelegator)
@@ -810,7 +810,7 @@ func stakeReadEpochByID() *cobra.Command {
 		flagEpochID,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagEpochID)
@@ -858,7 +858,7 @@ func stakeReadLatestEpoch() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -948,7 +948,7 @@ func stakeGetNodeID() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -992,7 +992,7 @@ func stakeReadMinSelfDelegation() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1034,7 +1034,7 @@ func stakeReadEpochValidatorNumber() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1076,7 +1076,7 @@ func stakeReadEpochBlockNumber() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1118,7 +1118,7 @@ func stakeReadSystemContractAddr() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1160,7 +1160,7 @@ func stakeReadCompleteUnBoundingEpochNumber() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
