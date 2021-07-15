@@ -8,17 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"context"
 	"fmt"
+	"os"
+	"runtime/debug"
+	"time"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"os"
-	"runtime/debug"
-	"time"
 )
 
 var log = logger.GetLogger(logger.MODULE_RPC)
@@ -28,7 +29,10 @@ func LoggingInterceptor(ctx context.Context, req interface{},
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 	log.Debugf("call gRPC method: %s", info.FullMethod)
-	log.Debugf("req detail: %+v", req)
+	log.DebugDynamic(func() string {
+		str := fmt.Sprintf("req detail: %+v", req)
+		return str[:1024] + " ......"
+	})
 	resp, err := handler(ctx, req)
 	log.Debugf("call gRPC method: %s, resp detail: %+v", info.FullMethod, resp)
 	return resp, err
