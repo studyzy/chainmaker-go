@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -33,16 +34,17 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
-var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
+var WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 var isSql = false
 
 var txType = commonPb.TxType_INVOKE_CONTRACT
 var pool *wasmer.VmPoolManager
 
-const (
+var (
 	ContractNameTest    = "contract01"
 	ContractVersionTest = "v1.0.0"
 	ChainIdTest         = "chain01"
+	MockTestLock        = sync.Mutex{}
 )
 
 func GetVmPoolManager() *wasmer.VmPoolManager {
@@ -52,15 +54,12 @@ func GetVmPoolManager() *wasmer.VmPoolManager {
 	return pool
 }
 
-var bytes []byte
 var file []byte
 
 // 初始化上下文和wasm字节码
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, protocol.TxSimContext, []byte) {
-	if bytes == nil {
-		bytes, _ = wasm.ReadBytes(WasmFile)
-		fmt.Printf("Wasm file size=%d\n", len(bytes))
-	}
+	bytes, _ := wasm.ReadBytes(WasmFile)
+	fmt.Printf("Wasm file size=%d\n", len(bytes))
 
 	wxvmCodeManager := xvm.NewCodeManager(ChainIdTest, "tmp/wxvm-data")
 	wxvmContextService := xvm.NewContextService(ChainIdTest)
@@ -246,6 +245,7 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 
 func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
 	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+	fmt.Println(">>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.CallContract>>>>", contract.Name)
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {

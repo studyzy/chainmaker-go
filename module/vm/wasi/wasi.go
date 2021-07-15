@@ -158,9 +158,8 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
 		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
 	}
-	for _, item := range paramItem {
-		key := item.Key
-		val := item.Value.([]byte)
+	paramMap := ecData.ToMap()
+	for key, val := range paramMap {
 		if len(key) > protocol.DefaultStateLen {
 			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key)), gasUsed
 		}
@@ -178,7 +177,6 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 
 	// call contract
 	gasUsed += protocol.CallContractGasOnce
-	paramMap := ecData.ToMap()
 
 	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil, paramMap, gasUsed, txSimContext.GetTx().Payload.TxType)
 	gasUsed += uint64(result.GasUsed)

@@ -20,9 +20,7 @@ import (
 )
 
 func TestContract_Fact(t *testing.T) {
-	//test.WasmFile = "../../../../test/wasm/go-fact-2.0.0.wasm"
 	test.WasmFile = "../../../../test/wasm/go-func-verify-2.0.0.wasm"
-	//test.WasmFile = "D:/develop/workspace/chainMaker/chainmaker-go/module/vm/sdk/go/fact-go.wasm"
 	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_GASM)
 
 	if len(byteCode) == 0 {
