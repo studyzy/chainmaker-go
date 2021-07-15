@@ -41,7 +41,7 @@ type ApiService struct {
 	subscriberRateLimiter *rate.Limiter
 	metricQueryCounter    *prometheus.CounterVec
 	metricInvokeCounter   *prometheus.CounterVec
-	ctx 				  context.Context
+	ctx                   context.Context
 }
 
 // NewApiService - new ApiService object
@@ -85,10 +85,10 @@ func NewApiService(chainMakerServer *blockchain.ChainMakerServer, ctx context.Co
 func (s *ApiService) SendRequest(ctx context.Context, req *commonPb.TxRequest) (*commonPb.TxResponse, error) {
 
 	return s.invoke(&commonPb.Transaction{
-		Payload:   	req.Payload,
-		Sender:     req.Sender,
-		Endorsers:  req.Endorsers,
-		Result:     nil}, protocol.RPC), nil
+		Payload:   req.Payload,
+		Sender:    req.Sender,
+		Endorsers: req.Endorsers,
+		Result:    nil}, protocol.RPC), nil
 }
 
 // validate tx
@@ -209,9 +209,29 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		blockVersion:     protocol.DefaultBlockVersion,
 	}
 
-	txResult, txStatusCode := vmMgr.RunContract(&commonPb.Contract{Name: tx.Payload.ContractName}, tx.Payload.Method,
-		nil, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
-
+	contract, err := store.GetContractByName(tx.Payload.ContractName)
+	if err != nil {
+		s.log.Error(err)
+		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
+		resp.Message = err.Error()
+		return resp
+	}
+	var bytecode []byte
+	if contract.RuntimeType != commonPb.RuntimeType_NATIVE {
+		bytecode, err = store.GetContractBytecode(tx.Payload.ContractName)
+		if err != nil {
+			s.log.Error(err)
+			resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
+			resp.Message = err.Error()
+			return resp
+		}
+	}
+	txResult, txStatusCode := vmMgr.RunContract(contract, tx.Payload.Method,
+		bytecode, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
+	s.log.DebugDynamic(func() string {
+		return fmt.Sprintf("vmMgr.RunContract: txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s, %s",
+			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method, tx.Payload.TxType, txResult.Message, txResult.Result)
+	})
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
 			s.metricQueryCounter.WithLabelValues(chainId, "true").Inc()
@@ -253,7 +273,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 // dealSystemChainQuery - deal system chain query
 func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protocol.VmManager) *commonPb.TxResponse {
 	var (
-		resp    = &commonPb.TxResponse{}
+		resp = &commonPb.TxResponse{}
 	)
 
 	chainId := tx.Payload.ChainId

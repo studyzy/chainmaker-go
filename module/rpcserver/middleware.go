@@ -31,7 +31,10 @@ func LoggingInterceptor(ctx context.Context, req interface{},
 	log.Debugf("call gRPC method: %s", info.FullMethod)
 	log.DebugDynamic(func() string {
 		str := fmt.Sprintf("req detail: %+v", req)
-		return str[:1024] + " ......"
+		if len(str) > 1024 {
+			str = str[:1024] + " ......"
+		}
+		return str
 	})
 	resp, err := handler(ctx, req)
 	log.Debugf("call gRPC method: %s, resp detail: %+v", info.FullMethod, resp)

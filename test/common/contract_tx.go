@@ -87,7 +87,7 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	//	os.Exit(0)
 	//}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -97,7 +97,7 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	return txId
 }
 
-func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payload *commonPb.Payload) *commonPb.TxResponse {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
@@ -141,7 +141,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 
 	fmt.Errorf("################ %s", string(sender.MemberInfo))
 
-	signer := getSigner(sk3, sender)
+	signer := GetSigner(sk3, sender)
 	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	signBytes, err := signer.Sign("SM3", rawTxBytes)
 	if err != nil {
@@ -165,7 +165,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	return result
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
+func GetSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -191,27 +191,21 @@ func QueryUserContractInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, c
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payload := constructPayload(syscontract.SystemContract_CONTRACT_MANAGE.String(), syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String(), pairs)
+	payload := ConstructQueryPayload(syscontract.SystemContract_CONTRACT_MANAGE.String(), syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String(), pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
+	resp := ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payload)
 	return resp
 
 }
 
-func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) *commonPb.Payload {
+func ConstructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) *commonPb.Payload {
 	payload := &commonPb.Payload{
 		TxType:       commonPb.TxType_QUERY_CONTRACT,
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
 	}
-
-	//payloadBytes, err := proto.Marshal(payload)
-	//if err != nil {
-	//	log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-	//	os.Exit(0)
-	//}
 
 	return payload
 }
@@ -251,7 +245,7 @@ func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	//	os.Exit(0)
 	//}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload)
 	return resp
 	//	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
@@ -284,14 +278,7 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 		Method:       method,
 		Parameters:   pairs,
 	}
-
-	//payloadBytes, err := proto.Marshal(payload)
-	//if err != nil {
-	//	log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-	//	os.Exit(0)
-	//}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload)
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 }

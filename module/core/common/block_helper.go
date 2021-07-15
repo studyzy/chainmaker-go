@@ -241,7 +241,11 @@ func FinalizeBlock(
 		}
 		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
 		logger.DebugDynamic(func() string {
-			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+			str := fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+			if len(str) > 1024 {
+				str = str[:1024] + " ......"
+			}
+			return str
 		})
 		if err != nil {
 			return err
