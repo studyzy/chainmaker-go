@@ -7,6 +7,8 @@ chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4 h1:rqpo2f3f2
 chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
 chainmaker.org/chainmaker/common v0.0.0-20210714055243-e02c9a0323b2 h1:LRTliiFgdRnMeBJvpgl0sK0uK/eXs9qFHm0KfqMwqRo=
 chainmaker.org/chainmaker/common v0.0.0-20210714055243-e02c9a0323b2/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
+chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec h1:uXvltIKJnOfQas1GgOblJWxgBD5OXSlQC42LyzKtoqU=
+chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210621034028-d765d0e95b61/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210706171157-e6dca957a232/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210708024946-64e9e52d1a2b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
@@ -29,6 +31,8 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6 h1:Fow0qgPUUK
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111 h1:8VuaUPv6h/BJ86ibs6IeOrB6g/NLok9mGaL8gCj3nz8=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a h1:/T2n3rSst8aE5zRYJ8USCCWWZKOMN5Mgq3RqXW8eze8=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210706172914-ccc59fc46e71/go.mod h1:4WvDQCYZJSieUduADcFir17MEx0UvBcoWIkBfBdNOKw=
 chainmaker.org/chainmaker/protocol v0.0.0-20210708034656-3fcc955608fc/go.mod h1:mCoBvQ9ZcJy2LXCCg96Ct9rLU/cJ76fAReMMAH3uMEw=
 chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543/go.mod h1:dH8VU8w+lR6WOA5JWU6G/NSdpPaKrYSIyyFA363uIjc=

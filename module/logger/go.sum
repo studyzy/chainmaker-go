@@ -26,6 +26,8 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6 h1:Fow0qgPUUK
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111 h1:8VuaUPv6h/BJ86ibs6IeOrB6g/NLok9mGaL8gCj3nz8=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a h1:/T2n3rSst8aE5zRYJ8USCCWWZKOMN5Mgq3RqXW8eze8=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc h1:fTBZDh0OJ0OIue/knGrDL7yf6mWnDIW9q2QJEajU844=
 chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc/go.mod h1:e/31KHE18Rr0ChD5GCx8XsSm0BcY0GmN1YPvwMMSLog=
 chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f h1:cWehX0kHn8ANjfr//4XYYW1kP+VD7TxrGSJ21JTVAX8=

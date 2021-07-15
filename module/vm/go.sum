@@ -4,6 +4,8 @@ chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4 h1:rqpo2f3f2
 chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
 chainmaker.org/chainmaker/common v0.0.0-20210714055243-e02c9a0323b2 h1:LRTliiFgdRnMeBJvpgl0sK0uK/eXs9qFHm0KfqMwqRo=
 chainmaker.org/chainmaker/common v0.0.0-20210714055243-e02c9a0323b2/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
+chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec h1:uXvltIKJnOfQas1GgOblJWxgBD5OXSlQC42LyzKtoqU=
+chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115 h1:vbrZrxHN1FvQtvQP/h+KOzfnntQBO3ImYVkE0EJaiKc=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210708065031-3ee06c03e115/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210708095431-3ed1d2a0d58e h1:7gn6e+FJaRHqdPTWImxKlg5XwfsJk9A7VQxX+IwMBTE=
@@ -23,6 +25,8 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6 h1:Fow0qgPUUK
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714080348-d54585b00fa6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111 h1:8VuaUPv6h/BJ86ibs6IeOrB6g/NLok9mGaL8gCj3nz8=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210714113815-1228e0322111/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a h1:/T2n3rSst8aE5zRYJ8USCCWWZKOMN5Mgq3RqXW8eze8=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543 h1:wJrbvFVJ/fAd0gExWePtEuYhCgZfMK+Gi7Ei9DQXflE=
 chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543/go.mod h1:dH8VU8w+lR6WOA5JWU6G/NSdpPaKrYSIyyFA363uIjc=
 chainmaker.org/chainmaker/protocol v0.0.0-20210709094426-ab3cc85a9553 h1:4nhgwY90StAGRxQNhu7uzkBnb2soFawJNKu2ZeDi2WQ=

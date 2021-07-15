@@ -180,13 +180,13 @@ func TestGetLatestEpochInfo(t *testing.T) {
 	defer ctrl.Finish()
 	mockStore := mock.NewMockBlockchainStore(ctrl)
 	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {
-		epoch := &syscontract.Epoch{EpochID: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
+		epoch := &syscontract.Epoch{EpochId: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
 			"vector1", "vector2", "vector3", "vector4"}}
 		return proto.Marshal(epoch)
 	}).AnyTimes()
 	epoch, err := GetLatestEpochInfo(mockStore)
 	require.NoError(t, err)
-	require.EqualValues(t, epoch.EpochID, 100)
+	require.EqualValues(t, epoch.EpochId, 100)
 	require.EqualValues(t, epoch.NextEpochCreateHeight, 990)
 	require.EqualValues(t, epoch.ProposerVector, []string{
 		"vector1", "vector2", "vector3", "vector4",

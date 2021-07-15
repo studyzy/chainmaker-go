@@ -104,7 +104,7 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 
 func (impl *DPoSImpl) createEpochRwSet(epoch *syscontract.Epoch) (*commonpb.TxRWSet, error) {
 	id := make([]byte, 8)
-	binary.BigEndian.PutUint64(id, epoch.EpochID)
+	binary.BigEndian.PutUint64(id, epoch.EpochId)
 	bz, err := proto.Marshal(epoch)
 	if err != nil {
 		impl.log.Errorf("marshal epoch failed, reason: %s", err)
@@ -121,7 +121,7 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *syscontract.Epoch) (*commonpb.TxRW
 			},
 			{
 				ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
-				Key:          dposmgr.ToEpochKey(fmt.Sprintf("%d", epoch.EpochID)),
+				Key:          dposmgr.ToEpochKey(fmt.Sprintf("%d", epoch.EpochId)),
 				Value:        bz,
 			},
 		},
@@ -149,7 +149,7 @@ func (impl *DPoSImpl) completeUnbounding(epoch *syscontract.Epoch,
 }
 
 func (impl *DPoSImpl) getUnboundingEntries(epoch *syscontract.Epoch) ([]*syscontract.UnbondingDelegation, error) {
-	prefix := dposmgr.ToUnbondingDelegationPrefix(epoch.EpochID)
+	prefix := dposmgr.ToUnbondingDelegationPrefix(epoch.EpochId)
 	iterRange := util.BytesPrefix(prefix)
 	iter, err := impl.stateDB.SelectObject(syscontract.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {

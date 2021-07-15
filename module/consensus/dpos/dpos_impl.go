@@ -126,7 +126,7 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *syscontrac
 
 	// 4. create NewEpoch
 	newEpoch := &syscontract.Epoch{
-		EpochID:               oldEpoch.EpochID + 1,
+		EpochId:               oldEpoch.EpochId + 1,
 		NextEpochCreateHeight: proposalHeight + epochBlockNum,
 		ProposerVector:        proposer,
 	}
