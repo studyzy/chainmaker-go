@@ -275,7 +275,7 @@ func main() {
 }
 
 func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payloadBytes []byte) (*commonPb.TxResponse, error) {
+	chainId, txId string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
@@ -313,12 +313,16 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 
 	// 构造Header
 	header := &commonPb.Payload{
-		ChainId: chainId,
-		//Sender:         sender,
+		ChainId:        chainId,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
+		ContractName:   payload.ContractName,
+		Method:         payload.Method,
+		Parameters:     payload.Parameters,
+		Sequence:       payload.Sequence,
+		Limit:          payload.Limit,
 	}
 
 	req := &commonPb.TxRequest{

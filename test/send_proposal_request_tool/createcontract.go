@@ -16,7 +16,6 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )
 
@@ -105,13 +104,8 @@ func createContract() error {
 	//	return err
 	//}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
 	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}

@@ -130,7 +130,7 @@ func saveCert() error {
 
 }
 
-func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) ([]byte, error) {
+func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) (*commonPb.Payload, error) {
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
@@ -140,12 +140,7 @@ func constructSystemContractPayload(chainId, contractName, method string, pairs 
 		Sequence:     sequence,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }
 
 func paramsMap2KVPairs(params map[string]string) (kvPairs []*commonPb.KeyValuePair) {
@@ -237,17 +232,12 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 	return transactionInfo, nil
 }
 
-func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
+func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }

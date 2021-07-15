@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
@@ -26,19 +27,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
+func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }
 
 func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMember, error) {

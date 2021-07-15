@@ -138,12 +138,9 @@ func certAdd() error {
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
+
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -184,13 +181,9 @@ func certDelete() error {
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
 
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}

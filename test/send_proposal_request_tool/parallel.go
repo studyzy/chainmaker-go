@@ -30,7 +30,6 @@ import (
 	"chainmaker.org/chainmaker/common/crypto/asym"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -716,13 +715,8 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 	//	return err
 	//}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
 	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payload)
 	if err != nil {
 		return err
 	}
@@ -756,13 +750,8 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 	//	return err
 	//}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
 	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payload)
 	if err != nil {
 		return err
 	}
@@ -805,7 +794,7 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 }
 
 func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *InvokerMsg,
-	orgId, userCrtPath string, payloadBytes []byte) (*commonPb.TxResponse, error) {
+	orgId, userCrtPath string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
@@ -842,6 +831,11 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 		TxId:           msg.txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
+		ContractName:   payload.ContractName,
+		Method:         payload.Method,
+		Parameters:     payload.Parameters,
+		Sequence:       payload.Sequence,
+		Limit:          payload.Limit,
 	}
 
 	req := &commonPb.TxRequest{

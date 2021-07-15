@@ -15,7 +15,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )
 
@@ -51,13 +50,8 @@ func freezeContract() error {
 	//	return err
 	//}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -107,13 +101,8 @@ func unfreezeContract() error {
 	//	return err
 	//}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -163,13 +152,8 @@ func RevokeContract() error {
 	//	return err
 	//}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
