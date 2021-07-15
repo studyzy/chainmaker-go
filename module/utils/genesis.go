@@ -446,8 +446,8 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 			ValidatorAddress:           candidate.PeerId,
 			DelegatorShares:            candidate.Weight,
 			SelfDelegation:             candidate.Weight,
-			UnbondingEpochID:           math.MaxInt64,
-			UnbondingCompletionEpochID: math.MaxUint64,
+			UnbondingEpochId:           math.MaxInt64,
+			UnbondingCompletionEpochId: math.MaxUint64,
 		})
 		if err != nil {
 			return nil, err
@@ -483,7 +483,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		valAddrs = append(valAddrs, v.PeerId)
 	}
 	epochInfo, err := proto.Marshal(&syscontract.Epoch{
-		EpochID:               0,
+		EpochId:               0,
 		ProposerVector:        valAddrs,
 		NextEpochCreateHeight: s.eachEpochNum,
 	})

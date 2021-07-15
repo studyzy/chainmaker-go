@@ -241,7 +241,11 @@ func FinalizeBlock(
 		}
 		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
 		logger.DebugDynamic(func() string {
-			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+			str := fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+			if len(str) > 1024 {
+				str = str[:1024] + " ......"
+			}
+			return str
 		})
 		if err != nil {
 			return err
@@ -488,7 +492,9 @@ func (vb *VerifierBlock) ValidateBlock(
 
 	// verify block sig and also verify identity and auth of block proposer
 	startSigTick := utils.CurrentTimeMillisSeconds()
-	vb.log.Debugf("verify block \n %s", utils.FormatBlock(block))
+	vb.log.DebugDynamic(func() string {
+		return fmt.Sprintf("verify block \n %s", utils.FormatBlock(block))
+	})
 	if ok, err := utils.VerifyBlockSig(hashType, block, vb.ac); !ok || err != nil {
 		return nil, nil, timeLasts, fmt.Errorf("(%d,%x - %x,%x) [signature]",
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.Proposer, block.Header.Signature)

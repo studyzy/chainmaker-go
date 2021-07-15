@@ -15,9 +15,9 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker-go/logger"
 )
@@ -101,7 +101,13 @@ func (consensus *ConsensusSoloImpl) handleProposedBlock(message *msgbus.Message)
 	proposedBlock := message.Payload.(*consensuspb.ProposalBlock)
 	block := proposedBlock.Block
 	clog.Infof("handle proposedBlock start, id: %s, height: %d", consensus.id, block.Header.BlockHeight)
-	clog.Debugf("ProposedBlock block: %v", block)
+	clog.DebugDynamic(func() string {
+		str := fmt.Sprintf("ProposedBlock block: %v", block)
+		if len(str) > 2048 {
+			str = str[:2048] + " ......"
+		}
+		return str
+	})
 
 	hash, sig, err := utils.SignBlock(consensus.chainConf.ChainConfig().Crypto.Hash, consensus.singer, block)
 	if err != nil {
@@ -143,7 +149,11 @@ func (consensus *ConsensusSoloImpl) handleVerifyResult(message *msgbus.Message) 
 	clog.Infof("handle verifyResult start, id: %s verifyResult: %s BlockInfo: %v",
 		consensus.id, verifyResult.Code, verifyResult.VerifiedBlock.Header.BlockHeight)
 	clog.DebugDynamic(func() string {
-		return fmt.Sprintf("verifyingBlock: %v", consensus.verifyingBlock)
+		str := fmt.Sprintf("verifyingBlock: %v", consensus.verifyingBlock)
+		if len(str) > 2048 {
+			str = str[:2048] + " ......"
+		}
+		return str
 	})
 
 	if consensus.verifyingBlock == nil {

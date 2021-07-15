@@ -442,6 +442,13 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 		ts.log.Errorf("Get contract info by name[%s] error:%s", contractName, err)
 		return nil, err
 	}
+	if contract.RuntimeType != commonpb.RuntimeType_NATIVE {
+		byteCode, err = utils.GetContractBytecode(txSimContext.Get, contractName)
+		if err != nil {
+			ts.log.Errorf("Get contract bytecode by name[%s] error:%s", contractName, err)
+			return nil, err
+		}
+	}
 	//contract = &commonpb.Contract{
 	//	ContractName:    contractName,
 	//	ContractVersion: contractVersion,

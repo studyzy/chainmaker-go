@@ -87,7 +87,7 @@ var (
 type Result struct {
 	Code                  commonPb.TxStatusCode           `json:"code"`
 	Message               string                          `json:"message,omitempty"`
-	ContractResultCode    uint32     `json:"contractResultCode"`
+	ContractResultCode    uint32                          `json:"contractResultCode"`
 	ContractResultMessage string                          `json:"contractResultMessage,omitempty"`
 	ContractQueryResult   string                          `json:"contractQueryResult"`
 	TxId                  string                          `json:"txId,omitempty"`
@@ -95,7 +95,7 @@ type Result struct {
 	TransactionInfo       *commonPb.TransactionInfo       `json:"transactionInfo,omitempty"`
 	ChainInfo             *discoveryPb.ChainInfo          `json:"chainInfo,omitempty"`
 	ChainList             *discoveryPb.ChainList          `json:"chainList,omitempty"`
-	ContractInfo          *commonPb.ContractInfo          `json:"contractInfo,omitempty"`
+	ContractInfo          *commonPb.Contract              `json:"contractInfo,omitempty"`
 	MultiSignInfo         *commonPb.MultiSignInfo         `json:"multiSignInfo,omitempty"`
 	PayloadHash           string                          `json:"payloadHash,omitempty"`
 	ShortCert             string                          `json:"shortCert,omitempty"`
@@ -313,7 +313,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 
 	// 构造Header
 	header := &commonPb.Payload{
-		ChainId:        chainId,
+		ChainId: chainId,
 		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
@@ -322,8 +322,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	req := &commonPb.TxRequest{
-		Payload:    header,
-		Sender: &commonPb.EndorsementEntry{Signer: sender},
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -400,7 +400,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 
 	// 构造Header
 	payload := &commonPb.Payload{
-		ChainId:        chainId,
+		ChainId: chainId,
 		//Sender:         sender,
 		TxType:         msg.txType,
 		TxId:           txId,
@@ -424,8 +424,8 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	//	return nil, "", err
 	//}
 	req := &commonPb.TxRequest{
-		Payload:    payload,
-		Sender: &commonPb.EndorsementEntry{Signer: sender},
+		Payload:   payload,
+		Sender:    &commonPb.EndorsementEntry{Signer: sender},
 		Endorsers: entries,
 	}
 

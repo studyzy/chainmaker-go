@@ -110,23 +110,23 @@ func TestDPoSImpl_GetUnboundingEntries(t *testing.T) {
 	impl, fn := initDPoSWithStore(t)
 	defer fn()
 
-	entries, err := impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 10})
+	entries, err := impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(entries))
 
 	blk, blkRwSet := generateUnboundingBlock(t, 4, 10, 1, 10)
 	require.NoError(t, impl.stateDB.PutBlock(blk, blkRwSet))
-	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 10})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 4, len(entries))
 
 	blk, blkRwSet = generateUnboundingBlock(t, 4, 10, 2, 20)
 	require.NoError(t, impl.stateDB.PutBlock(blk, blkRwSet))
-	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 20})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 20})
 	require.NoError(t, err)
 	require.EqualValues(t, 4, len(entries))
 
-	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochID: 30})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 30})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(entries))
 }
@@ -177,9 +177,9 @@ func createUndelegationEntries() []*syscontract.UnbondingDelegation {
 			valAddr = valAddr2
 		}
 		entry := &syscontract.UnbondingDelegation{
-			EpochID: "8", DelegatorAddress: delAddr, ValidatorAddress: valAddr,
+			EpochId: "8", DelegatorAddress: delAddr, ValidatorAddress: valAddr,
 			Entries: []*syscontract.UnbondingDelegationEntry{
-				{CreationEpochID: 1, CompletionEpochID: 8, Amount: "1000"},
+				{CreationEpochId: 1, CompletionEpochId: 8, Amount: "1000"},
 			},
 		}
 		entries = append(entries, entry)
@@ -318,11 +318,11 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 		delAddr := fmt.Sprintf("delegatorAddr-%d-%d", base, i+1)
 		valAddr := fmt.Sprintf("validatorAddr-%d-%d", base, i+1)
 		entry := &syscontract.UnbondingDelegation{
-			EpochID:          fmt.Sprintf("%d", completeEpoch),
+			EpochId:          fmt.Sprintf("%d", completeEpoch),
 			DelegatorAddress: delAddr,
 			ValidatorAddress: valAddr,
 			Entries: []*syscontract.UnbondingDelegationEntry{
-				{CreationEpochID: completeEpoch - 1, CompletionEpochID: completeEpoch, Amount: "1000"},
+				{CreationEpochId: completeEpoch - 1, CompletionEpochId: completeEpoch, Amount: "1000"},
 			},
 		}
 		bz, err := proto.Marshal(entry)

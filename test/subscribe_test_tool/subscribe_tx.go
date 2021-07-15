@@ -40,7 +40,7 @@ func subscribeTx() error {
 		Parameters: []*commonPb.KeyValuePair{
 			{Key: syscontract.SubscribeTx_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
 			{Key: syscontract.SubscribeTx_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
-			{Key: syscontract.SubscribeTx_TX_TYPE.String(), Value: []byte(commonPb.TxType(txType).String())},
+			//{Key: syscontract.SubscribeTx_TX_TYPE.String(), Value: []byte(commonPb.TxType(txType).String())},
 			{Key: syscontract.SubscribeTx_TX_IDS.String(), Value: []byte(txIds)},
 		},
 		//StartBlock: startBlock,
