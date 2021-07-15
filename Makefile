@@ -11,10 +11,10 @@ DATETIME=$(shell date "+%Y%m%d%H%M%S")
 VERSION=V1.2.0
 
 chainmaker:
-	@cd main && go build -mod=mod -o ../bin/chainmaker
+	@cd main && go build -o ../bin/chainmaker
 
 package:
-	@cd main && GOPATH=${GOPATH} go build -mod=mod -o ../bin/chainmaker
+	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
 	@mkdir -p ./release
 	@rm -rf ./tmp/chainmaker/
 	@mkdir -p ./tmp/chainmaker/
@@ -27,13 +27,13 @@ package:
 	@rm -rf ./tmp/
 
 compile:
-	@cd main && go build -mod=mod -o ../bin/chainmaker
+	@cd main && go build -o ../bin/chainmaker
 
 cmc:
-	@cd tools/cmc && GOPATH=${GOPATH} go build -mod=mod -o ../../bin/cmc
+	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
 
 scanner:
-	@cd tools/scanner && GOPATH=${GOPATH} go build -mod=mod -o ../../bin/scanner
+	@cd tools/scanner && GOPATH=${GOPATH} go build -o ../../bin/scanner
 
 dep: pb-dep mockgen-dep
 	@go get golang.org/x/tools/cmd/stringer
