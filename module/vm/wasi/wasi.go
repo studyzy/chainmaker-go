@@ -8,8 +8,6 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
-	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"errors"
 	"fmt"
 	"math/big"
@@ -17,6 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/crypto/paillier"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
@@ -160,7 +161,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	}
 	for _, item := range paramItem {
 		key := item.Key
-		val := item.Value.([]byte)
+
 		if len(key) > protocol.DefaultStateLen {
 			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key)), gasUsed
 		}
@@ -168,8 +169,11 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 		if err != nil || !match {
 			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", key), gasUsed
 		}
-		if len(val) > protocol.ParametersValueMaxLength {
-			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
+		if item.ValueType == serialize.EasyValueType_BYTES {
+			val := item.Value.([]byte)
+			if len(val) > protocol.ParametersValueMaxLength {
+				return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
+			}
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
