@@ -20,7 +20,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 //	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+//	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"

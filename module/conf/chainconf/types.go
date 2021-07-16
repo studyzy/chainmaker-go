@@ -242,7 +242,7 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
 			//if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
-			if resourceName != common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+			if resourceName != syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_UPDATE.String() && resourceName != syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String() {
 				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}
