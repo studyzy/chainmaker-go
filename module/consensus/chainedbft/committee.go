@@ -31,23 +31,31 @@ func (ip indexedPeers) Less(i, j int) bool { return ip[i].index < ip[j].index }
 //committee manages all of peers join current consensus epoch
 type committee struct {
 	sync.RWMutex
-	peers []*peer // Consensus nodes at current epoch
+	switchEpochHeight uint64
+
+	// last epoch info
+	lastValidators     []*peer
+	lastMinQuorumForQc int
+
+	// curr epoch info
+	peers              []*peer // Consensus nodes at current epoch
+	currMinQuorumForQc int
 }
 
 //newCommittee initializes a peer pool with given peer list
-func newCommittee(peers []*peer) *committee {
+func newCommittee(peers, lastValidators []*peer, switchHeight uint64) *committee {
 	return &committee{
-		peers: peers,
+		peers:             peers,
+		lastValidators:    lastValidators,
+		switchEpochHeight: switchHeight,
 	}
 }
 
 //getPeers returns peer list which are online
-func (pp *committee) getPeers() []*peer {
-	pp.RLock()
-	defer pp.RUnlock()
-
-	peers := make([]*peer, 0)
-	for _, peer := range pp.peers {
+func (pp *committee) getPeers(blkHeight uint64) []*peer {
+	usedPeers := pp.getUsedPeers(blkHeight)
+	peers := make([]*peer, 0, len(usedPeers))
+	for _, peer := range usedPeers {
 		if peer.active {
 			peers = append(peers, peer)
 		}
@@ -55,24 +63,10 @@ func (pp *committee) getPeers() []*peer {
 	return peers
 }
 
-//updatePeerNetState updates a peer's link state
-func (pp *committee) updatePeerNetState(id string, active bool) bool {
-	pp.Lock()
-	defer pp.Unlock()
-	for _, p := range pp.peers {
-		if p.id == id {
-			p.active = active
-			return true
-		}
-	}
-	return false
-}
-
 //getPeerByIndex returns a peer with given index
-func (pp *committee) getPeerByIndex(index uint64) *peer {
-	pp.RLock()
-	defer pp.RUnlock()
-	for _, v := range pp.peers {
+func (pp *committee) getPeerByIndex(height uint64, index uint64) *peer {
+	usedPeers := pp.getUsedPeers(height)
+	for _, v := range usedPeers {
 		if v.index == index {
 			return v
 		}
@@ -81,10 +75,9 @@ func (pp *committee) getPeerByIndex(index uint64) *peer {
 }
 
 //getPeerByID returns a peer with given id
-func (pp *committee) getPeerByID(id string) *peer {
-	pp.RLock()
-	defer pp.RUnlock()
-	for _, v := range pp.peers {
+func (pp *committee) getPeerByID(height uint64, id string) *peer {
+	usedPeers := pp.getUsedPeers(height)
+	for _, v := range usedPeers {
 		if v.id == id {
 			return v
 		}
@@ -93,10 +86,9 @@ func (pp *committee) getPeerByID(id string) *peer {
 }
 
 //isValidIdx checks whether a index is valid
-func (pp *committee) isValidIdx(index uint64) bool {
-	pp.RLock()
-	defer pp.RUnlock()
-	for _, v := range pp.peers {
+func (pp *committee) isValidIdx(height uint64, index uint64) bool {
+	usedPeers := pp.getUsedPeers(height)
+	for _, v := range usedPeers {
 		if v.index == index {
 			return true
 		}
@@ -105,8 +97,22 @@ func (pp *committee) isValidIdx(index uint64) bool {
 }
 
 //peerCount returns the size of core peers at current consensus epoch
-func (pp *committee) peerCount() int {
-	pp.RLock()
-	defer pp.RUnlock()
-	return len(pp.peers)
+func (pp *committee) peerCount(height uint64) int {
+	usedPeers := pp.getUsedPeers(height)
+	return len(usedPeers)
+}
+
+func (pp *committee) getUsedPeers(height uint64) []*peer {
+	usedPeers := pp.peers
+	if height <= pp.switchEpochHeight+3 {
+		usedPeers = pp.lastValidators
+	}
+	return usedPeers
+}
+
+func (pp *committee) minQuorumForQc(height uint64) int {
+	if height <= pp.switchEpochHeight+3 {
+		return pp.lastMinQuorumForQc
+	}
+	return pp.currMinQuorumForQc
 }

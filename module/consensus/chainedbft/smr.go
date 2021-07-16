@@ -121,10 +121,6 @@ func (cs *chainedbftSMR) isValidIdx(index uint64) bool {
 	return cs.committee.isValidIdx(index)
 }
 
-func (cs *chainedbftSMR) updatePeerNetState(id string, active bool) bool {
-	return cs.committee.updatePeerNetState(id, active)
-}
-
 func (cs *chainedbftSMR) peerCount() int {
 	return cs.committee.peerCount()
 }
