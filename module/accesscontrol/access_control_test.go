@@ -1269,9 +1269,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
-	ok, err = utils.VerifyConfigUpdateTx(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name, acsMap[org2Name].acInst)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
 	// invalid
 	sigRead, err = acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
@@ -1284,9 +1281,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
-	ok, err = utils.VerifyConfigUpdateTx(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name, acsMap[org2Name].acInst)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
 	// majority
@@ -1341,9 +1335,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	require.Equal(t, endorsementAuster.String(), validEndorsements[0].String())
 	require.Equal(t, endorsementBoreas.String(), validEndorsements[1].String())
 	require.Equal(t, endorsementZephyrus.String(), validEndorsements[2].String())
-	ok, err = utils.VerifyConfigUpdateTx(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg), "", acsMap[org2Name].acInst)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
 	// abnormal
 	sigThuellai, err := acsMap[org5Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
@@ -1361,9 +1352,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
-	ok, err = utils.VerifyConfigUpdateTx(common.ConfigFunction_CORE_UPDATE.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementZephyrus, endorsementEurus}, []byte(msg), "", acsMap[org2Name].acInst)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
 	// invalid
 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementAuster}, []byte(msg))
 	require.Nil(t, err)
@@ -1373,9 +1361,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 2)
-	ok, err = utils.VerifyConfigUpdateTx(common.ConfigFunction_CORE_UPDATE.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementAuster}, []byte(msg), "", acsMap[org2Name].acInst)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
 	// all
 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
 	require.Nil(t, err)
@@ -1392,15 +1377,6 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
-	// mock sign
-	endorsements, err := MockSignWithMultipleNodes([]byte(msg), []protocol.SigningMember{acsMap[org1Name].admin, acsMap[org2Name].admin, acsMap[org4Name].admin}, acInst.GetHashAlg())
-	ok, err = utils.VerifyConfigUpdateTx(common.ConfigFunction_CORE_UPDATE.String(), endorsements, []byte(msg), "", acsMap[org2Name].acInst)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
-	endorsements, err = MockSignWithMultipleNodes([]byte(msg), []protocol.SigningMember{acsMap[org2Name].admin, acsMap[org4Name].admin}, acInst.GetHashAlg())
-	ok, err = utils.VerifyConfigUpdateTx(common.ConfigFunction_CORE_UPDATE.String(), endorsements, []byte(msg), "", acsMap[org2Name].acInst)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
 	// threshold

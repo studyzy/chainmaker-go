@@ -60,7 +60,7 @@ var restrainedResourceList = map[string]bool{
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
+	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameWriteData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
 	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE_BLOCK_INFO: protocol.ResourceNameReadData,
@@ -298,54 +298,52 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store("test_3/4_admin", policyPortionTestAnyAdmin)
 
 	// transaction resource definitions
-	resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
-	resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
+	//resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
+	//resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
 
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
-	resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(common.SystemContract_PRIVATE_COMPUTE.String() + "-" + common.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(common.SystemContract_PRIVATE_COMPUTE.String() + "-" + common.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
-	resourceNamePolicyMap.Store(common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_CORE_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_BLOCK_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_CORE_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_BLOCK_UPDATE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_PERMISSION_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(common.ConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	resourceNamePolicyMap.Store(common.ConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
-	resourceNamePolicyMap.Store(consts.ContractManager_INIT_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_UPGRADE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_FREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_UNFREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(consts.ContractManager_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CONTRACT_MANAGE.String() + "-" + consts.ContractManager_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CONTRACT_MANAGE.String() + "-" + consts.ContractManager_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CONTRACT_MANAGE.String() + "-" + consts.ContractManager_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CONTRACT_MANAGE.String() + "-" + consts.ContractManager_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(common.SystemContract_CONTRACT_MANAGE.String() + "-" + consts.ContractManager_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERT_ADD.String(), policyWrite)
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_QUERY.String(), policyRead)
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.SystemContract_CERT_MANAGE.String() + "-" + common.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.SystemContract_CERT_MANAGE.String() + "-" + common.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.SystemContract_CERT_MANAGE.String() + "-" + common.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(common.SystemContract_CERT_MANAGE.String() + "-" + common.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 
 	// Archive
 	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
@@ -399,7 +397,7 @@ func (ac *accessControl) checkResourcePolicyRule(resourcePolicy *config.Resource
 
 func (ac *accessControl) checkResourcePolicyRuleSelfCase(resourcePolicy *config.ResourcePolicy) bool {
 	switch resourcePolicy.ResourceName {
-	case common.ConfigFunction_TRUST_ROOT_UPDATE.String(), common.ConfigFunction_NODE_ID_UPDATE.String():
+	case common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_TRUST_ROOT_UPDATE.String(), common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_NODE_ID_UPDATE.String():
 		return true
 	default:
 		ac.log.Errorf("bad configuration: the access rule of [%s] should not be [%s]", resourcePolicy.ResourceName, resourcePolicy.Policy.Rule)
