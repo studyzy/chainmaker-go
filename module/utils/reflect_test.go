@@ -23,12 +23,12 @@ type BlockConfig struct {
 }
 
 func TestUpdateChainConfigReflect2(t *testing.T) {
-	params := make(map[string]string, 0)
-	params["block_interval"] = "2"
-	params["block_size"] = "3"
-	params["block_tx_capacity"] = "4"
-	params["tx_timestamp_verify"] = "trues"
-	params["tx_timestamp_verify2"] = "trues"
+	params := make(map[string][]byte, 0)
+	params["block_interval"] = []byte("2")
+	params["block_size"] = []byte("3")
+	params["block_tx_capacity"] = []byte("4")
+	params["tx_timestamp_verify"] = []byte("trues")
+	params["tx_timestamp_verify2"] = []byte( "trues")
 
 	config := &BlockConfig{}
 	fmt.Println("config1", config)

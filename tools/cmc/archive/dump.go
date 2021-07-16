@@ -72,7 +72,7 @@ func newDumpCMD() *cobra.Command {
 // runDumpByHeightCMD `dump` command implementation
 func runDumpByHeightCMD(targetBlkHeight int64) error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 }
 
 // archiveBlockOnChain Build & Sign & Send a ArchiveBlockRequest
-func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
+func archiveBlockOnChain(cc *sdk.ChainClient, height uint64) error {
 	var (
 		err                error
 		payload            []byte
@@ -256,7 +256,7 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 
 func calcTargetHeightByTime(t time.Time) (int64, error) {
 	targetTs := t.Unix()
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 	if err != nil {
 		return -1, err
 	}

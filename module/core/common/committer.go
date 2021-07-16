@@ -9,11 +9,11 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -168,7 +168,7 @@ func rearrangeContractEvent(block *commonpb.Block, conEventMap map[string][]*com
 		return conEvent
 	}
 	for _, tx := range block.Txs {
-		if event, ok := conEventMap[tx.Header.TxId]; ok {
+		if event, ok := conEventMap[tx.Payload.TxId]; ok {
 			for _, e := range event {
 				conEvent = append(conEvent, e)
 			}

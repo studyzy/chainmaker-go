@@ -8,11 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"strings"
+
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -56,8 +59,8 @@ func saveDir() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_SAVE_DIR.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.PrivateComputeFunction_SAVE_DIR.String(),
 		pairs,
 		defaultSequence,
 	)
@@ -65,16 +68,16 @@ func saveDir() error {
 		return fmt.Errorf("construct save dir payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, common.TxType_INVOKE_SYSTEM_CONTRACT, chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, common.TxType_INVOKE_CONTRACT, chainId, txId, payloadBytes)
 	if err != nil {
-		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	if resp.Code == common.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &common.ContractResult{
-				Code:    common.ContractResultCode_OK,
-				Message: common.ContractResultCode_OK.String(),
+				Code:    0,
+				Message: "OK",
 				Result:  []byte(txId),
 			}
 		} else {
@@ -83,7 +86,7 @@ func saveDir() error {
 				return fmt.Errorf("get sync result failed, %s", err.Error())
 			}
 
-			if contractResult.Code != common.ContractResultCode_OK {
+			if contractResult.Code != 0 {
 				resp.Code = common.TxStatusCode_CONTRACT_FAIL
 				resp.Message = contractResult.Message
 			}
@@ -93,7 +96,7 @@ func saveDir() error {
 	}
 
 	if resp.Code != common.TxStatusCode_SUCCESS || resp.Message != "OK" {
-		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	resultStruct := &Result{

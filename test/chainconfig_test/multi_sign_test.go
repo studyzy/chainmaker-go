@@ -32,7 +32,7 @@ func TestMultiSignReq(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_type", // 多签内的交易类型
-		Value: commonPb.TxType_UPDATE_CHAIN_CONFIG.String(),
+		Value: commonPb.TxType_INVOKE_CONTRACT.String(),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "deadline_block", // 过期的区块高度
@@ -68,8 +68,8 @@ func TestMultiSignReq(t *testing.T) {
 
 	// 直接请求
 	sk, member := native.GetUserSK(1)
-	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ChainId: CHAIN1,
-		TxId: txId, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_REQ.String(), Pairs: pairs})
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
+		TxId: txId, ContractName: syscontract.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_REQ.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -87,10 +87,10 @@ func getPayloadInfo() ([]byte, []byte) {
 	if chainConfig == nil {
 		panic("chainConfig is empty")
 	}
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      CHAIN1,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		Method:       commonPb.ConfigFunction_CORE_UPDATE.String(),
+		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
+		Method:       syscontract.ChainConfigFunction_CORE_UPDATE.String(),
 		Parameters:   payloadPairs,
 		Sequence:     chainConfig.Sequence,
 		Endorsement:  nil,
@@ -163,8 +163,8 @@ func TestMultiSignVote(t *testing.T) {
 	}
 
 	sk, member := native.GetUserSK(signerIndex)
-	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ChainId: CHAIN1,
-		TxId: txId, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_VOTE.String(), Pairs: pairs})
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
+		TxId: txId, ContractName: syscontract.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_VOTE.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -188,8 +188,8 @@ func TestMultiSignQuery(t *testing.T) {
 	})
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT, ChainId: CHAIN1,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_QUERY.String(), Pairs: pairs})
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT, ChainId: CHAIN1,
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_QUERY.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -198,14 +198,14 @@ func getContractCreatePayloadInfo() ([]byte, []byte) {
 	var payloadPairs []*commonPb.KeyValuePair
 
 	wasmBin, _ := hex.DecodeString(native.BytesCode)
-	payload := &commonPb.ContractMgmtPayload{
+	payload := &commonPb.Payload{
 		ChainId: CHAIN1,
-		ContractId: &commonPb.ContractId{
+		ContractId: &commonPb.Contract{
 			ContractName:    "contract2",
 			ContractVersion: "1.0.0",
 			RuntimeType:     commonPb.RuntimeType_WASMER,
 		},
-		Method:     commonPb.ManageUserContractFunction_INIT_CONTRACT.String(),
+		Method:     syscontract.ContractManageFunction_INIT_CONTRACT.String(),
 		Parameters: payloadPairs,
 		ByteCode:   wasmBin,
 	}
@@ -265,8 +265,8 @@ func TestMultiSignContractReq(t *testing.T) {
 
 	// 直接请求
 	sk, member := native.GetUserSK(1)
-	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ChainId: CHAIN1,
-		TxId: txId, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_REQ.String(), Pairs: pairs})
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
+		TxId: txId, ContractName: syscontract.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_REQ.String(), Pairs: pairs})
 	processResults(resp, err)
 }
 
@@ -327,7 +327,7 @@ func TestMultiSignContractVote(t *testing.T) {
 	}
 
 	sk, member := native.GetUserSK(signerIndex)
-	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, ChainId: CHAIN1,
-		TxId: txId, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_VOTE.String(), Pairs: pairs})
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
+		TxId: txId, ContractName: syscontract.SystemContract_MULTI_SIGN.String(), MethodName: commonPb.MultiSignFunction_VOTE.String(), Pairs: pairs})
 	processResults(resp, err)
 }

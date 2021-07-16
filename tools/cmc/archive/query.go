@@ -46,7 +46,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 			if err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func newQueryTxOffChainCMD() *cobra.Command {
 
 			if blkWithRWSet.Block != nil {
 				for idx, tx := range blkWithRWSet.Block.Txs {
-					if tx.Header.TxId == args[0] {
+					if tx.Payload.TxId == args[0] {
 						txInfo = &common.TransactionInfo{
 							Transaction: tx,
 							BlockHeight: uint64(blkWithRWSet.Block.Header.BlockHeight),
@@ -189,7 +189,7 @@ func newQueryBlockByHashOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 			if err != nil {
 				return err
 			}
@@ -258,7 +258,7 @@ func newQueryBlockByTxIdOffChainCMD() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			//// 1.Chain Client
-			cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+			cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 			if err != nil {
 				return err
 			}

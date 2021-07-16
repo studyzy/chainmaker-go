@@ -1,10 +1,13 @@
 package main
 
 import (
+	"log"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 func SubscribeContractEvent() *cobra.Command {
@@ -20,9 +23,13 @@ func SubscribeContractEvent() *cobra.Command {
 }
 
 func subscribeContractEvent() error {
-	payload := &commonPb.SubscribeContractEventPayload{
-		Topic:        topic,
-		ContractName: contractName,
+	payload := &commonPb.Payload{
+		Parameters: []*commonPb.KeyValuePair{
+			{Key: syscontract.SubscribeContractEvent_TOPIC.String(), Value: []byte(topic)},
+			{Key: syscontract.SubscribeContractEvent_CONTRACT_NAME.String(), Value: []byte(contractName)},
+		},
+		//Topic:        topic,
+		//ContractName: contractName,
 	}
 
 	payloadBytes, err := proto.Marshal(payload)
@@ -30,7 +37,7 @@ func subscribeContractEvent() error {
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	_, err = subscribeRequest(sk3, client, commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO, chainId, payloadBytes)
+	_, err = subscribeRequest(sk3, client, syscontract.SubscribeFunction_SUBSCRIBE_CONTRACT_EVENT.String(), chainId, payloadBytes)
 	if err != nil {
 		return err
 	}

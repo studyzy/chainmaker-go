@@ -21,5 +21,5 @@ type Context struct {
 	Contract    Contract
 	Transaction Transaction
 	Message     Message
-	Parameters  map[string]string
+	Parameters  map[string][]byte
 }

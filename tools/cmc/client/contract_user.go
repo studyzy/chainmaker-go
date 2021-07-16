@@ -12,9 +12,11 @@ import (
 	"fmt"
 	"strings"
 
-	sdk "chainmaker.org/chainmaker/sdk-go"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
@@ -61,8 +63,9 @@ func createUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
-		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -88,8 +91,9 @@ func invokeUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagSendTimes, flagEnableCertHash,
-		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -109,9 +113,10 @@ func invokeContractTimesCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagSendTimes,
-		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagClientKeyFilePaths,
-		flagClientCrtFilePaths, flagEnableCertHash,
+		flagContractName, flagMethod, flagParams, flagTimeout, flagSyncResult, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagEnableCertHash,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -132,9 +137,10 @@ func getUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagConcurrency, flagTotalCountPerGoroutine, flagSdkConfPath, flagOrgId, flagChainId, flagSendTimes,
-		flagContractName, flagMethod, flagParams, flagTimeout, flagClientCrtFilePaths,
-		flagClientKeyFilePaths, flagEnableCertHash,
+		flagContractName, flagMethod, flagParams, flagTimeout, flagUserTlsCrtFilePath,
+		flagUserTlsKeyFilePath, flagEnableCertHash,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -155,8 +161,9 @@ func upgradeUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
-		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagRuntimeType, flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -182,8 +189,9 @@ func freezeUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -206,8 +214,9 @@ func unfreezeUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -230,8 +239,9 @@ func revokeUserContractCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagClientKeyFilePaths, flagClientCrtFilePaths,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
 	})
 
@@ -262,7 +272,7 @@ func createUserContract() error {
 		}
 	}
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -297,7 +307,7 @@ func createUserContract() error {
 		//	return fmt.Errorf("admin0 SendMultiSignReq failed, %s", err.Error())
 		//}
 		//
-		//err = checkProposalRequestResp(resp, true)
+		//err = util.CheckProposalRequestResp(resp, true)
 		//if err != nil {
 		//	return fmt.Errorf("admin0 checkProposalRequestResp failed, %s", err.Error())
 		//}
@@ -319,7 +329,7 @@ func createUserContract() error {
 		//		return fmt.Errorf("admin%d SendMultiSignVote failed, %s", i, err.Error())
 		//	}
 		//
-		//	err = checkProposalRequestResp(resp, true)
+		//	err = util.CheckProposalRequestResp(resp, true)
 		//	if err != nil {
 		//		return fmt.Errorf("admin%d checkProposalRequestResp failed, %s", i, err.Error())
 		//	}
@@ -350,7 +360,7 @@ func createUserContract() error {
 		//	return fmt.Errorf("SendContractManageRequest failed, %s", err.Error())
 		//}
 		//
-		//err = checkProposalRequestResp(resp, true)
+		//err = util.CheckProposalRequestResp(resp, true)
 		//if err != nil {
 		//	return fmt.Errorf("checkProposalRequestResp failed, %s", err.Error())
 		//}
@@ -375,7 +385,7 @@ func createUserContract() error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}
@@ -392,7 +402,7 @@ func invokeUserContract() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -415,7 +425,7 @@ func invokeContractTimes() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -439,7 +449,7 @@ func getUserContract() error {
 		err error
 	)
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -495,7 +505,7 @@ func upgradeUserContract() error {
 		}
 	}
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -537,7 +547,7 @@ func upgradeUserContract() error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}
@@ -568,7 +578,7 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		}
 	}
 
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
 	}
@@ -611,7 +621,7 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}

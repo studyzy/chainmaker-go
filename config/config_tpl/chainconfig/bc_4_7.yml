@@ -15,7 +15,7 @@ crypto:
 
 # 合约支持类型的配置
 contract:
-  enable_sql_support: false
+  enable_sql_support: false # 合约是否支持sql，此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
 
 # 交易、区块相关配置
 block:
@@ -43,6 +43,7 @@ consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,5-DPOS,10-POW)
   type: {consensus_type}
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
+  # 其中node_id为chainmaker.yml中 node.cert_file证书对应的nodeid
   nodes:
     - org_id: "{org1_id}"
       node_id:
@@ -87,33 +88,33 @@ consensus:
       value: "10"
     - key: stake.completionUnbondingEpochNum
       value: "1"
-    - key: stake.candidate:"{org1_peeraddr}"
+    - key: stake.candidate:{org1_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org2_peeraddr}"
+    - key: stake.candidate:{org2_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org3_peeraddr}"
+    - key: stake.candidate:{org3_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org4_peeraddr}"
+    - key: stake.candidate:{org4_peeraddr}
       value: "2500000"
-#    - key: stake.candidate:"{org5_peeraddr}"
+    #    - key: stake.candidate:{org5_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:"{org6_peeraddr}"
+    #    - key: stake.candidate:{org6_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:"{org7_peeraddr}"
+    #    - key: stake.candidate:{org7_peeraddr}
 #      value: "2500000"
-    - key: stake.nodeID:"{org1_peeraddr}"
+    - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
-    - key: stake.nodeID:"{org2_peeraddr}"
+    - key: stake.nodeID:{org2_peeraddr}
       value: "{org2_peerid}"
-    - key: stake.nodeID:"{org3_peeraddr}"
+    - key: stake.nodeID:{org3_peeraddr}
       value: "{org3_peerid}"
-    - key: stake.nodeID:"{org4_peeraddr}"
+    - key: stake.nodeID:{org4_peeraddr}
       value: "{org4_peerid}"
-#    - key: stake.nodeID:"{org5_peeraddr}"
+#    - key: stake.nodeID:{org5_peeraddr}
 #      value: "{org5_peerid}"
-#    - key: stake.nodeID:"{org6_peeraddr}"
+#    - key: stake.nodeID:{org6_peeraddr}
 #      value: "{org6_peerid}"
-#    - key: stake.nodeID:"{org7_peeraddr}"
+#    - key: stake.nodeID:{org7_peeraddr}
 #      value: "{org7_peerid}"
 
 # 信任组织和根证书

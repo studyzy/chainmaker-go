@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	"github.com/spf13/cobra"
 )
 
 func InvokeCMD() *cobra.Command {
@@ -68,7 +69,7 @@ func invoke() error {
 			return err
 		}
 
-		resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 			chainId, txId, payloadBytes)
 		if err != nil {
 			return err
@@ -92,7 +93,7 @@ func invoke() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//}

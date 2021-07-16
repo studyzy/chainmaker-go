@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"encoding/json"
 	"fmt"
 	"strconv"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -40,13 +42,13 @@ func getChainConfigByBlockHeight() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_height",
-		Value: strconv.Itoa(int(blockHeight)),
+		Value: []byte(strconv.Itoa(int(blockHeight))),
 	})
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), commonPb.ConfigFunction_GET_CHAIN_CONFIG_AT.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String(), pairs)
 	if err != nil {
 		return err
 	}
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err

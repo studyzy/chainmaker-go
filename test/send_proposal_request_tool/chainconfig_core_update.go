@@ -9,6 +9,7 @@ package main
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -44,18 +45,18 @@ func coreUpdate() error {
 	if txSchedulerTimeout > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_scheduler_timeout",
-			Value: strconv.Itoa(txSchedulerTimeout),
+			Value: []byte(strconv.Itoa(txSchedulerTimeout)),
 		})
 	}
 	if txSchedulerValidateTimeout > -100 {
 		pairs = append(pairs, &commonPb.KeyValuePair{
 			Key:   "tx_scheduler_validate_timeout",
-			Value: strconv.Itoa(txSchedulerValidateTimeout),
+			Value: []byte(strconv.Itoa(txSchedulerValidateTimeout)),
 		})
 	}
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_UPDATE_CHAIN_CONFIG, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), method: commonPb.ConfigFunction_CORE_UPDATE.String(), pairs: pairs, oldSeq: seq})
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
+		contractName: syscontract.SystemContract_CHAIN_CONFIG.String(), method: syscontract.ChainConfigFunction_CORE_UPDATE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}

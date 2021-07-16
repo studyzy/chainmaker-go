@@ -47,7 +47,7 @@ func (h *ResultKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInf
 	batch.Put([]byte(resultDBSavepointKey), lastBlockNumBytes)
 
 	txRWSets := blockInfo.TxRWSets
-	rwsetData := blockInfo.GetSerializedTxRWSets()
+	rwsetData := blockInfo.SerializedTxRWSets
 	for index, txRWSet := range txRWSets {
 		// 6. rwset: txID -> txRWSet
 		txRWSetBytes := rwsetData[index]
@@ -95,7 +95,7 @@ func (h *ResultKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializ
 		}
 
 		txRWSets := blockInfo.TxRWSets
-		rwsetData := blockInfo.GetSerializedTxRWSets()
+		rwsetData := blockInfo.SerializedTxRWSets
 		batch := types.NewUpdateBatch()
 		for index, txRWSet := range txRWSets {
 			// rwset: txID -> txRWSet
@@ -154,7 +154,7 @@ func (h *ResultKvDB) Close() {
 	h.DbHandle.Close()
 }
 
-func (h *ResultKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (h *ResultKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	h.Cache.AddBlock(blockHeight, batch)
 	go func() {

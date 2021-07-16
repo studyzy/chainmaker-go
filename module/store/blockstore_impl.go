@@ -14,10 +14,6 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
@@ -28,6 +24,10 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
@@ -91,7 +91,7 @@ func NewBlockStoreImpl(chainId string,
 		storeConfig:      storeConfig,
 	}
 
-	if err :=  blockStore.InitArchiveMgr(chainId); err != nil {
+	if err := blockStore.InitArchiveMgr(chainId); err != nil {
 		return nil, err
 	}
 
@@ -140,18 +140,22 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 		return err
 	}
 	//4. 初始化历史数据库
-	err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
-	if err != nil {
-		bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
-			block.Header.ChainId, block.Header.BlockHeight)
-		return err
+	if !bs.storeConfig.DisableHistoryDB {
+		err = bs.historyDB.InitGenesis(blockWithSerializedInfo)
+		if err != nil {
+			bs.logger.Errorf("chain[%s] failed to write historyDB, block[%d]",
+				block.Header.ChainId, block.Header.BlockHeight)
+			return err
+		}
 	}
 	//5. 初始化Result数据库
-	err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
-	if err != nil {
-		bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
-			block.Header.ChainId, block.Header.BlockHeight)
-		return err
+	if !bs.storeConfig.DisableResultDB {
+		err = bs.resultDB.InitGenesis(blockWithSerializedInfo)
+		if err != nil {
+			bs.logger.Errorf("chain[%s] failed to write resultDB, block[%d]",
+				block.Header.ChainId, block.Header.BlockHeight)
+			return err
+		}
 	}
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
@@ -310,8 +314,11 @@ func (bs *BlockStoreImpl) RestoreBlocks(serializedBlocks [][]byte) error {
 		if err != nil {
 			return err
 		}
-
-		blockInfos = append(blockInfos, bwsInfo)
+		_, s, err := serialization.SerializeBlock(bwsInfo)
+		if err != nil {
+			return err
+		}
+		blockInfos = append(blockInfos, s)
 	}
 
 	return bs.ArchiveMgr.RestoreBlock(blockInfos)
@@ -346,12 +353,12 @@ func (bs *BlockStoreImpl) GetHeightByHash(blockHash []byte) (uint64, error) {
 }
 
 // GetBlockHeaderByHeight returns a block header by given it's height, or returns nil if none exists.
-func (bs *BlockStoreImpl) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (bs *BlockStoreImpl) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	return bs.blockDB.GetBlockHeaderByHeight(height)
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
-func (bs *BlockStoreImpl) GetBlock(height int64) (*commonPb.Block, error) {
+func (bs *BlockStoreImpl) GetBlock(height uint64) (*commonPb.Block, error) {
 	return bs.blockDB.GetBlock(height)
 }
 
@@ -457,7 +464,7 @@ func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 
 // GetTxRWSetsByHeight returns all the rwsets corresponding to the block,
 // or returns nil if zhe block does not exist
-func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet, error) {
+func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height uint64) ([]*commonPb.TxRWSet, error) {
 	blockStoreInfo, err := bs.blockDB.GetFilteredBlock(height)
 	if err != nil || blockStoreInfo == nil {
 		return nil, err
@@ -483,7 +490,7 @@ func (bs *BlockStoreImpl) GetTxRWSetsByHeight(height int64) ([]*commonPb.TxRWSet
 
 // GetBlockWithRWSets returns the block and all the rwsets corresponding to the block,
 // or returns nil if zhe block does not exist
-func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRWSet, error) {
+func (bs *BlockStoreImpl) GetBlockWithRWSets(height uint64) (*storePb.BlockWithRWSet, error) {
 	block, err := bs.GetBlock(height)
 	if err != nil {
 		return nil, err
@@ -503,12 +510,12 @@ func (bs *BlockStoreImpl) GetBlockWithRWSets(height int64) (*storePb.BlockWithRW
 		//go func(i int, tx *commonPb.Transaction) {
 		//	defer bs.workersSemaphore.Release(1)
 		//	defer batchWG.Done()
-		txRWSet, err := bs.GetTxRWSet(tx.Header.TxId)
+		txRWSet, err := bs.GetTxRWSet(tx.Payload.TxId)
 		if err != nil {
 			return nil, err
 		}
 		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
-			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Header.TxId)
+			bs.logger.Errorf("not found rwset data in database by txid=%d, please check database", tx.Payload.TxId)
 			txRWSet = &commonPb.TxRWSet{}
 		}
 		blockWithRWSets.TxRWSets[i] = txRWSet
@@ -732,7 +739,12 @@ func (bs *BlockStoreImpl) getBlockFromLog(num uint64) (*serialization.BlockWithS
 		bs.logger.Errorf("read log failed, err:%s", err)
 		return nil, err
 	}
-	return serialization.DeserializeBlock(bytes)
+	blockWithRWSet, err := serialization.DeserializeBlock(bytes)
+	if err != nil {
+		return nil, err
+	}
+	_, s, err := serialization.SerializeBlock(blockWithRWSet)
+	return s, err
 }
 
 func (bs *BlockStoreImpl) deleteBlockFromLog(num uint64) error {
@@ -820,5 +832,13 @@ func (bs *BlockStoreImpl) InitArchiveMgr(chainId string) error {
 }
 
 func (bs *BlockStoreImpl) isSupportArchive() bool {
-	return bs.storeConfig.BlockDbConfig.IsKVDB() && bs.storeConfig.ResultDbConfig.IsKVDB()
+	return bs.storeConfig.BlockDbConfig.IsKVDB() &&
+		(bs.storeConfig.ResultDbConfig != nil && bs.storeConfig.ResultDbConfig.IsKVDB())
 }
+func (bs *BlockStoreImpl) GetContractByName(name string) (*commonPb.Contract, error) {
+	return utils.GetContractByName(bs.stateDB.ReadObject, name)
+}
+func (bs *BlockStoreImpl) GetContractBytecode(name string) ([]byte, error) {
+	return utils.GetContractBytecode(bs.stateDB.ReadObject, name)
+}
+

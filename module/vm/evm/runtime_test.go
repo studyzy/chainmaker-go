@@ -13,7 +13,7 @@ func TestRuntimeInstance_Install(t *testing.T) {
 	method := "init_contract"
 	test.CertFilePath = "./test/config/admin1.sing.crt"
 	test.ByteCodeFile = "./test/contracts/contract01/token.bin"
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	contractId, txContext, byteCode := test.InitContextTest(common.RuntimeType_EVM)
 
 	runtimeInstance := &RuntimeInstance{
@@ -26,7 +26,7 @@ func TestRuntimeInstance_Install(t *testing.T) {
 
 	byteCode, _ = hex.DecodeString(string(byteCode))
 	test.BaseParam(parameters)
-	parameters["data"] = "00000000000000000000000013f0c1639a9931b0ce17e14c83f96d4732865b58"
+	parameters["data"] = []byte( "00000000000000000000000013f0c1639a9931b0ce17e14c83f96d4732865b58")
 	contractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 	loggerByChain.Infof("ContractResult Code:%+v", contractResult.Code)
 	loggerByChain.Infof("ContractResult ContractEvent:%+v", contractResult.ContractEvent)
@@ -39,7 +39,7 @@ func TestRuntimeInstance_Invoke(t *testing.T) {
 	method := "4f9d719e" //testEvent
 	test.ByteCodeFile = "./test/contracts/contract01/token_body.bin"
 	test.CertFilePath = "./test/config/admin1.sing.crt"
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	contractId, txContext, byteCode := test.InitContextTest(common.RuntimeType_EVM)
 
 	runtimeInstance := &RuntimeInstance{
@@ -52,7 +52,7 @@ func TestRuntimeInstance_Invoke(t *testing.T) {
 
 	byteCode, _ = hex.DecodeString(string(byteCode))
 	test.BaseParam(parameters)
-	parameters["data"] = "4f9d719e"
+	parameters["data"] = []byte("4f9d719e")
 	contractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 	loggerByChain.Infof("ContractResult Code:%+v", contractResult.Code)
 	loggerByChain.Infof("ContractResult ContractEvent:%+v", contractResult.ContractEvent)

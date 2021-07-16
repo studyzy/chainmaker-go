@@ -12,10 +12,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
@@ -129,19 +131,16 @@ func certAdd() error {
 	txId := utils.GetRandTxId()
 	pairs := make([]*commonPb.KeyValuePair, 0)
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
-		Method:       commonPb.CertManageFunction_CERT_ADD.String(),
+		ContractName: syscontract.SystemContract_CERT_MANAGE.String(),
+		Method:       syscontract.CertManageFunction_CERT_ADD.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-		chainId, txId, payloadBytes)
+
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -172,23 +171,19 @@ func certDelete() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certHash,
-		Value: certHashes,
+		Value: []byte(certHashes),
 	})
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
-		Method:       commonPb.CertManageFunction_CERTS_DELETE.String(),
+		ContractName: syscontract.SystemContract_CERT_MANAGE.String(),
+		Method:       syscontract.CertManageFunction_CERTS_DELETE.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
 
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -212,13 +207,13 @@ func certQuery() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certHash,
-		Value: certHashes,
+		Value: []byte(certHashes),
 	})
-	payloadBytes, err := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), commonPb.CertManageFunction_CERTS_QUERY.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_CERT_MANAGE.String(), syscontract.CertManageFunction_CERTS_QUERY.String(), pairs)
 	if err != nil {
 		return err
 	}
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if err != nil {
 		return err
@@ -245,11 +240,11 @@ func certFrozen() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "certs",
-		Value: certs,
+		Value: []byte(certs),
 	})
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_FREEZE.String(), pairs: pairs, oldSeq: seq})
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
+		contractName: syscontract.SystemContract_CERT_MANAGE.String(), method: syscontract.CertManageFunction_CERTS_FREEZE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -284,15 +279,15 @@ func certUnfrozen() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "certs",
-		Value: certs,
+		Value: []byte(certs),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certHash,
-		Value: certHashes,
+		Value: []byte(certHashes),
 	})
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_UNFREEZE.String(), pairs: pairs, oldSeq: seq})
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
+		contractName: syscontract.SystemContract_CERT_MANAGE.String(), method: syscontract.CertManageFunction_CERTS_UNFREEZE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}
@@ -322,11 +317,11 @@ func certRevocation() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   certCrlStr,
-		Value: certCrl,
+		Value: []byte(certCrl),
 	})
 
-	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId: chainId,
-		contractName: commonPb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), method: commonPb.CertManageFunction_CERTS_REVOKE.String(), pairs: pairs, oldSeq: seq})
+	resp, txId, err := configUpdateRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT, chainId: chainId,
+		contractName: syscontract.SystemContract_CERT_MANAGE.String(), method: syscontract.CertManageFunction_CERTS_REVOKE.String(), pairs: pairs, oldSeq: seq})
 	if err != nil {
 		return err
 	}

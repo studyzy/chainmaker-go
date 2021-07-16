@@ -8,14 +8,15 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
+	"github.com/spf13/cobra"
 )
 
 func CreateContractCMD() *cobra.Command {
@@ -89,40 +90,22 @@ func createContract() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//	wasmBin, err = hex.DecodeString(string(wasmBin))
 	//}
 	//var pairs []*commonPb.KeyValuePair
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "1.0.0",
-			RuntimeType:     commonPb.RuntimeType(runTime),
-		},
-		Method:      method,
-		Parameters:  pairs,
-		ByteCode:    wasmBin,
-		Endorsement: nil,
-	}
+	//if endorsement, err := acSign(payload); err == nil {
+	//	payload.Endorsement = endorsement
+	//} else {
+	//	return err
+	//}
 
-	if endorsement, err := acSign(payload); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		return err
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}

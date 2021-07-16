@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package serialization
 
 import (
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"testing"
 
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"github.com/stretchr/testify/assert"
@@ -20,17 +20,17 @@ import (
 
 var chainId = "testchain1"
 
-func generateBlockHash(chainId string, height int64) []byte {
+func generateBlockHash(chainId string, height uint64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
 	return blockHash[:]
 }
 
-func generateTxId(chainId string, height int64, index int) string {
+func generateTxId(chainId string, height uint64, index int) string {
 	txIdBytes := sha256.Sum256([]byte(fmt.Sprintf("%s-%d-%d", chainId, height, index)))
 	return hex.EncodeToString(txIdBytes[:32])
 }
 
-func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.BlockWithRWSet {
+func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.BlockWithRWSet {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -40,13 +40,18 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 
 	for i := 0; i < txNum; i++ {
 		tx := &commonPb.Transaction{
-			Header: &commonPb.TxHeader{
+			Payload: &commonPb.Payload{
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
-				Sender: &acPb.SerializedMember{
-					OrgId: "org1",
-				},
+
 			},
+			Sender: &commonPb.EndorsementEntry{
+				Signer:    &acPb.Member{
+					OrgId: "org1",
+					MemberInfo: []byte("User1"),
+				},
+				Signature: []byte("signature1"),
+			} ,
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{
@@ -63,7 +68,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 		key := fmt.Sprintf("key_%d", i)
 		value := fmt.Sprintf("value_%d", i)
 		txRWset := &commonPb.TxRWSet{
-			TxId: block.Txs[i].Header.TxId,
+			TxId: block.Txs[i].Payload.TxId,
 			TxWrites: []*commonPb.TxWrite{
 				{
 					Key:          []byte(key),
@@ -80,11 +85,11 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 
 func TestSerializeBlock(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		block := createBlockAndRWSets(chainId, int64(i), 5000)
+		block := createBlockAndRWSets(chainId, uint64(i), 5000)
 		bytes, blockInfo, err := SerializeBlock(block)
 		assert.Nil(t, err)
 		assert.Equal(t, blockInfo.Block.String(), block.Block.String())
-		assert.Equal(t, len(block.Block.Txs), len(blockInfo.GetSerializedTxs()))
+		assert.Equal(t, len(block.Block.Txs), len(blockInfo.SerializedTxs))
 		assert.Equal(t, len(block.TxRWSets), len(blockInfo.TxRWSets))
 		result, err := DeserializeBlock(bytes)
 		assert.Nil(t, err)

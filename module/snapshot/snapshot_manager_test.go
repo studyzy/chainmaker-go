@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"testing"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,17 +53,17 @@ func TestChainedSnapshot(t *testing.T) {
 	require.Equal(t, nil, snapshot3.GetPreSnapshot())
 }
 
-func createNewBlock(height int64, timeStamp int64) *commonPb.Block {
+func createNewBlock(height uint64, timeStamp int64) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			BlockHeight:    height,
 			PreBlockHash:   nil,
 			BlockHash:      nil,
-			BlockVersion:   nil,
+			BlockVersion:   0,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			BlockTimestamp: timeStamp,
-			Proposer:       []byte{1, 2, 3},
+			Proposer:       &accesscontrol.Member{MemberInfo: []byte{1, 2, 3}},
 			ConsensusArgs:  nil,
 			TxCount:        0,
 			Signature:      nil,

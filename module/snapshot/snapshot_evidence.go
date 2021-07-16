@@ -8,7 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"errors"
+	"math"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
@@ -132,7 +134,7 @@ func (s *SnapshotEvidence) apply(tx *commonPb.Transaction, txRWSet *commonPb.TxR
 	s.delegate.txRWSetTable = append(s.delegate.txRWSetTable, txRWSet)
 
 	// Add to tx result map
-	s.delegate.txResultMap[tx.Header.TxId] = txResult
+	s.delegate.txResultMap[tx.Payload.TxId] = txResult
 
 	// Add to transaction table
 	s.delegate.txTable = append(s.delegate.txTable, tx)
@@ -148,9 +150,9 @@ func (s *SnapshotEvidence) IsSealed() bool {
 }
 
 // get block height for current snapshot
-func (s *SnapshotEvidence) GetBlockHeight() int64 {
+func (s *SnapshotEvidence) GetBlockHeight() uint64 {
 	if s.delegate == nil {
-		return -1
+		return math.MaxUint64
 	}
 	return s.delegate.GetBlockHeight()
 }
@@ -193,10 +195,10 @@ func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 	if isSql {
 		for i := 0; i < txCount; i++ {
 			dag.Vertexes[i] = &commonPb.DAG_Neighbor{
-				Neighbors: make([]int32, 0, 1),
+				Neighbors: make([]uint32, 0, 1),
 			}
 			if i != 0 {
-				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, int32(i-1))
+				dag.Vertexes[i].Neighbors = append(dag.Vertexes[i].Neighbors, uint32(i-1))
 			}
 		}
 	} else {
@@ -212,7 +214,7 @@ func (s *SnapshotEvidence) BuildDAG(isSql bool) *commonPb.DAG {
 }
 
 // Get Block Proposer for current snapshot
-func (s *SnapshotEvidence) GetBlockProposer() []byte {
+func (s *SnapshotEvidence) GetBlockProposer() *accesscontrol.Member {
 	if s.delegate == nil {
 		return nil
 	}

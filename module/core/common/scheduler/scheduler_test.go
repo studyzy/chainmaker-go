@@ -44,17 +44,17 @@ package scheduler
 //	}
 //}
 //
-//func newTx(txId string, contractId *commonpb.ContractId, parameterMap map[string]string) *commonpb.Transaction {
+//func newTx(txId string, contractId *commonpb.Contract, parameterMap map[string]string) *commonpb.Transaction {
 //
 //	var parameters []*commonpb.KeyValuePair
 //	for key, value := range parameterMap {
 //		parameters = append(parameters, &commonpb.KeyValuePair{
 //			Key:   key,
-//			Value: value,
+//			Value: []byte(value),
 //		})
 //	}
-//	payload := &commonpb.QueryPayload{
-//		ContractName: contractId.ContractName,
+//	payload := &commonpb.Payload{
+//		ContractName: contractId.Name,
 //		Method:       "method",
 //		Parameters:   parameters,
 //	}
@@ -63,7 +63,7 @@ package scheduler
 //		Header: &commonpb.TxHeader{
 //			ChainId:        "",
 //			Sender:         nil,
-//			TxType:         commonpb.TxType_QUERY_USER_CONTRACT,
+//			TxType:         commonpb.TxType_QUERY_CONTRACT,
 //			TxId:           txId,
 //			Timestamp:      0,
 //			ExpirationTime: 0,
@@ -111,7 +111,7 @@ package scheduler
 //	}
 //}
 //
-//func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonpb.Transaction, *mock.MockSnapshot, *TxSchedulerImpl, *commonpb.ContractId, *commonpb.Block) {
+//func prepare(t *testing.T) (*mock.MockVmManager, []*commonpb.TxRWSet, []*commonpb.Transaction, *mock.MockSnapshot, *TxSchedulerImpl, *commonpb.Contract, *commonpb.Block) {
 //	var txRWSetTable = make([]*commonpb.TxRWSet, 2)
 //	var txTable = make([]*commonpb.Transaction, 2)
 //
@@ -128,7 +128,7 @@ package scheduler
 //
 //	scheduler := NewTxScheduler(vmMgr, chainConf)
 //
-//	contractId := &commonpb.ContractId{
+//	contractId := &commonpb.Contract{
 //		ContractName:    "ContractName",
 //		ContractVersion: "1",
 //		RuntimeType:     commonpb.RuntimeType_WASMER,
@@ -161,34 +161,34 @@ package scheduler
 //	txTable[0] = tx0
 //	txTable[1] = tx1
 //	txRWSetTable[0] = &commonpb.TxRWSet{
-//		TxId: tx0.Header.TxId,
+//		TxId: tx0.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K1"),
 //			Value:        []byte("V"),
 //		}},
 //		TxWrites: []*commonpb.TxWrite{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K2"),
 //			Value:        []byte("V"),
 //		}},
 //	}
 //	txRWSetTable[1] = &commonpb.TxRWSet{
-//		TxId: tx1.Header.TxId,
+//		TxId: tx1.Payload.TxId,
 //		TxReads: []*commonpb.TxRead{
 //			{
-//				ContractName: contractId.ContractName,
+//				ContractName: contractId.Name,
 //				Key:          []byte("K2"),
 //				Value:        []byte("V"),
 //			},
 //			{
-//				ContractName: contractId.ContractName,
+//				ContractName: contractId.Name,
 //				Key:          []byte("K2"),
 //				Value:        []byte("V"),
 //			},
 //		},
 //		TxWrites: []*commonpb.TxWrite{{
-//			ContractName: contractId.ContractName,
+//			ContractName: contractId.Name,
 //			Key:          []byte("K3"),
 //			Value:        []byte("V"),
 //		}},

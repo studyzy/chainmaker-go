@@ -14,15 +14,15 @@ import (
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker-go/utils"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -207,7 +207,7 @@ func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*co
 	timeLasts := make([]int64, 0)
 	var err error
 	var lastBlock *commonpb.Block
-	txCapacity := int64(v.chainConf.ChainConfig().Block.BlockTxCapacity)
+	txCapacity := uint32(v.chainConf.ChainConfig().Block.BlockTxCapacity)
 	if block.Header.TxCount > txCapacity {
 		return nil, nil, timeLasts, fmt.Errorf("txcapacity expect <= %d, got %d)", txCapacity, block.Header.TxCount)
 	}
@@ -255,16 +255,16 @@ func (v *BlockVerifierImpl) cutBlocks(blocksToCut []*commonpb.Block, blockToKeep
 	cutTxs := make([]*commonpb.Transaction, 0)
 	txMap := make(map[string]interface{})
 	for _, tx := range blockToKeep.Txs {
-		txMap[tx.Header.TxId] = struct{}{}
+		txMap[tx.Payload.TxId] = struct{}{}
 	}
 	for _, blockToCut := range blocksToCut {
 		v.log.Infof("cut block block hash: %s, height: %v", blockToCut.Header.BlockHash, blockToCut.Header.BlockHeight)
 		for _, txToCut := range blockToCut.Txs {
-			if _, ok := txMap[txToCut.Header.TxId]; ok {
+			if _, ok := txMap[txToCut.Payload.TxId]; ok {
 				// this transaction is kept, do NOT cut it.
 				continue
 			}
-			v.log.Debugf("cut tx hash: %s", txToCut.Header.TxId)
+			v.log.Debugf("cut tx hash: %s", txToCut.Payload.TxId)
 			cutTxs = append(cutTxs, txToCut)
 		}
 	}

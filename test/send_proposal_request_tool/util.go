@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
@@ -26,22 +27,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
-	payload := &commonPb.QueryPayload{
+func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) (protocol.SigningMember, error) {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMember, error) {
 	skPEM, err := sk3.String()
 	if err != nil {
 		return nil, err
@@ -81,8 +77,8 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func acSign(msg *commonPb.ContractMgmtPayload) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
+func acSign(msg *commonPb.Payload) ([]*commonPb.EndorsementEntry, error) {
+	//msg.Endorsement = nil
 	bytes, _ := proto.Marshal(msg)
 
 	signers := make([]protocol.SigningMember, 0)
@@ -114,10 +110,10 @@ func acSign(msg *commonPb.ContractMgmtPayload) ([]*commonPb.EndorsementEntry, er
 		}
 
 		// 构造Sender
-		sender1 := &acPb.SerializedMember{
+		sender1 := &acPb.Member{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
-			IsFullCert: true,
+			//IsFullCert: true,
 		}
 
 		signer, err := getSigner(sk, sender1)

@@ -18,6 +18,6 @@ type mempoolTxs struct {
 }
 
 type valInPendingCache struct {
-	inBlockHeight int64
+	inBlockHeight uint64
 	tx            *commonPb.Transaction
 }

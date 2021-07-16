@@ -8,18 +8,19 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"fmt"
+	"time"
+
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"time"
 )
 
 func main() {
-	payload := &commonPb.TxHeader{
+	payload := &commonPb.Payload{
 		ChainId:        "chain1",
-		Sender:         &acPb.SerializedMember{OrgId: "wx-org1.chainmaker.com", IsFullCert: false, MemberInfo: []byte{'a', 'b', 'c', 'd'}},
-		TxType:         commonPb.TxType_INVOKE_USER_CONTRACT,
+		Sender:         &acPb.Member{OrgId: "wx-org1.chainmaker.com", MemberType: acPb.MemberType_CERT_HASH, MemberInfo: []byte{'a', 'b', 'c', 'd'}},
+		TxType:         commonPb.TxType_INVOKE_CONTRACT,
 		TxId:           "iiuowerytqwerewrwetretweryqooooereuy",
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: time.Now().Unix() + 20,

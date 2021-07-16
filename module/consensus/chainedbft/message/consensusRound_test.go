@@ -31,7 +31,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 		VoteData: &chainedbftpb.VoteData{
 			Level:     1,
 			Height:    1,
-			BlockID:   blkID,
+			BlockId:   blkID,
 			AuthorIdx: 1,
 		},
 	}
@@ -40,7 +40,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 			Level:     1,
 			Height:    1,
 			NewView:   true,
-			BlockID:   blkID,
+			BlockId:   blkID,
 			AuthorIdx: 2,
 		},
 	}
@@ -48,7 +48,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 		VoteData: &chainedbftpb.VoteData{
 			Level:     1,
 			Height:    1,
-			BlockID:   blkID,
+			BlockId:   blkID,
 			NewView:   true,
 			AuthorIdx: 1,
 		},
@@ -57,7 +57,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 		VoteData: &chainedbftpb.VoteData{
 			Level:     1,
 			Height:    1,
-			BlockID:   blkID,
+			BlockId:   blkID,
 			AuthorIdx: 2,
 		},
 	}
@@ -65,7 +65,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 		VoteData: &chainedbftpb.VoteData{
 			Level:     1,
 			Height:    1,
-			BlockID:   blkID,
+			BlockId:   blkID,
 			NewView:   true,
 			AuthorIdx: 2,
 		},
@@ -74,14 +74,14 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 		VoteData: &chainedbftpb.VoteData{
 			Level:     1,
 			Height:    1,
-			BlockID:   blkID,
+			BlockId:   blkID,
 			NewView:   true,
 			AuthorIdx: 3,
 		},
 	}
 	add, err := levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node1VoteBlk},
 		},
 	}, 3)
@@ -90,7 +90,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node2VoteBlkAndTimeOut},
 		},
 	}, 3)
@@ -99,7 +99,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node1VoteBlkAndTimeOut},
 		},
 	}, 3)
@@ -110,7 +110,7 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 	// node2 first vote block; second vote newView
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node2VoteBlk},
 		},
 	}, 3)
@@ -118,26 +118,26 @@ func TestCheckVoteDoneWithBlock2(t *testing.T) {
 	require.NoError(t, err, "shouldn't error")
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node2VoteBlkAndTimeOut2},
 		},
 	}, 3)
 	require.False(t, add, "add vote failed")
 	require.NoError(t, err, "shouldn't error")
 
-	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.False(t, done)
 
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&node3VoteBlkAndTimeOut},
 		},
 	}, 3)
 	require.True(t, add, "add vote success")
 	require.NoError(t, err, "shouldn't error")
 
-	doneBlkID, isNewView, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	doneBlkID, isNewView, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.False(t, isNewView)
 	require.True(t, done)
 	require.EqualValues(t, doneBlkID, blkID)
@@ -160,34 +160,34 @@ func TestCheckVoteDoneWithBlock(t *testing.T) {
 	}
 	add, err := levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteNewView1},
 		},
 	}, 3)
 	require.True(t, add, "add vote success")
 	require.NoError(t, err, "shouldn't error")
 
-	// 2. add blockID vote2 with level1
+	// 2. add BlockId vote2 with level1
 	voteBlock1 := chainedbftpb.VoteMsg{
 		VoteData: &chainedbftpb.VoteData{
-			Level: 1, Height: 1, AuthorIdx: 2, BlockID: []byte(utils.GetRandTxId()),
+			Level: 1, Height: 1, AuthorIdx: 2, BlockId: []byte(utils.GetRandTxId()),
 		},
 	}
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock1},
 		},
 	}, 3)
 	require.True(t, add, "add vote success")
 	require.NoError(t, err, "shouldn't error")
 
-	// 3. add blockID vote3 with level1
+	// 3. add BlockId vote3 with level1
 	voteBlock2 := voteBlock1
 	voteBlock2.VoteData.AuthorIdx = 3
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock2},
 		},
 	}, 3)
@@ -195,15 +195,15 @@ func TestCheckVoteDoneWithBlock(t *testing.T) {
 	require.NoError(t, err, "shouldn't error")
 
 	// 4. check vote done should be false
-	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.False(t, done, "should not be done")
 
-	// 5. add blockID vote4 with level1
+	// 5. add BlockId vote4 with level1
 	voteBlock3 := voteBlock1
 	voteBlock3.VoteData.AuthorIdx = 4
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock3},
 		},
 	}, 3)
@@ -211,10 +211,10 @@ func TestCheckVoteDoneWithBlock(t *testing.T) {
 	require.NoError(t, err, "shouldn't error")
 
 	// 7. check vote done should be false
-	voteBlockID, voteNewView, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	voteBlockId, voteNewView, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.True(t, done, "should be done")
 	require.False(t, voteNewView, "should vote newview")
-	require.EqualValues(t, voteBlockID, voteBlock2.VoteData.BlockID)
+	require.EqualValues(t, voteBlockId, voteBlock2.VoteData.BlockId)
 }
 
 func TestCheckVoteDoneWithNewView(t *testing.T) {
@@ -231,7 +231,7 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	}
 	add, err := levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteNewView1},
 		},
 	}, 3)
@@ -243,7 +243,7 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	voteNewView2.VoteData.AuthorIdx = 2
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteNewView2},
 		},
 	}, 3)
@@ -251,18 +251,18 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	require.NoError(t, err, "shouldn't error")
 
 	// 3. check vote done should be false
-	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	_, _, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.False(t, done, "should not be done")
 
-	// 4. add blockID vote3 with level1
+	// 4. add BlockId vote3 with level1
 	voteBlock := chainedbftpb.VoteMsg{
 		VoteData: &chainedbftpb.VoteData{
-			Level: 1, Height: 1, AuthorIdx: 3, BlockID: []byte(utils.GetRandTxId()),
+			Level: 1, Height: 1, AuthorIdx: 3, BlockId: []byte(utils.GetRandTxId()),
 		},
 	}
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock},
 		},
 	}, 3)
@@ -270,7 +270,7 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	require.NoError(t, err, "shouldn't error")
 
 	// 5. check vote done should be false
-	_, _, done = levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	_, _, done = levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.False(t, done, "should not be done")
 
 	// 6. add newView vote4 with level1
@@ -278,7 +278,7 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	voteNewView3.VoteData.AuthorIdx = 4
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteNewView3},
 		},
 	}, 3)
@@ -286,10 +286,10 @@ func TestCheckVoteDoneWithNewView(t *testing.T) {
 	require.NoError(t, err, "shouldn't error")
 
 	// 7. check vote done should be false
-	voteBlockID, voteNewView, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VoteMessage)
+	voteBlockId, voteNewView, done := levelVotes.checkVoteDone(1, chainedbftpb.MessageType_VOTE_MESSAGE)
 	require.True(t, done, "should be done")
 	require.True(t, voteNewView, "should vote newview")
-	require.Nil(t, voteBlockID, "should blockId is null")
+	require.Nil(t, voteBlockId, "should BlockId is null")
 }
 
 func TestInsertVote(t *testing.T) {
@@ -306,7 +306,7 @@ func TestInsertVote(t *testing.T) {
 	}
 	add, err := levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteNewView1},
 		},
 	}, 3)
@@ -316,7 +316,7 @@ func TestInsertVote(t *testing.T) {
 	// 2. add same vote should error
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteNewView1},
 		},
 	}, 3)
@@ -326,12 +326,12 @@ func TestInsertVote(t *testing.T) {
 	// add different vote in same level and same author
 	voteBlock := chainedbftpb.VoteMsg{
 		VoteData: &chainedbftpb.VoteData{
-			Level: 1, Height: 1, AuthorIdx: 1, BlockID: []byte(utils.GetRandTxId()),
+			Level: 1, Height: 1, AuthorIdx: 1, BlockId: []byte(utils.GetRandTxId()),
 		},
 	}
 	add, err = levelVotes.insertVote(1, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock},
 		},
 	}, 3)

@@ -17,7 +17,7 @@ import (
 
 type GovernanceContractImp struct {
 	log                *logger.CMLogger
-	Height             int64 //Cache height
+	Height             uint64 //Cache height
 	store              protocol.BlockchainStore
 	ledger             protocol.LedgerCache
 	governmentContract *consensusPb.GovernanceContract //Cache government data
@@ -122,7 +122,7 @@ func (gcr *GovernanceContractImp) GetMembers() interface{} {
 	var members []*consensusPb.GovernanceMember
 	for _, member := range governmentContract.Members {
 		members = append(members, &consensusPb.GovernanceMember{
-			Index: member.Index, NodeID: member.NodeID,
+			Index: member.Index, NodeId: member.NodeId,
 		})
 	}
 	return members
@@ -138,7 +138,7 @@ func (gcr *GovernanceContractImp) GetValidators() interface{} {
 	var members []*consensusPb.GovernanceMember
 	for _, member := range governmentContract.Validators {
 		members = append(members, &consensusPb.GovernanceMember{
-			Index: member.Index, NodeID: member.NodeID,
+			Index: member.Index, NodeId: member.NodeId,
 		})
 	}
 	return members
@@ -155,7 +155,7 @@ func (gcr *GovernanceContractImp) GetNextValidators() interface{} {
 	for _, member := range governmentContract.NextValidators {
 		newMember := &consensusPb.GovernanceMember{
 			Index:  member.Index,
-			NodeID: member.NodeID,
+			NodeId: member.NodeId,
 		}
 		members = append(members, newMember)
 	}

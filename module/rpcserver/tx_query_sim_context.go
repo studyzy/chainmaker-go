@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
+	"chainmaker.org/chainmaker-go/utils"
+	"errors"
+	"fmt"
+
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"errors"
-	"fmt"
-	"github.com/gogo/protobuf/proto"
 )
 
 // Storage interface for smart contracts, implement TxSimContext
@@ -32,15 +33,20 @@ type txQuerySimContextImpl struct {
 	hisResult        []*callContractResult
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
+	blockVersion     uint32
 }
 
 type callContractResult struct {
 	contractName string
 	method       string
-	param        map[string]string
+	param        map[string][]byte
 	depth        int
 	gasUsed      uint64
 	result       []byte
+}
+
+func (s *txQuerySimContextImpl) GetBlockVersion() uint32 {
+	return s.blockVersion
 }
 
 // StateDB & ReadWriteSet
@@ -95,23 +101,19 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 	return s.blockchainStore.SelectObject(contractName, startKey, limit)
 }
 
-func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {
-	if creatorByte, err := s.Get(commonPb.ContractName_SYSTEM_CONTRACT_STATE.String(), []byte(protocol.ContractCreator+contractName)); err != nil {
+func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Member {
+	contract, err := utils.GetContractByName(s.Get, contractName)
+	if err != nil {
 		return nil
-	} else {
-		creator := &acPb.SerializedMember{}
-		if err = proto.Unmarshal(creatorByte, creator); err != nil {
-			return nil
-		}
-		return creator
 	}
+	return contract.Creator
 }
 
-func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
-	return s.tx.Header.Sender
+func (s *txQuerySimContextImpl) GetSender() *acPb.Member {
+	return s.tx.Sender.Signer
 }
 
-func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
+func (s *txQuerySimContextImpl) GetBlockHeight() uint64 {
 	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
 		return 0
 	} else {
@@ -119,7 +121,7 @@ func (s *txQuerySimContextImpl) GetBlockHeight() int64 {
 	}
 }
 
-func (s *txQuerySimContextImpl) GetBlockProposer() []byte {
+func (s *txQuerySimContextImpl) GetBlockProposer() *acPb.Member {
 	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
 		return nil
 	} else {
@@ -184,7 +186,7 @@ func (s *txQuerySimContextImpl) GetChainNodesInfoProvider() (protocol.ChainNodes
 
 func (s *txQuerySimContextImpl) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	txRwSet := &commonPb.TxRWSet{
-		TxId:     s.tx.Header.TxId,
+		TxId:     s.tx.Payload.TxId,
 		TxReads:  nil,
 		TxWrites: nil,
 	}
@@ -225,12 +227,13 @@ func constructKey(contractName string, key []byte) string {
 	return contractName + string(key)
 }
 
-func (s *txQuerySimContextImpl) CallContract(contractId *commonPb.ContractId, method string, byteCode []byte, parameter map[string]string, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
+	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
@@ -238,19 +241,26 @@ func (s *txQuerySimContextImpl) CallContract(contractId *commonPb.ContractId, me
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    commonPb.ContractResultCode_FAIL,
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
-	r, code := s.vmManager.RunContract(contractId, method, byteCode, parameter, s, s.gasUsed, refTxType)
+	if len(byteCode) == 0 {
+		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		if err != nil {
+			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+		}
+		byteCode = dbByteCode
+	}
+	r, code := s.vmManager.RunContract(contract, method, byteCode, parameter, s, s.gasUsed, refTxType)
 
 	result := callContractResult{
 		depth:        s.currentDepth,
 		gasUsed:      s.gasUsed,
 		result:       r.Result,
-		contractName: contractId.ContractName,
+		contractName: contract.Name,
 		method:       method,
 		param:        parameter,
 	}

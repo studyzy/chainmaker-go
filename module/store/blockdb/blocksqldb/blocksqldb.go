@@ -11,12 +11,12 @@ import (
 	"runtime"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -45,7 +45,7 @@ func (db *BlockSqlDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	return height, nil
 }
 
-func (db *BlockSqlDB) GetBlockHeaderByHeight(height int64) (*commonPb.BlockHeader, error) {
+func (db *BlockSqlDB) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader, error) {
 	sql := "SELECT * from block_infos WHERE block_height=?"
 	blockInfo, err := db.getBlockInfoBySql(sql, height)
 	if err != nil {
@@ -259,7 +259,7 @@ func (b *BlockSqlDB) getFullBlockBySql(sql string, values ...interface{}) (*comm
 }
 
 // GetBlock returns a block given it's block height, or returns nil if none exists.
-func (b *BlockSqlDB) GetBlock(height int64) (*commonPb.Block, error) {
+func (b *BlockSqlDB) GetBlock(height uint64) (*commonPb.Block, error) {
 	return b.getFullBlockBySql("select * from block_infos where block_height =?", height)
 }
 
@@ -283,7 +283,7 @@ func (b *BlockSqlDB) GetLastConfigBlock() (*commonPb.Block, error) {
 }
 
 // GetFilteredBlock returns a filtered block given it's block height, or return nil if none exists.
-func (b *BlockSqlDB) GetFilteredBlock(height int64) (*storePb.SerializedBlock, error) {
+func (b *BlockSqlDB) GetFilteredBlock(height uint64) (*storePb.SerializedBlock, error) {
 	blockInfo, err := b.getBlockInfoBySql("select * from block_infos where block_height = ?", height)
 	if err != nil {
 		return nil, err
@@ -322,6 +322,9 @@ func (b *BlockSqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
 func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
+	if len(txId)==0{
+		return nil, errors.New("parameter is null")
+	}
 	var txInfo TxInfo
 	res, err := b.db.QuerySingle("select * from tx_infos where tx_id = ?", txId)
 	if err != nil {
@@ -379,7 +382,7 @@ func (b *BlockSqlDB) TxExists(txId string) (bool, error) {
 }
 
 //获得某个区块高度下的所有交易
-func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight int64) ([]*commonPb.Transaction, error) {
+func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight uint64) ([]*commonPb.Transaction, error) {
 	res, err := b.db.QueryMulti("select * from tx_infos where block_height = ? order by offset", blockHeight)
 	if err != nil {
 		return nil, err

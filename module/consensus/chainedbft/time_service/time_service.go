@@ -141,7 +141,7 @@ func (ts *TimerService) loop() {
 
 func (ts *TimerService) processEvent(newEvent *TimerEvent) {
 	ts.logger.Debugf("received a timer event: %s, last timer event: %s", newEvent, ts.pacemakerEvent)
-	if newEvent.State == chainedbftpb.ConsStateType_PaceMaker {
+	if newEvent.State == chainedbftpb.ConsStateType_PACEMAKER {
 		ts.pacemakerEvent = newEvent
 		dropTimerC(ts.pacemakerTimer, "Pacemaker", ts.logger)
 		ts.pacemakerTimer.Reset(ts.pacemakerEvent.Duration)

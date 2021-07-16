@@ -17,7 +17,7 @@ import (
 
 //BenchmarkStat is a stat to count by atomic
 type BenchmarkStat struct {
-	TxHeight     int64
+	TxHeight     uint64
 	TxSend       *int64
 	TxTimeout    *int64
 	TxSucc       *int64

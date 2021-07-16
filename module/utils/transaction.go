@@ -8,10 +8,11 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"regexp"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	"chainmaker.org/chainmaker/common/random/uuid"
@@ -20,17 +21,13 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// CalcUnsignedTxBytes calculate unsigned transaction bytes [header bytes || request payload bytes]
+// CalcUnsignedTxBytes calculate unsigned transaction bytes [request payload bytes]
 func CalcUnsignedTxBytes(t *commonPb.Transaction) ([]byte, error) {
 	if t == nil {
 		return nil, errors.New("calc unsigned tx bytes error, tx == nil")
 	}
-	headerBytes, err := proto.Marshal(t.Header)
-	if err != nil {
-		return nil, err
-	}
-	rawTxBytes := bytes.Join([][]byte{headerBytes, t.RequestPayload}, []byte{})
-	return rawTxBytes, nil
+	return t.Payload.Marshal()
+
 }
 
 // CalcUnsignedTxRequestBytes calculate unsigned transaction request bytes
@@ -38,30 +35,27 @@ func CalcUnsignedTxRequestBytes(txReq *commonPb.TxRequest) ([]byte, error) {
 	if txReq == nil {
 		return nil, errors.New("calc unsigned tx request bytes error, tx == nil")
 	}
-	return CalcUnsignedTxBytes(&commonPb.Transaction{
-		Header:         txReq.Header,
-		RequestPayload: txReq.Payload,
-	})
+	return txReq.Payload.Marshal()
 }
 
 // CalcUnsignedCompleteTxBytes calculate unsigned complete transaction bytearray
-func CalcUnsignedCompleteTxBytes(t *commonPb.Transaction) ([]byte, error) {
-	if t == nil {
-		return nil, errors.New("calc unsigned complete tx bytes error, tx == nil")
-	}
-	headerBytes, err := proto.Marshal(t.Header)
-	if err != nil {
-		return nil, err
-	}
-	resultBytes, err := proto.Marshal(t.Result)
-	if err != nil {
-		return nil, err
-	}
-	completeTxBytes := bytes.Join([][]byte{headerBytes, t.RequestPayload, resultBytes}, []byte{})
-	return completeTxBytes, nil
-}
+//func CalcUnsignedCompleteTxBytes(t *commonPb.Transaction) ([]byte, error) {
+//	if t == nil {
+//		return nil, errors.New("calc unsigned complete tx bytes error, tx == nil")
+//	}
+//	headerBytes, err := proto.Marshal(t.Header)
+//	if err != nil {
+//		return nil, err
+//	}
+//	resultBytes, err := proto.Marshal(t.Result)
+//	if err != nil {
+//		return nil, err
+//	}
+//	completeTxBytes := bytes.Join([][]byte{headerBytes, t.RequestPayload, resultBytes}, []byte{})
+//	return completeTxBytes, nil
+//}
 
-// CalcTxHash calculate transaction hash, include tx.Header, tx.signature, tx.Payload, tx.Result
+// CalcTxHash calculate transaction hash, include tx.Payload, tx.signature, tx.Payload, tx.Result
 func CalcTxHash(hashType string, t *commonPb.Transaction) ([]byte, error) {
 	//txBytes, err := CalcUnsignedCompleteTxBytes(t)
 	txBytes, err := t.Marshal()
@@ -120,18 +114,27 @@ func CalcResultBytes(result *commonPb.Result) ([]byte, error) {
 
 // IsManageContractAsConfigTx Whether the Manager Contract is considered a configuration transaction
 func IsManageContractAsConfigTx(tx *commonPb.Transaction, enableSqlDB bool) bool {
-	if tx == nil || tx.Header == nil {
+	if tx == nil {
 		return false
 	}
-	return enableSqlDB && tx.Header.TxType == commonPb.TxType_MANAGE_USER_CONTRACT
+	return enableSqlDB && IsContractMgmtTx(tx)
+}
+
+//IsContractMgmtTx 是否是合约安装、升级的交易
+func IsContractMgmtTx(tx *commonPb.Transaction) bool {
+	payload := tx.Payload
+
+	return payload.ContractName == syscontract.SystemContract_CONTRACT_MANAGE.String() &&
+		(payload.Method == syscontract.ContractManageFunction_INIT_CONTRACT.String() ||
+			payload.Method == syscontract.ContractManageFunction_UPGRADE_CONTRACT.String())
 }
 
 // IsConfigTx the transaction is a config transaction or not
 func IsConfigTx(tx *commonPb.Transaction) bool {
-	if tx == nil || tx.Header == nil {
+	if tx == nil {
 		return false
 	}
-	return tx.Header.TxType == commonPb.TxType_UPDATE_CHAIN_CONFIG
+	return tx.Payload.ContractName == syscontract.SystemContract_CHAIN_CONFIG.String()
 }
 
 // IsValidConfigTx the transaction is a valid config transaction or not
@@ -199,7 +202,7 @@ func DispatchTxVerifyTask(txs []*commonPb.Transaction) map[int][]*commonPb.Trans
 func GetTxIds(txs []*commonPb.Transaction) []string {
 	ret := make([]string, len(txs))
 	for i, tx := range txs {
-		ret[i] = tx.Header.TxId
+		ret[i] = tx.Payload.TxId
 	}
 	return ret
 }
@@ -209,7 +212,7 @@ func VerifyTxWithoutPayload(tx *commonPb.Transaction, chainId string, ac protoco
 	if tx == nil {
 		return errors.New("tx is nil")
 	}
-	if err := verifyTxHeader(tx.Header, chainId); err != nil {
+	if err := verifyTxHeader(tx.Payload, chainId); err != nil {
 		return fmt.Errorf("verify tx header failed, %s", err)
 	}
 	if err := verifyTxAuth(tx, ac); err != nil {
@@ -218,10 +221,20 @@ func VerifyTxWithoutPayload(tx *commonPb.Transaction, chainId string, ac protoco
 	return nil
 }
 
+//验证发送者和签名
+func verifyTxSender(tx *commonPb.Transaction) error {
+	_, err := tx.Payload.Marshal()
+	if err != nil {
+		return err
+	}
+	//tx.Sender.Signer.
+	return nil
+}
+
 // verify transaction header
-func verifyTxHeader(header *commonPb.TxHeader, targetChainId string) error {
-	defaultTxIdLen := 64            // txId的长度
-	defaultTxIdReg := "^[a-z0-9]+$" // txId的字符串的正则表达式[数字+小写字母]（^[a-z0-9]{64}$）
+func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
+	defaultTxIdLen := 64                     // txId的长度
+	defaultTxIdReg := "^[a-zA-Z0-9_]{1,64}$" // txId的字符串的正则表达式与普通参数命名规则相同
 	// 1. header not null
 	if header == nil {
 		return errors.New("tx header is nil")
@@ -231,7 +244,7 @@ func verifyTxHeader(header *commonPb.TxHeader, targetChainId string) error {
 		return fmt.Errorf("chain id [%s] is incorrect, wanted [%s]", header.ChainId, targetChainId)
 	}
 	// 3. tx id length is 64
-	if len(header.TxId) != defaultTxIdLen {
+	if len(header.TxId) > defaultTxIdLen {
 		return fmt.Errorf("tx id length is incorrect, wanted %d", defaultTxIdLen)
 	}
 	// 4. tx id only contains [a-z0-9]
@@ -240,16 +253,16 @@ func verifyTxHeader(header *commonPb.TxHeader, targetChainId string) error {
 		return fmt.Errorf("check tx id failed, %s", err)
 	}
 	if !match {
-		return errors.New("check tx id failed, only [a-z0-9] are allowed")
+		return errors.New("check tx id failed, only [a-zA-Z0-9_] are allowed")
 	}
 	// 5. timestamp (in seconds) before expiration time
 	if header.ExpirationTime != 0 && header.ExpirationTime <= header.Timestamp {
 		return fmt.Errorf("tx timestamp %d should be before expiration time %d", header.Timestamp, header.ExpirationTime)
 	}
 	// 6. sender should not be nil
-	if header.Sender == nil || header.Sender.OrgId == "" || header.Sender.MemberInfo == nil {
-		return fmt.Errorf("tx sender is nil")
-	}
+	//if header.Sender == nil || header.Sender.OrgId == "" || header.Sender.MemberInfo == nil {
+	//	return fmt.Errorf("tx sender is nil")
+	//}
 	return nil
 }
 
@@ -260,11 +273,9 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	if err != nil {
 		return err
 	}
-	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    t.Header.Sender,
-		Signature: t.RequestSignature,
-	}}
-	resourceId, err := ac.LookUpResourceNameByTxType(t.Header.TxType)
+
+	endorsements := []*commonPb.EndorsementEntry{t.Sender}
+	resourceId, err := ac.LookUpResourceNameByTxType(t.Payload.TxType)
 	if err != nil {
 		return err
 	}
@@ -298,4 +309,33 @@ func VerifyConfigUpdateTx(methodName string, endorsements []*commonPb.Endorsemen
 		}
 	}
 	return ac.VerifyPrincipal(principal)
+}
+func GenerateInstallContractPayload(contractName, version string, runtimeType commonPb.RuntimeType, bytecode []byte,
+	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_VERSION.String(),
+		Value: []byte(version),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String(),
+		Value: []byte(runtimeType.String()),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
+		Value: bytecode,
+	})
+	for _, kv := range initParameters {
+		pairs = append(pairs, kv)
+	}
+	payload := &commonPb.Payload{
+		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
+		Method:       syscontract.ContractManageFunction_INIT_CONTRACT.String(),
+		Parameters:   pairs,
+	}
+	return payload, nil
 }

@@ -8,15 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package native_test
 
 import (
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"encoding/hex"
 	"fmt"
+	"testing"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"testing"
 )
 
 // 查询区块
@@ -32,17 +35,17 @@ func TestGetBlockByHeight(t *testing.T) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: "0",
+			Value: []byte("0"),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), MethodName: commonPb.QueryFunction_GET_BLOCK_BY_HEIGHT.String(), Pairs: pairs})
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String(), Pairs: pairs})
 
 	if err != nil {
 		statusErr, ok := status.FromError(err)
@@ -84,17 +87,17 @@ func TestGetBlockByHash(t *testing.T) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: "54d54331b4a341353c19b82ec7ad4a6f15b78c9cc4ba8caa84759d1805f4ad1f",
+			Value: []byte("54d54331b4a341353c19b82ec7ad4a6f15b78c9cc4ba8caa84759d1805f4ad1f"),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
 	sk, member := native.GetUserSK(1)
-	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_SYSTEM_CONTRACT,
-		ChainId: CHAIN1, ContractName: commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), MethodName: commonPb.QueryFunction_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
 
 	if err != nil {
 		statusErr, ok := status.FromError(err)

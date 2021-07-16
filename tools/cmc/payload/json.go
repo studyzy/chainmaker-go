@@ -68,7 +68,7 @@ func printConfigUpdatePayload() error {
 		return fmt.Errorf("load file %s error: %s", jsonInput, err)
 	}
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.Payload{}
 	if err := proto.Unmarshal(raw, payload); err != nil {
 		return fmt.Errorf("SystemContractPayload unmarshal error: %s", err)
 	}
@@ -88,7 +88,7 @@ func printContractMgmtPayload() error {
 		return fmt.Errorf("load file %s error: %s", jsonInput, err)
 	}
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.Payload{}
 	if err := proto.Unmarshal(raw, payload); err != nil {
 		return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
 	}

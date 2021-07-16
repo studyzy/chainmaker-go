@@ -11,9 +11,10 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/spf13/cobra"
@@ -39,7 +40,7 @@ func QueryCMD() *cobra.Command {
 	return cmd
 }
 
-func returnResult(code commonPb.TxStatusCode, message string, contractCode commonPb.ContractResultCode, contractMessage string, data string) error {
+func returnResult(code commonPb.TxStatusCode, message string, contractCode uint32, contractMessage string, data string) error {
 	var result *Result
 	result = &Result{
 		Code:                  code,
@@ -95,7 +96,7 @@ func query() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//}
@@ -105,7 +106,7 @@ func query() error {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	fmt.Println("resp: ", resp, "err:", err)
 	if err != nil {

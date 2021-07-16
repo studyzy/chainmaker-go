@@ -17,11 +17,15 @@ import (
 	"strconv"
 	"strings"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	"chainmaker.org/chainmaker/protocol"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
-	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
+	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
 )
@@ -95,7 +99,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   []byte(cc.Version),
+			BlockVersion:   protocol.DefaultBlockVersion, //兼容v1.1.0，否则添加新节点会导致创世快不一致。
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
@@ -107,7 +111,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 		},
 		Dag: &commonPb.DAG{
 			Vertexes: []*commonPb.DAG_Neighbor{
-				&commonPb.DAG_Neighbor{
+				{
 					Neighbors: nil,
 				},
 			},
@@ -136,49 +140,42 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 
 func genConfigTx(cc *configPb.ChainConfig) (*commonPb.Transaction, error) {
 	var (
-		err          error
-		ccBytes      []byte
-		payloadBytes []byte
+		err     error
+		ccBytes []byte
+		//payloadBytes []byte
 	)
 
 	if ccBytes, err = proto.Marshal(cc); err != nil {
 		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
 	}
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      cc.ChainId,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 		Method:       "Genesis",
 		Parameters:   make([]*commonPb.KeyValuePair, 0),
 		Sequence:     cc.Sequence,
-		Endorsement:  nil,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
+		TxId:         GetTxIdWithSeed(int64(defaultTimestamp)),
+		Timestamp:    defaultTimestamp,
 	}
 	payload.Parameters = append(payload.Parameters, &commonPb.KeyValuePair{
-		Key:   commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		Value: cc.String(),
+		Key:   syscontract.SystemContract_CHAIN_CONFIG.String(),
+		Value: []byte(cc.String()),
 	})
 
-	if payloadBytes, err = proto.Marshal(payload); err != nil {
-		return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
-	}
+	//if payloadBytes, err = proto.Marshal(payload); err != nil {
+	//	return nil, fmt.Errorf(errMsgMarshalChainConfFail, err.Error())
+	//}
 
 	tx := &commonPb.Transaction{
-		Header: &commonPb.TxHeader{
-			ChainId:        cc.ChainId,
-			Sender:         nil,
-			TxType:         commonPb.TxType_UPDATE_CHAIN_CONFIG,
-			TxId:           GetTxIdWithSeed(int64(defaultTimestamp)),
-			Timestamp:      defaultTimestamp,
-			ExpirationTime: -1,
-		},
-		RequestPayload:   payloadBytes,
-		RequestSignature: nil,
+		Payload: payload,
 		Result: &commonPb.Result{
 			Code: commonPb.TxStatusCode_SUCCESS,
 			ContractResult: &commonPb.ContractResult{
-				Code:    commonPb.ContractResultCode_OK,
-				Message: commonPb.ContractResultCode_OK.String(),
-				Result:  ccBytes,
+				Code: uint32(0),
+
+				Result: ccBytes,
 			},
 			RwSetHash: nil,
 		},
@@ -272,7 +269,7 @@ func (e *ERC20Config) addAccount(address string, token *BigInteger) error {
 
 // toTxWrites convert to TxWrites
 func (e *ERC20Config) toTxWrites() []*commonPb.TxWrite {
-	contractName := commonPb.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String()
+	contractName := syscontract.SystemContract_DPOS_ERC20.String()
 	txWrites := []*commonPb.TxWrite{
 		{
 			Key:          []byte("OWN"), // equal with native.KeyOwner
@@ -351,32 +348,32 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 		keyValuePair := consensusExtConfig[i]
 		switch keyValuePair.Key {
 		case keyERC20Total:
-			config.total = NewBigInteger(keyValuePair.Value)
+			config.total = NewBigInteger(string(keyValuePair.Value))
 			if config.total == nil || config.total.Cmp(NewZeroBigInteger()) <= 0 {
 				return nil, fmt.Errorf("total config of dpos must more than zero")
 			}
 		case keyERC20Owner:
-			config.owner = keyValuePair.Value
+			config.owner = string(keyValuePair.Value)
 			_, err := base58.Decode(config.owner)
 			if err != nil {
 				return nil, fmt.Errorf("config of owner[%s] is not in base58 format", config.owner)
 			}
 		case keyERC20Decimals:
-			config.decimals = NewBigInteger(keyValuePair.Value)
+			config.decimals = NewBigInteger(string(keyValuePair.Value))
 			if config.decimals == nil || config.decimals.Cmp(NewZeroBigInteger()) < 0 {
 				return nil, fmt.Errorf("decimals config of dpos must more than -1")
 			}
 		default:
 			if strings.HasPrefix(keyValuePair.Key, keyERC20Acc) {
 				accAddress := keyValuePair.Key[len(keyERC20Acc):]
-				if accAddress == commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String() {
+				if accAddress == syscontract.SystemContract_DPOS_STAKE.String() {
 					accAddress = getContractAddress()
 				}
 				_, err := base58.Decode(accAddress)
 				if err != nil {
 					return nil, fmt.Errorf("account [%s] is not in base58 format", accAddress)
 				}
-				token := NewBigInteger(keyValuePair.Value)
+				token := NewBigInteger(string(keyValuePair.Value))
 				if token == nil || token.Cmp(NewZeroBigInteger()) <= 0 {
 					return nil, fmt.Errorf("token must more than zero, address[%s] token[%s]", accAddress, keyValuePair.Value)
 				}
@@ -412,22 +409,22 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	// 1. add property in rwSets
 	rwSets := []*commonPb.TxWrite{
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyMinSelfDelegation),
 			Value:        []byte(s.minSelfDelegation),
 		},
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyEpochValidatorNumber),
 			Value:        valNum,
 		},
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyEpochBlockNumber),
 			Value:        epochNum,
 		},
 		{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(keyUnbondingEpochNumber),
 			Value:        completeUnboundingNum,
 		},
@@ -435,29 +432,29 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 
 	// 2. add validatorInfo, delegationInfo in rwSet
 	sort.SliceStable(s.candidates, func(i, j int) bool {
-		return s.candidates[i].PeerID < s.candidates[j].PeerID
+		return s.candidates[i].PeerId < s.candidates[j].PeerId
 	})
 	validators := make([][]byte, 0, len(s.candidates))
 	delegations := make([][]byte, 0, len(s.candidates))
 	for _, candidate := range s.candidates {
-		bz, err := proto.Marshal(&commonPb.Validator{
+		bz, err := proto.Marshal(&syscontract.Validator{
 			Jailed:                     false,
-			Status:                     commonPb.BondStatus_Bonded,
+			Status:                     syscontract.BondStatus_BONDED,
 			Tokens:                     candidate.Weight,
-			ValidatorAddress:           candidate.PeerID,
+			ValidatorAddress:           candidate.PeerId,
 			DelegatorShares:            candidate.Weight,
 			SelfDelegation:             candidate.Weight,
-			UnbondingEpochID:           math.MaxInt64,
-			UnbondingCompletionEpochID: math.MaxUint64,
+			UnbondingEpochId:           math.MaxInt64,
+			UnbondingCompletionEpochId: math.MaxUint64,
 		})
 		if err != nil {
 			return nil, err
 		}
 		validators = append(validators, bz)
 
-		delegateBz, err := proto.Marshal(&commonPb.Delegation{
-			DelegatorAddress: candidate.PeerID,
-			ValidatorAddress: candidate.PeerID,
+		delegateBz, err := proto.Marshal(&syscontract.Delegation{
+			DelegatorAddress: candidate.PeerId,
+			ValidatorAddress: candidate.PeerId,
 			Shares:           candidate.Weight,
 		})
 		if err != nil {
@@ -467,13 +464,13 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	}
 	for i, validator := range s.candidates {
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerID)),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
+			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerId)),
 			Value:        validators[i],
 		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerID, validator.PeerID)), // key: prefix|delegator|validator
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
+			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerId, validator.PeerId)), // key: prefix|delegator|validator
 			Value:        delegations[i],                                                               // val: delegation info
 		})
 	}
@@ -481,10 +478,10 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 	// 4. add epoch info
 	valAddrs := make([]string, 0, len(s.candidates))
 	for _, v := range s.candidates {
-		valAddrs = append(valAddrs, v.PeerID)
+		valAddrs = append(valAddrs, v.PeerId)
 	}
-	epochInfo, err := proto.Marshal(&commonPb.Epoch{
-		EpochID:               0,
+	epochInfo, err := proto.Marshal(&syscontract.Epoch{
+		EpochId:               0,
 		ProposerVector:        valAddrs,
 		NextEpochCreateHeight: s.eachEpochNum,
 	})
@@ -492,24 +489,24 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 		return nil, err
 	}
 	rwSets = append(rwSets, &commonPb.TxWrite{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 		Key:          []byte(keyCurrentEpoch), // key: prefix
 		Value:        epochInfo,               // val: epochInfo
 	})
 	rwSets = append(rwSets, &commonPb.TxWrite{
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+		ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 		Key:          []byte(fmt.Sprintf(keyEpochFormat, "0")), // key: prefix|epochID
 		Value:        epochInfo,                                // val: epochInfo
 	})
 
 	for _, addr := range valAddrs {
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyNodeIDFormat, addr)), // key: prefix|addr
 			Value:        []byte(s.nodeIDs[addr]),                    // val: nodeID
 		})
 		rwSets = append(rwSets, &commonPb.TxWrite{
-			ContractName: commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
+			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 			Key:          []byte(fmt.Sprintf(keyRevNodeFormat, s.nodeIDs[addr])), // key: prefix|nodeID
 			Value:        []byte(addr),                                           // val: addr
 		})
@@ -519,7 +516,7 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 
 // getContractAddress 返回质押合约地址
 func getContractAddress() string {
-	bz := sha256.Sum256([]byte(commonPb.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String()))
+	bz := sha256.Sum256([]byte(syscontract.SystemContract_DPOS_STAKE.String()))
 	return base58.Encode(bz[:])
 }
 
@@ -541,7 +538,7 @@ func (s *StakeConfig) setCandidate(key, value string) error {
 		return fmt.Errorf("stake.candidate amount error, reason: %s", err)
 	}
 	s.candidates = append(s.candidates, &dpospb.CandidateInfo{
-		PeerID: values[1], Weight: value,
+		PeerId: values[1], Weight: value,
 	})
 	return nil
 }
@@ -580,36 +577,36 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 	for _, kv := range consensusExtConfig {
 		switch kv.Key {
 		case keyStakeEpochBlockNum:
-			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			val, err := strconv.ParseUint(string(kv.Value), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			config.eachEpochNum = val
 		case keyStakeEpochValidatorNum:
-			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			val, err := strconv.ParseUint(string(kv.Value), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			config.validatorNum = val
 		case keyStakeMinSelfDelegation:
-			if err := isValidBigInt(kv.Value); err != nil {
+			if err := isValidBigInt(string(kv.Value)); err != nil {
 				return nil, fmt.Errorf("%s error, reason: %s", keyStakeMinSelfDelegation, err)
 			}
-			config.minSelfDelegation = kv.Value
+			config.minSelfDelegation = string(kv.Value)
 		case keyStakeUnbondingEpochNum:
-			val, err := strconv.ParseUint(kv.Value, 10, 64)
+			val, err := strconv.ParseUint(string(kv.Value), 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			config.unbondingEpochNum = val
 		default:
 			if strings.HasPrefix(kv.Key, keyStakeCandidate) {
-				if err := config.setCandidate(kv.Key, kv.Value); err != nil {
+				if err := config.setCandidate(kv.Key, string(kv.Value)); err != nil {
 					return nil, err
 				}
 			}
 			if strings.HasPrefix(kv.Key, keyStakeConfigNodeID) {
-				if err := config.setNodeID(kv.Key, kv.Value); err != nil {
+				if err := config.setNodeID(kv.Key, string(kv.Value)); err != nil {
 					return nil, err
 				}
 			}
@@ -648,9 +645,9 @@ func isValidBigInt(val string) error {
 func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) ([]*commonPb.TxWrite, error) {
 	txWrites := make([]*commonPb.TxWrite, 0)
 	txWrites = append(txWrites, &commonPb.TxWrite{
-		Key:          []byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
+		Key:          []byte(syscontract.SystemContract_CHAIN_CONFIG.String()),
 		Value:        chainConfigBytes,
-		ContractName: commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
+		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 	})
 	if erc20Config != nil {
 		erc20ConfigTxWrites := erc20Config.toTxWrites()
@@ -663,5 +660,24 @@ func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig
 		}
 		txWrites = append(txWrites, stakeConfigTxWrites...)
 	}
+	//初始化系统合约的Contract状态数据
+	for name := range syscontract.SystemContract_value {
+		txWrites = append(txWrites, initSysContractTxWrite(name))
+	}
 	return txWrites, nil
+}
+func initSysContractTxWrite(name string) *commonPb.TxWrite {
+	contract := &commonPb.Contract{
+		Name:        name,
+		Version:     "v1",
+		RuntimeType: commonPb.RuntimeType_NATIVE,
+		Status:      commonPb.ContractStatus_NORMAL,
+		Creator:     nil,
+	}
+	data, _ := contract.Marshal()
+	return &commonPb.TxWrite{
+		Key:          GetContractDbKey(name),
+		Value:        data,
+		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
+	}
 }

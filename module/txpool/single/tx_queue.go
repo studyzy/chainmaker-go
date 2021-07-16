@@ -8,11 +8,12 @@ package single
 
 import (
 	"fmt"
+	"math"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 )
 
 type txValidateFunc func(tx *commonPb.Transaction, source protocol.TxSource) error
@@ -48,18 +49,18 @@ func (queue *txQueue) addTxsToCommonQueue(memTxs *mempoolTxs) {
 
 func (queue *txQueue) deleteTxsInPending(txIds []*commonPb.Transaction) {
 	for _, tx := range txIds {
-		queue.pendingCache.Delete(tx.Header.TxId)
+		queue.pendingCache.Delete(tx.Payload.TxId)
 	}
 }
 
-func (queue *txQueue) get(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
+func (queue *txQueue) get(txId string) (tx *commonPb.Transaction, inBlockHeight uint64) {
 	if tx, inBlockHeight := queue.commonTxQueue.Get(txId); tx != nil {
 		return tx, inBlockHeight
 	}
 	if tx, inBlockHeight := queue.configTxQueue.Get(txId); tx != nil {
 		return tx, inBlockHeight
 	}
-	return nil, -1
+	return nil, math.MaxUint64
 }
 
 func (queue *txQueue) configTxsCount() int {
@@ -78,7 +79,7 @@ func (queue *txQueue) deleteCommonTxs(txIds []string) {
 	queue.commonTxQueue.Delete(txIds)
 }
 
-func (queue *txQueue) fetch(expectedCount int, blockHeight int64, validateTxTime func(tx *commonPb.Transaction) error) []*commonPb.Transaction {
+func (queue *txQueue) fetch(expectedCount int, blockHeight uint64, validateTxTime func(tx *commonPb.Transaction) error) []*commonPb.Transaction {
 	// 1. fetch the config transaction
 	if configQueueLen := queue.configTxsCount(); configQueueLen > 0 {
 		if txs, txIds := queue.configTxQueue.Fetch(1, validateTxTime, blockHeight); len(txs) > 0 {
@@ -97,7 +98,7 @@ func (queue *txQueue) fetch(expectedCount int, blockHeight int64, validateTxTime
 	return nil
 }
 
-func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64, enableSqlDB bool) {
+func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, blockHeight uint64, enableSqlDB bool) {
 	if (utils.IsConfigTx(txs[0]) || utils.IsManageContractAsConfigTx(txs[0], enableSqlDB)) && len(txs) == 1 {
 		queue.configTxQueue.appendTxsToPendingCache(txs, blockHeight)
 	} else {
@@ -106,10 +107,10 @@ func (queue *txQueue) appendTxsToPendingCache(txs []*commonPb.Transaction, block
 }
 
 func (queue *txQueue) has(tx *commonPb.Transaction, checkPending bool) bool {
-	if queue.commonTxQueue.Has(tx.Header.TxId, checkPending) {
+	if queue.commonTxQueue.Has(tx.Payload.TxId, checkPending) {
 		return true
 	}
-	return queue.configTxQueue.Has(tx.Header.TxId, checkPending)
+	return queue.configTxQueue.Has(tx.Payload.TxId, checkPending)
 }
 
 func (queue *txQueue) status() string {

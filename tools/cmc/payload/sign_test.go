@@ -39,7 +39,7 @@ func TestSignConfigUpdatePayload(t *testing.T) {
 	raw, err := ioutil.ReadFile(signOutput)
 	assert.NoError(t, err)
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.Payload{}
 	err = proto.Unmarshal(raw, payload)
 	assert.NoError(t, err)
 
@@ -68,7 +68,7 @@ func TestSignContractMgmtPayload(t *testing.T) {
 	//raw, err := ioutil.ReadFile(signOutput)
 	//assert.NoError(t, err)
 	//
-	//payload := &sdkPbCommon.ContractMgmtPayload{}
+	//payload := &sdkPbCommon.Payload{}
 	//err = proto.Unmarshal(raw, payload)
 	//assert.NoError(t, err)
 	//

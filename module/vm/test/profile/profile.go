@@ -18,10 +18,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -64,7 +64,7 @@ func main() {
 func startPerf() {
 	test.WasmFile = wasmFilePath
 	test.CertFilePath = certFilePath
-	var contractId *commonPb.ContractId
+	var contractId *commonPb.Contract
 	var txContext protocol.TxSimContext
 	var byteCode []byte
 	var vmTypeInt int
@@ -83,7 +83,7 @@ func startPerf() {
 	}
 
 	finishNum := int64(0)
-	var gas int64
+	var gas uint64
 	start := time.Now().UnixNano() / 1e6
 	for i := int64(0); i < totalCallTimes; {
 		var createNum int64
@@ -185,9 +185,9 @@ func startPerf() {
 	}
 }
 
-func invokeContractOfGasm(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext,
+func invokeContractOfGasm(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext,
 	byteCode []byte) (contractResult *commonPb.ContractResult) {
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	test.BaseParam(parameters)
 	//parameters["contract_name"] = test.ContractNameTest
 	//parameters["method"] = "query"
@@ -199,9 +199,9 @@ func invokeContractOfGasm(method string, contractId *commonPb.ContractId, txCont
 	return runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 
-func invokeContractOfWasmer(method string, contractId *commonPb.ContractId, txContext protocol.TxSimContext,
+func invokeContractOfWasmer(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext,
 	pool *wasmer.VmPoolManager, byteCode []byte) (contractResult *commonPb.ContractResult) {
-	parameters := make(map[string]string)
+	parameters := make(map[string][]byte)
 	test.BaseParam(parameters)
 	//parameters["key"] = "key"
 

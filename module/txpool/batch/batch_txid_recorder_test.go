@@ -29,7 +29,7 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		txId := utils.GetRandTxId()
 		batch9.TxIdsMap[txId] = int32(i)
-		batch9.Txs[i] = &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txId}}
+		batch9.Txs[i] = &commonPb.Transaction{Payload: &commonPb.Payload{TxId: txId}}
 	}
 	recorder.AddRecordWithBatch(&batch9)
 
@@ -41,19 +41,19 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		txId := utils.GetRandTxId()
 		batch10.TxIdsMap[txId] = int32(i)
-		batch10.Txs[i] = &commonPb.Transaction{Header: &commonPb.TxHeader{TxId: txId}}
+		batch10.Txs[i] = &commonPb.Transaction{Payload: &commonPb.Payload{TxId: txId}}
 	}
 	recorder.AddRecordWithBatch(&batch10)
 
 	// 2. check existence in recorder
 	for i, tx := range batch9.Txs {
-		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.True(t, ok)
 		require.EqualValues(t, i, txIndex)
 		require.EqualValues(t, 9, batchId)
 	}
 	for i, tx := range batch10.Txs {
-		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.True(t, ok)
 		require.EqualValues(t, i, txIndex)
 		require.EqualValues(t, 10, batchId)
@@ -62,12 +62,12 @@ func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {
 	// 3. remove batch from recorder and check existence
 	recorder.RemoveRecordWithBatch(&batch9)
 	for _, tx := range batch9.Txs {
-		batchId, _, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, _, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.False(t, ok)
 		require.EqualValues(t, -1, batchId)
 	}
 	for i, tx := range batch10.Txs {
-		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Header.TxId)
+		batchId, txIndex, ok := recorder.FindBatchIdWithTxId(tx.Payload.TxId)
 		require.True(t, ok)
 		require.EqualValues(t, i, txIndex)
 		require.EqualValues(t, 10, batchId)

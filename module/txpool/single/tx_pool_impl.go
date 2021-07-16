@@ -13,15 +13,15 @@ import (
 	"sync/atomic"
 	"time"
 
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
+	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/txpool/poolconf"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -168,7 +168,7 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	if source == protocol.INTERNAL {
 		return commonErrors.ErrTxSource
 	}
-	pool.log.Debugf("AddTx,  txId: %s, source: %d", tx.Header.GetTxId(), source)
+	pool.log.Debugf("AddTx,  txId: %s, source: %d", tx.Payload.GetTxId(), source)
 
 	// 1. Determine if the tx pool is full or tx exist
 	if pool.isFull(tx) {
@@ -203,7 +203,7 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 	}
 	// 3. broadcast the transaction
 	if source == protocol.RPC {
-		pool.broadcastTx(tx.Header.TxId, txMsg)
+		pool.broadcastTx(tx.Payload.TxId, txMsg)
 	}
 	return nil
 }
@@ -211,11 +211,11 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 // isFull Check whether the transaction pool is fullnal
 func (pool *txPoolImpl) isFull(tx *commonPb.Transaction) bool {
 	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= poolconf.MaxConfigTxPoolSize() {
-		pool.log.Errorf("AddTx configTxPool is full, txId: %s, configQueueSize: %d", tx.Header.GetTxId(), pool.queue.configTxsCount())
+		pool.log.Errorf("AddTx configTxPool is full, txId: %s, configQueueSize: %d", tx.Payload.GetTxId(), pool.queue.configTxsCount())
 		return true
 	}
 	if pool.queue.commonTxsCount() >= poolconf.MaxCommonTxPoolSize() {
-		pool.log.Errorf("AddTx txPool is full, txId: %s, txQueueSize: %d", tx.Header.GetTxId(), pool.queue.commonTxsCount())
+		pool.log.Errorf("AddTx txPool is full, txId: %s, txQueueSize: %d", tx.Payload.GetTxId(), pool.queue.commonTxsCount())
 		return true
 	}
 	return false
@@ -261,15 +261,15 @@ func (pool *txPoolImpl) updateAndPublishSignal() {
 	}
 }
 
-func (pool *txPoolImpl) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
+func (pool *txPoolImpl) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight uint64) {
 	return pool.queue.get(txId)
 }
 
-func (pool *txPoolImpl) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]int64) {
+func (pool *txPoolImpl) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]uint64) {
 	start := utils.CurrentTimeMillisSeconds()
 	var (
 		txsRet       = make(map[string]*commonPb.Transaction, len(txIds))
-		txsHeightRet = make(map[string]int64, len(txIds))
+		txsHeightRet = make(map[string]uint64, len(txIds))
 	)
 	for _, txId := range txIds {
 		if tx, inBlockHeight := pool.queue.get(txId); tx != nil {
@@ -305,10 +305,10 @@ func (pool *txPoolImpl) retryTxs(txs []*commonPb.Transaction) {
 	for _, tx := range txs {
 		if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, enableSqlDB) {
 			configTxs = append(configTxs, tx)
-			configTxIds = append(configTxIds, tx.Header.TxId)
+			configTxIds = append(configTxIds, tx.Payload.TxId)
 		} else {
 			commonTxs = append(commonTxs, tx)
-			commonTxIds = append(commonTxIds, tx.Header.TxId)
+			commonTxIds = append(commonTxIds, tx.Payload.TxId)
 		}
 	}
 
@@ -336,9 +336,9 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	enableSqlDB := pool.chainConf.ChainConfig().Contract.EnableSqlSupport
 	for _, tx := range txs {
 		if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, enableSqlDB) {
-			configTxIds = append(configTxIds, tx.Header.TxId)
+			configTxIds = append(configTxIds, tx.Payload.TxId)
 		} else {
-			commonTxIds = append(commonTxIds, tx.Header.TxId)
+			commonTxIds = append(commonTxIds, tx.Payload.TxId)
 		}
 	}
 
@@ -353,7 +353,7 @@ func (pool *txPoolImpl) removeTxs(txs []*commonPb.Transaction) {
 	pool.log.Infof("removeTxs elapse time: %d", utils.CurrentTimeMillisSeconds()-start)
 }
 
-func (pool *txPoolImpl) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
+func (pool *txPoolImpl) FetchTxBatch(blockHeight uint64) []*commonPb.Transaction {
 	start := utils.CurrentTimeMillisSeconds()
 	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
@@ -372,7 +372,7 @@ func (pool *txPoolImpl) metrics(msg string, startTime int64, endTime int64) {
 	}
 }
 
-func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
+func (pool *txPoolImpl) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight uint64) {
 	if len(txs) == 0 {
 		return
 	}
@@ -400,9 +400,9 @@ func (pool *txPoolImpl) OnMessage(msg *msgbus.Message) {
 		return
 	}
 	if err := pool.AddTx(&tx, protocol.P2P); err != nil {
-		pool.log.Debugf("receiveOnMessage txId: %s, add failed: %s", tx.Header.TxId, err.Error())
+		pool.log.Debugf("receiveOnMessage txId: %s, add failed: %s", tx.Payload.TxId, err.Error())
 	}
-	pool.log.Debugf("receiveOnMessage txId: %s, add success", tx.Header.TxId)
+	pool.log.Debugf("receiveOnMessage txId: %s, add success", tx.Payload.TxId)
 }
 
 func (pool *txPoolImpl) OnQuit() {

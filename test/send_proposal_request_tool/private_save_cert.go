@@ -8,14 +8,17 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
 	"github.com/Rican7/retry/strategy"
-	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -63,8 +66,8 @@ func saveCert() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		commonPb.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(),
 		pairs,
 		defaultSequence,
 	)
@@ -72,16 +75,16 @@ func saveCert() error {
 		return fmt.Errorf("construct save cert payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_SYSTEM_CONTRACT, chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT, chainId, "", payloadBytes)
 	if err != nil {
-		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	if resp.Code == commonPb.TxStatusCode_SUCCESS {
 		if !withSyncResult {
 			resp.ContractResult = &commonPb.ContractResult{
-				Code:    commonPb.ContractResultCode_OK,
-				Message: commonPb.ContractResultCode_OK.String(),
+				Code:    0,
+				Message: "OK",
 				Result:  []byte(txId),
 			}
 		} else {
@@ -90,7 +93,7 @@ func saveCert() error {
 				return fmt.Errorf("get sync result failed, %s", err.Error())
 			}
 
-			if contractResult.Code != commonPb.ContractResultCode_OK {
+			if contractResult.Code != 0 {
 				resp.Code = commonPb.TxStatusCode_CONTRACT_FAIL
 				resp.Message = contractResult.Message
 			}
@@ -100,7 +103,7 @@ func saveCert() error {
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, commonPb.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	resultStruct := &Result{
@@ -127,9 +130,9 @@ func saveCert() error {
 
 }
 
-func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) ([]byte, error) {
+func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) (*commonPb.Payload, error) {
 
-	payload := &commonPb.SystemContractPayload{
+	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: contractName,
 		Method:       method,
@@ -137,19 +140,14 @@ func constructSystemContractPayload(chainId, contractName, method string, pairs 
 		Sequence:     sequence,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }
 
 func paramsMap2KVPairs(params map[string]string) (kvPairs []*commonPb.KeyValuePair) {
 	for key, val := range params {
 		kvPair := &commonPb.KeyValuePair{
 			Key:   key,
-			Value: val,
+			Value: []byte(val),
 		}
 
 		kvPairs = append(kvPairs, kvPair)
@@ -167,7 +165,7 @@ func checkProposalRequestResp(resp *commonPb.TxResponse, needContractResult bool
 		return fmt.Errorf("contract result is nil")
 	}
 
-	if resp.ContractResult != nil && resp.ContractResult.Code != commonPb.ContractResultCode_OK {
+	if resp.ContractResult != nil && resp.ContractResult.Code != 0 {
 		return errors.New(resp.ContractResult.Message)
 	}
 
@@ -204,12 +202,12 @@ func getSyncResult(txId string) (*commonPb.ContractResult, error) {
 func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 
 	payloadBytes, err := constructQueryPayload(
-		commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(),
-		commonPb.QueryFunction_GET_TX_BY_TX_ID.String(),
+		syscontract.SystemContract_CHAIN_QUERY.String(),
+		syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(),
 		[]*commonPb.KeyValuePair{
 			{
 				Key:   "txId",
-				Value: txId,
+				Value: []byte(txId),
 			},
 		},
 	)
@@ -217,13 +215,13 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 		return nil, fmt.Errorf("GetTxByTxId marshal query payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT, chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT, chainId, txId, payloadBytes)
 	if err != nil {
-		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf(errStringFormat, commonPb.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	transactionInfo := &commonPb.TransactionInfo{}
@@ -234,17 +232,12 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 	return transactionInfo, nil
 }
 
-func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
-	payload := &commonPb.QueryPayload{
+func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }

@@ -8,19 +8,20 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"encoding/pem"
+	"fmt"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"encoding/pem"
-	"fmt"
 )
 
 // GetCertHash get certificate hash
 func GetCertHash(orgId string, userCrtPEM []byte, hashType string) ([]byte, error) {
-	member := &acPb.SerializedMember{
+	member := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: userCrtPEM,
-		IsFullCert: true,
+		MemberType: acPb.MemberType_CERT,
 	}
 
 	certHash, err := getCertificateId(member.GetMemberInfo(), hashType)

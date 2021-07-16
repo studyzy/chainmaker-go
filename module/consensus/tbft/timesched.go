@@ -23,7 +23,7 @@ var (
 // timeout
 type timeoutInfo struct {
 	time.Duration
-	Height int64
+	Height uint64
 	Round  int32
 	Step   tbftpb.Step
 }

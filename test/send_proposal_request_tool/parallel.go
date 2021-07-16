@@ -8,9 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,13 +18,18 @@ import (
 	"sync/atomic"
 	"time"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker-go/logger"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -58,10 +60,10 @@ var (
 
 	nodeNum int
 
-	fileCache FileCacheReader     = NewFileCacheReader()
-	certCache CertFileCacheReader = NewCertFileCacheReader()
+	fileCache = NewFileCacheReader()
+	certCache = NewCertFileCacheReader()
 
-	abiCache  FileCacheReader     = NewFileCacheReader()
+	abiCache     = NewFileCacheReader()
 	outputResult bool
 )
 
@@ -507,7 +509,7 @@ func (t *Thread) Start() {
 
 			index := atomic.AddInt32(&t.statistician.completedCount, 1)
 			t.statistician.completedTimes[index-1] = elapsed.Milliseconds()
-			t.statistician.completedState[index-1] = (err == nil)
+			t.statistician.completedState[index-1] = err == nil
 			t.statistician.completedId[index-1] = t.index
 
 			if recordLog && err != nil {
@@ -571,7 +573,7 @@ type invokeHandler struct {
 var (
 	respStr     = "proposalRequest error, resp: %+v"
 	templateStr = "%s_%d_%d_%d"
-	resultStr     = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
+	resultStr   = "exec result, orgid: %s, loop_id: %d, method1: %s, txid: %s, resp: %+v"
 )
 
 func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey, orgId string, userCrtPath string, loopId int, ps []*KeyValuePair) error {
@@ -584,12 +586,12 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 			pairs = append(pairs, &commonPb.KeyValuePair{
 				//Key:   fmt.Sprintf("%s_%d_%d_%d", p.Key, h.threadId, loopId, time.Now().UnixNano()),
 				Key:   p.Key,
-				Value: fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()),
+				Value: []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano())),
 			})
 		} else {
 			pairs = append(pairs, &commonPb.KeyValuePair{
 				Key:   p.Key,
-				Value: p.Value,
+				Value: []byte(p.Value),
 			})
 		}
 	}
@@ -599,7 +601,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 	var abiData *[]byte
 	if abiPath != "" {
 		abiData = abiCache.Read(abiPath)
-		runTime = 5  //evm
+		runTime = 5 //evm
 	}
 
 	method1, pairs1, err := makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
@@ -611,7 +613,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 		return err
 	}
 
-	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
 		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
 	if err != nil {
 		return err
@@ -648,12 +650,12 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 			pairs = append(pairs, &commonPb.KeyValuePair{
 				//Key:   fmt.Sprintf("%s_%d_%d_%d", p.Key, h.threadId, loopId, time.Now().UnixNano()),
 				Key:   p.Key,
-				Value: fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()),
+				Value: []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano())),
 			})
 		} else {
 			pairs = append(pairs, &commonPb.KeyValuePair{
 				Key:   p.Key,
-				Value: p.Value,
+				Value: []byte(p.Value),
 			})
 		}
 	}
@@ -663,7 +665,7 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 		return err
 	}
 
-	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_QUERY_USER_CONTRACT,
+	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_QUERY_CONTRACT,
 		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
 	if err != nil {
 		return err
@@ -687,37 +689,34 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 	if err != nil {
 		return err
 	}
-
 	var pairs []*commonPb.KeyValuePair
+	payload, _ := utils.GenerateInstallContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
+		"1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
+	//
+	//method := syscontract.ContractManageFunction_INIT_CONTRACT.String()
+	//
+	//payload := &commonPb.Payload{
+	//	ChainId: chainId,
+	//	Contract: &commonPb.Contract{
+	//		ContractName:    fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
+	//		ContractVersion: "1.0.0",
+	//		RuntimeType:     commonPb.RuntimeType(runTime),
+	//	},
+	//	Method:      method,
+	//	Parameters:  pairs,
+	//	ByteCode:    wasmBin,
+	//	Endorsement: nil,
+	//}
 
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
-			ContractVersion: "1.0.0",
-			RuntimeType:     commonPb.RuntimeType(runTime),
-		},
-		Method:      method,
-		Parameters:  pairs,
-		ByteCode:    wasmBin,
-		Endorsement: nil,
-	}
+	//if endorsement, err := acSign(payload); err == nil {
+	//	payload.Endorsement = endorsement
+	//} else {
+	//	return err
+	//}
 
-	if endorsement, err := acSign(payload); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		return err
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_MANAGE_USER_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
+	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payload)
 	if err != nil {
 		return err
 	}
@@ -742,35 +741,17 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 	}
 
 	var pairs []*commonPb.KeyValuePair
+	payload, _ := GenerateUpgradeContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
+		version, commonPb.RuntimeType(runTime), wasmBin, pairs)
 
-	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
+	//if endorsement, err := acSign(payload); err == nil {
+	//	payload.Endorsement = endorsement
+	//} else {
+	//	return err
+	//}
 
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
-			ContractVersion: version,
-			RuntimeType:     commonPb.RuntimeType(runTime),
-		},
-		Method:      method,
-		Parameters:  pairs,
-		ByteCode:    wasmBin,
-		Endorsement: nil,
-	}
-
-	if endorsement, err := acSign(payload); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		return err
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_MANAGE_USER_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
+	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payload)
 	if err != nil {
 		return err
 	}
@@ -782,8 +763,38 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 	return nil
 }
 
+func GenerateUpgradeContractPayload(contractName, version string, runtimeType commonPb.RuntimeType, bytecode []byte,
+	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_VERSION.String(),
+		Value: []byte(version),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_RUNTIME_TYPE.String(),
+		Value: []byte(runtimeType.String()),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_BYTECODE.String(),
+		Value: bytecode,
+	})
+	for _, kv := range initParameters {
+		pairs = append(pairs, kv)
+	}
+	payload := &commonPb.Payload{
+		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
+		Method:       syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(),
+		Parameters:   pairs,
+	}
+	return payload, nil
+}
+
 func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *InvokerMsg,
-	orgId, userCrtPath string, payloadBytes []byte) (*commonPb.TxResponse, error) {
+	orgId, userCrtPath string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
@@ -791,41 +802,47 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	file := fileCache.Read(userCrtPath)
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: *file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
-	var sender *acPb.SerializedMember
+	var sender *acPb.Member
 	if useShortCrt {
 		certId, err := certCache.Read(userCrtPath, senderFull.MemberInfo, hashAlgo)
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute the identity for certificate [%v]", err)
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      senderFull.OrgId,
 			MemberInfo: *certId,
-			IsFullCert: false,
+			MemberType: acPb.MemberType_CERT_HASH,
 		}
 	} else {
 		sender = senderFull
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        msg.chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: msg.chainId,
+		//Sender:         sender,
 		TxType:         msg.txType,
 		TxId:           msg.txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
+		ContractName:   payload.ContractName,
+		Method:         payload.Method,
+		Parameters:     payload.Parameters,
+		Sequence:       payload.Sequence,
+		Limit:          payload.Limit,
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender: &commonPb.EndorsementEntry{
+			Signer: sender,
+		},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -843,7 +860,7 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 		return nil, err
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := client.SendRequest(ctx, req)
 	if err != nil {

@@ -11,17 +11,14 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/dpos"
-
-	"chainmaker.org/chainmaker/pb-go/consensus"
-
+	"chainmaker.org/chainmaker-go/consensus/dpos"
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
-
-	"chainmaker.org/chainmaker-go/logger"
-
+	"chainmaker.org/chainmaker/pb-go/consensus"
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
 	"chainmaker.org/chainmaker/protocol"
+
 	"github.com/gogo/protobuf/proto"
 )
 

@@ -16,9 +16,9 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/db/mysql"
 	"chainmaker.org/chainmaker-go/tools/cmc/archive/model"
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdk "chainmaker.org/chainmaker/sdk-go"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/store"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 const (
@@ -49,7 +49,7 @@ func newRestoreCMD() *cobra.Command {
 // runRestoreCMD `restore` command implementation
 func runRestoreCMD() error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func validateRestore(archivedBlkHeightOnChain, restoreStartBlkHeight int64) erro
 	return nil
 }
 
-func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height int64) error {
+func restoreBlock(cc *sdk.ChainClient, db *gorm.DB, height uint64) error {
 	tx := db.Begin()
 	if tx.Error != nil {
 		return tx.Error
