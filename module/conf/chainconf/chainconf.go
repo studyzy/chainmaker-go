@@ -9,9 +9,10 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/pb-go/common"
@@ -210,7 +211,7 @@ func (c *ChainConf) GetChainConfigAt(futureBlockHeight uint64) (*config.ChainCon
 // GetChainConfigAt get the lasted block info of chain config.
 // The blockHeight must exist in store.
 // If it is a config block , return the current config info.
-func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache, blockchainStore protocol.BlockchainStore, blockHeight uint64) (*config.ChainConfig, error) {
+func GetChainConfigAt(log protocol.Logger, lru *lru.Cache, configLru *lru.Cache, blockchainStore protocol.BlockchainStore, blockHeight uint64) (*config.ChainConfig, error) {
 	var (
 		block *common.Block
 		err   error
@@ -334,8 +335,8 @@ func (c *ChainConf) CompleteBlock(block *common.Block) error {
 	if ok {
 		// is native tx
 		// callback the watcher by sync
-		payloadData,_:=tx.Payload.Marshal()
-		if err := c.callbackContractVmWatcher(contract,payloadData ); err != nil {
+		payloadData, _ := tx.Payload.Marshal()
+		if err := c.callbackContractVmWatcher(contract, payloadData); err != nil {
 			return err
 		}
 	}

@@ -8,10 +8,10 @@
 package government
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"fmt"
 
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -22,10 +22,10 @@ const (
 
 type GovernmentContract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewGovernmentContract(log *logger.CMLogger) *GovernmentContract {
+func NewGovernmentContract(log protocol.Logger) *GovernmentContract {
 	return &GovernmentContract{
 		log:     log,
 		methods: registerGovernmentContractMethods(log),
@@ -36,7 +36,7 @@ func (c *GovernmentContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerGovernmentContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerGovernmentContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	governmentRuntime := &GovernmentRuntime{log: log}
@@ -45,7 +45,7 @@ func registerGovernmentContractMethods(log *logger.CMLogger) map[string]common.C
 }
 
 type GovernmentRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 func (r *GovernmentRuntime) GetGovernmentContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {

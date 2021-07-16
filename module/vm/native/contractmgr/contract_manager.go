@@ -18,7 +18,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -29,10 +28,10 @@ var (
 
 type ContractManager struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewContractManager(log *logger.CMLogger) *ContractManager {
+func NewContractManager(log protocol.Logger) *ContractManager {
 	return &ContractManager{
 		log:     log,
 		methods: registerContractManagerMethods(log),
@@ -43,7 +42,7 @@ func (c *ContractManager) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerContractManagerMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerContractManagerMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	runtime := &ContractManagerRuntime{log: log}
 	methodMap[syscontract.ContractManageFunction_INIT_CONTRACT.String()] = runtime.installContract
@@ -122,7 +121,7 @@ func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimConte
 }
 
 type ContractManagerRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 //GetContractInfo 根据合约名字查询合约的详细信息

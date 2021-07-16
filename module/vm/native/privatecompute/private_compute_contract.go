@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/crypto"
@@ -51,10 +50,10 @@ const (
 
 type PrivateComputeContract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewPrivateComputeContact(log *logger.CMLogger) *PrivateComputeContract {
+func NewPrivateComputeContact(log protocol.Logger) *PrivateComputeContract {
 	return &PrivateComputeContract{
 		log:     log,
 		methods: registerPrivateComputeContractMethods(log),
@@ -65,7 +64,7 @@ func (p *PrivateComputeContract) GetMethod(methodName string) common.ContractFun
 	return p.methods[methodName]
 }
 
-func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerPrivateComputeContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	privateComputeRuntime := &PrivateComputeRuntime{log: log}
@@ -91,7 +90,7 @@ func registerPrivateComputeContractMethods(log *logger.CMLogger) map[string]comm
 }
 
 type PrivateComputeRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 func (r *PrivateComputeRuntime) VerifyByEnclaveCert(context protocol.TxSimContext, enclaveId []byte, data []byte, sign []byte) (bool, error) {

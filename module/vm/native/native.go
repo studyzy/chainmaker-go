@@ -36,7 +36,7 @@ var (
 type RuntimeInstance struct {
 	// contracts map[contractName]Contract
 	contracts map[string]common.Contract
-	log       *logger.CMLogger
+	log       protocol.Logger
 }
 
 // GetRuntimeInstance get singleton RuntimeInstance
@@ -58,7 +58,7 @@ func GetRuntimeInstance(chainId string) *RuntimeInstance {
 	return instance
 }
 
-func initContract(log *logger.CMLogger) map[string]common.Contract {
+func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts := make(map[string]common.Contract, 64)
 	contracts[syscontract.SystemContract_CHAIN_CONFIG.String()] = chainconfigmgr.NewChainConfigContract(log)
 	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContact(log)

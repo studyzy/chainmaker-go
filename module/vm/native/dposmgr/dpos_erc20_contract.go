@@ -18,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -51,10 +50,10 @@ var (
 
 type DPoSERC20Contract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewDPoSERC20Contract(log *logger.CMLogger) *DPoSERC20Contract {
+func NewDPoSERC20Contract(log protocol.Logger) *DPoSERC20Contract {
 	return &DPoSERC20Contract{
 		log:     log,
 		methods: registerDPoSERC20ContractMethods(log),
@@ -65,7 +64,7 @@ func (c *DPoSERC20Contract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerDPoSERC20ContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// [DPoS]
 	dposRuntime := NewDPoSRuntime(log)
@@ -85,11 +84,11 @@ func registerDPoSERC20ContractMethods(log *logger.CMLogger) map[string]common.Co
 
 // [DPoS]
 type DPoSRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // NewDPoSRuntime
-func NewDPoSRuntime(log *logger.CMLogger) *DPoSRuntime {
+func NewDPoSRuntime(log protocol.Logger) *DPoSRuntime {
 	return &DPoSRuntime{log: log}
 }
 

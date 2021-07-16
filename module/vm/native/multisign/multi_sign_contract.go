@@ -8,11 +8,12 @@
 package multisign
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/common"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/vm/native/common"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var (
@@ -23,10 +24,10 @@ var (
 // MultiSignContract multiSign Contract
 type MultiSignContract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewMultiSignContract(log *logger.CMLogger) *MultiSignContract {
+func NewMultiSignContract(log protocol.Logger) *MultiSignContract {
 	return &MultiSignContract{
 		log:     log,
 		methods: registerMultiSignContractMethods(log),
@@ -37,7 +38,7 @@ func (c *MultiSignContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerMultiSignContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerMultiSignContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 
 	return methodMap
@@ -45,7 +46,7 @@ func registerMultiSignContractMethods(log *logger.CMLogger) map[string]common.Co
 
 // MultiSignRuntime  mutlSign runtime
 type MultiSignRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // payloadInfo the memory payload info

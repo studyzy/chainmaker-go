@@ -8,8 +8,12 @@
 package chainconfigmgr
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/sortedmap"
@@ -18,11 +22,7 @@ import (
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -53,10 +53,10 @@ var (
 
 type ChainConfigContract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewChainConfigContract(log *logger.CMLogger) *ChainConfigContract {
+func NewChainConfigContract(log protocol.Logger) *ChainConfigContract {
 	return &ChainConfigContract{
 		log:     log,
 		methods: registerChainConfigContractMethods(log),
@@ -67,7 +67,7 @@ func (c *ChainConfigContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerChainConfigContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerChainConfigContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// [core]
 	coreRuntime := &ChainCoreRuntime{log: log}
@@ -162,7 +162,7 @@ func setChainConfig(txSimContext protocol.TxSimContext, chainConfig *configPb.Ch
 
 // [core]
 type ChainConfigRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // GetChainConfig get newest chain config
@@ -205,7 +205,7 @@ func (r *ChainConfigRuntime) GetChainConfigFromBlockHeight(txSimContext protocol
 
 // [core]
 type ChainCoreRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
@@ -264,7 +264,7 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 
 // [block]
 type ChainBlockRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
@@ -317,7 +317,7 @@ func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, para
 
 // [trust_root]
 type ChainTrustRootsRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // TrustRootAdd add trustRoot
@@ -440,7 +440,7 @@ func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimCont
 
 // [consensus]
 type ChainConsensusRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // NodeIdAdd add nodeId
@@ -856,7 +856,7 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 
 	extConfigMap := make(map[string]string)
 	for _, v := range extConfig {
-		extConfigMap[v.Key] =string( v.Value)
+		extConfigMap[v.Key] = string(v.Value)
 	}
 
 	for key, val := range params {
@@ -940,7 +940,7 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 
 // [permissions]
 type ChainPermissionRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // ResourcePolicyAdd add permission
