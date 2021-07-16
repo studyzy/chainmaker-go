@@ -24,7 +24,7 @@ func CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtPath, userTlsKeyPa
 		sdk.WithChainClientOrgId(orgId),
 		sdk.WithUserCrtFilePath(userTlsCrtPath),
 		sdk.WithUserKeyFilePath(userTlsKeyPath),
-		sdk.WithUserSingCrtFilePath(userSignCrtPath),
+		sdk.WithUserSignCrtFilePath(userSignCrtPath),
 		sdk.WithUserSignKeyFilePath(userSignKeyPath),
 	)
 	if err != nil {
