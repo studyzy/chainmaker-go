@@ -265,10 +265,31 @@ func (r *ContractManagerRuntime) UnfreezeContract(context protocol.TxSimContext,
 	return r.changeContractStatus(context, name, commonPb.ContractStatus_FROZEN, commonPb.ContractStatus_NORMAL)
 }
 func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, name string) (*commonPb.Contract, error) {
-	return r.changeContractStatus(context, name, commonPb.ContractStatus_NORMAL, commonPb.ContractStatus_REVOKED)
+	if utils.IsAnyBlank(name) {
+		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
+		r.log.Errorf(err.Error())
+		return nil, err
+	}
+	contract, err := utils.GetContractByName(context.Get, name)
+	if err != nil {
+		return nil, err
+	}
+	if contract.Status != commonPb.ContractStatus_NORMAL && contract.Status != commonPb.ContractStatus_FROZEN {
+		r.log.Errorf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s", name, contract.Status.String())
+		return nil, errContractStatusInvalid
+	}
+	contract.Status = commonPb.ContractStatus_REVOKED
+	key := utils.GetContractDbKey(name)
+	cdata, _ := contract.Marshal()
+	err = context.Put(ContractName, key, cdata)
+	if err != nil {
+		return nil, err
+	}
+	return contract, nil
 }
 
-func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimContext, name string, oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
+func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimContext, name string,
+	oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
@@ -279,6 +300,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		return nil, err
 	}
 	if contract.Status != oldStatus {
+		r.log.Errorf("contract[%s] expect status:%s,actual status:%s", name, oldStatus.String(), contract.Status.String())
 		return nil, errContractStatusInvalid
 	}
 	contract.Status = newStatus
@@ -290,6 +312,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 	}
 	return contract, nil
 }
+
 func checkContractName(name string) bool {
 	reg := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
 	return reg.Match([]byte(name))

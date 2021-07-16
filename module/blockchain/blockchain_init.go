@@ -331,12 +331,18 @@ func (bc *Blockchain) initVM() (err error) {
 	// init VM
 	var vmFactory vm.Factory
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, nil, bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
 	} else {
 		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return
+}
+
+type soloChainNodesInfoProvider struct{}
+
+func (s *soloChainNodesInfoProvider) GetChainNodesInfo() ([]*protocol.ChainNodeInfo, error) {
+	return []*protocol.ChainNodeInfo{}, nil
 }
 
 func (bc *Blockchain) initCore() (err error) {
