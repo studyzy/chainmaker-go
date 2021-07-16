@@ -70,8 +70,8 @@ func main() {
 	initWasmerTest()
 	runTest()
 
-	initGasmTest()
-	runTest()
+	//initGasmTest()
+	//runTest()
 }
 
 func runTest() {
