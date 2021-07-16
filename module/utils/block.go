@@ -9,12 +9,13 @@ package utils
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"crypto/sha256"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -211,12 +212,12 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 	if err != nil {
 		return false, fmt.Errorf("fail to hash block: %v", err)
 	}
-	var serializedMember =b.Header.Proposer
+	var Member = b.Header.Proposer
 	if err != nil {
 		return false, fmt.Errorf("signer is unknown: %v", err)
 	}
 	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    serializedMember,
+		Signer:    Member,
 		Signature: b.Header.Signature,
 	}}
 	principal, err := ac.CreatePrincipal(protocol.ResourceNameConsensusNode, endorsements, hashedBlock)
@@ -231,4 +232,10 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 		return false, fmt.Errorf("authentication fail")
 	}
 	return true, nil
+}
+func IsContractMgmtBlock(b *commonPb.Block) bool {
+	if len(b.Txs) == 0 {
+		return false
+	}
+	return IsContractMgmtTx(b.Txs[0])
 }

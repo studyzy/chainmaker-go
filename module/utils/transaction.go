@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	"chainmaker.org/chainmaker/common/random/uuid"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -112,18 +114,27 @@ func CalcResultBytes(result *commonPb.Result) ([]byte, error) {
 
 // IsManageContractAsConfigTx Whether the Manager Contract is considered a configuration transaction
 func IsManageContractAsConfigTx(tx *commonPb.Transaction, enableSqlDB bool) bool {
-	if tx == nil  {
+	if tx == nil {
 		return false
 	}
-	return enableSqlDB && tx.IsContractMgmtTx()
+	return enableSqlDB && IsContractMgmtTx(tx)
+}
+
+//IsContractMgmtTx 是否是合约安装、升级的交易
+func IsContractMgmtTx(tx *commonPb.Transaction) bool {
+	payload := tx.Payload
+
+	return payload.ContractName == syscontract.SystemContract_CONTRACT_MANAGE.String() &&
+		(payload.Method == syscontract.ContractManageFunction_INIT_CONTRACT.String() ||
+			payload.Method == syscontract.ContractManageFunction_UPGRADE_CONTRACT.String())
 }
 
 // IsConfigTx the transaction is a config transaction or not
 func IsConfigTx(tx *commonPb.Transaction) bool {
-	if tx == nil  {
+	if tx == nil {
 		return false
 	}
-	return tx.IsConfigTx()
+	return tx.Payload.ContractName == syscontract.SystemContract_CHAIN_CONFIG.String()
 }
 
 // IsValidConfigTx the transaction is a valid config transaction or not
@@ -209,10 +220,11 @@ func VerifyTxWithoutPayload(tx *commonPb.Transaction, chainId string, ac protoco
 	}
 	return nil
 }
+
 //验证发送者和签名
 func verifyTxSender(tx *commonPb.Transaction) error {
-	_,err:= tx.Payload.Marshal()
-	if err!=nil{
+	_, err := tx.Payload.Marshal()
+	if err != nil {
 		return err
 	}
 	//tx.Sender.Signer.
@@ -221,8 +233,8 @@ func verifyTxSender(tx *commonPb.Transaction) error {
 
 // verify transaction header
 func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
-	defaultTxIdLen := 64                              // txId的长度
-	defaultTxIdReg := "^[a-zA-Z_][a-zA-Z0-9_]{0,63}$" // txId的字符串的正则表达式与普通参数命名规则相同
+	defaultTxIdLen := 64                     // txId的长度
+	defaultTxIdReg := "^[a-zA-Z0-9_]{1,64}$" // txId的字符串的正则表达式与普通参数命名规则相同
 	// 1. header not null
 	if header == nil {
 		return errors.New("tx header is nil")
@@ -262,7 +274,7 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 		return err
 	}
 
-	endorsements := []*commonPb.EndorsementEntry{ t.Sender}
+	endorsements := []*commonPb.EndorsementEntry{t.Sender}
 	resourceId, err := ac.LookUpResourceNameByTxType(t.Payload.TxType)
 	if err != nil {
 		return err
@@ -316,3 +328,33 @@ func VerifyConfigUpdateTx(methodName string, endorsements []*commonPb.Endorsemen
 	return ac.VerifyPrincipal(principal)
 }
 */
+
+func GenerateInstallContractPayload(contractName, version string, runtimeType commonPb.RuntimeType, bytecode []byte,
+	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_VERSION.String(),
+		Value: []byte(version),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String(),
+		Value: []byte(runtimeType.String()),
+	})
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
+		Value: bytecode,
+	})
+	for _, kv := range initParameters {
+		pairs = append(pairs, kv)
+	}
+	payload := &commonPb.Payload{
+		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
+		Method:       syscontract.ContractManageFunction_INIT_CONTRACT.String(),
+		Parameters:   pairs,
+	}
+	return payload, nil
+}

@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/logger"
@@ -44,7 +46,7 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 	txs := make([]*commonPb.Transaction, 0, num)
 	txType := commonPb.TxType_INVOKE_CONTRACT
 	for i := 0; i < num; i++ {
-		contractName := commonPb.SystemContract_CHAIN_CONFIG.String()
+		contractName := syscontract.SystemContract_CHAIN_CONFIG.String()
 
 		if !isConfig {
 			contractName = "userContract1"

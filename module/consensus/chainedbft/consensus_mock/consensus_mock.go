@@ -7,13 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package consensus_mock
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
@@ -137,7 +140,7 @@ func (cm *MockCommitter) AddBlock(block *commonPb.Block) error {
 		return errors.New("consensusArgs.ConsensusData is nil")
 	}
 	rwset, _ := proto.Marshal(consensusArgs.ConsensusData)
-	cm.store.WriteObject(commonPb.SystemContract_GOVERNANCE.String(), rwset)
+	cm.store.WriteObject(syscontract.SystemContract_GOVERNANCE.String(), rwset)
 	// chain.proposedCache.ClearProposedBlock(block.Header.BlockHeight)
 	// chain.proposedCache.ResetProposedThisRound()
 	cm.msgBus.Publish(msgbus.BlockInfo, block) // synchronize new block height to consensus and sync module
@@ -240,7 +243,7 @@ func (b *MockProposer) CreateBlock(height uint64, perHash []byte) *commonPb.Bloc
 			Signature:    []byte(""),
 			BlockHash:    []byte(""),
 			PreBlockHash: perHash,
-			Proposer:     &accesscontrol.SerializedMember{MemberInfo: []byte(b.id)},
+			Proposer:     &accesscontrol.Member{MemberInfo: []byte(b.id)},
 		},
 		Dag: &commonPb.DAG{},
 		Txs: []*commonPb.Transaction{
@@ -468,7 +471,7 @@ func NewMockMockBlockchainStore(gensis *commonPb.Block, cf *chainconf.ChainConf)
 	bs.blockList = append(bs.blockList, gensis)
 	config := cf.ChainConfig()
 	bconfig, _ := proto.Marshal(config)
-	bs.objectMap[commonPb.SystemContract_CHAIN_CONFIG.String()] = bconfig
+	bs.objectMap[syscontract.SystemContract_CHAIN_CONFIG.String()] = bconfig
 	return bs
 }
 

@@ -158,16 +158,17 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
 		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
 	}
-	for _, item := range paramItem {
-		if len(item.Key) > protocol.DefaultStateLen {
-			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(item.Key)), gasUsed
+	paramMap := ecData.ToMap()
+	for key, val := range paramMap {
+		if len(key) > protocol.DefaultStateLen {
+			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key)), gasUsed
 		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, item.Key)
+		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {
-			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", item.Key), gasUsed
+			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", key), gasUsed
 		}
-		if len(item.Value.(string)) > protocol.ParametersValueMaxLength {
-			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(item.Value.(string))), gasUsed
+		if len(val) > protocol.ParametersValueMaxLength {
+			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
@@ -176,8 +177,8 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 
 	// call contract
 	gasUsed += protocol.CallContractGasOnce
-	paramMap := ecData.ToMap()
-	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil, paramMap, gasUsed, common.TxType_INVOKE_CONTRACT)
+
+	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil, paramMap, gasUsed, txSimContext.GetTx().Payload.TxType)
 	gasUsed += uint64(result.GasUsed)
 	if code != common.TxStatusCode_SUCCESS {
 		return nil, fmt.Errorf("[call contract] execute error code: %s, msg: %s", code.String(), result.Message), gasUsed
@@ -192,7 +193,7 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 }
 
 func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []byte) int32 {
-	if contractResult.Code == uint32(protocol.ContractResultCode_FAIL) {
+	if contractResult.Code == uint32(1) {
 		return protocol.ContractSdkSignalResultFail
 	}
 	contractResult.Code = 0
@@ -201,7 +202,7 @@ func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []by
 }
 
 func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte) int32 {
-	contractResult.Code = uint32(protocol.ContractResultCode_FAIL)
+	contractResult.Code = uint32(1)
 	if len(contractResult.Message) > 0 {
 		contractResult.Message += ". contract message:" + string(data)
 	} else {
@@ -504,7 +505,7 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 	pubKeyBytes, _ := ec.GetBytes("pubKey")
 	valuePtr, _ := ec.GetInt32("value_ptr")
 
-	pubKey := paillier.Helper().NewPubKey()
+	pubKey := new(paillier.PubKey)
 	err := pubKey.Unmarshal(pubKeyBytes)
 	if err != nil {
 		return nil, err
@@ -539,9 +540,9 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 	return resultBytes, nil
 }
 
-func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
-	ct1 := paillier.Helper().NewCiphertext()
-	ct2 := paillier.Helper().NewCiphertext()
+func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ct1 := new(paillier.Ciphertext)
+	ct2 := new(paillier.Ciphertext)
 	err := ct1.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
@@ -561,8 +562,8 @@ func addCiphertext(operandOne interface{}, operandTwo interface{}, pubKey pailli
 	return result.Marshal()
 }
 
-func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
-	ct := paillier.Helper().NewCiphertext()
+func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ct := new(paillier.Ciphertext)
 	err := ct.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
@@ -582,9 +583,9 @@ func addPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 	return result.Marshal()
 }
 
-func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
-	ct1 := paillier.Helper().NewCiphertext()
-	ct2 := paillier.Helper().NewCiphertext()
+func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ct1 := new(paillier.Ciphertext)
+	ct2 := new(paillier.Ciphertext)
 	err := ct1.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
@@ -604,8 +605,8 @@ func subCiphertext(operandOne interface{}, operandTwo interface{}, pubKey pailli
 	return result.Marshal()
 }
 
-func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
-	ct := paillier.Helper().NewCiphertext()
+func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ct := new(paillier.Ciphertext)
 	err := ct.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err
@@ -628,8 +629,8 @@ func subPlaintext(operandOne interface{}, operandTwo interface{}, pubKey paillie
 	return result.Marshal()
 }
 
-func numMul(operandOne interface{}, operandTwo interface{}, pubKey paillier.Pub) ([]byte, error) {
-	ct := paillier.Helper().NewCiphertext()
+func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.PubKey) ([]byte, error) {
+	ct := new(paillier.Ciphertext)
 	err := ct.Unmarshal(operandOne.([]byte))
 	if err != nil {
 		return nil, err

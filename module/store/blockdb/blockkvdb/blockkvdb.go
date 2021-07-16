@@ -76,7 +76,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 
 	// 2. height-> blockInfo
 	heightKey := constructBlockNumKey(uint64(block.Header.BlockHeight))
-	batch.Put(heightKey, blockInfo.GetSerializedMeta())
+	batch.Put(heightKey, blockInfo.SerializedMeta)
 
 	// 3. hash-> height
 	hashKey := constructBlockHashKey(block.Header.BlockHash)
@@ -86,7 +86,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	txConfirmedTime := make([]byte, 8)
 	binary.BigEndian.PutUint64(txConfirmedTime, uint64(block.Header.BlockTimestamp))
 	startPrepareTxs := utils.CurrentTimeMillisSeconds()
-	for index, txBytes := range blockInfo.GetSerializedTxs() {
+	for index, txBytes := range blockInfo.SerializedTxs {
 		tx := blockInfo.Block.Txs[index]
 		txIdKey := constructTxIDKey(tx.Payload.TxId)
 		batch.Put(txIdKey, txBytes)
@@ -217,7 +217,7 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 
 		batch := types.NewUpdateBatch()
 		//verify imported block txs
-		for index, stx := range blockInfo.GetSerializedTxs() {
+		for index, stx := range blockInfo.SerializedTxs {
 			// put tx data
 			batch.Put(constructTxIDKey(blockInfo.Block.Txs[index].Payload.TxId), stx)
 		}
@@ -531,19 +531,19 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 func (b *BlockKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	b.Cache.AddBlock(blockHeight, batch)
+	go func() {
+		startWriteBatchTime := utils.CurrentTimeMillisSeconds()
+		err := b.DbHandle.WriteBatch(batch, false)
+		endWriteBatchTime := utils.CurrentTimeMillisSeconds()
+		b.Logger.Infof("write block db, block[%d], time used:%d",
+			blockHeight, endWriteBatchTime-startWriteBatchTime)
 
-	startWriteBatchTime := utils.CurrentTimeMillisSeconds()
-	err := b.DbHandle.WriteBatch(batch, false)
-	endWriteBatchTime := utils.CurrentTimeMillisSeconds()
-	b.Logger.Infof("write block db, block[%d], time used:%d",
-		blockHeight, endWriteBatchTime-startWriteBatchTime)
-
-	if err != nil {
-		panic(fmt.Sprintf("Error writing leveldb: %s", err))
-	}
-	//db committed, clean cache
-	b.Cache.DelBlock(blockHeight)
-
+		if err != nil {
+			panic(fmt.Sprintf("Error writing leveldb: %s", err))
+		}
+		//db committed, clean cache
+		b.Cache.DelBlock(blockHeight)
+	}()
 	return nil
 }
 

@@ -8,6 +8,7 @@ package native
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 )
 
 func IsNative(contractName string, txType commonPb.TxType) bool {
@@ -16,7 +17,7 @@ func IsNative(contractName string, txType commonPb.TxType) bool {
 
 // IsNativeContract return is native contract name
 func IsNativeContract(contractName string) bool {
-	_, ok := commonPb.SystemContract_value[contractName]
+	_, ok := syscontract.SystemContract_value[contractName]
 	return ok
 }
 

@@ -548,7 +548,7 @@ func createProposalMsg(proposal *Proposal) *tbftpb.TBFTMsg {
 	data := mustMarshal(proposalProto)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_propose,
+		Type: tbftpb.TBFTMsgType_MSG_PROPOSE,
 		Msg:  data,
 	}
 
@@ -560,7 +560,7 @@ func createPrevoteMsg(prevote *Vote) *tbftpb.TBFTMsg {
 	data := mustMarshal(prevoteProto)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_prevote,
+		Type: tbftpb.TBFTMsgType_MSG_PREVOTE,
 		Msg:  data,
 	}
 
@@ -572,7 +572,7 @@ func createPrecommitMsg(precommit *Vote) *tbftpb.TBFTMsg {
 	data := mustMarshal(precommitProto)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_precommit,
+		Type: tbftpb.TBFTMsgType_MSG_PRECOMMIT,
 		Msg:  data,
 	}
 
@@ -583,7 +583,7 @@ func createStateMsg(state *tbftpb.ConsensusState) *tbftpb.TBFTMsg {
 	data := mustMarshal(state)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_state,
+		Type: tbftpb.TBFTMsgType_MSG_STATE,
 		Msg:  data,
 	}
 

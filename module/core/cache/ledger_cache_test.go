@@ -62,7 +62,7 @@ func (m *moduleB) getBlock() *commonpb.Block {
 
 func CreateNewTestBlock(height uint64) *commonpb.Block {
 	var hash = []byte("0123456789")
-	var version = []byte("0")
+	var version = uint32(1)
 	var block = &commonpb.Block{
 		Header: &commonpb.BlockHeader{
 			ChainId:        "Chain1",
@@ -75,7 +75,7 @@ func CreateNewTestBlock(height uint64) *commonpb.Block {
 			RwSetRoot:      hash,
 			TxRoot:         hash,
 			BlockTimestamp: 0,
-			Proposer:       &accesscontrol.SerializedMember{MemberInfo: hash},
+			Proposer:       &accesscontrol.Member{MemberInfo: hash},
 			ConsensusArgs:  nil,
 			TxCount:        1,
 			Signature:      []byte(""),

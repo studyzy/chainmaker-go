@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker/protocol/test"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
@@ -89,8 +91,8 @@ func initChainConf(filePath string, t *testing.T) (*chainconf.ChainConf, error) 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	store := mock.NewMockBlockchainStore(ctrl)
-	store.EXPECT().ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
-		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
+	store.EXPECT().ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
 	nodecf, _ := chainconf.NewChainConf(
 		chainconf.WithBlockchainStore(store),
 	)

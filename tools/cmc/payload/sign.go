@@ -132,7 +132,7 @@ func signContractMgmtPayload() error {
 	return nil
 }
 
-//func getSigner(sk3 crypto.PrivateKey, sender *sdkPbCommon.SerializedMember) (protocol.SigningMember, error) {
+//func getSigner(sk3 crypto.PrivateKey, sender *sdkPbCommon.Member) (protocol.SigningMember, error) {
 //	skPEM, err := sk3.String()
 //	if err != nil {
 //		return nil, err
@@ -175,7 +175,7 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 		return nil, fmt.Errorf("SignTx failed, %s", err)
 	}
 
-	sender := &sdkPbAc.SerializedMember{
+	sender := &sdkPbAc.Member{
 		OrgId:      orgId,
 		MemberInfo: certFile,
 		//IsFullCert: true,
@@ -196,9 +196,9 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 	//	return nil, fmt.Errorf("Sign error: %s", err)
 	//}
 	//
-	//signerSerial, err := signer.GetSerializedMember(true)
+	//signerSerial, err := signer.GetMember(true)
 	//if err != nil {
-	//	return nil, fmt.Errorf("GetSerializedMember error: %s", err)
+	//	return nil, fmt.Errorf("GetMember error: %s", err)
 	//}
 	//
 	//return &sdkPbCommon.EndorsementEntry{

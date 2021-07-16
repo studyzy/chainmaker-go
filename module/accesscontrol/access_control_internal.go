@@ -21,7 +21,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker/pb-go/consts"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/crypto/asym"
@@ -63,13 +63,13 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameWriteData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
 	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_BLOCK_INFO: protocol.ResourceNameReadData,
-	common.TxType_SUBSCRIBE_TX_INFO:    protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
+	//common.TxType_SUBSCRIBE:    protocol.ResourceNameReadData,
 	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO: protocol.ResourceNameReadData,
+	//common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
 
-	common.TxType_ARCHIVE_FULL_BLOCK: protocol.ResourceNameArchive,
-	common.TxType_RESTORE_FULL_BLOCK: protocol.ResourceNameArchive,
+	common.TxType_ARCHIVE: protocol.ResourceNameArchive,
+	//common.TxType_ARCHIVE: protocol.ResourceNameArchive,
 }
 
 var (
@@ -165,7 +165,7 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 			return nil, fmt.Errorf("multiple public key for member %s", root.OrgId)
 		}
 		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
-		ac.identityType = IdentityTypePublicKey
+		ac.identityType = pbac.MemberType_PUBLIC_KEY
 	}
 
 	var certificates, certificateChain []*bcx509.Certificate
@@ -182,7 +182,7 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 		if len(cert.Signature) == 0 {
 			return nil, fmt.Errorf("invalid certificate [SN: %s]", cert.SerialNumber)
 		}
-		ac.identityType = IdentityTypeCert
+		ac.identityType = pbac.MemberType_CERT
 		certificates = append(certificates, cert)
 
 		pemBlock, rest = pem.Decode(rest)
@@ -248,7 +248,7 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
-	if ac.identityType == IdentityTypePublicKey {
+	if ac.identityType == pbac.MemberType_PUBLIC_KEY {
 		pk, errPubKey := asym.PublicKeyFromPEM([]byte(root.Root))
 		if errPubKey != nil {
 			return nil, fmt.Errorf("update configuration failed, invalid public key for organization %s", root.OrgId)
@@ -259,7 +259,7 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *confi
 
 		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
 	}
-	if ac.identityType == IdentityTypeCert {
+	if ac.identityType == pbac.MemberType_CERT {
 		pemBlock, rest := pem.Decode([]byte(root.Root))
 		for pemBlock != nil {
 			cert, errCert := bcx509.ParseCertificate(pemBlock.Bytes)
@@ -524,7 +524,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 		ouList, err := ac.getSignerRoleList(entry.Signer.MemberInfo)
 		if err != nil {
 			var info string
-			if entry.Signer.MemberType==pbac.MemberType_CERT {
+			if entry.Signer.MemberType == pbac.MemberType_CERT {
 				info = string(entry.Signer.MemberInfo)
 			} else {
 				info = hex.EncodeToString(entry.Signer.MemberInfo)
@@ -572,8 +572,8 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)", resourceName)
 }
 
-func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.SerializedMember) string {
-	if signer.MemberType==pbac.MemberType_CERT {
+func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.Member) string {
+	if signer.MemberType == pbac.MemberType_CERT {
 		return string(signer.MemberInfo)
 	} else {
 		return hex.EncodeToString(signer.MemberInfo)
@@ -644,7 +644,7 @@ func (ac *accessControl) validateCrlVersion(crlPemBytes []byte, crl *pkix.Certif
 			return fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPemBytes))
 		}
 		ac.log.Debugf("AKI is ASN1 encoded: %v", isASN1Encoded)
-		crlOldBytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), aki)
+		crlOldBytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), aki)
 		if err != nil {
 			return fmt.Errorf("lookup CRL [%s] failed: %v", hex.EncodeToString(aki), err)
 		}
@@ -669,11 +669,11 @@ func (ac *accessControl) systemContractCallbackCertManagementCase(payloadBytes [
 		return fmt.Errorf("resolve payload failed: %v", err)
 	}
 	switch payload.Method {
-	case common.CertManageFunction_CERTS_FREEZE.String():
+	case syscontract.CertManageFunction_CERTS_FREEZE.String():
 		return ac.systemContractCallbackCertManagementCertFreezeCase(&payload)
-	case common.CertManageFunction_CERTS_UNFREEZE.String():
+	case syscontract.CertManageFunction_CERTS_UNFREEZE.String():
 		return ac.systemContractCallbackCertManagementCertUnfreezeCase(&payload)
-	case common.CertManageFunction_CERTS_REVOKE.String():
+	case syscontract.CertManageFunction_CERTS_REVOKE.String():
 		return ac.systemContractCallbackCertManagementCertRevokeCase(&payload)
 	default:
 		ac.log.Debugf("unwatched method [%s]", payload.Method)
@@ -773,7 +773,7 @@ func (ac *accessControl) lookUpCertCache(certId string) ([]byte, bool) {
 			return nil, false
 		}
 		certIdHex := hex.EncodeToString([]byte(certId))
-		cert, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(certIdHex))
+		cert, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certIdHex))
 		if err != nil {
 			ac.log.Debugf("fail to load compressed certificate from local storage [%s]", certIdHex)
 			return nil, false
@@ -831,7 +831,7 @@ func (ac *accessControl) loadCRL() error {
 		return nil
 	}
 
-	crlAKIList, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
+	crlAKIList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
 	if err != nil {
 		return fmt.Errorf("fail to update CRL list: %v", err)
 	}
@@ -855,7 +855,7 @@ func (ac *accessControl) loadCRL() error {
 
 func (ac *accessControl) storeCrls(crlAKIs []string) error {
 	for _, crlAKI := range crlAKIs {
-		crlbytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(crlAKI))
+		crlbytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(crlAKI))
 		if err != nil {
 			return fmt.Errorf("fail to load CRL [%s]: %v", hex.EncodeToString([]byte(crlAKI)), err)
 		}
@@ -910,7 +910,7 @@ func (ac *accessControl) loadCertFrozenList() error {
 		return nil
 	}
 
-	certList, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
+	certList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
 	if err != nil {
 		return fmt.Errorf("update frozen certificate list failed: %v", err)
 	}
@@ -925,7 +925,7 @@ func (ac *accessControl) loadCertFrozenList() error {
 	}
 
 	for _, certID := range certIDs {
-		certBytes, err := ac.dataStore.ReadObject(common.SystemContract_CERT_MANAGE.String(), []byte(certID))
+		certBytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certID))
 		if err != nil {
 			return fmt.Errorf("load frozen certificate failed: %s", certID)
 		}
@@ -1063,7 +1063,7 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	if err != nil {
 		return nil, err
 	}
-	if ac.authMode == MemberMode || ac.identityType == IdentityTypePublicKey { // white list mode or public key mode
+	if ac.authMode == MemberMode || ac.identityType == pbac.MemberType_PUBLIC_KEY { // white list mode or public key mode
 		return []*bcx509.Certificate{cert}, nil
 	}
 
@@ -1144,14 +1144,14 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 	var memInfo string
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
-			Signer: &pbac.SerializedMember{
+			Signer: &pbac.Member{
 				OrgId:      endorsementEntry.Signer.OrgId,
 				MemberInfo: endorsementEntry.Signer.MemberInfo,
 				MemberType: endorsementEntry.Signer.MemberType,
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.MemberType==pbac.MemberType_CERT {
+		if endorsement.Signer.MemberType == pbac.MemberType_CERT {
 			ac.log.Debugf("target endorser uses full certificate")
 			memInfo = string(endorsement.Signer.MemberInfo)
 		} else {
@@ -1162,7 +1162,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 				continue
 			}
 			memInfo = string(memInfoBytes)
-			endorsement.Signer.MemberType=pbac.MemberType_CERT
+			endorsement.Signer.MemberType = pbac.MemberType_CERT
 			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 

@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 
@@ -33,7 +35,7 @@ func ChainConfigGetGovernanceContractCMD() *cobra.Command {
 func getGovernanceContract() error {
 	// 构造Payload
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(commonPb.SystemContract_GOVERNANCE.String(), commonPb.QueryFunction_GET_GOVERNANCE_CONTRACT.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_GOVERNANCE.String(), syscontract.ChainQueryFunction_GET_GOVERNANCE_CONTRACT.String(), pairs)
 	if err != nil {
 		return err
 	}

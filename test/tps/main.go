@@ -114,7 +114,7 @@ func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 	var pairs []*commonPb.KeyValuePair
 
 	//method := commonPb.TxType_MANAGE_USER_CONTRACT.String()
-	payload, _ := commonPb.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
 
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
@@ -210,7 +210,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		////IsFullCert: true,
@@ -254,7 +254,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	return nil
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -341,7 +341,7 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 //		fmt.Println("node", orgId, "peerId", peerId)
 //
 //		// 构造Sender
-//		sender1 := &acPb.SerializedMember{
+//		sender1 := &acPb.Member{
 //			OrgId:      fmt.Sprintf(orgIdFormat, orgId),
 //			MemberInfo: file2,
 //			//IsFullCert: true,

@@ -9,7 +9,6 @@ package wasmertest
 import (
 	"fmt"
 	"gotest.tools/assert"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -32,9 +31,8 @@ var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
-	//test.WasmFile = "../../../../test/wasm/rust-fact-1.2.0.wasm"
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
-	//test.WasmFile = "D:\\develop\\workspace\\chainMaker\\chainmaker-contract-sdk-rust\\target\\wasm32-unknown-unknown\\release\\chainmaker_contract.wasm"
+	test.ContractNameTest = "contract_fact"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
 
@@ -45,15 +43,15 @@ func TestCallFact(t *testing.T) {
 	println("start") // 2.9m
 	start := time.Now().UnixNano() / 1e6
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 10; j++ {
+	for i := 0; i < 1; i++ {
+		for j := 0; j < 1; j++ {
 			x++
 			y := x
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				invokeFact("increase", y, contractId, txContext, pool, bytes)
-				invokeFact("query", y, contractId, txContext, pool, bytes)
+				invokeFact("save", y, contractId, txContext, pool, bytes)
+				//invokeFact("query", y, contractId, txContext, pool, bytes)
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%1000 == 0 {
 					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
@@ -66,11 +64,6 @@ func TestCallFact(t *testing.T) {
 
 	end := time.Now().UnixNano() / 1e6
 	println("end 【spend】", end-start)
-	time.Sleep(time.Second * 2)
-	println("reset vm pool")
-	pool.ResetAllPool()
-	//time.Sleep(time.Second * 500)
-	runtime.GC()
 }
 
 func invokeFact(method string, id int32, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
@@ -79,21 +72,22 @@ func invokeFact(method string, id int32, contractId *commonPb.Contract, txContex
 	parameters["time"] = []byte("567124123")
 	parameters["file_hash"] = []byte("file_hash")
 	parameters["file_name"] = []byte(txId)
-	parameters["tx_id"] = []byte( txId)
+	parameters["tx_id"] = []byte(txId)
 	parameters["forever"] = []byte("true")
 	parameters["contract_name"] = []byte(test.ContractNameTest)
 
 	baseParam(parameters)
 	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
 	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
-	fmt.Printf("\n【result】 %+v \n\n\n", r)
+	//fmt.Printf("\n【result】 %+v \n\n\n", r)
 	return r
 }
 
 func TestFunctionalContract(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-1.2.0.wasm"
+	test.ContractNameTest = "contract_functional"
+	test.WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
-	pool := wasmer.NewVmPoolManager("chain001")
+	pool := test.GetVmPoolManager()
 
 	invokeFactContract("init_contract", contractId, txContext, pool, bytes)
 	invokeFactContract("upgrade", contractId, txContext, pool, bytes)
@@ -134,7 +128,7 @@ func TestFunctionalContract(t *testing.T) {
 func invokeFactContract(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
 	parameters := make(map[string][]byte)
 	parameters["time"] = []byte("1314520")
-	parameters["file_hash"] = []byte( "file_hash")
+	parameters["file_hash"] = []byte("file_hash")
 	parameters["file_name"] = []byte("file_name")
 	parameters["contract_name"] = []byte(test.ContractNameTest)
 	baseParam(parameters)
@@ -144,8 +138,30 @@ func invokeFactContract(method string, contractId *commonPb.Contract, txContext 
 	return r
 }
 
+func TestCounterContract(t *testing.T) {
+	test.ContractNameTest = "contract_counter"
+	test.WasmFile = "../../../../test/wasm/rust-counter-2.0.0.wasm"
+	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
+	pool := test.GetVmPoolManager()
+
+	invokeCounterContract("init_contract", contractId, txContext, pool, bytes)
+	invokeCounterContract("upgrade", contractId, txContext, pool, bytes)
+
+	invokeCounterContract("upgrade", contractId, txContext, pool, bytes)
+	invokeCounterContract("upgrade", contractId, txContext, pool, bytes)
+}
+
+func invokeCounterContract(method string, contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) *commonPb.ContractResult {
+	parameters := make(map[string][]byte)
+	baseParam(parameters)
+	runtime, _ := pool.NewRuntimeInstance(contractId, byteCode)
+	r := runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
+	fmt.Printf("\n【result】 %+v \n\n\n", r)
+	return r
+}
+
 // 使用原始调用智能合约
-func TestCallHelloWorldUseOrigin(t *testing.T) {
+func testCallHelloWorldUseOrigin(t *testing.T) {
 	_, _, byteCode := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	if byteCode == nil {
 		panic("byteCode is nil")
@@ -203,7 +219,6 @@ func TestCallHelloWorldUseOrigin(t *testing.T) {
 	deallocate(outputPointer, lengthOfOutput)
 
 	fmt.Println("end ")
-	time.Sleep(time.Second * 2)
 }
 
 func baseParam(parameters map[string][]byte) {

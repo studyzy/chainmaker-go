@@ -12,9 +12,9 @@ import (
 	"fmt"
 
 	native "chainmaker.org/chainmaker-go/vm/native/dposmgr"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	configpb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker/protocol/mock"
 
@@ -41,7 +41,7 @@ func newMockBlockChainStore(ctrl *gomock.Controller) protocol.BlockchainStore {
 				return []byte("10000"), nil
 			}
 			if bytes.Equal(key, []byte(native.KeyCurrentEpoch)) {
-				epoch := &commonpb.Epoch{NextEpochCreateHeight: 100}
+				epoch := &syscontract.Epoch{NextEpochCreateHeight: 100}
 				bz, err := proto.Marshal(epoch)
 				return bz, err
 			}

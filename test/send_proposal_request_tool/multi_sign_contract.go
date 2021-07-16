@@ -12,13 +12,14 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/gogo/protobuf/proto"
@@ -152,17 +153,14 @@ func multiSignReq() error {
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
-		ContractName: commonPb.SystemContract_MULTI_SIGN.String(),
-		Method:       commonPb.MultiSignFunction_REQ.String(),
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
+		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
+
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -229,17 +227,14 @@ func multiSignVote() error {
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
-		ContractName: commonPb.SystemContract_MULTI_SIGN.String(),
-		Method:       commonPb.MultiSignFunction_VOTE.String(),
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
+		Method:       syscontract.MultiSignFunction_VOTE.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
 	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
+
 	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if err != nil {
 		return err
 	}
@@ -300,7 +295,7 @@ func getMultiSign() (*commonPb.TxResponse, *commonPb.MultiSignInfo, error) {
 	if len(pairs) == 0 {
 		return nil, nil, errors.New("params is emtpy")
 	}
-	payloadBytes, err := constructPayload(commonPb.SystemContract_MULTI_SIGN.String(), commonPb.MultiSignFunction_QUERY.String(), pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_MULTI_SIGN.String(), syscontract.MultiSignFunction_QUERY.String(), pairs)
 	if err != nil {
 		return nil, nil, err
 	}

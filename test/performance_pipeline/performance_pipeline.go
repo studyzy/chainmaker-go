@@ -196,7 +196,7 @@ func getSignerAndCertId(index int, sk3 crypto.PrivateKey) (protocol.SigningMembe
 	if err != nil {
 		panic(err)
 	}
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgIds[index],
 		MemberInfo: file,
 		//IsFullCert: true,
@@ -206,7 +206,7 @@ func getSignerAndCertId(index int, sk3 crypto.PrivateKey) (protocol.SigningMembe
 	return signer, certId
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -273,7 +273,7 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 			Method:         payload.Method,
 			Parameters:     payload.Parameters,
 		},
-		Sender: &commonPb.EndorsementEntry{Signer: &acPb.SerializedMember{
+		Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{
 			OrgId:      orgIds[index],
 			MemberInfo: certId,
 			MemberType: acPb.MemberType_CERT_HASH,

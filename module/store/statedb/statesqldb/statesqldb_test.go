@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -42,11 +44,10 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
-				OrgId:              "org1",
-				MemberInfo:         []byte("User1"),
-				MemberType:         0,
-				SignatureAlgorithm: 0,
+			Proposer: &acPb.Member{
+				OrgId:      "org1",
+				MemberInfo: []byte("User1"),
+				MemberType: 0,
 			},
 		},
 		Txs: []*commonPb.Transaction{
@@ -54,15 +55,15 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 				Payload: &commonPb.Payload{
 					ChainId:      chainId,
 					TxType:       commonPb.TxType_INVOKE_CONTRACT,
-					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
-						OrgId: "org1",
+					Signer: &acPb.Member{
+						OrgId:      "org1",
 						MemberInfo: []byte("User1"),
 					},
 					Signature: []byte("signature1"),
-				} ,
+				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{
@@ -102,11 +103,10 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{
-				OrgId:              "org1",
-				MemberInfo:         []byte("User1"),
-				MemberType:         0,
-				SignatureAlgorithm: 0,
+			Proposer: &acPb.Member{
+				OrgId:      "org1",
+				MemberInfo: []byte("User1"),
+				MemberType: 0,
 			},
 		},
 	}
@@ -116,15 +116,14 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 			Payload: &commonPb.Payload{
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
-
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.SerializedMember{
-					OrgId: "org1",
+				Signer: &acPb.Member{
+					OrgId:      "org1",
 					MemberInfo: []byte("User1"),
 				},
 				Signature: []byte("signature1"),
-			} ,
+			},
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{
@@ -179,15 +178,14 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 			{
 				Payload: &commonPb.Payload{
 					ChainId: chainId,
-
 				},
 				Sender: &commonPb.EndorsementEntry{
-					Signer:    &acPb.SerializedMember{
-						OrgId: "org1",
+					Signer: &acPb.Member{
+						OrgId:      "org1",
 						MemberInfo: []byte("User1"),
 					},
 					Signature: []byte("signature1"),
-				} ,
+				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
 					ContractResult: &commonPb.ContractResult{

@@ -12,23 +12,21 @@ import (
 	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
-// CreateChainClientWithSDKConf create a chain client with sdk config file path
-func CreateChainClientWithSDKConf(sdkConfPath, chainId string) (*sdk.ChainClient, error) {
-	var (
-		cc  *sdk.ChainClient
-		err error
+// CreateChainClient create a chain client with sdk config file path.
+// sdkConfPath must not empty. chainId, orgId, userTlsCrtPath, userTlsKeyPath, userSignCrtPath, userSignKeyPath
+// will overwrite sdk config generated from sdkConfPath if they are not empty string,
+// otherwise sdk config will not be overwritten.
+func CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtPath, userTlsKeyPath,
+	userSignCrtPath, userSignKeyPath string) (*sdk.ChainClient, error) {
+	cc, err := sdk.NewChainClient(
+		sdk.WithConfPath(sdkConfPath),
+		sdk.WithChainClientChainId(chainId),
+		sdk.WithChainClientOrgId(orgId),
+		sdk.WithUserCrtFilePath(userTlsCrtPath),
+		sdk.WithUserKeyFilePath(userTlsKeyPath),
+		sdk.WithUserSignCrtFilePath(userSignCrtPath),
+		sdk.WithUserSignKeyFilePath(userSignKeyPath),
 	)
-
-	if chainId != "" {
-		cc, err = sdk.NewChainClient(
-			sdk.WithConfPath(sdkConfPath),
-			sdk.WithChainClientChainId(chainId),
-		)
-	} else {
-		cc, err = sdk.NewChainClient(
-			sdk.WithConfPath(sdkConfPath),
-		)
-	}
 	if err != nil {
 		return nil, err
 	}

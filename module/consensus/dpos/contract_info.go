@@ -12,10 +12,11 @@ import (
 	"math/big"
 
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+
 	"chainmaker.org/chainmaker/pb-go/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	dpospb "chainmaker.org/chainmaker/pb-go/dpos"
-
+	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"github.com/golang/protobuf/proto"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
@@ -23,7 +24,7 @@ import (
 const ModuleName = "dpos_module"
 
 // getEpochInfo get epoch info from ledger
-func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
+func (impl *DPoSImpl) getEpochInfo() (*syscontract.Epoch, error) {
 	epoch, err := GetLatestEpochInfo(impl.stateDB)
 	if err != nil {
 		impl.log.Errorf("get epoch failed, reason: %s", err)
@@ -33,7 +34,7 @@ func (impl *DPoSImpl) getEpochInfo() (*commonpb.Epoch, error) {
 	return epoch, nil
 }
 
-func (impl *DPoSImpl) getNodeIDsFromValidators(epoch *common.Epoch) ([]string, error) {
+func (impl *DPoSImpl) getNodeIDsFromValidators(epoch *syscontract.Epoch) ([]string, error) {
 	nodeIDs, err := GetNodeIDsFromValidators(impl.stateDB, epoch.ProposerVector)
 	if err != nil {
 		impl.log.Errorf("get nodeids from ledger failed, reason: %s", err)
@@ -47,15 +48,15 @@ func (impl *DPoSImpl) getNodeIDsFromValidators(epoch *common.Epoch) ([]string, e
 func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	prefix := dposmgr.ToValidatorPrefix()
 	iterRange := util.BytesPrefix(prefix)
-	iter, err := impl.stateDB.SelectObject(commonpb.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
+	iter, err := impl.stateDB.SelectObject(syscontract.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
-		impl.log.Errorf("read contract: %s error: %s", commonpb.SystemContract_DPOS_STAKE.String(), err)
+		impl.log.Errorf("read contract: %s error: %s", syscontract.SystemContract_DPOS_STAKE.String(), err)
 		return nil, err
 	}
 	defer iter.Release()
-	minSelfDelegationBz, err := impl.stateDB.ReadObject(commonpb.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyMinSelfDelegation))
+	minSelfDelegationBz, err := impl.stateDB.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyMinSelfDelegation))
 	if err != nil {
-		impl.log.Errorf("get selfMinDelegation from contract %s failed, reason: %s", commonpb.SystemContract_DPOS_STAKE.String(), err)
+		impl.log.Errorf("get selfMinDelegation from contract %s failed, reason: %s", syscontract.SystemContract_DPOS_STAKE.String(), err)
 		return nil, err
 	}
 	minSelfDelegation, ok := big.NewInt(0).SetString(string(minSelfDelegationBz), 10)
@@ -65,14 +66,14 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 		return nil, err
 	}
 	impl.log.Debugf("minSelfDelegation: %s", minSelfDelegation.String())
-	vals := make([]*commonpb.Validator, 0, 10)
+	vals := make([]*syscontract.Validator, 0, 10)
 	for iter.Next() {
 		kv, err := iter.Value()
 		if err != nil {
 			impl.log.Errorf("iterator read error: %s", err)
 			return nil, err
 		}
-		val := commonpb.Validator{}
+		val := syscontract.Validator{}
 		if err = proto.Unmarshal(kv.Value, &val); err != nil {
 			impl.log.Errorf("unmarshal validator failed, reason: %s", err)
 			return nil, err
@@ -91,9 +92,9 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 			return nil, fmt.Errorf("validator selfDelegation not parse to big.Int, actual: %s ", vals[i].SelfDelegation)
 		}
 		impl.log.Debugf("mixture candidatesInfo: %s", vals[i].String())
-		if !vals[i].Jailed && vals[i].Status == commonpb.BondStatus_BONDED && selfDelegation.Cmp(minSelfDelegation) >= 0 {
+		if !vals[i].Jailed && vals[i].Status == syscontract.BondStatus_BONDED && selfDelegation.Cmp(minSelfDelegation) >= 0 {
 			candidates = append(candidates, &dpospb.CandidateInfo{
-				PeerID: vals[i].ValidatorAddress,
+				PeerId: vals[i].ValidatorAddress,
 				Weight: vals[i].Tokens,
 			})
 		}
@@ -101,9 +102,9 @@ func (impl *DPoSImpl) getAllCandidateInfo() ([]*dpospb.CandidateInfo, error) {
 	return candidates, nil
 }
 
-func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) createEpochRwSet(epoch *syscontract.Epoch) (*commonpb.TxRWSet, error) {
 	id := make([]byte, 8)
-	binary.BigEndian.PutUint64(id, epoch.EpochID)
+	binary.BigEndian.PutUint64(id, epoch.EpochId)
 	bz, err := proto.Marshal(epoch)
 	if err != nil {
 		impl.log.Errorf("marshal epoch failed, reason: %s", err)
@@ -114,13 +115,13 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet
 		TxId: "",
 		TxWrites: []*commonpb.TxWrite{
 			{
-				ContractName: commonpb.SystemContract_DPOS_STAKE.String(),
+				ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 				Key:          []byte(dposmgr.KeyCurrentEpoch),
 				Value:        bz,
 			},
 			{
-				ContractName: commonpb.SystemContract_DPOS_STAKE.String(),
-				Key:          dposmgr.ToEpochKey(fmt.Sprintf("%d", epoch.EpochID)),
+				ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
+				Key:          dposmgr.ToEpochKey(fmt.Sprintf("%d", epoch.EpochId)),
 				Value:        bz,
 			},
 		},
@@ -136,7 +137,7 @@ func (impl *DPoSImpl) createSlashRwSet(slashAmount big.Int) (*commonpb.TxRWSet, 
 	return nil, nil
 }
 
-func (impl *DPoSImpl) completeUnbounding(epoch *commonpb.Epoch,
+func (impl *DPoSImpl) completeUnbounding(epoch *syscontract.Epoch,
 	block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 	undelegations, err := impl.getUnboundingEntries(epoch)
 	if err != nil {
@@ -147,24 +148,24 @@ func (impl *DPoSImpl) completeUnbounding(epoch *commonpb.Epoch,
 	return rwSet, err
 }
 
-func (impl *DPoSImpl) getUnboundingEntries(epoch *common.Epoch) ([]*commonpb.UnbondingDelegation, error) {
-	prefix := dposmgr.ToUnbondingDelegationPrefix(epoch.EpochID)
+func (impl *DPoSImpl) getUnboundingEntries(epoch *syscontract.Epoch) ([]*syscontract.UnbondingDelegation, error) {
+	prefix := dposmgr.ToUnbondingDelegationPrefix(epoch.EpochId)
 	iterRange := util.BytesPrefix(prefix)
-	iter, err := impl.stateDB.SelectObject(commonpb.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
+	iter, err := impl.stateDB.SelectObject(syscontract.SystemContract_DPOS_STAKE.String(), iterRange.Start, iterRange.Limit)
 	if err != nil {
 		impl.log.Errorf("new select range failed, reason: %s", err)
 		return nil, err
 	}
 	defer iter.Release()
 
-	undelegations := make([]*commonpb.UnbondingDelegation, 0, 10)
+	undelegations := make([]*syscontract.UnbondingDelegation, 0, 10)
 	for iter.Next() {
 		kv, err := iter.Value()
 		if err != nil {
 			impl.log.Errorf("get kv from iterator failed, reason: %s", err)
 			return nil, err
 		}
-		undelegation := commonpb.UnbondingDelegation{}
+		undelegation := syscontract.UnbondingDelegation{}
 		if err = proto.Unmarshal(kv.Value, &undelegation); err != nil {
 			impl.log.Errorf("unmarshal value to UnbondingDelegation failed, reason: %s", err)
 			return nil, err
@@ -177,7 +178,7 @@ func (impl *DPoSImpl) getUnboundingEntries(epoch *common.Epoch) ([]*commonpb.Unb
 	return undelegations, nil
 }
 
-func (impl *DPoSImpl) createUnboundingRwSet(undelegations []*commonpb.UnbondingDelegation,
+func (impl *DPoSImpl) createUnboundingRwSet(undelegations []*syscontract.UnbondingDelegation,
 	block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*commonpb.TxRWSet, error) {
 
 	rwSet := &commonpb.TxRWSet{
@@ -230,7 +231,7 @@ func (impl *DPoSImpl) addBalanceRwSet(addr string, balance *big.Int, addAmount s
 	}
 	after := balance.Add(add, balance)
 	return &commonpb.TxWrite{
-		ContractName: commonpb.SystemContract_DPOS_ERC20.String(),
+		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
 		Key:          []byte(dposmgr.BalanceKey(addr)),
 		Value:        []byte(after.String()),
 	}, after, nil
@@ -248,7 +249,7 @@ func (impl *DPoSImpl) subBalanceRwSet(addr string, before *big.Int, amount strin
 	}
 	after := before.Sub(before, sub)
 	return &commonpb.TxWrite{
-		ContractName: commonpb.SystemContract_DPOS_ERC20.String(),
+		ContractName: syscontract.SystemContract_DPOS_ERC20.String(),
 		Key:          []byte(dposmgr.BalanceKey(addr)),
 		Value:        []byte(after.String()),
 	}, after, nil
@@ -256,7 +257,7 @@ func (impl *DPoSImpl) subBalanceRwSet(addr string, before *big.Int, amount strin
 
 func (impl *DPoSImpl) balanceOf(addr string, block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (*big.Int, error) {
 	key := []byte(dposmgr.BalanceKey(addr))
-	val, err := impl.getState(commonpb.SystemContract_DPOS_ERC20.String(), key, block, blockTxRwSet)
+	val, err := impl.getState(syscontract.SystemContract_DPOS_ERC20.String(), key, block, blockTxRwSet)
 	if err != nil {
 		return nil, err
 	}

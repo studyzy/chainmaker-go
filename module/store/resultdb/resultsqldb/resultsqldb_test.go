@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
@@ -46,11 +48,9 @@ func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 				Payload: &commonPb.Payload{
 					ChainId:      chainId,
 					TxType:       commonPb.TxType_INVOKE_CONTRACT,
-					ContractName: commonPb.SystemContract_CHAIN_CONFIG.String(),
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
 				},
-				Sender: &commonPb.EndorsementEntry{Signer:
-				&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
-				},
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
 					Signature: []byte("sign1"),
 				},
 				Result: &commonPb.Result{
@@ -85,9 +85,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
 			},
-			Sender: &commonPb.EndorsementEntry{Signer:
-			&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
-			},
+			Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
 				Signature: []byte("sign1"),
 			},
 			Result: &commonPb.Result{
@@ -143,11 +141,8 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 			{
 				Payload: &commonPb.Payload{
 					ChainId: chainId,
-
 				},
-				Sender: &commonPb.EndorsementEntry{Signer:
-				&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
-				},
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
 					Signature: []byte("sign1"),
 				},
 				Result: &commonPb.Result{

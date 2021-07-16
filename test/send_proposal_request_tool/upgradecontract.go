@@ -8,14 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
-	"github.com/gogo/protobuf/proto"
+	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/spf13/cobra"
 )
 
@@ -98,7 +98,7 @@ func upgradeContract() error {
 	//
 	//}
 	payload, _ := GenerateUpgradeContractPayload(contractName, version, commonPb.RuntimeType(runTime), wasmBin, pairs)
-	//method := consts.ContractManager_UPGRADE_CONTRACT.String()
+	//method := syscontract.ContractManageFunction_UPGRADE_CONTRACT.String()
 	//
 	//payload := &commonPb.Payload{
 	//	ChainId: chainId,
@@ -113,19 +113,13 @@ func upgradeContract() error {
 	//	Endorsement: nil,
 	//}
 
-	//if endorsement, err := acSign(payload); err == nil {
-	//	payload.Endorsement = endorsement
-	//} else {
-	//	return err
-	//}
-
-	payloadBytes, err := proto.Marshal(payload)
+	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err = proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload, endorsement)
 	if err != nil {
 		return err
 	}

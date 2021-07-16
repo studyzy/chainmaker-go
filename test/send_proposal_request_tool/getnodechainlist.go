@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"encoding/json"
 	"fmt"
 
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -35,7 +36,7 @@ func getNodeChainList() error {
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes, err := constructPayload(commonPb.SystemContract_CHAIN_QUERY.String(), "GET_NODE_CHAIN_LIST", pairs)
+	payloadBytes, err := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_NODE_CHAIN_LIST", pairs)
 	if err != nil {
 		return err
 	}

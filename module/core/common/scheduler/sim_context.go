@@ -35,6 +35,7 @@ type txSimContextImpl struct {
 	hisResult        []*callContractResult
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
+	blockVersion     uint32
 }
 
 type callContractResult struct {
@@ -94,7 +95,7 @@ func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []
 	return s.snapshot.GetBlockchainStore().SelectObject(contractName, startKey, limit)
 }
 
-func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMember {
+func (s *txSimContextImpl) GetCreator(contractName string) *acpb.Member {
 	contract, err := utils.GetContractByName(s.Get, contractName)
 	if err != nil {
 		//TODO log
@@ -103,7 +104,7 @@ func (s *txSimContextImpl) GetCreator(contractName string) *acpb.SerializedMembe
 	return contract.Creator
 }
 
-func (s *txSimContextImpl) GetSender() *acpb.SerializedMember {
+func (s *txSimContextImpl) GetSender() *acpb.Member {
 	return s.tx.Sender.GetSigner()
 }
 
@@ -174,12 +175,8 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		TxReads:  nil,
 		TxWrites: nil,
 	}
-	if !runVmSuccess {
-		// ddl sql tx writes
-		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeyDdlSql...)
-		return s.txRWSet
-	}
 
+	// read set
 	{
 		txIds := make([]string, 0, len(s.txReadKeyMap))
 		for txId := range s.txReadKeyMap {
@@ -191,7 +188,8 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		}
 	}
 
-	{
+	// write set
+	if runVmSuccess {
 		txIds := make([]string, 0, len(s.txWriteKeyMap))
 		for txId := range s.txWriteKeyMap {
 			txIds = append(txIds, txId)
@@ -202,6 +200,9 @@ func (s *txSimContextImpl) GetTxRWSet(runVmSuccess bool) *commonpb.TxRWSet {
 		}
 		// sql nil key tx writes
 		s.txRWSet.TxWrites = append(s.txRWSet.TxWrites, s.txWriteKeySql...)
+	} else {
+		// ddl sql tx writes
+		s.txRWSet.TxWrites = s.txWriteKeyDdlSql
 	}
 	return s.txRWSet
 }
@@ -211,7 +212,7 @@ func (s *txSimContextImpl) GetBlockHeight() uint64 {
 	return s.snapshot.GetBlockHeight()
 }
 
-func (s *txSimContextImpl) GetBlockProposer() *acpb.SerializedMember {
+func (s *txSimContextImpl) GetBlockProposer() *acpb.Member {
 	return s.snapshot.GetBlockProposer()
 }
 
@@ -243,7 +244,7 @@ func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method stri
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonpb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
@@ -251,7 +252,7 @@ func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method stri
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonpb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
@@ -312,4 +313,7 @@ func (s *txSimContextImpl) SetStateKvHandle(index int32, rows protocol.StateIter
 func (s *txSimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
 	data, ok := s.kvRowCache[index]
 	return data, ok
+}
+func (s *txSimContextImpl) GetBlockVersion() uint32 {
+	return s.blockVersion
 }

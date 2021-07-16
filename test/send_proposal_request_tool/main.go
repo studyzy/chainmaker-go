@@ -87,7 +87,7 @@ var (
 type Result struct {
 	Code                  commonPb.TxStatusCode           `json:"code"`
 	Message               string                          `json:"message,omitempty"`
-	ContractResultCode    uint32     `json:"contractResultCode"`
+	ContractResultCode    uint32                          `json:"contractResultCode"`
 	ContractResultMessage string                          `json:"contractResultMessage,omitempty"`
 	ContractQueryResult   string                          `json:"contractQueryResult"`
 	TxId                  string                          `json:"txId,omitempty"`
@@ -95,7 +95,7 @@ type Result struct {
 	TransactionInfo       *commonPb.TransactionInfo       `json:"transactionInfo,omitempty"`
 	ChainInfo             *discoveryPb.ChainInfo          `json:"chainInfo,omitempty"`
 	ChainList             *discoveryPb.ChainList          `json:"chainList,omitempty"`
-	ContractInfo          *commonPb.ContractInfo          `json:"contractInfo,omitempty"`
+	ContractInfo          *commonPb.Contract              `json:"contractInfo,omitempty"`
 	MultiSignInfo         *commonPb.MultiSignInfo         `json:"multiSignInfo,omitempty"`
 	PayloadHash           string                          `json:"payloadHash,omitempty"`
 	ShortCert             string                          `json:"shortCert,omitempty"`
@@ -275,8 +275,11 @@ func main() {
 }
 
 func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payloadBytes []byte) (*commonPb.TxResponse, error) {
-
+	chainId, txId string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
+	return proposalRequestWithMultiSign(sk3, client, txType, chainId, txId, payload, nil)
+}
+func proposalRequestWithMultiSign(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, endorsers []*commonPb.EndorsementEntry) (*commonPb.TxResponse, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
 
@@ -290,19 +293,19 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		//IsFullCert: true,
 	}
 
-	var sender *acPb.SerializedMember
+	var sender *acPb.Member
 	if useShortCrt {
 		certId, err := utils.GetCertificateId(senderFull.MemberInfo, hashAlgo)
 		if err != nil {
 			return nil, fmt.Errorf("fail to compute the identity for certificate [%v]", err)
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      senderFull.OrgId,
 			MemberInfo: certId,
 			MemberType: acPb.MemberType_CERT_HASH,
@@ -314,18 +317,24 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	// 构造Header
 	header := &commonPb.Payload{
 		ChainId:        chainId,
-		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
 		ExpirationTime: 0,
+		ContractName:   payload.ContractName,
+		Method:         payload.Method,
+		Parameters:     payload.Parameters,
+		Sequence:       payload.Sequence,
+		Limit:          payload.Limit,
 	}
 
 	req := &commonPb.TxRequest{
-		Payload:    header,
-		Sender: &commonPb.EndorsementEntry{Signer: sender},
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
-
+	if len(endorsers) > 0 {
+		req.Endorsers = endorsers
+	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
 	if err != nil {
@@ -380,7 +389,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	}
 
 	// 构造Sender
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
 		//IsFullCert: true,
@@ -391,7 +400,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 		if err != nil {
 			return nil, "", err
 		}
-		sender = &acPb.SerializedMember{
+		sender = &acPb.Member{
 			OrgId:      orgId,
 			MemberInfo: id,
 			MemberType: acPb.MemberType_CERT_HASH,
@@ -400,7 +409,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 
 	// 构造Header
 	payload := &commonPb.Payload{
-		ChainId:        chainId,
+		ChainId: chainId,
 		//Sender:         sender,
 		TxType:         msg.txType,
 		TxId:           txId,
@@ -424,8 +433,8 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 	//	return nil, "", err
 	//}
 	req := &commonPb.TxRequest{
-		Payload:    payload,
-		Sender: &commonPb.EndorsementEntry{Signer: sender},
+		Payload:   payload,
+		Sender:    &commonPb.EndorsementEntry{Signer: sender},
 		Endorsers: entries,
 	}
 
@@ -497,7 +506,7 @@ func aclSign(msg commonPb.Payload, orgIds, adminSignKeys, adminSignCrts string) 
 		fmt.Println("node", i, "peerId", peerId)
 
 		// 构造Sender
-		sender1 := &acPb.SerializedMember{
+		sender1 := &acPb.Member{
 			OrgId:      orgIdArray[i],
 			MemberInfo: file2,
 			//IsFullCert: true,
@@ -534,7 +543,7 @@ func aclSignOne(bytes []byte, orgId, adminSignKey, adminSignCrt string) (*common
 	}
 
 	// 构造Sender
-	sender1 := &acPb.SerializedMember{
+	sender1 := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file2,
 		//IsFullCert: true,
@@ -553,7 +562,7 @@ func signWith(msg []byte, signer protocol.SigningMember, hashType string) (*comm
 	if err != nil {
 		return nil, err
 	}
-	signerSerial, err := signer.GetSerializedMember(true)
+	signerSerial, err := signer.GetMember()
 	if err != nil {
 		return nil, err
 	}

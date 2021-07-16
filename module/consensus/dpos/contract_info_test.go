@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"fmt"
 	"math/big"
 	"os"
@@ -16,7 +15,9 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store"
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
@@ -56,7 +57,7 @@ func TestDPoSImpl_addBalanceRwSet(t *testing.T) {
 	// 3. testAddr have balance in the blockChain and block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: syscontract.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
 	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
@@ -85,7 +86,7 @@ func TestDPoSImpl_SubBalanceRwSet(t *testing.T) {
 	// 3. sub 1000 from block
 	blockRwSet := make(map[string]*common.TxRWSet)
 	blockRwSet["tx1"] = &common.TxRWSet{TxWrites: []*common.TxWrite{
-		{ContractName: common.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
+		{ContractName: syscontract.SystemContract_DPOS_ERC20.String(), Key: []byte(dposmgr.BalanceKey(testAddr)), Value: []byte("2000")},
 	}}
 	balance, err := impl.balanceOf(testAddr, &common.Block{Txs: []*common.Transaction{{Payload: &common.Payload{TxId: "tx1"}}}}, blockRwSet)
 	require.NoError(t, err)
@@ -100,7 +101,7 @@ func TestDPoSImpl_CompleteUnbounding(t *testing.T) {
 	impl, fn := initTestImpl(t)
 	defer fn()
 
-	rwSet, err := impl.completeUnbounding(&common.Epoch{}, &common.Block{}, nil)
+	rwSet, err := impl.completeUnbounding(&syscontract.Epoch{}, &common.Block{}, nil)
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(rwSet.TxWrites))
 }
@@ -109,23 +110,23 @@ func TestDPoSImpl_GetUnboundingEntries(t *testing.T) {
 	impl, fn := initDPoSWithStore(t)
 	defer fn()
 
-	entries, err := impl.getUnboundingEntries(&common.Epoch{EpochID: 10})
+	entries, err := impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(entries))
 
 	blk, blkRwSet := generateUnboundingBlock(t, 4, 10, 1, 10)
 	require.NoError(t, impl.stateDB.PutBlock(blk, blkRwSet))
-	entries, err = impl.getUnboundingEntries(&common.Epoch{EpochID: 10})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 4, len(entries))
 
 	blk, blkRwSet = generateUnboundingBlock(t, 4, 10, 2, 20)
 	require.NoError(t, impl.stateDB.PutBlock(blk, blkRwSet))
-	entries, err = impl.getUnboundingEntries(&common.Epoch{EpochID: 20})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 20})
 	require.NoError(t, err)
 	require.EqualValues(t, 4, len(entries))
 
-	entries, err = impl.getUnboundingEntries(&common.Epoch{EpochID: 30})
+	entries, err = impl.getUnboundingEntries(&syscontract.Epoch{EpochId: 30})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, len(entries))
 }
@@ -161,13 +162,13 @@ func TestDPoSImpl_CreateUnboundingRwSet(t *testing.T) {
 	require.EqualValues(t, int(lastAddrBalance2.Uint64()), 2000)
 }
 
-func createUndelegationEntries() []*common.UnbondingDelegation {
+func createUndelegationEntries() []*syscontract.UnbondingDelegation {
 	delAddr1 := fmt.Sprintf("delegatorAddr-%d", 1)
 	valAddr1 := fmt.Sprintf("validatorAddr-%d", 1)
 	delAddr2 := fmt.Sprintf("delegatorAddr-%d", 2)
 	valAddr2 := fmt.Sprintf("validatorAddr-%d", 2)
 
-	entries := make([]*common.UnbondingDelegation, 0, 4)
+	entries := make([]*syscontract.UnbondingDelegation, 0, 4)
 	for i := 0; i < 4; i++ {
 		delAddr := delAddr1
 		valAddr := valAddr1
@@ -175,10 +176,10 @@ func createUndelegationEntries() []*common.UnbondingDelegation {
 			delAddr = delAddr2
 			valAddr = valAddr2
 		}
-		entry := &common.UnbondingDelegation{
-			EpochID: "8", DelegatorAddress: delAddr, ValidatorAddress: valAddr,
-			Entries: []*common.UnbondingDelegationEntry{
-				{CreationEpochID: 1, CompletionEpochID: 8, Amount: "1000"},
+		entry := &syscontract.UnbondingDelegation{
+			EpochId: "8", DelegatorAddress: delAddr, ValidatorAddress: valAddr,
+			Entries: []*syscontract.UnbondingDelegationEntry{
+				{CreationEpochId: 1, CompletionEpochId: 8, Amount: "1000"},
 			},
 		}
 		entries = append(entries, entry)
@@ -257,7 +258,7 @@ func generateBlockWithStakeConfig() (*common.Block, []*common.TxRWSet) {
 	rwSet = append(rwSet, &common.TxRWSet{
 		TxWrites: []*common.TxWrite{
 			{
-				ContractName: common.SystemContract_DPOS_STAKE.String(),
+				ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 				Key:          []byte(dposmgr.KeyMinSelfDelegation), Value: []byte(testSelfMinDelegation),
 			},
 		},
@@ -280,10 +281,10 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 		})
 
 		valAddr := fmt.Sprintf("validatorAddr-%d-%d", base, i+1)
-		validator := &common.Validator{
+		validator := &syscontract.Validator{
 			ValidatorAddress: valAddr,
 			Jailed:           false,
-			Status:           common.BondStatus_BONDED,
+			Status:           syscontract.BondStatus_BONDED,
 			SelfDelegation:   testSelfMinDelegation,
 		}
 		bz, err := proto.Marshal(validator)
@@ -291,7 +292,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
 				{
-					ContractName: common.SystemContract_DPOS_STAKE.String(),
+					ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 					Key:          dposmgr.ToValidatorKey(valAddr), Value: bz,
 				},
 			},
@@ -316,12 +317,12 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 
 		delAddr := fmt.Sprintf("delegatorAddr-%d-%d", base, i+1)
 		valAddr := fmt.Sprintf("validatorAddr-%d-%d", base, i+1)
-		entry := &common.UnbondingDelegation{
-			EpochID:          fmt.Sprintf("%d", completeEpoch),
+		entry := &syscontract.UnbondingDelegation{
+			EpochId:          fmt.Sprintf("%d", completeEpoch),
 			DelegatorAddress: delAddr,
 			ValidatorAddress: valAddr,
-			Entries: []*common.UnbondingDelegationEntry{
-				{CreationEpochID: completeEpoch - 1, CompletionEpochID: completeEpoch, Amount: "1000"},
+			Entries: []*syscontract.UnbondingDelegationEntry{
+				{CreationEpochId: completeEpoch - 1, CompletionEpochId: completeEpoch, Amount: "1000"},
 			},
 		}
 		bz, err := proto.Marshal(entry)
@@ -329,7 +330,7 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
 				{
-					ContractName: common.SystemContract_DPOS_STAKE.String(),
+					ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
 					Key:          dposmgr.ToUnbondingDelegationKey(completeEpoch, delAddr, valAddr), Value: bz,
 				},
 			},

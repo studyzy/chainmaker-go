@@ -30,7 +30,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 
 	// contract response
 	contractResult = &commonPb.ContractResult{
-		Code:    uint32(protocol.ContractResultCode_OK),
+		Code:    uint32(0),
 		Result:  nil,
 		Message: "",
 	}
@@ -76,19 +76,19 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 
 	err := sc.CallMethod(instance)
 	if err != nil {
-		r.log.Errorw("contract invoke failed, ", err.Error())
+		r.log.Warnf("contract[%s] invoke failed, %s", contract.Name, err.Error())
 	}
 
 	// gas Log
 	gas := instance.GetGasUsed()
 	if gas > protocol.GasLimit {
-		err = fmt.Errorf("contract invoke failed, out of gas %d/%d", gas, int64(protocol.GasLimit))
+		err = fmt.Errorf("out of gas %d/%d", gas, int64(protocol.GasLimit))
 	}
 	logStr += fmt.Sprintf("used gas %d ", gas)
 	contractResult.GasUsed = gas
 	if err != nil {
 		contractResult.Code = 1
-		msg := fmt.Sprintf("contract invoke failed, %s", err.Error())
+		msg := fmt.Sprintf("contract[%s] invoke failed, %s", contract.Name, err.Error())
 		r.log.Errorf(msg)
 		contractResult.Message = msg
 		instanceInfo.errCount++

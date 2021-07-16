@@ -11,6 +11,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 func blockChainsCMD() *cobra.Command {
@@ -34,8 +36,8 @@ func checkNewBlockchainsCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
-		flagSdkConfPath, flagOrgId, flagChainId,
-		flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
+		flagSdkConfPath, flagOrgId, flagChainId, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -44,7 +46,7 @@ func checkNewBlockchainsCMD() *cobra.Command {
 }
 
 func checkNewBlockchains() error {
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}

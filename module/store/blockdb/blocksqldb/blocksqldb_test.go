@@ -39,7 +39,7 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{MemberInfo: []byte("User1")},
+			Proposer: &acPb.Member{MemberInfo: []byte("User1")},
 		},
 		Txs: []*commonPb.Transaction{
 			{
@@ -48,7 +48,7 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 					TxType:  commonPb.TxType_INVOKE_CONTRACT,
 					
 				},
-				Sender: &commonPb.EndorsementEntry{Signer: &acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
 				},
 				Signature: []byte("sign1"),
 				},
@@ -72,7 +72,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.B
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{MemberInfo: []byte("User1")},
+			Proposer: &acPb.Member{MemberInfo: []byte("User1")},
 		},
 	}
 
@@ -82,7 +82,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.B
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
 			},
-			Sender: &commonPb.EndorsementEntry{Signer: &acPb.SerializedMember{OrgId: "org1", MemberInfo: []byte("cert1..."),
+			Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1..."),
 			},
 				Signature: []byte("sign1"),
 			},
@@ -142,7 +142,7 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.SerializedMember{MemberInfo: []byte("User1")},
+			Proposer: &acPb.Member{MemberInfo: []byte("User1")},
 		},
 		Txs: []*commonPb.Transaction{
 			{
@@ -151,7 +151,7 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 
 				},
 				Sender: &commonPb.EndorsementEntry{Signer:
-					&acPb.SerializedMember{OrgId: "org1",MemberInfo: []byte("cert1..."),
+					&acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
 						},
 					Signature: []byte("sign1"),
 				},

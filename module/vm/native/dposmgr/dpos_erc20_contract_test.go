@@ -198,8 +198,8 @@ func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 			cache.Put(name, string(key), value)
 			return nil
 		}).AnyTimes()
-	txSimContext.EXPECT().GetSender().DoAndReturn(func() *acPb.SerializedMember {
-		return &acPb.SerializedMember{
+	txSimContext.EXPECT().GetSender().DoAndReturn(func() *acPb.Member {
+		return &acPb.Member{
 			OrgId:      "wx-org1.chainmaker.org",
 			MemberInfo: ownerCert(),
 			//IsFullCert: true,

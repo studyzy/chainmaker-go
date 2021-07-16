@@ -33,6 +33,7 @@ type txQuerySimContextImpl struct {
 	hisResult        []*callContractResult
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
+	blockVersion     uint32
 }
 
 type callContractResult struct {
@@ -42,6 +43,10 @@ type callContractResult struct {
 	depth        int
 	gasUsed      uint64
 	result       []byte
+}
+
+func (s *txQuerySimContextImpl) GetBlockVersion() uint32 {
+	return s.blockVersion
 }
 
 // StateDB & ReadWriteSet
@@ -96,7 +101,7 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 	return s.blockchainStore.SelectObject(contractName, startKey, limit)
 }
 
-func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.SerializedMember {
+func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Member {
 	contract, err := utils.GetContractByName(s.Get, contractName)
 	if err != nil {
 		return nil
@@ -104,7 +109,7 @@ func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Serialized
 	return contract.Creator
 }
 
-func (s *txQuerySimContextImpl) GetSender() *acPb.SerializedMember {
+func (s *txQuerySimContextImpl) GetSender() *acPb.Member {
 	return s.tx.Sender.Signer
 }
 
@@ -116,7 +121,7 @@ func (s *txQuerySimContextImpl) GetBlockHeight() uint64 {
 	}
 }
 
-func (s *txQuerySimContextImpl) GetBlockProposer() *acPb.SerializedMember {
+func (s *txQuerySimContextImpl) GetBlockProposer() *acPb.Member {
 	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
 		return nil
 	} else {
@@ -228,7 +233,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too depth %d", s.currentDepth),
 		}
@@ -236,7 +241,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}

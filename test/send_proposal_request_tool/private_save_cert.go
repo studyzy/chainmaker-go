@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/Rican7/retry"
 	"github.com/Rican7/retry/backoff"
@@ -64,8 +66,8 @@ func saveCert() error {
 
 	payloadBytes, err := constructSystemContractPayload(
 		chainId,
-		commonPb.SystemContract_PRIVATE_COMPUTE.String(),
-		commonPb.PrivateComputeContractFunction_SAVE_CA_CERT.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(),
 		pairs,
 		defaultSequence,
 	)
@@ -128,7 +130,7 @@ func saveCert() error {
 
 }
 
-func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) ([]byte, error) {
+func constructSystemContractPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair, sequence uint64) (*commonPb.Payload, error) {
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
@@ -138,12 +140,7 @@ func constructSystemContractPayload(chainId, contractName, method string, pairs 
 		Sequence:     sequence,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }
 
 func paramsMap2KVPairs(params map[string]string) (kvPairs []*commonPb.KeyValuePair) {
@@ -205,8 +202,8 @@ func getSyncResult(txId string) (*commonPb.ContractResult, error) {
 func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 
 	payloadBytes, err := constructQueryPayload(
-		commonPb.SystemContract_CHAIN_QUERY.String(),
-		commonPb.QueryFunction_GET_TX_BY_TX_ID.String(),
+		syscontract.SystemContract_CHAIN_QUERY.String(),
+		syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(),
 		[]*commonPb.KeyValuePair{
 			{
 				Key:   "txId",
@@ -235,17 +232,12 @@ func GetTxByTxId(txId string) (*commonPb.TransactionInfo, error) {
 	return transactionInfo, nil
 }
 
-func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) ([]byte, error) {
+func constructQueryPayload(contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return payloadBytes, nil
+	return payload, nil
 }

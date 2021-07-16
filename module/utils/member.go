@@ -11,8 +11,13 @@ import "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 type MemberGetter interface {
 	//GetFullMemberInfo根据CERT_HASH获得完整的Cert，根据DID获得DID Document
-	GetFullMemberInfo(memberId []byte,mtype accesscontrol.MemberType) ([]byte,error)
+	GetFullMemberInfo(memberId []byte, mtype accesscontrol.MemberType) ([]byte, error)
 }
-func GetMemberPubKeySA(member *accesscontrol.SerializedMember,getter MemberGetter) ([]byte,uint32){
-	return []byte("pubkey"),member.SignatureAlgorithm
+
+func GetMemberPubKeySA(member *accesscontrol.Member, getter MemberGetter) ([]byte, uint32) {
+	return []byte("pubkey"), uint32(member.MemberType)
 }
+
+//func GetMemberPubKeySA(member *accesscontrol.Member,getter MemberGetter) ([]byte,uint32){
+//	return []byte("pubkey"),member.SignatureAlgorithm
+//}

@@ -68,7 +68,7 @@ func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCo
 func initGenesisBlock(block *common.Block) error {
 	qcForGenesis := &chainedbftpb.QuorumCert{
 		Votes:   []*chainedbftpb.VoteData{},
-		BlockID: block.Header.BlockHash,
+		BlockId: block.Header.BlockHash,
 	}
 	qcData, err := proto.Marshal(qcForGenesis)
 	if err != nil {
@@ -235,8 +235,8 @@ func (cs *chainStore) insertQC(qc *chainedbftpb.QuorumCert) error {
 	if qc.EpochId != cs.server.smr.getEpochId() {
 		// When the generation switches, the QC of the rootBlock is added again,
 		// and the rootQC is not consistent with the current generation ID of the node
-		if hasQC, _ := cs.getQC(string(qc.BlockID), qc.Height); hasQC != nil {
-			cs.logger.Debugf("find qc:[%x], height:[%d]", qc.BlockID, qc.Height)
+		if hasQC, _ := cs.getQC(string(qc.BlockId), qc.Height); hasQC != nil {
+			cs.logger.Debugf("find qc:[%x], height:[%d]", qc.BlockId, qc.Height)
 			return nil
 		}
 		return fmt.Errorf("insert qc failed, input err qc.epochid: [%v], node epochID: [%v]",

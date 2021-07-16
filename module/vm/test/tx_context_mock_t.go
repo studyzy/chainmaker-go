@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -33,16 +34,17 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
-var WasmFile = "../../../../test/wasm/rust-func-verify-1.2.1.wasm"
+var WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 var isSql = false
 
 var txType = commonPb.TxType_INVOKE_CONTRACT
 var pool *wasmer.VmPoolManager
 
-const (
+var (
 	ContractNameTest    = "contract01"
 	ContractVersionTest = "v1.0.0"
 	ChainIdTest         = "chain01"
+	MockTestLock        = sync.Mutex{}
 )
 
 func GetVmPoolManager() *wasmer.VmPoolManager {
@@ -52,21 +54,12 @@ func GetVmPoolManager() *wasmer.VmPoolManager {
 	return pool
 }
 
-var bytes []byte
 var file []byte
 
 // 初始化上下文和wasm字节码
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, protocol.TxSimContext, []byte) {
-	if bytes == nil {
-		bytes, _ = wasm.ReadBytes(WasmFile)
-		fmt.Printf("Wasm file size=%d\n", len(bytes))
-	}
-
-	contractId := commonPb.Contract{
-		Name:        ContractNameTest,
-		Version:     ContractVersionTest,
-		RuntimeType: runtimeType,
-	}
+	bytes, _ := wasm.ReadBytes(WasmFile)
+	fmt.Printf("Wasm file size=%d\n", len(bytes))
 
 	wxvmCodeManager := xvm.NewCodeManager(ChainIdTest, "tmp/wxvm-data")
 	wxvmContextService := xvm.NewContextService(ChainIdTest)
@@ -79,12 +72,18 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 			panic("file is nil" + err.Error())
 		}
 	}
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      testOrgId,
 		MemberInfo: file,
 		//IsFullCert: true,
 	}
 
+	contractId := commonPb.Contract{
+		Name:        ContractNameTest,
+		Version:     ContractVersionTest,
+		RuntimeType: runtimeType,
+		Creator:     sender,
+	}
 	db, _ := leveldb.OpenFile("tmp/leveldb"+utils.GetRandTxId(), nil)
 
 	chainConf := &chainconf.ChainConf{
@@ -116,14 +115,16 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	}
 	data, _ := contractId.Marshal()
 	key := utils.GetContractDbKey(contractId.Name)
-	txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	byteCodeKey := utils.GetContractByteCodeDbKey(contractId.Name)
+	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), byteCodeKey, bytes)
 	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	//txContext.Put(commonPb.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, txContext, bytes
 }
@@ -142,13 +143,16 @@ type TxContextMockTest struct {
 	currentResult []byte
 	hisResult     []*callContractResult
 
-	sender     *acPb.SerializedMember
-	creator    *acPb.SerializedMember
+	sender     *acPb.Member
+	creator    *acPb.Member
 	cacheMap   map[string][]byte
 	db         *leveldb.DB
 	kvRowCache map[int32]protocol.StateIterator
 }
 
+func (s *TxContextMockTest) GetBlockVersion() uint32 {
+	return protocol.DefaultBlockVersion
+}
 func (s *TxContextMockTest) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	panic("implement me")
 }
@@ -165,7 +169,7 @@ func (s *TxContextMockTest) GetStateKvHandle(index int32) (protocol.StateIterato
 	return data, ok
 }
 
-func (s *TxContextMockTest) GetBlockProposer() *acPb.SerializedMember {
+func (s *TxContextMockTest) GetBlockProposer() *acPb.Member {
 	panic("implement me")
 }
 
@@ -241,11 +245,12 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 
 func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
 	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+	fmt.Println(">>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.CallContract>>>>", contract.Name)
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("CallContract too deep %d", s.currentDepth),
 		}
@@ -253,7 +258,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 	}
 	if s.gasUsed > protocol.GasLimit {
 		contractResult := &commonPb.ContractResult{
-			Code:    uint32(protocol.ContractResultCode_FAIL),
+			Code:    uint32(1),
 			Result:  nil,
 			Message: fmt.Sprintf("There is not enough gas, gasUsed %d GasLimit %d ", gasUsed, int64(protocol.GasLimit)),
 		}
@@ -288,14 +293,14 @@ func (s *TxContextMockTest) GetCurrentResult() []byte {
 
 func (s *TxContextMockTest) GetTx() *commonPb.Transaction {
 	return &commonPb.Transaction{
-		Payload: &commonPb.Payload {
+		Payload: &commonPb.Payload{
 			ChainId:        ChainIdTest,
 			TxType:         txType,
 			TxId:           "abcdef12345678",
 			Timestamp:      0,
 			ExpirationTime: 0,
 		},
-		Result:           nil,
+		Result: nil,
 	}
 }
 
@@ -318,11 +323,11 @@ func (TxContextMockTest) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	}
 }
 
-func (s *TxContextMockTest) GetCreator(namespace string) *acPb.SerializedMember {
+func (s *TxContextMockTest) GetCreator(namespace string) *acPb.Member {
 	return s.creator
 }
 
-func (s *TxContextMockTest) GetSender() *acPb.SerializedMember {
+func (s *TxContextMockTest) GetSender() *acPb.Member {
 	return s.sender
 }
 
@@ -496,7 +501,7 @@ func (m mockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   nil,
+			BlockVersion:   0,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,

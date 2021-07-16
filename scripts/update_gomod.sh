@@ -30,10 +30,6 @@ cd ../core
 go get chainmaker.org/chainmaker/protocol@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go@${BRANCH}
 go test ./...
-cd ../dpos
-go get chainmaker.org/chainmaker/protocol@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go@${BRANCH}
-go test ./...
 cd ../logger
 go get chainmaker.org/chainmaker/protocol@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go@${BRANCH}

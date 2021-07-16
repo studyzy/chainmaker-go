@@ -8,21 +8,23 @@ package p2p
 
 import (
 	"bufio"
-	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
-	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
-	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
-	"github.com/tjfoc/gmsm/sm2"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
+	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
+	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	netPb "chainmaker.org/chainmaker/pb-go/net"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"github.com/tjfoc/gmsm/sm2"
 
 	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/common/helper"
@@ -877,7 +879,7 @@ func (ln *LibP2pNet) CheckRevokeTlsCerts(ac api.AccessControlProvider, certManag
 		return fmt.Errorf("resolve payload failed: %v", err)
 	}
 	switch payload.Method {
-	case commonPb.CertManageFunction_CERTS_REVOKE.String():
+	case syscontract.CertManageFunction_CERTS_REVOKE.String():
 		return ln.checkRevokeTlsCertsCertsRevokeMethod(ac, &payload)
 	default:
 		return nil

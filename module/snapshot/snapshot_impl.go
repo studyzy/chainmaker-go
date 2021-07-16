@@ -19,6 +19,10 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 )
 
+var ForceConflictedKey = []byte{0xFF}
+var ForceConflictedValue = []byte{0xFF}
+var ForceConflictedContractName = "_"
+
 // The record value is written by the SEQ corresponding to TX
 type sv struct {
 	seq   int
@@ -34,7 +38,7 @@ type SnapshotImpl struct {
 
 	chainId        string
 	blockTimestamp int64
-	blockProposer  *accesscontrol.SerializedMember
+	blockProposer  *accesscontrol.Member
 	blockHeight    uint64
 	preBlockHash   []byte
 
@@ -102,7 +106,7 @@ func (s *SnapshotImpl) GetTxRWSetTable() []*commonPb.TxRWSet {
 	//	for _, txRead := range txRWSet.TxReads {
 	//		if strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) ||
 	//			strings.HasPrefix(string(txRead.Key), protocol.ContractCreator) ||
-	//			txRead.ContractName == commonPb.SystemContract_CERT_MANAGE.String() {
+	//			txRead.ContractName == syscontract.SystemContract_CERT_MANAGE.String() {
 	//			txRead.Value = nil
 	//		}
 	//	}
@@ -158,7 +162,7 @@ func (s *SnapshotImpl) ApplyTxSimContext(cache protocol.TxSimContext, runVmSucce
 	var txRWSet *commonPb.TxRWSet
 	var txResult *commonPb.Result
 
-	// Only when the virtual machine is running normally can the read-write set be saved
+	// Only when the virtual machine is running normally can the read-write set be saved, or write fake conflicted key
 	txRWSet = cache.GetTxRWSet(runVmSuccess)
 	txResult = cache.GetTxResult()
 
@@ -226,7 +230,7 @@ func (s *SnapshotImpl) GetBlockHeight() uint64 {
 }
 
 // Get Block Proposer for current snapshot
-func (s *SnapshotImpl) GetBlockProposer() *accesscontrol.SerializedMember {
+func (s *SnapshotImpl) GetBlockProposer() *accesscontrol.Member {
 	return s.blockProposer
 }
 

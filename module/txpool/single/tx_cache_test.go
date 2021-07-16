@@ -7,9 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"testing"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"github.com/stretchr/testify/require"
 
@@ -28,7 +30,7 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 
 	for i := 0; i < num; i++ {
 
-		contractName := commonPb.SystemContract_CHAIN_CONFIG.String()
+		contractName := syscontract.SystemContract_CHAIN_CONFIG.String()
 
 		if !isConfig {
 			contractName = "userContract1"

@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -322,15 +323,15 @@ func initChainConsensusVerifier(chainId string) {
 
 // IsNative whether the contractName is a native
 func IsNative(contractName string) bool {
-	_, ok := common.SystemContract_value[contractName]
+	_, ok := syscontract.SystemContract_value[contractName]
 	return ok
 	//switch contractName {
-	//case common.SystemContract_CHAIN_CONFIG.String(),
-	//	common.SystemContract_CHAIN_QUERY.String(),
-	//	common.SystemContract_CERT_MANAGE.String(),
-	//	common.SystemContract_MULTI_SIGN.String(),
-	//	common.SystemContract_GOVERNANCE.String(),
-	//	common.SystemContract_PRIVATE_COMPUTE.String():
+	//case syscontract.SystemContract_CHAIN_CONFIG.String(),
+	//	syscontract.SystemContract_CHAIN_QUERY.String(),
+	//	syscontract.SystemContract_CERT_MANAGE.String(),
+	//	syscontract.SystemContract_MULTI_SIGN.String(),
+	//	syscontract.SystemContract_GOVERNANCE.String(),
+	//	syscontract.SystemContract_PRIVATE_COMPUTE.String():
 	//	return true
 	//default:
 	//	return false

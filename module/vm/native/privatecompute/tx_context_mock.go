@@ -27,7 +27,9 @@ func newTxContextMock(cache dataStore) *TxContextMock {
 		cacheMap: cache,
 	}
 }
-
+func (mock *TxContextMock) GetBlockVersion() uint32 {
+	return protocol.DefaultBlockVersion
+}
 func (mock *TxContextMock) Get(name string, key []byte) ([]byte, error) {
 	mock.lock.Lock()
 	defer mock.lock.Unlock()
@@ -101,11 +103,11 @@ func (mock *TxContextMock) GetTxRWSet(runVmSuccess bool) *commonPb.TxRWSet {
 	panic("implement me")
 }
 
-func (mock *TxContextMock) GetCreator(namespace string) *acPb.SerializedMember {
+func (mock *TxContextMock) GetCreator(namespace string) *acPb.Member {
 	panic("implement me")
 }
 
-func (mock *TxContextMock) GetSender() *acPb.SerializedMember {
+func (mock *TxContextMock) GetSender() *acPb.Member {
 	panic("implement me")
 }
 
@@ -133,7 +135,7 @@ func (mock *TxContextMock) GetDepth() int {
 	panic("implement me")
 }
 
-func (mock *TxContextMock) GetBlockProposer() *acPb.SerializedMember {
+func (mock *TxContextMock) GetBlockProposer() *acPb.Member {
 	panic("implement me")
 }
 

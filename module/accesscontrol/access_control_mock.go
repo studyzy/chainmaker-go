@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"sync"
+
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"sync"
 )
 
 var mockAcLogger = logger.GetLogger(logger.MODULE_ACCESS)
@@ -25,7 +26,6 @@ func MockAccessControl() protocol.AccessControlProvider {
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
 		hashType:              "",
-		identityType:          "",
 		dataStore:             nil,
 		memberCache:           concurrentlru.New(0),
 		certCache:             concurrentlru.New(0),
@@ -48,7 +48,6 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
 		hashType:              hashAlg,
-		identityType:          "",
 		dataStore:             nil,
 		memberCache:           concurrentlru.New(0),
 		certCache:             concurrentlru.New(0),
@@ -71,7 +70,7 @@ func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, has
 		if err != nil {
 			return nil, err
 		}
-		signerSerial, err := signer.GetSerializedMember(true)
+		signerSerial, err := signer.GetMember()
 		if err != nil {
 			return nil, err
 		}

@@ -127,7 +127,7 @@ func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, o
 		SenderOrgId: tx.Sender.Signer.OrgId,
 		SenderMemberInfo: tx.Sender.Signer.MemberInfo,
 		SenderMemberType: int(tx.Sender.Signer.MemberType),
-		SenderSA: tx.Sender.Signer.SignatureAlgorithm,
+		//SenderSA: tx.Sender.Signer.SignatureAlgorithm,
 		SenderSignature: tx.Sender.Signature,
 		Endorsers: string(endorsers),
 		TxStatusCode: int32(tx.Result.Code),
@@ -178,11 +178,11 @@ func (t *TxInfo) GetTx() (*commonPb.Transaction, error) {
 			Limit: t.Limit,
 		},
 		Sender: &commonPb.EndorsementEntry{
-			Signer:    &acPb.SerializedMember{
+			Signer:    &acPb.Member{
 				OrgId:              t.SenderOrgId,
 				MemberInfo:         t.SenderMemberInfo,
 				MemberType:         acPb.MemberType( t.SenderMemberType),
-				SignatureAlgorithm: t.SenderSA,
+				//SignatureAlgorithm: t.SenderSA,
 			},
 			Signature: t.SenderSignature,
 		},

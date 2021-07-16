@@ -8,20 +8,22 @@
 package blockcontract
 
 import (
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"math"
+	"reflect"
+	"strconv"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"encoding/hex"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"math"
-	"reflect"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -55,21 +57,22 @@ func (c *BlockContact) GetMethod(methodName string) common.ContractFunc {
 func registerBlockContactMethods(log *logger.CMLogger) map[string]common.ContractFunc {
 	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	blockRuntime := &BlockRuntime{log: log}
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetBlockByHeight
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = blockRuntime.GetBlockWithTxRWSetsByHeight
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_BY_HASH.String()] = blockRuntime.GetBlockByHash
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String()] = blockRuntime.GetBlockWithTxRWSetsByHash
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_BY_TX_ID.String()] = blockRuntime.GetBlockByTxId
-	queryMethodMap[commonPb.QueryFunction_GET_TX_BY_TX_ID.String()] = blockRuntime.GetTxByTxId
-	queryMethodMap[commonPb.QueryFunction_GET_LAST_CONFIG_BLOCK.String()] = blockRuntime.GetLastConfigBlock
-	queryMethodMap[commonPb.QueryFunction_GET_LAST_BLOCK.String()] = blockRuntime.GetLastBlock
-	queryMethodMap[commonPb.QueryFunction_GET_CHAIN_INFO.String()] = blockRuntime.GetChainInfo
-	queryMethodMap[commonPb.QueryFunction_GET_NODE_CHAIN_LIST.String()] = blockRuntime.GetNodeChainList
-	queryMethodMap[commonPb.QueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
-	queryMethodMap[commonPb.QueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
-	queryMethodMap[commonPb.QueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String()] = blockRuntime.GetArchiveBlockHeight
+
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetBlockByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = blockRuntime.GetBlockWithTxRWSetsByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String()] = blockRuntime.GetBlockByHash
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String()] = blockRuntime.GetBlockWithTxRWSetsByHash
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String()] = blockRuntime.GetBlockByTxId
+	queryMethodMap[syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String()] = blockRuntime.GetTxByTxId
+	queryMethodMap[syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String()] = blockRuntime.GetLastConfigBlock
+	queryMethodMap[syscontract.ChainQueryFunction_GET_LAST_BLOCK.String()] = blockRuntime.GetLastBlock
+	queryMethodMap[syscontract.ChainQueryFunction_GET_CHAIN_INFO.String()] = blockRuntime.GetChainInfo
+	queryMethodMap[syscontract.ChainQueryFunction_GET_NODE_CHAIN_LIST.String()] = blockRuntime.GetNodeChainList
+	queryMethodMap[syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
+	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String()] = blockRuntime.GetArchiveBlockHeight
 	return queryMethodMap
 }
 
@@ -138,8 +141,6 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 
 	if block, err = r.getBlockByHeight(store, chainId, math.MaxUint64); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if nodes, err = r.getChainNodeInfo(provider, chainId); err != nil {
@@ -182,8 +183,6 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 
 	if block, err = r.getBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -228,8 +227,6 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 
 	if block, err = r.getBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
@@ -272,8 +269,6 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 
 	if block, err = r.getBlockByHash(store, chainId, param.hash); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -318,8 +313,6 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 
 	if block, err = r.getBlockByHash(store, chainId, param.hash); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
@@ -362,8 +355,6 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 
 	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -408,8 +399,6 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 
 	if block, err = r.getLastConfigBlock(store, chainId); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -454,8 +443,6 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 
 	if block, err = r.getBlockByHeight(store, chainId, math.MaxUint64); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	if strings.ToLower(param.withRWSet) == "true" {
@@ -500,14 +487,10 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 	if tx, err = r.getTxByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
-	} else if tx == nil {
-		return nil, nil
 	}
 
 	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
 		return nil, err
-	} else if block == nil {
-		return nil, nil
 	}
 
 	transactionInfo := &commonPb.TransactionInfo{
@@ -709,9 +692,9 @@ func (r *BlockRuntime) handleError(value interface{}, err error, chainId string)
 	}
 	vi := reflect.ValueOf(value)
 	if vi.Kind() == reflect.Ptr && vi.IsNil() {
-		errMsg := fmt.Sprintf("no such %s, chainId:%s", typeName, chainId)
-		r.log.Warnf(errMsg)
-		return nil
+		errMsg := fmt.Errorf("no such %s, chainId:%s", typeName, chainId)
+		r.log.Warnf(errMsg.Error())
+		return errMsg
 	}
 	return nil
 }
