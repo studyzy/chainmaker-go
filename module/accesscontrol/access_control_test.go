@@ -18,7 +18,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
@@ -1317,7 +1316,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
-	principalRead, err = acInst.CreatePrincipal(common.SystemContract_CHAIN_CONFIG.String() + "-" + common.ConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
+	principalRead, err = acInst.CreatePrincipal(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
