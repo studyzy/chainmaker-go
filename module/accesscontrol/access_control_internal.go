@@ -73,7 +73,7 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 }
 
 var (
-	policyRead      = NewPolicy(protocol.RuleAny, nil, nil)
+	policyRead      = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
 	policyWrite     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
 	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
 	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
