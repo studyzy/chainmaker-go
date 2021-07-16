@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a
 	chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0 // indirect
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210714085802-149c1d33d4e5
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210716025252-5b327ee9112a
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/consensys/gurvy v0.3.8 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
@@ -15,6 +15,7 @@ require (
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e
+	github.com/mr-tron/base58 v1.2.0
 	github.com/samkumar/hibe v0.0.0-20171013061409-c1cd171b6178
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
