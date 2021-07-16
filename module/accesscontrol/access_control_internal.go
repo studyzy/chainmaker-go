@@ -298,8 +298,8 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store("test_3/4_admin", policyPortionTestAnyAdmin)
 
 	// transaction resource definitions
-	//resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
-	//resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
+	resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
+	resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
 
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
