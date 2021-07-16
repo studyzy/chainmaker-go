@@ -376,7 +376,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 
 	// 1. get GovernanceContract
 	gcr := NewGovernanceContract(store, ledger).(*GovernanceContractImp)
-	governanceContract, err := gcr.GetGovernmentContract()
+	governanceContract, err := gcr.GetGovernanceContract()
 	if err != nil {
 		log.Errorf("getGovernanceContract err!err=%v", err)
 		return nil, err
@@ -580,17 +580,4 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	}
 	txRWSet.TxWrites = append(txRWSet.TxWrites, txWrite)
 	return txRWSet, nil
-}
-
-func GetProposer(level uint64, NodeProposeRound uint64, validators []*consensusPb.GovernanceMember) (*consensusPb.GovernanceMember, error) {
-	if validators == nil || len(validators) == 0 {
-		return nil, fmt.Errorf("validators is nil")
-	}
-	index := (level / NodeProposeRound) % uint64(len(validators))
-	newMember := &consensusPb.GovernanceMember{
-		Index:  validators[index].Index,
-		NodeId: validators[index].NodeId,
-	}
-	log.Debugf("GetProposer newMember[%v] level[%v]", newMember, level)
-	return newMember, nil
 }

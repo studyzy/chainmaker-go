@@ -6,15 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 
 package chainedbft
 
-import (
-	"sync"
-)
+import consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 
 //peer defines basic peer information required by consensus
 type peer struct {
-	id     string //The network id
-	index  uint64 //The index of committee
-	active bool   //Peer's network state:online or offline
+	id    string //The network id
+	index int64  //The index of committee
 }
 
 type indexedPeers []*peer
@@ -28,9 +25,33 @@ func (ip indexedPeers) Swap(i, j int) { ip[i], ip[j] = ip[j], ip[i] }
 //Less checks the ith object's index < the jth object's index
 func (ip indexedPeers) Less(i, j int) bool { return ip[i].index < ip[j].index }
 
+type contractInfo struct {
+	*committee
+	*consensuspb.GovernanceContract
+}
+
+func newContractInfo(governContract *consensuspb.GovernanceContract) *contractInfo {
+	peers := make([]*peer, 0, len(governContract.Validators))
+	lastPeers := make([]*peer, 0, len(governContract.LastValidators))
+	for _, validator := range governContract.Validators {
+		peers = append(peers, &peer{
+			id:    validator.NodeId,
+			index: validator.Index,
+		})
+	}
+	for _, validator := range governContract.LastValidators {
+		lastPeers = append(lastPeers, &peer{
+			id:    validator.NodeId,
+			index: validator.Index,
+		})
+	}
+	committee := newCommittee(peers, lastPeers, governContract.NextSwitchHeight,
+		governContract.MinQuorumForQc, governContract.LastMinQuorumForQc)
+	return &contractInfo{committee: committee, GovernanceContract: governContract}
+}
+
 //committee manages all of peers join current consensus epoch
 type committee struct {
-	sync.RWMutex
 	switchEpochHeight uint64
 
 	// last epoch info
@@ -38,47 +59,32 @@ type committee struct {
 	lastMinQuorumForQc int
 
 	// curr epoch info
-	peers              []*peer // Consensus nodes at current epoch
+	validators         []*peer // Consensus nodes at current epoch
 	currMinQuorumForQc int
 }
 
 //newCommittee initializes a peer pool with given peer list
-func newCommittee(peers, lastValidators []*peer, switchHeight uint64) *committee {
+func newCommittee(peers, lastValidators []*peer, switchHeight uint64, quorumQc, lastQuorumQc uint64) *committee {
 	return &committee{
-		peers:             peers,
-		lastValidators:    lastValidators,
-		switchEpochHeight: switchHeight,
+		validators:         peers,
+		lastValidators:     lastValidators,
+		switchEpochHeight:  switchHeight,
+		currMinQuorumForQc: int(quorumQc),
+		lastMinQuorumForQc: int(lastQuorumQc),
 	}
 }
 
 //getPeers returns peer list which are online
 func (pp *committee) getPeers(blkHeight uint64) []*peer {
 	usedPeers := pp.getUsedPeers(blkHeight)
-	peers := make([]*peer, 0, len(usedPeers))
-	for _, peer := range usedPeers {
-		if peer.active {
-			peers = append(peers, peer)
-		}
-	}
-	return peers
+	return usedPeers
 }
 
 //getPeerByIndex returns a peer with given index
 func (pp *committee) getPeerByIndex(height uint64, index uint64) *peer {
 	usedPeers := pp.getUsedPeers(height)
 	for _, v := range usedPeers {
-		if v.index == index {
-			return v
-		}
-	}
-	return nil
-}
-
-//getPeerByID returns a peer with given id
-func (pp *committee) getPeerByID(height uint64, id string) *peer {
-	usedPeers := pp.getUsedPeers(height)
-	for _, v := range usedPeers {
-		if v.id == id {
+		if v.index == int64(index) {
 			return v
 		}
 	}
@@ -89,25 +95,11 @@ func (pp *committee) getPeerByID(height uint64, id string) *peer {
 func (pp *committee) isValidIdx(height uint64, index uint64) bool {
 	usedPeers := pp.getUsedPeers(height)
 	for _, v := range usedPeers {
-		if v.index == index {
+		if v.index == int64(index) {
 			return true
 		}
 	}
 	return false
-}
-
-//peerCount returns the size of core peers at current consensus epoch
-func (pp *committee) peerCount(height uint64) int {
-	usedPeers := pp.getUsedPeers(height)
-	return len(usedPeers)
-}
-
-func (pp *committee) getUsedPeers(height uint64) []*peer {
-	usedPeers := pp.peers
-	if height <= pp.switchEpochHeight+3 {
-		usedPeers = pp.lastValidators
-	}
-	return usedPeers
 }
 
 func (pp *committee) minQuorumForQc(height uint64) int {
@@ -115,4 +107,15 @@ func (pp *committee) minQuorumForQc(height uint64) int {
 		return pp.lastMinQuorumForQc
 	}
 	return pp.currMinQuorumForQc
+}
+
+func (pp *committee) getUsedPeers(height uint64) []*peer {
+	if height == 0 {
+		return pp.validators
+	}
+	usedPeers := pp.validators
+	if height <= pp.switchEpochHeight+3 {
+		usedPeers = pp.lastValidators
+	}
+	return usedPeers
 }
