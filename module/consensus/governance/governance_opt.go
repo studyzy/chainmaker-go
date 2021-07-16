@@ -473,8 +473,8 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, governanceCont
 	}
 
 	isChange := false
-	oldMembersMap := make(map[string]*consensusPb.GovernanceMember, len(GovernanceContract.Members))
-	for _, member := range GovernanceContract.Members {
+	oldMembersMap := make(map[string]*consensusPb.GovernanceMember, len(governanceContract.Members))
+	for _, member := range governanceContract.Members {
 		oldMembersMap[member.NodeId] = member
 	}
 
