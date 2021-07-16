@@ -8,24 +8,25 @@ package common
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
+	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker-go/utils"
 	"encoding/hex"
 	"fmt"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"runtime"
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -236,8 +237,7 @@ func FinalizeBlock(
 	txHashes := make([][]byte, block.Header.TxCount)
 	var goRoutinePool *ants.Pool
 	var err error
-	var txCount int
-	var lock sync.Mutex
+	var txCount int64
 	var wg sync.WaitGroup
 	poolCapacity := runtime.NumCPU() * 4
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
@@ -303,13 +303,11 @@ func FinalizeBlock(
 					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
 					errC <- err
 				}
-				lock.Lock()
-				txCount++
 				txHashes[packet.index] = txHash
-				if txCount == len(block.Txs) {
+				newTxCount := atomic.AddInt64(&txCount, 1)
+				if newTxCount == int64(len(block.Txs)) {
 					finishC <- true
 				}
-				lock.Unlock()
 			})
 		case err = <-errC:
 			return err

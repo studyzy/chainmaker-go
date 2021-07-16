@@ -14,7 +14,6 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 	"fmt"
 	"github.com/stretchr/testify/require"
-	_ "net/http/pprof"
 	"testing"
 	"time"
 )
