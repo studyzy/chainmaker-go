@@ -22,7 +22,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
+	//"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )
 
