@@ -479,8 +479,8 @@ func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSim
 		return nil, err
 	}
 
-	nodeId := params[paramNameNodeId]
-	if utils.IsAnyBlank(nodeId) {
+	memberInfo := params[paramNameMemberInfo]
+	if utils.IsAnyBlank(memberInfo) {
 		err = fmt.Errorf("delete trust member failed, require param [%s], but not found", paramNameNodeId)
 		r.log.Error(err)
 		return nil, err
@@ -489,14 +489,14 @@ func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSim
 	index := -1
 	trustMembers := chainConfig.TrustMembers
 	for i, trustMember := range trustMembers {
-		if nodeId == trustMember.NodeId {
+		if memberInfo == trustMember.MemberInfo {
 			index = i
 			break
 		}
 	}
 
 	if index == -1 {
-		err = fmt.Errorf("delete trust member failed, param [%s] not found from TrustMembers", nodeId)
+		err = fmt.Errorf("delete trust member failed, param [%s] not found from TrustMembers", memberInfo)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -506,9 +506,9 @@ func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSim
 	chainConfig.TrustMembers = trustMembers
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
-		r.log.Errorf("trust member delete fail, %s, nodeId[%s] ", err.Error(), nodeId)
+		r.log.Errorf("trust member delete fail, %s, nodeId[%s] ", err.Error(), memberInfo)
 	} else {
-		r.log.Infof("trust member delete success. nodeId[%s]", nodeId)
+		r.log.Infof("trust member delete success. nodeId[%s]", memberInfo)
 	}
 	return result, err
 }
