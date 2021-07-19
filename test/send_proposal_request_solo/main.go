@@ -311,7 +311,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payloadBytes, nil)
 
 	result := &commonPb.TransactionInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, result)
@@ -352,7 +352,7 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -386,7 +386,7 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+		chainId, "", payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -417,7 +417,7 @@ func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNo
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+		chainId, "", payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -452,7 +452,7 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+		chainId, "", payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -481,7 +481,7 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+		chainId, "", payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -509,7 +509,7 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+		chainId, "", payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -537,7 +537,7 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+		chainId, "", payloadBytes, nil)
 
 	blockInfo := &commonPb.BlockInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
@@ -560,7 +560,7 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	payload := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payload)
+		chainId, "", payload, nil)
 
 	chainInfo := &discoveryPb.ChainInfo{}
 	err := proto.Unmarshal(resp.ContractResult.Result, chainInfo)
@@ -611,7 +611,7 @@ func testUpgradeInvokeSum(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	}
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, nil)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
@@ -647,7 +647,7 @@ func testInvokeFactSave(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	//}
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, nil)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
@@ -666,7 +666,7 @@ func testInvokeMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method
 	}
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		CHAIN1, txId, payload)
+		CHAIN1, txId, payload, nil)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
@@ -684,7 +684,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method 
 	}
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		CHAIN1, txId, payload)
+		CHAIN1, txId, payload, nil)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return resp.ContractResult.Result
@@ -709,7 +709,7 @@ func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 	}
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, nil)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	return txId
@@ -734,7 +734,7 @@ func testQueryFindByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	}
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, nil)
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	fmt.Println(string(resp.ContractResult.Result))
@@ -912,7 +912,7 @@ func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 	payloadBytes := common.ConstructQueryPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payloadBytes, nil)
 	if resp == nil || resp.ContractResult == nil || strings.Contains(resp.Message, "no such transaction") {
 		time.Sleep(time.Second * 2)
 		testWaitTx(sk3, client, chainId, txId)

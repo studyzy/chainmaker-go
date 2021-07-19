@@ -43,15 +43,13 @@ func freezeContract() error {
 		Method: method,
 	}
 
-	// endorsement, err := acSign(payload)
-	//if err == nil {
-	//
-	//} else {
-	//	return err
-	//}
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
 
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+	resp, err := proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload, endorsement)
 	if err != nil {
 		return err
 	}
@@ -94,15 +92,13 @@ func unfreezeContract() error {
 
 		Method: method,
 	}
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
 
-	//if endorsement, err := acSign(payload); err == nil {
-	//	payload.Endorsement = endorsement
-	//} else {
-	//	return err
-	//}
-
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+	resp, err := proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload, endorsement)
 	if err != nil {
 		return err
 	}
@@ -145,15 +141,13 @@ func RevokeContract() error {
 
 		Method: method,
 	}
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
 
-	//if endorsement, err := acSign(payload); err == nil {
-	//	payload.Endorsement = endorsement
-	//} else {
-	//	return err
-	//}
-
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+	resp, err := proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload, endorsement)
 	if err != nil {
 		return err
 	}

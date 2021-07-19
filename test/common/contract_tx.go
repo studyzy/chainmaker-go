@@ -13,7 +13,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"time"
+
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/helper"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/utils"
@@ -58,37 +62,8 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 
 	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.2.1", runtimeType, wasmBin, nil)
 
-	//var pairs []*commonPb.KeyValuePair
-	//pairs = append(pairs, &commonPb.KeyValuePair{
-	//	Key:   syscontract.InitContract_CONTRACT_NAME.String(),
-	//	Value: []byte(contractName),
-	//})
-	//pairs = append(pairs, &commonPb.KeyValuePair{
-	//	Key:   syscontract.InitContract_CONTRACT_VERSION.String(),
-	//	Value: []byte("1.2.1"),
-	//})
-	//pairs = append(pairs, &commonPb.KeyValuePair{
-	//	Key:   syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String(),
-	//	Value: []byte(runtimeType.String()),
-	//})
-	//pairs = append(pairs, &commonPb.KeyValuePair{
-	//	Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
-	//	Value: wasmBin,
-	//})
-	//payload := &commonPb.Payload{
-	//	ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
-	//	Method:       syscontract.ContractManageFunction_INIT_CONTRACT.String(),
-	//	Parameters:   pairs,
-	//}
-
-	//payloadBytes, err := proto.Marshal(payload)
-	//if err != nil {
-	//	log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-	//	os.Exit(0)
-	//}
-
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, []int{1, 2, 3, 4})
 
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	if resp.Code != 0 {
@@ -97,8 +72,49 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	return txId
 }
 
+func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+	bytes, _ := msg.Marshal()
+
+	signers := make([]protocol.SigningMember, 0)
+	for _, orgId := range orgIdList {
+
+		numStr := strconv.Itoa(orgId)
+		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+		file, err := ioutil.ReadFile(path)
+		if err != nil {
+			panic(err)
+		}
+		sk, err := asym.PrivateKeyFromPEM(file, nil)
+		if err != nil {
+			panic(err)
+		}
+
+		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+		file2, err := ioutil.ReadFile(userCrtPath)
+		//fmt.Println("node", orgId, "crt", string(file2))
+		if err != nil {
+			panic(err)
+		}
+
+		// 获取peerId
+		_, err = helper.GetLibp2pPeerIdFromCert(file2)
+		//fmt.Println("node", orgId, "peerId", peerId)
+
+		// 构造Sender
+		sender1 := &acPb.Member{
+			OrgId:      "wx-org" + numStr + ".chainmaker.org",
+			MemberInfo: file2,
+		}
+
+		signer := GetSigner(sk, sender1)
+		signers = append(signers, signer)
+	}
+
+	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
+}
+
 func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payload *commonPb.Payload) *commonPb.TxResponse {
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 	defer cancel()
@@ -113,12 +129,9 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	// 构造Sender
-	//pubKeyString, _ := sk3.PublicKey().String()
 	sender := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
-		////IsFullCert: true,
-		//MemberInfo: []byte(pubKeyString),
 	}
 
 	// 构造Header
@@ -131,7 +144,14 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
-
+	if len(orgIdList) > 0 {
+		if endorsement, err := acSign(payload, orgIdList); err == nil {
+			req.Endorsers = endorsement
+		} else {
+			log.Fatalf("testCreate failed to sign endorsement, %s", err.Error())
+			os.Exit(0)
+		}
+	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
 	if err != nil {
@@ -150,7 +170,7 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req.Sender.Signature = signBytes
-
+	fmt.Printf("client signed tx request sender:%+v,\nendorsers:%+v\n", req.Sender, req.Endorsers)
 	result, err := (*client).SendRequest(ctx, req)
 
 	if err != nil {
@@ -194,7 +214,7 @@ func QueryUserContractInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, c
 	payload := ConstructQueryPayload(syscontract.SystemContract_CONTRACT_MANAGE.String(), syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String(), pairs)
 
 	resp := ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, nil)
 	return resp
 
 }
@@ -246,7 +266,7 @@ func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId
 	//}
 
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, []int{1, 2, 3, 4})
 	return resp
 	//	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 }
@@ -279,6 +299,6 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 		Parameters:   pairs,
 	}
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+		chainId, txId, payload, []int{1, 2, 3, 4})
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 }
