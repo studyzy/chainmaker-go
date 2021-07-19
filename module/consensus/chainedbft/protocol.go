@@ -112,7 +112,7 @@ func (cbi *ConsensusChainedBftImpl) processProposedBlock(block *common.Block) {
 	beginConstruct := chainUtils.CurrentTimeMillisSeconds()
 	proposal := cbi.constructProposal(block, height, level, cbi.smr.getEpochId())
 	endConstruct := chainUtils.CurrentTimeMillisSeconds()
-	cbi.signAndBroadcast(proposal)
+	cbi.signAndBroadcast(block.Header.BlockHeight, proposal)
 	endSignAndBroad := chainUtils.CurrentTimeMillisSeconds()
 	cbi.logger.Debugf("time used in processProposedBlock, constructProposalTime: %d, "+
 		"signAndBroadTime: %d", endConstruct-beginConstruct, endSignAndBroad-endConstruct)
@@ -139,7 +139,7 @@ func (cbi *ConsensusChainedBftImpl) processLocalTimeout(height uint64, level uin
 		return
 	}
 	cbi.smr.setLastVote(vote, level)
-	cbi.signAndBroadcast(vote)
+	cbi.signAndBroadcast(height, vote)
 }
 
 func (cbi *ConsensusChainedBftImpl) retryVote(lastVote *chainedbftpb.ConsensusPayload) (*chainedbftpb.ConsensusPayload, error) {
@@ -616,7 +616,7 @@ func (cbi *ConsensusChainedBftImpl) sendVote2Next(proposal *chainedbftpb.Proposa
 	} else {
 		cbi.logger.Debugf("send vote msg to other peer [%d], voteHeight:[%d], voteLevel:[%d], voteBlockId:[%x]", nextLeaderIndex,
 			proposal.Height, proposal.Level, proposal.Block.Header.BlockHash)
-		cbi.signAndSendToPeer(vote, nextLeaderIndex)
+		cbi.signAndSendToPeer(vote, proposal.Height, nextLeaderIndex)
 	}
 }
 
@@ -1068,10 +1068,10 @@ func (cbi *ConsensusChainedBftImpl) processBlockFetch(msg *chainedbftpb.Consensu
 	for i := 0; i <= count-1; i++ {
 		if i == count-1 {
 			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:], status, ReqId)
-			cbi.signAndSendToPeer(rsp, authorIdx)
+			cbi.signAndSendToPeer(rsp, cbi.smr.getHeight(), authorIdx)
 		} else {
 			rsp := cbi.constructBlockFetchRespMsg(blocks[i*MaxSyncBlockNum:(i+1)*MaxSyncBlockNum], status, ReqId)
-			cbi.signAndSendToPeer(rsp, authorIdx)
+			cbi.signAndSendToPeer(rsp, cbi.smr.getHeight(), authorIdx)
 		}
 	}
 }

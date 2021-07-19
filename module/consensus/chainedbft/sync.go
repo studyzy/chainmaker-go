@@ -90,7 +90,7 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		atomic.AddUint64(&sm.currReqID, 1)
 	}()
 	msg := sm.constructReqMsg(req)
-	sm.server.signAndSendToPeer(msg, req.targetPeer)
+	sm.server.signAndSendToPeer(msg, req.height, req.targetPeer)
 	return true
 }
 

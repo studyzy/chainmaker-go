@@ -318,7 +318,6 @@ func cfgChainedBftNode(t *testing.T) {
 		cbi.commitHeight = cbi.chainStore.getCommitHeight()
 		cbi.createEpoch(cbi.commitHeight)
 		epoch := cbi.nextEpoch
-		cbi.smr.initCommittee(epoch.useValidators)
 		cbi.msgPool = epoch.msgPool
 		cbi.selfIndexInEpoch = epoch.index
 		cbi.smr.paceMaker = liveness.NewPacemaker(cbi.logger, cbi.selfIndexInEpoch, 0, epoch.epochId, cbi.timerService)

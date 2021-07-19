@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
-	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -157,7 +156,8 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 }
 
 func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protocol.Government) {
-	base := governanceContract.GetRoundTimeoutMill()
+	contract, _ := governanceContract.GetGovernanceContract()
+	base := contract.GetHotstuffRoundTimeoutMill()
 	if base == 0 {
 		base = uint64(timeservice.DefaultRoundTimeout)
 	}
@@ -165,7 +165,7 @@ func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protoco
 		timeservice.RoundTimeout = time.Duration(base) * time.Millisecond
 	}
 
-	delta := governanceContract.GetRoundTimeoutIntervalMill()
+	delta := contract.GetHotstuffRoundTimeoutIntervalMill()
 	if delta == 0 {
 		delta = uint64(timeservice.DefaultRoundTimeoutInterval)
 	}
@@ -198,8 +198,9 @@ func (cbi *ConsensusChainedBftImpl) startConsensus() {
 	if hasWalEntry {
 		return
 	}
-	cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
-	if cbi.isValidProposer(cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
+	highQC := cbi.chainStore.getCurrentQC()
+	cbi.processCertificates(highQC, nil)
+	if cbi.isValidProposer(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.selfIndexInEpoch) {
 		cbi.smr.updateState(chainedbftpb.ConsStateType_PROPOSE)
 		cbi.processNewPropose(cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.chainStore.getCurrentQC().BlockId)
 	}
@@ -514,57 +515,44 @@ func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCer
 }
 
 //VerifyBlockSignatures verify consensus qc at incoming block and chainconf
-//now, only implement check commit in all validator, not in selected committee
+//now, implement check commit in all nodes, not in selected committee
 func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessControlProvider,
 	store protocol.BlockchainStore, block *common.Block, ledger protocol.LedgerCache) error {
-	if block == nil || block.AdditionalData == nil ||
-		len(block.AdditionalData.ExtraData) <= 0 {
+	// 1. base info check
+	if block == nil || block.AdditionalData == nil || len(block.AdditionalData.ExtraData) <= 0 {
 		return errors.New("nil block or nil additionalData or empty extraData")
 	}
-
-	//1. get qc and validate
-	quorumCert := utils.GetQCFromBlock(block)
-	if quorumCert == nil {
-		return errors.New("nil qc")
-	}
 	qc := new(chainedbftpb.QuorumCert)
-	if err := proto.Unmarshal(quorumCert, qc); err != nil {
-		return fmt.Errorf("failed to unmarshal qc, err %v", err)
+	if quorumCert := utils.GetQCFromBlock(block); len(quorumCert) == 0 {
+		return errors.New("nil qc")
+	} else {
+		if err := proto.Unmarshal(quorumCert, qc); err != nil {
+			return fmt.Errorf("failed to unmarshal qc, err %v", err)
+		}
 	}
-	if qc.BlockId == nil {
-		return fmt.Errorf("nil block id in qc")
-	}
-	if BlockId := block.GetHeader().GetBlockHash(); !bytes.Equal(qc.BlockId, BlockId) {
-		return fmt.Errorf("wrong qc block id [%v], expected [%v]", qc.BlockId, BlockId)
+	if blockId := block.GetHeader().GetBlockHash(); !bytes.Equal(qc.BlockId, blockId) {
+		return fmt.Errorf("wrong qc block id [%v], expected [%v]", qc.BlockId, blockId)
 	}
 
-	// because the validator set has changed after the generation switch, so that validate by validators
-	// cannot be continue.
-	governanceContract := governance.NewGovernanceContract(store, ledger)
-	if governanceContract.GetEpochId() == qc.EpochId+1 {
-		return nil
+	// 2. get governance contract
+	// because the validator set has changed after the generation switch,
+	// so that validate by validators cannot be continue.
+	governanceContract, err := governance.NewGovernanceContract(store, ledger).GetGovernanceContract()
+	if err != nil {
+		return err
 	}
+	// todo. 先注释，看是否可以验证通过
+	//if governanceContract.GetEpochId() == qc.EpochId+1 {
+	//	return nil
+	//}
 
 	//2. get validators from governance contract
-	var curValidators []*types.Validator
-	validatorsMembersInterface := governanceContract.GetValidators()
-	if validatorsMembersInterface == nil {
-		return fmt.Errorf("current validators is nil")
-	}
-	validatorsMembers := validatorsMembersInterface.([]*consensus.GovernanceMember)
-	for _, v := range validatorsMembers {
-		validator := &types.Validator{
-			Index:  uint64(v.Index),
-			NodeID: v.NodeId,
-		}
-		curValidators = append(curValidators, validator)
-	}
-
+	curValidators := governanceContract.GetValidators()
 	newViewNum, votedBlockNum, err := countNumFromVotes(qc, curValidators, ac)
 	if err != nil {
 		return err
 	}
-	minQuorumForQc := governanceContract.GetGovMembersValidatorMinCount()
+	minQuorumForQc := governanceContract.GetMinQuorumForQc()
 	if qc.Level > 0 && qc.NewView && newViewNum < minQuorumForQc {
 		return fmt.Errorf(fmt.Sprintf("vote new view num [%v] less than expected [%v]",
 			newViewNum, minQuorumForQc))
@@ -576,7 +564,7 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	return nil
 }
 
-func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Validator, ac protocol.AccessControlProvider) error {
+func validateVoteData(voteData *chainedbftpb.VoteData, validators []*consensus.GovernanceMember, ac protocol.AccessControlProvider) error {
 	author := voteData.GetAuthor()
 	authorIdx := voteData.GetAuthorIdx()
 	if author == nil {
@@ -584,9 +572,9 @@ func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Valid
 	}
 
 	// get validator by authorIdx
-	var validator *types.Validator = nil
+	var validator *consensus.GovernanceMember
 	for _, v := range validators {
-		if v.Index == authorIdx {
+		if v.Index == int64(authorIdx) {
 			validator = v
 			break
 		}
@@ -594,7 +582,7 @@ func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Valid
 	if validator == nil {
 		return fmt.Errorf("msg index not in validators")
 	}
-	if validator.NodeID != string(author) {
+	if validator.NodeId != string(author) {
 		return fmt.Errorf("msg author not equal validator nodeid")
 	}
 
@@ -620,7 +608,7 @@ func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Valid
 	return nil
 }
 
-func countNumFromVotes(qc *chainedbftpb.QuorumCert, curvalidators []*types.Validator, ac protocol.AccessControlProvider) (uint64, uint64, error) {
+func countNumFromVotes(qc *chainedbftpb.QuorumCert, currValidators []*consensus.GovernanceMember, ac protocol.AccessControlProvider) (uint64, uint64, error) {
 	var newViewNum uint64 = 0
 	var votedBlockNum uint64 = 0
 	voteIdxes := make(map[uint64]bool, 0)
@@ -629,7 +617,7 @@ func countNumFromVotes(qc *chainedbftpb.QuorumCert, curvalidators []*types.Valid
 		if vote == nil {
 			return 0, 0, fmt.Errorf("nil Commits msg")
 		}
-		if err := validateVoteData(vote, curvalidators, ac); err != nil {
+		if err := validateVoteData(vote, currValidators, ac); err != nil {
 			return 0, 0, fmt.Errorf("invalid commits, err %v", err)
 		}
 		// vote := msg.Payload.GetVoteMsg()
