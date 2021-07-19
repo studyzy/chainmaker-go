@@ -276,7 +276,10 @@ func main() {
 
 func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
-
+	return proposalRequestWithMultiSign(sk3, client, txType, chainId, txId, payload, nil)
+}
+func proposalRequestWithMultiSign(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, endorsers []*commonPb.EndorsementEntry) (*commonPb.TxResponse, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
 
@@ -329,7 +332,9 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 		Payload: header,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
-
+	if len(endorsers) > 0 {
+		req.Endorsers = endorsers
+	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
 	if err != nil {

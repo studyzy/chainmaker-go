@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"encoding/hex"
+	//	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
@@ -18,9 +18,9 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/utils"
-	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	//	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -76,9 +76,10 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 	runningTxC := make(chan *commonpb.Transaction, txBatchSize)
 	timeoutC := time.After(ScheduleTimeout * time.Second)
 	finishC := make(chan bool)
-	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
 	var goRoutinePool *ants.Pool
 	var err error
+	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
+
 	poolCapacity := ts.StoreHelper.GetPoolCapacity()
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
 		return nil, nil, err
@@ -336,8 +337,6 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//var contractVersion string
 	var method string
 	var byteCode []byte
-	var parameterPairs []*commonpb.KeyValuePair
-	var parameters map[string][]byte
 	//var endorsements []*commonpb.EndorsementEntry
 	//var sequence uint64
 
@@ -355,20 +354,20 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	case commonpb.TxType_QUERY_CONTRACT:
 		//var payload commonpb.Payload
 		//if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-		contractName = payload.ContractName
-		method = payload.Method
-		parameterPairs = payload.Parameters
-		parameters = ts.parseParameter(parameterPairs)
+		//contractName = payload.ContractName
+		//method = payload.Method
+		//parameterPairs = payload.Parameters
+		//parameters, err = ts.parseParameter(parameterPairs)
 		//} else {
 		//	return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Payload.TxId, err))
 		//}
 	case commonpb.TxType_INVOKE_CONTRACT:
 		//var payload commonpb.TransactPayload
 		//if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-		contractName = payload.ContractName
-		method = payload.Method
-		parameterPairs = payload.Parameters
-		parameters = ts.parseParameter(parameterPairs)
+		//contractName = payload.ContractName
+		//method = payload.Method
+		//parameterPairs = payload.Parameters
+		//parameters, err = ts.parseParameter(parameterPairs)
 		//} else {
 		//	return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Payload.TxId, err))
 		//}
@@ -437,6 +436,15 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	default:
 		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Payload.TxType))
 	}
+
+	contractName = payload.ContractName
+	method = payload.Method
+	parameters, err := ts.parseParameter(payload.Parameters)
+	if err != nil {
+		ts.log.Errorf("parse contract[%s] parameters error:%s", contractName, err)
+		return errResult(result, fmt.Errorf("parse tx[%s] contract[%s] parameters error:%s", payload.TxId, contractName, err.Error()))
+	}
+
 	contract, err := utils.GetContractByName(txSimContext.Get, contractName)
 	if err != nil {
 		ts.log.Errorf("Get contract info by name[%s] error:%s", contractName, err)
@@ -455,23 +463,6 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 	//	RuntimeType:     runtimeType,
 	//}
 
-	// verify parameters
-	if len(parameters) > protocol.ParametersKeyMaxCount {
-		return errResult(result, fmt.Errorf("expect less than %d parameters, but got %d, tx id:%s", protocol.ParametersKeyMaxCount, len(parameters),
-			tx.Payload.TxId))
-	}
-	for key, val := range parameters {
-		if len(key) > protocol.DefaultStateLen {
-			return errResult(result, fmt.Errorf("expect key length less than %d, but got %d, tx id:%s", protocol.DefaultStateLen, len(key), tx.Payload.TxId))
-		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
-		if err != nil || !match {
-			return errResult(result, fmt.Errorf("expect key no special characters, but got key:[%s]. letter, number, dot and underline are allowed, tx id:[%s]", key, tx.Payload.TxId))
-		}
-		if len(val) > protocol.ParametersValueMaxLength {
-			return errResult(result, fmt.Errorf("expect value length less than %d, but got %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Payload.TxId))
-		}
-	}
 	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contract, method, byteCode, parameters, txSimContext, 0, tx.Payload.TxType)
 
 	result.Code = txStatusCode
@@ -490,27 +481,32 @@ func errResult(result *commonpb.Result, err error) (*commonpb.Result, error) {
 	result.ContractResult.Code = 1
 	return result, err
 }
-func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string][]byte {
+func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) (map[string][]byte, error) {
+	// verify parameters
+	if len(parameterPairs) > protocol.ParametersKeyMaxCount {
+		return nil, fmt.Errorf("expect parameters length less than %d, but got %d", protocol.ParametersKeyMaxCount, len(parameterPairs))
+	}
 	parameters := make(map[string][]byte, 16)
 	for i := 0; i < len(parameterPairs); i++ {
 		key := parameterPairs[i].Key
-		// ignore the following input from the user's invoke parameters
-		if key == protocol.ContractCreatorOrgIdParam ||
-			key == protocol.ContractCreatorRoleParam ||
-			key == protocol.ContractCreatorPkParam ||
-			key == protocol.ContractSenderOrgIdParam ||
-			key == protocol.ContractSenderRoleParam ||
-			key == protocol.ContractSenderPkParam ||
-			key == protocol.ContractBlockHeightParam ||
-			key == protocol.ContractTxIdParam {
-			continue
-		}
 		value := parameterPairs[i].Value
+		if len(key) > protocol.DefaultStateLen {
+			return nil, fmt.Errorf("expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key))
+		}
+		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
+		if err != nil || !match {
+			return nil, fmt.Errorf("expect key no special characters, but got key:[%s]. letter, number, dot and underline are allowed", key)
+		}
+		if len(value) > protocol.ParametersValueMaxLength {
+			return nil, fmt.Errorf("expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(value))
+		}
+
 		parameters[key] = value
 	}
-	return parameters
+	return parameters, nil
 }
 
+/*
 func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string][]byte) error {
 	var ac protocol.AccessControlProvider
 	var targetOrgId string
@@ -560,6 +556,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 		return nil
 	}
 }
+*/
 
 func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
 	dagString := "digraph DAG {\n"

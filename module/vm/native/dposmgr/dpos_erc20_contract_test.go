@@ -8,10 +8,11 @@
 package dposmgr
 
 import (
-	"chainmaker.org/chainmaker/protocol/mock"
 	"fmt"
-	"github.com/golang/mock/gomock"
 	"testing"
+
+	"chainmaker.org/chainmaker/protocol/mock"
+	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker-go/logger"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
@@ -26,7 +27,7 @@ var (
 	Decimals         = []byte("18")
 	TotalSupply      = []byte("100000000")
 	TransferValue    = []byte("1000000")
-	TransferBigValue = []byte( "3000000")
+	TransferBigValue = []byte("3000000")
 	ApproveValue     = []byte("2000000")
 )
 
@@ -224,7 +225,7 @@ func initEnv(t *testing.T) (*DPoSRuntime, protocol.TxSimContext, func()) {
 	return dPoSRuntime, txSimContext, func() { ctrl.Finish() }
 }
 
-func NewLogger() *logger.CMLogger {
+func NewLogger() protocol.Logger {
 	cmLogger := logger.GetLogger("DPoS")
 	return cmLogger
 }

@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
@@ -40,10 +39,10 @@ var (
 
 type BlockContact struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewBlockContact(log *logger.CMLogger) *BlockContact {
+func NewBlockContact(log protocol.Logger) *BlockContact {
 	return &BlockContact{
 		log:     log,
 		methods: registerBlockContactMethods(log),
@@ -54,7 +53,7 @@ func (c *BlockContact) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerBlockContactMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerBlockContactMethods(log protocol.Logger) map[string]common.ContractFunc {
 	queryMethodMap := make(map[string]common.ContractFunc, 64)
 	blockRuntime := &BlockRuntime{log: log}
 
@@ -77,7 +76,7 @@ func registerBlockContactMethods(log *logger.CMLogger) map[string]common.Contrac
 }
 
 type BlockRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 type BlockRuntimeParam struct {

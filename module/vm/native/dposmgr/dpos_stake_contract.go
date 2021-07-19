@@ -19,7 +19,6 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/golang/protobuf/proto"
 	"github.com/mr-tron/base58"
@@ -153,21 +152,21 @@ func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amou
 // main implement here
 type DPoSStakeContract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
 func (d *DPoSStakeContract) GetMethod(methodName string) common.ContractFunc {
 	return d.methods[methodName]
 }
 
-func NewDPoSStakeContract(log *logger.CMLogger) *DPoSStakeContract {
+func NewDPoSStakeContract(log protocol.Logger) *DPoSStakeContract {
 	return &DPoSStakeContract{
 		log:     log,
 		methods: registerDPoSStakeContractMethods(log),
 	}
 }
 
-func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerDPoSStakeContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// implement
 	DPoSStakeRuntime := &DPoSStakeRuntime{log: log}
@@ -194,11 +193,11 @@ func registerDPoSStakeContractMethods(log *logger.CMLogger) map[string]common.Co
 }
 
 type DPoSStakeRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // 新建 stake Runtime
-func NewDPoSStakeRuntime(log *logger.CMLogger) *DPoSStakeRuntime {
+func NewDPoSStakeRuntime(log protocol.Logger) *DPoSStakeRuntime {
 	return &DPoSStakeRuntime{
 		log: log,
 	}

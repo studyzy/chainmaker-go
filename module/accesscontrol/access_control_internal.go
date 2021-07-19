@@ -73,7 +73,7 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 }
 
 var (
-	policyRead      = NewPolicy(protocol.RuleAny, nil, nil)
+	policyRead      = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
 	policyWrite     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
 	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
 	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
@@ -303,51 +303,47 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
-
-	//resourceNamePolicyMap.Store(syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(), policyConfig)
-	//resourceNamePolicyMap.Store(syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" + syscontract.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" + syscontract.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	resourceNamePolicyMap.Store(syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
-
-	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	//resourceNamePolicyMap.Store(consts.CertManageFunction_CERT_ADD.String(), policyWrite)
-	//resourceNamePolicyMap.Store(consts.CertManageFunction_CERTS_QUERY.String(), policyRead)
-	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 
 	// Archive
 	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
@@ -401,7 +397,7 @@ func (ac *accessControl) checkResourcePolicyRule(resourcePolicy *config.Resource
 
 func (ac *accessControl) checkResourcePolicyRuleSelfCase(resourcePolicy *config.ResourcePolicy) bool {
 	switch resourcePolicy.ResourceName {
-	case syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
+	case syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
 		return true
 	default:
 		ac.log.Errorf("bad configuration: the access rule of [%s] should not be [%s]", resourcePolicy.ResourceName, resourcePolicy.Policy.Rule)

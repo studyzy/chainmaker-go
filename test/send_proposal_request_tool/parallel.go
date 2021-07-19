@@ -614,7 +614,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 	}
 
 	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes, nil)
 	if err != nil {
 		return err
 	}
@@ -666,7 +666,7 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 	}
 
 	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_QUERY_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes)
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payloadBytes, nil)
 	if err != nil {
 		return err
 	}
@@ -709,14 +709,13 @@ func (h *createContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.Pr
 	//	Endorsement: nil,
 	//}
 
-	//if endorsement, err := acSign(payload); err == nil {
-	//	payload.Endorsement = endorsement
-	//} else {
-	//	return err
-	//}
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
 
 	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payload)
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payload, endorsement)
 	if err != nil {
 		return err
 	}
@@ -744,14 +743,13 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 	payload, _ := GenerateUpgradeContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
 		version, commonPb.RuntimeType(runTime), wasmBin, pairs)
 
-	//if endorsement, err := acSign(payload); err == nil {
-	//	payload.Endorsement = endorsement
-	//} else {
-	//	return err
-	//}
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
 
 	resp, err = sendRequest(sk3, client, &InvokerMsg{txType: commonPb.TxType_INVOKE_CONTRACT,
-		txId: txId, chainId: chainId}, orgId, userCrtPath, payload)
+		txId: txId, chainId: chainId}, orgId, userCrtPath, payload, endorsement)
 	if err != nil {
 		return err
 	}
@@ -794,7 +792,7 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 }
 
 func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *InvokerMsg,
-	orgId, userCrtPath string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
+	orgId, userCrtPath string, payload *commonPb.Payload, endorsers []*commonPb.EndorsementEntry) (*commonPb.TxResponse, error) {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
@@ -844,7 +842,9 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 			Signer: sender,
 		},
 	}
-
+	if len(endorsers) > 0 {
+		req.Endorsers = endorsers
+	}
 	// 拼接后，计算Hash，对hash计算签名
 	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
 	if err != nil {

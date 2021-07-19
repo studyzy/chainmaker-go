@@ -9,13 +9,6 @@ package certmgr
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker-go/vm/native/common"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/hex"
@@ -23,8 +16,15 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker-go/vm/native/common"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/protocol"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -35,10 +35,10 @@ const (
 
 type CertManageContract struct {
 	methods map[string]common.ContractFunc
-	log     *logger.CMLogger
+	log     protocol.Logger
 }
 
-func NewCertManageContract(log *logger.CMLogger) *CertManageContract {
+func NewCertManageContract(log protocol.Logger) *CertManageContract {
 	return &CertManageContract{
 		log:     log,
 		methods: registerCertManageContractMethods(log),
@@ -49,7 +49,7 @@ func (c *CertManageContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerCertManageContractMethods(log *logger.CMLogger) map[string]common.ContractFunc {
+func registerCertManageContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// cert manager
 	certManageRuntime := &CertManageRuntime{log: log}
@@ -65,7 +65,7 @@ func registerCertManageContractMethods(log *logger.CMLogger) map[string]common.C
 }
 
 type CertManageRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
 // Add cert add

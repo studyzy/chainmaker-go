@@ -51,7 +51,11 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	dbHandle := db.getContractDbHandle(contractName)
 	err = dbHandle.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		db.logger.Panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state info sql db table fail:" + err.Error())
+	}
+	err = dbHandle.CreateTableIfNotExist(&StateRecordSql{})
+	if err != nil {
+		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
 	}
 	return nil
 }
@@ -436,7 +440,7 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 	return db.QueryMulti(sql, values...)
 
 }
-func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
+func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
 	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
@@ -445,6 +449,25 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
 		return err
 	}
 	db := s.getContractDbHandle(contractName)
+	// query ddl from db
+	record := NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, version, 0)
+	query, args := record.GetQueryStatusSql()
+	s.logger.Debug("Query sql:", query, args)
+	row, err := s.db.QuerySingle(query, args)
+	if err != nil {
+		s.logger.Errorf("Query DDL history get an error:%s", err)
+		return err
+	}
+	//查询数据库中是否有DDL记录，如果有对应记录，而且状态是1，那么就跳过重复执行DDL的情况
+	if !row.IsEmpty() {
+		status := 0
+		row.ScanColumns(&status)
+		if status == 1 { //SUCCESS
+			s.logger.Infof("DDL[%s] already executed, ignore it", sql)
+			return nil
+		}
+	}
+	//查询不到记录，或者查询出来后状态是失败，则执行DDL
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
 	_, err = db.ExecSql(sql)
 	return err

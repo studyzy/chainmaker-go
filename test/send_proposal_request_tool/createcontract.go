@@ -98,14 +98,13 @@ func createContract() error {
 	//var pairs []*commonPb.KeyValuePair
 	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
 
-	//if endorsement, err := acSign(payload); err == nil {
-	//	payload.Endorsement = endorsement
-	//} else {
-	//	return err
-	//}
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+	resp, err = proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload, endorsement)
 	if err != nil {
 		return err
 	}
