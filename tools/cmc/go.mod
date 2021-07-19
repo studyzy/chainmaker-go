@@ -3,10 +3,10 @@ module chainmaker.org/chainmaker-go/tools/cmc
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a
-	chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0 // indirect
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210716025252-5b327ee9112a
+	chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6
+	chainmaker.org/chainmaker/protocol v0.0.0-20210719033859-75ccee9a9042 // indirect
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210719032717-230c4e039794
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/consensys/gurvy v0.3.8 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect

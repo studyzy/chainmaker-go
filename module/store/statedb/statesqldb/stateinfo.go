@@ -15,10 +15,6 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 )
 
-const (
-	contractStoreSeparator = '#'
-)
-
 // StateInfo defines mysql orm model, used to create mysql table 'state_infos'
 type StateInfo struct {
 	//ID           uint   `gorm:"primarykey"`

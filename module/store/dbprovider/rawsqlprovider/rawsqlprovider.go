@@ -21,8 +21,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 var defaultMaxIdleConns = 10

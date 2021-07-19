@@ -8,8 +8,6 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
-	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"errors"
 	"fmt"
 	"math/big"
@@ -17,6 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/crypto/paillier"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
@@ -443,14 +444,14 @@ func pedersenAddNum(commitment, num interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenAddNum(c, x)
+	return bulletproofs.PedersenAddNum(c, x)
 }
 
 func pedersenAddCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
 	commitmentX := commitment1.([]byte)
 	commitmentY := commitment2.([]byte)
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenAddCommitment(commitmentX, commitmentY)
+	return bulletproofs.PedersenAddCommitment(commitmentX, commitmentY)
 }
 
 func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
@@ -460,13 +461,13 @@ func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenSubNum(c, x)
+	return bulletproofs.PedersenSubNum(c, x)
 }
 
 func pedersenSubCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
 	commitmentX := commitment1.([]byte)
 	commitmentY := commitment2.([]byte)
-	return bulletproofs.Helper().NewBulletproofs().PedersenSubCommitment(commitmentX, commitmentY)
+	return bulletproofs.PedersenSubCommitment(commitmentX, commitmentY)
 
 }
 
@@ -477,13 +478,13 @@ func pedersenMulNum(commitment, num interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return bulletproofs.Helper().NewBulletproofs().PedersenMulNum(c, x)
+	return bulletproofs.PedersenMulNum(c, x)
 }
 
 func bulletproofsVerify(proof, commitment interface{}) ([]byte, error) {
 	p := proof.([]byte)
 	c := commitment.([]byte)
-	ok, err := bulletproofs.Helper().NewBulletproofs().Verify(p, c)
+	ok, err := bulletproofs.Verify(p, c)
 	if err != nil {
 		return nil, err
 	}
@@ -859,9 +860,9 @@ func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimCon
 	if err := w.verifySql.VerifyDDLSql(sql); err != nil {
 		return fmt.Errorf("[execute ddl] verify ddl sql error,  [%s], sql[%s]", err.Error(), sql)
 	}
-
+	//TODO: get current contract version
 	// execute
-	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql); err != nil {
+	if err := txSimContext.GetBlockchainStore().ExecDdlSql(contractName, sql, ""); err != nil {
 		return fmt.Errorf("[execute ddl] execute error, %s, sql[%s]", err.Error(), sql)
 	}
 	txSimContext.PutRecord(contractName, []byte(sql), protocol.SqlTypeDdl)

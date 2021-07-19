@@ -6,9 +6,9 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210715061527-a375826e244a
-	chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0
+	chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6
+	chainmaker.org/chainmaker/protocol v0.0.0-20210719033859-75ccee9a9042
 	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb // indirect
 	github.com/spf13/cobra v1.1.1 // indirect
 	github.com/stretchr/testify v1.7.0
