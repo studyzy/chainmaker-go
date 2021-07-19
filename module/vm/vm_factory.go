@@ -351,7 +351,7 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 	} else {
 		parameters[protocol.ContractSenderOrgIdParam] = []byte(senderMember.GetOrgId())
 		parameters[protocol.ContractSenderRoleParam] = []byte(senderMember.GetRole()[0])
-		parameters[protocol.ContractSenderPkParam] = []byte(hex.EncodeToString(senderMember.GetSKI())
+		parameters[protocol.ContractSenderPkParam] = []byte(hex.EncodeToString(senderMember.GetSKI()))
 	}
 
 	// Get three items in the certificate: orgid PK role
