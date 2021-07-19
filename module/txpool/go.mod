@@ -8,9 +8,9 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41
+	chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6
-	chainmaker.org/chainmaker/protocol v0.0.0-20210719033859-75ccee9a9042
+	chainmaker.org/chainmaker/protocol v0.0.0-20210719090442-fd00c78e0640
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/prometheus/client_golang v1.9.0
