@@ -32,9 +32,10 @@ func Factory() *coreEngineFactory {
 func (cf *coreEngineFactory) NewConsensusEngine(consensusType string, providerConf *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	p := provider.NewCoreEngineProviderByConsensusType(consensusType)
 	var storeHelper conf.StoreHelper
-	storeHelper = common.NewKVStoreHelper(providerConf.ChainConf.ChainConfig().ChainId)
 	if providerConf.ChainConf.ChainConfig().Contract.EnableSqlSupport {
 		storeHelper = common.NewSQLStoreHelper(providerConf.ChainConf.ChainConfig().ChainId)
+	} else {
+		storeHelper = common.NewKVStoreHelper(providerConf.ChainConf.ChainConfig().ChainId)
 	}
 	providerConf.StoreHelper = storeHelper
 
