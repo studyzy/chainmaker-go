@@ -60,7 +60,7 @@ var restrainedResourceList = map[string]bool{
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameWriteData,
+	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
 	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,

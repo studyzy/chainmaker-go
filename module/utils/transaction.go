@@ -293,8 +293,14 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 
 	//authentication for invoke_contract
 	if t.Payload.TxType == commonPb.TxType_INVOKE_CONTRACT {
-		endorsements := t.Endorsers
 		resourceId := t.Payload.ContractName + "-" + t.Payload.Method
+		if !ac.ResourcePolicyExists(resourceId) {
+			return nil
+		}
+		endorsements := t.Endorsers
+		if endorsements == nil {
+			return fmt.Errorf("endorsement is nil in verifyTxAuth for resourceId[%s]", resourceId)
+		}
 		principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
 		if err != nil {
 			return fmt.Errorf("fail to construct authentication principal for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
