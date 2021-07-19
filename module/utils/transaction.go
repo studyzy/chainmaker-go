@@ -290,9 +290,26 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	if !ok {
 		return fmt.Errorf("authentication failed")
 	}
+
+	//authentication for invoke_contract
+	if t.Payload.TxType == commonPb.TxType_INVOKE_CONTRACT {
+		endorsements := t.Endorsers
+		resourceId := t.Payload.ContractName + "-" + t.Payload.Method
+		principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
+		if err != nil {
+			return fmt.Errorf("fail to construct authentication principal for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
+		}
+		ok, err := ac.VerifyPrincipal(principal)
+		if err != nil {
+			return fmt.Errorf("authentication error for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
+		}
+		if !ok {
+			return fmt.Errorf("authentication failed for %s-%s", t.Payload.ContractName, t.Payload.Method)
+		}
+	}
 	return nil
 }
-
+/*
 // VerifyConfigUpdateTx verify a transaction which will update the chain config.
 func VerifyConfigUpdateTx(methodName string, endorsements []*commonPb.EndorsementEntry, msg []byte, targetOrgId string, ac protocol.AccessControlProvider) (bool, error) {
 	var principal protocol.Principal
@@ -310,6 +327,8 @@ func VerifyConfigUpdateTx(methodName string, endorsements []*commonPb.Endorsemen
 	}
 	return ac.VerifyPrincipal(principal)
 }
+*/
+
 func GenerateInstallContractPayload(contractName, version string, runtimeType commonPb.RuntimeType, bytecode []byte,
 	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	var pairs []*commonPb.KeyValuePair

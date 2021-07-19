@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"encoding/hex"
+//	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
@@ -18,9 +18,9 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/utils"
-	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+//	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -510,7 +510,7 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) m
 	}
 	return parameters
 }
-
+/*
 func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string][]byte) error {
 	var ac protocol.AccessControlProvider
 	var targetOrgId string
@@ -560,6 +560,7 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 		return nil
 	}
 }
+*/
 
 func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
 	dagString := "digraph DAG {\n"

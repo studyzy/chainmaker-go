@@ -148,6 +148,7 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 			orgConfig.Address = nil
 		}
 	}
+	/*
 	// For v1.1 to be compatible with v1.0, check resource policies
 	for _, rp := range chainConfig.ResourcePolicies {
 		switch rp.ResourceName {
@@ -161,6 +162,7 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 			continue
 		}
 	}
+	 */
 	return nil
 }
 
