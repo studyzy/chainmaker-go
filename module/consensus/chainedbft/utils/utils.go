@@ -42,7 +42,7 @@ func GetLevelFromBlock(block *common.Block) (uint64, error) {
 	if err != nil || args == nil {
 		return 0, err
 	}
-	return uint64(args.Level), nil
+	return args.Level, nil
 }
 
 //GetQCFromBlock get qc from block

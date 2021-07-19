@@ -398,7 +398,7 @@ func (cbi *ConsensusChainedBftImpl) validateBlockPair(fromPeer uint64,
 
 func (cbi *ConsensusChainedBftImpl) processBlockAndQC(blockPair *chainedbftpb.BlockPair) error {
 	header := blockPair.Block.GetHeader()
-	if executorErr := cbi.chainStore.insertBlock(blockPair.Block); executorErr != nil {
+	if executorErr := cbi.chainStore.insertBlock(blockPair.Block, blockPair.Qc.Level); executorErr != nil {
 		return fmt.Errorf("insertBlock [%v:%x] failed, err %v", header.GetBlockHeight(), header.BlockHash, executorErr)
 	}
 	err := cbi.processQC(blockPair.Qc)
@@ -474,7 +474,7 @@ func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusM
 		cbi.logger.Errorf("%s", err)
 		return err
 	}
-	if executorErr := cbi.chainStore.insertBlock(proposal.GetBlock()); executorErr != nil {
+	if executorErr := cbi.chainStore.insertBlock(proposal.GetBlock(), proposal.Level); executorErr != nil {
 		cbi.logger.Errorf("service selfIndexInEpoch [%v] processProposal add proposal block %v to chainStore failed, err: %s",
 			cbi.selfIndexInEpoch, proposal.GetBlock().GetHeader().BlockHeight, executorErr)
 		return executorErr
@@ -928,7 +928,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.logger.Debugf("processBlockCommitted received has committed block, height:%d, hash:%x",
 		block.Header.BlockHeight, block.Header.BlockHash)
 	// 1. check base commit block info
-	if uint64(cbi.commitHeight) >= block.Header.BlockHeight {
+	if cbi.commitHeight >= block.Header.BlockHeight {
 		cbi.logger.Warnf("service selfIndexInEpoch [%v] block:[%d:%x] has been committed",
 			cbi.selfIndexInEpoch, block.Header.BlockHeight, block.Header.BlockHash)
 		return
@@ -936,14 +936,14 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 2. insert committed block to chainStore
 	cbi.logger.Debugf("processBlockCommitted step 1 insert complete block")
 	if err := cbi.chainStore.insertCompletedBlock(block); err != nil {
-		cbi.logger.Errorf("insert block[%d:%x] to chainStore failed, reason: %s",
+		cbi.logger.Warnf("insert block[%d:%x] to chainStore failed, reason: %s",
 			block.Header.BlockHeight, block.Header.BlockHash, err)
 		return
 	}
 	// 3. update commit info in the consensus
 	cbi.logger.Debugf("processBlockCommitted step 2 update the last committed block info")
-	cbi.commitHeight = uint64(block.Header.BlockHeight)
-	cbi.msgPool.OnBlockSealed(uint64(block.Header.BlockHeight))
+	cbi.commitHeight = block.Header.BlockHeight
+	cbi.msgPool.OnBlockSealed(block.Header.BlockHeight)
 	cbi.smr.setLastCommittedBlock(block, cbi.chainStore.getCommitLevel())
 	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
 	// 4. create next epoch if meet the condition

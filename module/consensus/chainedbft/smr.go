@@ -182,7 +182,6 @@ func (cs *chainedbftSMR) getHighestTCLevel() uint64 {
 //func (cs *chainedbftSMR) processCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
 func (cs *chainedbftSMR) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert, hcLevel uint64) bool {
 	return cs.paceMaker.ProcessCertificates(qc, tc, hcLevel)
-	//return cs.paceMaker.ProcessCertificates(height, hqcLevel, htcLevel, hcLevel)
 }
 
 func (cs *chainedbftSMR) updateTC(tc *chainedbftpb.QuorumCert) {
