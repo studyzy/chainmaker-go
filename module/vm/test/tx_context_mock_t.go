@@ -417,7 +417,7 @@ func (m mockBlockchainStore) QueryMulti(contractName, sql string, values ...inte
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) ExecDdlSql(contractName, sql string) error {
+func (m mockBlockchainStore) ExecDdlSql(contractName, sql string, s string) error {
 	panic("implement me")
 }
 
