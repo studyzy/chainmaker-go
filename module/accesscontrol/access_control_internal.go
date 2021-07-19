@@ -56,6 +56,7 @@ var restrainedResourceList = map[string]bool{
 	protocol.ResourceNameUpdateConfig:     true,
 	protocol.ResourceNameP2p:              true,
 	protocol.ResourceNameConsensusNode:    true,
+	protocol.ResourceNameSubscribe:        true,
 }
 
 // Default access principals for predefined operation categories
@@ -63,7 +64,7 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
 	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE: protocol.ResourceNameSubscribe,
 	//common.TxType_SUBSCRIBE:    protocol.ResourceNameReadData,
 	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
 	//common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
@@ -78,6 +79,7 @@ var (
 	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
 	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
 	policyAdmin     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
+	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
 
 	policyConfig     = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
 	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
@@ -286,6 +288,7 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
 	resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
 	resourceNamePolicyMap.Store(protocol.ResourceNameAdmin, policyAdmin)
+	resourceNamePolicyMap.Store(protocol.ResourceNameSubscribe, policySubscribe)
 
 	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
 	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
