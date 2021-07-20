@@ -13,11 +13,11 @@ import (
 
 	"chainmaker.org/chainmaker-go/wasi"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
+	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 
 // #include <stdlib.h>
@@ -94,74 +94,80 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 	if err != nil {
 		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody), err)
 	}
+
+	log.Infof("### enter syscall handling, method = '%v'", method)
+	var ret int32
 	switch method.(string) {
 	// common
 	case protocol.ContractMethodLogMessage:
-		return s.LogMessage()
+		ret = s.LogMessage()
 	case protocol.ContractMethodSuccessResult:
-		return s.SuccessResult()
+		ret = s.SuccessResult()
 	case protocol.ContractMethodErrorResult:
-		return s.ErrorResult()
+		ret = s.ErrorResult()
 	case protocol.ContractMethodCallContract:
-		return s.CallContract()
+		ret = s.CallContract()
 	case protocol.ContractMethodCallContractLen:
-		return s.CallContractLen()
+		ret = s.CallContractLen()
 	case protocol.ContractMethodEmitEvent:
-		return s.EmitEvent()
+		ret = s.EmitEvent()
 		// paillier
 	case protocol.ContractMethodGetPaillierOperationResultLen:
-		return s.GetPaillierResultLen()
+		ret = s.GetPaillierResultLen()
 	case protocol.ContractMethodGetPaillierOperationResult:
-		return s.GetPaillierResult()
+		ret = s.GetPaillierResult()
 		// bulletproofs
 	case protocol.ContractMethodGetBulletproofsResultLen:
-		return s.GetBulletProofsResultLen()
+		ret = s.GetBulletProofsResultLen()
 	case protocol.ContractMethodGetBulletproofsResult:
-		return s.GetBulletProofsResult()
+		ret = s.GetBulletProofsResult()
 	// kv
 	case protocol.ContractMethodGetStateLen:
-		return s.GetStateLen()
+		ret = s.GetStateLen()
 	case protocol.ContractMethodGetState:
-		return s.GetState()
+		ret = s.GetState()
 	case protocol.ContractMethodPutState:
-		return s.PutState()
+		ret = s.PutState()
 	case protocol.ContractMethodDeleteState:
-		return s.DeleteState()
+		ret = s.DeleteState()
 	case protocol.ContractMethodKvIterator:
-		return s.KvIterator()
+		ret = s.KvIterator()
 	case protocol.ContractMethodKvPreIterator:
-		return s.KvPreIterator()
+		ret = s.KvPreIterator()
 	case protocol.ContractMethodKvIteratorHasNext:
-		return s.KvIteratorHasNext()
+		ret = s.KvIteratorHasNext()
 	case protocol.ContractMethodKvIteratorNextLen:
-		return s.KvIteratorNextLen()
+		ret = s.KvIteratorNextLen()
 	case protocol.ContractMethodKvIteratorNext:
-		return s.KvIteratorNext()
+		ret = s.KvIteratorNext()
 	case protocol.ContractMethodKvIteratorClose:
-		return s.KvIteratorClose()
+		ret = s.KvIteratorClose()
 	// sql
 	case protocol.ContractMethodExecuteUpdate:
-		return s.ExecuteUpdate()
+		ret = s.ExecuteUpdate()
 	case protocol.ContractMethodExecuteDdl:
-		return s.ExecuteDDL()
+		ret = s.ExecuteDDL()
 	case protocol.ContractMethodExecuteQuery:
-		return s.ExecuteQuery()
+		ret = s.ExecuteQuery()
 	case protocol.ContractMethodExecuteQueryOne:
-		return s.ExecuteQueryOne()
+		ret = s.ExecuteQueryOne()
 	case protocol.ContractMethodExecuteQueryOneLen:
-		return s.ExecuteQueryOneLen()
+		ret = s.ExecuteQueryOneLen()
 	case protocol.ContractMethodRSHasNext:
-		return s.RSHasNext()
+		ret = s.RSHasNext()
 	case protocol.ContractMethodRSNextLen:
-		return s.RSNextLen()
+		ret = s.RSNextLen()
 	case protocol.ContractMethodRSNext:
-		return s.RSNext()
+		ret = s.RSNext()
 	case protocol.ContractMethodRSClose:
-		return s.RSClose()
+		ret = s.RSClose()
 	default:
+		ret = protocol.ContractSdkSignalResultFail
 		log.Errorf("method[%s] is not match.", method)
 	}
-	return protocol.ContractSdkSignalResultFail
+	log.Infof("### leave syscall handling, method = '%v'", method)
+
+	return ret
 }
 
 // SuccessResult record the results of contract execution success
