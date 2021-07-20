@@ -7,13 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
-	"bytes"
 	"fmt"
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/pb-go/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol"
@@ -144,7 +142,7 @@ func (cs *chainStore) getBlocks(height uint64) []*common.Block {
 	return cs.blockPool.GetBlocks(height)
 }
 
-func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
+func (cs *chainStore) commitBlock(block *common.Block, ch chan<- interface{}) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
 	var (
 		qcData []byte
 		blocks []*common.Block
@@ -169,31 +167,12 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 			cs.logger.Errorf("commit block failed, add qc to block err, %v", err)
 			return lastCommitted, lastCommittedLevel, err
 		}
-		if err = cs.blockCommitter.AddBlock(newBlock); err == commonErrors.ErrBlockHadBeenCommited {
-			hadCommitBlock, getBlockErr := cs.blockChainStore.GetBlock(newBlock.GetHeader().GetBlockHeight())
-			if getBlockErr != nil {
-				cs.logger.Errorf("commit block failed, block had been committed, get block err, %v",
-					getBlockErr)
-				return lastCommitted, lastCommittedLevel, getBlockErr
-			}
-			if !bytes.Equal(hadCommitBlock.GetHeader().GetBlockHash(), newBlock.GetHeader().GetBlockHash()) {
-				cs.logger.Errorf("commit block failed, block had been committed, hash unequal err, %v",
-					getBlockErr)
-				return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, block had been commited, hash unequal")
-			}
-		} else if err != nil {
-			cs.logger.Errorf("commit block failed, add block err, %v", err)
-			return lastCommitted, lastCommittedLevel, err
-		}
+		ch <- newBlock
 		lastCommitted = newBlock
 		lastCommittedLevel = qc.Level
 	}
-	if err = cs.pruneBlockStore(string(block.GetHeader().GetBlockHash())); err != nil {
-		cs.logger.Errorf("commit block failed, prunning block store err, %v", err)
-		return lastCommitted, lastCommittedLevel, err
-	}
-	cs.logger.Debugf("end commit block, lastCommitBlock:[%d:%x], lastCommitLevel: %d",
-		lastCommitted.Header.BlockHeight, lastCommitted.Header.BlockHash, lastCommittedLevel)
+	ch <- string(block.GetHeader().GetBlockHash())
+	ch <- uint64(lastCommitted.Header.BlockHeight)
 	return lastCommitted, lastCommittedLevel, nil
 }
 

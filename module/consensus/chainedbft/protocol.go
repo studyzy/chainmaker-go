@@ -682,6 +682,41 @@ func (cbi *ConsensusChainedBftImpl) validateVoteMsg(msg *chainedbftpb.ConsensusM
 	return nil
 }
 
+func (cbi *ConsensusChainedBftImpl) processCommit(msg interface{}) {
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] processProposal step3 process qc start", cbi.selfIndexInEpoch)
+	for ; ; {
+		if block, ok := msg.(*common.Block); ok {
+			if err := cbi.chainStore.blockCommitter.AddBlock(block); err == commonErrors.ErrBlockHadBeenCommited {
+				hadCommitBlock, getBlockErr := cbi.chainStore.blockChainStore.GetBlock(block.GetHeader().GetBlockHeight())
+				if getBlockErr != nil {
+					cbi.chainStore.logger.Errorf("commit block failed, block had been committed, get block err, %v",
+						getBlockErr)
+				}
+				if !bytes.Equal(hadCommitBlock.GetHeader().GetBlockHash(), block.GetHeader().GetBlockHash()) {
+					cbi.chainStore.logger.Errorf("commit block failed, block had been committed, hash unequal err, %v",
+						getBlockErr)
+				}
+				return
+			} else if err != nil {
+				cbi.chainStore.logger.Errorf("commit block failed, add block err, %v", err)
+			} else {
+				return
+			}
+		} else if hash, ok := msg.(string); ok {
+			if err := cbi.chainStore.pruneBlockStore(hash); err != nil {
+				cbi.chainStore.logger.Errorf("commit block failed, prunning block store err, %v", err)
+			} else {
+				return
+			}
+		} else if height, ok := msg.(uint64); ok {
+			cbi.msgPool.OnBlockSealed(height)
+			return
+		}
+	}
+	cbi.logger.Errorf("process commit failed, reach max of retry count, qc:%+v", msg)
+	return
+}
+
 func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) {
 	// 1. base check vote msg
 	var (
@@ -909,7 +944,7 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 	if level > cbi.chainStore.getCommitLevel() {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates: try committing a block %v on [%x:%v]",
 			cbi.selfIndexInEpoch, block.Header.BlockHash, block.Header.BlockHeight, level)
-		lastCommittedBlock, lastCommitLevel, err := cbi.chainStore.commitBlock(block)
+		lastCommittedBlock, lastCommitLevel, err := cbi.chainStore.commitBlock(block, cbi.commitMsgCh)
 		if lastCommittedBlock != nil {
 			cbi.logger.Debugf("setCommit block status")
 			cbi.smr.setLastCommittedBlock(lastCommittedBlock, lastCommitLevel)

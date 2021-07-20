@@ -51,6 +51,7 @@ type ConsensusChainedBftImpl struct {
 	syncMsgCh       chan *chainedbftpb.ConsensusMsg // Transmit request and response information with the block
 	internalMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit the own proposals, voting information by the local node
 	protocolMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit Hotstuff protocol information: proposal, vote
+	commitMsgCh     chan interface{}                // Transmit commit block cmd
 
 	mtx sync.RWMutex
 	//nextEpoch          *epochManager       // next epoch
@@ -88,6 +89,7 @@ type ConsensusChainedBftImpl struct {
 	quitCh         chan struct{}
 	quitSyncCh     chan struct{}
 	quitProtocolCh chan struct{}
+	quitCommitCh   chan struct{}
 }
 
 //New returns an instance of chainedbft consensus
@@ -105,6 +107,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		protocolMsgCh:      make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
 		consBlockCh:        make(chan *common.Block, INTERNALCAPABILITY),
 		proposedBlockCh:    make(chan *common.Block, INTERNALCAPABILITY),
+		commitMsgCh:        make(chan interface{}, INTERNALCAPABILITY),
 		proposalWalIndex:   sync.Map{},
 		lastCommitWalIndex: 1,
 
@@ -195,6 +198,7 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	go cbi.loop()
 	go cbi.protocolLoop()
 	go cbi.syncLoop()
+	go cbi.commitLoop()
 	cbi.startConsensus()
 	return nil
 }
@@ -217,6 +221,7 @@ func (cbi *ConsensusChainedBftImpl) Stop() error {
 	close(cbi.quitProtocolCh)
 	close(cbi.quitSyncCh)
 	close(cbi.quitCh)
+	close(cbi.quitCommitCh)
 	if cbi.timerService != nil {
 		cbi.timerService.Stop()
 	}
@@ -315,6 +320,20 @@ func (cbi *ConsensusChainedBftImpl) syncLoop() {
 				cbi.logger.Warnf("service selfIndexInEpoch [%v] received non-sync msg %v", cbi.selfIndexInEpoch, msg.Payload.Type)
 			}
 		case <-cbi.quitProtocolCh:
+			return
+		}
+	}
+}
+
+func (cbi *ConsensusChainedBftImpl) commitLoop() {
+	for {
+		select {
+		case msg, ok := <-cbi.commitMsgCh:
+			if !ok {
+				continue
+			}
+			cbi.onReceivedCommit(msg)
+		case <-cbi.quitCommitCh:
 			return
 		}
 	}
@@ -438,6 +457,10 @@ func (cbi *ConsensusChainedBftImpl) onReceivedVote(msg *chainedbftpb.ConsensusMs
 
 func (cbi *ConsensusChainedBftImpl) onReceivedProposal(msg *chainedbftpb.ConsensusMsg) {
 	cbi.processProposal(msg)
+}
+
+func (cbi *ConsensusChainedBftImpl) onReceivedCommit(msg interface{}) {
+	cbi.processCommit(msg)
 }
 
 // VerifyBlockSignatures verify consensus qc at incoming block
