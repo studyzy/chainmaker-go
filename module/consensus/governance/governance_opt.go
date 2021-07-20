@@ -346,28 +346,6 @@ func createValidators(GovernanceContract *consensusPb.GovernanceContract, seedBy
 
 }
 
-func tryCreateNextValidators(block *commonPb.Block, GovernanceContract *consensusPb.GovernanceContract) bool {
-	if GovernanceContract.BlockNumPerEpoch <= 0 {
-		return false
-	}
-
-	height := block.GetHeader().GetBlockHeight()
-	if uint64(height)%GovernanceContract.BlockNumPerEpoch == 0 {
-		//use PreBlock hash
-		validators := createValidators(GovernanceContract, block.Header.PreBlockHash)
-		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
-		GovernanceContract.NextValidators = validators
-		GovernanceContract.NextSwitchHeight = uint64(height) + GovernanceContract.TransitBlock
-		log.Debugf("create NextValidators. curHeight=%v,switchHeight=%v", height, GovernanceContract.NextSwitchHeight)
-		if GovernanceContract.NextSwitchHeight == uint64(height) {
-			GovernanceContract.Validators = GovernanceContract.NextValidators
-			GovernanceContract.NextValidators = nil
-		}
-		return true
-	}
-	return false
-}
-
 //CheckAndCreateGovernmentArgs execute after block propose,create government txRWSet,wait to add to block header
 //when block commit,government txRWSet take effect
 func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.BlockchainStore,
@@ -390,8 +368,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 	}
 
 	var (
-		isConfigChg    = false
-		isValidatorChg = false
+		isConfigChg = false
 	)
 	// 2. check if chain config change
 	if utils.IsConfBlock(block) {
@@ -410,19 +387,11 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 		}
 	}
 
-	// 3. if chain config no change,check if epoch switch
-	if !isConfigChg {
-		log.Debugf("no chain config change, will check epoch switch")
-		if isValidatorChg = tryCreateNextValidators(block, governanceContract); !isValidatorChg {
-			log.Debugf("no epoch switch ...")
-		}
-	}
-
 	// 4. if chain config change or switch to next epoch, change the GovernanceContract epochId
-	if isValidatorChg || isConfigChg {
+	if isConfigChg {
 		governanceContract.EpochId++
-		log.Debugf("EpochId change! block Height[%d], new epochId[%d], isValidatorChg[%v], isConfigChg[%v]",
-			block.Header.GetBlockHeight(), governanceContract.EpochId, isValidatorChg, isConfigChg)
+		log.Debugf("EpochId change! block Height[%d], new epochId[%d], isConfigChg[%v]",
+			block.Header.GetBlockHeight(), governanceContract.EpochId, isConfigChg)
 	}
 
 	//5. create TxRWSet for GovernanceContract
