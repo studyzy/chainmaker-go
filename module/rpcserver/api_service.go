@@ -83,7 +83,10 @@ func NewApiService(chainMakerServer *blockchain.ChainMakerServer, ctx context.Co
 
 // SendRequest - deal received TxRequest
 func (s *ApiService) SendRequest(ctx context.Context, req *commonPb.TxRequest) (*commonPb.TxResponse, error) {
-
+	s.log.DebugDynamic(func() string {
+		return fmt.Sprintf("SendRequest[%s],payload:%#v,\n----signer:%v\n----endorsers:%+v",
+			req.Payload.TxId, req.Payload, req.Sender, req.Endorsers)
+	})
 	return s.invoke(&commonPb.Transaction{
 		Payload:   req.Payload,
 		Sender:    req.Sender,
