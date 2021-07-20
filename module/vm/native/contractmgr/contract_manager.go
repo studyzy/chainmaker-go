@@ -80,6 +80,7 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("install contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return contract.Marshal()
 }
 func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
@@ -93,6 +94,7 @@ func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return contract.Marshal()
 }
 func (r *ContractManagerRuntime) freezeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
@@ -101,6 +103,7 @@ func (r *ContractManagerRuntime) freezeContract(txSimContext protocol.TxSimConte
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("freeze contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return json.Marshal(contract)
 }
 func (r *ContractManagerRuntime) unfreezeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
@@ -109,6 +112,7 @@ func (r *ContractManagerRuntime) unfreezeContract(txSimContext protocol.TxSimCon
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("unfreeze contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return json.Marshal(contract)
 }
 func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
@@ -117,6 +121,7 @@ func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimConte
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("revoke contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return json.Marshal(contract)
 }
 
