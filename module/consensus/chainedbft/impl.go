@@ -547,25 +547,32 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	if err != nil {
 		return err
 	}
-	// todo. 先注释，看是否可以验证通过
-	//if governanceContract.GetEpochId() == qc.EpochId+1 {
-	//	return nil
-	//}
-
+	var (
+		quorumForQC uint64
+		validators  []*consensus.GovernanceMember
+	)
+	epochSwitchHeight := governanceContract.GetNextSwitchHeight()
+	if epochSwitchHeight+3 >= block.Header.BlockHeight {
+		validators = governanceContract.GetLastValidators()
+		quorumForQC = governanceContract.GetLastMinQuorumForQc()
+	} else {
+		validators = governanceContract.GetValidators()
+		quorumForQC = governanceContract.GetMinQuorumForQc()
+	}
 	//2. get validators from governance contract
-	curValidators := governanceContract.GetValidators()
-	newViewNum, votedBlockNum, err := countNumFromVotes(qc, curValidators, ac)
+	//curValidators := governanceContract.GetValidators()
+	newViewNum, votedBlockNum, err := countNumFromVotes(qc, validators, ac)
 	if err != nil {
 		return err
 	}
-	minQuorumForQc := governanceContract.GetMinQuorumForQc()
-	if qc.Level > 0 && qc.NewView && newViewNum < minQuorumForQc {
+	//minQuorumForQc := governanceContract.GetMinQuorumForQc()
+	if qc.Level > 0 && qc.NewView && newViewNum < quorumForQC {
 		return fmt.Errorf(fmt.Sprintf("vote new view num [%v] less than expected [%v]",
-			newViewNum, minQuorumForQc))
+			newViewNum, quorumForQC))
 	}
-	if qc.Level > 0 && !qc.NewView && votedBlockNum < minQuorumForQc {
+	if qc.Level > 0 && !qc.NewView && votedBlockNum < quorumForQC {
 		return fmt.Errorf(fmt.Sprintf("vote block num [%v] less than expected [%v]",
-			votedBlockNum, minQuorumForQc))
+			votedBlockNum, quorumForQC))
 	}
 	return nil
 }

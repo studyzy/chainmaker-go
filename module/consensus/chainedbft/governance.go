@@ -102,19 +102,24 @@ func (pp *committee) isValidIdx(height uint64, index uint64) bool {
 	return false
 }
 
+// minQuorumForQc The Quorum is obtained according to the height of the block
 func (pp *committee) minQuorumForQc(height uint64) int {
-	if height <= pp.switchEpochHeight+3 {
+	// blk1 <- blk2 <- blk3 <- blk4 <- blk5
+	// blk1 contain epoch switch info
+	// blk4 will commit blk1 by threeChain rules in consensus node
+	// So blk4 is a critical region in epoch switching logic, and blk4
+	// will verify by last validators and quorum
+	if height == pp.switchEpochHeight+3 {
 		return pp.lastMinQuorumForQc
 	}
 	return pp.currMinQuorumForQc
 }
 
+// getUsedPeers The validators is obtained according to the height of the block
 func (pp *committee) getUsedPeers(height uint64) []*peer {
-	if height == 0 {
-		return pp.validators
-	}
 	usedPeers := pp.validators
-	if height <= pp.switchEpochHeight+3 {
+	// review comments in minQuorumForQc func
+	if height == pp.switchEpochHeight+3 {
 		usedPeers = pp.lastValidators
 	}
 	return usedPeers
