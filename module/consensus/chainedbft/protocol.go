@@ -948,9 +948,13 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
 	// 4. create next epoch if meet the condition
 	cbi.logger.Debugf("processBlockCommitted step 3 create epoch if meet the condition")
-	cbi.createNextEpochIfRequired(cbi.commitHeight)
+	epoch, err := cbi.createNextEpochIfRequired(cbi.commitHeight)
+	if err != nil {
+		cbi.logger.Warnf("create epoch failed, reason: %s", err)
+		return
+	}
 	// 5. check if need to switch with the epoch
-	if cbi.nextEpoch == nil || (cbi.nextEpoch != nil && cbi.nextEpoch.switchHeight > cbi.commitHeight) {
+	if epoch == nil || epoch.switchHeight > cbi.commitHeight {
 		cbi.logger.Debugf("processBlockCommitted step 4 no switch epoch and process qc")
 		cbi.processCertificates(cbi.chainStore.getCurrentQC(), nil)
 		return
@@ -958,9 +962,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 6. switch epoch and update field state in consensus
 	oldIndex := cbi.selfIndexInEpoch
 	cbi.logger.Debugf("processBlockCommitted step 5 switch epoch and process qc")
-	if err := cbi.switchNextEpoch(cbi.commitHeight); err != nil {
-		return
-	}
+	cbi.switchNextEpoch(cbi.commitHeight, epoch)
 	if cbi.smr.isValidIdx(cbi.selfIndexInEpoch, cbi.commitHeight) {
 		cbi.logger.Infof("service selfIndexInEpoch [%v] start processCertificates,"+
 			"height [%v],level [%v]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
@@ -976,33 +978,11 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.logger.Infof("processBlockCommitted end, block: [%d:%x].", cbi.commitHeight, block.Header.BlockHash)
 }
 
-func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64) error {
+func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64, epoch *epochManager) {
 	cbi.logger.Debugf("service [%v] handle block committed: "+
 		"start switching to next epoch at height [%v]", cbi.selfIndexInEpoch, blockHeight)
-	chainStore, err := openChainStore(cbi.ledgerCache, cbi.blockCommitter, cbi.store, cbi, cbi.logger)
-	if err != nil {
-		cbi.logger.Errorf("new consensus service failed, err %v", err)
-		return err
-	}
-
-	if cbi.timerService != nil {
-		cbi.timerService.Stop()
-	}
-	if cbi.syncer != nil {
-		cbi.syncer.stop()
-	}
-	cbi.chainStore = chainStore
-	cbi.syncer = newSyncManager(cbi)
-	cbi.msgPool = cbi.nextEpoch.msgPool
-	cbi.timerService = timeservice.NewTimerService(cbi.logger)
-	cbi.selfIndexInEpoch = cbi.nextEpoch.index
-	cbi.smr = newChainedBftSMR(cbi.chainID, cbi.nextEpoch, cbi.chainStore, cbi.timerService, cbi)
-	cbi.nextEpoch = nil
-	go cbi.timerService.Start()
-	go cbi.syncer.start()
-	cbi.helper.DiscardAboveHeight(blockHeight)
-	cbi.initTimeOutConfig(cbi.governanceContract)
-	return nil
+	cbi.selfIndexInEpoch = epoch.index
+	cbi.initTimeOutConfig(cbi.government)
 }
 
 func (cbi *ConsensusChainedBftImpl) validateBlockFetch(msg *chainedbftpb.ConsensusMsg) error {

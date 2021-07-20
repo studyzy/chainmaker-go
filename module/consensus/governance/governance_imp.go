@@ -7,7 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package governance
 
 import (
-	"sync"
+	"sync/atomic"
+	"unsafe"
 
 	"chainmaker.org/chainmaker-go/logger"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
@@ -21,7 +22,6 @@ type GovernanceContractImp struct {
 	store              protocol.BlockchainStore
 	ledger             protocol.LedgerCache
 	governmentContract *consensusPb.GovernanceContract //Cache government data
-	sync.RWMutex
 }
 
 func NewGovernanceContract(store protocol.BlockchainStore, ledger protocol.LedgerCache) protocol.Government {
@@ -39,9 +39,12 @@ func NewGovernanceContract(store protocol.BlockchainStore, ledger protocol.Ledge
 func (gcr *GovernanceContractImp) GetGovernanceContract() (*consensusPb.GovernanceContract, error) {
 	//if cached height is latest,use cache
 	block := gcr.ledger.GetLastCommittedBlock()
-	if gcr.governmentContract != nil && block.Header.GetBlockHeight() == gcr.Height {
-		return gcr.governmentContract, nil
+	if block.Header.GetBlockHeight() == atomic.LoadUint64(&gcr.Height) {
+		if addr := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&gcr.governmentContract))); addr != nil {
+			return gcr.governmentContract, nil
+		}
 	}
+
 	var (
 		err                error
 		governmentContract *consensusPb.GovernanceContract = nil
@@ -49,28 +52,27 @@ func (gcr *GovernanceContractImp) GetGovernanceContract() (*consensusPb.Governan
 	//get from chainStore
 	if block.Header.GetBlockHeight() > 0 {
 		if governmentContract, err = getGovernanceContractFromChainStore(gcr.store); err != nil {
-			gcr.log.Errorw("getGovernanceContractFromChainStore err,", "err", err)
+			gcr.log.Errorf("getGovernanceContractFromChainStore err: %s", err)
 			return nil, err
 		}
 	} else {
 		//if genesis block,create government from genesis config
 		chainConfig, err := getChainConfigFromChainStore(gcr.store)
 		if err != nil {
-			gcr.log.Errorw("getChainConfigFromChainStore err,", "err", err)
+			gcr.log.Errorf("getChainConfigFromChainStore err: %s", err)
 			return nil, err
 		}
 		governmentContract, err = getGovernanceContractFromConfig(chainConfig)
 		if err != nil {
-			gcr.log.Errorw("getGovernanceContractFromConfig err,", "err", err)
+			gcr.log.Errorf("getGovernanceContractFromConfig err: %s", err)
 			return nil, err
 		}
 	}
-	log.Debugf("government contract configuration: %v", governmentContract.String())
+
+	gcr.log.Debugf("government contract configuration: %s", governmentContract.String())
 	//save as cache
-	gcr.Lock()
-	gcr.governmentContract = governmentContract
-	gcr.Height = block.Header.GetBlockHeight()
-	gcr.Unlock()
+	atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&gcr.governmentContract)), unsafe.Pointer(governmentContract))
+	atomic.StoreUint64(&gcr.Height, block.Header.BlockHeight)
 	return governmentContract, nil
 }
 

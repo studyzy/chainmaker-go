@@ -36,20 +36,8 @@ type chainStore struct {
 	blockPool *blockpool.BlockPool // Cache block and QC information
 }
 
-func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCommitter,
-	store protocol.BlockchainStore, server *ConsensusChainedBftImpl, logger *logger.CMLogger) (*chainStore, error) {
-
-	chainStore := &chainStore{
-		ledger:          ledger,
-		logger:          logger,
-		server:          server,
-		blockCommitter:  blockCommitter,
-		blockChainStore: store,
-	}
-	bestBlock := ledger.GetLastCommittedBlock()
-	if bestBlock == nil {
-		return nil, fmt.Errorf("openChainStore failed, get best block from ledger")
-	}
+func initChainStore(server *ConsensusChainedBftImpl) (*chainStore, error) {
+	bestBlock := server.ledgerCache.GetLastCommittedBlock()
 	if bestBlock.Header.BlockHeight == 0 {
 		if err := initGenesisBlock(bestBlock); err != nil {
 			return nil, err
@@ -57,17 +45,26 @@ func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCo
 	}
 	bestBlkQCBz := utils.GetQCFromBlock(bestBlock)
 	if len(bestBlkQCBz) == 0 {
-		return nil, fmt.Errorf("")
+		return nil, fmt.Errorf("get qc from block failed [%d:%x]", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
 	}
 	var bestBlkQC *chainedbftpb.QuorumCert
 	if err := proto.Unmarshal(bestBlkQCBz, bestBlkQC); err != nil {
 		return nil, err
 	}
-	chainStore.commitLevel = bestBlkQC.GetLevel()
-	chainStore.commitHeight = bestBlock.GetHeader().GetBlockHeight()
-	chainStore.commitQuorumCert = bestBlkQC
-	logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
-	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, bestBlkQC, 20)
+
+	chainStore := &chainStore{
+		server:          server,
+		ledger:          server.ledgerCache,
+		logger:          server.logger,
+		blockCommitter:  server.blockCommitter,
+		blockChainStore: server.store,
+
+		commitLevel:      bestBlkQC.GetLevel(),
+		commitHeight:     bestBlock.GetHeader().GetBlockHeight(),
+		commitQuorumCert: bestBlkQC,
+		blockPool:        blockpool.NewBlockPool(bestBlock, bestBlkQC, 20),
+	}
+	chainStore.logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
 	return chainStore, nil
 }
 

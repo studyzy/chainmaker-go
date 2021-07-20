@@ -52,10 +52,10 @@ type ConsensusChainedBftImpl struct {
 	internalMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit the own proposals, voting information by the local node
 	protocolMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit Hotstuff protocol information: proposal, vote
 
-	mtx                sync.RWMutex
-	nextEpoch          *epochManager       // next epoch
+	mtx sync.RWMutex
+	//nextEpoch          *epochManager       // next epoch
 	commitHeight       uint64              // The height of the latest committed block
-	governanceContract protocol.Government // The management contract on the block chain
+	government         protocol.Government // The management contract on the block chain
 	lastCommitWalIndex uint64
 
 	// wal info
@@ -120,43 +120,49 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		blockCommitter:        blockCommitter,
 		accessControlProvider: ac,
 		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
-		governanceContract:    governance.NewGovernanceContract(store, ledgerCache),
+		government:            governance.NewGovernanceContract(store, ledgerCache),
 
 		quitCh:         make(chan struct{}),
 		quitSyncCh:     make(chan struct{}),
 		quitProtocolCh: make(chan struct{}),
 	}
-	chainStore, err := openChainStore(service.ledgerCache, service.blockCommitter, service.store, service, service.logger)
-	if err != nil {
+	lastCommitBlk := ledgerCache.GetLastCommittedBlock()
+	if lastCommitBlk == nil {
+		return nil, fmt.Errorf("openChainStore failed, get best block from ledger")
+	}
+	service.syncer = newSyncManager(service)
+	service.commitHeight = lastCommitBlk.Header.BlockHeight
+	service.timerService = timeservice.NewTimerService(service.logger)
+
+	var err error
+	if service.chainStore, err = initChainStore(service); err != nil {
 		service.logger.Errorf("new consensus service failed, err %v", err)
 		return nil, err
 	}
 
-	service.chainStore = chainStore
-	service.syncer = newSyncManager(service)
-	service.timerService = timeservice.NewTimerService(service.logger)
-	service.commitHeight = service.chainStore.getCommitHeight()
-	service.createEpoch(service.commitHeight)
-	service.msgPool = service.nextEpoch.msgPool
-	service.selfIndexInEpoch = service.nextEpoch.index
-	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService, service)
-	epoch := service.nextEpoch
-	service.nextEpoch = nil
+	var epoch *epochManager
+	if epoch, err = service.createEpoch(service.commitHeight); err != nil {
+		return nil, err
+	}
+	service.msgPool = epoch.msgPool
+	service.selfIndexInEpoch = epoch.index
+	if service.smr, err = newChainedBftSMR(service, epoch); err != nil {
+		return nil, err
+	}
 	walDirPath := path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainID, WalDirSuffix)
 	if service.wal, err = wal.Open(walDirPath, nil); err != nil {
 		return nil, err
 	}
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
-	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
+	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.government); err != nil {
 		return nil, err
 	}
-	service.logger.Debugf("register config success")
-	service.initTimeOutConfig(service.governanceContract)
+	service.initTimeOutConfig(service.government)
 	return service, nil
 }
 
-func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protocol.Government) {
-	contract, _ := governanceContract.GetGovernanceContract()
+func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(government protocol.Government) {
+	contract, _ := government.GetGovernanceContract()
 	base := contract.GetHotstuffRoundTimeoutMill()
 	if base == 0 {
 		base = uint64(timeservice.DefaultRoundTimeout)

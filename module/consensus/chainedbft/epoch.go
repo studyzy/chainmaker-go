@@ -14,7 +14,6 @@ import (
 
 //epochManager manages the components that shared across epoch
 type epochManager struct {
-	force        bool   //use epoch immediately
 	index        uint64 //Local assigned index in next committee group
 	epochId      uint64
 	createHeight uint64 //Next height across epoch
@@ -25,31 +24,38 @@ type epochManager struct {
 }
 
 // createNextEpochIfRequired If the conditions are met, create the next epoch
-func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) {
-	governContract, _ := cbi.governanceContract.GetGovernanceContract()
+func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) (*epochManager, error) {
+	governContract, err := cbi.government.GetGovernanceContract()
+	if err != nil {
+		return nil, err
+	}
 
 	cbi.logger.Debugf("begin createNextEpochIfRequired, "+
 		"contractEpoch:%d, nodeEpoch:%d", governContract.EpochId, cbi.smr.getEpochId())
 	if governContract.EpochId == cbi.smr.getEpochId() {
-		return
+		return nil, nil
 	}
-	cbi.createEpoch(height)
+	epoch, err := cbi.createEpoch(height)
 	cbi.logger.Debugf("end createNextEpochIfRequired")
+	return epoch, err
 }
 
 // createEpoch create the epoch in the block height
-func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
-	govContract, _ := cbi.governanceContract.GetGovernanceContract()
+func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) (*epochManager, error) {
+	govContract, err := cbi.government.GetGovernanceContract()
+	if err != nil {
+		return nil, err
+	}
 
 	epoch := &epochManager{
-		force:        false,
-		createHeight: height,
 		index:        utils.InvalidIndex,
+		createHeight: height,
 
 		epochId:            govContract.EpochId,
 		switchHeight:       govContract.NextSwitchHeight,
-		governanceContract: cbi.governanceContract,
-		msgPool:            message.NewMsgPool(govContract.GetCachedLen(), int(govContract.GetValidatorNum()), int(govContract.MinQuorumForQc)),
+		governanceContract: cbi.government,
+		msgPool: message.NewMsgPool(govContract.GetCachedLen(),
+			int(govContract.GetValidatorNum()), int(govContract.MinQuorumForQc)),
 	}
 	for _, v := range govContract.Members {
 		if v.NodeId == cbi.id {
@@ -57,7 +63,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 			break
 		}
 	}
-	cbi.nextEpoch = epoch
+	return epoch, nil
 }
 
 //isValidProposer checks whether given index is valid at level
