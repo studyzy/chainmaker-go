@@ -25,7 +25,7 @@ func newQueryBlockByHeightOnChainCMD() *cobra.Command {
 		Long:  "query on-chain block by height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			height, err := strconv.ParseInt(args[0], 10, 64)
+			height, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
