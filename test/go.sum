@@ -11,6 +11,8 @@ chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec h1:uXvltIKJn
 chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
 chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41 h1:cHk7Gm1lTOxUiLsAA//VPJbA30K2fAl+gTj9PvPnlGQ=
 chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
+chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d h1:mslPrEnYdmS/vYHTEBsMt2xfppIb3otKZdfr+3MOFIM=
+chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210621034028-d765d0e95b61/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210630065752-c3d162425200 h1:ONd+TmpTbBvOPIICke+fJM4tWalBilPTgM3lPrmwE6M=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210630123814-27dfc86893cf h1:ZpBHo38TxfCRAv4AqbITf7UOd7EL354pthpogtizQyY=
@@ -59,6 +61,8 @@ chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0 h1:0ZIuFJd
 chainmaker.org/chainmaker/protocol v0.0.0-20210714073836-8ec1557557b0/go.mod h1:AXG9SUS4SDHx383h5E9oUbuwJz0doRA+cx/OYXeTWNo=
 chainmaker.org/chainmaker/protocol v0.0.0-20210719033859-75ccee9a9042 h1:imVGnz0ADbK5cwZru+vVw3Y9OsdolfqLuhjceFx3l+g=
 chainmaker.org/chainmaker/protocol v0.0.0-20210719033859-75ccee9a9042/go.mod h1:VocmJrHzMMfVTHMMLiBdxWvH3GqiTeJoNRzYUU2eD8w=
+chainmaker.org/chainmaker/protocol v0.0.0-20210719060811-1421e692280c h1:GYRdZRRuQn1Vy8nusjmPDAZSL/IPjR2oLDgCD1AtLSI=
+chainmaker.org/chainmaker/protocol v0.0.0-20210719060811-1421e692280c/go.mod h1:VocmJrHzMMfVTHMMLiBdxWvH3GqiTeJoNRzYUU2eD8w=
 chainmaker.org/chainmaker/sdk-go v0.0.0-20210706173158-3315f50af4de h1:dm/Zz8Hy9I7rasGmN7hyiw60vsrrL5tNilC+arZEWOg=
 chainmaker.org/chainmaker/sdk-go v0.0.0-20210706173158-3315f50af4de/go.mod h1:XEFsgFpBID++3bU+qi7JVDkz+i2FTaKtTyFuAeT5ZMg=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=

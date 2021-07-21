@@ -8,5 +8,6 @@ require (
 	github.com/Rican7/retry v0.1.0 // indirect
 	github.com/ethereum/go-ethereum v1.10.5 // indirect
 	github.com/spf13/cobra v1.2.1 // indirect
+	github.com/tidwall/wal v0.1.4 // indirect
 	golang.org/x/tools v0.1.4 // indirect
 )
