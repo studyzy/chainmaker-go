@@ -86,10 +86,9 @@ type ConsensusChainedBftImpl struct {
 	accessControlProvider protocol.AccessControlProvider
 
 	// Exit signal
-	quitCh         chan struct{}
-	quitSyncCh     chan struct{}
-	quitProtocolCh chan struct{}
-	quitCommitCh   chan struct{}
+	quitCh        chan struct{}
+	quitCommitCh  chan struct{}
+	quitSyncReqCh chan struct{}
 }
 
 //New returns an instance of chainedbft consensus
@@ -126,9 +125,9 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
 		government:            governance.NewGovernanceContract(store, ledgerCache),
 
-		quitCh:         make(chan struct{}),
-		quitSyncCh:     make(chan struct{}),
-		quitProtocolCh: make(chan struct{}),
+		quitCh:        make(chan struct{}),
+		quitCommitCh:  make(chan struct{}),
+		quitSyncReqCh: make(chan struct{}),
 	}
 	lastCommitBlk := ledgerCache.GetLastCommittedBlock()
 	if lastCommitBlk == nil {
@@ -197,7 +196,8 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	go cbi.syncer.start()
 	go cbi.timerService.Start()
 	go cbi.loop()
-	go cbi.asyncLoop()
+	go cbi.commitLoop()
+	go cbi.syncReqLoop()
 	cbi.startConsensus()
 	return nil
 }
@@ -217,10 +217,9 @@ func (cbi *ConsensusChainedBftImpl) startConsensus() {
 
 //Stop stop consensus
 func (cbi *ConsensusChainedBftImpl) Stop() error {
-	close(cbi.quitProtocolCh)
-	close(cbi.quitSyncCh)
 	close(cbi.quitCh)
 	close(cbi.quitCommitCh)
+	close(cbi.quitSyncReqCh)
 	if cbi.timerService != nil {
 		cbi.timerService.Stop()
 	}
@@ -297,19 +296,14 @@ func (cbi *ConsensusChainedBftImpl) loop() {
 	}
 }
 
-func (cbi *ConsensusChainedBftImpl) asyncLoop() {
+func (cbi *ConsensusChainedBftImpl) syncReqLoop() {
 	for {
 		select {
-		case msg, ok := <-cbi.commitMsgCh:
-			if !ok {
-				continue
-			}
-			cbi.onReceivedCommit(msg)
 		case msg, ok:= <-cbi.syncReqMsgCh:
 			if ok {
 				cbi.onReceiveBlockFetch(msg)
 			}
-		case <-cbi.quitCommitCh:
+		case <-cbi.quitSyncReqCh:
 			return
 		}
 	}
@@ -319,10 +313,9 @@ func (cbi *ConsensusChainedBftImpl) commitLoop() {
 	for {
 		select {
 		case msg, ok := <-cbi.commitMsgCh:
-			if !ok {
-				continue
+			if ok {
+				cbi.onReceivedCommit(msg)
 			}
-			cbi.onReceivedCommit(msg)
 		case <-cbi.quitCommitCh:
 			return
 		}
