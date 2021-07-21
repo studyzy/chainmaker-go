@@ -191,7 +191,7 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
 func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
-	bs.logger.Infof("chain[%s]: start put block[%d]", block.Header.ChainId, block.Header.BlockHeight)
+	bs.logger.Debugf("chain[%s]: start put block[%d] (txs:%d)", block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
 
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 	//1. commit log
