@@ -45,7 +45,7 @@ func initChainStore(server *ConsensusChainedBftImpl) (*chainStore, error) {
 	if len(bestBlkQCBz) == 0 {
 		return nil, fmt.Errorf("get qc from block failed [%d:%x]", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
 	}
-	var bestBlkQC *chainedbftpb.QuorumCert
+	bestBlkQC := &chainedbftpb.QuorumCert{}
 	if err := proto.Unmarshal(bestBlkQCBz, bestBlkQC); err != nil {
 		return nil, err
 	}
