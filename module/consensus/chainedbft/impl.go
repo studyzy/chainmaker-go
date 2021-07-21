@@ -315,6 +315,20 @@ func (cbi *ConsensusChainedBftImpl) asyncLoop() {
 	}
 }
 
+func (cbi *ConsensusChainedBftImpl) commitLoop() {
+	for {
+		select {
+		case msg, ok := <-cbi.commitMsgCh:
+			if !ok {
+				continue
+			}
+			cbi.onReceivedCommit(msg)
+		case <-cbi.quitCommitCh:
+			return
+		}
+	}
+}
+
 //OnQuit msgbus quit
 func (cbi *ConsensusChainedBftImpl) OnQuit() {
 	// do nothing
