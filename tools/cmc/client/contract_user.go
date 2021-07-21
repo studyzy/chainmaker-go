@@ -289,7 +289,7 @@ func createUserContract() error {
 			return err
 		}
 	}
-	pairsKv := paramsMap2KVPairs(pairs)
+	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("create user contract params:%+v\n", pairsKv)
 	payloadBytes, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, sdkPbCommon.RuntimeType(rt), pairsKv)
 
@@ -374,13 +374,13 @@ func createUserContract() error {
 		return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
 	}
 
-	mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload([][]byte{signedPayloadBytes1})
-	if err != nil {
-		return fmt.Errorf(SIGN_CONTRACT_MANAGE_PAYLOAD_FAILED_FORMAT, err.Error())
-	}
+	//mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload([][]byte{signedPayloadBytes1})
+	//if err != nil {
+	//	return fmt.Errorf(SIGN_CONTRACT_MANAGE_PAYLOAD_FAILED_FORMAT, err.Error())
+	//}
 
 	// 发送创建合约请求
-	resp, err := client.SendContractManageRequest(mergeSignedPayloadBytes, int64(timeout), syncResult)
+	resp, err := client.SendContractManageRequest(payloadBytes, []*sdkPbCommon.EndorsementEntry{signedPayloadBytes1}, int64(timeout), syncResult)
 	if err != nil {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
@@ -462,7 +462,7 @@ func getUserContract() error {
 		}
 	}
 
-	resp, err := client.QueryContract(contractName, method, pairs, -1)
+	resp, err := client.QueryContract(contractName, method, util.ConvertParameters(pairs), -1)
 	if err != nil {
 		return fmt.Errorf("query contract failed, %s", err.Error())
 	}
@@ -471,19 +471,6 @@ func getUserContract() error {
 
 	client.Stop()
 	return nil
-}
-
-func paramsMap2KVPairs(params map[string]string) (kvPairs []*sdkPbCommon.KeyValuePair) {
-	for key, val := range params {
-		kvPair := &sdkPbCommon.KeyValuePair{
-			Key:   key,
-			Value: val,
-		}
-
-		kvPairs = append(kvPairs, kvPair)
-	}
-
-	return
 }
 
 func upgradeUserContract() error {
@@ -522,7 +509,7 @@ func upgradeUserContract() error {
 			return err
 		}
 	}
-	pairsKv := paramsMap2KVPairs(pairs)
+	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("upgrade user contract params:%+v\n", pairsKv)
 	payloadBytes, err := client.CreateContractUpgradePayload(contractName, version, byteCodePath, sdkPbCommon.RuntimeType(rt), pairsKv)
 
@@ -536,13 +523,13 @@ func upgradeUserContract() error {
 		return fmt.Errorf(SIGN_CONTRACT_MANAGE_PAYLOAD_FAILED_FORMAT, err.Error())
 	}
 
-	mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload([][]byte{signedPayloadBytes1})
-	if err != nil {
-		return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
-	}
+	//mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload([][]byte{signedPayloadBytes1})
+	//if err != nil {
+	//	return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
+	//}
 
 	// 发送创建合约请求
-	resp, err := client.SendContractManageRequest(mergeSignedPayloadBytes, int64(timeout), syncResult)
+	resp, err := client.SendContractManageRequest(payloadBytes, []*sdkPbCommon.EndorsementEntry{signedPayloadBytes1}, int64(timeout), syncResult)
 	if err != nil {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
@@ -560,7 +547,7 @@ func upgradeUserContract() error {
 func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 	var (
 		err            error
-		payloadBytes   []byte
+		payloadBytes   *sdkPbCommon.Payload
 		whichOperation string
 	)
 
@@ -610,13 +597,14 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		return fmt.Errorf(SIGN_CONTRACT_MANAGE_PAYLOAD_FAILED_FORMAT, err.Error())
 	}
 
-	mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload([][]byte{signedPayloadBytes1})
-	if err != nil {
-		return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
-	}
+	//mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload([][]byte{signedPayloadBytes1})
+	//if err != nil {
+	//	return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
+	//}
 
 	// 发送创建合约请求
-	resp, err := client.SendContractManageRequest(mergeSignedPayloadBytes, int64(timeout), syncResult)
+	resp, err := client.SendContractManageRequest(payloadBytes, []*sdkPbCommon.EndorsementEntry{signedPayloadBytes1},
+		int64(timeout), syncResult)
 	if err != nil {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}

@@ -15,6 +15,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
@@ -231,7 +232,7 @@ func erc20Mint() *cobra.Command {
 					return err
 				}
 			}
-			txId = sdk.GetRandTxId()
+			txId = GetRandTxId()
 			resp, err := mint(client, address, amount, txId, DEFAULT_TIMEOUT, syncResult)
 			if err != nil {
 				return fmt.Errorf("mint failed, %s", err.Error())
@@ -279,7 +280,7 @@ func erc20Transfer() *cobra.Command {
 					return err
 				}
 			}
-			txId = sdk.GetRandTxId()
+			txId = GetRandTxId()
 			resp, err := transfer(client, address, amount, txId, DEFAULT_TIMEOUT, false)
 			if err != nil {
 				return fmt.Errorf("transfer failed, %s", err.Error())
@@ -583,7 +584,7 @@ func stakeDelegate() *cobra.Command {
 					return err
 				}
 			}
-			txId = sdk.GetRandTxId()
+			txId = GetRandTxId()
 			resp, err := delegate(client, address, amount, txId, DEFAULT_TIMEOUT, syncResult)
 			if err != nil {
 				return fmt.Errorf("delegate failed, %s", err.Error())
@@ -722,7 +723,7 @@ func stakeUnDelegate() *cobra.Command {
 					return err
 				}
 			}
-			txId = sdk.GetRandTxId()
+			txId = GetRandTxId()
 			resp, err := unDelegate(client, address, amount, txId, DEFAULT_TIMEOUT, syncResult)
 			if err != nil {
 				return fmt.Errorf("undelegate failed, %s", err.Error())
@@ -1144,18 +1145,18 @@ func mint(cc *sdk.ChainClient, address, amount string, txId string, timeout int6
 		"value": amount,
 	}
 	if txId == "" {
-		txId = sdk.GetRandTxId()
+		txId = GetRandTxId()
 	}
 	resp, err := cc.InvokeSystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		common.DPoSERC20ContractFunction_MINT.String(),
+		syscontract.SystemContract_DPOS_ERC20.String(),
+		syscontract.DPoSERC20Function_MINT.String(),
 		txId,
-		params,
+		util.ConvertParameters(params),
 		timeout,
 		withSyncResult,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1167,18 +1168,18 @@ func transfer(cc *sdk.ChainClient, address, amount string, txId string, timeout 
 		"value": amount,
 	}
 	if txId == "" {
-		txId = sdk.GetRandTxId()
+		txId = GetRandTxId()
 	}
 	resp, err := cc.InvokeSystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		common.DPoSERC20ContractFunction_TRANSFER.String(),
+		syscontract.SystemContract_DPOS_ERC20.String(),
+		syscontract.DPoSERC20Function_TRANSFER.String(),
 		txId,
-		params,
+		util.ConvertParameters(params),
 		timeout,
 		withSyncResult,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1189,13 +1190,13 @@ func balanceOf(cc *sdk.ChainClient, address string, timeout int64) (*common.TxRe
 		"owner": address,
 	}
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		common.DPoSERC20ContractFunction_GET_BALANCEOF.String(),
-		params,
+		syscontract.SystemContract_DPOS_ERC20.String(),
+		syscontract.DPoSERC20Function_GET_BALANCEOF.String(),
+		util.ConvertParameters(params),
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1203,13 +1204,13 @@ func balanceOf(cc *sdk.ChainClient, address string, timeout int64) (*common.TxRe
 
 func owner(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		common.DPoSERC20ContractFunction_GET_OWNER.String(),
+		syscontract.SystemContract_DPOS_ERC20.String(),
+		syscontract.DPoSERC20Function_GET_OWNER.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1217,13 +1218,13 @@ func owner(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 
 func decimals(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		common.DPoSERC20ContractFunction_GET_DECIMALS.String(),
+		syscontract.SystemContract_DPOS_ERC20.String(),
+		syscontract.DPoSERC20Function_GET_DECIMALS.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1231,13 +1232,13 @@ func decimals(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 
 func total(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_ERC20.String(),
-		common.DPoSERC20ContractFunction_GET_TOTAL_SUPPLY.String(),
+		syscontract.SystemContract_DPOS_ERC20.String(),
+		syscontract.DPoSERC20Function_GET_TOTAL_SUPPLY.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1245,13 +1246,13 @@ func total(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 
 func getAllCandidates(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_GET_ALL_CANDIDATES.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_GET_ALL_CANDIDATES.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1262,13 +1263,13 @@ func getValidatorByAddress(cc *sdk.ChainClient, address string, timeout int64) (
 		"address": address,
 	}
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_GET_VALIDATOR_BY_ADDRESS.String(),
-		params,
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_GET_VALIDATOR_BY_ADDRESS.String(),
+		util.ConvertParameters(params),
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1280,18 +1281,18 @@ func delegate(cc *sdk.ChainClient, address, amount string, txId string, timeout 
 		"amount": amount,
 	}
 	if txId == "" {
-		txId = sdk.GetRandTxId()
+		txId = GetRandTxId()
 	}
 	resp, err := cc.InvokeSystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_DELEGATE.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_DELEGATE.String(),
 		txId,
-		params,
+		util.ConvertParameters(params),
 		timeout,
 		withSyncResult,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1302,13 +1303,13 @@ func getDelegationsByAddress(cc *sdk.ChainClient, address string, timeout int64)
 		"address": address,
 	}
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_GET_DELEGATIONS_BY_ADDRESS.String(),
-		params,
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_GET_DELEGATIONS_BY_ADDRESS.String(),
+		util.ConvertParameters(params),
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1320,13 +1321,13 @@ func getUserDelegationByValidator(cc *sdk.ChainClient, delegatorAddress, validat
 		"validator_address": validatorAddress,
 	}
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_GET_USER_DELEGATION_BY_VALIDATOR.String(),
-		params,
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_GET_USER_DELEGATION_BY_VALIDATOR.String(),
+		util.ConvertParameters(params),
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1338,18 +1339,18 @@ func unDelegate(cc *sdk.ChainClient, address, amount string, txId string, timeou
 		"amount": amount,
 	}
 	if txId == "" {
-		txId = sdk.GetRandTxId()
+		txId = GetRandTxId()
 	}
 	resp, err := cc.InvokeSystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_UNDELEGATE.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_UNDELEGATE.String(),
 		txId,
-		params,
+		util.ConvertParameters(params),
 		timeout,
 		withSyncResult,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1360,13 +1361,13 @@ func readEpochByID(cc *sdk.ChainClient, epochID string, timeout int64) (*common.
 		"epoch_id": epochID,
 	}
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_EPOCH_BY_ID.String(),
-		params,
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_EPOCH_BY_ID.String(),
+		util.ConvertParameters(params),
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1374,13 +1375,13 @@ func readEpochByID(cc *sdk.ChainClient, epochID string, timeout int64) (*common.
 
 func readLatestEpoch(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_LATEST_EPOCH.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_LATEST_EPOCH.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1391,18 +1392,18 @@ func setNodeID(cc *sdk.ChainClient, nodeID string, timeout int64, withSyncResult
 		"node_id": nodeID,
 	}
 	if txId == "" {
-		txId = sdk.GetRandTxId()
+		txId = GetRandTxId()
 	}
 	resp, err := cc.InvokeSystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_SET_NODE_ID.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_SET_NODE_ID.String(),
 		txId,
-		params,
+		util.ConvertParameters(params),
 		timeout,
 		withSyncResult,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1413,13 +1414,13 @@ func getNodeID(cc *sdk.ChainClient, address string, timeout int64) (*common.TxRe
 		"address": address,
 	}
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_GET_NODE_ID.String(),
-		params,
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_GET_NODE_ID.String(),
+		util.ConvertParameters(params),
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1427,13 +1428,13 @@ func getNodeID(cc *sdk.ChainClient, address string, timeout int64) (*common.TxRe
 
 func readMinSelfDelegation(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_MIN_SELF_DELEGATION.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_MIN_SELF_DELEGATION.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1441,13 +1442,13 @@ func readMinSelfDelegation(cc *sdk.ChainClient, timeout int64) (*common.TxRespon
 
 func readEpochValidatorNumber(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_EPOCH_VALIDATOR_NUMBER.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_EPOCH_VALIDATOR_NUMBER.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1455,13 +1456,13 @@ func readEpochValidatorNumber(cc *sdk.ChainClient, timeout int64) (*common.TxRes
 
 func readEpochBlockNumber(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_EPOCH_BLOCK_NUMBER.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_EPOCH_BLOCK_NUMBER.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1469,13 +1470,13 @@ func readEpochBlockNumber(cc *sdk.ChainClient, timeout int64) (*common.TxRespons
 
 func readSystemContractAddr(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_SYSTEM_CONTRACT_ADDR.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_SYSTEM_CONTRACT_ADDR.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil
@@ -1483,13 +1484,13 @@ func readSystemContractAddr(cc *sdk.ChainClient, timeout int64) (*common.TxRespo
 
 func readCompleteUnBoundingEpochNumber(cc *sdk.ChainClient, timeout int64) (*common.TxResponse, error) {
 	resp, err := cc.QuerySystemContract(
-		common.ContractName_SYSTEM_CONTRACT_DPOS_STAKE.String(),
-		common.DPoSStakeContractFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String(),
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		syscontract.DPoSStakeFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String(),
 		nil,
 		timeout,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return nil, fmt.Errorf("%s failed, %s", common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	return resp, nil

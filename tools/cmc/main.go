@@ -10,6 +10,22 @@ package main
 import (
 	"strings"
 
+	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/console"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/paillier"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/hibe"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/key"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/cert"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/client"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/payload"
+
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
@@ -25,15 +41,16 @@ For detailed logs, please see ./sdk.log
 `),
 	}
 
-	//mainCmd.AddCommand(key.KeyCMD())
-	//mainCmd.AddCommand(cert.CertCMD())
-	//mainCmd.AddCommand(client.ClientCMD())
-	//mainCmd.AddCommand(hibe.HibeCMD())
-	//mainCmd.AddCommand(paillier.PaillierCMD())
+	mainCmd.AddCommand(key.KeyCMD())
+	mainCmd.AddCommand(cert.CertCMD())
+	mainCmd.AddCommand(client.ClientCMD())
+	mainCmd.AddCommand(hibe.HibeCMD())
+	mainCmd.AddCommand(paillier.PaillierCMD())
 	mainCmd.AddCommand(archive.NewArchiveCMD())
 	mainCmd.AddCommand(query.NewQueryOnChainCMD())
-	//mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
-	//mainCmd.AddCommand(bulletproofs.BulletproofsCMD())
+	mainCmd.AddCommand(payload.NewPayloadCMD())
+	mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
+	mainCmd.AddCommand(bulletproofs.BulletproofsCMD())
 	//mainCmd.AddCommand(tee.NewTeeCMD())
 
 	// 后续改成go-sdk

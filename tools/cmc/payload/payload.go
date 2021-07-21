@@ -24,9 +24,10 @@ var (
 	orgId         string
 	adminKeyPath  string
 	adminCertPath string
+	sdkConfPath   string
 )
 
-func PayloadCMD() *cobra.Command {
+func NewPayloadCMD() *cobra.Command {
 	payloadCmd := &cobra.Command{
 		Use:   "payload",
 		Short: "Payload command",
@@ -36,7 +37,7 @@ func PayloadCMD() *cobra.Command {
 	payloadCmd.AddCommand(jsonCMD())
 	payloadCmd.AddCommand(createCMD())
 	payloadCmd.AddCommand(signCMD())
-	payloadCmd.AddCommand(mergeCMD())
+	//payloadCmd.AddCommand(mergeCMD())
 
 	return payloadCmd
 }
@@ -54,6 +55,8 @@ func init() {
 	flags.StringVarP(&kvPairs, "kv-pairs", "k", "tx_scheduler_timeout:15;tx_scheduler_validate_timeout:20", "specify key value pairs")
 	flags.IntVarP(&sequence, "sequence", "s", 1, "specify sequence")
 	flags.StringVarP(&byteCodePath, "byte-code-path", "p", "./fact.wasm", "specify byte code path")
+	flags.StringVar(&sdkConfPath, "sdk-conf-path", "", "specify sdk config path")
+
 }
 
 func attachFlags(cmd *cobra.Command, names []string) {

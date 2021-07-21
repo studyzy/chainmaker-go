@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"strings"
 
+	"chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -129,7 +131,7 @@ func configConsensusNodeId(op int) error {
 	}
 	defer client.Stop()
 
-	var payloadBytes []byte
+	var payloadBytes *common.Payload
 	switch op {
 	case addNodeId:
 		payloadBytes, err = client.CreateChainConfigConsensusNodeIdAddPayload(nodeOrgId, []string{nodeId})
@@ -144,7 +146,7 @@ func configConsensusNodeId(op int) error {
 		return err
 	}
 
-	signedPayloads := make([][]byte, len(adminKeys))
+	signedPayloads := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
 		_, privKey, err := dealUserKey(adminKeys[i])
 		if err != nil {
@@ -162,12 +164,12 @@ func configConsensusNodeId(op int) error {
 		signedPayloads[i] = signedPayload
 	}
 
-	mergedSignedPayloadBytes, err := client.MergeChainConfigSignedPayload(signedPayloads)
-	if err != nil {
-		return err
-	}
+	//mergedSignedPayloadBytes, err := client.MergeChainConfigSignedPayload(signedPayloads)
+	//if err != nil {
+	//	return err
+	//}
 
-	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayloadBytes)
+	resp, err := client.SendChainConfigUpdateRequest(payloadBytes, signedPayloads, 0, syncResult)
 	if err != nil {
 		return err
 	}

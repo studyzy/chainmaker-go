@@ -61,7 +61,7 @@ func mergeContractMgmtPayloadCMD() *cobra.Command {
 		Short: "Contract command",
 		Long:  "Contract command",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return mergeContractMgmtPayload()
+			return mergeSystemContractPayload()
 		},
 	}
 	return contractCmd
@@ -75,7 +75,7 @@ func mergeSystemContractPayload() error {
 	if err != nil {
 		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, mergeInputs[0], err)
 	}
-	allPayload := &sdkPbCommon.Payload{}
+	allPayload := &sdkPbCommon.TxRequest{}
 	if err := proto.Unmarshal(raw, allPayload); err != nil {
 		return fmt.Errorf("SystemContractPayload unmarshal error: %s", err)
 	}
@@ -86,7 +86,7 @@ func mergeSystemContractPayload() error {
 	allPayloadCopy.(*sdkPbCommon.Payload).Endorsement = nil
 
 	if len(mergeInputs) > 1 {
-		allPayload, err = appendSystemContractEndorsements(allPayloadCopy.(*sdkPbCommon.Payload), allPayload, mergeInputs[1:])
+		allPayload, err = appendEndorsements(allPayloadCopy.(*sdkPbCommon.Payload), allPayload, mergeInputs[1:])
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func mergeSystemContractPayload() error {
 	return nil
 }
 
-func appendSystemContractEndorsements(payladWithoutEndorse, allPayload *sdkPbCommon.Payload,
+func appendEndorsements(payloadWithoutEndorse, allPayload *sdkPbCommon.Payload,
 	mergeInputs []string) (*sdkPbCommon.Payload, error) {
 	if len(mergeInputs) == 0 {
 		return allPayload, nil

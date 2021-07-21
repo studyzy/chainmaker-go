@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"encoding/base64"
 	"fmt"
+
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ func genOpeningCMD() *cobra.Command {
 }
 
 func genOpening() error {
-	opening, err := bulletproofs.Helper().NewBulletproofs().PedersenRNG()
+	opening, err := bulletproofs.PedersenRNG()
 	if err != nil {
 		return err
 	}
