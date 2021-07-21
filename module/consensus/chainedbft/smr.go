@@ -68,6 +68,15 @@ func (cs *chainedbftSMR) forwardNewHeightIfNeed() error {
 	return nil
 }
 
+func (cs *chainedbftSMR) updateContractInfo(epoch *epochManager) error {
+	govContract, err := epoch.governanceContract.GetGovernanceContract()
+	if err != nil {
+		return err
+	}
+	cs.info = newContractInfo(govContract)
+	return nil
+}
+
 func (cs *chainedbftSMR) updateState(newState chainedbftpb.ConsStateType) {
 	//cs.Lock()
 	//defer cs.Unlock()

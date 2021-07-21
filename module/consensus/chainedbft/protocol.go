@@ -997,7 +997,10 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 6. switch epoch and update field state in consensus
 	oldIndex := cbi.selfIndexInEpoch
 	cbi.logger.Debugf("processBlockCommitted step 5 switch epoch and process qc")
-	cbi.switchNextEpoch(cbi.commitHeight, epoch)
+	if err := cbi.switchNextEpoch(cbi.commitHeight, epoch); err != nil {
+		cbi.logger.Warnf("switch epoch err: %s", err)
+		return
+	}
 	if cbi.smr.isValidIdx(cbi.selfIndexInEpoch, cbi.commitHeight) {
 		cbi.logger.Infof("service selfIndexInEpoch [%v] start processCertificates,"+
 			"height [%v],level [%v]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
@@ -1013,11 +1016,13 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.logger.Infof("processBlockCommitted end, block: [%d:%x].", cbi.commitHeight, block.Header.BlockHash)
 }
 
-func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64, epoch *epochManager) {
+func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64, epoch *epochManager) error {
 	cbi.logger.Debugf("service [%v] handle block committed: "+
 		"start switching to next epoch at height [%v]", cbi.selfIndexInEpoch, blockHeight)
 	cbi.selfIndexInEpoch = epoch.index
 	cbi.initTimeOutConfig(cbi.government)
+	err := cbi.smr.updateContractInfo(epoch)
+	return err
 }
 
 func (cbi *ConsensusChainedBftImpl) validateBlockFetch(msg *chainedbftpb.ConsensusMsg) error {
