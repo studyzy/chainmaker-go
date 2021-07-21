@@ -7,10 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package governance
 
 import (
+	"fmt"
+	"strconv"
 	"sync/atomic"
 	"unsafe"
 
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
@@ -37,7 +41,7 @@ func NewGovernanceContract(store protocol.BlockchainStore, ledger protocol.Ledge
 
 //Get Government data from cache,ChainStore,chainConfig
 func (gcr *GovernanceContractImp) GetGovernanceContract() (*consensusPb.GovernanceContract, error) {
-	//if cached height is latest,use cache
+	//1. if cached height is latest,use cache
 	block := gcr.ledger.GetLastCommittedBlock()
 	if block.Header.GetBlockHeight() == atomic.LoadUint64(&gcr.Height) {
 		if addr := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&gcr.governmentContract))); addr != nil {
@@ -49,14 +53,14 @@ func (gcr *GovernanceContractImp) GetGovernanceContract() (*consensusPb.Governan
 		err                error
 		governmentContract *consensusPb.GovernanceContract = nil
 	)
-	//get from chainStore
+	//2. get gov contract from db or chainConfig
 	if block.Header.GetBlockHeight() > 0 {
 		if governmentContract, err = getGovernanceContractFromChainStore(gcr.store); err != nil {
 			gcr.log.Errorf("getGovernanceContractFromChainStore err: %s", err)
 			return nil, err
 		}
 	} else {
-		//if genesis block,create government from genesis config
+		//if genesis block, create government from genesis config
 		chainConfig, err := getChainConfigFromChainStore(gcr.store)
 		if err != nil {
 			gcr.log.Errorf("getChainConfigFromChainStore err: %s", err)
@@ -78,13 +82,77 @@ func (gcr *GovernanceContractImp) GetGovernanceContract() (*consensusPb.Governan
 
 //use by chainConf, check chain config before chain_config_contract run
 func (gcr *GovernanceContractImp) Verify(consensusType consensusPb.ConsensusType, chainConfig *configPb.ChainConfig) error {
-	governmentContract, err := gcr.GetGovernanceContract()
+	// 1. check validators num >= 4
+	if len(chainConfig.Consensus.Nodes) < (ConstMinQuorumForQc + 1) {
+		return fmt.Errorf("set Nodes size is too minimum: %d < %d", len(chainConfig.Consensus.Nodes), ConstMinQuorumForQc+1)
+	}
+
+	// 2. check config in hotstuff
+	conConf := chainConfig.Consensus
+	for _, oneConf := range conConf.ExtConfig {
+		switch oneConf.Key {
+		case CachedLen:
+			cachedLen, err := strconv.ParseInt(string(oneConf.Value), 10, 64)
+			if err != nil || cachedLen < 0 {
+				return fmt.Errorf("set CachedLen err")
+			}
+		case RoundTimeoutMill:
+			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
+			if err != nil {
+				return fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutMill, err)
+			}
+			if v < MinimumTimeOutMill {
+				return fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
+			}
+		case RoundTimeoutIntervalMill:
+			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
+			if err != nil {
+				return fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutIntervalMill, err)
+			}
+			if v < MinimumIntervalTimeOutMill {
+				return fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
+			}
+		}
+	}
+	return nil
+}
+
+//CheckAndCreateGovernmentArgs execute after block propose,create government txRWSet,wait to add to block header
+//when block commit,government txRWSet take effect
+func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.BlockchainStore,
+	proposalCache protocol.ProposalCache, ledger protocol.LedgerCache) (*commonPb.TxRWSet, error) {
+	log.Debugf("CheckAndCreateGovernmentArgs start")
+
+	// 1. get GovernanceContract
+	gcr := NewGovernanceContract(store, ledger).(*GovernanceContractImp)
+	governanceContract, err := gcr.GetGovernanceContract()
 	if err != nil {
-		gcr.log.Warnw("GetGovernmentContract err,", "err", err)
-		return err
+		return nil, err
 	}
-	if _, err = checkChainConfig(chainConfig, governmentContract); err != nil {
-		gcr.log.Warnw("checkChainConfig err,", "err", err)
+
+	// 2. check if chain config change
+	if !utils.IsConfBlock(block) {
+		return nil, nil
 	}
-	return err
+
+	var isConfigChg = false
+	chainConfig, err := getChainConfigFromBlock(block, proposalCache)
+	if err != nil {
+		return nil, err
+	}
+	if chainConfig != nil {
+		if isConfigChg, err = updateGovContractByConfig(chainConfig, governanceContract); err != nil {
+			return nil, err
+		}
+	}
+
+	// 3. if chain config change or switch to next epoch, change the GovernanceContract epochId
+	if isConfigChg {
+		governanceContract.EpochId++
+		governanceContract.NextSwitchHeight = block.Header.BlockHeight
+	}
+
+	// 4. create TxRWSet for GovernanceContract
+	txRWSet, err := getGovernanceContractTxRWSet(governanceContract)
+	return txRWSet, err
 }

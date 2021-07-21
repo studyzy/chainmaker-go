@@ -57,7 +57,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) (*epochManager, e
 		msgPool: message.NewMsgPool(govContract.GetCachedLen(),
 			int(govContract.GetValidatorNum()), int(govContract.MinQuorumForQc)),
 	}
-	for _, v := range govContract.Members {
+	for _, v := range govContract.Validators {
 		if v.NodeId == cbi.id {
 			epoch.index = uint64(v.Index)
 			break
