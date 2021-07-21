@@ -661,7 +661,13 @@ func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig
 		txWrites = append(txWrites, stakeConfigTxWrites...)
 	}
 	//初始化系统合约的Contract状态数据
-	for name := range syscontract.SystemContract_value {
+	syscontractKeys := []int{}
+	for k := range syscontract.SystemContract_name {
+		syscontractKeys = append(syscontractKeys, int(k))
+	}
+	sort.Ints(syscontractKeys)
+	for k := range syscontractKeys {
+		name := syscontract.SystemContract_name[int32(k)]
 		txWrites = append(txWrites, initSysContractTxWrite(name))
 	}
 	return txWrites, nil

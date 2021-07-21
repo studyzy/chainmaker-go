@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -295,7 +296,7 @@ func erc20Transfer() *cobra.Command {
 		flagAddress, flagAmount,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -341,7 +342,7 @@ func erc20BalanceOf() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -385,7 +386,7 @@ func erc20Owner() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -427,7 +428,7 @@ func erc20Decimals() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -469,7 +470,7 @@ func erc20Total() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -511,7 +512,7 @@ func stakeGetAllCandidates() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -543,9 +544,13 @@ func stakeGetValidatorByAddress() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get-validator failed, %s", err.Error())
 			}
-
+			val := &common.Validator{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, val); err != nil {
+				fmt.Println("unmarshal validatorInfo failed")
+				return nil
+			}
+			resp.ContractResult.Result = []byte(val.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -554,7 +559,7 @@ func stakeGetValidatorByAddress() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -588,7 +593,11 @@ func stakeDelegate() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("delegate failed, %s", err.Error())
 			}
-
+			info := &common.Delegation{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal delegate info failed, %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -636,9 +645,13 @@ func stakeGetDelegationsByAddress() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get-delegations-by-address failed, %s", err.Error())
 			}
-
+			delegateInfo := &common.DelegationInfo{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, delegateInfo); err != nil {
+				fmt.Println("unmarshal delegateInfo failed: ", err)
+				return nil
+			}
+			resp.ContractResult.Result = []byte(delegateInfo.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -647,7 +660,7 @@ func stakeGetDelegationsByAddress() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -681,9 +694,12 @@ func stakeGetUserDelegationByValidator() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("get-user-delegation-by-validator failed, %s", err.Error())
 			}
-
+			info := &common.Delegation{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal delegate info failed, %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
-
 			return nil
 		},
 	}
@@ -692,7 +708,7 @@ func stakeGetUserDelegationByValidator() *cobra.Command {
 		flagDelegator, flagValidator,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagDelegator)
@@ -727,7 +743,11 @@ func stakeUnDelegate() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("undelegate failed, %s", err.Error())
 			}
-
+			info := &common.UnbondingDelegation{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal UnbondingDelegation info failed, %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -775,7 +795,11 @@ func stakeReadEpochByID() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read-epoch-by-id failed, %s", err.Error())
 			}
-
+			info := &common.Epoch{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal epoch err: %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -786,7 +810,7 @@ func stakeReadEpochByID() *cobra.Command {
 		flagEpochID,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagEpochID)
@@ -820,7 +844,11 @@ func stakeReadLatestEpoch() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read-latest-epoch failed, %s", err.Error())
 			}
-
+			info := &common.Epoch{}
+			if err := proto.Unmarshal(resp.ContractResult.Result, info); err != nil {
+				return fmt.Errorf("unmarshal epoch err: %v", err)
+			}
+			resp.ContractResult.Result = []byte(info.String())
 			fmt.Printf("resp: %+v\n", resp)
 
 			return nil
@@ -830,7 +858,7 @@ func stakeReadLatestEpoch() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -920,7 +948,7 @@ func stakeGetNodeID() *cobra.Command {
 		flagAddress,
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagAddress)
@@ -964,7 +992,7 @@ func stakeReadMinSelfDelegation() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1006,7 +1034,7 @@ func stakeReadEpochValidatorNumber() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1048,7 +1076,7 @@ func stakeReadEpochBlockNumber() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1090,7 +1118,7 @@ func stakeReadSystemContractAddr() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
@@ -1132,7 +1160,7 @@ func stakeReadCompleteUnBoundingEpochNumber() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagSdkConfPath,
 		flagOrgId, flagChainId,
-		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
+		flagUserTlsCrtFilePath, flagUserTlsKeyFilePath, flagUserSignCrtFilePath, flagUserSignKeyFilePath,
 	})
 
 	return cmd
