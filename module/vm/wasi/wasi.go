@@ -8,8 +8,6 @@ Wacsi WebAssembly chainmaker system interface
 package wasi
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
-	"chainmaker.org/chainmaker-go/common/crypto/paillier"
 	"errors"
 	"fmt"
 	"math/big"
@@ -18,6 +16,8 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker-go/common/crypto/paillier"
 	"chainmaker.org/chainmaker-go/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
