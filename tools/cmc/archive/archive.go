@@ -33,9 +33,9 @@ var (
 	dbType                  string
 	dbDest                  string
 	target                  string
-	blocks                  int64
+	blocks                  uint64
 	secretKey               string
-	restoreStartBlockHeight int64
+	restoreStartBlockHeight uint64
 )
 
 const (
@@ -83,9 +83,9 @@ func init() {
 	flags.StringVar(&dbType, flagDbType, "mysql", "Database type. eg. mysql")
 	flags.StringVar(&dbDest, flagDbDest, "", "Database destination. eg. user:password:localhost:port")
 	flags.StringVar(&target, flagTarget, "", "Height or Date of the target block for this archive task. eg. 100 (block height) or \"2006-01-02 15:04:05\" (date)")
-	flags.Int64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
+	flags.Uint64Var(&blocks, flagBlocks, 1000, "Number of blocks to be archived this time")
 	flags.StringVar(&secretKey, flagSecretKey, "", "Secret Key for calc Hmac")
-	flags.Int64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
+	flags.Uint64Var(&restoreStartBlockHeight, flagStartBlockHeight, 0, "Restore starting block height")
 }
 
 // initDb Connecting database, migrate tables.
@@ -112,9 +112,9 @@ func initDb() (*gorm.DB, error) {
 }
 
 // hmac SM3(Fchain_id+Fblock_height+Fblock_with_rwset+key)
-func hmac(chainId string, blkHeight int64, blkWithRWSetBytes []byte, secretKey string) (string, error) {
+func hmac(chainId string, blkHeight uint64, blkWithRWSetBytes []byte, secretKey string) (string, error) {
 	blkHeightBytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(blkHeightBytes, uint64(blkHeight))
+	binary.LittleEndian.PutUint64(blkHeightBytes, blkHeight)
 
 	var data []byte
 	data = append(data, []byte(chainId)...)
