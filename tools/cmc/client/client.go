@@ -8,13 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"io/ioutil"
 	"log"
 
-	"github.com/gogo/protobuf/proto"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -37,7 +37,7 @@ var (
 	version        string
 	byteCodePath   string
 	runtimeType    string
-	timeout        int
+	timeout        int64
 	sendTimes      int
 	method         string
 	params         string
@@ -45,7 +45,7 @@ var (
 	chainId        string
 	syncResult     bool
 	enableCertHash bool
-	blockHeight    int64
+	blockHeight    uint64
 	withRWSet      bool
 	txId           string
 
@@ -153,14 +153,14 @@ func init() {
 		"NATIVE | WASMER | WXVM | GASM | EVM | DOCKER_GO | DOCKER_JAVA")
 	flags.StringVar(&chainId, flagChainId, "", "specify the chain id, such as: chain1, chain2 etc.")
 	flags.IntVar(&sendTimes, flagSendTimes, 1, "specify SendTimes , default once")
-	flags.IntVar(&timeout, flagTimeout, 10, "specify timeout in seconds, default 10s")
+	flags.Int64Var(&timeout, flagTimeout, 10, "specify timeout in seconds, default 10s")
 	flags.StringVar(&method, flagMethod, "", "specify invoke contract method")
 	flags.StringVar(&params, flagParams, "", "specify invoke contract params, json format, such as: \"{\\\"key\\\":\\\"value\\\",\\\"key1\\\":\\\"value1\\\"}\"")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
 	flags.BoolVar(&syncResult, flagSyncResult, false, "whether wait the result of the transaction, default false")
 	flags.BoolVar(&enableCertHash, flagEnableCertHash, true, "whether enable cert hash, default true")
 	flags.BoolVar(&withRWSet, flagWithRWSet, true, "whether with RWSet, default true")
-	flags.Int64Var(&blockHeight, flagBlockHeight, -1, "specify block height, default -1")
+	flags.Uint64Var(&blockHeight, flagBlockHeight, 0, "specify block height, default 0")
 	flags.StringVar(&txId, flagTxId, "", "specify tx id")
 
 	// Admin秘钥和证书列表
@@ -261,38 +261,35 @@ func getChainMakerServerVersion() error {
 	return nil
 }
 
-func signChainConfigPayload(payloadBytes, userCrtBytes []byte, privateKey crypto.PrivateKey, userCrt *bcx509.Certificate, orgId string) ([]byte, error) {
-	payload := &common.SystemContractPayload{}
-	if err := proto.Unmarshal(payloadBytes, payload); err != nil {
-		return nil, fmt.Errorf("unmarshal config update payload failed, %s", err)
-	}
+func signChainConfigPayload(payload *common.Payload, userCrtBytes []byte, privateKey crypto.PrivateKey,
+	userCrt *bcx509.Certificate, orgId string) (*common.EndorsementEntry, error) {
+	payloadBytes, _ := payload.Marshal()
 
 	signBytes, err := signTx(privateKey, userCrt, payloadBytes)
 	if err != nil {
 		return nil, fmt.Errorf("SignPayload failed, %s", err)
 	}
 
-	sender := &accesscontrol.SerializedMember{
+	sender := &accesscontrol.Member{
 		OrgId:      orgId,
 		MemberInfo: userCrtBytes,
-		IsFullCert: true,
 	}
 
 	entry := &common.EndorsementEntry{
 		Signer:    sender,
 		Signature: signBytes,
 	}
+	//req := &common.TxRequest{Payload: payload}
+	//req.Endorsers = []*common.EndorsementEntry{
+	//	entry,
+	//}
 
-	payload.Endorsement = []*common.EndorsementEntry{
-		entry,
-	}
+	//signedPayloadBytes, err := proto.Marshal(payload)
+	//if err != nil {
+	//	return nil, fmt.Errorf("marshal config update sigend payload failed, %s", err)
+	//}
 
-	signedPayloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("marshal config update sigend payload failed, %s", err)
-	}
-
-	return signedPayloadBytes, nil
+	return entry, nil
 }
 
 func signTx(privateKey crypto.PrivateKey, cert *bcx509.Certificate, msg []byte) ([]byte, error) {
@@ -317,7 +314,7 @@ func dealUserCrt(userCrtFilePath string) (userCrtBytes []byte, userCrt *bcx509.C
 	}
 
 	// 将证书转换为证书对象
-	userCrt, err = sdk.ParseCert(userCrtBytes)
+	userCrt, err = bcx509.ParseCertificate(userCrtBytes)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ParseCert failed, %s", err)
 	}

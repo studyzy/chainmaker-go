@@ -8,12 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package payload
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 
@@ -91,7 +91,7 @@ func createConfigUpdatePayload() error {
 		}
 		payload.Parameters = append(payload.Parameters, &sdkPbCommon.KeyValuePair{
 			Key:   s[0],
-			Value: s[1],
+			Value: []byte(s[1]),
 		})
 	}
 
@@ -107,46 +107,22 @@ func createConfigUpdatePayload() error {
 	return nil
 }
 
-func GenerateInstallContractPayload(contractName, version string, runtimeType sdkPbCommon.RuntimeType, bytecode []byte,
-	initParameters []*sdkPbCommon.KeyValuePair) (*sdkPbCommon.Payload, error) {
-	var pairs []*sdkPbCommon.KeyValuePair
-	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   syscontract.InitContract_CONTRACT_NAME.String(),
-		Value: contractName,
-	})
-	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   syscontract.InitContract_CONTRACT_VERSION.String(),
-		Value: version,
-	})
-	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String(),
-		Value: runtimeType.String(),
-	})
-	pairs = append(pairs, &sdkPbCommon.KeyValuePair{
-		Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
-		Value: base64.StdEncoding.EncodeToString(bytecode),
-	})
-	for _, kv := range initParameters {
-		pairs = append(pairs, kv)
-	}
-	payload := &sdkPbCommon.TransactPayload{
-		ContractName: sdkPbCommon.SystemContract_CONTRACT_MANAGE.String(),
-		Method:       syscontract.ContractManageFunction_INIT_CONTRACT.String(),
-		Parameters:   pairs,
-	}
-	return payload, nil
-}
-
 func createContractMgmtPayload() error {
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
+	if err != nil {
+		return err
+	}
+	defer cc.Stop()
+
 	runtimeValue, ok := sdkPbCommon.RuntimeType_value[strings.ToUpper(runtime)]
 	if !ok {
 		return fmt.Errorf("Runtime invalid: %s", runtime)
 	}
-	codeBytes, err := ioutil.ReadFile(byteCodePath)
+	_, err = os.Stat(byteCodePath)
 	if err != nil {
 		return fmt.Errorf("Read from file %s error: %s", byteCodePath, err)
 	}
-	payload, err := GenerateInstallContractPayload(contractName, version, sdkPbCommon.RuntimeType(runtimeValue), codeBytes, []*sdkPbCommon.KeyValuePair{})
+	payload, err := cc.CreateContractCreatePayload(contractName, version, byteCodePath, sdkPbCommon.RuntimeType(runtimeValue), []*sdkPbCommon.KeyValuePair{})
 	if err != nil {
 		return fmt.Errorf("Generate install contract payload error: %s", err)
 	}
@@ -158,7 +134,7 @@ func createContractMgmtPayload() error {
 		}
 		payload.Parameters = append(payload.Parameters, &sdkPbCommon.KeyValuePair{
 			Key:   s[0],
-			Value: s[1],
+			Value: []byte(s[1]),
 		})
 	}
 

@@ -7,10 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package bulletproofs
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 
 	"github.com/spf13/cobra"
 )
@@ -43,7 +44,7 @@ func pedersenNeg() error {
 			return err
 		}
 
-		neg, err := bulletproofs.Helper().NewBulletproofs().PedersenNeg(commitment)
+		neg, err := bulletproofs.PedersenNeg(commitment)
 		if err != nil {
 			return err
 		}
@@ -59,7 +60,7 @@ func pedersenNeg() error {
 			return err
 		}
 
-		neg, err := bulletproofs.Helper().NewBulletproofs().PedersenNegOpening(opening)
+		neg, err := bulletproofs.PedersenNegOpening(opening)
 		if err != nil {
 			return err
 		}
