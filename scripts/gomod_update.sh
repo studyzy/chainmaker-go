@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+set -x
 BRANCH=v2.0.0_newpb
 
 cd ../module/accesscontrol
