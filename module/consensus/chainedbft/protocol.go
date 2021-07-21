@@ -94,9 +94,6 @@ func (cbi *ConsensusChainedBftImpl) processNewPropose(height, level uint64, preB
 
 //processProposedBlock receive proposed block form core module, then go to new level
 func (cbi *ConsensusChainedBftImpl) processProposedBlock(block *common.Block) {
-	cbi.mtx.Lock()
-	defer cbi.mtx.Unlock()
-
 	height := cbi.smr.getHeight()
 	level := cbi.smr.getCurrentLevel()
 	cbi.logger.Debugf(`processProposedBlock start, block height: [%v], level: [%v]`, block.Header.BlockHeight, level)
@@ -309,8 +306,6 @@ func (cbi *ConsensusChainedBftImpl) validateProposer(msg *chainedbftpb.Consensus
 }
 
 func (cbi *ConsensusChainedBftImpl) processFetchResp(msg *chainedbftpb.ConsensusMsg) {
-	cbi.mtx.Lock()
-	defer cbi.mtx.Unlock()
 	if err := cbi.validateBlockFetchRsp(msg); err != nil {
 		return
 	}
@@ -406,9 +401,6 @@ func (cbi *ConsensusChainedBftImpl) processBlockAndQC(blockPair *chainedbftpb.Bl
 }
 
 func (cbi *ConsensusChainedBftImpl) processProposal(msg *chainedbftpb.ConsensusMsg) error {
-	cbi.mtx.Lock()
-	defer cbi.mtx.Unlock()
-
 	var (
 		proposalMsg = msg.Payload.GetProposalMsg()
 		proposal    = proposalMsg.ProposalData
@@ -724,9 +716,6 @@ func (cbi *ConsensusChainedBftImpl) processVote(msg *chainedbftpb.ConsensusMsg) 
 		vote      = voteMsg.VoteData
 		authorIdx = vote.GetAuthorIdx()
 	)
-	cbi.mtx.Lock()
-	defer cbi.mtx.Unlock()
-
 	cbi.logger.Debugf("service selfIndexInEpoch [%v] processVote: authorIdx:[%v] voteBaseInfo:[%d:%d:%d], expected:[%v:%v:%v]",
 		cbi.selfIndexInEpoch, authorIdx, vote.Height, vote.Level, vote.EpochId, cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.getEpochId())
 	if vote.Level < cbi.smr.getCurrentLevel() || vote.EpochId != cbi.smr.getEpochId() {
@@ -958,8 +947,6 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 }
 
 func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
-	cbi.mtx.Lock()
-	defer cbi.mtx.Unlock()
 	cbi.logger.Debugf("processBlockCommitted received has committed block, height:%d, hash:%x",
 		block.Header.BlockHeight, block.Header.BlockHash)
 	// 1. check base commit block info
