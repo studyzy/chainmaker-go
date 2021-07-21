@@ -33,7 +33,7 @@ import (
 
 var (
 	CHAIN1 = "chain1"
-	isTls  = false
+	isTls  = true
 )
 
 func getChainConfig() *configPb.ChainConfig {

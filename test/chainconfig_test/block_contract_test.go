@@ -121,3 +121,34 @@ func TestGetBlockByHash(t *testing.T) {
 	blockHash := blockInfo.Block.Header.BlockHash
 	fmt.Println("blockHash", string(blockHash), hex.EncodeToString(blockHash))
 }
+
+// 查询交易
+func TestGetTxById(t *testing.T) {
+	conn, err := native.InitGRPCConnect(isTls)
+	if err != nil {
+		panic(err)
+	}
+	client := apiPb.NewRpcNodeClient(conn)
+
+	fmt.Println("============ get tx by txId============")
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+		{
+			Key:   "txId",
+			Value: []byte("d74f339a0b6d496d94bfb35e2171364e8fcd1bb5833d46d8ad42c343eceeeacb"),
+		},
+	}
+
+	sk, member := native.GetUserSK(1)
+	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(), Pairs: pairs})
+	if len(resp.Message) != 0 {
+		fmt.Println(resp.Message)
+		return
+	}
+	tx := &commonPb.TransactionInfo{}
+	if err = proto.Unmarshal(resp.ContractResult.Result, tx); err != nil {
+		panic(err)
+	}
+	fmt.Println(tx)
+}

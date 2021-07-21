@@ -14,7 +14,6 @@ package native
 import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -40,11 +39,13 @@ var (
 	IP   = "localhost"
 	Port = 12301
 
-	certPathPrefix = "../../config"
-	WasmPath       = "../wasm/counter-go.wasm"
-	OrgIdFormat    = "wx-org%s.chainmaker.org"
-	UserKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
-	UserCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
+	certPathPrefix     = "../../config"
+	WasmPath           = "../wasm/counter-go.wasm"
+	OrgIdFormat        = "wx-org%s.chainmaker.org"
+	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
+	UserCrtPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
+	UserSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
+	UserSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
 
 	DefaultUserKeyPath = fmt.Sprintf(UserKeyPathFmt, "1")
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
@@ -125,7 +126,6 @@ func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.Member, client *apiPb.RpcN
 		Method:         msg.MethodName,
 		Parameters:     msg.Pairs,
 	}
-
 
 	req := &commonPb.TxRequest{
 		Payload: header,
@@ -310,7 +310,7 @@ func aclSign(msg *commonPb.Payload) ([]*commonPb.EndorsementEntry, error) {
 func GetUserSK(index int) (crypto.PrivateKey, *acPb.Member) {
 	numStr := strconv.Itoa(index)
 
-	keyPath := fmt.Sprintf(UserKeyPathFmt, numStr)
+	keyPath := fmt.Sprintf(UserSignKeyPathFmt, numStr)
 	file, err := ioutil.ReadFile(keyPath)
 	if err != nil {
 		panic(err)
@@ -319,7 +319,7 @@ func GetUserSK(index int) (crypto.PrivateKey, *acPb.Member) {
 	if err != nil {
 		panic(err)
 	}
-	certPath := fmt.Sprintf(UserCrtPathFmt, numStr)
+	certPath := fmt.Sprintf(UserSignCrtPathFmt, numStr)
 	file2, err := ioutil.ReadFile(certPath)
 	if err != nil {
 		panic(err)
@@ -350,7 +350,7 @@ func GetAdminSK(index int) (crypto.PrivateKey, *acPb.Member) {
 
 	userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
 	file2, err := ioutil.ReadFile(userCrtPath)
-	fmt.Println("node", numStr, "crt", string(file2))
+	//fmt.Println("node", numStr, "crt", string(file2))
 	if err != nil {
 		panic(err)
 	}
@@ -415,7 +415,7 @@ func UpdateSysRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *InvokeCon
 	}
 
 	// 构造Header
-	header := &commonPb.Payload{
+	payload := &commonPb.Payload{
 		ChainId: msg.ChainId,
 		//Sender:         sender,
 		TxType:         msg.TxType,
@@ -428,11 +428,12 @@ func UpdateSysRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *InvokeCon
 		Sequence:       5,
 	}
 
-
+	entries, err := aclSign(payload)
 
 	req := &commonPb.TxRequest{
-		Payload: header,
-		Sender:  &commonPb.EndorsementEntry{Signer: sender},
+		Payload:   payload,
+		Sender:    &commonPb.EndorsementEntry{Signer: sender},
+		Endorsers: entries,
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -447,13 +448,13 @@ func UpdateSysRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *InvokeCon
 		log.Fatalf(signFailedErr, err.Error())
 	}
 
-	fmt.Println(crypto.CRYPTO_ALGO_SHA256, "signBytes"+hex.EncodeToString(signBytes), "rawTxBytes="+hex.EncodeToString(rawTxBytes))
+	//fmt.Println(crypto.CRYPTO_ALGO_SHA256, "signBytes"+hex.EncodeToString(signBytes), "rawTxBytes="+hex.EncodeToString(rawTxBytes))
 	err = signer.Verify(crypto.CRYPTO_ALGO_SHA256, rawTxBytes, signBytes)
 	if err != nil {
 		panic(err)
 	}
 
 	req.Sender.Signature = signBytes
-	fmt.Println(req)
+	fmt.Printf("\n\n============request param↓============\n %+v \n============request param↑============\n\n", req)
 	return client.SendRequest(ctx, req)
 }
