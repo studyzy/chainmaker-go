@@ -334,7 +334,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 }
 
 func checkContractName(name string) bool {
-	reg := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
+	reg := regexp.MustCompile("^[a-zA-Z0-9_][a-zA-Z0-9_]{1,128}$")
 	return reg.Match([]byte(name))
 }
 func checkEvmAddress(addr string) bool {
