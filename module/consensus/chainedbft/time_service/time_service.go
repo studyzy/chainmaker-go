@@ -25,6 +25,11 @@ const (
 	ROUND_TIMEOUT
 )
 
+const (
+	DefaultRoundTimeout         = 6000
+	DefaultRoundTimeoutInterval = 500
+)
+
 var (
 	RoundTimeout         time.Duration
 	RoundTimeoutInterval time.Duration

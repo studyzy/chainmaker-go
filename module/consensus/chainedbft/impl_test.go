@@ -13,13 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
 	"chainmaker.org/chainmaker/protocol/test"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/consensus_mock"
+	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/msgbus"
@@ -90,8 +89,8 @@ func initChainConf(filePath string, t *testing.T) (*chainconf.ChainConf, error) 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	store := mock.NewMockBlockchainStore(ctrl)
-	store.EXPECT().ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
-		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
+	store.EXPECT().ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
 	nodecf, _ := chainconf.NewChainConf(
 		chainconf.WithBlockchainStore(store),
 	)
@@ -304,31 +303,31 @@ func initOneNode(t *testing.T) {
 	createNode(t, 0, chainid, buses, certnodes, false, genesis)
 }
 
-//
-//func cfgChainedBftNode(t *testing.T) {
-//	t.Log("cfg chainedBft...")
-//	for _, cbi := range chainedBftNode {
-//		cbi.logger.Infof("service selfIndexInEpoch %v started consensus.chainedbft", cbi.selfIndexInEpoch)
-//		var err error
-//		cbi.chainStore, err = openChainStore(cbi.ledgerCache, cbi.blockCommitter, cbi.store, cbi, cbi.logger)
-//		if err != nil {
-//			cbi.logger.Errorf("failed to new consensus service, err %v", err)
-//		}
-//		//cbi.smr.safetyRules = safetyrules.NewSafetyRules(cbi.logger, cbi.chainStore.blockPool)
-//		cbi.commitHeight = cbi.chainStore.getCommitHeight()
-//		cbi.createEpoch(cbi.commitHeight)
-//		epoch := cbi.nextEpoch
-//		cbi.msgPool = epoch.msgPool
-//		cbi.selfIndexInEpoch = epoch.index
-//		cbi.smr.paceMaker = liveness.NewPacemaker(cbi.logger, cbi.selfIndexInEpoch, 0, epoch.epochId, cbi.timerService)
-//		cbi.smr.forwardNewHeightIfNeed()
-//		cbi.nextEpoch = nil
-//
-//		cbi.msgbus.Register(msgbus.ProposedBlock, cbi)
-//		cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)
-//		cbi.msgbus.Register(msgbus.BlockInfo, cbi)
-//	}
-//}
+func cfgChainedBftNode(t *testing.T) {
+	t.Log("cfg chainedBft...")
+	for _, cbi := range chainedBftNode {
+		cbi.logger.Infof("service selfIndexInEpoch %v started consensus.chainedbft", cbi.selfIndexInEpoch)
+		var err error
+		cbi.chainStore, err = openChainStore(cbi.ledgerCache, cbi.blockCommitter, cbi.store, cbi, cbi.logger)
+		if err != nil {
+			cbi.logger.Errorf("failed to new consensus service, err %v", err)
+		}
+		//cbi.smr.safetyRules = safetyrules.NewSafetyRules(cbi.logger, cbi.chainStore.blockPool)
+		cbi.commitHeight = cbi.chainStore.getCommitHeight()
+		cbi.createEpoch(cbi.commitHeight)
+		epoch := cbi.nextEpoch
+		cbi.smr.initCommittee(epoch.useValidators)
+		cbi.msgPool = epoch.msgPool
+		cbi.selfIndexInEpoch = epoch.index
+		cbi.smr.paceMaker = liveness.NewPacemaker(cbi.logger, cbi.selfIndexInEpoch, 0, epoch.epochId, cbi.timerService)
+		cbi.smr.forwardNewHeightIfNeed()
+		cbi.nextEpoch = nil
+
+		cbi.msgbus.Register(msgbus.ProposedBlock, cbi)
+		cbi.msgbus.Register(msgbus.RecvConsensusMsg, cbi)
+		cbi.msgbus.Register(msgbus.BlockInfo, cbi)
+	}
+}
 
 //func TestSignAndVerifyMsg(t *testing.T) {
 //	initOneNode(t)

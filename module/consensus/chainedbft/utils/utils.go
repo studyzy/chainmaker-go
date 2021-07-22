@@ -42,18 +42,19 @@ func GetLevelFromBlock(block *common.Block) (uint64, error) {
 	if err != nil || args == nil {
 		return 0, err
 	}
-	return args.Level, nil
+	return uint64(args.Level), nil
 }
 
 //GetQCFromBlock get qc from block
 func GetQCFromBlock(block *common.Block) []byte {
+	var qc []byte = nil
 	if block == nil || block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return nil
 	}
-	if qc, ok := block.AdditionalData.ExtraData["QC"]; ok {
-		return qc
+	if v, ok := block.AdditionalData.ExtraData["QC"]; ok {
+		qc = v
 	}
-	return nil
+	return qc
 }
 
 //GetLevelFromQc get level from qc
@@ -71,7 +72,9 @@ func AddQCtoBlock(block *common.Block, qc []byte) error {
 		return nil
 	}
 	if block.AdditionalData == nil {
-		block.AdditionalData = &common.AdditionalData{}
+		block.AdditionalData = &common.AdditionalData{
+			ExtraData: make(map[string][]byte),
+		}
 	}
 	if block.AdditionalData.ExtraData == nil {
 		block.AdditionalData.ExtraData = make(map[string][]byte)
@@ -107,7 +110,7 @@ func SignConsensusMsg(msg *chainedbftpb.ConsensusMsg, hashType string,
 	if err != nil {
 		return fmt.Errorf("sign data failed, err %v data %v", err, data)
 	}
-	serializeMember, err := signer.GetMember()
+	serializeMember, err := signer.GetMember(true)
 	if err != nil {
 		return fmt.Errorf("get signer serializeMember failed, err %v", err)
 	}
@@ -163,13 +166,14 @@ func VerifyDataSign(data []byte, signEnrty *common.EndorsementEntry,
 		return fmt.Errorf("new principal error %v", err)
 	}
 
-	ok, err := ac.VerifyPrincipal(principal)
+	result, err := ac.VerifyPrincipal(principal)
 	if err != nil {
 		return fmt.Errorf("verify principal failed, error %v, data %v", err, data)
 	}
-	if !ok {
-		return fmt.Errorf("verify failed, result %v, data %v", ok, data)
+	if !result {
+		return fmt.Errorf("verify failed, result %v, data %v", result, data)
 	}
+
 	return nil
 }
 

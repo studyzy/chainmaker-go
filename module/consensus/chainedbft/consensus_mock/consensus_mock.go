@@ -14,8 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -140,7 +138,7 @@ func (cm *MockCommitter) AddBlock(block *commonPb.Block) error {
 		return errors.New("consensusArgs.ConsensusData is nil")
 	}
 	rwset, _ := proto.Marshal(consensusArgs.ConsensusData)
-	cm.store.WriteObject(syscontract.SystemContract_GOVERNANCE.String(), rwset)
+	cm.store.WriteObject(commonPb.SystemContract_GOVERNANCE.String(), rwset)
 	// chain.proposedCache.ClearProposedBlock(block.Header.BlockHeight)
 	// chain.proposedCache.ResetProposedThisRound()
 	cm.msgBus.Publish(msgbus.BlockInfo, block) // synchronize new block height to consensus and sync module
@@ -471,7 +469,7 @@ func NewMockMockBlockchainStore(gensis *commonPb.Block, cf *chainconf.ChainConf)
 	bs.blockList = append(bs.blockList, gensis)
 	config := cf.ChainConfig()
 	bconfig, _ := proto.Marshal(config)
-	bs.objectMap[syscontract.SystemContract_CHAIN_CONFIG.String()] = bconfig
+	bs.objectMap[commonPb.SystemContract_CHAIN_CONFIG.String()] = bconfig
 	return bs
 }
 

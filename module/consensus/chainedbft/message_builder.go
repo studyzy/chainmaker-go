@@ -25,7 +25,7 @@ func (cbi *ConsensusChainedBftImpl) constructBlock(block *common.Block, level ui
 		err     error
 		txRWSet *common.TxRWSet
 	)
-	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(cbi.proposalCache, block, cbi.governanceContract); err != nil {
+	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(block, cbi.store, cbi.proposalCache, cbi.ledgerCache); err != nil {
 		cbi.logger.Errorf(`CheckAndCreateGovernmentArgs err!`)
 		return nil
 	}
