@@ -172,7 +172,9 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
         } else if kv.Key == syscontract.SubscribeTx_CONTRACT_NAME.String() {
         	contractName = string(kv.Value)
         } else if kv.Key == syscontract.SubscribeTx_TX_IDS.String() {
-        	txIds = strings.Split(string(kv.Value), ",")
+            if kv.Value != nil {
+                txIds = strings.Split(string(kv.Value), ",")
+            }
         }
 
         if err != nil {
