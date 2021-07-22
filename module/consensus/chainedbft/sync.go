@@ -78,7 +78,7 @@ func (sm *syncManager) reqLoop() {
 				sm.logger.Debugf("receive all response that was met the condition from peer: %d", req.targetPeer)
 				continue
 			}
-			sm.logger.Errorf("No response was received that met the condition from peer:%d", req.targetPeer)
+			sm.logger.Warnf("No response was received that met the condition from peer:%d", req.targetPeer)
 		case <-sm.quitC:
 			return
 		}
@@ -90,7 +90,7 @@ func (sm *syncManager) startSyncReq(req *blockSyncReq) bool {
 		atomic.AddUint64(&sm.currReqID, 1)
 	}()
 	msg := sm.constructReqMsg(req)
-	sm.server.signAndSendToPeer(msg, req.targetPeer)
+	sm.server.signAndSendToPeer(msg, req.height, req.targetPeer)
 	return true
 }
 

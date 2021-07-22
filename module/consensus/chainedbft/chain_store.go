@@ -7,14 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
-	"bytes"
 	"fmt"
-	"sync"
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/pb-go/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol"
@@ -29,7 +26,7 @@ type chainStore struct {
 	blockCommitter  protocol.BlockCommitter  // Processing block committed on the chain
 	blockChainStore protocol.BlockchainStore // Provide information queries on the chain
 
-	rwMtx            sync.RWMutex             // Only the following three elements are protected
+	//rwMtx            sync.RWMutex             // Only the following three elements are protected
 	commitLevel      uint64                   // The latest block level on the chain
 	commitHeight     uint64                   // The latest block height on the chain
 	commitQuorumCert *chainedbftpb.QuorumCert // The latest committed QC on the chain
@@ -37,31 +34,35 @@ type chainStore struct {
 	blockPool *blockpool.BlockPool // Cache block and QC information
 }
 
-func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCommitter,
-	store protocol.BlockchainStore, server *ConsensusChainedBftImpl, logger *logger.CMLogger) (*chainStore, error) {
-
-	chainStore := &chainStore{
-		ledger:          ledger,
-		logger:          logger,
-		server:          server,
-		blockCommitter:  blockCommitter,
-		blockChainStore: store,
-	}
-	bestBlock := ledger.GetLastCommittedBlock()
-	if bestBlock == nil {
-		return nil, fmt.Errorf("openChainStore failed, get best block from ledger")
-	}
+func initChainStore(server *ConsensusChainedBftImpl) (*chainStore, error) {
+	bestBlock := server.ledgerCache.GetLastCommittedBlock()
 	if bestBlock.Header.BlockHeight == 0 {
 		if err := initGenesisBlock(bestBlock); err != nil {
 			return nil, err
 		}
 	}
-	if err := chainStore.updateCommitCacheInfo(bestBlock); err != nil {
-		return nil, fmt.Errorf("openChainStore failed, update commit cache info, err %v", err)
+	bestBlkQCBz := utils.GetQCFromBlock(bestBlock)
+	if len(bestBlkQCBz) == 0 {
+		return nil, fmt.Errorf("get qc from block failed [%d:%x]", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
+	}
+	bestBlkQC := &chainedbftpb.QuorumCert{}
+	if err := proto.Unmarshal(bestBlkQCBz, bestBlkQC); err != nil {
+		return nil, err
 	}
 
-	logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
-	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, chainStore.getCommitQC(), 20)
+	chainStore := &chainStore{
+		server:          server,
+		ledger:          server.ledgerCache,
+		logger:          server.logger,
+		blockCommitter:  server.blockCommitter,
+		blockChainStore: server.store,
+
+		commitLevel:      bestBlkQC.GetLevel(),
+		commitHeight:     bestBlock.GetHeader().GetBlockHeight(),
+		commitQuorumCert: bestBlkQC,
+		blockPool:        blockpool.NewBlockPool(bestBlock, bestBlkQC, 20),
+	}
+	chainStore.logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
 	return chainStore, nil
 }
 
@@ -84,43 +85,30 @@ func initGenesisBlock(block *common.Block) error {
 }
 
 func (cs *chainStore) updateCommitCacheInfo(bestBlock *common.Block) error {
-	var (
-		lastQC []byte
-		qc     = new(chainedbftpb.QuorumCert)
-	)
-	if lastQC = utils.GetQCFromBlock(bestBlock); len(lastQC) == 0 {
-		return fmt.Errorf("nil qc from best block at height %v ", bestBlock.GetHeader().GetBlockHeight())
+	qc := cs.blockPool.GetQCByID(string(bestBlock.Header.BlockHash))
+	if qc == nil {
+		return fmt.Errorf("not find committed block's qc from block[%d:%x]",
+			bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
 	}
-	if err := proto.Unmarshal(lastQC, qc); err != nil {
-		return fmt.Errorf("unmarshal qc from best block failed, err %v", err)
-	}
-	cs.rwMtx.Lock()
-	defer cs.rwMtx.Unlock()
-	cs.commitHeight = uint64(bestBlock.GetHeader().GetBlockHeight())
 	cs.commitLevel = qc.GetLevel()
+	cs.commitHeight = bestBlock.GetHeader().GetBlockHeight()
 	cs.commitQuorumCert = qc
 	return nil
 }
 
 func (cs *chainStore) getCommitQC() *chainedbftpb.QuorumCert {
-	cs.rwMtx.RLock()
-	defer cs.rwMtx.RUnlock()
 	return cs.commitQuorumCert
 }
 
 func (cs *chainStore) getCommitHeight() uint64 {
-	cs.rwMtx.RLock()
-	defer cs.rwMtx.RUnlock()
 	return cs.commitHeight
 }
 
 func (cs *chainStore) getCommitLevel() uint64 {
-	cs.rwMtx.RLock()
-	defer cs.rwMtx.RUnlock()
 	return cs.commitLevel
 }
 
-func (cs *chainStore) insertBlock(block *common.Block) error {
+func (cs *chainStore) insertBlock(block *common.Block, curLevel uint64) error {
 	if block == nil {
 		return fmt.Errorf("insertBlock failed, nil block")
 	}
@@ -128,19 +116,11 @@ func (cs *chainStore) insertBlock(block *common.Block) error {
 		return nil
 	}
 	var (
-		err         error
-		curLevel    uint64
-		prevBlock   *common.Block
-		rootBlockQc = new(chainedbftpb.QuorumCert)
+		err       error
+		prevBlock *common.Block
 	)
-	if curLevel, err = utils.GetLevelFromBlock(block); err != nil {
-		return fmt.Errorf("insertBlock failed, get level from block fail, %v", err)
-	}
-	if err = proto.Unmarshal(utils.GetQCFromBlock(cs.blockPool.GetRootBlock()), rootBlockQc); err != nil {
-		return fmt.Errorf("insertBlock failed, proto unmarshal fail, %v", err)
-	}
-	if curLevel <= rootBlockQc.GetLevel() {
-		return fmt.Errorf("insertBlock failed, older block")
+	if rootBlockQc := cs.blockPool.GetRootQC(); curLevel <= rootBlockQc.GetLevel() {
+		return fmt.Errorf("insertBlock failed, older block, blkLevel: %d, rootLevel: %d", curLevel, rootBlockQc.Level)
 	}
 	if prevBlock = cs.blockPool.GetBlockByID(string(block.GetHeader().GetPreBlockHash())); prevBlock == nil {
 		return fmt.Errorf("insertBlock failed, get previous block is nil")
@@ -149,13 +129,8 @@ func (cs *chainStore) insertBlock(block *common.Block) error {
 		return fmt.Errorf("insertBlock failed, invalid block height [%v], expected [%v]", block.GetHeader().GetBlockHeight(),
 			prevBlock.GetHeader().BlockHeight+1)
 	}
-
-	preQc := new(chainedbftpb.QuorumCert)
-	if err = proto.Unmarshal(utils.GetQCFromBlock(prevBlock), preQc); err != nil {
-		return fmt.Errorf("insertBlock failed, proto unmarshal fail, %v", err)
-	}
-	if preQc.GetLevel() >= curLevel {
-		return fmt.Errorf("insertBlock failed, invalid block level")
+	if preQc := cs.blockPool.GetQCByID(string(prevBlock.Header.BlockHash)); preQc != nil && preQc.GetLevel() >= curLevel {
+		return fmt.Errorf("insertBlock failed, invalid block level, blkLevel: %d, prevQc: %v", curLevel, preQc)
 	}
 	if err = cs.blockPool.InsertBlock(block); err != nil {
 		return fmt.Errorf("insertBlock failed: %s, failed to insert block %v", err, block.GetHeader().GetBlockHeight())
@@ -167,7 +142,7 @@ func (cs *chainStore) getBlocks(height uint64) []*common.Block {
 	return cs.blockPool.GetBlocks(height)
 }
 
-func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
+func (cs *chainStore) commitBlock(block *common.Block, ch chan<- interface{}) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
 	var (
 		qcData []byte
 		blocks []*common.Block
@@ -192,37 +167,17 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 			cs.logger.Errorf("commit block failed, add qc to block err, %v", err)
 			return lastCommitted, lastCommittedLevel, err
 		}
-		if err = cs.blockCommitter.AddBlock(newBlock); err == commonErrors.ErrBlockHadBeenCommited {
-			hadCommitBlock, getBlockErr := cs.blockChainStore.GetBlock(newBlock.GetHeader().GetBlockHeight())
-			if getBlockErr != nil {
-				cs.logger.Errorf("commit block failed, block had been committed, get block err, %v",
-					getBlockErr)
-				return lastCommitted, lastCommittedLevel, getBlockErr
-			}
-			if !bytes.Equal(hadCommitBlock.GetHeader().GetBlockHash(), newBlock.GetHeader().GetBlockHash()) {
-				cs.logger.Errorf("commit block failed, block had been committed, hash unequal err, %v",
-					getBlockErr)
-				return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, block had been commited, hash unequal")
-			}
-		} else if err != nil {
-			cs.logger.Errorf("commit block failed, add block err, %v", err)
-			return lastCommitted, lastCommittedLevel, err
-		}
+		ch <- newBlock
 		lastCommitted = newBlock
 		lastCommittedLevel = qc.Level
 	}
-	if err = cs.pruneBlockStore(string(block.GetHeader().GetBlockHash())); err != nil {
-		cs.logger.Errorf("commit block failed, prunning block store err, %v", err)
-		return lastCommitted, lastCommittedLevel, err
-	}
-	cs.logger.Debugf("end commit block, lastCommitBlock:[%d:%x], lastCommitLevel: %d",
-		lastCommitted.Header.BlockHeight, lastCommitted.Header.BlockHash, lastCommittedLevel)
+	ch <- string(block.GetHeader().GetBlockHash())
+	ch <- uint64(lastCommitted.Header.BlockHeight)
 	return lastCommitted, lastCommittedLevel, nil
 }
 
 func (cs *chainStore) pruneBlockStore(nextRootID string) error {
 	err := cs.blockPool.PruneBlock(nextRootID)
-	//cs.logger.Debugf("chainStore blockPool content: %s", cs.blockPool.Details())
 	return err
 }
 
@@ -235,8 +190,8 @@ func (cs *chainStore) insertQC(qc *chainedbftpb.QuorumCert) error {
 	if qc.EpochId != cs.server.smr.getEpochId() {
 		// When the generation switches, the QC of the rootBlock is added again,
 		// and the rootQC is not consistent with the current generation ID of the node
-		if hasQC, _ := cs.getQC(string(qc.BlockId), qc.Height); hasQC != nil {
-			cs.logger.Debugf("find qc:[%x], height:[%d]", qc.BlockId, qc.Height)
+		if hasQC, err := cs.getQC(string(qc.BlockId), qc.Height); hasQC != nil || err != nil {
+			cs.logger.Warnf("find qc:[%x], height:[%d], err: %v", qc.BlockId, qc.Height, err)
 			return nil
 		}
 		return fmt.Errorf("insert qc failed, input err qc.epochid: [%v], node epochID: [%v]",
@@ -249,7 +204,7 @@ func (cs *chainStore) insertQC(qc *chainedbftpb.QuorumCert) error {
 }
 
 func (cs *chainStore) insertCompletedBlock(block *common.Block) error {
-	if block.GetHeader().GetBlockHeight() <= uint64(cs.getCommitHeight()) {
+	if block.GetHeader().GetBlockHeight() <= cs.getCommitHeight() {
 		return nil
 	}
 	if err := cs.updateCommitCacheInfo(block); err != nil {
@@ -258,7 +213,8 @@ func (cs *chainStore) insertCompletedBlock(block *common.Block) error {
 	if err := cs.blockPool.InsertBlock(block); err != nil {
 		return err
 	}
-	if err := cs.blockPool.InsertQC(cs.getCommitQC()); err != nil {
+	// todo. may be delete the line
+	if err := cs.blockPool.InsertQC(cs.commitQuorumCert); err != nil {
 		return err
 	}
 	err := cs.pruneBlockStore(string(block.GetHeader().GetBlockHash()))

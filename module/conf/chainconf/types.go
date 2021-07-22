@@ -86,7 +86,7 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 	// block
 	if cconfig.Block.TxTimeout < 600 {
 		// timeout
-		log.Errorw("txTimeout len is low", "txTimeout len", cconfig.Block.TxTimeout)
+		log.Errorw("txTimeout less than 600", "txTimeout is", cconfig.Block.TxTimeout)
 		return nil, errors.New("tx_time is low")
 	}
 	if cconfig.Block.BlockTxCapacity < 1 {
