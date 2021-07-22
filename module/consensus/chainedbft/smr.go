@@ -64,7 +64,7 @@ func (cs *chainedbftSMR) forwardNewHeightIfNeed() error {
 		cs.logger.Errorf("get level from block error: %s, block %v", err, lastBlock)
 		return err
 	}
-	cs.safetyRules.SetLastCommittedBlock(lastBlock, level)
+	cs.safetyRules.SetLastCommittedLevel(level)
 	return nil
 }
 
@@ -128,12 +128,8 @@ func (cs *chainedbftSMR) commitRules(qc *chainedbftpb.QuorumCert) (commit bool, 
 	return cs.safetyRules.CommitRules(qc)
 }
 
-func (cs *chainedbftSMR) setLastCommittedBlock(block *common.Block, level uint64) {
-	cs.safetyRules.SetLastCommittedBlock(block, level)
-}
-
-func (cs *chainedbftSMR) getLastCommittedBlock() *common.Block {
-	return cs.safetyRules.GetLastCommittedBlock()
+func (cs *chainedbftSMR) setLastCommittedLevel(level uint64) {
+	cs.safetyRules.SetLastCommittedLevel(level)
 }
 
 func (cs *chainedbftSMR) getLastCommittedLevel() uint64 {

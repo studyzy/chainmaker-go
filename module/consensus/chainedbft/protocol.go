@@ -923,12 +923,13 @@ func (cbi *ConsensusChainedBftImpl) commitBlocksByQC(qc *chainedbftpb.QuorumCert
 	if level > cbi.chainStore.getCommitLevel() {
 		cbi.logger.Debugf("service selfIndexInEpoch [%v] processCertificates: try committing a block %v on [%x:%v]",
 			cbi.selfIndexInEpoch, block.Header.BlockHash, block.Header.BlockHeight, level)
-		lastCommittedBlock, lastCommitLevel, err := cbi.chainStore.commitBlock(block, cbi.commitMsgCh)
-		if lastCommittedBlock != nil {
-			cbi.logger.Debugf("setCommit block status")
-			cbi.smr.setLastCommittedBlock(lastCommittedBlock, lastCommitLevel)
-			cbi.logger.Debugf("on block sealed, blockHeight: %d", lastCommittedBlock.Header.BlockHeight)
-			cbi.msgPool.OnBlockSealed(uint64(lastCommittedBlock.Header.BlockHeight))
+		blocks, err := cbi.chainStore.packageBlocks(block)
+		for _, blk := range blocks {
+			if blk != nil {
+				cbi.msgbus.PublishSafe(msgbus.CommitBlock, blk)
+			} else {
+				break
+			}
 		}
 		if err != nil {
 			cbi.logger.Errorf("commit block to the chain failed, reason: %s", err)
@@ -955,8 +956,11 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 3. update commit info in the consensus
 	cbi.logger.Debugf("processBlockCommitted step 2 update the last committed block info")
 	cbi.commitHeight = block.Header.BlockHeight
+	if err := cbi.chainStore.pruneBlockStore(string(block.GetHeader().GetBlockHash())); err != nil {
+		cbi.chainStore.logger.Errorf("commit block failed, prunning block store err, %v", err)
+	}
 	cbi.msgPool.OnBlockSealed(block.Header.BlockHeight)
-	cbi.smr.setLastCommittedBlock(block, cbi.chainStore.getCommitLevel())
+	cbi.smr.setLastCommittedLevel(cbi.chainStore.getCommitLevel())
 	cbi.updateWalIndexAndTruncFile(block.Header.BlockHeight)
 	// 4. create next epoch if meet the condition
 	cbi.logger.Debugf("processBlockCommitted step 3 create epoch if meet the condition")

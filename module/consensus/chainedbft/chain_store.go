@@ -142,38 +142,36 @@ func (cs *chainStore) getBlocks(height uint64) []*common.Block {
 	return cs.blockPool.GetBlocks(height)
 }
 
-func (cs *chainStore) commitBlock(block *common.Block, ch chan<- interface{}) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
+func (cs *chainStore) packageBlocks(block *common.Block) ([]*common.Block, error) {
 	var (
-		qcData []byte
-		blocks []*common.Block
-		qc     *chainedbftpb.QuorumCert
+		qcData    []byte
+		blocks    []*common.Block
+		resBlocks []*common.Block
+		qc        *chainedbftpb.QuorumCert
+		err       error
 	)
 	if blocks = cs.blockPool.BranchFromRoot(block); blocks == nil {
-		return nil, 0, fmt.Errorf("commit block failed, no block to be committed")
+		return nil, fmt.Errorf("commit block failed, no block to be committed")
 	}
 	cs.logger.Infof("commit BranchFromRoot blocks contains [%v:%v]", blocks[0].Header.BlockHeight, blocks[len(blocks)-1].Header.BlockHeight)
 
-	for _, blk := range blocks {
+	resBlocks = make([]*common.Block, len(blocks))
+	for i, blk := range blocks {
 		if qc = cs.blockPool.GetQCByID(string(blk.GetHeader().GetBlockHash())); qc == nil {
-			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, get qc for block is nil")
+			return resBlocks, fmt.Errorf("commit block failed, get qc for block is nil")
 		}
 		if qcData, err = proto.Marshal(qc); err != nil {
-			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, marshal qc at height [%v], err %v",
-				blk.GetHeader().GetBlockHeight(), err)
+			return resBlocks, fmt.Errorf("commit block failed, marshal qc at height [%v], err %v", 	blk.GetHeader().GetBlockHeight(), err)
 		}
 
 		newBlock := proto.Clone(blk).(*common.Block)
 		if err = utils.AddQCtoBlock(newBlock, qcData); err != nil {
 			cs.logger.Errorf("commit block failed, add qc to block err, %v", err)
-			return lastCommitted, lastCommittedLevel, err
+			return resBlocks, err
 		}
-		ch <- newBlock
-		lastCommitted = newBlock
-		lastCommittedLevel = qc.Level
+		resBlocks[i] = newBlock
 	}
-	ch <- string(block.GetHeader().GetBlockHash())
-	ch <- uint64(lastCommitted.Header.BlockHeight)
-	return lastCommitted, lastCommittedLevel, nil
+	return resBlocks, nil
 }
 
 func (cs *chainStore) pruneBlockStore(nextRootID string) error {

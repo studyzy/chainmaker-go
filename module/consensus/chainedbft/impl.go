@@ -52,7 +52,6 @@ type ConsensusChainedBftImpl struct {
 	syncRespMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit response information with the block
 	internalMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit the own proposals, voting information by the local node
 	protocolMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit Hotstuff protocol information: proposal, vote
-	commitMsgCh     chan interface{}                // Transmit commit block cmd
 
 	//nextEpoch          *epochManager       // next epoch
 	commitHeight       uint64              // The height of the latest committed block
@@ -87,7 +86,6 @@ type ConsensusChainedBftImpl struct {
 
 	// Exit signal
 	quitCh        chan struct{}
-	quitCommitCh  chan struct{}
 	quitSyncReqCh chan struct{}
 }
 
@@ -107,7 +105,6 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		protocolMsgCh:      make(chan *chainedbftpb.ConsensusMsg, INTERNALCAPABILITY),
 		consBlockCh:        make(chan *common.Block, INTERNALCAPABILITY),
 		proposedBlockCh:    make(chan *common.Block, INTERNALCAPABILITY),
-		commitMsgCh:        make(chan interface{}, INTERNALCAPABILITY),
 		proposalWalIndex:   sync.Map{},
 		lastCommitWalIndex: 1,
 
@@ -126,7 +123,6 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		government:            governance.NewGovernanceContract(store, ledgerCache),
 
 		quitCh:        make(chan struct{}),
-		quitCommitCh:  make(chan struct{}),
 		quitSyncReqCh: make(chan struct{}),
 	}
 	lastCommitBlk := ledgerCache.GetLastCommittedBlock()
@@ -196,7 +192,6 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 	go cbi.syncer.start()
 	go cbi.timerService.Start()
 	go cbi.loop()
-	go cbi.commitLoop()
 	go cbi.syncReqLoop()
 	cbi.startConsensus()
 	return nil
@@ -218,7 +213,6 @@ func (cbi *ConsensusChainedBftImpl) startConsensus() {
 //Stop stop consensus
 func (cbi *ConsensusChainedBftImpl) Stop() error {
 	close(cbi.quitCh)
-	close(cbi.quitCommitCh)
 	close(cbi.quitSyncReqCh)
 	if cbi.timerService != nil {
 		cbi.timerService.Stop()
@@ -304,19 +298,6 @@ func (cbi *ConsensusChainedBftImpl) syncReqLoop() {
 				cbi.onReceiveBlockFetch(msg)
 			}
 		case <-cbi.quitSyncReqCh:
-			return
-		}
-	}
-}
-
-func (cbi *ConsensusChainedBftImpl) commitLoop() {
-	for {
-		select {
-		case msg, ok := <-cbi.commitMsgCh:
-			if ok {
-				cbi.onReceivedCommit(msg)
-			}
-		case <-cbi.quitCommitCh:
 			return
 		}
 	}

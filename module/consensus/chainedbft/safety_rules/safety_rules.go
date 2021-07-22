@@ -25,7 +25,6 @@ type SafetyRules struct {
 	chainStore protocol.BlockchainStore
 
 	lastCommittedLevel uint64        // the latest committed level in local node
-	lastCommittedBlock *common.Block // the latest committed block in local node
 
 	lastVoteMsg   *chainedbftpb.ConsensusPayload //
 	lastVoteLevel uint64                         //
@@ -63,13 +62,6 @@ func (sr *SafetyRules) GetLastVoteMsg() *chainedbftpb.ConsensusPayload {
 	return sr.lastVoteMsg
 }
 
-//GetLastCommittedBlock get last commiteed block
-func (sr *SafetyRules) GetLastCommittedBlock() *common.Block {
-	sr.RLock()
-	defer sr.RUnlock()
-	return sr.lastCommittedBlock
-}
-
 //GetLastCommittedLevel get last committeed level
 func (sr *SafetyRules) GetLastCommittedLevel() uint64 {
 	sr.RLock()
@@ -102,15 +94,13 @@ func (sr *SafetyRules) SetLastVote(vote *chainedbftpb.ConsensusPayload, level ui
 	sr.lastVoteLevel = level
 }
 
-//SetLastCommittedBlock set last committed blcok
-func (sr *SafetyRules) SetLastCommittedBlock(block *common.Block, level uint64) {
+//SetLastCommittedLevel set last committed level
+func (sr *SafetyRules) SetLastCommittedLevel(level uint64) {
 	sr.Lock()
 	defer sr.Unlock()
-	if level <= sr.lastCommittedLevel || (sr.lastCommittedBlock != nil &&
-		block.Header.BlockHeight <= sr.lastCommittedBlock.Header.BlockHeight) {
+	if level <= sr.lastCommittedLevel {
 		return
 	}
-	sr.lastCommittedBlock = block
 	sr.lastCommittedLevel = level
 }
 
