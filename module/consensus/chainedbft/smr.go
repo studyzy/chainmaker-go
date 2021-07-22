@@ -37,13 +37,10 @@ func newChainedBftSMR(server *ConsensusChainedBftImpl, epoch *epochManager) (*ch
 		paceMaker:   liveness.NewPacemaker(server.logger, epoch.index, epoch.createHeight, epoch.epochId, server.timerService),
 		safetyRules: safetyrules.NewSafetyRules(server.logger, store.blockPool, store.blockChainStore),
 	}
-	govContract, err := epoch.governanceContract.GetGovernanceContract()
-	if err != nil {
-		return nil, err
-	}
-	smr.info = newContractInfo(govContract)
+
+	smr.info = newContractInfo(epoch.governanceContract)
 	smr.logger.Debugf("currPeers [%v], lastPeers [%v], switchHeight: %d",
-		govContract.Validators, govContract.LastValidators, govContract.NextSwitchHeight)
+		epoch.governanceContract.Validators, epoch.governanceContract.LastValidators, epoch.governanceContract.NextSwitchHeight)
 	return smr, nil
 }
 
@@ -68,13 +65,8 @@ func (cs *chainedbftSMR) forwardNewHeightIfNeed() error {
 	return nil
 }
 
-func (cs *chainedbftSMR) updateContractInfo(epoch *epochManager) error {
-	govContract, err := epoch.governanceContract.GetGovernanceContract()
-	if err != nil {
-		return err
-	}
-	cs.info = newContractInfo(govContract)
-	return nil
+func (cs *chainedbftSMR) updateContractInfo(epoch *epochManager) {
+	cs.info = newContractInfo(epoch.governanceContract)
 }
 
 func (cs *chainedbftSMR) updateState(newState chainedbftpb.ConsStateType) {
@@ -97,11 +89,6 @@ func (cs *chainedbftSMR) isValidIdx(index uint64, blkHeight uint64) bool {
 
 func (cs *chainedbftSMR) min(qcHeight uint64) int {
 	return cs.info.minQuorumForQc(qcHeight)
-	//epochSwitchHeight := cs.server.governanceContract.GetSwitchHeight()
-	//if epochSwitchHeight == qcHeight {
-	//	return int(cs.server.governanceContract.GetLastGovMembersValidatorMinCount())
-	//}
-	//return int(cs.server.governanceContract.GetGovMembersValidatorMinCount())
 }
 
 func (cs *chainedbftSMR) getPeers(blkHeight uint64) []*peer {

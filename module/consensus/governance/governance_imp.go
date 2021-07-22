@@ -7,15 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package governance
 
 import (
-	"fmt"
-	"strconv"
 	"sync/atomic"
 	"unsafe"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -28,7 +25,7 @@ type GovernanceContractImp struct {
 	governmentContract *consensusPb.GovernanceContract //Cache government data
 }
 
-func NewGovernanceContract(store protocol.BlockchainStore, ledger protocol.LedgerCache) protocol.Government {
+func NewGovernanceContract(store protocol.BlockchainStore, ledger protocol.LedgerCache) *GovernanceContractImp {
 	governmentContract := &GovernanceContractImp{
 		log:                logger.GetLogger(logger.MODULE_CONSENSUS),
 		Height:             0,
@@ -80,61 +77,16 @@ func (gcr *GovernanceContractImp) GetGovernanceContract() (*consensusPb.Governan
 	return governmentContract, nil
 }
 
-//use by chainConf, check chain config before chain_config_contract run
-func (gcr *GovernanceContractImp) Verify(consensusType consensusPb.ConsensusType, chainConfig *configPb.ChainConfig) error {
-	// 1. check validators num >= 4
-	if len(chainConfig.Consensus.Nodes) < (ConstMinQuorumForQc + 1) {
-		return fmt.Errorf("set Nodes size is too minimum: %d < %d", len(chainConfig.Consensus.Nodes), ConstMinQuorumForQc+1)
-	}
-
-	// 2. check config in hotstuff
-	conConf := chainConfig.Consensus
-	for _, oneConf := range conConf.ExtConfig {
-		switch oneConf.Key {
-		case CachedLen:
-			cachedLen, err := strconv.ParseInt(string(oneConf.Value), 10, 64)
-			if err != nil || cachedLen < 0 {
-				return fmt.Errorf("set CachedLen err")
-			}
-		case RoundTimeoutMill:
-			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
-			if err != nil {
-				return fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutMill, err)
-			}
-			if v < MinimumTimeOutMill {
-				return fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutMill, v, MinimumTimeOutMill)
-			}
-		case RoundTimeoutIntervalMill:
-			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
-			if err != nil {
-				return fmt.Errorf("set %s Parse uint error: %s", RoundTimeoutIntervalMill, err)
-			}
-			if v < MinimumIntervalTimeOutMill {
-				return fmt.Errorf("set %s is too minimum, %d < %d", RoundTimeoutIntervalMill, v, MinimumIntervalTimeOutMill)
-			}
-		}
-	}
-	return nil
-}
-
 //CheckAndCreateGovernmentArgs execute after block propose,create government txRWSet,wait to add to block header
 //when block commit,government txRWSet take effect
-func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.BlockchainStore,
-	proposalCache protocol.ProposalCache, ledger protocol.LedgerCache) (*commonPb.TxRWSet, error) {
+func CheckAndCreateGovernmentArgs(proposalCache protocol.ProposalCache,
+	block *commonPb.Block, governanceContract *consensusPb.GovernanceContract) (*commonPb.TxRWSet, error) {
 	log.Debugf("CheckAndCreateGovernmentArgs start")
 
-	// 1. get GovernanceContract
-	gcr := NewGovernanceContract(store, ledger).(*GovernanceContractImp)
-	governanceContract, err := gcr.GetGovernanceContract()
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. check if chain config change
+	// 1. check if chain config change
 	if !utils.IsConfBlock(block) {
 		return nil, nil
 	}
-
 	var isConfigChg = false
 	chainConfig, err := getChainConfigFromBlock(block, proposalCache)
 	if err != nil {
@@ -146,7 +98,7 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 		}
 	}
 
-	// 3. if chain config change or switch to next epoch, change the GovernanceContract epochId
+	// 2. if chain config change or switch to next epoch, change the GovernanceContract epochId
 	if isConfigChg {
 		governanceContract.EpochId++
 		governanceContract.NextSwitchHeight = block.Header.BlockHeight

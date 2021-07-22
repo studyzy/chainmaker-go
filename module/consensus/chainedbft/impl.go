@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strconv"
 	"sync"
 	"time"
 
@@ -23,7 +24,9 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
@@ -55,9 +58,9 @@ type ConsensusChainedBftImpl struct {
 	commitMsgCh     chan interface{}                // Transmit commit block cmd
 
 	//nextEpoch          *epochManager       // next epoch
-	commitHeight       uint64              // The height of the latest committed block
-	government         protocol.Government // The management contract on the block chain
+	commitHeight       uint64 // The height of the latest committed block
 	lastCommitWalIndex uint64
+	governanceContract *consensuspb.GovernanceContract // The management contract on the block chain
 
 	// wal info
 	wal              *wal.Log
@@ -123,11 +126,15 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		blockCommitter:        blockCommitter,
 		accessControlProvider: ac,
 		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
-		government:            governance.NewGovernanceContract(store, ledgerCache),
 
 		quitCh:        make(chan struct{}),
 		quitCommitCh:  make(chan struct{}),
 		quitSyncReqCh: make(chan struct{}),
+	}
+
+	var err error
+	if service.governanceContract, err = governance.NewGovernanceContract(store, ledgerCache).GetGovernanceContract(); err != nil {
+		return nil, err
 	}
 	lastCommitBlk := ledgerCache.GetLastCommittedBlock()
 	if lastCommitBlk == nil {
@@ -137,14 +144,13 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.commitHeight = lastCommitBlk.Header.BlockHeight
 	service.timerService = timeservice.NewTimerService(service.logger)
 
-	var err error
 	if service.chainStore, err = initChainStore(service); err != nil {
 		service.logger.Errorf("new consensus service failed, err %v", err)
 		return nil, err
 	}
 
 	var epoch *epochManager
-	if epoch, err = service.createEpoch(service.commitHeight); err != nil {
+	if epoch, err = service.createEpoch(service.commitHeight, service.governanceContract); err != nil {
 		return nil, err
 	}
 	service.msgPool = epoch.msgPool
@@ -157,18 +163,17 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		return nil, err
 	}
 	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
-	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.government); err != nil {
+	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service); err != nil {
 		return nil, err
 	}
-	service.initTimeOutConfig(service.government)
+	service.initTimeOutConfig(service.governanceContract)
 	return service, nil
 }
 
-func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(government protocol.Government) {
-	contract, _ := government.GetGovernanceContract()
+func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(contract *consensuspb.GovernanceContract) {
 	base := contract.GetHotstuffRoundTimeoutMill()
 	if base == 0 {
-		base = uint64(timeservice.DefaultRoundTimeout)
+		base = uint64(governance.MinimumTimeOutMill)
 	}
 	if err := utils.VerifyTimeConfig(governance.RoundTimeoutMill, base); err == nil {
 		timeservice.RoundTimeout = time.Duration(base) * time.Millisecond
@@ -176,7 +181,7 @@ func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(government protocol.Govern
 
 	delta := contract.GetHotstuffRoundTimeoutIntervalMill()
 	if delta == 0 {
-		delta = uint64(timeservice.DefaultRoundTimeoutInterval)
+		delta = uint64(governance.MinimumIntervalTimeOutMill)
 	}
 	if err := utils.VerifyTimeConfig(governance.RoundTimeoutIntervalMill, delta); err == nil {
 		timeservice.RoundTimeoutInterval = time.Duration(delta) * time.Millisecond
@@ -668,4 +673,41 @@ func countNumFromVotes(qc *chainedbftpb.QuorumCert, currValidators []*consensus.
 		votedBlockNum++
 	}
 	return newViewNum, votedBlockNum, nil
+}
+
+//use by chainConf, check chain config before chain_config_contract run
+func (cbi *ConsensusChainedBftImpl) Verify(consensusType consensuspb.ConsensusType, chainConfig *configPb.ChainConfig) error {
+	// 1. check validators num >= 4
+	if len(chainConfig.Consensus.Nodes) < (governance.ConstMinQuorumForQc + 1) {
+		return fmt.Errorf("set Nodes size is too minimum: %d < %d", len(chainConfig.Consensus.Nodes), governance.ConstMinQuorumForQc+1)
+	}
+
+	// 2. check config in hotstuff
+	conConf := chainConfig.Consensus
+	for _, oneConf := range conConf.ExtConfig {
+		switch oneConf.Key {
+		case governance.CachedLen:
+			cachedLen, err := strconv.ParseInt(string(oneConf.Value), 10, 64)
+			if err != nil || cachedLen < 0 {
+				return fmt.Errorf("set CachedLen err")
+			}
+		case governance.RoundTimeoutMill:
+			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
+			if err != nil {
+				return fmt.Errorf("set %s Parse uint error: %s", governance.RoundTimeoutMill, err)
+			}
+			if v < governance.MinimumTimeOutMill {
+				return fmt.Errorf("set %s is too minimum, %d < %d", governance.RoundTimeoutMill, v, governance.MinimumTimeOutMill)
+			}
+		case governance.RoundTimeoutIntervalMill:
+			v, err := strconv.ParseUint(string(oneConf.Value), 10, 64)
+			if err != nil {
+				return fmt.Errorf("set %s Parse uint error: %s", governance.RoundTimeoutIntervalMill, err)
+			}
+			if v < governance.MinimumIntervalTimeOutMill {
+				return fmt.Errorf("set %s is too minimum, %d < %d", governance.RoundTimeoutIntervalMill, v, governance.MinimumIntervalTimeOutMill)
+			}
+		}
+	}
+	return nil
 }
