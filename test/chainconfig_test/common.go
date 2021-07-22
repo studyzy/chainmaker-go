@@ -39,19 +39,21 @@ var (
 	IP   = "localhost"
 	Port = 12301
 
-	certPathPrefix     = "../../config"
-	WasmPath           = "../wasm/counter-go.wasm"
-	OrgIdFormat        = "wx-org%s.chainmaker.org"
-	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
-	UserCrtPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
-	UserSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
-	UserSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
+	certPathPrefix      = "../../config"
+	WasmPath            = "../wasm/counter-go.wasm"
+	OrgIdFormat         = "wx-org%s.chainmaker.org"
+	UserKeyPathFmt      = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
+	UserCrtPathFmt      = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
+	UserSignKeyPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
+	UserSignCrtPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
+	AdminSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.key"
+	AdminSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.crt"
 
 	DefaultUserKeyPath = fmt.Sprintf(UserKeyPathFmt, "1")
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
 	DefaultOrgId       = fmt.Sprintf(OrgIdFormat, "1")
 
-	caPaths    = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
+	caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
 	prePathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
 	isTls = true
@@ -139,7 +141,8 @@ func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.Member, client *apiPb.RpcN
 	}
 
 	signer := getSigner(sk3, sender)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	//signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign(crypto.CRYPTO_ALGO_SHA256, rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 	}
@@ -274,6 +277,7 @@ func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *Invoke
 	req := &commonPb.TxRequest{
 		Payload:   payload,
 		Endorsers: entries,
+		Sender:    &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -286,8 +290,8 @@ func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *Invoke
 	signBytes, err := signer.Sign("SM3", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
+		panic(err)
 	}
-
 	req.Sender.Signature = signBytes
 	fmt.Println(req)
 	return client.SendRequest(ctx, req)
