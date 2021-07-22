@@ -11,8 +11,9 @@ import (
 	"fmt"
 	"sync"
 
-	sdk "chainmaker.org/chainmaker/sdk-go"
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 func Dispatch(client *sdk.ChainClient, contractName, method string, params map[string]string) {
@@ -31,7 +32,7 @@ func DispatchTimes(client *sdk.ChainClient, contractName, method string, params 
 	var (
 		wgSendReq sync.WaitGroup
 	)
-	times := maxi(1, sendTimes)
+	times := util.MaxInt(1, sendTimes)
 	wgSendReq.Add(times)
 	txId := GetRandTxId()
 	for i := 0; i < times; i++ {
@@ -48,7 +49,7 @@ func runInvokeContract(client *sdk.ChainClient, contractName, method string, par
 	}()
 
 	for i := 0; i < totalCntPerGoroutine; i++ {
-		resp, err := client.InvokeContract(contractName, method, "", params, int64(timeout), syncResult)
+		resp, err := client.InvokeContract(contractName, method, "", util.ConvertParameters(params), int64(timeout), syncResult)
 		if err != nil {
 			fmt.Printf("[ERROR] invoke contract failed, %s", err.Error())
 			return
@@ -68,7 +69,7 @@ func runInvokeContractOnce(client *sdk.ChainClient, contractName, method string,
 	defer func() {
 		wg.Done()
 	}()
-	resp, err := client.InvokeContract(contractName, method, txId, params, int64(timeout), syncResult)
+	resp, err := client.InvokeContract(contractName, method, txId, util.ConvertParameters(params), int64(timeout), syncResult)
 	if err != nil {
 		fmt.Printf("[ERROR] invoke contract failed, %s", err.Error())
 		return

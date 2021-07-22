@@ -23,11 +23,14 @@ func BytesToInt(b []byte) int32 {
 }
 
 // BytesToInt le bytes to int64, little endian
-func BytesToInt64(b []byte) int64 {
+func BytesToInt64(b []byte) (int64, error) {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x int64
-	binary.Read(bytesBuffer, binary.LittleEndian, &x)
-	return int64(x)
+	err := binary.Read(bytesBuffer, binary.LittleEndian, &x)
+	if err != nil {
+		return -1, err
+	}
+	return x, nil
 }
 
 // IntToBytes int32 to le bytes, little endian
@@ -38,8 +41,32 @@ func IntToBytes(x int32) []byte {
 }
 
 // Int64ToBytes int64 to le bytes, little endian
-func Int64ToBytes(x int64) []byte {
+func Int64ToBytes(x int64) ([]byte, error) {
 	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.LittleEndian, x)
-	return bytesBuffer.Bytes()
+	err := binary.Write(bytesBuffer, binary.LittleEndian, x)
+	if err != nil {
+		return nil, err
+	}
+	return bytesBuffer.Bytes(), nil
+}
+
+// BytesToInt le bytes to uint64, little endian
+func BytesToUint64(b []byte) (uint64, error) {
+	bytesBuffer := bytes.NewBuffer(b)
+	var x uint64
+	err := binary.Read(bytesBuffer, binary.LittleEndian, &x)
+	if err != nil {
+		return 0, err
+	}
+	return x, nil
+}
+
+// Uint64ToBytes uint64 to le bytes, little endian
+func Uint64ToBytes(x uint64) ([]byte, error) {
+	bytesBuffer := bytes.NewBuffer([]byte{})
+	err := binary.Write(bytesBuffer, binary.LittleEndian, x)
+	if err != nil {
+		return nil, err
+	}
+	return bytesBuffer.Bytes(), nil
 }

@@ -10,7 +10,11 @@ package client
 import (
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 )
 
 func updateBlockConfigCMD() *cobra.Command {
@@ -35,8 +39,9 @@ func updateBlockIntervalCMD() *cobra.Command {
 	}
 
 	attachFlags(cmd, []string{
+		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagOrgId, flagEnableCertHash,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 		flagBlockInterval,
 	})
 
@@ -49,7 +54,7 @@ func updateBlockIntervalCMD() *cobra.Command {
 }
 
 func updateBlockInterval() error {
-	client, err := createClientWithConfig()
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}
@@ -59,10 +64,10 @@ func updateBlockInterval() error {
 		return fmt.Errorf("get chain config failed, %s", err.Error())
 	}
 	txTimestampVerify := chainConfig.Block.TxTimestampVerify
-	txTimeout := int(chainConfig.Block.TxTimeout)
-	blockTxCap := int(chainConfig.Block.BlockTxCapacity)
-	blockSize := int(chainConfig.Block.BlockSize)
-	blockUpdatePayload, err := client.CreateChainConfigBlockUpdatePayload(txTimestampVerify, txTimeout, blockTxCap, blockSize, blockInterval)
+	txTimeout := int64(chainConfig.Block.TxTimeout)
+	blockTxCap := int64(chainConfig.Block.BlockTxCapacity)
+	blockSize := int64(chainConfig.Block.BlockSize)
+	blockUpdatePayload, err := client.CreateChainConfigBlockUpdatePayload(txTimestampVerify, txTimeout, blockTxCap, blockSize, int64(blockInterval))
 	if err != nil {
 		return fmt.Errorf("create chain config block update payload failed, %s", err.Error())
 	}
@@ -71,19 +76,16 @@ func updateBlockInterval() error {
 		return fmt.Errorf("create admin client failed, %s", err.Error())
 	}
 	defer adminClient.Stop()
-	signedPayload, err := adminClient.SignChainConfigPayload(blockUpdatePayload)
+	adminEndorser, err := adminClient.SignPayload(blockUpdatePayload)
 	if err != nil {
 		return fmt.Errorf("sign chain config payload failed, %s", err.Error())
 	}
-	mergedSignedPayload, err := client.MergeChainConfigSignedPayload([][]byte{signedPayload})
-	if err != nil {
-		return fmt.Errorf("merge chain config signed payload failed, %s", err.Error())
-	}
-	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayload)
+
+	resp, err := client.SendChainConfigUpdateRequest(blockUpdatePayload, []*common.EndorsementEntry{adminEndorser}, 0, true)
 	if err != nil {
 		return fmt.Errorf("send chain config update request failed, %s", err.Error())
 	}
-	err = checkProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, true)
 	if err != nil {
 		return fmt.Errorf("check proposal request resp failed, %s", err.Error())
 	}

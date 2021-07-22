@@ -8,6 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"strconv"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -27,11 +31,16 @@ func SubscribeBlockCMD() *cobra.Command {
 }
 
 func subscribeBlock() error {
-	payload := &commonPb.SubscribeBlockPayload{
-		StartBlock: startBlock,
-		EndBlock:   endBlock,
-		//WithRwSet:  true,
-		WithRwSet: withRwSet,
+	payload := &commonPb.Payload{
+		Parameters: []*commonPb.KeyValuePair{
+			{Key: syscontract.SubscribeBlock_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
+			{Key: syscontract.SubscribeBlock_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
+			{Key: syscontract.SubscribeBlock_WITH_RWSET.String(), Value: []byte(strconv.FormatBool(withRwSet))},
+		},
+		//StartBlock: startBlock,
+		//EndBlock:   endBlock,
+		////WithRwSet:  true,
+		//WithRwSet: withRwSet,
 	}
 
 	payloadBytes, err := proto.Marshal(payload)
@@ -39,7 +48,7 @@ func subscribeBlock() error {
 		return err
 	}
 
-	_, err = subscribeRequest(sk3, client, commonPb.TxType_SUBSCRIBE_BLOCK_INFO, chainId, payloadBytes)
+	_, err = subscribeRequest(sk3, client, syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String(), chainId, payloadBytes)
 	if err != nil {
 		return err
 	}

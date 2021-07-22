@@ -32,7 +32,7 @@ func newBlocker(chainid string, maxBlockNum int) *Blocker {
 	}
 }
 
-func (b *Blocker) createBlock(height int64) *common.Block {
+func (b *Blocker) createBlock(height uint64) *common.Block {
 	b.Lock()
 	defer b.Unlock()
 
@@ -51,7 +51,7 @@ func (b *Blocker) createBlock(height int64) *common.Block {
 		Dag: &common.DAG{},
 		Txs: []*common.Transaction{
 			{
-				Header: &common.TxHeader{
+				Payload: &common.Payload{
 					ChainId: b.chainid,
 				},
 			},
@@ -63,7 +63,7 @@ func (b *Blocker) createBlock(height int64) *common.Block {
 	block.Header.BlockHash = blockHash[:]
 
 	// txHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", blockHash, 0)))
-	// block.Txs[0].Header.TxId = string(txHash[:])
+	// block.Txs[0].Payload.TxId = string(txHash[:])
 
 	return block
 }
@@ -76,12 +76,12 @@ type mockCoreEngine struct {
 	id                string
 	msgbus            msgbus.MessageBus
 	blocker           *Blocker
-	height            int64
+	height            uint64
 	canPropose        bool
 	reachingConsensus bool
 	verifiedBlocks    []*common.Block
 	commitedBlocks    []*common.Block
-	commitEventC      chan int64
+	commitEventC      chan uint64
 }
 
 func newMockCoreEngine(t *testing.T, id string, mb msgbus.MessageBus, blocker *Blocker) *mockCoreEngine {
@@ -92,7 +92,7 @@ func newMockCoreEngine(t *testing.T, id string, mb msgbus.MessageBus, blocker *B
 		blocker:      blocker,
 		height:       1,
 		canPropose:   false,
-		commitEventC: make(chan int64),
+		commitEventC: make(chan uint64),
 	}
 
 	ce.msgbus.Register(msgbus.ProposeState, ce)

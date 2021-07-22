@@ -11,23 +11,23 @@ import (
 	"strconv"
 	"sync"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
+	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 )
 
 // SimContext record the contract context
 type SimContext struct {
 	TxSimContext   protocol.TxSimContext
-	ContractId     *commonPb.ContractId
+	Contract       *commonPb.Contract
 	ContractResult *commonPb.ContractResult
 	Log            *logger.CMLogger
 	Instance       *wasm.Instance
 
 	method        string
-	parameters    map[string]string
+	parameters    map[string][]byte
 	CtxPtr        int32
 	GetStateCache []byte // cache call method GetStateLen value result, one cache per transaction
 	ChainId       string
@@ -62,7 +62,7 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 
 	runtimeSdkType := sdkType.ToI32()
 	if int32(commonPb.RuntimeType_WASMER) == runtimeSdkType {
-		sc.parameters[protocol.ContractContextPtrParam] = strconv.Itoa(int(sc.CtxPtr))
+		sc.parameters[protocol.ContractContextPtrParam] = []byte(strconv.Itoa(int(sc.CtxPtr)))
 		ec := serialize.NewEasyCodecWithMap(sc.parameters)
 		bytes = ec.Marshal()
 	} else {

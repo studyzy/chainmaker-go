@@ -71,7 +71,7 @@ func TestNextHeightToReq(t *testing.T) {
 	sch := newScheduler(NewMockSender(), mockLedger, 100, time.Second, time.Second*3, 2, logger.GetLogger(logger.MODULE_SYNC))
 
 	// 1. add block status
-	for i := int64(0); i < 5; i++ {
+	for i := uint64(0); i < 5; i++ {
 		sch.blockStates[100+i] = newBlock
 	}
 
@@ -141,7 +141,7 @@ func TestSyncedBlockMsg(t *testing.T) {
 	sch := newScheduler(NewMockSender(), mockLedger, 100, time.Second, time.Second*3, 2, logger.GetLogger(logger.MODULE_SYNC))
 
 	bz, _ := proto.Marshal(&syncPb.SyncBlockBatch{
-		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batchs: []*commonPb.Block{
+		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batches: []*commonPb.Block{
 			{Header: &commonPb.BlockHeader{BlockHeight: 11}},
 			{Header: &commonPb.BlockHeader{BlockHeight: 12}},
 		}}},
@@ -235,7 +235,7 @@ func TestSchedulerFlow(t *testing.T) {
 
 	// 4. process received blocks msg and check result
 	bz, err := proto.Marshal(&syncPb.SyncBlockBatch{
-		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batchs: []*commonPb.Block{
+		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batches: []*commonPb.Block{
 			{Header: &commonPb.BlockHeader{BlockHeight: 11}},
 			{Header: &commonPb.BlockHeader{BlockHeight: 12}},
 		}}},

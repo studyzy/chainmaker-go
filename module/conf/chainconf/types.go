@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -16,14 +15,17 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/common/helper"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	"chainmaker.org/chainmaker-go/localconf"
+
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
-	"github.com/golang/protobuf/proto"
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
@@ -240,7 +242,8 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 
 		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
-			if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+			//if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
+			if resourceName != syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_UPDATE.String() && resourceName != syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String() {
 				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}
@@ -321,45 +324,42 @@ func initChainConsensusVerifier(chainId string) {
 
 // IsNative whether the contractName is a native
 func IsNative(contractName string) bool {
-	switch contractName {
-	case common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		common.ContractName_SYSTEM_CONTRACT_QUERY.String(),
-		common.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(),
-		common.ContractName_SYSTEM_CONTRACT_MULTI_SIGN.String(),
-		common.ContractName_SYSTEM_CONTRACT_GOVERNANCE.String(),
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String():
-		return true
-	default:
-		return false
-	}
+	_, ok := syscontract.SystemContract_value[contractName]
+	return ok
+	//switch contractName {
+	//case syscontract.SystemContract_CHAIN_CONFIG.String(),
+	//	syscontract.SystemContract_CHAIN_QUERY.String(),
+	//	syscontract.SystemContract_CERT_MANAGE.String(),
+	//	syscontract.SystemContract_MULTI_SIGN.String(),
+	//	syscontract.SystemContract_GOVERNANCE.String(),
+	//	syscontract.SystemContract_PRIVATE_COMPUTE.String():
+	//	return true
+	//default:
+	//	return false
+	//}
 }
 
 // IsNativeTx whether the transaction is a native
 func IsNativeTx(tx *common.Transaction) (contract string, b bool) {
-	if tx == nil || tx.Header == nil {
+	if tx == nil || tx.Payload == nil {
 		return "", false
 	}
-	txType := tx.Header.TxType
+	txType := tx.Payload.TxType
 	switch txType {
-	case common.TxType_INVOKE_SYSTEM_CONTRACT, common.TxType_UPDATE_CHAIN_CONFIG:
-		payloadBytes := tx.RequestPayload
-		payload := new(common.SystemContractPayload)
-		err := proto.Unmarshal(payloadBytes, payload)
-		if err != nil {
-			return "", false
-		}
+	case common.TxType_INVOKE_CONTRACT:
+		payload := tx.Payload
 		return payload.ContractName, IsNative(payload.ContractName)
-	case common.TxType_MANAGE_USER_CONTRACT:
-		payloadBytes := tx.RequestPayload
-		payload := new(common.ContractMgmtPayload)
-		err := proto.Unmarshal(payloadBytes, payload)
-		if err != nil {
-			return "", false
-		}
-		if payload.ContractId == nil {
-			return "", false
-		}
-		return payload.ContractId.ContractName, IsNative(payload.ContractId.ContractName)
+	//case common.TxType_MANAGE_USER_CONTRACT:
+	//	payloadBytes := tx.RequestPayload
+	//	payload := new(common.Payload)
+	//	err := proto.Unmarshal(payloadBytes, payload)
+	//	if err != nil {
+	//		return "", false
+	//	}
+	//	if payload.Contract == nil {
+	//		return "", false
+	//	}
+	//	return payload.Contract.Name, IsNative(payload.Contract.Name)
 	default:
 		return "", false
 	}

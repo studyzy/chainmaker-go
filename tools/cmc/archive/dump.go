@@ -41,7 +41,7 @@ func newDumpCMD() *cobra.Command {
 			}
 
 			// try target is block height
-			if height, err := strconv.ParseInt(target, 10, 64); err == nil {
+			if height, err := strconv.ParseUint(target, 10, 64); err == nil {
 				return runDumpByHeightCMD(height)
 			}
 
@@ -70,9 +70,9 @@ func newDumpCMD() *cobra.Command {
 }
 
 // runDumpByHeightCMD `dump` command implementation
-func runDumpByHeightCMD(targetBlkHeight int64) error {
+func runDumpByHeightCMD(targetBlkHeight uint64) error {
 	//// 1.Chain Client
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 	if archivedBlkHeightOnChain == 0 {
 		batchStartBlkHeight = 0
 	}
-	for processedBlocks := int64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks < blocks; processedBlocks++ {
+	for processedBlocks := uint64(0); targetBlkHeight >= batchEndBlkHeight && processedBlocks < blocks; processedBlocks++ {
 		if batchEndBlkHeight-batchStartBlkHeight >= blocksPerBatch {
 			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err == nil {
 				batchStartBlkHeight = batchEndBlkHeight
@@ -139,7 +139,7 @@ func runDumpByHeightCMD(targetBlkHeight int64) error {
 }
 
 // validateDump basic params validation
-func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight int64) error {
+func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight uint64) error {
 	// target block height already archived, do nothing.
 	if targetBlkHeight <= archivedBlkHeightOffChain {
 		return errors.New("target block height already archived")
@@ -159,7 +159,7 @@ func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBl
 
 // runBatch Run a batch job
 // NOTE: Include startBlk, exclude endBlk
-func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
+func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk uint64) error {
 	// check if create table
 	for blk := startBlk; blk < endBlk; blk++ {
 		// blk is first row of new table, create new table
@@ -228,11 +228,11 @@ func runBatch(cc *sdk.ChainClient, db *gorm.DB, startBlk, endBlk int64) error {
 }
 
 // archiveBlockOnChain Build & Sign & Send a ArchiveBlockRequest
-func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
+func archiveBlockOnChain(cc *sdk.ChainClient, height uint64) error {
 	var (
 		err                error
-		payload            []byte
-		signedPayloadBytes []byte
+		payload            *common.Payload
+		signedPayloadBytes *common.Payload
 		resp               *common.TxResponse
 	)
 
@@ -254,17 +254,17 @@ func archiveBlockOnChain(cc *sdk.ChainClient, height int64) error {
 	return util.CheckProposalRequestResp(resp, false)
 }
 
-func calcTargetHeightByTime(t time.Time) (int64, error) {
+func calcTargetHeightByTime(t time.Time) (uint64, error) {
 	targetTs := t.Unix()
-	cc, err := util.CreateChainClientWithSDKConf(sdkConfPath, chainId)
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	defer cc.Stop()
 
 	lastBlock, err := cc.GetLastBlock(false)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	if lastBlock.Block.Header.BlockTimestamp <= targetTs {
 		return lastBlock.Block.Header.BlockHeight, nil
@@ -272,13 +272,13 @@ func calcTargetHeightByTime(t time.Time) (int64, error) {
 
 	genesisHeader, err := cc.GetBlockHeaderByHeight(0)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	if genesisHeader.BlockTimestamp >= targetTs {
-		return -1, fmt.Errorf("no blocks at %s", t)
+		return 0, fmt.Errorf("no blocks at %s", t)
 	}
 
-	targetBlkHeight, err := util.SearchInt64(lastBlock.Block.Header.BlockHeight, func(i int64) (bool, error) {
+	targetBlkHeight, err := util.SearchU64(lastBlock.Block.Header.BlockHeight, func(i uint64) (bool, error) {
 		header, err := cc.GetBlockHeaderByHeight(i)
 		if err != nil {
 			return false, err
@@ -286,12 +286,12 @@ func calcTargetHeightByTime(t time.Time) (int64, error) {
 		return header.BlockTimestamp > targetTs, nil
 	})
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 
 	targetHeader, err := cc.GetBlockHeaderByHeight(targetBlkHeight)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	if targetHeader.BlockTimestamp > targetTs {
 		targetBlkHeight--

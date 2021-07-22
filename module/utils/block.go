@@ -9,13 +9,13 @@ package utils
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"crypto/sha256"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -74,28 +74,31 @@ func FormatBlock(b *commonPb.Block) string {
 // calcUnsignedBlockBytes calculate unsigned block bytes
 // since dag & txs are already included in block header, we can safely set this two field to nil
 func calcUnsignedBlockBytes(b *commonPb.Block) ([]byte, error) {
-	block := &commonPb.Block{
-		Header: &commonPb.BlockHeader{
-			ChainId:        b.Header.ChainId,
-			BlockHeight:    b.Header.BlockHeight,
-			PreBlockHash:   b.Header.PreBlockHash,
-			BlockHash:      nil,
-			PreConfHeight:  b.Header.PreConfHeight,
-			BlockVersion:   b.Header.BlockVersion,
-			DagHash:        b.Header.DagHash,
-			RwSetRoot:      b.Header.RwSetRoot,
-			TxRoot:         b.Header.TxRoot,
-			BlockTimestamp: b.Header.BlockTimestamp,
-			Proposer:       b.Header.Proposer,
-			ConsensusArgs:  b.Header.ConsensusArgs,
-			TxCount:        b.Header.TxCount,
-			Signature:      nil,
-		},
-		Dag: nil,
-		Txs: nil,
-	}
-
-	blockBytes, err := proto.Marshal(block)
+	//block := &commonPb.Block{
+	//	Header: &commonPb.BlockHeader{
+	//		ChainId:        b.Header.ChainId,
+	//		BlockHeight:    b.Header.BlockHeight,
+	//		PreBlockHash:   b.Header.PreBlockHash,
+	//		BlockHash:      nil,
+	//		PreConfHeight:  b.Header.PreConfHeight,
+	//		BlockVersion:   b.Header.BlockVersion,
+	//		DagHash:        b.Header.DagHash,
+	//		RwSetRoot:      b.Header.RwSetRoot,
+	//		TxRoot:         b.Header.TxRoot,
+	//		BlockTimestamp: b.Header.BlockTimestamp,
+	//		Proposer:       b.Header.Proposer,
+	//		ConsensusArgs:  b.Header.ConsensusArgs,
+	//		TxCount:        b.Header.TxCount,
+	//		Signature:      nil,
+	//	},
+	//	Dag: nil,
+	//	Txs: nil,
+	//}
+	//BlockHash就是HeaderHash，所以这里只需要把Header的Signature和BlockHash字段去掉，再序列化计算Hash即可。
+	header := *b.Header
+	header.Signature = nil
+	header.BlockHash = nil
+	blockBytes, err := proto.Marshal(&header)
 	if err != nil {
 		return nil, err
 	}
@@ -112,14 +115,17 @@ func CalcBlockFingerPrint(block *commonPb.Block) BlockFingerPrint {
 	chainId := block.Header.ChainId
 	blockHeight := block.Header.BlockHeight
 	blockTimestamp := block.Header.BlockTimestamp
-	blockProposer := block.Header.Proposer
+	var blockProposer []byte
+	if block.Header.Proposer != nil {
+		blockProposer, _ = block.Header.Proposer.Marshal()
+	}
 	preBlockHash := block.Header.PreBlockHash
 
 	return CalcFingerPrint(chainId, blockHeight, blockTimestamp, blockProposer, preBlockHash)
 }
 
 // CalcFingerPrint calculate finger print
-func CalcFingerPrint(chainId string, height int64, timestamp int64, proposer []byte, preHash []byte) BlockFingerPrint {
+func CalcFingerPrint(chainId string, height uint64, timestamp int64, proposer []byte, preHash []byte) BlockFingerPrint {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%s-%v-%v-%v-%v", chainId, height, timestamp, proposer, preHash)))
 	return BlockFingerPrint(fmt.Sprintf("%x", h.Sum(nil)))
@@ -206,13 +212,12 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 	if err != nil {
 		return false, fmt.Errorf("fail to hash block: %v", err)
 	}
-	var serializedMember acPb.SerializedMember
-	err = proto.Unmarshal(b.Header.Proposer, &serializedMember)
+	var Member = b.Header.Proposer
 	if err != nil {
 		return false, fmt.Errorf("signer is unknown: %v", err)
 	}
 	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    &serializedMember,
+		Signer:    Member,
 		Signature: b.Header.Signature,
 	}}
 	principal, err := ac.CreatePrincipal(protocol.ResourceNameConsensusNode, endorsements, hashedBlock)
@@ -227,4 +232,10 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 		return false, fmt.Errorf("authentication fail")
 	}
 	return true, nil
+}
+func IsContractMgmtBlock(b *commonPb.Block) bool {
+	if len(b.Txs) == 0 {
+		return false
+	}
+	return IsContractMgmtTx(b.Txs[0])
 }

@@ -11,17 +11,19 @@ import (
 	"errors"
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/utils"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 const (
@@ -154,7 +156,7 @@ func (s *StateKvDB) Close() {
 	s.DbHandle.Close()
 }
 
-func (s *StateKvDB) writeBatch(blockHeight int64, batch protocol.StoreBatcher) error {
+func (s *StateKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	s.Cache.AddBlock(blockHeight, batch)
 	go func() {
@@ -221,7 +223,7 @@ func (s *StateKvDB) RollbackDbTransaction(txName string) error {
 	return errorSqldbOnly
 
 }
-func (s *StateKvDB) ExecDdlSql(contractName, sql string) error {
+func (s *StateKvDB) ExecDdlSql(contractName, sql, version string) error {
 	return errorSqldbOnly
 
 }
@@ -236,8 +238,8 @@ func (s *StateKvDB) operateDbByWriteSet(batch protocol.StoreBatcher, txWrite *co
 	}
 }
 func (s *StateKvDB) GetChainConfig() (*configPb.ChainConfig, error) {
-	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	val, err := s.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return nil, err
 	}

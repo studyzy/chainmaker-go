@@ -10,7 +10,10 @@ package payload
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
 
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 
@@ -73,7 +76,7 @@ func createContractMgmtPayloadCMD() *cobra.Command {
 }
 
 func createConfigUpdatePayload() error {
-	payload := &sdkPbCommon.SystemContractPayload{
+	payload := &sdkPbCommon.Payload{
 		ChainId:      chainId,
 		ContractName: contractName,
 		Method:       method,
@@ -88,7 +91,7 @@ func createConfigUpdatePayload() error {
 		}
 		payload.Parameters = append(payload.Parameters, &sdkPbCommon.KeyValuePair{
 			Key:   s[0],
-			Value: s[1],
+			Value: []byte(s[1]),
 		})
 	}
 
@@ -105,25 +108,23 @@ func createConfigUpdatePayload() error {
 }
 
 func createContractMgmtPayload() error {
+	cc, err := util.CreateChainClient(sdkConfPath, chainId, "", "", "", "", "")
+	if err != nil {
+		return err
+	}
+	defer cc.Stop()
+
 	runtimeValue, ok := sdkPbCommon.RuntimeType_value[strings.ToUpper(runtime)]
 	if !ok {
 		return fmt.Errorf("Runtime invalid: %s", runtime)
 	}
-	codeBytes, err := ioutil.ReadFile(byteCodePath)
+	_, err = os.Stat(byteCodePath)
 	if err != nil {
 		return fmt.Errorf("Read from file %s error: %s", byteCodePath, err)
 	}
-
-	payload := &sdkPbCommon.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &sdkPbCommon.ContractId{
-			ContractName:    contractName,
-			ContractVersion: version,
-			RuntimeType:     sdkPbCommon.RuntimeType(runtimeValue),
-		},
-		Method:     method,
-		Parameters: []*sdkPbCommon.KeyValuePair{},
-		ByteCode:   codeBytes,
+	payload, err := cc.CreateContractCreatePayload(contractName, version, byteCodePath, sdkPbCommon.RuntimeType(runtimeValue), []*sdkPbCommon.KeyValuePair{})
+	if err != nil {
+		return fmt.Errorf("Generate install contract payload error: %s", err)
 	}
 	kvs := strings.Split(kvPairs, ";")
 	for _, kv := range kvs {
@@ -133,7 +134,7 @@ func createContractMgmtPayload() error {
 		}
 		payload.Parameters = append(payload.Parameters, &sdkPbCommon.KeyValuePair{
 			Key:   s[0],
-			Value: s[1],
+			Value: []byte(s[1]),
 		})
 	}
 

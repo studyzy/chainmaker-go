@@ -21,7 +21,7 @@ const defaultMaxBlockSize = 10
 // StoreCacheMgr provide handle to cache instances
 type StoreCacheMgr struct {
 	sync.RWMutex
-	pendingBlockUpdates map[int64]protocol.StoreBatcher
+	pendingBlockUpdates map[uint64]protocol.StoreBatcher
 	blockSizeSem        *semaphore.Weighted
 	cache               *storeCache
 	cacheSize           int //block size in cache, if cache size <= 0, use defalut size = 10
@@ -36,7 +36,7 @@ func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 		blockWriteBufferSize = defaultMaxBlockSize
 	}
 	storeCacheMgr := &StoreCacheMgr{
-		pendingBlockUpdates: make(map[int64]protocol.StoreBatcher),
+		pendingBlockUpdates: make(map[uint64]protocol.StoreBatcher),
 		blockSizeSem:        semaphore.NewWeighted(int64(blockWriteBufferSize)),
 		cache:               newStoreCache(),
 		cacheSize:           blockWriteBufferSize,
@@ -46,7 +46,7 @@ func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
 }
 
 // AddBlock cache a block with given block height and update batch
-func (mgr *StoreCacheMgr) AddBlock(blockHeight int64, updateBatch protocol.StoreBatcher) {
+func (mgr *StoreCacheMgr) AddBlock(blockHeight uint64, updateBatch protocol.StoreBatcher) {
 	//wait for semaphore
 	err := mgr.blockSizeSem.Acquire(context.Background(), 1)
 	if err != nil {
@@ -62,7 +62,7 @@ func (mgr *StoreCacheMgr) AddBlock(blockHeight int64, updateBatch protocol.Store
 }
 
 // DelBlock delete block for the given block height
-func (mgr *StoreCacheMgr) DelBlock(blockHeight int64) {
+func (mgr *StoreCacheMgr) DelBlock(blockHeight uint64) {
 	//release semaphore
 	mgr.blockSizeSem.Release(1)
 	mgr.Lock()

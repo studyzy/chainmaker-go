@@ -7,15 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
+	"fmt"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto/hash"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 //  statistic the time consuming of finalizeBlock between sync and async
@@ -63,9 +65,9 @@ func TestFinalizeBlock_Async(t *testing.T) {
 
 }
 
-func createBlock(height int64) *commonpb.Block {
+func createBlock(height uint64) *commonpb.Block {
 	var hash = []byte("0123456789")
-	var version = []byte("0")
+	var version = uint32(1)
 	var block = &commonpb.Block{
 		Header: &commonpb.BlockHeader{
 			ChainId:        "Chain1",
@@ -78,7 +80,7 @@ func createBlock(height int64) *commonpb.Block {
 			RwSetRoot:      hash,
 			TxRoot:         hash,
 			BlockTimestamp: 0,
-			Proposer:       hash,
+			Proposer:       &accesscontrol.Member{MemberInfo: hash},
 			ConsensusArgs:  nil,
 			TxCount:        1,
 			Signature:      []byte(""),
@@ -93,18 +95,17 @@ func createBlock(height int64) *commonpb.Block {
 }
 
 func createNewTestTx(txID string) *commonpb.Transaction {
-	var hash = []byte("0123456789")
+	//var hash = []byte("0123456789")
 	return &commonpb.Transaction{
-		Header: &commonpb.TxHeader{
+		Payload: &commonpb.Payload{
 			ChainId:        "Chain1",
-			Sender:         nil,
 			TxType:         0,
 			TxId:           txID,
 			Timestamp:      CurrentTimeMillisSeconds(),
 			ExpirationTime: 0,
 		},
-		RequestPayload:   hash,
-		RequestSignature: hash,
+		//RequestPayload:   hash,
+		//RequestSignature: hash,
 		Result: &commonpb.Result{
 			Code:           commonpb.TxStatusCode_SUCCESS,
 			ContractResult: nil,
@@ -132,17 +133,17 @@ func FinalizeBlockSync(
 
 	// TxCount contains acl verify failed txs and invoked contract txs
 	txCount := len(block.Txs)
-	block.Header.TxCount = int64(txCount)
+	block.Header.TxCount = uint32(txCount)
 
 	// TxRoot/RwSetRoot
 	var err error
 	txHashes := make([][]byte, txCount)
 	for i, tx := range block.Txs {
 		// finalize tx, put rwsethash into tx.Result
-		rwSet := txRWSetMap[tx.Header.TxId]
+		rwSet := txRWSetMap[tx.Payload.TxId]
 		if rwSet == nil {
 			rwSet = &commonpb.TxRWSet{
-				TxId:     tx.Header.TxId,
+				TxId:     tx.Payload.TxId,
 				TxReads:  nil,
 				TxWrites: nil,
 			}
@@ -156,7 +157,7 @@ func FinalizeBlockSync(
 		}
 		if tx.Result == nil {
 			// in case tx.Result is nil, avoid panic
-			e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
+			e := fmt.Errorf("tx(%s) result == nil", tx.Payload.TxId)
 			logger.Error(e.Error())
 			return e
 		}

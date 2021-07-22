@@ -14,8 +14,8 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/logger"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker-go/utils"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/wal"
@@ -88,12 +88,12 @@ func TestSaveWal(t *testing.T) {
 	// 1. add entry: vote and proposal
 	voteBlock := chainedbftpb.VoteMsg{
 		VoteData: &chainedbftpb.VoteData{
-			Level: 1, Height: 1, AuthorIdx: 1, BlockID: []byte(utils.GetRandTxId()),
+			Level: 1, Height: 1, AuthorIdx: 1, BlockId: []byte(utils.GetRandTxId()),
 		},
 	}
-	cbi.saveWalEntry(chainedbftpb.MessageType_ProposalMessage, &chainedbftpb.ConsensusMsg{
+	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_VoteMessage,
+			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock},
 		},
 	})
@@ -103,9 +103,9 @@ func TestSaveWal(t *testing.T) {
 			Level: 1, Height: 1, Proposer: []byte("nodeId1"), ProposerIdx: 1,
 		},
 	}
-	cbi.saveWalEntry(chainedbftpb.MessageType_ProposalMessage, &chainedbftpb.ConsensusMsg{
+	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
-			Type: chainedbftpb.MessageType_ProposalMessage,
+			Type: chainedbftpb.MessageType_PROPOSAL_MESSAGE,
 			Data: &chainedbftpb.ConsensusPayload_ProposalMsg{proposalMsg},
 		},
 	})

@@ -10,14 +10,18 @@ package rpcserver
 import (
 	"errors"
 	"fmt"
+	"strings"
 
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker-go/subscriber/model"
 	commonErr "chainmaker.org/chainmaker/common/errors"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker-go/subscriber/model"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,64 +35,217 @@ func (s *ApiService) Subscribe(req *commonPb.TxRequest, server apiPb.RpcNode_Sub
 	)
 
 	tx := &commonPb.Transaction{
-		Header:           req.Header,
-		RequestPayload:   req.Payload,
-		RequestSignature: req.Signature,
-		Result:           nil}
+		Payload:   req.Payload,
+		Sender:    req.Sender,
+		Endorsers: req.Endorsers,
+		Result:    nil}
 
 	errCode, errMsg = s.validate(tx)
 	if errCode != commonErr.ERR_CODE_OK {
 		return status.Error(codes.Unauthenticated, errMsg)
 	}
 
-	switch req.Header.TxType {
-	case commonPb.TxType_SUBSCRIBE_BLOCK_INFO:
+	switch req.Payload.Method {
+	case syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String():
 		return s.dealBlockSubscription(tx, server)
-	case commonPb.TxType_SUBSCRIBE_TX_INFO:
+	case syscontract.SubscribeFunction_SUBSCRIBE_TX.String():
 		return s.dealTxSubscription(tx, server)
-	case commonPb.TxType_SUBSCRIBE_CONTRACT_EVENT_INFO:
+	case syscontract.SubscribeFunction_SUBSCRIBE_CONTRACT_EVENT.String():
 		return s.dealContractEventSubscription(tx, server)
 	}
 
 	return nil
 }
 
-//dealContractEventSubscription - deal contract event subscribe request
-func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
+// dealBlockSubscription - deal block subscribe request
+func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
 	var (
-		err     error
-		errMsg  string
-		errCode commonErr.ErrCode
-		payload commonPb.SubscribeContractEventPayload
+		err             error
+		errMsg          string
+		errCode         commonErr.ErrCode
+		db              protocol.BlockchainStore
+		lastBlockHeight int64
+		payload         = tx.Payload
+		startBlock      int64
+		endBlock        int64
+		withRWSet       = false
+		onlyHeader      = false
 	)
 
-	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
-		errCode = commonErr.ERR_CODE_SYSTEM_CONTRACT_PB_UNMARSHAL
+	for _, kv := range payload.Parameters {
+		if kv.Key == syscontract.SubscribeBlock_START_BLOCK.String() {
+			startBlock, err = utils.BytesToInt64(kv.Value)
+		} else if kv.Key == syscontract.SubscribeBlock_END_BLOCK.String() {
+			endBlock, err = utils.BytesToInt64(kv.Value)
+		} else if kv.Key == syscontract.SubscribeBlock_WITH_RWSET.String() {
+			if string(kv.Value) == "true" {
+				withRWSet = true
+			}
+		} else if kv.Key == syscontract.SubscribeBlock_ONLY_HEADER.String() {
+			if string(kv.Value) == "true" {
+				onlyHeader = true
+				withRWSet = false
+			}
+		}
+
+		if err != nil {
+			errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_BLOCK
+			errMsg = s.getErrMsg(errCode, err)
+			s.log.Error(errMsg)
+			return status.Error(codes.InvalidArgument, errMsg)
+		}
+	}
+
+	if err = s.checkSubscribeBlockHeight(startBlock, endBlock); err != nil {
+		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_BLOCK
 		errMsg = s.getErrMsg(errCode, err)
 		s.log.Error(errMsg)
 		return status.Error(codes.InvalidArgument, errMsg)
 	}
 
-	if err = s.checkSubscribeContractEventPayload(&payload); err != nil {
+	s.log.Infof("Recv block subscribe request: [start:%d]/[end:%d]/[withRWSet:%v]/[onlyHeader:%v]",
+		startBlock, endBlock, withRWSet, onlyHeader)
+
+	chainId := tx.Payload.ChainId
+	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
+		errCode = commonErr.ERR_CODE_GET_STORE
+		errMsg = s.getErrMsg(errCode, err)
+		s.log.Error(errMsg)
+		return status.Error(codes.Internal, errMsg)
+	}
+
+	if lastBlockHeight, err = s.checkAndGetLastBlockHeight(db, startBlock); err != nil {
+		errCode = commonErr.ERR_CODE_GET_LAST_BLOCK
+		errMsg = s.getErrMsg(errCode, err)
+		s.log.Error(errMsg)
+		return status.Error(codes.Internal, errMsg)
+	}
+
+	var startBlockHeight int64
+	if startBlock > startBlockHeight {
+		startBlockHeight = startBlock
+	}
+
+	if startBlock == -1 && endBlock == -1 {
+		return s.sendNewBlock(db, tx, server, endBlock, withRWSet, onlyHeader, -1)
+	}
+
+	if endBlock != -1 && endBlock <= lastBlockHeight {
+		err, _ := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader)
+		if err != nil {
+			s.log.Errorf("sendHistoryBlock failed, %s", err)
+			return err
+		}
+
+		return status.Error(codes.OK, "OK")
+	}
+
+	err, alreadySendHistoryBlockHeight := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader)
+	if err != nil {
+		s.log.Errorf("sendHistoryBlock failed, %s", err)
+		return err
+	}
+
+	s.log.Debugf("after sendHistoryBlock, alreadySendHistoryBlockHeight is %d", alreadySendHistoryBlockHeight)
+
+	return s.sendNewBlock(db, tx, server, endBlock, withRWSet, onlyHeader, alreadySendHistoryBlockHeight)
+}
+
+// dealTxSubscription - deal tx subscribe request
+func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
+	var (
+		err          error
+		errMsg       string
+		errCode      commonErr.ErrCode
+		db           protocol.BlockchainStore
+		payload      = tx.Payload
+		startBlock   int64
+		endBlock     int64
+		contractName string
+		txIds        []string
+	)
+
+	for _, kv := range payload.Parameters {
+		if kv.Key == syscontract.SubscribeTx_START_BLOCK.String() {
+			startBlock, err = utils.BytesToInt64(kv.Value)
+		} else if kv.Key == syscontract.SubscribeTx_END_BLOCK.String() {
+			endBlock, err = utils.BytesToInt64(kv.Value)
+		} else if kv.Key == syscontract.SubscribeTx_CONTRACT_NAME.String() {
+			contractName = string(kv.Value)
+		} else if kv.Key == syscontract.SubscribeTx_TX_IDS.String() {
+			txIds = strings.Split(string(kv.Value), ",")
+		}
+
+		if err != nil {
+			errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_TX
+			errMsg = s.getErrMsg(errCode, err)
+			s.log.Error(errMsg)
+			return status.Error(codes.InvalidArgument, errMsg)
+		}
+	}
+
+	if err = s.checkSubscribeBlockHeight(startBlock, endBlock); err != nil {
+		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_TX
+		errMsg = s.getErrMsg(errCode, err)
+		s.log.Error(errMsg)
+		return status.Error(codes.InvalidArgument, errMsg)
+	}
+
+	s.log.Infof("Recv block subscribe request: [start:%d]/[end:%d]/[contractName:%s]/[txIds:%+v]",
+		startBlock, endBlock, contractName, txIds)
+
+	chainId := tx.Payload.ChainId
+	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
+		errCode = commonErr.ERR_CODE_GET_STORE
+		errMsg = s.getErrMsg(errCode, err)
+		s.log.Error(errMsg)
+		return status.Error(codes.Internal, errMsg)
+	}
+
+	return s.doSendTx(tx, db, server, startBlock, endBlock, contractName, txIds)
+}
+
+//dealContractEventSubscription - deal contract event subscribe request
+func (s *ApiService) dealContractEventSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
+	var (
+		err          error
+		errMsg       string
+		errCode      commonErr.ErrCode
+		payload      = tx.Payload
+		topic        string
+		contractName string
+	)
+
+	for _, kv := range payload.Parameters {
+		if kv.Key == syscontract.SubscribeContractEvent_TOPIC.String() {
+			topic = string(kv.Value)
+		} else if kv.Key == syscontract.SubscribeContractEvent_CONTRACT_NAME.String() {
+			contractName = string(kv.Value)
+		}
+	}
+
+	if err = s.checkSubscribeContractEventPayload(topic, contractName); err != nil {
 		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_CONTRACT_EVENT
 		errMsg = s.getErrMsg(errCode, err)
 		s.log.Error(errMsg)
 		return status.Error(codes.InvalidArgument, errMsg)
 	}
 	s.log.Infof("Recv contractEventInfo subscribe request: [topic:%v]/[contractName:%v]",
-		payload.Topic, payload.ContractName)
+		topic, contractName)
 
-	return s.doSendContractEvent(tx, server, payload)
+	return s.doSendContractEvent(tx, server, topic, contractName)
 
 }
 
-func (s *ApiService) checkSubscribeContractEventPayload(payload *commonPb.SubscribeContractEventPayload) error {
-	if payload.Topic == "" || payload.ContractName == "" {
+func (s *ApiService) checkSubscribeContractEventPayload(topic, contractName string) error {
+	if topic == "" || contractName == "" {
 		return errors.New("invalid topic or contract name")
 	}
+
 	return nil
 }
-func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer, payload commonPb.SubscribeContractEventPayload) error {
+
+func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer, topic, contractName string) error {
 
 	var (
 		errCode         commonErr.ErrCode
@@ -100,7 +257,7 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.
 
 	eventCh := make(chan model.NewContractEvent)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if eventSubscriber, err = s.chainMakerServer.GetEventSubscribe(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_SUBSCRIBER
 		errMsg = s.getErrMsg(errCode, err)
@@ -116,7 +273,7 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.
 			contractEventInfoList := ev.ContractEventInfoList.ContractEvents
 			sendEventInfoList := &commonPb.ContractEventInfoList{}
 			for _, EventInfo := range contractEventInfoList {
-				if EventInfo.ContractName != payload.ContractName || EventInfo.Topic != payload.Topic {
+				if EventInfo.ContractName != contractName || EventInfo.Topic != topic {
 					continue
 				}
 				sendEventInfoList.ContractEvents = append(sendEventInfoList.ContractEvents, EventInfo)
@@ -140,46 +297,8 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.
 	}
 }
 
-// dealTxSubscription - deal tx subscribe request
-func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
-	var (
-		err     error
-		errMsg  string
-		errCode commonErr.ErrCode
-		payload commonPb.SubscribeTxPayload
-		db      protocol.BlockchainStore
-	)
-
-	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
-		errCode = commonErr.ERR_CODE_SYSTEM_CONTRACT_PB_UNMARSHAL
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.InvalidArgument, errMsg)
-	}
-
-	if err = s.checkSubscribePayload(payload.StartBlock, payload.EndBlock); err != nil {
-		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_TX
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.InvalidArgument, errMsg)
-	}
-
-	s.log.Infof("Recv block subscribe request: [start:%d]/[end:%d]/[txType:%d]/[txIds:%+v]",
-		payload.StartBlock, payload.EndBlock, payload.TxType, payload.TxIds)
-
-	chainId := tx.Header.ChainId
-	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
-		errCode = commonErr.ERR_CODE_GET_STORE
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.Internal, errMsg)
-	}
-
-	return s.doSendTx(tx, db, server, payload)
-}
-
 func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainStore,
-	server apiPb.RpcNode_SubscribeServer, payload commonPb.SubscribeTxPayload) error {
+	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string, txIds []string) error {
 
 	var (
 		txIdsMap                      = make(map[string]struct{})
@@ -187,15 +306,15 @@ func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainSt
 		err                           error
 	)
 
-	for _, txId := range payload.TxIds {
+	for _, txId := range txIds {
 		txIdsMap[txId] = struct{}{}
 	}
 
-	if payload.StartBlock == -1 && payload.EndBlock == -1 {
-		return s.sendNewTx(db, tx, server, payload, txIdsMap, -1)
+	if startBlock == -1 && endBlock == -1 {
+		return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, -1)
 	}
 
-	if alreadySendHistoryBlockHeight, err = s.doSendHistoryTx(db, server, payload, txIdsMap); err != nil {
+	if alreadySendHistoryBlockHeight, err = s.doSendHistoryTx(db, server, startBlock, endBlock, contractName, txIds, txIdsMap); err != nil {
 		return err
 	}
 
@@ -203,11 +322,11 @@ func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainSt
 		return status.Error(codes.OK, "OK")
 	}
 
-	return s.sendNewTx(db, tx, server, payload, txIdsMap, alreadySendHistoryBlockHeight)
+	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, alreadySendHistoryBlockHeight)
 }
 
 func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
-	payload commonPb.SubscribeTxPayload, txIdsMap map[string]struct{}) (int64, error) {
+	startBlock, endBlock int64, contractName string, txIds []string, txIdsMap map[string]struct{}) (int64, error) {
 
 	var (
 		err             error
@@ -217,19 +336,19 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 	)
 
 	var startBlockHeight int64
-	if payload.StartBlock > startBlockHeight {
-		startBlockHeight = payload.StartBlock
+	if startBlock > startBlockHeight {
+		startBlockHeight = startBlock
 	}
 
-	if lastBlockHeight, err = s.checkAndGetLastBlockHeight(db, payload.StartBlock); err != nil {
+	if lastBlockHeight, err = s.checkAndGetLastBlockHeight(db, startBlock); err != nil {
 		errCode = commonErr.ERR_CODE_GET_LAST_BLOCK
 		errMsg = s.getErrMsg(errCode, err)
 		s.log.Error(errMsg)
 		return -1, status.Error(codes.Internal, errMsg)
 	}
 
-	if payload.EndBlock != -1 && payload.EndBlock <= lastBlockHeight {
-		err, _ := s.sendHistoryTx(db, server, startBlockHeight, payload.EndBlock, payload.TxType, payload.TxIds, txIdsMap)
+	if endBlock != -1 && endBlock <= lastBlockHeight {
+		err, _ := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName, txIds, txIdsMap)
 		if err != nil {
 			s.log.Errorf("sendHistoryTx failed, %s", err)
 			return -1, err
@@ -238,17 +357,17 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 		return 0, status.Error(codes.OK, "OK")
 	}
 
-	if len(payload.TxIds) > 0 && len(txIdsMap) == 0 {
+	if len(txIds) > 0 && len(txIdsMap) == 0 {
 		return 0, status.Error(codes.OK, "OK")
 	}
 
-	err, alreadySendHistoryBlockHeight := s.sendHistoryTx(db, server, startBlockHeight, payload.EndBlock, payload.TxType, payload.TxIds, txIdsMap)
+	err, alreadySendHistoryBlockHeight := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName, txIds, txIdsMap)
 	if err != nil {
 		s.log.Errorf("sendHistoryTx failed, %s", err)
 		return -1, err
 	}
 
-	if len(payload.TxIds) > 0 && len(txIdsMap) == 0 {
+	if len(txIds) > 0 && len(txIdsMap) == 0 {
 		return 0, status.Error(codes.OK, "OK")
 	}
 
@@ -257,83 +376,10 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 	return alreadySendHistoryBlockHeight, nil
 }
 
-// dealBlockSubscription - deal block subscribe request
-func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiPb.RpcNode_SubscribeServer) error {
-	var (
-		err             error
-		errMsg          string
-		errCode         commonErr.ErrCode
-		payload         commonPb.SubscribeBlockPayload
-		db              protocol.BlockchainStore
-		lastBlockHeight int64
-	)
-
-	if err = proto.Unmarshal(tx.RequestPayload, &payload); err != nil {
-		errCode = commonErr.ERR_CODE_SYSTEM_CONTRACT_PB_UNMARSHAL
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.InvalidArgument, errMsg)
-	}
-
-	if err = s.checkSubscribePayload(payload.StartBlock, payload.EndBlock); err != nil {
-		errCode = commonErr.ERR_CODE_CHECK_PAYLOAD_PARAM_SUBSCRIBE_BLOCK
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.InvalidArgument, errMsg)
-	}
-
-	s.log.Infof("Recv block subscribe request: [start:%d]/[end:%d]/[withRWSet:%v]",
-		payload.StartBlock, payload.EndBlock, payload.WithRwSet)
-
-	chainId := tx.Header.ChainId
-	if db, err = s.chainMakerServer.GetStore(chainId); err != nil {
-		errCode = commonErr.ERR_CODE_GET_STORE
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.Internal, errMsg)
-	}
-
-	if lastBlockHeight, err = s.checkAndGetLastBlockHeight(db, payload.StartBlock); err != nil {
-		errCode = commonErr.ERR_CODE_GET_LAST_BLOCK
-		errMsg = s.getErrMsg(errCode, err)
-		s.log.Error(errMsg)
-		return status.Error(codes.Internal, errMsg)
-	}
-
-	var startBlockHeight int64
-	if payload.StartBlock > startBlockHeight {
-		startBlockHeight = payload.StartBlock
-	}
-
-	if payload.StartBlock == -1 && payload.EndBlock == -1 {
-		return s.sendNewBlock(db, tx, server, payload.EndBlock, payload.WithRwSet, -1)
-	}
-
-	if payload.EndBlock != -1 && payload.EndBlock <= lastBlockHeight {
-		err, _ := s.sendHistoryBlock(db, server, startBlockHeight, payload.EndBlock, payload.WithRwSet)
-		if err != nil {
-			s.log.Errorf("sendHistoryBlock failed, %s", err)
-			return err
-		}
-
-		return status.Error(codes.OK, "OK")
-	}
-
-	err, alreadySendHistoryBlockHeight := s.sendHistoryBlock(db, server, startBlockHeight, payload.EndBlock, payload.WithRwSet)
-	if err != nil {
-		s.log.Errorf("sendHistoryBlock failed, %s", err)
-		return err
-	}
-
-	s.log.Debugf("after sendHistoryBlock, alreadySendHistoryBlockHeight is %d", alreadySendHistoryBlockHeight)
-
-	return s.sendNewBlock(db, tx, server, payload.EndBlock, payload.WithRwSet, alreadySendHistoryBlockHeight)
-}
-
 // sendNewBlock - send new block to subscriber
 func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.Transaction,
 	server apiPb.RpcNode_SubscribeServer,
-	endBlockHeight int64, withRWSet bool, alreadySendHistoryBlockHeight int64) error {
+	endBlockHeight int64, withRWSet, onlyHeader bool, alreadySendHistoryBlockHeight int64) error {
 
 	var (
 		errCode         commonErr.ErrCode
@@ -345,7 +391,7 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 
 	blockCh := make(chan model.NewBlockEvent)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if eventSubscriber, err = s.chainMakerServer.GetEventSubscribe(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_SUBSCRIBER
 		errMsg = s.getErrMsg(errCode, err)
@@ -361,9 +407,9 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 		case ev := <-blockCh:
 			blockInfo = ev.BlockInfo
 
-			if alreadySendHistoryBlockHeight != -1 && blockInfo.Block.Header.BlockHeight > alreadySendHistoryBlockHeight {
+			if alreadySendHistoryBlockHeight != -1 && int64(blockInfo.Block.Header.BlockHeight) > alreadySendHistoryBlockHeight {
 				err, _ = s.sendHistoryBlock(store, server, alreadySendHistoryBlockHeight+1,
-					blockInfo.Block.Header.BlockHeight, withRWSet)
+					int64(blockInfo.Block.Header.BlockHeight), withRWSet, onlyHeader)
 				if err != nil {
 					s.log.Errorf("send history block failed, %s", err)
 					return err
@@ -373,12 +419,12 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 				continue
 			}
 
-			if err = s.dealBlockSubscribeResult(server, blockInfo, endBlockHeight, withRWSet); err != nil {
+			if err = s.dealBlockSubscribeResult(server, blockInfo, withRWSet, onlyHeader); err != nil {
 				s.log.Errorf(err.Error())
 				return status.Error(codes.Internal, err.Error())
 			}
 
-			if endBlockHeight != -1 && blockInfo.Block.Header.BlockHeight >= endBlockHeight {
+			if endBlockHeight != -1 && int64(blockInfo.Block.Header.BlockHeight) >= endBlockHeight {
 				return status.Error(codes.OK, "OK")
 			}
 
@@ -391,7 +437,7 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 }
 
 func (s *ApiService) dealBlockSubscribeResult(server apiPb.RpcNode_SubscribeServer, blockInfo *commonPb.BlockInfo,
-	endBlockHeight int64, withRWSet bool) error {
+	withRWSet, onlyHeader bool) error {
 
 	var (
 		err    error
@@ -404,12 +450,13 @@ func (s *ApiService) dealBlockSubscribeResult(server apiPb.RpcNode_SubscribeServ
 			RwsetList: nil,
 		}
 	}
-	if result, err = s.getBlockSubscribeResult(blockInfo); err != nil {
+
+	if result, err = s.getBlockSubscribeResult(blockInfo, onlyHeader); err != nil {
 		return fmt.Errorf("get block subscribe result failed, %s", err)
 	}
 
 	if err := server.Send(result); err != nil {
-		return fmt.Errorf("send block info by realtime failed, %s", err)
+		return fmt.Errorf("send block subscribe result by realtime failed, %s", err)
 	}
 
 	return nil
@@ -417,7 +464,7 @@ func (s *ApiService) dealBlockSubscribeResult(server apiPb.RpcNode_SubscribeServ
 
 // sendNewTx - send new tx to subscriber
 func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Transaction,
-	server apiPb.RpcNode_SubscribeServer, payload commonPb.SubscribeTxPayload,
+	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string, txIds []string,
 	txIdsMap map[string]struct{}, alreadySendHistoryBlockHeight int64) error {
 
 	var (
@@ -430,7 +477,7 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 
 	blockCh := make(chan model.NewBlockEvent)
 
-	chainId := tx.Header.ChainId
+	chainId := tx.Payload.ChainId
 	if eventSubscriber, err = s.chainMakerServer.GetEventSubscribe(chainId); err != nil {
 		errCode = commonErr.ERR_CODE_GET_SUBSCRIBER
 		errMsg = s.getErrMsg(errCode, err)
@@ -446,9 +493,9 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 		case ev := <-blockCh:
 			block = ev.BlockInfo.Block
 
-			if alreadySendHistoryBlockHeight != -1 && block.Header.BlockHeight > alreadySendHistoryBlockHeight {
+			if alreadySendHistoryBlockHeight != -1 && int64(block.Header.BlockHeight) > alreadySendHistoryBlockHeight {
 				err, _ = s.sendHistoryTx(store, server, alreadySendHistoryBlockHeight+1,
-					block.Header.BlockHeight, payload.TxType, payload.TxIds, txIdsMap)
+					int64(block.Header.BlockHeight), contractName, txIds, txIdsMap)
 				if err != nil {
 					s.log.Errorf("send history block failed, %s", err)
 					return err
@@ -458,13 +505,13 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 				continue
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, payload.TxType, payload.TxIds, txIdsMap); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return status.Error(codes.Internal, errMsg)
 			}
 
-			if s.checkIsFinish(payload, txIdsMap, ev.BlockInfo) {
+			if s.checkIsFinish(txIds, endBlock, txIdsMap, ev.BlockInfo) {
 				return status.Error(codes.OK, "OK")
 			}
 
@@ -476,14 +523,14 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 	}
 }
 
-func (s *ApiService) checkIsFinish(payload commonPb.SubscribeTxPayload,
+func (s *ApiService) checkIsFinish(txIds []string, endBlock int64,
 	txIdsMap map[string]struct{}, blockInfo *commonPb.BlockInfo) bool {
 
-	if len(payload.TxIds) > 0 && len(txIdsMap) == 0 {
+	if len(txIds) > 0 && len(txIdsMap) == 0 {
 		return true
 	}
 
-	if payload.EndBlock != -1 && blockInfo.Block.Header.BlockHeight >= payload.EndBlock {
+	if endBlock != -1 && int64(blockInfo.Block.Header.BlockHeight) >= endBlock {
 		return true
 	}
 
@@ -504,7 +551,7 @@ func (s *ApiService) getRateLimitToken() error {
 
 // sendHistoryBlock - send history block to subscriber
 func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
-	startBlockHeight, endBlockHeight int64, withRWSet bool) (error, int64) {
+	startBlockHeight, endBlockHeight int64, withRWSet, onlyHeader bool) (error, int64) {
 
 	var (
 		err    error
@@ -535,7 +582,7 @@ func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server api
 				return nil, alreadySendHistoryBlockHeight
 			}
 
-			if result, err = s.getBlockSubscribeResult(blockInfo); err != nil {
+			if result, err = s.getBlockSubscribeResult(blockInfo, onlyHeader); err != nil {
 				errMsg = fmt.Sprintf("get block subscribe result failed, %s", err)
 				s.log.Error(errMsg)
 				return errors.New(errMsg), -1
@@ -561,9 +608,9 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 	)
 
 	if withRWSet {
-		blockWithRWSet, err = store.GetBlockWithRWSets(curblockHeight)
+		blockWithRWSet, err = store.GetBlockWithRWSets(uint64(curblockHeight))
 	} else {
-		block, err = store.GetBlock(curblockHeight)
+		block, err = store.GetBlock(uint64(curblockHeight))
 	}
 
 	if err != nil {
@@ -603,7 +650,7 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 	server apiPb.RpcNode_SubscribeServer,
 	startBlockHeight, endBlockHeight int64,
-	txType commonPb.TxType, txIds []string, txIdsMap map[string]struct{}) (error, int64) {
+	contractName string, txIds []string, txIdsMap map[string]struct{}) (error, int64) {
 
 	var (
 		err    error
@@ -629,7 +676,7 @@ func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 				return nil, i - 1
 			}
 
-			block, err = store.GetBlock(i)
+			block, err = store.GetBlock(uint64(i))
 
 			if err != nil {
 				errMsg = fmt.Sprintf("get block failed, at [height:%d], %s", i, err)
@@ -641,7 +688,7 @@ func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 				return nil, i - 1
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, txType, txIds, txIdsMap); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return status.Error(codes.Internal, errMsg), -1
@@ -652,8 +699,8 @@ func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 	}
 }
 
-// checkSubscribePayload - check subscriber payload info
-func (s *ApiService) checkSubscribePayload(startBlockHeight, endBlockHeight int64) error {
+// checkSubscribeBlockHeight - check subscriber payload info
+func (s *ApiService) checkSubscribeBlockHeight(startBlockHeight, endBlockHeight int64) error {
 	if startBlockHeight < -1 || endBlockHeight < -1 ||
 		(endBlockHeight != -1 && startBlockHeight > endBlockHeight) {
 
@@ -678,17 +725,26 @@ func (s *ApiService) getTxSubscribeResult(tx *commonPb.Transaction) (*commonPb.S
 	return result, nil
 }
 
-func (s *ApiService) getBlockSubscribeResult(blockInfo *commonPb.BlockInfo) (*commonPb.SubscribeResult, error) {
+func (s *ApiService) getBlockSubscribeResult(blockInfo *commonPb.BlockInfo, onlyHeader bool) (*commonPb.SubscribeResult, error) {
+	var (
+		resultBytes []byte
+		err         error
+	)
 
-	blockBytes, err := proto.Marshal(blockInfo)
+	if onlyHeader {
+		resultBytes, err = proto.Marshal(blockInfo.Block.Header)
+	} else {
+		resultBytes, err = proto.Marshal(blockInfo)
+	}
+
 	if err != nil {
-		errMsg := fmt.Sprintf("marshal block info failed, %s", err)
+		errMsg := fmt.Sprintf("marshal block subscribe result failed, %s", err)
 		s.log.Error(errMsg)
 		return nil, errors.New(errMsg)
 	}
 
 	result := &commonPb.SubscribeResult{
-		Data: blockBytes,
+		Data: resultBytes,
 	}
 
 	return result, nil
@@ -710,21 +766,21 @@ func (s *ApiService) getContractEventSubscribeResult(contractEventsInfoList *com
 	return result, nil
 }
 func (s *ApiService) sendSubscribeTx(server apiPb.RpcNode_SubscribeServer,
-	txs []*commonPb.Transaction, txType commonPb.TxType, txIds []string, txIdsMap map[string]struct{}) error {
+	txs []*commonPb.Transaction, contractName string, txIds []string, txIdsMap map[string]struct{}) error {
 
 	var (
 		err error
 	)
 
 	for _, tx := range txs {
-		if txType == -1 && len(txIds) == 0 {
+		if contractName == "" && len(txIds) == 0 {
 			if err = s.doSendSubscribeTx(server, tx); err != nil {
 				return err
 			}
 			continue
 		}
 
-		if s.checkIsContinue(tx, txType, txIds, txIdsMap) {
+		if s.checkIsContinue(tx, contractName, txIds, txIdsMap) {
 			continue
 		}
 
@@ -736,18 +792,18 @@ func (s *ApiService) sendSubscribeTx(server apiPb.RpcNode_SubscribeServer,
 	return nil
 }
 
-func (s *ApiService) checkIsContinue(tx *commonPb.Transaction, txType commonPb.TxType, txIds []string, txIdsMap map[string]struct{}) bool {
-	if txType != -1 && tx.Header.TxType != txType {
+func (s *ApiService) checkIsContinue(tx *commonPb.Transaction, contractName string, txIds []string, txIdsMap map[string]struct{}) bool {
+	if contractName != "" && tx.Payload.ContractName != contractName {
 		return true
 	}
 
 	if len(txIds) > 0 {
-		_, ok := txIdsMap[tx.Header.TxId]
+		_, ok := txIdsMap[tx.Payload.TxId]
 		if !ok {
 			return true
 		}
 
-		delete(txIdsMap, tx.Header.TxId)
+		delete(txIdsMap, tx.Payload.TxId)
 	}
 
 	return false
@@ -792,11 +848,11 @@ func (s *ApiService) checkAndGetLastBlockHeight(store protocol.BlockchainStore,
 		return -1, status.Error(codes.Internal, errMsg)
 	}
 
-	if lastBlock.Header.BlockHeight < payloadStartBlockHeight {
+	if int64(lastBlock.Header.BlockHeight) < payloadStartBlockHeight {
 		errMsg = fmt.Sprintf("payload start block height > last block height")
 		s.log.Error(errMsg)
 		return -1, status.Error(codes.InvalidArgument, errMsg)
 	}
 
-	return lastBlock.Header.BlockHeight, nil
+	return int64(lastBlock.Header.BlockHeight), nil
 }

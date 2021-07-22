@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"sync"
 
-	commonErrors "chainmaker.org/chainmaker/common/errors"
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
+	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/pb-go/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol"
@@ -68,7 +68,7 @@ func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCo
 func initGenesisBlock(block *common.Block) error {
 	qcForGenesis := &chainedbftpb.QuorumCert{
 		Votes:   []*chainedbftpb.VoteData{},
-		BlockID: block.Header.BlockHash,
+		BlockId: block.Header.BlockHash,
 	}
 	qcData, err := proto.Marshal(qcForGenesis)
 	if err != nil {
@@ -163,7 +163,7 @@ func (cs *chainStore) insertBlock(block *common.Block) error {
 	return nil
 }
 
-func (cs *chainStore) getBlocks(height int64) []*common.Block {
+func (cs *chainStore) getBlocks(height uint64) []*common.Block {
 	return cs.blockPool.GetBlocks(height)
 }
 
@@ -235,8 +235,8 @@ func (cs *chainStore) insertQC(qc *chainedbftpb.QuorumCert) error {
 	if qc.EpochId != cs.server.smr.getEpochId() {
 		// When the generation switches, the QC of the rootBlock is added again,
 		// and the rootQC is not consistent with the current generation ID of the node
-		if hasQC, _ := cs.getQC(string(qc.BlockID), qc.Height); hasQC != nil {
-			cs.logger.Debugf("find qc:[%x], height:[%d]", qc.BlockID, qc.Height)
+		if hasQC, _ := cs.getQC(string(qc.BlockId), qc.Height); hasQC != nil {
+			cs.logger.Debugf("find qc:[%x], height:[%d]", qc.BlockId, qc.Height)
 			return nil
 		}
 		return fmt.Errorf("insert qc failed, input err qc.epochid: [%v], node epochID: [%v]",
@@ -249,7 +249,7 @@ func (cs *chainStore) insertQC(qc *chainedbftpb.QuorumCert) error {
 }
 
 func (cs *chainStore) insertCompletedBlock(block *common.Block) error {
-	if block.GetHeader().GetBlockHeight() <= int64(cs.getCommitHeight()) {
+	if block.GetHeader().GetBlockHeight() <= uint64(cs.getCommitHeight()) {
 		return nil
 	}
 	if err := cs.updateCommitCacheInfo(block); err != nil {
@@ -269,7 +269,7 @@ func (cs *chainStore) getBlock(id string, height uint64) (*common.Block, error) 
 	if block := cs.blockPool.GetBlockByID(id); block != nil {
 		return block, nil
 	}
-	block, err := cs.blockChainStore.GetBlock(int64(height))
+	block, err := cs.blockChainStore.GetBlock(height)
 	return block, err
 }
 
@@ -299,7 +299,7 @@ func (cs *chainStore) getQC(id string, height uint64) (*chainedbftpb.QuorumCert,
 	if qc := cs.blockPool.GetQCByID(id); qc != nil {
 		return qc, nil
 	}
-	block, err := cs.blockChainStore.GetBlock(int64(height))
+	block, err := cs.blockChainStore.GetBlock(height)
 	if err != nil {
 		return nil, fmt.Errorf("get qc failed, get block fail at height [%v]", height)
 	}

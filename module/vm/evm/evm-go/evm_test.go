@@ -1,10 +1,10 @@
 package evm_go
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/evm/test"
+	"chainmaker.org/chainmaker/common/evmutils"
 	pb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"fmt"
@@ -81,6 +81,7 @@ func TestEVM_ExecuteContract(t *testing.T) {
 	//instructions.Load()
 
 	evm.ExecuteContract(true)
+
 }
 
 func constTransactionGasPrice() *evmutils.Int {

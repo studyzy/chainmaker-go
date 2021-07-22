@@ -7,8 +7,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -41,8 +41,8 @@ func (c *ContextService) Context(id int64) (*Context, bool) {
 	return ctx, ok
 }
 
-func (c *ContextService) MakeContext(contractId *commonPb.ContractId, txSimContext protocol.TxSimContext,
-	contractResult *commonPb.ContractResult, parameters map[string]string) *Context {
+func (c *ContextService) MakeContext(contract *commonPb.Contract, txSimContext protocol.TxSimContext,
+	contractResult *commonPb.ContractResult, parameters map[string][]byte) *Context {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.ctxId++
@@ -50,7 +50,7 @@ func (c *ContextService) MakeContext(contractId *commonPb.ContractId, txSimConte
 		ID:             c.ctxId,
 		Parameters:     parameters,
 		TxSimContext:   txSimContext,
-		ContractId:     contractId,
+		ContractId:     contract,
 		ContractResult: contractResult,
 	}
 	c.ctxMap[ctx.ID] = ctx
@@ -77,7 +77,7 @@ func (c *ContextService) PutState(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 
-	context.TxSimContext.Put(context.ContractId.ContractName, []byte(key), []byte(value))
+	context.TxSimContext.Put(context.ContractId.Name, []byte(key), []byte(value))
 
 	items := make([]*serialize.EasyCodecItem, 0)
 
@@ -96,7 +96,7 @@ func (c *ContextService) GetState(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 
-	value, err := context.TxSimContext.Get(context.ContractId.ContractName, []byte(key))
+	value, err := context.TxSimContext.Get(context.ContractId.Name, []byte(key))
 	if err != nil {
 		context.err = err
 		return protocol.ContractSdkSignalResultFail
@@ -138,10 +138,10 @@ func (c *ContextService) EmitEvent(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 	contractEvent := &commonPb.ContractEvent{
-		ContractName:    context.ContractId.ContractName,
-		ContractVersion: context.ContractId.ContractVersion,
+		ContractName:    context.ContractId.Name,
+		ContractVersion: context.ContractId.Version,
 		Topic:           topic,
-		TxId:            context.TxSimContext.GetTx().Header.TxId,
+		TxId:            context.TxSimContext.GetTx().Payload.TxId,
 		EventData:       eventData,
 	}
 	ddl := utils.GenerateSaveContractEventDdl(contractEvent, "chainId", 1, 1)
@@ -166,7 +166,7 @@ func (c *ContextService) DeleteState(ctxId int64) int32 {
 		context.err = fmt.Errorf("delete state request have no key:%d", c.ctxId)
 		return protocol.ContractSdkSignalResultFail
 	}
-	err = context.TxSimContext.Del(context.ContractId.ContractName, []byte(key))
+	err = context.TxSimContext.Del(context.ContractId.Name, []byte(key))
 	if err != nil {
 		context.err = err
 		return protocol.ContractSdkSignalResultFail
@@ -194,7 +194,7 @@ func (c *ContextService) NewIterator(ctxId int64) int32 {
 	if capLimit <= 0 {
 		capLimit = DefaultCap
 	}
-	iter, _ := context.TxSimContext.Select(context.ContractId.ContractName, []byte(start), []byte(limit))
+	iter, _ := context.TxSimContext.Select(context.ContractId.Name, []byte(start), []byte(limit))
 
 	//out := new(IteratorResponse)
 	out := make([]*serialize.EasyCodecItem, 0)
@@ -244,16 +244,16 @@ func (c *ContextService) SetOutput(ctxId int64) int32 {
 	if err == nil {
 		context.ContractResult.Result = []byte(result)
 	}
-	if context.ContractResult.Code == commonPb.ContractResultCode_FAIL {
+	if context.ContractResult.Code == 1 {
 		items := make([]*serialize.EasyCodecItem, 0)
 		context.resp = items
 		return protocol.ContractSdkSignalResultSuccess
 	}
 	switch code {
 	case 0:
-		context.ContractResult.Code = commonPb.ContractResultCode_OK
+		context.ContractResult.Code = 0
 	default:
-		context.ContractResult.Code = commonPb.ContractResultCode_FAIL
+		context.ContractResult.Code = 1
 	}
 	items := make([]*serialize.EasyCodecItem, 0)
 
@@ -276,7 +276,7 @@ func (c *ContextService) CallContract(ctxId int64) int32 {
 
 	ecArg := serialize.NewEasyCodecWithBytes(args)
 	paramMap := ecArg.ToMap()
-	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.ContractId{ContractName: contract}, method, nil, paramMap, context.gasUsed, commonPb.TxType_INVOKE_USER_CONTRACT)
+	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.Contract{Name: contract}, method, nil, paramMap, context.gasUsed, commonPb.TxType_INVOKE_CONTRACT)
 
 	ecParam := serialize.NewEasyCodec()
 	ecParam.AddInt32("code", int32(contractResult.Code))
@@ -300,7 +300,7 @@ func (c *ContextService) LogMessage(ctxId int64) int32 {
 		context.err = fmt.Errorf("log message param[msg] is required:%d", c.ctxId)
 		return protocol.ContractSdkSignalResultFail
 	}
-	c.logger.Debugf("wxvm log>> [%s] %s", context.TxSimContext.GetTx().Header.TxId, msg)
+	c.logger.Debugf("wxvm log>> [%s] %s", context.TxSimContext.GetTx().Payload.TxId, msg)
 	msgItems := make([]*serialize.EasyCodecItem, 0)
 	context.resp = msgItems
 	return protocol.ContractSdkSignalResultSuccess

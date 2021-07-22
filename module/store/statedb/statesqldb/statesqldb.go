@@ -12,17 +12,18 @@ import (
 	"fmt"
 	"sync"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // StateSqlDB provider a implementation of `statedb.StateDB`
@@ -50,7 +51,11 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	dbHandle := db.getContractDbHandle(contractName)
 	err = dbHandle.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		db.logger.Panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state info sql db table fail:" + err.Error())
+	}
+	err = dbHandle.CreateTableIfNotExist(&StateRecordSql{})
+	if err != nil {
+		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
 	}
 	return nil
 }
@@ -113,7 +118,7 @@ func GetContractDbName(chainId, contractName string) string {
 
 //getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
 func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
-	if _, ok := commonPb.ContractName_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
+	if _, ok := syscontract.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
 		return getDbName(dbConfig, chainId)
 	}
 	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
@@ -157,22 +162,19 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	}
 
 	//2. 如果是新建合约，则创建对应的数据库，并执行DDL
-	if block.IsContractMgmtBlock() {
+	if utils.IsContractMgmtBlock(block) {
 		//创建对应合约的数据库
-		payload := &commonPb.ContractMgmtPayload{}
-		err = payload.Unmarshal(block.Txs[0].RequestPayload)
-		if err != nil {
-			return err
+		payload := block.Txs[0].Payload
+
+		contractId := &commonPb.Contract{
+			Name:        string(payload.GetParameter(syscontract.InitContract_CONTRACT_NAME.String())),
+			Version:     string(payload.GetParameter(syscontract.InitContract_CONTRACT_VERSION.String())),
+			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String()))]),
 		}
-		contractId := &commonPb.ContractId{
-			ContractName:    payload.ContractId.ContractName,
-			ContractVersion: payload.ContractId.ContractVersion,
-			RuntimeType:     payload.ContractId.RuntimeType,
-		}
-		if payload.ContractId.RuntimeType == commonPb.RuntimeType_EVM {
-			address, _ := evmutils.MakeAddressFromString(payload.ContractId.ContractName)
-			contractId.ContractName = address.String()
-		}
+		//if contractId.RuntimeType == commonPb.RuntimeType_EVM {
+		//	address, _ := evmutils.MakeAddressFromString(contractId.Name)
+		//	contractId.Name = address.String()
+		//}
 		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
 			err2 := s.db.RollbackDbTransaction(txKey)
@@ -251,7 +253,7 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 	}
 	return nil
 }
-func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int64) error {
+func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint64) error {
 	err := dbTx.ChangeContextDb(s.dbName)
 	if err != nil {
 		return err
@@ -265,12 +267,12 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height int6
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.ContractId,
+func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.Contract,
 	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
-	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.ContractName)
-	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.ContractName)
-	err := s.initContractDb(contractId.ContractName) //创建合约的数据库和KV表
+	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.Name)
+	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.Name)
+	err := s.initContractDb(contractId.Name) //创建合约的数据库和KV表
 	if err != nil {
 		return err
 	}
@@ -438,7 +440,7 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 	return db.QueryMulti(sql, values...)
 
 }
-func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
+func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
 	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
@@ -447,6 +449,25 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql string) error {
 		return err
 	}
 	db := s.getContractDbHandle(contractName)
+	// query ddl from db
+	record := NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, version, 0)
+	query, args := record.GetQueryStatusSql()
+	s.logger.Debug("Query sql:", query, args)
+	row, err := s.db.QuerySingle(query, args)
+	if err != nil {
+		s.logger.Errorf("Query DDL history get an error:%s", err)
+		return err
+	}
+	//查询数据库中是否有DDL记录，如果有对应记录，而且状态是1，那么就跳过重复执行DDL的情况
+	if !row.IsEmpty() {
+		status := 0
+		row.ScanColumns(&status)
+		if status == 1 { //SUCCESS
+			s.logger.Infof("DDL[%s] already executed, ignore it", sql)
+			return nil
+		}
+	}
+	//查询不到记录，或者查询出来后状态是失败，则执行DDL
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
 	_, err = db.ExecSql(sql)
 	return err
@@ -494,8 +515,8 @@ func (s *StateSqlDB) updateConsensusArgs(dbTx protocol.SqlDBTransaction, block *
 	return nil
 }
 func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
-	val, err := s.ReadObject(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-		[]byte(commonPb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	val, err := s.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return nil, err
 	}

@@ -37,15 +37,17 @@ node:
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
-#  peer_stream_pool_size: 100
-#  max_peer_count_allow: 20
-#  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
+  #  peer_stream_pool_size: 100
+  #  max_peer_count_allow: 20
+  #  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
+  #  seeds ip格式为： "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
+  #  seeds dns格式为："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
   seeds:
 
   tls:
     enabled: true
     priv_key_file: ../config/{org_path}/certs/{net_cert_path}.key
-    cert_file:     ../config/{org_path}/certs/{net_cert_path}.crt
+    cert_file: ../config/{org_path}/certs/{net_cert_path}.crt
 #  blacklist:
 #    addresses:
 #      - "127.0.0.1:11305"
@@ -64,12 +66,13 @@ txpool:
   max_txpool_size: 50000 # 普通交易池上限
   max_config_txpool_size: 10 # config交易池的上限
   full_notify_again_time: 30 # 交易池溢出后，再次通知的时间间隔(秒)
-  batch_max_size: 30000 # 批次最大大小
-  batch_create_timeout: 200 # 创建批次超时时间，单位毫秒
+#  pool_type: "batch"  # single/batch：single实时进入交易池，batch批量进入交易池
+#  batch_max_size: 30000 # 批次最大大小
+#  batch_create_timeout: 200 # 创建批次超时时间，单位毫秒
 
 rpc:
   provider: grpc
-  port: {rpc_port}
+  port: { rpc_port }
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
   check_chain_conf_trust_roots_change_interval: 60
   ratelimit:
@@ -103,6 +106,7 @@ pprof:
   enabled: false
   port: {pprof_port}
 
+
 storage:
   store_path: ../data/{org_id}/ledgerData1
   # 最小的不允许归档的区块高度
@@ -112,9 +116,12 @@ storage:
     leveldb_config:
       store_path: ../data/{org_id}/blocks
   statedb_config:
-    provider: leveldb
-    leveldb_config:
+    provider: leveldb # leveldb/sql 二选一
+    leveldb_config: # leveldb config
       store_path: ../data/{org_id}/state
+    sqldb_config: # sql config
+      sqldb_type: mysql           #contract event db 只支持mysql
+      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
   historydb_config:
     provider: leveldb
     leveldb_config:

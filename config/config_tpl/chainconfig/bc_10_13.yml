@@ -15,7 +15,7 @@ crypto:
 
 # 合约支持类型的配置
 contract:
-  enable_sql_support: false
+  enable_sql_support: false # 此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
 
 # 交易、区块相关配置
 block:
@@ -43,6 +43,7 @@ consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,5-DPOS,10-POW)
   type: {consensus_type}
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
+  # 其中node_id为chainmaker.yml中 node.cert_file证书对应的nodeid
   nodes:
     - org_id: "{org1_id}"
       node_id:
@@ -105,57 +106,57 @@ consensus:
       value: "10"
     - key: stake.completionUnbondingEpochNum
       value: "1"
-    - key: stake.candidate:"{org1_peeraddr}"
+    - key: stake.candidate:{org1_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org2_peeraddr}"
+    - key: stake.candidate:{org2_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org3_peeraddr}"
+    - key: stake.candidate:{org3_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org4_peeraddr}"
+    - key: stake.candidate:{org4_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org5_peeraddr}"
+    - key: stake.candidate:{org5_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org6_peeraddr}"
+    - key: stake.candidate:{org6_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org7_peeraddr}"
+    - key: stake.candidate:{org7_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org8_peeraddr}"
+    - key: stake.candidate:{org8_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org9_peeraddr}"
+    - key: stake.candidate:{org9_peeraddr}
       value: "2500000"
-    - key: stake.candidate:"{org10_peeraddr}"
+    - key: stake.candidate:{org10_peeraddr}
       value: "2500000"
-#    - key: stake.candidate:"{org11_peeraddr}"
+    #    - key: stake.candidate:{org11_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:"{org12_peeraddr}"
+    #    - key: stake.candidate:{org12_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:"{org13_peeraddr}"
+    #    - key: stake.candidate:{org13_peeraddr}
 #      value: "2500000"
-    - key: stake.nodeID:"{org1_peeraddr}"
+    - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
-    - key: stake.nodeID:"{org2_peeraddr}"
+    - key: stake.nodeID:{org2_peeraddr}
       value: "{org2_peerid}"
-    - key: stake.nodeID:"{org3_peeraddr}"
+    - key: stake.nodeID:{org3_peeraddr}
       value: "{org3_peerid}"
-    - key: stake.nodeID:"{org4_peeraddr}"
+    - key: stake.nodeID:{org4_peeraddr}
       value: "{org4_peerid}"
-    - key: stake.nodeID:"{org5_peeraddr}"
+    - key: stake.nodeID:{org5_peeraddr}
       value: "{org5_peerid}"
-    - key: stake.nodeID:"{org6_peeraddr}"
+    - key: stake.nodeID:{org6_peeraddr}
       value: "{org6_peerid}"
-    - key: stake.nodeID:"{org7_peeraddr}"
+    - key: stake.nodeID:{org7_peeraddr}
       value: "{org7_peerid}"
-    - key: stake.nodeID:"{org8_peeraddr}"
+    - key: stake.nodeID:{org8_peeraddr}
       value: "{org8_peerid}"
-    - key: stake.nodeID:"{org9_peeraddr}"
+    - key: stake.nodeID:{org9_peeraddr}
       value: "{org9_peerid}"
-    - key: stake.nodeID:"{org10_peeraddr}"
+    - key: stake.nodeID:{org10_peeraddr}
       value: "{org10_peerid}"
-#    - key: stake.nodeID:"{org11_peeraddr}"
+#    - key: stake.nodeID:{org11_peeraddr}
 #      value: "{org11_peerid}"
-#    - key: stake.nodeID:"{org12_peeraddr}"
+#    - key: stake.nodeID:{org12_peeraddr}
 #      value: "{org12_peerid}"
-#    - key: stake.nodeID:"{org13_peeraddr}"
+#    - key: stake.nodeID:{org13_peeraddr}
 #      value: "{org13_peerid}"
 
 # 信任组织和根证书
@@ -189,53 +190,21 @@ trust_roots:
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
-  - resource_name: NODE_ID_UPDATE
+  - resource_name: CHAIN_CONFIG-NODE_ID_UPDATE
     policy:
       rule: SELF # 规则（ANY，MAJORITY...，全部大写，自动转大写）
       org_list: # 组织名称（组织名称，区分大小写）
       role_list: # 角色名称（role，自动转大写）
         - admin
-  - resource_name: TRUST_ROOT_UPDATE
-    policy:
-      rule: SELF # 规则（ANY，MAJORITY...，全部大写）
-      org_list: # 组织名称（组织名称）
-      role_list: # 角色名称（role，自动转大写）
-        - admin
-  - resource_name: CONSENSUS_EXT_DELETE
+  - resource_name: CHAIN_CONFIG-TRUST_ROOT_ADD
     policy:
       rule: MAJORITY
       org_list:
       role_list:
         - admin
-  - resource_name: BLOCK_UPDATE
+  - resource_name: CHAIN_CONFIG-CERTS_FREEZE
     policy:
       rule: ANY
       org_list:
       role_list:
         - admin
-        - client
-  - resource_name: INIT_CONTRACT
-    policy:
-      rule: ANY
-      org_list:
-      role_list:
-  - resource_name: UPGRADE_CONTRACT
-    policy:
-      rule: ANY
-      org_list:
-      role_list:
-  - resource_name: FREEZE_CONTRACT
-    policy:
-      rule: ANY
-      org_list:
-      role_list:
-  - resource_name: UNFREEZE_CONTRACT
-    policy:
-      rule: ANY
-      org_list:
-      role_list:
-  - resource_name: REVOKE_CONTRACT
-    policy:
-      rule: ANY
-      org_list:
-      role_list:

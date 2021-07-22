@@ -8,17 +8,20 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker/pb-go/common"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 )
 
 var (
 	codeHash string
-	contractCode string
+	//contractCode string
 )
 
 func GetContractCMD() *cobra.Command {
@@ -47,22 +50,22 @@ func getContract() error {
 		"code_hash":     string(codeHashArr[:]),
 	})
 
-	payloadBytes, err := constructQueryPayload(
-		common.ContractName_SYSTEM_CONTRACT_PRIVATE_COMPUTE.String(),
-		common.PrivateComputeContractFunction_GET_CONTRACT.String(),
+	payloadBytes, err := constructQueryPayload(chainId,
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.PrivateComputeFunction_GET_CONTRACT.String(),
 		pairs,
 	)
 	if err != nil {
 		return fmt.Errorf("marshal get contract payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_SYSTEM_CONTRACT, chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
-		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	if err = checkProposalRequestResp(resp, true); err != nil {
-		return fmt.Errorf(errStringFormat, common.TxType_QUERY_SYSTEM_CONTRACT.String(), err.Error())
+		return fmt.Errorf(errStringFormat, common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}
 
 	contractInfo := &common.PrivateGetContract{}

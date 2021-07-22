@@ -14,7 +14,7 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	genesis, err := Genesis("./bc1.yml")
+	genesis, err := Genesis("./testdata/bc1.yml")
 	require.Nil(t, err)
 	fmt.Println(genesis)
 }

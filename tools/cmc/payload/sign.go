@@ -52,7 +52,7 @@ func signSystemContractPayloadCMD() *cobra.Command {
 		Short: "Config command",
 		Long:  "Config command",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return signSystemContractPayload()
+			return signPayload()
 		},
 	}
 	return configCmd
@@ -64,19 +64,21 @@ func signContractMgmtPayloadCMD() *cobra.Command {
 		Short: "Contract command",
 		Long:  "Contract command",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return signContractMgmtPayload()
+			return signPayload()
 		},
 	}
 	return contractCmd
 }
 
-func signSystemContractPayload() error {
+const LOAD_FILE_ERROR_FORMAT = "Load file %s error: %s"
+
+func signPayload() error {
 	raw, err := ioutil.ReadFile(signInput)
 	if err != nil {
 		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
 	}
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.Payload{}
 	if err := proto.Unmarshal(raw, payload); err != nil {
 		return fmt.Errorf("SystemContractPayload unmarshal error: %s", err)
 	}
@@ -85,11 +87,10 @@ func signSystemContractPayload() error {
 	if err != nil {
 		return err
 	}
-	payload.Endorsement = []*sdkPbCommon.EndorsementEntry{
-		entry,
-	}
+	tx := &sdkPbCommon.TxRequest{Payload: payload}
+	tx.Sender = entry
 
-	bytes, err := proto.Marshal(payload)
+	bytes, err := proto.Marshal(tx)
 	if err != nil {
 		return fmt.Errorf("SystemContractPayload marshal error: %s", err)
 	}
@@ -101,38 +102,7 @@ func signSystemContractPayload() error {
 	return nil
 }
 
-func signContractMgmtPayload() error {
-	raw, err := ioutil.ReadFile(signInput)
-	if err != nil {
-		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
-	}
-
-	payload := &sdkPbCommon.ContractMgmtPayload{}
-	if err := proto.Unmarshal(raw, payload); err != nil {
-		return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
-	}
-
-	entry, err := sign(raw)
-	if err != nil {
-		return err
-	}
-	payload.Endorsement = []*sdkPbCommon.EndorsementEntry{
-		entry,
-	}
-
-	bytes, err := proto.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("ContractMgmtPayload marshal error: %s", err)
-	}
-
-	if err = ioutil.WriteFile(signOutput, bytes, 0600); err != nil {
-		return fmt.Errorf("Write to file %s error: %s", signOutput, err)
-	}
-
-	return nil
-}
-
-//func getSigner(sk3 crypto.PrivateKey, sender *sdkPbCommon.SerializedMember) (protocol.SigningMember, error) {
+//func getSigner(sk3 crypto.PrivateKey, sender *sdkPbCommon.Member) (protocol.SigningMember, error) {
 //	skPEM, err := sk3.String()
 //	if err != nil {
 //		return nil, err
@@ -175,10 +145,10 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 		return nil, fmt.Errorf("SignTx failed, %s", err)
 	}
 
-	sender := &sdkPbAc.SerializedMember{
+	sender := &sdkPbAc.Member{
 		OrgId:      orgId,
 		MemberInfo: certFile,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 
 	return &sdkPbCommon.EndorsementEntry{
@@ -196,9 +166,9 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 	//	return nil, fmt.Errorf("Sign error: %s", err)
 	//}
 	//
-	//signerSerial, err := signer.GetSerializedMember(true)
+	//signerSerial, err := signer.GetMember(true)
 	//if err != nil {
-	//	return nil, fmt.Errorf("GetSerializedMember error: %s", err)
+	//	return nil, fmt.Errorf("GetMember error: %s", err)
 	//}
 	//
 	//return &sdkPbCommon.EndorsementEntry{

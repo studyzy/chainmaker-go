@@ -1,19 +1,20 @@
 package main
 
 import (
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	evm "chainmaker.org/chainmaker/common/evmutils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
+
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	evm "chainmaker.org/chainmaker/common/evmutils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 //func getByteCode(bytecode []byte, runtime commonPb.RuntimeType) ([]*commonPb.KeyValuePair, error) {
@@ -22,7 +23,7 @@ import (
 //	}
 //}
 
-var printEnable bool = false
+var printEnable = false
 
 type EvmAbi struct {
 	anonymous       bool         `json:"anonymous"`
@@ -251,12 +252,12 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 					switch paramMap["type"].(string) {
 					case "address":
 						var add *evm.Address
-						ski := pair.Value
+						ski := string(pair.Value)
 						if printEnable {
 							fmt.Println("[debug] pair.Key: ", pair.Key, "pair.Value:", pair.Value, ", ski:", ski, ", typeof(ski): ", reflect.TypeOf(ski))
 						}
-						if strings.LastIndex(pair.Value, ".crt") > -1 {
-							ski, err = getSki(pair.Value)
+						if strings.LastIndex(string(pair.Value), ".crt") > -1 {
+							ski, err = getSki(string(pair.Value))
 							if err != nil {
 								return method, nil, err
 							}
@@ -278,7 +279,7 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 							fmt.Println("[append][address] pair.Key: ", pair.Key, "pair.Value: ", pair.Value, "type(add):", reflect.TypeOf(add), ", add: ", add, ", params:", params)
 						}
 					case "uint256", "int256", "uint", "int", "uint8", "int8":
-						val, err := strconv.Atoi(pair.Value)
+						val, err := strconv.Atoi(string(pair.Value))
 						if err != nil {
 							return method, nil, err
 						}
@@ -293,7 +294,7 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 					//	}
 					//	params = append(params, big.NewInt(int64(val)))
 					case "bool":
-						if strings.ToUpper(pair.Value) == "TRUE" {
+						if strings.ToUpper(string(pair.Value)) == "TRUE" {
 							params = append(params, true)
 						} else {
 							params = append(params, false)
@@ -335,7 +336,7 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 	result = []*commonPb.KeyValuePair{
 		{
 			Key:   "data",
-			Value: data,
+			Value: []byte(data),
 		},
 	}
 	if printEnable {
@@ -417,10 +418,10 @@ func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.Ke
 					switch paramMap["type"].(string) {
 					case "address":
 						var add *evm.Address
-						ski := pair.Value
+						ski := string(pair.Value)
 						fmt.Println("[debug] pair.Key: ", pair.Key, "pair.Value:", pair.Value, ", ski:", ski, ", typeof(ski): ", reflect.TypeOf(ski))
-						if strings.LastIndex(pair.Value, ".crt") > -1 {
-							ski, err = getSki(pair.Value)
+						if strings.LastIndex(string(pair.Value), ".crt") > -1 {
+							ski, err = getSki(string(pair.Value))
 							if err != nil {
 								return method, nil, err
 							}
@@ -440,7 +441,7 @@ func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.Ke
 							fmt.Println("[append][address] pair.Key: ", pair.Key, "pair.Value: ", pair.Value, "type(add):", reflect.TypeOf(add), ", add: ", add, ", params:", params)
 						}
 					case "uint256", "int256", "uint", "int", "uint8", "int8":
-						val, err := strconv.Atoi(pair.Value)
+						val, err := strconv.Atoi(string(pair.Value))
 						if err != nil {
 							return method, nil, err
 						}
@@ -455,7 +456,7 @@ func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.Ke
 					//	}
 					//	params = append(params, big.NewInt(int64(val)))
 					case "bool":
-						if strings.ToUpper(pair.Value) == "TRUE" {
+						if strings.ToUpper(string(pair.Value)) == "TRUE" {
 							params = append(params, true)
 						} else {
 							params = append(params, false)
@@ -497,7 +498,7 @@ func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.Ke
 	result = []*commonPb.KeyValuePair{
 		{
 			Key:   "data",
-			Value: data,
+			Value: []byte(data),
 		},
 	}
 	if printEnable {

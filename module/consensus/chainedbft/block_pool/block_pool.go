@@ -19,7 +19,7 @@ import (
 //BlockPool store block and qc in memory
 type BlockPool struct {
 	mtx                   sync.RWMutex
-	idToQC                map[string]*chainedbftpb.QuorumCert // store qc in memory, key is blockID, value is blockQC
+	idToQC                map[string]*chainedbftpb.QuorumCert // store qc in memory, key is BlockId, value is blockQC
 	blockTree             *BlockTree                          // store block in memory
 	highestQC             *chainedbftpb.QuorumCert            // highest qc in local node
 	highestCertifiedBlock *common.Block                       // highest block with qc in local node
@@ -34,7 +34,7 @@ func NewBlockPool(rootBlock *common.Block,
 		highestQC:             rootQC,
 		highestCertifiedBlock: rootBlock,
 	}
-	blockPool.idToQC[string(rootQC.BlockID)] = rootQC
+	blockPool.idToQC[string(rootQC.BlockId)] = rootQC
 	return blockPool
 }
 
@@ -60,22 +60,22 @@ func (bp *BlockPool) InsertQC(qc *chainedbftpb.QuorumCert) error {
 	}
 	bp.mtx.Lock()
 	defer bp.mtx.Unlock()
-	if _, exist := bp.idToQC[string(qc.BlockID)]; exist {
+	if _, exist := bp.idToQC[string(qc.BlockId)]; exist {
 		return nil
 	}
-	bp.idToQC[string(qc.BlockID)] = qc
+	bp.idToQC[string(qc.BlockId)] = qc
 
 	if qc.Level <= bp.highestQC.Level {
 		return nil
 	}
 	bp.highestQC = qc
-	if blk := bp.blockTree.GetBlockByID(string(qc.BlockID)); blk != nil {
+	if blk := bp.blockTree.GetBlockByID(string(qc.BlockId)); blk != nil {
 		bp.highestCertifiedBlock = blk
 	}
 	return nil
 }
 
-func (bp *BlockPool) GetBlocks(height int64) []*common.Block {
+func (bp *BlockPool) GetBlocks(height uint64) []*common.Block {
 	return bp.blockTree.GetBlocks(height)
 }
 

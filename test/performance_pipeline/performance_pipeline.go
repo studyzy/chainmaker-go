@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
@@ -24,9 +25,7 @@ import (
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 
-	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -197,17 +196,17 @@ func getSignerAndCertId(index int, sk3 crypto.PrivateKey) (protocol.SigningMembe
 	if err != nil {
 		panic(err)
 	}
-	senderFull := &acPb.SerializedMember{
+	senderFull := &acPb.Member{
 		OrgId:      orgIds[index],
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 	}
 	signer := getSigner(sk3, senderFull)
 
 	return signer, certId
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -227,60 +226,58 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.Si
 func createInvokePackage(signer protocol.SigningMember, certId []byte, index int) *commonPb.TxRequest {
 	txId := utils.GetRandTxId()
 	var (
-		payloadBytes []byte
-		rawTxBytes   []byte
-		signBytes    []byte
+		payload    *commonPb.Payload
+		rawTxBytes []byte
+		signBytes  []byte
 
 		err error
 	)
 
 	// 1. create payload
 	if CallContract == 1 {
-		if payloadBytes, err = proto.Marshal(&commonPb.TransactPayload{
+		payload = &commonPb.Payload{
 			ContractName: addContractName,
 			Method:       addFuncName,
-		}); err != nil {
-			log.Fatalf("marshal payload failed, %s", err.Error())
 		}
+
 	} else {
-		if payloadBytes, err = proto.Marshal(&commonPb.TransactPayload{
+		payload = &commonPb.Payload{
 			ContractName: contractNameFact,
 			Method:       factFuncName,
 			Parameters: []*commonPb.KeyValuePair{
 				{
 					Key:   "file_hash",
-					Value: txId[:10],
+					Value: []byte(txId[:10]),
 				},
 				{
 					Key:   "file_name",
-					Value: "长安链chainmaker",
+					Value: []byte("长安链chainmaker"),
 				},
 				{
 					Key:   "time",
-					Value: "1615188470000",
+					Value: []byte("1615188470000"),
 				},
 			},
-		}); err != nil {
-			log.Fatalf("marshal payload failed, %s", err.Error())
 		}
 	}
 
 	// 2. create request with payload
 	req := &commonPb.TxRequest{
-		Header: &commonPb.TxHeader{
-			ChainId: CHAIN1,
-			Sender: &acPb.SerializedMember{
-				OrgId:      orgIds[index],
-				MemberInfo: certId,
-				IsFullCert: false,
-			},
-			TxType:         commonPb.TxType_INVOKE_USER_CONTRACT,
+		Payload: &commonPb.Payload{
+			ChainId:        CHAIN1,
+			TxType:         commonPb.TxType_INVOKE_CONTRACT,
 			TxId:           txId,
 			Timestamp:      time.Now().Unix(),
 			ExpirationTime: 0,
+			ContractName:   payload.ContractName,
+			Method:         payload.Method,
+			Parameters:     payload.Parameters,
 		},
-		Payload:   payloadBytes,
-		Signature: nil,
+		Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{
+			OrgId:      orgIds[index],
+			MemberInfo: certId,
+			MemberType: acPb.MemberType_CERT_HASH,
+		}},
 	}
 
 	// 3. generate the signature on request
@@ -292,7 +289,7 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 	}
 
 	// 4. Assemble the signature in request
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 	return req
 }
 

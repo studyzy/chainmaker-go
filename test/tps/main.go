@@ -8,26 +8,25 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"context"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strconv"
 	"sync"
 	"time"
 
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
@@ -114,27 +113,28 @@ func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 
 	var pairs []*commonPb.KeyValuePair
 
-	method := commonPb.TxType_MANAGE_USER_CONTRACT.String()
+	//method := commonPb.TxType_MANAGE_USER_CONTRACT.String()
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", runtimeType, wasmBin, pairs)
 
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "1.0.0",
-			//RuntimeType:     commonPb.RuntimeType_GASM,
-			RuntimeType: runtimeType,
-		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   wasmBin,
-	}
+	//payload := &commonPb.Payload{
+	//	ChainId: chainId,
+	//	Contract: &commonPb.Contract{
+	//		ContractName:    contractName,
+	//		ContractVersion: "1.0.0",
+	//		//RuntimeType:     commonPb.RuntimeType_GASM,
+	//		RuntimeType: runtimeType,
+	//	},
+	//	Method:     method,
+	//	Parameters: pairs,
+	//	ByteCode:   wasmBin,
+	//}
 
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("failed to sign endorsement, %s", err.Error())
-		return
-	}
+	//if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
+	//	payload.Endorsement = endorsement
+	//} else {
+	//	log.Fatalf("failed to sign endorsement, %s", err.Error())
+	//	return
+	//}
 
 	payloadBytes, err := proto.Marshal(payload)
 	if err != nil {
@@ -142,7 +142,7 @@ func testCreate(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 		return
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp != nil {
 		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -157,23 +157,23 @@ func testInvoke(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "time",
-			Value: "counter1",
+			Value: []byte("counter1"),
 		},
 		{
 			Key:   "file_hash",
-			Value: "counter2",
+			Value: []byte("counter2"),
 		},
 		{
 			Key:   "file_name",
-			Value: "counter3",
+			Value: []byte("counter3"),
 		},
 		{
 			Key:   "tx_id",
-			Value: "counter4",
+			Value: []byte("counter4"),
 		},
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       "save",
 		Parameters:   pairs,
@@ -185,7 +185,7 @@ func testInvoke(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, chainId strin
 		return txId
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp != nil {
 		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -210,22 +210,21 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	// 构造Sender
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		////IsFullCert: true,
 	}
 	req := &commonPb.TxRequest{
-		Header: &commonPb.TxHeader{
-			ChainId:        chainId,
-			Sender:         sender,
+		Payload: &commonPb.Payload{
+			ChainId: chainId,
+			//Sender:         sender,
 			TxType:         txType,
 			TxId:           txId,
 			Timestamp:      time.Now().Unix(),
 			ExpirationTime: 0,
 		},
-		Payload:   payloadBytes,
-		Signature: nil,
+		Sender: &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -242,7 +241,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 		return nil
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 	result, err := (client).SendRequest(ctx, req)
 	if err == nil {
 		return result
@@ -255,7 +254,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	return nil
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -296,7 +295,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) []byte {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -311,45 +310,46 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 	return payloadBytes
 }
 
-func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(msg)
-
-	signers := make([]protocol.SigningMember, 0)
-	for _, orgId := range orgIdList {
-
-		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-		file, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		sk, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-		file2, err := ioutil.ReadFile(userCrtPath)
-		fmt.Println("node", orgId, "crt", string(file2))
-		if err != nil {
-			panic(err)
-		}
-
-		// 获取peerId
-		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
-		fmt.Println("node", orgId, "peerId", peerId)
-
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      fmt.Sprintf(orgIdFormat, orgId),
-			MemberInfo: file2,
-			IsFullCert: true,
-		}
-
-		signer := getSigner(sk, sender1)
-		signers = append(signers, signer)
-	}
-
-	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
-}
+//
+//func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(msg)
+//
+//	signers := make([]protocol.SigningMember, 0)
+//	for _, orgId := range orgIdList {
+//
+//		numStr := strconv.Itoa(orgId)
+//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+//		file, err := ioutil.ReadFile(path)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+//		file2, err := ioutil.ReadFile(userCrtPath)
+//		fmt.Println("node", orgId, "crt", string(file2))
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// 获取peerId
+//		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
+//		fmt.Println("node", orgId, "peerId", peerId)
+//
+//		// 构造Sender
+//		sender1 := &acPb.Member{
+//			OrgId:      fmt.Sprintf(orgIdFormat, orgId),
+//			MemberInfo: file2,
+//			//IsFullCert: true,
+//		}
+//
+//		signer := getSigner(sk, sender1)
+//		signers = append(signers, signer)
+//	}
+//
+//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
+//}

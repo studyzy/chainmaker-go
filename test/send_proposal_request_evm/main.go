@@ -20,18 +20,21 @@ import (
 	"strings"
 	"time"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
+	"chainmaker.org/chainmaker-go/test/common"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	evm "chainmaker.org/chainmaker/common/evmutils"
-	"chainmaker.org/chainmaker/common/helper"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
@@ -118,19 +121,19 @@ func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeCli
 		pairs := []*commonPb.KeyValuePair{
 			{
 				Key:   "from",
-				Value: strconv.Itoa(i),
+				Value: []byte(strconv.Itoa(i)),
 			},
 			{
 				Key:   "to",
-				Value: strconv.Itoa(i + 1000),
+				Value: []byte(strconv.Itoa(i + 1000)),
 			},
 			{
 				Key:   "amount",
-				Value: "1",
+				Value: []byte("1"),
 			},
 		}
 
-		payload := &commonPb.TransactPayload{
+		payload := &commonPb.Payload{
 			ContractName: contractName,
 			Method:       "transfer",
 			Parameters:   pairs,
@@ -141,7 +144,7 @@ func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeCli
 			log.Fatalf("marshal payload failed, %s", err.Error())
 		}
 
-		resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+		resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 			chainId, txId, payloadBytes)
 
 		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -155,11 +158,11 @@ func testPerformanceModeBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 		pairs := []*commonPb.KeyValuePair{
 			{
 				Key:   "from",
-				Value: strconv.Itoa(i),
+				Value: []byte(strconv.Itoa(i)),
 			},
 		}
 
-		payload := &commonPb.TransactPayload{
+		payload := &commonPb.Payload{
 			ContractName: contractName,
 			Method:       "balance",
 			Parameters:   pairs,
@@ -170,7 +173,7 @@ func testPerformanceModeBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 			log.Fatalf("marshal payload failed, %s", err.Error())
 		}
 
-		resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+		resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 			chainId, txId, payloadBytes)
 
 		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -189,47 +192,47 @@ func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNod
 	time.Sleep(5 * time.Second)
 
 	// 冻结
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 	testInvoke(sk3, &client, CHAIN1)
 	//testInvoke2(sk3, &client, CHAIN1)
 	time.Sleep(5 * time.Second)
 
 	// 解冻
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String())
+	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 	testInvoke(sk3, &client, CHAIN1)
 	//testInvoke2(sk3, &client, CHAIN1)
 	time.Sleep(5 * time.Second)
 
 	// 冻结
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 	testInvoke(sk3, &client, CHAIN1)
 	//testInvoke2(sk3, &client, CHAIN1)
 	time.Sleep(5 * time.Second)
 
 	// 解冻
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String())
+	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 	testInvoke(sk3, &client, CHAIN1)
 	//testInvoke2(sk3, &client, CHAIN1)
 	time.Sleep(5 * time.Second)
 
 	// 冻结
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
 	//time.Sleep(5 * time.Second)
 	// 吊销
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_REVOKE_CONTRACT.String())
+	common.RevokeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 	testInvoke(sk3, &client, CHAIN1)
 	//testInvoke2(sk3, &client, CHAIN1)
 	time.Sleep(5 * time.Second)
 
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_FREEZE_CONTRACT.String())
+	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 
-	testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, commonPb.ManageUserContractFunction_UNFREEZE_CONTRACT.String())
+	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
 	time.Sleep(5 * time.Second)
 }
 
@@ -237,13 +240,13 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	fmt.Printf("\n============ get tx by txId [%s] ============\n", txId)
 
 	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: txId}
+	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, pair)
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -256,17 +259,17 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "txId",
-			Value: txId,
+			Value: []byte(txId),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -278,24 +281,24 @@ func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId
 	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
 }
 
-func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height int64) string {
+func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height uint64) string {
 	fmt.Printf("\n============ get block by height [%d] ============\n", height)
 	// 构造Payload
 
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.FormatInt(height, 10),
+			Value: []byte(strconv.FormatUint(height, 10)),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -309,19 +312,19 @@ func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	return hex.EncodeToString(blockInfo.Block.Header.BlockHash)
 }
 
-func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height int64) string {
+func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height uint64) string {
 	fmt.Printf("\n============ get block with txRWsets by height [%d] ============\n", height)
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: strconv.FormatInt(height, 10),
+			Value: []byte(strconv.FormatUint(height, 10)),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -341,17 +344,17 @@ func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 		{
 			Key:   "withRWSet",
-			Value: "false",
+			Value: []byte("false"),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -369,13 +372,13 @@ func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNode
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHash",
-			Value: hash,
+			Value: []byte(hash),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -393,13 +396,13 @@ func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "withRWSet",
-			Value: "true",
+			Value: []byte("true"),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -417,13 +420,13 @@ func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "withRWSet",
-			Value: "true",
+			Value: []byte("true"),
 		},
 	}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_LAST_BLOCK", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	blockInfo := &commonPb.BlockInfo{}
@@ -440,9 +443,9 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes := constructPayload(commonPb.ContractName_SYSTEM_CONTRACT_QUERY.String(), "GET_CHAIN_INFO", pairs)
+	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_SYSTEM_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, "", payloadBytes)
 
 	chainInfo := &discoveryPb.ChainInfo{}
@@ -455,182 +458,47 @@ func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainI
 }
 
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-
-	txId := utils.GetRandTxId()
-
-	fmt.Printf("\n============ create contract [%s] ============\n", txId)
-
-	var pairs []*commonPb.KeyValuePair
-	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
-	var byteCodeBin []byte
-	if runtimeType == commonPb.RuntimeType_EVM {
-		byteCodeTmp, err := ioutil.ReadFile(ByteCodePath)
-		bc := string(byteCodeTmp)
-		checkErr(err)
-		data := ""
-		hasParam := true
-		if hasParam {
-			method := ""
-			myAbi, err := abi.JSON(strings.NewReader(AbiJson))
-			checkErr(err)
-			addr := evm.BigToAddress(evm.FromDecimalString(client1Addr))
-			dataByte, err := myAbi.Pack(method, addr)
-			checkErr(err)
-			data = hex.EncodeToString(dataByte)
-		}
-		pairs = []*commonPb.KeyValuePair{
-			{
-				Key:   "data",
-				Value: data,
-			},
-		}
-		fmt.Println(data)
-		//bc += data
-		byteCodeBin, err = hex.DecodeString(bc)
-	} else {
-		var err error
-		byteCodeBin, err = ioutil.ReadFile(WasmPath)
-		checkErr(err)
-		pairs = []*commonPb.KeyValuePair{}
-	}
-
-	method := commonPb.ManageUserContractFunction_INIT_CONTRACT.String()
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "1.0.0",
-			RuntimeType:     runtimeType,
-		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   byteCodeBin,
-	}
-
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-		os.Exit(0)
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes)
-	//result, _ := myAbi.Constructor.Outputs.Unpack(resp.ContractResult.Result)
-	v := make(map[string]interface{})
-	if resp.ContractResult != nil {
-		myAbi.Constructor.Outputs.UnpackIntoMap(v, resp.ContractResult.Result)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	common.CreateContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
 }
 
 func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-
-	txId := utils.GetRandTxId()
-
-	fmt.Printf("\n============ create contract [%s] ============\n", txId)
-
-	var pairs []*commonPb.KeyValuePair
-
-	var byteCodeBin []byte
-	if runtimeType == commonPb.RuntimeType_EVM {
-		byteCodeTmp, err := ioutil.ReadFile(ByteCodePath)
-		checkErr(err)
-		byteCodeBin, err = hex.DecodeString(string(byteCodeTmp))
-		checkErr(err)
-
-		data := ""
-		hasParam := true
-		if hasParam {
-			method := ""
-			myAbi, err := abi.JSON(strings.NewReader(AbiJson))
-			checkErr(err)
-			dataByte, err := myAbi.Pack(method, big.NewInt(3), big.NewInt(2))
-			checkErr(err)
-			data = hex.EncodeToString(dataByte)
-		}
-		pairs = []*commonPb.KeyValuePair{
-			{
-				Key:   "data",
-				Value: data,
-			},
-		}
-	} else {
-		var err error
-		byteCodeBin, err = ioutil.ReadFile(WasmPath)
-		checkErr(err)
-		pairs = []*commonPb.KeyValuePair{}
-	}
-
-	method := commonPb.ManageUserContractFunction_UPGRADE_CONTRACT.String()
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName:    contractName,
-			ContractVersion: "2.0.0",
-			RuntimeType:     runtimeType,
-		},
-		Method:     method,
-		Parameters: pairs,
-		ByteCode:   byteCodeBin,
-	}
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-		os.Exit(0)
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp := common.UpgradeContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
 
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 }
-func testFreezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, method string) {
 
-	txId := utils.GetRandTxId()
-
-	fmt.Printf("\n============ freeze contract [%s] ============\n", txId)
-
-	payload := &commonPb.ContractMgmtPayload{
-		ChainId: chainId,
-		ContractId: &commonPb.ContractId{
-			ContractName: contractName,
-			RuntimeType:  runtimeType,
-		},
-		Method: method,
-	}
-
-	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
-		payload.Endorsement = endorsement
-	} else {
-		log.Fatalf("failed to sign endorsement, %s", err.Error())
-		os.Exit(0)
-	}
-
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-		os.Exit(0)
-	}
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT, chainId, txId, payloadBytes)
-
-	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-}
+//func testFreezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, method string) {
+//
+//	txId := utils.GetRandTxId()
+//
+//	fmt.Printf("\n============ freeze contract [%s] ============\n", txId)
+//
+//	payload := &commonPb.Payload{
+//		ChainId: chainId,
+//		Contract: &commonPb.Contract{
+//			ContractName: contractName,
+//			RuntimeType:  runtimeType,
+//		},
+//		Method: method,
+//	}
+//
+//	if endorsement, err := acSign(payload, []int{1, 2, 3, 4}); err == nil {
+//		payload.Endorsement = endorsement
+//	} else {
+//		log.Fatalf("failed to sign endorsement, %s", err.Error())
+//		os.Exit(0)
+//	}
+//
+//	payloadBytes, err := proto.Marshal(payload)
+//	if err != nil {
+//		log.Fatalf("marshal payload failed, %s", err.Error())
+//		os.Exit(0)
+//	}
+//
+//	resp := proposalRequest(sk3, client, commonPb.TxType_MANAGE_USER_CONTRACT, chainId, txId, payloadBytes)
+//
+//	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+//}
 
 func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
 	txId := utils.GetRandTxId()
@@ -658,7 +526,7 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -667,16 +535,16 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -687,7 +555,7 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
@@ -724,7 +592,7 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -733,16 +601,16 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -753,7 +621,7 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
@@ -801,7 +669,7 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -810,16 +678,16 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -830,7 +698,7 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
@@ -883,7 +751,7 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -892,16 +760,16 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -912,7 +780,7 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
@@ -959,7 +827,7 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -968,16 +836,16 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -988,7 +856,7 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
@@ -1033,7 +901,7 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -1042,16 +910,16 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -1062,7 +930,7 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
@@ -1095,7 +963,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "data",
-				Value: data,
+				Value: []byte(data),
 			},
 		}
 
@@ -1104,16 +972,16 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		pairs = []*commonPb.KeyValuePair{
 			{
 				Key:   "file_hash",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 			{
 				Key:   "file_name",
-				Value: "counter1",
+				Value: []byte("counter1"),
 			},
 		}
 	}
 
-	payload := &commonPb.TransactPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -1124,7 +992,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		log.Fatalf("marshal payload failed, %s", err.Error())
 	}
 
-	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_USER_CONTRACT,
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payloadBytes)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
@@ -1151,17 +1019,17 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 
 	// 构造Sender
 	//pubKeyString, _ := sk3.PublicKey().String()
-	sender := &acPb.SerializedMember{
+	sender := &acPb.Member{
 		OrgId:      orgId,
 		MemberInfo: file,
-		IsFullCert: true,
+		//IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
 
 	// 构造Header
-	header := &commonPb.TxHeader{
-		ChainId:        chainId,
-		Sender:         sender,
+	header := &commonPb.Payload{
+		ChainId: chainId,
+		//Sender:         sender,
 		TxType:         txType,
 		TxId:           txId,
 		Timestamp:      time.Now().Unix(),
@@ -1169,9 +1037,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	req := &commonPb.TxRequest{
-		Header:    header,
-		Payload:   payloadBytes,
-		Signature: nil,
+		Payload: header,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
 	// 拼接后，计算Hash，对hash计算签名
@@ -1191,7 +1058,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 
-	req.Signature = signBytes
+	req.Sender.Signature = signBytes
 
 	result, err := (*client).SendRequest(ctx, req)
 
@@ -1210,7 +1077,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	return result
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.SerializedMember) protocol.SigningMember {
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
 	skPEM, err := sk3.String()
 	if err != nil {
 		log.Fatalf("get sk PEM failed, %s", err.Error())
@@ -1252,7 +1119,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 }
 
 func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) []byte {
-	payload := &commonPb.QueryPayload{
+	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
@@ -1267,48 +1134,48 @@ func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePai
 	return payloadBytes
 }
 
-func acSign(msg *commonPb.ContractMgmtPayload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-	msg.Endorsement = nil
-	bytes, _ := proto.Marshal(msg)
-
-	signers := make([]protocol.SigningMember, 0)
-	for _, orgId := range orgIdList {
-
-		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-		file, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		sk, err := asym.PrivateKeyFromPEM(file, nil)
-		if err != nil {
-			panic(err)
-		}
-
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-		file2, err := ioutil.ReadFile(userCrtPath)
-		fmt.Println("node", orgId, "crt", string(file2))
-		if err != nil {
-			panic(err)
-		}
-
-		// 获取peerId
-		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
-		fmt.Println("node", orgId, "peerId", peerId)
-
-		// 构造Sender
-		sender1 := &acPb.SerializedMember{
-			OrgId:      "wx-org" + numStr + ".chainmaker.org",
-			MemberInfo: file2,
-			IsFullCert: true,
-		}
-
-		signer := getSigner(sk, sender1)
-		signers = append(signers, signer)
-	}
-
-	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
-}
+//func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
+//	msg.Endorsement = nil
+//	bytes, _ := proto.Marshal(msg)
+//
+//	signers := make([]protocol.SigningMember, 0)
+//	for _, orgId := range orgIdList {
+//
+//		numStr := strconv.Itoa(orgId)
+//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+//		file, err := ioutil.ReadFile(path)
+//		if err != nil {
+//			panic(err)
+//		}
+//		sk, err := asym.PrivateKeyFromPEM(file, nil)
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+//		file2, err := ioutil.ReadFile(userCrtPath)
+//		fmt.Println("node", orgId, "crt", string(file2))
+//		if err != nil {
+//			panic(err)
+//		}
+//
+//		// 获取peerId
+//		peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
+//		fmt.Println("node", orgId, "peerId", peerId)
+//
+//		// 构造Sender
+//		sender1 := &acPb.Member{
+//			OrgId:      "wx-org" + numStr + ".chainmaker.org",
+//			MemberInfo: file2,
+//			//IsFullCert: true,
+//		}
+//
+//		signer := getSigner(sk, sender1)
+//		signers = append(signers, signer)
+//	}
+//
+//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
+//}
 
 func testUserContractFunctionalFlow(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
 

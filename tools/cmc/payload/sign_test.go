@@ -33,19 +33,19 @@ func TestSignConfigUpdatePayload(t *testing.T) {
 	adminKeyPath = "../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.key"
 	adminCertPath = "../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
 
-	err = signSystemContractPayload()
+	err = signPayload()
 	assert.NoError(t, err)
 
 	raw, err := ioutil.ReadFile(signOutput)
 	assert.NoError(t, err)
 
-	payload := &sdkPbCommon.SystemContractPayload{}
+	payload := &sdkPbCommon.TxRequest{}
 	err = proto.Unmarshal(raw, payload)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 1, len(payload.Endorsement))
-	assert.NotNil(t, payload.Endorsement)
-	assert.NotNil(t, payload.Endorsement[0])
+	assert.Equal(t, 1, len(payload.Endorsers))
+	assert.NotNil(t, payload.Endorsers)
+	assert.NotNil(t, payload.Endorsers[0])
 }
 
 func TestSignContractMgmtPayload(t *testing.T) {
@@ -68,7 +68,7 @@ func TestSignContractMgmtPayload(t *testing.T) {
 	//raw, err := ioutil.ReadFile(signOutput)
 	//assert.NoError(t, err)
 	//
-	//payload := &sdkPbCommon.ContractMgmtPayload{}
+	//payload := &sdkPbCommon.Payload{}
 	//err = proto.Unmarshal(raw, payload)
 	//assert.NoError(t, err)
 	//

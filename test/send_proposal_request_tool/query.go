@@ -8,14 +8,15 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,7 @@ func QueryCMD() *cobra.Command {
 	return cmd
 }
 
-func returnResult(code commonPb.TxStatusCode, message string, contractCode commonPb.ContractResultCode, contractMessage string, data string) error {
+func returnResult(code commonPb.TxStatusCode, message string, contractCode uint32, contractMessage string, data string) error {
 	var result *Result
 	result = &Result{
 		Code:                  code,
@@ -57,8 +58,6 @@ func returnResult(code commonPb.TxStatusCode, message string, contractCode commo
 }
 
 func query() error {
-	txId := utils.GetRandTxId()
-
 	// 构造Payload
 	if pairsString == "" {
 		bytes, err := ioutil.ReadFile(pairsFile)
@@ -95,18 +94,17 @@ func query() error {
 	//	pairs = []*commonPb.KeyValuePair{
 	//		{
 	//			Key:   "data",
-	//			Value: data,
+	//			Value: []byte(data),
 	//		},
 	//	}
 	//}
 
-	payloadBytes, err := constructPayload(contractName, method, pairs)
+	payloadBytes, err := constructQueryPayload(chainId, contractName, method, pairs)
 	if err != nil {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_USER_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	fmt.Println("resp: ", resp, "err:", err)
 	if err != nil {
 		return err

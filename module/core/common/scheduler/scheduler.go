@@ -7,20 +7,21 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"encoding/hex"
+	//	"encoding/hex"
 	"errors"
 	"fmt"
 	"regexp"
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker-go/core/provider/conf"
+
 	"chainmaker.org/chainmaker-go/localconf"
-	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/gogo/protobuf/proto"
+	//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	//	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/protocol"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -45,7 +46,8 @@ type TxScheduler struct {
 // Transaction dependency in adjacency table representation
 type dagNeighbors map[int]bool
 
-func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction) protocol.TxSimContext {
+func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction,
+	blockVersion uint32) protocol.TxSimContext {
 	return &txSimContextImpl{
 		txExecSeq:        snapshot.GetSnapshotSize(),
 		tx:               tx,
@@ -60,6 +62,7 @@ func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, t
 		gasUsed:          0,
 		currentDepth:     0,
 		hisResult:        make([]*callContractResult, 0),
+		blockVersion:     blockVersion,
 	}
 }
 
@@ -73,9 +76,10 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 	runningTxC := make(chan *commonpb.Transaction, txBatchSize)
 	timeoutC := time.After(ScheduleTimeout * time.Second)
 	finishC := make(chan bool)
-	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
 	var goRoutinePool *ants.Pool
 	var err error
+	ts.log.Infof("schedule tx batch start, size %d", txBatchSize)
+
 	poolCapacity := ts.StoreHelper.GetPoolCapacity()
 	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
 		return nil, nil, err
@@ -91,8 +95,8 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 					if snapshot.IsSealed() {
 						return
 					}
-					ts.log.Debugf("run vm for tx id:%s", tx.Header.GetTxId())
-					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx)
+					ts.log.Debugf("run vm for tx id:%s", tx.Payload.GetTxId())
+					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
@@ -105,7 +109,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 						runVmSuccess = false
 						tx.Result = txResult
 						txSimContext.SetTxResult(txResult)
-						ts.log.Errorf("failed to run vm for tx id:%s during schedule, tx result:%+v, error:%+v", tx.Header.GetTxId(), txResult, err)
+						ts.log.Errorf("failed to run vm for tx id:%s during schedule, tx result:%+v, error:%+v", tx.Payload.GetTxId(), txResult, err)
 					} else {
 						tx.Result = txResult
 						txSimContext.SetTxResult(txResult)
@@ -116,9 +120,9 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 					} else {
 						if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 							elapsed := time.Since(start)
-							ts.metricVMRunTime.WithLabelValues(tx.Header.ChainId).Observe(elapsed.Seconds())
+							ts.metricVMRunTime.WithLabelValues(tx.Payload.ChainId).Observe(elapsed.Seconds())
 						}
-						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
+						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Payload.GetTxId(), txResult, applySize)
 					}
 					// If all transactions have been successfully added to dag
 					if applySize >= txBatchSize {
@@ -126,7 +130,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 					}
 				})
 				if err != nil {
-					ts.log.Warnf("failed to submit tx id %s during schedule, %+v", tx.Header.GetTxId(), err)
+					ts.log.Warnf("failed to submit tx id %s during schedule, %+v", tx.Payload.GetTxId(), err)
 				}
 			case <-timeoutC:
 				ts.scheduleFinishC <- true
@@ -168,7 +172,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 	contractEventMap := make(map[string][]*commonpb.ContractEvent)
 	for _, tx := range block.Txs {
 		event := tx.Result.ContractResult.ContractEvent
-		contractEventMap[tx.Header.TxId] = event
+		contractEventMap[tx.Payload.TxId] = event
 	}
 	//ts.dumpDAG(block.Dag, block.Txs)
 	if localconf.ChainMakerConfig.SchedulerConfig.RWSetLog {
@@ -228,8 +232,8 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 			case txIndex := <-runningTxC:
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
-					ts.log.Debugf("run vm with dag for tx id %s", tx.Header.GetTxId())
-					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx)
+					ts.log.Debugf("run vm with dag for tx id %s", tx.Payload.GetTxId())
+					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
@@ -237,18 +241,18 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 					if txResult, err = ts.runVM(tx, txSimContext); err != nil {
 						runVmSuccess = false
 						txSimContext.SetTxResult(txResult)
-						ts.log.Errorf("failed to run vm for tx id:%s during simulate with dag, tx result:%+v, error:%+v", tx.Header.GetTxId(), txResult, err)
+						ts.log.Errorf("failed to run vm for tx id:%s during simulate with dag, tx result:%+v, error:%+v", tx.Payload.GetTxId(), txResult, err)
 					} else {
-						//ts.log.Debugf("success to run vm for tx id:%s during simulate with dag, tx result:%+v", tx.Header.GetTxId(), txResult)
+						//ts.log.Debugf("success to run vm for tx id:%s during simulate with dag, tx result:%+v", tx.Payload.GetTxId(), txResult)
 						txSimContext.SetTxResult(txResult)
 					}
 
 					applyResult, applySize := snapshot.ApplyTxSimContext(txSimContext, runVmSuccess)
 					if !applyResult {
-						ts.log.Debugf("failed to apply according to dag with tx %s ", tx.Header.TxId)
+						ts.log.Debugf("failed to apply according to dag with tx %s ", tx.Payload.TxId)
 						runningTxC <- txIndex
 					} else {
-						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Header.GetTxId(), txResult, applySize)
+						ts.log.Debugf("apply to snapshot tx id:%s, result:%+v, apply count:%d", tx.Payload.GetTxId(), txResult, applySize)
 						doneTxC <- txIndex
 					}
 					// If all transactions in current batch have been successfully added to dag
@@ -257,7 +261,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 					}
 				})
 				if err != nil {
-					ts.log.Warnf("failed to submit tx id %s during simulate with dag, %+v", tx.Header.GetTxId(), err)
+					ts.log.Warnf("failed to submit tx id %s during simulate with dag, %+v", tx.Payload.GetTxId(), err)
 				}
 			case doneTxIndex := <-doneTxC:
 				ts.shrinkDag(doneTxIndex, dagRemain)
@@ -327,138 +331,139 @@ func (ts *TxScheduler) Halt() {
 }
 
 func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxSimContext) (*commonpb.Result, error) {
-	var contractId *commonpb.ContractId
+	//var contractId *commonpb.Contract
 	var contractName string
-	var runtimeType commonpb.RuntimeType
-	var contractVersion string
+	//var runtimeType commonpb.RuntimeType
+	//var contractVersion string
 	var method string
 	var byteCode []byte
-	var parameterPairs []*commonpb.KeyValuePair
-	var parameters map[string]string
-	var endorsements []*commonpb.EndorsementEntry
-	var sequence uint64
+	//var endorsements []*commonpb.EndorsementEntry
+	//var sequence uint64
 
 	result := &commonpb.Result{
 		Code: commonpb.TxStatusCode_SUCCESS,
 		ContractResult: &commonpb.ContractResult{
-			Code:    commonpb.ContractResultCode_OK,
+			Code:    uint32(0),
 			Result:  nil,
 			Message: "",
 		},
 		RwSetHash: nil,
 	}
-
-	switch tx.Header.TxType {
-	case commonpb.TxType_QUERY_SYSTEM_CONTRACT, commonpb.TxType_QUERY_USER_CONTRACT:
-		var payload commonpb.QueryPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Header.TxId, err))
-		}
-	case commonpb.TxType_INVOKE_USER_CONTRACT:
-		var payload commonpb.TransactPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Header.TxId, err))
-		}
-	case commonpb.TxType_INVOKE_SYSTEM_CONTRACT:
-		var payload commonpb.SystemContractPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Header.TxId, err))
-		}
-	case commonpb.TxType_UPDATE_CHAIN_CONFIG:
-		var payload commonpb.SystemContractPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			contractName = payload.ContractName
-			method = payload.Method
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-			endorsements = payload.Endorsement
-			sequence = payload.Sequence
-
-			if endorsements == nil {
-				return errResult(result, fmt.Errorf("endorsements not found in config update payload, tx id:%s", tx.Header.TxId))
-			}
-			payload.Endorsement = nil
-			verifyPayloadBytes, err := proto.Marshal(&payload)
-
-			if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
-				return errResult(result, err)
-			}
-
-			ts.log.Debugf("chain config update [%d] [%v]", sequence, endorsements)
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal system contract payload for tx %s, %s", tx.Header.TxId, err.Error()))
-		}
-	case commonpb.TxType_MANAGE_USER_CONTRACT:
-		var payload commonpb.ContractMgmtPayload
-		if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
-			if payload.ContractId == nil {
-				return errResult(result, fmt.Errorf("param is null"))
-			}
-			contractName = payload.ContractId.ContractName
-			runtimeType = payload.ContractId.RuntimeType
-			contractVersion = payload.ContractId.ContractVersion
-			method = payload.Method
-			byteCode = payload.ByteCode
-			parameterPairs = payload.Parameters
-			parameters = ts.parseParameter(parameterPairs)
-			endorsements = payload.Endorsement
-
-			if endorsements == nil {
-				return errResult(result, fmt.Errorf("endorsements not found in contract mgmt payload, tx id:%s", tx.Header.TxId))
-			}
-
-			payload.Endorsement = nil
-			verifyPayloadBytes, err := proto.Marshal(&payload)
-
-			if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
-				return errResult(result, err)
-			}
-		} else {
-			return errResult(result, fmt.Errorf("failed to unmarshal contract mgmt payload for tx %s, %s", tx.Header.TxId, err.Error()))
-		}
+	payload := tx.Payload
+	switch tx.Payload.TxType {
+	case commonpb.TxType_QUERY_CONTRACT:
+		//var payload commonpb.Payload
+		//if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+		//contractName = payload.ContractName
+		//method = payload.Method
+		//parameterPairs = payload.Parameters
+		//parameters, err = ts.parseParameter(parameterPairs)
+		//} else {
+		//	return errResult(result, fmt.Errorf("failed to unmarshal query payload for tx %s, %s", tx.Payload.TxId, err))
+		//}
+	case commonpb.TxType_INVOKE_CONTRACT:
+		//var payload commonpb.TransactPayload
+		//if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+		//contractName = payload.ContractName
+		//method = payload.Method
+		//parameterPairs = payload.Parameters
+		//parameters, err = ts.parseParameter(parameterPairs)
+		//} else {
+		//	return errResult(result, fmt.Errorf("failed to unmarshal transact payload for tx %s, %s", tx.Payload.TxId, err))
+		//}
+	//case commonpb.TxType_INVOKE_CONTRACT:
+	//	var payload commonpb.Payload
+	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+	//		contractName = payload.ContractName
+	//		method = payload.Method
+	//		parameterPairs = payload.Parameters
+	//		parameters = ts.parseParameter(parameterPairs)
+	//	} else {
+	//		return errResult(result, fmt.Errorf("failed to unmarshal invoke payload for tx %s, %s", tx.Payload.TxId, err))
+	//	}
+	//case commonpb.TxType_INVOKE_CONTRACT:
+	//	var payload commonpb.Payload
+	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+	//		contractName = payload.ContractName
+	//		method = payload.Method
+	//		parameterPairs = payload.Parameters
+	//		parameters = ts.parseParameter(parameterPairs)
+	//		endorsements = payload.Endorsement
+	//		sequence = payload.Sequence
+	//
+	//		if endorsements == nil {
+	//			return errResult(result, fmt.Errorf("endorsements not found in config update payload, tx id:%s", tx.Payload.TxId))
+	//		}
+	//		payload.Endorsement = nil
+	//		verifyPayloadBytes, err := proto.Marshal(&payload)
+	//
+	//		if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
+	//			return errResult(result, err)
+	//		}
+	//
+	//		ts.log.Debugf("chain config update [%d] [%v]", sequence, endorsements)
+	//	} else {
+	//		return errResult(result, fmt.Errorf("failed to unmarshal system contract payload for tx %s, %s", tx.Payload.TxId, err.Error()))
+	//	}
+	//case commonpb.TxType_MANAGE_USER_CONTRACT:
+	//	var payload commonpb.Payload
+	//	if err := proto.Unmarshal(tx.RequestPayload, &payload); err == nil {
+	//		if payload.Contract == nil {
+	//			return errResult(result, fmt.Errorf("param is null"))
+	//		}
+	//		contractName = payload.Contract.Name
+	//		runtimeType = payload.Contract.RuntimeType
+	//		contractVersion = payload.Contract.Version
+	//		method = payload.Method
+	//		byteCode = payload.ByteCode
+	//		parameterPairs = payload.Parameters
+	//		parameters = ts.parseParameter(parameterPairs)
+	//		endorsements = payload.Endorsement
+	//
+	//		if endorsements == nil {
+	//			return errResult(result, fmt.Errorf("endorsements not found in contract mgmt payload, tx id:%s", tx.Payload.TxId))
+	//		}
+	//
+	//		payload.Endorsement = nil
+	//		verifyPayloadBytes, err := proto.Marshal(&payload)
+	//
+	//		if err = ts.acVerify(txSimContext, method, endorsements, verifyPayloadBytes, parameters); err != nil {
+	//			return errResult(result, err)
+	//		}
+	//	} else {
+	//		return errResult(result, fmt.Errorf("failed to unmarshal contract mgmt payload for tx %s, %s", tx.Payload.TxId, err.Error()))
+	//	}
 	default:
-		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Header.TxType))
+		return errResult(result, fmt.Errorf("no such tx type: %s", tx.Payload.TxType))
 	}
 
-	contractId = &commonpb.ContractId{
-		ContractName:    contractName,
-		ContractVersion: contractVersion,
-		RuntimeType:     runtimeType,
+	contractName = payload.ContractName
+	method = payload.Method
+	parameters, err := ts.parseParameter(payload.Parameters)
+	if err != nil {
+		ts.log.Errorf("parse contract[%s] parameters error:%s", contractName, err)
+		return errResult(result, fmt.Errorf("parse tx[%s] contract[%s] parameters error:%s", payload.TxId, contractName, err.Error()))
 	}
 
-	// verify parameters
-	if len(parameters) > protocol.ParametersKeyMaxCount {
-		return errResult(result, fmt.Errorf("expect less than %d parameters, but got %d, tx id:%s", protocol.ParametersKeyMaxCount, len(parameters),
-			tx.Header.TxId))
+	contract, err := utils.GetContractByName(txSimContext.Get, contractName)
+	if err != nil {
+		ts.log.Errorf("Get contract info by name[%s] error:%s", contractName, err)
+		return nil, err
 	}
-	for key, val := range parameters {
-		if len(key) > protocol.DefaultStateLen {
-			return errResult(result, fmt.Errorf("expect key length less than %d, but got %d, tx id:%s", protocol.DefaultStateLen, len(key), tx.Header.TxId))
-		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
-		if err != nil || !match {
-			return errResult(result, fmt.Errorf("expect key no special characters, but got key:[%s]. letter, number, dot and underline are allowed, tx id:[%s]", key, tx.Header.TxId))
-		}
-		if len(val) > protocol.ParametersValueMaxLength {
-			return errResult(result, fmt.Errorf("expect value length less than %d, but got %d, tx id:%s", protocol.ParametersValueMaxLength, len(val), tx.Header.TxId))
+	if contract.RuntimeType != commonpb.RuntimeType_NATIVE {
+		byteCode, err = utils.GetContractBytecode(txSimContext.Get, contractName)
+		if err != nil {
+			ts.log.Errorf("Get contract bytecode by name[%s] error:%s", contractName, err)
+			return nil, err
 		}
 	}
-	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contractId, method, byteCode, parameters, txSimContext, 0, tx.Header.TxType)
+	//contract = &commonpb.Contract{
+	//	ContractName:    contractName,
+	//	ContractVersion: contractVersion,
+	//	RuntimeType:     runtimeType,
+	//}
+
+	contractResultPayload, txStatusCode := ts.VmManager.RunContract(contract, method, byteCode, parameters, txSimContext, 0, tx.Payload.TxType)
 
 	result.Code = txStatusCode
 	result.ContractResult = contractResultPayload
@@ -473,31 +478,36 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 func errResult(result *commonpb.Result, err error) (*commonpb.Result, error) {
 	result.ContractResult.Message = err.Error()
 	result.Code = commonpb.TxStatusCode_INVALID_PARAMETER
-	result.ContractResult.Code = commonpb.ContractResultCode_FAIL
+	result.ContractResult.Code = 1
 	return result, err
 }
-func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) map[string]string {
-	parameters := make(map[string]string, 16)
+func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) (map[string][]byte, error) {
+	// verify parameters
+	if len(parameterPairs) > protocol.ParametersKeyMaxCount {
+		return nil, fmt.Errorf("expect parameters length less than %d, but got %d", protocol.ParametersKeyMaxCount, len(parameterPairs))
+	}
+	parameters := make(map[string][]byte, 16)
 	for i := 0; i < len(parameterPairs); i++ {
 		key := parameterPairs[i].Key
-		// ignore the following input from the user's invoke parameters
-		if key == protocol.ContractCreatorOrgIdParam ||
-			key == protocol.ContractCreatorRoleParam ||
-			key == protocol.ContractCreatorPkParam ||
-			key == protocol.ContractSenderOrgIdParam ||
-			key == protocol.ContractSenderRoleParam ||
-			key == protocol.ContractSenderPkParam ||
-			key == protocol.ContractBlockHeightParam ||
-			key == protocol.ContractTxIdParam {
-			continue
-		}
 		value := parameterPairs[i].Value
+		if len(key) > protocol.DefaultStateLen {
+			return nil, fmt.Errorf("expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key))
+		}
+		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
+		if err != nil || !match {
+			return nil, fmt.Errorf("expect key no special characters, but got key:[%s]. letter, number, dot and underline are allowed", key)
+		}
+		if len(value) > protocol.ParametersValueMaxLength {
+			return nil, fmt.Errorf("expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(value))
+		}
+
 		parameters[key] = value
 	}
-	return parameters
+	return parameters, nil
 }
 
-func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string]string) error {
+/*
+func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName string, endorsements []*commonpb.EndorsementEntry, msg []byte, parameters map[string][]byte) error {
 	var ac protocol.AccessControlProvider
 	var targetOrgId string
 	var err error
@@ -505,10 +515,10 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 	tx := txSimContext.GetTx()
 
 	if ac, err = txSimContext.GetAccessControl(); err != nil {
-		return fmt.Errorf("failed to get access control from tx sim context for tx: %s, error: %s", tx.Header.TxId, err.Error())
+		return fmt.Errorf("failed to get access control from tx sim context for tx: %s, error: %s", tx.Payload.TxId, err.Error())
 	}
 	if orgId, ok := parameters[protocol.ConfigNameOrgId]; ok {
-		targetOrgId = orgId
+		targetOrgId = string(orgId)
 	} else {
 		targetOrgId = ""
 	}
@@ -516,22 +526,22 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 	var fullCertEndorsements []*commonpb.EndorsementEntry
 	for _, endorsement := range endorsements {
 		if endorsement == nil || endorsement.Signer == nil {
-			return fmt.Errorf("failed to get endorsement signer for tx: %s, endorsement: %+v", tx.Header.TxId, endorsement)
+			return fmt.Errorf("failed to get endorsement signer for tx: %s, endorsement: %+v", tx.Payload.TxId, endorsement)
 		}
-		if endorsement.Signer.IsFullCert {
+		if endorsement.Signer.MemberType == acpb.MemberType_CERT {
 			fullCertEndorsements = append(fullCertEndorsements, endorsement)
 		} else {
 			fullCertEndorsement := &commonpb.EndorsementEntry{
-				Signer: &acpb.SerializedMember{
+				Signer: &acpb.Member{
 					OrgId:      endorsement.Signer.OrgId,
 					MemberInfo: nil,
-					IsFullCert: true,
+					//IsFullCert: true,
 				},
 				Signature: endorsement.Signature,
 			}
 			memberInfoHex := hex.EncodeToString(endorsement.Signer.MemberInfo)
-			if fullMemberInfo, err := txSimContext.Get(commonpb.ContractName_SYSTEM_CONTRACT_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
-				return fmt.Errorf("failed to get full cert from tx sim context for tx: %s, error: %s", tx.Header.TxId, err.Error())
+			if fullMemberInfo, err := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
+				return fmt.Errorf("failed to get full cert from tx sim context for tx: %s, error: %s", tx.Payload.TxId, err.Error())
 			} else {
 				fullCertEndorsement.Signer.MemberInfo = fullMemberInfo
 			}
@@ -539,23 +549,24 @@ func (ts *TxScheduler) acVerify(txSimContext protocol.TxSimContext, methodName s
 		}
 	}
 	if verifyResult, err := utils.VerifyConfigUpdateTx(methodName, fullCertEndorsements, msg, targetOrgId, ac); err != nil {
-		return fmt.Errorf("failed to verify endorsements for tx: %s, error: %s", tx.Header.TxId, err.Error())
+		return fmt.Errorf("failed to verify endorsements for tx: %s, error: %s", tx.Payload.TxId, err.Error())
 	} else if !verifyResult {
-		return fmt.Errorf("failed to verify endorsements for tx: %s", tx.Header.TxId)
+		return fmt.Errorf("failed to verify endorsements for tx: %s", tx.Payload.TxId)
 	} else {
 		return nil
 	}
 }
+*/
 
 func (ts *TxScheduler) dumpDAG(dag *commonpb.DAG, txs []*commonpb.Transaction) {
 	dagString := "digraph DAG {\n"
 	for i, ns := range dag.Vertexes {
 		if len(ns.Neighbors) == 0 {
-			dagString += fmt.Sprintf("id_%s -> begin;\n", txs[i].Header.TxId[:8])
+			dagString += fmt.Sprintf("id_%s -> begin;\n", txs[i].Payload.TxId[:8])
 			continue
 		}
 		for _, n := range ns.Neighbors {
-			dagString += fmt.Sprintf("id_%s -> id_%s;\n", txs[i].Header.TxId[:8], txs[n].Header.TxId[:8])
+			dagString += fmt.Sprintf("id_%s -> id_%s;\n", txs[i].Payload.TxId[:8], txs[n].Payload.TxId[:8])
 		}
 	}
 	dagString += "}"

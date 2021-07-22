@@ -198,7 +198,7 @@ func (m *Module) resolveImports(externModules map[string]*Module) error {
 			}
 		case 0x03: // global
 			if err := m.applyGlobalImport(em, es); err != nil {
-				return fmt.Errorf("applyGlobalImport: %w", is.Name, err)
+				return fmt.Errorf("applyGlobalImport: %s  %v", is.Name, err)
 			}
 		default:
 			return fmt.Errorf("%s invalid kind of import: %#x", is.Name, is.Desc.Kind)
@@ -389,12 +389,12 @@ func (m *Module) buildTableIndexSpace() error {
 		if size > len(table) {
 			next := make([]*uint32, size)
 			copy(next, table)
-			for i, _ := range elem.Init {
+			for i := range elem.Init {
 				next[i+offset] = &elem.Init[i]
 			}
 			m.IndexSpace.Table[elem.TableIndex] = next
 		} else {
-			for i, _ := range elem.Init {
+			for i := range elem.Init {
 				table[i+offset] = &elem.Init[i]
 			}
 		}

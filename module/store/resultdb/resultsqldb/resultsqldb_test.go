@@ -12,30 +12,32 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
+	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker/protocol/test"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
-	"chainmaker.org/chainmaker-go/store/serialization"
 	"github.com/stretchr/testify/assert"
 )
 
 var log = &test.GoLogger{}
 
-func generateBlockHash(chainId string, height int64) []byte {
+func generateBlockHash(chainId string, height uint64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
 	return blockHash[:]
 }
 
-func generateTxId(chainId string, height int64, index int) string {
+func generateTxId(chainId string, height uint64, index int) string {
 	txIdBytes := sha256.Sum256([]byte(fmt.Sprintf("%s-%d-%d", chainId, height, index)))
 	return hex.EncodeToString(txIdBytes[:32])
 }
 
-func createConfigBlock(chainId string, height int64) *storePb.BlockWithRWSet {
+func createConfigBlock(chainId string, height uint64) *storePb.BlockWithRWSet {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -43,12 +45,13 @@ func createConfigBlock(chainId string, height int64) *storePb.BlockWithRWSet {
 		},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.TxHeader{
-					ChainId: chainId,
-					TxType:  commonPb.TxType_UPDATE_CHAIN_CONFIG,
-					Sender: &acPb.SerializedMember{
-						OrgId: "org1",
-					},
+				Payload: &commonPb.Payload{
+					ChainId:      chainId,
+					TxType:       commonPb.TxType_INVOKE_CONTRACT,
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
+				},
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
+					Signature: []byte("sign1"),
 				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
@@ -61,14 +64,14 @@ func createConfigBlock(chainId string, height int64) *storePb.BlockWithRWSet {
 	}
 
 	block.Header.BlockHash = generateBlockHash(chainId, height)
-	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+	block.Txs[0].Payload.TxId = generateTxId(chainId, height, 0)
 	return &storePb.BlockWithRWSet{
 		Block:    block,
 		TxRWSets: []*commonPb.TxRWSet{},
 	}
 }
 
-func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.BlockWithRWSet {
+func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.BlockWithRWSet {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -78,12 +81,12 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 
 	for i := 0; i < txNum; i++ {
 		tx := &commonPb.Transaction{
-			Header: &commonPb.TxHeader{
+			Payload: &commonPb.Payload{
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
-				Sender: &acPb.SerializedMember{
-					OrgId: "org1",
-				},
+			},
+			Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
+				Signature: []byte("sign1"),
 			},
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
@@ -101,7 +104,7 @@ func createBlockAndRWSets(chainId string, height int64, txNum int) *storePb.Bloc
 		key := fmt.Sprintf("key_%d", i)
 		value := fmt.Sprintf("value_%d", i)
 		txRWset := &commonPb.TxRWSet{
-			TxId: block.Txs[i].Header.TxId,
+			TxId: block.Txs[i].Payload.TxId,
 			TxWrites: []*commonPb.TxWrite{
 				{
 					Key:          []byte(key),
@@ -128,7 +131,7 @@ var block2 = createBlockAndRWSets(testChainId, 2, 2)
 var configBlock4 = createConfigBlock(testChainId, 4)
 var block5, _ = createBlockAndRWSets(testChainId, 5, 3)*/
 
-func createBlock(chainId string, height int64) *commonPb.Block {
+func createBlock(chainId string, height uint64) *commonPb.Block {
 	block := &commonPb.Block{
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
@@ -136,11 +139,11 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 		},
 		Txs: []*commonPb.Transaction{
 			{
-				Header: &commonPb.TxHeader{
+				Payload: &commonPb.Payload{
 					ChainId: chainId,
-					Sender: &acPb.SerializedMember{
-						OrgId: "org1",
-					},
+				},
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
+					Signature: []byte("sign1"),
 				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
@@ -153,7 +156,7 @@ func createBlock(chainId string, height int64) *commonPb.Block {
 	}
 
 	block.Header.BlockHash = generateBlockHash(chainId, height)
-	block.Txs[0].Header.TxId = generateTxId(chainId, height, 0)
+	block.Txs[0].Payload.TxId = generateTxId(chainId, height, 0)
 	return block
 }
 

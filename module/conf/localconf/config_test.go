@@ -25,9 +25,9 @@ func TestLoadConf(_ *testing.T) {
 
 func TestUpdateDebugConfig(t *testing.T) {
 	pairs := []*common.KeyValuePair{
-		{Key: "IsCliOpen", Value: "true"},
-		{Key: "IsHttpOpen", Value: "true"},
-		{Key: "invalid", Value: "true"},
+		{Key: "IsCliOpen", Value: []byte( "true")},
+		{Key: "IsHttpOpen", Value: []byte( "true")},
+		{Key: "invalid", Value: []byte( "true")},
 	}
 	err := UpdateDebugConfig(pairs)
 	assert.NoError(t, err)

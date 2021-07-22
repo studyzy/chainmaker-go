@@ -9,10 +9,13 @@ package batch
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"chainmaker.org/chainmaker-go/txpool/poolconf"
+	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/errors"
 	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
@@ -20,8 +23,6 @@ import (
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/txpool/poolconf"
-	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -176,7 +177,7 @@ func (p *BatchTxPool) createConfigTxBatch() {
 		TxIdsMap: make(map[string]int32),
 		Size_:    1,
 	}
-	batch.TxIdsMap[tx.GetHeader().GetTxId()] = 0
+	batch.TxIdsMap[tx.Payload.GetTxId()] = 0
 
 	batchMsg, err := proto.Marshal(batch)
 	if err != nil {
@@ -208,11 +209,11 @@ func (p *BatchTxPool) popTxsFromQueue() ([]*commonPb.Transaction, map[string]int
 	for i := 0; i < int(p.batchMaxSize); {
 		if val, ok, _ := p.txQueue.Pull(); ok {
 			tx := val.(*commonPb.Transaction)
-			if _, ok := txIdToIndex[tx.GetHeader().GetTxId()]; ok {
+			if _, ok := txIdToIndex[tx.Payload.GetTxId()]; ok {
 				continue
 			}
 			txs = append(txs, tx)
-			txIdToIndex[tx.GetHeader().GetTxId()] = int32(i)
+			txIdToIndex[tx.Payload.GetTxId()] = int32(i)
 			i++
 			continue
 		}
@@ -281,7 +282,7 @@ func (p *BatchTxPool) broadcastTxBatch(batchId int32, batchMsg []byte) error {
 	return nil
 }
 
-func (p *BatchTxPool) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]int64) {
+func (p *BatchTxPool) GetTxsByTxIds(txIds []string) (map[string]*commonPb.Transaction, map[string]uint64) {
 	if atomic.LoadInt32(&p.stat) == 0 {
 		p.log.Errorf(commonErrors.ErrTxPoolHasStopped.String())
 		return nil, nil
@@ -311,29 +312,29 @@ func (p *BatchTxPool) getBatch(batchId int32) *txpoolPb.TxBatch {
 	return nil
 }
 
-func (p *BatchTxPool) generateTxsInfoFromBatch(batch *txpoolPb.TxBatch) (map[string]*commonPb.Transaction, map[string]int64) {
+func (p *BatchTxPool) generateTxsInfoFromBatch(batch *txpoolPb.TxBatch) (map[string]*commonPb.Transaction, map[string]uint64) {
 	txsRet := make(map[string]*commonPb.Transaction, batch.Size_)
-	txsHeightInfo := make(map[string]int64)
+	txsHeightInfo := make(map[string]uint64)
 
 	for _, tx := range batch.Txs {
-		txsRet[tx.Header.TxId] = tx
+		txsRet[tx.Payload.TxId] = tx
 	}
 	return txsRet, txsHeightInfo
 }
 
-func (p *BatchTxPool) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight int64) {
+func (p *BatchTxPool) GetTxByTxId(txId string) (tx *commonPb.Transaction, inBlockHeight uint64) {
 	if atomic.LoadInt32(&p.stat) == 0 {
 		p.log.Errorf(commonErrors.ErrTxPoolHasStopped.String())
-		return nil, -1
+		return nil, math.MaxUint64
 	}
 	batchId, txIndex, exist := p.batchTxIdRecorder.FindBatchIdWithTxId(txId)
 	if !exist {
-		return nil, -1
+		return nil, math.MaxUint64
 	}
 	if batch := p.getBatch(batchId); batch != nil {
 		return batch.Txs[txIndex], inBlockHeight
 	}
-	return nil, -1
+	return nil, math.MaxUint64
 }
 
 func (p *BatchTxPool) TxExists(tx *commonPb.Transaction) bool {
@@ -341,11 +342,11 @@ func (p *BatchTxPool) TxExists(tx *commonPb.Transaction) bool {
 		p.log.Errorf("batch tx pool not started, start it first pls")
 		return false
 	}
-	_, _, exist := p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Header.TxId)
+	_, _, exist := p.batchTxIdRecorder.FindBatchIdWithTxId(tx.Payload.TxId)
 	return exist
 }
 
-func (p *BatchTxPool) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
+func (p *BatchTxPool) FetchTxBatch(blockHeight uint64) []*commonPb.Transaction {
 	if atomic.LoadInt32(&p.stat) == 0 {
 		p.log.Errorf("batch tx pool not started, start it first pls")
 		return nil
@@ -358,7 +359,7 @@ func (p *BatchTxPool) FetchTxBatch(blockHeight int64) []*commonPb.Transaction {
 	return p.fetchTxsFromCommonPool(blockHeight)
 }
 
-func (p *BatchTxPool) fetchTxsFromCfgPool(blockHeight int64) []*commonPb.Transaction {
+func (p *BatchTxPool) fetchTxsFromCfgPool(blockHeight uint64) []*commonPb.Transaction {
 	var (
 		batch   *txpoolPb.TxBatch
 		cfgPool = p.configBatchPool
@@ -389,7 +390,7 @@ func (p *BatchTxPool) moveBatch(removePool *nodeBatchPool, batch *txpoolPb.TxBat
 	return batch.Txs
 }
 
-func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight int64) []*commonPb.Transaction {
+func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight uint64) []*commonPb.Transaction {
 	var (
 		batch         *txpoolPb.TxBatch
 		commonTxsPool = p.commonBatchPool
@@ -434,7 +435,7 @@ func (p *BatchTxPool) retryTxBatch(txs []*commonPb.Transaction) {
 	if len(txs) == 0 {
 		return
 	}
-	if _, _, ok := p.batchTxIdRecorder.FindBatchIdWithTxId(txs[0].Header.TxId); ok {
+	if _, _, ok := p.batchTxIdRecorder.FindBatchIdWithTxId(txs[0].Payload.TxId); ok {
 		return
 	}
 
@@ -458,7 +459,7 @@ func (p *BatchTxPool) retryTxBatch(txs []*commonPb.Transaction) {
 func createTxIdsMap(txs []*commonPb.Transaction) map[string]int32 {
 	txIdsMap := make(map[string]int32)
 	for idx, tx := range txs {
-		txIdsMap[tx.GetHeader().GetTxId()] = int32(idx)
+		txIdsMap[tx.Payload.GetTxId()] = int32(idx)
 	}
 	return txIdsMap
 }
@@ -471,7 +472,7 @@ func (p *BatchTxPool) removeTxBatch(txs []*commonPb.Transaction) {
 		ok      bool
 		remove  = false
 		batchId int32
-		txId    = txs[0].GetHeader().GetTxId()
+		txId    = txs[0].Payload.GetTxId()
 	)
 	if batchId, _, ok = p.batchTxIdRecorder.FindBatchIdWithTxId(txId); !ok {
 		p.log.Warnf("batch id not found,ignored. (tx id:%s) when removeTxBatch", txId)
@@ -531,9 +532,9 @@ func (p *BatchTxPool) OnMessage(message *msgbus.Message) {
 
 		filterTxs := make([]*commonPb.Transaction, 0, batch.Size_)
 		for txId, index := range batch.TxIdsMap {
-			if batch.Txs[index].Header.TxId != txId {
+			if batch.Txs[index].Payload.TxId != txId {
 				p.log.Errorf("Malicious batch, %d tx's Id in"+
-					" map is %s, but actual is %s", index, txId, batch.Txs[index].Header.TxId)
+					" map is %s, but actual is %s", index, txId, batch.Txs[index].Payload.TxId)
 				return
 			}
 			if err := p.validate(batch.Txs[index], protocol.P2P); err == nil {
@@ -581,6 +582,6 @@ func (p *BatchTxPool) OnQuit() {
 	// no implement
 }
 
-func (p *BatchTxPool) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight int64) {
+func (p *BatchTxPool) AddTxsToPendingCache(txs []*commonPb.Transaction, blockHeight uint64) {
 	// no implement, Because it's only implemented in the Hotstuff algorithm.
 }

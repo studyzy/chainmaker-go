@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package statedb
 
 import (
+	"chainmaker.org/chainmaker-go/store/serialization"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/store/serialization"
 )
 
 // StateDB provides handle to world state instances
@@ -36,7 +36,7 @@ type StateDB interface {
 	//不在事务中，直接查询状态数据库，返回多行结果
 	QueryMulti(contractName, sql string, values ...interface{}) (protocol.SqlRows, error)
 	//执行DDL语句
-	ExecDdlSql(contractName, sql string) error
+	ExecDdlSql(contractName, sql, version string) error
 	//启用一个事务
 	BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error)
 	//根据事务名，获得一个已经启用的事务

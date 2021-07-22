@@ -8,9 +8,9 @@ package wasmer
 
 import (
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/utils"
 	"fmt"
 )
 
@@ -22,15 +22,15 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string, byteCode []byte, parameters map[string]string,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
-	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().GetHeader().GetTxId())
+	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().Payload.TxId)
 	startTime := utils.CurrentTimeMillisSeconds()
 
 	// contract response
 	contractResult = &commonPb.ContractResult{
-		Code:    commonPb.ContractResultCode_OK,
+		Code:    uint32(0),
 		Result:  nil,
 		Message: "",
 	}
@@ -41,7 +41,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 		r.log.Debugf(logStr)
 		panicErr := recover()
 		if panicErr != nil {
-			contractResult.Code = commonPb.ContractResultCode_FAIL
+			contractResult.Code = 1
 			contractResult.Message = fmt.Sprint(panicErr)
 			if instanceInfo != nil {
 				instanceInfo.errCount++
@@ -68,7 +68,7 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	var sc = NewSimContext(method, r.log, r.chainId)
 	defer sc.removeCtxPointer()
-	sc.ContractId = contractId
+	sc.Contract = contract
 	sc.TxSimContext = txContext
 	sc.ContractResult = contractResult
 	sc.parameters = parameters
@@ -76,26 +76,25 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.ContractId, method string,
 
 	err := sc.CallMethod(instance)
 	if err != nil {
-		r.log.Errorw("contract invoke failed, ", err.Error())
+		r.log.Warnf("contract[%s] invoke failed, %s", contract.Name, err.Error())
 	}
 
 	// gas Log
 	gas := instance.GetGasUsed()
 	if gas > protocol.GasLimit {
-		err = fmt.Errorf("contract invoke failed, out of gas %d/%d", gas, int64(protocol.GasLimit))
+		err = fmt.Errorf("out of gas %d/%d", gas, int64(protocol.GasLimit))
 	}
 	logStr += fmt.Sprintf("used gas %d ", gas)
-	contractResult.GasUsed = int64(gas)
-
+	contractResult.GasUsed = gas
 	if err != nil {
-		contractResult.Code = commonPb.ContractResultCode_FAIL
-		msg := fmt.Sprintf("contract invoke failed, %s", err.Error())
+		contractResult.Code = 1
+		msg := fmt.Sprintf("contract[%s] invoke failed, %s", contract.Name, err.Error())
 		r.log.Errorf(msg)
 		contractResult.Message = msg
 		instanceInfo.errCount++
 		return contractResult
 	}
 	contractResult.ContractEvent = sc.ContractEvent
-	contractResult.GasUsed = int64(gas)
+	contractResult.GasUsed = gas
 	return contractResult
 }

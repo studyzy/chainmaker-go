@@ -8,6 +8,10 @@ package common
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
@@ -20,18 +24,11 @@ import (
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"encoding/hex"
-	"fmt"
-	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	"runtime"
-	"sync"
-	"sync/atomic"
 )
 
 const (
-	DEFAULTDURATION = 1000     // default proposal duration, millis seconds
-	DEFAULTVERSION  = "v1.0.0" // default version of chain
+	DEFAULTDURATION = 1000 // default proposal duration, millis seconds
 )
 
 type BlockBuilderConf struct {
@@ -77,7 +74,7 @@ func NewBlockBuilder(conf *BlockBuilderConf) *BlockBuilder {
 	return creatorBlock
 }
 
-func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, txBatch []*commonpb.Transaction) (*commonpb.Block, []int64, error) {
+func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte, txBatch []*commonpb.Transaction) (*commonpb.Block, []int64, error) {
 	timeLasts := make([]int64, 0)
 	currentHeight, _ := bb.ledgerCache.CurrentHeight()
 	lastBlock := bb.findLastBlockFromCache(proposingHeight, preHash, currentHeight)
@@ -146,7 +143,7 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 	if len(txRWSetMap) < len(txBatch) {
 		// if tx not in txRWSetMap, tx should be put back to txpool
 		for _, tx := range txBatch {
-			if _, ok := txRWSetMap[tx.Header.TxId]; !ok {
+			if _, ok := txRWSetMap[tx.Payload.TxId]; !ok {
 				txsTimeout = append(txsTimeout, tx)
 			}
 		}
@@ -163,7 +160,7 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight int64, preHash []byte, 
 	return block, timeLasts, nil
 }
 
-func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight int64, preHash []byte, currentHeight int64) *commonpb.Block {
+func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight uint64, preHash []byte, currentHeight uint64) *commonpb.Block {
 	var lastBlock *commonpb.Block
 	if currentHeight+1 == proposingHeight {
 		lastBlock = bb.ledgerCache.GetLastCommittedBlock()
@@ -179,7 +176,7 @@ func InitNewBlock(
 	chainId string,
 	chainConf protocol.ChainConf) (*commonpb.Block, error) {
 	// get node pk from identity
-	proposer, err := identity.Serialize(true)
+	proposer, err := identity.GetMember()
 	if err != nil {
 		return nil, fmt.Errorf("identity serialize failed, %s", err)
 	}
@@ -196,7 +193,7 @@ func InitNewBlock(
 			PreBlockHash:   lastBlock.Header.BlockHash,
 			BlockHash:      nil,
 			PreConfHeight:  preConfHeight,
-			BlockVersion:   getChainVersion(chainConf),
+			BlockVersion:   protocol.DefaultBlockVersion,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
@@ -226,125 +223,80 @@ func FinalizeBlock(
 	}
 
 	// TxCount contains acl verify failed txs and invoked contract txs
-	block.Header.TxCount = int64(len(block.Txs))
-	type txPacket struct {
-		index int
-		tx    *commonpb.Transaction
-	}
-	txPacketC := make(chan *txPacket, block.Header.TxCount)
-	finishC := make(chan bool)
-	errC := make(chan error)
-	txHashes := make([][]byte, block.Header.TxCount)
-	var goRoutinePool *ants.Pool
+	txCount := len(block.Txs)
+	block.Header.TxCount = uint32(txCount)
+
+	// TxRoot/RwSetRoot
 	var err error
-	var txCount int64
-	var wg sync.WaitGroup
-	poolCapacity := runtime.NumCPU() * 4
-	if goRoutinePool, err = ants.NewPool(poolCapacity, ants.WithPreAlloc(true)); err != nil {
+	txHashes := make([][]byte, txCount)
+	for i, tx := range block.Txs {
+		// finalize tx, put rwsethash into tx.Result
+		rwSet := txRWSetMap[tx.Payload.TxId]
+		if rwSet == nil {
+			rwSet = &commonpb.TxRWSet{
+				TxId:     tx.Payload.TxId,
+				TxReads:  nil,
+				TxWrites: nil,
+			}
+		}
+		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+		logger.DebugDynamic(func() string {
+			str := fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
+			if len(str) > 1024 {
+				str = str[:1024] + " ......"
+			}
+			return str
+		})
+		if err != nil {
+			return err
+		}
+		if tx.Result == nil {
+			// in case tx.Result is nil, avoid panic
+			e := fmt.Errorf("tx(%s) result == nil", tx.Payload.TxId)
+			logger.Error(e.Error())
+			return e
+		}
+		tx.Result.RwSetHash = rwSetHash
+		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
+		txHash, err := utils.CalcTxHash(hashType, tx)
+		if err != nil {
+			return err
+		}
+		txHashes[i] = txHash
+	}
+
+	block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
+	if err != nil {
+		logger.Warnf("get tx merkle root error %s", err)
 		return err
 	}
-	defer goRoutinePool.Release()
-
-	wg.Add(1)
-	goRoutinePool.Submit(
-		func() {
-			// DagDigest
-			dagHash, err := utils.CalcDagHash(hashType, block.Dag)
-			if err != nil {
-				logger.Warnf("get dag hash error %s", err)
-				errC <- err
-			}
-			block.Header.DagHash = dagHash
-			wg.Done()
-		})
-
-	goRoutinePool.Submit(func() {
-		if block.Header.TxCount > 0 {
-			for i, tx := range block.Txs {
-				txPacketC <- &txPacket{index: i, tx: tx}
-			}
-		} else {
-			finishC <- true
-		}
-	})
-
-	for {
-		select {
-		case packet := <-txPacketC:
-			err = goRoutinePool.Submit(func() {
-				tx := packet.tx
-				rwSet := txRWSetMap[tx.Header.TxId]
-				if rwSet == nil {
-					rwSet = &commonpb.TxRWSet{
-						TxId:     tx.Header.TxId,
-						TxReads:  nil,
-						TxWrites: nil,
-					}
-				}
-				rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
-				logger.DebugDynamic(func() string {
-					return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
-				})
-				if err != nil {
-					logger.Debugf("calc rwSet hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
-					errC <- err
-				}
-				if tx.Result == nil {
-					// in case tx.Result is nil, avoid panic
-					e := fmt.Errorf("tx(%s) result == nil", tx.Header.TxId)
-					logger.Error(e.Error())
-					errC <- e
-					return
-				}
-				tx.Result.RwSetHash = rwSetHash
-				// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-				txHash, err := utils.CalcTxHash(hashType, tx)
-				if err != nil {
-					logger.Debugf("calc tx hash fail,txId: [%s] err: [%s]", tx.Header.TxId, err.Error())
-					errC <- err
-				}
-				txHashes[packet.index] = txHash
-				newTxCount := atomic.AddInt64(&txCount, 1)
-				if newTxCount == int64(len(block.Txs)) {
-					finishC <- true
-				}
-			})
-		case err = <-errC:
-			return err
-		case <-finishC:
-			//merkleTxStart := utils.CurrentTimeMillisSeconds()
-			block.Header.TxRoot, err = hash.GetMerkleRoot(hashType, txHashes)
-			//merkleTxCost := utils.CurrentTimeMillisSeconds() - merkleTxStart
-			//logger.Debugf("build tx root merkle tree cost[%d], txNum[%d] \n", merkleTxCost, block.Header.TxCount)
-			if err != nil {
-				logger.Warnf("get tx merkle root error %s", err)
-				return err
-			}
-			//merkleStart := utils.CurrentTimeMillisSeconds()
-			block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
-			//merkleCost := utils.CurrentTimeMillisSeconds() - merkleStart
-			//logger.Debugf("build merkle tree cost[%d], txNum[%d] \n", merkleCost, block.Header.TxCount)
-			if err != nil {
-				logger.Warnf("get rwset merkle root error %s", err)
-				return err
-			}
-			wg.Wait()
-			logger.Debugf("finalize block [%d] finish", block.Header.BlockHeight)
-			return nil
-		}
+	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
+	if err != nil {
+		logger.Warnf("get rwset merkle root error %s", err)
+		return err
 	}
+
+	// DagDigest
+	dagHash, err := utils.CalcDagHash(hashType, block.Dag)
+	if err != nil {
+		logger.Warnf("get dag hash error %s", err)
+		return err
+	}
+	block.Header.DagHash = dagHash
+
+	return nil
 }
 
 // IsTxCountValid, to check if txcount in block is valid
 func IsTxCountValid(block *commonpb.Block) error {
-	if block.Header.TxCount != int64(len(block.Txs)) {
+	if block.Header.TxCount != uint32(len(block.Txs)) {
 		return fmt.Errorf("txcount expect %d, got %d", block.Header.TxCount, len(block.Txs))
 	}
 	return nil
 }
 
 // IsHeightValid, to check if block height is valid
-func IsHeightValid(block *commonpb.Block, currentHeight int64) error {
+func IsHeightValid(block *commonpb.Block, currentHeight uint64) error {
 	if currentHeight+1 != block.Header.BlockHeight {
 		return fmt.Errorf("height expect %d, got %d", currentHeight+1, block.Header.BlockHeight)
 	}
@@ -376,10 +328,10 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 	txSet := make(map[string]struct{})
 	exist := struct{}{}
 	for _, tx := range txs {
-		if tx == nil || tx.Header == nil {
+		if tx == nil || tx.Payload == nil {
 			return true
 		}
-		txSet[tx.Header.TxId] = exist
+		txSet[tx.Payload.TxId] = exist
 	}
 	// length of set < length of txs, means txs have duplicate tx
 	return len(txSet) < len(txs)
@@ -417,14 +369,15 @@ func IsRWSetHashValid(block *commonpb.Block, hashType string) error {
 
 // getChainVersion, get chain version from config.
 // If not access from config, use default value.
-func getChainVersion(chainConf protocol.ChainConf) []byte {
-	if chainConf == nil || chainConf.ChainConfig() == nil {
-		return []byte(DEFAULTVERSION)
-	}
-	return []byte(chainConf.ChainConfig().Version)
-}
+// @Deprecated
+//func getChainVersion(chainConf protocol.ChainConf) []byte {
+//	if chainConf == nil || chainConf.ChainConfig() == nil {
+//		return []byte(protocol.DefaultBlockVersion)
+//	}
+//	return []byte(chainConf.ChainConfig().Version)
+//}
 
-func VerifyHeight(height int64, ledgerCache protocol.LedgerCache) error {
+func VerifyHeight(height uint64, ledgerCache protocol.LedgerCache) error {
 	currentHeight, err := ledgerCache.CurrentHeight()
 	if err != nil {
 		return err
@@ -539,7 +492,9 @@ func (vb *VerifierBlock) ValidateBlock(
 
 	// verify block sig and also verify identity and auth of block proposer
 	startSigTick := utils.CurrentTimeMillisSeconds()
-	vb.log.Debugf("verify block \n %s", utils.FormatBlock(block))
+	vb.log.DebugDynamic(func() string {
+		return fmt.Sprintf("verify block \n %s", utils.FormatBlock(block))
+	})
 	if ok, err := utils.VerifyBlockSig(hashType, block, vb.ac); !ok || err != nil {
 		return nil, nil, timeLasts, fmt.Errorf("(%d,%x - %x,%x) [signature]",
 			block.Header.BlockHeight, block.Header.BlockHash, block.Header.Proposer, block.Header.Signature)
@@ -571,7 +526,7 @@ func (vb *VerifierBlock) ValidateBlock(
 	if err != nil {
 		return nil, nil, timeLasts, fmt.Errorf("simulate %s", err)
 	}
-	if block.Header.TxCount != int64(len(txRWSetMap)) {
+	if block.Header.TxCount != uint32(len(txRWSetMap)) {
 		return nil, nil, timeLasts, fmt.Errorf("simulate txcount expect %d, got %d",
 			block.Header.TxCount, len(txRWSetMap))
 	}
@@ -608,10 +563,10 @@ func (vb *VerifierBlock) ValidateBlock(
 	contractEventMap := make(map[string][]*commonpb.ContractEvent)
 	for _, tx := range block.Txs {
 		var events []*commonpb.ContractEvent
-		if result, ok := txResultMap[tx.Header.TxId]; ok {
+		if result, ok := txResultMap[tx.Payload.TxId]; ok {
 			events = result.ContractResult.ContractEvent
 		}
-		contractEventMap[tx.Header.TxId] = events
+		contractEventMap[tx.Payload.TxId] = events
 	}
 	// verify TxRoot
 	startRootsTick := utils.CurrentTimeMillisSeconds()
@@ -626,7 +581,7 @@ func (vb *VerifierBlock) ValidateBlock(
 }
 
 func CheckPreBlock(block *commonpb.Block, lastBlock *commonpb.Block, err error,
-	lastBlockHash []byte, proposedHeight int64) error {
+	lastBlockHash []byte, proposedHeight uint64) error {
 
 	if err = IsHeightValid(block, proposedHeight); err != nil {
 		return err
@@ -810,20 +765,20 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	return nil
 }
 
-func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height int64) []*commonpb.Transaction {
+func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height uint64) []*commonpb.Transaction {
 	proposedBlocks := chain.proposalCache.GetProposedBlocksAt(height)
 	txRetry := make([]*commonpb.Transaction, 0, localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize)
 	chain.log.Debugf("has %d blocks in height: %d", len(proposedBlocks), height)
 	keepTxs := make(map[string]struct{}, len(block.Txs))
 	for _, tx := range block.Txs {
-		keepTxs[tx.Header.TxId] = struct{}{}
+		keepTxs[tx.Payload.TxId] = struct{}{}
 	}
 	for _, b := range proposedBlocks {
 		if bytes.Equal(b.Header.BlockHash, block.Header.BlockHash) {
 			continue
 		}
 		for _, tx := range b.Txs {
-			if _, ok := keepTxs[tx.Header.TxId]; !ok {
+			if _, ok := keepTxs[tx.Payload.TxId]; !ok {
 				txRetry = append(txRetry, tx)
 			}
 		}
@@ -832,7 +787,7 @@ func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height in
 }
 
 func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block, lastProposed *commonpb.Block,
-	err error, height int64, rwSetMap map[string]*commonpb.TxRWSet, conEventMap map[string][]*commonpb.ContractEvent) error {
+	err error, height uint64, rwSetMap map[string]*commonpb.TxRWSet, conEventMap map[string][]*commonpb.ContractEvent) error {
 	if lastProposed != nil {
 		return nil
 	}

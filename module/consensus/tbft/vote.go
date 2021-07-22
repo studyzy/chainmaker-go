@@ -34,7 +34,7 @@ var (
 // Proposal represent a proposal to be vote for consensus
 type Proposal struct {
 	Voter       string
-	Height      int64
+	Height      uint64
 	Round       int32
 	PolRound    int32
 	Block       *common.Block
@@ -42,7 +42,7 @@ type Proposal struct {
 }
 
 // NewProposal create a new Proposal instance
-func NewProposal(voter string, height int64, round int32, polRound int32, block *common.Block) *Proposal {
+func NewProposal(voter string, height uint64, round int32, polRound int32, block *common.Block) *Proposal {
 	return &Proposal{
 		Voter:    voter,
 		Height:   height,
@@ -88,14 +88,14 @@ func (p *Proposal) ToProto() *tbftpb.Proposal {
 type Vote struct {
 	Type        tbftpb.VoteType
 	Voter       string
-	Height      int64
+	Height      uint64
 	Round       int32
 	Hash        []byte
 	Endorsement *common.EndorsementEntry
 }
 
 // NewVote create a new Vote instance
-func NewVote(typ tbftpb.VoteType, voter string, height int64, round int32, hash []byte) *Vote {
+func NewVote(typ tbftpb.VoteType, voter string, height uint64, round int32, hash []byte) *Vote {
 	return &Vote{
 		Type:   typ,
 		Voter:  voter,
@@ -142,7 +142,7 @@ func (v *Vote) String() string {
 // BlockVotes traces the vote from different voter
 type BlockVotes struct {
 	Votes map[string]*Vote
-	Sum   int64
+	Sum   uint64
 }
 
 // NewBlockVotes creates a new BlockVotes instance
@@ -190,9 +190,9 @@ func (bv *BlockVotes) addVote(vote *Vote) {
 type VoteSet struct {
 	logger       *logger.CMLogger
 	Type         tbftpb.VoteType
-	Height       int64
+	Height       uint64
 	Round        int32
-	Sum          int64
+	Sum          uint64
 	Maj23        []byte
 	Votes        map[string]*Vote
 	VotesByBlock map[string]*BlockVotes
@@ -200,7 +200,7 @@ type VoteSet struct {
 }
 
 // NewVoteSet creates a new VoteSet instance
-func NewVoteSet(logger *logger.CMLogger, voteType tbftpb.VoteType, height int64, round int32, validators *validatorSet) *VoteSet {
+func NewVoteSet(logger *logger.CMLogger, voteType tbftpb.VoteType, height uint64, round int32, validators *validatorSet) *VoteSet {
 	return &VoteSet{
 		logger:       logger,
 		Type:         voteType,
@@ -328,7 +328,7 @@ func (vs *VoteSet) AddVote(vote *Vote) (added bool, err error) {
 	}
 
 	oldSum := votesByBlock.Sum
-	quorum := int64(vs.validators.Size()*2/3 + 1)
+	quorum := uint64(vs.validators.Size()*2/3 + 1)
 
 	votesByBlock.addVote(vote)
 	vs.logger.Debugf("VoteSet(%s/%d/%d) AddVote %s(%s/%d/%d/%x) "+
@@ -379,9 +379,9 @@ func (vs *VoteSet) hasTwoThirdsAny() bool {
 	}
 
 	ret := true
-	leftSum := int64(vs.validators.Size()) - vs.Sum
+	leftSum := uint64(vs.validators.Size()) - vs.Sum
 	for _, v := range vs.VotesByBlock {
-		if (v.Sum + leftSum) >= int64(vs.validators.Size()*2/3+1) {
+		if (v.Sum + leftSum) >= uint64(vs.validators.Size()*2/3+1) {
 			ret = false
 			break
 		}
@@ -392,13 +392,13 @@ func (vs *VoteSet) hasTwoThirdsAny() bool {
 }
 
 type roundVoteSet struct {
-	Height     int64
+	Height     uint64
 	Round      int32
 	Prevotes   *VoteSet
 	Precommits *VoteSet
 }
 
-func newRoundVoteSet(height int64, round int32, prevotes *VoteSet, precommits *VoteSet) *roundVoteSet {
+func newRoundVoteSet(height uint64, round int32, prevotes *VoteSet, precommits *VoteSet) *roundVoteSet {
 	return &roundVoteSet{
 		Height:     height,
 		Round:      round,
@@ -440,14 +440,14 @@ func (rvs *roundVoteSet) String() string {
 
 type heightRoundVoteSet struct {
 	logger        *logger.CMLogger
-	Height        int64
+	Height        uint64
 	Round         int32
 	RoundVoteSets map[int32]*roundVoteSet
 
 	validators *validatorSet
 }
 
-func newHeightRoundVoteSet(logger *logger.CMLogger, height int64, round int32, validators *validatorSet) *heightRoundVoteSet {
+func newHeightRoundVoteSet(logger *logger.CMLogger, height uint64, round int32, validators *validatorSet) *heightRoundVoteSet {
 	hvs := &heightRoundVoteSet{
 		logger:        logger,
 		Height:        height,
@@ -494,8 +494,8 @@ func (hvs *heightRoundVoteSet) addRound(round int32) {
 		panic(fmt.Errorf("round %d alread exists", round))
 	}
 
-	prevotes := NewVoteSet(hvs.logger, tbftpb.VoteType_VotePrevote, hvs.Height, round, hvs.validators)
-	precommits := NewVoteSet(hvs.logger, tbftpb.VoteType_VotePrecommit, hvs.Height, round, hvs.validators)
+	prevotes := NewVoteSet(hvs.logger, tbftpb.VoteType_VOTE_PREVOTE, hvs.Height, round, hvs.validators)
+	precommits := NewVoteSet(hvs.logger, tbftpb.VoteType_VOTE_PRECOMMIT, hvs.Height, round, hvs.validators)
 	hvs.RoundVoteSets[round] = newRoundVoteSet(hvs.Height, round, prevotes, precommits)
 }
 
@@ -514,9 +514,9 @@ func (hvs *heightRoundVoteSet) getVoteSet(round int32, voteType tbftpb.VoteType)
 	}
 
 	switch voteType {
-	case tbftpb.VoteType_VotePrevote:
+	case tbftpb.VoteType_VOTE_PREVOTE:
 		return rvs.Prevotes
-	case tbftpb.VoteType_VotePrecommit:
+	case tbftpb.VoteType_VOTE_PRECOMMIT:
 		return rvs.Precommits
 	default:
 		// This should not happen
@@ -525,11 +525,11 @@ func (hvs *heightRoundVoteSet) getVoteSet(round int32, voteType tbftpb.VoteType)
 }
 
 func (hvs *heightRoundVoteSet) prevotes(round int32) *VoteSet {
-	return hvs.getVoteSet(round, tbftpb.VoteType_VotePrevote)
+	return hvs.getVoteSet(round, tbftpb.VoteType_VOTE_PREVOTE)
 }
 
 func (hvs *heightRoundVoteSet) precommits(round int32) *VoteSet {
-	return hvs.getVoteSet(round, tbftpb.VoteType_VotePrecommit)
+	return hvs.getVoteSet(round, tbftpb.VoteType_VOTE_PRECOMMIT)
 }
 
 func (hvs *heightRoundVoteSet) addVote(vote *Vote) (added bool, err error) {
@@ -548,7 +548,7 @@ func createProposalMsg(proposal *Proposal) *tbftpb.TBFTMsg {
 	data := mustMarshal(proposalProto)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_propose,
+		Type: tbftpb.TBFTMsgType_MSG_PROPOSE,
 		Msg:  data,
 	}
 
@@ -560,7 +560,7 @@ func createPrevoteMsg(prevote *Vote) *tbftpb.TBFTMsg {
 	data := mustMarshal(prevoteProto)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_prevote,
+		Type: tbftpb.TBFTMsgType_MSG_PREVOTE,
 		Msg:  data,
 	}
 
@@ -572,7 +572,7 @@ func createPrecommitMsg(precommit *Vote) *tbftpb.TBFTMsg {
 	data := mustMarshal(precommitProto)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_precommit,
+		Type: tbftpb.TBFTMsgType_MSG_PRECOMMIT,
 		Msg:  data,
 	}
 
@@ -583,7 +583,7 @@ func createStateMsg(state *tbftpb.ConsensusState) *tbftpb.TBFTMsg {
 	data := mustMarshal(state)
 
 	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_state,
+		Type: tbftpb.TBFTMsgType_MSG_STATE,
 		Msg:  data,
 	}
 

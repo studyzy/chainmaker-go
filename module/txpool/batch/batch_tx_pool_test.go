@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/stretchr/testify/require"
 )
@@ -22,13 +22,13 @@ func TestBatchTxPool_PopTxsFromQueue(t *testing.T) {
 		pool := NewBatchTxPool("nodeId", "test-chain", nil, nil, nil, nil)
 		pool.txQueue = lockfreequeue.NewQueue(uint32(pool.batchMaxSize))
 		for i := 0; i < int(pool.batchMaxSize); i++ {
-			pool.txQueue.Push(&commonpb.Transaction{Header: &commonpb.TxHeader{TxId: utils.GetRandTxId()}})
+			pool.txQueue.Push(&commonpb.Transaction{Payload: &commonpb.Payload{TxId: utils.GetRandTxId()}})
 		}
 		pool.batchCreateTimeout = time.Second
 		txs, txIdToIndex := pool.popTxsFromQueue()
 		require.EqualValues(t, len(txs), len(txIdToIndex))
 		for txId, index := range txIdToIndex {
-			require.EqualValues(t, txId, txs[index].Header.TxId, "txId should be equal")
+			require.EqualValues(t, txId, txs[index].Payload.TxId, "txId should be equal")
 		}
 	}
 }

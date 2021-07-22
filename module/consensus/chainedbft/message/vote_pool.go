@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sort"
 
-	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 type orderIndexes []uint64
@@ -29,22 +29,22 @@ func (oi orderIndexes) Less(i, j int) bool { return oi[i] < oi[j] }
 type votePool struct {
 	newViewNum    int    //The number of new view voted
 	lockedNewView bool   //Indicates whether move to new view
-	lockedBlockID []byte //The +2/3 voted for vp block
+	lockedBlockId []byte //The +2/3 voted for vp block
 
 	votes        map[uint64]*chainedbft.VoteData            //format: [author index] = voteData; store all vote from author
 	votedNewView map[uint64]*chainedbft.VoteData            //format: [author index] = voteData; only store newView vote from author
-	votedBlockID map[string]map[uint64]*chainedbft.VoteData //format: [block hash][author index] = voteData; only store proposal vote from author
+	votedBlockId map[string]map[uint64]*chainedbft.VoteData //format: [block hash][author index] = voteData; only store proposal vote from author
 }
 
 //newVotePool initializes a votePool with given params
 func newVotePool(size int) *votePool {
 	return &votePool{
 		newViewNum:    0,
-		lockedBlockID: nil,
+		lockedBlockId: nil,
 		lockedNewView: false,
 		votes:         make(map[uint64]*chainedbft.VoteData, size),
 		votedNewView:  make(map[uint64]*chainedbft.VoteData, size),
-		votedBlockID:  make(map[string]map[uint64]*chainedbft.VoteData, size),
+		votedBlockId:  make(map[string]map[uint64]*chainedbft.VoteData, size),
 	}
 }
 
@@ -66,8 +66,8 @@ func (vp *votePool) addVoteIfNeed(vote *chainedbft.VoteData) {
 	if vote.NewView && !lastVote.NewView {
 		lastVote.NewView = vote.NewView
 	}
-	if len(vote.BlockID) > 0 && len(lastVote.BlockID) == 0 {
-		lastVote.BlockID = vote.BlockID
+	if len(vote.BlockId) > 0 && len(lastVote.BlockId) == 0 {
+		lastVote.BlockId = vote.BlockId
 	}
 }
 
@@ -89,17 +89,17 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	}
 
 	// process block vote
-	if len(vote.BlockID) == 0 {
+	if len(vote.BlockId) == 0 {
 		return true, nil
 	}
-	blockID := string(vote.BlockID)
-	if _, ok := vp.votedBlockID[blockID]; !ok {
-		vp.votedBlockID[blockID] = make(map[uint64]*chainedbft.VoteData, 1)
+	BlockId := string(vote.BlockId)
+	if _, ok := vp.votedBlockId[BlockId]; !ok {
+		vp.votedBlockId[BlockId] = make(map[uint64]*chainedbft.VoteData, 1)
 	}
-	vp.votedBlockID[blockID][vote.AuthorIdx] = vote
-	if vp.lockedBlockID == nil && len(vp.votedBlockID[blockID]) >= minVotesForQc {
+	vp.votedBlockId[BlockId][vote.AuthorIdx] = vote
+	if vp.lockedBlockId == nil && len(vp.votedBlockId[BlockId]) >= minVotesForQc {
 		//Over 2/3 votes for same block and executed state root
-		vp.lockedBlockID = vote.BlockID
+		vp.lockedBlockId = vote.BlockId
 	}
 	return true, nil
 }
@@ -109,10 +109,10 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (isValid boo
 	if !ok {
 		return true, nil
 	}
-	if lastVote.BlockID != nil && vote.BlockID != nil && bytes.Compare(lastVote.BlockID, vote.BlockID) != 0 {
-		return false, fmt.Errorf("different votes block from same level %d, oldBlockID: %x, newBlockID: %x",
-			vote.Level, lastVote.BlockID, vote.BlockID)
-	} else if lastVote.NewView == vote.NewView && bytes.Equal(lastVote.BlockID, vote.BlockID) {
+	if lastVote.BlockId != nil && vote.BlockId != nil && bytes.Compare(lastVote.BlockId, vote.BlockId) != 0 {
+		return false, fmt.Errorf("different votes block from same level %d, oldBlockId: %x, newBlockId: %x",
+			vote.Level, lastVote.BlockId, vote.BlockId)
+	} else if lastVote.NewView == vote.NewView && bytes.Equal(lastVote.BlockId, vote.BlockId) {
 		return false, nil
 	}
 	return true, nil
@@ -120,8 +120,8 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (isValid boo
 
 //checkVoteDone checks whether a valid block or nil block voted by +2/3 nodes
 func (vp *votePool) checkVoteDone() (blkID []byte, isNewView bool, done bool) {
-	if vp.lockedBlockID != nil {
-		return vp.lockedBlockID, false, true
+	if vp.lockedBlockId != nil {
+		return vp.lockedBlockId, false, true
 	}
 
 	if vp.lockedNewView {
@@ -134,8 +134,8 @@ func (vp *votePool) checkVoteDone() (blkID []byte, isNewView bool, done bool) {
 func (vp *votePool) getQCVotes() []*chainedbft.VoteData {
 	indexes := make([]uint64, 0, len(vp.votes))
 	votes := make([]*chainedbft.VoteData, 0, len(vp.votes))
-	if len(vp.lockedBlockID) > 0 {
-		blkVotes := vp.votedBlockID[string(vp.lockedBlockID)]
+	if len(vp.lockedBlockId) > 0 {
+		blkVotes := vp.votedBlockId[string(vp.lockedBlockId)]
 		for index := range blkVotes {
 			indexes = append(indexes, index)
 		}

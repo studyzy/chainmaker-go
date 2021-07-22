@@ -12,11 +12,11 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210716062634-2954837e13a4
-	chainmaker.org/chainmaker/protocol v0.0.0-20210624151907-50fa3348c696
+	chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6
+	chainmaker.org/chainmaker/protocol v0.0.0-20210719060811-1421e692280c
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.4.3
 	github.com/mr-tron/base58 v1.2.0
 	github.com/spf13/cobra v1.1.1
@@ -29,12 +29,10 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/chainconf => ../conf/chainconf
-
 	chainmaker.org/chainmaker-go/evm => ./evm
 	chainmaker.org/chainmaker-go/gasm => ./gasm
 	chainmaker.org/chainmaker-go/localconf => ../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-
 	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/utils => ../utils
 	chainmaker.org/chainmaker-go/wasi => ./wasi

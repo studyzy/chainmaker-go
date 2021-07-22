@@ -12,6 +12,8 @@ import (
 	"errors"
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+
 	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
@@ -146,26 +148,28 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 			orgConfig.Address = nil
 		}
 	}
-	// For v1.1 to be compatible with v1.0, check resource policies
-	for _, rp := range chainConfig.ResourcePolicies {
-		switch rp.ResourceName {
-		case common.ConfigFunction_NODE_ID_ADD.String():
-			rp.ResourceName = common.ConfigFunction_NODE_ID_ADD.String()
-		case common.ConfigFunction_NODE_ID_UPDATE.String():
-			rp.ResourceName = common.ConfigFunction_NODE_ID_UPDATE.String()
-		case common.ConfigFunction_NODE_ID_DELETE.String():
-			rp.ResourceName = common.ConfigFunction_NODE_ID_DELETE.String()
-		default:
-			continue
+	/*
+		// For v1.1 to be compatible with v1.0, check resource policies
+		for _, rp := range chainConfig.ResourcePolicies {
+			switch rp.ResourceName {
+			case syscontract.ChainConfigFunction_NODE_ID_ADD.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_ADD.String()
+			case syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()
+			case syscontract.ChainConfigFunction_NODE_ID_DELETE.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_DELETE.String()
+			default:
+				continue
+			}
 		}
-	}
+	*/
 	return nil
 }
 
 // latestChainConfig load latest chainConfig
 func (c *ChainConf) latestChainConfig() error {
 	// load chain config from store
-	bytes, err := c.blockchainStore.ReadObject(common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), []byte(common.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	bytes, err := c.blockchainStore.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(), []byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return err
 	}
@@ -193,7 +197,7 @@ func (c *ChainConf) latestChainConfig() error {
 }
 
 // GetChainConfigFromFuture get a future chain config.
-func (c *ChainConf) GetChainConfigFromFuture(futureBlockHeight int64) (*config.ChainConfig, error) {
+func (c *ChainConf) GetChainConfigFromFuture(futureBlockHeight uint64) (*config.ChainConfig, error) {
 	c.log.Debugf("GetChainConfig from futureBlockHeiht", "futureBlockHeight", futureBlockHeight)
 	if futureBlockHeight > 0 {
 		futureBlockHeight--
@@ -202,14 +206,14 @@ func (c *ChainConf) GetChainConfigFromFuture(futureBlockHeight int64) (*config.C
 }
 
 // GetChainConfigAt get chain config with block height.
-func (c *ChainConf) GetChainConfigAt(futureBlockHeight int64) (*config.ChainConfig, error) {
+func (c *ChainConf) GetChainConfigAt(futureBlockHeight uint64) (*config.ChainConfig, error) {
 	return GetChainConfigAt(c.log, c.lru, c.configLru, c.blockchainStore, futureBlockHeight)
 }
 
 // GetChainConfigAt get the lasted block info of chain config.
 // The blockHeight must exist in store.
 // If it is a config block , return the current config info.
-func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache, blockchainStore protocol.BlockchainStore, blockHeight int64) (*config.ChainConfig, error) {
+func GetChainConfigAt(log protocol.Logger, lru *lru.Cache, configLru *lru.Cache, blockchainStore protocol.BlockchainStore, blockHeight uint64) (*config.ChainConfig, error) {
 	var (
 		block *common.Block
 		err   error
@@ -247,7 +251,7 @@ func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache
 
 	txConfig := block.Txs[0]
 	if txConfig.Result == nil || txConfig.Result.ContractResult == nil || txConfig.Result.ContractResult.Result == nil {
-		log.Errorw("tx(id: %s) is not config tx", txConfig.Header.TxId)
+		log.Errorw("tx(id: %s) is not config tx", txConfig.Payload.TxId)
 		return nil, errors.New("tx is not config tx")
 	}
 	result := txConfig.Result.ContractResult.Result
@@ -264,7 +268,7 @@ func GetChainConfigAt(log *logger.CMLogger, lru *lru.Cache, configLru *lru.Cache
 	return chainConfig, nil
 }
 
-func getBlockInCache(lru *lru.Cache, configLru *lru.Cache, blockHeight int64) *common.Block {
+func getBlockInCache(lru *lru.Cache, configLru *lru.Cache, blockHeight uint64) *common.Block {
 	var block *common.Block
 	if configLru != nil {
 		if value, ok := configLru.Get(blockHeight); ok {
@@ -279,7 +283,7 @@ func getBlockInCache(lru *lru.Cache, configLru *lru.Cache, blockHeight int64) *c
 	return block
 }
 
-func getBlockFromStore(blockchainStore protocol.BlockchainStore, blockHeight int64) (*common.Block, error) {
+func getBlockFromStore(blockchainStore protocol.BlockchainStore, blockHeight uint64) (*common.Block, error) {
 	var block *common.Block
 	var err error
 	block, err = blockchainStore.GetBlock(blockHeight)
@@ -333,8 +337,8 @@ func (c *ChainConf) CompleteBlock(block *common.Block) error {
 	if ok {
 		// is native tx
 		// callback the watcher by sync
-
-		if err := c.callbackContractVmWatcher(contract, tx.RequestPayload); err != nil {
+		payloadData, _ := tx.Payload.Marshal()
+		if err := c.callbackContractVmWatcher(contract, payloadData); err != nil {
 			return err
 		}
 	}

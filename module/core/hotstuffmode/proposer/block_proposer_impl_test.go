@@ -305,7 +305,7 @@ package proposer
 //	block.Dag = dag
 //	confKV := &commonpb.KeyValuePair{
 //		Key:   "IsExtreme",
-//		Value: "true",
+//		Value: []byte("true"),
 //	}
 //	kvs := make([]*commonpb.KeyValuePair, 1)
 //	kvs[0] = confKV
@@ -353,7 +353,7 @@ package proposer
 //	pairs := []*commonpb.KeyValuePair{
 //		{
 //			Key:   "file_hash",
-//			Value: txId[len(txId)/2:],
+//			Value: []byte(txId)[len(txId)/2:],
 //		},
 //	}
 //	return &commonpb.TransactPayload{
@@ -367,10 +367,10 @@ package proposer
 //	return &commonpb.Transaction{
 //		Header: &commonpb.TxHeader{
 //			ChainId: "chain1",
-//			Sender: &acpb.SerializedMember{
+//			Sender: &acpb.Member{
 //				OrgId:      "wx-org1.chainmaker.org",
 //				MemberInfo: []byte("wx-org1.chainmaker.org"),
-//				IsFullCert: false,
+//				MemberType: acPb.MemberType_CERT_HASH,
 //			},
 //			TxType:         0,
 //			TxId:           txId,
@@ -392,7 +392,7 @@ package proposer
 //	}
 //}
 //
-//func createNewTestBlock(height int64) *commonpb.Block {
+//func createNewTestBlock(height uint64) *commonpb.Block {
 //	var hash = []byte("0123456789")
 //	var version = []byte("0")
 //	var block = &commonpb.Block{

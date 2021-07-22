@@ -87,27 +87,27 @@ package verifier
 //	txs := make([]*commonpb.Transaction, 1)
 //	txs[0] = tx
 //	rwSetmap := make(map[string]*commonpb.TxRWSet, 0)
-//	rwSetmap[tx.Header.TxId] = &commonpb.TxRWSet{
-//		TxId:     tx.Header.TxId,
+//	rwSetmap[tx.Payload.TxId] = &commonpb.TxRWSet{
+//		TxId:     tx.Payload.TxId,
 //		TxReads:  nil,
 //		TxWrites: nil,
 //	}
 //
 //	txList := make(map[string]*commonpb.Transaction, 0)
-//	txList[tx.Header.TxId] = tx
+//	txList[tx.Payload.TxId] = tx
 //	heights := make(map[string]int64, 0)
-//	heights[tx.Header.TxId] = 1
+//	heights[tx.Payload.TxId] = 1
 //
 //	txpool.EXPECT().GetTxsByTxIds(gomock.Any()).Return(txList, heights).AnyTimes()
 //	txpool.EXPECT().AddTxsToPendingCache(gomock.Any(), gomock.Any()).AnyTimes()
 //	txResultMap := make(map[string]*commonpb.Result)
-//	txResultMap[tx.Header.TxId] = tx.Result
+//	txResultMap[tx.Payload.TxId] = tx.Result
 //	txScheduler.EXPECT().SimulateWithDag(gomock.Any(), gomock.Any()).Return(rwSetmap, txResultMap, nil).AnyTimes()
 //
 //	proposer, err := signerMember.Serialize(true)
 //	require.Nil(t, err)
 //
-//	tx.Result.RwSetHash, err  = utils.CalcRWSetHash(hashType, rwSetmap[tx.Header.TxId])
+//	tx.Result.RwSetHash, err  = utils.CalcRWSetHash(hashType, rwSetmap[tx.Payload.TxId])
 //
 //	txHash, err := utils.CalcTxHash(hashType, tx)
 //	require.Nil(t, err)
@@ -254,7 +254,7 @@ package verifier
 //	}
 //}
 //
-//func createNewTestBlock(height int64, proposer []byte, txs []*commonpb.Transaction) *commonpb.Block {
+//func createNewTestBlock(height uint64, proposer []byte, txs []*commonpb.Transaction) *commonpb.Block {
 //	var hash = []byte("0123456789")
 //	var version = []byte("0")
 //
@@ -311,7 +311,7 @@ package verifier
 //	}
 //}
 //
-//func createNewTestBlockWithoutProposer(height int64) *commonpb.Block {
+//func createNewTestBlockWithoutProposer(height uint64) *commonpb.Block {
 //	var hash = []byte("0123456789")
 //	var version = []byte("0")
 //	var block = &commonpb.Block{

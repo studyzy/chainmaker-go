@@ -130,7 +130,7 @@ func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
 	defer sr.RUnlock()
 
 	var (
-		justQc = proposal.JustifyQC
+		justQc = proposal.JustifyQc
 	)
 
 	// 1. 活性规则：The liveness rule is the replica will accept m if m.justify has a higher view than the current locked QC
@@ -178,12 +178,12 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (commit bool, co
 		parentBlock *common.Block
 		grandBlock  *common.Block
 	)
-	if qcBlock = sr.blockPool.GetBlockByID(string(qc.BlockID)); qcBlock == nil {
-		sr.logger.Debugf("commit rules, qc's block[%x] is nil", qc.BlockID)
+	if qcBlock = sr.blockPool.GetBlockByID(string(qc.BlockId)); qcBlock == nil {
+		sr.logger.Debugf("commit rules, qc's block[%x] is nil", qc.BlockId)
 		return false, nil, 0
 	}
 	if parentBlock = sr.blockPool.GetBlockByID(string(qcBlock.Header.PreBlockHash)); parentBlock == nil {
-		sr.logger.Debugf("commit rules, qc's parent[%x] block is nil", qc.BlockID)
+		sr.logger.Debugf("commit rules, qc's parent[%x] block is nil", qc.BlockId)
 		return false, nil, 0
 	}
 	if grandBlock = sr.blockPool.GetBlockByID(string(parentBlock.Header.PreBlockHash)); grandBlock == nil {
@@ -211,7 +211,7 @@ func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (commit bool, co
 
 //UpdateLockedQC process incoming qc, update locked state by two-chain
 func (sr *SafetyRules) UpdateLockedQC(qc *chainedbftpb.QuorumCert) {
-	if qc == nil || qc.NewView || qc.BlockID == nil {
+	if qc == nil || qc.NewView || qc.BlockId == nil {
 		sr.logger.Debugf("received new view or nil block id qc, info: %s", qc.String())
 		return
 	}
@@ -223,9 +223,9 @@ func (sr *SafetyRules) UpdateLockedQC(qc *chainedbftpb.QuorumCert) {
 		prevBlock *common.Block
 		prevQC    *chainedbftpb.QuorumCert
 	)
-	if block = sr.blockPool.GetBlockByID(string(qc.BlockID)); block == nil {
+	if block = sr.blockPool.GetBlockByID(string(qc.BlockId)); block == nil {
 		sr.logger.Debugf("incoming qc failed, nil block for qc certified id [%v] on [%v]:[%v]",
-			hex.EncodeToString(qc.BlockID), qc.Height, qc.Level)
+			hex.EncodeToString(qc.BlockId), qc.Height, qc.Level)
 		return
 	}
 	if prevBlock = sr.blockPool.GetBlockByID(string(block.Header.PreBlockHash)); prevBlock == nil {

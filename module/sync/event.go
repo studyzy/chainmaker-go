@@ -66,7 +66,7 @@ const (
 )
 
 type ProcessedBlockResp struct {
-	height int64
+	height uint64
 	status processedBlockStatus
 	from   string
 	EqualLevel

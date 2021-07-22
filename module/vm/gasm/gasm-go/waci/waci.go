@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -27,7 +27,7 @@ var wacsi = wasi.NewWacsi()
 
 type WaciInstance struct {
 	TxSimContext   protocol.TxSimContext
-	ContractId     *commonPb.ContractId
+	ContractId     *commonPb.Contract
 	ContractResult *commonPb.ContractResult
 	Log            *logger.CMLogger
 	Vm             *wasm.VirtualMachine
@@ -42,13 +42,13 @@ type WaciInstance struct {
 func (s *WaciInstance) LogMsg(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(msgPtr int32, msgLen int32) {
 		msg := vm.Memory[msgPtr : msgPtr+msgLen]
-		s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, msg)
+		s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().GetPayload().TxId, msg)
 	})
 }
 
 // LogMessage print log to file
 func (s *WaciInstance) LogMessage() int32 {
-	s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, string(s.RequestBody))
+	s.Log.Debugf("gasm log>> [%s] %s", s.TxSimContext.GetTx().GetPayload().TxId, string(s.RequestBody))
 	return protocol.ContractSdkSignalResultSuccess
 }
 
@@ -56,7 +56,7 @@ func (s *WaciInstance) LogMessage() int32 {
 func (s *WaciInstance) SysCall(vm *wasm.VirtualMachine) reflect.Value {
 	return reflect.ValueOf(func(requestHeaderPtr int32, requestHeaderLen int32, requestBodyPtr int32, requestBodyLen int32) int32 {
 		if requestHeaderLen == 0 {
-			s.Log.Errorf("gasm log>> [%s] requestHeader is null.", s.TxSimContext.GetTx().Header.TxId)
+			s.Log.Errorf("gasm log>> [%s] requestHeader is null.", s.TxSimContext.GetTx().GetPayload().TxId)
 			return protocol.ContractSdkSignalResultFail
 		}
 
@@ -236,7 +236,7 @@ func (s *WaciInstance) recordMsg(msg string) int32 {
 	} else {
 		s.ContractResult.Message += "error message: " + msg
 	}
-	s.ContractResult.Code = commonPb.ContractResultCode_FAIL
-	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().Header.TxId, s.ContractId.ContractName, msg)
+	s.ContractResult.Code = 1
+	s.Log.Errorf("gasm log>> [%s] %s", s.TxSimContext.GetTx().GetPayload().TxId, s.ContractId.Name, msg)
 	return protocol.ContractSdkSignalResultFail
 }
