@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
@@ -23,6 +24,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
+
 	//"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )
