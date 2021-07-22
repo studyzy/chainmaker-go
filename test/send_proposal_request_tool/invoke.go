@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/utils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/spf13/cobra"
 )
@@ -64,13 +65,12 @@ func invoke() error {
 	} else {
 		fmt.Println("pairs: ", pairs, ", method: ", method)
 
-		payloadBytes, err := constructPayload(contractName, method, pairs)
+		payloadBytes, err := constructInvokePayload(chainId, contractName, method, pairs)
 		if err != nil {
 			return err
 		}
 
-		resp, err = proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-			chainId, txId, payloadBytes)
+		resp, err = proposalRequest(sk3, client, payloadBytes)
 		if err != nil {
 			return err
 		}

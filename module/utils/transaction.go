@@ -247,13 +247,16 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 	if len(header.TxId) > defaultTxIdLen {
 		return fmt.Errorf("tx id length is incorrect, wanted %d", defaultTxIdLen)
 	}
-	// 4. tx id only contains [a-z0-9]
-	match, err := regexp.MatchString(defaultTxIdReg, header.TxId)
-	if err != nil {
-		return fmt.Errorf("check tx id failed, %s", err)
-	}
-	if !match {
-		return errors.New("check tx id failed, only [a-zA-Z0-9_] are allowed")
+	//only invoke contract tx need check txid
+	if header.TxType == commonPb.TxType_INVOKE_CONTRACT {
+		// 4. tx id only contains [a-z0-9]
+		match, err := regexp.MatchString(defaultTxIdReg, header.TxId)
+		if err != nil {
+			return fmt.Errorf("check tx id failed, %s", err)
+		}
+		if !match {
+			return errors.New("check tx id failed, only [a-zA-Z0-9_] are allowed, your TxId is:" + header.TxId)
+		}
 	}
 	// 5. timestamp (in seconds) before expiration time
 	if header.ExpirationTime != 0 && header.ExpirationTime <= header.Timestamp {
@@ -315,6 +318,7 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	}
 	return nil
 }
+
 /*
 // VerifyConfigUpdateTx verify a transaction which will update the chain config.
 func VerifyConfigUpdateTx(methodName string, endorsements []*commonPb.EndorsementEntry, msg []byte, targetOrgId string, ac protocol.AccessControlProvider) (bool, error) {

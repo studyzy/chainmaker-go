@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -96,15 +97,23 @@ func createContract() error {
 	//	wasmBin, err = hex.DecodeString(string(wasmBin))
 	//}
 	//var pairs []*commonPb.KeyValuePair
-	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
-
+	installP, _ := utils.GenerateInstallContractPayload(contractName, "1.0.0", commonPb.RuntimeType(runTime), wasmBin, pairs)
+	payload := &commonPb.Payload{
+		ChainId:        chainId,
+		TxType:         commonPb.TxType_INVOKE_CONTRACT,
+		TxId:           txId,
+		Timestamp:      time.Now().Unix(),
+		ExpirationTime: 0,
+		ContractName:   installP.ContractName,
+		Method:         installP.Method,
+		Parameters:     installP.Parameters,
+	}
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
 	}
 
-	resp, err = proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload, endorsement)
+	resp, err = proposalRequestWithMultiSign(sk3, client, payload, endorsement)
 	if err != nil {
 		return err
 	}

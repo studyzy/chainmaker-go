@@ -46,7 +46,7 @@ func runQueryArchivedHeightOnChainCMD() error {
 		return err
 	}
 
-	output, err := prettyjson.Marshal(map[string]int64{"archived_height": archivedBlkHeight})
+	output, err := prettyjson.Marshal(map[string]uint64{"archived_height": archivedBlkHeight})
 	if err != nil {
 		return err
 	}
