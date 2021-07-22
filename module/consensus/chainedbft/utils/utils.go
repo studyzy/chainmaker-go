@@ -163,14 +163,13 @@ func VerifyDataSign(data []byte, signEnrty *common.EndorsementEntry,
 		return fmt.Errorf("new principal error %v", err)
 	}
 
-	result, err := ac.VerifyPrincipal(principal)
+	ok, err := ac.VerifyPrincipal(principal)
 	if err != nil {
 		return fmt.Errorf("verify principal failed, error %v, data %v", err, data)
 	}
-	if !result {
-		return fmt.Errorf("verify failed, result %v, data %v", result, data)
+	if !ok {
+		return fmt.Errorf("verify failed, result %v, data %v", ok, data)
 	}
-
 	return nil
 }
 
