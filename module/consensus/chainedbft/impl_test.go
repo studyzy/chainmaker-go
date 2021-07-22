@@ -24,6 +24,7 @@ import (
 	"chainmaker.org/chainmaker/common/msgbus"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	systemPb "chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker/protocol/mock"
 	"github.com/gogo/protobuf/proto"
@@ -89,8 +90,8 @@ func initChainConf(filePath string, t *testing.T) (*chainconf.ChainConf, error) 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	store := mock.NewMockBlockchainStore(ctrl)
-	store.EXPECT().ReadObject(commonPb.SystemContract_CHAIN_CONFIG.String(),
-		[]byte(commonPb.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
+	store.EXPECT().ReadObject(systemPb.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(systemPb.SystemContract_CHAIN_CONFIG.String())).Return(pbcfbyte, nil).AnyTimes()
 	nodecf, _ := chainconf.NewChainConf(
 		chainconf.WithBlockchainStore(store),
 	)
