@@ -645,7 +645,7 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.Bi
 	// 判断其值是否满足
 	if fromBalance.Cmp(val) < 0 {
 		// 账户剩余的钱不满足需求
-		return nil, fmt.Errorf("address balance is not enough, contract[%s] address[%s] balance[%s] value[%s]",
+		return nil, fmt.Errorf("address balance is not enough, contract[%s] from address[%s] balance[%s] < value[%s]",
 			dposErc20ContractName, from, fromBalance.String(), val.String())
 	}
 	toBalance, err := balanceOf(txSimContext, to)

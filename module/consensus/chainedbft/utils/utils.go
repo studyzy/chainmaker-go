@@ -42,19 +42,18 @@ func GetLevelFromBlock(block *common.Block) (uint64, error) {
 	if err != nil || args == nil {
 		return 0, err
 	}
-	return uint64(args.Level), nil
+	return args.Level, nil
 }
 
 //GetQCFromBlock get qc from block
 func GetQCFromBlock(block *common.Block) []byte {
-	var qc []byte = nil
 	if block == nil || block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return nil
 	}
-	if v, ok := block.AdditionalData.ExtraData["QC"]; ok {
-		qc = v
+	if qc, ok := block.AdditionalData.ExtraData["QC"]; ok {
+		return qc
 	}
-	return qc
+	return nil
 }
 
 //GetLevelFromQc get level from qc
@@ -72,9 +71,7 @@ func AddQCtoBlock(block *common.Block, qc []byte) error {
 		return nil
 	}
 	if block.AdditionalData == nil {
-		block.AdditionalData = &common.AdditionalData{
-			ExtraData: make(map[string][]byte),
-		}
+		block.AdditionalData = &common.AdditionalData{}
 	}
 	if block.AdditionalData.ExtraData == nil {
 		block.AdditionalData.ExtraData = make(map[string][]byte)

@@ -10,11 +10,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"chainmaker.org/chainmaker/pb-go/net"
-
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/common/log"
+	"chainmaker.org/chainmaker/common/msgbus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/net"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -27,9 +28,10 @@ func (cbi *ConsensusChainedBftImpl) signAndMarshal(payload *chainedbftpb.Consens
 	if err := utils.SignConsensusMsg(consensusMessage, cbi.chainConf.ChainConfig().Crypto.Hash, cbi.singer); err != nil {
 		return nil, fmt.Errorf("sign consensus message failed, err %v", err)
 	}
-	data, _ := proto.Marshal(payload)
-	cbi.logger.Debugf("The hash of the unsigned raw data when sign data：%x", sha256.Sum256(data))
-	cbi.logger.Debugf("signAndMarshal, consensus msg %v", payload.String())
+	if localconf.ChainMakerConfig.LogConfig.SystemLog.LogLevelDefault == log.DEBUG {
+		data, _ := proto.Marshal(payload)
+		cbi.logger.Debugf("The hash of the unsigned raw data when sign data：%x", sha256.Sum256(data))
+	}
 	if internal {
 		//send it to self, no need to marshal
 		cbi.internalMsgCh <- consensusMessage
@@ -42,15 +44,15 @@ func (cbi *ConsensusChainedBftImpl) signAndMarshal(payload *chainedbftpb.Consens
 }
 
 //signAndBroadcast signs the consensus message and broadcasts it to consensus group
-func (cbi *ConsensusChainedBftImpl) signAndBroadcast(payload *chainedbftpb.ConsensusPayload) {
+func (cbi *ConsensusChainedBftImpl) signAndBroadcast(height uint64, payload *chainedbftpb.ConsensusPayload) {
 	consensusData, err := cbi.signAndMarshal(payload, true)
 	if err != nil {
 		cbi.logger.Errorf("sign payload failed, err %v", err)
 		return
 	}
-	peers := cbi.smr.peers()
+	peers := cbi.smr.peers(height)
 	for _, peer := range peers {
-		if peer.index == cbi.selfIndexInEpoch {
+		if peer.index == int64(cbi.selfIndexInEpoch) {
 			continue
 		}
 		msg := &net.NetMsg{
@@ -63,20 +65,20 @@ func (cbi *ConsensusChainedBftImpl) signAndBroadcast(payload *chainedbftpb.Conse
 }
 
 //signAndSendToPeer signs the consensus message and unicast it to the specified peer
-func (cbi *ConsensusChainedBftImpl) signAndSendToPeer(payload *chainedbftpb.ConsensusPayload, index uint64) {
+func (cbi *ConsensusChainedBftImpl) signAndSendToPeer(payload *chainedbftpb.ConsensusPayload, blkHeight, index uint64) {
 	consensusData, err := cbi.signAndMarshal(payload, false)
 	if err != nil {
-		cbi.logger.Errorf("sign payload failed, err %v", err)
+		cbi.logger.Warnf("sign payload failed, err %v", err)
 		return
 	}
-	cbi.sendToPeer(consensusData, index)
+	cbi.sendToPeer(consensusData, blkHeight, index)
 }
 
 //sendToPeer sends consensus data to specified peer
-func (cbi *ConsensusChainedBftImpl) sendToPeer(consensusData []byte, index uint64) {
-	peer := cbi.smr.getPeerByIndex(index)
+func (cbi *ConsensusChainedBftImpl) sendToPeer(consensusData []byte, blkHeight, index uint64) {
+	peer := cbi.smr.getPeerByIndex(blkHeight, index)
 	if peer == nil {
-		cbi.logger.Errorf("get peer with index %v failed", cbi.selfIndexInEpoch, index)
+		cbi.logger.Warnf("get peer with index %v in blkHeight: %d, failed", cbi.selfIndexInEpoch, index, blkHeight)
 		return
 	}
 	msg := &net.NetMsg{

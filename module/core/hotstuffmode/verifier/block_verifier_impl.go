@@ -169,6 +169,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 
 	// sync mode, need to verify consensus vote signature
+	beginConsensCheck := utils.CurrentTimeMillisSeconds()
 	if protocol.SYNC_VERIFY == mode {
 		if err = v.verifyVoteSig(block); err != nil {
 			v.log.Warnf("verify failed [%d](%x), votesig %s",
@@ -176,6 +177,7 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			return err
 		}
 	}
+	consensusCheckUsed := utils.CurrentTimeMillisSeconds() - beginConsensCheck
 
 	// verify success, cache block and read write set
 	v.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
@@ -191,8 +193,8 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
 	}
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	v.log.Infof("verify success [%d,%x](%v,%d)", block.Header.BlockHeight, block.Header.BlockHash,
-		timeLasts, elapsed)
+	v.log.Infof("verify success [%d,%x](%v,consensusCheckUsed: %d, total: %d)", block.Header.BlockHeight,
+		block.Header.BlockHash, timeLasts, consensusCheckUsed, elapsed)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
 	}
