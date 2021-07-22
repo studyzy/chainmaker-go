@@ -33,7 +33,6 @@ const (
 	MODULE_CLI        = "[Cli]"
 	MODULE_CHAINCONF  = "[ChainConf]"
 	MODULE_ACCESS     = "[Access]"
-	MODULE_SPV        = "[Spv]"
 	MODULE_MONITOR    = "[Monitor]"
 	MODULE_SYNC       = "[Sync]"
 	MODULE_DPOS       = "[DPoS]"

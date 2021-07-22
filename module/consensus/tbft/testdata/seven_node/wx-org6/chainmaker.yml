@@ -3,7 +3,7 @@ blockchain:
     genesis: chainconfig/bc1.yml
 
 node:
-  # 节点类型：full、spv
+  # 节点类型：full
   type: full
   org_id:        wx-org6.chainmaker.org
   priv_key_file: ./certs/node/consensus1/consensus1.tls.key
