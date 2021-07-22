@@ -19,7 +19,7 @@ require (
 	chainmaker.org/chainmaker-go/vm v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6
-	chainmaker.org/chainmaker/protocol v0.0.0-20210719090442-fd00c78e0640
+	chainmaker.org/chainmaker/protocol v0.0.0-20210719060811-1421e692280c
 )
 
 replace (

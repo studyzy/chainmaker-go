@@ -46,7 +46,7 @@ func getData() error {
 		"key":           key,
 	})
 
-	payloadBytes, err := constructQueryPayload(
+	payloadBytes, err := constructQueryPayload(chainId,
 		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
 		syscontract.PrivateComputeFunction_GET_DATA.String(),
 		pairs,
@@ -55,7 +55,7 @@ func getData() error {
 		return fmt.Errorf("marshal get data payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, common.TxType_QUERY_CONTRACT, chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return fmt.Errorf(errStringFormat, common.TxType_QUERY_CONTRACT.String(), err.Error())
 	}

@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -111,6 +112,10 @@ func NewBlockStoreImpl(chainId string,
 //InitGenesis 初始化创世区块到数据库，对应的数据库必须为空数据库，否则报错
 func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 	bs.logger.Debug("start initial genesis block to database...")
+	bs.logger.InfoDynamic(func() string {
+		j, _ := json.Marshal(genesisBlock)
+		return "Genesis JSON:" + string(j)
+	})
 	//1.检查创世区块是否有异常
 	if err := checkGenesis(genesisBlock); err != nil {
 		return err
@@ -171,8 +176,8 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 			return errors.New("contract event db config err")
 		}
 	}
-	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), ",
-		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes))
+	bs.logger.Infof("chain[%s]: put block[%d] hash[%x] (txs:%d bytes:%d), ",
+		block.Header.ChainId, block.Header.BlockHeight, block.Header.BlockHash, len(block.Txs), len(blockBytes))
 
 	//7. init archive manager
 	err = bs.InitArchiveMgr(block.Header.ChainId)
@@ -191,7 +196,7 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
 func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
-	bs.logger.Infof("chain[%s]: start put block[%d]", block.Header.ChainId, block.Header.BlockHeight)
+	bs.logger.Debugf("chain[%s]: start put block[%d] (txs:%d)", block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
 
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 	//1. commit log
@@ -278,9 +283,9 @@ func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.T
 				block.Header.ChainId, block.Header.BlockHeight, err)
 		}
 	}()
-	bs.logger.Infof("chain[%s]: put block[%d] (txs:%d bytes:%d), "+
+	bs.logger.Infof("chain[%s]: put block[%d] hash[%x] (txs:%d bytes:%d), "+
 		"time used (mashal:%d, log:%d, commit:%d, total:%d)",
-		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs), len(blockBytes),
+		block.Header.ChainId, block.Header.BlockHeight, block.Header.BlockHash, len(block.Txs), len(blockBytes),
 		elapsedMarshalBlockAndRWSet, elapsedCommitlogDB, elapsedCommitBlock,
 		utils.CurrentTimeMillisSeconds()-startPutBlock)
 	return nil

@@ -8,15 +8,15 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
 
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -58,8 +58,6 @@ func returnResult(code commonPb.TxStatusCode, message string, contractCode uint3
 }
 
 func query() error {
-	txId := utils.GetRandTxId()
-
 	// 构造Payload
 	if pairsString == "" {
 		bytes, err := ioutil.ReadFile(pairsFile)
@@ -101,13 +99,12 @@ func query() error {
 	//	}
 	//}
 
-	payloadBytes, err := constructPayload(contractName, method, pairs)
+	payloadBytes, err := constructQueryPayload(chainId, contractName, method, pairs)
 	if err != nil {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	fmt.Println("resp: ", resp, "err:", err)
 	if err != nil {
 		return err

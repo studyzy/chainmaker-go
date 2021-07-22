@@ -68,7 +68,7 @@ func saveDir() error {
 		return fmt.Errorf("construct save dir payload failed, %s", err.Error())
 	}
 
-	resp, err = proposalRequest(sk3, client, common.TxType_INVOKE_CONTRACT, chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return fmt.Errorf(errStringFormat, common.TxType_INVOKE_CONTRACT.String(), err.Error())
 	}

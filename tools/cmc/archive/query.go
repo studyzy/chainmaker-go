@@ -124,7 +124,7 @@ func newQueryBlockByHeightOffChainCMD() *cobra.Command {
 		Long:  "query off-chain block by height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			height, err := strconv.ParseInt(args[0], 10, 64)
+			height, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
@@ -338,7 +338,7 @@ func newQueryArchivedHeightOffChainCMD() *cobra.Command {
 				return err
 			}
 
-			output, err := prettyjson.Marshal(map[string]int64{"archived_height": archivedBlkHeightOffChain})
+			output, err := prettyjson.Marshal(map[string]uint64{"archived_height": archivedBlkHeightOffChain})
 			if err != nil {
 				return err
 			}

@@ -6,7 +6,6 @@ chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec h1:uXvltIKJn
 chainmaker.org/chainmaker/common v0.0.0-20210715034123-ddf52475b9ec/go.mod h1:w11NjM/JqXUPfS8HXVD7xwYhvCE65y7Hl3BG7mnGb+o=
 chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41 h1:cHk7Gm1lTOxUiLsAA//VPJbA30K2fAl+gTj9PvPnlGQ=
 chainmaker.org/chainmaker/common v0.0.0-20210716065627-3246c7d5da41/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
-chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d h1:mslPrEnYdmS/vYHTEBsMt2xfppIb3otKZdfr+3MOFIM=
 chainmaker.org/chainmaker/common v0.0.0-20210719075615-247a2254ad3d/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210713015752-33fec271c90a/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210713083111-ba49f19e233a h1:DE7aBuHvVNce8lakXXyUR9+DyBPT8NxGt7SoOMy7A9g=

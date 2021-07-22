@@ -56,6 +56,7 @@ var restrainedResourceList = map[string]bool{
 	protocol.ResourceNameUpdateConfig:     true,
 	protocol.ResourceNameP2p:              true,
 	protocol.ResourceNameConsensusNode:    true,
+	protocol.ResourceNameSubscribe:        true,
 }
 
 // Default access principals for predefined operation categories
@@ -63,7 +64,7 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
 	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
+	common.TxType_SUBSCRIBE: protocol.ResourceNameSubscribe,
 	//common.TxType_SUBSCRIBE:    protocol.ResourceNameReadData,
 	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
 	//common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
@@ -78,6 +79,7 @@ var (
 	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
 	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
 	policyAdmin     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
+	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
 
 	policyConfig     = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
 	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
@@ -286,6 +288,7 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
 	resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
 	resourceNamePolicyMap.Store(protocol.ResourceNameAdmin, policyAdmin)
+	resourceNamePolicyMap.Store(protocol.ResourceNameSubscribe, policySubscribe)
 
 	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
 	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
@@ -307,43 +310,43 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" + syscontract.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String() + "-" + syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String() + "-" + syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 
 	// Archive
 	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
@@ -1123,9 +1126,9 @@ func (ac *accessControl) satisfyPolicy(mem protocol.Member, policy *policyWhiteL
 func (ac *accessControl) refinePrincipal(principal protocol.Principal) (protocol.Principal, error) {
 	endorsements := principal.GetEndorsement()
 	msg := principal.GetMessage()
-	refinedEndorsement := ac.refineEndorsements(endorsements, msg)
+	refinedEndorsement, resultMsg := ac.refineEndorsements(endorsements, msg)
 	if len(refinedEndorsement) <= 0 {
-		return nil, fmt.Errorf("authentication failed: message not signed by ac member on this chain")
+		return nil, fmt.Errorf("authentication failed: message not signed by ac member on this chain %s", resultMsg)
 	}
 
 	refinedPrincipal, err := ac.CreatePrincipal(principal.GetResourceName(), refinedEndorsement, msg)
@@ -1136,12 +1139,12 @@ func (ac *accessControl) refinePrincipal(principal protocol.Principal) (protocol
 	return refinedPrincipal, nil
 }
 
-func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEntry, msg []byte) []*common.EndorsementEntry {
-
+func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEntry, msg []byte) ([]*common.EndorsementEntry, string) {
 	refinedSigners := map[string]bool{}
 	var refinedEndorsement []*common.EndorsementEntry
 
 	var memInfo string
+	resultMsg := ""
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
 			Signer: &pbac.Member{
@@ -1169,8 +1172,9 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 		signerInfo, ok := ac.lookUpSignerInCache(memInfo)
 		if !ok {
 			ac.log.Debugf("certificate not in local cache, should verify it against the trusted root certificates: \n%s", memInfo)
-			remoteMember, certChain, ok := ac.verifyPrincipalSignerNotInCache(endorsement, msg, memInfo)
+			remoteMember, certChain, ok, msgTmp := ac.verifyPrincipalSignerNotInCache(endorsement, msg, memInfo)
 			if !ok {
+				resultMsg += msgTmp
 				continue
 			}
 
@@ -1180,8 +1184,12 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 			}
 
 			ac.addSignerToCache(memInfo, signerInfo)
-		} else if !ac.verifyPrincipalSignerInCache(signerInfo, endorsement, msg, memInfo) {
-			continue
+		} else {
+			flat, msgTmp := ac.verifyPrincipalSignerInCache(signerInfo, endorsement, msg, memInfo)
+			resultMsg += msgTmp
+			if !flat {
+				continue
+			}
 		}
 
 		if _, ok := refinedSigners[memInfo]; !ok {
@@ -1189,20 +1197,22 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 			refinedEndorsement = append(refinedEndorsement, endorsement)
 		}
 	}
-	return refinedEndorsement
+	return refinedEndorsement, resultMsg
 }
 
-func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte, memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool) {
+func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte, memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, resultMsg string) {
 	var err error
 	remoteMember, err = ac.NewMemberFromCertPem(endorsement.Signer.OrgId, memInfo)
 	if err != nil {
-		ac.log.Warnf(authenticationFailedErrorTemplate, err)
+		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
+		ac.log.Warn(resultMsg)
 		ok = false
 		return
 	}
 	certChain, err = ac.verifyMember(remoteMember)
 	if err != nil {
-		ac.log.Warnf(authenticationFailedErrorTemplate, err)
+		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
+		ac.log.Warn(resultMsg)
 		ok = false
 		return
 	}
@@ -1210,14 +1220,16 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 		policyType: ac.authMode,
 		policyList: ac.localOrg.trustedRootCerts,
 	}); err != nil {
-		ac.log.Warnf(authenticationFailedErrorTemplate, err)
+		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
+		ac.log.Warn(resultMsg)
 		ok = false
 		return
 	}
 
 	if err = remoteMember.Verify(ac.GetHashAlg(), msg, endorsement.Signature); err != nil {
-		ac.log.Warnf(authenticationFailedErrorTemplate, err)
+		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
+		ac.log.Warn(resultMsg)
 		ok = false
 		return
 	}
@@ -1225,30 +1237,34 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 	return
 }
 
-func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, endorsement *common.EndorsementEntry, msg []byte, memInfo string) bool {
+func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, endorsement *common.EndorsementEntry, msg []byte, memInfo string) (bool, string) {
 	// check CRL and certificate frozen list
 	err := ac.checkCRL(signerInfo.certChain)
 	if err != nil {
-		ac.log.Warnf("authentication failed, checking CRL returns error: %v", err)
-		return false
+		resultMsg := fmt.Sprintf("authentication failed, checking CRL returns error: %v", err)
+		ac.log.Warn(resultMsg)
+		return false, resultMsg
 	}
 	err = ac.checkCertFrozenList(signerInfo.certChain)
 	if err != nil {
-		ac.log.Warnf("authentication failed, checking certificate frozen list returns error: %v", err)
-		return false
+		resultMsg := fmt.Sprintf("authentication failed, checking certificate frozen list returns error: %v", err)
+		ac.log.Warn(resultMsg)
+		return false, resultMsg
 	}
 
 	ac.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
 	if endorsement.Signer.OrgId != signerInfo.signer.GetOrgId() {
-		ac.log.Warnf("authentication failed, signer does not belong to the organization it claims [claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.signer.GetOrgId())
-		return false
+		resultMsg := fmt.Sprintf("authentication failed, signer does not belong to the organization it claims [claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.signer.GetOrgId())
+		ac.log.Warn(resultMsg)
+		return false, resultMsg
 	}
 	if err := signerInfo.signer.Verify(ac.GetHashAlg(), msg, endorsement.Signature); err != nil {
-		ac.log.Warnf(authenticationFailedErrorTemplate, err)
+		resultMsg := fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
-		return false
+		ac.log.Warn(resultMsg)
+		return false, resultMsg
 	}
-	return true
+	return true, ""
 }
 
 func (ac *accessControl) lookUpPolicyByResourceName(resourceName string) (*policy, error) {

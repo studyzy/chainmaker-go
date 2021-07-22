@@ -54,22 +54,32 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 	runtimeType commonPb.RuntimeType) string {
 
 	txId := utils.GetRandTxId()
-
 	fmt.Printf("\n============ create contract %s [%s] ============\n", contractName, txId)
 
-	//wasmBin, _ := base64.StdEncoding.DecodeString(WasmPath)
 	wasmBin, _ := ioutil.ReadFile(wasmPath)
-
 	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.2.1", runtimeType, wasmBin, nil)
 
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload, []int{1, 2, 3, 4})
-
 	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 	if resp.Code != 0 {
 		panic(resp.Message)
 	}
 	return txId
+}
+
+func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId, contractName, wasmUpgradePath string,
+	runtimeType commonPb.RuntimeType) *commonPb.TxResponse {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ upgrade contract %s [%s] ============\n", contractName, txId)
+
+	wasmBin, _ := ioutil.ReadFile(wasmUpgradePath)
+	payload, _ := utils.GenerateInstallContractPayload(contractName, "2.0.1", runtimeType, wasmBin, nil)
+	payload.Method = syscontract.ContractManageFunction_UPGRADE_CONTRACT.String()
+
+	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload, []int{1, 2, 3, 4})
+	return resp
 }
 
 func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
@@ -228,47 +238,6 @@ func ConstructQueryPayload(contractName, method string, pairs []*commonPb.KeyVal
 	}
 
 	return payload
-}
-
-func UpgradeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId, contractName, wasmUpgradePath string,
-	runtimeType commonPb.RuntimeType) *commonPb.TxResponse {
-
-	txId := utils.GetRandTxId()
-
-	wasmBin, _ := ioutil.ReadFile(wasmUpgradePath)
-	var pairs []*commonPb.KeyValuePair
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
-		Value: []byte(contractName),
-	})
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   syscontract.UpgradeContract_CONTRACT_VERSION.String(),
-		Value: []byte("2.0.0"),
-	})
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   syscontract.UpgradeContract_CONTRACT_RUNTIME_TYPE.String(),
-		Value: []byte(runtimeType.String()),
-	})
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   syscontract.UpgradeContract_CONTRACT_BYTECODE.String(),
-		Value: wasmBin,
-	})
-	payload := &commonPb.Payload{
-		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
-		Method:       syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(),
-		Parameters:   pairs,
-	}
-
-	//payloadBytes, err := proto.Marshal(payload)
-	//if err != nil {
-	//	log.Fatalf(logTempMarshalPayLoadFailed, err.Error())
-	//	os.Exit(0)
-	//}
-
-	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload, []int{1, 2, 3, 4})
-	return resp
-	//	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
 }
 
 func FreezeContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string,

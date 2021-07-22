@@ -274,12 +274,10 @@ func main() {
 	}
 }
 
-func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
-	return proposalRequestWithMultiSign(sk3, client, txType, chainId, txId, payload, nil)
+func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, payload *commonPb.Payload) (*commonPb.TxResponse, error) {
+	return proposalRequestWithMultiSign(sk3, client, payload, nil)
 }
-func proposalRequestWithMultiSign(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payload *commonPb.Payload, endorsers []*commonPb.EndorsementEntry) (*commonPb.TxResponse, error) {
+func proposalRequestWithMultiSign(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, payload *commonPb.Payload, endorsers []*commonPb.EndorsementEntry) (*commonPb.TxResponse, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(time.Duration(requestTimeout)*time.Second)))
 	defer cancel()
 
@@ -314,22 +312,9 @@ func proposalRequestWithMultiSign(sk3 crypto.PrivateKey, client apiPb.RpcNodeCli
 		sender = senderFull
 	}
 
-	// 构造Header
-	header := &commonPb.Payload{
-		ChainId:        chainId,
-		TxType:         txType,
-		TxId:           txId,
-		Timestamp:      time.Now().Unix(),
-		ExpirationTime: 0,
-		ContractName:   payload.ContractName,
-		Method:         payload.Method,
-		Parameters:     payload.Parameters,
-		Sequence:       payload.Sequence,
-		Limit:          payload.Limit,
-	}
-
+	// 构造TxRequest
 	req := &commonPb.TxRequest{
-		Payload: header,
+		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 	if len(endorsers) > 0 {

@@ -13,6 +13,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -119,8 +121,11 @@ func configTrustRoot(op int) error {
 	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 || len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_KEY_AND_CERT_NOT_ENOUGH_FORMAT, len(adminKeys), len(adminCrts))
+	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 {
+		return ErrAdminOrgIdKeyCertIsEmpty
+	}
+	if len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminOrgIdSlice), len(adminKeys), len(adminCrts))
 	}
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
@@ -140,7 +145,7 @@ func configTrustRoot(op int) error {
 		}
 	}
 
-	var payloadBytes []byte
+	var payloadBytes *common.Payload
 	switch op {
 	case addTrustRoot:
 		payloadBytes, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, string(trustRootBytes))
@@ -155,7 +160,7 @@ func configTrustRoot(op int) error {
 		return err
 	}
 
-	signedPayloads := make([][]byte, len(adminKeys))
+	signedPayloads := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
 		_, privKey, err := dealUserKey(adminKeys[i])
 		if err != nil {
@@ -173,12 +178,12 @@ func configTrustRoot(op int) error {
 		signedPayloads[i] = signedPayload
 	}
 
-	mergedSignedPayloadBytes, err := client.MergeChainConfigSignedPayload(signedPayloads)
-	if err != nil {
-		return err
-	}
+	//mergedSignedPayloadBytes, err := client.MergeChainConfigSignedPayload(signedPayloads)
+	//if err != nil {
+	//	return err
+	//}
 
-	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayloadBytes)
+	resp, err := client.SendChainConfigUpdateRequest(payloadBytes, signedPayloads, 0, syncResult)
 	if err != nil {
 		return err
 	}

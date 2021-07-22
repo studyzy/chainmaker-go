@@ -17,7 +17,6 @@ import (
 	hashAlo "chainmaker.org/chainmaker/common/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/common/evmutils"
-	sdk "chainmaker.org/chainmaker/sdk-go"
 
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
@@ -77,7 +76,7 @@ func certToUserAddrInStake() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read cert content failed, reason: %s", err)
 			}
-			cert, err := sdk.ParseCert(certContent)
+			cert, err := bcx509.ParseCertificate(certContent)
 			if err != nil {
 				return fmt.Errorf("parse cert failed, reason: %s", err)
 			}
