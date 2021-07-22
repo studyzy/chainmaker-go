@@ -34,6 +34,8 @@ func TestDebugDynamicLog(t *testing.T) {
 	logger := GetLogger("DebugTest")
 	count := 0
 	to := time.NewTicker(time.Second)
+	logger.Debug("start debug log")
+	logger.Error("error log include trace")
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	c := make(chan string)

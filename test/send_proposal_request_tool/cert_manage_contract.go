@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -137,10 +138,12 @@ func certAdd() error {
 		Method:       syscontract.CertManageFunction_CERT_ADD.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
+		TxId:         txId,
+		Timestamp:    time.Now().Unix(),
 	}
 
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+	resp, err := proposalRequest(sk3, client, payload)
 	if err != nil {
 		return err
 	}
@@ -180,10 +183,12 @@ func certDelete() error {
 		Method:       syscontract.CertManageFunction_CERTS_DELETE.String(),
 		Parameters:   pairs,
 		Sequence:     seq,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
+		TxId:         txId,
+		Timestamp:    time.Now().Unix(),
 	}
 
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload)
+	resp, err := proposalRequest(sk3, client, payload)
 	if err != nil {
 		return err
 	}
@@ -209,12 +214,11 @@ func certQuery() error {
 		Key:   certHash,
 		Value: []byte(certHashes),
 	})
-	payloadBytes, err := constructPayload(syscontract.SystemContract_CERT_MANAGE.String(), syscontract.CertManageFunction_CERTS_QUERY.String(), pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_CERT_MANAGE.String(), syscontract.CertManageFunction_CERTS_QUERY.String(), pairs)
 	if err != nil {
 		return err
 	}
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}

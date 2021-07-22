@@ -119,8 +119,9 @@ func (r *CertManageRuntime) Delete(txSimContext protocol.TxSimContext, params ma
 		}
 
 		if len(bytes) == 0 {
-			r.log.Errorf("certManage delete the certHash failed, certHash[%s], err: certHash is not exist", certHash)
-			return nil, errors.New("certManage delete the certHash is err")
+			msg := fmt.Sprintf("certManage delete the certHash failed, certHash[%s], err: certHash is not exist", certHash)
+			r.log.Error(msg)
+			return nil, errors.New(msg)
 		}
 
 		err = txSimContext.Del(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHash))
@@ -265,7 +266,7 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 	}
 
 	// the full cert
-	var certFullHashes bytes.Buffer
+	certFullHashes := &bytes.Buffer{}
 	certsStr := string(params[paramNameCerts])
 	certHashesStr := string(params[paramNameCertHashes])
 
@@ -461,7 +462,7 @@ func (r *CertManageRuntime) getFreezeKeyArray(txSimContext protocol.TxSimContext
 	return hashType, freezeKeyArray, nil
 }
 
-func (r *CertManageRuntime) recoverFrozenCert(txSimContext protocol.TxSimContext, certHash string, freezeKeyArray []string, certFullHashes bytes.Buffer, changed bool) ([]string, bool) {
+func (r *CertManageRuntime) recoverFrozenCert(txSimContext protocol.TxSimContext, certHash string, freezeKeyArray []string, certFullHashes *bytes.Buffer, changed bool) ([]string, bool) {
 	certHashKey := protocol.CertFreezeKeyPrefix + certHash
 	certHashBytes, err := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHashKey))
 	if err != nil {

@@ -12,6 +12,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
+
+	"chainmaker.org/chainmaker-go/utils"
 
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -27,16 +30,32 @@ import (
 	"google.golang.org/grpc"
 )
 
-func constructPayload(contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+func constructQueryPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	payload := &commonPb.Payload{
 		ContractName: contractName,
 		Method:       method,
 		Parameters:   pairs,
+		TxId:         "", //Query不需要TxId
+		TxType:       commonPb.TxType_QUERY_CONTRACT,
+		ChainId:      chainId,
 	}
 
 	return payload, nil
 }
+func constructInvokePayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
+	payload := &commonPb.Payload{
+		ContractName:   contractName,
+		Method:         method,
+		Parameters:     pairs,
+		TxId:           utils.GetRandTxId(),
+		TxType:         commonPb.TxType_INVOKE_CONTRACT,
+		ChainId:        chainId,
+		Timestamp:      time.Now().Unix(),
+		ExpirationTime: 0,
+	}
 
+	return payload, nil
+}
 func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMember, error) {
 	skPEM, err := sk3.String()
 	if err != nil {

@@ -9,7 +9,8 @@ package chainedbft
 import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/consensus/governance"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 )
 
 //epochManager manages the components that shared across epoch
@@ -20,12 +21,12 @@ type epochManager struct {
 	switchHeight uint64 //real switch epoch
 
 	msgPool            *message.MsgPool //The msg pool associated to next epoch
-	governanceContract protocol.Government
+	governanceContract *consensuspb.GovernanceContract
 }
 
 // createNextEpochIfRequired If the conditions are met, create the next epoch
 func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) (*epochManager, error) {
-	governContract, err := cbi.government.GetGovernanceContract()
+	governContract, err := governance.NewGovernanceContract(cbi.store, cbi.ledgerCache).GetGovernanceContract()
 	if err != nil {
 		return nil, err
 	}
@@ -35,17 +36,13 @@ func (cbi *ConsensusChainedBftImpl) createNextEpochIfRequired(height uint64) (*e
 	if governContract.EpochId == cbi.smr.getEpochId() {
 		return nil, nil
 	}
-	epoch, err := cbi.createEpoch(height)
+	epoch, err := cbi.createEpoch(height, governContract)
 	cbi.logger.Debugf("end createNextEpochIfRequired")
 	return epoch, err
 }
 
 // createEpoch create the epoch in the block height
-func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) (*epochManager, error) {
-	govContract, err := cbi.government.GetGovernanceContract()
-	if err != nil {
-		return nil, err
-	}
+func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64, govContract *consensuspb.GovernanceContract) (*epochManager, error) {
 
 	epoch := &epochManager{
 		index:        utils.InvalidIndex,
@@ -53,7 +50,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) (*epochManager, e
 
 		epochId:            govContract.EpochId,
 		switchHeight:       govContract.NextSwitchHeight,
-		governanceContract: cbi.government,
+		governanceContract: govContract,
 		msgPool: message.NewMsgPool(govContract.GetCachedLen(),
 			int(govContract.GetValidatorNum()), int(govContract.MinQuorumForQc)),
 	}

@@ -118,8 +118,7 @@ func upgradeContract() error {
 		return err
 	}
 
-	resp, err = proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload, endorsement)
+	resp, err = proposalRequestWithMultiSign(sk3, client, payload, endorsement)
 	if err != nil {
 		return err
 	}

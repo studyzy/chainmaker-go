@@ -29,19 +29,43 @@ func ToCamelCase(field string) string {
 	return str
 }
 
-func IsAnyBlank(args ...string) bool {
+// IsAnyBlank args type only string/[]byte
+func IsAnyBlank(args ...interface{}) bool {
 	for i := 0; i < len(args); i++ {
-		if len(args[i]) == 0 || strings.TrimSpace(args[i]) == "" {
+		if args[i] == nil {
 			return true
+		}
+
+		switch v := args[i].(type) {
+		case string:
+			if len(v) == 0 || strings.TrimSpace(v) == "" {
+				return true
+			}
+		case []byte:
+			if len(v) == 0 {
+				return true
+			}
 		}
 	}
 	return false
 }
 
-func IsAllBlank(args ...string) bool {
+// IsAllBlank args type only string/[]byte
+func IsAllBlank(args ...interface{}) bool {
 	for i := 0; i < len(args); i++ {
-		if len(args[i]) != 0 && strings.TrimSpace(args[i]) != "" {
-			return false
+		if args[i] == nil {
+			continue
+		}
+
+		switch v := args[i].(type) {
+		case string:
+			if strings.TrimSpace(v) != "" {
+				return false
+			}
+		case []byte:
+			if len(v) != 0 {
+				return false
+			}
 		}
 	}
 	return true

@@ -574,7 +574,7 @@ func (cbi *ConsensusChainedBftImpl) validateBlockConsensusArg(block *common.Bloc
 		return fmt.Errorf("validateBlockConsensusArg: GetConsensusArgsFromBlock err from block"+
 			" at height [%v:%x], err %v", block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
-	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(block, cbi.store, cbi.proposalCache, cbi.ledgerCache); err != nil {
+	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(cbi.proposalCache, block, cbi.governanceContract); err != nil {
 		return fmt.Errorf("validateBlockConsensusArg: CheckAndCreateGovernmentArgs err "+
 			"at height [%v:%x], err %v", block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
@@ -978,10 +978,7 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	// 6. switch epoch and update field state in consensus
 	oldIndex := cbi.selfIndexInEpoch
 	cbi.logger.Debugf("processBlockCommitted step 5 switch epoch and process qc")
-	if err := cbi.switchNextEpoch(cbi.commitHeight, epoch); err != nil {
-		cbi.logger.Warnf("switch epoch err: %s", err)
-		return
-	}
+	cbi.switchNextEpoch(cbi.commitHeight, epoch)
 	if cbi.smr.isValidIdx(cbi.selfIndexInEpoch, cbi.commitHeight) {
 		cbi.logger.Infof("service selfIndexInEpoch [%v] start processCertificates,"+
 			"height [%v],level [%v]", cbi.selfIndexInEpoch, cbi.smr.getHeight(), cbi.smr.getCurrentLevel())
@@ -997,13 +994,12 @@ func (cbi *ConsensusChainedBftImpl) processBlockCommitted(block *common.Block) {
 	cbi.logger.Infof("processBlockCommitted end, block: [%d:%x].", cbi.commitHeight, block.Header.BlockHash)
 }
 
-func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64, epoch *epochManager) error {
+func (cbi *ConsensusChainedBftImpl) switchNextEpoch(blockHeight uint64, epoch *epochManager) {
 	cbi.logger.Debugf("service [%v] handle block committed: "+
 		"start switching to next epoch at height [%v]", cbi.selfIndexInEpoch, blockHeight)
 	cbi.selfIndexInEpoch = epoch.index
-	cbi.initTimeOutConfig(cbi.government)
-	err := cbi.smr.updateContractInfo(epoch)
-	return err
+	cbi.initTimeOutConfig(epoch.governanceContract)
+	cbi.smr.updateContractInfo(epoch)
 }
 
 func (cbi *ConsensusChainedBftImpl) validateBlockFetch(msg *chainedbftpb.ConsensusMsg) error {

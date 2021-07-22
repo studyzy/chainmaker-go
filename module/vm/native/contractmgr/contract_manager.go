@@ -9,6 +9,7 @@ package contractmgr
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -70,37 +71,54 @@ func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimCont
 	return json.Marshal(contracts)
 }
 func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[syscontract.InitContract_CONTRACT_NAME.String()])
-	version := string(parameters[syscontract.InitContract_CONTRACT_VERSION.String()])
-	byteCode := parameters[syscontract.InitContract_CONTRACT_BYTECODE.String()]
-	runtime := parameters[syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String()]
-	runtimeInt := commonPb.RuntimeType_value[string(runtime)]
-	runtimeType := commonPb.RuntimeType(runtimeInt)
+	name, version, byteCode, runtimeType, err := r.parseParam(parameters)
+	if err != nil {
+		return nil, err
+	}
 	contract, err := r.InstallContract(txSimContext, name, version, byteCode, runtimeType, parameters)
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
 }
+
 func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
-	name := string(parameters[syscontract.UpgradeContract_CONTRACT_NAME.String()])
-	version := string(parameters[syscontract.UpgradeContract_CONTRACT_VERSION.String()])
-	byteCode := parameters[syscontract.UpgradeContract_CONTRACT_BYTECODE.String()]
-	runtime := string(parameters[syscontract.UpgradeContract_CONTRACT_RUNTIME_TYPE.String()])
-	runtimeInt := commonPb.RuntimeType_value[runtime]
-	runtimeType := commonPb.RuntimeType(runtimeInt)
+	name, version, byteCode, runtimeType, err := r.parseParam(parameters)
+	if err != nil {
+		return nil, err
+	}
 	contract, err := r.UpgradeContract(txSimContext, name, version, byteCode, runtimeType, parameters)
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
 }
+
+func (r *ContractManagerRuntime) parseParam(parameters map[string][]byte) (string, string, []byte, commonPb.RuntimeType, error) {
+	name := string(parameters[syscontract.InitContract_CONTRACT_NAME.String()])
+	version := string(parameters[syscontract.InitContract_CONTRACT_VERSION.String()])
+	byteCode := parameters[syscontract.InitContract_CONTRACT_BYTECODE.String()]
+	runtime := parameters[syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String()]
+	if utils.IsAnyBlank(name, version, byteCode, runtime) {
+		return "", "", nil, 0, errors.New("params contractName/version/byteCode/runtimeType cannot be empty")
+	}
+	runtimeInt := commonPb.RuntimeType_value[string(runtime)]
+	if runtimeInt == 0 || int(runtimeInt) >= len(commonPb.RuntimeType_value) {
+		return "", "", nil, 0, errors.New("params runtimeType[" + string(runtime) + "] is error")
+	}
+	runtimeType := commonPb.RuntimeType(runtimeInt)
+	return name, version, byteCode, runtimeType, nil
+}
+
 func (r *ContractManagerRuntime) freezeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
 	contract, err := r.FreezeContract(txSimContext, name)
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("freeze contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return json.Marshal(contract)
 }
 func (r *ContractManagerRuntime) unfreezeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
@@ -109,6 +127,7 @@ func (r *ContractManagerRuntime) unfreezeContract(txSimContext protocol.TxSimCon
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("unfreeze contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return json.Marshal(contract)
 }
 func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
@@ -117,6 +136,7 @@ func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimConte
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("revoke contract success[name:%s version:%s runtimeType:%d]", contract.Name, contract.Version, contract.RuntimeType)
 	return json.Marshal(contract)
 }
 
@@ -231,6 +251,7 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 		return nil, errContractVersionExist
 	}
 	contract.RuntimeType = runTime
+	contract.Version = version
 	//update ContractInfo
 	cdata, _ := contract.Marshal()
 	context.Put(ContractName, key, cdata)
@@ -313,7 +334,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 }
 
 func checkContractName(name string) bool {
-	reg := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
+	reg := regexp.MustCompile("^[a-zA-Z0-9_]{1,128}$")
 	return reg.Match([]byte(name))
 }
 func checkEvmAddress(addr string) bool {

@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -128,14 +130,14 @@ func freezeOrUnfreezeCert(which int) error {
 	}
 	defer adminClient.Stop()
 
-	var payload []byte
+	var payload *commonpb.Payload
 	var whichOperation string
 	switch which {
 	case 1:
-		payload, err = client.CreateCertManageFrozenPayload(certFiles)
+		payload = client.CreateCertManageFrozenPayload(certFiles)
 		whichOperation = "freeze"
 	case 2:
-		payload, err = client.CreateCertManageUnfrozenPayload(certFiles)
+		payload = client.CreateCertManageUnfrozenPayload(certFiles)
 		whichOperation = "unfreeze"
 	default:
 		err = fmt.Errorf("wrong which param")
@@ -147,7 +149,7 @@ func freezeOrUnfreezeCert(which int) error {
 	if err != nil {
 		return fmt.Errorf("sign cert manage payload failed, %s", err.Error())
 	}
-	resp, err := client.SendCertManageRequest(signedPayload, -1, syncResult)
+	resp, err := client.SendCertManageRequest(payload, []*commonpb.EndorsementEntry{signedPayload}, -1, syncResult)
 	if err != nil {
 		return fmt.Errorf("send cert manage request failed, %s", err.Error())
 	}
@@ -174,7 +176,7 @@ func revokeCert() error {
 		return fmt.Errorf("create admin client failed, %s", err.Error())
 	}
 	defer adminClient.Stop()
-	payload, err := client.CreateCertManageRevocationPayload(string(crlBytes))
+	payload := client.CreateCertManageRevocationPayload(string(crlBytes))
 	if err != nil {
 		return fmt.Errorf("create cert manage revocation payload failed, %s", err.Error())
 	}
@@ -182,7 +184,7 @@ func revokeCert() error {
 	if err != nil {
 		return fmt.Errorf("sign cert manage payload failed, %s", err.Error())
 	}
-	resp, err := client.SendCertManageRequest(signedPayload, -1, syncResult)
+	resp, err := client.SendCertManageRequest(payload, []*commonpb.EndorsementEntry{signedPayload}, -1, syncResult)
 	if err != nil {
 		return fmt.Errorf("send cert manage request failed, %s", err.Error())
 	}
