@@ -13,14 +13,12 @@ import (
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/common"
-
-	"github.com/spf13/cobra"
-
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/common/crypto"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"github.com/spf13/cobra"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
@@ -292,9 +290,9 @@ func createUserContract() error {
 			return err
 		}
 	}
-	pairsKv := paramsMap2KVPairs(pairs)
+	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("create user contract params:%+v\n", pairsKv)
-	payload, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
+	payloadBytes, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
 	if err != nil {
 		return err
 	}
@@ -310,14 +308,19 @@ func createUserContract() error {
 			return err
 		}
 
-		signedPayload, err := signContractManagePayload(payload, crtBytes, privKey, crt, adminOrgIdSlice[i])
+		signedPayload, err := signContractManagePayload(payloadBytes, crtBytes, privKey, crt, adminOrgIdSlice[i])
 		if err != nil {
 			return err
 		}
 		signedPayloads[i] = signedPayload
 	}
 
-	resp, err := client.SendContractManageRequest(payload, signedPayloads, int64(timeout), false)
+	//mergedSignedPayloadBytes, err := client.MergeContractManageSignedPayload(signedPayloads)
+	//if err != nil {
+	//	return err
+	//}
+
+	resp, err := client.SendContractManageRequest(payloadBytes, signedPayloads, int64(timeout), false)
 	if err != nil {
 		return err
 	}
@@ -383,7 +386,7 @@ func getUserContract() error {
 		}
 	}
 
-	resp, err := client.QueryContract(contractName, method, paramsMap2KVPairs(pairs), -1)
+	resp, err := client.QueryContract(contractName, method, util.ConvertParameters(pairs), -1)
 	if err != nil {
 		return fmt.Errorf("query contract failed, %s", err.Error())
 	}
@@ -392,19 +395,6 @@ func getUserContract() error {
 
 	client.Stop()
 	return nil
-}
-
-func paramsMap2KVPairs(params map[string]string) (kvPairs []*common.KeyValuePair) {
-	for key, val := range params {
-		kvPair := &common.KeyValuePair{
-			Key:   key,
-			Value: []byte(val),
-		}
-
-		kvPairs = append(kvPairs, kvPair)
-	}
-
-	return
 }
 
 func upgradeUserContract() error {
@@ -436,7 +426,7 @@ func upgradeUserContract() error {
 			return err
 		}
 	}
-	pairsKv := paramsMap2KVPairs(pairs)
+	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("upgrade user contract params:%+v\n", pairsKv)
 	payloadBytes, err := client.CreateContractUpgradePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
 	if err != nil {
@@ -560,7 +550,8 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 	return nil
 }
 
-func signContractManagePayload(payload *common.Payload, userCrtBytes []byte, privateKey crypto.PrivateKey, userCrt *bcx509.Certificate, orgId string) (*common.EndorsementEntry, error) {
+func signContractManagePayload(payload *common.Payload, userCrtBytes []byte, privateKey crypto.PrivateKey,
+	userCrt *bcx509.Certificate, orgId string) (*common.EndorsementEntry, error) {
 
 	payloadBytes, _ := payload.Marshal()
 	signBytes, err := signTx(privateKey, userCrt, payloadBytes)

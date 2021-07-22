@@ -24,7 +24,7 @@ func checkProposalRequestResp(resp *sdkPbCommon.TxResponse, needContractResult b
 		return fmt.Errorf("contract result is nil")
 	}
 
-	if resp.ContractResult != nil && resp.ContractResult.Code != sdkPbCommon.ContractResultCode_OK {
+	if resp.ContractResult != nil && resp.ContractResult.Code != 0 {
 		return errors.New(resp.ContractResult.Message)
 	}
 

@@ -35,13 +35,12 @@ func getContractInfo() error {
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 
-	payloadBytes, err := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CONTRACT_INFO", pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CONTRACT_INFO", pairs)
 	if err != nil {
 		return err
 	}
 
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}

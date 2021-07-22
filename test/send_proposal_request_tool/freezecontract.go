@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
@@ -36,20 +35,14 @@ func freezeContract() error {
 
 	method := syscontract.ContractManageFunction_FREEZE_CONTRACT.String()
 
-	payload := &commonPb.Payload{
-		ChainId:      chainId,
-		ContractName: contractName,
-
-		Method: method,
-	}
+	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
 
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
 	}
 
-	resp, err := proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload, endorsement)
+	resp, err := proposalRequestWithMultiSign(sk3, client, payload, endorsement)
 	if err != nil {
 		return err
 	}
@@ -86,19 +79,14 @@ func unfreezeContract() error {
 
 	method := syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()
 
-	payload := &commonPb.Payload{
-		ChainId:      chainId,
-		ContractName: contractName,
+	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
 
-		Method: method,
-	}
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
 	}
 
-	resp, err := proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload, endorsement)
+	resp, err := proposalRequestWithMultiSign(sk3, client, payload, endorsement)
 	if err != nil {
 		return err
 	}
@@ -131,23 +119,17 @@ func RevokeContractCMD() *cobra.Command {
 }
 
 func RevokeContract() error {
-	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_REVOKE_CONTRACT.String()
 
-	payload := &commonPb.Payload{
-		ChainId:      chainId,
-		ContractName: contractName,
+	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
 
-		Method: method,
-	}
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
 	}
 
-	resp, err := proposalRequestWithMultiSign(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payload, endorsement)
+	resp, err := proposalRequestWithMultiSign(sk3, client, payload, endorsement)
 	if err != nil {
 		return err
 	}

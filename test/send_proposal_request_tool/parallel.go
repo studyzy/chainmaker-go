@@ -608,7 +608,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 
 	//fmt.Println("[exec_handle]orgId: ", orgId, ", userCrtPath: ", userCrtPath, ", loopId: ", loopId, ", method1: ", method1, ", pairs1: ", pairs1, ", method: ", method, ", pairs: ", pairs)
 
-	payloadBytes, err := constructPayload(contractName, method1, pairs1)
+	payloadBytes, err := constructQueryPayload(chainId, contractName, method1, pairs1)
 	if err != nil {
 		return err
 	}
@@ -660,7 +660,7 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 		}
 	}
 
-	payloadBytes, err := constructPayload(contractName, method, pairs)
+	payloadBytes, err := constructQueryPayload(chainId, contractName, method, pairs)
 	if err != nil {
 		return err
 	}
@@ -787,6 +787,7 @@ func GenerateUpgradeContractPayload(contractName, version string, runtimeType co
 		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
 		Method:       syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(),
 		Parameters:   pairs,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 	}
 	return payload, nil
 }
@@ -822,22 +823,9 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	}
 
 	// 构造Header
-	header := &commonPb.Payload{
-		ChainId: msg.chainId,
-		//Sender:         sender,
-		TxType:         msg.txType,
-		TxId:           msg.txId,
-		Timestamp:      time.Now().Unix(),
-		ExpirationTime: 0,
-		ContractName:   payload.ContractName,
-		Method:         payload.Method,
-		Parameters:     payload.Parameters,
-		Sequence:       payload.Sequence,
-		Limit:          payload.Limit,
-	}
 
 	req := &commonPb.TxRequest{
-		Payload: header,
+		Payload: payload,
 		Sender: &commonPb.EndorsementEntry{
 			Signer: sender,
 		},

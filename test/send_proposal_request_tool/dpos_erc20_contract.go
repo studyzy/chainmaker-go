@@ -199,12 +199,11 @@ func balanceOf() error {
 			Value: []byte(userAddr),
 		},
 	}
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_BALANCEOF.String(), pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_BALANCEOF.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+	resp, err := proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}
@@ -230,12 +229,11 @@ func ERC20Owner() *cobra.Command {
 
 func owner() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_OWNER.String(), pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_OWNER.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+	resp, err := proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}
@@ -256,12 +254,11 @@ func ERC20Decimals() *cobra.Command {
 
 func decimals() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_DECIMALS.String(), pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_DECIMALS.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+	resp, err := proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}
@@ -282,12 +279,11 @@ func ERC20Total() *cobra.Command {
 
 func total() error {
 	pairs := make([]*commonPb.KeyValuePair, 0)
-	payloadBytes, err := constructPayload(syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_TOTAL_SUPPLY.String(), pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_DPOS_ERC20.String(), syscontract.DPoSERC20Function_GET_TOTAL_SUPPLY.String(), pairs)
 	if err != nil {
 		log.Fatalf("create payload failed, err: %s", err)
 	}
-	resp, err := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
+	resp, err := proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}

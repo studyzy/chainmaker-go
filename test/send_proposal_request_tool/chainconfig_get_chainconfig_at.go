@@ -44,12 +44,11 @@ func getChainConfigByBlockHeight() error {
 		Key:   "block_height",
 		Value: []byte(strconv.Itoa(int(blockHeight))),
 	})
-	payloadBytes, err := constructPayload(syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String(), pairs)
+	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String(), pairs)
 	if err != nil {
 		return err
 	}
-	resp, err = proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+	resp, err = proposalRequest(sk3, client, payloadBytes)
 	if err != nil {
 		return err
 	}

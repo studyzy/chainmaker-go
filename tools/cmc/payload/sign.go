@@ -52,7 +52,7 @@ func signSystemContractPayloadCMD() *cobra.Command {
 		Short: "Config command",
 		Long:  "Config command",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return signSystemContractPayload()
+			return signPayload()
 		},
 	}
 	return configCmd
@@ -64,13 +64,15 @@ func signContractMgmtPayloadCMD() *cobra.Command {
 		Short: "Contract command",
 		Long:  "Contract command",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return signContractMgmtPayload()
+			return signPayload()
 		},
 	}
 	return contractCmd
 }
 
-func signSystemContractPayload() error {
+const LOAD_FILE_ERROR_FORMAT = "Load file %s error: %s"
+
+func signPayload() error {
 	raw, err := ioutil.ReadFile(signInput)
 	if err != nil {
 		return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
@@ -85,11 +87,10 @@ func signSystemContractPayload() error {
 	if err != nil {
 		return err
 	}
-	payload.Endorsement = []*sdkPbCommon.EndorsementEntry{
-		entry,
-	}
+	tx := &sdkPbCommon.TxRequest{Payload: payload}
+	tx.Sender = entry
 
-	bytes, err := proto.Marshal(payload)
+	bytes, err := proto.Marshal(tx)
 	if err != nil {
 		return fmt.Errorf("SystemContractPayload marshal error: %s", err)
 	}
@@ -97,37 +98,6 @@ func signSystemContractPayload() error {
 	if err = ioutil.WriteFile(signOutput, bytes, 0600); err != nil {
 		return fmt.Errorf("Write to file %s error: %s", signOutput, err)
 	}
-
-	return nil
-}
-
-func signContractMgmtPayload() error {
-	//raw, err := ioutil.ReadFile(signInput)
-	//if err != nil {
-	//	return fmt.Errorf(LOAD_FILE_ERROR_FORMAT, signInput, err)
-	//}
-	//
-	//payload := &sdkPbCommon.Payload{}
-	//if err := proto.Unmarshal(raw, payload); err != nil {
-	//	return fmt.Errorf("ContractMgmtPayload unmarshal error: %s", err)
-	//}
-	//
-	//entry, err := sign(raw)
-	//if err != nil {
-	//	return err
-	//}
-	//payload.Endorsement = []*sdkPbCommon.EndorsementEntry{
-	//	entry,
-	//}
-	//
-	//bytes, err := proto.Marshal(payload)
-	//if err != nil {
-	//	return fmt.Errorf("ContractMgmtPayload marshal error: %s", err)
-	//}
-	//
-	//if err = ioutil.WriteFile(signOutput, bytes, 0600); err != nil {
-	//	return fmt.Errorf("Write to file %s error: %s", signOutput, err)
-	//}
 
 	return nil
 }
