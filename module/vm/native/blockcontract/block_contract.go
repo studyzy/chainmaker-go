@@ -8,7 +8,9 @@
 package blockcontract
 
 import (
+	"chainmaker.org/chainmaker/common/crypto/hash"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -30,6 +32,7 @@ const (
 	paramNameWithRWSet   = "withRWSet"
 	paramNameBlockHash   = "blockHash"
 	paramNameTxId        = "txId"
+	SHA256               = "SHA256"
 )
 
 var (
@@ -373,6 +376,54 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 		return nil, fmt.Errorf(errMsg)
 	}
 	return blockInfoBytes, nil
+
+}
+
+func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+	var errMsg string
+	var err error
+
+	// check params
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameTxId, paramNameWithRWSet); err != nil {
+		return nil, err
+	}
+
+	chainId := txSimContext.GetTx().Payload.ChainId
+
+	store := txSimContext.GetBlockchainStore()
+	if store == nil {
+		return nil, errStoreIsNil
+	}
+
+	var block *commonPb.Block
+
+	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
+		return nil, err
+	}
+
+	hashes := make([][]byte, 0)
+
+	for _, tx := range block.Txs {
+		hashes = append(hashes, []byte(tx.Payload.TxId))
+	}
+
+	merkleTree, err := hash.BuildMerkleTree(SHA256, hashes)
+	if err != nil {
+		return nil, err
+	}
+
+	merklePaths := make([][]byte, 0)
+	hash.GetMerklePath(SHA256, []byte(param.txId), merkleTree, &merklePaths, false) //todo withRoot hashType
+
+	merklePathsBytes, err := json.Marshal(merklePaths)
+	if err != nil {
+		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
+		r.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
+	}
+
+	return merklePathsBytes, nil
 
 }
 
