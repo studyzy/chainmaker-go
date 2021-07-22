@@ -54,9 +54,9 @@ type ConsensusChainedBftImpl struct {
 	protocolMsgCh   chan *chainedbftpb.ConsensusMsg // Transmit Hotstuff protocol information: proposal, vote
 
 	mtx                sync.RWMutex
-	nextEpoch          *epochManager       // next epoch
-	commitHeight       uint64              // The height of the latest committed block
-	governanceContract protocol.Government // The management contract on the block chain
+	nextEpoch          *epochManager                     // next epoch
+	commitHeight       uint64                            // The height of the latest committed block
+	governanceContract *governance.GovernanceContractImp // The management contract on the block chain
 	lastCommitWalIndex uint64
 
 	// wal info
@@ -156,7 +156,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	return service, nil
 }
 
-func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract protocol.Government) {
+func (cbi *ConsensusChainedBftImpl) initTimeOutConfig(governanceContract *governance.GovernanceContractImp) {
 	base := governanceContract.GetRoundTimeoutMill()
 	if base == 0 {
 		base = uint64(timeservice.DefaultRoundTimeout)

@@ -12,7 +12,6 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
 )
 
 //epochManager manages the components that shared across epoch
@@ -26,7 +25,7 @@ type epochManager struct {
 
 	msgPool            *message.MsgPool   //The msg pool associated to next epoch
 	useValidators      []*types.Validator //The peer pool associated to next epoch
-	governanceContract protocol.Government
+	governanceContract *governance.GovernanceContractImp
 }
 
 // createNextEpochIfRequired If the conditions are met, create the next epoch
