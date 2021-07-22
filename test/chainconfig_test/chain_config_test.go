@@ -13,6 +13,7 @@ package native_test
 
 import (
 	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -49,13 +50,18 @@ func getChainConfig() *configPb.ChainConfig {
 	var pairs []*commonPb.KeyValuePair
 	//Pairs = append(Pairs, pair)
 
-	sk, member := native.GetUserSK(1)
+	sk, member := native.GetUserSK(5)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT, ChainId: CHAIN1,
 		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(), MethodName: syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), Pairs: pairs})
 	if err == nil {
+		if resp.Code != commonPb.TxStatusCode_SUCCESS {
+			panic(resp.Message)
+		}
 		result := &configPb.ChainConfig{}
 		err = proto.Unmarshal(resp.ContractResult.Result, result)
-		fmt.Printf("send tx resp: code:%d, msg:%s, chainConfig:%+v\n", resp.Code, resp.Message, result)
+		data, _ := json.MarshalIndent(result, "", "\t")
+		fmt.Printf("send tx resp: code:%d, msg:%s, chainConfig:%s\n", resp.Code, resp.Message, data)
+		fmt.Printf("\n============ get chain config end============\n\n\n")
 		return result
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
@@ -82,17 +88,18 @@ func TestGetChainConfigAt(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_height",
-		Value: []byte("0"),
+		Value: []byte("1"),
 	})
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT, ChainId: CHAIN1,
 		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(), MethodName: syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String(), Pairs: pairs})
 	if err == nil {
-		fmt.Println(resp.ContractResult)
 		result := &configPb.ChainConfig{}
 		err = proto.Unmarshal(resp.ContractResult.Result, result)
-		fmt.Printf("send tx resp: code:%d, msg:%s, chainConfig:%+v\n", resp.Code, resp.Message, result)
+		data, _ := json.MarshalIndent(result, "", "\t")
+		fmt.Printf("send tx resp: code:%d, msg:%s, chainConfig:%s\n", resp.Code, resp.Message, data)
+		fmt.Printf("\n============ get chain config end============\n\n\n")
 		return
 	}
 	if statusErr, ok := status.FromError(err); ok && statusErr.Code() == codes.DeadlineExceeded {
@@ -119,7 +126,7 @@ func TestUpdateCore(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_scheduler_timeout",
-		Value: []byte("15"),
+		Value: []byte("16"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_scheduler_validate_timeout",
@@ -144,7 +151,7 @@ func TestUpdateBlock(t *testing.T) {
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "tx_timeout",
-		Value: []byte("-1"),
+		Value: []byte("900"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   "block_tx_capacity",
@@ -172,32 +179,28 @@ func TestAddTrustRoot(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   orgId,
-		Value: []byte(orgId),
+		Value: []byte("wx-org5.chainmaker.org"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key: "root",
-		Value: []byte(`
------BEGIN CERTIFICATE-----
-MIIDNjCCApigAwIBAgIDCAf8MAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ
+		Value: []byte(`-----BEGIN CERTIFICATE-----
+MIICrzCCAlWgAwIBAgIDCoJWMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ
 MA4GA1UECBMHQmVpamluZzEQMA4GA1UEBxMHQmVpamluZzEfMB0GA1UEChMWd3gt
-b3JnMS5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD
-ExljYS53eC1vcmcxLmNoYWlubWFrZXIub3JnMB4XDTIwMTEwMzEyNDkzNloXDTMw
-MTEwMTEyNDkzNlowgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw
-DgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmcxLmNoYWlubWFrZXIub3Jn
-MRIwEAYDVQQLEwlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4LW9yZzEuY2hhaW5t
-YWtlci5vcmcwgZswEAYHKoZIzj0CAQYFK4EEACMDgYYABAAWyvxAG5reWbTWpd0Q
-Bm5UDt4DVIuS8pjgEnvaVys/XTTB9DjvUQW28r6k22O2P4OLGq8lQ0puDEr7TiYr
-JltzTQC/nEF/QtJjaRW98l32NqZzpjtVFTZy1jd7vqpIogbemq6zallwwXK0w792
-zhuOMqb2q3ZXINRH4/I5nOTf/8zSGaOBpzCBpDAOBgNVHQ8BAf8EBAMCAaYwDwYD
-VR0lBAgwBgYEVR0lADAPBgNVHRMBAf8EBTADAQH/MCkGA1UdDgQiBCAKogJqaxO0
-df/ngy1+VfXPwM12k2Bk91uqyQbUFy50GTBFBgNVHREEPjA8gg5jaGFpbm1ha2Vy
-Lm9yZ4IJbG9jYWxob3N0ghljYS53eC1vcmcxLmNoYWlubWFrZXIub3JnhwR/AAAB
-MAoGCCqGSM49BAMCA4GLADCBhwJBee8wC03Wz6eV42KMMSHXa17tL/KNpVeCbLOo
-oFhb8+WMRqqeAKNx61E5panzjqZR2ntvZ8AzvJpy7zUYtRZXeuQCQgHxil885sxo
-+ha6Ty7ohEnKdK+JXO2hdI14QLsvEOTjA1Beul42U4XtNKCYZp+aNIjUUWIMAEKH
-55yvulf9kDgsjw==
+b3JnNS5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD
+ExljYS53eC1vcmc1LmNoYWlubWFrZXIub3JnMB4XDTIwMTIwODA2NTM0M1oXDTMw
+MTIwNjA2NTM0M1owgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw
+DgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmc1LmNoYWlubWFrZXIub3Jn
+MRIwEAYDVQQLEwlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4LW9yZzUuY2hhaW5t
+YWtlci5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQvKJbsKIIfwZDBl7Fd
+QFzub5HVLMYHbg9Vocg7FRiuOvggk9nR7kvRm8RD+AY64OpThhE5fCmYJLUhKr0Q
+YyhFo4GnMIGkMA4GA1UdDwEB/wQEAwIBpjAPBgNVHSUECDAGBgRVHSUAMA8GA1Ud
+EwEB/wQFMAMBAf8wKQYDVR0OBCIEIEUAhxhcWZS15xG8t6OkdHY5bgbJhDdawNvk
+X+ev1BPWMEUGA1UdEQQ+MDyCDmNoYWlubWFrZXIub3Jngglsb2NhbGhvc3SCGWNh
+Lnd4LW9yZzUuY2hhaW5tYWtlci5vcmeHBH8AAAEwCgYIKoZIzj0EAwIDSAAwRQIg
+Joe9KHupPPSSQF7M+u0hmT/3TjHH1P9WkBItt0bFy1kCIQCCaRznhe1jnZ8kD8XS
+7F36kC80dzJI7t6qhubcmUbt5A==
 -----END CERTIFICATE-----
-	`),
+`),
 	})
 	processReq(txId, commonPb.TxType_INVOKE_CONTRACT, syscontract.SystemContract_CHAIN_CONFIG.String(), syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), pairs, chainConfig.Sequence)
 }
@@ -214,29 +217,26 @@ func TestUpdateTrustRoot(t *testing.T) {
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key:   orgId,
-		Value: []byte("wx-org1"),
+		Value: []byte("wx-org5.chainmaker.org"),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
 		Key: "root",
 		Value: []byte(`-----BEGIN CERTIFICATE-----
-MIIDNjCCApigAwIBAgIDAeONMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ
+MIICrzCCAlWgAwIBAgIDAOetMAoGCCqGSM49BAMCMIGKMQswCQYDVQQGEwJDTjEQ
 MA4GA1UECBMHQmVpamluZzEQMA4GA1UEBxMHQmVpamluZzEfMB0GA1UEChMWd3gt
-b3JnMi5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD
-ExljYS53eC1vcmcyLmNoYWlubWFrZXIub3JnMB4XDTIwMTEwMzEyNDkzN1oXDTMw
-MTEwMTEyNDkzN1owgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw
-DgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmcyLmNoYWlubWFrZXIub3Jn
-MRIwEAYDVQQLEwlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4LW9yZzIuY2hhaW5t
-YWtlci5vcmcwgZswEAYHKoZIzj0CAQYFK4EEACMDgYYABADzIS7T4x788oWufjDb
-u1AIStmGSvyzJpyq65mIcrxJddJAAZ3o+icnH+VhuEg6MJ1ErwYsD36b6yRozhxp
-cHzJ7AFH0Fy9pBYH5S45M4nlOXEuKjFQj32KDufRhBLRq8k+MAsi+SEEOlE1cmWj
-8lUXN23J9OqBBWi4FUuQovMUfR0hVaOBpzCBpDAOBgNVHQ8BAf8EBAMCAaYwDwYD
-VR0lBAgwBgYEVR0lADAPBgNVHRMBAf8EBTADAQH/MCkGA1UdDgQiBCBzaApBM4pn
-SgAEFDvUNydn0DbiWih7FUGLUqw7Yn18LjBFBgNVHREEPjA8gg5jaGFpbm1ha2Vy
-Lm9yZ4IJbG9jYWxob3N0ghljYS53eC1vcmcyLmNoYWlubWFrZXIub3JnhwR/AAAB
-MAoGCCqGSM49BAMCA4GLADCBhwJCAOn8dQoFtV0FuJhMKRsc2frkUdEHEeVIA6qe
-VJVRsVYJOpWfn1/QWpYiWbn3eZMmQN6Y0LDEnzyuRuYZAYY8pBUZAkFFYsqJKqwC
-Ac94P+IXMG3sBkeyq3wBzVxr8pCEaNVgVV0BUY240J/qW4vcBHqRyQ5ylppJ8RAo
-uL8dAwVUqvB/iQ==
+b3JnNS5jaGFpbm1ha2VyLm9yZzESMBAGA1UECxMJcm9vdC1jZXJ0MSIwIAYDVQQD
+ExljYS53eC1vcmc1LmNoYWlubWFrZXIub3JnMB4XDTIxMDcyMjA5MzIzMVoXDTMx
+MDcyMDA5MzIzMVowgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQIEwdCZWlqaW5nMRAw
+DgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmc1LmNoYWlubWFrZXIub3Jn
+MRIwEAYDVQQLEwlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4LW9yZzUuY2hhaW5t
+YWtlci5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARezHsdPWKfxwtEx61G
+Bce//KXsNJkdxuFamrIBDLe4XLuGaM791IqddFBaa6pDsPoaWPP+d2pDRuKekj1M
+uoSRo4GnMIGkMA4GA1UdDwEB/wQEAwIBpjAPBgNVHSUECDAGBgRVHSUAMA8GA1Ud
+EwEB/wQFMAMBAf8wKQYDVR0OBCIEIMATPlrnbPNC94C3iK7EuhnBhQnZHaQI0/Vi
+iTMzJYKiMEUGA1UdEQQ+MDyCDmNoYWlubWFrZXIub3Jngglsb2NhbGhvc3SCGWNh
+Lnd4LW9yZzUuY2hhaW5tYWtlci5vcmeHBH8AAAEwCgYIKoZIzj0EAwIDSAAwRQIh
+AOsYAbNJTT4GRVEOwpe6/yv3gomrb7bYmn0/o6myQcZQAiBxOtuRu3IihyK9PmEK
+wrKB3vCIB2OTcU1bx3WKHi3W3Q==
 -----END CERTIFICATE-----
 `),
 	})
