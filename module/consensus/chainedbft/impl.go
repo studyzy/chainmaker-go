@@ -195,7 +195,8 @@ func (cbi *ConsensusChainedBftImpl) Start() error {
 
 	go cbi.syncer.start()
 	go cbi.timerService.Start()
-	go cbi.loop()
+	go cbi.msgDeliveryLoop()
+	go cbi.protocolLoop() // pro
 	go cbi.commitLoop()
 	go cbi.syncReqLoop()
 	cbi.startConsensus()
@@ -252,7 +253,7 @@ func (cbi *ConsensusChainedBftImpl) OnMessage(message *msgbus.Message) {
 	}
 }
 
-func (cbi *ConsensusChainedBftImpl) loop() {
+func (cbi *ConsensusChainedBftImpl) msgDeliveryLoop() {
 	for {
 		select {
 		case msg, ok := <-cbi.msgCh:
@@ -263,6 +264,15 @@ func (cbi *ConsensusChainedBftImpl) loop() {
 			if ok {
 				cbi.onConsensusMsg(msg)
 			}
+		case <-cbi.quitCh:
+			return
+		}
+	}
+}
+
+func (cbi *ConsensusChainedBftImpl) protocolLoop() {
+	for {
+		select {
 		case msg, ok := <-cbi.proposedBlockCh:
 			if ok {
 				cbi.onProposedBlock(msg)
@@ -299,7 +309,7 @@ func (cbi *ConsensusChainedBftImpl) loop() {
 func (cbi *ConsensusChainedBftImpl) syncReqLoop() {
 	for {
 		select {
-		case msg, ok:= <-cbi.syncReqMsgCh:
+		case msg, ok := <-cbi.syncReqMsgCh:
 			if ok {
 				cbi.onReceiveBlockFetch(msg)
 			}
