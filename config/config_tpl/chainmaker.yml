@@ -72,7 +72,7 @@ txpool:
 
 rpc:
   provider: grpc
-  port: { rpc_port }
+  port: {rpc_port}
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
   check_chain_conf_trust_roots_change_interval: 60
   ratelimit:

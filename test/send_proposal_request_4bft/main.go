@@ -45,16 +45,23 @@ const (
 	fieldWithRWSet                  = "withRWSet"
 )
 
-const (
+var (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
 	Port           = 12301
 	certPathPrefix = "./config"
-	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId          = "wx-org1.chainmaker.org"
-	prePathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 )
+
+func prePathFmt() string {
+	return certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
+}
+func userKeyPath() string {
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+}
+func userCrtPath() string {
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+}
 
 var (
 	WasmPath        = ""
@@ -67,6 +74,13 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
+	if len(os.Args) == 2 {
+		certPathPrefix = os.Args[1]
+		caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
+		common.SetCertPathPrefix(certPathPrefix)
+		fmt.Println("命令行参数设置证书的根路径为:", certPathPrefix)
+	}
+
 	initWasmerTest()
 	runTest()
 
@@ -93,7 +107,7 @@ func runTest() {
 
 		client = apiPb.NewRpcNodeClient(conn)
 
-		file, err := ioutil.ReadFile(userKeyPath)
+		file, err := ioutil.ReadFile(userKeyPath())
 		if err != nil {
 			panic(err)
 		}
@@ -844,8 +858,8 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 		tlsClient := ca.CAClient{
 			ServerName: "chainmaker.org",
 			CaPaths:    caPaths,
-			CertFile:   userCrtPath,
-			KeyFile:    userKeyPath,
+			CertFile:   userCrtPath(),
+			KeyFile:    userKeyPath(),
 		}
 
 		c, err := tlsClient.GetCredentialsByCA()
