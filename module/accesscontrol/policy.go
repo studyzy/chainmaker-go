@@ -8,10 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"strings"
+
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/protocol"
-	"strings"
 )
 
 type policy struct {
@@ -55,7 +55,7 @@ func NewPolicyFromPb(input *pbac.Policy) *policy {
 }
 
 // Authentication validation policy
-type policyWhiteList struct {
-	policyType AuthMode
-	policyList map[string]*bcx509.Certificate
-}
+// type policyWhiteList struct {
+// 	policyType AuthMode
+// 	policyList map[string]*bcx509.Certificate
+// }

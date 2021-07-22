@@ -34,24 +34,16 @@ import (
 
 const unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
 
-// authentication mode: white list, identity, certificate chain, etc.
-type AuthMode string
-
 // type used to specify the public information type: certificate or public key
 type IdentityType string
 
 const (
 	ModuleNameAccessControl = "Access Control"
-
-	MemberMode   AuthMode = "white list" // white list mode
-	IdentityMode AuthMode = "identity"   // attribute-authorization mode
-
 )
 
 var _ protocol.AccessControlProvider = (*accessControl)(nil)
 
 type accessControl struct {
-	authMode              AuthMode
 	orgList               *sync.Map // map[string]*organization , orgId -> *organization
 	orgNum                int32
 	resourceNamePolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
