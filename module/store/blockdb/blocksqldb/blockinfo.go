@@ -43,8 +43,8 @@ type BlockInfo struct {
 func (b *BlockInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&b.ChainId, &b.BlockHeight, &b.PreBlockHash, &b.BlockHash, &b.PreConfHeight, &b.BlockVersion,
 		&b.DagHash, &b.RwSetRoot, &b.TxRoot, &b.BlockTimestamp,
-		&b.ProposerOrgId,&b.ProposerMemberInfo,&b.ProposerMemberType,&b.ProposerSA, &b.ConsensusArgs, &b.TxCount,
-		&b.Signature,&b.BlockType, &b.Dag, &b.TxIds, &b.AdditionalData)
+		&b.ProposerOrgId, &b.ProposerMemberInfo, &b.ProposerMemberType, &b.ProposerSA, &b.ConsensusArgs, &b.TxCount,
+		&b.Signature, &b.BlockType, &b.Dag, &b.TxIds, &b.AdditionalData)
 }
 func (b *BlockInfo) GetCreateTableSql(dbType string) string {
 	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
@@ -92,9 +92,9 @@ func (b *BlockInfo) GetInsertSql() (string, []interface{}) {
 	return "INSERT INTO block_infos values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 		[]interface{}{b.ChainId, b.BlockHeight, b.PreBlockHash, b.BlockHash, b.PreConfHeight, b.BlockVersion,
 			b.DagHash, b.RwSetRoot, b.TxRoot, b.BlockTimestamp,
-			b.ProposerOrgId,b.ProposerMemberInfo,b.ProposerMemberType,b.ProposerSA,
+			b.ProposerOrgId, b.ProposerMemberInfo, b.ProposerMemberType, b.ProposerSA,
 			b.ConsensusArgs, b.TxCount,
-			b.Signature,b.BlockType, b.Dag, b.TxIds, b.AdditionalData}
+			b.Signature, b.BlockType, b.Dag, b.TxIds, b.AdditionalData}
 }
 func (b *BlockInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE block_infos set chain_id=?" +
@@ -105,24 +105,24 @@ func (b *BlockInfo) GetCountSql() (string, []interface{}) {
 }
 func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 	blockInfo := &BlockInfo{
-		ChainId:        block.Header.ChainId,
-		BlockHeight:    block.Header.BlockHeight,
-		PreBlockHash:   block.Header.PreBlockHash,
-		BlockHash:      block.Header.BlockHash,
-		PreConfHeight:  block.Header.PreConfHeight,
-		BlockVersion:   block.Header.BlockVersion,
-		DagHash:        block.Header.DagHash,
-		RwSetRoot:      block.Header.RwSetRoot,
-		TxRoot:         block.Header.TxRoot,
-		BlockTimestamp: block.Header.BlockTimestamp,
-		ProposerOrgId:       block.Header.Proposer.OrgId,
-		ProposerMemberInfo:       block.Header.Proposer.MemberInfo,
-		ProposerMemberType:       int(block.Header.Proposer.MemberType),
+		ChainId:            block.Header.ChainId,
+		BlockHeight:        block.Header.BlockHeight,
+		PreBlockHash:       block.Header.PreBlockHash,
+		BlockHash:          block.Header.BlockHash,
+		PreConfHeight:      block.Header.PreConfHeight,
+		BlockVersion:       block.Header.BlockVersion,
+		DagHash:            block.Header.DagHash,
+		RwSetRoot:          block.Header.RwSetRoot,
+		TxRoot:             block.Header.TxRoot,
+		BlockTimestamp:     block.Header.BlockTimestamp,
+		ProposerOrgId:      block.Header.Proposer.OrgId,
+		ProposerMemberInfo: block.Header.Proposer.MemberInfo,
+		ProposerMemberType: int(block.Header.Proposer.MemberType),
 		//ProposerSA:       block.Header.Proposer.SignatureAlgorithm,
-		ConsensusArgs:  block.Header.ConsensusArgs,
-		TxCount:        block.Header.TxCount,
-		Signature:      block.Header.Signature,
-		BlockType: int(block.Header.BlockType),
+		ConsensusArgs: block.Header.ConsensusArgs,
+		TxCount:       block.Header.TxCount,
+		Signature:     block.Header.Signature,
+		BlockType:     int(block.Header.BlockType),
 	}
 	if block.Dag != nil {
 		dagBytes, err := proto.Marshal(block.Dag)
@@ -168,10 +168,10 @@ func ConvertHeader2BlockInfo(header *commonPb.BlockHeader) *BlockInfo {
 		ProposerMemberInfo: header.Proposer.MemberInfo,
 		ProposerMemberType: int(header.Proposer.MemberType),
 		//ProposerSA:         header.Proposer.SignatureAlgorithm,
-		ConsensusArgs:      header.ConsensusArgs,
-		TxCount:            header.TxCount,
-		Signature:          header.Signature,
-		BlockType: int(header.BlockType),
+		ConsensusArgs: header.ConsensusArgs,
+		TxCount:       header.TxCount,
+		Signature:     header.Signature,
+		BlockType:     int(header.BlockType),
 	}
 
 	return blockInfo
@@ -199,9 +199,9 @@ func (b *BlockInfo) GetBlockHeader() *commonPb.BlockHeader {
 		TxRoot:         b.TxRoot,
 		BlockTimestamp: b.BlockTimestamp,
 		Proposer: &accesscontrol.Member{
-			OrgId:              b.ProposerOrgId,
-			MemberInfo:         b.ProposerMemberInfo,
-			MemberType:         accesscontrol.MemberType(b.ProposerMemberType),
+			OrgId:      b.ProposerOrgId,
+			MemberInfo: b.ProposerMemberInfo,
+			MemberType: accesscontrol.MemberType(b.ProposerMemberType),
 			//SignatureAlgorithm: b.ProposerSA,
 		},
 		ConsensusArgs: b.ConsensusArgs,

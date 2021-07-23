@@ -20,12 +20,12 @@ blockchain:
 
 node:
   # 节点类型：full、spv
-  type:              full
-  org_id:            {org_id}
-  priv_key_file:     ../config/{org_path}/certs/{node_cert_path}.key
-  cert_file:         ../config/{org_path}/certs/{node_cert_path}.crt
+  type: full
+  org_id: { org_id }
+  priv_key_file: ../config/{org_path}/certs/{node_cert_path}.key
+  cert_file: ../config/{org_path}/certs/{node_cert_path}.crt
   signer_cache_size: 1000
-  cert_cache_size:   1000
+  cert_cache_size: 1000
   pkcs11:
     enabled: false
     library: # path to the so file of pkcs11 interface
@@ -37,17 +37,17 @@ node:
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/{net_port}
-#  peer_stream_pool_size: 100
-#  max_peer_count_allow: 20
-#  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
-#  seeds ip格式为： "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
-#  seeds dns格式为："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
+  #  peer_stream_pool_size: 100
+  #  max_peer_count_allow: 20
+  #  peer_elimination_strategy: 3  # 1 Random, 2 FIFO, 3 LIFO
+  #  seeds ip格式为： "/ip4/127.0.0.1/tcp/11301/p2p/"+nodeid
+  #  seeds dns格式为："/dns/cm-node1.org/tcp/11301/p2p/"+nodeid
   seeds:
 
   tls:
     enabled: true
     priv_key_file: ../config/{org_path}/certs/{net_cert_path}.key
-    cert_file:     ../config/{org_path}/certs/{net_cert_path}.crt
+    cert_file: ../config/{org_path}/certs/{net_cert_path}.crt
 #  blacklist:
 #    addresses:
 #      - "127.0.0.1:11305"
@@ -72,7 +72,7 @@ txpool:
 
 rpc:
   provider: grpc
-  port: {rpc_port}
+  port: { rpc_port }
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
   check_chain_conf_trust_roots_change_interval: 60
   ratelimit:
@@ -94,17 +94,17 @@ rpc:
     #   twoway  - 双向认证
     #mode: disable
     #mode: oneway
-    mode:           twoway
-    priv_key_file:  ../config/{org_path}/certs/{rpc_cert_path}.key
-    cert_file:      ../config/{org_path}/certs/{rpc_cert_path}.crt
+    mode: twoway
+    priv_key_file: ../config/{org_path}/certs/{rpc_cert_path}.key
+    cert_file: ../config/{org_path}/certs/{rpc_cert_path}.crt
 
 monitor:
   enabled: true
-  port: {monitor_port}
+  port: { monitor_port }
 
 pprof:
   enabled: false
-  port: {pprof_port}
+  port: { pprof_port }
 
 
 storage:

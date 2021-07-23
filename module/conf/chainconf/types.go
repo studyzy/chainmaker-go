@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"sync"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
 
@@ -29,7 +30,15 @@ import (
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
 
-const regChainId = "^[a-zA-Z0-9_]{1,30}$"
+const (
+	regChainId         = "^[a-zA-Z0-9_]{1,30}$"
+	minTxTimeout       = 600
+	minBlockInterval   = 10
+	minBlockTxCapacity = 1
+	minBlockSize       = 1
+	minNodeIds         = 1
+	minTrustRoots      = 1
+)
 
 var (
 	chainConsensusVerifier = make(map[string]consensusVerifier, 0)
@@ -74,34 +83,41 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 		return nil, err
 	}
 
-	if len(mConfig.TrustRoots) < 1 {
-		log.Errorw("trust roots len is low", "trustRoots len", len(mConfig.TrustRoots))
-		return nil, errors.New("trust roots len is low")
+	if len(mConfig.TrustRoots) < minTrustRoots {
+		msg := fmt.Sprintf("trustRoots len less than %d, trustRoots len is %d", minTrustRoots, len(mConfig.TrustRoots))
+		log.Error(msg)
+		return nil, errors.New(msg)
 	}
-	if len(mConfig.NodeIds) < 1 {
-		log.Errorw("nodeIds len is low", "nodeIds len", len(mConfig.NodeIds))
-		return nil, errors.New("node ids len is low")
+
+	if len(mConfig.NodeIds) < minNodeIds {
+		msg := fmt.Sprintf("nodeIds len less than %d, nodeIds len is %d", minNodeIds, len(mConfig.NodeIds))
+		log.Error(msg)
+		return nil, errors.New(msg)
 	}
 	// block
-	if cconfig.Block.TxTimeout < 600 {
+	if cconfig.Block.TxTimeout < minTxTimeout {
 		// timeout
-		log.Errorw("txTimeout less than 600", "txTimeout is", cconfig.Block.TxTimeout)
-		return nil, errors.New("tx_time is low")
+		msg := fmt.Sprintf("txTimeout less than %d, txTimeout is %d", minTxTimeout, cconfig.Block.TxTimeout)
+		log.Error(msg)
+		return nil, errors.New(msg)
 	}
-	if cconfig.Block.BlockTxCapacity < 1 {
+	if cconfig.Block.BlockTxCapacity < minBlockTxCapacity {
 		// block tx cap
-		log.Errorw("blockTxCapacity is low", "blockTxCapacity", cconfig.Block.BlockTxCapacity)
-		return nil, errors.New("block_tx_capacity is low")
+		msg := fmt.Sprintf("blockTxCapacity less than %d, blockTxCapacity is %d", minBlockTxCapacity, cconfig.Block.BlockTxCapacity)
+		log.Error(msg)
+		return nil, errors.New(msg)
 	}
-	if cconfig.Block.BlockSize < 1 {
+	if cconfig.Block.BlockSize < minBlockSize {
 		// block size
-		log.Errorw("blockSize is low", "blockSize", cconfig.Block.BlockSize)
-		return nil, errors.New("blockSize is low")
+		msg := fmt.Sprintf("blockSize less than %d, blockSize is %d", minBlockSize, cconfig.Block.BlockSize)
+		log.Error(msg)
+		return nil, errors.New(msg)
 	}
-	if cconfig.Block.BlockInterval < 10 {
+	if cconfig.Block.BlockInterval < minBlockInterval {
 		// block interval
-		log.Errorw("blockInterval is low", "blockInterval", cconfig.Block.BlockInterval)
-		return nil, errors.New("blockInterval is low")
+		msg := fmt.Sprintf("blockInterval less than %d, blockInterval is %d", minBlockInterval, cconfig.Block.BlockInterval)
+		log.Error(msg)
+		return nil, errors.New(msg)
 	}
 
 	if cconfig.Contract == nil {

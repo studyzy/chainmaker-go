@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-chain_id: {chain_id}    # 链标识
+chain_id: { chain_id }    # 链标识
 version: v1.2.0         # 链版本
 sequence: 1             # 配置版本
 auth_type: "identity"   # 认证类型
@@ -41,7 +41,7 @@ scheduler:
 #共识配置
 consensus:
   # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,5-DPOS,10-POW)
-  type: {consensus_type}
+  type: { consensus_type }
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   # 其中node_id为chainmaker.yml中 node.cert_file证书对应的nodeid
   nodes:
@@ -57,20 +57,20 @@ consensus:
     - org_id: "{org4_id}"
       node_id:
         - "{org4_peerid}"
-#    - org_id: "{org5_id}"
-#      node_id:
-#        - "{org5_peerid}"
-#    - org_id: "{org6_id}"
-#      node_id:
-#        - "{org6_peerid}"
-#    - org_id: "{org7_id}"
-#      node_id:
-#        - "{org7_peerid}"
+  #    - org_id: "{org5_id}"
+  #      node_id:
+  #        - "{org5_peerid}"
+  #    - org_id: "{org6_id}"
+  #      node_id:
+  #        - "{org6_peerid}"
+  #    - org_id: "{org7_id}"
+  #      node_id:
+  #        - "{org7_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
   dpos_config: # DPoS
-  #ERC20合约配置
+    #ERC20合约配置
     - key: erc20.total
       value: "{erc20_total}"
     - key: erc20.owner
@@ -79,7 +79,7 @@ consensus:
       value: "18"
     - key: erc20.account:SYSTEM_CONTRACT_DPOS_STAKE
       value: "{erc20_total}"
-  #Stake合约配置
+    #Stake合约配置
     - key: stake.minSelfDelegation
       value: "2500000"
     - key: stake.epochValidatorNum
@@ -97,11 +97,11 @@ consensus:
     - key: stake.candidate:{org4_peeraddr}
       value: "2500000"
     #    - key: stake.candidate:{org5_peeraddr}
-#      value: "2500000"
+    #      value: "2500000"
     #    - key: stake.candidate:{org6_peeraddr}
-#      value: "2500000"
+    #      value: "2500000"
     #    - key: stake.candidate:{org7_peeraddr}
-#      value: "2500000"
+    #      value: "2500000"
     - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
     - key: stake.nodeID:{org2_peeraddr}

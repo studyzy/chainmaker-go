@@ -246,7 +246,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
 			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method, tx.Payload.TxType, txResult.Message)
-		s.log.Warn(errMsg)
+		s.log.Error(errMsg)
 
 		resp.Code = txStatusCode
 		if txResult.Message == archive.ArchivedBlockError.Error() {

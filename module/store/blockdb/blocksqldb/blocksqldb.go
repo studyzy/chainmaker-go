@@ -322,7 +322,7 @@ func (b *BlockSqlDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
 func (b *BlockSqlDB) GetTx(txId string) (*commonPb.Transaction, error) {
-	if len(txId)==0{
+	if len(txId) == 0 {
 		return nil, errors.New("parameter is null")
 	}
 	var txInfo TxInfo

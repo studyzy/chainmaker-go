@@ -20,12 +20,12 @@ blockchain:
 
 node:
   # 节点类型：full、spv
-  type:              full
-  org_id:            wx-org3.chainmaker.org
-  priv_key_file:     ../config/wx-org3/certs/node/consensus1/consensus1.sign.key
-  cert_file:         ../config/wx-org3/certs/node/consensus1/consensus1.sign.crt
+  type: full
+  org_id: wx-org3.chainmaker.org
+  priv_key_file: ../config/wx-org3/certs/node/consensus1/consensus1.sign.key
+  cert_file: ../config/wx-org3/certs/node/consensus1/consensus1.sign.crt
   signer_cache_size: 1000
-  cert_cache_size:   1000
+  cert_cache_size: 1000
 
 net:
   provider: LibP2P
@@ -38,7 +38,7 @@ net:
   tls:
     enabled: true
     priv_key_file: ../config/wx-org3/certs/node/consensus1/consensus1.tls.key
-    cert_file:     ../config/wx-org3/certs/node/consensus1/consensus1.tls.crt
+    cert_file: ../config/wx-org3/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
   max_txpool_size: 5120 # 普通交易池上限
@@ -55,9 +55,9 @@ rpc:
     #   twoway  - 双向认证
     #mode: disable
     #mode: oneway
-    mode:           twoway
-    priv_key_file:  ../config/wx-org3/certs/node/consensus1/consensus1.tls.key
-    cert_file:      ../config/wx-org3/certs/node/consensus1/consensus1.tls.crt
+    mode: twoway
+    priv_key_file: ../config/wx-org3/certs/node/consensus1/consensus1.tls.key
+    cert_file: ../config/wx-org3/certs/node/consensus1/consensus1.tls.crt
 
 monitor:
   enabled: false

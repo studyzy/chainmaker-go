@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sort"
 
-	chainedbft "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
 type orderIndexes []uint64

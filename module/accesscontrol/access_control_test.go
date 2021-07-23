@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	logger2 "chainmaker.org/chainmaker-go/logger"
@@ -23,6 +24,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
+
 	//"chainmaker.org/chainmaker-go/utils"
 	"github.com/stretchr/testify/require"
 )
@@ -1316,7 +1318,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
-	principalRead, err = acInst.CreatePrincipal(syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
+	principalRead, err = acInst.CreatePrincipal(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)

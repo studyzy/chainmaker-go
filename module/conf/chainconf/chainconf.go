@@ -149,20 +149,20 @@ func HandleCompatibility(chainConfig *config.ChainConfig) error {
 		}
 	}
 	/*
-	// For v1.1 to be compatible with v1.0, check resource policies
-	for _, rp := range chainConfig.ResourcePolicies {
-		switch rp.ResourceName {
-		case syscontract.ChainConfigFunction_NODE_ID_ADD.String():
-			rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_ADD.String()
-		case syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
-			rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()
-		case syscontract.ChainConfigFunction_NODE_ID_DELETE.String():
-			rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_DELETE.String()
-		default:
-			continue
+		// For v1.1 to be compatible with v1.0, check resource policies
+		for _, rp := range chainConfig.ResourcePolicies {
+			switch rp.ResourceName {
+			case syscontract.ChainConfigFunction_NODE_ID_ADD.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_ADD.String()
+			case syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()
+			case syscontract.ChainConfigFunction_NODE_ID_DELETE.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_DELETE.String()
+			default:
+				continue
+			}
 		}
-	}
-	 */
+	*/
 	return nil
 }
 

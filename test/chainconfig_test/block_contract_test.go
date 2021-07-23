@@ -9,6 +9,7 @@ package native_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -135,14 +136,14 @@ func TestGetTxById(t *testing.T) {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "txId",
-			Value: []byte("d74f339a0b6d496d94bfb35e2171364e8fcd1bb5833d46d8ad42c343eceeeacb"),
+			Value: []byte("c6b7033daf96441aab83f33e1abe6706543a410e7158405a90e5cfb02aa50660"),
 		},
 	}
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
 		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(), Pairs: pairs})
-	if len(resp.Message) != 0 {
+	if resp.Code != 0 {
 		fmt.Println(resp.Message)
 		return
 	}
@@ -150,5 +151,7 @@ func TestGetTxById(t *testing.T) {
 	if err = proto.Unmarshal(resp.ContractResult.Result, tx); err != nil {
 		panic(err)
 	}
-	fmt.Println(tx)
+	//fmt.Println(tx)
+	data, _ := json.MarshalIndent(tx, "", "  ")
+	fmt.Printf("%s", data)
 }

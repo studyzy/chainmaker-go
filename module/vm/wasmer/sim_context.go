@@ -21,7 +21,7 @@ import (
 // SimContext record the contract context
 type SimContext struct {
 	TxSimContext   protocol.TxSimContext
-	Contract     	*commonPb.Contract
+	Contract       *commonPb.Contract
 	ContractResult *commonPb.ContractResult
 	Log            *logger.CMLogger
 	Instance       *wasm.Instance
@@ -62,7 +62,7 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 
 	runtimeSdkType := sdkType.ToI32()
 	if int32(commonPb.RuntimeType_WASMER) == runtimeSdkType {
-		sc.parameters[protocol.ContractContextPtrParam] = []byte( strconv.Itoa(int(sc.CtxPtr)))
+		sc.parameters[protocol.ContractContextPtrParam] = []byte(strconv.Itoa(int(sc.CtxPtr)))
 		ec := serialize.NewEasyCodecWithMap(sc.parameters)
 		bytes = ec.Marshal()
 	} else {

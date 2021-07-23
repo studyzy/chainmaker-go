@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package serialization
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"testing"
+
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
@@ -43,15 +44,14 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 			Payload: &commonPb.Payload{
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
-
 			},
 			Sender: &commonPb.EndorsementEntry{
-				Signer:    &acPb.Member{
-					OrgId: "org1",
+				Signer: &acPb.Member{
+					OrgId:      "org1",
 					MemberInfo: []byte("User1"),
 				},
 				Signature: []byte("signature1"),
-			} ,
+			},
 			Result: &commonPb.Result{
 				Code: commonPb.TxStatusCode_SUCCESS,
 				ContractResult: &commonPb.ContractResult{

@@ -1,19 +1,20 @@
 package main
 
 import (
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	evm "chainmaker.org/chainmaker/common/evmutils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
+
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	evm "chainmaker.org/chainmaker/common/evmutils"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 //func getByteCode(bytecode []byte, runtime commonPb.RuntimeType) ([]*commonPb.KeyValuePair, error) {
@@ -22,7 +23,7 @@ import (
 //	}
 //}
 
-var printEnable bool = false
+var printEnable = false
 
 type EvmAbi struct {
 	anonymous       bool         `json:"anonymous"`
@@ -417,7 +418,7 @@ func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.Ke
 					switch paramMap["type"].(string) {
 					case "address":
 						var add *evm.Address
-						ski :=string( pair.Value)
+						ski := string(pair.Value)
 						fmt.Println("[debug] pair.Key: ", pair.Key, "pair.Value:", pair.Value, ", ski:", ski, ", typeof(ski): ", reflect.TypeOf(ski))
 						if strings.LastIndex(string(pair.Value), ".crt") > -1 {
 							ski, err = getSki(string(pair.Value))

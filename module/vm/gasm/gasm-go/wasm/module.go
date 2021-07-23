@@ -389,12 +389,12 @@ func (m *Module) buildTableIndexSpace() error {
 		if size > len(table) {
 			next := make([]*uint32, size)
 			copy(next, table)
-			for i, _ := range elem.Init {
+			for i := range elem.Init {
 				next[i+offset] = &elem.Init[i]
 			}
 			m.IndexSpace.Table[elem.TableIndex] = next
 		} else {
-			for i, _ := range elem.Init {
+			for i := range elem.Init {
 				table[i+offset] = &elem.Init[i]
 			}
 		}

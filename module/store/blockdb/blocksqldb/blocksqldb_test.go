@@ -39,18 +39,16 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.Member{MemberInfo: []byte("User1")},
+			Proposer:    &acPb.Member{MemberInfo: []byte("User1")},
 		},
 		Txs: []*commonPb.Transaction{
 			{
 				Payload: &commonPb.Payload{
 					ChainId: chainId,
 					TxType:  commonPb.TxType_INVOKE_CONTRACT,
-					
 				},
-				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
-				},
-				Signature: []byte("sign1"),
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
+					Signature: []byte("sign1"),
 				},
 				Result: &commonPb.Result{
 					Code: commonPb.TxStatusCode_SUCCESS,
@@ -72,7 +70,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.B
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.Member{MemberInfo: []byte("User1")},
+			Proposer:    &acPb.Member{MemberInfo: []byte("User1")},
 		},
 	}
 
@@ -82,8 +80,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.B
 				ChainId: chainId,
 				TxId:    generateTxId(chainId, height, i),
 			},
-			Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1..."),
-			},
+			Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
 				Signature: []byte("sign1"),
 			},
 			Result: &commonPb.Result{
@@ -142,17 +139,14 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 		Header: &commonPb.BlockHeader{
 			ChainId:     chainId,
 			BlockHeight: height,
-			Proposer: &acPb.Member{MemberInfo: []byte("User1")},
+			Proposer:    &acPb.Member{MemberInfo: []byte("User1")},
 		},
 		Txs: []*commonPb.Transaction{
 			{
 				Payload: &commonPb.Payload{
 					ChainId: chainId,
-
 				},
-				Sender: &commonPb.EndorsementEntry{Signer:
-					&acPb.Member{OrgId: "org1",MemberInfo: []byte("cert1..."),
-						},
+				Sender: &commonPb.EndorsementEntry{Signer: &acPb.Member{OrgId: "org1", MemberInfo: []byte("cert1...")},
 					Signature: []byte("sign1"),
 				},
 				Result: &commonPb.Result{

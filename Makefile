@@ -99,4 +99,4 @@ lint:
 #	cd tools/sdk && golangci-lint run ./...
 
 gomod:
-	cd scripts && ./update_gomod.sh
+	cd scripts && ./gomod_update.sh

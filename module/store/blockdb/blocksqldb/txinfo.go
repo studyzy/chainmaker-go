@@ -7,10 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package blocksqldb
 
 import (
+	"encoding/json"
+
 	"chainmaker.org/chainmaker-go/localconf"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"encoding/json"
 )
 
 // TxInfo defines mysql orm model, used to create mysql table 'tx_infos'
@@ -53,10 +54,10 @@ type TxInfo struct {
 }
 
 func (t *TxInfo) ScanObject(scan func(dest ...interface{}) error) error {
-	return scan(&t.ChainId, &t.TxType, &t.TxId,&t.Timestamp,&t.ExpirationTime,
-		&t.ContractName, &t.Method,&t.Parameters,&t.Sequence,&t.Limit,
-		&t.SenderOrgId,&t.SenderMemberInfo,&t.SenderMemberType,&t.SenderSA,&t.SenderSignature,&t.Endorsers,
-		&t.TxStatusCode,&t.ContractResultCode,&t.ResultData,&t.ResultMessage,&t.GasUsed,&t.ContractEvents,&t.RwSetHash,&t.Message,
+	return scan(&t.ChainId, &t.TxType, &t.TxId, &t.Timestamp, &t.ExpirationTime,
+		&t.ContractName, &t.Method, &t.Parameters, &t.Sequence, &t.Limit,
+		&t.SenderOrgId, &t.SenderMemberInfo, &t.SenderMemberType, &t.SenderSA, &t.SenderSignature, &t.Endorsers,
+		&t.TxStatusCode, &t.ContractResultCode, &t.ResultData, &t.ResultMessage, &t.GasUsed, &t.ContractEvents, &t.RwSetHash, &t.Message,
 		&t.BlockHeight, &t.BlockHash, &t.Offset)
 }
 func (t *TxInfo) GetCreateTableSql(dbType string) string {
@@ -90,9 +91,9 @@ func (t *TxInfo) GetTableName() string {
 }
 func (t *TxInfo) GetInsertSql() (string, []interface{}) {
 	return "INSERT INTO tx_infos values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", []interface{}{
-		t.ChainId, t.TxType,t.TxId,  t.Timestamp, t.ExpirationTime,t.ContractName,t.Method,t.Parameters,t.Sequence,t.Limit,
-		t.SenderOrgId,t.SenderMemberInfo,t.SenderMemberType,t.SenderSA,t.SenderSignature,t.Endorsers,
-		t.TxStatusCode,t.ContractResultCode,t.ResultData,t.ResultMessage,t.GasUsed,t.ContractEvents,t.RwSetHash,t.Message,
+		t.ChainId, t.TxType, t.TxId, t.Timestamp, t.ExpirationTime, t.ContractName, t.Method, t.Parameters, t.Sequence, t.Limit,
+		t.SenderOrgId, t.SenderMemberInfo, t.SenderMemberType, t.SenderSA, t.SenderSignature, t.Endorsers,
+		t.TxStatusCode, t.ContractResultCode, t.ResultData, t.ResultMessage, t.GasUsed, t.ContractEvents, t.RwSetHash, t.Message,
 		t.BlockHeight, t.BlockHash, t.Offset}
 }
 func (t *TxInfo) GetUpdateSql() (string, []interface{}) {
@@ -104,14 +105,14 @@ func (b *TxInfo) GetCountSql() (string, []interface{}) {
 
 // NewTxInfo construct new `TxInfo`
 func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, offset uint32) (*TxInfo, error) {
-	par,_:=json.Marshal(tx.Payload.Parameters)
+	par, _ := json.Marshal(tx.Payload.Parameters)
 	var endorsers []byte
-	if len(tx.Endorsers)>0{
-		endorsers,_=json.Marshal(tx.Endorsers)
+	if len(tx.Endorsers) > 0 {
+		endorsers, _ = json.Marshal(tx.Endorsers)
 	}
 	var events []byte
-	if len(tx.Result.ContractResult.ContractEvent)>0{
-		events,_=json.Marshal(tx.Result.ContractResult.ContractEvent)
+	if len(tx.Result.ContractResult.ContractEvent) > 0 {
+		events, _ = json.Marshal(tx.Result.ContractResult.ContractEvent)
 	}
 	txInfo := &TxInfo{
 		ChainId:          tx.Payload.ChainId,
@@ -119,49 +120,49 @@ func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, o
 		TxId:             tx.Payload.TxId,
 		Timestamp:        tx.Payload.Timestamp,
 		ExpirationTime:   tx.Payload.ExpirationTime,
-		ContractName: tx.Payload.ContractName,
-		Method: tx.Payload.Method,
-		Parameters: string(par),
-		Sequence: tx.Payload.Sequence,
-		Limit: tx.Payload.Limit,
-		SenderOrgId: tx.Sender.Signer.OrgId,
+		ContractName:     tx.Payload.ContractName,
+		Method:           tx.Payload.Method,
+		Parameters:       string(par),
+		Sequence:         tx.Payload.Sequence,
+		Limit:            tx.Payload.Limit,
+		SenderOrgId:      tx.Sender.Signer.OrgId,
 		SenderMemberInfo: tx.Sender.Signer.MemberInfo,
 		SenderMemberType: int(tx.Sender.Signer.MemberType),
 		//SenderSA: tx.Sender.Signer.SignatureAlgorithm,
-		SenderSignature: tx.Sender.Signature,
-		Endorsers: string(endorsers),
-		TxStatusCode: int32(tx.Result.Code),
+		SenderSignature:    tx.Sender.Signature,
+		Endorsers:          string(endorsers),
+		TxStatusCode:       int32(tx.Result.Code),
 		ContractResultCode: tx.Result.ContractResult.Code,
-		ResultData: tx.Result.ContractResult.Result,
-		ResultMessage: tx.Result.ContractResult.Message,
-		GasUsed: tx.Result.ContractResult.GasUsed,
-		ContractEvents: string(events),
-		RwSetHash:        tx.Result.RwSetHash,
-		Message: tx.Result.Message,
+		ResultData:         tx.Result.ContractResult.Result,
+		ResultMessage:      tx.Result.ContractResult.Message,
+		GasUsed:            tx.Result.ContractResult.GasUsed,
+		ContractEvents:     string(events),
+		RwSetHash:          tx.Result.RwSetHash,
+		Message:            tx.Result.Message,
 
-		BlockHeight:      blockHeight,
-		BlockHash:        blockHash,
-		Offset:           offset,
-
+		BlockHeight: blockHeight,
+		BlockHash:   blockHash,
+		Offset:      offset,
 	}
 
 	return txInfo, nil
 }
-func getParameters(par string) []*commonPb.KeyValuePair{
+func getParameters(par string) []*commonPb.KeyValuePair {
 	var pairs []*commonPb.KeyValuePair
-	json.Unmarshal([]byte(par),&pairs)
+	json.Unmarshal([]byte(par), &pairs)
 	return pairs
 }
-func getEndorsers(endorsers string) []*commonPb.EndorsementEntry{
+func getEndorsers(endorsers string) []*commonPb.EndorsementEntry {
 	var pairs []*commonPb.EndorsementEntry
-	json.Unmarshal([]byte(endorsers),&pairs)
+	json.Unmarshal([]byte(endorsers), &pairs)
 	return pairs
 }
-func getContractEvents(events string) []*commonPb.ContractEvent{
+func getContractEvents(events string) []*commonPb.ContractEvent {
 	var pairs []*commonPb.ContractEvent
-	json.Unmarshal([]byte(events),&pairs)
+	json.Unmarshal([]byte(events), &pairs)
 	return pairs
 }
+
 // GetTx transfer TxInfo to commonPb.Transaction
 func (t *TxInfo) GetTx() (*commonPb.Transaction, error) {
 	tx := &commonPb.Transaction{
@@ -171,17 +172,17 @@ func (t *TxInfo) GetTx() (*commonPb.Transaction, error) {
 			TxId:           t.TxId,
 			Timestamp:      t.Timestamp,
 			ExpirationTime: t.ExpirationTime,
-			ContractName: t.ContractName,
-			Method: t.Method,
-			Parameters: getParameters(t.Parameters),
-			Sequence: t.Sequence,
-			Limit: t.Limit,
+			ContractName:   t.ContractName,
+			Method:         t.Method,
+			Parameters:     getParameters(t.Parameters),
+			Sequence:       t.Sequence,
+			Limit:          t.Limit,
 		},
 		Sender: &commonPb.EndorsementEntry{
-			Signer:    &acPb.Member{
-				OrgId:              t.SenderOrgId,
-				MemberInfo:         t.SenderMemberInfo,
-				MemberType:         acPb.MemberType( t.SenderMemberType),
+			Signer: &acPb.Member{
+				OrgId:      t.SenderOrgId,
+				MemberInfo: t.SenderMemberInfo,
+				MemberType: acPb.MemberType(t.SenderMemberType),
 				//SignatureAlgorithm: t.SenderSA,
 			},
 			Signature: t.SenderSignature,
@@ -190,7 +191,7 @@ func (t *TxInfo) GetTx() (*commonPb.Transaction, error) {
 		Result: &commonPb.Result{
 			Code:      commonPb.TxStatusCode(t.TxStatusCode),
 			RwSetHash: t.RwSetHash,
-			Message: t.Message,
+			Message:   t.Message,
 			ContractResult: &commonPb.ContractResult{
 				Code:          t.ContractResultCode,
 				Result:        t.ResultData,
