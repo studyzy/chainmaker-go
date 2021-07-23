@@ -123,7 +123,7 @@ func convertRows2Map(rows *sql.Rows) (map[string][]byte, error) {
 		} else {
 			value = string(col)
 		}
-		resultC[cols[i]] = []byte( value)
+		resultC[cols[i]] = []byte(value)
 	}
 	return resultC, nil
 }

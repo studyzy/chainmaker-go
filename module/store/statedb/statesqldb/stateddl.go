@@ -84,8 +84,10 @@ func (b *StateRecordSql) GetCountSql() (string, []interface{}) {
 }
 
 // NewStateRecordSql construct a new StateRecordSql
-func NewStateRecordSql(contractName string, sql string, sqlType protocol.SqlType, version string, status int) *StateRecordSql {
-	bytes, _ := hash.Get(crypto.HASH_TYPE_SHA256, []byte(contractName+contractStoreSeparator+version+contractStoreSeparator+sql))
+func NewStateRecordSql(contractName string, sql string, sqlType protocol.SqlType,
+	version string, status int) *StateRecordSql {
+	rawId := []byte(contractName + contractStoreSeparator + version + contractStoreSeparator + sql)
+	bytes, _ := hash.Get(crypto.HASH_TYPE_SHA256, rawId)
 	id := hex.EncodeToString(bytes)
 	return &StateRecordSql{
 		Id:           id,

@@ -35,12 +35,8 @@ const (
 	archivedPivotKey         = "archivedPivotKey"
 )
 
-const (
-	blockDBName = ""
-)
-
 var (
-	ValueNotFoundError = errors.New("value not found")
+	ErrValueNotFound = errors.New("value not found")
 )
 
 // BlockKvDB provider a implementation of `blockdb.BlockDB`
@@ -137,7 +133,6 @@ func (b *BlockKvDB) GetArchivedPivot() (uint64, error) {
 	return b.archivedPivot, nil
 }
 
-
 // ShrinkBlocks remove ranged txid--SerializedTx from kvdb
 func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
 	var (
@@ -150,7 +145,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 	}
 
 	if utils.IsConfBlock(block) {
-		return nil, archive.ConfigBlockArchiveError
+		return nil, archive.ErrConfigBlockArchive
 	}
 
 	txIdsMap := make(map[uint64][]string)
@@ -212,7 +207,7 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 		}
 
 		if !bytes.Equal(blockInfo.Block.Header.BlockHash, sBlock.Header.BlockHash) {
-			return archive.InvalidateRestoreBlocksError
+			return archive.ErrInvalidateRestoreBlocks
 		}
 
 		batch := types.NewUpdateBatch()
@@ -269,7 +264,7 @@ func (b *BlockKvDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	}
 
 	if heightBytes == nil {
-		return 0, ValueNotFoundError
+		return 0, ErrValueNotFound
 	}
 
 	return decodeBlockNumKey(heightBytes), nil
@@ -283,7 +278,7 @@ func (b *BlockKvDB) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader
 	}
 
 	if vBytes == nil {
-		return nil, ValueNotFoundError
+		return nil, ErrValueNotFound
 	}
 
 	var blockStoreInfo storePb.SerializedBlock
@@ -372,7 +367,7 @@ func (b *BlockKvDB) GetTxHeight(txId string) (uint64, error) {
 	}
 
 	if vBytes == nil {
-		return 0, ValueNotFoundError
+		return 0, ErrValueNotFound
 	}
 
 	return decodeBlockNumKey(vBytes), nil
@@ -387,7 +382,7 @@ func (b *BlockKvDB) GetTx(txId string) (*commonPb.Transaction, error) {
 	} else if len(bytes) == 0 {
 		isArchived, erra := b.TxArchived(txId)
 		if erra == nil && isArchived {
-			return nil, archive.ArchivedTxError
+			return nil, archive.ErrArchivedTx
 		}
 
 		return nil, nil
@@ -409,7 +404,7 @@ func (b *BlockKvDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, 
 	} else if len(vBytes) == 0 {
 		isArchived, erra := b.TxArchived(txId)
 		if erra == nil && isArchived {
-			return nil, archive.ArchivedTxError
+			return nil, archive.ErrArchivedTx
 		}
 		return nil, nil
 	}
@@ -441,7 +436,7 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 	}
 
 	if heightBytes == nil {
-		return false, ValueNotFoundError
+		return false, ErrValueNotFound
 	}
 
 	archivedPivot, err := b.GetArchivedPivot()
@@ -509,8 +504,8 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 		//	defer batchWG.Done()
 		tx, err1 := b.GetTx(txid)
 		if err1 != nil {
-			if err1 == archive.ArchivedTxError {
-				return nil, archive.ArchivedBlockError
+			if err1 == archive.ErrArchivedTx {
+				return nil, archive.ErrArchivedBlock
 			}
 			//errsChan <- err
 			return nil, err1
@@ -583,9 +578,9 @@ func (b *BlockKvDB) getNextArchivePivot(pivotBlock *commonPb.Block) (uint64, err
 
 		//we should not get block data only if it is config block
 		archivedPivot = archivedPivot - 1
-		_, errb := b.GetBlock(uint64(archivedPivot))
-		if errb == archive.ArchivedBlockError {
-			curIsConf = false
+		_, errb := b.GetBlock(archivedPivot)
+		if errb == archive.ErrArchivedBlock {
+			//curIsConf = false
 			break
 		} else if errb != nil {
 			return 0, errb

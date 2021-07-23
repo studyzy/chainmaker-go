@@ -57,7 +57,8 @@ func (t *TxInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&t.ChainId, &t.TxType, &t.TxId, &t.Timestamp, &t.ExpirationTime,
 		&t.ContractName, &t.Method, &t.Parameters, &t.Sequence, &t.Limit,
 		&t.SenderOrgId, &t.SenderMemberInfo, &t.SenderMemberType, &t.SenderSA, &t.SenderSignature, &t.Endorsers,
-		&t.TxStatusCode, &t.ContractResultCode, &t.ResultData, &t.ResultMessage, &t.GasUsed, &t.ContractEvents, &t.RwSetHash, &t.Message,
+		&t.TxStatusCode, &t.ContractResultCode, &t.ResultData, &t.ResultMessage, &t.GasUsed,
+		&t.ContractEvents, &t.RwSetHash, &t.Message,
 		&t.BlockHeight, &t.BlockHash, &t.Offset)
 }
 func (t *TxInfo) GetCreateTableSql(dbType string) string {
@@ -91,10 +92,11 @@ func (t *TxInfo) GetTableName() string {
 }
 func (t *TxInfo) GetInsertSql() (string, []interface{}) {
 	return "INSERT INTO tx_infos values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", []interface{}{
-		t.ChainId, t.TxType, t.TxId, t.Timestamp, t.ExpirationTime, t.ContractName, t.Method, t.Parameters, t.Sequence, t.Limit,
+		t.ChainId, t.TxType, t.TxId, t.Timestamp, t.ExpirationTime,
+		t.ContractName, t.Method, t.Parameters, t.Sequence, t.Limit,
 		t.SenderOrgId, t.SenderMemberInfo, t.SenderMemberType, t.SenderSA, t.SenderSignature, t.Endorsers,
-		t.TxStatusCode, t.ContractResultCode, t.ResultData, t.ResultMessage, t.GasUsed, t.ContractEvents, t.RwSetHash, t.Message,
-		t.BlockHeight, t.BlockHash, t.Offset}
+		t.TxStatusCode, t.ContractResultCode, t.ResultData, t.ResultMessage, t.GasUsed,
+		t.ContractEvents, t.RwSetHash, t.Message, t.BlockHeight, t.BlockHash, t.Offset}
 }
 func (t *TxInfo) GetUpdateSql() (string, []interface{}) {
 	return "UPDATE tx_infos SET chain_id=? WHERE tx_id=?", []interface{}{t.ChainId, t.TxId}

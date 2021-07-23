@@ -112,8 +112,8 @@ func (h *ResultKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializ
 
 	writeTime := utils.CurrentTimeMillisSeconds() - beforeWrite
 	h.Logger.Infof("restore block RWSets from [%d] to [%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
-		blockInfos[len(blockInfos)-1].Block.Header.BlockHeight, blockInfos[0].Block.Header.BlockHeight, beforeWrite-startTime, writeTime,
-		utils.CurrentTimeMillisSeconds()-startTime)
+		blockInfos[len(blockInfos)-1].Block.Header.BlockHeight, blockInfos[0].Block.Header.BlockHeight,
+		beforeWrite-startTime, writeTime, utils.CurrentTimeMillisSeconds()-startTime)
 
 	return nil
 }
