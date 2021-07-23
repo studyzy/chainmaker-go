@@ -21,6 +21,7 @@ import (
 )
 
 var ErrNotImplement = errors.New("implement me")
+var ErrNullPoint = errors.New("null point")
 
 // BlockSqlDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a mysql based data model

@@ -104,6 +104,9 @@ func (b *BlockInfo) GetCountSql() (string, []interface{}) {
 	return "SELECT count(*) FROM block_infos WHERE block_height=?", []interface{}{b.BlockHeight}
 }
 func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
+	if block.Header == nil {
+		return nil, ErrNullPoint
+	}
 	blockInfo := &BlockInfo{
 		ChainId:            block.Header.ChainId,
 		BlockHeight:        block.Header.BlockHeight,
@@ -115,9 +118,9 @@ func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 		RwSetRoot:          block.Header.RwSetRoot,
 		TxRoot:             block.Header.TxRoot,
 		BlockTimestamp:     block.Header.BlockTimestamp,
-		ProposerOrgId:      block.Header.Proposer.OrgId,
-		ProposerMemberInfo: block.Header.Proposer.MemberInfo,
-		ProposerMemberType: int(block.Header.Proposer.MemberType),
+		ProposerOrgId:      getProposer(block.Header).OrgId,
+		ProposerMemberInfo: getProposer(block.Header).MemberInfo,
+		ProposerMemberType: int(getProposer(block.Header).MemberType),
 		//ProposerSA:       block.Header.Proposer.SignatureAlgorithm,
 		ConsensusArgs: block.Header.ConsensusArgs,
 		TxCount:       block.Header.TxCount,
@@ -151,7 +154,16 @@ func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 
 	return blockInfo, nil
 }
-
+func getProposer(h *commonPb.BlockHeader) *accesscontrol.Member {
+	if h.Proposer == nil {
+		return &accesscontrol.Member{
+			OrgId:      "",
+			MemberType: 0,
+			MemberInfo: nil,
+		}
+	}
+	return h.Proposer
+}
 func ConvertHeader2BlockInfo(header *commonPb.BlockHeader) *BlockInfo {
 	blockInfo := &BlockInfo{
 		ChainId:            header.ChainId,
