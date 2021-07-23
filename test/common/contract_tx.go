@@ -39,17 +39,27 @@ const (
 	fieldWithRWSet                  = "withRWSet"
 )
 
-const (
+var (
 	CHAIN1         = "chain1"
 	IP             = "localhost"
 	Port           = 12301
-	certPathPrefix = "../../config"
-	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
-	orgId          = "wx-org1.chainmaker.org"
-	prePathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
+	certPathPrefix = "./config"
+
+	orgId = "wx-org1.chainmaker.org"
 )
 
+func SetCertPathPrefix(path string) {
+	certPathPrefix = path
+}
+func prePathFmt() string {
+	return certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
+}
+func userKeyPath() string {
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+}
+func userCrtPath() string {
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+}
 func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string, wasmPath string,
 	runtimeType commonPb.RuntimeType) string {
 
@@ -89,7 +99,7 @@ func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntr
 	for _, orgId := range orgIdList {
 
 		numStr := strconv.Itoa(orgId)
-		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
+		path := fmt.Sprintf(prePathFmt(), numStr) + "admin1.sign.key"
 		file, err := ioutil.ReadFile(path)
 		if err != nil {
 			panic(err)
@@ -99,7 +109,7 @@ func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntr
 			panic(err)
 		}
 
-		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
+		userCrtPath := fmt.Sprintf(prePathFmt(), numStr) + "admin1.sign.crt"
 		file2, err := ioutil.ReadFile(userCrtPath)
 		//fmt.Println("node", orgId, "crt", string(file2))
 		if err != nil {
@@ -133,7 +143,7 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		txId = utils.GetRandTxId()
 	}
 
-	file, err := ioutil.ReadFile(userCrtPath)
+	file, err := ioutil.ReadFile(userCrtPath())
 	if err != nil {
 		panic(err)
 	}

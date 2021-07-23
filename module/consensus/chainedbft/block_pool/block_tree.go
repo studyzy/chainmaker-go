@@ -11,8 +11,6 @@ import (
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-
 	"chainmaker.org/chainmaker/common/queue"
 	"chainmaker.org/chainmaker/pb-go/common"
 )
@@ -38,20 +36,18 @@ func (bn *BlockNode) GetChildren() []string {
 type BlockTree struct {
 	idToNode       map[string]*BlockNode // store block and its' children blockHash
 	heightToBlocks map[uint64][]*common.Block
-	rootBlock      *common.Block          // The block has been committed to the chain
-	rootQC         *chainedbft.QuorumCert // the block has been committed to the chain
-	prunedBlocks   []string               // Caches the block hash that will be deleted
-	maxPrunedSize  int                    // The maximum number of cached blocks that will be deleted
+	rootBlock      *common.Block // The latest block is committed to the chain
+	prunedBlocks   []string      // Caches the block hash that will be deleted
+	maxPrunedSize  int           // The maximum number of cached blocks that will be deleted
 }
 
 //NewBlockTree init a block tree with rootBlock, rootQC and maxPrunedSize
-func NewBlockTree(rootBlock *common.Block, rootQC *chainedbft.QuorumCert, maxPrunedSize int) *BlockTree {
+func NewBlockTree(rootBlock *common.Block, maxPrunedSize int) *BlockTree {
 	blockTree := &BlockTree{
-		rootQC:         rootQC,
-		rootBlock:      rootBlock,
-		maxPrunedSize:  maxPrunedSize,
 		idToNode:       make(map[string]*BlockNode, 10),
+		rootBlock:      rootBlock,
 		prunedBlocks:   make([]string, 0, maxPrunedSize),
+		maxPrunedSize:  maxPrunedSize,
 		heightToBlocks: make(map[uint64][]*common.Block),
 	}
 	blockTree.idToNode[string(rootBlock.Header.BlockHash)] = &BlockNode{
@@ -89,10 +85,6 @@ func (bt *BlockTree) GetRootBlock() *common.Block {
 	return bt.rootBlock
 }
 
-func (bt *BlockTree) GetRootQC() *chainedbft.QuorumCert {
-	return bt.rootQC
-}
-
 //GetBlockByID get block by block hash
 func (bt *BlockTree) GetBlockByID(id string) *common.Block {
 	if node, ok := bt.idToNode[id]; ok {
@@ -128,7 +120,7 @@ func (bt *BlockTree) BranchFromRoot(block *common.Block) []*common.Block {
 }
 
 //PruneBlock prune block and update rootBlock
-func (bt *BlockTree) PruneBlock(newRootID string, newRootQC *chainedbft.QuorumCert) ([]string, error) {
+func (bt *BlockTree) PruneBlock(newRootID string) ([]string, error) {
 	toPruned := bt.findBlockToPrune(newRootID)
 	if toPruned == nil {
 		return nil, nil
@@ -138,7 +130,6 @@ func (bt *BlockTree) PruneBlock(newRootID string, newRootQC *chainedbft.QuorumCe
 		return nil, nil
 	}
 	bt.rootBlock = newRootBlock
-	bt.rootQC = newRootQC
 	bt.prunedBlocks = append(bt.prunedBlocks, toPruned[0:]...)
 
 	var pruned []string

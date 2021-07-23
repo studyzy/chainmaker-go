@@ -12,13 +12,14 @@ SPDX-License-Identifier: Apache-2.0
 package native
 
 import (
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
 	"time"
+
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/utils"
@@ -141,7 +142,7 @@ func QueryRequest(sk3 crypto.PrivateKey, sender *acPb.Member, client *apiPb.RpcN
 	}
 
 	signer := getSigner(sk3, sender)
-	//signBytes, err := signer.Sign("SM3", rawTxBytes)
+	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	signBytes, err := signer.Sign(crypto.CRYPTO_ALGO_SHA256, rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
