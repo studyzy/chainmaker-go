@@ -47,9 +47,9 @@ import (
 
 const (
 	CHAIN1           = "chain1"
-	certPathPrefix   = "/big_space/chainmaker/chainmaker-go/build/crypto-config"
-	certWasmPath     = "/big_space/chainmaker/chainmaker-go/test/wasm/rust-fact-1.0.0.wasm"
-	addWasmPath      = "/big_space/chainmaker/chainmaker-go/test/wasm/rust-counter-1.0.0.wasm"
+	certPathPrefix   = "../../build/crypto-config"
+	certWasmPath     = "../wasm/rust-fact-2.0.0.wasm"
+	addWasmPath      = "../wasm/rust-counter-2.0.0.wasm"
 	userKeyPath      = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key"
 	userCrtPath      = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
 	orgId            = "wx-org1.chainmaker.org"
@@ -135,6 +135,7 @@ var (
 )
 
 func main() {
+	common.SetCertPathPrefix(certPathPrefix)
 	var (
 		step     int
 		wasmType int
