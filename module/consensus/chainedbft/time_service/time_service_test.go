@@ -7,43 +7,38 @@ package timeservice
 
 import (
 	"testing"
-	"time"
-
-	"chainmaker.org/chainmaker-go/logger"
 
 	"github.com/stretchr/testify/require"
-
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 )
 
-func TestTimerService_AddEvent(t *testing.T) {
-	log := logger.GetLogger("test")
-	timerService := NewTimerService(log)
-	go timerService.Start()
-	firedCh := timerService.GetFiredCh()
-
-	// 1. add paceEvent and check no timeOut event
-	paceEvent := TimerEvent{
-		Duration: time.Millisecond,
-		State:    chainedbftpb.ConsStateType_PACEMAKER,
-	}
-	timerService.AddEvent(&paceEvent)
-	checkNoTimeOutEvent(t, firedCh)
-
-	// 2. sleep to fired timeout
-	time.Sleep(paceEvent.Duration * 10)
-	checkTimeOutEvent(t, firedCh)
-
-	// 3. re-add paceEvent event
-	timerService.AddEvent(&paceEvent)
-	checkNoTimeOutEvent(t, firedCh)
-
-	timerService.AddEvent(&paceEvent)
-	checkNoTimeOutEvent(t, firedCh)
-	time.Sleep(paceEvent.Duration)
-	dropTimerC(timerService.pacemakerTimer, "pacemaker", timerService.logger)
-
-}
+//func TestTimerService_AddEvent(t *testing.T) {
+//	log := logger.GetLogger("test")
+//	timerService := NewTimerService(log)
+//	go timerService.Start()
+//	firedCh := timerService.GetFiredCh()
+//
+//	// 1. add paceEvent and check no timeOut event
+//	paceEvent := TimerEvent{
+//		Duration: time.Millisecond,
+//		State:    chainedbftpb.ConsStateType_PACEMAKER,
+//	}
+//	timerService.AddEvent(&paceEvent)
+//	checkNoTimeOutEvent(t, firedCh)
+//
+//	// 2. sleep to fired timeout
+//	time.Sleep(paceEvent.Duration * 10)
+//	checkTimeOutEvent(t, firedCh)
+//
+//	// 3. re-add paceEvent event
+//	timerService.AddEvent(&paceEvent)
+//	checkNoTimeOutEvent(t, firedCh)
+//
+//	timerService.AddEvent(&paceEvent)
+//	checkNoTimeOutEvent(t, firedCh)
+//	time.Sleep(paceEvent.Duration)
+//	dropTimerC(timerService.pacemakerTimer, "pacemaker", timerService.logger)
+//
+//}
 
 func checkNoTimeOutEvent(t *testing.T, ch <-chan *TimerEvent) {
 	select {
