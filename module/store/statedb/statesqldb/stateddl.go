@@ -27,7 +27,7 @@ type StateRecordSql struct {
 	// id is sql hash
 	Id           string    `gorm:"size:64;primaryKey"`
 	ContractName string    `gorm:"size:100"`
-	Sql          string    `gorm:"size:4000"`
+	SqlString    string    `gorm:"size:4000"`
 	SqlType      int       `gorm:"size:1;default:1"`
 	Version      string    `gorm:"size:20"`
 	Status       int       `gorm:"default:0"` //0: start process, 1:success 2:fail
@@ -39,7 +39,7 @@ func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
 		return `CREATE TABLE state_record_sql (
 					id varchar(64),
 					contract_name varchar(100),
-					sql varchar(4000),
+					sql_string varchar(4000),
 					version varchar(20),
 					status int,
 					updated_at datetime(3) NULL DEFAULT null,
@@ -49,7 +49,7 @@ func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
 		return `CREATE TABLE state_record_sql (
 					id text,
 					contract_name text,
-					sql text,
+					sql_string text,
 					version text,
 					status integer,
 					updated_at datetime DEFAULT null,
@@ -64,7 +64,7 @@ func (b *StateRecordSql) GetTableName() string {
 
 func (b *StateRecordSql) GetInsertSql() (string, []interface{}) {
 	return "INSERT INTO state_record_sql values(?,?,?,?,?,?,?)",
-		[]interface{}{b.Id, b.ContractName, b.Sql, b.SqlType, b.Version, b.Status, b.UpdatedAt}
+		[]interface{}{b.Id, b.ContractName, b.SqlString, b.SqlType, b.Version, b.Status, b.UpdatedAt}
 }
 
 func (b *StateRecordSql) GetUpdateSql() (string, []interface{}) {
@@ -92,7 +92,7 @@ func NewStateRecordSql(contractName string, sql string, sqlType protocol.SqlType
 	return &StateRecordSql{
 		Id:           id,
 		ContractName: contractName,
-		Sql:          sql,
+		SqlString:    sql,
 		SqlType:      int(sqlType),
 		Version:      version,
 		Status:       status,
