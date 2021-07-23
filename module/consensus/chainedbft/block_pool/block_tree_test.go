@@ -8,13 +8,13 @@ package blockpool
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker-go/utils"
 )
 
 func TestBlockTree_InsertBlock(t *testing.T) {
 	rootBlk := common.Block{Header: &common.BlockHeader{BlockHash: []byte(utils.GetRandTxId())}}
-	tree := NewBlockTree(&rootBlk, nil, 10)
+	tree := NewBlockTree(&rootBlk, 10)
 	//tree.InsertBlock()
 	_ = tree
 }

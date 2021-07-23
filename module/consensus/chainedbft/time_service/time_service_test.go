@@ -37,6 +37,7 @@ import (
 //	checkNoTimeOutEvent(t, firedCh)
 //	time.Sleep(paceEvent.Duration)
 //	dropTimerC(timerService.pacemakerTimer, "pacemaker", timerService.logger)
+//
 //}
 
 func checkNoTimeOutEvent(t *testing.T, ch <-chan *TimerEvent) {
