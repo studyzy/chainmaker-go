@@ -13,8 +13,6 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -22,9 +20,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/concurrentlru"
-	bccrypto "chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
@@ -33,9 +28,6 @@ import (
 )
 
 const unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
-
-// type used to specify the public information type: certificate or public key
-type IdentityType string
 
 const (
 	ModuleNameAccessControl = "Access Control"
@@ -68,18 +60,17 @@ type accessControl struct {
 	// verification options for organization members
 	opts bcx509.VerifyOptions
 
-	localOrg           *organization
-	localSigningMember protocol.SigningMember
+	localOrg *organization
 
 	//local trust members
 	localTrustMembers []*config.TrustMemberConfig
 	log               protocol.Logger
 }
 
-func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig protocol.ChainConf,
+func NewAccessControlWithChainConfig(chainConfig protocol.ChainConf,
 	localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
 	conf := chainConfig.ChainConfig()
-	acp, err := newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile, conf, localOrgId, store, log)
+	acp, err := newAccessControlWithChainConfigPb(conf, localOrgId, store, log)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +79,9 @@ func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCer
 	return acp, err
 }
 
-func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig *config.ChainConfig,
-	localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (*accessControl, error) {
+func newAccessControlWithChainConfigPb(chainConfig *config.ChainConfig, localOrgId string,
+	store protocol.BlockchainStore, log protocol.Logger) (*accessControl, error) {
 	ac := &accessControl{
-		authMode:              AuthMode(chainConfig.AuthType),
 		orgList:               &sync.Map{},
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
@@ -124,11 +114,6 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 	if err := ac.loadCertFrozenList(); err != nil {
 		return nil, err
 	}
-
-	if err := ac.initLocalSigningMember(localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile); err != nil {
-		return nil, err
-	}
-
 	return ac, nil
 }
 
@@ -194,7 +179,10 @@ func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, er
 		return false, fmt.Errorf("authentication fail, not ac member on this chain: [%v]", err)
 	}
 
-	if ac.authMode == MemberMode || localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
+	// if ac.authMode == MemberMode || localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
+	// 	return true, nil
+	// }
+	if localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
 		return true, nil
 	}
 
@@ -226,37 +214,93 @@ func (ac *accessControl) ResourcePolicyExists(resourceName string) bool {
 	return true
 }
 
-// GetValidEndorsements filters all endorsement entries and returns all valid ones
-func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
-	if atomic.LoadInt32(&ac.orgNum) <= 0 {
-		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
+func (ac *accessControl) NewMember(member *pbac.Member) (protocol.Member, error) {
+	memberCached, ok := ac.lookUpSignerInCache(string(member.MemberInfo))
+	if ok && memberCached.signer.GetOrgId() == member.OrgId {
+		ac.log.Debugf("member found in local cache")
+		return memberCached.signer, nil
 	}
-	refinedPolicy, err := ac.refinePrincipal(principal)
-	if err != nil {
-		return nil, fmt.Errorf("authentication fail, not a member on this chain: [%v]", err)
-	}
-	endorsements := refinedPolicy.GetEndorsement()
-	if ac.authMode == MemberMode || localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
-		return endorsements, nil
-	}
-	p, err := ac.lookUpPolicyByResourceName(principal.GetResourceName())
-	if err != nil {
-		return nil, fmt.Errorf("authentication fail: [%v]", err)
-	}
-	orgListRaw := p.GetOrgList()
-	roleListRaw := p.GetRoleList()
-	orgList := map[string]bool{}
-	roleList := map[protocol.Role]bool{}
-	for _, orgRaw := range orgListRaw {
-		orgList[orgRaw] = true
-	}
-	for _, roleRaw := range roleListRaw {
-		roleList[roleRaw] = true
-	}
-	return ac.getValidEndorsements(orgList, roleList, endorsements), nil
+	memberFactory := Factory()
+	return memberFactory.NewMember(member, ac)
 }
 
-// ValidateCRL validates whether the CRL is issued by a trusted CA
+func (ac *accessControl) GetMemberStatus(member protocol.Member) (pbac.MemberStatus, error) {
+	switch member.(type) {
+	case *certMember:
+		var certChain []*bcx509.Certificate
+		certChain = append(certChain, member.(*certMember).cert)
+		err := ac.checkCRL(certChain)
+		if err != nil && err.Error() == "certificate is revoked" {
+			return pbac.MemberStatus_REVOKED, nil
+		}
+		return pbac.MemberStatus_NORMAL, nil
+	case *pkMember:
+		return pbac.MemberStatus_NORMAL, nil
+	}
+	return pbac.MemberStatus_INVALID, fmt.Errorf("get member status failed: unsupport member type")
+}
+
+func (ac *accessControl) VerifyRelatedMaterial(verifyType pbac.VerifyType, data []byte) (bool, error) {
+	switch verifyType {
+	case pbac.VerifyType_CRL:
+		crlPEM, _ := pem.Decode(data)
+		if crlPEM == nil {
+			return false, fmt.Errorf("empty CRL")
+		}
+		var orgs = ac.getAllOrgs()
+		for crlPEM != nil {
+			crl, err := x509.ParseCRL(crlPEM.Bytes)
+			if err != nil {
+				return false, fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPEM.Bytes))
+			}
+
+			err = ac.validateCrlVersion(crlPEM.Bytes, crl)
+			if err != nil {
+				return false, err
+			}
+
+			err1 := ac.checkCRLAgainstTrustedCerts(crl, orgs, false)
+			err2 := ac.checkCRLAgainstTrustedCerts(crl, orgs, true)
+			if err1 != nil && err2 != nil {
+				return false, fmt.Errorf("invalid CRL: \n\t[verification against trusted root certs: %v], \n\t[verification against trusted intermediate certs: %v]", err1, err2)
+			}
+		}
+		return true, nil
+	}
+	return false, fmt.Errorf("verify member's related material failed: unsupport verify type")
+}
+
+//GetValidEndorsements filters all endorsement entries and returns all valid ones
+// func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
+// 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
+// 		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
+// 	}
+// 	refinedPolicy, err := ac.refinePrincipal(principal)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("authentication fail, not a member on this chain: [%v]", err)
+// 	}
+// 	endorsements := refinedPolicy.GetEndorsement()
+// 	if ac.authMode == MemberMode || localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
+// 		return endorsements, nil
+// 	}
+// 	p, err := ac.lookUpPolicyByResourceName(principal.GetResourceName())
+// 	if err != nil {
+// 		return nil, fmt.Errorf("authentication fail: [%v]", err)
+// 	}
+// 	orgListRaw := p.GetOrgList()
+// 	roleListRaw := p.GetRoleList()
+// 	orgList := map[string]bool{}
+// 	roleList := map[protocol.Role]bool{}
+// 	for _, orgRaw := range orgListRaw {
+// 		orgList[orgRaw] = true
+// 	}
+// 	for _, roleRaw := range roleListRaw {
+// 		roleList[roleRaw] = true
+// 	}
+// 	return ac.getValidEndorsements(orgList, roleList, endorsements), nil
+// }
+
+//ValidateCRL validates whether the CRL is issued by a trusted CA
 func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, error) {
 	crlPEM, rest := pem.Decode(crlBytes)
 	if crlPEM == nil {
@@ -288,171 +332,13 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 	return crls, nil
 }
 
-// IsCertRevoked verify whether cert chain is revoked by a trusted CA.
+//IsCertRevoked verify whether cert chain is revoked by a trusted CA.
 func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
 	err := ac.checkCRL(certChain)
 	if err != nil && err.Error() == "certificate is revoked" {
 		return true
 	}
 	return false
-}
-
-// GetLocalOrgId returns local organization id
-func (ac *accessControl) GetLocalOrgId() string {
-	return ac.localOrg.id
-}
-
-// GetLocalSigningMember returns local SigningMember
-func (ac *accessControl) GetLocalSigningMember() protocol.SigningMember {
-	return ac.localSigningMember
-}
-
-// NewMemberFromCertPem creates a member from cert pem
-func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.Member, error) {
-	var err error
-
-	memberCached, ok := ac.lookUpSignerInCache(certPEM)
-	if ok && memberCached.signer.GetOrgId() == orgId {
-		ac.log.Debugf("member found in local cache")
-		return memberCached.signer, nil
-	}
-
-	var newMember member
-	newMember.orgId = orgId
-	newMember.hashType = ac.hashType
-
-	certBlock, _ := pem.Decode([]byte(certPEM))
-	if certBlock == nil {
-		return nil, fmt.Errorf("setup member failed, none public key or certificate given")
-	}
-
-	pk, err := asym.PublicKeyFromPEM([]byte(certPEM))
-	if err == nil {
-		certificate := &bcx509.Certificate{
-			SubjectKeyId: nil,
-			Signature:    nil,
-			Raw:          certBlock.Bytes,
-			PublicKey:    pk,
-		}
-		newMember.id = certPEM
-		newMember.cert = certificate
-		newMember.pk = pk
-		newMember.identityType = pbac.MemberType_PUBLIC_KEY
-		return &newMember, nil
-	}
-
-	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
-	if err == nil {
-
-		for _, v := range ac.localTrustMembers {
-			if v.MemberInfo == certPEM {
-				newMember.role = append(newMember.role, protocol.Role(strings.ToUpper(v.Role)))
-				id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
-				if err != nil {
-					id = []byte(cert.Subject.CommonName)
-				}
-				newMember.id = string(id)
-				newMember.cert = cert
-				newMember.pk = cert.PublicKey
-				newMember.identityType = IdentityTypeCert
-				return &newMember, nil
-			}
-		}
-
-		orgIdFromCert := ""
-		if len(cert.Subject.Organization) > 0 {
-			orgIdFromCert = cert.Subject.Organization[0]
-		}
-		if orgIdFromCert != orgId {
-			return nil, fmt.Errorf("setup member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
-		}
-
-		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
-		if err != nil {
-			id = []byte(cert.Subject.CommonName)
-		}
-		newMember.id = string(id)
-		newMember.cert = cert
-		newMember.pk = cert.PublicKey
-		/*
-			newMember.pk, err = asym.PublicKeyFromDER(cert.RawSubjectPublicKeyInfo)
-			if err != nil {
-				return nil, fmt.Errorf("fail to parse member public key: %v", err)
-			}
-		*/
-
-		ou := ""
-		if len(cert.Subject.OrganizationalUnit) > 0 {
-			ou = cert.Subject.OrganizationalUnit[0]
-		}
-		ou = strings.ToUpper(ou)
-
-		newMember.role = append(newMember.role, protocol.Role(ou))
-
-		newMember.identityType = pbac.MemberType_CERT
-		return &newMember, nil
-	}
-
-	return nil, fmt.Errorf("setup member failed, invalid public key or certificate")
-}
-
-// NewMemberFromProto creates a member from Member
-func (ac *accessControl) NewMemberFromProto(Member *pbac.Member) (protocol.Member, error) {
-	if Member.MemberType == pbac.MemberType_CERT {
-		return ac.NewMemberFromCertPem(Member.OrgId, string(Member.MemberInfo))
-	} else {
-		certPEM, ok := ac.lookUpCertCache(string(Member.MemberInfo))
-		if !ok {
-			return nil, fmt.Errorf("setup member failed, fail to look up certificate ID")
-		}
-		if certPEM == nil {
-			return nil, fmt.Errorf("setup member failed, unknown certificate ID")
-		}
-		return ac.NewMemberFromCertPem(Member.OrgId, string(certPEM))
-	}
-}
-
-// NewSigningMemberFromCertFile creates a signing member from private key and cert files
-func (ac *accessControl) NewSigningMemberFromCertFile(orgId string, prvKeyFile, password, certFile string) (protocol.SigningMember, error) {
-	memberInst, err := ac.newMemberFromCert(orgId, certFile)
-	if err != nil {
-		return nil, err
-	}
-
-	skPEM, err := ioutil.ReadFile(prvKeyFile)
-
-	return ac.NewSigningMember(memberInst, string(skPEM), password)
-}
-
-// NewSigningMember creates a signing member from existing member
-func (ac *accessControl) NewSigningMember(mem protocol.Member, privateKeyPem string, password string) (protocol.SigningMember, error) {
-	var err error
-	var sk bccrypto.PrivateKey
-	p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
-	if p11Config.Enabled {
-		p11Handle, err := getP11Handle()
-		if err != nil {
-			return nil, err
-		}
-		mem, ok := mem.(*member)
-		if !ok {
-			return nil, fmt.Errorf("setup member failed, invalid member type")
-		}
-		sk, err = pkcs11.NewPrivateKey(p11Handle, mem.pk)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		sk, err = asym.PrivateKeyFromPEM([]byte(privateKeyPem), []byte(password))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &signingMember{
-		member: *mem.(*member),
-		sk:     sk,
-	}, nil
 }
 
 func (ac *accessControl) Module() string {

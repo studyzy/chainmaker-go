@@ -21,6 +21,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	bccrypto "chainmaker.org/chainmaker/common/crypto"
+
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
@@ -146,15 +148,45 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 	return nil
 }
 
-func (ac *accessControl) initLocalSigningMember(localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) error {
+func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (protocol.SigningMember, error) {
 	if localPrivKeyFile != "" && localCertFile != "" {
-		var err error
-		ac.localSigningMember, err = ac.NewSigningMemberFromCertFile(localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
+		certPEM, err := ioutil.ReadFile(localCertFile)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
 		}
+		certMember, err := newMemberFromCertPem(localOrgId, string(certPEM), hashType, true)
+		if err != nil {
+			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+		}
+		skPEM, err := ioutil.ReadFile(localPrivKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+		}
+		var sk bccrypto.PrivateKey
+		p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
+		if p11Config.Enabled {
+			p11Handle, err := getP11Handle()
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+			}
+
+			sk, err = pkcs11.NewPrivateKey(p11Handle, certMember.cert.PublicKey)
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+			}
+		} else {
+			sk, err = asym.PrivateKeyFromPEM([]byte(skPEM), []byte(localPrivKeyPwd))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return &signingCertMember{
+			certMember: *certMember,
+			sk:         sk,
+		}, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func (ac *accessControl) buildCertificateChain(root, orgId string, org *organization) ([]*bcx509.Certificate, error) {
@@ -525,7 +557,7 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 		if entry.Signer.OrgId != targetOrg {
 			continue
 		}
-		ouList, err := ac.getSignerRoleList(entry.Signer.MemberInfo)
+		signerRole, err := ac.getSignerRole(entry.Signer.MemberInfo)
 		if err != nil {
 			var info string
 			if entry.Signer.MemberType == pbac.MemberType_CERT {
@@ -536,10 +568,8 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err, info)
 			continue
 		}
-		for _, ou := range ouList {
-			if ou == role {
-				return true, nil
-			}
+		if signerRole == role {
+			return true, nil
 		}
 	}
 	return false, fmt.Errorf("authentication fail: target [%s] does not belong to the signer", targetOrg)
@@ -558,19 +588,15 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 		if len(roleList) == 0 {
 			return true, nil
 		}
-		var signerRoleList []protocol.Role
-		var err error
-		signerRoleList, err = ac.getSignerRoleList(endorsement.Signer.MemberInfo)
+		signerRole, err := ac.getSignerRole(endorsement.Signer.MemberInfo)
 		if err != nil {
 			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err, ac.getEndorsementSignerMemberInfoString(endorsement.Signer))
 			continue
 		}
-		for _, ou := range signerRoleList {
-			if _, ok := roleList[ou]; ok {
-				return true, nil
-			}
+		if _, ok := roleList[signerRole]; ok {
+			return true, nil
 		}
-		ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRoleList, p.GetRoleList())
+		ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRole, p.GetRoleList())
 	}
 
 	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)", resourceName)
@@ -990,15 +1016,6 @@ func getP11Handle() (*pkcs11.P11Handle, error) {
 	return p11Handle, nil
 }
 
-func (ac *accessControl) newMemberFromCert(orgId string, certFile string) (protocol.Member, error) {
-	//certPEM, err := ioutil.ReadFile(filepath.Join(localconf.ConfPath, localconf.ChainMakerConfig.NodeConfig.CertFile))
-	certPEM, err := ioutil.ReadFile(certFile)
-	if err != nil {
-		return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
-	}
-	return ac.NewMemberFromCertPem(orgId, string(certPEM))
-}
-
 func (ac *accessControl) countValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool, endorsements []*common.EndorsementEntry) int {
 	refinedEndorsements := ac.getValidEndorsements(orgList, roleList, endorsements)
 	return ac.countOrgsFromEndorsements(refinedEndorsements)
@@ -1006,7 +1023,6 @@ func (ac *accessControl) countValidEndorsements(orgList map[string]bool, roleLis
 
 func (ac *accessControl) getValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool, endorsements []*common.EndorsementEntry) []*common.EndorsementEntry {
 	var refinedEndorsements []*common.EndorsementEntry
-	var err error
 	for _, endorsement := range endorsements {
 		if len(orgList) > 0 {
 			if _, ok := orgList[endorsement.Signer.OrgId]; !ok {
@@ -1015,33 +1031,29 @@ func (ac *accessControl) getValidEndorsements(orgList map[string]bool, roleList 
 			}
 		}
 
-		var signerRoleList []protocol.Role
 		if len(roleList) == 0 {
 			refinedEndorsements = append(refinedEndorsements, endorsement)
 			continue
 		}
-		signerRoleList, err = ac.getSignerRoleList(endorsement.Signer.MemberInfo)
+		signerRole, err := ac.getSignerRole(endorsement.Signer.MemberInfo)
 		if err != nil {
 			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err, ac.getEndorsementSignerMemberInfoString(endorsement.Signer))
 			continue
 		}
-		isRoleMatching := ac.isRoleMatching(signerRoleList, roleList, &refinedEndorsements, endorsement)
+		isRoleMatching := ac.isRoleMatching(signerRole, roleList, &refinedEndorsements, endorsement)
 		if !isRoleMatching {
-			ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRoleList, roleList)
+			ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRole, roleList)
 		}
 	}
 
 	return refinedEndorsements
 }
 
-func (ac *accessControl) isRoleMatching(signerRoleList []protocol.Role, roleList map[protocol.Role]bool, refinedEndorsements *[]*common.EndorsementEntry, endorsement *common.EndorsementEntry) bool {
+func (ac *accessControl) isRoleMatching(signerRole protocol.Role, roleList map[protocol.Role]bool, refinedEndorsements *[]*common.EndorsementEntry, endorsement *common.EndorsementEntry) bool {
 	isRoleMatching := false
-	for _, sr := range signerRoleList {
-		if _, ok := roleList[sr]; ok {
-			*refinedEndorsements = append(*refinedEndorsements, endorsement)
-			isRoleMatching = true
-			break
-		}
+	if _, ok := roleList[signerRole]; ok {
+		*refinedEndorsements = append(*refinedEndorsements, endorsement)
+		isRoleMatching = true
 	}
 	return isRoleMatching
 }
@@ -1063,52 +1075,46 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	if mem == nil {
 		return nil, fmt.Errorf("authentication failed, invalid member: member should not be nil")
 	}
-	cert, err := mem.GetCertificate()
-	if err != nil {
-		return nil, err
-	}
-	if ac.authMode == MemberMode || ac.identityType == pbac.MemberType_PUBLIC_KEY { // white list mode or public key mode
-		return []*bcx509.Certificate{cert}, nil
-	}
-
-	for _, v := range ac.localTrustMembers {
-		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
-		if certBlock == nil {
-			return nil, fmt.Errorf("setup member failed, none public key or certificate given")
-		}
-		trustMemberCert, err := bcx509.ParseCertificate(certBlock.Bytes)
-		if err == nil {
-			if string(trustMemberCert.Raw) == string(cert.Raw) {
-				return []*bcx509.Certificate{cert}, nil
+	switch mem.(type) {
+	case *certMember:
+		for _, v := range ac.localTrustMembers {
+			certBlock, _ := pem.Decode([]byte(v.MemberInfo))
+			if certBlock == nil {
+				return nil, fmt.Errorf("setup member failed, none public key or certificate given")
 			}
+			trustMemberCert, err := bcx509.ParseCertificate(certBlock.Bytes)
+			if err == nil {
+				if string(trustMemberCert.Raw) == string(cert.Raw) {
+					return []*bcx509.Certificate{cert}, nil
+				}
+			}
+
+		}
+		certMember, _ := mem.(*certMember)
+		certChains, err := certMember.cert.Verify(ac.opts)
+		if err != nil {
+			return nil, fmt.Errorf("authentication failed, not ac valid certificate from trusted CAs: %v", err)
+		}
+		orgIdFromCert := certMember.cert.Subject.Organization[0]
+		if mem.GetOrgId() != orgIdFromCert {
+			return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
+		}
+		org := ac.getOrgByOrgId(orgIdFromCert)
+		if org == nil {
+			return nil, fmt.Errorf("authentication failed, no orgnization found")
+		}
+		if len(org.trustedRootCerts) <= 0 {
+			return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate or trusted public key whitelist")
 		}
 
+		certChain := ac.findCertChain(org, certChains)
+		if certChain != nil {
+			return certChain, nil
+		}
+	case *pkMember:
+		return nil, nil
 	}
-
-	certChains, err := cert.Verify(ac.opts)
-	if err != nil {
-		return nil, fmt.Errorf("authentication failed, not ac valid certificate from trusted CAs: %v", err)
-	}
-
-	orgIdFromCert := cert.Subject.Organization[0]
-	if mem.GetOrgId() != orgIdFromCert {
-		return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
-	}
-
-	org := ac.getOrgByOrgId(mem.GetOrgId())
-	if org == nil {
-		return nil, fmt.Errorf("authentication failed, no orgnization found")
-	}
-	if len(org.trustedRootCerts) <= 0 {
-		return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate or trusted public key whitelist")
-	}
-
-	certChain := ac.findCertChain(org, certChains)
-	if certChain != nil {
-		return certChain, nil
-	}
-
-	return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s]", mem.GetOrgId())
+	return nil, fmt.Errorf("verify member failed: unsupport member type")
 }
 
 func (ac *accessControl) findCertChain(org *organization, certChains [][]*bcx509.Certificate) []*bcx509.Certificate {
@@ -1135,9 +1141,9 @@ func (ac *accessControl) findCertChain(org *organization, certChains [][]*bcx509
 }
 
 // Check whether the provided member's role matches the description supplied in PrincipleWhiteList
-func (ac *accessControl) satisfyPolicy(mem protocol.Member, policy *policyWhiteList) error {
-	return mem.(*member).satisfyPolicy(policy)
-}
+// func (ac *accessControl) satisfyPolicy(mem protocol.Member, policy *policyWhiteList) error {
+// 	return mem.(*member).satisfyPolicy(policy)
+// }
 
 // all-in-one validation for signing members: certificate chain/whitelist, signature, policies
 func (ac *accessControl) refinePrincipal(principal protocol.Principal) (protocol.Principal, error) {
@@ -1182,7 +1188,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 				continue
 			}
 			memInfo = string(memInfoBytes)
-			endorsement.Signer.MemberType = pbac.MemberType_CERT
+			endorsement.Signer.MemberType = pbac.MemberType_CERT_HASH
 			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 
@@ -1219,7 +1225,7 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 
 func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte, memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, resultMsg string) {
 	var err error
-	remoteMember, err = ac.NewMemberFromCertPem(endorsement.Signer.OrgId, memInfo)
+	remoteMember, err = ac.NewMember(endorsement.Signer)
 	if err != nil {
 		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Warn(resultMsg)
@@ -1234,17 +1240,17 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 		ok = false
 		return
 	}
-	if err = ac.satisfyPolicy(remoteMember, &policyWhiteList{
-		policyType: ac.authMode,
-		policyList: ac.localOrg.trustedRootCerts,
-	}); err != nil {
-		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
-		ac.log.Warn(resultMsg)
-		ok = false
-		return
-	}
+	// if err = ac.satisfyPolicy(remoteMember, &policyWhiteList{
+	// 	policyType: ac.authMode,
+	// 	policyList: ac.localOrg.trustedRootCerts,
+	// }); err != nil {
+	// 	resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
+	// 	ac.log.Warn(resultMsg)
+	// 	ok = false
+	// 	return
+	// }
 
-	if err = remoteMember.Verify(ac.GetHashAlg(), msg, endorsement.Signature); err != nil {
+	if err = remoteMember.Verify(msg, endorsement.Signature); err != nil {
 		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		ac.log.Warn(resultMsg)
@@ -1285,7 +1291,7 @@ func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, 
 		ac.log.Warn(resultMsg)
 		return false, resultMsg
 	}
-	if err := signerInfo.signer.Verify(ac.GetHashAlg(), msg, endorsement.Signature); err != nil {
+	if err := signerInfo.signer.Verify(msg, endorsement.Signature); err != nil {
 		resultMsg := fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		ac.log.Warn(resultMsg)
@@ -1302,20 +1308,20 @@ func (ac *accessControl) lookUpPolicyByResourceName(resourceName string) (*polic
 	return p.(*policy), nil
 }
 
-func (ac *accessControl) getSignerRoleList(signerInfo []byte) ([]protocol.Role, error) {
-	var ouList []protocol.Role
+func (ac *accessControl) getSignerRole(signerInfo []byte) (protocol.Role, error) {
+	var role protocol.Role
 	memberInfo, ok := ac.lookUpSignerInCache(string(signerInfo))
 	if ok {
-		ouList = memberInfo.signer.GetRole()
+		role = memberInfo.signer.GetRole()
 	} else {
 		ouListString, err := bcx509.GetOUFromPEM(signerInfo)
 		if err != nil {
-			return nil, fmt.Errorf("authentication failed: fail to get role list")
+			return role, fmt.Errorf("authentication failed: fail to get role list")
 		}
-		for _, ouString := range ouListString {
-			ouString = strings.ToUpper(ouString)
-			ouList = append(ouList, protocol.Role(ouString))
+		if ouListString == nil {
+			return role, fmt.Errorf("authentication failed: fail to get role list")
 		}
+		role = protocol.Role(strings.ToUpper(ouListString[0]))
 	}
-	return ouList, nil
+	return role, nil
 }

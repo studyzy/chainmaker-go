@@ -21,7 +21,6 @@ var mockAcLogger = logger.GetLogger(logger.MODULE_ACCESS)
 
 func MockAccessControl() protocol.AccessControlProvider {
 	ac := &accessControl{
-		authMode:              IdentityMode,
 		orgList:               &sync.Map{},
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
@@ -43,7 +42,6 @@ func MockAccessControl() protocol.AccessControlProvider {
 
 func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 	ac := &accessControl{
-		authMode:              IdentityMode,
 		orgList:               &sync.Map{},
 		orgNum:                0,
 		resourceNamePolicyMap: &sync.Map{},
@@ -66,7 +64,7 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, hashType string) ([]*commonPb.EndorsementEntry, error) {
 	var ret []*commonPb.EndorsementEntry
 	for _, signer := range signers {
-		sig, err := signer.Sign(hashType, msg)
+		sig, err := signer.Sign(msg)
 		if err != nil {
 			return nil, err
 		}

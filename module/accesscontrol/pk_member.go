@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -90,4 +91,39 @@ func (spm *signingPkMember) Sign(msg []byte) ([]byte, error) {
 		Hash: hash,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
 	})
+}
+
+func NewPkMember(member *pbac.Member, ac *accessControl) (*pkMember, error) {
+	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
+		return nil, fmt.Errorf("setup public key member failed, unsupport member type")
+	} else {
+		return newMemberFromPkPem(member.OrgId, string(member.MemberInfo), ac.hashType)
+	}
+}
+
+func newMemberFromPkPem(orgId, pkPEM string, hashType string) (*pkMember, error) {
+	var pkMember pkMember
+	pkMember.orgId = orgId
+	pkMember.hashType = hashType
+
+	pk, err := asym.PublicKeyFromPEM([]byte(pkPEM))
+	if err != nil {
+		return nil, fmt.Errorf("setup pk member failed, err: %s", err.Error())
+	}
+
+	pkMember.pk = pk
+	pkMember.id = pkPEM
+	//TODO ROLE
+	//pkMember.role
+
+	return &pkMember, nil
+}
+
+var NilPkMemberProvider MemberProvider = (*pkMemberProvider)(nil)
+
+type pkMemberProvider struct {
+}
+
+func (pmp *pkMemberProvider) NewMember(member *pbac.Member, ac *accessControl) (protocol.Member, error) {
+	return NewPkMember(member, ac)
 }
