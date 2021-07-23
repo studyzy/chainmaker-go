@@ -101,4 +101,5 @@ func TestCreateGenesis(t *testing.T) {
 	t.Log(genesis)
 	assert.Nil(t, err)
 	assert.True(t, IsConfBlock(genesis))
+
 }

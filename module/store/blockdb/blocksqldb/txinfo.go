@@ -117,21 +117,20 @@ func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, o
 		events, _ = json.Marshal(tx.Result.ContractResult.ContractEvent)
 	}
 	txInfo := &TxInfo{
-		ChainId:          tx.Payload.ChainId,
-		TxType:           int32(tx.Payload.TxType),
-		TxId:             tx.Payload.TxId,
-		Timestamp:        tx.Payload.Timestamp,
-		ExpirationTime:   tx.Payload.ExpirationTime,
-		ContractName:     tx.Payload.ContractName,
-		Method:           tx.Payload.Method,
-		Parameters:       string(par),
-		Sequence:         tx.Payload.Sequence,
-		Limit:            tx.Payload.Limit,
-		SenderOrgId:      tx.Sender.Signer.OrgId,
-		SenderMemberInfo: tx.Sender.Signer.MemberInfo,
-		SenderMemberType: int(tx.Sender.Signer.MemberType),
-		//SenderSA: tx.Sender.Signer.SignatureAlgorithm,
-		SenderSignature:    tx.Sender.Signature,
+		ChainId:            tx.Payload.ChainId,
+		TxType:             int32(tx.Payload.TxType),
+		TxId:               tx.Payload.TxId,
+		Timestamp:          tx.Payload.Timestamp,
+		ExpirationTime:     tx.Payload.ExpirationTime,
+		ContractName:       tx.Payload.ContractName,
+		Method:             tx.Payload.Method,
+		Parameters:         string(par),
+		Sequence:           tx.Payload.Sequence,
+		Limit:              tx.Payload.Limit,
+		SenderOrgId:        getSender(tx).Signer.OrgId,
+		SenderMemberInfo:   getSender(tx).Signer.MemberInfo,
+		SenderMemberType:   int(getSender(tx).Signer.MemberType),
+		SenderSignature:    getSender(tx).Signature,
 		Endorsers:          string(endorsers),
 		TxStatusCode:       int32(tx.Result.Code),
 		ContractResultCode: tx.Result.ContractResult.Code,
@@ -148,6 +147,19 @@ func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, o
 	}
 
 	return txInfo, nil
+}
+func getSender(tx *commonPb.Transaction) *commonPb.EndorsementEntry {
+	if tx.Sender == nil {
+		return &commonPb.EndorsementEntry{
+			Signer: &acPb.Member{
+				OrgId:      "",
+				MemberType: 0,
+				MemberInfo: nil,
+			},
+			Signature: nil,
+		}
+	}
+	return tx.Sender
 }
 func getParameters(par string) []*commonPb.KeyValuePair {
 	var pairs []*commonPb.KeyValuePair
