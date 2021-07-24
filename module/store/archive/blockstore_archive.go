@@ -23,15 +23,20 @@ const defaultMinUnArchiveBlockHeight = 10
 const defaultUnArchiveBlockHeight = 300000 //about 7 days block produces
 
 var (
-	ErrHeightNotReach          = errors.New("target archive height not reach")
-	ErrLastHeightTooLow        = errors.New("chain last height too low to archive")
-	ErrHeightTooLow            = errors.New("target archive height too low")
-	ErrRestoreHeightNotMatch   = errors.New("restore block height not match last archived height")
+	errHeightNotReach        = errors.New("target archive height not reach")
+	errLastHeightTooLow      = errors.New("chain last height too low to archive")
+	errHeightTooLow          = errors.New("target archive height too low")
+	errRestoreHeightNotMatch = errors.New("restore block height not match last archived height")
+	//ErrInvalidateRestoreBlocks invalidate restore blocks
 	ErrInvalidateRestoreBlocks = errors.New("invalidate restore blocks")
-	ErrConfigBlockArchive      = errors.New("config block do not need archive")
-	ErrArchivedTx              = errors.New("archived transaction")
-	ErrArchivedRWSet           = errors.New("archived RWSet")
-	ErrArchivedBlock           = errors.New("archived block")
+	//ErrConfigBlockArchive config block do not need archive
+	ErrConfigBlockArchive = errors.New("config block do not need archive")
+	//ErrArchivedTx archived transaction
+	ErrArchivedTx = errors.New("archived transaction")
+	//ErrArchivedRWSet archived RWSet
+	ErrArchivedRWSet = errors.New("archived RWSet")
+	//ErrArchivedBlock archived block
+	ErrArchivedBlock = errors.New("archived block")
 )
 
 // ArchiveMgr provide handle to archive instances
@@ -100,11 +105,11 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 
 	//archiveHeight should between archivedPivot and lastHeight - unarchiveBlockHeight
 	if lastHeight <= mgr.unarchiveBlockHeight {
-		return ErrLastHeightTooLow
+		return errLastHeightTooLow
 	} else if mgr.archivedPivot >= archiveHeight {
-		return ErrHeightTooLow
+		return errHeightTooLow
 	} else if archiveHeight >= lastHeight-mgr.unarchiveBlockHeight {
-		return ErrHeightNotReach
+		return errHeightNotReach
 	}
 
 	if txIdsMap, err = mgr.blockDB.ShrinkBlocks(archivedPivot+1, archiveHeight); err != nil {
@@ -140,7 +145,7 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 	if lastRestoreHeight != mgr.archivedPivot {
 		mgr.logger.Errorf("restore last block height[%d] not match node archived height[%d]",
 			blockInfos[total-1].Block.Header.BlockHeight, mgr.archivedPivot)
-		return ErrRestoreHeightNotMatch
+		return errRestoreHeightNotMatch
 	}
 
 	//restore block info should be continuous

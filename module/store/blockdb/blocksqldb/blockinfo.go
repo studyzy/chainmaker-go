@@ -105,7 +105,7 @@ func (b *BlockInfo) GetCountSql() (string, []interface{}) {
 }
 func NewBlockInfo(block *commonPb.Block) (*BlockInfo, error) {
 	if block.Header == nil {
-		return nil, ErrNullPoint
+		return nil, errNullPoint
 	}
 	blockInfo := &BlockInfo{
 		ChainId:            block.Header.ChainId,

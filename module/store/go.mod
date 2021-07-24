@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
-	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210723070658-764cafbc33fe

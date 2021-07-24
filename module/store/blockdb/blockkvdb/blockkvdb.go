@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	ErrValueNotFound = errors.New("value not found")
+	errValueNotFound = errors.New("value not found")
 )
 
 // BlockKvDB provider a implementation of `blockdb.BlockDB`
@@ -264,7 +264,7 @@ func (b *BlockKvDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	}
 
 	if heightBytes == nil {
-		return 0, ErrValueNotFound
+		return 0, errValueNotFound
 	}
 
 	return decodeBlockNumKey(heightBytes), nil
@@ -278,7 +278,7 @@ func (b *BlockKvDB) GetBlockHeaderByHeight(height uint64) (*commonPb.BlockHeader
 	}
 
 	if vBytes == nil {
-		return nil, ErrValueNotFound
+		return nil, errValueNotFound
 	}
 
 	var blockStoreInfo storePb.SerializedBlock
@@ -367,7 +367,7 @@ func (b *BlockKvDB) GetTxHeight(txId string) (uint64, error) {
 	}
 
 	if vBytes == nil {
-		return 0, ErrValueNotFound
+		return 0, errValueNotFound
 	}
 
 	return decodeBlockNumKey(vBytes), nil
@@ -436,7 +436,7 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 	}
 
 	if heightBytes == nil {
-		return false, ErrValueNotFound
+		return false, errValueNotFound
 	}
 
 	archivedPivot, err := b.GetArchivedPivot()
