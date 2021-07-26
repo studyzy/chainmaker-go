@@ -218,7 +218,8 @@ func genConfigTxRWSet(cc *configPb.ChainConfig) (*commonPb.TxRWSet, error) {
 			return nil, fmt.Errorf("token of stake contract account[%s] is nil", stakeContractAddr)
 		}
 		if tokenInERC20.Cmp(stackContractToken) != 0 {
-			return nil, fmt.Errorf("token of stake contract account[%s] is not equal, erc20[%s] stake[%s]", stakeContractAddr, tokenInERC20.String(), stackContractToken)
+			return nil, fmt.Errorf("token of stake contract account[%s] is not equal, erc20[%s] stake[%s]",
+				stakeContractAddr, tokenInERC20.String(), stackContractToken)
 		}
 	}
 	rwSets, err := totalTxRWSet(ccBytes, erc20Config, stakeConfig)
@@ -375,7 +376,8 @@ func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config,
 				}
 				token := NewBigInteger(string(keyValuePair.Value))
 				if token == nil || token.Cmp(NewZeroBigInteger()) <= 0 {
-					return nil, fmt.Errorf("token must more than zero, address[%s] token[%s]", accAddress, keyValuePair.Value)
+					return nil, fmt.Errorf("token must more than zero, address[%s] token[%s]",
+						accAddress, keyValuePair.Value)
 				}
 				err = config.addAccount(accAddress, token)
 				if err != nil {
@@ -468,10 +470,12 @@ func (s *StakeConfig) toTxWrites() ([]*commonPb.TxWrite, error) {
 			Key:          []byte(fmt.Sprintf(keyValidatorFormat, validator.PeerId)),
 			Value:        validators[i],
 		})
+		// key: prefix|delegator|validator
+		key := []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerId, validator.PeerId))
 		rwSets = append(rwSets, &commonPb.TxWrite{
 			ContractName: syscontract.SystemContract_DPOS_STAKE.String(),
-			Key:          []byte(fmt.Sprintf(keyDelegationFormat, validator.PeerId, validator.PeerId)), // key: prefix|delegator|validator
-			Value:        delegations[i],                                                               // val: delegation info
+			Key:          key,
+			Value:        delegations[i], // val: delegation info
 		})
 	}
 
@@ -613,7 +617,8 @@ func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig,
 		}
 	}
 	if len(config.nodeIDs) != len(config.candidates) {
-		return nil, fmt.Errorf("config nodeIDs and candidates not matched, nodeIDs num: %d, candidates: %d ", len(config.nodeIDs), len(config.candidates))
+		return nil, fmt.Errorf("config nodeIDs and candidates not matched, nodeIDs num: %d, candidates: %d ",
+			len(config.nodeIDs), len(config.candidates))
 	}
 	if len(config.minSelfDelegation) == 0 {
 		config.minSelfDelegation = defaultDPoSMinSelfDelegation
@@ -642,7 +647,8 @@ func isValidBigInt(val string) error {
 	return nil
 }
 
-func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) ([]*commonPb.TxWrite, error) {
+func totalTxRWSet(chainConfigBytes []byte, erc20Config *ERC20Config, stakeConfig *StakeConfig) (
+	[]*commonPb.TxWrite, error) {
 	txWrites := make([]*commonPb.TxWrite, 0)
 	txWrites = append(txWrites, &commonPb.TxWrite{
 		Key:          []byte(syscontract.SystemContract_CHAIN_CONFIG.String()),

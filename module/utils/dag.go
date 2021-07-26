@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 

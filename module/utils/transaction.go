@@ -207,7 +207,8 @@ func GetTxIds(txs []*commonPb.Transaction) []string {
 	return ret
 }
 
-// VerifyTxWithoutPayload verify a transaction with access control provider. The payload of the transaction will not be verified.
+// VerifyTxWithoutPayload verify a transaction with access control provider.
+//The payload of the transaction will not be verified.
 func VerifyTxWithoutPayload(tx *commonPb.Transaction, chainId string, ac protocol.AccessControlProvider) error {
 	if tx == nil {
 		return errors.New("tx is nil")
@@ -218,16 +219,6 @@ func VerifyTxWithoutPayload(tx *commonPb.Transaction, chainId string, ac protoco
 	if err := verifyTxAuth(tx, ac); err != nil {
 		return fmt.Errorf("verify tx authentation failed, %s", err)
 	}
-	return nil
-}
-
-//验证发送者和签名
-func verifyTxSender(tx *commonPb.Transaction) error {
-	_, err := tx.Payload.Marshal()
-	if err != nil {
-		return err
-	}
-	//tx.Sender.Signer.
 	return nil
 }
 
@@ -269,7 +260,8 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 	return nil
 }
 
-// verify transaction sender's authentication (include signature verification, cert-chain verification, access verification)
+// verify transaction sender's authentication (include signature verification,
+//cert-chain verification, access verification)
 func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) error {
 	var err error
 	txBytes, err := CalcUnsignedTxBytes(t)
@@ -306,7 +298,8 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 		}
 		principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
 		if err != nil {
-			return fmt.Errorf("fail to construct authentication principal for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
+			return fmt.Errorf("fail to construct authentication principal for %s-%s: %s",
+				t.Payload.ContractName, t.Payload.Method, err)
 		}
 		ok, err := ac.VerifyPrincipal(principal)
 		if err != nil {
@@ -318,26 +311,6 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	}
 	return nil
 }
-
-/*
-// VerifyConfigUpdateTx verify a transaction which will update the chain config.
-func VerifyConfigUpdateTx(methodName string, endorsements []*commonPb.EndorsementEntry, msg []byte, targetOrgId string, ac protocol.AccessControlProvider) (bool, error) {
-	var principal protocol.Principal
-	var err error
-	if targetOrgId != "" {
-		principal, err = ac.CreatePrincipalForTargetOrg(methodName, endorsements, msg, targetOrgId)
-		if err != nil {
-			return false, fmt.Errorf("fail to construct authentication principal: [%v]", err)
-		}
-	} else {
-		principal, err = ac.CreatePrincipal(methodName, endorsements, msg)
-		if err != nil {
-			return false, fmt.Errorf("fail to construct authentication principal: [%v]", err)
-		}
-	}
-	return ac.VerifyPrincipal(principal)
-}
-*/
 
 func GenerateInstallContractPayload(contractName, version string, runtimeType commonPb.RuntimeType, bytecode []byte,
 	initParameters []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
@@ -358,9 +331,7 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType co
 		Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
 		Value: bytecode,
 	})
-	for _, kv := range initParameters {
-		pairs = append(pairs, kv)
-	}
+	pairs = append(pairs, initParameters...)
 	payload := &commonPb.Payload{
 		ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(),
 		Method:       syscontract.ContractManageFunction_INIT_CONTRACT.String(),

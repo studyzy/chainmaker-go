@@ -37,7 +37,7 @@ var _ protocol.ChainConf = (*ChainConf)(nil)
 var log = logger.GetLogger(logger.MODULE_CHAINCONF)
 
 const (
-	AllContract = "ALL_CONTRACT"
+	allContract = "ALL_CONTRACT"
 
 	blockEmptyErrorTemplate = "block is empty"
 )
@@ -312,7 +312,7 @@ func (c *ChainConf) GetConsensusNodeIdList() ([]string, error) {
 	return chainNodeList, nil
 }
 
-// BlockComplete complete the block. Invoke all config watchers.
+// CompleteBlock complete the block. Invoke all config watchers.
 func (c *ChainConf) CompleteBlock(block *common.Block) error {
 	if block == nil {
 		c.log.Error(blockEmptyErrorTemplate)
@@ -365,7 +365,7 @@ func (c *ChainConf) callbackChainConfigWatcher() error {
 
 func (c *ChainConf) callbackContractVmWatcher(contract string, requestPayload []byte) error {
 	// watch the all contract
-	if vmWatchers, ok := c.vmWatchers[AllContract]; ok {
+	if vmWatchers, ok := c.vmWatchers[allContract]; ok {
 		for m, w := range vmWatchers {
 			err := w.Callback(contract, requestPayload)
 			if err != nil {
@@ -411,16 +411,16 @@ func (c *ChainConf) AddVmWatch(w protocol.VmWatcher) {
 }
 
 func (c *ChainConf) addVmWatcherWithAllContract(w protocol.VmWatcher) {
-	watchers, ok := c.vmWatchers[AllContract]
+	watchers, ok := c.vmWatchers[allContract]
 	if !ok {
 		watchers = make(map[string]protocol.VmWatcher)
 	}
 	if _, ok := watchers[w.Module()]; ok {
-		c.log.Errorf("vm watcher existed(contract: %s, module: %s)", AllContract, w.Module())
+		c.log.Errorf("vm watcher existed(contract: %s, module: %s)", allContract, w.Module())
 		return
 	}
 	watchers[w.Module()] = w
-	c.vmWatchers[AllContract] = watchers
+	c.vmWatchers[allContract] = watchers
 }
 
 func (c *ChainConf) addVmWatcherWithContracts(w protocol.VmWatcher) {
