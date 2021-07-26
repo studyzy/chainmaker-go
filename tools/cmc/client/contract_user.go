@@ -21,8 +21,7 @@ import (
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
 const SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT = "SendContractManageRequest failed, %s"
-const CREATE_USER_CLIENT_FAILED_FORMAT = "create user client failed, %s"
-const ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key & cert list length not equal, [orgIds len: %d]/[keys len: %d]/[certs len:%d]"
+const ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key & cert list length not equal, [keys len: %d]/[certs len:%d]"
 
 var (
 	ErrAdminOrgIdKeyCertIsEmpty = errors.New("admin orgId or key or cert list is empty")
@@ -67,7 +66,7 @@ func createUserContractCMD() *cobra.Command {
 		flagUserTlsKeyFilePath, flagUserTlsCrtFilePath, flagUserSignKeyFilePath, flagUserSignCrtFilePath,
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
 		flagRuntimeType, flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
-		flagAdminKeyFilePaths, flagAdminCrtFilePaths, flagAdminOrgIds,
+		flagAdminKeyFilePaths, flagAdminCrtFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -77,7 +76,6 @@ func createUserContractCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagRuntimeType)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 
 	return cmd
 }
@@ -164,7 +162,7 @@ func upgradeUserContractCMD() *cobra.Command {
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagSdkConfPath, flagContractName, flagVersion, flagByteCodePath, flagOrgId, flagChainId, flagSendTimes,
 		flagRuntimeType, flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
-		flagAdminOrgIds, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -172,7 +170,6 @@ func upgradeUserContractCMD() *cobra.Command {
 	cmd.MarkFlagRequired(flagVersion)
 	cmd.MarkFlagRequired(flagByteCodePath)
 	cmd.MarkFlagRequired(flagRuntimeType)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
@@ -192,13 +189,11 @@ func freezeUserContractCMD() *cobra.Command {
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
 		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes, flagTimeout, flagParams,
-		flagSyncResult, flagEnableCertHash,
-		flagAdminOrgIds, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagContractName)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
@@ -217,14 +212,12 @@ func unfreezeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
-		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
-		flagAdminOrgIds, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes, flagTimeout, flagParams,
+		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagContractName)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
@@ -243,14 +236,12 @@ func revokeUserContractCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath, flagUserTlsKeyFilePath, flagUserTlsCrtFilePath,
-		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes,
-		flagTimeout, flagParams, flagSyncResult, flagEnableCertHash,
-		flagAdminOrgIds, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
+		flagSdkConfPath, flagContractName, flagOrgId, flagChainId, flagSendTimes, flagTimeout, flagParams,
+		flagSyncResult, flagEnableCertHash, flagAdminCrtFilePaths, flagAdminKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
 	cmd.MarkFlagRequired(flagContractName)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 
@@ -258,19 +249,18 @@ func revokeUserContractCMD() *cobra.Command {
 }
 
 func createUserContract() error {
-	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 {
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
 		return ErrAdminOrgIdKeyCertIsEmpty
 	}
-	if len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminOrgIdSlice), len(adminKeys), len(adminCrts))
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err)
+		return err
 	}
 	defer client.Stop()
 
@@ -318,8 +308,9 @@ func createUserContract() error {
 func invokeUserContract() error {
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
+		return err
 	}
+	defer client.Stop()
 
 	pairs := make(map[string]string)
 	if params != "" {
@@ -338,8 +329,9 @@ func invokeUserContract() error {
 func invokeContractTimes() error {
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
+		return err
 	}
+	defer client.Stop()
 
 	pairs := make(map[string]string)
 	if params != "" {
@@ -358,8 +350,9 @@ func invokeContractTimes() error {
 func getUserContract() error {
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
+		return err
 	}
+	defer client.Stop()
 
 	pairs := make(map[string]string)
 	if params != "" {
@@ -381,19 +374,18 @@ func getUserContract() error {
 }
 
 func upgradeUserContract() error {
-	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 {
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
 		return ErrAdminOrgIdKeyCertIsEmpty
 	}
-	if len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminOrgIdSlice), len(adminKeys), len(adminCrts))
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
+		return err
 	}
 	defer client.Stop()
 
@@ -443,19 +435,18 @@ func upgradeUserContract() error {
 }
 
 func freezeOrUnfreezeOrRevokeUserContract(which int) error {
-	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 {
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
 		return ErrAdminOrgIdKeyCertIsEmpty
 	}
-	if len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminOrgIdSlice), len(adminKeys), len(adminCrts))
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err.Error())
+		return err
 	}
 	defer client.Stop()
 

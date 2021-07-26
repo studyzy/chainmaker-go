@@ -21,7 +21,6 @@ import (
 	sdkutils "chainmaker.org/chainmaker/sdk-go/utils"
 )
 
-const CREATE_USER_FAILED_FORMAT = "create user client failed, %s"
 const DEFAULT_TIMEOUT = 5000 // ms
 
 func systemContractCMD() *cobra.Command {
@@ -137,7 +136,7 @@ func getChainInfo() error {
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+		return err
 	}
 	defer client.Stop()
 	pairs := make(map[string]string)
@@ -165,7 +164,7 @@ func getBlockByHeight() error {
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+		return err
 	}
 	defer client.Stop()
 	pairs := make(map[string]string)
@@ -193,7 +192,7 @@ func getTxByTxId() error {
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+		return err
 	}
 	defer client.Stop()
 	pairs := make(map[string]string)
@@ -224,7 +223,7 @@ func erc20Mint() *cobra.Command {
 			)
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -272,7 +271,7 @@ func erc20Transfer() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -318,7 +317,7 @@ func erc20BalanceOf() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -363,7 +362,7 @@ func erc20Owner() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -405,7 +404,7 @@ func erc20Decimals() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -447,7 +446,7 @@ func erc20Total() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -489,7 +488,7 @@ func stakeGetAllCandidates() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -531,7 +530,7 @@ func stakeGetValidatorByAddress() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -580,7 +579,7 @@ func stakeDelegate() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -632,7 +631,7 @@ func stakeGetDelegationsByAddress() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -681,7 +680,7 @@ func stakeGetUserDelegationByValidator() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -730,7 +729,7 @@ func stakeUnDelegate() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -782,7 +781,7 @@ func stakeReadEpochByID() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -831,7 +830,7 @@ func stakeReadLatestEpoch() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -877,7 +876,7 @@ func stakeSetNodeID() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -924,7 +923,7 @@ func stakeGetNodeID() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -969,7 +968,7 @@ func stakeReadMinSelfDelegation() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -1011,7 +1010,7 @@ func stakeReadEpochValidatorNumber() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -1053,7 +1052,7 @@ func stakeReadEpochBlockNumber() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -1095,7 +1094,7 @@ func stakeReadSystemContractAddr() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
@@ -1137,7 +1136,7 @@ func stakeReadCompleteUnBoundingEpochNumber() *cobra.Command {
 
 			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
-				return fmt.Errorf(CREATE_USER_FAILED_FORMAT, err.Error())
+				return err
 			}
 			defer client.Stop()
 			pairs := make(map[string]string)
