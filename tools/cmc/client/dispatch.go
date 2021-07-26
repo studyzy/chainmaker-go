@@ -14,6 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
 	sdk "chainmaker.org/chainmaker/sdk-go"
+	sdkutils "chainmaker.org/chainmaker/sdk-go/utils"
 )
 
 func Dispatch(client *sdk.ChainClient, contractName, method string, params map[string]string) {
@@ -34,7 +35,7 @@ func DispatchTimes(client *sdk.ChainClient, contractName, method string, params 
 	)
 	times := util.MaxInt(1, sendTimes)
 	wgSendReq.Add(times)
-	txId := GetRandTxId()
+	txId := sdkutils.GetRandTxId()
 	for i := 0; i < times; i++ {
 		go runInvokeContractOnce(client, contractName, method, params, &wgSendReq, txId)
 	}
