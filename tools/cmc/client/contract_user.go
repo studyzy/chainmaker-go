@@ -276,9 +276,8 @@ func createUserContract() error {
 			return err
 		}
 	}
-	pairsKv := util.ConvertParameters(pairs)
-	fmt.Printf("create user contract params:%+v\n", pairsKv)
-	payload, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
+	kvs := util.ConvertParameters(pairs)
+	payload, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), kvs)
 	if err != nil {
 		return err
 	}
@@ -297,7 +296,7 @@ func createUserContract() error {
 	if err != nil {
 		return err
 	}
-	err = util.CheckProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, false)
 	if err != nil {
 		return err
 	}
