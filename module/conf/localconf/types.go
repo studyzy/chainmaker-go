@@ -317,16 +317,6 @@ type syncConfig struct {
 	DataDetectionTick         float64 `mapstructure:"data_detection_tick"`
 }
 
-type spvConfig struct {
-	RefreshReqCacheMills     int64 `mapstructure:"refresh_reqcache_mils"`
-	MessageCacheSize         int64 `mapstructure:"message_cahche_size"`
-	ReSyncCheckIntervalMills int64 `mapstructure:"resync_check_interval_mils"`
-	SyncTimeoutMills         int64 `mapstructure:"sync_timeout_mils"`
-	ReqSyncBlockNum          int64 `mapstructure:"reqsync_blocknum"`
-	MaxReqSyncBlockNum       int64 `mapstructure:"max_reqsync_blocknum"`
-	PeerActiveTime           int64 `mapstructure:"peer_active_time"`
-}
-
 type monitorConfig struct {
 	Enabled bool `mapstructure:"enabled"`
 	Port    int  `mapstructure:"port"`
@@ -372,7 +362,6 @@ type CMConfig struct {
 	StorageConfig    StorageConfig      `mapstructure:"storage"`
 	TxPoolConfig     txPoolConfig       `mapstructure:"txpool"`
 	SyncConfig       syncConfig         `mapstructure:"sync"`
-	SpvConfig        spvConfig          `mapstructure:"spv"`
 
 	// 开发调试使用
 	DebugConfig     debugConfig     `mapstructure:"debug"`

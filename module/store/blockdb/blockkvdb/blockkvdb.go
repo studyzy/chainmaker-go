@@ -50,11 +50,6 @@ type BlockKvDB struct {
 	Logger protocol.Logger
 }
 
-func (b *BlockKvDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
-	heightKey := constructBlockNumKey(uint64(header.BlockHeight))
-	data, _ := header.Marshal()
-	return b.DbHandle.Put(heightKey, data)
-}
 func (b *BlockKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	return b.CommitBlock(genesisBlock)
 }

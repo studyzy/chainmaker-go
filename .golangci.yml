@@ -12,6 +12,9 @@ run:
     - protogo #from pb generate
     - sqldbprovider #will remove
     - eventsqldb
+    - evm-go
+    - gasm-go
+    - wasmer-go
 linters:
   disable-all: true
   enable:

@@ -13,19 +13,15 @@ func (bc *Blockchain) Start() error {
 
 	// start sequence：
 	// 1、net service
-	// 2、spv node
-	// 3、core engine
-	// 4、consensus module
-	// 5、tx pool
-	// 6、sync service
+	// 2、core engine
+	// 3、consensus module
+	// 4、tx pool
+	// 5、sync service
 
 	var startModules = make([]map[string]func() error, 0)
 	if bc.isModuleInit(moduleNameNetService) && !bc.isModuleStartUp(moduleNameNetService) {
 		startModules = append(startModules, map[string]func() error{moduleNameNetService: bc.startNetService})
 	}
-	//if bc.isModuleInit(moduleNameSpv) {
-	//	startModules = append(startModules, map[string]func() error{moduleNameSpv: bc.startSpv})
-	//}
 	if bc.isModuleInit(moduleNameCore) && !bc.isModuleStartUp(moduleNameCore) {
 		startModules = append(startModules, map[string]func() error{moduleNameCore: bc.startCoreEngine})
 	}
