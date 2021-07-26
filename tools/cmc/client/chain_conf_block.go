@@ -64,10 +64,10 @@ func updateBlockInterval() error {
 		return fmt.Errorf("get chain config failed, %s", err.Error())
 	}
 	txTimestampVerify := chainConfig.Block.TxTimestampVerify
-	txTimeout := int64(chainConfig.Block.TxTimeout)
-	blockTxCap := int64(chainConfig.Block.BlockTxCapacity)
-	blockSize := int64(chainConfig.Block.BlockSize)
-	blockUpdatePayload, err := client.CreateChainConfigBlockUpdatePayload(txTimestampVerify, txTimeout, blockTxCap, blockSize, int64(blockInterval))
+	txTimeout := chainConfig.Block.TxTimeout
+	blockTxCap := chainConfig.Block.BlockTxCapacity
+	blockSize := chainConfig.Block.BlockSize
+	blockUpdatePayload, err := client.CreateChainConfigBlockUpdatePayload(txTimestampVerify, txTimeout, blockTxCap, blockSize, blockInterval)
 	if err != nil {
 		return fmt.Errorf("create chain config block update payload failed, %s", err.Error())
 	}

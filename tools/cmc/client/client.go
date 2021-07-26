@@ -58,7 +58,7 @@ var (
 	userSignKeyFilePath string
 	userSignCrtFilePath string
 
-	blockInterval  int
+	blockInterval  uint32
 	nodeOrgId      string
 	nodeIdOld      string
 	nodeId         string
@@ -177,7 +177,7 @@ func init() {
 	flags.StringVar(&userSignCrtFilePath, flagUserSignCrtFilePath, "", "specify user sign cert file path to sign tx")
 
 	// 链配置
-	flags.IntVar(&blockInterval, flagBlockInterval, 2000, "block interval timeout in milliseconds, default 2000ms")
+	flags.Uint32Var(&blockInterval, flagBlockInterval, 2000, "block interval timeout in milliseconds, default 2000ms")
 
 	flags.StringVar(&nodeOrgId, flagNodeOrgId, "", "specify node org id")
 	flags.StringVar(&nodeIdOld, flagNodeIdOld, "", "specify old node id")
