@@ -917,7 +917,7 @@ func Test_blockchainStoreImpl_Archive(t *testing.T) {
 
 	//archive block height2 which is a config block
 	err1 := s.ArchiveBlock(uint64(archiveHeight2))
-	assert.True(t, err1 == archive.ConfigBlockArchiveError)
+	assert.True(t, err1 == archive.ErrConfigBlockArchive)
 	assert.Equal(t, uint64(archiveHeight1), s.GetArchivedPivot())
 
 	verifyArchive(t, 15, blocks, s)
@@ -1028,22 +1028,22 @@ func verifyArchivedHeight(t *testing.T, avBlkHeight uint64, blocks []*commonPb.B
 	assert.Equal(t, vtHeight, avBlkHeight)
 
 	vtBlk, err5 := s.GetBlockByTx(avBlk.Txs[0].Payload.TxId)
-	assert.True(t, archive.ArchivedBlockError == err5)
+	assert.True(t, archive.ErrArchivedBlock == err5)
 	assert.True(t, vtBlk == nil)
 
 	vttx, err6 := s.GetTx(avBlk.Txs[0].Payload.TxId)
-	assert.True(t, archive.ArchivedTxError == err6)
+	assert.True(t, archive.ErrArchivedTx == err6)
 	assert.True(t, vttx == nil)
 
 	vtBlk2, err7 := s.GetBlockByHash(avBlk.Hash())
-	assert.True(t, archive.ArchivedBlockError == err7)
+	assert.True(t, archive.ErrArchivedBlock == err7)
 	assert.True(t, vtBlk2 == nil)
 
 	vtBlkRW, err8 := s.GetBlockWithRWSets(avBlk.Header.BlockHeight)
-	assert.True(t, archive.ArchivedBlockError == err8)
+	assert.True(t, archive.ErrArchivedBlock == err8)
 	assert.True(t, vtBlkRW == nil)
 
 	vtBlkRWs, err9 := s.GetTxRWSetsByHeight(avBlk.Header.BlockHeight)
-	assert.True(t, archive.ArchivedRWSetError == err9)
+	assert.True(t, archive.ErrArchivedRWSet == err9)
 	assert.True(t, vtBlkRWs == nil)
 }

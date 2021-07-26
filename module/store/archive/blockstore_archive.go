@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package archive
 
 import (
-	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
+
+	"chainmaker.org/chainmaker/protocol"
 
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
@@ -22,15 +23,20 @@ const defaultMinUnArchiveBlockHeight = 10
 const defaultUnArchiveBlockHeight = 300000 //about 7 days block produces
 
 var (
-	HeightNotReachError          = errors.New("target archive height not reach")
-	LastHeightTooLowError        = errors.New("chain last height too low to archive")
-	HeightTooLowError            = errors.New("target archive height too low")
-	RestoreHeightNotMatchError   = errors.New("restore block height not match last archived height")
-	InvalidateRestoreBlocksError = errors.New("invalidate restore blocks")
-	ConfigBlockArchiveError      = errors.New("config block do not need archive")
-	ArchivedTxError              = errors.New("archived transaction")
-	ArchivedRWSetError           = errors.New("archived RWSet")
-	ArchivedBlockError           = errors.New("archived block")
+	errHeightNotReach        = errors.New("target archive height not reach")
+	errLastHeightTooLow      = errors.New("chain last height too low to archive")
+	errHeightTooLow          = errors.New("target archive height too low")
+	errRestoreHeightNotMatch = errors.New("restore block height not match last archived height")
+	//ErrInvalidateRestoreBlocks invalidate restore blocks
+	ErrInvalidateRestoreBlocks = errors.New("invalidate restore blocks")
+	//ErrConfigBlockArchive config block do not need archive
+	ErrConfigBlockArchive = errors.New("config block do not need archive")
+	//ErrArchivedTx archived transaction
+	ErrArchivedTx = errors.New("archived transaction")
+	//ErrArchivedRWSet archived RWSet
+	ErrArchivedRWSet = errors.New("archived RWSet")
+	//ErrArchivedBlock archived block
+	ErrArchivedBlock = errors.New("archived block")
 )
 
 // ArchiveMgr provide handle to archive instances
@@ -46,7 +52,8 @@ type ArchiveMgr struct {
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
-func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB, storeConfig *localconf.StorageConfig, logger protocol.Logger) (*ArchiveMgr, error) {
+func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB,
+	storeConfig *localconf.StorageConfig, logger protocol.Logger) (*ArchiveMgr, error) {
 	archiveMgr := &ArchiveMgr{
 		blockDB:     blockDB,
 		resultDB:    resultDB,
@@ -58,10 +65,12 @@ func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.Re
 	cfgUnArchiveBlockHeight := archiveMgr.storeConfig.UnArchiveBlockHeight
 	if cfgUnArchiveBlockHeight == 0 {
 		unarchiveBlockHeight = defaultUnArchiveBlockHeight
-		archiveMgr.logger.Infof("config UnArchiveBlockHeight not set, will set to defaultMinUnArchiveBlockHeight:[%d]", defaultUnArchiveBlockHeight)
+		archiveMgr.logger.Infof(
+			"config UnArchiveBlockHeight not set, will set to defaultMinUnArchiveBlockHeight:[%d]", defaultUnArchiveBlockHeight)
 	} else if cfgUnArchiveBlockHeight <= defaultMinUnArchiveBlockHeight {
 		unarchiveBlockHeight = defaultMinUnArchiveBlockHeight
-		archiveMgr.logger.Infof("config UnArchiveBlockHeight is too low:[%d], will set to defaultMinUnArchiveBlockHeight:[%d]",
+		archiveMgr.logger.Infof(
+			"config UnArchiveBlockHeight is too low:[%d], will set to defaultMinUnArchiveBlockHeight:[%d]",
 			cfgUnArchiveBlockHeight, defaultMinUnArchiveBlockHeight)
 	} else if cfgUnArchiveBlockHeight > defaultMinUnArchiveBlockHeight {
 		unarchiveBlockHeight = cfgUnArchiveBlockHeight
@@ -96,11 +105,11 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 
 	//archiveHeight should between archivedPivot and lastHeight - unarchiveBlockHeight
 	if lastHeight <= mgr.unarchiveBlockHeight {
-		return LastHeightTooLowError
+		return errLastHeightTooLow
 	} else if mgr.archivedPivot >= archiveHeight {
-		return HeightTooLowError
+		return errHeightTooLow
 	} else if archiveHeight >= lastHeight-mgr.unarchiveBlockHeight {
-		return HeightNotReachError
+		return errHeightNotReach
 	}
 
 	if txIdsMap, err = mgr.blockDB.ShrinkBlocks(archivedPivot+1, archiveHeight); err != nil {
@@ -121,8 +130,8 @@ func (mgr *ArchiveMgr) ArchiveBlock(archiveHeight uint64) error {
 func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSerializedInfo) error {
 	mgr.Lock()
 	defer mgr.Unlock()
-	if blockInfos == nil || len(blockInfos) == 0 {
-		mgr.logger.Warnf("retore block is empty")
+	if len(blockInfos) == 0 {
+		mgr.logger.Warnf("restore block is empty")
 		return nil
 	}
 
@@ -136,18 +145,14 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 	if lastRestoreHeight != mgr.archivedPivot {
 		mgr.logger.Errorf("restore last block height[%d] not match node archived height[%d]",
 			blockInfos[total-1].Block.Header.BlockHeight, mgr.archivedPivot)
-		return RestoreHeightNotMatchError
-	}
-
-	if blockInfos[0].Block.Header.BlockHeight < 0 {
-		return InvalidateRestoreBlocksError
+		return errRestoreHeightNotMatch
 	}
 
 	//restore block info should be continuous
 	curHeight := uint64(lastRestoreHeight)
 	for i := 0; i < total; i++ {
 		if blockInfos[total-i-1].Block.Header.BlockHeight != curHeight {
-			return InvalidateRestoreBlocksError
+			return ErrInvalidateRestoreBlocks
 		}
 		curHeight = curHeight - 1
 	}
@@ -167,17 +172,16 @@ func (mgr *ArchiveMgr) RestoreBlock(blockInfos []*serialization.BlockWithSeriali
 
 // GetArchivedPivot return restore block pivot
 func (mgr *ArchiveMgr) GetArchivedPivot() (uint64, error) {
-	 archivedPivot, err := mgr.blockDB.GetArchivedPivot()
-	 if err != nil {
-	 	return 0, err
-	 }
+	archivedPivot, err := mgr.blockDB.GetArchivedPivot()
+	if err != nil {
+		return 0, err
+	}
 
-	 mgr.archivedPivot = archivedPivot
-	 return mgr.archivedPivot, nil
+	mgr.archivedPivot = archivedPivot
+	return mgr.archivedPivot, nil
 }
 
 // GetMinUnArchiveBlockSize return unarchiveBlockHeight
 func (mgr *ArchiveMgr) GetMinUnArchiveBlockSize() uint64 {
 	return mgr.unarchiveBlockHeight
 }
-

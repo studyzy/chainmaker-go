@@ -7,8 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package resultdb
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 )
 
 // ResultDB provides handle to rwSets instances

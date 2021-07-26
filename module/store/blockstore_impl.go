@@ -196,7 +196,8 @@ func checkGenesis(genesisBlock *storePb.BlockWithRWSet) error {
 
 // PutBlock commits the block and the corresponding rwsets in an atomic operation
 func (bs *BlockStoreImpl) PutBlock(block *commonPb.Block, txRWSets []*commonPb.TxRWSet) error {
-	bs.logger.Debugf("chain[%s]: start put block[%d] (txs:%d)", block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
+	bs.logger.Debugf("chain[%s]: start put block[%d] (txs:%d)",
+		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
 
 	startPutBlock := utils.CurrentTimeMillisSeconds()
 	//1. commit log
@@ -460,7 +461,7 @@ func (bs *BlockStoreImpl) GetTxRWSet(txId string) (*commonPb.TxRWSet, error) {
 		if isArchived, err = bs.blockDB.TxArchived(txId); err != nil {
 			return nil, err
 		} else if isArchived {
-			return nil, archive.ArchivedRWSetError
+			return nil, archive.ErrArchivedRWSet
 		}
 	}
 

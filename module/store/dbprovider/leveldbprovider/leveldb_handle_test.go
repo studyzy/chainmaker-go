@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/protocol/test"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol/test"
 	"github.com/stretchr/testify/assert"
 )
 

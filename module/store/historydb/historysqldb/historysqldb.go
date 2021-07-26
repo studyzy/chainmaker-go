@@ -124,8 +124,8 @@ func (h *HistorySqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedI
 			}
 			return err
 		}
-		var contractName string
-		contractName = tx.Payload.ContractName
+
+		contractName := tx.Payload.ContractName
 
 		contractTxInfo := &ContractTxHistoryInfo{
 			ContractName: contractName,
