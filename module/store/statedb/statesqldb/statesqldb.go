@@ -455,13 +455,9 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	record := NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, version, 0)
 	query, args := record.GetQueryStatusSql()
 	s.logger.Debug("Query sql:", query, args)
-	row, err := s.db.QuerySingle(query, args)
-	if err != nil {
-		s.logger.Errorf("Query DDL history get an error:%s", err)
-		return err
-	}
+	row, _ := s.db.QuerySingle(query, args)
 	//查询数据库中是否有DDL记录，如果有对应记录，而且状态是1，那么就跳过重复执行DDL的情况
-	if !row.IsEmpty() {
+	if row != nil && !row.IsEmpty() {
 		status := 0
 		err = row.ScanColumns(&status)
 		if err != nil {

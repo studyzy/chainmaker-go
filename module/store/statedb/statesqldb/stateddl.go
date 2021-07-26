@@ -73,14 +73,14 @@ func (b *StateRecordSql) GetUpdateSql() (string, []interface{}) {
 		[]interface{}{b.UpdatedAt, b.Status, b.Id}
 }
 
-func (b *StateRecordSql) GetQueryStatusSql() (string, []interface{}) {
+func (b *StateRecordSql) GetQueryStatusSql() (string, interface{}) {
 	return "select status FROM state_record_sql WHERE id=?",
-		[]interface{}{b.Id}
+		b.Id
 }
 
-func (b *StateRecordSql) GetCountSql() (string, []interface{}) {
+func (b *StateRecordSql) GetCountSql() (string, interface{}) {
 	return "select count(*) FROM state_record_sql WHERE id=?",
-		[]interface{}{b.Id}
+		b.Id
 }
 
 // NewStateRecordSql construct a new StateRecordSql
