@@ -14,17 +14,13 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker/common/crypto"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 	"github.com/spf13/cobra"
 )
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
 const SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT = "SendContractManageRequest failed, %s"
-const MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT = "MergeContractManageSignedPayload failed, %s"
-const SIGN_CONTRACT_MANAGE_PAYLOAD_FAILED_FORMAT = "SignContractManagePayload failed, %s"
 const CREATE_USER_CLIENT_FAILED_FORMAT = "create user client failed, %s"
 const ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key & cert list length not equal, [orgIds len: %d]/[keys len: %d]/[certs len:%d]"
 
@@ -292,35 +288,22 @@ func createUserContract() error {
 	}
 	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("create user contract params:%+v\n", pairsKv)
-	payloadBytes, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
+	payload, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
 	if err != nil {
 		return err
 	}
 
-	signedPayloads := make([]*common.EndorsementEntry, len(adminKeys))
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		_, privKey, err := dealUserKey(adminKeys[i])
-		if err != nil {
-			return err
-		}
-		crtBytes, crt, err := dealUserCrt(adminCrts[i])
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}
 
-		signedPayload, err := signContractManagePayload(payloadBytes, crtBytes, privKey, crt, adminOrgIdSlice[i])
-		if err != nil {
-			return err
-		}
-		signedPayloads[i] = signedPayload
+		endorsementEntrys[i] = e
 	}
 
-	//mergedSignedPayloadBytes, err := client.MergeContractManageSignedPayload(signedPayloads)
-	//if err != nil {
-	//	return err
-	//}
-
-	resp, err := client.SendContractManageRequest(payloadBytes, signedPayloads, int64(timeout), false)
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, false)
 	if err != nil {
 		return err
 	}
@@ -428,36 +411,23 @@ func upgradeUserContract() error {
 	}
 	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("upgrade user contract params:%+v\n", pairsKv)
-	payloadBytes, err := client.CreateContractUpgradePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
+	payload, err := client.CreateContractUpgradePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
 	if err != nil {
 		return err
 	}
 
-	signedPayloads := make([]*common.EndorsementEntry, len(adminKeys))
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		_, privKey, err := dealUserKey(adminKeys[i])
-		if err != nil {
-			return err
-		}
-		crtBytes, crt, err := dealUserCrt(adminCrts[i])
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}
 
-		signedPayload, err := signContractManagePayload(payloadBytes, crtBytes, privKey, crt, adminOrgIdSlice[i])
-		if err != nil {
-			return err
-		}
-		signedPayloads[i] = signedPayload
+		endorsementEntrys[i] = e
 	}
 
-	//mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload(signedPayloads)
-	//if err != nil {
-	//	return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
-	//}
-
 	// 发送更新合约请求
-	resp, err := client.SendContractManageRequest(payloadBytes, signedPayloads, int64(timeout), syncResult)
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, syncResult)
 	if err != nil {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
@@ -490,19 +460,19 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 	defer client.Stop()
 
 	var (
-		payloadBytes   *common.Payload
+		payload        *common.Payload
 		whichOperation string
 	)
 
 	switch which {
 	case 1:
-		payloadBytes, err = client.CreateContractFreezePayload(contractName)
+		payload, err = client.CreateContractFreezePayload(contractName)
 		whichOperation = "freeze"
 	case 2:
-		payloadBytes, err = client.CreateContractUnfreezePayload(contractName)
+		payload, err = client.CreateContractUnfreezePayload(contractName)
 		whichOperation = "unfreeze"
 	case 3:
-		payloadBytes, err = client.CreateContractRevokePayload(contractName)
+		payload, err = client.CreateContractRevokePayload(contractName)
 		whichOperation = "revoke"
 	default:
 		err = fmt.Errorf("wrong which param")
@@ -511,31 +481,18 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		return fmt.Errorf("create cert manage %s payload failed, %s", whichOperation, err.Error())
 	}
 
-	signedPayloads := make([]*common.EndorsementEntry, len(adminKeys))
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		_, privKey, err := dealUserKey(adminKeys[i])
-		if err != nil {
-			return err
-		}
-		crtBytes, crt, err := dealUserCrt(adminCrts[i])
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}
 
-		signedPayload, err := signContractManagePayload(payloadBytes, crtBytes, privKey, crt, adminOrgIdSlice[i])
-		if err != nil {
-			return err
-		}
-		signedPayloads[i] = signedPayload
+		endorsementEntrys[i] = e
 	}
 
-	//mergeSignedPayloadBytes, err := client.MergeContractManageSignedPayload(signedPayloads)
-	//if err != nil {
-	//	return fmt.Errorf(MERGE_CONTRACT_MANAGE_SIGNED_PAYLOAD_FAILED_FORMAT, err.Error())
-	//}
-
 	// 发送创建合约请求
-	resp, err := client.SendContractManageRequest(payloadBytes, signedPayloads, int64(timeout), syncResult)
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, syncResult)
 	if err != nil {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
@@ -548,26 +505,4 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 	fmt.Printf("%s contract resp: %+v\n", whichOperation, resp)
 
 	return nil
-}
-
-func signContractManagePayload(payload *common.Payload, userCrtBytes []byte, privateKey crypto.PrivateKey,
-	userCrt *bcx509.Certificate, orgId string) (*common.EndorsementEntry, error) {
-
-	payloadBytes, _ := payload.Marshal()
-	signBytes, err := signTx(privateKey, userCrt, payloadBytes)
-	if err != nil {
-		return nil, fmt.Errorf("SignPayload failed, %s", err)
-	}
-
-	sender := &accesscontrol.Member{
-		OrgId:      orgId,
-		MemberInfo: userCrtBytes,
-	}
-
-	entry := &common.EndorsementEntry{
-		Signer:    sender,
-		Signature: signBytes,
-	}
-
-	return entry, nil
 }
