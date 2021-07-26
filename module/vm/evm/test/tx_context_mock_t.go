@@ -9,11 +9,11 @@ package test
 import (
 	"chainmaker.org/chainmaker-go/utils"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"sync"
 
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
@@ -39,7 +39,7 @@ var file []byte
 // 初始化上下文和wasm字节码
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxContextMockTest, []byte) {
 	if bytes == nil {
-		bytes, _ = wasm.ReadBytes(ByteCodeFile)
+		bytes, _ = ioutil.ReadFile(ByteCodeFile)
 		fmt.Printf("byteCode file size=%d\n", len(bytes))
 	}
 
@@ -94,6 +94,10 @@ type TxContextMockTest struct {
 	sender   *acPb.Member
 	creator  *acPb.Member
 	cacheMap map[string][]byte
+}
+
+func (s *TxContextMockTest) GetBlockVersion() uint32 {
+	panic("implement me")
 }
 
 func (s *TxContextMockTest) SetStateKvHandle(i int32, iterator protocol.StateIterator) {
@@ -348,7 +352,7 @@ func (m mockBlockchainStore) QueryMulti(contractName, sql string, values ...inte
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) ExecDdlSql(contractName, sql string) error {
+func (m mockBlockchainStore) ExecDdlSql(contractName, sql string, version string) error {
 	panic("implement me")
 }
 
@@ -436,7 +440,7 @@ func (m mockBlockchainStore) GetLastBlock() (*commonPb.Block, error) {
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
-			BlockVersion:   nil,
+			BlockVersion:   0,
 			DagHash:        nil,
 			RwSetRoot:      nil,
 			TxRoot:         nil,
