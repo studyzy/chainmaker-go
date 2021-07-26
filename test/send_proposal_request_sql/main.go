@@ -64,6 +64,7 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
+	common.SetCertPathPrefix(certPathPrefix)
 
 	conn, err := initGRPCConnect(true)
 	if err != nil {
@@ -310,13 +311,13 @@ func functionalTest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient) {
 	fmt.Println("test success!!!")
 }
 func initWasmerSqlTest() {
-	WasmPath = "../wasm/rust-sql-1.1.1.wasm"
+	WasmPath = "../wasm/rust-sql-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
 	contractName = "contract110"
 	runtimeType = commonPb.RuntimeType_WASMER
 }
 func initGasmTest() {
-	WasmPath = "../wasm/go-sql-1.1.1.wasm"
+	WasmPath = "../wasm/go-sql-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
 	contractName = "contract210"
 	runtimeType = commonPb.RuntimeType_GASM
