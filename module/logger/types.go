@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package logger
 
-// LogConfig: the config of log module
+// LogConfig the config of log module
 type LogConfig struct {
 	ConfigFile string        `mapstructure:"config_file"`
 	SystemLog  LogNodeConfig `mapstructure:"system"`
@@ -15,7 +15,7 @@ type LogConfig struct {
 	EventLog   LogNodeConfig `mapstructure:"event"`
 }
 
-// LogNodeConfig: the log config of node
+// LogNodeConfig the log config of node
 type LogNodeConfig struct {
 	LogLevelDefault string            `mapstructure:"log_level_default"`
 	LogLevels       map[string]string `mapstructure:"log_levels"`

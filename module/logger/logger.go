@@ -19,8 +19,7 @@ import (
 )
 
 const (
-	// output system.log
-	MODULE_BLOCKCHAIN = "[Blockchain]"
+	MODULE_BLOCKCHAIN = "[Blockchain]" // output system.log
 	MODULE_NET        = "[Net]"
 	MODULE_STORAGE    = "[Storage]"
 	MODULE_SNAPSHOT   = "[Snapshot]"
@@ -36,11 +35,10 @@ const (
 	MODULE_MONITOR    = "[Monitor]"
 	MODULE_SYNC       = "[Sync]"
 	MODULE_DPOS       = "[DPoS]"
-	// output brief.log
-	MODULE_BRIEF = "[Brief]"
+	MODULE_BRIEF      = "[Brief]" // output brief.log
 
-	// output to event.log
-	MODULE_EVENT = "[Event]"
+	MODULE_EVENT = "[Event]" // output to event.log
+
 )
 
 var (
