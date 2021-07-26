@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package revoke
 
 import (
+	"sync"
+
 	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/protocol"
-	"sync"
 )
 
 // RevokedValidator is a validator for validating revoked peer use revoked tls cert.
@@ -52,10 +53,12 @@ func (rv *RevokedValidator) ValidateCertsIsRevoked(certs []*cmx509.Certificate) 
 		if ac == nil {
 			return false
 		}
-		bl = ac.IsCertRevoked(certs)
-		if bl {
-			return false
-		}
+		// for _, cert := range certs {
+		// 	bl = ac.GetMemberStatus(certs)
+		// 	if bl {
+		// 		return false
+		// 	}
+		// }
 		return true
 	})
 	return bl

@@ -165,7 +165,7 @@ func (cbi *ConsensusChainedBftImpl) retryVote(lastVote *chainedbftpb.ConsensusPa
 	if data, err = proto.Marshal(tempVoteData); err != nil {
 		return nil, fmt.Errorf("marshal vote failed: %s", err)
 	}
-	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash, data); err != nil {
+	if sign, err = cbi.singer.Sign(data); err != nil {
 		return nil, fmt.Errorf("failed to sign data failed, err %v data %v", err, data)
 	}
 	serializeMember, err := cbi.singer.GetMember()

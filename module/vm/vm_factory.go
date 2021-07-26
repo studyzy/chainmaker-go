@@ -345,23 +345,23 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 	}
 
 	// Get three items in the certificate: orgid PK role
-	if senderMember, err := m.AccessControl.NewMemberFromProto(sender); err != nil {
+	if senderMember, err := m.AccessControl.NewMember(sender); err != nil {
 		contractResult.Message = fmt.Sprintf("failed to unmarshal sender %q", runtimeType)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_SENDER_FAILED
 	} else {
 		parameters[protocol.ContractSenderOrgIdParam] = []byte(senderMember.GetOrgId())
-		parameters[protocol.ContractSenderRoleParam] = []byte(senderMember.GetRole()[0])
-		parameters[protocol.ContractSenderPkParam] = []byte(hex.EncodeToString(senderMember.GetSKI()))
+		parameters[protocol.ContractSenderRoleParam] = []byte(senderMember.GetRole())
+		parameters[protocol.ContractSenderPkParam] = []byte(senderMember.GetMemberId())
 	}
 
 	// Get three items in the certificate: orgid PK role
-	if creatorMember, err := m.AccessControl.NewMemberFromProto(creator); err != nil {
+	if creatorMember, err := m.AccessControl.NewMember(creator); err != nil {
 		contractResult.Message = fmt.Sprintf("failed to unmarshal creator %q", creator)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_CREATOR_FAILED
 	} else {
 		parameters[protocol.ContractCreatorOrgIdParam] = []byte(creator.OrgId)
-		parameters[protocol.ContractCreatorRoleParam] = []byte(creatorMember.GetRole()[0])
-		parameters[protocol.ContractCreatorPkParam] = []byte(hex.EncodeToString(creatorMember.GetSKI()))
+		parameters[protocol.ContractCreatorRoleParam] = []byte(creatorMember.GetRole())
+		parameters[protocol.ContractCreatorPkParam] = []byte(creatorMember.GetMemberId())
 	}
 
 	parameters[protocol.ContractTxIdParam] = []byte(txId)

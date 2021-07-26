@@ -24,6 +24,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"github.com/Workiva/go-datastructures/threadsafe/err"
 	"github.com/tjfoc/gmsm/sm2"
 
 	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
@@ -917,8 +918,21 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.Acc
 	for _, param := range payload.Parameters {
 		if param.Key == "cert_crl" {
 
-			crl := strings.Replace(string(param.Value), ",", "\n", -1)
-			crls, err := ac.ValidateCRL([]byte(crl))
+			crlStr := strings.Replace(string(param.Value), ",", "\n", -1)
+			_, err = ac.VerifyRelatedMaterial(pbac.VerifyType_CRL, []byte(crlStr))
+			if err != nil {
+				logger.Errorf("[Net] validate crl failed, %s", err.Error())
+				return err
+			}
+
+			var crls []*pkix.CertificateList
+
+			crl, err := x509.ParseCRL([]byte(crlStr))
+			if err != nil {
+				logger.Errorf("[Net] validate crl failed, %s", err.Error())
+				return err
+			}
+			crls = append(crls, crl)
 			if err != nil {
 				logger.Errorf("[Net] validate crl failed, %s", err.Error())
 				return err
