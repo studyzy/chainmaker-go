@@ -127,11 +127,7 @@ func newBlockSqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logge
 	}
 	return blockDB, nil
 }
-func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
-	blockInfo := ConvertHeader2BlockInfo(header)
-	_, err := b.db.Save(blockInfo)
-	return err
-}
+
 func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	b.initDb(b.dbName)
 	return b.CommitBlock(genesisBlock)
