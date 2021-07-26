@@ -9,16 +9,17 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 import (
+	"errors"
+	"path/filepath"
+	"reflect"
+	"strings"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
-	"errors"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"path/filepath"
-	"reflect"
-	"strings"
 )
 
 var (

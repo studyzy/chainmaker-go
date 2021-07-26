@@ -8,8 +8,9 @@
 package localconf
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStorageConfig_GetDefaultDBConfig(t *testing.T) {
