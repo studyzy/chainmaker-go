@@ -5,7 +5,7 @@ blockchain:
 #    genesis: chainconfig/bc2.yml
 
 node:
-  # 节点类型：full、spv
+  # 节点类型：full
   type: full
 
   # node1
