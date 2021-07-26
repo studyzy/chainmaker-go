@@ -106,7 +106,7 @@ func SignConsensusMsg(msg *chainedbftpb.ConsensusMsg, hashType string,
 		return fmt.Errorf("marshal payload failed, payload %v, err %v", msg.Payload, err)
 	}
 
-	sign, err := signer.Sign(data)
+	sign, err := signer.Sign(hashType, data)
 	if err != nil {
 		return fmt.Errorf("sign data failed, err %v data %v", err, data)
 	}

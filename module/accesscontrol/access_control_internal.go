@@ -154,7 +154,7 @@ func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyP
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
 		}
-		certMember, err := newMemberFromCertPem(localOrgId, string(certPEM), hashType, true)
+		certMember, err := newMemberFromCertPem(localOrgId, string(certPEM), true, hashType)
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
 		}
@@ -1250,7 +1250,7 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 	// 	return
 	// }
 
-	if err = remoteMember.Verify(msg, endorsement.Signature); err != nil {
+	if err = remoteMember.Verify(ac.hashType, msg, endorsement.Signature); err != nil {
 		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		ac.log.Warn(resultMsg)
@@ -1291,7 +1291,7 @@ func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, 
 		ac.log.Warn(resultMsg)
 		return false, resultMsg
 	}
-	if err := signerInfo.signer.Verify(msg, endorsement.Signature); err != nil {
+	if err := signerInfo.signer.Verify(ac.hashType, msg, endorsement.Signature); err != nil {
 		resultMsg := fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		ac.log.Warn(resultMsg)

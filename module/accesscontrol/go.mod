@@ -8,7 +8,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210726025509-9809b34a7a73
-	chainmaker.org/chainmaker/protocol v0.0.0-20210723094416-a1dc249aee8c
+	chainmaker.org/chainmaker/protocol v0.0.0-20210726074101-329ed8283584
 	github.com/gogo/protobuf v1.3.2
 )
 

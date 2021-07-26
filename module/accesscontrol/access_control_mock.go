@@ -64,7 +64,7 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, hashType string) ([]*commonPb.EndorsementEntry, error) {
 	var ret []*commonPb.EndorsementEntry
 	for _, signer := range signers {
-		sig, err := signer.Sign(msg)
+		sig, err := signer.Sign(hashType, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -72,6 +72,7 @@ func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, has
 		if err != nil {
 			return nil, err
 		}
+
 		ret = append(ret, &commonPb.EndorsementEntry{
 			Signer:    signerSerial,
 			Signature: sig,

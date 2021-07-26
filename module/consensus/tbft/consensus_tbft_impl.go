@@ -1198,7 +1198,7 @@ func (consensus *ConsensusTBFTImpl) ToGossipStateProto() *tbftpb.GossipState {
 
 func (consensus *ConsensusTBFTImpl) signProposal(proposal *Proposal) error {
 	proposalBytes := mustMarshal(proposal.ToProto())
-	sig, err := consensus.singer.Sign(proposalBytes)
+	sig, err := consensus.singer.Sign(consensus.chainConf.ChainConfig().Crypto.Hash,proposalBytes)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%v) sign proposal %s(%d/%d)-%x failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
@@ -1221,7 +1221,7 @@ func (consensus *ConsensusTBFTImpl) signProposal(proposal *Proposal) error {
 
 func (consensus *ConsensusTBFTImpl) signVote(vote *Vote) error {
 	voteBytes := mustMarshal(vote.ToProto())
-	sig, err := consensus.singer.Sign(voteBytes)
+	sig, err := consensus.singer.Sign(consensus.chainConf.ChainConfig().Crypto.Hash,voteBytes)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%v) sign vote %s(%d/%d)-%x failed: %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step,

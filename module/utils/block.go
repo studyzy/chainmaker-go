@@ -41,7 +41,7 @@ func SignBlock(hashType string, singer protocol.SigningMember, b *commonPb.Block
 	if err != nil {
 		return []byte{}, nil, err
 	}
-	sig, err := singer.Sign(blockHash)
+	sig, err := singer.Sign(hashType, blockHash)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -42,9 +42,9 @@ func (pm *pkMember) GetRole() protocol.Role {
 	return pm.role
 }
 
-func (pm *pkMember) Verify(msg []byte, sig []byte) error {
+func (pm *pkMember) Verify(hashType string, msg []byte, sig []byte) error {
 
-	hash, ok := bccrypto.HashAlgoMap[pm.hashType]
+	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
 		return fmt.Errorf("cert member verify signature failed: unsupport hash type")
 	}
@@ -82,8 +82,8 @@ type signingPkMember struct {
 }
 
 // When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
-func (spm *signingPkMember) Sign(msg []byte) ([]byte, error) {
-	hash, ok := bccrypto.HashAlgoMap[spm.hashType]
+func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
+	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
 		return nil, fmt.Errorf("sign failed: unsupport hash type")
 	}

@@ -32,7 +32,7 @@ type certMember struct {
 	// role of this member
 	role protocol.Role
 
-	// hash type from chain configuration
+	// hash type from cert
 	hashType string
 
 	// the certificate is full or hash
@@ -51,14 +51,21 @@ func (cm *certMember) GetRole() protocol.Role {
 	return cm.role
 }
 
-func (cm *certMember) Verify(msg []byte, sig []byte) error {
-
+func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
+	hash, ok := bccrypto.HashAlgoMap[hashType]
+	if !ok {
+		return fmt.Errorf("sign failed: unsupport hash type")
+	}
 	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cm.cert.SignatureAlgorithm)
 	if err != nil {
 		return fmt.Errorf("cert member verify failed: invalid algorithm: %s", err.Error())
 	}
 
-	ok, err := cm.cert.PublicKey.VerifyWithOpts(msg, sig, &bccrypto.SignOpts{
+	if hash != hashAlgo {
+		return fmt.Errorf("cert member verify failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+	}
+
+	ok, err = cm.cert.PublicKey.VerifyWithOpts(msg, sig, &bccrypto.SignOpts{
 		Hash: hashAlgo,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
 	})
@@ -101,11 +108,20 @@ type signingCertMember struct {
 }
 
 // When using certificate, the signature-hash algorithm suite is from the certificate, and the input hashType is ignored.
-func (scm *signingCertMember) Sign(msg []byte) ([]byte, error) {
+func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) {
+	hash, ok := bccrypto.HashAlgoMap[hashType]
+	if !ok {
+		return nil, fmt.Errorf("sign failed: unsupport hash type")
+	}
 	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(scm.cert.SignatureAlgorithm)
 	if err != nil {
 		return nil, fmt.Errorf("sign failed: invalid algorithm: %s", err.Error())
 	}
+
+	if hash != hashAlgo {
+		return nil, fmt.Errorf("sign failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+	}
+
 	return scm.sk.SignWithOpts(msg, &bccrypto.SignOpts{
 		Hash: hashAlgo,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
@@ -114,7 +130,7 @@ func (scm *signingCertMember) Sign(msg []byte) ([]byte, error) {
 
 func NewCertMember(member *pbac.Member, ac *accessControl) (*certMember, error) {
 	if member.MemberType == pbac.MemberType_CERT {
-		return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), ac.hashType, true)
+		return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, ac.hashType)
 	}
 	if member.MemberType == pbac.MemberType_CERT_HASH {
 		certPEM, ok := ac.lookUpCertCache(string(member.MemberInfo))
@@ -124,16 +140,15 @@ func NewCertMember(member *pbac.Member, ac *accessControl) (*certMember, error) 
 		if certPEM == nil {
 			return nil, fmt.Errorf("setup member failed, unknown certificate ID")
 		}
-		return newMemberFromCertPem(member.OrgId, string(certPEM), ac.hashType, false)
+		return newMemberFromCertPem(member.OrgId, string(certPEM), false, ac.hashType)
 	}
 	return nil, fmt.Errorf("setup member failed, unsupport cert member type")
 }
 
-func newMemberFromCertPem(orgId, certPEM string, hashType string, isFullCert bool) (*certMember, error) {
+func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType string) (*certMember, error) {
 	var certMember certMember
 	certMember.orgId = orgId
 	certMember.isFullCert = isFullCert
-	certMember.hashType = hashType
 
 	certBlock, _ := pem.Decode([]byte(certPEM))
 	if certBlock == nil {
@@ -142,6 +157,18 @@ func newMemberFromCertPem(orgId, certPEM string, hashType string, isFullCert boo
 
 	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
 	if err == nil {
+		hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+		if err != nil {
+			return nil, fmt.Errorf("new member failed: get hash from signature algorithm: %s", err.Error())
+		}
+		hash, ok := bccrypto.HashAlgoMap[hashType]
+		if !ok {
+			return nil, fmt.Errorf("new member failed: unsupport hash type")
+		}
+		if hash != hashAlgo {
+			return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+		}
+		certMember.hashType = hashType
 		orgIdFromCert := cert.Subject.Organization[0]
 		if orgIdFromCert != orgId {
 			return nil, fmt.Errorf("setup cert member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
@@ -173,7 +200,7 @@ func (cmp *certMemberProvider) NewMember(member *pbac.Member, ac *accessControl)
 }
 
 func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem string, password string) (protocol.SigningMember, error) {
-	certMember, err := newMemberFromCertPem(member.OrgId, string(member.MemberInfo), hashType, true)
+	certMember, err := newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, hashType)
 	if err != nil {
 		return nil, err
 	}

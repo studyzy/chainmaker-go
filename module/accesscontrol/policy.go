@@ -24,6 +24,20 @@ func (p *policy) GetRule() protocol.Rule {
 	return p.rule
 }
 
+func (p *policy) GetPbPolicy() *pbac.Policy {
+	var pbRoleList []string
+	for _, role := range p.roleList {
+		var roleStr string
+		roleStr = string(role)
+		pbRoleList = append(pbRoleList, roleStr)
+	}
+	return &pbac.Policy{
+		Rule:     string(p.rule),
+		OrgList:  p.orgList,
+		RoleList: pbRoleList,
+	}
+}
+
 func (p *policy) GetOrgList() []string {
 	return p.orgList
 }
