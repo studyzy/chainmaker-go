@@ -46,7 +46,7 @@ var (
 	wasmPath       string
 	contractName   string
 	txId           string
-	height         int
+	height         uint64
 	hash           string
 	withRWSets     bool
 	useTLS         bool
