@@ -26,7 +26,7 @@ type TxInfo struct {
 	// invoke method
 	Method string `gorm:"size:128"`
 	// invoke parameters in k-v format
-	Parameters string `gorm:"type:longtext"` //json
+	Parameters []byte `gorm:"type:longblob"` //json
 	//sequence number 交易顺序号，以Sender为主键，0表示无顺序要求，>0则必须连续递增。
 	Sequence uint64 `gorm:"default:0"`
 	// gas price+gas limit; fee; timeout seconds;
@@ -65,7 +65,7 @@ func (t *TxInfo) GetCreateTableSql(dbType string) string {
 	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
 		return `CREATE TABLE tx_infos (chain_id varchar(128),tx_type int,tx_id varchar(128),timestamp bigint DEFAULT 0,
 expiration_time bigint DEFAULT 0,
-contract_name varchar(128),method varchar(128),parameters longtext,sequence bigint,limits blob,
+contract_name varchar(128),method varchar(128),parameters longblob,sequence bigint,limits blob,
 sender_org_id varchar(128),sender_member_info blob,sender_member_type int,sender_sa int,sender_signature blob,
 endorsers longtext,
 tx_status_code int,contract_result_code int,result_data longblob,result_message varchar(2000),
@@ -77,7 +77,7 @@ INDEX idx_height_offset (block_height,offset)) default character set utf8`
 	if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
 		return `CREATE TABLE tx_infos (chain_id text,tx_type int,tx_id text,timestamp integer DEFAULT 0,
 expiration_time integer DEFAULT 0,
-contract_name text,method text,parameters longtext,sequence bigint,limits blob,
+contract_name text,method text,parameters longblob,sequence bigint,limits blob,
 sender_org_id text,sender_member_info blob,sender_member_type integer,sender_sa integer,sender_signature blob,
 endorsers longtext,
 tx_status_code integer,contract_result_code integer,result_data longblob,result_message text,
@@ -124,7 +124,7 @@ func NewTxInfo(tx *commonPb.Transaction, blockHeight uint64, blockHash []byte, o
 		ExpirationTime:     tx.Payload.ExpirationTime,
 		ContractName:       tx.Payload.ContractName,
 		Method:             tx.Payload.Method,
-		Parameters:         string(par),
+		Parameters:         par,
 		Sequence:           tx.Payload.Sequence,
 		Limit:              tx.Payload.Limit,
 		SenderOrgId:        getSender(tx).Signer.OrgId,
@@ -161,9 +161,9 @@ func getSender(tx *commonPb.Transaction) *commonPb.EndorsementEntry {
 	}
 	return tx.Sender
 }
-func getParameters(par string) []*commonPb.KeyValuePair {
+func getParameters(par []byte) []*commonPb.KeyValuePair {
 	var pairs []*commonPb.KeyValuePair
-	json.Unmarshal([]byte(par), &pairs)
+	json.Unmarshal(par, &pairs)
 	return pairs
 }
 func getEndorsers(endorsers string) []*commonPb.EndorsementEntry {

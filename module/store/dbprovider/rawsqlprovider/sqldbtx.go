@@ -76,6 +76,7 @@ func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 		p.logger.Debug("Exec sql:", insert, args)
 		result, err := p.db.Exec(insert, args...)
 		if err != nil {
+			p.logger.Warn("Exec sql:", insert, args)
 			p.logger.Error(err)
 			return 0, errSql
 		}

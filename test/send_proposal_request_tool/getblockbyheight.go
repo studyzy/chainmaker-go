@@ -10,7 +10,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
+	"math"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -30,13 +30,14 @@ func GetBlockByHeightCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVarP(&height, "height", "H", -1, "specify block height")
+	flags.Uint64VarP(&height, "height", "H", math.MaxUint64, "specify block height")
 	flags.BoolVarP(&withRWSets, "with-rw-sets", "w", false, "specify whether return rw sets")
 
 	return cmd
 }
 
 func getBlockByHeight() error {
+
 	// 构造Payload
 	w := "false"
 	if withRWSets {
@@ -45,7 +46,7 @@ func getBlockByHeight() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: []byte(strconv.Itoa(height)),
+			Value: []byte(fmt.Sprintf("%d", height)),
 		},
 		{
 			Key:   "withRWSet",
