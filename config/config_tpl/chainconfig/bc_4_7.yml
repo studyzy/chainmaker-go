@@ -96,11 +96,11 @@ consensus:
       value: "2500000"
     - key: stake.candidate:{org4_peeraddr}
       value: "2500000"
-    #    - key: stake.candidate:{org5_peeraddr}
+#    - key: stake.candidate:{org5_peeraddr}
 #      value: "2500000"
-    #    - key: stake.candidate:{org6_peeraddr}
+#    - key: stake.candidate:{org6_peeraddr}
 #      value: "2500000"
-    #    - key: stake.candidate:{org7_peeraddr}
+#    - key: stake.candidate:{org7_peeraddr}
 #      value: "2500000"
     - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"

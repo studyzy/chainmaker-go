@@ -75,15 +75,15 @@ consensus:
     - org_id: "{org10_id}"
       node_id:
         - "{org10_peerid}"
-  #    - org_id: "{org11_id}"
-  #      node_id:
-  #        - "{org11_peerid}"
-  #    - org_id: "{org12_id}"
-  #      node_id:
-  #        - "{org12_peerid}"
-  #    - org_id: "{org13_id}"
-  #      node_id:
-  #        - "{org13_peerid}"
+#    - org_id: "{org11_id}"
+#      node_id:
+#        - "{org11_peerid}"
+#    - org_id: "{org12_id}"
+#      node_id:
+#        - "{org12_peerid}"
+#    - org_id: "{org13_id}"
+#      node_id:
+#        - "{org13_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -126,12 +126,12 @@ consensus:
       value: "2500000"
     - key: stake.candidate:{org10_peeraddr}
       value: "2500000"
-    #    - key: stake.candidate:{org11_peeraddr}
-    #      value: "2500000"
-    #    - key: stake.candidate:{org12_peeraddr}
-    #      value: "2500000"
-    #    - key: stake.candidate:{org13_peeraddr}
-    #      value: "2500000"
+#    - key: stake.candidate:{org11_peeraddr}
+#      value: "2500000"
+#    - key: stake.candidate:{org12_peeraddr}
+#      value: "2500000"
+#    - key: stake.candidate:{org13_peeraddr}
+#      value: "2500000"
     - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
     - key: stake.nodeID:{org2_peeraddr}
