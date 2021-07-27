@@ -165,11 +165,11 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	if utils.IsContractMgmtBlock(block) {
 		//创建对应合约的数据库
 		payload := block.Txs[0].Payload
-
+		runtime := payload.GetParameter(syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String())
 		contractId := &commonPb.Contract{
 			Name:        string(payload.GetParameter(syscontract.InitContract_CONTRACT_NAME.String())),
 			Version:     string(payload.GetParameter(syscontract.InitContract_CONTRACT_VERSION.String())),
-			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(payload.GetParameter(syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String()))]),
+			RuntimeType: commonPb.RuntimeType(commonPb.RuntimeType_value[string(runtime)]),
 		}
 		//if contractId.RuntimeType == commonPb.RuntimeType_EVM {
 		//	address, _ := evmutils.MakeAddressFromString(contractId.Name)
@@ -240,8 +240,6 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 				s.logger.Errorf("execute sql[%s] get error:%s", txWrite.Value, err.Error())
 				return err
 			}
-		} else {
-			// nothing sql rw record in result db
 		}
 	} else {
 		stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
@@ -267,8 +265,8 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint
 }
 
 //如果是创建或者升级合约，那么需要创建对应的数据库和state_infos表，然后执行DDL语句，然后如果是KV数据，保存数据
-func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block, contractId *commonPb.Contract,
-	writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
+func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block,
+	contractId *commonPb.Contract, writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
 	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.Name)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.Name)
@@ -290,6 +288,10 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 			if !processStateDbSqlOutside {
 				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
 				err = dbTx.ChangeContextDb(writeDbName)
+				if err != nil {
+					s.logger.Errorf("change context db to %s get an error:%s", writeDbName, err)
+					return err
+				}
 				_, err = dbTx.ExecSql(string(txWrite.Value)) //运行用户自定义的建表语句
 				if err != nil {
 					s.logger.Errorf("execute sql[%s] get an error:%s", string(txWrite.Value), err)
@@ -453,15 +455,14 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	record := NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, version, 0)
 	query, args := record.GetQueryStatusSql()
 	s.logger.Debug("Query sql:", query, args)
-	row, err := s.db.QuerySingle(query, args)
-	if err != nil {
-		s.logger.Errorf("Query DDL history get an error:%s", err)
-		return err
-	}
+	row, _ := s.db.QuerySingle(query, args)
 	//查询数据库中是否有DDL记录，如果有对应记录，而且状态是1，那么就跳过重复执行DDL的情况
-	if !row.IsEmpty() {
+	if row != nil && !row.IsEmpty() {
 		status := 0
-		row.ScanColumns(&status)
+		err = row.ScanColumns(&status)
+		if err != nil {
+			return err
+		}
 		if status == 1 { //SUCCESS
 			s.logger.Infof("DDL[%s] already executed, ignore it", sql)
 			return nil

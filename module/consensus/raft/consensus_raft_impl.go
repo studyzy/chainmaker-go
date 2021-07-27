@@ -184,7 +184,10 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	go consensus.serve()
 	consensus.msgbus.Register(msgbus.ProposedBlock, consensus)
 	consensus.msgbus.Register(msgbus.RecvConsensusMsg, consensus)
-	chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_RAFT, consensus)
+	err = chainconf.RegisterVerifier(consensus.chainID, consensuspb.ConsensusType_RAFT, consensus)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -206,9 +209,13 @@ func (consensus *ConsensusRaftImpl) OnMessage(message *msgbus.Message) {
 	case msgbus.RecvConsensusMsg:
 		if msg, ok := message.Payload.(*netpb.NetMsg); ok {
 			raftMsg := raftpb.Message{}
-			raftMsg.Unmarshal(msg.Payload)
+			if err := raftMsg.Unmarshal(msg.Payload); err != nil {
+				consensus.logger.Panicf("[%x] unmarshal message %v", consensus.Id, err)
+			}
 			consensus.logger.Debugf("[%x] receive message %v", consensus.Id, describeMessage(raftMsg))
-			consensus.node.Step(context.Background(), raftMsg)
+			if err := consensus.node.Step(context.Background(), raftMsg); err != nil {
+				consensus.logger.Errorf("[%x] step message %v, err: %v", consensus.Id, describeMessage(raftMsg), err)
+			}
 		} else {
 			panic(fmt.Errorf("receive message failed, error message type"))
 		}
@@ -237,7 +244,7 @@ func (consensus *ConsensusRaftImpl) saveSnap(snap raftpb.Snapshot) error {
 	return consensus.wal.ReleaseLockTo(snap.Metadata.Index)
 }
 
-func (consensus *ConsensusRaftImpl) serve() error {
+func (consensus *ConsensusRaftImpl) serve() {
 	snap, err := consensus.raftStorage.Snapshot()
 	if err != nil {
 		consensus.logger.Fatalf("[%x] raftStorage Snapshot error", consensus.Id, err)
@@ -261,24 +268,33 @@ func (consensus *ConsensusRaftImpl) serve() error {
 	for {
 		select {
 		case <-consensus.closeC:
-			return nil
+			return
 		case <-ticker.C:
 			consensus.node.Tick()
 			consensus.logger.Debugf("[%x] status: %s", consensus.Id, consensus.node.Status())
 		case ready := <-consensus.node.Ready():
 			consensus.logger.Debugf("[%x] receive from raft ready, %v", consensus.Id, describeReady(ready))
-			consensus.wal.Save(ready.HardState, ready.Entries)
+			if err := consensus.wal.Save(ready.HardState, ready.Entries); err != nil {
+				consensus.logger.Panicf("[%x] save wal: %v, error: %v", consensus.Id, describeReady(ready), err)
+			}
 			if !etcdraft.IsEmptySnap(ready.Snapshot) {
-				consensus.saveSnap(ready.Snapshot)
-				consensus.raftStorage.ApplySnapshot(ready.Snapshot)
+				if err := consensus.saveSnap(ready.Snapshot); err != nil {
+					consensus.logger.Panicf("[%x] save snap error: %v", consensus.Id, err)
+				}
+				if err := consensus.raftStorage.ApplySnapshot(ready.Snapshot); err != nil {
+					consensus.logger.Panicf("[%x] apply snapshot error: %v", consensus.Id, err)
+				}
 				consensus.publishSnapshot(ready.Snapshot)
 			}
 
-			consensus.raftStorage.Append(ready.Entries)
+			if err := consensus.raftStorage.Append(ready.Entries); err != nil {
+				consensus.logger.Panicf("[%x] storage append entries error: %v", consensus.Id, err)
+			}
 			consensus.sendMessages(ready.Messages)
 			ok, configChanged := consensus.publishEntries(consensus.entriesToApply(ready.CommittedEntries))
 			if !ok {
-				return nil
+				consensus.logger.Infof("[%x] is deleted from consensus nodes", consensus.Id)
+				return
 			}
 			consensus.maybeTriggerSnapshot(configChanged)
 			if ready.SoftState != nil {
@@ -303,8 +319,8 @@ func (consensus *ConsensusRaftImpl) serve() error {
 
 			serializeMember, err := consensus.singer.GetMember()
 			if err != nil {
-				consensus.logger.Errorf("[%x] get serialize member failed: %v", consensus.Id, err)
-				return err
+				consensus.logger.Fatalf("[%x] get serialize member failed: %v", consensus.Id, err)
+				return
 			}
 			signature := &common.EndorsementEntry{
 				Signer:    serializeMember,
@@ -317,11 +333,15 @@ func (consensus *ConsensusRaftImpl) serve() error {
 			data, _ := json.Marshal(additionalData)
 			block.AdditionalData.ExtraData[protocol.RAFTAddtionalDataKey] = data
 			data = mustMarshal(block)
-			consensus.node.Propose(context.TODO(), data)
+			if err := consensus.node.Propose(context.TODO(), data); err != nil {
+				consensus.logger.Panicf("[%x] propose error: %v", consensus.Id, err)
+			}
 
 		case cc := <-consensus.confChangeC:
 			consensus.logger.Debugf("[%x] ProposeConfChange %v", consensus.Id, describeConfChange(cc))
-			consensus.node.ProposeConfChange(context.TODO(), cc)
+			if err := consensus.node.ProposeConfChange(context.TODO(), cc); err != nil {
+				consensus.logger.Panicf("[%x] propose config change error: %v", consensus.Id, err)
+			}
 		}
 	}
 }
@@ -333,7 +353,8 @@ func (consensus *ConsensusRaftImpl) entriesToApply(ents []raftpb.Entry) (nents [
 
 	firstIdx := ents[0].Index
 	if firstIdx > consensus.appliedIndex+1 {
-		consensus.logger.Fatalf("first index of committed entry[%d] should <= progress.appliedIndex[%d]+1", firstIdx, consensus.appliedIndex)
+		consensus.logger.Fatalf("first index of committed entry[%d] should <= progress.appliedIndex[%d]+1",
+			firstIdx, consensus.appliedIndex)
 	}
 	if consensus.appliedIndex-firstIdx+1 < uint64(len(ents)) {
 		nents = ents[consensus.appliedIndex-firstIdx+1:]
@@ -365,7 +386,9 @@ func (consensus *ConsensusRaftImpl) publishEntries(ents []raftpb.Entry) (ok bool
 			configChanged = true
 
 			var cc raftpb.ConfChange
-			cc.Unmarshal(ents[i].Data)
+			if err := cc.Unmarshal(ents[i].Data); err != nil {
+				consensus.logger.Panicf("[%x] unmarshal config change error: %v", consensus.Id, err)
+			}
 			consensus.confState = *consensus.node.ApplyConfChange(cc)
 			consensus.peers = consensus.getPeersFromChainConf()
 
@@ -388,7 +411,8 @@ func (consensus *ConsensusRaftImpl) publishSnapshot(snapshot raftpb.Snapshot) {
 	}
 
 	if snapshot.Metadata.Index <= consensus.appliedIndex {
-		consensus.logger.Fatalf("snapshot index: %v should > appliedIndex: %v", snapshot.Metadata.Index, consensus.appliedIndex)
+		consensus.logger.Fatalf("snapshot index: %v should > appliedIndex: %v",
+			snapshot.Metadata.Index, consensus.appliedIndex)
 	}
 
 	consensus.logger.Infof("publishSnapshot metadata: %v", snapshot.Metadata)
@@ -526,15 +550,21 @@ func (consensus *ConsensusRaftImpl) replayWAL() *wal.WAL {
 	}
 	consensus.raftStorage = etcdraft.NewMemoryStorage()
 	if snapshot != nil {
-		consensus.raftStorage.ApplySnapshot(*snapshot)
+		if err := consensus.raftStorage.ApplySnapshot(*snapshot); err != nil {
+			consensus.logger.Panicf("[%x] apply snapshot error: %v", consensus.Id, err)
+		}
 	}
-	consensus.raftStorage.SetHardState(state)
-	consensus.raftStorage.Append(ents)
+	if err := consensus.raftStorage.SetHardState(state); err != nil {
+		consensus.logger.Panicf("[%x] SetHardState error: %v", consensus.Id, err)
+	}
+	if err := consensus.raftStorage.Append(ents); err != nil {
+		consensus.logger.Panicf("[%x] storage append error: %v", consensus.Id, err)
+	}
 	consensus.logger.Infof("replayWAL walsnap index: %v, len(ents): %v", walsnap.Index, len(ents))
 	return w
 }
 
-func (consensus *ConsensusRaftImpl) commitBlock(block *common.Block) error {
+func (consensus *ConsensusRaftImpl) commitBlock(block *common.Block) {
 	for {
 		err := consensus.blockVerifier.VerifyBlock(block, protocol.CONSENSUS_VERIFY)
 		consensus.logger.Debugf("verify block: %d-%x error: %v", block.Header.BlockHeight, block.Header.BlockHash, err)
@@ -542,7 +572,7 @@ func (consensus *ConsensusRaftImpl) commitBlock(block *common.Block) error {
 			break
 		}
 		if err == commonErrors.ErrBlockHadBeenCommited {
-			return nil
+			return
 		} else if err != nil {
 			consensus.logger.Errorf("verify block: %d-%x fail: %s", block.Header.BlockHeight, block.Header.BlockHash, err)
 			time.Sleep(time.Millisecond * 10)
@@ -554,8 +584,6 @@ func (consensus *ConsensusRaftImpl) commitBlock(block *common.Block) error {
 	if err != nil && err != commonErrors.ErrBlockHadBeenCommited {
 		consensus.logger.Fatalf("commit block: %d-%x fail: %s", block.Header.BlockHeight, block.Header.BlockHash, err)
 	}
-
-	return nil
 }
 
 func (consensus *ConsensusRaftImpl) sendProposeState(isProposer bool) {
@@ -566,7 +594,9 @@ func (consensus *ConsensusRaftImpl) sendProposeState(isProposer bool) {
 // Verify implements interface of struct Verifier,
 // This interface is used to verify the validity of parameters,
 // it executes before consensus.
-func (consensus *ConsensusRaftImpl) Verify(consensusType consensuspb.ConsensusType, chainConfig *config.ChainConfig) error {
+func (consensus *ConsensusRaftImpl) Verify(
+	consensusType consensuspb.ConsensusType,
+	chainConfig *config.ChainConfig) error {
 	return nil
 }
 
@@ -624,7 +654,7 @@ func (consensus *ConsensusRaftImpl) processConfigChange() {
 // error when verify successfully, and return corresponding error
 // when failed.
 func VerifyBlockSignatures(block *common.Block) error {
-	if block == nil || block.Header == nil || block.Header.BlockHeight < 0 ||
+	if block == nil || block.Header == nil ||
 		block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return fmt.Errorf("invalid block")
 	}

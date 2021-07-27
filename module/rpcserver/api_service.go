@@ -249,9 +249,9 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		s.log.Error(errMsg)
 
 		resp.Code = txStatusCode
-		if txResult.Message == archive.ArchivedBlockError.Error() {
+		if txResult.Message == archive.ErrArchivedBlock.Error() {
 			resp.Code = commonPb.TxStatusCode_ARCHIVED_BLOCK
-		} else if txResult.Message == archive.ArchivedTxError.Error() {
+		} else if txResult.Message == archive.ErrArchivedTx.Error() {
 			resp.Code = commonPb.TxStatusCode_ARCHIVED_TX
 		}
 

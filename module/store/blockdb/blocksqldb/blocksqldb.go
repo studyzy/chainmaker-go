@@ -20,7 +20,8 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-var NotImplementError = errors.New("implement me")
+var errNotImplement = errors.New("implement me")
+var errNullPoint = errors.New("null point")
 
 // BlockSqlDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a mysql based data model
@@ -81,11 +82,11 @@ func (db *BlockSqlDB) GetArchivedPivot() (uint64, error) {
 }
 
 func (db *BlockSqlDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint64][]string, error) {
-	return nil, NotImplementError
+	return nil, errNotImplement
 }
 
 func (db *BlockSqlDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerializedInfo) error {
-	return NotImplementError
+	return errNotImplement
 }
 
 // NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
@@ -399,7 +400,7 @@ func (b *BlockSqlDB) getTxsByBlockHeight(blockHeight uint64) ([]*commonPb.Transa
 	return result, nil
 }
 func (b *BlockSqlDB) GetTxConfirmedTime(txId string) (int64, error) {
-	return 0, NotImplementError
+	return 0, errNotImplement
 }
 
 // Close is used to close database
