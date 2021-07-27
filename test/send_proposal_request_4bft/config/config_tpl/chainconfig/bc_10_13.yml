@@ -95,7 +95,7 @@ consensus:
       value: "{org1_peeraddr}"
     - key: erc20.decimals
       value: "18"
-    - key: erc20.account:SYSTEM_CONTRACT_DPOS_STAKE
+    - key: erc20.account:DPOS_STAKE
       value: "{erc20_total}"
     #Stake合约配置
     - key: stake.minSelfDelegation
