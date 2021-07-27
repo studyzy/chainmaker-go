@@ -13,11 +13,11 @@ import (
 )
 
 import (
-	"github.com/tjfoc/gmtls"
+	cmtls "chainmaker.org/chainmaker-go/common/crypto/tls"
 )
 
 type conn struct {
-	*gmtls.Conn
+	*cmtls.Conn
 
 	localPeer peer.ID
 	privKey   ci.PrivKey
