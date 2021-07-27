@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package hibe
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,11 +16,8 @@ import (
 	"strconv"
 	"strings"
 
-	localhibe "chainmaker.org/chainmaker/common/crypto/hibe"
-	"github.com/samkumar/hibe"
+	"chainmaker.org/chainmaker/common/crypto/hibe"
 	"github.com/spf13/cobra"
-	"vuvuzela.io/crypto/bn256"
-	"vuvuzela.io/crypto/rand"
 )
 
 var (
@@ -137,7 +135,7 @@ func updatePrvKeyCMD() *cobra.Command {
 
 func setupOrgHibeSys() error {
 
-	err := localhibe.ValidateId(orgId)
+	err := hibe.ValidateId(orgId)
 	if err != nil {
 		return err
 	}
@@ -189,7 +187,7 @@ func setupOrgHibeSys() error {
 }
 
 func getParams() error {
-	if err := localhibe.ValidateId(orgId); err != nil {
+	if err := hibe.ValidateId(orgId); err != nil {
 		return err
 	}
 
@@ -227,14 +225,14 @@ func getParams() error {
 }
 
 func genPrivateKey() error {
-	err := localhibe.ValidateId(orgId)
+	err := hibe.ValidateId(orgId)
 	if err != nil {
 		return err
 	}
 
 	savePathSuffix = orgId
 
-	err = localhibe.ValidateId(id)
+	err = hibe.ValidateId(id)
 	if err != nil {
 		return err
 	}
@@ -247,7 +245,7 @@ func genPrivateKey() error {
 		return fmt.Errorf("file [ %s ] does not exists", keyFilePath)
 	}
 
-	strId, hibeId := localhibe.IdStr2HibeId(id)
+	strId, hibeId := hibe.IdStr2HibeId(id)
 
 	var fileName string
 	for i, item := range strId {
@@ -298,10 +296,10 @@ func genPrivateKey() error {
 		if err != nil {
 			return fmt.Errorf("open file [%s] failed, %s", paramsFilePath, err.Error())
 		}
-		masterKey := new(bn256.G1)
+		masterKey := new(hibe.G1)
 
-		masterKey, ok = masterKey.Unmarshal(masterKeyBytes)
-		if !ok {
+		_, err = masterKey.Unmarshal(masterKeyBytes)
+		if err != nil {
 			return errors.New("params.Unmarshal() failed, please check your masterKey file")
 		}
 		privateKey, err = hibe.KeyGenFromMaster(rand.Reader, params, masterKey, hibeId)
@@ -331,7 +329,7 @@ func genPrivateKey() error {
 			return errors.New("params.Unmarshal() failed, please check your privateKey file")
 		}
 
-		matchedIdStr, hibeIds := localhibe.IdStr2HibeId(matchedId)
+		matchedIdStr, hibeIds := hibe.IdStr2HibeId(matchedId)
 
 		parentIdStrLen := len(strings.Split(parentIdStr, "/"))
 		for i := parentIdStrLen + 1; i <= len(matchedIdStr); i++ {
