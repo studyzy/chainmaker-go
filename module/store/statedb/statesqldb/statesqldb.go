@@ -466,20 +466,12 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 		if status == 1 { //SUCCESS
 			s.logger.Infof("DDLRecord[%s] already executed, ignore it", sql)
 			return nil
-		} else {
-			// todo optimization, if contract is installing, The database has not been created
-			insertSql, args := record.GetInsertSql()
-			_, err := s.db.ExecSql(insertSql, args...)
-			if err != nil {
-				s.logger.Warn("DDLRecord[%s] save fail. error: %s", sql, err.Error())
-			}
 		}
-	} else {
-		insertSql, args := record.GetInsertSql()
-		_, err := s.db.ExecSql(insertSql, args...)
-		if err != nil {
-			s.logger.Warn("DDLRecord[%s] save fail. error: %s", sql, err.Error())
-		}
+	}
+	insertSql, args2 := record.GetInsertSql()
+	_, err = s.db.ExecSql(insertSql, args2...)
+	if err != nil {
+		s.logger.Warn("DDLRecord[%s] save fail. error: %s", sql, err.Error())
 	}
 	//查询不到记录，或者查询出来后状态是失败，则执行DDL
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
