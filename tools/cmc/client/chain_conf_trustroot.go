@@ -13,11 +13,11 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/common"
-
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 const (
@@ -51,12 +51,11 @@ func addTrustRootCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId, flagAdminOrgIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
@@ -77,12 +76,11 @@ func removeTrustRootCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId, flagAdminOrgIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
@@ -103,12 +101,11 @@ func updateTrustRootCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId, flagAdminOrgIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustRootCrtPath, flagTrustRootOrgId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
-	cmd.MarkFlagRequired(flagAdminOrgIds)
 	cmd.MarkFlagRequired(flagAdminCrtFilePaths)
 	cmd.MarkFlagRequired(flagAdminKeyFilePaths)
 	cmd.MarkFlagRequired(flagTrustRootOrgId)
@@ -118,19 +115,18 @@ func updateTrustRootCMD() *cobra.Command {
 }
 
 func configTrustRoot(op int) error {
-	adminOrgIdSlice := strings.Split(adminOrgIds, ",")
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
-	if len(adminKeys) == 0 || len(adminCrts) == 0 || len(adminOrgIdSlice) == 0 {
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
 		return ErrAdminOrgIdKeyCertIsEmpty
 	}
-	if len(adminKeys) != len(adminCrts) || len(adminOrgIdSlice) != len(adminCrts) {
-		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminOrgIdSlice), len(adminKeys), len(adminCrts))
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
 	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
-	if err != nil && !strings.Contains(err.Error(), "user cert havenot on chain yet, and try again") {
-		return fmt.Errorf(CREATE_USER_CLIENT_FAILED_FORMAT, err)
+	if err != nil {
+		return err
 	}
 	defer client.Stop()
 
@@ -145,14 +141,14 @@ func configTrustRoot(op int) error {
 		}
 	}
 
-	var payloadBytes *common.Payload
+	var payload *common.Payload
 	switch op {
 	case addTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, string(trustRootBytes))
+		payload, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, string(trustRootBytes))
 	case removeTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootDeletePayload(trustRootOrgId)
+		payload, err = client.CreateChainConfigTrustRootDeletePayload(trustRootOrgId)
 	case updateTrustRoot:
-		payloadBytes, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, string(trustRootBytes))
+		payload, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, string(trustRootBytes))
 	default:
 		err = errors.New("invalid trust root operation")
 	}
@@ -160,30 +156,17 @@ func configTrustRoot(op int) error {
 		return err
 	}
 
-	signedPayloads := make([]*common.EndorsementEntry, len(adminKeys))
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
 	for i := range adminKeys {
-		_, privKey, err := dealUserKey(adminKeys[i])
-		if err != nil {
-			return err
-		}
-		crtBytes, crt, err := dealUserCrt(adminCrts[i])
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
 		if err != nil {
 			return err
 		}
 
-		signedPayload, err := signChainConfigPayload(payloadBytes, crtBytes, privKey, crt, adminOrgIdSlice[i])
-		if err != nil {
-			return err
-		}
-		signedPayloads[i] = signedPayload
+		endorsementEntrys[i] = e
 	}
 
-	//mergedSignedPayloadBytes, err := client.MergeChainConfigSignedPayload(signedPayloads)
-	//if err != nil {
-	//	return err
-	//}
-
-	resp, err := client.SendChainConfigUpdateRequest(payloadBytes, signedPayloads, 0, syncResult)
+	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, 0, syncResult)
 	if err != nil {
 		return err
 	}
