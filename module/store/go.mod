@@ -8,12 +8,16 @@ require (
 	chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210723070658-764cafbc33fe
 	chainmaker.org/chainmaker/protocol v0.0.0-20210722032803-8365b24e96d9
+	github.com/dgraph-io/badger v1.6.2
+	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang/snappy v0.0.3 // indirect
+	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/mattn/go-sqlite3 v2.0.1+incompatible
 	github.com/pingcap/errors v0.11.5-0.20201029093017-5a7df2af2ac7 // indirect
 	github.com/pkg/errors v0.9.1
@@ -31,6 +35,5 @@ require (
 replace (
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../logger
-
 	chainmaker.org/chainmaker-go/utils => ../utils
 )

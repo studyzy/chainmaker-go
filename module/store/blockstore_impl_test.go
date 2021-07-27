@@ -96,24 +96,25 @@ func getSqlConfig() *localconf.StorageConfig {
 	conf.DisableContractEventDB = true
 	return conf
 }
-func getMysqlConfig() *localconf.StorageConfig {
+func getBadgerConfig(path string) *localconf.StorageConfig {
 	conf := &localconf.StorageConfig{}
-	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	var sqlconfig = &localconf.SqlDbConfig{
-		SqlDbType: "mysql",
-		Dsn:       "root:123@tcp(9.135.110.53)/",
+	if path == "" {
+		path = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	}
+	conf.StorePath = path
 
+	badgerConfig := &localconf.BadgerDbConfig{
+		StorePath: path,
+	}
 	dbConfig := &localconf.DbConfig{
-		Provider:    "sql",
-		SqlDbConfig: sqlconfig,
+		Provider:       "badgerdb",
+		BadgerDbConfig: badgerConfig,
 	}
 	conf.BlockDbConfig = dbConfig
 	conf.StateDbConfig = dbConfig
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
 	conf.DisableContractEventDB = true
-
 	return conf
 }
 func getlvldbConfig(path string) *localconf.StorageConfig {
@@ -364,6 +365,11 @@ func Test_blockchainStoreImpl_GetBlockSqlDb(t *testing.T) {
 func Test_blockchainStoreImpl_GetBlockLevledb(t *testing.T) {
 	testBlockchainStoreImpl_GetBlock(t, getlvldbConfig(""))
 }
+
+func Test_blockchainStoreImpl_GetBlockBadgerdb(t *testing.T) {
+	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig("./"))
+}
+
 func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
 	var funcName = "get block"
 	tests := []struct {

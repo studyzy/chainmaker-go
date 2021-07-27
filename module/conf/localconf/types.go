@@ -230,9 +230,15 @@ func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
 		BloomFilterBits:      config.BloomFilterBits,
 		BlockWriteBufferSize: config.WriteBufferSize,
 	}
+
+	bconfig := &BadgerDbConfig{
+		StorePath: config.StorePath,
+	}
+
 	return &DbConfig{
-		Provider:      "leveldb",
-		LevelDbConfig: lconfig,
+		Provider:       "leveldb",
+		LevelDbConfig:  lconfig,
+		BadgerDbConfig: bconfig,
 	}
 }
 
@@ -252,21 +258,28 @@ func (config *StorageConfig) GetActiveDBCount() int {
 }
 
 type DbConfig struct {
-	//leveldb,rocksdb,sql
-	Provider      string         `mapstructure:"provider"`
-	LevelDbConfig *LevelDbConfig `mapstructure:"leveldb_config"`
-	SqlDbConfig   *SqlDbConfig   `mapstructure:"sqldb_config"`
+	//leveldb,badgerdb,sql
+	Provider       string          `mapstructure:"provider"`
+	LevelDbConfig  *LevelDbConfig  `mapstructure:"leveldb_config"`
+	BadgerDbConfig *BadgerDbConfig `mapstructure:"badgerdb_config"`
+	SqlDbConfig    *SqlDbConfig    `mapstructure:"sqldb_config"`
 }
 
-const DbConfig_Provider_Sql = "sql"
-const DbConfig_Provider_LevelDb = "leveldb"
-const DbConfig_Provider_RocksDb = "rocksdb"
+const (
+	DbconfigProviderSql      = "sql"
+	DbconfigProviderLeveldb  = "leveldb"
+	DbconfigProviderRocksdb  = "rocksdb"
+	DbconfigProviderBadgerdb = "badgerdb"
+)
 
 func (dbc *DbConfig) IsKVDB() bool {
-	return dbc.Provider == DbConfig_Provider_LevelDb || dbc.Provider == DbConfig_Provider_RocksDb
+	return dbc.Provider == DbconfigProviderLeveldb ||
+		dbc.Provider == DbconfigProviderRocksdb ||
+		dbc.Provider == DbconfigProviderBadgerdb
 }
+
 func (dbc *DbConfig) IsSqlDB() bool {
-	return dbc.Provider == DbConfig_Provider_Sql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
+	return dbc.Provider == DbconfigProviderSql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
 }
 
 type LevelDbConfig struct {
@@ -275,6 +288,11 @@ type LevelDbConfig struct {
 	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
 	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
 }
+
+type BadgerDbConfig struct {
+	StorePath string `mapstructure:"store_path"`
+}
+
 type SqlDbConfig struct {
 	//mysql, sqlite, postgres, sqlserver
 	SqlDbType       string `mapstructure:"sqldb_type"`
