@@ -37,7 +37,7 @@ func newContractEventDB(dbName string, db protocol.SqlDBHandle, logger protocol.
 
 func (c *ContractEventSqlDB) initDb(dbName string) {
 
-	err := c.db.CreateDatabaseIfNotExist(dbName)
+	_, err := c.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create database %s db:%s", dbName, err))
 	}
