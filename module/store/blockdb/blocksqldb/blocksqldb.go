@@ -221,15 +221,13 @@ func (b *BlockSqlDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*BlockInfo, error) {
 	//get block info from mysql
 	var blockInfo BlockInfo
-	res, err := b.db.QuerySingle(sql, values...)
-	if err != nil {
-		return nil, err
-	}
-	if res.IsEmpty() {
+	res, _ := b.db.QuerySingle(sql, values...)
+
+	if res == nil || res.IsEmpty() {
 		b.logger.Infof("sql[%s] %v return empty result", sql, values)
 		return nil, nil
 	}
-	err = blockInfo.ScanObject(res.ScanColumns)
+	err := blockInfo.ScanObject(res.ScanColumns)
 	if err != nil {
 		return nil, err
 	}

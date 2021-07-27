@@ -464,9 +464,14 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 			return err
 		}
 		if status == 1 { //SUCCESS
-			s.logger.Infof("DDL[%s] already executed, ignore it", sql)
+			s.logger.Infof("DDLRecord[%s] already executed, ignore it", sql)
 			return nil
 		}
+	}
+	insertSql, args2 := record.GetInsertSql()
+	_, err = s.db.ExecSql(insertSql, args2...)
+	if err != nil {
+		s.logger.Warn("DDLRecord[%s] save fail. error: %s", sql, err.Error())
 	}
 	//查询不到记录，或者查询出来后状态是失败，则执行DDL
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)

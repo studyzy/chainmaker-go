@@ -273,7 +273,12 @@ func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) 
 	p.log.Debug("Exec sql:", sql, values)
 	tx, err := p.db.Exec(sql, values...)
 	if err != nil {
-		p.log.Error(err)
+		// todo optimization
+		if strings.Contains(err.Error(), "doesn't exist") {
+			p.log.Warnf(err.Error())
+		} else {
+			p.log.Error(err)
+		}
 		return 0, errSql
 	}
 	return tx.RowsAffected()
@@ -331,7 +336,12 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 	p.log.Debug("Query sql:", sql, values)
 	rows, err := db.Query(sql, values...)
 	if err != nil {
-		p.log.Error(err)
+		// todo optimization
+		if strings.Contains(err.Error(), "doesn't exist") {
+			p.log.Warnf(err.Error())
+		} else {
+			p.log.Error(err)
+		}
 		return nil, errSqlQuery
 	}
 
