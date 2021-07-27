@@ -75,6 +75,7 @@ func registerBlockContactMethods(log protocol.Logger) map[string]common.Contract
 	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
 	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
 	queryMethodMap[syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String()] = blockRuntime.GetArchiveBlockHeight
+	queryMethodMap[syscontract.ChainQueryFunction_GET_MERKLE_PATH_BY_TX_ID.String()] = blockRuntime.GetMerklePathByTxId
 	return queryMethodMap
 }
 
