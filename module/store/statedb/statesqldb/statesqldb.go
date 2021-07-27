@@ -451,8 +451,8 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 		return err
 	}
 	if !exist {
-		if err := s.initContractDb(contractName); err != nil {
-			return err
+		if errTmp := s.initContractDb(contractName); errTmp != nil {
+			return errTmp
 		}
 	}
 	db := s.getContractDbHandle(contractName)
