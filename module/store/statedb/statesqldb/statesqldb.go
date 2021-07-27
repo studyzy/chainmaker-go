@@ -446,13 +446,14 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
 	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
-	s.initContractDb(contractName)
 	exist, err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err
 	}
 	if !exist {
-		s.initContractDb(contractName)
+		if err := s.initContractDb(contractName); err != nil {
+			return err
+		}
 	}
 	db := s.getContractDbHandle(contractName)
 	// query ddl from db
