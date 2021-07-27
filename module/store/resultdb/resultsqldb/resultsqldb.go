@@ -37,7 +37,7 @@ func NewResultSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger prot
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *ResultSqlDB) initDb(dbName string) {
 	db.logger.Debugf("create result database %s to save transaction receipt", dbName)
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		db.logger.Panicf("init state sql db fail,error:%s", err)
 	}

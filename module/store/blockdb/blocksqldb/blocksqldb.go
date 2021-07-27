@@ -99,7 +99,7 @@ func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger proto
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *BlockSqlDB) initDb(dbName string) {
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
