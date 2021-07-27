@@ -467,6 +467,7 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 			s.logger.Infof("DDLRecord[%s] already executed, ignore it", sql)
 			return nil
 		} else {
+			// todo optimization, if contract is installing, The database has not been created
 			insertSql, args := record.GetInsertSql()
 			_, err := s.db.ExecSql(insertSql, args...)
 			if err != nil {
