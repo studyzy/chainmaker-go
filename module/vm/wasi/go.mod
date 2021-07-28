@@ -6,12 +6,10 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210709154839-e2c8e4fc62b4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210709093937-9b3b422e24b1
-	chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc
-	github.com/gogo/protobuf v1.3.2
-	github.com/golang/protobuf v1.4.3
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	chainmaker.org/chainmaker/common v0.0.0-20210727024622-8e8f7e941404
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b
+	chainmaker.org/chainmaker/protocol v0.0.0-20210727101110-59285b10f1ef
+	github.com/golang/protobuf v1.4.3 // indirect
 )
 
 replace (
