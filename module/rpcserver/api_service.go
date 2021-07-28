@@ -172,7 +172,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		errCode commonErr.ErrCode
 		store   protocol.BlockchainStore
 		vmMgr   protocol.VmManager
-		resp    = &commonPb.TxResponse{}
+		resp    = &commonPb.TxResponse{TxId: tx.Payload.TxId}
 	)
 
 	chainId := tx.Payload.ChainId
@@ -341,7 +341,7 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 		err     error
 		errMsg  string
 		errCode commonErr.ErrCode
-		resp    = &commonPb.TxResponse{}
+		resp    = &commonPb.TxResponse{TxId: tx.Payload.TxId}
 	)
 
 	err = s.chainMakerServer.AddTx(tx.Payload.ChainId, tx, source)
