@@ -52,27 +52,21 @@ var p11HandleMap = map[string]*pkcs11.P11Handle{}
 // List of access principals which should not be customized
 var restrainedResourceList = map[string]bool{
 	protocol.ResourceNameAllTest:          true,
-	protocol.ResourceNameReadData:         true,
-	protocol.ResourceNameWriteData:        true,
-	protocol.ResourceNameUpdateSelfConfig: true,
-	protocol.ResourceNameUpdateConfig:     true,
 	protocol.ResourceNameP2p:              true,
 	protocol.ResourceNameConsensusNode:    true,
-	protocol.ResourceNameSubscribe:        true,
+	
+	common.TxType_QUERY_CONTRACT.String(): true,
+	common.TxType_INVOKE_CONTRACT.String():true,
+	common.TxType_SUBSCRIBE.String(): 	   true,
+	common.TxType_ARCHIVE.String():        true,
 }
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
-	//common.TxType_INVOKE_CONTRACT:  protocol.ResourceNameWriteData,
 	common.TxType_SUBSCRIBE: protocol.ResourceNameSubscribe,
-	//common.TxType_SUBSCRIBE:    protocol.ResourceNameReadData,
-	//common.TxType_MANAGE_USER_CONTRACT:          protocol.ResourceNameWriteData,
-	//common.TxType_SUBSCRIBE: protocol.ResourceNameReadData,
-
 	common.TxType_ARCHIVE: protocol.ResourceNameArchive,
-	//common.TxType_ARCHIVE: protocol.ResourceNameArchive,
 }
 
 var (
@@ -82,6 +76,7 @@ var (
 	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
 	policyAdmin     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
 	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
+	policyArchive   = NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin})
 
 	policyConfig     = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
 	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
@@ -316,15 +311,8 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId
 func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap := &sync.Map{}
 
-	resourceNamePolicyMap.Store(protocol.ResourceNameReadData, policyRead)
-	resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
 	resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
 	resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
-	resourceNamePolicyMap.Store(protocol.ResourceNameAdmin, policyAdmin)
-	resourceNamePolicyMap.Store(protocol.ResourceNameSubscribe, policySubscribe)
-
-	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
-	resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
 
 	// only used for test
 	resourceNamePolicyMap.Store(protocol.ResourceNameAllTest, policyAllTest)
@@ -332,6 +320,12 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store("test_2_admin", policyLimitTestAdmin)
 	resourceNamePolicyMap.Store("test_3/4", policyPortionTestAny)
 	resourceNamePolicyMap.Store("test_3/4_admin", policyPortionTestAnyAdmin)
+
+	// for txtype
+	resourceNamePolicyMap.Store(common.TxType_QUERY_CONTRACT.String(), policyRead)
+	resourceNamePolicyMap.Store(common.TxType_INVOKE_CONTRACT.String(), policyWrite)
+	resourceNamePolicyMap.Store(common.TxType_SUBSCRIBE.String(), policySubscribe)
+	resourceNamePolicyMap.Store(common.TxType_ARCHIVE.String(), policyArchive)
 
 	// transaction resource definitions
 	resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
@@ -380,10 +374,6 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
-
-	// Archive
-	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
-		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
 
 	return resourceNamePolicyMap
 }

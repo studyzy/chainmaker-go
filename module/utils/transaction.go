@@ -273,11 +273,8 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	}
 
 	endorsements := []*commonPb.EndorsementEntry{t.Sender}
-	resourceId, err := ac.LookUpResourceNameByTxType(t.Payload.TxType)
-	if err != nil {
-		return err
-	}
-	principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
+	txType := t.Payload.TxType
+	principal, err := ac.CreatePrincipal(txType.String(), endorsements, txBytes)
 	if err != nil {
 		return fmt.Errorf("fail to construct authentication principal: %s", err)
 	}
@@ -292,17 +289,39 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	//authentication for invoke_contract
 	if t.Payload.TxType == commonPb.TxType_INVOKE_CONTRACT {
 		resourceId := t.Payload.ContractName + "-" + t.Payload.Method
-		if !ac.ResourcePolicyExists(resourceId) {
+		p, err := ac.LookUpPolicy(resourceId)
+		if err != nil {
 			return nil
 		}
 		endorsements := t.Endorsers
 		if endorsements == nil {
 			return fmt.Errorf("endorsement is nil in verifyTxAuth for resourceId[%s]", resourceId)
 		}
-		principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
-		if err != nil {
-			return fmt.Errorf("fail to construct authentication principal for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
+		targetOrg := ""
+		if p.Rule == string(protocol.RuleSelf) {
+			parameterPairs := t.Payload.Parameters
+			if parameterPairs != nil {
+			    for i := 0; i < len(parameterPairs); i++ {
+					key := parameterPairs[i].Key
+					if key == protocol.ConfigNameOrgId {
+						targetOrg = string(parameterPairs[i].Value)
+						break
+					}
+				}
+			}
 		}
+		if targetOrg != "" {
+			principal, err = ac.CreatePrincipalForTargetOrg(resourceId, endorsements, txBytes, targetOrg)
+			if err != nil {
+				return fmt.Errorf("fail to construct authentication principal with orgId %s for %s-%s: %s", targetOrg, t.Payload.ContractName, t.Payload.Method, err)
+		    }
+		} else {
+			principal, err = ac.CreatePrincipal(resourceId, endorsements, txBytes)
+			if err != nil {
+				return fmt.Errorf("fail to construct authentication principal for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
+			}
+		}
+
 		ok, err := ac.VerifyPrincipal(principal)
 		if err != nil {
 			return fmt.Errorf("authentication error for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)

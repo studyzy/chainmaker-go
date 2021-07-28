@@ -193,7 +193,7 @@ func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, er
 
 	return ac.verifyPrincipalPolicy(principal, refinedPrincipal, p)
 }
-
+/*
 // LookUpResourceNameByTxType returns resource name corresponding to the tx type
 func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (string, error) {
 	id, ok := txTypeToResourceNameMap[txType]
@@ -212,6 +212,17 @@ func (ac *accessControl) ResourcePolicyExists(resourceName string) bool {
 		return false
 	}
 	return true
+}
+*/
+
+// LookUpPolicy returns corresponding policy configured for the given resource name
+func (ac *accessControl) LookUpPolicy(resourceName string) (*pbac.Policy, error) {
+	p, ok := ac.resourceNamePolicyMap.Load(resourceName)
+	if !ok {
+		return nil, fmt.Errorf("policy not found for resource %s", resourceName)
+	}
+	pbPolicy := p.(*policy).GetPbPolicy()
+	return pbPolicy, nil
 }
 
 func (ac *accessControl) NewMember(member *pbac.Member) (protocol.Member, error) {
