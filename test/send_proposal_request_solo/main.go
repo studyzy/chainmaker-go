@@ -40,7 +40,7 @@ import (
 const (
 	logTempMarshalPayLoadFailed     = "marshal payload failed, %s"
 	logTempUnmarshalBlockInfoFailed = "blockInfo unmarshal error %s\n"
-	logTempSendTx                   = "send tx resp: code:%d, msg:%s, payload:%+v\n"
+	logTempSendTx                   = "send tx resp: code:%d, msg:%s, txid:%s, payload:%+v\n"
 	logTempSendBlock                = "send tx resp: code:%d, msg:%s, blockInfo:%+v\n"
 	fieldWithRWSet                  = "withRWSet"
 )
@@ -69,11 +69,11 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 func main() {
 	common.SetCertPathPrefix(certPathPrefix)
 
-	initWasmerTest()
-	runTest()
-
-	//initGasmTest()
+	//initWasmerTest()
 	//runTest()
+
+	initGasmTest()
+	runTest()
 }
 
 func runTest() {
@@ -324,7 +324,7 @@ func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, c
 	if result.Transaction.Result.Code != 0 {
 		panic(result.Transaction.Result.ContractResult.Message)
 	}
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, result.Transaction.Result.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, result.Transaction.Result.ContractResult)
 	fmt.Println("GasUsed：", result.Transaction.Result.ContractResult.GasUsed)
 	fmt.Println("Message：", result.Transaction.Result.ContractResult.Message)
 	fmt.Println("Result：", result.Transaction.Result.ContractResult.Result)
@@ -586,7 +586,7 @@ func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 
 	resp := common.UpgradeContract(sk3, client, chainId, contractName, WasmUpgradePath, runtimeType)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 }
 
 var fileHash = "b4018d181b6f"
@@ -615,7 +615,7 @@ func testUpgradeInvokeSum(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, ch
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payload, nil)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	return txId
 }
 func testInvokeFactSave(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) string {
@@ -651,7 +651,7 @@ func testInvokeFactSave(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chai
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload, nil)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	return txId
 }
 
@@ -670,7 +670,7 @@ func testInvokeMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		CHAIN1, txId, payload, nil)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	return txId
 }
 func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method string) []byte {
@@ -688,7 +688,7 @@ func testQueryMethod(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, method 
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		CHAIN1, txId, payload, nil)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	return resp.ContractResult.Result
 }
 
@@ -713,7 +713,7 @@ func testInvokeFunctionalVerify(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClie
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload, nil)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	return txId
 }
 
@@ -738,7 +738,7 @@ func testQueryFindByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
 		chainId, txId, payload, nil)
 
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	fmt.Println(string(resp.ContractResult.Result))
 	//items := serialize.EasyUnmarshal(resp.ContractResult.Result)
 	//for _, item := range items {

@@ -95,7 +95,7 @@ consensus:
       value: "{org1_peeraddr}"
     - key: erc20.decimals
       value: "18"
-    - key: erc20.account:SYSTEM_CONTRACT_DPOS_STAKE
+    - key: erc20.account:DPOS_STAKE
       value: "{erc20_total}"
     #Stake合约配置
     - key: stake.minSelfDelegation
@@ -126,11 +126,11 @@ consensus:
       value: "2500000"
     - key: stake.candidate:{org10_peeraddr}
       value: "2500000"
-    #    - key: stake.candidate:{org11_peeraddr}
+#    - key: stake.candidate:{org11_peeraddr}
 #      value: "2500000"
-    #    - key: stake.candidate:{org12_peeraddr}
+#    - key: stake.candidate:{org12_peeraddr}
 #      value: "2500000"
-    #    - key: stake.candidate:{org13_peeraddr}
+#    - key: stake.candidate:{org13_peeraddr}
 #      value: "2500000"
     - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"

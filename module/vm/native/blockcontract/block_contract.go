@@ -783,7 +783,11 @@ func (r *BlockRuntime) validateParams(parameters map[string][]byte, keyNames ...
 		switch keyName {
 		case paramNameBlockHeight:
 			value, _ := r.getValue(parameters, paramNameBlockHeight)
-			param.height, err = strconv.ParseUint(value, 10, 64)
+			if value == "-1" { //接收-1作为高度参数，用于表示最新高度，系统内部用MaxUint64表示最新高度
+				param.height = math.MaxUint64
+			} else {
+				param.height, err = strconv.ParseUint(value, 10, 64)
+			}
 		case paramNameWithRWSet:
 			param.withRWSet, err = r.getValue(parameters, paramNameWithRWSet)
 		case paramNameBlockHash:

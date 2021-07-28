@@ -34,7 +34,7 @@ import (
 const (
 	logTempMarshalPayLoadFailed     = "marshal payload failed, %s"
 	logTempUnmarshalBlockInfoFailed = "blockInfo unmarshal error %s\n"
-	logTempSendTx                   = "send tx resp: code:%d, msg:%s, payload:%+v\n"
+	logTempSendTx                   = "send tx resp: code:%d, msg:%s txid:%s, result:%+v\n"
 	logTempSendBlock                = "send tx resp: code:%d, msg:%s, blockInfo:%+v\n"
 	fieldWithRWSet                  = "withRWSet"
 )
@@ -71,7 +71,7 @@ func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId 
 
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload, []int{1, 2, 3, 4})
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 	if resp.Code != 0 {
 		panic(resp.Message)
 	}
@@ -279,5 +279,5 @@ func freezeOrUnfreezeOrRevoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient
 	}
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
 		chainId, txId, payload, []int{1, 2, 3, 4})
-	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.TxId, resp.ContractResult)
 }

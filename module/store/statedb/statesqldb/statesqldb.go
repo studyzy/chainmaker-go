@@ -43,7 +43,7 @@ type StateSqlDB struct {
 func (db *StateSqlDB) initContractDb(contractName string) error {
 	dbName := getContractDbName(db.dbConfig, db.chainId, contractName)
 	db.logger.Debugf("try to create state db %s", dbName)
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		db.logger.Panic("init state sql db fail")
 	}
@@ -61,7 +61,7 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 }
 func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	db.logger.Debugf("try to create state db %s", dbName)
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
@@ -446,9 +446,14 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
 	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
-	err := s.db.CreateDatabaseIfNotExist(dbName)
+	exist, err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err
+	}
+	if !exist {
+		if errTmp := s.initContractDb(contractName); errTmp != nil {
+			return errTmp
+		}
 	}
 	db := s.getContractDbHandle(contractName)
 	// query ddl from db
@@ -464,13 +469,25 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 			return err
 		}
 		if status == 1 { //SUCCESS
-			s.logger.Infof("DDL[%s] already executed, ignore it", sql)
+			s.logger.Infof("DDLRecord[%s] already executed, ignore it", sql)
 			return nil
 		}
+	}
+	insertSql, args2 := record.GetInsertSql()
+	_, err = s.db.ExecSql(insertSql, args2...)
+	if err != nil {
+		s.logger.Warnf("DDLRecord[%s] save fail. error: %s", sql, err.Error())
 	}
 	//查询不到记录，或者查询出来后状态是失败，则执行DDL
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
 	_, err = db.ExecSql(sql)
+
+	record.Status = 1
+	updateSql, args3 := record.GetUpdateSql()
+	_, err2 := s.db.ExecSql(updateSql, args3...)
+	if err2 != nil {
+		s.logger.Warnf("DDLRecord[%s] update fail. error: %s", sql, err2.Error())
+	}
 	return err
 }
 func (s *StateSqlDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {

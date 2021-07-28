@@ -825,7 +825,7 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value, ok := val.(string)
+		value, ok := val.([]byte)
 		if !ok {
 			r.log.Error("value not a string")
 		}
@@ -992,7 +992,7 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value, ok := val.(string)
+		value, ok := val.([]byte)
 		if !ok {
 			r.log.Error("value not a string")
 		}
@@ -1080,7 +1080,7 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value, ok := val.(string)
+		value, ok := val.([]byte)
 		if !ok {
 			r.log.Error("value not a string")
 		}
@@ -1091,7 +1091,7 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 			return false
 		}
 		policy := &acPb.Policy{}
-		err1 := proto.Unmarshal([]byte(value), policy)
+		err1 := proto.Unmarshal(value, policy)
 		if err1 != nil {
 			parseParamErr = fmt.Errorf("policy Unmarshal err:%s", err1)
 			r.log.Errorf(parseParamErr.Error())

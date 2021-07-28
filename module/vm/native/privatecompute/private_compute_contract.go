@@ -451,25 +451,32 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	codeHeader := string(params["code_header"])
 	cRes := []byte(params["result"])
 	r.log.Debugf("save data received code header len: %d, code header: %x", len(codeHeader), []byte(codeHeader))
+
+	/*get private contract compute result form cRes unmarshal*/
 	var result commonPb.ContractResult
 	if err := result.Unmarshal(cRes); err != nil {
 		r.log.Errorf("Unmarshal ContractResult failed, err: %s", err.Error())
 		return nil, err
 	}
+
 	if isDeployStr == "" {
 		err := fmt.Errorf("is_deploy param should not be empty")
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
+
 	isDeploy, err := strconv.ParseBool(isDeployStr)
 	if err != nil {
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
+
+	/*check access control by sign pairs, org ids, payload bytes and ac*/
 	ac, err := context.GetAccessControl()
 	if err != nil {
 		return nil, err
 	}
+
 	var signPairs []*syscontract.SignInfo
 	var orgIds []string
 	var payloadBytes []byte
@@ -478,11 +485,12 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	if isDeploy {
 		requestBytes = []byte(params["deploy_req"])
 		deployReq, err := r.getDeployRequest(params)
-		if err != nil {
+		if err != nil || deployReq.SignPair == nil || deployReq.Payload == nil  {
 			err := fmt.Errorf("get private deploy request from params failed, err: %v", err)
 			r.log.Errorf(err.Error())
 			return nil, err
 		}
+
 		r.log.Debugf("deployReq: %v", deployReq)
 		signPairs = deployReq.SignPair
 		orgIds = deployReq.Payload.OrgId
@@ -495,11 +503,12 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	} else {
 		requestBytes = []byte(params["private_req"])
 		req, err := r.getPrivateRequest(params)
-		if err != nil {
+		if err != nil || req.SignPair == nil || req.Payload == nil {
 			err := fmt.Errorf("get private compute request from params failed, err: %v", err)
 			r.log.Errorf(err.Error())
 			return nil, err
 		}
+
 		signPairs = req.SignPair
 		orgIds = req.Payload.OrgId
 		payloadBytes, err = req.Payload.Marshal()
@@ -509,6 +518,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 			return nil, err
 		}
 	}
+
 	auth, err := r.verifyMultiCallerAuth(signPairs, orgIds, payloadBytes, ac)
 	if !auth || err != nil {
 		err := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
@@ -516,10 +526,13 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
+
+	/*if deploy, save private contract code*/
 	if isDeploy && (codeHeader == "" || len(result.Result) == 0) {
 		r.log.Errorf("code_header should not be empty when deploying contract")
 		return nil, err
 	}
+
 	if isDeploy {
 		err := r.saveContract(context, name, version, []byte(codeHeader), result.Result, codeHash)
 		if err != nil {
@@ -536,6 +549,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
+
 	rwb := []byte(params["rw_set"])
 	r.log.Debug("rwset bytes: ", rwb)
 	var rwSet commonPb.TxRWSet
@@ -543,18 +557,21 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		r.log.Errorf("Unmarshal RWSet failed, err: %s", err.Error())
 		return nil, err
 	}
-	// verify sign
+
+	/* get PEM, pk and construct private contract compute result, then verify sign */
 	combinedKey := syscontract.SystemContract_PRIVATE_COMPUTE.String() + "global_enclave_id"
 	pkPEM, err := context.Get(combinedKey, []byte("verification_pub_key"))
 	if err != nil {
 		r.log.Errorf("get verification_pub_key error: %s", err.Error())
 		return nil, err
 	}
+
 	pk, err := asym.PublicKeyFromPEM(pkPEM)
 	if err != nil {
 		r.log.Errorf("get pk from PEM error: %s", err.Error())
 		return nil, err
 	}
+
 	evmResultBuffer := bytes.NewBuffer([]byte{})
 
 	// Code
@@ -591,6 +608,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		}
 		// evmResultBuffer.Write([]byte(rwSet.TxReads[i].Version.RefTxId))
 	}
+
 	// wsets
 	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(rwSet.TxWrites))); err != nil {
 		return nil, err
@@ -608,6 +626,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		}
 		evmResultBuffer.Write(rwSet.TxWrites[i].Value)
 	}
+
 	// name
 	if err := binary.Write(evmResultBuffer, binary.LittleEndian, uint32(len(name))); err != nil {
 		return nil, err
@@ -644,16 +663,19 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		UID:          "",
 		EncodingType: rsa.RSA_PSS,
 	})
+
 	if err != nil {
 		r.log.Errorf("verify ContractResult err: %s", err.Error())
 		return nil, err
 	}
+
 	if !b {
 		r.log.Debug("verify ContractResult failed")
 		return nil, nil
 	}
 	r.log.Debug("verify ContractResult success")
 
+	/* check contract code hash */
 	combinationName := syscontract.SystemContract_PRIVATE_COMPUTE.String() + name
 	key := append([]byte(ContractByteCode), version...)
 	contractCode, err := context.Get(combinationName, key)
@@ -687,12 +709,14 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, err
 	}
 
+	/*check gas limit*/
 	if result.GasUsed > protocol.GasLimit {
 		err := fmt.Errorf("gas[%d] expend the limit[%f]", result.GasUsed, protocol.GasLimit)
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
 
+	/*save private contract compute result*/
 	if err := context.Put(combinationName, []byte(ComputeResult), cRes); err != nil {
 		r.log.Errorf("Write compute result:%s failed, err: %s", cRes, err.Error())
 		return nil, err
@@ -703,6 +727,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 		return nil, nil
 	}
 
+	/*check read set version and save rwSet*/
 	for i := 0; i < len(rwSet.TxReads); i++ {
 		key := rwSet.TxReads[i].Key
 		val := rwSet.TxReads[i].Value
@@ -735,8 +760,6 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 			return nil, err
 		}
 	}
-
-	//TODO: put events into DB
 
 	return nil, nil
 }

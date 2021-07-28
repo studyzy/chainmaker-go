@@ -17,6 +17,7 @@ func (s *ApiService) doArchive(tx *commonPb.Transaction) *commonPb.TxResponse {
 		return &commonPb.TxResponse{
 			Code:    commonPb.TxStatusCode_INTERNAL_ERROR,
 			Message: commonErr.ERR_CODE_TXTYPE.String(),
+			TxId:    tx.Payload.TxId,
 		}
 	}
 
@@ -59,7 +60,7 @@ func (s *ApiService) doArchiveBlock(tx *commonPb.Transaction) *commonPb.TxRespon
 		blockHeight uint64
 		errCode     commonErr.ErrCode
 		store       protocol.BlockchainStore
-		resp        = &commonPb.TxResponse{}
+		resp        = &commonPb.TxResponse{TxId: tx.Payload.TxId}
 	)
 
 	chainId := tx.Payload.ChainId
@@ -121,7 +122,7 @@ func (s *ApiService) doRestoreBlock(tx *commonPb.Transaction) *commonPb.TxRespon
 		fullBlock []byte
 		errCode   commonErr.ErrCode
 		store     protocol.BlockchainStore
-		resp      = &commonPb.TxResponse{}
+		resp      = &commonPb.TxResponse{TxId: tx.Payload.TxId}
 	)
 
 	chainId := tx.Payload.ChainId

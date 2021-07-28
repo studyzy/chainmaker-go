@@ -10,25 +10,17 @@ package main
 import (
 	"strings"
 
-	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/console"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/paillier"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/hibe"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/key"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/cert"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/client"
-
-	"chainmaker.org/chainmaker-go/tools/cmc/payload"
-
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
+	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
+	"chainmaker.org/chainmaker-go/tools/cmc/cert"
+	"chainmaker.org/chainmaker-go/tools/cmc/client"
+	"chainmaker.org/chainmaker-go/tools/cmc/console"
+	"chainmaker.org/chainmaker-go/tools/cmc/hibe"
+	"chainmaker.org/chainmaker-go/tools/cmc/key"
+	"chainmaker.org/chainmaker-go/tools/cmc/paillier"
+	"chainmaker.org/chainmaker-go/tools/cmc/payload"
 	"chainmaker.org/chainmaker-go/tools/cmc/query"
 )
 

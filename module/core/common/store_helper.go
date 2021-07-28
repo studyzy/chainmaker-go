@@ -55,7 +55,7 @@ func (sql *SQLStoreHelper) RollBack(block *commonpb.Block, blockchainStore proto
 		contractName := string(payload.GetParameter(syscontract.InitContract_CONTRACT_NAME.String()))
 		if len(contractName) != 0 {
 			dbName := statesqldb.GetContractDbName(sql.chainId, contractName)
-			blockchainStore.ExecDdlSql(contractName, "drop database "+dbName, "")
+			blockchainStore.ExecDdlSql(contractName, "drop database "+dbName, "1")
 		}
 	}
 	return nil
