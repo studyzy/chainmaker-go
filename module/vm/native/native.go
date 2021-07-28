@@ -12,6 +12,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
 	"chainmaker.org/chainmaker-go/vm/native/certmgr"
 	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
@@ -19,9 +20,6 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/contractmgr"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker-go/vm/native/government"
-	"chainmaker.org/chainmaker-go/vm/native/multisign"
-
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -62,7 +60,7 @@ func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContact(log)
 	contracts[syscontract.SystemContract_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
 	contracts[syscontract.SystemContract_GOVERNANCE.String()] = government.NewGovernmentContract(log)
-	contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
+	//contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
 	contracts[syscontract.SystemContract_PRIVATE_COMPUTE.String()] = privatecompute.NewPrivateComputeContact(log)
 	contracts[syscontract.SystemContract_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
 	contracts[syscontract.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
