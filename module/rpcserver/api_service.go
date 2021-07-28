@@ -145,6 +145,7 @@ func (s *ApiService) invoke(tx *commonPb.Transaction, source protocol.TxSource) 
 		if errCode != commonErr.ERR_CODE_OK {
 			resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 			resp.Message = errMsg
+			resp.TxId = tx.Payload.TxId
 			return resp
 		}
 	}
@@ -183,6 +184,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		s.log.Error(errMsg)
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 		resp.Message = errMsg
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 
@@ -192,6 +194,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		s.log.Error(errMsg)
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 		resp.Message = errMsg
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 
@@ -217,6 +220,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		s.log.Error(err)
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 		resp.Message = err.Error()
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 	var bytecode []byte
@@ -226,6 +230,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 			s.log.Error(err)
 			resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 			resp.Message = err.Error()
+			resp.TxId = tx.Payload.TxId
 			return resp
 		}
 	}
@@ -257,6 +262,7 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 
 		resp.Message = errMsg
 		resp.ContractResult = txResult
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 
@@ -264,12 +270,14 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		resp.Code = commonPb.TxStatusCode_CONTRACT_FAIL
 		resp.Message = commonPb.TxStatusCode_CONTRACT_FAIL.String()
 		resp.ContractResult = txResult
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 
 	resp.Code = commonPb.TxStatusCode_SUCCESS
 	resp.Message = commonPb.TxStatusCode_SUCCESS.String()
 	resp.ContractResult = txResult
+	resp.TxId = tx.Payload.TxId
 	return resp
 }
 
@@ -315,12 +323,14 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		resp.Code = commonPb.TxStatusCode_CONTRACT_FAIL
 		resp.Message = commonPb.TxStatusCode_CONTRACT_FAIL.String()
 		resp.ContractResult = txResult
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 
 	resp.Code = commonPb.TxStatusCode_SUCCESS
 	resp.Message = commonPb.TxStatusCode_SUCCESS.String()
 	resp.ContractResult = txResult
+	resp.TxId = tx.Payload.TxId
 	return resp
 }
 
@@ -357,6 +367,7 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 		s.log.Error(errMsg)
 		resp.Code = commonPb.TxStatusCode_INTERNAL_ERROR
 		resp.Message = errMsg
+		resp.TxId = tx.Payload.TxId
 		return resp
 	}
 
@@ -365,7 +376,7 @@ func (s *ApiService) dealTransact(tx *commonPb.Transaction, source protocol.TxSo
 	errCode = commonErr.ERR_CODE_OK
 	resp.Code = commonPb.TxStatusCode_SUCCESS
 	resp.Message = errCode.String()
-
+	resp.TxId = tx.Payload.TxId
 	return resp
 }
 
