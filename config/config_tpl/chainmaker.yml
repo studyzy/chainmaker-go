@@ -119,9 +119,9 @@ storage:
     provider: leveldb # leveldb/sql 二选一
     leveldb_config: # leveldb config
       store_path: ../data/{org_id}/state
-    sqldb_config: # sql config
-      sqldb_type: mysql           #contract event db 只支持mysql
-      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
+  #    sqldb_config: # sql config，只有provider为sql的时候才需要配置和启用这个配置
+  #      sqldb_type: mysql           #具体的sql db类型，目前支持mysql，sqlite
+  #      dsn: root:password@tcp(127.0.0.1:3306)/  #mysql的连接信息，包括用户名、密码、ip、port等，示例：root:admin@tcp(127.0.0.1:3306)/
   historydb_config:
     provider: leveldb
     leveldb_config:
