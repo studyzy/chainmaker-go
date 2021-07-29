@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
@@ -34,8 +36,12 @@ func freezeContract() error {
 	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_FREEZE_CONTRACT.String()
-
-	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	payload, _ := constructInvokePayload(chainId, contractName, method, pairs)
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -78,8 +84,12 @@ func unfreezeContract() error {
 	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()
-
-	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	payload, _ := constructInvokePayload(chainId, contractName, method, pairs)
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -121,8 +131,12 @@ func RevokeContractCMD() *cobra.Command {
 func RevokeContract() error {
 
 	method := syscontract.ContractManageFunction_REVOKE_CONTRACT.String()
-
-	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	payload, _ := constructInvokePayload(chainId, contractName, method, pairs)
 
 	endorsement, err := acSign(payload)
 	if err != nil {

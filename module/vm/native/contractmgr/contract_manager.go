@@ -285,7 +285,7 @@ func (r *ContractManagerRuntime) UnfreezeContract(context protocol.TxSimContext,
 }
 func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, name string) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
-		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
+		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
@@ -310,7 +310,7 @@ func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, n
 func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimContext, name string,
 	oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
-		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
+		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
 		r.log.Errorf(err.Error())
 		return nil, err
 	}
