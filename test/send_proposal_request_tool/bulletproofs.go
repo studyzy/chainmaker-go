@@ -1,11 +1,12 @@
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 )
 
 var (
