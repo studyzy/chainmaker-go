@@ -42,7 +42,7 @@ func freezeContract() error {
 		Value: []byte(contractName),
 	})
 	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
-
+	payload.TxId = txId
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func freezeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
 	bytes, err := json.Marshal(result)
 	if err != nil {
@@ -90,6 +90,7 @@ func unfreezeContract() error {
 		Value: []byte(contractName),
 	})
 	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
+	payload.TxId = txId
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -104,7 +105,7 @@ func unfreezeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
 	bytes, err := json.Marshal(result)
 	if err != nil {
@@ -137,6 +138,7 @@ func RevokeContract() error {
 		Value: []byte(contractName),
 	})
 	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
+	payload.TxId = txId
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -151,7 +153,7 @@ func RevokeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
 	bytes, err := json.Marshal(result)
 	if err != nil {
