@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/spf13/cobra"
@@ -39,7 +38,7 @@ func InvokeCMD() *cobra.Command {
 }
 
 func invoke() error {
-	txId := utils.GetRandTxId()
+	txId := ""
 
 	// 构造Payload
 	if pairsString == "" {
@@ -76,6 +75,7 @@ func invoke() error {
 		}
 		testCode = resp.Code
 		testMessage = resp.Message
+		txId = resp.TxId
 	}
 
 	////暂时不支持传参
