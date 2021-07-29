@@ -66,6 +66,10 @@ func (db *MemdbHandle) NewIteratorWithRange(start []byte, limit []byte) protocol
 func (db *MemdbHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 	return db.db.NewIterator(util.BytesPrefix(prefix))
 }
+func (db *MemdbHandle) CompactRange(start []byte, limit []byte) error {
+	return nil
+}
+
 func (db *MemdbHandle) Close() error {
 	db.db.Reset()
 	return nil
