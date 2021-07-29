@@ -13,11 +13,13 @@ func memoryBase(vm *VirtualMachine) uint64 {
 
 func i32Load(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(uint64(binary.LittleEndian.Uint32(vm.Memory[base:])))
 }
 
 func i64Load(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(binary.LittleEndian.Uint64(vm.Memory[base:]))
 }
 
@@ -31,6 +33,7 @@ func f64Load(vm *VirtualMachine) {
 
 func i32Load8s(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(uint64(vm.Memory[base]))
 }
 
@@ -40,6 +43,7 @@ func i32Load8u(vm *VirtualMachine) {
 
 func i32Load16s(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(uint64(binary.LittleEndian.Uint16(vm.Memory[base:])))
 }
 
@@ -49,6 +53,7 @@ func i32Load16u(vm *VirtualMachine) {
 
 func i64Load8s(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(uint64(vm.Memory[base]))
 }
 
@@ -58,6 +63,7 @@ func i64Load8u(vm *VirtualMachine) {
 
 func i64Load16s(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(uint64(binary.LittleEndian.Uint16(vm.Memory[base:])))
 }
 
@@ -67,6 +73,7 @@ func i64Load16u(vm *VirtualMachine) {
 
 func i64Load32s(vm *VirtualMachine) {
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.OperandStack.Push(uint64(binary.LittleEndian.Uint32(vm.Memory[base:])))
 }
 
@@ -77,54 +84,63 @@ func i64Load32u(vm *VirtualMachine) {
 func i32Store(vm *VirtualMachine) {
 	val := vm.OperandStack.Pop()
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint32(vm.Memory[base:], uint32(val))
 }
 
 func i64Store(vm *VirtualMachine) {
 	val := vm.OperandStack.Pop()
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint64(vm.Memory[base:], val)
 }
 
 func f32Store(vm *VirtualMachine) {
 	val := vm.OperandStack.Pop()
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint32(vm.Memory[base:], uint32(val))
 }
 
 func f64Store(vm *VirtualMachine) {
 	v := vm.OperandStack.Pop()
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint64(vm.Memory[base:], v)
 }
 
 func i32Store8(vm *VirtualMachine) {
 	v := byte(vm.OperandStack.Pop())
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.Memory[base] = v
 }
 
 func i32Store16(vm *VirtualMachine) {
 	v := uint16(vm.OperandStack.Pop())
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint16(vm.Memory[base:], v)
 }
 
 func i64Store8(vm *VirtualMachine) {
 	v := byte(vm.OperandStack.Pop())
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	vm.Memory[base] = v
 }
 
 func i64Store16(vm *VirtualMachine) {
 	v := uint16(vm.OperandStack.Pop())
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint16(vm.Memory[base:], v)
 }
 
 func i64Store32(vm *VirtualMachine) {
 	v := uint32(vm.OperandStack.Pop())
 	base := memoryBase(vm)
+	memorySafeCheck(vm, base)
 	binary.LittleEndian.PutUint32(vm.Memory[base:], v)
 }
 
@@ -147,4 +163,15 @@ func memoryGrow(vm *VirtualMachine) {
 	vm.OperandStack.Push(uint64(len(vm.Memory)) / vmPageSize)
 	vm.Memory = append(vm.Memory, make([]byte, n*vmPageSize)...)
 	vm.Gas += tableGas[OptCodeMemoryGrow] * uint64(n)
+}
+
+func memorySafeCheck(vm *VirtualMachine, base uint64) {
+	if base >= uint64(len(vm.Memory)) {
+		diff := base - uint64(len(vm.Memory)) + 1
+		vm.Memory = append(vm.Memory, make([]byte, diff)...)
+		if vm.InnerModule.SecMemory[0].Max != nil &&
+			uint64(uint32(len(vm.Memory)/vmPageSize)) > uint64(*(vm.InnerModule.SecMemory[0].Max)) {
+			panic("out of vm max memory limit ")
+		}
+	}
 }
