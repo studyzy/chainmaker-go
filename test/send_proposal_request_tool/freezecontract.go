@@ -38,10 +38,10 @@ func freezeContract() error {
 	method := syscontract.ContractManageFunction_FREEZE_CONTRACT.String()
 	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Key:   syscontract.FreezeContract_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
-	payload, _ := constructInvokePayload(chainId, contractName, method, pairs)
+	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -89,7 +89,7 @@ func unfreezeContract() error {
 		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
-	payload, _ := constructInvokePayload(chainId, contractName, method, pairs)
+	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -136,7 +136,7 @@ func RevokeContract() error {
 		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
 		Value: []byte(contractName),
 	})
-	payload, _ := constructInvokePayload(chainId, contractName, method, pairs)
+	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
 
 	endorsement, err := acSign(payload)
 	if err != nil {
