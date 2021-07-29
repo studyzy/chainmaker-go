@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 
 	"chainmaker.org/chainmaker-go/vm/native/common"
 
@@ -185,13 +184,13 @@ func (r *ContractManagerRuntime) GetAllContracts(context protocol.TxSimContext) 
 	return result, nil
 }
 
-//安装新合约
+//InstallContract 安装新合约
 func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, name, version string, byteCode []byte,
 	runTime commonPb.RuntimeType, initParameters map[string][]byte) (*commonPb.Contract, error) {
-	if !checkContractName(name) {
+	if !utils.CheckContractNameFormat(name) {
 		return nil, errInvalidContractName
 	}
-	if runTime == commonPb.RuntimeType_EVM && !checkEvmAddress(name) {
+	if runTime == commonPb.RuntimeType_EVM && !utils.CheckEvmAddressFormat(name) {
 		return nil, errInvalidEvmContractName
 	}
 	key := utils.GetContractDbKey(name)
@@ -233,7 +232,7 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 	return contract, nil
 }
 
-//升级现有合约
+//UpgradeContract 升级现有合约
 func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, name, version string, byteCode []byte,
 	runTime commonPb.RuntimeType, upgradeParameters map[string][]byte) (*commonPb.Contract, error) {
 	key := utils.GetContractDbKey(name)
@@ -331,13 +330,4 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		return nil, err
 	}
 	return contract, nil
-}
-
-func checkContractName(name string) bool {
-	reg := regexp.MustCompile("^[a-zA-Z0-9_]{1,128}$")
-	return reg.Match([]byte(name))
-}
-func checkEvmAddress(addr string) bool {
-	reg := regexp.MustCompile("^(0x)?[0-9a-fA-F]{40}$")
-	return reg.Match([]byte(addr))
 }
