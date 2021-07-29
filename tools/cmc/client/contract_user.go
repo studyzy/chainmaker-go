@@ -21,10 +21,11 @@ import (
 
 const CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT = "checkProposalRequestResp failed, %s"
 const SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT = "SendContractManageRequest failed, %s"
-const ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key & cert list length not equal, [keys len: %d]/[certs len:%d]"
+const ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT = "admin orgId & key & cert list length not equal, " +
+	"[keys len: %d]/[certs len:%d]"
 
 var (
-	ErrAdminOrgIdKeyCertIsEmpty = errors.New("admin orgId or key or cert list is empty")
+	errAdminOrgIdKeyCertIsEmpty = errors.New("admin orgId or key or cert list is empty")
 )
 
 type UserContract struct {
@@ -252,13 +253,14 @@ func createUserContract() error {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return ErrAdminOrgIdKeyCertIsEmpty
+		return errAdminOrgIdKeyCertIsEmpty
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -305,7 +307,8 @@ func createUserContract() error {
 }
 
 func invokeUserContract() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -326,7 +329,8 @@ func invokeUserContract() error {
 }
 
 func invokeContractTimes() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -347,7 +351,8 @@ func invokeContractTimes() error {
 }
 
 func getUserContract() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -376,13 +381,14 @@ func upgradeUserContract() error {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return ErrAdminOrgIdKeyCertIsEmpty
+		return errAdminOrgIdKeyCertIsEmpty
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -402,7 +408,8 @@ func upgradeUserContract() error {
 	}
 	pairsKv := util.ConvertParameters(pairs)
 	fmt.Printf("upgrade user contract params:%+v\n", pairsKv)
-	payload, err := client.CreateContractUpgradePayload(contractName, version, byteCodePath, common.RuntimeType(rt), pairsKv)
+	payload, err := client.CreateContractUpgradePayload(contractName, version, byteCodePath, common.RuntimeType(rt),
+		pairsKv)
 	if err != nil {
 		return err
 	}
@@ -437,13 +444,14 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return ErrAdminOrgIdKeyCertIsEmpty
+		return errAdminOrgIdKeyCertIsEmpty
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}

@@ -115,7 +115,9 @@ func createCACertificate() error {
 		return err
 	}
 	hashType := crypto.HashAlgoMap[strings.ToUpper(hash)]
-	return cert.CreateCACertificate(&cert.CACertificateConfig{PrivKey: privKey, HashType: hashType, CertPath: path, CertFileName: name, Country: c, Locality: l, Province: p, OrganizationalUnit: ou, Organization: org, CommonName: cn, ExpireYear: expireYear, Sans: sans})
+	return cert.CreateCACertificate(&cert.CACertificateConfig{PrivKey: privKey, HashType: hashType,
+		CertPath: path, CertFileName: name, Country: c, Locality: l, Province: p, OrganizationalUnit: ou,
+		Organization: org, CommonName: cn, ExpireYear: expireYear, Sans: sans})
 }
 
 func createCSR() error {
@@ -123,13 +125,16 @@ func createCSR() error {
 	if err != nil {
 		return err
 	}
-	return cert.CreateCSR(&cert.CSRConfig{PrivKey: privKey, CsrPath: path, CsrFileName: name, Country: c, Locality: l, Province: p, OrganizationalUnit: ou, Organization: org, CommonName: cn})
+	return cert.CreateCSR(&cert.CSRConfig{PrivKey: privKey, CsrPath: path, CsrFileName: name,
+		Country: c, Locality: l, Province: p, OrganizationalUnit: ou, Organization: org, CommonName: cn})
 }
 
 func issueCertificate() error {
 	hashType := crypto.HashAlgoMap[strings.ToUpper(hash)]
-	return cert.IssueCertificate(&cert.IssueCertificateConfig{HashType: hashType, IsCA: isCA, IssuerPrivKeyFilePath: caKeyPath, IssuerCertFilePath: caCertPath,
-		CsrFilePath: csrPath, CertPath: path, CertFileName: name, ExpireYear: expireYear, Sans: sans, Uuid: uuid.GetUUID()})
+	return cert.IssueCertificate(&cert.IssueCertificateConfig{HashType: hashType, IsCA: isCA,
+		IssuerPrivKeyFilePath: caKeyPath, IssuerCertFilePath: caCertPath,
+		CsrFilePath: csrPath, CertPath: path, CertFileName: name,
+		ExpireYear: expireYear, Sans: sans, Uuid: uuid.GetUUID()})
 }
 
 func loadPrivateKey(path string) (crypto.PrivateKey, error) {

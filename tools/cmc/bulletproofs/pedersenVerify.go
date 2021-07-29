@@ -58,11 +58,6 @@ func pedersenVerify() error {
 		return err
 	}
 
-	if ok {
-		fmt.Printf("verify: true\n")
-		return nil
-	} else {
-		fmt.Printf("verify: false\n")
-		return nil
-	}
+	fmt.Printf("verify: %t\n", ok)
+	return nil
 }
