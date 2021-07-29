@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/utils"
 
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -97,7 +98,9 @@ func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {
 	return nil
 }
 
-func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (
+	protocol.StateIterator, error) {
+
 	return s.blockchainStore.SelectObject(contractName, startKey, limit)
 }
 
@@ -114,19 +117,28 @@ func (s *txQuerySimContextImpl) GetSender() *acPb.Member {
 }
 
 func (s *txQuerySimContextImpl) GetBlockHeight() uint64 {
-	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
+	var (
+		lastBlock *commonPb.Block
+		err       error
+	)
+	if lastBlock, err = s.blockchainStore.GetLastBlock(); err != nil {
 		return 0
-	} else {
-		return lastBlock.Header.BlockHeight
 	}
+
+	return lastBlock.Header.BlockHeight
 }
 
 func (s *txQuerySimContextImpl) GetBlockProposer() *acPb.Member {
-	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
+	var (
+		lastBlock *commonPb.Block
+		err       error
+	)
+
+	if lastBlock, err = s.blockchainStore.GetLastBlock(); err != nil {
 		return nil
-	} else {
-		return lastBlock.Header.Proposer
 	}
+
+	return lastBlock.Header.Proposer
 }
 
 func (s *txQuerySimContextImpl) putIntoReadSet(contractName string, key []byte, value []byte) {
@@ -210,7 +222,6 @@ func (s *txQuerySimContextImpl) GetTxExecSeq() int {
 }
 
 func (s *txQuerySimContextImpl) SetTxExecSeq(int) {
-	return
 }
 
 // Get the tx result
@@ -227,8 +238,10 @@ func constructKey(contractName string, key []byte) string {
 	return contractName + string(key)
 }
 
-func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
-	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string,
+	byteCode []byte, parameter map[string][]byte, gasUsed uint64,
+	refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {

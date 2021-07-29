@@ -5,31 +5,29 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-/*
-	GRPC Server framwork
-*/
 package rpcserver
 
 import (
-	"chainmaker.org/chainmaker-go/blockchain"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/monitor"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/prometheus/client_golang/prometheus"
-	"google.golang.org/grpc"
 	"net"
 	"sort"
 	"strings"
 	"time"
+
+	"chainmaker.org/chainmaker-go/blockchain"
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc"
 )
 
 // RPCServer struct define
@@ -84,12 +82,10 @@ func NewRPCServer(chainMakerServer *blockchain.ChainMakerServer) (*RPCServer, er
 			"grpc_service", "grpc_method")
 	}
 
-	var log = logger.GetLogger(logger.MODULE_RPC)
-
 	return &RPCServer{
 		grpcServer:       server,
 		chainMakerServer: chainMakerServer,
-		log:              log,
+		log:              logger.GetLogger(logger.MODULE_RPC),
 	}, nil
 }
 
@@ -138,7 +134,7 @@ func (s *RPCServer) Start() error {
 
 // RegisterHandler - register apiservice handler to rpcserver
 func (s *RPCServer) RegisterHandler() error {
-	apiService := NewApiService(s.chainMakerServer, s.ctx)
+	apiService := NewApiService(s.ctx, s.chainMakerServer)
 	apiPb.RegisterRpcNodeServer(s.grpcServer, apiService)
 	return nil
 }
@@ -239,7 +235,8 @@ func (s *RPCServer) checkAndRestart() error {
 	}
 
 	if s.curChainConfTrustRootsHash != rootsHash {
-		s.log.Debugf("different chain config trust roots cert hash: [old:%s]/[new:%s]", s.curChainConfTrustRootsHash, rootsHash)
+		s.log.Debugf("different chain config trust roots cert hash: [old:%s]/[new:%s]",
+			s.curChainConfTrustRootsHash, rootsHash)
 
 		if err := s.Restart("TrustRoots certs change, reload it"); err != nil {
 			return err
@@ -313,12 +310,4 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 	server := grpc.NewServer(opts...)
 
 	return server, nil
-}
-
-func splitMethodName(fullMethodName string) (string, string) {
-	fullMethodName = strings.TrimPrefix(fullMethodName, "/") // remove leading slash
-	if i := strings.Index(fullMethodName, "/"); i >= 0 {
-		return fullMethodName[:i], fullMethodName[i+1:]
-	}
-	return "unknown", "unknown"
 }
