@@ -16,8 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker/common/crypto/hibe"
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker/common/crypto/hibe"
 )
 
 var (
@@ -100,38 +101,17 @@ func genPrvKeyCMD() *cobra.Command {
 
 	flags := genPrivateKeyCmd.Flags()
 	flags.StringVarP(&paramsFilePath, "ppath", "p", "", "the hibe params file's path")
-	flags.IntVarP(&fromMaster, "fromMaster", "m", 0, "generate prvKey from masterKey or privateKey, 1 from master, 0 from parent, m default is 0")
+	flags.IntVarP(&fromMaster, "fromMaster", "m", 0, "generate prvKey from masterKey or privateKey,"+
+		" 1 from master, 0 from parent, m default is 0")
 	flags.StringVarP(&keyFilePath, "kpath", "k", "", "the masterKey Or parentKey file path")
 	flags.StringVarP(&privateKeySavePath, "spath", "s", "", "the result storage file path, and the file name is the id")
-	flags.StringVarP(&id, "id", "i", "", "get the private key of the ID, Must be formatted in the sample format with\" / \", "+
+	flags.StringVarP(&id, "id", "i", "", "get the private key of the ID, Must be formatted in"+
+		" the sample format with\" / \", "+
 		"for example: id org1/ou1/Alice")
 	flags.StringVarP(&orgId, "orgId", "o", "", "the result storage name, please enter your orgId")
 
 	return genPrivateKeyCmd
 }
-
-/*
-func updatePrvKeyCMD() *cobra.Command {
-	updatePrivateKeyCmd := &cobra.Command{
-		Use:   "updatePrvKey",
-		Short: "update a privateKey for an Id using the master or parent key",
-		Long:  "update a privateKey for an Id using the master or parent key",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return genPrivateKey()
-		},
-	}
-
-	flags := updatePrivateKeyCmd.Flags()
-	flags.StringVarP(&paramsFilePath, "ppath", "p", "", "the parameter file's path")
-	flags.IntVarP(&fromMaster, "fromMaster", "m", 0, "update prvKey from masterKey or privateKey, 1 from master, 0 from parent")
-	flags.StringVarP(&keyFilePath, "kpath", "k", "", "the masterKey Or parentKey file path")
-	flags.StringVarP(&privateKeySavePath, "spath", "s", "", "the privateKey storage file path, and the file name is the id")
-	flags.StringVarP(&id, "id", "i", "", "update the private key of the ID, Must be formatted in the sample format with\" / \", "+
-		"for example: id org1/ou1/Alice")
-
-	return updatePrivateKeyCmd
-}
-*/
 
 func setupOrgHibeSys() error {
 
@@ -167,7 +147,9 @@ func setupOrgHibeSys() error {
 	}
 
 	params, masterKey, err := hibe.Setup(rand.Reader, l)
-
+	if err != nil {
+		return err
+	}
 	if err = os.MkdirAll(path, os.ModePerm); err != nil {
 		return fmt.Errorf("mk hibe dir failed, %s", err.Error())
 	}
@@ -224,6 +206,7 @@ func getParams() error {
 	return nil
 }
 
+// TODO 此函数太大需要拆解
 func genPrivateKey() error {
 	err := hibe.ValidateId(orgId)
 	if err != nil {
@@ -349,7 +332,8 @@ func genPrivateKey() error {
 		return fmt.Errorf("save privateKey to file [%s] failed, %s", fileName, err.Error())
 	}
 
-	fmt.Printf("%s privateKey storage file path: %s/%s/privateKeys/%s\n", strId, privateKeySavePath, savePathSuffix, fileName)
+	fmt.Printf("%s privateKey storage file path: %s/%s/privateKeys/%s\n", strId,
+		privateKeySavePath, savePathSuffix, fileName)
 
 	return nil
 }

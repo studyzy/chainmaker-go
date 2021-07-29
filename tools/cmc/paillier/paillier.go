@@ -54,11 +54,11 @@ func genKey() error {
 	prvFilePath := filepath.Join(paillierKeySavePath, fmt.Sprintf("%s.prvKey", paillierKeyFileName))
 	pubFilePath := filepath.Join(paillierKeySavePath, fmt.Sprintf("%s.pubKey", paillierKeyFileName))
 
-	exist, err := pathExists(prvFilePath)
+	_, err := pathExists(prvFilePath)
 	if err != nil {
 		return err
 	}
-	exist, err = pathExists(pubFilePath)
+	exist, err := pathExists(pubFilePath)
 	if exist {
 		return fmt.Errorf("file [ %s ] already exist", pubFilePath)
 	}

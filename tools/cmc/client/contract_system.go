@@ -134,7 +134,8 @@ func getChainInfo() error {
 		err error
 	)
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -162,7 +163,8 @@ func getBlockByHeight() error {
 		err error
 	)
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -190,7 +192,8 @@ func getTxByTxId() error {
 		err error
 	)
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -221,7 +224,8 @@ func erc20Mint() *cobra.Command {
 			var (
 				err error
 			)
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -269,7 +273,8 @@ func erc20Transfer() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -315,7 +320,8 @@ func erc20BalanceOf() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -360,7 +366,8 @@ func erc20Owner() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -402,7 +409,8 @@ func erc20Decimals() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -444,7 +452,8 @@ func erc20Total() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -486,7 +495,8 @@ func stakeGetAllCandidates() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -528,7 +538,8 @@ func stakeGetValidatorByAddress() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -577,7 +588,8 @@ func stakeDelegate() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -629,7 +641,8 @@ func stakeGetDelegationsByAddress() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -678,7 +691,8 @@ func stakeGetUserDelegationByValidator() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -727,7 +741,8 @@ func stakeUnDelegate() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -779,7 +794,8 @@ func stakeReadEpochByID() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -828,7 +844,8 @@ func stakeReadLatestEpoch() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -874,7 +891,8 @@ func stakeSetNodeID() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -921,7 +939,8 @@ func stakeGetNodeID() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -966,7 +985,8 @@ func stakeReadMinSelfDelegation() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -1008,7 +1028,8 @@ func stakeReadEpochValidatorNumber() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -1050,7 +1071,8 @@ func stakeReadEpochBlockNumber() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -1092,7 +1114,8 @@ func stakeReadSystemContractAddr() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -1134,7 +1157,8 @@ func stakeReadCompleteUnBoundingEpochNumber() *cobra.Command {
 				err error
 			)
 
-			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+			client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+				userSignCrtFilePath, userSignKeyFilePath)
 			if err != nil {
 				return err
 			}
@@ -1167,7 +1191,8 @@ func stakeReadCompleteUnBoundingEpochNumber() *cobra.Command {
 	return cmd
 }
 
-func mint(cc *sdk.ChainClient, address, amount string, txId string, timeout int64, withSyncResult bool) (*common.TxResponse, error) {
+func mint(cc *sdk.ChainClient, address, amount string, txId string, timeout int64,
+	withSyncResult bool) (*common.TxResponse, error) {
 	params := map[string]string{
 		"to":    address,
 		"value": amount,
@@ -1190,7 +1215,8 @@ func mint(cc *sdk.ChainClient, address, amount string, txId string, timeout int6
 	return resp, nil
 }
 
-func transfer(cc *sdk.ChainClient, address, amount string, txId string, timeout int64, withSyncResult bool) (*common.TxResponse, error) {
+func transfer(cc *sdk.ChainClient, address, amount string, txId string, timeout int64,
+	withSyncResult bool) (*common.TxResponse, error) {
 	params := map[string]string{
 		"to":    address,
 		"value": amount,
@@ -1303,7 +1329,8 @@ func getValidatorByAddress(cc *sdk.ChainClient, address string, timeout int64) (
 	return resp, nil
 }
 
-func delegate(cc *sdk.ChainClient, address, amount string, txId string, timeout int64, withSyncResult bool) (*common.TxResponse, error) {
+func delegate(cc *sdk.ChainClient, address, amount string, txId string, timeout int64,
+	withSyncResult bool) (*common.TxResponse, error) {
 	params := map[string]string{
 		"to":     address,
 		"amount": amount,
@@ -1343,7 +1370,8 @@ func getDelegationsByAddress(cc *sdk.ChainClient, address string, timeout int64)
 	return resp, nil
 }
 
-func getUserDelegationByValidator(cc *sdk.ChainClient, delegatorAddress, validatorAddress string, timeout int64) (*common.TxResponse, error) {
+func getUserDelegationByValidator(cc *sdk.ChainClient, delegatorAddress, validatorAddress string,
+	timeout int64) (*common.TxResponse, error) {
 	params := map[string]string{
 		"delegator_address": delegatorAddress,
 		"validator_address": validatorAddress,
@@ -1361,7 +1389,8 @@ func getUserDelegationByValidator(cc *sdk.ChainClient, delegatorAddress, validat
 	return resp, nil
 }
 
-func unDelegate(cc *sdk.ChainClient, address, amount string, txId string, timeout int64, withSyncResult bool) (*common.TxResponse, error) {
+func unDelegate(cc *sdk.ChainClient, address, amount string, txId string, timeout int64,
+	withSyncResult bool) (*common.TxResponse, error) {
 	params := map[string]string{
 		"from":   address,
 		"amount": amount,
