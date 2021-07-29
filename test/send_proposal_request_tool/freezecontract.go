@@ -130,6 +130,7 @@ func RevokeContractCMD() *cobra.Command {
 }
 
 func RevokeContract() error {
+	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_REVOKE_CONTRACT.String()
 	var pairs []*commonPb.KeyValuePair
