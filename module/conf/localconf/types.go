@@ -265,10 +265,10 @@ type DbConfig struct {
 	SqlDbConfig    *SqlDbConfig    `mapstructure:"sqldb_config"`
 }
 
+//nolint
 const (
-	DbconfigProviderSql     = "sql"
-	DbconfigProviderLeveldb = "leveldb"
-	//DbconfigProviderRocksdb  = "rocksdb"
+	DbconfigProviderSql      = "sql"
+	DbconfigProviderLeveldb  = "leveldb"
 	DbconfigProviderBadgerdb = "badgerdb"
 )
 

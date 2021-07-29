@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
+//nolint
 const (
 	MODULE_BLOCKCHAIN = "[Blockchain]" // output system.log
 	MODULE_NET        = "[Net]"
@@ -28,7 +29,7 @@ const (
 	MODULE_CORE       = "[Core]"
 	MODULE_VM         = "[Vm]"
 	MODULE_RPC        = "[Rpc]"
-	MODULE_LEDGER     = "[Ledger]"
+	MODULE_LEDGER     = "[Ledger]" //nolint:golint,unused
 	MODULE_CLI        = "[Cli]"
 	MODULE_CHAINCONF  = "[ChainConf]"
 	MODULE_ACCESS     = "[Access]"

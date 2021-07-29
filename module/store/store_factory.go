@@ -40,8 +40,6 @@ import (
 type Factory struct {
 }
 
-var newRocksdbHandle func(chainId string, dbName string, logger protocol.Logger) protocol.DBHandle
-
 // NewStore constructs new BlockStore
 func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig,
 	logger protocol.Logger) (protocol.BlockchainStore, error) {
@@ -130,12 +128,14 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 		storeConfig, binLog, logger)
 }
 
+//nolint
 func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log protocol.Logger) protocol.DBHandle {
 	dbFolder := "localdb"
 	storeType := parseEngineType(config.BlockDbConfig.Provider)
 	if storeType == types.BadgerDb {
 		return badgerdbprovider.NewBadgerDBHandle(chainId, dbFolder, config.GetDefaultDBConfig().BadgerDbConfig, log)
 	} else {
+		//nolint
 		return leveldbprovider.NewLevelDBHandle(chainId, dbFolder, config.GetDefaultDBConfig().LevelDbConfig, log)
 	}
 }
@@ -168,9 +168,11 @@ func (m *Factory) NewBlockKvDB(chainId string, engineType types.EngineType, dbCo
 	}
 	switch engineType {
 	case types.LevelDb:
-		blockDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreBlockDBDir, dbConfig.LevelDbConfig, logger)
+		blockDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId,
+			leveldbprovider.StoreBlockDBDir, dbConfig.LevelDbConfig, logger)
 	case types.BadgerDb:
-		blockDB.DbHandle = badgerdbprovider.NewBadgerDBHandle(chainId, badgerdbprovider.StoreBlockDBDir, dbConfig.BadgerDbConfig, logger)
+		blockDB.DbHandle = badgerdbprovider.NewBadgerDBHandle(chainId,
+			badgerdbprovider.StoreBlockDBDir, dbConfig.BadgerDbConfig, logger)
 	default:
 		return nil, nil
 	}
@@ -192,9 +194,11 @@ func (m *Factory) NewStateKvDB(chainId string, engineType types.EngineType, dbCo
 	}
 	switch engineType {
 	case types.LevelDb:
-		stateDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreStateDBDir, dbConfig.LevelDbConfig, logger)
+		stateDB.DbHandle = leveldbprovider.NewLevelDBHandle(chainId,
+			leveldbprovider.StoreStateDBDir, dbConfig.LevelDbConfig, logger)
 	case types.BadgerDb:
-		stateDB.DbHandle = badgerdbprovider.NewBadgerDBHandle(chainId, badgerdbprovider.StoreStateDBDir, dbConfig.BadgerDbConfig, logger)
+		stateDB.DbHandle = badgerdbprovider.NewBadgerDBHandle(chainId,
+			badgerdbprovider.StoreStateDBDir, dbConfig.BadgerDbConfig, logger)
 
 	default:
 		return nil, nil
@@ -208,23 +212,28 @@ func (m *Factory) NewHistoryKvDB(chainId string, engineType types.EngineType, db
 	var db protocol.DBHandle
 	switch engineType {
 	case types.LevelDb:
-		db = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreHistoryDBDir, dbConfig.LevelDbConfig, logger)
+		db = leveldbprovider.NewLevelDBHandle(chainId,
+			leveldbprovider.StoreHistoryDBDir, dbConfig.LevelDbConfig, logger)
 	case types.BadgerDb:
-		db = badgerdbprovider.NewBadgerDBHandle(chainId, badgerdbprovider.StoreHistoryDBDir, dbConfig.BadgerDbConfig, logger)
+		db = badgerdbprovider.NewBadgerDBHandle(chainId,
+			badgerdbprovider.StoreHistoryDBDir, dbConfig.BadgerDbConfig, logger)
 	default:
 		return nil, errors.New("invalid db type")
 	}
 	historyDB := historykvdb.NewHistoryKvDB(db, cache.NewStoreCacheMgr(chainId, logger), logger)
 	return historyDB, nil
 }
+
 func (m *Factory) NewResultKvDB(chainId string, engineType types.EngineType, dbConfig *localconf.DbConfig,
 	logger protocol.Logger) (*resultkvdb.ResultKvDB, error) {
 	var db protocol.DBHandle
 	switch engineType {
 	case types.LevelDb:
-		db = leveldbprovider.NewLevelDBHandle(chainId, leveldbprovider.StoreResultDBDir, dbConfig.LevelDbConfig, logger)
+		db = leveldbprovider.NewLevelDBHandle(chainId,
+			leveldbprovider.StoreResultDBDir, dbConfig.LevelDbConfig, logger)
 	case types.BadgerDb:
-		db = badgerdbprovider.NewBadgerDBHandle(chainId, badgerdbprovider.StoreResultDBDir, dbConfig.BadgerDbConfig, logger)
+		db = badgerdbprovider.NewBadgerDBHandle(chainId,
+			badgerdbprovider.StoreResultDBDir, dbConfig.BadgerDbConfig, logger)
 	default:
 		return nil, errors.New("invalid db type")
 	}

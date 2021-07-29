@@ -35,7 +35,6 @@ const (
 type BadgerDBHandle struct {
 	writeLock sync.Mutex
 	db        *badger.DB
-	wb        *badger.WriteBatch
 	logger    protocol.Logger
 }
 
@@ -122,10 +121,9 @@ func (h *BadgerDBHandle) Has(key []byte) (bool, error) {
 		_, err := txn.Get(key)
 		if err != nil {
 			return err
-		} else {
-			exist = true
 		}
-		return err
+		exist = true
+		return nil
 	})
 
 	if err == badger.ErrKeyNotFound {
@@ -151,6 +149,7 @@ func (h *BadgerDBHandle) Delete(key []byte) error {
 }
 
 // WriteBatch writes a batch in an atomic operation
+//nolint:golint,unused
 func (h *BadgerDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 	if batch.Len() == 0 {
 		return nil
@@ -161,9 +160,9 @@ func (h *BadgerDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) erro
 	for k, v := range batch.KVs() {
 		key := []byte(k)
 		if v == nil {
-			badgerBatch.Delete(key)
+			_ = badgerBatch.Delete(key)
 		} else {
-			badgerBatch.Set(key, v)
+			_ = badgerBatch.Set(key, v)
 		}
 	}
 
@@ -175,7 +174,7 @@ func (h *BadgerDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) erro
 }
 
 // CompactRange compacts the underlying DB for the given key range.
-func (h *BadgerDBHandle) CompactRange(start, limit []byte) error {
+func (h *BadgerDBHandle) CompactRange(start, limit []byte) error { //nolint:golint,unused
 	return nil
 	//return h.db.CompactRange(util.Range{
 	//	Start: start,

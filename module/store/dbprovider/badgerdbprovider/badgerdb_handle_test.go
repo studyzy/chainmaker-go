@@ -7,15 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package badgerdbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker/protocol/test"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol/test"
+	"github.com/stretchr/testify/assert"
 )
 
 var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()))
@@ -103,8 +104,8 @@ func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
 	var count int
 	for iter.Next() {
 		count++
-		key := string(iter.Key())
-		fmt.Println(fmt.Sprintf("key: %s", key))
+		//key := string(iter.Key())
+		//fmt.Println(fmt.Sprintf("key: %s", key))
 	}
 	assert.Equal(t, 5, count)
 }

@@ -20,7 +20,8 @@ type BadgerIterator struct {
 	direction  bool
 }
 
-func NewBadgerIterator(db *badger.DB, iterOptions badger.IteratorOptions, prefixIter bool, rangeIter bool, first []byte, last []byte) *BadgerIterator {
+func NewBadgerIterator(db *badger.DB, iterOptions badger.IteratorOptions, prefixIter bool,
+	rangeIter bool, first []byte, last []byte) *BadgerIterator {
 	var it *badger.Iterator
 	badgerTxn := db.NewTransaction(false)
 	it = badgerTxn.NewIterator(iterOptions)
@@ -61,7 +62,7 @@ func (iter *BadgerIterator) Value() []byte {
 
 func (iter *BadgerIterator) Next() bool {
 	// last time call the function of Prev, here should renew iterator
-	if iter.direction == true {
+	if iter.direction {
 		key := iter.Key()
 		iter.badgerIter.Close()
 		iter.opts.Reverse = false
@@ -89,7 +90,7 @@ func (iter *BadgerIterator) next() bool {
 	}
 	if iter.rangeIter {
 		valid := iter.badgerIter.Valid()
-		if valid == false {
+		if !valid {
 			return valid
 		}
 		item := iter.badgerIter.Item()
@@ -101,7 +102,7 @@ func (iter *BadgerIterator) next() bool {
 
 func (iter *BadgerIterator) Prev() bool {
 	// first time to call the function of Prev, renew Iterator
-	if iter.direction == false {
+	if !iter.direction {
 		key := iter.Key()
 		iter.badgerIter.Close()
 		//iter.txn.Discard()
