@@ -8,16 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"log"
-
 	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"github.com/spf13/cobra"
-
-	"github.com/gogo/protobuf/proto"
 )
 
 func SubscribeTxCMD() *cobra.Command {
@@ -39,16 +35,12 @@ func subscribeTx() error {
 		Parameters: []*commonPb.KeyValuePair{
 			{Key: syscontract.SubscribeTx_START_BLOCK.String(), Value: start},
 			{Key: syscontract.SubscribeTx_END_BLOCK.String(), Value: end},
+			{Key: syscontract.SubscribeTx_CONTRACT_NAME.String(), Value: []byte(contractName)},
 			{Key: syscontract.SubscribeTx_TX_IDS.String(), Value: []byte(txIds)},
 		},
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
-	_, err = subscribeRequest(sk3, client, syscontract.SubscribeFunction_SUBSCRIBE_TX.String(), chainId, payloadBytes)
+	_, err := subscribeRequest(sk3, client, syscontract.SubscribeFunction_SUBSCRIBE_TX.String(), chainId, payload)
 	if err != nil {
 		return err
 	}

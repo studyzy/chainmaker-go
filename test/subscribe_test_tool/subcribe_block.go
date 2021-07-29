@@ -15,7 +15,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )
 
@@ -43,12 +42,7 @@ func subscribeBlock() error {
 		},
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	_, err = subscribeRequest(sk3, client, syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String(), chainId, payloadBytes)
+	_, err := subscribeRequest(sk3, client, syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String(), chainId, payload)
 	if err != nil {
 		return err
 	}
