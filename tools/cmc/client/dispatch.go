@@ -50,7 +50,7 @@ func runInvokeContract(client *sdk.ChainClient, contractName, method string, par
 	}()
 
 	for i := 0; i < totalCntPerGoroutine; i++ {
-		resp, err := client.InvokeContract(contractName, method, "", util.ConvertParameters(params), int64(timeout), syncResult)
+		resp, err := client.InvokeContract(contractName, method, "", util.ConvertParameters(params), timeout, syncResult)
 		if err != nil {
 			fmt.Printf("[ERROR] invoke contract failed, %s", err.Error())
 			return
