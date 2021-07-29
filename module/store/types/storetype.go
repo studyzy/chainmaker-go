@@ -22,6 +22,8 @@ const (
 	MySQL EngineType = 3
 	//Sqlite Sqlite
 	Sqlite EngineType = 4
+	//BadgerDb BadgerDb
+	BadgerDb EngineType = 5
 )
 
 func (t EngineType) String() string {

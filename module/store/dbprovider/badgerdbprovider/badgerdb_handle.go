@@ -44,18 +44,6 @@ func NewBadgerDBHandle(chainId string, dbFolder string, dbconfig *localconf.Badg
 	dbPath := filepath.Join(dbconfig.StorePath, chainId, dbFolder)
 	opt := badger.DefaultOptions(dbPath)
 	opt.SyncWrites = false
-	//writeBufferSize := dbconfig.BlockWriteBufferSize
-	//if writeBufferSize <= 0 {
-	//	//default value 4MB
-	//	dbOpts.SyncWrites = 4 * opt.MiB
-	//} else {
-	//	dbOpts.WriteBuffer = writeBufferSize * opt.MiB
-	//}
-	//bloomFilterBits := dbconfig.BloomFilterBits
-	//if bloomFilterBits <= 0 {
-	//	bloomFilterBits = defaultBloomFilterBits
-	//}
-	//dbOpts.Filter = filter.NewBloomFilter(bloomFilterBits)
 	err := createDirIfNotExist(dbPath)
 	if err != nil {
 		panic(fmt.Sprintf("Error create dir %s by badgerdbprovider: %s", dbPath, err))

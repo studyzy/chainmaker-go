@@ -7,16 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package badgerdbprovider
 
 import (
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol/test"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker/protocol/test"
-	"github.com/stretchr/testify/assert"
 )
 
 var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()))
@@ -83,6 +82,33 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 	}
 	assert.Equal(t, 2, count)
 }
+
+func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
+	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	defer dbHandle.Close()
+
+	batch := types.NewUpdateBatch()
+
+	batch.Put([]byte("key1"), []byte("value1"))
+	batch.Put([]byte("key2"), []byte("value2"))
+	batch.Put([]byte("key3"), []byte("value3"))
+	batch.Put([]byte("key4"), []byte("value4"))
+	batch.Put([]byte("keyx"), []byte("value5"))
+
+	err := dbHandle.WriteBatch(batch, true)
+	assert.Equal(t, nil, err)
+
+	iter := dbHandle.NewIteratorWithPrefix([]byte("key"))
+	defer iter.Release()
+	var count int
+	for iter.Next() {
+		count++
+		key := string(iter.Key())
+		fmt.Println(fmt.Sprintf("key: %s", key))
+	}
+	assert.Equal(t, 5, count)
+}
+
 func TestTempFolder(t *testing.T) {
 	t.Log(os.TempDir())
 }

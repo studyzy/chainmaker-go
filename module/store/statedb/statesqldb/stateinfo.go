@@ -30,7 +30,7 @@ func (b *StateInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&b.ContractName, &b.ObjectKey, &b.ObjectValue, &b.BlockHeight, &b.UpdatedAt)
 }
 func (b *StateInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE state_infos (
     contract_name varchar(128),object_key varbinary(128) DEFAULT '',
     object_value longblob,block_height bigint unsigned,
@@ -38,7 +38,7 @@ func (b *StateInfo) GetCreateTableSql(dbType string) string {
     PRIMARY KEY (contract_name,object_key),
     INDEX idx_height (block_height)
     ) default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE state_infos (
     contract_name text,object_key blob DEFAULT '',
     object_value longblob,block_height integer,updated_at datetime DEFAULT null,

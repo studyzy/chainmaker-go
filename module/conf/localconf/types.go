@@ -266,15 +266,15 @@ type DbConfig struct {
 }
 
 const (
-	DbconfigProviderSql      = "sql"
-	DbconfigProviderLeveldb  = "leveldb"
-	DbconfigProviderRocksdb  = "rocksdb"
+	DbconfigProviderSql     = "sql"
+	DbconfigProviderLeveldb = "leveldb"
+	//DbconfigProviderRocksdb  = "rocksdb"
 	DbconfigProviderBadgerdb = "badgerdb"
 )
 
 func (dbc *DbConfig) IsKVDB() bool {
 	return dbc.Provider == DbconfigProviderLeveldb ||
-		dbc.Provider == DbconfigProviderRocksdb ||
+		//dbc.Provider == DbconfigProviderRocksdb ||
 		dbc.Provider == DbconfigProviderBadgerdb
 }
 
@@ -305,8 +305,8 @@ type SqlDbConfig struct {
 	DbPrefix        string `mapstructure:"db_prefix"`
 }
 
-const SqlDbConfig_SqlDbType_MySQL = "mysql"
-const SqlDbConfig_SqlDbType_Sqlite = "sqlite"
+const SqldbconfigSqldbtypeMysql = "mysql"
+const SqldbconfigSqldbtypeSqlite = "sqlite"
 
 type txPoolConfig struct {
 	PoolType            string `mapstructure:"pool_type"`

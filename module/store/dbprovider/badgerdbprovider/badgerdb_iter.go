@@ -121,28 +121,28 @@ func (iter *BadgerIterator) Prev() bool {
 	return next
 }
 
-// Last skip to the last iterator
-func (iter *BadgerIterator) Last() bool {
-	key := iter.Key()
-	for iter.Next() {
-		key = iter.Key()
-	}
-	iter.badgerIter.Seek(key)
-
-	valid := iter.badgerIter.Valid()
-	if !valid {
-		return false
-	}
-	if iter.rangeIter {
-		item := iter.badgerIter.Item()
-		return bytes.Compare(item.Key(), iter.last) < 0 && bytes.Compare(item.Key(), iter.first) >= 0
-	}
-	// 如果根本不存在以iter.first为前缀, 那么应该返回false
-	if iter.prefixIter {
-		return iter.badgerIter.ValidForPrefix(key)
-	}
-	return true
-}
+//// Last skip to the last iterator
+//func (iter *BadgerIterator) Last() bool {
+//	key := iter.Key()
+//	for iter.Next() {
+//		key = iter.Key()
+//	}
+//	iter.badgerIter.Seek(key)
+//
+//	valid := iter.badgerIter.Valid()
+//	if !valid {
+//		return false
+//	}
+//	if iter.rangeIter {
+//		item := iter.badgerIter.Item()
+//		return bytes.Compare(item.Key(), iter.last) < 0 && bytes.Compare(item.Key(), iter.first) >= 0
+//	}
+//	// 如果根本不存在以iter.first为前缀, 那么应该返回false
+//	if iter.prefixIter {
+//		return iter.badgerIter.ValidForPrefix(key)
+//	}
+//	return true
+//}
 
 // First skip to the first iterator
 func (iter *BadgerIterator) First() bool {
