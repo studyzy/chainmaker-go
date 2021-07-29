@@ -9,7 +9,8 @@ package main
 
 import (
 	"log"
-	"strconv"
+
+	"chainmaker.org/chainmaker-go/utils"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
@@ -32,21 +33,14 @@ func SubscribeTxCMD() *cobra.Command {
 }
 
 func subscribeTx() error {
-	//var ids []string
-	//if len(txIds) > 0 {
-	//	ids = strings.Split(txIds, ",")
-	//}
+	start, _ := utils.Int64ToBytes(startBlock)
+	end, _ := utils.Int64ToBytes(endBlock)
 	payload := &commonPb.Payload{
 		Parameters: []*commonPb.KeyValuePair{
-			{Key: syscontract.SubscribeTx_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
-			{Key: syscontract.SubscribeTx_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
-			//{Key: syscontract.SubscribeTx_TX_TYPE.String(), Value: []byte(commonPb.TxType(txType).String())},
+			{Key: syscontract.SubscribeTx_START_BLOCK.String(), Value: start},
+			{Key: syscontract.SubscribeTx_END_BLOCK.String(), Value: end},
 			{Key: syscontract.SubscribeTx_TX_IDS.String(), Value: []byte(txIds)},
 		},
-		//StartBlock: startBlock,
-		//EndBlock:   endBlock,
-		//TxType:     commonPb.TxType(txType),
-		//TxIds:      ids,
 	}
 
 	payloadBytes, err := proto.Marshal(payload)

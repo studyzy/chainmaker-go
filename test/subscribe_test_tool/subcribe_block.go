@@ -10,6 +10,8 @@ package main
 import (
 	"strconv"
 
+	"chainmaker.org/chainmaker-go/utils"
+
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -31,16 +33,14 @@ func SubscribeBlockCMD() *cobra.Command {
 }
 
 func subscribeBlock() error {
+	start, _ := utils.Int64ToBytes(startBlock)
+	end, _ := utils.Int64ToBytes(endBlock)
 	payload := &commonPb.Payload{
 		Parameters: []*commonPb.KeyValuePair{
-			{Key: syscontract.SubscribeBlock_START_BLOCK.String(), Value: []byte(strconv.FormatInt(startBlock, 10))},
-			{Key: syscontract.SubscribeBlock_END_BLOCK.String(), Value: []byte(strconv.FormatInt(endBlock, 10))},
+			{Key: syscontract.SubscribeBlock_START_BLOCK.String(), Value: start},
+			{Key: syscontract.SubscribeBlock_END_BLOCK.String(), Value: end},
 			{Key: syscontract.SubscribeBlock_WITH_RWSET.String(), Value: []byte(strconv.FormatBool(withRwSet))},
 		},
-		//StartBlock: startBlock,
-		//EndBlock:   endBlock,
-		////WithRwSet:  true,
-		//WithRwSet: withRwSet,
 	}
 
 	payloadBytes, err := proto.Marshal(payload)
