@@ -12,6 +12,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
+	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
 	"chainmaker.org/chainmaker-go/vm/native/certmgr"
 	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
@@ -19,18 +20,13 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/contractmgr"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker-go/vm/native/government"
-	"chainmaker.org/chainmaker-go/vm/native/multisign"
-
-	"chainmaker.org/chainmaker-go/logger"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/gogo/protobuf/proto"
 )
 
 var (
 	nativeLock     = &sync.Mutex{}
-	nativeInstance = make(map[string]*RuntimeInstance, 0) // singleton map[chainId]instance
+	nativeInstance = make(map[string]*RuntimeInstance) // singleton map[chainId]instance
 )
 
 type RuntimeInstance struct {
@@ -64,7 +60,7 @@ func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContact(log)
 	contracts[syscontract.SystemContract_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
 	contracts[syscontract.SystemContract_GOVERNANCE.String()] = government.NewGovernmentContract(log)
-	contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
+	//contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
 	contracts[syscontract.SystemContract_PRIVATE_COMPUTE.String()] = privatecompute.NewPrivateComputeContact(log)
 	contracts[syscontract.SystemContract_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
 	contracts[syscontract.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
@@ -110,37 +106,26 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	return result
 }
 
-func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error {
-	tx := txContext.GetTx()
-	payload := tx.Payload
-	//var config commonPb.Payload
-	//err := proto.Unmarshal(payload, &config)
-	//if err != nil {
-	//	r.log.Errorw(ErrUnmarshalFailed.Error(), "Position", "SystemContractPayload Unmarshal", "err", err)
-	//	return ErrUnmarshalFailed
-	//}
-
-	// chainId
-	//if tx.Payload.ChainId != config.ChainId {
-	//	r.log.Errorw("chainId is different", "tx chainId", tx.Payload.ChainId, "payload chainId", config.ChainId)
-	//	return errors.New("chainId is different")
-	//}
-
-	bytes, err := txContext.Get(syscontract.SystemContract_CHAIN_CONFIG.String(), []byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
-	var chainConfig configPb.ChainConfig
-	err = proto.Unmarshal(bytes, &chainConfig)
-	if err != nil {
-		r.log.Errorw(common.ErrUnmarshalFailed.Error(), "Position", "configPb.ChainConfig Unmarshal", "err", err)
-		return common.ErrUnmarshalFailed
-	}
-
-	if payload.Sequence != chainConfig.Sequence+1 {
-		// the sequence is not incre 1
-		r.log.Errorw(common.ErrSequence.Error(), "chainConfig", chainConfig.Sequence, "sdk chainConfig", payload.Sequence)
-		return common.ErrSequence
-	}
-	return nil
-}
+//func (r *RuntimeInstance) verifySequence(txContext protocol.TxSimContext) error {
+//	tx := txContext.GetTx()
+//	payload := tx.Payload
+//
+//	bytes, err := txContext.Get(syscontract.SystemContract_CHAIN_CONFIG.String(),
+//	[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
+//	var chainConfig configPb.ChainConfig
+//	err = proto.Unmarshal(bytes, &chainConfig)
+//	if err != nil {
+//		r.log.Errorw(common.ErrUnmarshalFailed.Error(), "Position", "configPb.ChainConfig Unmarshal", "err", err)
+//		return common.ErrUnmarshalFailed
+//	}
+//
+//	if payload.Sequence != chainConfig.Sequence+1 {
+//		// the sequence is not incre 1
+//		r.log.Errorw(common.ErrSequence.Error(), "chainConfig", chainConfig.Sequence, "sdk chainConfig", payload.Sequence)
+//		return common.ErrSequence
+//	}
+//	return nil
+//}
 
 func (r *RuntimeInstance) getContractFunc(contract *commonPb.Contract, methodName string) (common.ContractFunc, error) {
 	if contract == nil {

@@ -8,8 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
@@ -34,9 +35,13 @@ func freezeContract() error {
 	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_FREEZE_CONTRACT.String()
-
-	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
-
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.FreezeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
+	payload.TxId = txId
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err
@@ -50,13 +55,9 @@ func freezeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -78,8 +79,13 @@ func unfreezeContract() error {
 	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()
-
-	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
+	payload.TxId = txId
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -94,13 +100,9 @@ func unfreezeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -119,10 +121,16 @@ func RevokeContractCMD() *cobra.Command {
 }
 
 func RevokeContract() error {
+	txId := utils.GetRandTxId()
 
 	method := syscontract.ContractManageFunction_REVOKE_CONTRACT.String()
-
-	payload, _ := constructInvokePayload(chainId, contractName, method, nil)
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.UpgradeContract_CONTRACT_NAME.String(),
+		Value: []byte(contractName),
+	})
+	payload, _ := constructInvokePayload(chainId, syscontract.SystemContract_CONTRACT_MANAGE.String(), method, pairs)
+	payload.TxId = txId
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -137,13 +145,9 @@ func RevokeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

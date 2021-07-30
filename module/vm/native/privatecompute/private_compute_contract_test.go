@@ -8,12 +8,13 @@
 package privatecompute
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"chainmaker.org/chainmaker-go/logger"
 )
 
 var certCaFilename = "testdata/remote_attestation/enclave_cacert.crt"

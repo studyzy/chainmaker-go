@@ -10,7 +10,7 @@ package utils
 import (
 	"bytes"
 	"compress/gzip"
-	"io"
+	"io/ioutil"
 )
 
 // GZipCompressBytes compress bytes with GZip(BestSpeed mode).
@@ -33,20 +33,12 @@ func GZipCompressBytes(data []byte) ([]byte, error) {
 
 // GZipDeCompressBytes decompress bytes with GZip.
 func GZipDeCompressBytes(data []byte) ([]byte, error) {
-	var out bytes.Buffer
 	var in bytes.Buffer
 	in.Write(data)
 	r, err := gzip.NewReader(&in)
 	if err != nil {
 		return nil, err
 	}
-	_, err = io.Copy(&out, r)
-	if err != nil {
-		return nil, err
-	}
-	err = r.Close()
-	if err != nil {
-		return nil, err
-	}
-	return out.Bytes(), nil
+	defer r.Close()
+	return ioutil.ReadAll(r)
 }

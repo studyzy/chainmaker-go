@@ -38,9 +38,11 @@ import (
 // Special characters allowed to define customized access rules
 const (
 	LIMIT_DELIMITER = "/"
+	PARAM_CERTS     = "certs"
 
 	authenticationFailedErrorTemplate        = "authentication failed, %v"
-	failToGetRoleInfoFromCertWarningTemplate = "authentication warning: fail to get role information from certificate [%v], certificate information: \n%s\n"
+	failToGetRoleInfoFromCertWarningTemplate = "authentication warning: fail to get role information from " +
+		"certificate [%v], certificate information: \n%s\n"
 )
 
 var notEnoughParticipantsSupportError = "authentication fail: not enough participants support this action"
@@ -74,24 +76,27 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 }
 
 var (
-	policyRead      = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
-	policyWrite     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
-	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
-	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
-	policyAdmin     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
-	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
+	policyRead = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode,
+		protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
+	policyWrite     = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
+	policyConsensus = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
+	policyP2P       = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode,
+		protocol.RoleCommonNode})
+	policyAdmin     = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
+	policySubscribe = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient,
+		protocol.RoleAdmin})
 
-	policyConfig     = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
-	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
+	policyConfig     = newPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
+	policySelfConfig = newPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
 
-	policyForbidden = NewPolicy(protocol.RuleForbidden, nil, nil)
+	//policyForbidden = newPolicy(protocol.RuleForbidden, nil, nil)
 
-	policyAllTest = NewPolicy(protocol.RuleAll, nil, []protocol.Role{protocol.RoleAdmin})
+	policyAllTest = newPolicy(protocol.RuleAll, nil, []protocol.Role{protocol.RoleAdmin})
 
-	policyLimitTestAny        = NewPolicy("2", nil, nil)
-	policyLimitTestAdmin      = NewPolicy("2", nil, []protocol.Role{protocol.RoleAdmin})
-	policyPortionTestAny      = NewPolicy("3/4", nil, nil)
-	policyPortionTestAnyAdmin = NewPolicy("3/4", nil, []protocol.Role{protocol.RoleAdmin})
+	policyLimitTestAny        = newPolicy("2", nil, nil)
+	policyLimitTestAdmin      = newPolicy("2", nil, []protocol.Role{protocol.RoleAdmin})
+	policyPortionTestAny      = newPolicy("3/4", nil, nil)
+	policyPortionTestAnyAdmin = newPolicy("3/4", nil, []protocol.Role{protocol.RoleAdmin})
 )
 
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
@@ -111,7 +116,8 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 		if certificateChain == nil || !certificateChain[len(certificateChain)-1].IsCA {
 			return fmt.Errorf("the certificate configured as root for organization %s is not a CA certificate", root.OrgId)
 		}
-		org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] = certificateChain[len(certificateChain)-1]
+		org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] =
+			certificateChain[len(certificateChain)-1]
 		ac.opts.Roots.AddCert(certificateChain[len(certificateChain)-1])
 		for i := 0; i < len(certificateChain); i++ {
 			org.trustedIntermediateCerts[string(certificateChain[i].Raw)] = certificateChain[i]
@@ -129,7 +135,8 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 		}*/
 
 		if len(org.trustedRootCerts) <= 0 {
-			return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", root.OrgId)
+			return fmt.Errorf("setup organization failed, no trusted root (for %s): please configure "+
+				"trusted root certificate or trusted public key whitelist", root.OrgId)
 		}
 
 		ac.addOrg(org)
@@ -146,10 +153,12 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 	return nil
 }
 
-func (ac *accessControl) initLocalSigningMember(localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) error {
+func (ac *accessControl) initLocalSigningMember(localOrgId, localPrivKeyFile, localPrivKeyPwd,
+	localCertFile string) error {
 	if localPrivKeyFile != "" && localCertFile != "" {
 		var err error
-		ac.localSigningMember, err = ac.NewSigningMemberFromCertFile(localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
+		ac.localSigningMember, err = ac.NewSigningMemberFromCertFile(localOrgId, localPrivKeyFile, localPrivKeyPwd,
+			localCertFile)
 		if err != nil {
 			return err
 		}
@@ -157,7 +166,8 @@ func (ac *accessControl) initLocalSigningMember(localOrgId, localPrivKeyFile, lo
 	return nil
 }
 
-func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
+func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org *organization) (
+	[]*bcx509.Certificate, error) {
 	isUsePk := false
 
 	pk, errPubKey := asym.PublicKeyFromPEM([]byte(root.Root))
@@ -166,7 +176,8 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 		if ac.getOrgByOrgId(root.OrgId) != nil {
 			return nil, fmt.Errorf("multiple public key for member %s", root.OrgId)
 		}
-		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
+		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil,
+			SubjectKeyId: nil}
 		ac.identityType = pbac.MemberType_PUBLIC_KEY
 	}
 
@@ -194,8 +205,9 @@ func (ac *accessControl) buildCertificateChain(root *config.TrustRootConfig, org
 	return certificateChain, nil
 }
 
-func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig, localOrgId string) error {
-	var orgNum int32 = 0
+func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig,
+	localOrgId string) error {
+	var orgNum int32
 	orgList := &sync.Map{}
 
 	opts := bcx509.VerifyOptions{
@@ -224,7 +236,8 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 		}
 
 		if len(org.trustedRootCerts) <= 0 {
-			return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", root.OrgId)
+			return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure "+
+				"trusted root certificate or trusted public key whitelist", root.OrgId)
 		}
 
 		orgList.Store(org.id, org)
@@ -247,7 +260,8 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 	return nil
 }
 
-func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *config.TrustRootConfig, org *organization) ([]*bcx509.Certificate, error) {
+func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *config.TrustRootConfig, org *organization) (
+	[]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
 	if ac.identityType == pbac.MemberType_PUBLIC_KEY {
@@ -259,7 +273,8 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root *confi
 			return nil, fmt.Errorf("update configuration failed, multiple public key for member %s", root.OrgId)
 		}
 
-		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
+		org.trustedRootCerts[root.Root] = &bcx509.Certificate{Raw: []byte(root.Root), PublicKey: pk, Signature: nil,
+			SubjectKeyId: nil}
 	}
 	if ac.identityType == pbac.MemberType_CERT {
 		pemBlock, rest := pem.Decode([]byte(root.Root))
@@ -306,51 +321,80 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
-	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" + syscontract.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
-	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" + syscontract.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
+	//syscontract.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
+	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
+	//syscontract.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_BLOCK_UPDATE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ID_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ORG_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ORG_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ORG_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CONSENSUS_EXT_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_CONSENSUS_EXT_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_PERMISSION_ADD.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_PERMISSION_UPDATE.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_PERMISSION_DELETE.String(), policyConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), policySelfConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_NODE_ID_UPDATE.String(), policySelfConfig)
 
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_INIT_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_UPGRADE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_FREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
 
 	// certificate management
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_FREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_UNFREEZE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_DELETE.String(), policyAdmin)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 
 	// Archive
-	resourceNamePolicyMap.Store(protocol.ResourceNameArchive,
-		NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
+	resourceNamePolicyMap.Store(protocol.ResourceNameArchive, newPolicy(protocol.RuleAny,
+		[]string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin}))
 
 	return resourceNamePolicyMap
 }
@@ -359,7 +403,7 @@ func (ac *accessControl) initResourcePolicy(resourcePolicies []*config.ResourceP
 	resourceNamePolicyMap := ac.createDefaultResourcePolicy()
 	for _, resourcePolicy := range resourcePolicies {
 		if ac.ValidateResourcePolicy(resourcePolicy) {
-			policy := NewPolicyFromPb(resourcePolicy.Policy)
+			policy := newPolicyFromPb(resourcePolicy.Policy)
 			resourceNamePolicyMap.Store(resourcePolicy.ResourceName, policy)
 		}
 	}
@@ -400,17 +444,23 @@ func (ac *accessControl) checkResourcePolicyRule(resourcePolicy *config.Resource
 
 func (ac *accessControl) checkResourcePolicyRuleSelfCase(resourcePolicy *config.ResourcePolicy) bool {
 	switch resourcePolicy.ResourceName {
-	case syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(), syscontract.SystemContract_CHAIN_CONFIG.String() + "-" + syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
+	case syscontract.SystemContract_CHAIN_CONFIG.String() + "-" +
+		syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String(),
+		syscontract.SystemContract_CHAIN_CONFIG.String() + "-" +
+			syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
 		return true
 	default:
-		ac.log.Errorf("bad configuration: the access rule of [%s] should not be [%s]", resourcePolicy.ResourceName, resourcePolicy.Policy.Rule)
+		ac.log.Errorf("bad configuration: the access rule of [%s] should not be [%s]", resourcePolicy.ResourceName,
+			resourcePolicy.Policy.Rule)
 		return false
 	}
 }
 
 func (ac *accessControl) checkResourcePolicyRuleMajorityCase(policy *pbac.Policy) bool {
 	if len(policy.OrgList) != int(atomic.LoadInt32(&ac.orgNum)) {
-		ac.log.Warnf("[%s] rule considers all the organizations on the chain, any customized configuration for organization list will be overridden, should use [Portion] rule for customized organization list", protocol.RuleMajority)
+		ac.log.Warnf("[%s] rule considers all the organizations on the chain, any customized configuration for "+
+			"organization list will be overridden, should use [Portion] rule for customized organization list",
+			protocol.RuleMajority)
 	}
 	switch len(policy.RoleList) {
 	case 0:
@@ -418,11 +468,13 @@ func (ac *accessControl) checkResourcePolicyRuleMajorityCase(policy *pbac.Policy
 		return true
 	case 1:
 		if policy.RoleList[0] != string(protocol.RoleAdmin) {
-			ac.log.Warnf("role allowed in [%s] is only [%s], [%s] will be overridden", protocol.RuleMajority, protocol.RoleAdmin, policy.RoleList[0])
+			ac.log.Warnf("role allowed in [%s] is only [%s], [%s] will be overridden", protocol.RuleMajority,
+				protocol.RoleAdmin, policy.RoleList[0])
 		}
 		return true
 	default:
-		ac.log.Warnf("role allowed in [%s] is only [%s], the other roles in the list will be ignored", protocol.RuleMajority, protocol.RoleAdmin)
+		ac.log.Warnf("role allowed in [%s] is only [%s], the other roles in the list will be ignored",
+			protocol.RuleMajority, protocol.RoleAdmin)
 		return true
 	}
 }
@@ -459,7 +511,8 @@ func (ac *accessControl) checkResourcePolicyRuleDefaultCase(policy *pbac.Policy)
 	}
 }
 
-func (ac *accessControl) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, p *policy) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, p *policy) (
+	bool, error) {
 	endorsements := refinedPrincipal.GetEndorsement()
 	rule := p.GetRule()
 
@@ -493,7 +546,8 @@ func buildOrgListRoleListOfPolicyForVerifyPrincipal(p *policy) (map[string]bool,
 	return orgList, roleList
 }
 
-func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endorsements []*common.EndorsementEntry) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endorsements []*common.EndorsementEntry) (
+	bool, error) {
 	// notice: accept admin role only, and require majority of all the organizations on the chain
 	role := protocol.RoleAdmin
 	// orgList, _ := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
@@ -509,13 +563,13 @@ func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endors
 
 	if float64(numOfValid) > float64(ac.orgNum)/2.0 {
 		return true, nil
-	} else {
-		return false, fmt.Errorf("%s: %d valid endorsements required, %d valid endorsements received", notEnoughParticipantsSupportError, int(float64(ac.orgNum)/2.0+1), numOfValid)
-
 	}
+	return false, fmt.Errorf("%s: %d valid endorsements required, %d valid endorsements received",
+		notEnoughParticipantsSupportError, int(float64(ac.orgNum)/2.0+1), numOfValid)
 }
 
-func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, endorsements []*common.EndorsementEntry) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, endorsements []*common.EndorsementEntry) (
+	bool, error) {
 	role := protocol.RoleAdmin
 	if targetOrg == "" {
 		return false, fmt.Errorf("authentication fail: SELF keyword requires the owner of the affected target")
@@ -544,12 +598,14 @@ func (ac *accessControl) verifyPrincipalPolicyRuleSelfCase(targetOrg string, end
 	return false, fmt.Errorf("authentication fail: target [%s] does not belong to the signer", targetOrg)
 }
 
-func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsements []*common.EndorsementEntry, resourceName string) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsements []*common.EndorsementEntry,
+	resourceName string) (bool, error) {
 	orgList, roleList := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 	for _, endorsement := range endorsements {
 		if len(orgList) > 0 {
 			if _, ok := orgList[endorsement.Signer.OrgId]; !ok {
-				ac.log.Debugf("authentication warning: signer's organization [%s] is not permitted, requires [%v]", endorsement.Signer.OrgId, p.GetOrgList())
+				ac.log.Debugf("authentication warning: signer's organization [%s] is not permitted, requires [%v]",
+					endorsement.Signer.OrgId, p.GetOrgList())
 				continue
 			}
 		}
@@ -561,7 +617,8 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 		var err error
 		signerRoleList, err = ac.getSignerRoleList(endorsement.Signer.MemberInfo)
 		if err != nil {
-			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err, ac.getEndorsementSignerMemberInfoString(endorsement.Signer))
+			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err,
+				ac.getEndorsementSignerMemberInfoString(endorsement.Signer))
 			continue
 		}
 		for _, ou := range signerRoleList {
@@ -569,7 +626,8 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 				return true, nil
 			}
 		}
-		ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRoleList, p.GetRoleList())
+		ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]",
+			signerRoleList, p.GetRoleList())
 	}
 
 	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)", resourceName)
@@ -578,12 +636,12 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 func (ac *accessControl) getEndorsementSignerMemberInfoString(signer *pbac.Member) string {
 	if signer.MemberType == pbac.MemberType_CERT {
 		return string(signer.MemberInfo)
-	} else {
-		return hex.EncodeToString(signer.MemberInfo)
 	}
+	return hex.EncodeToString(signer.MemberInfo)
 }
 
-func (ac *accessControl) verifyPrincipalPolicyRuleAllCase(p *policy, endorsements []*common.EndorsementEntry) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicyRuleAllCase(p *policy, endorsements []*common.EndorsementEntry) (
+	bool, error) {
 	orgList, roleList := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 	numOfValid := ac.countValidEndorsements(orgList, roleList, endorsements)
 	if len(orgList) <= 0 && numOfValid == int(atomic.LoadInt32(&ac.orgNum)) {
@@ -595,7 +653,8 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAllCase(p *policy, endorsement
 	return false, fmt.Errorf("authentication fail: not all of the listed organtizations consend to this action")
 }
 
-func (ac *accessControl) verifyPrincipalPolicyRuleDefaultCase(p *policy, endorsements []*common.EndorsementEntry) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicyRuleDefaultCase(p *policy, endorsements []*common.EndorsementEntry) (
+	bool, error) {
 	rule := p.GetRule()
 	orgList, roleList := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 	nums := strings.Split(string(rule), LIMIT_DELIMITER)
@@ -603,20 +662,23 @@ func (ac *accessControl) verifyPrincipalPolicyRuleDefaultCase(p *policy, endorse
 	case 1:
 		threshold, err := strconv.Atoi(nums[0])
 		if err != nil {
-			return false, fmt.Errorf("authentication fail: unrecognized rule, should be ANY, MAJORITY, ALL, SELF, ac threshold (integer), or ac portion (fraction)")
+			return false, fmt.Errorf("authentication fail: unrecognized rule, should be ANY, MAJORITY, ALL, " +
+				"SELF, ac threshold (integer), or ac portion (fraction)")
 		}
 
 		numOfValid := ac.countValidEndorsements(orgList, roleList, endorsements)
 		if numOfValid >= threshold {
 			return true, nil
 		}
-		return false, fmt.Errorf("%s: %d valid endorsements required, %d valid endorsements received", notEnoughParticipantsSupportError, threshold, numOfValid)
+		return false, fmt.Errorf("%s: %d valid endorsements required, %d valid endorsements received",
+			notEnoughParticipantsSupportError, threshold, numOfValid)
 
 	case 2:
 		numerator, err := strconv.Atoi(nums[0])
 		denominator, err2 := strconv.Atoi(nums[1])
 		if err != nil || err2 != nil {
-			return false, fmt.Errorf("authentication fail: unrecognized rule, should be ANY, MAJORITY, ALL, SELF, an integer, or ac fraction")
+			return false, fmt.Errorf("authentication fail: unrecognized rule, should be ANY, MAJORITY, ALL, " +
+				"SELF, an integer, or ac fraction")
 		}
 
 		if denominator <= 0 {
@@ -634,9 +696,11 @@ func (ac *accessControl) verifyPrincipalPolicyRuleDefaultCase(p *policy, endorse
 		if float64(numOfValid) >= numRequired {
 			return true, nil
 		}
-		return false, fmt.Errorf("%s: %f valid endorsements required, %d valid endorsements received", notEnoughParticipantsSupportError, numRequired, numOfValid)
+		return false, fmt.Errorf("%s: %f valid endorsements required, %d valid endorsements received",
+			notEnoughParticipantsSupportError, numRequired, numOfValid)
 	default:
-		return false, fmt.Errorf("authentication fail: unrecognized principle type, should be ANY, MAJORITY, ALL, SELF, an integer (Threshold), or ac fraction (Portion)")
+		return false, fmt.Errorf("authentication fail: unrecognized principle type, should be ANY, MAJORITY, " +
+			"ALL, SELF, an integer (Threshold), or ac fraction (Portion)")
 	}
 }
 
@@ -644,7 +708,7 @@ func (ac *accessControl) validateCrlVersion(crlPemBytes []byte, crl *pkix.Certif
 	if ac.dataStore != nil {
 		aki, isASN1Encoded, err := bcx509.GetAKIFromExtensions(crl.TBSCertList.Extensions)
 		if err != nil {
-			return fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPemBytes))
+			return fmt.Errorf("invalid CRL: %v\n[%s]", err, hex.EncodeToString(crlPemBytes))
 		}
 		ac.log.Debugf("AKI is ASN1 encoded: %v", isASN1Encoded)
 		crlOldBytes, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), aki)
@@ -686,7 +750,7 @@ func (ac *accessControl) systemContractCallbackCertManagementCase(payloadBytes [
 
 func (ac *accessControl) systemContractCallbackCertManagementCertFreezeCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
-		if param.Key == "certs" {
+		if param.Key == PARAM_CERTS {
 			certList := strings.Replace(string(param.Value), ",", "\n", -1)
 			certBlock, rest := pem.Decode([]byte(certList))
 			for certBlock != nil {
@@ -702,7 +766,7 @@ func (ac *accessControl) systemContractCallbackCertManagementCertFreezeCase(payl
 
 func (ac *accessControl) systemContractCallbackCertManagementCertUnfreezeCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
-		if param.Key == "certs" {
+		if param.Key == PARAM_CERTS {
 			certList := strings.Replace(string(param.Value), ",", "\n", -1)
 			certBlock, rest := pem.Decode([]byte(certList))
 			for certBlock != nil {
@@ -792,7 +856,8 @@ func (ac *accessControl) lookUpCertCache(certId string) ([]byte, bool) {
 		ac.log.Debugf("compressed certificate [%v] found in cache", []byte(certId))
 		return ret.([]byte), true
 	} else {
-		ac.log.Debugf("fail to look up compressed certificate [%v] due to an internal error of local cache", []byte(certId))
+		ac.log.Debugf("fail to look up compressed certificate [%v] due to an internal error of local cache",
+			[]byte(certId))
 		return nil, false
 	}
 }
@@ -802,7 +867,8 @@ func (ac *accessControl) addCertCache(signer string, cert []byte) {
 }
 
 // Check certificate chain against CRL and frozen list
-func (ac *accessControl) checkCRLAgainstTrustedCerts(crl *pkix.CertificateList, orgList []*organization, isIntermediate bool) error {
+func (ac *accessControl) checkCRLAgainstTrustedCerts(crl *pkix.CertificateList, orgList []*organization,
+	isIntermediate bool) error {
 	aki, isASN1Encoded, err := bcx509.GetAKIFromExtensions(crl.TBSCertList.Extensions)
 	if err != nil {
 		return fmt.Errorf("fail to get AKI of CRL [%s]: %v", crl.TBSCertList.Issuer.String(), err)
@@ -834,7 +900,8 @@ func (ac *accessControl) loadCRL() error {
 		return nil
 	}
 
-	crlAKIList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
+	crlAKIList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
+		[]byte(protocol.CertRevokeKey))
 	if err != nil {
 		return fmt.Errorf("fail to update CRL list: %v", err)
 	}
@@ -849,11 +916,8 @@ func (ac *accessControl) loadCRL() error {
 		return fmt.Errorf("fail to update CRL list: %v", err)
 	}
 
-	if err := ac.storeCrls(crlAKIs); err != nil {
-		return err
-	}
-
-	return nil
+	err = ac.storeCrls(crlAKIs)
+	return err
 }
 
 func (ac *accessControl) storeCrls(crlAKIs []string) error {
@@ -913,7 +977,8 @@ func (ac *accessControl) loadCertFrozenList() error {
 		return nil
 	}
 
-	certList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertFreezeKey))
+	certList, err := ac.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
+		[]byte(protocol.CertFreezeKey))
 	if err != nil {
 		return fmt.Errorf("update frozen certificate list failed: %v", err)
 	}
@@ -980,7 +1045,8 @@ func getP11Handle() (*pkcs11.P11Handle, error) {
 	p11Key := getP11HandleId()
 	p11Handle, ok := p11HandleMap[p11Key]
 	if !ok {
-		p11Handle, err = pkcs11.New(p11Config.Library, p11Config.Label, p11Config.Password, p11Config.SessionCacheSize, p11Config.Hash)
+		p11Handle, err = pkcs11.New(p11Config.Library, p11Config.Label, p11Config.Password, p11Config.SessionCacheSize,
+			p11Config.Hash)
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize organization with HSM: [%v]", err)
 		}
@@ -998,18 +1064,21 @@ func (ac *accessControl) newMemberFromCert(orgId string, certFile string) (proto
 	return ac.NewMemberFromCertPem(orgId, string(certPEM))
 }
 
-func (ac *accessControl) countValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool, endorsements []*common.EndorsementEntry) int {
+func (ac *accessControl) countValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool,
+	endorsements []*common.EndorsementEntry) int {
 	refinedEndorsements := ac.getValidEndorsements(orgList, roleList, endorsements)
 	return ac.countOrgsFromEndorsements(refinedEndorsements)
 }
 
-func (ac *accessControl) getValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool, endorsements []*common.EndorsementEntry) []*common.EndorsementEntry {
+func (ac *accessControl) getValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool,
+	endorsements []*common.EndorsementEntry) []*common.EndorsementEntry {
 	var refinedEndorsements []*common.EndorsementEntry
 	var err error
 	for _, endorsement := range endorsements {
 		if len(orgList) > 0 {
 			if _, ok := orgList[endorsement.Signer.OrgId]; !ok {
-				ac.log.Debugf("authentication warning: signer's organization [%s] is not permitted, requires", endorsement.Signer.OrgId, orgList)
+				ac.log.Debugf("authentication warning: signer's organization [%s] is not permitted, requires",
+					endorsement.Signer.OrgId, orgList)
 				continue
 			}
 		}
@@ -1021,19 +1090,22 @@ func (ac *accessControl) getValidEndorsements(orgList map[string]bool, roleList 
 		}
 		signerRoleList, err = ac.getSignerRoleList(endorsement.Signer.MemberInfo)
 		if err != nil {
-			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err, ac.getEndorsementSignerMemberInfoString(endorsement.Signer))
+			ac.log.Debugf(failToGetRoleInfoFromCertWarningTemplate, err,
+				ac.getEndorsementSignerMemberInfoString(endorsement.Signer))
 			continue
 		}
 		isRoleMatching := ac.isRoleMatching(signerRoleList, roleList, &refinedEndorsements, endorsement)
 		if !isRoleMatching {
-			ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRoleList, roleList)
+			ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]",
+				signerRoleList, roleList)
 		}
 	}
 
 	return refinedEndorsements
 }
 
-func (ac *accessControl) isRoleMatching(signerRoleList []protocol.Role, roleList map[protocol.Role]bool, refinedEndorsements *[]*common.EndorsementEntry, endorsement *common.EndorsementEntry) bool {
+func (ac *accessControl) isRoleMatching(signerRoleList []protocol.Role, roleList map[protocol.Role]bool,
+	refinedEndorsements *[]*common.EndorsementEntry, endorsement *common.EndorsementEntry) bool {
 	isRoleMatching := false
 	for _, sr := range signerRoleList {
 		if _, ok := roleList[sr]; ok {
@@ -1048,11 +1120,7 @@ func (ac *accessControl) isRoleMatching(signerRoleList []protocol.Role, roleList
 func (ac *accessControl) countOrgsFromEndorsements(endorsements []*common.EndorsementEntry) int {
 	mapOrg := map[string]int{}
 	for _, endorsement := range endorsements {
-		if _, ok := mapOrg[endorsement.Signer.OrgId]; ok {
-			mapOrg[endorsement.Signer.OrgId]++
-		} else {
-			mapOrg[endorsement.Signer.OrgId] = 1
-		}
+		mapOrg[endorsement.Signer.OrgId]++
 	}
 	return len(mapOrg)
 }
@@ -1076,14 +1144,16 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 	}
 	orgIdFromCert := cert.Subject.Organization[0]
 	if mem.GetOrgId() != orgIdFromCert {
-		return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
+		return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims "+
+			"[claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
 	}
 	org := ac.getOrgByOrgId(orgIdFromCert)
 	if org == nil {
 		return nil, fmt.Errorf("authentication failed, no orgnization found")
 	}
 	if len(org.trustedRootCerts) <= 0 {
-		return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate or trusted public key whitelist")
+		return nil, fmt.Errorf("authentication failed, no trusted root: please configure " +
+			"trusted root certificate or trusted public key whitelist")
 	}
 
 	certChain := ac.findCertChain(org, certChains)
@@ -1091,7 +1161,8 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 		return certChain, nil
 	}
 
-	return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s]", mem.GetOrgId())
+	return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims"+
+		" [claim: %s]", mem.GetOrgId())
 }
 
 func (ac *accessControl) findCertChain(org *organization, certChains [][]*bcx509.Certificate) []*bcx509.Certificate {
@@ -1139,7 +1210,8 @@ func (ac *accessControl) refinePrincipal(principal protocol.Principal) (protocol
 	return refinedPrincipal, nil
 }
 
-func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEntry, msg []byte) ([]*common.EndorsementEntry, string) {
+func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEntry, msg []byte) (
+	[]*common.EndorsementEntry, string) {
 	refinedSigners := map[string]bool{}
 	var refinedEndorsement []*common.EndorsementEntry
 
@@ -1171,7 +1243,8 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 
 		signerInfo, ok := ac.lookUpSignerInCache(memInfo)
 		if !ok {
-			ac.log.Debugf("certificate not in local cache, should verify it against the trusted root certificates: \n%s", memInfo)
+			ac.log.Debugf("certificate not in local cache, should verify it against the trusted root certificates: "+
+				"\n%s", memInfo)
 			remoteMember, certChain, ok, msgTmp := ac.verifyPrincipalSignerNotInCache(endorsement, msg, memInfo)
 			if !ok {
 				resultMsg += msgTmp
@@ -1200,7 +1273,8 @@ func (ac *accessControl) refineEndorsements(endorsements []*common.EndorsementEn
 	return refinedEndorsement, resultMsg
 }
 
-func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte, memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, resultMsg string) {
+func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte,
+	memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, resultMsg string) {
 	var err error
 	remoteMember, err = ac.NewMemberFromCertPem(endorsement.Signer.OrgId, memInfo)
 	if err != nil {
@@ -1228,7 +1302,8 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 
 	if err = remoteMember.Verify(ac.GetHashAlg(), msg, endorsement.Signature); err != nil {
 		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
-		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
+		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
+			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		ac.log.Warn(resultMsg)
 		ok = false
 		return
@@ -1237,7 +1312,8 @@ func (ac *accessControl) verifyPrincipalSignerNotInCache(endorsement *common.End
 	return
 }
 
-func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, endorsement *common.EndorsementEntry, msg []byte, memInfo string) (bool, string) {
+func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, endorsement *common.EndorsementEntry,
+	msg []byte, memInfo string) (bool, string) {
 	// check CRL and certificate frozen list
 	err := ac.checkCRL(signerInfo.certChain)
 	if err != nil {
@@ -1254,13 +1330,15 @@ func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, 
 
 	ac.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
 	if endorsement.Signer.OrgId != signerInfo.signer.GetOrgId() {
-		resultMsg := fmt.Sprintf("authentication failed, signer does not belong to the organization it claims [claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.signer.GetOrgId())
+		resultMsg := fmt.Sprintf("authentication failed, signer does not belong to the organization it claims "+
+			"[claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.signer.GetOrgId())
 		ac.log.Warn(resultMsg)
 		return false, resultMsg
 	}
 	if err := signerInfo.signer.Verify(ac.GetHashAlg(), msg, endorsement.Signature); err != nil {
 		resultMsg := fmt.Sprintf(authenticationFailedErrorTemplate, err)
-		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\nsignature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
+		ac.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
+			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		ac.log.Warn(resultMsg)
 		return false, resultMsg
 	}
@@ -1270,7 +1348,8 @@ func (ac *accessControl) verifyPrincipalSignerInCache(signerInfo *cachedSigner, 
 func (ac *accessControl) lookUpPolicyByResourceName(resourceName string) (*policy, error) {
 	p, ok := ac.resourceNamePolicyMap.Load(resourceName)
 	if !ok {
-		return nil, fmt.Errorf("look up access policy failed, did not configurate access policy for resource %s", resourceName)
+		return nil, fmt.Errorf("look up access policy failed, did not configure access policy "+
+			"for resource %s", resourceName)
 	}
 	return p.(*policy), nil
 }

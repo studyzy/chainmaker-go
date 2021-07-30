@@ -13,13 +13,15 @@ import (
 )
 
 // BytesToInt le bytes to int32, little endian
-func BytesToInt(b []byte) int32 {
+func BytesToInt(b []byte) (int32, error) {
 	bytesBuffer := bytes.NewBuffer(b)
 
 	var x int32
-	binary.Read(bytesBuffer, binary.LittleEndian, &x)
-
-	return int32(x)
+	err := binary.Read(bytesBuffer, binary.LittleEndian, &x)
+	if err != nil {
+		return -1, err
+	}
+	return x, nil
 }
 
 // BytesToInt le bytes to int64, little endian
@@ -36,7 +38,10 @@ func BytesToInt64(b []byte) (int64, error) {
 // IntToBytes int32 to le bytes, little endian
 func IntToBytes(x int32) []byte {
 	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.LittleEndian, x)
+	err := binary.Write(bytesBuffer, binary.LittleEndian, x)
+	if err != nil {
+		return nil
+	}
 	return bytesBuffer.Bytes()
 }
 

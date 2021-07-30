@@ -15,9 +15,8 @@ func (bc *Blockchain) Stop() {
 	// 1、sync service
 	// 2、core engine
 	// 3、consensus module
-	// 4、spv node
-	// 5、net service
-	// 6、tx pool
+	// 4、net service
+	// 5、tx pool
 
 	var stopModules = make([]map[string]func() error, 0)
 	if bc.isModuleStartUp(moduleNameNetService) {
@@ -31,9 +30,6 @@ func (bc *Blockchain) Stop() {
 	}
 	if bc.isModuleStartUp(moduleNameSync) {
 		stopModules = append(stopModules, map[string]func() error{moduleNameSync: bc.stopSyncService})
-	}
-	if bc.isModuleStartUp(moduleNameSpv) {
-		stopModules = append(stopModules, map[string]func() error{moduleNameSpv: bc.stopSpv})
 	}
 	if bc.isModuleStartUp(moduleNameTxPool) {
 		stopModules = append(stopModules, map[string]func() error{moduleNameTxPool: bc.stopTxPool})
@@ -61,7 +57,6 @@ func (bc *Blockchain) StopOnRequirements() {
 		moduleNameSync:       bc.stopSyncService,
 		moduleNameCore:       bc.stopCoreEngine,
 		moduleNameConsensus:  bc.stopConsensus,
-		moduleNameSpv:        bc.stopSpv,
 		moduleNameTxPool:     bc.stopTxPool,
 	}
 
@@ -69,18 +64,17 @@ func (bc *Blockchain) StopOnRequirements() {
 	// 1、sync service
 	// 2、core engine
 	// 3、consensus module
-	// 4、spv node
-	// 5、net service
-	// 6、tx pool
+	// 4、net service
+	// 5、tx pool
+
 	sequence := map[string]int{
 		moduleNameSync:       0,
 		moduleNameCore:       1,
 		moduleNameConsensus:  2,
-		moduleNameSpv:        3,
-		moduleNameNetService: 4,
-		moduleNameTxPool:     5,
+		moduleNameNetService: 3,
+		moduleNameTxPool:     4,
 	}
-	closeFlagArray := [6]string{}
+	closeFlagArray := [5]string{}
 	for moduleName := range bc.startModules {
 		_, ok := bc.initModules[moduleName]
 		if ok {
@@ -114,13 +108,6 @@ func (bc *Blockchain) stopNetService() error {
 		return err
 	}
 	delete(bc.startModules, moduleNameNetService)
-	return nil
-}
-
-func (bc *Blockchain) stopSpv() error {
-	// stop spv node
-	bc.spv.Stop()
-	delete(bc.startModules, moduleNameSpv)
 	return nil
 }
 

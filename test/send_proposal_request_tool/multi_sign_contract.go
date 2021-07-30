@@ -13,7 +13,6 @@ package main
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -172,11 +171,7 @@ func multiSignReq() error {
 		TxId:        txId,
 		PayloadHash: hex.EncodeToString(payloadHash),
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -247,11 +242,7 @@ func multiSignVote() error {
 		TxId:        txId,
 		PayloadHash: payloadHash,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -271,11 +262,7 @@ func multiSignQuery() error {
 		PayloadHash:   hex.EncodeToString(payloadHash),
 		MultiSignInfo: multiSignInfo,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

@@ -1084,7 +1084,7 @@ func TestAccessControlNewSigningMember(t *testing.T) {
 	require.NotNil(t, signer)
 }
 
-func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t *testing.T) {
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForRead(t *testing.T) {
 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
@@ -1139,18 +1139,28 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
+}
+
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForWrite(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
 	// write
-	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	sigRead, err := acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].admin.GetMember()
+	signerRead, err := acsMap[org1Name].admin.GetMember()
 	require.Nil(t, err)
-	endorsementRead = &common.EndorsementEntry{
+	endorsementRead := &common.EndorsementEntry{
 		Signer:    signerRead,
 		Signature: sigRead,
 	}
-	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameWriteData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameWriteData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
 	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	sigRead, err = acsMap[org1Name].client.Sign(acInst.GetHashAlg(), []byte(msg))
@@ -1180,18 +1190,28 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
+}
+
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForP2pAndConsesus(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
 	// P2P
-	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	sigRead, err := acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org1Name].consensusNode.GetMember()
+	signerRead, err := acsMap[org1Name].consensusNode.GetMember()
 	require.Nil(t, err)
-	endorsementRead = &common.EndorsementEntry{
+	endorsementRead := &common.EndorsementEntry{
 		Signer:    signerRead,
 		Signature: sigRead,
 	}
-	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
 	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
@@ -1249,18 +1269,28 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org3Name].acInst.VerifyPrincipal(principalRead)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
+}
+
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForSelf(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
 	// self
-	sigRead, err = acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	sigRead, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
-	signerRead, err = acsMap[org4Name].admin.GetMember()
+	signerRead, err := acsMap[org4Name].admin.GetMember()
 	require.Nil(t, err)
-	endorsementRead = &common.EndorsementEntry{
+	endorsementRead := &common.EndorsementEntry{
 		Signer:    signerRead,
 		Signature: sigRead,
 	}
-	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
+	principalRead, err := acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
 	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	// invalid
@@ -1277,6 +1307,16 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
+}
+
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForMajority(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
 	// majority
 	sigEurus, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)
@@ -1310,12 +1350,12 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 		Signer:    signerBoreas,
 		Signature: sigBoreas,
 	}
-	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
 	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
-	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
+	validEndorsements, err := acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
 	principalRead, err = acInst.CreatePrincipal(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
@@ -1355,16 +1395,70 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	validEndorsements, err = acsMap[org2Name].acInst.GetValidEndorsements(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 2)
+}
+
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForTest(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
+
+	sigRead, err := acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err := acsMap[org1Name].commonNode.GetMember()
+	require.Nil(t, err)
+
+	sigEurus, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerEurus, err := acsMap[org4Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementEurus := &common.EndorsementEntry{
+		Signer:    signerEurus,
+		Signature: sigEurus,
+	}
+	sigAuster, err := acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerAuster, err := acsMap[org3Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementAuster := &common.EndorsementEntry{
+		Signer:    signerAuster,
+		Signature: sigAuster,
+	}
+	sigZephyrus, err := acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerZephyrus, err := acsMap[org1Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementZephyrus := &common.EndorsementEntry{
+		Signer:    signerZephyrus,
+		Signature: sigZephyrus,
+	}
+	sigBoreas, err := acsMap[org2Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerBoreas, err := acsMap[org2Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementBoreas := &common.EndorsementEntry{
+		Signer:    signerBoreas,
+		Signature: sigBoreas,
+	}
+	sigThuellai, err := acsMap[org5Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerThuellai, err := acsMap[org5Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementThuellai := &common.EndorsementEntry{
+		Signer:    signerThuellai,
+		Signature: sigThuellai,
+	}
+	endorsementReadZephyrus := &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
 	// all
-	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
 	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
-	// abnormal
-	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus, endorsementThuellai}, []byte(msg))
-	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	// invalid
@@ -1379,18 +1473,8 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
-	policyLimit, err = acInst.CreatePrincipal("test_2_admin", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus}, []byte(msg))
-	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
 	// invalid
 	policyLimit, err = acInst.CreatePrincipal("test_2", []*common.EndorsementEntry{endorsementAuster, endorsementThuellai}, []byte(msg))
-	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
-	policyLimit, err = acInst.CreatePrincipal("test_2_admin", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus}, []byte(msg))
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
 	require.NotNil(t, err)
@@ -1401,27 +1485,38 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
-	policyPortion, err = acInst.CreatePrincipal("test_3/4_admin", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus, endorsementEurus}, []byte(msg))
-	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
 	// invalid
 	policyPortion, err = acInst.CreatePrincipal("test_3/4", []*common.EndorsementEntry{endorsementAuster, endorsementAuster, endorsementBoreas, endorsementThuellai}, []byte(msg))
 	require.Nil(t, err)
 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
 	require.NotNil(t, err)
 	require.Equal(t, false, ok)
-	policyPortion, err = acInst.CreatePrincipal("test_3/4_admin", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus, endorsementEurus}, []byte(msg))
-	require.Nil(t, err)
-	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
+}
+
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipalForTime(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
+	var ok bool
+
 	// bench
 	var timeStart, timeEnd int64
 	count := int64(100)
+
+	sigRead, err := acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err := acsMap[org3Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementRead := &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
 	// any
-	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
 	require.Nil(t, err)
 	timeStart = time.Now().UnixNano()
 	for i := 0; i < int(count); i++ {
@@ -1431,6 +1526,15 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	fmt.Printf("Verify ANY average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
+
+	sigEurus, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerEurus, err := acsMap[org4Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementEurus := &common.EndorsementEntry{
+		Signer:    signerEurus,
+		Signature: sigEurus,
+	}
 	// self
 	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementEurus}, []byte(msg), org4Name)
 	require.Nil(t, err)
@@ -1442,6 +1546,7 @@ func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	fmt.Printf("Verify SELF average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
+
 	// consensus
 	sigZephyrusConsensus, err := acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
 	require.Nil(t, err)

@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/main/cmd"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/main/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -23,6 +24,4 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	return
 }

@@ -11,7 +11,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -31,7 +30,6 @@ import (
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
 
 const (
-	regChainId         = "^[a-zA-Z0-9_]{1,30}$"
 	minTxTimeout       = 600
 	minBlockInterval   = 10
 	minBlockTxCapacity = 1
@@ -41,13 +39,13 @@ const (
 )
 
 var (
-	chainConsensusVerifier = make(map[string]consensusVerifier, 0)
+	chainConsensusVerifier = make(map[string]consensusVerifier)
 	// for multi chain start
 	chainConfigVerifierLock = sync.RWMutex{}
 )
 
-// chainConfig chainConfig struct
-type chainConfig struct {
+// ChainConfig ChainConfig struct
+type ChainConfig struct {
 	*config.ChainConfig
 	NodeOrgIds       map[string][]string // NodeOrgIds is a map mapped org with consensus nodes ids.
 	NodeIds          map[string]string   // NodeIds is a map mapped node id with org.
@@ -56,14 +54,14 @@ type chainConfig struct {
 }
 
 // VerifyChainConfig verify the chain config.
-func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
-	log := logger.GetLoggerByChain(logger.MODULE_CHAINCONF, cconfig.ChainId)
+func VerifyChainConfig(cconfig *config.ChainConfig) (*ChainConfig, error) {
+	chainLog := logger.GetLoggerByChain(logger.MODULE_CHAINCONF, cconfig.ChainId)
 	// validate params
 	if err := validateParams(cconfig); err != nil {
 		return nil, err
 	}
 
-	mConfig := &chainConfig{
+	mConfig := &ChainConfig{
 		ChainConfig:      cconfig,
 		NodeOrgIds:       make(map[string][]string),
 		NodeIds:          make(map[string]string),
@@ -71,11 +69,11 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 		ResourcePolicies: make(map[string]struct{}),
 	}
 
-	if err := verifyChainConfigTrustRoots(cconfig, mConfig); err != nil {
+	if err := verifyChainConfigTrustRoots(cconfig, mConfig, chainLog); err != nil {
 		return nil, err
 	}
 
-	if err := verifyChainConfigConsensus(cconfig, mConfig); err != nil {
+	if err := verifyChainConfigConsensus(cconfig, mConfig, chainLog); err != nil {
 		return nil, err
 	}
 
@@ -85,38 +83,40 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 
 	if len(mConfig.TrustRoots) < minTrustRoots {
 		msg := fmt.Sprintf("trustRoots len less than %d, trustRoots len is %d", minTrustRoots, len(mConfig.TrustRoots))
-		log.Error(msg)
+		chainLog.Error(msg)
 		return nil, errors.New(msg)
 	}
 
 	if len(mConfig.NodeIds) < minNodeIds {
 		msg := fmt.Sprintf("nodeIds len less than %d, nodeIds len is %d", minNodeIds, len(mConfig.NodeIds))
-		log.Error(msg)
+		chainLog.Error(msg)
 		return nil, errors.New(msg)
 	}
 	// block
 	if cconfig.Block.TxTimeout < minTxTimeout {
 		// timeout
 		msg := fmt.Sprintf("txTimeout less than %d, txTimeout is %d", minTxTimeout, cconfig.Block.TxTimeout)
-		log.Error(msg)
+		chainLog.Error(msg)
 		return nil, errors.New(msg)
 	}
 	if cconfig.Block.BlockTxCapacity < minBlockTxCapacity {
 		// block tx cap
-		msg := fmt.Sprintf("blockTxCapacity less than %d, blockTxCapacity is %d", minBlockTxCapacity, cconfig.Block.BlockTxCapacity)
-		log.Error(msg)
+		msg := fmt.Sprintf("blockTxCapacity less than %d, blockTxCapacity is %d",
+			minBlockTxCapacity, cconfig.Block.BlockTxCapacity)
+		chainLog.Error(msg)
 		return nil, errors.New(msg)
 	}
 	if cconfig.Block.BlockSize < minBlockSize {
 		// block size
 		msg := fmt.Sprintf("blockSize less than %d, blockSize is %d", minBlockSize, cconfig.Block.BlockSize)
-		log.Error(msg)
+		chainLog.Error(msg)
 		return nil, errors.New(msg)
 	}
 	if cconfig.Block.BlockInterval < minBlockInterval {
 		// block interval
-		msg := fmt.Sprintf("blockInterval less than %d, blockInterval is %d", minBlockInterval, cconfig.Block.BlockInterval)
-		log.Error(msg)
+		msg := fmt.Sprintf("blockInterval less than %d, blockInterval is %d",
+			minBlockInterval, cconfig.Block.BlockInterval)
+		chainLog.Error(msg)
 		return nil, errors.New(msg)
 	}
 
@@ -127,11 +127,15 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 	if cconfig.Contract.EnableSqlSupport {
 		provider := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.Provider
 		if provider != "sql" {
-			log.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql, but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true", provider, provider)
+			chainLog.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql,"+
+				" but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true",
+				provider, provider)
 			return nil, errors.New("chain config error")
 		}
 		if cconfig.Consensus.Type == consensus.ConsensusType_HOTSTUFF {
-			log.Errorf("chain config error: chain config sql is enable, expect consensus tbft/raft/solo, but got %s. current config: consensus.type = %s, contract.enable_sql_support = true", consensus.ConsensusType_HOTSTUFF.String(), consensus.ConsensusType_HOTSTUFF)
+			chainLog.Errorf("chain config error: chain config sql is enable, expect consensus tbft/raft/solo,"+
+				" but got %s. current config: consensus.type = %s, contract.enable_sql_support = true",
+				consensus.ConsensusType_HOTSTUFF.String(), consensus.ConsensusType_HOTSTUFF)
 			return nil, errors.New("chain config error")
 		}
 	}
@@ -140,7 +144,7 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 	if verifier != nil {
 		err := verifier.Verify(cconfig.Consensus.Type, cconfig)
 		if err != nil {
-			log.Errorw("consensus verify is err", "err", err)
+			chainLog.Errorw("consensus verify is err", "err", err)
 			return nil, err
 		}
 	}
@@ -148,7 +152,7 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 	return mConfig, nil
 }
 
-func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfig) error {
+func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *ChainConfig, log protocol.Logger) error {
 	// load all ca root certs
 	for _, root := range config.TrustRoots {
 		if _, ok := mConfig.CaRoots[root.OrgId]; ok {
@@ -170,7 +174,7 @@ func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *chainConfi
 	return nil
 }
 
-func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig) error {
+func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *ChainConfig, log protocol.Logger) error {
 	// verify consensus
 	if config.Consensus != nil && config.Consensus.Nodes != nil {
 		if len(config.Consensus.Nodes) == 0 {
@@ -193,7 +197,7 @@ func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig
 			}
 
 			mConfig.NodeOrgIds[node.OrgId] = node.NodeId
-			if err := verifyChainConfigConsensusNodesIds(mConfig, node); err != nil {
+			if err := verifyChainConfigConsensusNodesIds(mConfig, node, log); err != nil {
 				return err
 			}
 		}
@@ -201,7 +205,7 @@ func verifyChainConfigConsensus(config *config.ChainConfig, mConfig *chainConfig
 	return nil
 }
 
-func verifyChainConfigConsensusNodesIds(mConfig *chainConfig, node *config.OrgConfig) error {
+func verifyChainConfigConsensusNodesIds(mConfig *ChainConfig, node *config.OrgConfig, log protocol.Logger) error {
 	if len(node.NodeId) > 0 {
 		for _, nid := range node.NodeId {
 			// node id can not be repeated
@@ -230,7 +234,7 @@ func verifyChainConfigConsensusNodesIds(mConfig *chainConfig, node *config.OrgCo
 	return nil
 }
 
-func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *chainConfig) error {
+func verifyChainConfigResourcePolicies(config *config.ChainConfig, mConfig *ChainConfig) error {
 	if config.ResourcePolicies != nil {
 		resourceLen := len(config.ResourcePolicies)
 		for _, resourcePolicy := range config.ResourcePolicies {
@@ -257,8 +261,10 @@ func verifyPolicy(resourcePolicy *config.ResourcePolicy) error {
 
 		// self only for NODE_ID_UPDATE or TRUST_ROOT_UPDATE
 		if policy.Rule == string(protocol.RuleSelf) {
-			//if resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_NODE_ID_UPDATE.String() && resourceName != common.ConfigFunction_TRUST_ROOT_UPDATE.String() {
-			if resourceName != syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_NODE_ID_UPDATE.String() && resourceName != syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String() {
+			if resourceName != syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+				syscontract.ChainConfigFunction_NODE_ID_UPDATE.String() &&
+				resourceName != syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+					syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String() {
 				err := fmt.Errorf("self rule can only be used by NODE_ID_UPDATE or TRUST_ROOT_UPDATE")
 				return err
 			}
@@ -300,9 +306,10 @@ func validateParams(config *config.ChainConfig) error {
 	if config.Block == nil {
 		return errors.New("chainconfig block is nil")
 	}
-	match, err := regexp.MatchString(regChainId, config.ChainId)
-	if err != nil || !match {
-		return fmt.Errorf("chain id[%s] can only consist of numbers, letters and underscores and chainId length must less than 30", config.ChainId)
+	match := utils.CheckChainIdFormat(config.ChainId)
+	if !match {
+		return fmt.Errorf("chain id[%s] can only consist of numbers,"+
+			" letters and underscores and chainId length must less than 30", config.ChainId)
 	}
 	return nil
 }
@@ -333,7 +340,7 @@ func GetVerifier(chainId string, consensusType consensus.ConsensusType) protocol
 
 func initChainConsensusVerifier(chainId string) {
 	if _, ok := chainConsensusVerifier[chainId]; !ok {
-		chainConsensusVerifier[chainId] = make(consensusVerifier, 0)
+		chainConsensusVerifier[chainId] = make(consensusVerifier)
 	}
 }
 

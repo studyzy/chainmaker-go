@@ -139,7 +139,8 @@ func runDumpByHeightCMD(targetBlkHeight uint64) error {
 }
 
 // validateDump basic params validation
-func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain, targetBlkHeight uint64) error {
+func validateDump(archivedBlkHeightOnChain, archivedBlkHeightOffChain, currentBlkHeightOnChain,
+	targetBlkHeight uint64) error {
 	// target block height already archived, do nothing.
 	if targetBlkHeight <= archivedBlkHeightOffChain {
 		return errors.New("target block height already archived")

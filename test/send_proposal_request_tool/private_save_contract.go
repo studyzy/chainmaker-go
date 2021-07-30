@@ -9,7 +9,6 @@ package main
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 
 	"chainmaker.org/chainmaker/pb-go/common"
@@ -103,11 +102,7 @@ func saveContract() error {
 		fmt.Println("resp.ContractResult is nil ")
 	}
 
-	bytes, err := json.Marshal(resultStruct)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(resultStruct.ToJsonString())
 
 	return nil
 }

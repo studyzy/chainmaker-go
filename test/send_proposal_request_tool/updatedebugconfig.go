@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -61,11 +62,7 @@ func updateDebugConfig() error {
 		Code:    commonPb.TxStatusCode(r.Code),
 		Message: r.Message,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

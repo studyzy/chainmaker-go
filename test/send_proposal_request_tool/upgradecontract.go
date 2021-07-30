@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -98,20 +99,9 @@ func upgradeContract() error {
 	//
 	//}
 	payload, _ := GenerateUpgradeContractPayload(contractName, version, commonPb.RuntimeType(runTime), wasmBin, pairs)
-	//method := syscontract.ContractManageFunction_UPGRADE_CONTRACT.String()
-	//
-	//payload := &commonPb.Payload{
-	//	ChainId: chainId,
-	//	Contract: &commonPb.Contract{
-	//		ContractName:    contractName,
-	//		ContractVersion: version,
-	//		RuntimeType:     commonPb.RuntimeType(runTime),
-	//	},
-	//	Method:      method,
-	//	Parameters:  pairs,
-	//	ByteCode:    wasmBin,
-	//	Endorsement: nil,
-	//}
+	payload.TxId = txId
+	payload.ChainId = chainId
+	payload.Timestamp = time.Now().Unix()
 
 	endorsement, err := acSign(payload)
 	if err != nil {
@@ -126,13 +116,10 @@ func upgradeContract() error {
 	result := &Result{
 		Code:    resp.Code,
 		Message: resp.Message,
-		TxId:    txId,
+		TxId:    resp.TxId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

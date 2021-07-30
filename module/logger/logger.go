@@ -19,8 +19,7 @@ import (
 )
 
 const (
-	// output system.log
-	MODULE_BLOCKCHAIN = "[Blockchain]"
+	MODULE_BLOCKCHAIN = "[Blockchain]" // output system.log
 	MODULE_NET        = "[Net]"
 	MODULE_STORAGE    = "[Storage]"
 	MODULE_SNAPSHOT   = "[Snapshot]"
@@ -33,15 +32,13 @@ const (
 	MODULE_CLI        = "[Cli]"
 	MODULE_CHAINCONF  = "[ChainConf]"
 	MODULE_ACCESS     = "[Access]"
-	MODULE_SPV        = "[Spv]"
 	MODULE_MONITOR    = "[Monitor]"
 	MODULE_SYNC       = "[Sync]"
 	MODULE_DPOS       = "[DPoS]"
-	// output brief.log
-	MODULE_BRIEF = "[Brief]"
+	MODULE_BRIEF      = "[Brief]" // output brief.log
 
-	// output to event.log
-	MODULE_EVENT = "[Event]"
+	MODULE_EVENT = "[Event]" // output to event.log
+
 )
 
 var (
@@ -160,7 +157,8 @@ func GetLogger(name string) *CMLogger {
 	return GetLoggerByChain(name, "")
 }
 
-// GetLoggerByChain find the CMLogger object with module name and chainId, usually called in initialization of all module.
+// GetLoggerByChain find the CMLogger object with module name and chainId,
+// usually called in initialization of all module.
 // One module can get a logger for each chain, then logger can be use forever until the program terminate.
 func GetLoggerByChain(name, chainId string) *CMLogger {
 	logHeader := name + chainId
@@ -169,16 +167,16 @@ func GetLoggerByChain(name, chainId string) *CMLogger {
 	if ok {
 		logger, _ = loggerVal.(*CMLogger)
 		return logger
-	} else {
-		zapLogger, logLevel := createLoggerByChain(name, chainId)
-
-		logger = newCMLogger(name, chainId, zapLogger, logLevel)
-		loggerVal, ok = cmLoggers.LoadOrStore(logHeader, logger)
-		if ok {
-			logger, _ = loggerVal.(*CMLogger)
-		}
-		return logger
 	}
+	zapLogger, logLevel := createLoggerByChain(name, chainId)
+
+	logger = newCMLogger(name, chainId, zapLogger, logLevel)
+	loggerVal, ok = cmLoggers.LoadOrStore(logHeader, logger)
+	if ok {
+		logger, _ = loggerVal.(*CMLogger)
+	}
+	return logger
+
 }
 
 func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVEL) {
@@ -276,7 +274,7 @@ func refreshAllLoggerOfCmLoggers() {
 }
 
 // RefreshLogConfig refresh log levels of modules at initiation time of log module
-// or refresh log levels of modules dynamiclly at running time.
+// or refresh log levels of modules dynamically at running time.
 func RefreshLogConfig(config *LogConfig) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()

@@ -44,12 +44,12 @@ func TestDebugDynamicLog(t *testing.T) {
 		logger.DebugDynamic(func() string {
 			count++
 			wg.Done()
-			return "hello dynamic debug"
+			return helloDebug
 		})
 		logger.InfoDynamic(func() string {
 			count++
 			wg.Done()
-			return "hello dynamic info"
+			return helloInfo
 		})
 		wg.Wait()
 		c <- "ok"
@@ -58,9 +58,12 @@ func TestDebugDynamicLog(t *testing.T) {
 	case <-to.C:
 		t.Fail()
 	case <-c:
-		t.Log("succes!")
+		t.Log("success!")
 	}
 }
+
+const helloDebug = "hello dynamic debug"
+const helloInfo = "hello dynamic info"
 
 func TestInfoDynamicLog(t *testing.T) {
 	logConfig = DefaultLogConfig()
@@ -76,12 +79,12 @@ func TestInfoDynamicLog(t *testing.T) {
 		logger.DebugDynamic(func() string {
 			count++
 			t.Fail()
-			return "hello dynamic debug"
+			return helloDebug
 		})
 		logger.InfoDynamic(func() string {
 			count++
 			wg.Done()
-			return "hello dynamic info"
+			return helloInfo
 		})
 		wg.Wait()
 		c <- "ok"
@@ -90,7 +93,7 @@ func TestInfoDynamicLog(t *testing.T) {
 	case <-to.C:
 		t.Fail()
 	case <-c:
-		t.Log("succes!")
+		t.Log("success!")
 	}
 
 }
@@ -104,12 +107,12 @@ func TestDynamicLogWhenWarnLevel(t *testing.T) {
 	logger.DebugDynamic(func() string {
 		count++
 		t.Fail()
-		return "hello dynamic debug"
+		return helloDebug
 	})
 	logger.InfoDynamic(func() string {
 		count++
 		t.Fail()
-		return "hello dynamic info"
+		return helloInfo
 	})
 	if count != 0 {
 		t.Fail()

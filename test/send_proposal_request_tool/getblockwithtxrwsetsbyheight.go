@@ -8,9 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
+	"math"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -30,7 +29,7 @@ func GetBlockWithRWSetsByHeightCMD() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVarP(&height, "height", "H", -1, "specify block height")
+	flags.Uint64VarP(&height, "height", "H", math.MaxUint64, "specify block height")
 
 	return cmd
 }
@@ -40,7 +39,7 @@ func getBlockWithRWSetsByHeight() error {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "blockHeight",
-			Value: []byte(strconv.Itoa(height)),
+			Value: []byte(fmt.Sprintf("%d", height)),
 		},
 	}
 
@@ -65,11 +64,7 @@ func getBlockWithRWSetsByHeight() error {
 		ContractResultMessage: resp.ContractResult.Message,
 		BlockInfo:             blockInfo,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

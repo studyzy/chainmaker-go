@@ -107,7 +107,8 @@ func calcUnsignedBlockBytes(b *commonPb.Block) ([]byte, error) {
 
 type BlockFingerPrint string
 
-// CalcBlockFingerPrint since the block has not yet formed, snapshot uses fingerprint as the possible unique value of the block
+// CalcBlockFingerPrint since the block has not yet formed,
+//snapshot uses fingerprint as the possible unique value of the block
 func CalcBlockFingerPrint(block *commonPb.Block) BlockFingerPrint {
 	if block == nil {
 		return ""
@@ -177,25 +178,22 @@ func IsConfBlock(block *commonPb.Block) bool {
 // GetConsensusArgsFromBlock get args from block
 func GetConsensusArgsFromBlock(block *commonPb.Block) (*consensusPb.BlockHeaderConsensusArgs, error) {
 	if block == nil {
-		//logger.GetLogger(logger.MODULE_CONSENSUS).Errorf("GetConsensusArgsFromBlock block is nil!")
-		return nil, fmt.Errorf("block is nil!")
+		return nil, fmt.Errorf("block is nil")
 	}
 	args := new(consensusPb.BlockHeaderConsensusArgs)
 	if block.Header.ConsensusArgs == nil {
-		//logger.GetLogger(logger.MODULE_CONSENSUS).Errorf("GetConsensusArgsFromBlock block.Header.ConsensusArgs is nil!")
-		return nil, fmt.Errorf("ConsensusArgs is nil!")
+		return nil, fmt.Errorf("ConsensusArgs is nil")
 	}
 	err := proto.Unmarshal(block.Header.ConsensusArgs, args)
 	if err != nil {
-		//logger.GetLogger(logger.MODULE_CONSENSUS).Errorf("GetConsensusArgsFromBlock block.Header.ConsensusArgs Unmarshal err!")
-		return nil, fmt.Errorf("Unmarshal err!")
+		return nil, fmt.Errorf("Unmarshal err:%s", err)
 	}
 	return args, nil
 }
 
 // IsEmptyBlock is it a empty block
 func IsEmptyBlock(block *commonPb.Block) error {
-	if block == nil || block.Header == nil || block.Header.BlockHeight < 0 || block.Header.BlockHash == nil ||
+	if block == nil || block.Header == nil || block.Header.BlockHash == nil ||
 		block.Header.ChainId == "" || block.Header.PreBlockHash == nil || block.Header.Signature == nil {
 		return fmt.Errorf("invalid block, yield verify")
 	}
@@ -212,12 +210,12 @@ func VerifyBlockSig(hashType string, b *commonPb.Block, ac protocol.AccessContro
 	if err != nil {
 		return false, fmt.Errorf("fail to hash block: %v", err)
 	}
-	var Member = b.Header.Proposer
+	var member = b.Header.Proposer
 	if err != nil {
 		return false, fmt.Errorf("signer is unknown: %v", err)
 	}
 	endorsements := []*commonPb.EndorsementEntry{{
-		Signer:    Member,
+		Signer:    member,
 		Signature: b.Header.Signature,
 	}}
 	principal, err := ac.CreatePrincipal(protocol.ResourceNameConsensusNode, endorsements, hashedBlock)

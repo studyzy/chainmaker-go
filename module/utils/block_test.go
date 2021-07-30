@@ -8,11 +8,12 @@
 package utils
 
 import (
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestCalcBlockFingerPrint(t *testing.T) {

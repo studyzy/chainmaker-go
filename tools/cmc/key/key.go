@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package key
 
 import (
-	"chainmaker.org/chainmaker/common/cert"
-	"chainmaker.org/chainmaker/common/crypto"
 	"fmt"
 	"strings"
+
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker/common/cert"
+	"chainmaker.org/chainmaker/common/crypto"
 )
 
 var (
@@ -36,12 +38,11 @@ func genCMD() *cobra.Command {
 		Use:   "gen",
 		Short: "Private key generate",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Generate the private key of the specified crypto algorithm.
+			`Generate the private key of the specified crypto algorithm.
 Supported algorithms: SM2 ECC_P256
 Example:
 $ cmc key gen -a ECC_P256 -p ./ -n ca.key
 `,
-			),
 		),
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return generatePrivateKey()
@@ -73,9 +74,8 @@ func generatePrivateKey() error {
 		if keyType, ok := crypto.AsymAlgoMap[a]; ok {
 			_, err := cert.CreatePrivKey(keyType, path, name)
 			return err
-		} else {
-			return fmt.Errorf("unsupported algorithm %s", algo)
 		}
+		return fmt.Errorf("unsupported algorithm %s", algo)
 	default:
 		return fmt.Errorf("unsupported algorithm %s", algo)
 	}

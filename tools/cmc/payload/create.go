@@ -122,7 +122,8 @@ func createContractMgmtPayload() error {
 	if err != nil {
 		return fmt.Errorf("Read from file %s error: %s", byteCodePath, err)
 	}
-	payload, err := cc.CreateContractCreatePayload(contractName, version, byteCodePath, sdkPbCommon.RuntimeType(runtimeValue), []*sdkPbCommon.KeyValuePair{})
+	payload, err := cc.CreateContractCreatePayload(contractName, version, byteCodePath,
+		sdkPbCommon.RuntimeType(runtimeValue), []*sdkPbCommon.KeyValuePair{})
 	if err != nil {
 		return fmt.Errorf("Generate install contract payload error: %s", err)
 	}

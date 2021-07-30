@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package hibe
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -15,11 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	localhibe "chainmaker.org/chainmaker/common/crypto/hibe"
-	"github.com/samkumar/hibe"
 	"github.com/spf13/cobra"
-	"vuvuzela.io/crypto/bn256"
-	"vuvuzela.io/crypto/rand"
+
+	"chainmaker.org/chainmaker/common/crypto/hibe"
 )
 
 var (
@@ -102,42 +101,21 @@ func genPrvKeyCMD() *cobra.Command {
 
 	flags := genPrivateKeyCmd.Flags()
 	flags.StringVarP(&paramsFilePath, "ppath", "p", "", "the hibe params file's path")
-	flags.IntVarP(&fromMaster, "fromMaster", "m", 0, "generate prvKey from masterKey or privateKey, 1 from master, 0 from parent, m default is 0")
+	flags.IntVarP(&fromMaster, "fromMaster", "m", 0, "generate prvKey from masterKey or privateKey,"+
+		" 1 from master, 0 from parent, m default is 0")
 	flags.StringVarP(&keyFilePath, "kpath", "k", "", "the masterKey Or parentKey file path")
 	flags.StringVarP(&privateKeySavePath, "spath", "s", "", "the result storage file path, and the file name is the id")
-	flags.StringVarP(&id, "id", "i", "", "get the private key of the ID, Must be formatted in the sample format with\" / \", "+
+	flags.StringVarP(&id, "id", "i", "", "get the private key of the ID, Must be formatted in"+
+		" the sample format with\" / \", "+
 		"for example: id org1/ou1/Alice")
 	flags.StringVarP(&orgId, "orgId", "o", "", "the result storage name, please enter your orgId")
 
 	return genPrivateKeyCmd
 }
 
-/*
-func updatePrvKeyCMD() *cobra.Command {
-	updatePrivateKeyCmd := &cobra.Command{
-		Use:   "updatePrvKey",
-		Short: "update a privateKey for an Id using the master or parent key",
-		Long:  "update a privateKey for an Id using the master or parent key",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return genPrivateKey()
-		},
-	}
-
-	flags := updatePrivateKeyCmd.Flags()
-	flags.StringVarP(&paramsFilePath, "ppath", "p", "", "the parameter file's path")
-	flags.IntVarP(&fromMaster, "fromMaster", "m", 0, "update prvKey from masterKey or privateKey, 1 from master, 0 from parent")
-	flags.StringVarP(&keyFilePath, "kpath", "k", "", "the masterKey Or parentKey file path")
-	flags.StringVarP(&privateKeySavePath, "spath", "s", "", "the privateKey storage file path, and the file name is the id")
-	flags.StringVarP(&id, "id", "i", "", "update the private key of the ID, Must be formatted in the sample format with\" / \", "+
-		"for example: id org1/ou1/Alice")
-
-	return updatePrivateKeyCmd
-}
-*/
-
 func setupOrgHibeSys() error {
 
-	err := localhibe.ValidateId(orgId)
+	err := hibe.ValidateId(orgId)
 	if err != nil {
 		return err
 	}
@@ -169,7 +147,9 @@ func setupOrgHibeSys() error {
 	}
 
 	params, masterKey, err := hibe.Setup(rand.Reader, l)
-
+	if err != nil {
+		return err
+	}
 	if err = os.MkdirAll(path, os.ModePerm); err != nil {
 		return fmt.Errorf("mk hibe dir failed, %s", err.Error())
 	}
@@ -189,7 +169,7 @@ func setupOrgHibeSys() error {
 }
 
 func getParams() error {
-	if err := localhibe.ValidateId(orgId); err != nil {
+	if err := hibe.ValidateId(orgId); err != nil {
 		return err
 	}
 
@@ -226,15 +206,16 @@ func getParams() error {
 	return nil
 }
 
+// TODO 此函数太大需要拆解
 func genPrivateKey() error {
-	err := localhibe.ValidateId(orgId)
+	err := hibe.ValidateId(orgId)
 	if err != nil {
 		return err
 	}
 
 	savePathSuffix = orgId
 
-	err = localhibe.ValidateId(id)
+	err = hibe.ValidateId(id)
 	if err != nil {
 		return err
 	}
@@ -247,7 +228,7 @@ func genPrivateKey() error {
 		return fmt.Errorf("file [ %s ] does not exists", keyFilePath)
 	}
 
-	strId, hibeId := localhibe.IdStr2HibeId(id)
+	strId, hibeId := hibe.IdStr2HibeId(id)
 
 	var fileName string
 	for i, item := range strId {
@@ -298,10 +279,10 @@ func genPrivateKey() error {
 		if err != nil {
 			return fmt.Errorf("open file [%s] failed, %s", paramsFilePath, err.Error())
 		}
-		masterKey := new(bn256.G1)
+		masterKey := new(hibe.G1)
 
-		masterKey, ok = masterKey.Unmarshal(masterKeyBytes)
-		if !ok {
+		_, err = masterKey.Unmarshal(masterKeyBytes)
+		if err != nil {
 			return errors.New("params.Unmarshal() failed, please check your masterKey file")
 		}
 		privateKey, err = hibe.KeyGenFromMaster(rand.Reader, params, masterKey, hibeId)
@@ -331,7 +312,7 @@ func genPrivateKey() error {
 			return errors.New("params.Unmarshal() failed, please check your privateKey file")
 		}
 
-		matchedIdStr, hibeIds := localhibe.IdStr2HibeId(matchedId)
+		matchedIdStr, hibeIds := hibe.IdStr2HibeId(matchedId)
 
 		parentIdStrLen := len(strings.Split(parentIdStr, "/"))
 		for i := parentIdStrLen + 1; i <= len(matchedIdStr); i++ {
@@ -351,7 +332,8 @@ func genPrivateKey() error {
 		return fmt.Errorf("save privateKey to file [%s] failed, %s", fileName, err.Error())
 	}
 
-	fmt.Printf("%s privateKey storage file path: %s/%s/privateKeys/%s\n", strId, privateKeySavePath, savePathSuffix, fileName)
+	fmt.Printf("%s privateKey storage file path: %s/%s/privateKeys/%s\n", strId,
+		privateKeySavePath, savePathSuffix, fileName)
 
 	return nil
 }

@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+
+	"chainmaker.org/chainmaker/common/crypto/hash"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 )
 
 // CheckRootCertificate check the root certificate
@@ -35,7 +36,8 @@ func CheckRootCertificate(certPEM string) (bool, error) {
 	return true, nil
 }
 
-// GetCertificateIdHex on input a certificate in PEM format, a hash algorithm (should be the one in chain configuration), output the identity of the certificate in the form of a string (under hexadecimal encoding)
+// GetCertificateIdHex on input a certificate in PEM format, a hash algorithm(should be the one in chain configuration),
+//output the identity of the certificate in the form of a string (under hexadecimal encoding)
 func GetCertificateIdHex(certPEM []byte, hashType string) (string, error) {
 	id, err := GetCertificateId(certPEM, hashType)
 	if err != nil {

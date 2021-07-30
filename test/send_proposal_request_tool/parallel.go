@@ -607,8 +607,7 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 	method1, pairs1, err := makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 
 	//fmt.Println("[exec_handle]orgId: ", orgId, ", userCrtPath: ", userCrtPath, ", loopId: ", loopId, ", method1: ", method1, ", pairs1: ", pairs1, ", method: ", method, ", pairs: ", pairs)
-
-	payloadBytes, err := constructQueryPayload(chainId, contractName, method1, pairs1)
+	payloadBytes, err := constructInvokePayload(chainId, contractName, method1, pairs1)
 	if err != nil {
 		return err
 	}
@@ -742,7 +741,9 @@ func (h *upgradeContractHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.P
 	var pairs []*commonPb.KeyValuePair
 	payload, _ := GenerateUpgradeContractPayload(fmt.Sprintf(templateStr, contractName, h.threadId, loopId, time.Now().Unix()),
 		version, commonPb.RuntimeType(runTime), wasmBin, pairs)
-
+	payload.TxId = txId
+	payload.ChainId = chainId
+	payload.Timestamp = time.Now().Unix()
 	endorsement, err := acSign(payload)
 	if err != nil {
 		return err

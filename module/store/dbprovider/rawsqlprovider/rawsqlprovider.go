@@ -185,14 +185,14 @@ func (p *SqlDBHandle) createDirIfNotExist(path string) error {
 	return nil
 }
 
-func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
+func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) (bool, error) {
 	p.Lock()
 	defer p.Unlock()
 	if p.contextDbName == dbName {
-		return nil
+		return true, nil
 	}
 	if p.dbType == types.Sqlite {
-		return nil
+		return true, nil
 	}
 	//尝试切换数据库
 	_, err := p.db.Exec("use " + dbName)
@@ -201,20 +201,20 @@ func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 		_, err = p.db.Exec("create database " + dbName)
 		if err != nil {
 			p.log.Error(err)
-			return errDatabase //创建失败
+			return false, errDatabase //创建失败
 		}
-		p.log.Debugf("create database %s", dbName)
+		p.log.Infof("create database %s", dbName)
 		//创建成功，再次切换数据库
 		_, err = p.db.Exec("use " + dbName)
 		if err != nil {
 			p.log.Error(err)
-			return errDatabase //use失败
+			return false, errDatabase //use失败
 		}
-		return nil
+		return false, nil
 	}
 	p.log.Debugf("use database %s", dbName)
 	p.contextDbName = dbName
-	return nil
+	return true, nil
 }
 
 func (p *SqlDBHandle) CreateTableIfNotExist(objI interface{}) error {
@@ -273,7 +273,12 @@ func (p *SqlDBHandle) ExecSql(sql string, values ...interface{}) (int64, error) 
 	p.log.Debug("Exec sql:", sql, values)
 	tx, err := p.db.Exec(sql, values...)
 	if err != nil {
-		p.log.Error(err)
+		// todo optimization
+		if strings.Contains(err.Error(), "doesn't exist") {
+			p.log.Warnf(err.Error())
+		} else {
+			p.log.Error(err)
+		}
 		return 0, errSql
 	}
 	return tx.RowsAffected()
@@ -331,7 +336,12 @@ func (p *SqlDBHandle) QuerySingle(sql string, values ...interface{}) (protocol.S
 	p.log.Debug("Query sql:", sql, values)
 	rows, err := db.Query(sql, values...)
 	if err != nil {
-		p.log.Error(err)
+		// todo optimization
+		if strings.Contains(err.Error(), "doesn't exist") {
+			p.log.Warnf(err.Error())
+		} else {
+			p.log.Error(err)
+		}
 		return nil, errSqlQuery
 	}
 

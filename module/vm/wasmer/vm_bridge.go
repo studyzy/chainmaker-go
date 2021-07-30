@@ -94,7 +94,7 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody), err)
 	}
 
-	log.Infof("### enter syscall handling, method = '%v'", method)
+	log.Debugf("### enter syscall handling, method = '%v'", method)
 	var ret int32
 	switch method.(string) {
 	// common
@@ -164,7 +164,7 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 		ret = protocol.ContractSdkSignalResultFail
 		log.Errorf("method[%s] is not match.", method)
 	}
-	log.Infof("### leave syscall handling, method = '%v'", method)
+	log.Debugf("### leave syscall handling, method = '%v'", method)
 
 	return ret
 }

@@ -12,6 +12,9 @@ run:
     - protogo #from pb generate
     - sqldbprovider #will remove
     - eventsqldb
+    - evm-go
+    - gasm-go
+    - wasmer-go
 linters:
   disable-all: true
   enable:
@@ -114,11 +117,14 @@ issues:
         - lll
         - funlen
     - linters:
-      - revive
+        - revive
       text: "stutters"
     - linters:
-      - errcheck
+        - errcheck
       text: "json.Unmarshal"
+    - linters:
+        - gosec
+      text: "G108"
   max-same-issues: 0
   new: false
   max-issues-per-linter: 0

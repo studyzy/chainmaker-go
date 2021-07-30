@@ -9,13 +9,13 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
+	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker-go/subscriber"
 )
 
 const (
@@ -30,7 +30,6 @@ const (
 	moduleNameCore          = "Core"
 	moduleNameConsensus     = "Consensus"
 	moduleNameSync          = "Sync"
-	moduleNameSpv           = "Spv"
 	moduleNameDpos          = "DPoS"
 )
 
@@ -92,8 +91,6 @@ type Blockchain struct {
 	chainNodeList []string
 
 	eventSubscriber *subscriber.EventSubscriber
-
-	spv protocol.Spv
 
 	initModules  map[string]struct{}
 	startModules map[string]struct{}

@@ -79,7 +79,7 @@ func (consensus *ConsensusSoloImpl) procProposerStatus() {
 	consensus.msgbus.Publish(msgbus.ProposeState, true)
 }
 
-//OnMessage recieve core busmsg and process block
+//OnMessage receive core busmsg and process block
 func (consensus *ConsensusSoloImpl) OnMessage(message *msgbus.Message) {
 	clog.Infof("%s OnMessage receive topic: %s", consensus.id, message.Topic)
 	switch message.Topic {
@@ -98,7 +98,10 @@ func (consensus *ConsensusSoloImpl) handleProposedBlock(message *msgbus.Message)
 		return
 	}
 
-	proposedBlock := message.Payload.(*consensuspb.ProposalBlock)
+	proposedBlock, ok := message.Payload.(*consensuspb.ProposalBlock)
+	if !ok {
+		panic("message.Payload not a ProposalBlock")
+	}
 	block := proposedBlock.Block
 	clog.Infof("handle proposedBlock start, id: %s, height: %d", consensus.id, block.Header.BlockHeight)
 	clog.DebugDynamic(func() string {
@@ -131,7 +134,6 @@ func (consensus *ConsensusSoloImpl) handleProposedBlock(message *msgbus.Message)
 	consensus.verifyingBlock = block
 	consensus.msgbus.Publish(msgbus.VerifyBlock, block)
 
-	return
 }
 
 //handleVerifyResult process verifyresult msg
@@ -145,7 +147,10 @@ func (consensus *ConsensusSoloImpl) handleVerifyResult(message *msgbus.Message) 
 	consensus.mtx.Lock()
 	defer consensus.mtx.Unlock()
 
-	verifyResult := message.Payload.(*consensuspb.VerifyResult)
+	verifyResult, ok := message.Payload.(*consensuspb.VerifyResult)
+	if !ok {
+		panic("message.Payload not a VerifyResult")
+	}
 	clog.Infof("handle verifyResult start, id: %s verifyResult: %s BlockInfo: %v",
 		consensus.id, verifyResult.Code, verifyResult.VerifiedBlock.Header.BlockHeight)
 	clog.DebugDynamic(func() string {
@@ -180,8 +185,6 @@ func (consensus *ConsensusSoloImpl) handleVerifyResult(message *msgbus.Message) 
 	clog.Infof("publish CommitBlock, height = %v", consensus.verifyingBlock.Header.BlockHeight)
 	consensus.msgbus.Publish(msgbus.CommitBlock, consensus.verifyingBlock)
 	consensus.verifyingBlock = nil
-
-	return
 }
 
 //OnQuit ...

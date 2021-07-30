@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -43,7 +44,7 @@ type StateSqlDB struct {
 func (db *StateSqlDB) initContractDb(contractName string) error {
 	dbName := getContractDbName(db.dbConfig, db.chainId, contractName)
 	db.logger.Debugf("try to create state db %s", dbName)
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		db.logger.Panic("init state sql db fail")
 	}
@@ -61,7 +62,7 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 }
 func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	db.logger.Debugf("try to create state db %s", dbName)
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
@@ -233,7 +234,7 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 			return err
 		}
 	}
-	if len(txWrite.Key) == 0 { //是sql
+	if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 		if !processStateDbSqlOutside { // 没有在外面处理过，则在这里进行处理
 			sql := string(txWrite.Value)
 			if _, err := dbTx.ExecSql(sql); err != nil {
@@ -283,7 +284,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 	})
 
 	for _, txWrite := range writes {
-		if len(txWrite.Key) == 0 { //这是SQL语句
+		if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
 				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
@@ -446,35 +447,48 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
 	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
-	err := s.db.CreateDatabaseIfNotExist(dbName)
+	exist, err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err
+	}
+	if !exist {
+		if errTmp := s.initContractDb(contractName); errTmp != nil {
+			return errTmp
+		}
 	}
 	db := s.getContractDbHandle(contractName)
 	// query ddl from db
 	record := NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, version, 0)
 	query, args := record.GetQueryStatusSql()
 	s.logger.Debug("Query sql:", query, args)
-	row, err := s.db.QuerySingle(query, args)
-	if err != nil {
-		s.logger.Errorf("Query DDL history get an error:%s", err)
-		return err
-	}
+	row, _ := s.db.QuerySingle(query, args)
 	//查询数据库中是否有DDL记录，如果有对应记录，而且状态是1，那么就跳过重复执行DDL的情况
-	if !row.IsEmpty() {
+	if row != nil && !row.IsEmpty() {
 		status := 0
 		err = row.ScanColumns(&status)
 		if err != nil {
 			return err
 		}
 		if status == 1 { //SUCCESS
-			s.logger.Infof("DDL[%s] already executed, ignore it", sql)
+			s.logger.Infof("DDLRecord[%s] already executed, ignore it", sql)
 			return nil
 		}
+	}
+	insertSql, args2 := record.GetInsertSql()
+	_, err = s.db.ExecSql(insertSql, args2...)
+	if err != nil {
+		s.logger.Warnf("DDLRecord[%s] save fail. error: %s", sql, err.Error())
 	}
 	//查询不到记录，或者查询出来后状态是失败，则执行DDL
 	s.logger.Debugf("run DDL sql[%s] in db[%s]", sql, dbName)
 	_, err = db.ExecSql(sql)
+
+	record.Status = 1
+	updateSql, args3 := record.GetUpdateSql()
+	_, err2 := s.db.ExecSql(updateSql, args3...)
+	if err2 != nil {
+		s.logger.Warnf("DDLRecord[%s] update fail. error: %s", sql, err2.Error())
+	}
 	return err
 }
 func (s *StateSqlDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {

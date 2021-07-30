@@ -99,7 +99,7 @@ func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger proto
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *BlockSqlDB) initDb(dbName string) {
-	err := db.db.CreateDatabaseIfNotExist(dbName)
+	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic("init state sql db fail")
 	}
@@ -127,11 +127,7 @@ func newBlockSqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logge
 	}
 	return blockDB, nil
 }
-func (b *BlockSqlDB) SaveBlockHeader(header *commonPb.BlockHeader) error {
-	blockInfo := ConvertHeader2BlockInfo(header)
-	_, err := b.db.Save(blockInfo)
-	return err
-}
+
 func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	b.initDb(b.dbName)
 	return b.CommitBlock(genesisBlock)
@@ -225,15 +221,13 @@ func (b *BlockSqlDB) GetBlockByHash(blockHash []byte) (*commonPb.Block, error) {
 func (b *BlockSqlDB) getBlockInfoBySql(sql string, values ...interface{}) (*BlockInfo, error) {
 	//get block info from mysql
 	var blockInfo BlockInfo
-	res, err := b.db.QuerySingle(sql, values...)
-	if err != nil {
-		return nil, err
-	}
-	if res.IsEmpty() {
+	res, _ := b.db.QuerySingle(sql, values...)
+
+	if res == nil || res.IsEmpty() {
 		b.logger.Infof("sql[%s] %v return empty result", sql, values)
 		return nil, nil
 	}
-	err = blockInfo.ScanObject(res.ScanColumns)
+	err := blockInfo.ScanObject(res.ScanColumns)
 	if err != nil {
 		return nil, err
 	}

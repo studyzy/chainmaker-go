@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -57,11 +56,7 @@ func getNodeChainList() error {
 		ContractResultMessage: resp.ContractResult.Message,
 		ChainList:             chainList,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

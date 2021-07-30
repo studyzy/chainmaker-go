@@ -21,7 +21,7 @@ import (
 func CalcRWSetRoot(hashType string, txs []*commonPb.Transaction) ([]byte, error) {
 	// calculate read-write set hash following the order in txs
 	// if txId does not exist in txRWSetMap, fill in a default one
-	if txs == nil || len(txs) == 0 {
+	if len(txs) == 0 {
 		return nil, nil
 	}
 	rwSetHashes := make([][]byte, len(txs))

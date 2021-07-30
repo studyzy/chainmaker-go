@@ -61,8 +61,10 @@ func getBlockByTxId() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("resp: ", resp, "err: ", err)
-
+	log.DebugDynamic(func() string {
+		data, _ := json.Marshal(resp)
+		return string(data)
+	})
 	blockInfo := &commonPb.BlockInfo{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, blockInfo); err != nil {
 		return err
@@ -74,11 +76,8 @@ func getBlockByTxId() error {
 		ContractResultMessage: resp.ContractResult.Message,
 		BlockInfo:             blockInfo,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

@@ -40,6 +40,7 @@ func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
 					id varchar(64),
 					contract_name varchar(100),
 					sql_string varchar(4000),
+					sql_type int,
 					version varchar(20),
 					status int,
 					updated_at datetime(3) NULL DEFAULT null,
@@ -50,6 +51,7 @@ func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
 					id text,
 					contract_name text,
 					sql_string text,
+					sql_type integer,
 					version text,
 					status integer,
 					updated_at datetime DEFAULT null,
@@ -73,14 +75,14 @@ func (b *StateRecordSql) GetUpdateSql() (string, []interface{}) {
 		[]interface{}{b.UpdatedAt, b.Status, b.Id}
 }
 
-func (b *StateRecordSql) GetQueryStatusSql() (string, []interface{}) {
+func (b *StateRecordSql) GetQueryStatusSql() (string, interface{}) {
 	return "select status FROM state_record_sql WHERE id=?",
-		[]interface{}{b.Id}
+		b.Id
 }
 
-func (b *StateRecordSql) GetCountSql() (string, []interface{}) {
+func (b *StateRecordSql) GetCountSql() (string, interface{}) {
 	return "select count(*) FROM state_record_sql WHERE id=?",
-		[]interface{}{b.Id}
+		b.Id
 }
 
 // NewStateRecordSql construct a new StateRecordSql

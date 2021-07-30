@@ -17,6 +17,7 @@ func (s *ApiService) doArchive(tx *commonPb.Transaction) *commonPb.TxResponse {
 		return &commonPb.TxResponse{
 			Code:    commonPb.TxStatusCode_INTERNAL_ERROR,
 			Message: commonErr.ERR_CODE_TXTYPE.String(),
+			TxId:    tx.Payload.TxId,
 		}
 	}
 
@@ -41,7 +42,7 @@ func (s *ApiService) getArchiveBlockHeight(params []*commonPb.KeyValuePair) (uin
 
 	key := syscontract.ArchiveBlock_BLOCK_HEIGHT.String()
 	if params[0].Key != key {
-		return 0, errors.New(fmt.Sprintf("invalid key, must be %s", key))
+		return 0, fmt.Errorf("invalid key, must be %s", key)
 	}
 
 	blockHeight, err := utils.BytesToUint64(params[0].Value)
@@ -59,7 +60,7 @@ func (s *ApiService) doArchiveBlock(tx *commonPb.Transaction) *commonPb.TxRespon
 		blockHeight uint64
 		errCode     commonErr.ErrCode
 		store       protocol.BlockchainStore
-		resp        = &commonPb.TxResponse{}
+		resp        = &commonPb.TxResponse{TxId: tx.Payload.TxId}
 	)
 
 	chainId := tx.Payload.ChainId
@@ -102,7 +103,7 @@ func (s *ApiService) getRestoreBlock(params []*commonPb.KeyValuePair) ([]byte, e
 
 	key := syscontract.RestoreBlock_FULL_BLOCK.String()
 	if params[0].Key != key {
-		return nil, errors.New(fmt.Sprintf("invalid key, must be %s", key))
+		return nil, fmt.Errorf("invalid key, must be %s", key)
 	}
 
 	fullBlock := params[0].Value
@@ -121,7 +122,7 @@ func (s *ApiService) doRestoreBlock(tx *commonPb.Transaction) *commonPb.TxRespon
 		fullBlock []byte
 		errCode   commonErr.ErrCode
 		store     protocol.BlockchainStore
-		resp      = &commonPb.TxResponse{}
+		resp      = &commonPb.TxResponse{TxId: tx.Payload.TxId}
 	)
 
 	chainId := tx.Payload.ChainId
