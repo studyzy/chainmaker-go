@@ -10,6 +10,7 @@ package rpcserver
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"chainmaker.org/chainmaker-go/utils"
 
@@ -35,6 +36,7 @@ type txQuerySimContextImpl struct {
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
 	blockVersion     uint32
+	keyIndex         int
 }
 
 type callContractResult struct {
@@ -83,7 +85,7 @@ func (s *txQuerySimContextImpl) Put(contractName string, key []byte, value []byt
 
 func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	txWrite := &commonPb.TxWrite{
-		Key:          nil,
+		Key:          []byte(s.getSqlKey()),
 		Value:        value,
 		ContractName: contractName,
 	}
@@ -91,6 +93,11 @@ func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte, sql
 	if sqlType == protocol.SqlTypeDdl {
 		s.txWriteKeyDdlSql = append(s.txWriteKeyDdlSql, txWrite)
 	}
+}
+
+func (s *txQuerySimContextImpl) getSqlKey() string {
+	s.keyIndex++
+	return "#sql#" + s.tx.Payload.TxId + "#" + strconv.Itoa(s.keyIndex)
 }
 
 func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {

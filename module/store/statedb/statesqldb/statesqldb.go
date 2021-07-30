@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -233,7 +234,7 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 			return err
 		}
 	}
-	if len(txWrite.Key) == 0 { //是sql
+	if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 		if !processStateDbSqlOutside { // 没有在外面处理过，则在这里进行处理
 			sql := string(txWrite.Value)
 			if _, err := dbTx.ExecSql(sql); err != nil {
@@ -283,7 +284,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 	})
 
 	for _, txWrite := range writes {
-		if len(txWrite.Key) == 0 { //这是SQL语句
+		if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
 				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
