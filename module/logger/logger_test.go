@@ -27,6 +27,7 @@ func TestLogger(_ *testing.T) {
 	logger = GetLogger(MODULE_BRIEF)
 	logger.Infof("brief log .....")
 }
+
 func TestDebugDynamicLog(t *testing.T) {
 	logConfig = DefaultLogConfig()
 	logConfig.SystemLog.LogInConsole = true
@@ -115,5 +116,63 @@ func TestDynamicLogWhenWarnLevel(t *testing.T) {
 	})
 	if count != 0 {
 		t.Fail()
+	}
+}
+
+func TestRotateSize(t *testing.T) {
+
+	logger := GetLogger(MODULE_CORE)
+	logger2 := GetLogger(MODULE_CONSENSUS)
+	loggerBrief := GetLogger(MODULE_BRIEF)
+	loggerEvent := GetLogger(MODULE_EVENT)
+	loggerAccess := GetLogger(MODULE_ACCESS)
+	loggerBC := GetLogger(MODULE_BLOCKCHAIN)
+
+	loggerCli := GetLogger(MODULE_CLI)
+	loggerDPOS := GetLogger(MODULE_DPOS)
+	loggerLedger := GetLogger(MODULE_LEDGER)
+	loggerMonitor := GetLogger(MODULE_MONITOR)
+	loggerNet := GetLogger(MODULE_NET)
+	loggerRpc := GetLogger(MODULE_RPC)
+
+	loggerSNAPSHOT := GetLogger(MODULE_SNAPSHOT)
+	loggerSPV := GetLogger(MODULE_SPV)
+	loggerStorage := GetLogger(MODULE_STORAGE)
+	loggerSync := GetLogger(MODULE_SYNC)
+	loggerTxpool := GetLogger(MODULE_TXPOOL)
+	loggerVm := GetLogger(MODULE_VM)
+
+	go printLog(logger,1)
+	go printLog(logger2,2)
+	go printLog(loggerBrief,3)
+	go printLog(loggerEvent,4)
+	go printLog(loggerAccess,5)
+	go printLog(loggerBC,6)
+
+	//---------------------------------------
+	go printLog(loggerCli,1)
+	go printLog(loggerDPOS,2)
+	go printLog(loggerLedger,3)
+	go printLog(loggerMonitor,4)
+	go printLog(loggerNet,5)
+	go printLog(loggerRpc,6)
+
+	//---------------------------------------
+	go printLog(loggerSNAPSHOT,1)
+	go printLog(loggerSPV,2)
+	go printLog(loggerStorage,3)
+	go printLog(loggerSync,4)
+	go printLog(loggerTxpool,5)
+	go printLog(loggerVm,6)
+	select {
+
+	}
+}
+
+func printLog(logger *CMLogger,index int){
+	for {
+		//time.Sleep(100*time.Microsecond)
+		logger.Info("this is info msg ",index)
+		logger.Debugf("hello %s", "chainmaker %d",index)
 	}
 }
