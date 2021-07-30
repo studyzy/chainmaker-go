@@ -937,14 +937,14 @@ func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender *protocol.Role,
 	fmt.Printf("Verifying subscribed block of height: %d\n", blockInfo.Block.Header.BlockHeight)
 	fmt.Printf("verify: the role of request sender is Light [%t]\n", *reqSender == protocol.RoleLight)
 	fmt.Printf("the block has %d txs\n", len(blockInfo.Block.Txs))
-	for i, tx := range blockInfo.Block.Txs {
-
-		if tx.Sender.Signer != nil {
-
-			fmt.Printf("Tx [%d] of subscribed block, localOrgId is %v, TxOrgId is %s, "+
-				"verify: this tx is of the same organization [%t]\n", i, localOrgId, tx.Sender.Signer.OrgId, tx.Sender.Signer.OrgId == localOrgId)
-		}
-	}
+	//for i, tx := range blockInfo.Block.Txs {
+	//
+	//	if tx.Sender.Signer != nil {
+	//
+	//		fmt.Printf("Tx [%d] of subscribed block, localOrgId is %v, TxOrgId is %s, "+
+	//			"verify: this tx is of the same organization [%t]\n", i, localOrgId, tx.Sender.Signer.OrgId, tx.Sender.Signer.OrgId == localOrgId)
+	//	}
+	//}
 	fmt.Println()
 }
 
