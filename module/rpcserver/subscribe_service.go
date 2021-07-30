@@ -70,6 +70,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		endBlock        int64
 		withRWSet       = false
 		onlyHeader      = false
+		reqSender       *protocol.Role
 	)
 
 	for _, kv := range payload.Parameters {
@@ -121,17 +122,26 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		return status.Error(codes.Internal, errMsg)
 	}
 
+	reqSender, err = s.getRoleOfRequestSender(tx)
+	reqSenderOrgId := tx.Sender.Signer.OrgId
+	if err != nil {
+		return err
+	}
+
 	var startBlockHeight int64
 	if startBlock > startBlockHeight {
 		startBlockHeight = startBlock
 	}
 
 	if startBlock == -1 && endBlock == -1 {
-		return s.sendNewBlock(db, tx, server, endBlock, withRWSet, onlyHeader, -1)
+		return s.sendNewBlock(db, tx, server, endBlock, withRWSet, onlyHeader,
+			-1, reqSender, reqSenderOrgId)
 	}
 
 	if endBlock != -1 && endBlock <= lastBlockHeight {
-		err, _ := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader)
+		err, _ := s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
+			withRWSet, onlyHeader, reqSender, reqSenderOrgId)
+
 		if err != nil {
 			s.log.Errorf("sendHistoryBlock failed, %s", err)
 			return err
@@ -140,7 +150,9 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		return status.Error(codes.OK, "OK")
 	}
 
-	err, alreadySendHistoryBlockHeight := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader)
+	err, alreadySendHistoryBlockHeight := s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
+		withRWSet, onlyHeader, reqSender, reqSenderOrgId)
+
 	if err != nil {
 		s.log.Errorf("sendHistoryBlock failed, %s", err)
 		return err
@@ -148,7 +160,8 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 
 	s.log.Debugf("after sendHistoryBlock, alreadySendHistoryBlockHeight is %d", alreadySendHistoryBlockHeight)
 
-	return s.sendNewBlock(db, tx, server, endBlock, withRWSet, onlyHeader, alreadySendHistoryBlockHeight)
+	return s.sendNewBlock(db, tx, server, endBlock, withRWSet, onlyHeader, alreadySendHistoryBlockHeight,
+		reqSender, reqSenderOrgId)
 }
 
 // dealTxSubscription - deal tx subscribe request
@@ -163,6 +176,7 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
 		endBlock     int64
 		contractName string
 		txIds        []string
+		reqSender    *protocol.Role
 	)
 
 	for _, kv := range payload.Parameters {
@@ -204,7 +218,12 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
 		return status.Error(codes.Internal, errMsg)
 	}
 
-	return s.doSendTx(tx, db, server, startBlock, endBlock, contractName, txIds)
+	reqSender, err = s.getRoleOfRequestSender(tx)
+	if err != nil {
+		return err
+	}
+	reqSenderOrgId := tx.Sender.Signer.OrgId
+	return s.doSendTx(tx, db, server, startBlock, endBlock, contractName, txIds, reqSender, reqSenderOrgId)
 }
 
 //dealContractEventSubscription - deal contract event subscribe request
@@ -300,7 +319,8 @@ func (s *ApiService) doSendContractEvent(tx *commonPb.Transaction, server apiPb.
 }
 
 func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainStore,
-	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string, txIds []string) error {
+	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string,
+	txIds []string, reqSender *protocol.Role, reqSenderOrgId string) error {
 
 	var (
 		txIdsMap                      = make(map[string]struct{})
@@ -313,10 +333,12 @@ func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainSt
 	}
 
 	if startBlock == -1 && endBlock == -1 {
-		return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, -1)
+		return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds,
+			txIdsMap, -1, reqSender, reqSenderOrgId)
 	}
 
-	if alreadySendHistoryBlockHeight, err = s.doSendHistoryTx(db, server, startBlock, endBlock, contractName, txIds, txIdsMap); err != nil {
+	if alreadySendHistoryBlockHeight, err = s.doSendHistoryTx(db, server, startBlock, endBlock,
+		contractName, txIds, txIdsMap, reqSender, reqSenderOrgId); err != nil {
 		return err
 	}
 
@@ -324,11 +346,13 @@ func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainSt
 		return status.Error(codes.OK, "OK")
 	}
 
-	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, alreadySendHistoryBlockHeight)
+	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds,
+		txIdsMap, alreadySendHistoryBlockHeight, reqSender, reqSenderOrgId)
 }
 
 func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
-	startBlock, endBlock int64, contractName string, txIds []string, txIdsMap map[string]struct{}) (int64, error) {
+	startBlock, endBlock int64, contractName string, txIds []string,
+	txIdsMap map[string]struct{}, reqSender *protocol.Role, reqSenderOrgId string) (int64, error) {
 
 	var (
 		err             error
@@ -350,7 +374,9 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 	}
 
 	if endBlock != -1 && endBlock <= lastBlockHeight {
-		err, _ := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName, txIds, txIdsMap)
+		err, _ := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
+			txIds, txIdsMap, reqSender, reqSenderOrgId)
+
 		if err != nil {
 			s.log.Errorf("sendHistoryTx failed, %s", err)
 			return -1, err
@@ -363,7 +389,9 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 		return 0, status.Error(codes.OK, "OK")
 	}
 
-	err, alreadySendHistoryBlockHeight := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName, txIds, txIdsMap)
+	err, alreadySendHistoryBlockHeight := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
+		txIds, txIdsMap, reqSender, reqSenderOrgId)
+
 	if err != nil {
 		s.log.Errorf("sendHistoryTx failed, %s", err)
 		return -1, err
@@ -381,7 +409,8 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 // sendNewBlock - send new block to subscriber
 func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.Transaction,
 	server apiPb.RpcNode_SubscribeServer,
-	endBlockHeight int64, withRWSet, onlyHeader bool, alreadySendHistoryBlockHeight int64) error {
+	endBlockHeight int64, withRWSet, onlyHeader bool, alreadySendHistoryBlockHeight int64,
+	reqSender *protocol.Role, reqSenderOrgId string) error {
 
 	var (
 		errCode         commonErr.ErrCode
@@ -411,7 +440,7 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 
 			if alreadySendHistoryBlockHeight != -1 && int64(blockInfo.Block.Header.BlockHeight) > alreadySendHistoryBlockHeight {
 				err, _ = s.sendHistoryBlock(store, server, alreadySendHistoryBlockHeight+1,
-					int64(blockInfo.Block.Header.BlockHeight), withRWSet, onlyHeader)
+					int64(blockInfo.Block.Header.BlockHeight), withRWSet, onlyHeader, reqSender, reqSenderOrgId)
 				if err != nil {
 					s.log.Errorf("send history block failed, %s", err)
 					return err
@@ -420,6 +449,18 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 				alreadySendHistoryBlockHeight = -1
 				continue
 			}
+
+			reqSender, err = s.getRoleOfRequestSender(tx)
+			if err != nil {
+				return err
+			}
+
+			reqSenderOrgId := tx.Sender.Signer.OrgId
+			if *reqSender == protocol.RoleLight {
+				utils.FilterBlockTxs(reqSenderOrgId, blockInfo.Block)
+			}
+
+			printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
 
 			if err = s.dealBlockSubscribeResult(server, blockInfo, withRWSet, onlyHeader); err != nil {
 				s.log.Errorf(err.Error())
@@ -467,7 +508,7 @@ func (s *ApiService) dealBlockSubscribeResult(server apiPb.RpcNode_SubscribeServ
 // sendNewTx - send new tx to subscriber
 func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Transaction,
 	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string, txIds []string,
-	txIdsMap map[string]struct{}, alreadySendHistoryBlockHeight int64) error {
+	txIdsMap map[string]struct{}, alreadySendHistoryBlockHeight int64, reqSender *protocol.Role, reqSenderOrgId string) error {
 
 	var (
 		errCode         commonErr.ErrCode
@@ -497,7 +538,7 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 
 			if alreadySendHistoryBlockHeight != -1 && int64(block.Header.BlockHeight) > alreadySendHistoryBlockHeight {
 				err, _ = s.sendHistoryTx(store, server, alreadySendHistoryBlockHeight+1,
-					int64(block.Header.BlockHeight), contractName, txIds, txIdsMap)
+					int64(block.Header.BlockHeight), contractName, txIds, txIdsMap, reqSender, reqSenderOrgId)
 				if err != nil {
 					s.log.Errorf("send history block failed, %s", err)
 					return err
@@ -507,7 +548,7 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 				continue
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap, reqSender, reqSenderOrgId); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return status.Error(codes.Internal, errMsg)
@@ -553,7 +594,7 @@ func (s *ApiService) getRateLimitToken() error {
 
 // sendHistoryBlock - send history block to subscriber
 func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
-	startBlockHeight, endBlockHeight int64, withRWSet, onlyHeader bool) (error, int64) {
+	startBlockHeight, endBlockHeight int64, withRWSet, onlyHeader bool, reqSender *protocol.Role, reqSenderOrgId string) (error, int64) {
 
 	var (
 		err    error
@@ -575,7 +616,7 @@ func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server api
 				return nil, i - 1
 			}
 
-			blockInfo, alreadySendHistoryBlockHeight, err := s.getBlockInfoFromStore(store, i, withRWSet)
+			blockInfo, alreadySendHistoryBlockHeight, err := s.getBlockInfoFromStore(store, i, withRWSet, reqSender, reqSenderOrgId)
 			if err != nil {
 				return status.Error(codes.Internal, errMsg), -1
 			}
@@ -601,7 +642,7 @@ func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server api
 	}
 }
 
-func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curblockHeight int64, withRWSet bool) (
+func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curblockHeight int64, withRWSet bool, reqSender *protocol.Role, reqSenderOrgId string) (
 	blockInfo *commonPb.BlockInfo, alreadySendHistoryBlockHeight int64, err error) {
 	var (
 		errMsg         string
@@ -634,9 +675,19 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 			Block:     blockWithRWSet.Block,
 			RwsetList: blockWithRWSet.TxRWSets,
 		}
+
+		// filter txs so that only related ones get passed
+		if *reqSender == protocol.RoleLight {
+			utils.FilterBlockTxs(reqSenderOrgId, blockWithRWSet.Block)
+		}
 	} else {
 		if block == nil {
 			return nil, curblockHeight - 1, nil
+		}
+
+		// filter txs so that only related ones get passed
+		if *reqSender == protocol.RoleLight {
+			utils.FilterBlockTxs(reqSenderOrgId, block)
 		}
 
 		blockInfo = &commonPb.BlockInfo{
@@ -645,6 +696,8 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 		}
 	}
 
+	printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
+
 	return blockInfo, -1, nil
 }
 
@@ -652,7 +705,8 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 	server apiPb.RpcNode_SubscribeServer,
 	startBlockHeight, endBlockHeight int64,
-	contractName string, txIds []string, txIdsMap map[string]struct{}) (error, int64) {
+	contractName string, txIds []string, txIdsMap map[string]struct{},
+	reqSender *protocol.Role, reqSenderOrgId string) (error, int64) {
 
 	var (
 		err    error
@@ -690,7 +744,7 @@ func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 				return nil, i - 1
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap, reqSender, reqSenderOrgId); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return status.Error(codes.Internal, errMsg), -1
@@ -768,7 +822,8 @@ func (s *ApiService) getContractEventSubscribeResult(contractEventsInfoList *com
 	return result, nil
 }
 func (s *ApiService) sendSubscribeTx(server apiPb.RpcNode_SubscribeServer,
-	txs []*commonPb.Transaction, contractName string, txIds []string, txIdsMap map[string]struct{}) error {
+	txs []*commonPb.Transaction, contractName string, txIds []string,
+	txIdsMap map[string]struct{}, reqSender *protocol.Role, reqSenderOrgId string) error {
 
 	var (
 		err error
@@ -776,7 +831,7 @@ func (s *ApiService) sendSubscribeTx(server apiPb.RpcNode_SubscribeServer,
 
 	for _, tx := range txs {
 		if contractName == "" && len(txIds) == 0 {
-			if err = s.doSendSubscribeTx(server, tx); err != nil {
+			if err = s.doSendSubscribeTx(server, tx, reqSender, reqSenderOrgId); err != nil {
 				return err
 			}
 			continue
@@ -786,7 +841,7 @@ func (s *ApiService) sendSubscribeTx(server apiPb.RpcNode_SubscribeServer,
 			continue
 		}
 
-		if err = s.doSendSubscribeTx(server, tx); err != nil {
+		if err = s.doSendSubscribeTx(server, tx, reqSender, reqSenderOrgId); err != nil {
 			return err
 		}
 	}
@@ -811,12 +866,15 @@ func (s *ApiService) checkIsContinue(tx *commonPb.Transaction, contractName stri
 	return false
 }
 
-func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx *commonPb.Transaction) error {
+func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx *commonPb.Transaction, reqSender *protocol.Role, reqSenderOrgId string) error {
 	var (
-		err    error
-		errMsg string
-		result *commonPb.SubscribeResult
+		err       error
+		errMsg    string
+		result    *commonPb.SubscribeResult
 	)
+
+	isReqSenderLightNode := *reqSender == protocol.RoleLight
+	isTxRelatedToSender := (tx.Sender.Signer.OrgId != "") && reqSenderOrgId == tx.Sender.Signer.OrgId
 
 	if result, err = s.getTxSubscribeResult(tx); err != nil {
 		errMsg = fmt.Sprintf("get tx subscribe result failed, %s", err)
@@ -828,6 +886,22 @@ func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx 
 		errMsg = fmt.Sprintf("send subscribe tx result failed, %s", err)
 		s.log.Error(errMsg)
 		return errors.New(errMsg)
+	}
+
+	if isReqSenderLightNode {
+		if isTxRelatedToSender {
+			if err := server.Send(result); err != nil {
+				errMsg = fmt.Sprintf("send subscribe tx result failed, %s", err)
+				s.log.Error(errMsg)
+				return errors.New(errMsg)
+			}
+		}
+	} else {
+		if err := server.Send(result); err != nil {
+			errMsg = fmt.Sprintf("send subscribe tx result failed, %s", err)
+			s.log.Error(errMsg)
+			return errors.New(errMsg)
+		}
 	}
 
 	return nil
@@ -857,4 +931,32 @@ func (s *ApiService) checkAndGetLastBlockHeight(store protocol.BlockchainStore,
 	}
 
 	return int64(lastBlock.Header.BlockHeight), nil
+}
+
+func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender *protocol.Role, localOrgId string) {
+	fmt.Printf("Verifying subscribed block of height: %d\n", blockInfo.Block.Header.BlockHeight)
+	fmt.Printf("verify: the role of request sender is Light [%t]\n", *reqSender == protocol.RoleLight)
+	fmt.Printf("the block has %d txs\n", len(blockInfo.Block.Txs))
+	for i, tx := range blockInfo.Block.Txs {
+
+		if tx.Sender.Signer != nil {
+
+			fmt.Printf("Tx [%d] of subscribed block, localOrgId is %v, TxOrgId is %s, "+
+				"verify: this tx is of the same organization [%t]\n", i, localOrgId, tx.Sender.Signer.OrgId, tx.Sender.Signer.OrgId == localOrgId)
+		}
+	}
+	fmt.Println()
+}
+
+func (s *ApiService) getRoleOfRequestSender(tx *commonPb.Transaction) (*protocol.Role, error) {
+	bc, err := s.chainMakerServer.GetBlockchain(tx.Payload.ChainId)
+	if err != nil {
+		errCode := commonErr.ERR_CODE_GET_BLOCKCHAIN
+		errMsg := s.getErrMsg(errCode, err)
+		s.log.Error(errMsg)
+		return nil, err
+	}
+
+	ac := bc.GetAccessControl()
+	return utils.GetRoleOfRequestSender(tx, ac)
 }
