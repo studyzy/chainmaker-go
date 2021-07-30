@@ -179,9 +179,10 @@ func safeStore(vm *VirtualMachine, base uint64) {
 		var max uint32
 		if vm.InnerModule.SecMemory[0].Max != nil {
 			max = *vm.InnerModule.SecMemory[0].Max
+		} else {
+			max = defaultMax
 		}
 
-		max = defaultMax
 		diff := base - uint64(len(vm.Memory)) + 1
 		preMemory := len(vm.Memory) + int(diff)
 		if uint64(uint32(preMemory/vmPageSize)) > uint64(max) {
