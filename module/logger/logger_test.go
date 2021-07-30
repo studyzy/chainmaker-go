@@ -136,7 +136,7 @@ func TestRotateSize(t *testing.T) {
 	loggerRpc := GetLogger(MODULE_RPC)
 
 	loggerSNAPSHOT := GetLogger(MODULE_SNAPSHOT)
-	loggerSPV := GetLogger(MODULE_SPV)
+	//loggerSPV := GetLogger(MODULE_SPV)
 	loggerStorage := GetLogger(MODULE_STORAGE)
 	loggerSync := GetLogger(MODULE_SYNC)
 	loggerTxpool := GetLogger(MODULE_TXPOOL)
@@ -159,7 +159,7 @@ func TestRotateSize(t *testing.T) {
 
 	//---------------------------------------
 	go printLog(loggerSNAPSHOT,1)
-	go printLog(loggerSPV,2)
+	//go printLog(loggerSPV,2)
 	go printLog(loggerStorage,3)
 	go printLog(loggerSync,4)
 	go printLog(loggerTxpool,5)
