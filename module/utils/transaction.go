@@ -297,24 +297,26 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 		if endorsements == nil {
 			return fmt.Errorf("endorsement is nil in verifyTxAuth for resourceId[%s]", resourceId)
 		}
-		targetOrg := ""
+
 		if p.Rule == string(protocol.RuleSelf) {
+			var targetOrg string
 			parameterPairs := t.Payload.Parameters
 			if parameterPairs != nil {
-			    for i := 0; i < len(parameterPairs); i++ {
+				for i := 0; i < len(parameterPairs); i++ {
 					key := parameterPairs[i].Key
 					if key == protocol.ConfigNameOrgId {
 						targetOrg = string(parameterPairs[i].Value)
 						break
 					}
 				}
+				if targetOrg == "" {
+					return fmt.Errorf("verification rule is [SELF], but org_id is not set in the parameter")
+				}
+				principal, err = ac.CreatePrincipalForTargetOrg(resourceId, endorsements, txBytes, targetOrg)
+				if err != nil {
+					return fmt.Errorf("fail to construct authentication principal with orgId %s for %s-%s: %s", targetOrg, t.Payload.ContractName, t.Payload.Method, err)
+				}
 			}
-		}
-		if targetOrg != "" {
-			principal, err = ac.CreatePrincipalForTargetOrg(resourceId, endorsements, txBytes, targetOrg)
-			if err != nil {
-				return fmt.Errorf("fail to construct authentication principal with orgId %s for %s-%s: %s", targetOrg, t.Payload.ContractName, t.Payload.Method, err)
-		    }
 		} else {
 			principal, err = ac.CreatePrincipal(resourceId, endorsements, txBytes)
 			if err != nil {

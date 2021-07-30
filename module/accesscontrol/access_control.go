@@ -193,6 +193,7 @@ func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, er
 
 	return ac.verifyPrincipalPolicy(principal, refinedPrincipal, p)
 }
+
 /*
 // LookUpResourceNameByTxType returns resource name corresponding to the tx type
 func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (string, error) {
@@ -235,17 +236,25 @@ func (ac *accessControl) NewMember(member *pbac.Member) (protocol.Member, error)
 	return memberFactory.NewMember(member, ac)
 }
 
-func (ac *accessControl) GetMemberStatus(member protocol.Member) (pbac.MemberStatus, error) {
-	switch member.(type) {
-	case *certMember:
+func (ac *accessControl) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
+	switch member.MemberType {
+	case pbac.MemberType_CERT | pbac.MemberType_CERT_HASH:
+		certBlock, _ := pem.Decode(member.MemberInfo)
+		if certBlock == nil {
+			return pbac.MemberStatus_INVALID, fmt.Errorf("member info decode failed")
+		}
+		cert, err := bcx509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			return pbac.MemberStatus_INVALID, fmt.Errorf("parsing member info failed: %s", err.Error())
+		}
 		var certChain []*bcx509.Certificate
-		certChain = append(certChain, member.(*certMember).cert)
-		err := ac.checkCRL(certChain)
+		certChain = append(certChain, cert)
+		err = ac.checkCRL(certChain)
 		if err != nil && err.Error() == "certificate is revoked" {
 			return pbac.MemberStatus_REVOKED, nil
 		}
 		return pbac.MemberStatus_NORMAL, nil
-	case *pkMember:
+	case pbac.MemberType_PUBLIC_KEY:
 		return pbac.MemberStatus_NORMAL, nil
 	}
 	return pbac.MemberStatus_INVALID, fmt.Errorf("get member status failed: unsupport member type")

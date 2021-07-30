@@ -53,12 +53,6 @@ func (rv *RevokedValidator) ValidateCertsIsRevoked(certs []*cmx509.Certificate) 
 		if ac == nil {
 			return false
 		}
-		// for _, cert := range certs {
-		// 	bl = ac.GetMemberStatus(certs)
-		// 	if bl {
-		// 		return false
-		// 	}
-		// }
 		return true
 	})
 	return bl
