@@ -16,6 +16,7 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
+	github.com/tidwall/pretty v1.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 // indirect
 	google.golang.org/grpc v1.37.0
 )

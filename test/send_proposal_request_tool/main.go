@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +30,7 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/pretty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -82,6 +84,7 @@ var (
 
 	abiPath    string
 	initParams string
+	prettyJson bool
 )
 
 type Result struct {
@@ -104,9 +107,25 @@ type Result struct {
 	CertAddress           *evm.Address                    `json:"certAddress,omitempty"`
 }
 
+func (result *Result) ToJsonString() string {
+	rjson, _ := json.Marshal(result)
+	if prettyJson {
+		rjson = pretty.Color(rjson, nil)
+	}
+	return string(rjson)
+}
+
 type SimpleRPCResult struct {
 	Code    commonPb.TxStatusCode `json:"code"`
 	Message string                `json:"message,omitempty"`
+}
+
+func (result *SimpleRPCResult) ToJsonString() string {
+	rjson, _ := json.Marshal(result)
+	if prettyJson {
+		rjson = pretty.Color(rjson, nil)
+	}
+	return string(rjson)
 }
 
 func main() {
@@ -153,6 +172,7 @@ func main() {
 
 	mainFlags.BoolVar(&useShortCrt, "use-short-crt", false, "use compressed certificate in transactions")
 	mainFlags.StringVar(&hashAlgo, "hash-algorithm", "SHA256", "hash algorithm set in chain configuration")
+	mainFlags.BoolVarP(&prettyJson, "pretty", "p", false, "specify whether pretty json result")
 
 	mainCmd.AddCommand(CreateContractCMD())
 	mainCmd.AddCommand(UpgradeContractCMD())

@@ -118,11 +118,8 @@ func upgradeContract() error {
 		Message: resp.Message,
 		TxId:    resp.TxId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

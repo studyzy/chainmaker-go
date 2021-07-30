@@ -49,11 +49,7 @@ func returnResult(code commonPb.TxStatusCode, message string, contractCode uint3
 		ContractResultMessage: contractMessage,
 		ContractQueryResult:   data,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 	return nil
 }
 
@@ -108,9 +104,10 @@ func query() error {
 	if err != nil {
 		return err
 	}
-	respJson, _ := json.Marshal(resp)
-	fmt.Println("TxResponse:")
-	fmt.Println(string(respJson))
+	log.DebugDynamic(func() string {
+		respJson, _ := json.Marshal(resp)
+		return string(respJson)
+	})
 	var dataByte []interface{}
 	//var result *Result
 	//暂时不支持传参
