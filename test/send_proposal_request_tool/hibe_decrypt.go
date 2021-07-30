@@ -117,10 +117,6 @@ func decryptHibeMessage() error {
 	result.ContractResultMessage = "OK"
 	result.HibeExecMsg = hibeMessage
 
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 	return nil
 }

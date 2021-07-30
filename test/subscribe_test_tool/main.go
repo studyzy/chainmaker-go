@@ -138,7 +138,7 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, method string, _ string, payloadBytes []byte) (*commonPb.TxResponse, error) {
+func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, method string, _ string, payloadBytes *commonPb.Payload) (*commonPb.TxResponse, error) {
 
 	req := generateReq(sk3, method, payloadBytes)
 	res, err := client.Subscribe(context.Background(), req)
@@ -245,7 +245,7 @@ func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
 	return nil
 }
 
-func generateReq(sk3 crypto.PrivateKey, method string, payloadBytes []byte) *commonPb.TxRequest {
+func generateReq(sk3 crypto.PrivateKey, method string, payload *commonPb.Payload) *commonPb.TxRequest {
 	txId := utils.GetRandTxId()
 	file, err := ioutil.ReadFile(userCrtPath)
 	if err != nil {
@@ -260,18 +260,16 @@ func generateReq(sk3 crypto.PrivateKey, method string, payloadBytes []byte) *com
 	}
 
 	// 构造Header
-	header := &commonPb.Payload{
-		ChainId: chainId,
-		//Sender:         sender,
-		TxType:         commonPb.TxType_SUBSCRIBE,
-		Method:         method,
-		TxId:           txId,
-		Timestamp:      time.Now().Unix(),
-		ExpirationTime: 0,
-	}
+	payload.ChainId = chainId
+	//Sender:         sender,
+	payload.TxType = commonPb.TxType_SUBSCRIBE
+	payload.Method = method
+	payload.TxId = txId
+	payload.Timestamp = time.Now().Unix()
+	payload.ExpirationTime = 0
 
 	req := &commonPb.TxRequest{
-		Payload: header,
+		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 

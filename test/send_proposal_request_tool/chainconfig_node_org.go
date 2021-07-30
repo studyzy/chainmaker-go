@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -104,11 +103,7 @@ func nodeOrgAdd() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -139,11 +134,7 @@ func nodeOrgUpdate() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -170,11 +161,7 @@ func nodeOrgDelete() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

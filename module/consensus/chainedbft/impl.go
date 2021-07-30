@@ -97,6 +97,11 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	blockCommitter protocol.BlockCommitter, netService protocol.NetService, store protocol.BlockchainStore,
 	msgBus msgbus.MessageBus, chainConf protocol.ChainConf, helper protocol.HotStuffHelper) (*ConsensusChainedBftImpl, error) {
 
+	slog := logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId)
+	if chainConf.ChainConfig().Contract.EnableSqlSupport {
+		slog.Error("hotstuff consensus doesn't support sql contract")
+		return nil, fmt.Errorf("hotstuff consensus doesn't support sql contract")
+	}
 	service := &ConsensusChainedBftImpl{
 		id:                 id,
 		chainID:            chainID,
@@ -120,7 +125,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 		blockVerifier:         blockVerifier,
 		blockCommitter:        blockCommitter,
 		accessControlProvider: ac,
-		logger:                logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId),
+		logger:                slog,
 		governanceContract:    governance.NewGovernanceContract(store, ledgerCache),
 
 		quitCh:         make(chan struct{}),

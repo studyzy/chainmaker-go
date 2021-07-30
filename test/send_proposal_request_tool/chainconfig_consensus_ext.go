@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -114,11 +113,7 @@ func consensusExtAdd() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -154,11 +149,7 @@ func consensusExtUpdate() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -188,11 +179,7 @@ func consensusExtDelete() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

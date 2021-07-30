@@ -9,8 +9,11 @@ package blockkvdb
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/cache"
@@ -66,7 +69,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	batch.Put([]byte(lastBlockNumKeyStr), lastBlockNumBytes)
 
 	// 2. height-> blockInfo
-	heightKey := constructBlockNumKey(uint64(block.Header.BlockHeight))
+	heightKey := constructBlockNumKey(block.Header.BlockHeight)
 	batch.Put(heightKey, blockInfo.SerializedMeta)
 
 	// 3. hash-> height
@@ -83,7 +86,8 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 		batch.Put(txIdKey, txBytes)
 
 		blockTxIdKey := constructBlockTxIDKey(tx.Payload.TxId)
-		batch.Put(blockTxIdKey, heightKey)
+		txBlockInf := constructTxIDBlockInfo(block.Header.BlockHeight, block.Header.BlockHash, uint32(index))
+		batch.Put(blockTxIdKey, txBlockInf)
 		b.Logger.Debugf("chain[%s]: blockInfo[%d] batch transaction index[%d] txid[%s]",
 			block.Header.ChainId, block.Header.BlockHeight, index, tx.Payload.TxId)
 	}
@@ -345,27 +349,27 @@ func (b *BlockKvDB) GetLastSavepoint() (uint64, error) {
 // GetBlockByTx returns a block which contains a tx.
 func (b *BlockKvDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 	blockTxIdKey := constructBlockTxIDKey(txId)
-	heightBytes, err := b.get(blockTxIdKey)
+	txIdBlockInfoBytes, err := b.get(blockTxIdKey)
 	if err != nil {
 		return nil, err
 	}
-
-	return b.getBlockByHeightBytes(heightBytes)
+	height, _, _ := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	return b.GetBlock(height)
 }
 
 // GetTxHeight retrieves a transaction height by txid, or returns nil if none exists.
 func (b *BlockKvDB) GetTxHeight(txId string) (uint64, error) {
 	blockTxIdKey := constructBlockTxIDKey(txId)
-	vBytes, err := b.get(blockTxIdKey)
+	txIdBlockInfoBytes, err := b.get(blockTxIdKey)
 	if err != nil {
 		return 0, err
 	}
 
-	if vBytes == nil {
+	if txIdBlockInfoBytes == nil {
 		return 0, errValueNotFound
 	}
-
-	return decodeBlockNumKey(vBytes), nil
+	height, _, _ := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	return height, nil
 }
 
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
@@ -409,8 +413,12 @@ func (b *BlockKvDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, 
 	if err != nil {
 		return nil, err
 	}
-	//TODO devin add block info
-	return &commonPb.TransactionInfo{Transaction: &tx}, nil
+	txIDBlockInfoBytes, err := b.get(constructBlockTxIDKey(txId))
+	if err != nil {
+		return nil, err
+	}
+	height, blockHash, txIndex := parseTxIdBlockInfo(txIDBlockInfoBytes)
+	return &commonPb.TransactionInfo{Transaction: &tx, BlockHeight: height, BlockHash: blockHash, TxIndex: txIndex}, nil
 }
 
 // TxExists returns true if the tx exist, or returns false if none exists.
@@ -425,12 +433,12 @@ func (b *BlockKvDB) TxExists(txId string) (bool, error) {
 
 // TxArchived returns true if the tx archived, or returns false.
 func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
-	heightBytes, err := b.DbHandle.Get(constructBlockTxIDKey(txId))
+	txIdBlockInfoBytes, err := b.DbHandle.Get(constructBlockTxIDKey(txId))
 	if err != nil {
 		return false, err
 	}
 
-	if heightBytes == nil {
+	if txIdBlockInfoBytes == nil {
 		return false, errValueNotFound
 	}
 
@@ -438,8 +446,8 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	if decodeBlockNumKey(heightBytes) <= archivedPivot {
+	height, _, _ := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	if height <= archivedPivot {
 		return true, nil
 	}
 
@@ -628,4 +636,16 @@ func (b *BlockKvDB) compactRange() {
 		}
 		//time.Sleep(2 * time.Second)
 	}
+}
+func constructTxIDBlockInfo(height uint64, blockHash []byte, txIndex uint32) []byte {
+	value := fmt.Sprintf("%d,%x,%d", height, blockHash, txIndex)
+	return []byte(value)
+}
+func parseTxIdBlockInfo(value []byte) (height uint64, blockHash []byte, txIndex uint32) {
+	strArray := strings.Split(string(value), ",")
+	height, _ = strconv.ParseUint(strArray[0], 10, 64)
+	blockHash, _ = hex.DecodeString(strArray[1])
+	idx, _ := strconv.Atoi(strArray[2])
+	txIndex = uint32(idx)
+	return
 }

@@ -112,11 +112,7 @@ func permissionAdd() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -151,11 +147,7 @@ func permissionUpdate() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -181,11 +173,7 @@ func permissionDelete() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

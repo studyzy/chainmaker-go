@@ -159,11 +159,7 @@ func certAdd() error {
 		TxId:      txId,
 		ShortCert: certId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -198,11 +194,7 @@ func certDelete() error {
 		Message: resp.Message,
 		TxId:    txId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -268,11 +260,7 @@ func certFrozen() error {
 		TxId:      txId,
 		ShortCert: certId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -306,11 +294,7 @@ func certUnfrozen() error {
 		TxId:      txId,
 		ShortCert: certId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
@@ -345,11 +329,7 @@ func certRevocation() error {
 		TxId:      txId,
 		ShortCert: certId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
