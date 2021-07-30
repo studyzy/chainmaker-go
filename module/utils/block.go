@@ -237,3 +237,15 @@ func IsContractMgmtBlock(b *commonPb.Block) bool {
 	}
 	return IsContractMgmtTx(b.Txs[0])
 }
+
+func FilterBlockTxs(reqSenderOrgId string, block *commonPb.Block) {
+
+	txs := block.GetTxs()
+	results := make([]*commonPb.Transaction, 0, len(txs))
+	for i, tx := range txs {
+		if tx.Sender.Signer.OrgId != "" && tx.Sender.Signer.OrgId == reqSenderOrgId {
+			results = append(results, txs[i])
+		}
+	}
+	block.Txs = results
+}

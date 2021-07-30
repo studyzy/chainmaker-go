@@ -334,3 +334,32 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType co
 	}
 	return payload, nil
 }
+
+func GetRoleOfRequestSender(tx *commonPb.Transaction, ac protocol.AccessControlProvider) (*protocol.Role, error) {
+	//var cert = tx.Sender.Signer.MemberInfo
+	//var ok = false
+	var member protocol.Member
+	var err error
+
+	//if len(cert) <= 32 {
+	//	cert, ok = ac.LookUpCertCache(string(cert))
+	//	if !ok {
+	//		err = fmt.Errorf("unable to get the role of sender due to unqualified certificate")
+	//		return nil, err
+	//	}
+	//}
+
+	//sm := &accesscontrol.SerializedMember{
+	//	OrgId:      tx.Sender.Signer.OrgId,
+	//	MemberInfo: cert,
+	//	IsFullCert: true,
+	//}
+
+	member, err = ac.NewMemberFromProto(tx.Sender.Signer)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &member.GetRole()[0], nil
+}
