@@ -198,6 +198,7 @@ func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVE
 			LogLevel:     log.GetLogLevel(defaultLogNode.LogLevelDefault),
 			MaxAge:       defaultLogNode.MaxAge,
 			RotationTime: defaultLogNode.RotationTime,
+			RotationSize: defaultLogNode.RotationSize,
 			JsonFormat:   false,
 			ShowLine:     true,
 			LogInConsole: defaultLogNode.LogInConsole,
@@ -212,6 +213,7 @@ func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVE
 				LogLevel:     log.GetLogLevel(logConfig.BriefLog.LogLevelDefault),
 				MaxAge:       logConfig.BriefLog.MaxAge,
 				RotationTime: logConfig.BriefLog.RotationTime,
+				RotationSize: logConfig.BriefLog.RotationSize,
 				JsonFormat:   false,
 				ShowLine:     true,
 				LogInConsole: logConfig.BriefLog.LogInConsole,
@@ -225,6 +227,7 @@ func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVE
 				LogLevel:     log.GetLogLevel(logConfig.EventLog.LogLevelDefault),
 				MaxAge:       logConfig.EventLog.MaxAge,
 				RotationTime: logConfig.EventLog.RotationTime,
+				RotationSize: logConfig.EventLog.RotationSize,
 				JsonFormat:   false,
 				ShowLine:     true,
 				LogInConsole: logConfig.EventLog.LogInConsole,
@@ -243,6 +246,7 @@ func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVE
 				LogLevel:     log.GetLogLevel(value),
 				MaxAge:       logConfig.SystemLog.MaxAge,
 				RotationTime: logConfig.SystemLog.RotationTime,
+				RotationSize: logConfig.SystemLog.RotationSize,
 				JsonFormat:   false,
 				ShowLine:     true,
 				LogInConsole: logConfig.SystemLog.LogInConsole,
@@ -313,6 +317,7 @@ func DefaultLogConfig() *LogConfig {
 			FilePath:        defaultLogNode.FilePath,
 			MaxAge:          defaultLogNode.MaxAge,
 			RotationTime:    defaultLogNode.RotationTime,
+			RotationSize:    defaultLogNode.RotationSize,
 			LogInConsole:    defaultLogNode.LogInConsole,
 		},
 		BriefLog: LogNodeConfig{
@@ -320,6 +325,7 @@ func DefaultLogConfig() *LogConfig {
 			FilePath:        defaultLogNode.FilePath,
 			MaxAge:          defaultLogNode.MaxAge,
 			RotationTime:    defaultLogNode.RotationTime,
+			RotationSize:    defaultLogNode.RotationSize,
 			LogInConsole:    defaultLogNode.LogInConsole,
 		},
 		EventLog: LogNodeConfig{
@@ -327,6 +333,7 @@ func DefaultLogConfig() *LogConfig {
 			FilePath:        defaultLogNode.FilePath,
 			MaxAge:          defaultLogNode.MaxAge,
 			RotationTime:    defaultLogNode.RotationTime,
+			RotationSize:    defaultLogNode.RotationSize,
 			LogInConsole:    defaultLogNode.LogInConsole,
 		},
 	}
@@ -340,6 +347,7 @@ func GetDefaultLogNodeConfig() LogNodeConfig {
 		FilePath:        "./default.log",
 		MaxAge:          log.DEFAULT_MAX_AGE,
 		RotationTime:    log.DEFAULT_ROTATION_TIME,
+		RotationSize:    log.DEFAULT_ROTATION_SIZE,
 		LogInConsole:    true,
 		ShowColor:       true,
 	}
