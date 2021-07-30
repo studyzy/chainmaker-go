@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 )
 
-var defaultMax = uint32(65535)  // 4G
+var defaultMax = uint32(65535)
 
 func memoryBase(vm *VirtualMachine) uint64 {
 	vm.ActiveContext.PC++
@@ -184,9 +184,6 @@ func safeStore(vm *VirtualMachine, base uint64, isStore bool) {
 			panic("out of vm max memory limit ")
 			return
 		}
-
-		if isStore {
-			vm.Memory = append(vm.Memory, make([]byte, diff)...)
-		}
+		vm.Memory = append(vm.Memory, make([]byte, diff)...)
 	}
 }
