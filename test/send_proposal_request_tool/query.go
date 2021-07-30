@@ -76,7 +76,7 @@ func query() error {
 	var abiData *[]byte
 	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 	if err != nil {
-		err = returnResult(1, "make pairs filure!", 0, "error", "")
+		err = returnResult(1, "make pairs failure!", 0, "error", "")
 		return err
 	}
 	////暂时不支持传参
@@ -105,11 +105,12 @@ func query() error {
 	}
 
 	resp, err = proposalRequest(sk3, client, payloadBytes)
-	fmt.Println("resp: ", resp, "err:", err)
 	if err != nil {
 		return err
 	}
-
+	respJson, _ := json.Marshal(resp)
+	fmt.Println("TxResponse:")
+	fmt.Println(string(respJson))
 	var dataByte []interface{}
 	//var result *Result
 	//暂时不支持传参
