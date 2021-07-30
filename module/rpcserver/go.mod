@@ -18,6 +18,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.9.0
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
+	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/grpc v1.37.0
 )
 

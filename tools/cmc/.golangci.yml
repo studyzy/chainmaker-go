@@ -7,14 +7,7 @@ run:
   skip-dirs-use-default: true
   #  skip-files:
   skip-dirs:
-    - p2p #from libp2p
-    - mock #from gomock
-    - protogo #from pb generate
-    - sqldbprovider #will remove
-    - eventsqldb
-    - evm-go
-    - gasm-go
-    - wasmer-go
+    - tee
 linters:
   disable-all: true
   enable:
@@ -32,7 +25,6 @@ linters:
     - govet
     - lll
     - rowserrcheck
-    - errcheck
     - misspell
     - unused
     - varcheck
@@ -45,13 +37,13 @@ linters-settings:
     min-len: 2
     min-occurrences: 2
   gocyclo:
-    min-complexity: 20
+    min-complexity: 25
   goimports:
   #local-prefixes: git.code.oa.com
   golint:
   #min-confidence: 0
   govet:
-    check-shadowing: true
+    check-shadowing: false
   gosimple:
     go: "1.15"
   lll:
@@ -83,13 +75,11 @@ linters-settings:
       - name: range
       #      - name: receiver-naming
       - name: time-naming
-      - name: unexported-return
       - name: indent-error-flow
       - name: errorf
       - name: empty-block
       - name: superfluous-else
       - name: unexported-naming
-      - name: unexported-return
       - name: unreachable-code
       - name: redefines-builtin-id
       - name: function-length
@@ -117,14 +107,11 @@ issues:
         - lll
         - funlen
     - linters:
-        - revive
+      - revive
       text: "stutters"
     - linters:
-        - errcheck
+      - errcheck
       text: "json.Unmarshal"
-    - linters:
-        - gosec
-      text: "G108"
   max-same-issues: 0
   new: false
   max-issues-per-linter: 0

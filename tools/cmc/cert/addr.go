@@ -89,8 +89,14 @@ func certToUserAddrInStake() *cobra.Command {
 			)
 			if cert.SignatureAlgorithm == bcx509.SM3WithSM2 {
 				hashBz, err = hashAlo.GetByStrType(crypto.CRYPTO_ALGO_SM3, pubkey)
+				if err != nil {
+					return err
+				}
 			} else {
 				hashBz, err = hashAlo.GetByStrType(crypto.CRYPTO_ALGO_SHA256, pubkey)
+				if err != nil {
+					return err
+				}
 			}
 			addr := base58.Encode(hashBz[:])
 			fmt.Printf("address: %s \n\nfrom cert: %s\n", addr, certPath)

@@ -27,7 +27,8 @@ func proveMethodCMD() *cobra.Command {
 	}
 
 	flags := commitmentMethodCmd.Flags()
-	flags.StringVarP(&commitmentMethod, "method", "", "", "prove method: ProveAfterAddNum ProveAfterAddCommitment ProveAfterSubNum ProveAfterSubCommitment ProveAfterMulNum")
+	flags.StringVarP(&commitmentMethod, "method", "", "", "prove method: ProveAfterAddNum "+
+		"ProveAfterAddCommitment ProveAfterSubNum ProveAfterSubCommitment ProveAfterMulNum")
 	flags.Int64VarP(&valueX, "valueX", "", -1, "valueY")
 	flags.Int64VarP(&valueY, "valueY", "", -1, "valueY")
 	flags.StringVarP(&commitmentXStr, "commitmentX", "", "", "")
@@ -80,7 +81,7 @@ func proveAfterAddNum(commitmentX, openingX []byte) error {
 	}
 
 	fmt.Printf("proof: [%s]\n", base64.StdEncoding.EncodeToString(proof))
-	fmt.Printf("commtiment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
+	fmt.Printf("commitment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
 	fmt.Printf("opening: [%s]\n", openingXStr)
 
 	return nil
@@ -101,13 +102,14 @@ func proveAfterAddCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofs.ProveAfterAddCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofs.ProveAfterAddCommitment(uint64(valueX), uint64(valueY),
+		openingX, openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("proof: [%s]\n", base64.StdEncoding.EncodeToString(proof))
-	fmt.Printf("commtiment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
+	fmt.Printf("commitment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
 	fmt.Printf("opening: [%s]\n", base64.StdEncoding.EncodeToString(opening))
 
 	return nil
@@ -120,7 +122,7 @@ func proveAfterSubNum(commitmentX, openingX []byte) error {
 	}
 
 	fmt.Printf("proof: [%s]\n", base64.StdEncoding.EncodeToString(proof))
-	fmt.Printf("commtiment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
+	fmt.Printf("commitment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
 	fmt.Printf("opening: [%s]\n", openingXStr)
 
 	return nil
@@ -141,13 +143,14 @@ func proveAfterSubCommitment(commitmentX, openingX []byte) error {
 		return err
 	}
 
-	proof, commitment, opening, err := bulletproofs.ProveAfterSubCommitment(uint64(valueX), uint64(valueY), openingX, openingY, commitmentX, commitmentY)
+	proof, commitment, opening, err := bulletproofs.ProveAfterSubCommitment(uint64(valueX), uint64(valueY), openingX,
+		openingY, commitmentX, commitmentY)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("proof: [%s]\n", base64.StdEncoding.EncodeToString(proof))
-	fmt.Printf("commtiment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
+	fmt.Printf("commitment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
 	fmt.Printf("opening: [%s]\n", base64.StdEncoding.EncodeToString(opening))
 
 	return nil
@@ -160,7 +163,7 @@ func proveAfterMulNum(commitmentX, openingX []byte) error {
 	}
 
 	fmt.Printf("proof: [%s]\n", base64.StdEncoding.EncodeToString(proof))
-	fmt.Printf("commtiment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
+	fmt.Printf("commitment: [%s]\n", base64.StdEncoding.EncodeToString(commitment))
 	fmt.Printf("opening: [%s]\n", base64.StdEncoding.EncodeToString(opening))
 	return nil
 }

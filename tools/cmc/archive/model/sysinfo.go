@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// KArchivedblockheight archived_block_height
 	KArchivedblockheight = "archived_block_height"
 )
 
