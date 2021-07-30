@@ -70,11 +70,7 @@ func calAddressFromCert() error {
 		ContractQueryResult:   addr,
 		ContractResultMessage: "success",
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 	return nil
 }
 
@@ -314,10 +310,6 @@ func processResult(resp *commonPb.TxResponse, m proto.Message) error {
 		ContractQueryResult:   queryResult,
 		ContractResultMessage: resp.ContractResult.Message,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 	return nil
 }

@@ -49,11 +49,7 @@ func returnResult(code commonPb.TxStatusCode, message string, contractCode uint3
 		ContractResultMessage: contractMessage,
 		ContractQueryResult:   data,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 	return nil
 }
 
@@ -76,7 +72,7 @@ func query() error {
 	var abiData *[]byte
 	method, pairs, err = makePairs(method, abiPath, pairs, commonPb.RuntimeType(runTime), abiData)
 	if err != nil {
-		err = returnResult(1, "make pairs filure!", 0, "error", "")
+		err = returnResult(1, "make pairs failure!", 0, "error", "")
 		return err
 	}
 	////暂时不支持传参
@@ -105,11 +101,13 @@ func query() error {
 	}
 
 	resp, err = proposalRequest(sk3, client, payloadBytes)
-	fmt.Println("resp: ", resp, "err:", err)
 	if err != nil {
 		return err
 	}
-
+	log.DebugDynamic(func() string {
+		respJson, _ := json.Marshal(resp)
+		return string(respJson)
+	})
 	var dataByte []interface{}
 	//var result *Result
 	//暂时不支持传参

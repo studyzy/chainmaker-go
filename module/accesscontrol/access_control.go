@@ -82,10 +82,12 @@ type accessControl struct {
 	log protocol.Logger
 }
 
-func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig protocol.ChainConf,
-	localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
+func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string,
+	chainConfig protocol.ChainConf, localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (
+	protocol.AccessControlProvider, error) {
 	conf := chainConfig.ChainConfig()
-	acp, err := newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile, conf, localOrgId, store, log)
+	acp, err := newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile, conf, localOrgId,
+		store, log)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +96,9 @@ func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCer
 	return acp, err
 }
 
-func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig *config.ChainConfig,
-	localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (*accessControl, error) {
+func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localCertFile string,
+	chainConfig *config.ChainConfig, localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (
+	*accessControl, error) {
 	ac := &accessControl{
 		authMode:              AuthMode(chainConfig.AuthType),
 		orgList:               &sync.Map{},
@@ -145,7 +148,8 @@ func (ac *accessControl) GetHashAlg() string {
 // ValidateResourcePolicy checks whether the given resource principal is valid
 func (ac *accessControl) ValidateResourcePolicy(resourcePolicy *config.ResourcePolicy) bool {
 	if _, ok := restrainedResourceList[resourcePolicy.ResourceName]; ok {
-		ac.log.Errorf("bad configuration: should not modify the access policy of the resource: %s", resourcePolicy.ResourceName)
+		ac.log.Errorf("bad configuration: should not modify the access policy of the resource: %s",
+			resourcePolicy.ResourceName)
 		return false
 	}
 
@@ -163,7 +167,8 @@ func (ac *accessControl) ValidateResourcePolicy(resourcePolicy *config.ResourceP
 
 // CreatePrincipalForTargetOrg creates a principal for "SELF" type principal,
 // which needs to convert SELF to a sepecific organization id in one authentication
-func (ac *accessControl) CreatePrincipalForTargetOrg(resourceName string, endorsements []*common.EndorsementEntry, message []byte, targetOrgId string) (protocol.Principal, error) {
+func (ac *accessControl) CreatePrincipalForTargetOrg(resourceName string, endorsements []*common.EndorsementEntry,
+	message []byte, targetOrgId string) (protocol.Principal, error) {
 	p, err := ac.CreatePrincipal(resourceName, endorsements, message)
 	if err != nil {
 		return nil, err
@@ -173,9 +178,11 @@ func (ac *accessControl) CreatePrincipalForTargetOrg(resourceName string, endors
 }
 
 // CreatePrincipal creates a principal for one time authentication
-func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (protocol.Principal, error) {
+func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (
+	protocol.Principal, error) {
 	if len(endorsements) == 0 || message == nil {
-		return nil, fmt.Errorf("setup access control principal failed, a principal should contain valid (non-empty) signer information, signature, and message")
+		return nil, fmt.Errorf("setup access control principal failed, a principal should contain valid (non-empty)" +
+			" signer information, signature, and message")
 	}
 	if endorsements[0] == nil {
 		return nil, fmt.Errorf("setup access control principal failed, signer-signature pair should not be nil")
@@ -216,9 +223,8 @@ func (ac *accessControl) LookUpResourceNameByTxType(txType common.TxType) (strin
 	id, ok := txTypeToResourceNameMap[txType]
 	if !ok {
 		return protocol.ResourceNameUnknown, fmt.Errorf("invalid transaction type")
-	} else {
-		return id, nil
 	}
+	return id, nil
 }
 
 // ResourcePolicyExists checks whether there is corresponding policy configured for the given resource name
@@ -272,7 +278,7 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 	for crlPEM != nil {
 		crl, err := x509.ParseCRL(crlPEM.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPEM.Bytes))
+			return nil, fmt.Errorf("invalid CRL: %v\n[%s]", err, hex.EncodeToString(crlPEM.Bytes))
 		}
 
 		err = ac.validateCrlVersion(crlPEM.Bytes, crl)
@@ -283,7 +289,8 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 		err1 := ac.checkCRLAgainstTrustedCerts(crl, orgs, false)
 		err2 := ac.checkCRLAgainstTrustedCerts(crl, orgs, true)
 		if err1 != nil && err2 != nil {
-			return nil, fmt.Errorf("invalid CRL: \n\t[verification against trusted root certs: %v], \n\t[verification against trusted intermediate certs: %v]", err1, err2)
+			return nil, fmt.Errorf("invalid CRL: \n\t[verification against trusted root certs: %v], \n\t["+
+				"verification against trusted intermediate certs: %v]", err1, err2)
 		}
 
 		crls = append(crls, crl)
@@ -350,7 +357,8 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 	if err == nil {
 		orgIdFromCert := cert.Subject.Organization[0]
 		if orgIdFromCert != orgId {
-			return nil, fmt.Errorf("setup member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
+			return nil, fmt.Errorf("setup member failed, organization information in certificate and in input "+
+				"parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
 		}
 		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
 		if err != nil {
@@ -382,40 +390,46 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 }
 
 // NewMemberFromProto creates a member from Member
-func (ac *accessControl) NewMemberFromProto(Member *pbac.Member) (protocol.Member, error) {
-	if Member.MemberType == pbac.MemberType_CERT {
-		return ac.NewMemberFromCertPem(Member.OrgId, string(Member.MemberInfo))
-	} else {
-		certPEM, ok := ac.lookUpCertCache(string(Member.MemberInfo))
-		if !ok {
-			return nil, fmt.Errorf("setup member failed, fail to look up certificate ID")
-		}
-		if certPEM == nil {
-			return nil, fmt.Errorf("setup member failed, unknown certificate ID")
-		}
-		return ac.NewMemberFromCertPem(Member.OrgId, string(certPEM))
+func (ac *accessControl) NewMemberFromProto(member *pbac.Member) (protocol.Member, error) {
+	if member.MemberType == pbac.MemberType_CERT {
+		return ac.NewMemberFromCertPem(member.OrgId, string(member.MemberInfo))
 	}
+	certPEM, ok := ac.lookUpCertCache(string(member.MemberInfo))
+	if !ok {
+		return nil, fmt.Errorf("setup member failed, fail to look up certificate ID")
+	}
+	if certPEM == nil {
+		return nil, fmt.Errorf("setup member failed, unknown certificate ID")
+	}
+
+	return ac.NewMemberFromCertPem(member.OrgId, string(certPEM))
 }
 
 // NewSigningMemberFromCertFile creates a signing member from private key and cert files
-func (ac *accessControl) NewSigningMemberFromCertFile(orgId string, prvKeyFile, password, certFile string) (protocol.SigningMember, error) {
+func (ac *accessControl) NewSigningMemberFromCertFile(orgId string, prvKeyFile, password, certFile string) (
+	protocol.SigningMember, error) {
 	memberInst, err := ac.newMemberFromCert(orgId, certFile)
 	if err != nil {
 		return nil, err
 	}
 
 	skPEM, err := ioutil.ReadFile(prvKeyFile)
+	if err != nil {
+		return nil, err
+	}
 
 	return ac.NewSigningMember(memberInst, string(skPEM), password)
 }
 
 // NewSigningMember creates a signing member from existing member
-func (ac *accessControl) NewSigningMember(mem protocol.Member, privateKeyPem string, password string) (protocol.SigningMember, error) {
+func (ac *accessControl) NewSigningMember(mem protocol.Member, privateKeyPem string, password string) (
+	protocol.SigningMember, error) {
 	var err error
 	var sk bccrypto.PrivateKey
 	p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
 	if p11Config.Enabled {
-		p11Handle, err := getP11Handle()
+		var p11Handle *pkcs11.P11Handle
+		p11Handle, err = getP11Handle()
 		if err != nil {
 			return nil, err
 		}

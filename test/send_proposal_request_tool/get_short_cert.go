@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
@@ -49,11 +48,7 @@ func getShortCertBase64() error {
 	result := &Result{
 		ShortCert: certId,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

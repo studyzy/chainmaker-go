@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -49,8 +48,9 @@ func getTxByTxId() error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("send tx resp: code:%d, msg:%s\n", resp.Code, resp.Message)
+	log.DebugDynamic(func() string {
+		return fmt.Sprintf("send tx resp: code:%d, msg:%s", resp.Code, resp.Message)
+	})
 
 	transactionInfo := &commonPb.TransactionInfo{}
 	if err = proto.Unmarshal(resp.ContractResult.Result, transactionInfo); err != nil {
@@ -63,11 +63,7 @@ func getTxByTxId() error {
 		ContractResultMessage: resp.ContractResult.Message,
 		TransactionInfo:       transactionInfo,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }

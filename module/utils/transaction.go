@@ -10,7 +10,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"regexp"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
@@ -224,8 +223,7 @@ func VerifyTxWithoutPayload(tx *commonPb.Transaction, chainId string, ac protoco
 
 // verify transaction header
 func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
-	defaultTxIdLen := 64                     // txId的长度
-	defaultTxIdReg := "^[a-zA-Z0-9_]{1,64}$" // txId的字符串的正则表达式与普通参数命名规则相同
+	defaultTxIdLen := 64 // txId的长度
 	// 1. header not null
 	if header == nil {
 		return errors.New("tx header is nil")
@@ -241,10 +239,7 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 	//only invoke contract tx need check txid
 	if header.TxType == commonPb.TxType_INVOKE_CONTRACT {
 		// 4. tx id only contains [a-z0-9]
-		match, err := regexp.MatchString(defaultTxIdReg, header.TxId)
-		if err != nil {
-			return fmt.Errorf("check tx id failed, %s", err)
-		}
+		match := CheckTxIDFormat(header.TxId)
 		if !match {
 			return errors.New("check tx id failed, only [a-zA-Z0-9_] are allowed, your TxId is:" + header.TxId)
 		}

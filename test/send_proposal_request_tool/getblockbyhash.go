@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -73,11 +72,7 @@ func getBlockByHash() error {
 		ContractResultMessage: resp.ContractResult.Message,
 		BlockInfo:             blockInfo,
 	}
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
+	fmt.Println(result.ToJsonString())
 
 	return nil
 }
