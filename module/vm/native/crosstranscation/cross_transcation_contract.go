@@ -139,7 +139,7 @@ func (r *CrossTransactionRuntime) Rollback(ctx protocol.TxSimContext, params map
 	//获取参数crossID
 	crossID := params[paramCrossID]
 	state := r.cache.GetCrossState(ctx, crossID)
-	r.log.Info("crossID [%s] state is [%s]", crossID, state.String())
+	r.log.Infof("crossID [%s] state is [%s]", crossID, state.String())
 	switch state {
 	case syscontract.CrossTxState_RollbackOK: //应该有个message去表示[]byte("已回滚,重复回滚")
 		return nil, nil

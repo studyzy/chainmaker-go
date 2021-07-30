@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker-go/logger"
+
 	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -25,7 +27,7 @@ var (
 		StateKey:         cacheKey("state"),
 		ProofPreKey:      cacheKey("proof"),
 	}
-	crossContract = NewCrossTransactionContract(nil)
+	crossContract = NewCrossTransactionContract(logger.GetLogger("CrossTx"))
 	gCache        = NewCacheMock()
 	crossID       = []byte(uuid.New().String())
 	gProofKey     = []byte("1233211234567")
