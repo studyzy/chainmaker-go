@@ -8,23 +8,20 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"github.com/stretchr/testify/require"
 )
 
 const (
 	rawChainTemplate    = "raw chain: %v\n"
 	sortedChainTemplate = "sorted chain: %v\n"
-)
-
-var (
-	sans = []string{"127.0.0.1", "localhost", "chainmaker.org", "8.8.8.8"}
 )
 
 var rootCert = certificatePair{

@@ -58,9 +58,8 @@ func (m *member) GetRole() []protocol.Role {
 func (m *member) GetSKI() []byte {
 	if m.identityType == pbac.MemberType_CERT || m.identityType == pbac.MemberType_CERT_HASH {
 		return m.cert.SubjectKeyId
-	} else {
-		return m.cert.Raw
 	}
+	return m.cert.Raw
 }
 
 func (m *member) GetCertificate() (*bcx509.Certificate, error) {
@@ -131,8 +130,9 @@ type signingMember struct {
 	sk bccrypto.PrivateKey
 }
 
-// When using certificate, the signature-hash algorithm suite is from the certificate, and the input hashType is ignored.
-// When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
+// When using certificate, the signature-hash algorithm suite is from the certificate and the input hashType is ignored.
+// When using public key instead of certificate, hashType is used to specify the hash algorithm,
+//while the signature algorithm is decided by the public key itself.
 func (sm *signingMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	var opts bccrypto.SignOpts
 	if sm.identityType == pbac.MemberType_PUBLIC_KEY {
@@ -155,9 +155,8 @@ func (m *member) satisfyPolicy(policy *policyWhiteList) error {
 		_, ok := policy.policyList[string(m.cert.Raw)]
 		if ok {
 			return nil
-		} else {
-			return fmt.Errorf("not a member for the claimed organization [%s]", m.orgId)
 		}
+		return fmt.Errorf("not a member for the claimed organization [%s]", m.orgId)
 	case IdentityMode: // attribute mode
 		// TODO add policy
 		return nil
