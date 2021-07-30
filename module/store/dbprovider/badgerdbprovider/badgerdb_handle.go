@@ -185,25 +185,14 @@ func (h *BadgerDBHandle) CompactRange(start, limit []byte) error { //nolint:goli
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
 func (h *BadgerDBHandle) NewIteratorWithRange(startKey []byte, limitKey []byte) protocol.Iterator {
-	opt := badger.IteratorOptions{
-		PrefetchValues: true,
-		PrefetchSize:   100,
-		Reverse:        false,
-		AllVersions:    false,
-	}
-	return NewBadgerIterator(h.db, opt, false, true, startKey, limitKey)
+	return NewIterator(h.db, badger.DefaultIteratorOptions, startKey, limitKey)
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
 func (h *BadgerDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
-	iteratorOptions := badger.IteratorOptions{
-		PrefetchValues: true,
-		PrefetchSize:   100,
-		Reverse:        false,
-		AllVersions:    false,
-		Prefix:         prefix,
-	}
-	return NewBadgerIterator(h.db, iteratorOptions, true, false, prefix, []byte("00"))
+	opts := badger.DefaultIteratorOptions
+	opts.Prefix = prefix
+	return NewIterator(h.db, opts, nil, nil)
 }
 
 // Close closes the badgerdb
