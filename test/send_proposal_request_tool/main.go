@@ -172,7 +172,7 @@ func main() {
 
 	mainFlags.BoolVar(&useShortCrt, "use-short-crt", false, "use compressed certificate in transactions")
 	mainFlags.StringVar(&hashAlgo, "hash-algorithm", "SHA256", "hash algorithm set in chain configuration")
-	mainFlags.BoolVarP(&prettyJson, "pretty", "p", false, "specify whether pretty json result")
+	mainFlags.BoolVar(&prettyJson, "pretty", false, "specify whether pretty json result")
 
 	mainCmd.AddCommand(CreateContractCMD())
 	mainCmd.AddCommand(UpgradeContractCMD())
