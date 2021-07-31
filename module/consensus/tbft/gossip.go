@@ -81,7 +81,7 @@ func (g *gossipService) stop() {
 }
 
 func (g *gossipService) addValidators(validators []string) error {
-	if validators == nil || len(validators) == 0 {
+	if len(validators) == 0 {
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func (g *gossipService) addValidators(validators []string) error {
 }
 
 func (g *gossipService) removeValidators(validators []string) error {
-	if validators == nil || len(validators) == 0 {
+	if len(validators) == 0 {
 		return nil
 	}
 
