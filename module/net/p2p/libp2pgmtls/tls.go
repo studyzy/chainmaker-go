@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package libp2pgmtls
 
 import (
+	cmcrypto "chainmaker.org/chainmaker-go/common/crypto"
 	cmtls "chainmaker.org/chainmaker-go/common/crypto/tls"
 	cmx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/net/p2p/revoke"
@@ -14,7 +15,6 @@ import (
 	gocrypto "crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -143,8 +143,8 @@ func createVerifyPeerCertificateFunc(
 	newTlsPeerChainIdsNotifyC chan<- map[string][]string,
 	newTlsCertIdPeerIdNotifyC chan<- string,
 	addPeerIdTlsCertNotifyC chan<- map[string][]byte,
-) func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-	return func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+) func(rawCerts [][]byte, _ [][]*cmx509.Certificate) error {
+	return func(rawCerts [][]byte, _ [][]*cmx509.Certificate) error {
 		revoked, err := isRevoked(revokeValidator, rawCerts)
 		if err != nil {
 			return err
@@ -255,10 +255,13 @@ func (t *Transport) setupConn(tlsConn *cmtls.Conn, remotePubKey crypto.PubKey) (
 }
 
 func parsePublicKeyToPubKey(publicKey gocrypto.PublicKey) (crypto.PubKey, error) {
+	if stPublicKey, ok := publicKey.(cmcrypto.PublicKey); ok{
+		publicKey = stPublicKey.ToStandardKey()
+	}
 	switch p := publicKey.(type) {
 	case *ecdsa.PublicKey:
 		if p.Curve == sm2.P256Sm2() {
-			b, err := sm2.MarshalPKIXPublicKey(p)
+			b, err := cmx509.MarshalPKIXPublicKey(p)
 			if err != nil {
 				return nil, err
 			}
@@ -274,5 +277,6 @@ func parsePublicKeyToPubKey(publicKey gocrypto.PublicKey) (crypto.PubKey, error)
 	case *rsa.PublicKey:
 		return crypto.NewRsaPublicKey(*p), nil
 	}
+
 	return nil, errors.New("unsupported public key type")
 }
