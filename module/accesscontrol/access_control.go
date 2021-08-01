@@ -291,34 +291,34 @@ func (ac *accessControl) VerifyRelatedMaterial(verifyType pbac.VerifyType, data 
 }
 
 //GetValidEndorsements filters all endorsement entries and returns all valid ones
-// func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
-// 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
-// 		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
-// 	}
-// 	refinedPolicy, err := ac.refinePrincipal(principal)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("authentication fail, not a member on this chain: [%v]", err)
-// 	}
-// 	endorsements := refinedPolicy.GetEndorsement()
-// 	if ac.authMode == MemberMode || localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
-// 		return endorsements, nil
-// 	}
-// 	p, err := ac.lookUpPolicyByResourceName(principal.GetResourceName())
-// 	if err != nil {
-// 		return nil, fmt.Errorf("authentication fail: [%v]", err)
-// 	}
-// 	orgListRaw := p.GetOrgList()
-// 	roleListRaw := p.GetRoleList()
-// 	orgList := map[string]bool{}
-// 	roleList := map[protocol.Role]bool{}
-// 	for _, orgRaw := range orgListRaw {
-// 		orgList[orgRaw] = true
-// 	}
-// 	for _, roleRaw := range roleListRaw {
-// 		roleList[roleRaw] = true
-// 	}
-// 	return ac.getValidEndorsements(orgList, roleList, endorsements), nil
-// }
+func (ac *accessControl) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
+	if atomic.LoadInt32(&ac.orgNum) <= 0 {
+		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
+	}
+	refinedPolicy, err := ac.refinePrincipal(principal)
+	if err != nil {
+		return nil, fmt.Errorf("authentication fail, not a member on this chain: [%v]", err)
+	}
+	endorsements := refinedPolicy.GetEndorsement()
+	// if ac.authMode == MemberMode || localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
+	// 	return endorsements, nil
+	// }
+	p, err := ac.lookUpPolicyByResourceName(principal.GetResourceName())
+	if err != nil {
+		return nil, fmt.Errorf("authentication fail: [%v]", err)
+	}
+	orgListRaw := p.GetOrgList()
+	roleListRaw := p.GetRoleList()
+	orgList := map[string]bool{}
+	roleList := map[protocol.Role]bool{}
+	for _, orgRaw := range orgListRaw {
+		orgList[orgRaw] = true
+	}
+	for _, roleRaw := range roleListRaw {
+		roleList[roleRaw] = true
+	}
+	return ac.getValidEndorsements(orgList, roleList, endorsements), nil
+}
 
 //ValidateCRL validates whether the CRL is issued by a trusted CA
 func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, error) {
@@ -353,13 +353,13 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 }
 
 //IsCertRevoked verify whether cert chain is revoked by a trusted CA.
-func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
-	err := ac.checkCRL(certChain)
-	if err != nil && err.Error() == "certificate is revoked" {
-		return true
-	}
-	return false
-}
+// func (ac *accessControl) IsCertRevoked(certChain []*bcx509.Certificate) bool {
+// 	err := ac.checkCRL(certChain)
+// 	if err != nil && err.Error() == "certificate is revoked" {
+// 		return true
+// 	}
+// 	return false
+// }
 
 func (ac *accessControl) Module() string {
 	return ModuleNameAccessControl

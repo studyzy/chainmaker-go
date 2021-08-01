@@ -52,20 +52,20 @@ func (cm *certMember) GetRole() protocol.Role {
 }
 
 func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
-	hash, ok := bccrypto.HashAlgoMap[hashType]
-	if !ok {
-		return fmt.Errorf("sign failed: unsupport hash type")
-	}
+	// hash, ok := bccrypto.HashAlgoMap[hashType]
+	// if !ok {
+	// 	return fmt.Errorf("sign failed: unsupport hash type")
+	// }
 	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cm.cert.SignatureAlgorithm)
 	if err != nil {
 		return fmt.Errorf("cert member verify failed: invalid algorithm: %s", err.Error())
 	}
 
-	if hash != hashAlgo {
-		return fmt.Errorf("cert member verify failed: The hash algorithm doesn't match the hash algorithm in the certificate")
-	}
+	// if hash != hashAlgo {
+	// 	return fmt.Errorf("cert member verify failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+	// }
 
-	ok, err = cm.cert.PublicKey.VerifyWithOpts(msg, sig, &bccrypto.SignOpts{
+	ok, err := cm.cert.PublicKey.VerifyWithOpts(msg, sig, &bccrypto.SignOpts{
 		Hash: hashAlgo,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
 	})
@@ -109,18 +109,18 @@ type signingCertMember struct {
 
 // When using certificate, the signature-hash algorithm suite is from the certificate, and the input hashType is ignored.
 func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) {
-	hash, ok := bccrypto.HashAlgoMap[hashType]
-	if !ok {
-		return nil, fmt.Errorf("sign failed: unsupport hash type")
-	}
+	// hash, ok := bccrypto.HashAlgoMap[hashType]
+	// if !ok {
+	// 	return nil, fmt.Errorf("sign failed: unsupport hash type")
+	// }
 	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(scm.cert.SignatureAlgorithm)
 	if err != nil {
 		return nil, fmt.Errorf("sign failed: invalid algorithm: %s", err.Error())
 	}
 
-	if hash != hashAlgo {
-		return nil, fmt.Errorf("sign failed: The hash algorithm doesn't match the hash algorithm in the certificate")
-	}
+	// if hash != hashAlgo {
+	// 	return nil, fmt.Errorf("sign failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+	// }
 
 	return scm.sk.SignWithOpts(msg, &bccrypto.SignOpts{
 		Hash: hashAlgo,
@@ -152,7 +152,7 @@ func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType strin
 
 	certBlock, _ := pem.Decode([]byte(certPEM))
 	if certBlock == nil {
-		return nil, fmt.Errorf("setup cert member failed, none public key or certificate given")
+		return nil, fmt.Errorf("setup cert member failed, pem decode failed")
 	}
 
 	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
@@ -166,17 +166,18 @@ func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType strin
 			return nil, fmt.Errorf("new member failed: unsupport hash type")
 		}
 		if hash != hashAlgo {
-			return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+			//return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate")
 		}
 		certMember.hashType = hashType
 		orgIdFromCert := cert.Subject.Organization[0]
 		if orgIdFromCert != orgId {
 			return nil, fmt.Errorf("setup cert member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
 		}
-		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
-		if err != nil {
-			id = []byte(cert.Subject.CommonName)
-		}
+		// id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+		// if err != nil {
+		// 	id = []byte(cert.Subject.CommonName)
+		// }
+		id := []byte(cert.Subject.CommonName)
 		certMember.id = string(id)
 		certMember.cert = cert
 		ou := ""

@@ -21,12 +21,11 @@ import (
 	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
 	"chainmaker.org/chainmaker-go/utils"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"github.com/Workiva/go-datastructures/threadsafe/err"
 	"github.com/tjfoc/gmsm/sm2"
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/common/helper"
