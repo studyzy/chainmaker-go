@@ -51,22 +51,22 @@ var p11HandleMap = map[string]*pkcs11.P11Handle{}
 
 // List of access principals which should not be customized
 var restrainedResourceList = map[string]bool{
-	protocol.ResourceNameAllTest:          true,
-	protocol.ResourceNameP2p:              true,
-	protocol.ResourceNameConsensusNode:    true,
-	
-	common.TxType_QUERY_CONTRACT.String(): true,
-	common.TxType_INVOKE_CONTRACT.String():true,
-	common.TxType_SUBSCRIBE.String(): 	   true,
-	common.TxType_ARCHIVE.String():        true,
+	protocol.ResourceNameAllTest:       true,
+	protocol.ResourceNameP2p:           true,
+	protocol.ResourceNameConsensusNode: true,
+
+	common.TxType_QUERY_CONTRACT.String():  true,
+	common.TxType_INVOKE_CONTRACT.String(): true,
+	common.TxType_SUBSCRIBE.String():       true,
+	common.TxType_ARCHIVE.String():         true,
 }
 
 // Default access principals for predefined operation categories
 var txTypeToResourceNameMap = map[common.TxType]string{
 	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
 	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE: protocol.ResourceNameSubscribe,
-	common.TxType_ARCHIVE: protocol.ResourceNameArchive,
+	common.TxType_SUBSCRIBE:       protocol.ResourceNameSubscribe,
+	common.TxType_ARCHIVE:         protocol.ResourceNameArchive,
 }
 
 var (
@@ -78,7 +78,8 @@ var (
 	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
 	policyArchive   = NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin})
 
-	policyConfig     = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
+	policyConfig = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
+
 	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
 
 	policyForbidden = NewPolicy(protocol.RuleForbidden, nil, nil)
@@ -115,15 +116,23 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 				ac.opts.Intermediates.AddCert(certificateChain[i])
 			}
 
-			/*for _, certificate := range certificateChain {
-				if certificate.IsCA {
-					org.trustedRootCerts[string(certificate.Raw)] = certificate
-					ac.opts.Roots.AddCert(certificate)
-				} else {
-					org.trustedIntermediateCerts[string(certificate.Raw)] = certificate
-					ac.opts.Intermediates.AddCert(certificate)
-				}
-			}*/
+			certificateChain, err := ac.buildCertificateChain(root, org)
+			if err != nil {
+				return err
+			}
+
+			if certificateChain == nil || !certificateChain[len(certificateChain)-1].IsCA {
+				return fmt.Errorf("the certificate configured as root for organization %s is not a CA certificate", root.OrgId)
+			}
+
+			org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] =
+				certificateChain[len(certificateChain)-1]
+			ac.opts.Roots.AddCert(certificateChain[len(certificateChain)-1])
+
+			for i := 0; i < len(certificateChain); i++ {
+				org.trustedIntermediateCerts[string(certificateChain[i].Raw)] = certificateChain[i]
+				ac.opts.Intermediates.AddCert(certificateChain[i])
+			}
 
 			if len(org.trustedRootCerts) <= 0 {
 				return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
@@ -131,6 +140,7 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 		}
 		ac.addOrg(org)
 	}
+
 	localOrg := ac.getOrgByOrgId(localOrgId)
 	if localOrg == nil {
 		localOrg = &organization{
@@ -140,6 +150,7 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 		}
 	}
 	ac.localOrg = localOrg
+
 	return nil
 }
 
@@ -213,18 +224,17 @@ func (ac *accessControl) buildCertificateChain(root, orgId string, org *organiza
 		}
 		ac.identityType = pbac.MemberType_CERT
 		certificates = append(certificates, cert)
-
 		pemBlock, rest = pem.Decode(rest)
 	}
-
 	certificateChain = bcx509.BuildCertificateChain(certificates)
 	return certificateChain, nil
 }
 
-func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig, localOrgId string) error {
-	var orgNum int32 = 0
-	orgList := &sync.Map{}
+func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig,
+	localOrgId string) error {
 
+	var orgNum int32
+	orgList := &sync.Map{}
 	opts := bcx509.VerifyOptions{
 		Intermediates: bcx509.NewCertPool(),
 		Roots:         bcx509.NewCertPool(),
@@ -258,10 +268,10 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 		orgList.Store(org.id, org)
 		orgNum++
 	}
+
 	atomic.StoreInt32(&ac.orgNum, orgNum)
 	ac.orgList = orgList
 	ac.opts = opts
-
 	localOrg := ac.getOrgByOrgId(localOrgId)
 	if localOrg == nil {
 		localOrg = &organization{
@@ -278,6 +288,7 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId string, org *organization) ([]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
+	var certificates, certificateChain []*bcx509.Certificate
 	if ac.identityType == pbac.MemberType_PUBLIC_KEY {
 		pk, errPubKey := asym.PublicKeyFromPEM([]byte(root))
 		if errPubKey != nil {
@@ -289,6 +300,7 @@ func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId
 
 		org.trustedRootCerts[root] = &bcx509.Certificate{Raw: []byte(root), PublicKey: pk, Signature: nil, SubjectKeyId: nil}
 	}
+
 	if ac.identityType == pbac.MemberType_CERT {
 		pemBlock, rest := pem.Decode([]byte(root))
 		for pemBlock != nil {
