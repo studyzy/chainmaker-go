@@ -322,9 +322,9 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 	//for private compute
 	resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
 	resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
-		syscontract.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
+		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(), policyConfig)
 	resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
-		syscontract.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+		syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
