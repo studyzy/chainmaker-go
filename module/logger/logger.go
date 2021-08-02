@@ -18,8 +18,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// Log module
 const (
-	MODULE_BLOCKCHAIN = "[Blockchain]" // output system.log
+	MODULE_BLOCKCHAIN = "[Blockchain]"
 	MODULE_NET        = "[Net]"
 	MODULE_STORAGE    = "[Storage]"
 	MODULE_SNAPSHOT   = "[Snapshot]"
@@ -35,10 +36,9 @@ const (
 	MODULE_MONITOR    = "[Monitor]"
 	MODULE_SYNC       = "[Sync]"
 	MODULE_DPOS       = "[DPoS]"
-	MODULE_BRIEF      = "[Brief]" // output brief.log
+	MODULE_BRIEF      = "[Brief]"
 
-	MODULE_EVENT = "[Event]" // output to event.log
-
+	MODULE_EVENT = "[Event]"
 )
 
 var (
