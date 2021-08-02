@@ -15,6 +15,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.4.4
+	github.com/jfcg/sorty v1.0.15
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/viper v1.7.1
