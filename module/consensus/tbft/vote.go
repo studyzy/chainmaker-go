@@ -20,9 +20,9 @@ import (
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
 )
 
-const (
-	nilVoteStr = "nil vote"
-)
+//const (
+//	nilVoteStr = "nil vote"
+//)
 
 var (
 	ErrVoteNil              = errors.New("nil vote")
@@ -183,7 +183,7 @@ func (bv *BlockVotes) ToProto() *tbftpb.BlockVotes {
 
 func (bv *BlockVotes) addVote(vote *Vote) {
 	bv.Votes[vote.Voter] = vote
-	bv.Sum += 1
+	bv.Sum++
 }
 
 // VoteSet wraps tbftpb.VoteSet and validatorSet
@@ -200,7 +200,8 @@ type VoteSet struct {
 }
 
 // NewVoteSet creates a new VoteSet instance
-func NewVoteSet(logger *logger.CMLogger, voteType tbftpb.VoteType, height uint64, round int32, validators *validatorSet) *VoteSet {
+func NewVoteSet(logger *logger.CMLogger, voteType tbftpb.VoteType, height uint64, round int32,
+	validators *validatorSet) *VoteSet {
 	return &VoteSet{
 		logger:       logger,
 		Type:         voteType,
@@ -318,7 +319,7 @@ func (vs *VoteSet) AddVote(vote *Vote) (added bool, err error) {
 	}
 
 	vs.Votes[vote.Voter] = vote
-	vs.Sum += 1
+	vs.Sum++
 
 	hashStr := base64.StdEncoding.EncodeToString(vote.Hash)
 	votesByBlock, ok := vs.VotesByBlock[hashStr]
@@ -407,7 +408,8 @@ func newRoundVoteSet(height uint64, round int32, prevotes *VoteSet, precommits *
 	}
 }
 
-func NewRoundVoteSetFromProto(logger *logger.CMLogger, rvs *tbftpb.RoundVoteSet, validators *validatorSet) *roundVoteSet {
+func NewRoundVoteSetFromProto(logger *logger.CMLogger, rvs *tbftpb.RoundVoteSet,
+	validators *validatorSet) *roundVoteSet {
 	if rvs == nil {
 		return nil
 	}
@@ -447,7 +449,8 @@ type heightRoundVoteSet struct {
 	validators *validatorSet
 }
 
-func newHeightRoundVoteSet(logger *logger.CMLogger, height uint64, round int32, validators *validatorSet) *heightRoundVoteSet {
+func newHeightRoundVoteSet(logger *logger.CMLogger, height uint64, round int32,
+	validators *validatorSet) *heightRoundVoteSet {
 	hvs := &heightRoundVoteSet{
 		logger:        logger,
 		Height:        height,
@@ -459,16 +462,17 @@ func newHeightRoundVoteSet(logger *logger.CMLogger, height uint64, round int32, 
 	return hvs
 }
 
-func newHeightRoundVoteSetFromProto(logger *logger.CMLogger, hvsProto *tbftpb.HeightRoundVoteSet, validators *validatorSet) *heightRoundVoteSet {
-	hvs := newHeightRoundVoteSet(logger, hvsProto.Height, hvsProto.Round, validators)
-
-	for k, v := range hvsProto.RoundVoteSets {
-		rvs := NewRoundVoteSetFromProto(logger, v, validators)
-		hvs.RoundVoteSets[k] = rvs
-	}
-
-	return hvs
-}
+//func newHeightRoundVoteSetFromProto(logger *logger.CMLogger, hvsProto *tbftpb.HeightRoundVoteSet,
+//	validators *validatorSet) *heightRoundVoteSet {
+//	hvs := newHeightRoundVoteSet(logger, hvsProto.Height, hvsProto.Round, validators)
+//
+//	for k, v := range hvsProto.RoundVoteSets {
+//		rvs := NewRoundVoteSetFromProto(logger, v, validators)
+//		hvs.RoundVoteSets[k] = rvs
+//	}
+//
+//	return hvs
+//}
 
 func (hvs *heightRoundVoteSet) ToProto() *tbftpb.HeightRoundVoteSet {
 	if hvs == nil {
@@ -579,13 +583,13 @@ func createPrecommitMsg(precommit *Vote) *tbftpb.TBFTMsg {
 	return tbftMsg
 }
 
-func createStateMsg(state *tbftpb.ConsensusState) *tbftpb.TBFTMsg {
-	data := mustMarshal(state)
-
-	tbftMsg := &tbftpb.TBFTMsg{
-		Type: tbftpb.TBFTMsgType_MSG_STATE,
-		Msg:  data,
-	}
-
-	return tbftMsg
-}
+//func createStateMsg(state *tbftpb.ConsensusState) *tbftpb.TBFTMsg {
+//	data := mustMarshal(state)
+//
+//	tbftMsg := &tbftpb.TBFTMsg{
+//		Type: tbftpb.TBFTMsgType_MSG_STATE,
+//		Msg:  data,
+//	}
+//
+//	return tbftMsg
+//}

@@ -22,13 +22,14 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-func GetValidatorList(chainConfig *config.ChainConfig, store protocol.BlockchainStore) (validators []string, err error) {
+func GetValidatorList(chainConfig *config.ChainConfig, store protocol.BlockchainStore) (validators []string,
+	err error) {
 	if chainConfig.Consensus.Type == consensus.ConsensusType_TBFT {
 		return GetValidatorListFromConfig(chainConfig)
 	} else if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
 		return GetValidatorListFromLedger(store)
 	}
-	return nil, fmt.Errorf("unkonwn consensus type: %s", chainConfig.Consensus.Type)
+	return nil, fmt.Errorf("unknown consensus type: %s", chainConfig.Consensus.Type)
 }
 
 func GetValidatorListFromConfig(chainConfig *config.ChainConfig) (validators []string, err error) {
@@ -60,8 +61,7 @@ func GetValidatorListFromLedger(store protocol.BlockchainStore) (validators []st
 func VerifyBlockSignatures(chainConf protocol.ChainConf,
 	ac protocol.AccessControlProvider, block *common.Block, store protocol.BlockchainStore) error {
 
-	if block == nil || block.Header == nil || block.Header.BlockHeight < 0 ||
-		block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
+	if block == nil || block.Header == nil || block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return fmt.Errorf("invalid block")
 	}
 	blockVoteSet, ok := block.AdditionalData.ExtraData[protocol.TBFTAddtionalDataKey]
