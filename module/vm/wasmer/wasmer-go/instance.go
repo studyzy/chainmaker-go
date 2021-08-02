@@ -128,6 +128,7 @@ func newInstanceWithImports(
 		cWasmImport := *getCWasmerImport(importName, importImport)
 		wasmImports[importNth] = cWasmImport
 		if importFunc, ok := importImport.(ImportFunction); ok {
+			// 登记 cWasmImport.value 地址，用于instance 销毁时候的释放
 			importedFunctionPointer := (**cWasmerImportFuncT)((unsafe.Pointer)(&cWasmImport.value))
 			imports.imports[importName] = ImportFunction {
 				importFunc.implementation,

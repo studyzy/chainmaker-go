@@ -123,6 +123,8 @@ func (memory *Memory) Grow(numberOfPages uint32) error {
 
 // Close closes/frees memory allocated at the NewMemory at time.
 func (memory *Memory) Close() {
+	// 从 lib 中获取内存的时候标志为 false, 表示从 lib 中借用的内存。
+	// instance 销毁的需要释放
 	if !memory.IsOwned() {
 		cWasmerMemoryDestroy(memory.memory)
 	}
