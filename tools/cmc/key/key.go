@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package key
 
 import (
-	"chainmaker.org/chainmaker/common/cert"
-	"chainmaker.org/chainmaker/common/crypto"
 	"fmt"
 	"strings"
+
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker/common/cert"
+	"chainmaker.org/chainmaker/common/crypto"
 )
 
 var (

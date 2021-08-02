@@ -8,6 +8,7 @@ func MaxInt(i, j int) int {
 	}
 	return i
 }
+
 func ConvertParameters(pars map[string]string) []*common.KeyValuePair {
 	var kvp []*common.KeyValuePair
 	for k, v := range pars {

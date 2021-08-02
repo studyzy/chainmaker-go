@@ -96,9 +96,10 @@ func updateBlockInterval() error {
 	if err != nil {
 		return fmt.Errorf("send chain config update request failed, %s", err.Error())
 	}
-	err = util.CheckProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, false)
 	if err != nil {
 		return fmt.Errorf("check proposal request resp failed, %s", err.Error())
 	}
+	fmt.Printf("response %+v\n", resp)
 	return nil
 }

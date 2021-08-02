@@ -16,8 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker/common/crypto/hibe"
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker/common/crypto/hibe"
 )
 
 var (
