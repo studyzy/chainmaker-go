@@ -5,7 +5,7 @@ go 1.15
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210727024622-8e8f7e941404
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210727020515-fed49abae939
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210729080049-e8ddce10b9e6
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
