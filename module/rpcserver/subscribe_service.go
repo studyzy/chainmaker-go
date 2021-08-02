@@ -74,6 +74,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		endBlock        int64
 		withRWSet       = false
 		onlyHeader      = false
+		reqSender       *protocol.Role
 	)
 
 	for _, kv := range payload.Parameters {
@@ -142,7 +143,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 	}
 
 	if endBlock != -1 && endBlock <= lastBlockHeight {
-		err, _ := s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
+		_, err := s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
 			withRWSet, onlyHeader, reqSender, reqSenderOrgId)
 
 		if err != nil {
@@ -153,7 +154,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		return status.Error(codes.OK, "OK")
 	}
 
-	err, alreadySendHistoryBlockHeight := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader)
+	alreadySendHistoryBlockHeight, err := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader, reqSender, reqSenderOrgId)
 	if err != nil {
 		s.log.Errorf("sendHistoryBlock failed, %s", err)
 		return err
@@ -350,7 +351,7 @@ func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainSt
 		return status.Error(codes.OK, "OK")
 	}
 
-	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, alreadySendHistoryBlockHeight)
+	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, alreadySendHistoryBlockHeight, reqSender, reqSenderOrgId)
 }
 
 func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
@@ -377,7 +378,7 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 	}
 
 	if endBlock != -1 && endBlock <= lastBlockHeight {
-		err, _ := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
+		_, err := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
 			txIds, txIdsMap, reqSender, reqSenderOrgId)
 
 		if err != nil {
@@ -392,7 +393,7 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 		return 0, status.Error(codes.OK, "OK")
 	}
 
-	err, alreadySendHistoryBlockHeight := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
+	alreadySendHistoryBlockHeight, err := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
 		txIds, txIdsMap, reqSender, reqSenderOrgId)
 
 	if err != nil {
@@ -442,7 +443,7 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 			blockInfo = ev.BlockInfo
 
 			if alreadySendHistoryBlockHeight != -1 && int64(blockInfo.Block.Header.BlockHeight) > alreadySendHistoryBlockHeight {
-				err, _ = s.sendHistoryBlock(store, server, alreadySendHistoryBlockHeight+1,
+				_, err = s.sendHistoryBlock(store, server, alreadySendHistoryBlockHeight+1,
 					int64(blockInfo.Block.Header.BlockHeight), withRWSet, onlyHeader, reqSender, reqSenderOrgId)
 				if err != nil {
 					s.log.Errorf("send history block failed, %s", err)
@@ -453,12 +454,6 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 				continue
 			}
 
-			reqSender, err = s.getRoleOfRequestSender(tx)
-			if err != nil {
-				return err
-			}
-
-			reqSenderOrgId := tx.Sender.Signer.OrgId
 			if *reqSender == protocol.RoleLight {
 				utils.FilterBlockTxs(reqSenderOrgId, blockInfo.Block)
 			}
@@ -540,7 +535,7 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 			block = ev.BlockInfo.Block
 
 			if alreadySendHistoryBlockHeight != -1 && int64(block.Header.BlockHeight) > alreadySendHistoryBlockHeight {
-				err, _ = s.sendHistoryTx(store, server, alreadySendHistoryBlockHeight+1,
+				_, err = s.sendHistoryTx(store, server, alreadySendHistoryBlockHeight+1,
 					int64(block.Header.BlockHeight), contractName, txIds, txIdsMap, reqSender, reqSenderOrgId)
 				if err != nil {
 					s.log.Errorf("send history block failed, %s", err)
@@ -619,7 +614,7 @@ func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server api
 				return i - 1, nil
 			}
 
-			blockInfo, alreadySendHistoryBlockHeight, err := s.getBlockInfoFromStore(store, i, withRWSet)
+			blockInfo, alreadySendHistoryBlockHeight, err := s.getBlockInfoFromStore(store, i, withRWSet, reqSender, reqSenderOrgId)
 			if err != nil {
 				return -1, status.Error(codes.Internal, errMsg)
 			}
@@ -746,7 +741,7 @@ func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 				return i - 1, nil
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap, reqSender, reqSenderOrgId); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return -1, status.Error(codes.Internal, errMsg)
@@ -875,9 +870,9 @@ func (s *ApiService) checkIsContinue(tx *commonPb.Transaction, contractName stri
 
 func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx *commonPb.Transaction, reqSender *protocol.Role, reqSenderOrgId string) error {
 	var (
-		err       error
-		errMsg    string
-		result    *commonPb.SubscribeResult
+		err    error
+		errMsg string
+		result *commonPb.SubscribeResult
 	)
 
 	isReqSenderLightNode := *reqSender == protocol.RoleLight
