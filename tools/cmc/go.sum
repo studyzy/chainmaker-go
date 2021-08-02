@@ -1,9 +1,8 @@
+chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25 h1:yt6PYC0HDfvLRS1yNMqDfarNKkAj3ulC+BEQmTg//uc=
 chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
-chainmaker.org/chainmaker/common v0.0.0-20210727024622-8e8f7e941404 h1:g0yA2jZ1rLzUJKFBlVQvfthfJZfz+5ZJfLrXqGfIIwo=
-chainmaker.org/chainmaker/common v0.0.0-20210727024622-8e8f7e941404/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210722032511-d7299b62eae6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b h1:ZXOLnpa87F268NZeyW7Ce2Y9SgCgC0ggR4EFkTSiSNc=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210723070658-764cafbc33fe h1:spAyJafAUiraHkytxNpjl231X7d+ul+MFjhEH3u9PG0=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210723070658-764cafbc33fe/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/sdk-go v0.0.0-20210729080049-e8ddce10b9e6 h1:n/d03SVHkkvP/6KGUKi9UxpjVZdQaQAiV/ydqAIht4I=
 chainmaker.org/chainmaker/sdk-go v0.0.0-20210729080049-e8ddce10b9e6/go.mod h1:3PIw9yFYVkXdZDp/wCNf+FaW6qPaIRXx1DE79q0feK4=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
