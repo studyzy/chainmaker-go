@@ -108,9 +108,15 @@ storage:
   # 最小的不允许归档的区块高度
   unarchive_block_height: 300000
   blockdb_config:
-    provider: leveldb
-    leveldb_config:
-      store_path: ../data/{org_id}/blocks
+    provider: rocksdb
+      rocksdb_config:
+        write_buffer_size: 64
+        db_write_buffer_size: 64
+        block_cache_size: 128
+        max_write_buffer_number: 10
+        max_background_compactions: 4
+        max_background_flushes: 2
+        bloom_filter_bits: 10
   statedb_config:
     provider: leveldb
     leveldb_config:
