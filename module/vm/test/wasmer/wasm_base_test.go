@@ -19,7 +19,6 @@ import (
 	_ "net/http/pprof"
 	"runtime"
 	"sync"
-	"time"
 )
 
 // Module 序列化后实例wasm
@@ -88,10 +87,9 @@ func TestInstanceNewAndClose(t *testing.T) {
 
 	println("test begin ==> ")
 	runtime.ReadMemStats(&beginMemStat)
-	time.Sleep(time.Second * 5)
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1; i++ {
 		wg.Add(1)
 
 		go func() {
@@ -117,8 +115,6 @@ func TestInstanceNewAndClose(t *testing.T) {
 	debug.FreeOSMemory()
 	println("finshed, waiting exit...")
 
-
-	time.Sleep(time.Second * 10)
 	fmt.Printf("begin stat =>\t Alloc = %v, TotalAlloc = %v, Sys = %v, NumGC = %v\n",
 		beginMemStat.Alloc/1024, beginMemStat.TotalAlloc/1024, beginMemStat.Sys/1024, beginMemStat.NumGC)
 	fmt.Printf("end stat   =>\t Alloc = %v, TotalAlloc = %v, Sys = %v, NumGC = %v\n",
