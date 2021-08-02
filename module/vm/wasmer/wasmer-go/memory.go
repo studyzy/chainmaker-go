@@ -123,7 +123,7 @@ func (memory *Memory) Grow(numberOfPages uint32) error {
 
 // Close closes/frees memory allocated at the NewMemory at time.
 func (memory *Memory) Close() {
-	if memory.IsOwned() {
+	if !memory.IsOwned() {
 		cWasmerMemoryDestroy(memory.memory)
 	}
 }

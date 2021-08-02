@@ -124,7 +124,20 @@ func newInstanceWithImports(
 	var importNth = 0
 
 	for importName, importImport := range imports.imports {
-		wasmImports[importNth] = *getCWasmerImport(importName, importImport)
+		// 构建临时对象 cWasmImport
+		cWasmImport := *getCWasmerImport(importName, importImport)
+		wasmImports[importNth] = cWasmImport
+		if importFunc, ok := importImport.(ImportFunction); ok {
+			importedFunctionPointer := (**cWasmerImportFuncT)((unsafe.Pointer)(&cWasmImport.value))
+			imports.imports[importName] = ImportFunction {
+				importFunc.implementation,
+				importFunc.cgoPointer,
+				*importedFunctionPointer,
+				importFunc.wasmInputs,
+				importFunc.wasmOutputs,
+				importFunc.namespace,
+			}
+		}
 		importNth++
 	}
 
@@ -473,7 +486,9 @@ func (instance *Instance) Close() {
 	if instance.imports != nil {
 		instance.imports.Close()
 	}
-
+	if instance.Memory != nil {
+		instance.Memory.Close()
+	}
 	if instance.instance != nil {
 		cWasmerInstanceDestroy(instance.instance)
 	}

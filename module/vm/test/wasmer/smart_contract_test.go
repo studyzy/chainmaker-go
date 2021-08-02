@@ -44,7 +44,7 @@ func TestCallFact(t *testing.T) {
 	println("start") // 2.9m
 	start := time.Now().UnixNano() / 1e6
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 10000; i++ {
 		for j := 0; j < 1; j++ {
 			x++
 			y := x
