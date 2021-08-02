@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -18,14 +19,13 @@ import (
 	"strings"
 	"time"
 
-	"chainmaker.org/chainmaker/common/crypto/x509"
-
-	"chainmaker.org/chainmaker/common/random/uuid"
+	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker/common/cert"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-	"github.com/spf13/cobra"
+	"chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/random/uuid"
 )
 
 const (
@@ -175,7 +175,10 @@ func createCrl() error {
 	if err != nil {
 		return fmt.Errorf("parse ca cert file failed, %s", err.Error())
 	}
-	block, _ := pem.Decode(issuerPrivKeyRaw)
+	block, rest := pem.Decode(issuerPrivKeyRaw)
+	if len(rest) != 0 {
+		return errors.New("pem.Decode failed, invalid cert")
+	}
 	issuerPrivKey, err := asym.PrivateKeyFromDER(block.Bytes)
 	if err != nil {
 		return fmt.Errorf("load private key from der failed, %s", err.Error())
