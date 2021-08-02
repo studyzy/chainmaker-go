@@ -92,7 +92,7 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.Proposal = pcsProto.Proposal
 	pcs.VerifingProposal = pcsProto.VerifingProposal
 	validatorSet := pcs.tbftImpl.getValidatorSet()
-	pcs.RoundVoteSet = NewRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	pcs.RoundVoteSet = newRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
 	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
@@ -123,7 +123,6 @@ func (pcs *PeerStateService) procStateChange() {
 			pcs.sendStateChange()
 		case <-pcs.closeC:
 			loop = false
-			break
 		}
 	}
 }

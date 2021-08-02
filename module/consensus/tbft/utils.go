@@ -35,9 +35,10 @@ func GetValidatorList(chainConfig *config.ChainConfig, store protocol.Blockchain
 func GetValidatorListFromConfig(chainConfig *config.ChainConfig) (validators []string, err error) {
 	nodes := chainConfig.Consensus.Nodes
 	for _, node := range nodes {
-		for _, nid := range node.NodeId {
-			validators = append(validators, nid)
-		}
+		//for _, nid := range node.NodeId {
+		//	validators = append(validators, nid)
+		//}
+		validators = append(validators, node.NodeId...)
 	}
 	return validators, nil
 }
@@ -103,7 +104,10 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf,
 	for _, v := range blockVotes.Votes {
 		voteProto := v.ToProto()
 		voteProtoCopy := proto.Clone(voteProto)
-		vote := voteProtoCopy.(*tbftpb.Vote)
+		vote, ok := voteProtoCopy.(*tbftpb.Vote)
+		if !ok {
+			return fmt.Errorf("interface transfer to *tbftpb.Vote failed")
+		}
 		vote.Endorsement = nil
 		message := mustMarshal(vote)
 
