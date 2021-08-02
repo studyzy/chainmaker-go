@@ -123,7 +123,7 @@ func TestRotateSize(t *testing.T) {
 
 	logger := GetLogger(MODULE_CORE)
 
-	for i := 0 ;i<100;i++{
+	for i := 0; i < 100; i++ {
 		//time.Sleep(100*time.Microsecond)
 		logger.Info("this is info msg ")
 		logger.Debugf("hello %s", "chainmaker ")
