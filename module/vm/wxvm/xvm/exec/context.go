@@ -43,7 +43,7 @@ type Code interface {
 
 type aotContext struct {
 	context  C.wxvm_context_t
-	gasUsed  uint64
+	//gasUsed  uint64
 	cfg      ContextConfig
 	userData map[string]interface{}
 	code     *aotCode

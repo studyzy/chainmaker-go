@@ -59,7 +59,8 @@ func CompileNativeLibrary(cfg *Config, target, source string) error {
 		return err
 	}
 	cheader := filepath.Join(tmpdir, "wasm-rt.h")
-	err = ioutil.WriteFile(cheader, wasmRTHeader, 0644)
+	//TODO:check if there is question when file permission is 0600
+	err = ioutil.WriteFile(cheader, wasmRTHeader, 0600)
 	if err != nil {
 		return err
 	}

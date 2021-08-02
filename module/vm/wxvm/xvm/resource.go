@@ -40,9 +40,9 @@ var MaxLimits = Limits{
 	Cpu: maxResourceLimit,
 }
 
-func roundup(n, scale int64) int64 {
-	if scale == 0 {
-		return 0
-	}
-	return (n + scale - 1) / scale
-}
+//func roundup(n, scale int64) int64 {
+//	if scale == 0 {
+//		return 0
+//	}
+//	return (n + scale - 1) / scale
+//}//unused(deadcode)

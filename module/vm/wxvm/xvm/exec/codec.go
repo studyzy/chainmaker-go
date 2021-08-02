@@ -84,7 +84,7 @@ func (c Codec) CString(addr uint32) string {
 	}
 	mem := c.mem
 	var i = int(addr)
-	for ; i < len(mem) && mem[i] != '\x00'; i++ {
-	}
+	//for ; i < len(mem) && mem[i] != '\x00'; i++ {
+	//}
 	return string(mem[addr:i])
 }
