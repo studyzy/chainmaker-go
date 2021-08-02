@@ -88,8 +88,8 @@ func registerChainConfigContractMethods(log protocol.Logger) map[string]common.C
 
 	// [trust_Member]
 	trustMembersRuntime := &ChainTrustMembersRuntime{log: log}
-	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_ADD.String()] = trustMembersRuntime.TrustMemberAdd
-	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_DELETE.String()] = trustMembersRuntime.TrustMemberDelete
+	methodMap[syscontract.ChainConfigFunction_TRUST_MEMBER_ADD.String()] = trustMembersRuntime.TrustMemberAdd
+	methodMap[syscontract.ChainConfigFunction_TRUST_MEMBER_DELETE.String()] = trustMembersRuntime.TrustMemberDelete
 
 	// [consensus]
 	consensusRuntime := &ChainConsensusRuntime{log: log}
@@ -336,14 +336,13 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 		return nil, err
 	}
 
-	orgId := params[paramNameOrgId]
-	rootCasStr := params[paramNameRoot]
+	orgId := string(params[paramNameOrgId])
+	rootCasStr := string(params[paramNameRoot])
 	if utils.IsAnyBlank(orgId, rootCasStr) {
-		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", ErrParams.Error(), paramNameOrgId, paramNameRoot)
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
-
 	root := strings.Split(rootCasStr, ",")
 
 	trustRoot := &configPb.TrustRootConfig{OrgId: orgId, Root: root}
@@ -366,11 +365,11 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 		return nil, err
 	}
 
-	orgId := params[paramNameOrgId]
+	orgId := string(params[paramNameOrgId])
 
-	rootCasStr := params[paramNameRoot]
+	rootCasStr := string(params[paramNameRoot])
 	if utils.IsAnyBlank(orgId, rootCasStr) {
-		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", ErrParams.Error(), paramNameOrgId, paramNameRoot)
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -447,10 +446,10 @@ func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimCont
 
 // [trust_root]
 type ChainTrustMembersRuntime struct {
-	log *logger.CMLogger
+	log protocol.Logger
 }
 
-func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -458,12 +457,12 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 		return nil, err
 	}
 
-	orgId := params[paramNameOrgId]
-	memberInfo := params[paramNameMemberInfo]
-	role := params[paramNameRole]
-	nodeId := params[paramNameNodeId]
+	orgId := string(params[paramNameOrgId])
+	memberInfo := string(params[paramNameMemberInfo])
+	role := string(params[paramNameRole])
+	nodeId := string(params[paramNameNodeId])
 	if utils.IsAnyBlank(memberInfo, orgId, role, nodeId) {
-		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found", ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
+		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -479,7 +478,7 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 	return result, err
 }
 
-func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -487,7 +486,7 @@ func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSim
 		return nil, err
 	}
 
-	memberInfo := params[paramNameMemberInfo]
+	memberInfo := string(params[paramNameMemberInfo])
 	if utils.IsAnyBlank(memberInfo) {
 		err = fmt.Errorf("delete trust member failed, require param [%s], but not found", paramNameNodeId)
 		r.log.Error(err)

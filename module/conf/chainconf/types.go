@@ -77,7 +77,7 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*chainConfig, error) {
 		return nil, err
 	}
 
-	if err := verifyChainConfigConsensus(cconfig, mConfig); err != nil {
+	if err := verifyChainConfigConsensus(cconfig, mConfig, chainLog); err != nil {
 		return nil, err
 	}
 
