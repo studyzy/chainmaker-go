@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package wxvm
 
 import (
+	"runtime/debug"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"runtime/debug"
 )
 
 type RuntimeInstance struct {
@@ -22,8 +23,9 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
-	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte,
+	parameters map[string][]byte, txContext protocol.TxSimContext,
+	gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
 	tx := txContext.GetTx()
 
@@ -56,7 +58,8 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 		return
 	}
 
-	if inst, err := xvm.CreateInstance(context.ID, execCode, method, contract, gasUsed, int64(protocol.GasLimit)); err != nil {
+	inst, err := xvm.CreateInstance(context.ID, execCode, method, contract, gasUsed, int64(protocol.GasLimit))
+	if err != nil {
 		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		return

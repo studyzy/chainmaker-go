@@ -69,7 +69,11 @@ func newResolverBridge(r Resolver) *resolverBridge {
 func wxvm_resolve_func(env unsafe.Pointer, module, name *C.char) C.wasm_rt_func_handle_t {
 	lock.Lock()
 	defer lock.Unlock()
-	r := PointerRestore(uintptr(env)).(*resolverBridge)
+	r, ok := PointerRestore(uintptr(env)).(*resolverBridge)
+	if !ok {
+		Throw(NewTrap("bad type convert from interface{} to resolverBridge"))
+	}
+
 	moduleStr, nameStr := C.GoString(module), C.GoString(name)
 	key := moduleStr + ":" + nameStr
 
@@ -103,7 +107,11 @@ func wxvm_resolve_func(env unsafe.Pointer, module, name *C.char) C.wasm_rt_func_
 
 //export wxvm_resolve_global
 func wxvm_resolve_global(env unsafe.Pointer, module, name *C.char) C.int64_t {
-	r := PointerRestore(uintptr(env)).(*resolverBridge)
+	r, ok := PointerRestore(uintptr(env)).(*resolverBridge)
+	if !ok {
+		Throw(NewTrap("bad type convert from interface{} to resolverBridge"))
+	}
+
 	moduleStr, nameStr := C.GoString(module), C.GoString(name)
 	value, ok := r.resolver.ResolveGlobal(moduleStr, nameStr)
 	if !ok {
@@ -118,7 +126,11 @@ func wxvm_resolve_global(env unsafe.Pointer, module, name *C.char) C.int64_t {
 //export wxvm_call_func
 func wxvm_call_func(env unsafe.Pointer, handle C.wasm_rt_func_handle_t,
 	ctxptr *C.wxvm_context_t, params *C.uint32_t, paramLen C.uint32_t) C.uint32_t {
-	r := PointerRestore(uintptr(env)).(*resolverBridge)
+	r, ok := PointerRestore(uintptr(env)).(*resolverBridge)
+	if !ok {
+		Throw(NewTrap("bad type convert from interface{} to resolverBridge"))
+	}
+
 	idx := int(uintptr(handle))
 	if idx <= 0 || idx >= len(r.funcs) {
 		Throw(NewTrap(fmt.Sprintf("bad func idx %d", idx)))

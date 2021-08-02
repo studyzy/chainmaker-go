@@ -1,15 +1,7 @@
 package xvm
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/compile"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"errors"
-	"golang.org/x/sync/singleflight"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +9,15 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/compile"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/protocol"
+	"golang.org/x/sync/singleflight"
 )
 
 const OptLevel = 0
@@ -35,7 +36,10 @@ type CodeManager struct {
 
 func NewCodeManager(chainId string, basedir string) *CodeManager {
 	runDirFull := filepath.Join(basedir)
-	os.MkdirAll(basedir, 0755)
+	err := os.MkdirAll(basedir, 0755)
+	if err != nil {
+		logger.GetLoggerByChain(logger.MODULE_VM, chainId).Infof("New code manager failed err: %v", err)
+	}
 
 	return &CodeManager{
 		basedir: basedir,
@@ -51,9 +55,9 @@ func (c *CodeManager) lookupMemCache(keyId string) (exec.Code, bool) {
 	ccode, ok := c.codes[keyId]
 	if !ok {
 		return nil, false
-	} else {
-		return ccode, true
 	}
+
+	return ccode, true
 }
 
 func (c *CodeManager) lookupDiskCache(chainId string, contract *commonPb.Contract) (string, bool) {
@@ -73,7 +77,10 @@ func (c *CodeManager) makeDiskCache(chainId string, contract *commonPb.Contract,
 	basePath := filepath.Join(c.basedir, filePath)
 	libPath := filepath.Join(c.basedir, filePath, fileName)
 
-	os.MkdirAll(basePath, 0755)
+	if err := os.MkdirAll(basePath, 0755); err != nil {
+		c.log.Errorf("mkdir all failed, err: %v", err)
+	}
+
 	if err := c.CompileCode(codebuf, libPath); err != nil {
 		c.log.Errorf("failed to compile wxvm code for contract %s", contract.Name, err.Error())
 		return "", err
