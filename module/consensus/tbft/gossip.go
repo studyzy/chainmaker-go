@@ -137,7 +137,6 @@ func (g *gossipService) gossipStateRoutine() {
 			go g.gossipState()
 		case <-g.closeC:
 			loop = false
-			break
 		}
 	}
 }
@@ -170,7 +169,6 @@ func (g *gossipService) recvStateRoutine() {
 			go g.procRecvState(msg)
 		case <-g.closeC:
 			loop = false
-			break
 		}
 	}
 }

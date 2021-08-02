@@ -8,7 +8,7 @@ package tbft
 
 import (
 	"crypto/rand"
-	"crypto/sha1"
+	"crypto/sha256"
 	"reflect"
 	"testing"
 
@@ -157,7 +157,7 @@ func TestVerifyBlockSignaturesOneNodeSuccess(t *testing.T) {
 	}, nil)
 
 	var blockHeight uint64 = 10
-	blockHash := sha1.Sum(nil)
+	blockHash := sha256.Sum256(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
 		Header: &commonpb.BlockHeader{
@@ -208,7 +208,7 @@ func TestVerifyBlockSignaturesOneNodeFail(t *testing.T) {
 	}, nil)
 
 	var blockHeight uint64 = 10
-	blockHash := sha1.Sum(nil)
+	blockHash := sha256.Sum256(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
 		Header: &commonpb.BlockHeader{
@@ -269,7 +269,7 @@ func TestVerifyBlockSignaturesFourNodeSuccess(t *testing.T) {
 	}, nil)
 
 	var blockHeight uint64 = 10
-	blockHash := sha1.Sum(nil)
+	blockHash := sha256.Sum256(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
 		Header: &commonpb.BlockHeader{
@@ -338,7 +338,7 @@ func TestVerifyBlockSignaturesFourNodeFail(t *testing.T) {
 	}, nil)
 
 	var blockHeight uint64 = 10
-	blockHash := sha1.Sum(nil)
+	blockHash := sha256.Sum256(nil)
 	rand.Read(blockHash[:])
 	block := &commonpb.Block{
 		Header: &commonpb.BlockHeader{
