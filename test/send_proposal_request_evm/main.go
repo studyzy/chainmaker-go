@@ -16,11 +16,8 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"strconv"
 	"strings"
 	"time"
-
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/test/common"
 
@@ -33,7 +30,6 @@ import (
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/gogo/protobuf/proto"
@@ -43,25 +39,23 @@ import (
 )
 
 const (
-	MAX_CNT        = 1
-	CHAIN1         = "chain1"
-	CHAIN2         = "chain2"
-	IP             = "localhost"
-	Port           = 12301
-	certPathPrefix = "../../config"
-	WasmPath       = "../../test/wasm/fact-rust-0.7.2.wasm"
-	AbiJson        = "[{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_addressFounder\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	AbiJson1       = "[{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newBalance\",\"type\":\"uint256\"},{\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"updateBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newBalance\",\"type\":\"uint256\"}],\"name\":\"updateMyBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_addressFounder\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
-	ByteCodePath   = "../../test/wasm/evm-token.bin"
-	ByteCodePath1  = "../../test/wasm/evm-token.bin"
-	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
-	adminKeyPath   = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.key"
-	adminCrtPath   = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.crt"
+	MAX_CNT         = 1
+	CHAIN1          = "chain1"
+	CHAIN2          = "chain2"
+	IP              = "localhost"
+	Port            = 12301
+	certPathPrefix  = "../../config"
+	ByteCodeHexPath = "../../test/wasm/evm-token.hex"
+	ByteCodePath    = "../../test/wasm/evm-token.bin"
+	ABIPath         = "../../test/wasm/evm-token.abi"
+	userKeyPath     = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+	userCrtPath     = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	adminKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.key"
+	adminCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.crt"
 
 	orgId         = "wx-org1.chainmaker.org"
-	contractName  = "contract92"
-	contractName1 = "contract92"
+	contractName  = "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
+	contractName1 = "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
 	runtimeType   = commonPb.RuntimeType_EVM
 	prePathFmt    = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
@@ -70,9 +64,11 @@ const (
 
 //var caPaths = []string{certPathPrefix + "/certs/wx-org1/ca"}
 var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
+var AbiJson = ""
 
 func main() {
 	flag.Parse()
+	common.SetCertPathPrefix(certPathPrefix)
 
 	conn, err := initGRPCConnect(true)
 	if err != nil {
@@ -113,356 +109,30 @@ func main() {
 
 }
 
-func testPerformanceModeTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	for j := 0; j < 5000; j++ {
-		i := j % 1000
-		txId := utils.GetRandTxId()
-		// 构造Payload
-		pairs := []*commonPb.KeyValuePair{
-			{
-				Key:   "from",
-				Value: []byte(strconv.Itoa(i)),
-			},
-			{
-				Key:   "to",
-				Value: []byte(strconv.Itoa(i + 1000)),
-			},
-			{
-				Key:   "amount",
-				Value: []byte("1"),
-			},
-		}
-
-		payload := &commonPb.Payload{
-			ContractName: contractName,
-			Method:       "transfer",
-			Parameters:   pairs,
-		}
-
-		payloadBytes, err := proto.Marshal(payload)
-		if err != nil {
-			log.Fatalf("marshal payload failed, %s", err.Error())
-		}
-
-		resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-			chainId, txId, payloadBytes)
-
-		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-	}
-}
-
-func testPerformanceModeBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	for i := 0; i < 2000; i++ {
-		txId := utils.GetRandTxId()
-		// 构造Payload
-		pairs := []*commonPb.KeyValuePair{
-			{
-				Key:   "from",
-				Value: []byte(strconv.Itoa(i)),
-			},
-		}
-
-		payload := &commonPb.Payload{
-			ContractName: contractName,
-			Method:       "balance",
-			Parameters:   pairs,
-		}
-
-		payloadBytes, err := proto.Marshal(payload)
-		if err != nil {
-			log.Fatalf("marshal payload failed, %s", err.Error())
-		}
-
-		resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-			chainId, txId, payloadBytes)
-
-		fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-	}
-}
-
-func testFreezeOrUnfreezeOrRevokeFlow(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient) {
-	//执行合约
-	testInvoke(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	// 升级合约
-	testUpgrade(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-	testInvoke(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	// 冻结
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-	testInvoke(sk3, &client, CHAIN1)
-	//testInvoke2(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	// 解冻
-	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-	testInvoke(sk3, &client, CHAIN1)
-	//testInvoke2(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	// 冻结
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-	testInvoke(sk3, &client, CHAIN1)
-	//testInvoke2(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	// 解冻
-	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-	testInvoke(sk3, &client, CHAIN1)
-	//testInvoke2(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	// 冻结
-	//testFreezeOrUnfreezeOrRevoke(sk3, &client, CHAIN1, syscontract.ContractManageFunction_FREEZE_CONTRACT.String())
-	//time.Sleep(5 * time.Second)
-	// 吊销
-	common.RevokeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-	testInvoke(sk3, &client, CHAIN1)
-	//testInvoke2(sk3, &client, CHAIN1)
-	time.Sleep(5 * time.Second)
-
-	common.FreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-
-	common.UnfreezeContract(sk3, &client, CHAIN1, contractName, runtimeType)
-	time.Sleep(5 * time.Second)
-}
-
-func testGetTxByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) {
-	fmt.Printf("\n============ get tx by txId [%s] ============\n", txId)
-
-	// 构造Payload
-	pair := &commonPb.KeyValuePair{Key: "txId", Value: []byte(txId)}
-	var pairs []*commonPb.KeyValuePair
-	pairs = append(pairs, pair)
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_TX_BY_TX_ID", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
-
-	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
-}
-
-func testGetBlockByTxId(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txId, chainId string) {
-	fmt.Printf("\n============ get block by txId [%s] ============\n", txId)
-
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "txId",
-			Value: []byte(txId),
-		},
-		{
-			Key:   "withRWSet",
-			Value: []byte("false"),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_TX_ID", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
+func convertHex2Bin(hexPath, binPath string) error {
+	hexBytes, err := ioutil.ReadFile(hexPath)
 	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
+		return err
 	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-}
-
-func testGetBlockByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height uint64) string {
-	fmt.Printf("\n============ get block by height [%d] ============\n", height)
-	// 构造Payload
-
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "blockHeight",
-			Value: []byte(strconv.FormatUint(height, 10)),
-		},
-		{
-			Key:   "withRWSet",
-			Value: []byte("false"),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HEIGHT", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
+	bin, err := hex.DecodeString(string(hexBytes))
 	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
+		return err
 	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-
-	return hex.EncodeToString(blockInfo.Block.Header.BlockHash)
-}
-
-func testGetBlockWithTxRWSetsByHeight(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, height uint64) string {
-	fmt.Printf("\n============ get block with txRWsets by height [%d] ============\n", height)
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "blockHeight",
-			Value: []byte(strconv.FormatUint(height, 10)),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
-	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-
-	return hex.EncodeToString(blockInfo.Block.Header.BlockHash)
-}
-
-func testGetBlockByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, hash string) {
-	fmt.Printf("\n============ get block by hash [%s] ============\n", hash)
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "blockHash",
-			Value: []byte(hash),
-		},
-		{
-			Key:   "withRWSet",
-			Value: []byte("false"),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_BY_HASH", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
-	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-}
-
-func testGetBlockWithTxRWSetsByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, hash string) {
-	fmt.Printf("\n============ get block with txRWsets by hash [%s] ============\n", hash)
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "blockHash",
-			Value: []byte(hash),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_BLOCK_WITH_TXRWSETS_BY_HASH", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
-	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-}
-
-func testGetLastConfigBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	fmt.Printf("\n============ get last config block ============\n")
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "withRWSet",
-			Value: []byte("true"),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_CONFIG_BLOCK", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
-	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-}
-
-func testGetLastBlock(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	fmt.Printf("\n============ get last block ============\n")
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "withRWSet",
-			Value: []byte("true"),
-		},
-	}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_LAST_BLOCK", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	blockInfo := &commonPb.BlockInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, blockInfo)
-	if err != nil {
-		fmt.Printf("blockInfo unmarshal error %s\n", err)
-		os.Exit(0)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, blockInfo)
-}
-
-func testGetChainInfo(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	fmt.Printf("\n============ get chain info ============\n")
-	// 构造Payload
-	pairs := []*commonPb.KeyValuePair{}
-
-	payloadBytes := constructPayload(syscontract.SystemContract_CHAIN_QUERY.String(), "GET_CHAIN_INFO", pairs)
-
-	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, "", payloadBytes)
-
-	chainInfo := &discoveryPb.ChainInfo{}
-	err := proto.Unmarshal(resp.ContractResult.Result, chainInfo)
-	if err != nil {
-		fmt.Printf("chainInfo unmarshal error %s\n", err)
-		os.Exit(0)
-	}
-	fmt.Printf("send tx resp: code:%d, msg:%s, blockInfo:%+v\n", resp.ContractResult.Code, resp.ContractResult.Message, chainInfo)
+	return ioutil.WriteFile(binPath, bin, 777)
 }
 
 func testCreate(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	common.CreateContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
+	convertHex2Bin(ByteCodeHexPath, ByteCodePath)
+	abi, err := ioutil.ReadFile(ABIPath)
+	if err != nil {
+		panic(err.Error())
+	}
+	AbiJson = string(abi)
+	common.CreateContract(sk3, client, chainId, contractName, ByteCodePath, runtimeType)
 }
 
 func testUpgrade(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
-	resp := common.UpgradeContract(sk3, client, chainId, contractName, WasmPath, runtimeType)
+	resp := common.UpgradeContract(sk3, client, chainId, contractName, ByteCodePath, runtimeType)
 
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 }
@@ -550,13 +220,8 @@ func testInvoke(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
 		fmt.Println(method0, "->", v)
@@ -616,13 +281,8 @@ func testInvoke2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId str
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 
 	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
 
@@ -635,11 +295,11 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
-	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
 	//test1Addr, _ := myAbi.Pack("",big.NewInt(100000000),"test","test")
 	//fmt.Println("test1Addr : ", hex.EncodeToString(test1Addr))
 	//method0 := "balanceOfAddress"
-	method0 := "balances"
+	method0 := "balanceOf"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
 		//method = "setAndMul"
@@ -673,18 +333,6 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 			},
 		}
 
-	} else {
-		method = "find_by_file_hash"
-		pairs = []*commonPb.KeyValuePair{
-			{
-				Key:   "file_hash",
-				Value: []byte("counter1"),
-			},
-			{
-				Key:   "file_name",
-				Value: []byte("counter1"),
-			},
-		}
 	}
 
 	payload := &commonPb.Payload{
@@ -693,13 +341,8 @@ func testQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId strin
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
 		fmt.Println(method0, "->", v)
@@ -714,11 +357,11 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
-	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
 	//test1Addr, _ := myAbi.Pack("",big.NewInt(100000000),"test","test")
 	//fmt.Println("test1Addr : ", hex.EncodeToString(test1Addr))
 	//method0 := "balanceOfAddress"
-	method0 := "balances"
+	method0 := "balanceOf"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
 		//method = "setAndMul"
@@ -755,18 +398,6 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 			},
 		}
 
-	} else {
-		method = "find_by_file_hash"
-		pairs = []*commonPb.KeyValuePair{
-			{
-				Key:   "file_hash",
-				Value: []byte("counter1"),
-			},
-			{
-				Key:   "file_name",
-				Value: []byte("counter1"),
-			},
-		}
 	}
 
 	payload := &commonPb.Payload{
@@ -775,13 +406,8 @@ func testQuery2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
 		fmt.Println(method0, "->", v)
@@ -796,7 +422,7 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
-	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
 	method0 := "updateBalance"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
@@ -851,13 +477,8 @@ func testSet(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string)
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
 		fmt.Println(method0, "->", v)
@@ -871,7 +492,7 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
-	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
 	method0 := "updateMyBalance"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
@@ -925,13 +546,8 @@ func testSet2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
 		fmt.Println(method0, "->", v)
@@ -945,7 +561,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 
 	// 构造Payload
 	var pairs []*commonPb.KeyValuePair
-	myAbi, _ := abi.JSON(strings.NewReader(AbiJson1))
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
 	method0 := "transfer"
 	var method string
 	if runtimeType == commonPb.RuntimeType_EVM {
@@ -987,13 +603,8 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 		Parameters:   pairs,
 	}
 
-	payloadBytes, err := proto.Marshal(payload)
-	if err != nil {
-		log.Fatalf("marshal payload failed, %s", err.Error())
-	}
-
 	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
-		chainId, txId, payloadBytes)
+		chainId, txId, payload)
 	if resp.ContractResult != nil {
 		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
 		fmt.Println(method0, "->", v)
@@ -1003,7 +614,7 @@ func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId st
 }
 
 func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payloadBytes []byte) *commonPb.TxResponse {
+	chainId, txId string, payload *commonPb.Payload) *commonPb.TxResponse {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(5*time.Second)))
 	defer cancel()
@@ -1025,19 +636,13 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		//IsFullCert: true,
 		//MemberInfo: []byte(pubKeyString),
 	}
-
-	// 构造Header
-	header := &commonPb.Payload{
-		ChainId: chainId,
-		//Sender:         sender,
-		TxType:         txType,
-		TxId:           txId,
-		Timestamp:      time.Now().Unix(),
-		ExpirationTime: 0,
-	}
+	payload.ChainId = chainId
+	payload.TxType = txType
+	payload.TxId = txId
+	payload.Timestamp = time.Now().Unix()
 
 	req := &commonPb.TxRequest{
-		Payload: header,
+		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
 	}
 
@@ -1051,8 +656,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	fmt.Errorf("################ %s", string(sender.MemberInfo))
 
 	signer := getSigner(sk3, sender)
-	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
+	//signBytes, err := signer.Sign("SM3", rawTxBytes)
 	if err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 		os.Exit(0)

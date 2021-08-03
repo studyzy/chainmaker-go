@@ -62,7 +62,7 @@ type timeScheduler struct {
 }
 
 // NewTimeSheduler returns a new timeScheduler
-func NewTimeSheduler(logger *logger.CMLogger, id string) *timeScheduler {
+func newTimeSheduler(logger *logger.CMLogger, id string) *timeScheduler {
 	ts := &timeScheduler{
 		logger:   logger,
 		id:       id,

@@ -100,8 +100,8 @@ func (p *pendingBatchPool) Range(f func(batch *txpoolPb.TxBatch) (isContinue boo
 	}
 }
 
-func (p *pendingBatchPool) currentSize() int {
-	p.l.RLock()
-	defer p.l.RUnlock()
-	return len(p.pool)
-}
+//func (p *pendingBatchPool) currentSize() int {
+//	p.l.RLock()
+//	defer p.l.RUnlock()
+//	return len(p.pool)
+//}

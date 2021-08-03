@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"testing"
+
+	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
 	"github.com/stretchr/testify/require"
 

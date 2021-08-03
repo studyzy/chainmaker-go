@@ -7,12 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol"
 )
 
-var rowIndex int32 = 0
-var verifySql = &types.StandardSqlVerify{}
+//var rowIndex int32 = 0
+//var verifySql = &types.StandardSqlVerify{}
 
 // ExecuteQuery execute query sql, return result set index
 func (s *WaciInstance) ExecuteQuery() int32 {
@@ -35,7 +34,8 @@ func (s *WaciInstance) ExecuteQueryOne() int32 {
 }
 
 func (s *WaciInstance) executeQueryOneCore(isLen bool) int32 {
-	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.Sc.Contract.Name, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.ChainId, isLen)
+	data, err := wacsi.ExecuteQueryOne(s.RequestBody, s.Sc.Contract.Name,
+		s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.ChainId, isLen)
 	s.Sc.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())

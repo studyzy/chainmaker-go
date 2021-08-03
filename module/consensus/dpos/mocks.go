@@ -18,8 +18,8 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker/protocol/mock"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 )
 
 var (

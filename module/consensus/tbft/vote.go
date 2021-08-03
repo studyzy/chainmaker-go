@@ -408,7 +408,7 @@ func newRoundVoteSet(height uint64, round int32, prevotes *VoteSet, precommits *
 	}
 }
 
-func NewRoundVoteSetFromProto(logger *logger.CMLogger, rvs *tbftpb.RoundVoteSet,
+func newRoundVoteSetFromProto(logger *logger.CMLogger, rvs *tbftpb.RoundVoteSet,
 	validators *validatorSet) *roundVoteSet {
 	if rvs == nil {
 		return nil
