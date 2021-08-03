@@ -21,7 +21,8 @@ import (
 // when the source type is P2P, additional certificate and tx header checks will be performed
 func (pool *txPoolImpl) validate(tx *commonPb.Transaction, source protocol.TxSource) error {
 	startTime := utils.CurrentTimeMillisSeconds()
-	msg := fmt.Sprintf("tx_validator validate txId= %s,validateTxCertAndHeader= %v", tx.Payload.TxId, source == protocol.P2P)
+	msg := fmt.Sprintf("tx_validator validate txId= %s,validateTxCertAndHeader= %v",
+		tx.Payload.TxId, source == protocol.P2P)
 	pool.metrics("[start]"+msg, startTime, startTime)
 	defer pool.metrics("[end]"+msg, startTime, utils.CurrentTimeMillisSeconds())
 
@@ -48,7 +49,8 @@ func (pool *txPoolImpl) validateTxTime(tx *commonPb.Transaction) error {
 		txTimestamp := tx.Payload.Timestamp
 		chainTime := utils.CurrentTimeSeconds()
 		if math.Abs(float64(chainTime-txTimestamp)) > poolconf.MaxTxTimeTimeout(pool.chainConf) {
-			pool.log.Errorw("the txId timestamp is error", "txId", tx.Payload.GetTxId(), "txTimestamp", txTimestamp, "chainTimestamp", chainTime)
+			pool.log.Errorw("the txId timestamp is error", "txId", tx.Payload.GetTxId(),
+				"txTimestamp", txTimestamp, "chainTimestamp", chainTime)
 			return commonErrors.ErrTxTimeout
 		}
 	}

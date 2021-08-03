@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const contract = "userContract1"
+
 func mockValidate(txList *txList, blockChainStore protocol.BlockchainStore) txValidateFunc {
 	return func(tx *commonPb.Transaction, source protocol.TxSource) error {
 		if source != protocol.INTERNAL {
@@ -49,7 +51,7 @@ func generateTxs(num int, isConfig bool) []*commonPb.Transaction {
 		contractName := syscontract.SystemContract_CHAIN_CONFIG.String()
 
 		if !isConfig {
-			contractName = "userContract1"
+			contractName = contract
 		}
 		txs = append(txs, &commonPb.Transaction{
 			Payload: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType,
@@ -143,15 +145,15 @@ func TestTxList_Get(t *testing.T) {
 	// 1. put txs[:30] txs and check existence
 	list.Put(txs[:30], protocol.RPC, validateFunc)
 	for _, tx := range txs[:30] {
-		tx, inBlockHeight := list.Get(tx.Payload.TxId)
-		require.NotNil(t, tx)
+		tx1, inBlockHeight := list.Get(tx.Payload.TxId)
+		require.NotNil(t, tx1)
 		require.EqualValues(t, 0, inBlockHeight)
 	}
 
 	// 2. check txs[30:100] not exist in txList
 	for _, tx := range txs[30:100] {
-		tx, inBlockHeight := list.Get(tx.Payload.TxId)
-		require.Nil(t, tx)
+		tx2, inBlockHeight := list.Get(tx.Payload.TxId)
+		require.Nil(t, tx2)
 		require.EqualValues(t, -1, inBlockHeight)
 	}
 

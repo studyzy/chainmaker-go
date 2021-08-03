@@ -30,15 +30,15 @@ var _ protocol.TxPool = (*txPoolImpl)(nil)
 type txPoolImpl struct {
 	chainId string
 
-	queue          *txQueue            // the queue for store transactions
-	cache          *txCache            // the cache to temporarily cache transactions
-	addTxsCh       chan *mempoolTxs    // channel that receive the common transactions
-	stopCh         chan struct{}       // the channel signal that stop the service
-	stopAtomic     int64               // the flag that identifies whether the service has closed
-	flushTicker    int                 // ticker to check whether the cache needs to be refreshed
-	signalLock     sync.RWMutex        // Locker to protect signal status
-	signalStatus   txpoolPb.SignalType // The current state of the transaction pool
-	latestFullTime int64               // The most latest time the trading pool was full
+	queue        *txQueue            // the queue for store transactions
+	cache        *txCache            // the cache to temporarily cache transactions
+	addTxsCh     chan *mempoolTxs    // channel that receive the common transactions
+	stopCh       chan struct{}       // the channel signal that stop the service
+	stopAtomic   int64               // the flag that identifies whether the service has closed
+	flushTicker  int                 // ticker to check whether the cache needs to be refreshed
+	signalLock   sync.RWMutex        // Locker to protect signal status
+	signalStatus txpoolPb.SignalType // The current state of the transaction pool
+	//latestFullTime int64               // The most latest time the trading pool was full
 
 	ac              protocol.AccessControlProvider
 	log             protocol.Logger
@@ -49,7 +49,8 @@ type txPoolImpl struct {
 }
 
 func NewTxPoolImpl(chainId string, blockStore protocol.BlockchainStore, msgBus msgbus.MessageBus,
-	conf protocol.ChainConf, ac protocol.AccessControlProvider, net protocol.NetService, log protocol.Logger) (protocol.TxPool, error) {
+	conf protocol.ChainConf, ac protocol.AccessControlProvider, net protocol.NetService,
+	log protocol.Logger) (protocol.TxPool, error) {
 	if len(chainId) == 0 {
 		return nil, fmt.Errorf("no chainId in create txpool")
 	}
@@ -190,7 +191,8 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 
 	// 2. store the transaction
 	memTx := &mempoolTxs{isConfigTxs: false, txs: []*commonPb.Transaction{tx}, source: source}
-	if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx, pool.chainConf.ChainConfig().Contract.EnableSqlSupport) {
+	if utils.IsConfigTx(tx) || utils.IsManageContractAsConfigTx(tx,
+		pool.chainConf.ChainConfig().Contract.EnableSqlSupport) {
 		memTx.isConfigTxs = true
 	}
 	t := time.NewTimer(time.Second)
@@ -211,11 +213,13 @@ func (pool *txPoolImpl) AddTx(tx *commonPb.Transaction, source protocol.TxSource
 // isFull Check whether the transaction pool is fullnal
 func (pool *txPoolImpl) isFull(tx *commonPb.Transaction) bool {
 	if utils.IsConfigTx(tx) && pool.queue.configTxsCount() >= poolconf.MaxConfigTxPoolSize() {
-		pool.log.Errorf("AddTx configTxPool is full, txId: %s, configQueueSize: %d", tx.Payload.GetTxId(), pool.queue.configTxsCount())
+		pool.log.Errorf("AddTx configTxPool is full, txId: %s, configQueueSize: %d", tx.Payload.GetTxId(),
+			pool.queue.configTxsCount())
 		return true
 	}
 	if pool.queue.commonTxsCount() >= poolconf.MaxCommonTxPoolSize() {
-		pool.log.Errorf("AddTx txPool is full, txId: %s, txQueueSize: %d", tx.Payload.GetTxId(), pool.queue.commonTxsCount())
+		pool.log.Errorf("AddTx txPool is full, txId: %s, txQueueSize: %d", tx.Payload.GetTxId(),
+			pool.queue.commonTxsCount())
 		return true
 	}
 	return false
@@ -357,7 +361,8 @@ func (pool *txPoolImpl) FetchTxBatch(blockHeight uint64) []*commonPb.Transaction
 	start := utils.CurrentTimeMillisSeconds()
 	txs := pool.queue.fetch(poolconf.MaxTxCount(pool.chainConf), blockHeight, pool.validateTxTime)
 	if len(txs) > 0 {
-		pool.log.Infof("fetch txs from txPool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs), blockHeight, utils.CurrentTimeMillisSeconds()-start)
+		pool.log.Infof("fetch txs from txPool, txsNum:%d, blockHeight:%d, elapse time: %d", len(txs),
+			blockHeight, utils.CurrentTimeMillisSeconds()-start)
 	}
 	return txs
 }
@@ -409,11 +414,11 @@ func (pool *txPoolImpl) OnQuit() {
 	// no implement
 }
 
-func (pool *txPoolImpl) getSignalStatus() txpoolPb.SignalType {
-	pool.signalLock.RLock()
-	defer pool.signalLock.RUnlock()
-	return pool.signalStatus
-}
+//func (pool *txPoolImpl) getSignalStatus() txpoolPb.SignalType {
+//	pool.signalLock.RLock()
+//	defer pool.signalLock.RUnlock()
+//	return pool.signalStatus
+//}
 
 func (pool *txPoolImpl) setSignalStatus(signal txpoolPb.SignalType) {
 	pool.signalLock.Lock()

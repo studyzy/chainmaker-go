@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol"
@@ -18,9 +19,11 @@ type txCache struct {
 	txs        []*mempoolTxs // The transactions in the cache
 	totalCount int           // The number of transactions in the cache
 
-	flushThreshold int           // The threshold of the number of transactions in the cache. When the number of transactions in the cache is greater than or equal to the threshold, the transactions will be flushed to the queue.
-	flushTimeOut   time.Duration // The timeOut to flush cache
-	lastFlushTime  time.Time     // Time of the latest cache refresh
+	flushThreshold int // The threshold of the number of transactions in the cache. When the number of
+	// transactions in the cache is greater than or equal to the threshold, the transactions
+	//	will be flushed to the queue.
+	flushTimeOut  time.Duration // The timeOut to flush cache
+	lastFlushTime time.Time     // Time of the latest cache refresh
 }
 
 func newTxCache() *txCache {
@@ -50,7 +53,8 @@ func (cache *txCache) addMemoryTxs(memTxs *mempoolTxs) {
 }
 
 // mergeAndSplitTxsBySource Divide the transactions in the cache according to the source.
-func (cache *txCache) mergeAndSplitTxsBySource(memTxs *mempoolTxs) (rpcTxs, p2pTxs, internalTxs []*commonPb.Transaction) {
+func (cache *txCache) mergeAndSplitTxsBySource(memTxs *mempoolTxs) (rpcTxs, p2pTxs,
+	internalTxs []*commonPb.Transaction) {
 	totalCount := cache.totalCount
 	if memTxs != nil {
 		totalCount = len(memTxs.txs) + cache.totalCount

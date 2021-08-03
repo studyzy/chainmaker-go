@@ -42,7 +42,8 @@ func newTxList(log protocol.Logger, pendingCache *sync.Map, blockchainStore prot
 		pendingCache:    pendingCache,
 	}
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		list.metricTxPoolSize = monitor.NewGaugeVec(monitor.SUBSYSTEM_TXPOOL, "metric_tx_pool_size", "tx pool size", "chainId", "poolType")
+		list.metricTxPoolSize = monitor.NewGaugeVec(monitor.SUBSYSTEM_TXPOOL, "metric_tx_pool_size",
+			"tx pool size", "chainId", "poolType")
 	}
 	return list
 }
@@ -94,7 +95,8 @@ func (l *txList) Delete(txIds []string) {
 }
 
 // Fetch Gets a list of stored transactions
-func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error, blockHeight uint64) ([]*commonPb.Transaction, []string) {
+func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
+	blockHeight uint64) ([]*commonPb.Transaction, []string) {
 	queueLen := l.queue.Size()
 	if queueLen < count {
 		count = queueLen
@@ -126,7 +128,8 @@ func (l *txList) Fetch(count int, validate func(tx *commonPb.Transaction) error,
 	l.log.Debugw("txList Fetch", "count", count, "queueLen", queueLen)
 	if queueLen > 0 {
 		cacheKVs, txs, txIds, errKeys = l.getTxsFromQueue(count, blockHeight, validate)
-		l.log.Debugw("txList Fetch txsNormal", "count", count, "queueLen", queueLen, "txsLen", len(txs), "errKeys", len(errKeys), "cacheKeys", len(cacheKVs))
+		l.log.Debugw("txList Fetch txsNormal", "count", count, "queueLen", queueLen,
+			"txsLen", len(txs), "errKeys", len(errKeys), "cacheKeys", len(cacheKVs))
 	}
 	return txs, txIds
 }
@@ -140,8 +143,14 @@ func (l *txList) getTxsFromQueue(count int, blockHeight uint64, validate func(tx
 	cacheKVs = make([]*valInPendingCache, 0, count)
 	node := l.queue.GetLinkList().Front()
 	for node != nil && count > 0 {
-		txId := node.Value.(string)
-		tx := l.queue.Get(txId).(*commonPb.Transaction)
+		txId, ok := node.Value.(string)
+		if !ok {
+			l.log.Errorf("interface value transfer into string failed")
+		}
+		tx, ok1 := l.queue.Get(txId).(*commonPb.Transaction)
+		if !ok1 {
+			l.log.Errorf("interface val transfer into *commonPb.Transaction failed")
+		}
 		if validate != nil && validate(tx) != nil {
 			errKeys = append(errKeys, txId)
 		} else {
@@ -193,7 +202,10 @@ func (l *txList) Has(txId string, checkPending bool) (exist bool) {
 func (l *txList) Get(txId string) (tx *commonPb.Transaction, inBlockHeight uint64) {
 	if pendingVal, ok := l.pendingCache.Load(txId); ok && pendingVal != nil {
 		l.log.Debugw(fmt.Sprintf("txList Get Transaction by txId = %s in pendingCache", txId), "exist", true)
-		val := pendingVal.(*valInPendingCache)
+		val, ok := pendingVal.(*valInPendingCache)
+		if !ok {
+			l.log.Errorf("interface pendingVal transfer into *valInPendingCache failed")
+		}
 		return val.tx, val.inBlockHeight
 	}
 
