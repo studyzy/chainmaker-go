@@ -20,7 +20,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
@@ -57,23 +57,23 @@ const (
 )
 
 // ToValidatorKey - Key: V + "/" + ValidatorAddress
-func ToValidatorKey(ValidatorAddress string) []byte {
-	return []byte(fmt.Sprintf(KeyValidatorFormat, ValidatorAddress))
+func ToValidatorKey(validatorAddress string) []byte {
+	return []byte(fmt.Sprintf(KeyValidatorFormat, validatorAddress))
 }
 
 // ToValidatorPrefix - Key: V + "/"
 func ToValidatorPrefix() []byte {
-	return []byte(fmt.Sprintf(prefixValidator))
+	return []byte(fmt.Sprint(prefixValidator))
 }
 
 // ToDelegationKey - Key: D + "/" + DelegatorAddress + "/" + ValidatorAddress
-func ToDelegationKey(DelegatorAddress, ValidatorAddress string) []byte {
-	return []byte(fmt.Sprintf(KeyDelegationFormat, DelegatorAddress, ValidatorAddress))
+func ToDelegationKey(delegatorAddress, validatorAddress string) []byte {
+	return []byte(fmt.Sprintf(KeyDelegationFormat, delegatorAddress, validatorAddress))
 }
 
 // ToDelegationPrefix - Key: D + "/" + DelegatorAddress
-func ToDelegationPrefix(DelegatorAddress string) []byte {
-	return []byte(prefixDelegation + DelegatorAddress)
+func ToDelegationPrefix(delegatorAddress string) []byte {
+	return []byte(prefixDelegation + delegatorAddress)
 }
 
 // ToEpochKey - Key：E + "/" + EpochID
@@ -131,20 +131,22 @@ func newDelegation(delegatorAddress, validatorAddress string, shares string) *sy
 	}
 }
 
-func newUnbondingDelegation(EpochID uint64, DelegatorAddress, ValidatorAddress string) *syscontract.UnbondingDelegation {
-	UnbondingDelegationEntry := make([]*syscontract.UnbondingDelegationEntry, 0)
+func newUnbondingDelegation(
+	epochID uint64, delegatorAddress, validatorAddress string) *syscontract.UnbondingDelegation {
+	unbondingDelegationEntry := make([]*syscontract.UnbondingDelegationEntry, 0)
 	return &syscontract.UnbondingDelegation{
-		EpochId:          strconv.Itoa(int(EpochID)),
-		DelegatorAddress: DelegatorAddress,
-		ValidatorAddress: ValidatorAddress,
-		Entries:          UnbondingDelegationEntry,
+		EpochId:          strconv.Itoa(int(epochID)),
+		DelegatorAddress: delegatorAddress,
+		ValidatorAddress: validatorAddress,
+		Entries:          unbondingDelegationEntry,
 	}
 }
 
-func newUnbondingDelegationEntry(CreationEpochID, CompletionEpochID uint64, amount string) *syscontract.UnbondingDelegationEntry {
+func newUnbondingDelegationEntry(
+	creationEpochID, completionEpochID uint64, amount string) *syscontract.UnbondingDelegationEntry {
 	return &syscontract.UnbondingDelegationEntry{
-		CreationEpochId:   CreationEpochID,
-		CompletionEpochId: CompletionEpochID,
+		CreationEpochId:   creationEpochID,
+		CompletionEpochId: completionEpochID,
 		Amount:            amount,
 	}
 }
@@ -169,26 +171,44 @@ func NewDPoSStakeContract(log protocol.Logger) *DPoSStakeContract {
 func registerDPoSStakeContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	methodMap := make(map[string]common.ContractFunc, 64)
 	// implement
-	DPoSStakeRuntime := &DPoSStakeRuntime{log: log}
+	stakeRuntime := &DPoSStakeRuntime{log: log}
 
-	methodMap[syscontract.DPoSStakeFunction_GET_ALL_CANDIDATES.String()] = DPoSStakeRuntime.GetAllCandidates
-	methodMap[syscontract.DPoSStakeFunction_GET_VALIDATOR_BY_ADDRESS.String()] = DPoSStakeRuntime.GetValidatorByAddress
-	methodMap[syscontract.DPoSStakeFunction_DELEGATE.String()] = DPoSStakeRuntime.Delegate
-	methodMap[syscontract.DPoSStakeFunction_GET_DELEGATIONS_BY_ADDRESS.String()] = DPoSStakeRuntime.GetDelegationsByAddress
-	methodMap[syscontract.DPoSStakeFunction_GET_USER_DELEGATION_BY_VALIDATOR.String()] = DPoSStakeRuntime.GetUserDelegationByValidator
-	methodMap[syscontract.DPoSStakeFunction_UNDELEGATE.String()] = DPoSStakeRuntime.UnDelegate
-	methodMap[syscontract.DPoSStakeFunction_READ_EPOCH_BY_ID.String()] = DPoSStakeRuntime.ReadEpochByID
-	methodMap[syscontract.DPoSStakeFunction_READ_LATEST_EPOCH.String()] = DPoSStakeRuntime.ReadLatestEpoch
-	methodMap[syscontract.DPoSStakeFunction_SET_NODE_ID.String()] = DPoSStakeRuntime.SetNodeID
-	methodMap[syscontract.DPoSStakeFunction_GET_NODE_ID.String()] = DPoSStakeRuntime.GetNodeID
-	methodMap[syscontract.DPoSStakeFunction_READ_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.ReadMinSelfDelegation
-	//methodMap[syscontract.DPoSStakeFunction_UPDATE_MIN_SELF_DELEGATION.String()] = DPoSStakeRuntime.UpdateMinSelfDelegation
-	methodMap[syscontract.DPoSStakeFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.ReadEpochValidatorNumber
-	//methodMap[syscontract.DPoSStakeFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochValidatorNumber
-	methodMap[syscontract.DPoSStakeFunction_READ_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.ReadEpochBlockNumber
-	methodMap[syscontract.DPoSStakeFunction_READ_SYSTEM_CONTRACT_ADDR.String()] = DPoSStakeRuntime.ReadSystemContractAddr
-	//methodMap[syscontract.DPoSStakeFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] = DPoSStakeRuntime.UpdateEpochBlockNumber
-	methodMap[syscontract.DPoSStakeFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] = DPoSStakeRuntime.ReadCompleteUnBoundingEpochNumber
+	methodMap[syscontract.DPoSStakeFunction_GET_ALL_CANDIDATES.String()] =
+		stakeRuntime.GetAllCandidates
+	methodMap[syscontract.DPoSStakeFunction_GET_VALIDATOR_BY_ADDRESS.String()] =
+		stakeRuntime.GetValidatorByAddress
+	methodMap[syscontract.DPoSStakeFunction_DELEGATE.String()] =
+		stakeRuntime.Delegate
+	methodMap[syscontract.DPoSStakeFunction_GET_DELEGATIONS_BY_ADDRESS.String()] =
+		stakeRuntime.GetDelegationsByAddress
+	methodMap[syscontract.DPoSStakeFunction_GET_USER_DELEGATION_BY_VALIDATOR.String()] =
+		stakeRuntime.GetUserDelegationByValidator
+	methodMap[syscontract.DPoSStakeFunction_UNDELEGATE.String()] =
+		stakeRuntime.UnDelegate
+	methodMap[syscontract.DPoSStakeFunction_READ_EPOCH_BY_ID.String()] =
+		stakeRuntime.ReadEpochByID
+	methodMap[syscontract.DPoSStakeFunction_READ_LATEST_EPOCH.String()] =
+		stakeRuntime.ReadLatestEpoch
+	methodMap[syscontract.DPoSStakeFunction_SET_NODE_ID.String()] =
+		stakeRuntime.SetNodeID
+	methodMap[syscontract.DPoSStakeFunction_GET_NODE_ID.String()] =
+		stakeRuntime.GetNodeID
+	methodMap[syscontract.DPoSStakeFunction_READ_MIN_SELF_DELEGATION.String()] =
+		stakeRuntime.ReadMinSelfDelegation
+	//methodMap[syscontract.DPoSStakeFunction_UPDATE_MIN_SELF_DELEGATION.String()] =
+	//DPoSStakeRuntime.UpdateMinSelfDelegation
+	methodMap[syscontract.DPoSStakeFunction_READ_EPOCH_VALIDATOR_NUMBER.String()] =
+		stakeRuntime.ReadEpochValidatorNumber
+	//methodMap[syscontract.DPoSStakeFunction_UPDATE_EPOCH_VALIDATOR_NUMBER.String()] =
+	//DPoSStakeRuntime.UpdateEpochValidatorNumber
+	methodMap[syscontract.DPoSStakeFunction_READ_EPOCH_BLOCK_NUMBER.String()] =
+		stakeRuntime.ReadEpochBlockNumber
+	methodMap[syscontract.DPoSStakeFunction_READ_SYSTEM_CONTRACT_ADDR.String()] =
+		stakeRuntime.ReadSystemContractAddr
+	//methodMap[syscontract.DPoSStakeFunction_UPDATE_EPOCH_BLOCK_NUMBER.String()] =
+	//DPoSStakeRuntime.UpdateEpochBlockNumber
+	methodMap[syscontract.DPoSStakeFunction_READ_COMPLETE_UNBOUNDING_EPOCH_NUMBER.String()] =
+		stakeRuntime.ReadCompleteUnBoundingEpochNumber
 	return methodMap
 }
 
@@ -300,9 +320,11 @@ func (s *DPoSStakeRuntime) getAllCandidates(context protocol.TxSimContext) (*sys
 		cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
 		if err != nil {
 			s.log.Errorf("compare min self delegation error, amount: %s", v.SelfDelegation)
-			return nil, fmt.Errorf("convert self delegate string to integer error, amount: %s, err: %s", v.SelfDelegation, err.Error())
+			return nil, fmt.Errorf(
+				"convert self delegate string to integer error, amount: %s, err: %s",
+				v.SelfDelegation, err.Error())
 		}
-		if v.Jailed == true || cmp == -1 || v.Status != syscontract.BondStatus_BONDED {
+		if v.Jailed || cmp == -1 || v.Status != syscontract.BondStatus_BONDED {
 			continue
 		}
 		collection.Vector = append(collection.Vector, v.ValidatorAddress)
@@ -313,7 +335,8 @@ func (s *DPoSStakeRuntime) getAllCandidates(context protocol.TxSimContext) (*sys
 // GetValidatorByAddress() Validator		// 返回所有满足最低抵押条件验证人
 // @params["address"]
 // return Validator
-func (s *DPoSStakeRuntime) GetValidatorByAddress(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetValidatorByAddress(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramAddress)
 	if err != nil {
@@ -395,13 +418,14 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 		s.log.Errorf("update tokens error: ", err.Error())
 		return nil, err
 	}
+	var cmp int
 	if from == to {
 		err = updateValidatorSelfDelegate(v, amount)
 		if err != nil {
 			s.log.Errorf("update self delegate error: ", err.Error())
 			return nil, err
 		}
-		cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
+		cmp, err = compareMinSelfDelegation(context, v.SelfDelegation)
 		if err != nil {
 			s.log.Errorf("compare min self delegation error: ", err.Error())
 			return nil, err
@@ -448,7 +472,8 @@ func (s *DPoSStakeRuntime) Delegate(context protocol.TxSimContext, params map[st
 // GetDelegationsByAddress() []Delegation		// 返回所有 Delegation
 // @params["address"]
 // return DelegationInfo
-func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetDelegationsByAddress(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramAddress)
 	if err != nil {
@@ -468,7 +493,8 @@ func (s *DPoSStakeRuntime) GetDelegationsByAddress(context protocol.TxSimContext
 // GetUserDelegationByValidator() Delegation		// 返回所有 Delegation
 // @params["validator_address"]
 // return Delegation
-func (s *DPoSStakeRuntime) GetUserDelegationByValidator(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) GetUserDelegationByValidator(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramDelegatorAddress, paramValidatorAddress)
 	if err != nil {
@@ -498,6 +524,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		return nil, err
 	}
 
+	// get params
 	undelegateValidatorAddress := string(params[paramFrom])
 	amount := string(params[paramAmount])
 
@@ -507,14 +534,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		return nil, fmt.Errorf("amount is less than 0")
 	}
 	// read epoch
-	bz, err := s.ReadLatestEpoch(context, nil)
-	if err != nil {
-		s.log.Errorf("undelegate read latest epoch error")
-		return nil, err
-	}
-	// read epoch
-	epoch := &syscontract.Epoch{}
-	err = proto.Unmarshal(bz, epoch)
+	epoch, err := s.readEpoch(context)
 	if err != nil {
 		s.log.Errorf("undelegate unmarshal latest epoch error")
 		return nil, err
@@ -548,63 +568,12 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 	}
 	ud.Entries = append(ud.Entries, entry)
 
-	// update validator
-	v, err := getValidator(context, undelegateValidatorAddress)
+	// update validator and delegation
+	v, d, err := s.updateValidatorAndDelegationByUndelegate(context, sender, undelegateValidatorAddress, amount, shares)
 	if err != nil {
-		s.log.Errorf("get validator [%s] error: ", undelegateValidatorAddress, err.Error())
+		s.log.Errorf("update validator and delegation error: ", err.Error())
 		return nil, err
 	}
-	negShare := &big.Int{}
-	negShare.Mul(shares, big.NewInt(-1))
-	err = updateValidatorShares(v, negShare)
-	if err != nil {
-		s.log.Errorf("update validator [%s] share error: ", undelegateValidatorAddress, err.Error())
-		return nil, err
-	}
-	err = updateValidatorTokens(v, "-"+amount)
-	if err != nil {
-		s.log.Errorf("update validator [%s] tokens error: ", undelegateValidatorAddress, err.Error())
-		return nil, err
-	}
-	// 如果是 验证人自身 解除抵押
-	if sender == undelegateValidatorAddress {
-		err = updateValidatorSelfDelegate(v, "-"+amount)
-		if err != nil {
-			s.log.Errorf("update validator [%s] self delegation error: ", undelegateValidatorAddress, err.Error())
-			return nil, err
-		}
-		// compare self delegation
-		cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
-		if err != nil {
-			s.log.Errorf("compare min self delegation error: ", err.Error())
-			return nil, err
-		}
-		if cmp == -1 {
-			// 检查当前网络情况下，节点是否能退出
-			if err := s.canDelete(context); err != nil {
-				return nil, err
-			}
-
-			if v.SelfDelegation == "0" {
-				updateValidatorStatus(v, syscontract.BondStatus_UNBONDED)
-			} else {
-				updateValidatorStatus(v, syscontract.BondStatus_UNBONDING)
-			}
-		}
-	}
-
-	// update delegation
-	d, err := getDelegation(context, sender, undelegateValidatorAddress)
-	if err != nil {
-		s.log.Errorf("get delegation error: ", err.Error())
-		return nil, err
-	}
-	err = updateDelegateShares(d, negShare)
-	if err != nil {
-		s.log.Errorf("update delegate shares error: ", err.Error())
-		return nil, err
-	}
-
 	// save
 	err = save(context, ToUnbondingDelegationKey(completeEpoch, sender, undelegateValidatorAddress), ud)
 	if err != nil {
@@ -686,7 +655,8 @@ func (s *DPoSStakeRuntime) ReadEpochByID(context protocol.TxSimContext, params m
 
 // ReadMinSelfDelegation() string				// 读取验证人最少抵押token数量
 // return string
-func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadMinSelfDelegation(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation))
 	if err != nil {
@@ -699,7 +669,8 @@ func (s *DPoSStakeRuntime) ReadMinSelfDelegation(context protocol.TxSimContext, 
 // UpdateMinSelfDelegation() string
 // @params["min_self_delegation"]
 // return string
-func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramMinSelfDelegation)
 	if err != nil {
@@ -726,10 +697,12 @@ func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext
 		return nil, err
 	}
 	if isOverRange {
-		return []byte(allowSelfDelegation), fmt.Errorf("min self delegation change over range, biggest self delegation is: [%s]", allowSelfDelegation)
+		return []byte(allowSelfDelegation), fmt.Errorf(
+			"min self delegation change over range, biggest self delegation is: [%s]", allowSelfDelegation)
 	}
 	// put data
-	err = context.Put(syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation), []byte(minSelfDelegation))
+	err = context.Put(
+		syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyMinSelfDelegation), []byte(minSelfDelegation))
 	if err != nil {
 		s.log.Errorf(err.Error())
 		return nil, err
@@ -739,7 +712,8 @@ func (s *DPoSStakeRuntime) UpdateMinSelfDelegation(context protocol.TxSimContext
 
 // ReadEpochValidatorNumber() string				// 读取每个世代验证人数量
 // return string
-func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
 	if err != nil {
@@ -753,7 +727,8 @@ func (s *DPoSStakeRuntime) ReadEpochValidatorNumber(context protocol.TxSimContex
 // UpdateEpochValidatorNumber() string
 // @params["epoch_validator_number"]
 // return string
-func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramEpochValidatorNumber)
 	if err != nil {
@@ -796,7 +771,8 @@ func (s *DPoSStakeRuntime) UpdateEpochValidatorNumber(context protocol.TxSimCont
 
 // ReadEpochBlockNumber() string				// 读取世代的出块数量
 // return string
-func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadEpochBlockNumber(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber))
 	if err != nil {
@@ -808,7 +784,8 @@ func (s *DPoSStakeRuntime) ReadEpochBlockNumber(context protocol.TxSimContext, p
 
 // ReadSystemContractAddr() string				// 读取stake系统合约的地址
 // return string
-func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadSystemContractAddr(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	addr := StakeContractAddr()
 	return []byte(addr), nil
@@ -816,7 +793,8 @@ func (s *DPoSStakeRuntime) ReadSystemContractAddr(context protocol.TxSimContext,
 
 // ReadEpochBlockNumber() string				// 读取世代的出块数量
 // return string
-func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// get data
 	num, err := getUnbondingEpochNumber(context)
 	if err != nil {
@@ -828,7 +806,8 @@ func (s *DPoSStakeRuntime) ReadCompleteUnBoundingEpochNumber(context protocol.Tx
 // UpdateEpochBlockNumber() bool				// 更新世代的出块数量
 // @params["epoch_block_number"]
 // return nil
-func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(
+	context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// check params
 	err := checkParams(params, paramEpochBlockNumber)
 	if err != nil {
@@ -857,11 +836,16 @@ func (s *DPoSStakeRuntime) UpdateEpochBlockNumber(context protocol.TxSimContext,
 	bigEndianAmount := encodeUint64ToBigEndian(uint64(amount))
 	// put data
 	err = context.Put(syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochBlockNumber), bigEndianAmount)
+	if err != nil {
+		return nil, err
+	}
+
 	return []byte(epochBlockNumber), nil
 }
 
 // 获取或创建 validator
-func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*syscontract.Validator, error) {
+func getOrCreateValidator(
+	context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*syscontract.Validator, error) {
 	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), ToValidatorKey(validatorAddress))
 	if err != nil {
 		return nil, err
@@ -875,24 +859,22 @@ func getOrCreateValidator(context protocol.TxSimContext, delegatorAddress, valid
 		if delegatorAddress == validatorAddress {
 			return v, nil
 		}
-		if v.Status != syscontract.BondStatus_BONDED || v.Jailed == true {
+		if v.Status != syscontract.BondStatus_BONDED || v.Jailed {
 			return nil, fmt.Errorf("validator in wrong status, jailed: %v, status: %s", v.Jailed, v.Status)
 		}
 		return v, nil
-	} else {
-		// 新建 validator 判断
-		if delegatorAddress != validatorAddress {
-			// 如果是新建 validator, 抵押人被抵押人必须是同一个人
-			return nil, fmt.Errorf("no such validator, validator address: %s", validatorAddress)
-		} else {
-			key := ToNodeIDKey(validatorAddress)
-			if bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), key); err != nil || len(bz) == 0 {
-				return nil, fmt.Errorf("not set validator nodeID, you should first set nodeID with validator")
-			}
-			v = newValidator(validatorAddress)
-		}
-		return v, nil
 	}
+	// 新建 validator 判断
+	if delegatorAddress != validatorAddress {
+		// 如果是新建 validator, 抵押人被抵押人必须是同一个人
+		return nil, fmt.Errorf("no such validator, validator address: %s", validatorAddress)
+	}
+	key := ToNodeIDKey(validatorAddress)
+	if bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), key); err != nil || len(bz) == 0 {
+		return nil, fmt.Errorf("not set validator nodeID, you should first set nodeID with validator")
+	}
+	v = newValidator(validatorAddress)
+	return v, nil
 }
 
 // 返回 validator 字节数据
@@ -984,6 +966,69 @@ func updateValidatorStatus(validator *syscontract.Validator, status syscontract.
 	validator.Status = status
 }
 
+func (s *DPoSStakeRuntime) updateValidatorAndDelegationByUndelegate(
+	context protocol.TxSimContext, sender, undelegateValidatorAddress, amount string, shares *big.Int,
+) (*syscontract.Validator, *syscontract.Delegation, error) {
+	v, err := getValidator(context, undelegateValidatorAddress)
+	if err != nil {
+		s.log.Errorf("get validator [%s] error: ", undelegateValidatorAddress, err.Error())
+		return nil, nil, err
+	}
+	negShare := &big.Int{}
+	negShare.Mul(shares, big.NewInt(-1))
+	err = updateValidatorShares(v, negShare)
+	if err != nil {
+		s.log.Errorf("update validator [%s] share error: ", undelegateValidatorAddress, err.Error())
+		return nil, nil, err
+	}
+	err = updateValidatorTokens(v, "-"+amount)
+	if err != nil {
+		s.log.Errorf("update validator [%s] tokens error: ", undelegateValidatorAddress, err.Error())
+		return nil, nil, err
+	}
+	// 如果是 验证人自身 解除抵押
+	var cmp int
+	if sender == undelegateValidatorAddress {
+		err = updateValidatorSelfDelegate(v, "-"+amount)
+		if err != nil {
+			s.log.Errorf(
+				"update validator [%s] self delegation error: ", undelegateValidatorAddress, err.Error())
+			return nil, nil, err
+		}
+		// compare self delegation
+		cmp, err = compareMinSelfDelegation(context, v.SelfDelegation)
+		if err != nil {
+			s.log.Errorf("compare min self delegation error: ", err.Error())
+			return nil, nil, err
+		}
+		if cmp == -1 {
+			// 检查当前网络情况下，节点是否能退出
+			if err = s.canDelete(context); err != nil {
+				return nil, nil, err
+			}
+
+			if v.SelfDelegation == "0" {
+				updateValidatorStatus(v, syscontract.BondStatus_UNBONDED)
+			} else {
+				updateValidatorStatus(v, syscontract.BondStatus_UNBONDING)
+			}
+		}
+	}
+
+	// update delegation
+	d, err := getDelegation(context, sender, undelegateValidatorAddress)
+	if err != nil {
+		s.log.Errorf("get delegation error: ", err.Error())
+		return nil, nil, err
+	}
+	err = updateDelegateShares(d, negShare)
+	if err != nil {
+		s.log.Errorf("update delegate shares error: ", err.Error())
+		return nil, nil, err
+	}
+	return v, d, nil
+}
+
 // 根据 amount 计算 share
 func calcShareByAmount(tokens string, shares string, amount string) (*big.Int, error) {
 	// 将 amount 转换成 int
@@ -1017,38 +1062,39 @@ func calcShareByAmount(tokens string, shares string, amount string) (*big.Int, e
 	return newShare, nil
 }
 
-// 根据 share 计算 amount
-func calcAmountByShare(tokens string, shares string, share string) (*big.Int, error) {
-	// 将 amount 转换成 int
-	var err error
-	tokensValue, err := stringToBigInt(tokens)
-	if err != nil {
-		return nil, err
-	}
-	sharesValue, err := stringToBigInt(shares)
-	if err != nil {
-		return nil, err
-	}
-	shareValue, err := stringToBigInt(share)
-	if err != nil {
-		return nil, err
-	}
-
-	// 计算 share 对应的 amount 数量
-	newAmount := &big.Int{}
-	if sharesValue.Cmp(big.NewInt(0)) < 1 {
-		return nil, fmt.Errorf("shares less or equal to 0")
-	} else {
-		// 计算 amount 的数量, amount = share / shares * tokens
-		y := newAmount.Mul(sharesValue, tokensValue)
-		newAmount = y.Div(shareValue, y)
-	}
-	return newAmount, nil
-}
+//// 根据 share 计算 amount
+//func calcAmountByShare(tokens string, shares string, share string) (*big.Int, error) {
+//	// 将 amount 转换成 int
+//	var err error
+//	tokensValue, err := stringToBigInt(tokens)
+//	if err != nil {
+//		return nil, err
+//	}
+//	sharesValue, err := stringToBigInt(shares)
+//	if err != nil {
+//		return nil, err
+//	}
+//	shareValue, err := stringToBigInt(share)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	// 计算 share 对应的 amount 数量
+//	newAmount := &big.Int{}
+//	if sharesValue.Cmp(big.NewInt(0)) < 1 {
+//		return nil, fmt.Errorf("shares less or equal to 0")
+//	}
+//	// 计算 amount 的数量, amount = share / shares * tokens
+//	y := newAmount.Mul(sharesValue, tokensValue)
+//	newAmount = y.Div(shareValue, y)
+//	return newAmount, nil
+//}
 
 // 获取或创建 delegation
-func getOrCreateDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*syscontract.Delegation, error) {
-	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
+func getOrCreateDelegation(
+	context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*syscontract.Delegation, error) {
+	bz, err := context.Get(
+		syscontract.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1065,7 +1111,8 @@ func getOrCreateDelegation(context protocol.TxSimContext, delegatorAddress, vali
 }
 
 // 获取或创建 delegation
-func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress string) (*syscontract.DelegationInfo, error) {
+func getDelegationsByAddress(
+	context protocol.TxSimContext, delegatorAddress string) (*syscontract.DelegationInfo, error) {
 	// 获取地址所有抵押数据
 	iterRange := util.BytesPrefix(ToDelegationPrefix(delegatorAddress))
 	// TODO search scope has no memory data
@@ -1100,8 +1147,10 @@ func getDelegationsByAddress(context protocol.TxSimContext, delegatorAddress str
 }
 
 // 返回 delegation 信息
-func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*syscontract.Delegation, error) {
-	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
+func getDelegation(
+	context protocol.TxSimContext, delegatorAddress, validatorAddress string) (*syscontract.Delegation, error) {
+	bz, err := context.Get(
+		syscontract.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1112,19 +1161,22 @@ func getDelegation(context protocol.TxSimContext, delegatorAddress, validatorAdd
 			return nil, err
 		}
 	} else {
-		return nil, fmt.Errorf("no such delegation, delegatorAddress: [%s], validatorAddress: [%s]", delegatorAddress, validatorAddress)
+		return nil, fmt.Errorf(
+			"no such delegation, delegatorAddress: [%s], validatorAddress: [%s]", delegatorAddress, validatorAddress)
 	}
 	return d, nil
 }
 
 // 返回 delegation 字节数据
 func getDelegationBytes(context protocol.TxSimContext, delegatorAddress, validatorAddress string) ([]byte, error) {
-	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
+	bz, err := context.Get(
+		syscontract.SystemContract_DPOS_STAKE.String(), ToDelegationKey(delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
 	if len(bz) <= 0 {
-		return nil, fmt.Errorf("no delegation as delegator: %s, validdator: %s", delegatorAddress, validatorAddress)
+		return nil, fmt.Errorf(
+			"no delegation as delegator: %s, validdator: %s", delegatorAddress, validatorAddress)
 	}
 	return bz, nil
 }
@@ -1145,8 +1197,12 @@ func updateDelegateShares(delegate *syscontract.Delegation, shares *big.Int) err
 }
 
 // 获取或创建 unbonding delegation
-func getOrCreateUnbondingDelegation(context protocol.TxSimContext, epochID uint64, delegatorAddress, validatorAddress string) (*syscontract.UnbondingDelegation, error) {
-	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
+func getOrCreateUnbondingDelegation(
+	context protocol.TxSimContext, epochID uint64, delegatorAddress, validatorAddress string,
+) (*syscontract.UnbondingDelegation, error) {
+	bz, err := context.Get(
+		syscontract.SystemContract_DPOS_STAKE.String(),
+		ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -1162,30 +1218,39 @@ func getOrCreateUnbondingDelegation(context protocol.TxSimContext, epochID uint6
 	return ud, nil
 }
 
-// 获取 unbonding delegation
-func getUnbondingDelegation(context protocol.TxSimContext, epochID uint64, delegatorAddress, validatorAddress string) (*syscontract.UnbondingDelegation, error) {
-	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
-	if err != nil {
-		return nil, err
-	}
-	ud := &syscontract.UnbondingDelegation{}
-	if len(bz) > 0 {
-		err = proto.Unmarshal(bz, ud)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, fmt.Errorf("no such unbonding delegation, epochID: [%d], delegatorAddress: [%s],validatorAddress: [%s]", epochID, delegatorAddress, validatorAddress)
-	}
-	return ud, nil
-}
+//// 获取 unbonding delegation
+//func getUnbondingDelegation(
+//	context protocol.TxSimContext, epochID uint64, delegatorAddress, validatorAddress string,
+//	) (*syscontract.UnbondingDelegation, error) {
+//	bz, err := context.Get(
+//		syscontract.SystemContract_DPOS_STAKE.String(),
+//		ToUnbondingDelegationKey(epochID, delegatorAddress, validatorAddress))
+//	if err != nil {
+//		return nil, err
+//	}
+//	ud := &syscontract.UnbondingDelegation{}
+//	if len(bz) > 0 {
+//		err = proto.Unmarshal(bz, ud)
+//		if err != nil {
+//			return nil, err
+//		}
+//	} else {
+//		return nil, fmt.Errorf(
+//			"no such unbonding delegation, epochID: [%d], delegatorAddress: [%s],validatorAddress: [%s]",
+//			epochID, delegatorAddress, validatorAddress)
+//	}
+//	return ud, nil
+//}
 
 // 检查 当前 epoch 总的 undelegation 数量
-func (s *DPoSStakeRuntime) checkEpochUnDelegateAmount(context protocol.TxSimContext, delegatorAddress string, validatorAddress string, amount string) (*big.Int, error) {
+func (s *DPoSStakeRuntime) checkEpochUnDelegateAmount(
+	context protocol.TxSimContext, delegatorAddress string, validatorAddress string, amount string) (*big.Int, error) {
 	// get delegate
 	d, err := getDelegation(context, delegatorAddress, validatorAddress)
 	if err != nil {
-		s.log.Errorf("get delegation error, delegationAddress: [%s], validatorAddress: [%s]", delegatorAddress, validatorAddress)
+		s.log.Errorf(
+			"get delegation error, delegationAddress: [%s], validatorAddress: [%s]",
+			delegatorAddress, validatorAddress)
 		return nil, err
 	}
 	// get validator
@@ -1246,7 +1311,8 @@ func (s *DPoSStakeRuntime) checkSenderAndOwner(context protocol.TxSimContext) er
 	return nil
 }
 
-func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(context protocol.TxSimContext, amount string) (bool, string, error) {
+func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(
+	context protocol.TxSimContext, amount string) (bool, string, error) {
 	// convert int string to big int
 	amountValue, err := stringToBigInt(amount)
 	if err != nil {
@@ -1255,6 +1321,9 @@ func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(context protocol.TxSi
 
 	// get all validator
 	vc, err := getAllValidatorByPrefix(context, ToValidatorPrefix())
+	if err != nil {
+		return false, "", nil
+	}
 
 	// 按照 SelfDelegation 排序
 	c := make(Collections, 0)
@@ -1287,9 +1356,8 @@ func (s *DPoSStakeRuntime) checkMinSelfDelegationOverRange(context protocol.TxSi
 	}
 	if amountValue.Cmp(value) <= 0 {
 		return false, value.String(), nil
-	} else {
-		return true, value.String(), nil
 	}
+	return true, value.String(), nil
 }
 
 func (s *DPoSStakeRuntime) checkNewValidatorNumberOverRange(context protocol.TxSimContext, amount int) error {
@@ -1308,6 +1376,22 @@ func (s *DPoSStakeRuntime) checkNewValidatorNumberOverRange(context protocol.TxS
 		return fmt.Errorf("new validator amount is over range, current all candidates number is: [%d]", len(vc.Vector))
 	}
 	return nil
+}
+
+func (s *DPoSStakeRuntime) readEpoch(context protocol.TxSimContext) (*syscontract.Epoch, error) {
+	bz, err := s.ReadLatestEpoch(context, nil)
+	if err != nil {
+		s.log.Errorf("undelegate read latest epoch error")
+		return nil, err
+	}
+	// read epoch
+	epoch := &syscontract.Epoch{}
+	err = proto.Unmarshal(bz, epoch)
+	if err != nil {
+		s.log.Errorf("undelegate unmarshal latest epoch error")
+		return nil, err
+	}
+	return epoch, nil
 }
 
 // 返回所有验证人
