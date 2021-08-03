@@ -27,7 +27,6 @@ import (
 	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
 	_ "net/http/pprof"
 )
-
 var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
@@ -44,20 +43,21 @@ func TestCallFact(t *testing.T) {
 	println("start") // 2.9m
 	start := time.Now().UnixNano() / 1e6
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 1000; i++ {
 		for j := 0; j < 1; j++ {
 			x++
 			y := x
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				invokeFact("save", y, contractId, txContext, pool, bytes)
+				invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
 				//invokeFact("query", y, contractId, txContext, pool, bytes)
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%1000 == 0 {
 					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
 				}
 			}()
+			fmt.Printf("###### %v \n", i)
 		}
 
 		wg.Wait()
