@@ -156,8 +156,8 @@ func (r *PrivateComputeRuntime) getValue(context protocol.TxSimContext, key stri
 func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name, version string,
 	codeHeader, code []byte, codeHash string) error {
 	if utils.IsAnyBlank(name, version, string(codeHeader), string(code), codeHash) {
-		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, params[version]=%s",
-			common.ErrParams.Error(), name, code, codeHash, version)
+		err := fmt.Errorf("%s, param[contract_name]=%s, param[contract_code]=%s, param[code_hash]=%s, "+
+			"params[version]=%s", common.ErrParams.Error(), name, code, codeHash, version)
 		r.log.Errorf(err.Error())
 		return err
 	}
@@ -183,8 +183,8 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 
 	match, err := regexp.MatchString(protocol.DefaultVersionRegex, version)
 	if err != nil || !match {
-		formatErr := fmt.Errorf("param[version] string of the contract[%+v] invalid while invoke user contract, "+
-			"should match [%s]", name, protocol.DefaultVersionRegex)
+		formatErr := fmt.Errorf("param[version] string of the contract[%+v] invalid while invoke "+
+			"user contract, should match [%s]", name, protocol.DefaultVersionRegex)
 		r.log.Errorf(formatErr.Error())
 		return formatErr
 	}
@@ -193,13 +193,15 @@ func (r *PrivateComputeRuntime) saveContract(context protocol.TxSimContext, name
 	versionKey := []byte(ContractVersion)
 	versionInCtx, err := context.Get(combinationName, versionKey)
 	if err != nil {
-		formatErr := fmt.Errorf("unable to find latest version for contract[%s], system error:%s", name, err.Error())
+		formatErr := fmt.Errorf("unable to find latest version for contract[%s], system error:%s",
+			name, err.Error())
 		r.log.Errorf(formatErr.Error())
 		return formatErr
 	}
 
 	if versionInCtx != nil {
-		formatErr := fmt.Errorf("the contract already exists. contract[%s], version[%s]", name, string(versionInCtx))
+		formatErr := fmt.Errorf("the contract already exists. contract[%s], version[%s]",
+			name, string(versionInCtx))
 		r.log.Errorf(formatErr.Error())
 		return formatErr
 	}
@@ -376,8 +378,8 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	}
 	auth, err := r.verifyMultiCallerAuth(signPairs, orgIds, payloadBytes, ac)
 	if !auth || err != nil {
-		formatErr := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], request payload[code_hash]=%v",
-			params["user_cert"], params["client_sign"], params["payload"])
+		formatErr := fmt.Errorf("verify user auth failed, user_cert[%v], signature[%v], "+
+			"request payload[code_hash]=%v", params["user_cert"], params["client_sign"], params["payload"])
 		r.log.Errorf(formatErr.Error())
 		return nil, formatErr
 	}
@@ -853,7 +855,8 @@ func (r *PrivateComputeRuntime) SaveRemoteAttestation(context protocol.TxSimCont
 		return nil, formatErr
 	}
 	if err := context.Put(enclaveIdKey, []byte("encrypt_pub_key"), proof.EncryptionKeyPEM); err != nil {
-		formatErr := fmt.Errorf("save remote attestatipn attribute <encrypt_pub_key> failed, err: %s", err.Error())
+		formatErr := fmt.Errorf("save remote attestatipn attribute <encrypt_pub_key> "+
+			"failed, err: %s", err.Error())
 		r.log.Errorf(formatErr.Error())
 		return nil, formatErr
 	}
