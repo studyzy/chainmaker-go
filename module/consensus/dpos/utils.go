@@ -19,11 +19,12 @@ import (
 	pbdpos "chainmaker.org/chainmaker/pb-go/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 )
 
 // ValidatorsElection select validators from Candidates
-func ValidatorsElection(infos []*pbdpos.CandidateInfo, n int, seed []byte, outSort bool) ([]*pbdpos.CandidateInfo, error) {
+func ValidatorsElection(
+	infos []*pbdpos.CandidateInfo, n int, seed []byte, outSort bool) ([]*pbdpos.CandidateInfo, error) {
 	if n == 0 {
 		return nil, fmt.Errorf("can not select zero validators")
 	}
@@ -86,7 +87,7 @@ func distributionN(m, n int) (int, int) {
 }
 
 func sliceToMap(array []int) map[int]struct{} {
-	values := make(map[int]struct{}, 0)
+	values := make(map[int]struct{})
 	for _, v := range array {
 		values[v] = struct{}{}
 	}
@@ -107,11 +108,11 @@ func (s CandidateInfos) Swap(i, j int) {
 func (s CandidateInfos) Less(i, j int) bool {
 	// 优先按照weight排序，相同的情况下按照PeerId从小到大排序（字符串）
 	wi, wj := utils.NewBigInteger(s[i].Weight), utils.NewBigInteger(s[j].Weight)
-	if val := wi.Cmp(wj); val == 0 {
+	val := wi.Cmp(wj)
+	if val == 0 {
 		return strings.Compare(s[i].PeerId, s[j].PeerId) < 0
-	} else {
-		return val > 0
 	}
+	return val > 0
 }
 
 func GetLatestEpochInfo(store protocol.BlockchainStore) (*syscontract.Epoch, error) {
