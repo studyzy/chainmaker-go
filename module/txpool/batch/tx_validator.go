@@ -43,7 +43,8 @@ func (p *BatchTxPool) validateTxTime(tx *commonPb.Transaction) error {
 	txTimestamp := tx.Payload.Timestamp
 	chainTime := utils.CurrentTimeSeconds()
 	if math.Abs(float64(chainTime-txTimestamp)) > poolconf.MaxTxTimeTimeout(p.chainConf) {
-		p.log.Errorw("the txId timestamp is error", "txId", tx.Payload.GetTxId(), "txTimestamp", txTimestamp, "chainTimestamp", chainTime)
+		p.log.Errorw("the txId timestamp is error", "txId", tx.Payload.GetTxId(), "txTimestamp",
+			txTimestamp, "chainTimestamp", chainTime)
 		return commonErrors.ErrTxTimeout
 	}
 	return nil

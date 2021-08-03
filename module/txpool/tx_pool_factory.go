@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"time"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/localconf"
-	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/txpool/batch"
 	"chainmaker.org/chainmaker-go/txpool/single"
+	"chainmaker.org/chainmaker/common/msgbus"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol"
 )
 
 type PoolType string
@@ -58,7 +58,8 @@ func (f TxPoolFactory) NewTxPool(log protocol.Logger, txPoolType PoolType, opts 
 		if err := batchPool.Apply(batch.WithMsgBus(tf.msgBus),
 			batch.WithPoolSize(int(localconf.ChainMakerConfig.TxPoolConfig.MaxTxPoolSize)),
 			batch.WithBatchMaxSize(localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize),
-			batch.WithBatchCreateTimeout(time.Duration(localconf.ChainMakerConfig.TxPoolConfig.BatchCreateTimeout)*time.Millisecond),
+			batch.WithBatchCreateTimeout(time.Duration(localconf.ChainMakerConfig.TxPoolConfig.BatchCreateTimeout)*
+				time.Millisecond),
 		); err != nil {
 			return nil, err
 		}

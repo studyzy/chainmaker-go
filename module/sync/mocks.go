@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package sync
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker/common/msgbus"
 	mbusmock "chainmaker.org/chainmaker/common/msgbus/mock"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -16,7 +18,6 @@ import (
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	syncPb "chainmaker.org/chainmaker/pb-go/sync"
 	"chainmaker.org/chainmaker/protocol/mock"
-	"fmt"
 	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker/protocol"

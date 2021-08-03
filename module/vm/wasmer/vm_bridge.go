@@ -110,6 +110,7 @@ func sysCall(context unsafe.Pointer,
 	return ret
 }
 
+//nolint
 func (s *WaciInstance) invoke(method interface{}) int32 {
 	switch method.(string) {
 	// common
