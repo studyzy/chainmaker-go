@@ -9,30 +9,24 @@ package main
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"time"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
-	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/json"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+
+	"chainmaker.org/chainmaker/common/ca"
+	"chainmaker.org/chainmaker/common/crypto"
+	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	apipb "chainmaker.org/chainmaker/pb-go/api"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/sdk-go/utils"
 )
 
 var (
@@ -52,18 +46,17 @@ var (
 	txIds        string
 	topic        string
 	contractName string
+	onlyHeader   bool
 
 	conn   *grpc.ClientConn
-	client apiPb.RpcNodeClient
+	client apipb.RpcNodeClient
 	sk3    crypto.PrivateKey
-	Log    *logger.CMLogger
 )
 
 const rpcClientMaxReceiveMessageSize = 1024 * 1024 * 16
 
 func main() {
 	var err error
-	Log = logger.GetLogger("")
 	mainCmd := &cobra.Command{
 		Use: "subscribe",
 		PersistentPreRun: func(_ *cobra.Command, _ []string) {
@@ -72,7 +65,7 @@ func main() {
 				panic(err)
 			}
 
-			client = apiPb.NewRpcNodeClient(conn)
+			client = apipb.NewRpcNodeClient(conn)
 
 			file, err := ioutil.ReadFile(userKeyPath)
 			if err != nil {
@@ -88,7 +81,7 @@ func main() {
 
 	mainCmd.AddCommand(SubscribeBlockCMD())
 	mainCmd.AddCommand(SubscribeTxCMD())
-	mainCmd.AddCommand(SubscribeContractEvent())
+	mainCmd.AddCommand(SubscribeEventCMD())
 
 	mainFlags := mainCmd.PersistentFlags()
 	mainFlags.StringVarP(&ip, "ip", "i", "localhost", "specify ip")
@@ -100,13 +93,14 @@ func main() {
 	mainFlags.StringVarP(&chainId, "chain-id", "C", "chain1", "specify chain id")
 	mainFlags.StringVarP(&orgId, "org-id", "O", "wx-org1.chainmaker.org", "specify org id")
 	mainFlags.StringVarP(&dataFile, "data-file", "f", "data.txt", "specify the data file to write blocks or tx")
-	mainFlags.Int64VarP(&startBlock, "start-block", "s", 2, "specify the start block height to receive from, -1 means to receive until you stop the program")
+	mainFlags.Int64VarP(&startBlock, "start-block", "s", -1, "specify the start block height to receive from, -1 means to receive until you stop the program")
 	mainFlags.Int64VarP(&endBlock, "end-block", "e", -1, "specify the end block height to receive to, -1 means to receive until you stop the program")
 	mainFlags.BoolVarP(&withRwSet, "withRWSet", "S", false, "specify withRWSet, true or false")
 	mainFlags.Int32VarP(&txType, "tx-type", "T", -1, "specify transaction type you with to receive, -1 means all, other value from 0 to 7")
 	mainFlags.StringVarP(&txIds, "tx-ids", "I", "", "specify the transaction ids, separated by comma, NOTICE: don't add space between ids")
 	mainFlags.StringVarP(&topic, "topic", "", "topic_vx", "specify the contract event topic")
 	mainFlags.StringVarP(&contractName, "contract-name", "", "claim001", "specify the contract name")
+	mainFlags.BoolVarP(&onlyHeader, "only-header", "H", false, "the results of blocks only contains Header or FUll Data when subscribe block")
 
 	if mainCmd.Execute() != nil {
 		return
@@ -138,171 +132,135 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-func subscribeRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, method string, _ string, payloadBytes *commonPb.Payload) (*commonPb.TxResponse, error) {
-
-	req := generateReq(sk3, method, payloadBytes)
-	res, err := client.Subscribe(context.Background(), req)
-	if err != nil {
-		log.Fatalf("subscribe contract event failed, %s", err.Error())
+func createPayload(chainId, txId string, txType common.TxType, contractName, method string,
+	kvs []*common.KeyValuePair, seq uint64) *common.Payload {
+	if txId == "" {
+		txId = utils.GetRandTxId()
 	}
 
-	f, err := os.OpenFile(dataFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("open data file failed, %s", err.Error())
-	}
-	defer f.Close()
+	payload := utils.NewPayload(
+		utils.WithChainId(chainId),
+		utils.WithTxType(txType),
+		utils.WithTxId(txId),
+		utils.WithTimestamp(time.Now().Unix()),
+		utils.WithContractName(contractName),
+		utils.WithMethod(method),
+		utils.WithParameters(kvs),
+		utils.WithSequence(seq),
+	)
 
-	for {
-		result, err := res.Recv()
-		if err == io.EOF {
-			log.Println("got eof and exit")
-			break
-		}
-		if err != nil {
-			log.Println(err)
-			break
-		}
-		switch method {
-		case syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String():
-			err := recvBlock(f, result)
-			if err != nil {
-				break
-			}
-		case syscontract.SubscribeFunction_SUBSCRIBE_TX.String():
-			err := recvTx(f, result)
-			if err != nil {
-				break
-			}
-		case syscontract.SubscribeFunction_SUBSCRIBE_CONTRACT_EVENT.String():
-			err := recvContractEvent(f, result)
-			if err != nil {
-				break
-			}
-		}
-	}
-
-	return nil, err
+	return payload
 }
 
-func recvBlock(file *os.File, result *commonPb.SubscribeResult) error {
-	var blockInfo commonPb.BlockInfo
-	if err := proto.Unmarshal(result.Data, &blockInfo); err != nil {
-		log.Println(err)
-		return err
-	}
-	bytes, err := json.Marshal(blockInfo)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	_, _ = file.Write(bytes)
-	_, _ = file.WriteString("\n")
-	blockHash := make([]byte, len(blockInfo.Block.Header.BlockHash)*2)
-	hex.Encode(blockHash, blockInfo.Block.Header.BlockHash)
-	fmt.Printf("Received a block at height:%d, chainId:%s, blockHash:%s\n",
-		blockInfo.Block.Header.BlockHeight, chainId, blockHash)
-	return nil
-}
-func recvTx(file *os.File, result *commonPb.SubscribeResult) error {
-	var tx commonPb.Transaction
-	if err := proto.Unmarshal(result.Data, &tx); err != nil {
-		log.Println(err)
-		return err
-	}
-
-	bytes, err := json.Marshal(tx)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	_, _ = file.Write(bytes)
-	_, _ = file.WriteString("\n")
-
-	fmt.Printf("Received a transaction, chainId:%s, txId:%s\n",
-		tx.Payload.ChainId, tx.Payload.TxId)
-	return nil
-}
-
-func recvContractEvent(file *os.File, result *commonPb.SubscribeResult) error {
-	recvEventTick := time.Now().UnixNano() / 1e6
-	con := &commonPb.ContractEventInfoList{}
-	if err := proto.Unmarshal(result.Data, con); err != nil {
-		log.Println(err)
-		return err
-	}
-	for _, event := range con.ContractEvents {
-		Log.Infof("time:[%d],received a contract event :chainId:%s, blockHeight:%d,txId:%s, contractName:%s,topic:%s, eventData:%v",
-			recvEventTick, event.ChainId, event.BlockHeight, event.TxId, event.ContractName, event.Topic, event.EventData)
-	}
-	/*bytes, err := json.Marshal(con)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	_, _ = file.Write(bytes)
-	_, _ = file.WriteString("\n")*/
-
-	return nil
-}
-
-func generateReq(sk3 crypto.PrivateKey, method string, payload *commonPb.Payload) *commonPb.TxRequest {
-	txId := utils.GetRandTxId()
-	file, err := ioutil.ReadFile(userCrtPath)
+func generateTxRequest(payload *common.Payload,
+	endorsers []*common.EndorsementEntry) (*common.TxRequest, error) {
+	userCrtBytes, err := ioutil.ReadFile(userCrtPath)
 	if err != nil {
 		panic(err)
 	}
 
 	// 构造Sender
-	sender := &acPb.Member{
+	signer := &accesscontrol.Member{
 		OrgId:      orgId,
-		MemberInfo: file,
-		//IsFullCert: true,
+		MemberInfo: userCrtBytes,
+		MemberType: accesscontrol.MemberType_CERT,
 	}
 
-	// 构造Header
-	payload.ChainId = chainId
-	//Sender:         sender,
-	payload.TxType = commonPb.TxType_SUBSCRIBE
-	payload.Method = method
-	payload.TxId = txId
-	payload.Timestamp = time.Now().Unix()
-	payload.ExpirationTime = 0
-
-	req := &commonPb.TxRequest{
+	req := &common.TxRequest{
 		Payload: payload,
-		Sender:  &commonPb.EndorsementEntry{Signer: sender},
+		Sender: &common.EndorsementEntry{
+			Signer:    signer,
+			Signature: nil,
+		},
+		Endorsers: endorsers,
 	}
 
-	// 拼接后，计算Hash，对hash计算签名
-	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
+	userCrt, err := utils.ParseCert(userCrtBytes)
 	if err != nil {
-		log.Fatalf("CalcUnsignedTxRequest failed, %s", err.Error())
+		return nil, err
 	}
-
-	signer := getSigner(sk3, sender)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := utils.SignPayload(sk3, userCrt, payload)
 	if err != nil {
-		log.Fatalf("sign failed, %s", err.Error())
+		return nil, fmt.Errorf("SignPayload failed, %s", err)
 	}
 
 	req.Sender.Signature = signBytes
-	return req
+
+	return req, nil
 }
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
-	skPEM, err := sk3.String()
+func subscribe(ctx context.Context, payload *common.Payload) (<-chan interface{}, error) {
+
+	req, err := generateTxRequest(payload, nil)
 	if err != nil {
-		log.Fatalf("get sk PEM failed, %s", err.Error())
+		return nil, err
 	}
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
+	resp, err := client.Subscribe(ctx, req)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
-	if err != nil {
-		panic(err)
-	}
-	return signer
+	c := make(chan interface{})
+	go func() {
+		defer close(c)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				var result *common.SubscribeResult
+				result, err = resp.Recv()
+				if err == io.EOF {
+					return
+				}
+
+				if err != nil {
+					return
+				}
+
+				var ret interface{}
+				switch payload.Method {
+				case syscontract.SubscribeFunction_SUBSCRIBE_BLOCK.String():
+					blockInfo := &common.BlockInfo{}
+					if err = proto.Unmarshal(result.Data, blockInfo); err == nil {
+						ret = blockInfo
+						break
+					}
+
+					blockHeader := &common.BlockHeader{}
+					if err = proto.Unmarshal(result.Data, blockHeader); err == nil {
+						ret = blockHeader
+						break
+					}
+					close(c)
+					return
+				case syscontract.SubscribeFunction_SUBSCRIBE_TX.String():
+					tx := &common.Transaction{}
+					if err = proto.Unmarshal(result.Data, tx); err != nil {
+						close(c)
+						return
+					}
+					ret = tx
+				case syscontract.SubscribeFunction_SUBSCRIBE_CONTRACT_EVENT.String():
+					events := &common.ContractEventInfoList{}
+					if err = proto.Unmarshal(result.Data, events); err != nil {
+						close(c)
+						return
+					}
+					for _, event := range events.ContractEvents {
+						c <- event
+					}
+					continue
+
+				default:
+					ret = result.Data
+				}
+
+				c <- ret
+			}
+		}
+	}()
+
+	return c, err
 }
