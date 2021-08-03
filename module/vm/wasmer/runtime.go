@@ -22,6 +22,10 @@ type RuntimeInstance struct {
 	chainId string
 }
 
+func (r *RuntimeInstance) Pool() *vmPool {
+	return r.pool
+}
+
 // Invoke contract by call vm, implement protocol.RuntimeInstance
 func (r *RuntimeInstance) Invoke(
 	contract *commonPb.Contract, method string,

@@ -9,16 +9,18 @@ package payload
 
 import (
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
+
+	"github.com/gogo/protobuf/proto"
+	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	sdkPbAc "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
-	"github.com/gogo/protobuf/proto"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -178,7 +180,10 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 }
 
 func ParseCert(crtPEM []byte) (*bcx509.Certificate, error) {
-	certBlock, _ := pem.Decode(crtPEM)
+	certBlock, rest := pem.Decode(crtPEM)
+	if len(rest) != 0 {
+		return nil, errors.New("pem.Decode failed, invalid cert")
+	}
 	if certBlock == nil {
 		return nil, fmt.Errorf("decode pem failed, invalid certificate")
 	}
