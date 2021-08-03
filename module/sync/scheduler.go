@@ -168,6 +168,7 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		//sch.log.Debugf("no need to sync block")
 		return nil, nil
 	}
+	pendingHeight = sch.nextHeightToReq()
 	//if pendingHeight = sch.nextHeightToReq(); pendingHeight < 0 {
 	//	sch.log.Debugf("pendingHeight: %d, block status %v", pendingHeight, sch.blockStates)
 	//	return nil, nil
