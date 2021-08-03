@@ -13,8 +13,9 @@ import (
 )
 
 type BlockSyncServerConf struct {
-	timeOut           time.Duration // Timeout of request, unit nanosecond
-	reqTimeThreshold  time.Duration // When the difference between the height of the node and the latest height of peers is 1, the time interval for requesting
+	timeOut          time.Duration // Timeout of request, unit nanosecond
+	reqTimeThreshold time.Duration // When the difference between the height of the node and the latest height of peers
+	// is 1, the time interval for requesting
 	processBlockTick  time.Duration // The ticker to process of the block, unit nanosecond
 	livenessTick      time.Duration // The ticker to liveness checking, unit nanosecond
 	schedulerTick     time.Duration // The ticker to request block from the peer, unit nanosecond
@@ -79,5 +80,6 @@ func (c *BlockSyncServerConf) SetReqTimeThreshold(n float64) *BlockSyncServerCon
 func (c *BlockSyncServerConf) print() string {
 	return fmt.Sprintf("blockPoolSize: %d, request timeout: %d, batchSizeFromOneNode: %d"+
 		", processBlockTick: %v, schedulerTick: %v, livenessTick: %v, nodeStatusTick: %v\n",
-		c.blockPoolSize, c.timeOut, c.batchSizeFromOneNode, c.processBlockTick, c.schedulerTick, c.livenessTick, c.nodeStatusTick)
+		c.blockPoolSize, c.timeOut, c.batchSizeFromOneNode, c.processBlockTick, c.schedulerTick, c.livenessTick,
+		c.nodeStatusTick)
 }
