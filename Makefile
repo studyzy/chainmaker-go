@@ -8,10 +8,13 @@ else
   endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
-VERSION=V1.2.0
+VERSION=v2.0.0
 
 chainmaker:
 	@cd main && go build -o ../bin/chainmaker
+
+chainmaker-vendor:
+	@cd main && go build -mod=vendor -o ../bin/chainmaker
 
 package:
 	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
@@ -42,12 +45,13 @@ generate:
 	go generate ./...
 
 docker-build:
+	cd main && go mod vendor
 	docker build -t chainmaker -f ./DOCKER/Dockerfile .
-	docker tag chainmaker chainmaker:v1.2.0
+	docker tag chainmaker chainmaker:${VERSION}
 
 docker-build-dev: chainmaker
 	docker build -t chainmaker -f ./DOCKER/dev.Dockerfile .
-	docker tag chainmaker chainmaker:v1.2.0
+	docker tag chainmaker chainmaker:${VERSION}
 
 docker-compose-start: docker-compose-stop
 	docker-compose up -d
