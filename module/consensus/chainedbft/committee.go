@@ -55,37 +55,12 @@ func (pp *committee) getPeers() []*peer {
 	return peers
 }
 
-//updatePeerNetState updates a peer's link state
-func (pp *committee) updatePeerNetState(id string, active bool) bool {
-	pp.Lock()
-	defer pp.Unlock()
-	for _, p := range pp.peers {
-		if p.id == id {
-			p.active = active
-			return true
-		}
-	}
-	return false
-}
-
 //getPeerByIndex returns a peer with given index
 func (pp *committee) getPeerByIndex(index uint64) *peer {
 	pp.RLock()
 	defer pp.RUnlock()
 	for _, v := range pp.peers {
 		if v.index == index {
-			return v
-		}
-	}
-	return nil
-}
-
-//getPeerByID returns a peer with given id
-func (pp *committee) getPeerByID(id string) *peer {
-	pp.RLock()
-	defer pp.RUnlock()
-	for _, v := range pp.peers {
-		if v.id == id {
 			return v
 		}
 	}
@@ -102,11 +77,4 @@ func (pp *committee) isValidIdx(index uint64) bool {
 		}
 	}
 	return false
-}
-
-//peerCount returns the size of core peers at current consensus epoch
-func (pp *committee) peerCount() int {
-	pp.RLock()
-	defer pp.RUnlock()
-	return len(pp.peers)
 }

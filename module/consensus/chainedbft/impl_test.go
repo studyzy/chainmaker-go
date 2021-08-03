@@ -289,7 +289,7 @@ func initOneNode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	chainid := "TestConsensusChainedBftImpl"
+	chainid := "TestConsensusChainedBftImplOneNode"
 
 	nodeLocalConf = make([]*localconf.CMConfig, 0)
 	nodeChainConf = make([]*chainconf.ChainConf, 0)

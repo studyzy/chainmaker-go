@@ -47,7 +47,7 @@ func GetLevelFromBlock(block *common.Block) (uint64, error) {
 
 //GetQCFromBlock get qc from block
 func GetQCFromBlock(block *common.Block) []byte {
-	var qc []byte = nil
+	var qc []byte
 	if block == nil || block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return nil
 	}
@@ -178,7 +178,8 @@ func VerifyDataSign(data []byte, signEnrty *common.EndorsementEntry,
 }
 
 //GetUidFromProtoSigner get uid from Member using netservice
-func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService, ac protocol.AccessControlProvider) (string, error) {
+func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService,
+	ac protocol.AccessControlProvider) (string, error) {
 	if signerpb == nil {
 		return "", fmt.Errorf("signer is nil")
 	}
