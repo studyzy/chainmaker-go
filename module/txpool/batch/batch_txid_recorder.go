@@ -34,12 +34,13 @@ func (r *batchTxIdRecorder) RemoveRecordWithBatch(batch *txpoolPb.TxBatch) {
 func (r *batchTxIdRecorder) FindBatchIdWithTxId(txId string) (batchId int32, txIndex int32, ok bool) {
 	batchId = -1
 	r.m.Range(func(key, value interface{}) bool {
-		txsMapInfo, ok := value.(map[string]int32)
-		if !ok {
+		txsMapInfo, ok0 := value.(map[string]int32)
+		if !ok0 {
 			panic("transfer value interface into map failed")
 		}
 		if index, exist := txsMapInfo[txId]; exist {
 			txIndex = index
+			ok = true
 			var ok1 bool
 			batchId, ok1 = key.(int32)
 			if !ok1 {
