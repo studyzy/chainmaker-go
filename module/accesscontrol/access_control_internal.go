@@ -37,61 +37,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-// Special characters allowed to define customized access rules
-const (
-	LIMIT_DELIMITER = "/"
-
-	authenticationFailedErrorTemplate        = "authentication failed, %v"
-	failToGetRoleInfoFromCertWarningTemplate = "authentication warning: fail to get role information from certificate [%v], certificate information: \n%s\n"
-)
-
-var notEnoughParticipantsSupportError = "authentication fail: not enough participants support this action"
-
-var p11HandleMap = map[string]*pkcs11.P11Handle{}
-
-// List of access principals which should not be customized
-var restrainedResourceList = map[string]bool{
-	protocol.ResourceNameAllTest:       true,
-	protocol.ResourceNameP2p:           true,
-	protocol.ResourceNameConsensusNode: true,
-
-	common.TxType_QUERY_CONTRACT.String():  true,
-	common.TxType_INVOKE_CONTRACT.String(): true,
-	common.TxType_SUBSCRIBE.String():       true,
-	common.TxType_ARCHIVE.String():         true,
-}
-
-// Default access principals for predefined operation categories
-var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
-	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE:       protocol.ResourceNameSubscribe,
-	common.TxType_ARCHIVE:         protocol.ResourceNameArchive,
-}
-
-var (
-	policyRead      = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
-	policyWrite     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
-	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
-	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
-	policyAdmin     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
-	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
-	policyArchive   = NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin})
-
-	policyConfig = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
-
-	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
-
-	policyForbidden = NewPolicy(protocol.RuleForbidden, nil, nil)
-
-	policyAllTest = NewPolicy(protocol.RuleAll, nil, []protocol.Role{protocol.RoleAdmin})
-
-	policyLimitTestAny        = NewPolicy("2", nil, nil)
-	policyLimitTestAdmin      = NewPolicy("2", nil, []protocol.Role{protocol.RoleAdmin})
-	policyPortionTestAny      = NewPolicy("3/4", nil, nil)
-	policyPortionTestAnyAdmin = NewPolicy("3/4", nil, []protocol.Role{protocol.RoleAdmin})
-)
-
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
 	ac.orgNum = 0
 	ac.orgList = &sync.Map{}
@@ -366,8 +311,6 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 		syscontract.ChainConfigFunction_TRUST_MEMBER_ADD.String(), policyConfig)
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
 		syscontract.ChainConfigFunction_TRUST_MEMBER_DELETE.String(), policyConfig)
-	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_TRUST_MEMBER_UPDATE.String(), policyConfig)
 
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
 		syscontract.ChainConfigFunction_NODE_ID_ADD.String(), policyConfig)
@@ -544,21 +487,8 @@ func (ac *accessControl) verifyPrincipalPolicy(principal, refinedPrincipal proto
 	}
 }
 
-func buildOrgListRoleListOfPolicyForVerifyPrincipal(p *policy) (map[string]bool, map[protocol.Role]bool) {
-	orgListRaw := p.GetOrgList()
-	roleListRaw := p.GetRoleList()
-	orgList := map[string]bool{}
-	roleList := map[protocol.Role]bool{}
-	for _, orgRaw := range orgListRaw {
-		orgList[orgRaw] = true
-	}
-	for _, roleRaw := range roleListRaw {
-		roleList[roleRaw] = true
-	}
-	return orgList, roleList
-}
-
-func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endorsements []*common.EndorsementEntry) (bool, error) {
+func (ac *accessControl) verifyPrincipalPolicyRuleMajorityCase(p *policy, endorsements []*common.EndorsementEntry) (
+	bool, error) {
 	// notice: accept admin role only, and require majority of all the organizations on the chain
 	role := protocol.RoleAdmin
 	// orgList, _ := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)

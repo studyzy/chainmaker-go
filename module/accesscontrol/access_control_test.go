@@ -19,7 +19,9 @@ import (
 	logger2 "chainmaker.org/chainmaker-go/logger"
 	bccrypto "chainmaker.org/chainmaker/common/crypto"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
 	//"chainmaker.org/chainmaker-go/utils"
@@ -950,381 +952,381 @@ func TestAccessControlValidateResourcePolicy(t *testing.T) {
 	require.Equal(t, false, ok)
 }
 
-// func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t *testing.T) {
-// 	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
-// 	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
+func TestAccessControlCreatePrincipalAndGetValidEndorsementsAndVerifyPrincipal(t *testing.T) {
+	localconf.ChainMakerConfig.NodeConfig.SignerCacheSize = 10
+	localconf.ChainMakerConfig.NodeConfig.CertCacheSize = 10
 
-// 	for orgId, info := range orgList {
-// 		acsMap[orgId] = constructAC(t, info)
-// 	}
-// 	acInst := acsMap[org1Name].acInst
+	for orgId, info := range orgList {
+		acsMap[orgId] = constructAC(t, info)
+	}
+	acInst := acsMap[org1Name].acInst
 
-// 	// read
-// 	sigRead, err := acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err := acsMap[org1Name].commonNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementReadZephyrus := &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementReadZephyrus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	validEndorsements, err := acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, len(validEndorsements), 1)
-// 	require.Equal(t, endorsementReadZephyrus.String(), validEndorsements[0].String())
-// 	// read invalid
-// 	sigRead, err = acsMap[org5Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org5Name].commonNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead := &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// wrong signer
-// 	sigRead, err = acsMap[org5Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org2Name].commonNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// write
-// 	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org1Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameWriteData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	sigRead, err = acsMap[org1Name].client.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org1Name].client.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameTxTransact, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	sigRead, err = acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org1Name].commonNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameTxTransact, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// P2P
-// 	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org1Name].consensusNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org4Name].commonNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org3Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org1Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// consensus
-// 	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org1Name].consensusNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org4Name].commonNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org3Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// self
-// 	sigRead, err = acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org4Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	sigRead, err = acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerRead, err = acsMap[org3Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementRead = &common.EndorsementEntry{
-// 		Signer:    signerRead,
-// 		Signature: sigRead,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// majority
-// 	sigEurus, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerEurus, err := acsMap[org4Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementEurus := &common.EndorsementEntry{
-// 		Signer:    signerEurus,
-// 		Signature: sigEurus,
-// 	}
-// 	sigAuster, err := acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerAuster, err := acsMap[org3Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementAuster := &common.EndorsementEntry{
-// 		Signer:    signerAuster,
-// 		Signature: sigAuster,
-// 	}
-// 	sigZephyrus, err := acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerZephyrus, err := acsMap[org1Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementZephyrus := &common.EndorsementEntry{
-// 		Signer:    signerZephyrus,
-// 		Signature: sigZephyrus,
-// 	}
-// 	sigBoreas, err := acsMap[org2Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerBoreas, err := acsMap[org2Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementBoreas := &common.EndorsementEntry{
-// 		Signer:    signerBoreas,
-// 		Signature: sigBoreas,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, len(validEndorsements), 4)
-// 	principalRead, err = acInst.CreatePrincipal(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, len(validEndorsements), 3)
-// 	require.Equal(t, endorsementAuster.String(), validEndorsements[0].String())
-// 	require.Equal(t, endorsementBoreas.String(), validEndorsements[1].String())
-// 	require.Equal(t, endorsementZephyrus.String(), validEndorsements[2].String())
-// 	// abnormal
-// 	sigThuellai, err := acsMap[org5Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerThuellai, err := acsMap[org5Name].admin.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementThuellai := &common.EndorsementEntry{
-// 		Signer:    signerThuellai,
-// 		Signature: sigThuellai,
-// 	}
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, len(validEndorsements), 4)
-// 	// invalid
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementAuster}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, len(validEndorsements), 2)
-// 	// all
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// abnormal
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus, endorsementThuellai}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// threshold
-// 	policyLimit, err := acInst.CreatePrincipal("test_2", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	policyLimit, err = acInst.CreatePrincipal("test_2_admin", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	policyLimit, err = acInst.CreatePrincipal("test_2", []*common.EndorsementEntry{endorsementAuster, endorsementThuellai}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	policyLimit, err = acInst.CreatePrincipal("test_2_admin", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// portion
-// 	policyPortion, err := acInst.CreatePrincipal("test_3/4", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	policyPortion, err = acInst.CreatePrincipal("test_3/4_admin", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	// invalid
-// 	policyPortion, err = acInst.CreatePrincipal("test_3/4", []*common.EndorsementEntry{endorsementAuster, endorsementAuster, endorsementBoreas, endorsementThuellai}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	policyPortion, err = acInst.CreatePrincipal("test_3/4_admin", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus, endorsementEurus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
-// 	require.NotNil(t, err)
-// 	require.Equal(t, false, ok)
-// 	// bench
-// 	var timeStart, timeEnd int64
-// 	count := int64(100)
-// 	// any
-// 	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
-// 	require.Nil(t, err)
-// 	timeStart = time.Now().UnixNano()
-// 	for i := 0; i < int(count); i++ {
-// 		ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	}
-// 	timeEnd = time.Now().UnixNano()
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	fmt.Printf("Verify ANY average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
-// 	// self
-// 	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementEurus}, []byte(msg), org4Name)
-// 	require.Nil(t, err)
-// 	timeStart = time.Now().UnixNano()
-// 	for i := 0; i < int(count); i++ {
-// 		ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
-// 	}
-// 	timeEnd = time.Now().UnixNano()
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	fmt.Printf("Verify SELF average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
-// 	// consensus
-// 	sigZephyrusConsensus, err := acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
-// 	require.Nil(t, err)
-// 	signerZephyrusConsensus, err := acsMap[org1Name].consensusNode.GetMember()
-// 	require.Nil(t, err)
-// 	endorsementZephyrusConsensus := &common.EndorsementEntry{
-// 		Signer:    signerZephyrusConsensus,
-// 		Signature: sigZephyrusConsensus,
-// 	}
-// 	policyConsensus, err := acInst.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementZephyrusConsensus}, []byte(msg))
-// 	require.Nil(t, err)
-// 	timeStart = time.Now().UnixNano()
-// 	for i := 0; i < int(count); i++ {
-// 		ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyConsensus)
-// 	}
-// 	timeEnd = time.Now().UnixNano()
-// 	require.Nil(t, err)
-// 	require.Equal(t, true, ok)
-// 	fmt.Printf("Verify CONSENSUS average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
-// }
+	// read
+	sigRead, err := acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err := acsMap[org1Name].commonNode.GetMember()
+	require.Nil(t, err)
+	endorsementReadZephyrus := &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err := acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementReadZephyrus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err := acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	validEndorsements, err := acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 1)
+	require.Equal(t, endorsementReadZephyrus.String(), validEndorsements[0].String())
+	// read invalid
+	sigRead, err = acsMap[org5Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org5Name].commonNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead := &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// wrong signer
+	sigRead, err = acsMap[org5Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org2Name].commonNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// write
+	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org1Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameWriteData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	sigRead, err = acsMap[org1Name].client.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org1Name].client.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameTxTransact, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	sigRead, err = acsMap[org1Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org1Name].commonNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameTxTransact, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// P2P
+	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org1Name].consensusNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org4Name].commonNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org3Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	sigRead, err = acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org1Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// consensus
+	sigRead, err = acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org1Name].consensusNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	sigRead, err = acsMap[org4Name].commonNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org4Name].commonNode.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org3Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// self
+	sigRead, err = acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org4Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	sigRead, err = acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerRead, err = acsMap[org3Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementRead = &common.EndorsementEntry{
+		Signer:    signerRead,
+		Signature: sigRead,
+	}
+	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementRead}, []byte(msg), org4Name)
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// majority
+	sigEurus, err := acsMap[org4Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerEurus, err := acsMap[org4Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementEurus := &common.EndorsementEntry{
+		Signer:    signerEurus,
+		Signature: sigEurus,
+	}
+	sigAuster, err := acsMap[org3Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerAuster, err := acsMap[org3Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementAuster := &common.EndorsementEntry{
+		Signer:    signerAuster,
+		Signature: sigAuster,
+	}
+	sigZephyrus, err := acsMap[org1Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerZephyrus, err := acsMap[org1Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementZephyrus := &common.EndorsementEntry{
+		Signer:    signerZephyrus,
+		Signature: sigZephyrus,
+	}
+	sigBoreas, err := acsMap[org2Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerBoreas, err := acsMap[org2Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementBoreas := &common.EndorsementEntry{
+		Signer:    signerBoreas,
+		Signature: sigBoreas,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 4)
+	principalRead, err = acInst.CreatePrincipal(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+syscontract.ChainConfigFunction_CONSENSUS_EXT_ADD.String(), []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 3)
+	require.Equal(t, endorsementAuster.String(), validEndorsements[0].String())
+	require.Equal(t, endorsementBoreas.String(), validEndorsements[1].String())
+	require.Equal(t, endorsementZephyrus.String(), validEndorsements[2].String())
+	// abnormal
+	sigThuellai, err := acsMap[org5Name].admin.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerThuellai, err := acsMap[org5Name].admin.GetMember()
+	require.Nil(t, err)
+	endorsementThuellai := &common.EndorsementEntry{
+		Signer:    signerThuellai,
+		Signature: sigThuellai,
+	}
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 4)
+	// invalid
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameUpdateConfig, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementThuellai, endorsementAuster}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	validEndorsements, err = acsMap[org2Name].acInst.(*accessControl).GetValidEndorsements(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, len(validEndorsements), 2)
+	// all
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// abnormal
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementAuster, endorsementBoreas, endorsementZephyrus, endorsementEurus, endorsementThuellai}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameAllTest, []*common.EndorsementEntry{endorsementBoreas, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// threshold
+	policyLimit, err := acInst.CreatePrincipal("test_2", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	policyLimit, err = acInst.CreatePrincipal("test_2_admin", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	policyLimit, err = acInst.CreatePrincipal("test_2", []*common.EndorsementEntry{endorsementAuster, endorsementThuellai}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	policyLimit, err = acInst.CreatePrincipal("test_2_admin", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyLimit)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// portion
+	policyPortion, err := acInst.CreatePrincipal("test_3/4", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	policyPortion, err = acInst.CreatePrincipal("test_3/4_admin", []*common.EndorsementEntry{endorsementAuster, endorsementZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	// invalid
+	policyPortion, err = acInst.CreatePrincipal("test_3/4", []*common.EndorsementEntry{endorsementAuster, endorsementAuster, endorsementBoreas, endorsementThuellai}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	policyPortion, err = acInst.CreatePrincipal("test_3/4_admin", []*common.EndorsementEntry{endorsementAuster, endorsementReadZephyrus, endorsementEurus}, []byte(msg))
+	require.Nil(t, err)
+	ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyPortion)
+	require.NotNil(t, err)
+	require.Equal(t, false, ok)
+	// bench
+	var timeStart, timeEnd int64
+	count := int64(100)
+	// any
+	principalRead, err = acInst.CreatePrincipal(protocol.ResourceNameReadData, []*common.EndorsementEntry{endorsementRead}, []byte(msg))
+	require.Nil(t, err)
+	timeStart = time.Now().UnixNano()
+	for i := 0; i < int(count); i++ {
+		ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	}
+	timeEnd = time.Now().UnixNano()
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	fmt.Printf("Verify ANY average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
+	// self
+	principalRead, err = acInst.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementEurus}, []byte(msg), org4Name)
+	require.Nil(t, err)
+	timeStart = time.Now().UnixNano()
+	for i := 0; i < int(count); i++ {
+		ok, err = acsMap[org2Name].acInst.VerifyPrincipal(principalRead)
+	}
+	timeEnd = time.Now().UnixNano()
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	fmt.Printf("Verify SELF average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
+	// consensus
+	sigZephyrusConsensus, err := acsMap[org1Name].consensusNode.Sign(acInst.GetHashAlg(), []byte(msg))
+	require.Nil(t, err)
+	signerZephyrusConsensus, err := acsMap[org1Name].consensusNode.GetMember()
+	require.Nil(t, err)
+	endorsementZephyrusConsensus := &common.EndorsementEntry{
+		Signer:    signerZephyrusConsensus,
+		Signature: sigZephyrusConsensus,
+	}
+	policyConsensus, err := acInst.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementZephyrusConsensus}, []byte(msg))
+	require.Nil(t, err)
+	timeStart = time.Now().UnixNano()
+	for i := 0; i < int(count); i++ {
+		ok, err = acsMap[org2Name].acInst.VerifyPrincipal(policyConsensus)
+	}
+	timeEnd = time.Now().UnixNano()
+	require.Nil(t, err)
+	require.Equal(t, true, ok)
+	fmt.Printf("Verify CONSENSUS average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
+}

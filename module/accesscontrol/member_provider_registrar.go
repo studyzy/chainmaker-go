@@ -16,7 +16,7 @@ func init() {
 var memberRegistry = map[pbac.MemberType]reflect.Type{}
 
 type MemberProvider interface {
-	NewMember(member *pbac.Member, ac *accessControl) (protocol.Member, error)
+	NewMember(member *pbac.Member, acs *accessControlService) (protocol.Member, error)
 }
 
 func RegisterMemberProvider(memberType pbac.MemberType, mp MemberProvider) {

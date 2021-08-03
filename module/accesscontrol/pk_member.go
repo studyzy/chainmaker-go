@@ -93,11 +93,11 @@ func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	})
 }
 
-func NewPkMember(member *pbac.Member, ac *accessControl) (*pkMember, error) {
+func NewPkMember(member *pbac.Member, acs *accessControlService) (*pkMember, error) {
 	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
 		return nil, fmt.Errorf("setup public key member failed, unsupport member type")
 	} else {
-		return newMemberFromPkPem(member.OrgId, string(member.MemberInfo), ac.hashType)
+		return newMemberFromPkPem(member.OrgId, string(member.MemberInfo), acs.hashType)
 	}
 }
 
@@ -124,6 +124,6 @@ var NilPkMemberProvider MemberProvider = (*pkMemberProvider)(nil)
 type pkMemberProvider struct {
 }
 
-func (pmp *pkMemberProvider) NewMember(member *pbac.Member, ac *accessControl) (protocol.Member, error) {
-	return NewPkMember(member, ac)
+func (pmp *pkMemberProvider) NewMember(member *pbac.Member, acs *accessControlService) (protocol.Member, error) {
+	return NewPkMember(member, acs)
 }

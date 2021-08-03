@@ -227,13 +227,7 @@ func (ac *accessControl) LookUpPolicy(resourceName string) (*pbac.Policy, error)
 }
 
 func (ac *accessControl) NewMember(member *pbac.Member) (protocol.Member, error) {
-	memberCached, ok := ac.lookUpSignerInCache(string(member.MemberInfo))
-	if ok && memberCached.signer.GetOrgId() == member.OrgId {
-		ac.log.Debugf("member found in local cache")
-		return memberCached.signer, nil
-	}
-	memberFactory := Factory()
-	return memberFactory.NewMember(member, ac)
+	return nil, nil
 }
 
 func (ac *accessControl) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {

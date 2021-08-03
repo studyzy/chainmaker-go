@@ -71,9 +71,3 @@ func newPolicyFromPb(input *pbac.Policy) *policy {
 
 	return p
 }
-
-// Authentication validation policy
-// type policyWhiteList struct {
-// 	policyType AuthMode
-// 	policyList map[string]*bcx509.Certificate
-// }

@@ -11,14 +11,14 @@ type memberFactory struct {
 }
 
 var once sync.Once
-var _instance *memberFactory
+var mem_instance *memberFactory
 
-func Factory() *memberFactory {
-	once.Do(func() { _instance = new(memberFactory) })
-	return _instance
+func MemberFactory() *memberFactory {
+	once.Do(func() { mem_instance = new(memberFactory) })
+	return mem_instance
 }
 
-func (mf *memberFactory) NewMember(pbMember *pbac.Member, ac *accessControl) (protocol.Member, error) {
+func (mf *memberFactory) NewMember(pbMember *pbac.Member, acs *accessControlService) (protocol.Member, error) {
 	p := NewMemberByMemberType(pbMember.MemberType)
-	return p.NewMember(pbMember, ac)
+	return p.NewMember(pbMember, acs)
 }
