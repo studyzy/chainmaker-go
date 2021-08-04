@@ -16,21 +16,19 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
-	"chainmaker.org/chainmaker-go/store/archive"
-
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/wal"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker/protocol/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/tidwall/wal"
 )
 
 var chainId = "ut1"

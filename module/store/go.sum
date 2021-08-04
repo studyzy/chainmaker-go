@@ -1,6 +1,8 @@
 chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
 chainmaker.org/chainmaker/common v0.0.0-20210803074600-028f232695a9 h1:Hqfv1IRoOzs8R+C8TAIrmKjqi9Jlvf59SXQbByTE9dg=
 chainmaker.org/chainmaker/common v0.0.0-20210803074600-028f232695a9/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
+chainmaker.org/chainmaker/common v0.0.0-20210804033544-04ebb04bd759 h1:8SxiyTcB9XrkPTaJnVCOaUh0WkI6IYdbhaHc2fxHZTc=
+chainmaker.org/chainmaker/common v0.0.0-20210804033544-04ebb04bd759/go.mod h1:i7XbQVJubFm+ehtT0em44u0waZEIFFZThTS1d8vnKRQ=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210722032511-d7299b62eae6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210723070658-764cafbc33fe h1:spAyJafAUiraHkytxNpjl231X7d+ul+MFjhEH3u9PG0=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210723070658-764cafbc33fe/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
@@ -631,8 +633,6 @@ github.com/tidwall/pretty v1.0.2 h1:Z7S3cePv9Jwm1KwS0513MRaoUe3S01WPbLNV40pwWZU=
 github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tidwall/tinylru v1.0.2 h1:W4mp7iUz4cnVMqAvWy2zbzC35ASv5sqdyyEjoQKKBFg=
 github.com/tidwall/tinylru v1.0.2/go.mod h1:HDVL7TsWeezQ4g44Um84TOVBMFcq7Xa9giqNc805KJ8=
-github.com/tidwall/wal v0.1.4 h1:YDUbo2ShwiaGoEu74tC2oQlQFj4iDw+iA9qkkanSKC4=
-github.com/tidwall/wal v0.1.4/go.mod h1:ww7Pd44/KnyETODJPUPKrzLlYjI72GZWlucNKt7pOt0=
 github.com/tjfoc/gmsm v1.2.3/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=

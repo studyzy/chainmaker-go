@@ -25,11 +25,11 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/wal"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
 
