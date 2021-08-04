@@ -61,6 +61,7 @@ var (
 	WasmUpgradePath = ""
 	contractName    = ""
 	runtimeType     = commonPb.RuntimeType_WASMER
+	multiOrgId      = "wx-org1.chainmaker.org"
 )
 
 var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
@@ -69,7 +70,7 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 func main() {
 	common.SetCertPathPrefix(certPathPrefix)
 
-	initWasmerTest()
+	initGasmTest()
 	runTest()
 
 }
@@ -104,7 +105,17 @@ func runTest() {
 		}
 	}
 	testMultiSign(sk3, &client, "", CHAIN1)
-	//testMultiSignVote(sk3,&client,"",CHAIN1)
+	//multiOrgId = "wx-org1.chainmaker.org"
+	//testMultiSignVote(sk3, &client, "", CHAIN1)
+
+	time.Sleep(time.Second * 3)
+	multiOrgId = "wx-org2.chainmaker.org"
+	testMultiSignVote(sk3, &client, "", CHAIN1)
+
+	time.Sleep(time.Second * 3)
+	multiOrgId = "wx-org3.chainmaker.org"
+	testMultiSignVote(sk3, &client, "", CHAIN1)
+
 	//testMultiSignVoteAdmin2(sk3,&client,"",CHAIN1)
 	//testMultiSignVoteAdmin3(sk3,&client,"",CHAIN
 
@@ -339,12 +350,13 @@ func initPayload() *commonPb.Payload {
 			Value: []byte("1.0"),
 		},
 		{
-			Key:   syscontract.InitContract_CONTRACT_BYTECODE.String(),
+			Key: syscontract.InitContract_CONTRACT_BYTECODE.String(),
+			//Value: nil,
 			Value: wasmBin,
 		},
 		{
 			Key:   syscontract.InitContract_CONTRACT_RUNTIME_TYPE.String(),
-			Value: []byte("4"),
+			Value: []byte(runtimeType.String()),
 		},
 	}
 
@@ -353,7 +365,7 @@ func initPayload() *commonPb.Payload {
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
-		TxId:         "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20ad5",
+		TxId:         "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20a33",
 	}
 	return payload
 }
@@ -390,8 +402,8 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 	}
 	var (
 		certPathPrefix = "../../config"
-		admin1KeyPath  = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.key"
-		admin1CrtPath  = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.tls.crt"
+		admin1KeyPath  = certPathPrefix + "/crypto-config/" + multiOrgId + "/user/admin1/admin1.tls.key"
+		admin1CrtPath  = certPathPrefix + "/crypto-config/" + multiOrgId + "/user/admin1/admin1.tls.crt"
 	)
 
 	var eeByte []byte
@@ -406,7 +418,7 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 			panic(err)
 		}
 		admin1 := &acPb.Member{
-			OrgId:      "wx-org1.chainmaker.org",
+			OrgId:      multiOrgId,
 			MemberInfo: admin1File,
 		}
 		skAdmin1, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
@@ -432,7 +444,7 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 	}
 	pairs := []*commonPb.KeyValuePair{
 		{
-			Key:   "payload",
+			Key:   "multiPayload",
 			Value: payloadBytes,
 		},
 		{
