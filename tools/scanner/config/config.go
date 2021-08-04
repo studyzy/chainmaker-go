@@ -33,9 +33,5 @@ func (c *ScanConfig) loadConfig(path string) error {
 		return err
 	}
 
-	if err := v.Unmarshal(c); err != nil {
-		return err
-	}
-
-	return nil
+	return v.Unmarshal(c)
 }

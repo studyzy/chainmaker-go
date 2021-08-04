@@ -35,7 +35,7 @@ func SendMail(subject, content, receiver, attachFile, attachName string) error {
 		attachFile,
 		attachName,
 	}
-	result, err := Post(config.GlobalConfig.AlarmCenterConfig.SendMailURL, body)
+	result, err := post(config.GlobalConfig.AlarmCenterConfig.SendMailURL, body)
 	if err != nil {
 		return err
 	}
