@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 set -x
-BRANCH=v2.0.1_dev
+BRANCH=v2.0.2_dev
 
 cd ../module/accesscontrol
 go get chainmaker.org/chainmaker/protocol@${BRANCH}
