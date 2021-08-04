@@ -87,8 +87,8 @@ func runRestoreCMD() error {
 	})
 	progress.Start()
 	defer progress.Stop()
-	for height := archivedBlkHeightOnChain; height >= restoreStartBlockHeight; height-- {
-		if err := restoreBlock(cc, db, height); err != nil {
+	for height := int64(archivedBlkHeightOnChain); height >= int64(restoreStartBlockHeight); height-- {
+		if err := restoreBlock(cc, db, uint64(height)); err != nil {
 			return err
 		}
 
