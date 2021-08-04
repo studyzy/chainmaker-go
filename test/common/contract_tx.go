@@ -133,9 +133,8 @@ func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntr
 	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
 }
 
-func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
-
+func ProposalMultiRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int, timestamp int64) *commonPb.TxResponse {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 	defer cancel()
 
@@ -158,8 +157,7 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	payload.ChainId = chainId
 	payload.TxType = txType
 	payload.TxId = txId
-	payload.Timestamp = time.Now().Unix()
-
+	payload.Timestamp = timestamp
 	req := &commonPb.TxRequest{
 		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
@@ -203,6 +201,11 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 	return result
+
+}
+func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
+	return ProposalMultiRequest(sk3, client, txType, chainId, txId, payload, orgIdList, time.Now().Unix())
 }
 
 func GetSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {

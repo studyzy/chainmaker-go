@@ -63,6 +63,8 @@ var (
 	runtimeType     = commonPb.RuntimeType_WASMER
 	multiOrgId      = "wx-org1.chainmaker.org"
 	multiOrg3Id     = "wx-org3.chainmaker.org"
+	txId            = "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20a44"
+	timestamp       int64
 )
 
 var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
@@ -83,7 +85,6 @@ func runTest() {
 		client apiPb.RpcNodeClient
 		sk3    crypto.PrivateKey
 		err    error
-		txId   string
 	)
 	// init
 	{
@@ -106,17 +107,20 @@ func runTest() {
 			panic(err)
 		}
 	}
-	testMultiSign(sk3, &client, "", CHAIN1)
+	txId = "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20a50"
+	timestamp = 1628072754
+	//timestamp = time.Now().Unix()
+	//testMultiSign(sk3, &client, "", CHAIN1)
 	//multiOrgId = "wx-org1.chainmaker.org"
 	//testMultiSignVote(sk3, &client, "", CHAIN1)
 
-	time.Sleep(time.Second * 3)
+	//time.Sleep(time.Second * 3)
 	multiOrgId = "wx-org2.chainmaker.org"
 	testMultiSignVote(sk3, &client, "", CHAIN1)
-
+	//
 	//time.Sleep(time.Second * 3)
-	//multiOrgId = "wx-org3.chainmaker.org"
-	//testMultiSignVoteAdmin2(sk3, &client, "", CHAIN1)
+	multiOrgId = "wx-org3.chainmaker.org"
+	testMultiSignVoteAdmin2(sk3, &client, "", CHAIN1)
 
 	// 1) 合约创建
 	//testCreate(sk3, &client, CHAIN1)
@@ -196,6 +200,7 @@ func runTest() {
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-func-verify-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
+	WasmPath = ""
 	contractName = "contract103"
 	runtimeType = commonPb.RuntimeType_WASMER
 	printConfig("wasmer")
@@ -322,9 +327,10 @@ func testMultiSign(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contractN
 
 	payload := initPayload()
 
-	resp := common.ProposalRequest(sk3, client, payload.TxType,
-		chainId, payload.TxId, payload, []int{1})
+	resp := common.ProposalMultiRequest(sk3, client, payload.TxType,
+		chainId, payload.TxId, payload, []int{1}, timestamp)
 
+	fmt.Println("testMultiSign timestamp", timestamp)
 	fmt.Println(resp)
 	return nil
 }
@@ -364,7 +370,7 @@ func initPayload() *commonPb.Payload {
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
-		TxId:         "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20a44",
+		TxId:         txId,
 	}
 	return payload
 }
@@ -422,7 +428,7 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 		}
 		skAdmin1, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
 		signerAdmin1 := GetSigner(skAdmin1, admin1)
-		signerAdmin1Bytes, err := signerAdmin1.Sign("SM3", payloadBytes)
+		signerAdmin1Bytes, err := signerAdmin1.Sign("SHA256", payloadBytes)
 		if err != nil {
 			log.Fatalf("sign failed, %s", err.Error())
 			os.Exit(0)
@@ -505,7 +511,7 @@ func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 		}
 		skAdmin2, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
 		signerAdmin2 := GetSigner(skAdmin2, admin2)
-		signerAdmin2Bytes, err := signerAdmin2.Sign("SM3", payloadBytes)
+		signerAdmin2Bytes, err := signerAdmin2.Sign("SHA256", payloadBytes)
 		if err != nil {
 			log.Fatalf("sign failed, %s", err.Error())
 			os.Exit(0)

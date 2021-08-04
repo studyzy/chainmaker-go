@@ -72,6 +72,8 @@ func (r *MultiSignRuntime) reqContract(txSimContext protocol.TxSimContext, param
 		VoteInfos:    nil,
 	}
 
+	r.log.Infof("req sign payload:%+v \n", tx.Payload)
+
 	for _, endorser := range tx.Endorsers {
 		multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, &syscontract.MultiSignVoteInfo{
 			Vote:        syscontract.VoteStatus(1),
@@ -109,6 +111,7 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 	proto.Unmarshal(reqVoteState, voteState)
 	multiSignInfoDB, _ := txSimContext.Get("multi_sign_contract", []byte(oldPayload.TxId)) // MultiSignInfo
 	proto.Unmarshal(multiSignInfoDB, multiSignInfo)
+	r.log.Infof("vote sign old payload:%+v \n m\n", oldPayload)
 
 	multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, voteState)
 	r.log.Infof("multi vote[%s] count=%d state=%d(0:agree,1:reject)", oldPayload.TxId, multiSignInfo.VoteInfos, voteState.Vote)
