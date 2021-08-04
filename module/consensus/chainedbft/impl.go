@@ -16,6 +16,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/common/msgbus"
+	"chainmaker.org/chainmaker-go/common/wal"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
@@ -30,7 +31,6 @@ import (
 	"chainmaker.org/chainmaker-go/protocol"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/tidwall/wal"
 )
 
 const (

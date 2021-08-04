@@ -17,7 +17,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	github.com/tidwall/wal v0.1.4
 	github.com/yiyanwannian/gorocksdb v0.0.0-20210414112040-54bce342c6b6
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
