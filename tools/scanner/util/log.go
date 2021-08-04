@@ -68,10 +68,10 @@ func (l *Log) Replace(msg string) string {
 }
 
 func Replace(template, msg string) string {
-	templateReg := regexp.MustCompile("\\[.*?\\]")
+	templateReg := regexp.MustCompile(`\[.*?\]`)
 	templateRegResult := templateReg.FindAllString(template, -1)
 
-	msgReg := regexp.MustCompile("\\$\\{[0-9]*\\}")
+	msgReg := regexp.MustCompile(`\$\{[0-9]*\}`)
 	msgRegResult := msgReg.FindAllString(msg, -1)
 
 	result := msg

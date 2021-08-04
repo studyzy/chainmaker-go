@@ -53,13 +53,15 @@ func start() error {
 	}
 	errorC := make(chan error, 1)
 	go handleExitSignal(errorC)
-	select {
-	case <-errorC:
-		for _, logScanner := range logScanners {
-			logScanner.Stop()
-		}
-		fmt.Println("All is stopped!")
+	e := <-errorC
+	if e != nil {
+		return e
 	}
+	for _, logScanner := range logScanners {
+		logScanner.Stop()
+	}
+	fmt.Println("All is stopped!")
+
 	return nil
 }
 
@@ -68,7 +70,7 @@ func handleExitSignal(exitC chan<- error) {
 	signal.Notify(signalChan, syscall.SIGTERM, os.Interrupt, syscall.SIGINT)
 	defer signal.Stop(signalChan)
 
-	for _ = range signalChan {
+	for range signalChan {
 		exitC <- nil
 	}
 }
