@@ -7,6 +7,8 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6 h1:s4j0xniq+m
 chainmaker.org/chainmaker/pb-go v0.0.0-20210719032153-653bd8436ef6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210722032511-d7299b62eae6 h1:vXdcQ1d+XG1MQCQSP5JxkbeV904nPczeb/jCvOOLdPQ=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210722032511-d7299b62eae6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210730022733-37475203fe8b h1:04Z3tzR1BnKL2YFu1HG64QaD2VC9iz5HQUVSPAYUuwk=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210730022733-37475203fe8b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210719033859-75ccee9a9042/go.mod h1:VocmJrHzMMfVTHMMLiBdxWvH3GqiTeJoNRzYUU2eD8w=
 chainmaker.org/chainmaker/protocol v0.0.0-20210719060811-1421e692280c h1:GYRdZRRuQn1Vy8nusjmPDAZSL/IPjR2oLDgCD1AtLSI=
 chainmaker.org/chainmaker/protocol v0.0.0-20210719060811-1421e692280c/go.mod h1:VocmJrHzMMfVTHMMLiBdxWvH3GqiTeJoNRzYUU2eD8w=

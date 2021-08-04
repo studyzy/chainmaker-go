@@ -8,7 +8,7 @@ require (
 	chainmaker.org/chainmaker-go/net v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210722032511-d7299b62eae6
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210730022733-37475203fe8b
 	chainmaker.org/chainmaker/protocol v0.0.0-20210722032803-8365b24e96d9
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2
