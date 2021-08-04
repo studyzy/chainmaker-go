@@ -581,7 +581,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 		}
 		if cmp == -1 {
 			// 检查当前网络情况下，节点是否能退出
-			if err := s.canDelete(context); err != nil {
+			if err := s.canDelete(context, undelegateValidatorAddress); err != nil {
 				return nil, err
 			}
 
@@ -633,7 +633,7 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 	return proto.Marshal(ud)
 }
 
-func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
+func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext, undelegateValidatorAddress string) error {
 	bz, err := context.Get(syscontract.SystemContract_DPOS_STAKE.String(), []byte(KeyEpochValidatorNumber))
 	if err != nil {
 		return err
@@ -644,8 +644,14 @@ func (s *DPoSStakeRuntime) canDelete(context protocol.TxSimContext) error {
 	if err != nil {
 		return err
 	}
-	// 如果共识中 当前节点退出后剩余节点数量 少于 共识所需的节点数量
-	if amount > uint64(len(collection.Vector)-1) {
+	var contains bool
+	for _, validator := range collection.Vector {
+		if validator == undelegateValidatorAddress {
+			contains = true
+		}
+	}
+	// 如果共识中 当前节点为共识节点 并且 退出后剩余节点数量 少于 共识所需的节点数量
+	if amount > uint64(len(collection.Vector)-1) && contains {
 		return fmt.Errorf("the number of candidates[%d] after the undelegate "+
 			"is less than the number of validators[%d]", len(collection.Vector)-1, amount)
 	}
