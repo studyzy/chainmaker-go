@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"chainmaker.org/chainmaker-go/common/wal"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/logger"
@@ -18,7 +19,6 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/wal"
 )
 
 func TestBaseWriteWal(t *testing.T) {
