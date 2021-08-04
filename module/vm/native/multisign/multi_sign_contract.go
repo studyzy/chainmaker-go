@@ -112,43 +112,43 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 
 	multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, voteState)
 	r.log.Infof("multi vote[%s] count=%d state=%d(0:agree,1:reject)", oldPayload.TxId, multiSignInfo.VoteInfos, voteState.Vote)
-	b, _ := multiSignInfo.Marshal()
-	txSimContext.Put("multi_sign_contract", []byte(oldPayload.TxId), b) // MultiSignInfo
+	multiSignInfoByte, _ := multiSignInfo.Marshal()
+	txSimContext.Put("multi_sign_contract", []byte(oldPayload.TxId), multiSignInfoByte) // MultiSignInfo
 
 	endorsers := make([]*commonPb.EndorsementEntry, 0)
 	for _, info := range multiSignInfo.VoteInfos {
 		endorsers = append(endorsers, info.Endorsement)
 	}
+
 	// verify access control
-	/*
-		{
-			ac, err := txSimContext.GetAccessControl()
-			if err != nil {
-				r.log.Errorw("txSimContext.GetAccessControl is err", "err", err)
-				return nil, err
-			}
-			principal, err := ac.CreatePrincipal(multiSignInfo.Method, endorsers, multiPayload)
-			if err != nil {
-				r.log.Error(err)
-				return nil, err
-			}
-			endorsement, err := ac.GetValidEndorsements(principal)
-			if err != nil {
-				r.log.Error(err)
-				return nil, err
-			}
-			if len(endorsement) == 0 {
-				err = fmt.Errorf("the vote is err")
-				r.log.Errorw(err.Error(), "err", err)
-				return nil, err
-			}
-			if flag, err := ac.VerifyPrincipal(principal); err != nil {
-				return nil, err
-			} else if !flag {
-				return nil, nil
-			}
+	{
+		ac, err := txSimContext.GetAccessControl()
+		if err != nil {
+			r.log.Errorw("txSimContext.GetAccessControl is err", "err", err)
+			return nil, err
 		}
-	*/
+		resourceId := multiSignInfo.ContractName + "-" + multiSignInfo.Method
+		principal, err := ac.CreatePrincipal(resourceId, endorsers, multiPayload)
+		if err != nil {
+			r.log.Error(err)
+			return nil, err
+		}
+		endorsement, err := ac.GetValidEndorsements(principal)
+		if err != nil {
+			r.log.Error(err)
+			return nil, err
+		}
+		if len(endorsement) == 0 {
+			err = fmt.Errorf("the vote is err")
+			r.log.Errorw(err.Error(), "err", err)
+			return nil, err
+		}
+		if flag, err := ac.VerifyPrincipal(principal); err != nil {
+			return nil, err
+		} else if !flag {
+			return nil, nil
+		}
+	}
 
 	var (
 		contractResultBytes []byte
@@ -159,6 +159,7 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 		voteFlag := false
 		if len(multiSignInfo.VoteInfos) > 2 {
 			voteFlag = true
+			r.log.Infof("the number of vote is %d", len(multiSignInfo.VoteInfos))
 		}
 
 		contract := &commonPb.Contract{
@@ -172,7 +173,10 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 			// 6、调用真实系统合约完成该交易
 			initParam := make(map[string][]byte)
 			for i := range oldPayload.Parameters {
-				// is sysContractName jump
+				// is sysContractName or sysMethod jump
+				if oldPayload.Parameters[i].Key == "sysContractName" || oldPayload.Parameters[i].Key == "sysMethod" {
+					continue
+				}
 				initParam[oldPayload.Parameters[i].Key] = oldPayload.Parameters[i].Value
 			}
 			byteCode := initParam[syscontract.InitContract_CONTRACT_BYTECODE.String()]
@@ -182,10 +186,11 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 				// call success
 				contractResultBytes = contractResult.Result
 				multiSignInfo.Status = syscontract.MultiSignStatus_ADOPTED
+				r.log.Infof("CallContract success")
 			} else {
 				// call failture
 				contractErr = errors.New(contractResult.Message)
-				// multiSignInfo.Status = syscontract.MultiSignStatus_FAILED
+				multiSignInfo.Status = syscontract.MultiSignStatus_FAILED
 			}
 		}
 	}

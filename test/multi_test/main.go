@@ -62,6 +62,7 @@ var (
 	contractName    = ""
 	runtimeType     = commonPb.RuntimeType_WASMER
 	multiOrgId      = "wx-org1.chainmaker.org"
+	multiOrg3Id     = "wx-org3.chainmaker.org"
 )
 
 var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
@@ -113,12 +114,9 @@ func runTest() {
 	multiOrgId = "wx-org2.chainmaker.org"
 	testMultiSignVote(sk3, &client, "", CHAIN1)
 
-	time.Sleep(time.Second * 3)
-	multiOrgId = "wx-org3.chainmaker.org"
-	testMultiSignVote(sk3, &client, "", CHAIN1)
-
-	//testMultiSignVoteAdmin2(sk3,&client,"",CHAIN1)
-	//testMultiSignVoteAdmin3(sk3,&client,"",CHAIN
+	//time.Sleep(time.Second * 3)
+	//multiOrgId = "wx-org3.chainmaker.org"
+	//testMultiSignVoteAdmin2(sk3, &client, "", CHAIN1)
 
 	// 1) 合约创建
 	//testCreate(sk3, &client, CHAIN1)
@@ -437,7 +435,7 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 		eeByte, _ = ee.Marshal()
 
 		msvi := &syscontract.MultiSignVoteInfo{
-			Vote:        syscontract.VoteStatus_REJECT,
+			Vote:        syscontract.VoteStatus_AGREE,
 			Endorsement: ee,
 		}
 		msviByte, _ = msvi.Marshal()
@@ -475,15 +473,10 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contractName, chainId string) []byte {
 	fmt.Println("========================================================================================================")
 	fmt.Println("========================================================================================================")
-	fmt.Println("======================================testMultiSignVoteAdmin2 ==========================================")
+	fmt.Println("==========================================testMultiSignVote2 ===========================================")
 	fmt.Println("========================================================================================================")
 	fmt.Println("========================================================================================================")
 
-	// 构造Payload
-	//pair := &commonPb.KeyValuePair{Key: "contractName", Value: []byte("name01")}
-	//var pairs []*commonPb.KeyValuePair
-	//pairs = append(pairs, pair)
-	//"payload","Signature","voteState"
 	payload1 := initPayload()
 	payloadBytes, err := payload1.Marshal()
 	if err != nil {
@@ -491,10 +484,12 @@ func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	}
 	var (
 		certPathPrefix = "../../config"
-		admin2KeyPath  = certPathPrefix + "/crypto-config/wx-org2.chainmaker.org/user/admin1/admin1.tls.key"
-		admin2CrtPath  = certPathPrefix + "/crypto-config/wx-org2.chainmaker.org/user/admin1/admin1.tls.crt"
+		admin2KeyPath  = certPathPrefix + "/crypto-config/" + multiOrg3Id + "/user/admin1/admin1.tls.key"
+		admin2CrtPath  = certPathPrefix + "/crypto-config/" + multiOrg3Id + "/user/admin1/admin1.tls.crt"
 	)
-	var ee2Byte []byte
+
+	var eeByte []byte
+	var msviByte []byte
 	{
 		admin2File, err := ioutil.ReadFile(admin2CrtPath)
 		if err != nil {
@@ -505,7 +500,7 @@ func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 			panic(err)
 		}
 		admin2 := &acPb.Member{
-			OrgId:      "wx-org2.chainmaker.org",
+			OrgId:      multiOrg3Id,
 			MemberInfo: admin2File,
 		}
 		skAdmin2, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
@@ -516,103 +511,31 @@ func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 			os.Exit(0)
 		}
 
-		ee2 := &commonPb.EndorsementEntry{
+		ee := &commonPb.EndorsementEntry{
 			Signer:    admin2,
 			Signature: signerAdmin2Bytes,
 		}
-		ee2Byte, _ = ee2.Marshal()
+		eeByte, _ = ee.Marshal()
+
+		msvi := &syscontract.MultiSignVoteInfo{
+			Vote:        syscontract.VoteStatus_AGREE,
+			Endorsement: ee,
+		}
+		msviByte, _ = msvi.Marshal()
+
 	}
 	pairs := []*commonPb.KeyValuePair{
 		{
-			Key:   "payload",
+			Key:   "multiPayload",
 			Value: payloadBytes,
 		},
 		{
 			Key:   "signature",
-			Value: ee2Byte,
+			Value: eeByte,
 		},
 		{
 			Key:   "voteState",
-			Value: []byte(syscontract.VoteStatus_REJECT.String()),
-		},
-	}
-
-	payload := &commonPb.Payload{
-		TxType:       commonPb.TxType_INVOKE_CONTRACT,
-		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
-		Method:       syscontract.MultiSignFunction_VOTE.String(),
-		Parameters:   pairs,
-	}
-
-	resp := common.ProposalRequest(sk3, client, payload.TxType,
-		chainId, "", payload, nil)
-
-	fmt.Println(resp)
-	return nil
-}
-
-func testMultiSignVoteAdmin3(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contractName, chainId string) []byte {
-	fmt.Println("========================================================================================================")
-	fmt.Println("========================================================================================================")
-	fmt.Println("====================================testMultiSignVoteAdmin3 ============================================")
-	fmt.Println("========================================================================================================")
-	fmt.Println("========================================================================================================")
-
-	// 构造Payload
-	//pair := &commonPb.KeyValuePair{Key: "contractName", Value: []byte("name01")}
-	//var pairs []*commonPb.KeyValuePair
-	//pairs = append(pairs, pair)
-	//"payload","Signature","voteState"
-	payload1 := initPayload()
-	payloadBytes, err := payload1.Marshal()
-	if err != nil {
-		panic(err)
-	}
-	var (
-		certPathPrefix = "../../config"
-		admin3KeyPath  = certPathPrefix + "/crypto-config/wx-org3.chainmaker.org/user/admin1/admin1.tls.key"
-		admin3CrtPath  = certPathPrefix + "/crypto-config/wx-org3.chainmaker.org/user/admin1/admin1.tls.crt"
-	)
-	var ee3Byte []byte
-	{
-		admin3File, err := ioutil.ReadFile(admin3CrtPath)
-		if err != nil {
-			panic(err)
-		}
-		fadminKeyFile, err := ioutil.ReadFile(admin3KeyPath)
-		if err != nil {
-			panic(err)
-		}
-		admin3 := &acPb.Member{
-			OrgId:      "wx-org3.chainmaker.org",
-			MemberInfo: admin3File,
-		}
-		skAdmin3, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
-		signerAdmin3 := GetSigner(skAdmin3, admin3)
-		signerAdmin3Bytes, err := signerAdmin3.Sign("SM3", payloadBytes)
-		if err != nil {
-			log.Fatalf("sign failed, %s", err.Error())
-			os.Exit(0)
-		}
-
-		ee3 := &commonPb.EndorsementEntry{
-			Signer:    admin3,
-			Signature: signerAdmin3Bytes,
-		}
-		ee3Byte, _ = ee3.Marshal()
-	}
-	pairs := []*commonPb.KeyValuePair{
-		{
-			Key:   "payload",
-			Value: payloadBytes,
-		},
-		{
-			Key:   "signature",
-			Value: ee3Byte,
-		},
-		{
-			Key:   "voteState",
-			Value: []byte(syscontract.VoteStatus_REJECT.String()),
+			Value: msviByte,
 		},
 	}
 
