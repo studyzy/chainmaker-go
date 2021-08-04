@@ -25,7 +25,8 @@ func (cbi *ConsensusChainedBftImpl) constructBlock(block *common.Block, level ui
 		err     error
 		txRWSet *common.TxRWSet
 	)
-	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(block, cbi.store, cbi.proposalCache, cbi.ledgerCache); err != nil {
+	if txRWSet, err = governance.CheckAndCreateGovernmentArgs(block, cbi.store, cbi.proposalCache,
+		cbi.ledgerCache); err != nil {
 		cbi.logger.Errorf(`CheckAndCreateGovernmentArgs err!`)
 		return nil
 	}
@@ -66,12 +67,15 @@ func (cbi *ConsensusChainedBftImpl) constructProposal(
 		SyncInfo:     syncInfo,
 		ProposalData: proposalData,
 	}
-	cbi.logger.Debugf("service selfIndexInEpoch [%v] constructProposal, proposal: [%v:%v:%v], JustifyQc: %v, HighestTc: %v",
-		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height, proposalData.Level, qc.String(), syncInfo.HighestTc.String())
+	cbi.logger.Debugf("service selfIndexInEpoch [%v] constructProposal, proposal: [%v:%v:%v],"+
+		"JustifyQc: %v, HighestTc: %v",
+		cbi.selfIndexInEpoch, proposalData.ProposerIdx, proposalData.Height,
+		proposalData.Level, qc.String(), syncInfo.HighestTc.String())
 
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_PROPOSAL_MESSAGE,
-		Data: &chainedbftpb.ConsensusPayload_ProposalMsg{proposalMsg},
+		Data: &chainedbftpb.ConsensusPayload_ProposalMsg{
+			ProposalMsg: proposalMsg},
 	}
 	return consensusPayload
 }
@@ -120,7 +124,8 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_VOTE_MESSAGE,
-		Data: &chainedbftpb.ConsensusPayload_VoteMsg{vote},
+		Data: &chainedbftpb.ConsensusPayload_VoteMsg{
+			VoteMsg: vote},
 	}
 	return consensusPayload, nil
 }
@@ -139,23 +144,25 @@ func (cbi *ConsensusChainedBftImpl) constructBlockFetchMsg(reqID uint64, endBloc
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_BLOCK_FETCH_MESSAGE,
-		Data: &chainedbftpb.ConsensusPayload_BlockFetchMsg{msg},
+		Data: &chainedbftpb.ConsensusPayload_BlockFetchMsg{
+			BlockFetchMsg: msg},
 	}
 	return consensusPayload
 }
 
 //constructBlockFetchRespMsg builds a blßock fetch response with given params
 func (cbi *ConsensusChainedBftImpl) constructBlockFetchRespMsg(blocks []*chainedbft.BlockPair,
-	status chainedbft.BlockFetchStatus, RespId uint64) *chainedbftpb.ConsensusPayload {
+	status chainedbft.BlockFetchStatus, respId uint64) *chainedbftpb.ConsensusPayload {
 	msg := &chainedbft.BlockFetchRespMsg{
-		RespId:    RespId,
+		RespId:    respId,
 		Status:    status,
 		Blocks:    blocks,
 		AuthorIdx: cbi.selfIndexInEpoch,
 	}
 	consensusPayload := &chainedbftpb.ConsensusPayload{
 		Type: chainedbftpb.MessageType_BLOCK_FETCH_RESP_MESSAGE,
-		Data: &chainedbftpb.ConsensusPayload_BlockFetchRespMsg{msg},
+		Data: &chainedbftpb.ConsensusPayload_BlockFetchRespMsg{
+			BlockFetchRespMsg: msg},
 	}
 	return consensusPayload
 }

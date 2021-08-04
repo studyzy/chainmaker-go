@@ -1,9 +1,16 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package xvm
 
 import (
-	"chainmaker.org/chainmaker/common/serialize"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
+	"chainmaker.org/chainmaker/common/serialize"
 )
 
 const (
@@ -47,10 +54,15 @@ func (s *contextServiceResolver) cFetchResponse(ctx exec.Context, userBuf, userL
 	if iresponse == nil {
 		exec.Throw(exec.NewTrap("call fetchResponse on nil value"))
 	}
-	response := iresponse.(responseDesc)
+	response, ok := iresponse.(responseDesc)
+	if !ok {
+		exec.Throw(exec.NewTrap("call fetchResponse error"))
+	}
+
 	userbuf := codec.Bytes(userBuf, userLen)
 	if len(response.Body) != len(userbuf) {
-		exec.Throw(exec.NewTrap(fmt.Sprintf("call fetchResponse with bad length, got %d, expect %d", len(userbuf), len(response.Body))))
+		exec.Throw(exec.NewTrap(fmt.Sprintf("call fetchResponse with bad length, got %d, expect %d",
+			len(userbuf), len(response.Body))))
 	}
 	copy(userbuf, response.Body)
 	success := uint32(1)
@@ -69,7 +81,11 @@ func (s *contextServiceResolver) cCallMethod(
 	successAddr uint32) uint32 {
 
 	codec := exec.NewCodec(ctx)
-	ctxId := ctx.GetUserData(contextIDKey).(int64)
+	ctxId, ok := ctx.GetUserData(contextIDKey).(int64)
+	if !ok {
+		s.contextService.logger.Errorw("convert user data to ctxId failed")
+	}
+
 	method := codec.String(methodAddr, methodLen)
 	requestBufTmp := codec.Bytes(requestAddr, requestLen)
 	responseBuf := codec.Bytes(responseAddr, responseLen)
@@ -126,8 +142,8 @@ func (s *contextServiceResolver) cCallMethod(
 	}
 
 	// slow path
-	var responseDesc responseDesc
-	responseDesc.Body = possibleResponseBuf
-	ctx.SetUserData(responseKey, responseDesc)
-	return uint32(len(responseDesc.Body))
+	var resDesc responseDesc
+	resDesc.Body = possibleResponseBuf
+	ctx.SetUserData(responseKey, resDesc)
+	return uint32(len(resDesc.Body))
 }

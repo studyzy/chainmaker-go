@@ -35,10 +35,12 @@ type scheduler struct {
 	lastRequest       time.Time             // The last time which block request was sent
 	pendingRecvHeight uint64                // The next block to be processed, all smaller blocks have been processed
 
-	maxPendingBlocks    uint64        // The maximum number of blocks allowed to be processed simultaneously (including: New, Pending, Received);
+	maxPendingBlocks uint64 // The maximum number of blocks allowed to be processed simultaneously
+	// (including: New, Pending, Received);
 	BatchesizeInEachReq uint64        // Number of blocks requested per request
 	peerReqTimeout      time.Duration // The maximum timeout for a node response
-	reqTimeThreshold    time.Duration // When the difference between the height of the node and the latest height of peers is 1, the time interval for requesting
+	reqTimeThreshold    time.Duration // When the difference between the height of the node and
+	// the latest height of peers is 1, the time interval for requesting
 
 	log    *logger.CMLogger
 	sender syncSender
@@ -46,7 +48,7 @@ type scheduler struct {
 }
 
 func newScheduler(sender syncSender, ledger protocol.LedgerCache,
-	maxNum uint64, timeOut, reqTimeThreshold time.Duration, Batchesize uint64, log *logger.CMLogger) *scheduler {
+	maxNum uint64, timeOut, reqTimeThreshold time.Duration, batchesize uint64, log *logger.CMLogger) *scheduler {
 
 	currHeight, err := ledger.CurrentHeight()
 	if err != nil {
@@ -59,7 +61,7 @@ func newScheduler(sender syncSender, ledger protocol.LedgerCache,
 
 		peerReqTimeout:      timeOut,
 		maxPendingBlocks:    maxNum,
-		BatchesizeInEachReq: Batchesize,
+		BatchesizeInEachReq: batchesize,
 		reqTimeThreshold:    reqTimeThreshold,
 
 		peers:             make(map[string]uint64),
@@ -92,7 +94,8 @@ func (sch *scheduler) handler(event queue.Item) (queue.Item, error) {
 func (sch *scheduler) handleNodeStatus(msg NodeStatusMsg) {
 	localCurrBlk := sch.ledger.GetLastCommittedBlock()
 	if old, exist := sch.peers[msg.from]; exist {
-		if old > msg.msg.BlockHeight || sch.isPeerArchivedTooHeight(localCurrBlk.Header.BlockHeight, msg.msg.GetArchivedHeight()) {
+		if old > msg.msg.BlockHeight || sch.isPeerArchivedTooHeight(localCurrBlk.Header.BlockHeight,
+			msg.msg.GetArchivedHeight()) {
 			delete(sch.peers, msg.from)
 			return
 		}
@@ -102,7 +105,8 @@ func (sch *scheduler) handleNodeStatus(msg NodeStatusMsg) {
 			msg.from, msg.msg.BlockHeight, msg.msg.GetArchivedHeight())
 		return
 	}
-	sch.log.Debugf("add node[%s], status[height: %d, archivedHeight: %d]", msg.from, msg.msg.BlockHeight, msg.msg.ArchivedHeight)
+	sch.log.Debugf("add node[%s], status[height: %d, archivedHeight: %d]", msg.from, msg.msg.BlockHeight,
+		msg.msg.ArchivedHeight)
 	sch.peers[msg.from] = msg.msg.BlockHeight
 	sch.addPendingBlocksAndUpdatePendingHeight(msg.msg.BlockHeight)
 }
@@ -142,7 +146,8 @@ func (sch *scheduler) handleLivinessMsg() {
 	if exist && time.Since(reqTime) > sch.peerReqTimeout {
 		id := sch.pendingBlocks[sch.pendingRecvHeight]
 		sch.log.Debugf("block request [height: %d] time out from node[%s]", sch.pendingRecvHeight, id)
-		if currBlk := sch.ledger.GetLastCommittedBlock(); currBlk != nil && currBlk.Header.BlockHeight < sch.pendingRecvHeight {
+		if currBlk := sch.ledger.GetLastCommittedBlock(); currBlk != nil && currBlk.Header.BlockHeight <
+			sch.pendingRecvHeight {
 			sch.blockStates[sch.pendingRecvHeight] = newBlock
 		}
 		delete(sch.peers, id)
@@ -163,10 +168,11 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		//sch.log.Debugf("no need to sync block")
 		return nil, nil
 	}
-	if pendingHeight = sch.nextHeightToReq(); pendingHeight < 0 {
-		sch.log.Debugf("pendingHeight: %d, block status %v", pendingHeight, sch.blockStates)
-		return nil, nil
-	}
+	pendingHeight = sch.nextHeightToReq()
+	//if pendingHeight = sch.nextHeightToReq(); pendingHeight < 0 {
+	//	sch.log.Debugf("pendingHeight: %d, block status %v", pendingHeight, sch.blockStates)
+	//	return nil, nil
+	//}
 	if bz, err = proto.Marshal(&syncPb.BlockSyncReq{
 		BlockHeight: pendingHeight, BatchSize: sch.BatchesizeInEachReq,
 	}); err != nil {
@@ -183,7 +189,8 @@ func (sch *scheduler) handleScheduleMsg() (queue.Item, error) {
 		sch.pendingTime[i] = sch.lastRequest
 		sch.pendingBlocks[i] = peer
 	}
-	sch.log.Debugf("request block[height: %d] from node [%s], BatchesizeInReq: %d", pendingHeight, peer, sch.BatchesizeInEachReq)
+	sch.log.Debugf("request block[height: %d] from node [%s], BatchesizeInReq: %d", pendingHeight, peer,
+		sch.BatchesizeInEachReq)
 	if err := sch.sender.sendMsg(syncPb.SyncMsg_BLOCK_SYNC_REQ, bz, peer); err != nil {
 		return nil, err
 	}
@@ -205,7 +212,7 @@ func (sch *scheduler) nextHeightToReq() uint64 {
 }
 
 func (sch *scheduler) maxHeight() uint64 {
-	var max uint64 = 0
+	var max uint64
 	for _, height := range sch.peers {
 		if max < height {
 			max = height

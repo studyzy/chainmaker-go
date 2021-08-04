@@ -22,7 +22,7 @@ type LogNodeConfig struct {
 	FilePath        string            `mapstructure:"file_path"`
 	MaxAge          int               `mapstructure:"max_age"`
 	RotationTime    int               `mapstructure:"rotation_time"`
-	RotationSize    int64            `mapstructure:"rotation_size"`
+	RotationSize    int64             `mapstructure:"rotation_size"`
 	LogInConsole    bool              `mapstructure:"log_in_console"`
 	ShowColor       bool              `mapstructure:"show_color"`
 }

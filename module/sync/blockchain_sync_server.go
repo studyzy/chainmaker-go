@@ -194,7 +194,8 @@ func (sync *BlockChainSyncServer) handleNodeStatusResp(syncMsg *syncPb.SyncMsg, 
 	if err := proto.Unmarshal(syncMsg.Payload, &msg); err != nil {
 		return err
 	}
-	sync.log.Debugf("receive node[%s] status, height [%d], archived height [%d]", from, msg.BlockHeight, msg.ArchivedHeight)
+	sync.log.Debugf("receive node[%s] status, height [%d], archived height [%d]", from, msg.BlockHeight,
+		msg.ArchivedHeight)
 	return sync.scheduler.addTask(NodeStatusMsg{msg: msg, from: from})
 }
 
@@ -249,7 +250,8 @@ func (sync *BlockChainSyncServer) sendInfos(req *syncPb.BlockSyncReq, from strin
 		}
 		info := &commonPb.BlockInfo{Block: blkRwInfo.Block, RwsetList: blkRwInfo.TxRWSets}
 		if bz, err = proto.Marshal(&syncPb.SyncBlockBatch{
-			Data: &syncPb.SyncBlockBatch_BlockinfoBatch{BlockinfoBatch: &syncPb.BlockInfoBatch{Batch: []*commonPb.BlockInfo{info}}},
+			Data: &syncPb.SyncBlockBatch_BlockinfoBatch{BlockinfoBatch: &syncPb.BlockInfoBatch{
+				Batch: []*commonPb.BlockInfo{info}}},
 		}); err != nil {
 			return err
 		}

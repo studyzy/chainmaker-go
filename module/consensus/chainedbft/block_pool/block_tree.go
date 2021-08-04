@@ -54,7 +54,8 @@ func NewBlockTree(rootBlock *common.Block, maxPrunedSize int) *BlockTree {
 		block:    rootBlock,
 		children: make([]string, 0),
 	}
-	blockTree.heightToBlocks[rootBlock.Header.BlockHeight] = append(blockTree.heightToBlocks[rootBlock.Header.BlockHeight], rootBlock)
+	blockTree.heightToBlocks[rootBlock.Header.BlockHeight] = append(
+		blockTree.heightToBlocks[rootBlock.Header.BlockHeight], rootBlock)
 	return blockTree
 }
 
@@ -155,7 +156,13 @@ func (bt *BlockTree) findBlockToPrune(newRootID string) []string {
 	)
 	toPrunedQueue.PushBack(string(bt.rootBlock.Header.BlockHash))
 	for !toPrunedQueue.IsEmpty() {
-		curID := toPrunedQueue.PollFront().(string)
+		var (
+			curID string
+			ok    bool
+		)
+		if curID, ok = toPrunedQueue.PollFront().(string); !ok {
+			return nil
+		}
 		curNode := bt.idToNode[curID]
 		for _, child := range curNode.GetChildren() {
 			if child == newRootID {

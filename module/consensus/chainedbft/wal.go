@@ -72,9 +72,14 @@ func (cbi *ConsensusChainedBftImpl) replayWal() (hasWalEntry bool) {
 }
 
 func (cbi *ConsensusChainedBftImpl) updateWalIndexAndTruncFile(commitHeight uint64) {
-	var nextProposalIndex uint64
+	var (
+		nextProposalIndex uint64
+		ok                bool
+	)
 	if val, exist := cbi.proposalWalIndex.Load(uint64(commitHeight + 1)); exist {
-		nextProposalIndex = val.(uint64)
+		if nextProposalIndex, ok = val.(uint64); !ok {
+			return
+		}
 	} else {
 		return
 	}

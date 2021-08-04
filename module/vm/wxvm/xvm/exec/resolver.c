@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "wxvm.h"
 
 extern wasm_rt_func_handle_t wxvm_resolve_func(void* env, char* module, char* name);

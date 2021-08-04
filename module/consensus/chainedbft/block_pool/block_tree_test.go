@@ -8,8 +8,8 @@ package blockpool
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/pb-go/common"
 )
 
 func TestBlockTree_InsertBlock(t *testing.T) {

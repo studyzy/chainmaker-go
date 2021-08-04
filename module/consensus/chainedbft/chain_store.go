@@ -60,7 +60,8 @@ func openChainStore(ledger protocol.LedgerCache, blockCommitter protocol.BlockCo
 		return nil, fmt.Errorf("openChainStore failed, update commit cache info, err %v", err)
 	}
 
-	logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x", bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
+	logger.Debugf("init chainStore by bestBlock, height: %d, hash: %x",
+		bestBlock.Header.BlockHeight, bestBlock.Header.BlockHash)
 	chainStore.blockPool = blockpool.NewBlockPool(bestBlock, chainStore.getCommitQC(), 20)
 	return chainStore, nil
 }
@@ -163,11 +164,8 @@ func (cs *chainStore) insertBlock(block *common.Block) error {
 	return nil
 }
 
-func (cs *chainStore) getBlocks(height uint64) []*common.Block {
-	return cs.blockPool.GetBlocks(height)
-}
-
-func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block, lastCommittedLevel uint64, err error) {
+func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Block,
+	lastCommittedLevel uint64, err error) {
 	var (
 		qcData []byte
 		blocks []*common.Block
@@ -176,7 +174,8 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 	if blocks = cs.blockPool.BranchFromRoot(block); blocks == nil {
 		return nil, 0, fmt.Errorf("commit block failed, no block to be committed")
 	}
-	cs.logger.Infof("commit BranchFromRoot blocks contains [%v:%v]", blocks[0].Header.BlockHeight, blocks[len(blocks)-1].Header.BlockHeight)
+	cs.logger.Infof("commit BranchFromRoot blocks contains [%v:%v]",
+		blocks[0].Header.BlockHeight, blocks[len(blocks)-1].Header.BlockHeight)
 
 	for _, blk := range blocks {
 		if qc = cs.blockPool.GetQCByID(string(blk.GetHeader().GetBlockHash())); qc == nil {
@@ -187,7 +186,14 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 				blk.GetHeader().GetBlockHeight(), err)
 		}
 
-		newBlock := proto.Clone(blk).(*common.Block)
+		var (
+			newBlock *common.Block
+			ok       bool
+		)
+		if newBlock, ok = proto.Clone(blk).(*common.Block); !ok {
+			cs.logger.Errorf("block clone error")
+			return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, clone block failed")
+		}
 		if err = utils.AddQCtoBlock(newBlock, qcData); err != nil {
 			cs.logger.Errorf("commit block failed, add qc to block err, %v", err)
 			return lastCommitted, lastCommittedLevel, err
@@ -202,7 +208,8 @@ func (cs *chainStore) commitBlock(block *common.Block) (lastCommitted *common.Bl
 			if !bytes.Equal(hadCommitBlock.GetHeader().GetBlockHash(), newBlock.GetHeader().GetBlockHash()) {
 				cs.logger.Errorf("commit block failed, block had been committed, hash unequal err, %v",
 					getBlockErr)
-				return lastCommitted, lastCommittedLevel, fmt.Errorf("commit block failed, block had been commited, hash unequal")
+				return lastCommitted, lastCommittedLevel, fmt.Errorf(
+					"commit block failed, block had been committed, hash unequal")
 			}
 		} else if err != nil {
 			cs.logger.Errorf("commit block failed, add block err, %v", err)

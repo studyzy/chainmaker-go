@@ -36,3 +36,4 @@ tools/cmc/testdata
 /module/vm/test/*/tmp/
 nohup.out
 main/chainmaker
+vendor

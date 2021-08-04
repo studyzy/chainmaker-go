@@ -1,7 +1,12 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package xvm
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 
@@ -77,7 +82,9 @@ func (c *ContextService) PutState(ctxId int64) int32 {
 		return protocol.ContractSdkSignalResultFail
 	}
 
-	context.TxSimContext.Put(context.ContractId.Name, []byte(key), []byte(value))
+	if err := context.TxSimContext.Put(context.ContractId.Name, []byte(key), []byte(value)); err != nil {
+		context.err = fmt.Errorf("put state param[key | value] failed, err: %v", err)
+	}
 
 	items := make([]*serialize.EasyCodecItem, 0)
 
@@ -129,7 +136,11 @@ func (c *ContextService) EmitEvent(ctxId int64) int32 {
 	in := ec.GetItems()
 	var eventData []string
 	for i := 1; i < len(in); i++ {
-		data := in[i].Value.(string)
+		data, ok := in[i].Value.(string)
+		if !ok {
+			c.logger.Debugf("convert value failed, value=%v", in[i].Value)
+		}
+
 		eventData = append(eventData, data)
 		c.logger.Debugf("method EmitEvent eventData :%v", data)
 	}
@@ -201,7 +212,7 @@ func (c *ContextService) NewIterator(ctxId int64) int32 {
 	for iter.Next() && capLimit > 0 {
 		kv, err := iter.Value()
 		if err != nil {
-			context.err = errors.New(fmt.Sprintf("new iterator select error, %s", err))
+			context.err = fmt.Errorf("new iterator select error, %s", err)
 			return protocol.ContractSdkSignalResultFail
 		}
 		var item serialize.EasyCodecItem
@@ -210,7 +221,7 @@ func (c *ContextService) NewIterator(ctxId int64) int32 {
 		item.ValueType = serialize.EasyValueType_BYTES
 		item.Value = kv.Value
 		out = append(out, &item)
-		capLimit -= 1
+		capLimit--
 	}
 
 	iter.Release()
@@ -276,7 +287,8 @@ func (c *ContextService) CallContract(ctxId int64) int32 {
 
 	ecArg := serialize.NewEasyCodecWithBytes(args)
 	paramMap := ecArg.ToMap()
-	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.Contract{Name: contract}, method, nil, paramMap, context.gasUsed, commonPb.TxType_INVOKE_CONTRACT)
+	contractResult, txStatusCode := context.TxSimContext.CallContract(&commonPb.Contract{Name: contract}, method, nil,
+		paramMap, context.gasUsed, commonPb.TxType_INVOKE_CONTRACT)
 
 	ecParam := serialize.NewEasyCodec()
 	ecParam.AddInt32("code", int32(contractResult.Code))
@@ -300,7 +312,7 @@ func (c *ContextService) LogMessage(ctxId int64) int32 {
 		context.err = fmt.Errorf("log message param[msg] is required:%d", c.ctxId)
 		return protocol.ContractSdkSignalResultFail
 	}
-	c.logger.Debugf("wxvm log>> [%s] %s", context.TxSimContext.GetTx().Payload.TxId, msg)
+	c.logger.Debugf("wxvm log>> [%s] %s\n", context.TxSimContext.GetTx().Payload.TxId, msg)
 	msgItems := make([]*serialize.EasyCodecItem, 0)
 	context.resp = msgItems
 	return protocol.ContractSdkSignalResultSuccess

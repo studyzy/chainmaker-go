@@ -36,7 +36,8 @@ type chainedbftSMR struct {
 
 //newChainedBftSMR returns an instance of consensus smr
 func newChainedBftSMR(chainID string,
-	epoch *epochManager, chainStore *chainStore, ts *timeservice.TimerService, server *ConsensusChainedBftImpl) *chainedbftSMR {
+	epoch *epochManager, chainStore *chainStore, ts *timeservice.TimerService,
+	server *ConsensusChainedBftImpl) *chainedbftSMR {
 	smr := &chainedbftSMR{
 		chainStore: chainStore,
 		logger:     logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainID),
@@ -105,28 +106,8 @@ func (cs *chainedbftSMR) getPeerByIndex(index uint64) *peer {
 	return cs.committee.getPeerByIndex(index)
 }
 
-func (cs *chainedbftSMR) getPeerByID(id string) *peer {
-	return cs.committee.getPeerByID(id)
-}
-
-func (cs *chainedbftSMR) getIndexByID(id string) int {
-	peer := cs.getPeerByID(id)
-	if peer != nil {
-		return int(peer.index)
-	}
-	return -1
-}
-
 func (cs *chainedbftSMR) isValidIdx(index uint64) bool {
 	return cs.committee.isValidIdx(index)
-}
-
-func (cs *chainedbftSMR) updatePeerNetState(id string, active bool) bool {
-	return cs.committee.updatePeerNetState(id, active)
-}
-
-func (cs *chainedbftSMR) peerCount() int {
-	return cs.committee.peerCount()
 }
 
 func (cs *chainedbftSMR) min(qcHeight uint64) int {
@@ -135,10 +116,6 @@ func (cs *chainedbftSMR) min(qcHeight uint64) int {
 		return int(cs.server.governanceContract.GetLastGovMembersValidatorMinCount())
 	}
 	return int(cs.server.governanceContract.GetGovMembersValidatorMinCount())
-}
-
-func (cs *chainedbftSMR) getPeers() []*peer {
-	return cs.committee.getPeers()
 }
 
 func (cs *chainedbftSMR) getLastVote() (uint64, *chainedbftpb.ConsensusPayload) {
@@ -157,16 +134,13 @@ func (cs *chainedbftSMR) updateLockedQC(qc *chainedbftpb.QuorumCert) {
 	cs.safetyRules.UpdateLockedQC(qc)
 }
 
-func (cs *chainedbftSMR) commitRules(qc *chainedbftpb.QuorumCert) (commit bool, commitBlock *common.Block, commitLevel uint64) {
+func (cs *chainedbftSMR) commitRules(qc *chainedbftpb.QuorumCert) (commit bool, commitBlock *common.Block,
+	commitLevel uint64) {
 	return cs.safetyRules.CommitRules(qc)
 }
 
 func (cs *chainedbftSMR) setLastCommittedBlock(block *common.Block, level uint64) {
 	cs.safetyRules.SetLastCommittedBlock(block, level)
-}
-
-func (cs *chainedbftSMR) getLastCommittedBlock() *common.Block {
-	return cs.safetyRules.GetLastCommittedBlock()
 }
 
 func (cs *chainedbftSMR) getLastCommittedLevel() uint64 {
@@ -199,7 +173,8 @@ func (cs *chainedbftSMR) getHighestTCLevel() uint64 {
 // hcLevel The latest committed QC level in local node.
 // Returns true if the consensus goes to the next level, otherwise false.
 //func (cs *chainedbftSMR) processCertificates(height, hqcLevel, htcLevel, hcLevel uint64) bool {
-func (cs *chainedbftSMR) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert, hcLevel uint64) bool {
+func (cs *chainedbftSMR) processCertificates(qc *chainedbftpb.QuorumCert, tc *chainedbftpb.QuorumCert,
+	hcLevel uint64) bool {
 	return cs.paceMaker.ProcessCertificates(qc, tc, hcLevel)
 	//return cs.paceMaker.ProcessCertificates(height, hqcLevel, htcLevel, hcLevel)
 }

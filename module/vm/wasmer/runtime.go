@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"fmt"
 )
 
 // RuntimeInstance wasm runtime
@@ -21,8 +22,14 @@ type RuntimeInstance struct {
 	chainId string
 }
 
+func (r *RuntimeInstance) Pool() *vmPool {
+	return r.pool
+}
+
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (r *RuntimeInstance) Invoke(
+	contract *commonPb.Contract, method string,
+	byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
 	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().Payload.TxId)

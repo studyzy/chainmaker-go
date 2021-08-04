@@ -33,7 +33,7 @@ func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *m
 		contractName := syscontract.SystemContract_CHAIN_CONFIG.String()
 
 		if !isConfig {
-			contractName = "userContract1"
+			contractName = contract
 		}
 
 		rpcTxs.txs = append(rpcTxs.txs, &commonPb.Transaction{Payload: &commonPb.Payload{TxId: utils.GetRandTxId(), TxType: txType, Method: "SetConfig", ContractName: contractName}})

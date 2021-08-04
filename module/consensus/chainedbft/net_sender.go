@@ -12,14 +12,15 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/net"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
+	"chainmaker.org/chainmaker/common/msgbus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
 )
 
 //signAndMarshal signs the consensus payload and marshal consensus message including signature
-func (cbi *ConsensusChainedBftImpl) signAndMarshal(payload *chainedbftpb.ConsensusPayload, internal bool) ([]byte, error) {
+func (cbi *ConsensusChainedBftImpl) signAndMarshal(payload *chainedbftpb.ConsensusPayload,
+	internal bool) ([]byte, error) {
 	consensusMessage := &chainedbftpb.ConsensusMsg{
 		Payload:   payload,
 		SignEntry: nil,

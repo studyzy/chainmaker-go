@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package xvm
 
 const (
@@ -40,9 +46,9 @@ var MaxLimits = Limits{
 	Cpu: maxResourceLimit,
 }
 
-func roundup(n, scale int64) int64 {
-	if scale == 0 {
-		return 0
-	}
-	return (n + scale - 1) / scale
-}
+//func roundup(n, scale int64) int64 {
+//	if scale == 0 {
+//		return 0
+//	}
+//	return (n + scale - 1) / scale
+//}//unused(deadcode)
