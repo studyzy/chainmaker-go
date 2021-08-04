@@ -3,14 +3,16 @@ Copyright (C) BABEC. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
 */
+
 package gasmtest
 
 import (
 	"fmt"
-	"gotest.tools/assert"
 	"sync"
 	"testing"
 	"time"
+
+	"gotest.tools/assert"
 
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
@@ -20,7 +22,6 @@ import (
 )
 
 func TestContract_Fact(t *testing.T) {
-	test.WasmFile = "../../../../test/wasm/go-func-verify-2.0.0.wasm"
 	contractId, txContext, byteCode := test.InitContextTest(commonPb.RuntimeType_GASM)
 
 	if len(byteCode) == 0 {
@@ -31,7 +32,7 @@ func TestContract_Fact(t *testing.T) {
 	wg := sync.WaitGroup{}
 	for i := 0; i < 100; i++ {
 		for j := 0; j < 10; j++ {
-			x += 1
+			x++
 			y := int32(x)
 			wg.Add(1)
 			go func() {
