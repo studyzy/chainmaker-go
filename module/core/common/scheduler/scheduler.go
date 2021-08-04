@@ -490,8 +490,8 @@ func (ts *TxScheduler) parseParameter(parameterPairs []*commonpb.KeyValuePair) (
 	for i := 0; i < len(parameterPairs); i++ {
 		key := parameterPairs[i].Key
 		value := parameterPairs[i].Value
-		if len(key) > protocol.DefaultStateLen {
-			return nil, fmt.Errorf("expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key))
+		if len(key) > protocol.DefaultMaxStateKeyLen {
+			return nil, fmt.Errorf("expect key length less than %d, but got %d", protocol.DefaultMaxStateKeyLen, len(key))
 		}
 		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {

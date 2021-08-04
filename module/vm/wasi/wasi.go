@@ -39,15 +39,18 @@ const boolFalse Bool = 0
 type Wacsi interface {
 	// state operation
 	PutState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
-	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
+	GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte,
+		data []byte, isLen bool) ([]byte, error)
 	DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
 	// call other contract
-	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64, isLen bool) ([]byte, error, uint64)
+	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64,
+		isLen bool) ([]byte, error, uint64)
 	// result record
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
 	// emit event
-	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.Contract, log *logger.CMLogger) (*common.ContractEvent, error)
+	EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.Contract,
+		log *logger.CMLogger) (*common.ContractEvent, error)
 	// paillier
 	PaillierOperation(requestBody []byte, memory []byte, data []byte, isLen bool) ([]byte, error)
 	// bulletproofs
@@ -57,16 +60,22 @@ type Wacsi interface {
 	KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
 	KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
 	KvIteratorHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
-	KvIteratorNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, contractName string, isLen bool) ([]byte, error)
+	KvIteratorNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+		contractName string, isLen bool) ([]byte, error)
 	KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error
 
 	// sql operation
-	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
-	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error)
-	ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error
-	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error
+	ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte,
+		chainId string) error
+	ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte,
+		data []byte, chainId string, isLen bool) ([]byte, error)
+	ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext,
+		memory []byte, chainId string) error
+	ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte,
+		method string) error
 	RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
-	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error)
+	RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+		isLen bool) ([]byte, error)
 	RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error
 }
 
@@ -94,7 +103,8 @@ func (*WacsiImpl) PutState(requestBody []byte, contractName string, txSimContext
 	return err
 }
 
-func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
+func (*WacsiImpl) GetState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte,
+	data []byte, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	key, _ := ec.GetString("key")
 	field, _ := ec.GetString("field")
@@ -133,7 +143,8 @@ func (*WacsiImpl) DeleteState(requestBody []byte, contractName string, txSimCont
 	}
 	return nil
 }
-func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64, isLen bool) ([]byte, error, uint64) {
+func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+	gasUsed uint64, isLen bool) ([]byte, error, uint64) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	valuePtr, _ := ec.GetInt32("value_ptr")
 	contractName, _ := ec.GetString("contract_name")
@@ -157,19 +168,23 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 		return nil, fmt.Errorf("[call contract] method is null"), gasUsed
 	}
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
-		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d", protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
+		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d",
+			protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
 	}
 	paramMap := ecData.ToMap()
 	for key, val := range paramMap {
-		if len(key) > protocol.DefaultStateLen {
-			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d", protocol.DefaultStateLen, len(key)), gasUsed
+		if len(key) > protocol.DefaultMaxStateKeyLen {
+			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d",
+				protocol.DefaultMaxStateKeyLen, len(key)), gasUsed
 		}
 		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
 		if err != nil || !match {
-			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. letter, number, dot and underline are allowed", key), gasUsed
+			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. "+
+				"letter, number, dot and underline are allowed", key), gasUsed
 		}
 		if len(val) > protocol.ParametersValueMaxLength {
-			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d", protocol.ParametersValueMaxLength, len(val)), gasUsed
+			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d",
+				protocol.ParametersValueMaxLength, len(val)), gasUsed
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
@@ -179,7 +194,8 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	// call contract
 	gasUsed += protocol.CallContractGasOnce
 
-	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil, paramMap, gasUsed, txSimContext.GetTx().Payload.TxType)
+	result, code := txSimContext.CallContract(&common.Contract{Name: contractName}, method, nil,
+		paramMap, gasUsed, txSimContext.GetTx().Payload.TxType)
 	gasUsed += uint64(result.GasUsed)
 	if code != common.TxStatusCode_SUCCESS {
 		return nil, fmt.Errorf("[call contract] execute error code: %s, msg: %s", code.String(), result.Message), gasUsed
@@ -213,7 +229,8 @@ func (*WacsiImpl) ErrorResult(contractResult *common.ContractResult, data []byte
 }
 
 // EmitEvent emit event to chain
-func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.Contract, log *logger.CMLogger) (*common.ContractEvent, error) {
+func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimContext, contractId *common.Contract,
+	log *logger.CMLogger) (*common.ContractEvent, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	topic, err := ec.GetString("topic")
 	if err != nil {
@@ -252,7 +269,8 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 }
 
 //author:whang1234
-func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
+	memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	startKey, _ := ec.GetString("start_key")
 	startField, _ := ec.GetString("start_field")
@@ -279,7 +297,8 @@ func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimCon
 	return nil
 }
 
-func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) KvPreIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
+	memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	startKey, _ := ec.GetString("start_key")
 	startField, _ := ec.GetString("start_field")
@@ -323,7 +342,8 @@ func (*WacsiImpl) KvIteratorHasNext(requestBody []byte, txSimContext protocol.Tx
 	return nil
 }
 
-func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, contractname string, isLen bool) ([]byte, error) {
+func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+	contractname string, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	kvIndex, _ := ec.GetInt32("rs_index")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -363,7 +383,8 @@ func (*WacsiImpl) KvIteratorNext(requestBody []byte, txSimContext protocol.TxSim
 	return kvBytes, nil
 }
 
-func (w *WacsiImpl) KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) KvIteratorClose(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
+	memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	kvIndex, _ := ec.GetInt32("rs_index")
 	valuePtr, _ := ec.GetInt32("value_ptr")
@@ -654,7 +675,8 @@ func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.Pub
 	return result.Marshal()
 }
 
-func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
+	memory []byte, chainId string) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -688,7 +710,8 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error) {
+func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
+	memory []byte, data []byte, chainId string, isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -759,7 +782,8 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 	return nil
 }
 
-func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
+func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+	isLen bool) ([]byte, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -815,7 +839,8 @@ func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, method string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, method string,
+	txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
 	if txSimContext.GetTx().Payload.TxType == common.TxType_QUERY_CONTRACT {
 		return fmt.Errorf("[execute update] query transaction cannot be execute dml")
 	}
@@ -848,7 +873,8 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 	return nil
 }
 
-func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error {
+func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
+	memory []byte, method string) error {
 	if !w.isManageContract(method) {
 		return ErrorNotManageContract
 	}
