@@ -4,10 +4,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+## deploy ChainMaker and test
 
-
+alreadyBuild=$1
 
 # chainmaker-go/scripts
+# backups & build release & start ChainMaker
 cd ..
 ./cluster_quick_stop.sh clean
 sleep 1
@@ -20,11 +22,13 @@ ps -ef|grep chainmaker
 
 
 # chainmaker-go/build
+# backups *.gz
 cd ../build
 mkdir bak
 mv release/*.gz bak/
 
 # chainmaker-go/bin
+# prepare sdk config & crypto config
 cd ../bin
 rm -rf testdata
 mkdir testdata
@@ -34,5 +38,5 @@ cd ..
 
 # chainmaker-go/scripts/test
 cd scripts/test
-#./cmc_test.sh
-./send_tool_test.sh
+./cmc_test.sh alreadyBuild
+#./send_tool_test.sh alreadyBuild
