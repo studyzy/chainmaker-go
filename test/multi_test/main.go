@@ -70,7 +70,8 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 func main() {
 	common.SetCertPathPrefix(certPathPrefix)
 
-	initGasmTest()
+	//initGasmTest()
+	initWasmerTest()
 	runTest()
 
 }
@@ -197,7 +198,7 @@ func runTest() {
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-func-verify-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
-	contractName = "contract101"
+	contractName = "contract103"
 	runtimeType = commonPb.RuntimeType_WASMER
 	printConfig("wasmer")
 }
@@ -343,7 +344,7 @@ func initPayload() *commonPb.Payload {
 		},
 		{
 			Key:   syscontract.InitContract_CONTRACT_NAME.String(),
-			Value: []byte("contract01"),
+			Value: []byte(contractName),
 		},
 		{
 			Key:   syscontract.InitContract_CONTRACT_VERSION.String(),
@@ -365,7 +366,7 @@ func initPayload() *commonPb.Payload {
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
-		TxId:         "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20a33",
+		TxId:         "9ba51cef2017837acd41c6cf5246ec727c958a5475e051331a6d4fba25d20a44",
 	}
 	return payload
 }
