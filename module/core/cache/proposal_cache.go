@@ -34,7 +34,7 @@ type ProposalCache struct {
 type blockProposal struct {
 	block                *commonpb.Block              // proposal block
 	rwSetMap             map[string]*commonpb.TxRWSet // read write set of this proposal block
-	contactEventInfoMap  map[string][]*commonpb.ContractEvent
+	contractEventInfoMap map[string][]*commonpb.ContractEvent
 	isSelfProposed       bool // is this block proposed by this node
 	hasProposedThisRound bool // for *BFT consensus, only propose once at a round.
 }
@@ -69,7 +69,7 @@ func (pc *ProposalCache) GetProposedBlock(b *commonpb.Block) (*commonpb.Block, m
 	defer pc.rwMu.RUnlock()
 
 	if proposedBlock, ok := pc.lastProposedBlock[height][string(fingerPrint)]; ok {
-		return proposedBlock.block, proposedBlock.rwSetMap, proposedBlock.contactEventInfoMap
+		return proposedBlock.block, proposedBlock.rwSetMap, proposedBlock.contractEventInfoMap
 	}
 	return nil, nil, nil
 }
@@ -109,7 +109,7 @@ func (pc *ProposalCache) GetProposedBlockByHashAndHeight(hash []byte, height uin
 }
 
 // SetProposedBlock set porposed block in current consensus height, after it's generated or verified.
-func (pc *ProposalCache) SetProposedBlock(b *commonpb.Block, rwSetMap map[string]*commonpb.TxRWSet, contactEventMap map[string][]*commonpb.ContractEvent, selfPropose bool) error {
+func (pc *ProposalCache) SetProposedBlock(b *commonpb.Block, rwSetMap map[string]*commonpb.TxRWSet, contractEventMap map[string][]*commonpb.ContractEvent, selfPropose bool) error {
 	if b == nil || b.Header == nil {
 		return nil
 	}
@@ -123,7 +123,7 @@ func (pc *ProposalCache) SetProposedBlock(b *commonpb.Block, rwSetMap map[string
 	bs := &blockProposal{
 		block:                b,
 		rwSetMap:             rwSetMap,
-		contactEventInfoMap:  contactEventMap,
+		contractEventInfoMap: contractEventMap,
 		isSelfProposed:       selfPropose,
 		hasProposedThisRound: true,
 	}

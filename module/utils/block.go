@@ -243,7 +243,7 @@ func FilterBlockTxs(reqSenderOrgId string, block *commonPb.Block) {
 	txs := block.GetTxs()
 	results := make([]*commonPb.Transaction, 0, len(txs))
 	for i, tx := range txs {
-		if tx.Sender.Signer.OrgId != "" && tx.Sender.Signer.OrgId == reqSenderOrgId {
+		if block.Header.BlockHeight != 0 && tx.Sender.Signer.OrgId == reqSenderOrgId {
 			results = append(results, txs[i])
 		}
 	}

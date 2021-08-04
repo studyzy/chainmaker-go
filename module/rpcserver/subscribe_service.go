@@ -876,16 +876,10 @@ func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx 
 	)
 
 	isReqSenderLightNode := *reqSender == protocol.RoleLight
-	isTxRelatedToSender := (tx.Sender.Signer.OrgId != "") && reqSenderOrgId == tx.Sender.Signer.OrgId
+	isTxRelatedToSender := (tx.Sender != nil) && reqSenderOrgId == tx.Sender.Signer.OrgId
 
 	if result, err = s.getTxSubscribeResult(tx); err != nil {
 		errMsg = fmt.Sprintf("get tx subscribe result failed, %s", err)
-		s.log.Error(errMsg)
-		return errors.New(errMsg)
-	}
-
-	if err := server.Send(result); err != nil {
-		errMsg = fmt.Sprintf("send subscribe tx result failed, %s", err)
 		s.log.Error(errMsg)
 		return errors.New(errMsg)
 	}
@@ -940,18 +934,18 @@ func (s *ApiService) checkAndGetLastBlockHeight(store protocol.BlockchainStore,
 	return int64(lastBlock.Header.BlockHeight), nil
 }
 
-func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender *protocol.Role, localOrgId string) {
+func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender *protocol.Role, reqSenderOrgId string) {
 	fmt.Printf("Verifying subscribed block of height: %d\n", blockInfo.Block.Header.BlockHeight)
 	fmt.Printf("verify: the role of request sender is Light [%t]\n", *reqSender == protocol.RoleLight)
 	fmt.Printf("the block has %d txs\n", len(blockInfo.Block.Txs))
-	//for i, tx := range blockInfo.Block.Txs {
-	//
-	//	if tx.Sender.Signer != nil {
-	//
-	//		fmt.Printf("Tx [%d] of subscribed block, localOrgId is %v, TxOrgId is %s, "+
-	//			"verify: this tx is of the same organization [%t]\n", i, localOrgId, tx.Sender.Signer.OrgId, tx.Sender.Signer.OrgId == localOrgId)
-	//	}
-	//}
+	for i, tx := range blockInfo.Block.Txs {
+
+		if tx.Sender != nil {
+
+			fmt.Printf("Tx [%d] of subscribed block, from org %v, TxSenderOrgId is %s, "+
+				"verify: this tx is of the same organization [%t]\n", i, tx.Sender.Signer.OrgId, reqSenderOrgId, tx.Sender.Signer.OrgId == reqSenderOrgId)
+		}
+	}
 	fmt.Println()
 }
 

@@ -43,23 +43,23 @@ var (
 	errStoreIsNil                     = fmt.Errorf("store is nil")
 )
 
-type BlockContact struct {
+type BlockContract struct {
 	methods map[string]common.ContractFunc
 	log     protocol.Logger
 }
 
-func NewBlockContact(log protocol.Logger) *BlockContact {
-	return &BlockContact{
+func NewBlockContract(log protocol.Logger) *BlockContract {
+	return &BlockContract{
 		log:     log,
-		methods: registerBlockContactMethods(log),
+		methods: registerBlockContractMethods(log),
 	}
 }
 
-func (c *BlockContact) GetMethod(methodName string) common.ContractFunc {
+func (c *BlockContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerBlockContactMethods(log protocol.Logger) map[string]common.ContractFunc {
+func registerBlockContractMethods(log protocol.Logger) map[string]common.ContractFunc {
 	q := make(map[string]common.ContractFunc, 64)
 	b := &BlockRuntime{log: log}
 

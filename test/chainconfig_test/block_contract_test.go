@@ -181,7 +181,7 @@ func TestGetTxById(t *testing.T) {
 //GetFullBlockByHeight
 
 func TestGetBlock(t *testing.T) {
-	testHeight := 3
+	testHeight := -1
 	height := int64(testHeight)
 	blockByHeight, blockHashStringByHeight, txId := testGetBlockByHeight(t, client, height)
 	blockByBlockHash := testGetBlockByHash(t, client, blockHashStringByHeight)
@@ -261,7 +261,11 @@ func testGetBlockByHeight(t *testing.T, client apiPb.RpcNodeClient, height int64
 
 	if len(blockInfo.GetBlock().Txs) > 0 {
 		tx = blockInfo.GetBlock().Txs[0]
-		fmt.Printf("recv block [%d] => with (%d txs) from organization: %s\n", blockInfo.Block.Header.BlockHeight, len(blockInfo.Block.Txs), tx.Sender.Signer.OrgId)
+		if blockInfo.GetBlock().Header.BlockHeight > 0 {
+			fmt.Printf("recv block [%d] => with (%d txs) from organization: %s\n", blockInfo.Block.Header.BlockHeight, len(blockInfo.Block.Txs), tx.Sender.Signer.OrgId)
+		} else {
+			fmt.Printf("recv block [%d] => with (%d txs)", blockInfo.Block.Header.BlockHeight, len(blockInfo.Block.Txs))
+		}
 		fmt.Println()
 		fmt.Println()
 		return blockInfo.Block, hex.EncodeToString(blockHash), tx.Payload.TxId
@@ -291,7 +295,7 @@ func testGetBlockByHash(t *testing.T, client apiPb.RpcNodeClient, hash string) *
 
 	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT,
-		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CONTRACT_MANAGE.String(), MethodName: syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
+		ChainId: CHAIN1, ContractName: syscontract.SystemContract_CHAIN_QUERY.String(), MethodName: syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), Pairs: pairs})
 
 	handleQueryReqError(err)
 	//fmt.Printf("response: %v\n", resp)
