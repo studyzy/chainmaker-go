@@ -725,13 +725,13 @@ func (r *BlockRuntime) getFullBlockByHeight(store protocol.BlockchainStore, chai
 		err            error
 	)
 
-	lastBlock, err = store.GetLastBlock()
-	if err != nil {
-		err = r.handleError(lastBlock, err, chainId)
-		return nil, err
-	}
-
 	if height == math.MaxUint64 {
+		lastBlock, err = store.GetLastBlock()
+		if err != nil {
+			err = r.handleError(lastBlock, err, chainId)
+			return nil, err
+		}
+
 		blockWithRWSet, err = store.GetBlockWithRWSets(lastBlock.Header.BlockHeight)
 	} else {
 		blockWithRWSet, err = store.GetBlockWithRWSets(height)
@@ -749,13 +749,13 @@ func (r *BlockRuntime) getBlockHeaderByHeight(store protocol.BlockchainStore, ch
 		err         error
 	)
 
-	lastBlock, err = store.GetLastBlock()
-	if err != nil {
-		err = r.handleError(lastBlock, err, chainId)
-		return nil, err
-	}
-
 	if height == math.MaxUint64 {
+		lastBlock, err = store.GetLastBlock()
+		if err != nil {
+			err = r.handleError(lastBlock, err, chainId)
+			return nil, err
+		}
+
 		blockHeader, err = store.GetBlockHeaderByHeight(lastBlock.Header.BlockHeight)
 	} else {
 		blockHeader, err = store.GetBlockHeaderByHeight(height)
