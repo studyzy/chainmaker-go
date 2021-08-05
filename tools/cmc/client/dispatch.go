@@ -74,7 +74,7 @@ func runInvokeContractOnce(client *sdk.ChainClient, contractName, method string,
 	}()
 
 	txId := sdkutils.GetRandTxId()
-	resp, err := client.InvokeContract(contractName, method, txId, util.ConvertParameters(params), int64(timeout), syncResult)
+	resp, err := client.InvokeContract(contractName, method, txId, util.ConvertParameters(params), timeout, syncResult)
 	if err != nil {
 		fmt.Printf("[ERROR] invoke contract failed, %s", err.Error())
 		return
