@@ -49,13 +49,19 @@ var NilCertACProvider ACProvider = (*certACProvider)(nil)
 
 func (cp *certACProvider) NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
-	return newCertACProvider(chainConf, localOrgId, store, log)
+	certACProvider, err := newCertACProvider(chainConf.ChainConfig(), localOrgId, store, log)
+	if err != nil {
+		return nil, err
+	}
+	chainConf.AddWatch(certACProvider)
+	chainConf.AddVmWatch(certACProvider)
+	return certACProvider, nil
 }
 
-func newCertACProvider(chainConfig protocol.ChainConf, localOrgId string,
+func newCertACProvider(chainConfig *config.ChainConfig, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (*certACProvider, error) {
 	certACProvider := &certACProvider{
-		hashType:   chainConfig.ChainConfig().GetCrypto().Hash,
+		hashType:   chainConfig.GetCrypto().Hash,
 		certCache:  concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
 		crl:        sync.Map{},
 		frozenList: sync.Map{},
@@ -68,7 +74,7 @@ func newCertACProvider(chainConfig protocol.ChainConf, localOrgId string,
 	}
 	certACProvider.acService = initAccessControlService(certACProvider.hashType, chainConfig, store, log)
 
-	err := certACProvider.initTrustRoots(chainConfig.ChainConfig().TrustRoots, localOrgId)
+	err := certACProvider.initTrustRoots(chainConfig.TrustRoots, localOrgId)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +89,6 @@ func newCertACProvider(chainConfig protocol.ChainConf, localOrgId string,
 	if err := certACProvider.loadCertFrozenList(); err != nil {
 		return nil, err
 	}
-	chainConfig.AddWatch(certACProvider)
-	chainConfig.AddVmWatch(certACProvider)
 	return certACProvider, nil
 }
 
@@ -938,4 +942,32 @@ func (cp *certACProvider) systemContractCallbackCertManagementCase(payloadBytes 
 		cp.log.Debugf("unwatched method [%s]", payload.Method)
 		return nil
 	}
+}
+
+//GetValidEndorsements filters all endorsement entries and returns all valid ones
+func (cp *certACProvider) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
+	if atomic.LoadInt32(&cp.acService.orgNum) <= 0 {
+		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
+	}
+	refinedPolicy, err := cp.refinePrincipal(principal)
+	if err != nil {
+		return nil, fmt.Errorf("authentication fail, not a member on this chain: [%v]", err)
+	}
+	endorsements := refinedPolicy.GetEndorsement()
+
+	p, err := cp.acService.lookUpPolicyByResourceName(principal.GetResourceName())
+	if err != nil {
+		return nil, fmt.Errorf("authentication fail: [%v]", err)
+	}
+	orgListRaw := p.GetOrgList()
+	roleListRaw := p.GetRoleList()
+	orgList := map[string]bool{}
+	roleList := map[protocol.Role]bool{}
+	for _, orgRaw := range orgListRaw {
+		orgList[orgRaw] = true
+	}
+	for _, roleRaw := range roleListRaw {
+		roleList[roleRaw] = true
+	}
+	return cp.acService.getValidEndorsements(orgList, roleList, endorsements), nil
 }

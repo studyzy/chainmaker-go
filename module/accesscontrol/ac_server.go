@@ -91,23 +91,28 @@ type memberCache struct {
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType string, chainConf protocol.ChainConf,
+func initAccessControlService(hashType string, chainConf *config.ChainConfig,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
 		orgList:               sync.Map{},
 		resourceNamePolicyMap: sync.Map{},
-		localTrustMembers:     chainConf.ChainConfig().TrustMembers,
+		localTrustMembers:     chainConf.TrustMembers,
 		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
 		dataStore:             store,
 		log:                   log,
 		hashType:              hashType,
 	}
-	acService.initResourcePolicy(chainConf.ChainConfig().ResourcePolicies)
+	acService.initResourcePolicy(chainConf.ResourcePolicies)
 	return acService
 }
 
 func (acs *accessControlService) createDefaultResourcePolicy() {
+
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameReadData, policyRead)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
+	acs.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
 
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)

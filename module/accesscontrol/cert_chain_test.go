@@ -24,6 +24,11 @@ const (
 	sortedChainTemplate = "sorted chain: %v\n"
 )
 
+type certificatePair struct {
+	certificate string
+	sk          string
+}
+
 var (
 	sans = []string{"127.0.0.1", "localhost", "chainmaker.org", "8.8.8.8"}
 )

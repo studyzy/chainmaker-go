@@ -277,7 +277,13 @@ func (bc *Blockchain) initAC() (err error) {
 		}
 	}
 	acLog := logger.GetLoggerByChain(logger.MODULE_ACCESS, bc.chainId)
-	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	//bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	//if err != nil {
+	//	bc.log.Errorf("get organization information failed, %s", err.Error())
+	//	return
+	//}
+	acFactory := accesscontrol.ACFactory()
+	bc.ac, err = acFactory.NewACProvider("CERT", bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
 		bc.log.Errorf("get organization information failed, %s", err.Error())
 		return
