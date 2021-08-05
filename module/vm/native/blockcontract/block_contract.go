@@ -569,7 +569,8 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 }
 
-func (r *BlockRuntime) GetFullBlockByHeight(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetFullBlockByHeight(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var errMsg string
 	var err error
 
@@ -601,7 +602,8 @@ func (r *BlockRuntime) GetFullBlockByHeight(txSimContext protocol.TxSimContext, 
 	return blockWithRWSetBytes, nil
 }
 
-func (r *BlockRuntime) GetBlockHeightByTxId(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockHeightByTxId(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var err error
 
 	// check params
@@ -627,7 +629,8 @@ func (r *BlockRuntime) GetBlockHeightByTxId(txSimContext protocol.TxSimContext, 
 	return []byte(resultBlockHeight), nil
 }
 
-func (r *BlockRuntime) GetBlockHeightByHash(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockHeightByHash(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var err error
 
 	// check params
@@ -651,7 +654,8 @@ func (r *BlockRuntime) GetBlockHeightByHash(txSimContext protocol.TxSimContext, 
 	return []byte(resultBlockHeight), nil
 }
 
-func (r *BlockRuntime) GetBlockHeaderByHeight(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockHeaderByHeight(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var err error
 	var errMsg string
 
@@ -720,12 +724,13 @@ func (r *BlockRuntime) getBlockByHeight(store protocol.BlockchainStore, chainId 
 func (r *BlockRuntime) getFullBlockByHeight(store protocol.BlockchainStore, chainId string, height uint64) (
 	*storage.BlockWithRWSet, error) {
 	var (
+		lastBlock      *commonPb.Block
 		blockWithRWSet *storage.BlockWithRWSet
 		err            error
 	)
 
 	if height == math.MaxUint64 {
-		lastBlock, err := store.GetLastBlock()
+		lastBlock, err = store.GetLastBlock()
 		if err != nil {
 			err = r.handleError(lastBlock, err, chainId)
 			return nil, err
@@ -743,12 +748,13 @@ func (r *BlockRuntime) getFullBlockByHeight(store protocol.BlockchainStore, chai
 func (r *BlockRuntime) getBlockHeaderByHeight(store protocol.BlockchainStore, chainId string, height uint64) (
 	*commonPb.BlockHeader, error) {
 	var (
+		lastBlock   *commonPb.Block
 		blockHeader *commonPb.BlockHeader
 		err         error
 	)
 
 	if height == math.MaxUint64 {
-		lastBlock, err := store.GetLastBlock()
+		lastBlock, err = store.GetLastBlock()
 		if err != nil {
 			err = r.handleError(lastBlock, err, chainId)
 			return nil, err
