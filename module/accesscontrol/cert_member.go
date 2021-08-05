@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"chainmaker.org/chainmaker-go/localconf"
@@ -227,4 +228,45 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem st
 		certMember: *certMember,
 		sk:         sk,
 	}, nil
+}
+
+func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (protocol.SigningMember, error) {
+	if localPrivKeyFile != "" && localCertFile != "" {
+		certPEM, err := ioutil.ReadFile(localCertFile)
+		if err != nil {
+			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+		}
+		certMember, err := newMemberFromCertPem(localOrgId, string(certPEM), true, hashType)
+		if err != nil {
+			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+		}
+		skPEM, err := ioutil.ReadFile(localPrivKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+		}
+		var sk bccrypto.PrivateKey
+		p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
+		if p11Config.Enabled {
+			p11Handle, err := getP11Handle()
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+			}
+
+			sk, err = pkcs11.NewPrivateKey(p11Handle, certMember.cert.PublicKey)
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+			}
+		} else {
+			sk, err = asym.PrivateKeyFromPEM([]byte(skPEM), []byte(localPrivKeyPwd))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return &signingCertMember{
+			certMember: *certMember,
+			sk:         sk,
+		}, nil
+	}
+	return nil, nil
 }

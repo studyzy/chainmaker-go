@@ -83,6 +83,8 @@ func newCertACProvider(chainConfig protocol.ChainConf, localOrgId string,
 	if err := certACProvider.loadCertFrozenList(); err != nil {
 		return nil, err
 	}
+	chainConfig.AddWatch(certACProvider)
+	chainConfig.AddVmWatch(certACProvider)
 	return certACProvider, nil
 }
 
@@ -773,14 +775,15 @@ func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certifica
 		return nil, fmt.Errorf("authentication failed, no orgnization found")
 	}
 	if len(org.(*organization).trustedRootCerts) <= 0 {
-		return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate or trusted public key whitelist")
+		return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate")
 	}
 
 	certChain := cp.findCertChain(org.(*organization), certChains)
 	if certChain != nil {
 		return certChain, nil
 	}
-	return nil, fmt.Errorf("verify member failed: unsupport member type")
+	return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims"+
+		" [claim: %s]", mem.GetOrgId())
 }
 
 func (cp *certACProvider) findCertChain(org *organization, certChains [][]*bcx509.Certificate) []*bcx509.Certificate {
