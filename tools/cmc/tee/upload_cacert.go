@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package tee
 
 import (
-	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker/pb-go/common"
-	sdk "chainmaker.org/chainmaker/sdk-go"
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -38,7 +39,6 @@ func uploadCaCertCmd() *cobra.Command {
 	uploadCaCertCmd.MarkFlagRequired("sdk-conf-path")
 	uploadCaCertCmd.MarkFlagRequired("admin-key-file-paths")
 	uploadCaCertCmd.MarkFlagRequired("admin-crt-file-paths")
-
 
 	return uploadCaCertCmd
 }

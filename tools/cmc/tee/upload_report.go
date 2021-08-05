@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package tee
 
 import (
-	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker/pb-go/common"
-	sdk "chainmaker.org/chainmaker/sdk-go"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
