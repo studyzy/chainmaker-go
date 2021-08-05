@@ -294,7 +294,7 @@ func createUserContract() error {
 		endorsementEntrys[i] = e
 	}
 
-	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, false)
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, syncResult)
 	if err != nil {
 		return err
 	}

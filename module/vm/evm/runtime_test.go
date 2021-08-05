@@ -1,18 +1,22 @@
 package evm
 
 import (
+	"encoding/hex"
+	"testing"
+
 	"chainmaker.org/chainmaker-go/evm/test"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
-	"encoding/hex"
-	"testing"
 )
+
+const certFilePath = "./test/config/admin1.sing.crt"
+const byteCodeFilePath = "./test/contracts/contract01/token.bin"
 
 func TestRuntimeInstance_Install(t *testing.T) {
 	//部署合约
 	method := "init_contract"
-	test.CertFilePath = "./test/config/admin1.sing.crt"
-	test.ByteCodeFile = "./test/contracts/contract01/token.bin"
+	test.CertFilePath = certFilePath
+	test.ByteCodeFile = byteCodeFilePath
 	parameters := make(map[string][]byte)
 	contractId, txContext, byteCode := test.InitContextTest(common.RuntimeType_EVM)
 
@@ -26,7 +30,7 @@ func TestRuntimeInstance_Install(t *testing.T) {
 
 	byteCode, _ = hex.DecodeString(string(byteCode))
 	test.BaseParam(parameters)
-	parameters["data"] = []byte( "00000000000000000000000013f0c1639a9931b0ce17e14c83f96d4732865b58")
+	parameters["data"] = []byte("00000000000000000000000013f0c1639a9931b0ce17e14c83f96d4732865b58")
 	contractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 	loggerByChain.Infof("ContractResult Code:%+v", contractResult.Code)
 	loggerByChain.Infof("ContractResult ContractEvent:%+v", contractResult.ContractEvent)
