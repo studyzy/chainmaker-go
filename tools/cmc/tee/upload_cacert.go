@@ -12,12 +12,12 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 	"chainmaker.org/chainmaker/pb-go/common"
 	sdk "chainmaker.org/chainmaker/sdk-go"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 func uploadCaCertCmd() *cobra.Command {
