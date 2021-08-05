@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package libp2pgmtls
 
 import (
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/net/p2p/revoke"
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"context"
 	gocrypto "crypto"
 	"crypto/ecdsa"
@@ -182,15 +183,25 @@ func createVerifyPeerCertificateFunc(
 }
 
 func isRevoked(revokeValidator *revoke.RevokedValidator, rawCerts [][]byte) (bool, error) {
-	certs := make([]*cmx509.Certificate, 0)
+	//certs := make([]*cmx509.Certificate, 0)
+	//for idx := range rawCerts {
+	//	cert, err := cmx509.ParseCertificate(rawCerts[idx])
+	//	if err != nil {
+	//		return false, err
+	//	}
+	//	certs = append(certs, cert)
+	//}
+	//return revokeValidator.ValidateCertsIsRevoked(certs), nil
+	members := make([]*pbac.Member, 0)
 	for idx := range rawCerts {
-		cert, err := cmx509.ParseCertificate(rawCerts[idx])
-		if err != nil {
-			return false, err
+		m := &pbac.Member{
+			OrgId:      "",
+			MemberType: pbac.MemberType_CERT,
+			MemberInfo: rawCerts[idx],
 		}
-		certs = append(certs, cert)
+		members = append(members, m)
 	}
-	return revokeValidator.ValidateCertsIsRevoked(certs), nil
+	return revokeValidator.ValidateMemberStatus(members)
 }
 
 // SecureInbound runs the TLS handshake as a server.
