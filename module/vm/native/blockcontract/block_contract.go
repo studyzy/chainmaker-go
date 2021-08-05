@@ -396,7 +396,7 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 
 	// check params
 	var param *BlockRuntimeParam
-	if param, err = r.validateParams(parameters, paramNameTxId, paramNameWithRWSet); err != nil {
+	if param, err = r.validateParams(parameters, paramNameTxId); err != nil {
 		return nil, err
 	}
 
