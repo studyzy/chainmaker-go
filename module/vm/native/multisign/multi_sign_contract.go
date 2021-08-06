@@ -104,18 +104,21 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 	r.log.Infof(" voteContract VOTE test")
 	multiPayload := parameters["multiPayload"]
 	reqVoteState := parameters["voteState"]
-	signature := parameters["signature"]
-	if utils.IsAnyBlank(multiPayload, reqVoteState, signature) {
+	reqSignature := parameters["signature"]
+	if utils.IsAnyBlank(multiPayload, reqVoteState, reqSignature) {
 		err = fmt.Errorf("params multiPayload,voteState,signature cannot be empty")
 		return nil, err
 	}
 
+	signature := &commonPb.EndorsementEntry{}
 	oldPayload := &commonPb.Payload{}
 	multiSignInfo := &syscontract.MultiSignInfo{}
 	voteState := &syscontract.MultiSignVoteInfo{}
 
+	proto.Unmarshal(reqSignature, signature)
 	proto.Unmarshal(multiPayload, oldPayload)
 	proto.Unmarshal(reqVoteState, voteState)
+
 	multiSignInfoDB, _ := txSimContext.Get("multi_sign_contract", []byte(oldPayload.TxId)) // MultiSignInfo
 	proto.Unmarshal(multiSignInfoDB, multiSignInfo)
 	mPayloadByte, _ := multiSignInfo.Payload.Marshal()
@@ -133,6 +136,19 @@ func (r *MultiSignRuntime) voteContract(txSimContext protocol.TxSimContext, para
 	endorsers := make([]*commonPb.EndorsementEntry, 0)
 	for _, info := range multiSignInfo.VoteInfos {
 		endorsers = append(endorsers, info.Endorsement)
+	}
+	//校验签名权限
+	var signerFlag bool = false
+	for _, i := range endorsers {
+		//if cmp.Equal(signature.Signer，i.Signer)
+		//if reflect.DeepEqual(signature.Signer，i.Signer)
+		if signature.Signer == i.Signer {
+			signerFlag = true
+		}
+	}
+
+	if !signerFlag {
+		r.log.Warnf("the signer is not available,signerFlag is %b", signerFlag)
 	}
 
 	var (
