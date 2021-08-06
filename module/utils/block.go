@@ -238,14 +238,22 @@ func IsContractMgmtBlock(b *commonPb.Block) bool {
 	return IsContractMgmtTx(b.Txs[0])
 }
 
-func FilterBlockTxs(reqSenderOrgId string, block *commonPb.Block) {
+func FilterBlockTxs(reqSenderOrgId string, block *commonPb.Block) *commonPb.Block {
 
 	txs := block.GetTxs()
 	results := make([]*commonPb.Transaction, 0, len(txs))
+
+	newBlock := &commonPb.Block{
+		Header:         block.Header,
+		Dag:            block.Dag,
+		AdditionalData: block.AdditionalData,
+	}
 	for i, tx := range txs {
 		if block.Header.BlockHeight != 0 && tx.Sender.Signer.OrgId == reqSenderOrgId {
 			results = append(results, txs[i])
 		}
 	}
+	newBlock.Txs = results
 	block.Txs = results
+	return newBlock
 }

@@ -455,7 +455,11 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 			}
 
 			if *reqSender == protocol.RoleLight {
-				utils.FilterBlockTxs(reqSenderOrgId, blockInfo.Block)
+				newBlock := utils.FilterBlockTxs(reqSenderOrgId, blockInfo.Block)
+				blockInfo = &commonPb.BlockInfo{
+					Block:     newBlock,
+					RwsetList: ev.BlockInfo.RwsetList,
+				}
 			}
 
 			printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
@@ -676,21 +680,29 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 
 		// filter txs so that only related ones get passed
 		if *reqSender == protocol.RoleLight {
-			utils.FilterBlockTxs(reqSenderOrgId, blockWithRWSet.Block)
+			newBlock := utils.FilterBlockTxs(reqSenderOrgId, blockWithRWSet.Block)
+			blockInfo = &commonPb.BlockInfo{
+				Block:     newBlock,
+				RwsetList: blockWithRWSet.TxRWSets,
+			}
 		}
 	} else {
 		if block == nil {
 			return nil, curblockHeight - 1, nil
 		}
 
-		// filter txs so that only related ones get passed
-		if *reqSender == protocol.RoleLight {
-			utils.FilterBlockTxs(reqSenderOrgId, block)
-		}
-
 		blockInfo = &commonPb.BlockInfo{
 			Block:     block,
 			RwsetList: nil,
+		}
+
+		// filter txs so that only related ones get passed
+		if *reqSender == protocol.RoleLight {
+			newBlock := utils.FilterBlockTxs(reqSenderOrgId, block)
+			blockInfo = &commonPb.BlockInfo{
+				Block:     newBlock,
+				RwsetList: nil,
+			}
 		}
 	}
 

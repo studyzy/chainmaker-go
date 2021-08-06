@@ -9,6 +9,7 @@ package blockcontract
 
 import (
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/pb-go/store"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -193,7 +194,7 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -242,7 +243,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -289,7 +290,7 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -338,7 +339,7 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -385,7 +386,7 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -433,9 +434,9 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
-		return nil, err
-	}
+	//if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	//	return nil, err
+	//}
 
 	hashes := make([][]byte, 0)
 
@@ -487,7 +488,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -535,7 +536,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
 		return nil, err
 	}
 
@@ -609,6 +610,7 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
+	var block *commonPb.Block
 
 	// check params
 	var param *BlockRuntimeParam
@@ -621,8 +623,14 @@ func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, param
 		return nil, err
 	}
 
-	if err = checkRoleAndFilterBlockTxs(blockWithRWSet.Block, context); err != nil {
+	if block, err = checkRoleAndFilterBlockTxs(blockWithRWSet.Block, context); err != nil {
 		return nil, err
+	}
+
+	blockWithRWSet = &store.BlockWithRWSet{
+		Block:          block,
+		TxRWSets:       blockWithRWSet.TxRWSets,
+		ContractEvents: blockWithRWSet.ContractEvents,
 	}
 
 	blockWithRWSetBytes, err := blockWithRWSet.Marshal()
@@ -854,7 +862,7 @@ func (r *BlockRuntime) getValue(parameters map[string][]byte, key string) (strin
 	return string(value), nil
 }
 
-func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxSimContext) error {
+func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxSimContext) (*commonPb.Block, error) {
 	var (
 		reqSender *protocol.Role
 		err       error
@@ -863,19 +871,21 @@ func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxS
 
 	ac, err = txSimContext.GetAccessControl()
 	if err != nil {
-		return err
+		return block, err
 	}
 
 	reqSender, err = utils.GetRoleOfRequestSender(txSimContext.GetTx(), ac)
 	if err != nil {
-		return err
-	}
-	reqSenderOrgId := txSimContext.GetTx().Sender.Signer.OrgId
-	if *reqSender == protocol.RoleLight {
-		utils.FilterBlockTxs(reqSenderOrgId, block)
+		return block, err
 	}
 
-	return nil
+	reqSenderOrgId := txSimContext.GetTx().Sender.Signer.OrgId
+	if *reqSender == protocol.RoleLight {
+		newBlock := utils.FilterBlockTxs(reqSenderOrgId, block)
+		return newBlock, nil
+	}
+
+	return block, nil
 }
 
 func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext, tx *commonPb.Transaction, transactionInfo *commonPb.TransactionInfo) error {
