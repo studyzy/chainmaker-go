@@ -56,7 +56,7 @@ var (
 	nodeId         string
 	nodeIds        string
 	trustRootOrgId string
-	trustRootPath  string
+	trustRootPaths []string
 	certFilePaths  string
 	certCrlPath    string
 
@@ -65,6 +65,11 @@ var (
 	delegator string
 	validator string
 	epochID   string
+
+	trustMemberOrgId    string
+	trustMemberInfoPath string
+	trustMemberRole     string
+	trustMemberNodeId   string
 )
 
 const (
@@ -99,6 +104,10 @@ const (
 	flagNodeIds                = "node-ids"
 	flagTrustRootOrgId         = "trust-root-org-id"
 	flagTrustRootCrtPath       = "trust-root-path"
+	flagTrustMemberOrgId       = "trust-member-org-id"
+	flagTrustMemberCrtPath     = "trust-member-path"
+	flagTrustMemberRole        = "trust-member-role"
+	flagTrustMemberNodeId      = "trust-member-node-id"
 	flagCertFilePaths          = "cert-file-paths"
 	flagCertCrlPath            = "cert-crl-path"
 	flagAddress                = "address"
@@ -175,7 +184,13 @@ func init() {
 	flags.StringVar(&nodeIds, flagNodeIds, "", "specify node ids(which will be added or update to")
 
 	flags.StringVar(&trustRootOrgId, flagTrustRootOrgId, "", "specify the ca org id")
-	flags.StringVar(&trustRootPath, flagTrustRootCrtPath, "", "specify the ca file path")
+	flags.StringSliceVar(&trustRootPaths, flagTrustRootCrtPath, nil, "specify the ca file path")
+
+	flags.StringVar(&trustMemberOrgId, flagTrustMemberOrgId, "", "specify the ca org id")
+	flags.StringVar(&trustMemberInfoPath, flagTrustMemberCrtPath, "", "specify the ca file path")
+	flags.StringVar(&trustMemberRole, flagTrustMemberRole, "", "specify trust member role")
+	flags.StringVar(&trustMemberNodeId, flagTrustMemberNodeId, "", "specify trust member node id")
+
 	// 证书管理
 	flags.StringVar(&certFilePaths, flagCertFilePaths, "", "specify cert file paths, use ',' to separate")
 	flags.StringVar(&certCrlPath, flagCertCrlPath, "", "specify cert crl path")

@@ -79,7 +79,9 @@ type accessControl struct {
 	localOrg           *organization
 	localSigningMember protocol.SigningMember
 
-	log protocol.Logger
+	//local trust members
+	localTrustMembers []*config.TrustMemberConfig
+	log               protocol.Logger
 }
 
 func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string, chainConfig protocol.ChainConf,
@@ -111,8 +113,9 @@ func newAccessControlWithChainConfigPb(localPrivKeyFile, localPrivKeyPwd, localC
 			Intermediates: bcx509.NewCertPool(),
 			Roots:         bcx509.NewCertPool(),
 		},
-		localOrg: nil,
-		log:      log,
+		localOrg:          nil,
+		localTrustMembers: chainConfig.TrustMembers,
+		log:               log,
 	}
 	err := ac.initTrustRoots(chainConfig.TrustRoots, localOrgId)
 	if err != nil {
@@ -348,10 +351,30 @@ func (ac *accessControl) NewMemberFromCertPem(orgId, certPEM string) (protocol.M
 
 	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
 	if err == nil {
-		orgIdFromCert := cert.Subject.Organization[0]
+
+		for _, v := range ac.localTrustMembers {
+			if v.MemberInfo == certPEM {
+				newMember.role = append(newMember.role, protocol.Role(strings.ToUpper(v.Role)))
+				id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+				if err != nil {
+					id = []byte(cert.Subject.CommonName)
+				}
+				newMember.id = string(id)
+				newMember.cert = cert
+				newMember.pk = cert.PublicKey
+				newMember.identityType = IdentityTypeCert
+				return &newMember, nil
+			}
+		}
+
+		orgIdFromCert := ""
+		if len(cert.Subject.Organization) > 0 {
+			orgIdFromCert = cert.Subject.Organization[0]
+		}
 		if orgIdFromCert != orgId {
 			return nil, fmt.Errorf("setup member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
 		}
+
 		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
 		if err != nil {
 			id = []byte(cert.Subject.CommonName)
@@ -459,6 +482,7 @@ func (ac *accessControl) Watch(chainConfig *config.ChainConfig) error {
 	ac.memberCache.Clear()
 	ac.certCache.Clear()
 
+	ac.localTrustMembers = chainConfig.TrustMembers
 	return nil
 }
 

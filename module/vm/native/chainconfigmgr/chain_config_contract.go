@@ -26,11 +26,13 @@ import (
 )
 
 const (
-	paramNameOrgId     = "org_id"
-	paramNameRoot      = "root"
-	paramNameNodeIds   = "node_ids"
-	paramNameNodeId    = "node_id"
-	paramNameNewNodeId = "new_node_id"
+	paramNameOrgId      = "org_id"
+	paramNameRoot       = "root"
+	paramNameNodeIds    = "node_ids"
+	paramNameNodeId     = "node_id"
+	paramNameNewNodeId  = "new_node_id"
+	paramNameMemberInfo = "member_info"
+	paramNameRole       = "role"
 
 	paramNameTxSchedulerTimeout         = "tx_scheduler_timeout"
 	paramNameTxSchedulerValidateTimeout = "tx_scheduler_validate_timeout"
@@ -83,6 +85,11 @@ func registerChainConfigContractMethods(log protocol.Logger) map[string]common.C
 	methodMap[syscontract.ChainConfigFunction_TRUST_ROOT_ADD.String()] = trustRootsRuntime.TrustRootAdd
 	methodMap[syscontract.ChainConfigFunction_TRUST_ROOT_UPDATE.String()] = trustRootsRuntime.TrustRootUpdate
 	methodMap[syscontract.ChainConfigFunction_TRUST_ROOT_DELETE.String()] = trustRootsRuntime.TrustRootDelete
+
+	// [trust_Member]
+	trustMembersRuntime := &ChainTrustMembersRuntime{log: log}
+	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_ADD.String()] = trustMembersRuntime.TrustMemberAdd
+	methodMap[commonPb.ConfigFunction_TRUST_MEMBER_DELETE.String()] = trustMembersRuntime.TrustMemberDelete
 
 	// [consensus]
 	consensusRuntime := &ChainConsensusRuntime{log: log}
@@ -329,23 +336,23 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 		return nil, err
 	}
 
-	orgId := string(params[paramNameOrgId])
-	rootCaCrt := string(params[paramNameRoot])
-	if utils.IsAnyBlank(orgId, rootCaCrt) {
-		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
+	orgId := params[paramNameOrgId]
+	rootCasStr := params[paramNameRoot]
+	if utils.IsAnyBlank(orgId, rootCasStr) {
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
 
-	chainConfig.TrustRoots = append(chainConfig.TrustRoots, &configPb.TrustRootConfig{
-		OrgId: orgId,
-		Root:  rootCaCrt,
-	})
+	root := strings.Split(rootCasStr, ",")
+
+	trustRoot := &configPb.TrustRootConfig{OrgId: orgId, Root: root}
+	chainConfig.TrustRoots = append(chainConfig.TrustRoots, trustRoot)
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
-		r.log.Errorf("trust root add fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
+		r.log.Errorf("trust root add fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCasStr)
 	} else {
-		r.log.Infof("trust root add success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+		r.log.Infof("trust root add success. orgId[%s] cert[%s]", orgId, rootCasStr)
 	}
 	return result, err
 }
@@ -359,26 +366,26 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 		return nil, err
 	}
 
-	orgId := string(params[paramNameOrgId])
-	rootCaCrt := string(params[paramNameRoot])
-	if utils.IsAnyBlank(orgId, rootCaCrt) {
-		err = fmt.Errorf("update trust root cert failed, require param [%s, %s] but not found", paramNameOrgId, paramNameRoot)
+	orgId := params[paramNameOrgId]
+
+	rootCasStr := params[paramNameRoot]
+	if utils.IsAnyBlank(orgId, rootCasStr) {
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
 
+	root := strings.Split(rootCasStr, ",")
+
 	trustRoots := chainConfig.TrustRoots
-	for i, root := range trustRoots {
-		if orgId == root.OrgId {
-			trustRoots[i] = &configPb.TrustRootConfig{
-				OrgId: orgId,
-				Root:  rootCaCrt,
-			}
+	for i, trustRoot := range trustRoots {
+		if orgId == trustRoot.OrgId {
+			trustRoots[i] = &configPb.TrustRootConfig{OrgId: orgId, Root: root}
 			result, err = setChainConfig(txSimContext, chainConfig)
 			if err != nil {
-				r.log.Errorf("trust root update fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCaCrt)
+				r.log.Errorf("trust root update fail, %s, orgId[%s] cert[%s]", err.Error(), orgId, rootCasStr)
 			} else {
-				r.log.Infof("trust root update success. orgId[%s] cert[%s]", orgId, rootCaCrt)
+				r.log.Infof("trust root update success. orgId[%s] cert[%s]", orgId, rootCasStr)
 			}
 			return result, err
 		}
@@ -434,6 +441,82 @@ func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimCont
 		r.log.Errorf("trust root delete fail, %s, orgId[%s] ", err.Error(), orgId)
 	} else {
 		r.log.Infof("trust root delete success. orgId[%s]", orgId)
+	}
+	return result, err
+}
+
+// [trust_root]
+type ChainTrustMembersRuntime struct {
+	log *logger.CMLogger
+}
+
+func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+	// [start]
+	chainConfig, err := getChainConfig(txSimContext, params)
+	if err != nil {
+		r.log.Error(err)
+		return nil, err
+	}
+
+	orgId := params[paramNameOrgId]
+	memberInfo := params[paramNameMemberInfo]
+	role := params[paramNameRole]
+	nodeId := params[paramNameNodeId]
+	if utils.IsAnyBlank(memberInfo, orgId, role, nodeId) {
+		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found", ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
+		r.log.Error(err)
+		return nil, err
+	}
+
+	trustMember := &configPb.TrustMemberConfig{MemberInfo: memberInfo, OrgId: orgId, Role: role, NodeId: nodeId}
+	chainConfig.TrustMembers = append(chainConfig.TrustMembers, trustMember)
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("trust member add fail, %s, orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", err.Error(), orgId, memberInfo, role, nodeId)
+	} else {
+		r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", orgId, memberInfo, role, nodeId)
+	}
+	return result, err
+}
+
+func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string]string) (result []byte, err error) {
+	// [start]
+	chainConfig, err := getChainConfig(txSimContext, params)
+	if err != nil {
+		r.log.Error(err)
+		return nil, err
+	}
+
+	memberInfo := params[paramNameMemberInfo]
+	if utils.IsAnyBlank(memberInfo) {
+		err = fmt.Errorf("delete trust member failed, require param [%s], but not found", paramNameNodeId)
+		r.log.Error(err)
+		return nil, err
+	}
+
+	index := -1
+	trustMembers := chainConfig.TrustMembers
+	for i, trustMember := range trustMembers {
+		if memberInfo == trustMember.MemberInfo {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		err = fmt.Errorf("delete trust member failed, param [%s] not found from TrustMembers", memberInfo)
+		r.log.Error(err)
+		return nil, err
+	}
+
+	trustMembers = append(trustMembers[:index], trustMembers[index+1:]...)
+
+	chainConfig.TrustMembers = trustMembers
+	result, err = setChainConfig(txSimContext, chainConfig)
+	if err != nil {
+		r.log.Errorf("trust member delete fail, %s, nodeId[%s] ", err.Error(), memberInfo)
+	} else {
+		r.log.Infof("trust member delete success. nodeId[%s]", memberInfo)
 	}
 	return result, err
 }
