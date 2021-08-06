@@ -17,10 +17,10 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker/common/crypto/hash"
-
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker/common/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
 	storage "chainmaker.org/chainmaker/pb-go/store"
@@ -413,10 +413,14 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 		return nil, err
 	}
 
-	hashes := make([][]byte, 0)
+	hashes := make([][]byte, len(block.Txs))
+	for i, tx := range block.Txs {
+		txHash, err := utils.CalcTxHash(SHA256, tx)
+		if err != nil {
+			return nil, err
+		}
 
-	for _, tx := range block.Txs {
-		hashes = append(hashes, []byte(tx.Payload.TxId))
+		hashes[i] = txHash
 	}
 
 	merkleTree, err := hash.BuildMerkleTree(SHA256, hashes)
