@@ -18,15 +18,15 @@ import (
 type cacheKey []byte
 
 var (
-	paramCrossID      = syscontract.CrossParamKey_crossID.String()
-	paramExecData     = syscontract.CrossParamKey_execData.String()
-	paramRollbackData = syscontract.CrossParamKey_rollbackData.String()
-	paramProofKey     = syscontract.CrossParamKey_proofKey.String()
-	paramTxProof      = syscontract.CrossParamKey_txProof.String()
+	paramCrossID      = "crossID"
+	paramExecData     = "execData"
+	paramRollbackData = "rollbackData"
+	paramProofKey     = "proofKey"
+	paramTxProof      = "txProof"
 
-	paramContract   = syscontract.CrossParamKey_contract.String()
-	paramMethod     = syscontract.CrossParamKey_method.String()
-	paramCallParams = syscontract.CrossParamKey_params.String()
+	paramContract   = "contract"
+	paramMethod     = "method"
+	paramCallParams = "params"
 )
 
 type CrossTransactionContract struct {
@@ -198,6 +198,7 @@ func (r *CrossTransactionRuntime) ReadProof(ctx protocol.TxSimContext, params ma
 func (r *CrossTransactionRuntime) ReadState(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	err := checkParams(params, paramCrossID)
 	if err != nil {
+		r.log.Errorf("CrossTransactionRuntime.ReadState checkParams param error: [%v]", err)
 		return nil, err
 	}
 	//获取参数crossID
@@ -214,6 +215,18 @@ func (r *CrossTransactionRuntime) ReadState(ctx protocol.TxSimContext, params ma
 
 //仲裁
 func (r *CrossTransactionRuntime) Arbitrate(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	err := checkParams(params, paramCrossID)
+	if err != nil {
+		r.log.Errorf("CrossTransactionRuntime.Arbitrate checkParams param error: [%v]", err)
+		return nil, err
+	}
+	crossID := params[paramCrossID]
+	state := r.cache.GetCrossState(ctx, crossID)
+	switch state {
+	case syscontract.CrossTxState_ExecOK: //执行成功回滚
+	default: //忽略处理
+		return nil, nil
+	}
 	return nil, nil
 }
 
