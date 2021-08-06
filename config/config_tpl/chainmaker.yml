@@ -110,7 +110,7 @@ storage:
   blockdb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/{org_id}/blocks
+      store_path: ../data/{org_id}/block
   statedb_config:
     provider: leveldb
     leveldb_config:

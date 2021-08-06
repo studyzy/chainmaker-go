@@ -15,12 +15,12 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.4.4
+	github.com/jfcg/sorty v1.0.15
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/go-funk v0.8.0
-	github.com/tidwall/wal v0.1.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/raft/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/server/v3 v3.5.0-beta.4

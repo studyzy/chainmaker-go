@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/common/wal"
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker-go/pb/protogo/common"
 	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
@@ -28,7 +29,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"github.com/tidwall/wal"
 	"golang.org/x/sync/semaphore"
 )
 

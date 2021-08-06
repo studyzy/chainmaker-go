@@ -15,11 +15,11 @@ import (
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker-go/common/wal"
 	"chainmaker.org/chainmaker-go/pb/protogo/common"
 	"chainmaker.org/chainmaker-go/pb/protogo/config"
 	consensuspb "chainmaker.org/chainmaker-go/pb/protogo/consensus"
 	netpb "chainmaker.org/chainmaker-go/pb/protogo/net"
-	"github.com/tidwall/wal"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 
