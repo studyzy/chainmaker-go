@@ -79,16 +79,17 @@ func getGovernanceContractFromChainStore(store protocol.BlockchainStore) (*conse
 		log.Errorf("ReadObject.Get empty!contractName=%v", contractName)
 		return nil, fmt.Errorf("bytes is empty")
 	}
-	var GovernanceContract consensusPb.GovernanceContract
-	err = proto.Unmarshal(bz, &GovernanceContract)
+	var governanceContract consensusPb.GovernanceContract
+	err = proto.Unmarshal(bz, &governanceContract)
 	if err != nil {
 		log.Errorf(UnmarshalErrFmt, err)
 		return nil, err
 	}
 
-	return &GovernanceContract, nil
+	return &governanceContract, nil
 }
-func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (update bool) {
+func updateGovContractFromConfig(chainConfig *configPb.ChainConfig,
+	governanceContract *consensusPb.GovernanceContract) (update bool) {
 	isChg := false
 	conConf := chainConfig.Consensus
 
@@ -122,21 +123,24 @@ func updateGovContractFromConfig(chainConfig *configPb.ChainConfig, GovernanceCo
 			newCachedLen = cachedLen
 		}
 	}
-	if newCachedLen != 0 && GovernanceContract.CachedLen != newCachedLen {
-		GovernanceContract.CachedLen = newCachedLen
+	if newCachedLen != 0 && governanceContract.CachedLen != newCachedLen {
+		governanceContract.CachedLen = newCachedLen
 		isChg = true
 	}
-	if newRoundTimeoutMill != 0 && GovernanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
-		GovernanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
+	if newRoundTimeoutMill != 0 && governanceContract.HotstuffRoundTimeoutMill != newRoundTimeoutMill {
+		governanceContract.HotstuffRoundTimeoutMill = newRoundTimeoutMill
 		isChg = true
 	}
-	if newRoundTimeoutIntervalMill != 0 && GovernanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
-		GovernanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
+	if newRoundTimeoutIntervalMill != 0 &&
+		governanceContract.HotstuffRoundTimeoutIntervalMill != newRoundTimeoutIntervalMill {
+		governanceContract.HotstuffRoundTimeoutIntervalMill = newRoundTimeoutIntervalMill
 		isChg = true
 	}
 	return isChg
 }
-func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
+
+func checkChainConfig(chainConfig *configPb.ChainConfig,
+	governanceContract *consensusPb.GovernanceContract) (bool, error) {
 	var err error
 	nodes := chainConfig.Consensus.Nodes
 	tempMap := map[string]int{}
@@ -153,20 +157,21 @@ func checkChainConfig(chainConfig *configPb.ChainConfig, GovernanceContract *con
 	}
 
 	conConf := chainConfig.Consensus
-	newBlockNumPerEpoch := int64(ConstBlockNumPerEpoch)
 	for _, oneConf := range conConf.ExtConfig {
 		switch oneConf.Key {
 		case CachedLen:
-			cachedLen, err := strconv.ParseInt(string(oneConf.Value), 10, 64)
+			var cachedLen int64
+			cachedLen, err = strconv.ParseInt(string(oneConf.Value), 10, 64)
 			if err != nil || cachedLen < 0 {
 				return false, fmt.Errorf("set CachedLen err")
 			}
 		case BlockNumPerEpoch:
+			var newBlockNumPerEpoch int64
 			newBlockNumPerEpoch, err = strconv.ParseInt(string(oneConf.Value), 10, 64)
 			if err != nil {
 				return false, fmt.Errorf("set BlockNumPerEpoch err: %s", err)
 			}
-			if GovernanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newBlockNumPerEpoch > 0 {
+			if governanceContract.Type == consensusPb.ConsensusType_HOTSTUFF && newBlockNumPerEpoch > 0 {
 				return false, fmt.Errorf("set BlockNumPerEpoch err! HOTSTUFF should set <= 0, actual: %d", newBlockNumPerEpoch)
 			}
 		case RoundTimeoutMill:
@@ -223,8 +228,8 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 	}
 	sort.Sort(indexedGovernanceMember(members))
 
-	// 2. create GovernanceContract
-	GovernanceContract := &consensusPb.GovernanceContract{
+	// 2. create governanceContract
+	governanceContract := &consensusPb.GovernanceContract{
 		EpochId:           0,
 		Type:              consensusType,
 		CurMaxIndex:       int64(index),
@@ -242,25 +247,25 @@ func getGovernanceContractFromConfig(chainConfig *configPb.ChainConfig) (*consen
 		NextValidators:    nil,
 		ConfigSequence:    chainConfig.Sequence,
 	}
-	updateGovContractFromConfig(chainConfig, GovernanceContract)
+	updateGovContractFromConfig(chainConfig, governanceContract)
 
-	if GovernanceContract.N > GovernanceContract.ValidatorNum {
-		GovernanceContract.N = GovernanceContract.ValidatorNum
+	if governanceContract.N > governanceContract.ValidatorNum {
+		governanceContract.N = governanceContract.ValidatorNum
 	}
-	GovernanceContract.MinQuorumForQc = (2*GovernanceContract.N + 1) / 3
-	if GovernanceContract.MinQuorumForQc < ConstMinQuorumForQc {
-		log.Errorf("Set minQuorumForQc err!MinQuorumForQc=%v", GovernanceContract.MinQuorumForQc)
-		GovernanceContract.MinQuorumForQc = ConstMinQuorumForQc
+	governanceContract.MinQuorumForQc = (2*governanceContract.N + 1) / 3
+	if governanceContract.MinQuorumForQc < ConstMinQuorumForQc {
+		log.Errorf("Set minQuorumForQc err!MinQuorumForQc=%v", governanceContract.MinQuorumForQc)
+		governanceContract.MinQuorumForQc = ConstMinQuorumForQc
 	}
 
-	bytesSeed, _ := proto.Marshal(GovernanceContract)
-	validators, err := createValidators(GovernanceContract, bytesSeed)
+	bytesSeed, _ := proto.Marshal(governanceContract)
+	validators, err := createValidators(governanceContract, bytesSeed)
 	if err != nil {
 		log.Errorf(CreateValidatorsErrFmt, err)
 		return nil, err
 	}
-	GovernanceContract.Validators = validators
-	return GovernanceContract, nil
+	governanceContract.Validators = validators
+	return governanceContract, nil
 }
 
 func getChainConfigFromChainStore(store protocol.BlockchainStore) (*configPb.ChainConfig, error) {
@@ -282,23 +287,23 @@ func getChainConfigFromChainStore(store protocol.BlockchainStore) (*configPb.Cha
 
 //Josephus problem
 //Time Complexity:chooseM*seed
-func getRandomList(N, chooseM int64, seed int64) []int64 {
+func getRandomList(n, chooseM int64, seed int64) []int64 {
 	var (
 		result       []int64
-		peers        = make([]int64, N)
+		peers        = make([]int64, n)
 		i, j, curNum int64
 	)
-	//if N less M,choose all
-	if N <= chooseM {
-		for i = 0; i < N; i++ {
+	//if n less M,choose all
+	if n <= chooseM {
+		for i = 0; i < n; i++ {
 			result = append(result, i)
 		}
 		return result
 	}
 
-	//from seed%N
-	for i = seed % N; curNum < chooseM; i++ {
-		if i >= N {
+	//from seed%n
+	for i = seed % n; curNum < chooseM; i++ {
+		if i >= n {
 			i = 0
 		}
 		if peers[i] == 0 {
@@ -315,72 +320,73 @@ func getRandomList(N, chooseM int64, seed int64) []int64 {
 	return result
 }
 
-func createValidators(GovernanceContract *consensusPb.GovernanceContract, seedBytes []byte) ([]*consensusPb.GovernanceMember, error) {
-	var membersNum = uint64(len(GovernanceContract.Members))
-	if membersNum <= GovernanceContract.ValidatorNum {
+func createValidators(governanceContract *consensusPb.GovernanceContract,
+	seedBytes []byte) ([]*consensusPb.GovernanceMember, error) {
+	var membersNum = uint64(len(governanceContract.Members))
+	if membersNum <= governanceContract.ValidatorNum {
 		//if membersNum less ,choose all
-		validators := GovernanceContract.Members
+		validators := governanceContract.Members
 		return validators, nil
-	} else {
-		for len(seedBytes) < 40 {
-			seedBytes = append(seedBytes, 0)
-		}
-
-		var b [8]byte
-		for i := 0; i < 8; i++ {
-			for j := 0; j < 4; j++ {
-				b[i] = seedBytes[i] ^ seedBytes[i+8*j]
-			}
-		}
-		var members []*consensusPb.GovernanceMember
-
-		seed := uint64(b[7]) | uint64(b[6])<<8 | uint64(b[5])<<16 | uint64(b[4])<<24 | uint64(b[3])<<32 | uint64(b[2])<<40 | uint64(b[1])<<48 | uint64(b[0])<<56
-		seed = seed % uint64(membersNum)
-
-		//use Josephus problem
-		randomList := getRandomList(int64(membersNum), int64(GovernanceContract.ValidatorNum), int64(seed))
-		log.Debugf("createValidators randomList=%v", randomList)
-		for _, index := range randomList {
-			member := GovernanceContract.Members[index]
-			members = append(members, member)
-		}
-		sort.Sort(indexedGovernanceMember(members))
-		return members, nil
 	}
+	for len(seedBytes) < 40 {
+		seedBytes = append(seedBytes, 0)
+	}
+
+	var b [8]byte
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 4; j++ {
+			b[i] = seedBytes[i] ^ seedBytes[i+8*j]
+		}
+	}
+	var members []*consensusPb.GovernanceMember
+
+	seed := uint64(b[7]) | uint64(b[6])<<8 | uint64(b[5])<<16 | uint64(b[4])<<24 |
+		uint64(b[3])<<32 | uint64(b[2])<<40 | uint64(b[1])<<48 | uint64(b[0])<<56
+	seed = seed % uint64(membersNum)
+
+	//use Josephus problem
+	randomList := getRandomList(int64(membersNum), int64(governanceContract.ValidatorNum), int64(seed))
+	log.Debugf("createValidators randomList=%v", randomList)
+	for _, index := range randomList {
+		member := governanceContract.Members[index]
+		members = append(members, member)
+	}
+	sort.Sort(indexedGovernanceMember(members))
+	return members, nil
 }
 
-func TryCreateNextValidators(block *commonPb.Block, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
-	if GovernanceContract.BlockNumPerEpoch <= 0 {
+func TryCreateNextValidators(block *commonPb.Block, governanceContract *consensusPb.GovernanceContract) (bool, error) {
+	if governanceContract.BlockNumPerEpoch <= 0 {
 		return false, nil
 	}
 
 	height := block.GetHeader().GetBlockHeight()
-	if uint64(height)%GovernanceContract.BlockNumPerEpoch == 0 {
+	if uint64(height)%governanceContract.BlockNumPerEpoch == 0 {
 		//use PreBlock hash
-		BytesSeed := block.Header.PreBlockHash
-		validators, err := createValidators(GovernanceContract, BytesSeed)
+		bytesSeed := block.Header.PreBlockHash
+		validators, err := createValidators(governanceContract, bytesSeed)
 		if err != nil {
 			log.Errorf(CreateValidatorsErrFmt, err)
 			return false, err
 		}
-		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
-		GovernanceContract.NextValidators = validators
-		GovernanceContract.NextSwitchHeight = uint64(height) + GovernanceContract.TransitBlock
-		log.Debugf("create NextValidators. curHeight=%v,switchHeight=%v", height, GovernanceContract.NextSwitchHeight)
+		governanceContract.LastMinQuorumForQc = governanceContract.MinQuorumForQc
+		governanceContract.NextValidators = validators
+		governanceContract.NextSwitchHeight = uint64(height) + governanceContract.TransitBlock
+		log.Debugf("create NextValidators. curHeight=%v,switchHeight=%v", height, governanceContract.NextSwitchHeight)
 		return true, nil
 	}
 	return false, nil
 }
 
 //try to check switch epoch
-func TrySwitchNextValidator(block *commonPb.Block, GovernanceContract *consensusPb.GovernanceContract) bool {
-	if GovernanceContract.NextValidators == nil {
+func TrySwitchNextValidator(block *commonPb.Block, governanceContract *consensusPb.GovernanceContract) bool {
+	if governanceContract.NextValidators == nil {
 		return false
 	}
 	height := block.GetHeader().GetBlockHeight()
-	if GovernanceContract.NextSwitchHeight == uint64(height) {
-		GovernanceContract.Validators = GovernanceContract.NextValidators
-		GovernanceContract.NextValidators = nil
+	if governanceContract.NextSwitchHeight == uint64(height) {
+		governanceContract.Validators = governanceContract.NextValidators
+		governanceContract.NextValidators = nil
 		return true
 	}
 	return false
@@ -414,7 +420,8 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 	)
 	// 2. check if chain config change
 	if utils.IsConfBlock(block) {
-		chainConfig, err := getChainConfigFromBlock(block, proposalCache)
+		var chainConfig *configPb.ChainConfig
+		chainConfig, err = getChainConfigFromBlock(block, proposalCache)
 		if err != nil {
 			log.Errorf("getChainConfigFromBlock err!err=%v", err)
 		}
@@ -431,7 +438,8 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 	// 3. if chain config no change,check if epoch switch
 	if !configChg {
 		log.Debugf("no chain config change, will check epoch switch")
-		if isCreate, err := TryCreateNextValidators(block, governanceContract); err != nil {
+		var isCreate bool
+		if isCreate, err = TryCreateNextValidators(block, governanceContract); err != nil {
 			log.Errorf("TryCreateNextValidators err!err=%v", err)
 			return nil, err
 		} else if isCreate {
@@ -453,7 +461,8 @@ func CheckAndCreateGovernmentArgs(block *commonPb.Block, store protocol.Blockcha
 	return txRWSet, err
 }
 
-func getChainConfigFromBlock(block *commonPb.Block, proposalCache protocol.ProposalCache) (*configPb.ChainConfig, error) {
+func getChainConfigFromBlock(block *commonPb.Block,
+	proposalCache protocol.ProposalCache) (*configPb.ChainConfig, error) {
 	if !utils.IsConfBlock(block) {
 		log.Errorf("block is not conf block")
 		return nil, fmt.Errorf("block is not conf block")
@@ -489,15 +498,16 @@ func getChainConfigFromBlock(block *commonPb.Block, proposalCache protocol.Propo
 	return &chainConfig, nil
 }
 
-func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceContract *consensusPb.GovernanceContract) (bool, error) {
+func updateGovContractByConfig(chainConfig *configPb.ChainConfig,
+	governanceContract *consensusPb.GovernanceContract) (bool, error) {
 	log.Debugf("updateGovContractByConfig start")
-	if GovernanceContract.ConfigSequence == chainConfig.Sequence {
+	if governanceContract.ConfigSequence == chainConfig.Sequence {
 		return false, nil
 	}
 
 	isChange := false
-	oldMembersMap := make(map[string]*consensusPb.GovernanceMember, len(GovernanceContract.Members))
-	for _, member := range GovernanceContract.Members {
+	oldMembersMap := make(map[string]*consensusPb.GovernanceMember, len(governanceContract.Members))
+	for _, member := range governanceContract.Members {
 		oldMembersMap[member.NodeId] = member
 	}
 
@@ -505,7 +515,7 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 		nodeIds []string
 		tempMap = make(map[string]int)
 		nodes   = chainConfig.Consensus.Nodes
-		index   = GovernanceContract.CurMaxIndex
+		index   = governanceContract.CurMaxIndex
 		members []*consensusPb.GovernanceMember
 	)
 	// 1. Initializes the members who have the right to participate in the consensus
@@ -534,14 +544,14 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 	}
 
 	// 2. if change
-	isChange = updateGovContractFromConfig(chainConfig, GovernanceContract)
-	if index != GovernanceContract.CurMaxIndex || len(members) != len(GovernanceContract.Members) || isChange {
+	isChange = updateGovContractFromConfig(chainConfig, governanceContract)
+	if index != governanceContract.CurMaxIndex || len(members) != len(governanceContract.Members) || isChange {
 		sort.Sort(indexedGovernanceMember(members))
 		isChange = true
 		n := len(members)
 		//members == validators
-		//if n > int(GovernanceContract.ValidatorNum) {
-		//	n = int(GovernanceContract.ValidatorNum)
+		//if n > int(governanceContract.ValidatorNum) {
+		//	n = int(governanceContract.ValidatorNum)
 		//}
 
 		minQuorumForQc := (2*n + 1) / 3
@@ -550,31 +560,32 @@ func updateGovContractByConfig(chainConfig *configPb.ChainConfig, GovernanceCont
 			minQuorumForQc = ConstMinQuorumForQc
 		}
 
-		GovernanceContract.LastMinQuorumForQc = GovernanceContract.MinQuorumForQc
-		GovernanceContract.CurMaxIndex = index
-		GovernanceContract.N = uint64(n)
-		GovernanceContract.MinQuorumForQc = uint64(minQuorumForQc)
-		GovernanceContract.Members = members
-		GovernanceContract.NextValidators = nil
-		GovernanceContract.ValidatorNum = uint64(n)
+		governanceContract.LastMinQuorumForQc = governanceContract.MinQuorumForQc
+		governanceContract.CurMaxIndex = index
+		governanceContract.N = uint64(n)
+		governanceContract.MinQuorumForQc = uint64(minQuorumForQc)
+		governanceContract.Members = members
+		governanceContract.NextValidators = nil
+		governanceContract.ValidatorNum = uint64(n)
 
-		bytesSeed, _ := proto.Marshal(GovernanceContract)
-		validators, err := createValidators(GovernanceContract, bytesSeed)
+		bytesSeed, _ := proto.Marshal(governanceContract)
+		validators, err := createValidators(governanceContract, bytesSeed)
 		if err != nil {
 			log.Errorf(CreateValidatorsErrFmt, err)
 			return false, err
 		}
-		GovernanceContract.Validators = validators
+		governanceContract.Validators = validators
 	}
-	GovernanceContract.ConfigSequence = chainConfig.Sequence
+	governanceContract.ConfigSequence = chainConfig.Sequence
 	log.Debugf("updateGovContractByConfig end.isChange=%v", isChange)
 	return isChange, nil
 }
 
-func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceContract, oldBytes []byte) (*commonPb.TxRWSet, error) {
+func getGovernanceContractTxRWSet(governanceContract *consensusPb.GovernanceContract,
+	oldBytes []byte) (*commonPb.TxRWSet, error) {
 	txRWSet := &commonPb.TxRWSet{
 		TxId:     systemPb.SystemContract_GOVERNANCE.String(),
-		TxReads:  make([]*commonPb.TxRead, 0, 0),
+		TxReads:  make([]*commonPb.TxRead, 0),
 		TxWrites: make([]*commonPb.TxWrite, 0, 1),
 	}
 
@@ -585,12 +596,12 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	)
 	log.Debugf("begin getGovernanceContractTxRWSet ...")
 	// 1. check for changes
-	if pbccPayload, err = proto.Marshal(GovernanceContract); err != nil {
+	if pbccPayload, err = proto.Marshal(governanceContract); err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("proto marshal pbcc failed, %s", err.Error())
 	}
 	if bytes.Equal(oldBytes, pbccPayload) {
-		log.Debugf("GovernanceContract no change")
+		log.Debugf("governanceContract no change")
 		return txRWSet, nil
 	}
 
@@ -599,7 +610,7 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	if err = proto.Unmarshal(oldBytes, &oldGovernanceContract); err != nil {
 		return nil, err
 	}
-	log.Debugf("GovernanceContract change older contract:[%s]", oldGovernanceContract.String())
+	log.Debugf("governanceContract change older contract:[%s]", oldGovernanceContract.String())
 	txWrite := &commonPb.TxWrite{
 		Key:          []byte(contractName),
 		Value:        pbccPayload,
@@ -609,11 +620,12 @@ func getGovernanceContractTxRWSet(GovernanceContract *consensusPb.GovernanceCont
 	return txRWSet, nil
 }
 
-func GetProposer(level uint64, NodeProposeRound uint64, validators []*consensusPb.GovernanceMember) (*consensusPb.GovernanceMember, error) {
-	if validators == nil || len(validators) == 0 {
+func GetProposer(level uint64, nodeProposeRound uint64,
+	validators []*consensusPb.GovernanceMember) (*consensusPb.GovernanceMember, error) {
+	if len(validators) == 0 {
 		return nil, fmt.Errorf("validators is nil")
 	}
-	index := (level / NodeProposeRound) % uint64(len(validators))
+	index := (level / nodeProposeRound) % uint64(len(validators))
 	newMember := &consensusPb.GovernanceMember{
 		Index:  validators[index].Index,
 		NodeId: validators[index].NodeId,

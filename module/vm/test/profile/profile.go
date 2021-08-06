@@ -57,8 +57,6 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	return
 }
 
 func startPerf() {
@@ -138,7 +136,10 @@ func startPerf() {
 	}
 	if fileInfo.Size() > 4096 {
 		f.Close()
-		os.Rename(reportFilePath, reportFilePath+"-"+time.Now().Format(time.RFC3339))
+		if err = os.Rename(reportFilePath, reportFilePath+"-"+time.Now().Format(time.RFC3339)); err != nil {
+			fmt.Println("rename file again err", err)
+			return
+		}
 		f, err = os.OpenFile(reportFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Println("open report file again err", err)
@@ -155,7 +156,8 @@ func startPerf() {
 			now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
 			wasmFilePath, finishNum*1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)
 		reportStr = fmt.Sprintf("<h1>Gasm VM Benchmark Test</h1>\n<h3>Time: %d-%02d-%02d %02d:%02d:%02d</h3>\n"+
-			"<h3>Contract: %s</h3>\n<h3> Tps: %d</h3>\n<h3>Total call times: %d</h3>\n<h3>Go routines(concurrent instances): %d</h3>\n"+
+			"<h3>Contract: %s</h3>\n<h3> Tps: %d</h3>\n<h3>Total call times: %d</h3>\n<h3>Go "+
+			"routines(concurrent instances): %d</h3>\n"+
 			"<h3>Spend time: %dms</h3>\n<h3> Used gas: %d</h3>\n",
 			now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
 			wasmFilePath, finishNum*1000/(end-start), finishNum, vmGoroutineNum, end-start, gas)

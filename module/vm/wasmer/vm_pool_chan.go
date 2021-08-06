@@ -7,25 +7,33 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker/common/random/uuid"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"fmt"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 const (
-	defaultRefreshTime    = time.Hour * 12        // refresh vmPool time, use for grow or shrink
-	defaultMaxSize        = 100                   // the max pool size for every contract
-	defaultMinSize        = 10                    // the min pool size
-	defaultChangeSize     = 10                    // grow pool size
-	defaultDelayTolerance = time.Millisecond * 10 // if get instance avg time greater than this value, should grow pool
-	defaultApplyThreshold = 100                   // if apply times greater than this value, should grow pool
-	defaultDiscardCount   = 10                    // if wasmer instance invoke error more than N times, should close and discard this instance
+	// refresh vmPool time, use for grow or shrink
+	defaultRefreshTime = time.Hour * 12
+	// the max pool size for every contract
+	defaultMaxSize = 100
+	// the min pool size
+	defaultMinSize = 10
+	// grow pool size
+	defaultChangeSize = 10
+	// if get instance avg time greater than this value, should grow pool
+	defaultDelayTolerance = time.Millisecond * 10
+	// if apply times greater than this value, should grow pool
+	defaultApplyThreshold = 100
+	// if wasmer instance invoke error more than N times, should close and discard this instance
+	defaultDiscardCount = 10
 )
 
 // VmPoolManager manages vm pools for all contracts
@@ -101,7 +109,7 @@ func (m *VmPoolManager) NewRuntimeInstance(contractId *commonPb.Contract, byteCo
 		return nil, err
 	}
 
-	if byteCode == nil || len(byteCode) == 0 {
+	if len(byteCode) == 0 {
 		err = fmt.Errorf("[%s_%s], byte code is nil", contractId.Name, contractId.Version)
 		m.log.Warn(err)
 		return nil, err
@@ -188,7 +196,9 @@ func (p *vmPool) NewInstance() (*wrappedInstance, error) {
 // CloseInstance close a wasmer instance directly, for cross contract call
 func (p *vmPool) CloseInstance(instance *wrappedInstance) {
 	if instance != nil {
-		CallDeallocate(instance.wasmInstance)
+		if err := CallDeallocate(instance.wasmInstance); err != nil {
+			p.log.Errorf("CallDeallocate(...) error: %v", err)
+		}
 		instance.wasmInstance.Close()
 		instance = nil
 	}
@@ -259,17 +269,21 @@ func (p *vmPool) startRefreshingLoop() {
 			if p.shouldGrow() {
 				p.grow(defaultChangeSize)
 				p.applyGrowCount = 0
-				p.log.Infof("[%s] vm pool grows by %d, the current size is %d", key, defaultChangeSize, p.currentSize)
+				p.log.Infof("[%s] vm pool grows by %d, the current size is %d",
+					key, defaultChangeSize, p.currentSize)
 			}
 		case <-refreshTimer.C:
-			p.log.Debugf("[%s] vm pool refresh timer expires. current size is %d, delay is %dms", key, p.currentSize, p.getAverageDelay())
+			p.log.Debugf("[%s] vm pool refresh timer expires. current size is %d, delay is %dms",
+				key, p.currentSize, p.getAverageDelay())
 			if p.shouldGrow() {
 				p.grow(defaultChangeSize)
 				p.applyGrowCount = 0
-				p.log.Infof("[%s] vm pool grows by %d, the current size is %d", key, defaultChangeSize, p.currentSize)
+				p.log.Infof("[%s] vm pool grows by %d, the current size is %d",
+					key, defaultChangeSize, p.currentSize)
 			} else if p.shouldShrink() {
 				p.shrink(defaultChangeSize)
-				p.log.Infof("[%s] vm pool shrinks by %d, the current size is %d", key, defaultChangeSize, p.currentSize)
+				p.log.Infof("[%s] vm pool shrinks by %d, the current size is %d",
+					key, defaultChangeSize, p.currentSize)
 			}
 
 			// other go routine may modify useCount & totalDelay
@@ -281,7 +295,9 @@ func (p *vmPool) startRefreshingLoop() {
 			refreshTimer.Stop()
 			for p.currentSize > 0 {
 				instance := <-p.instances
-				CallDeallocate(instance.wasmInstance)
+				if err := CallDeallocate(instance.wasmInstance); err != nil {
+					p.log.Errorf("CallDeallocate(...) error: %v", err)
+				}
 				instance.wasmInstance.Close()
 				p.currentSize--
 			}
@@ -290,7 +306,9 @@ func (p *vmPool) startRefreshingLoop() {
 		case <-p.resetC:
 			for p.currentSize > 0 {
 				instance := <-p.instances
-				CallDeallocate(instance.wasmInstance)
+				if err := CallDeallocate(instance.wasmInstance); err != nil {
+					p.log.Errorf("CallDeallocate(...) error: %v", err)
+				}
 				instance.wasmInstance.Close()
 				p.currentSize--
 			}
@@ -356,7 +374,8 @@ func (p *vmPool) grow(count int32) {
 // 1. current size > min size, AND
 // 2. average delay <= delay tolerance (int operation here is safe)
 func (p *vmPool) shouldShrink() bool {
-	if p.currentSize > defaultMinSize && p.getAverageDelay() <= int32(defaultDelayTolerance) && p.currentSize > defaultChangeSize {
+	if p.currentSize > defaultMinSize && p.getAverageDelay() <=
+		int32(defaultDelayTolerance) && p.currentSize > defaultChangeSize {
 		return true
 	}
 	return false
@@ -365,7 +384,9 @@ func (p *vmPool) shouldShrink() bool {
 func (p *vmPool) shrink(count int32) {
 	for i := int32(0); i < count; i++ {
 		instance := <-p.instances
-		CallDeallocate(instance.wasmInstance)
+		if err := CallDeallocate(instance.wasmInstance); err != nil {
+			p.log.Errorf("CallDeallocate(...) error: %v", err)
+		}
 		instance.wasmInstance.Close()
 		instance = nil
 		p.currentSize--
@@ -375,13 +396,10 @@ func (p *vmPool) shrink(count int32) {
 // shouldDiscard discard instance when
 // error count times more than defaultDiscardCount
 func (p *vmPool) shouldDiscard(instance *wrappedInstance) bool {
-	if instance.errCount > defaultDiscardCount {
-		return true
-	}
-	return false
+	return instance.errCount > defaultDiscardCount
 }
 
-func (p *vmPool) newInstanceFromByteCode() (*wrappedInstance, error) {
+func (p *vmPool) NewInstanceFromByteCode() (*wrappedInstance, error) {
 	vb := GetVmBridgeManager()
 	wasmInstance, err := vb.NewWasmInstance(p.byteCode)
 	if err != nil {
@@ -439,7 +457,7 @@ func (p *vmPool) close() {
 }
 
 // close the contract vm pool
-func (m *VmPoolManager) closeAVmPool(contractId *commonPb.Contract) {
+func (m *VmPoolManager) CloseAVmPool(contractId *commonPb.Contract) {
 	key := contractId.Name + "_" + contractId.Version
 	pool, ok := m.instanceMap[key]
 	if ok {
@@ -449,7 +467,7 @@ func (m *VmPoolManager) closeAVmPool(contractId *commonPb.Contract) {
 }
 
 // close all contract vm pool
-func (m *VmPoolManager) closeAllVmPool() {
+func (m *VmPoolManager) CloseAllVmPool() {
 	for key, pool := range m.instanceMap {
 		m.log.Infof("close pool %s", key)
 		pool.close()
@@ -458,7 +476,7 @@ func (m *VmPoolManager) closeAllVmPool() {
 
 // FIXME: 确认函数名是否多了字符A？@taifu
 // reset a contract vm pool install
-func (m *VmPoolManager) resetAVmPool(contractId *commonPb.Contract) {
+func (m *VmPoolManager) ResetAVmPool(contractId *commonPb.Contract) {
 
 	key := contractId.Name + "_" + contractId.Version
 	pool, ok := m.instanceMap[key]

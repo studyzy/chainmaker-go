@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package core
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -25,6 +26,8 @@ type LogScanner interface {
 
 const (
 	defaultBufferSize = 100
+	PANIC             = "panic"
+	format            = `^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ [0-9][0-9]\:[0-9][0-9]\:[0-9][0-9]\.[0-9][0-9][0-9]`
 )
 
 type logScannerImpl struct {
@@ -68,7 +71,7 @@ func (l *logScannerImpl) Start() {
 			l.buffer[l.index] = line.Text
 
 			for _, role := range l.config.RoleConfigs {
-				if l.panicStartLine >= 0 && strings.ToLower(role.RoleType) == "panic" {
+				if l.panicStartLine >= 0 && strings.ToLower(role.RoleType) == PANIC {
 					l.handlePanic(role, true)
 				}
 
@@ -78,7 +81,7 @@ func (l *logScannerImpl) Start() {
 			l.index = (l.index + 1) % l.bufferSize
 		case <-ticker.C:
 			for _, role := range l.config.RoleConfigs {
-				if l.panicStartLine >= 0 && strings.ToLower(role.RoleType) == "panic" {
+				if l.panicStartLine >= 0 && strings.ToLower(role.RoleType) == PANIC {
 					l.handlePanic(role, false)
 				}
 			}
@@ -89,7 +92,10 @@ func (l *logScannerImpl) Start() {
 func (l *logScannerImpl) Stop() {
 	stopFunc := func() {
 		close(l.stopCh)
-		l.tail.Stop()
+		err := l.tail.Stop()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 	l.stopOnce.Do(stopFunc)
 }
@@ -99,7 +105,7 @@ func (l *logScannerImpl) handle(role *config.RoleConfig, line string) {
 	switch strings.ToLower(role.RoleType) {
 	case "normal":
 		msg = l.handleNormal(role, line)
-	case "panic":
+	case PANIC:
 		if strings.HasPrefix(line, "panic: ") {
 			l.panicStartLine = l.index
 		}
@@ -109,7 +115,7 @@ func (l *logScannerImpl) handle(role *config.RoleConfig, line string) {
 }
 
 func (l *logScannerImpl) handleNormal(role *config.RoleConfig, line string) string {
-	logReg := regexp.MustCompile("^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\\ [0-9][0-9]\\:[0-9][0-9]\\:[0-9][0-9]\\.[0-9][0-9][0-9]")
+	logReg := regexp.MustCompile(format)
 	if len(logReg.FindAllStringIndex(line, -1)) == 0 {
 		return ""
 	}
@@ -131,7 +137,10 @@ func (l *logScannerImpl) handleNormal(role *config.RoleConfig, line string) stri
 func (l *logScannerImpl) sendMsg(role *config.RoleConfig, msg string) {
 	if msg != "" {
 		if role.Email {
-			l.email(role, msg)
+			err := l.email(role, msg)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
 		}
 		//if role.WX {
 		//	l.wx(role, msg)
@@ -144,8 +153,9 @@ func (l *logScannerImpl) sendMsg(role *config.RoleConfig, msg string) {
 
 func (l *logScannerImpl) handlePanic(role *config.RoleConfig, newLine bool) {
 	if newLine {
-		logReg := regexp.MustCompile("^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\\ [0-9][0-9]\\:[0-9][0-9]\\:[0-9][0-9]\\.[0-9][0-9][0-9]")
-		panicReg := regexp.MustCompile("^panic\\:")
+
+		logReg := regexp.MustCompile(format)
+		panicReg := regexp.MustCompile(`^panic\:`)
 		line := l.buffer[l.index]
 		if len(logReg.FindAllStringIndex(line, -1)) == 0 && len(panicReg.FindAllStringIndex(line, -1)) == 0 {
 			return
@@ -161,7 +171,10 @@ func (l *logScannerImpl) handlePanic(role *config.RoleConfig, newLine bool) {
 
 	if msg != "" {
 		if role.Email {
-			l.email(role, msg)
+			err := l.email(role, msg)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
 		}
 		//if role.WX {
 		//	l.wx(role, msg)

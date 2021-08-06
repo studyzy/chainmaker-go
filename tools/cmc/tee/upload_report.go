@@ -15,6 +15,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 )
 
 func uploadReportCmd() *cobra.Command {
@@ -34,11 +38,18 @@ func uploadReportCmd() *cobra.Command {
 	uploadReportCmd.Flags().AddFlagSet(flags)
 	uploadReportCmd.MarkFlagRequired("report")
 	uploadReportCmd.MarkFlagRequired("sdk-conf-path")
+	uploadReportCmd.MarkFlagRequired("admin-key-file-paths")
+	uploadReportCmd.MarkFlagRequired("admin-crt-file-paths")
 
 	return uploadReportCmd
 }
 
 func cliUploadReport() error {
+	adminKeys, adminCrts, err := createMultiSignAdmins(adminKeyFilePaths, adminCrtFilePaths)
+	if err != nil {
+		return err
+	}
+
 	file, err := os.Open(reportFile)
 	if err != nil {
 		return fmt.Errorf("open file '%s' error: %v", reportFile, err)
@@ -62,9 +73,27 @@ func cliUploadReport() error {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
 	}
 
-	_, err = client.SaveEnclaveReport("global_enclave_id", reportData, "", true, 3)
+	payload, err := client.CreateSaveEnclaveReportPayload("global_enclave_id", reportData, "")
 	if err != nil {
-		return fmt.Errorf("save ca cert failed, %s", err.Error())
+		return fmt.Errorf("save enclave report failed, %s", err.Error())
+	}
+
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
+	for i := range adminKeys {
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		if err != nil {
+			return err
+		}
+		endorsementEntrys[i] = e
+	}
+
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, 5, false)
+	if err != nil {
+		return err
+	}
+	err = util.CheckProposalRequestResp(resp, false)
+	if err != nil {
+		return err
 	}
 
 	fmt.Println("command execute successfully.")

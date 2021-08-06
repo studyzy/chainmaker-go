@@ -20,10 +20,10 @@ contract:
 # 交易、区块相关配置
 block:
   tx_timestamp_verify: true # 是否需要开启交易时间戳校验
-  tx_timeout: 600  # 交易时间戳的过期时间(秒)sync_store: true # 切换存储实现，是否启用异步存储机制
-  block_tx_capacity: 50000  # 区块中最大交易数
+  tx_timeout: 600  # 交易时间戳的过期时间(秒)
+  block_tx_capacity: 100  # 区块中最大交易数
   block_size: 10  # 区块最大限制，单位MB
-  block_interval: 10 # 出块间隔，单位:ms
+  block_interval: 2000 # 出块间隔，单位:ms
 
 # core模块
 core:
@@ -40,7 +40,7 @@ scheduler:
 
 #共识配置
 consensus:
-  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
+  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,5-DPOS,10-POW)
   type: {consensus_type}
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   # 其中node_id为chainmaker.yml中 node.cert_file证书对应的nodeid
@@ -183,37 +183,37 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "{org1_id}"
-    root: "./certs/ca/{org1_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
   - org_id: "{org2_id}"
-    root: "./certs/ca/{org2_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org2_id}/ca.crt"
   - org_id: "{org3_id}"
-    root: "./certs/ca/{org3_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org3_id}/ca.crt"
   - org_id: "{org4_id}"
-    root: "./certs/ca/{org4_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org4_id}/ca.crt"
   - org_id: "{org5_id}"
-    root: "./certs/ca/{org5_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
   - org_id: "{org6_id}"
-    root: "./certs/ca/{org6_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
   - org_id: "{org7_id}"
-    root: "./certs/ca/{org7_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
   - org_id: "{org8_id}"
-    root: "./certs/ca/{org8_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org8_id}/ca.crt"
   - org_id: "{org9_id}"
-    root: "./certs/ca/{org9_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org9_id}/ca.crt"
   - org_id: "{org10_id}"
-    root: "./certs/ca/{org10_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org10_id}/ca.crt"
   - org_id: "{org11_id}"
-    root: "./certs/ca/{org11_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
   - org_id: "{org12_id}"
-    root: "./certs/ca/{org12_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
   - org_id: "{org13_id}"
-    root: "./certs/ca/{org13_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
   - org_id: "{org14_id}"
-    root: "./certs/ca/{org14_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org14_id}/ca.crt"
   - org_id: "{org15_id}"
-    root: "./certs/ca/{org15_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org15_id}/ca.crt"
   - org_id: "{org16_id}"
-    root: "./certs/ca/{org16_id}/ca.crt"
+    root: "../config/{org_path}/certs/ca/{org16_id}/ca.crt"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
@@ -235,4 +235,3 @@ resource_policies:
       org_list:
       role_list:
         - admin
-async_store: true # 切换存储实现，是否启用异步存储机制

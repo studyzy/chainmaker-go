@@ -1,13 +1,21 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package xvm
 
 import (
+	"errors"
+
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"errors"
 )
 
-func CreateInstance(contextId int64, code exec.Code, method string, contract *commonPb.Contract, gasUsed uint64, gasLimit int64) (*wxvmInstance, error) {
+func CreateInstance(contextId int64, code exec.Code, method string, contract *commonPb.Contract, gasUsed uint64,
+	gasLimit int64) (*WxvmInstance, error) {
 	execCtx, err := code.NewContext(&exec.ContextConfig{
 		GasLimit: gasLimit,
 	})
@@ -21,19 +29,19 @@ func CreateInstance(contextId int64, code exec.Code, method string, contract *co
 
 	execCtx.SetGasUsed(gasUsed)
 	execCtx.SetUserData(contextIDKey, contextId)
-	instance := &wxvmInstance{
+	instance := &WxvmInstance{
 		method:  method,
 		ExecCtx: execCtx,
 	}
 	return instance, nil
 }
 
-type wxvmInstance struct {
+type WxvmInstance struct {
 	method  string
 	ExecCtx exec.Context
 }
 
-func (x *wxvmInstance) Exec() error {
+func (x *WxvmInstance) Exec() error {
 	mem := x.ExecCtx.Memory()
 	if mem == nil {
 		return errors.New("bad contract, no memory")
@@ -44,17 +52,17 @@ func (x *wxvmInstance) Exec() error {
 	return err
 }
 
-func (x *wxvmInstance) ResourceUsed() Limits {
+func (x *WxvmInstance) ResourceUsed() Limits {
 	limits := Limits{
 		Cpu: x.ExecCtx.GasUsed(),
 	}
 	return limits
 }
 
-func (x *wxvmInstance) Release() {
+func (x *WxvmInstance) Release() {
 	x.ExecCtx.Release()
 }
 
-func (x *wxvmInstance) Abort(msg string) {
+func (x *WxvmInstance) Abort(msg string) {
 	exec.Throw(exec.NewTrap(msg))
 }

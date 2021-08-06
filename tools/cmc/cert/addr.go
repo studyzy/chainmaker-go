@@ -10,16 +10,17 @@ package cert
 import (
 	"encoding/hex"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
+
+	"github.com/mr-tron/base58"
+	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker/common/crypto"
 	hashAlo "chainmaker.org/chainmaker/common/crypto/hash"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"chainmaker.org/chainmaker/common/evmutils"
-
-	"github.com/mr-tron/base58"
-	"github.com/spf13/cobra"
 )
 
 func addrCMD() *cobra.Command {
@@ -46,7 +47,10 @@ func getAddr() error {
 		return fmt.Errorf("read cert file [%s] failed, %s", certPath, err)
 	}
 
-	block, _ := pem.Decode(certBytes)
+	block, rest := pem.Decode(certBytes)
+	if len(rest) != 0 {
+		return errors.New("pem.Decode failed, invalid cert")
+	}
 	cert, err := bcx509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return fmt.Errorf("parseCertificate cert failed, %s", err)
@@ -76,7 +80,11 @@ func certToUserAddrInStake() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read cert content failed, reason: %s", err)
 			}
-			cert, err := bcx509.ParseCertificate(certContent)
+			block, rest := pem.Decode(certContent)
+			if len(rest) != 0 {
+				return errors.New("pem.Decode failed, invalid cert")
+			}
+			cert, err := bcx509.ParseCertificate(block.Bytes)
 			if err != nil {
 				return fmt.Errorf("parse cert failed, reason: %s", err)
 			}

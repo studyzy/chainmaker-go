@@ -66,7 +66,8 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 		ec := serialize.NewEasyCodecWithMap(sc.parameters)
 		bytes = ec.Marshal()
 	} else {
-		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d", uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
+		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d",
+			uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
 	}
 
 	return sc.callContract(instance, sc.method, bytes)

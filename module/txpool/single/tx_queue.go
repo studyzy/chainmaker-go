@@ -79,11 +79,13 @@ func (queue *txQueue) deleteCommonTxs(txIds []string) {
 	queue.commonTxQueue.Delete(txIds)
 }
 
-func (queue *txQueue) fetch(expectedCount int, blockHeight uint64, validateTxTime func(tx *commonPb.Transaction) error) []*commonPb.Transaction {
+func (queue *txQueue) fetch(expectedCount int, blockHeight uint64,
+	validateTxTime func(tx *commonPb.Transaction) error) []*commonPb.Transaction {
 	// 1. fetch the config transaction
 	if configQueueLen := queue.configTxsCount(); configQueueLen > 0 {
 		if txs, txIds := queue.configTxQueue.Fetch(1, validateTxTime, blockHeight); len(txs) > 0 {
-			queue.log.Debugw("FetchTxBatch get config txs", "txCount", 1, "configQueueLen", configQueueLen, "txsLen", len(txs), "txIds", txIds)
+			queue.log.Debugw("FetchTxBatch get config txs", "txCount", 1, "configQueueLen",
+				configQueueLen, "txsLen", len(txs), "txIds", txIds)
 			return txs
 		}
 	}
@@ -91,7 +93,8 @@ func (queue *txQueue) fetch(expectedCount int, blockHeight uint64, validateTxTim
 	// 2. fetch the common transaction
 	if txQueueLen := queue.commonTxsCount(); txQueueLen > 0 {
 		if txs, txIds := queue.commonTxQueue.Fetch(expectedCount, validateTxTime, blockHeight); len(txs) > 0 {
-			queue.log.Debugw("FetchTxBatch get common txs", "txCount", expectedCount, "txQueueLen", txQueueLen, "txsLen", len(txs), "txIds", txIds)
+			queue.log.Debugw("FetchTxBatch get common txs", "txCount", expectedCount, "txQueueLen",
+				txQueueLen, "txsLen", len(txs), "txIds", txIds)
 			return txs
 		}
 	}

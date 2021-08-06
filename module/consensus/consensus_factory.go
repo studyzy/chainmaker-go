@@ -14,10 +14,10 @@ import (
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 
-	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/consensus/raft"
 	"chainmaker.org/chainmaker-go/consensus/solo"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/protocol"
 )
 

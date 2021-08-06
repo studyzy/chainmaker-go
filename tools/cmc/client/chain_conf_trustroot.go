@@ -167,11 +167,11 @@ func configTrustRoot(op int) error {
 		endorsementEntrys[i] = e
 	}
 
-	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, 0, syncResult)
+	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, -1, syncResult)
 	if err != nil {
 		return err
 	}
-	err = util.CheckProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, false)
 	if err != nil {
 		return err
 	}

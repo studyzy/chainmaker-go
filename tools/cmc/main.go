@@ -22,6 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/paillier"
 	"chainmaker.org/chainmaker-go/tools/cmc/payload"
 	"chainmaker.org/chainmaker-go/tools/cmc/query"
+	"chainmaker.org/chainmaker-go/tools/cmc/tee"
 )
 
 func main() {
@@ -43,7 +44,7 @@ For detailed logs, please see ./sdk.log
 	mainCmd.AddCommand(payload.NewPayloadCMD())
 	mainCmd.AddCommand(console.NewConsoleCMD(mainCmd))
 	mainCmd.AddCommand(bulletproofs.BulletproofsCMD())
-	//mainCmd.AddCommand(tee.NewTeeCMD())
+	mainCmd.AddCommand(tee.NewTeeCMD())
 
 	// 后续改成go-sdk
 	//mainCmd.AddCommand(payload.PayloadCMD())

@@ -294,7 +294,7 @@ func createUserContract() error {
 		endorsementEntrys[i] = e
 	}
 
-	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, false)
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, timeout, syncResult)
 	if err != nil {
 		return err
 	}
@@ -430,7 +430,7 @@ func upgradeUserContract() error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = util.CheckProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, false)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}
@@ -495,7 +495,7 @@ func freezeOrUnfreezeOrRevokeUserContract(which int) error {
 		return fmt.Errorf(SEND_CONTRACT_MANAGE_REQUEST_FAILED_FORMAT, err.Error())
 	}
 
-	err = util.CheckProposalRequestResp(resp, true)
+	err = util.CheckProposalRequestResp(resp, false)
 	if err != nil {
 		return fmt.Errorf(CHECK_PROPOSAL_RESPONSE_FAILED_FORMAT, err.Error())
 	}

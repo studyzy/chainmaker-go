@@ -7,12 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/utils"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -22,11 +23,15 @@ import (
 
 var testOrgId = "wx-org1.chainmaker.org"
 
+//CertFilePath  cert file path
 var CertFilePath = "./config/admin1.sing.crt"
+
+//ByteCodeFile  byte code file path
 var ByteCodeFile = "./token.bin"
 
 var txType = commonPb.TxType_INVOKE_CONTRACT
 
+//contract and chain info
 const (
 	ContractNameTest    = "contract01"
 	ContractVersionTest = "v1.0.0"
@@ -36,7 +41,7 @@ const (
 var bytes []byte
 var file []byte
 
-// 初始化上下文和wasm字节码
+//InitContextTest 初始化上下文和wasm字节码
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxContextMockTest, []byte) {
 	if bytes == nil {
 		bytes, _ = ioutil.ReadFile(ByteCodeFile)
@@ -71,14 +76,20 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, *TxC
 	}
 	data, _ := contractId.Marshal()
 	key := utils.GetContractDbKey(contractId.Name)
-	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	err := txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	if err != nil {
+		panic(err)
+	}
 	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
 	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
 	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
 	//
 	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(),
+	//versionKey, []byte(contractId.Version))
+
+	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(),
+	//runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
 
 	return &contractId, &txContext, bytes
 }
@@ -183,8 +194,9 @@ func (s *TxContextMockTest) Del(name string, key []byte) error {
 	s.cacheMap[k] = nil
 	return nil
 }
-func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
-	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *TxContextMockTest) CallContract(contract *commonPb.Contract,
+	method string, byteCode []byte, parameter map[string][]byte,
+	gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {
@@ -380,7 +392,8 @@ func (m mockBlockchainStore) PutBlock(block *commonPb.Block, txRWSets []*commonP
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+func (m mockBlockchainStore) SelectObject(contractName string,
+	startKey []byte, limit []byte) (protocol.StateIterator, error) {
 	panic("implement me")
 }
 

@@ -45,15 +45,16 @@ func TestBaseWriteWal(t *testing.T) {
 
 	// 3. read content from wal file
 	count := 0
+	var data []byte
 	for i := firstIndex + 1; i < lastIndex+1; i++ {
-		data, err := walFile.Read(i)
+		data, err = walFile.Read(i)
 		require.NoError(t, err)
 		count++
 		fmt.Println(i, ": ", string(data))
 	}
 	require.EqualValues(t, 4, count)
 
-	data, err := walFile.Read(lastIndex)
+	data, err = walFile.Read(lastIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, data, []byte("hello4"))
 
@@ -94,7 +95,8 @@ func TestSaveWal(t *testing.T) {
 	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
 			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
-			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock},
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{
+				VoteMsg: &voteBlock},
 		},
 	})
 
@@ -106,7 +108,8 @@ func TestSaveWal(t *testing.T) {
 	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
 			Type: chainedbftpb.MessageType_PROPOSAL_MESSAGE,
-			Data: &chainedbftpb.ConsensusPayload_ProposalMsg{proposalMsg},
+			Data: &chainedbftpb.ConsensusPayload_ProposalMsg{
+				ProposalMsg: proposalMsg},
 		},
 	})
 
