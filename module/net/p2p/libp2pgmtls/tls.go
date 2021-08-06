@@ -7,6 +7,8 @@ SPDX-License-Identifier: Apache-2.0
 package libp2pgmtls
 
 import (
+	cmcrypto "chainmaker.org/chainmaker-go/common/crypto"
+	cmtls "chainmaker.org/chainmaker-go/common/crypto/tls"
 	cmx509 "chainmaker.org/chainmaker-go/common/crypto/x509"
 	"chainmaker.org/chainmaker-go/net/p2p/revoke"
 	"context"
@@ -20,16 +22,15 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
 	"github.com/tjfoc/gmsm/sm2"
-	"github.com/tjfoc/gmtls"
 	"net"
 )
 
 // ID is the protocol ID (used when negotiating with multistream)
-const ID = "/gmtls/1.0.0"
+const ID = "/cmtls/1.0.0"
 
 // Transport constructs secure communication sessions for a peer.
 type Transport struct {
-	config *gmtls.Config
+	config *cmtls.Config
 
 	privKey   crypto.PrivKey
 	localPeer peer.ID
@@ -86,7 +87,7 @@ func loadAllCertsFromCertBytes(certByte []byte, chainId string, tlsTrustRoots *C
 		return false, nil
 	}
 	for _, cert := range allCertsBytes {
-		c, err := sm2.ParseCertificate(cert)
+		c, err := cmx509.ParseCertificate(cert)
 		if err != nil {
 			return false, err
 		}
@@ -112,7 +113,7 @@ func New(
 	addPeerIdTlsCertNotifyC chan<- map[string][]byte,
 ) func(key crypto.PrivKey) (*Transport, error) {
 	return func(key crypto.PrivKey) (*Transport, error) {
-		certificate, err := gmtls.X509KeyPair(certBytes, keyBytes)
+		certificate, err := cmtls.X509KeyPair(certBytes, keyBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -123,10 +124,10 @@ func New(
 		}
 		addPeerIdTlsCertNotifyC <- map[string][]byte{id.Pretty(): certificate.Certificate[0]}
 		return &Transport{
-			config: &gmtls.Config{
-				Certificates:          []gmtls.Certificate{certificate},
+			config: &cmtls.Config{
+				Certificates:          []cmtls.Certificate{certificate},
 				InsecureSkipVerify:    true,
-				ClientAuth:            gmtls.RequireAnyClientCert,
+				ClientAuth:            cmtls.RequireAnyClientCert,
 				VerifyPeerCertificate: createVerifyPeerCertificateFunc(tlsTrustRoots, revokeValidator, newTlsPeerChainIdsNotifyC, newTlsCertIdPeerIdNotifyC, addPeerIdTlsCertNotifyC),
 			},
 			privKey:         key,
@@ -142,8 +143,8 @@ func createVerifyPeerCertificateFunc(
 	newTlsPeerChainIdsNotifyC chan<- map[string][]string,
 	newTlsCertIdPeerIdNotifyC chan<- string,
 	addPeerIdTlsCertNotifyC chan<- map[string][]byte,
-) func(rawCerts [][]byte, _ [][]*sm2.Certificate) error {
-	return func(rawCerts [][]byte, _ [][]*sm2.Certificate) error {
+) func(rawCerts [][]byte, _ [][]*cmx509.Certificate) error {
+	return func(rawCerts [][]byte, _ [][]*cmx509.Certificate) error {
 		revoked, err := isRevoked(revokeValidator, rawCerts)
 		if err != nil {
 			return err
@@ -152,7 +153,7 @@ func createVerifyPeerCertificateFunc(
 			return fmt.Errorf("certificate revoked")
 		}
 		tlsCertBytes := rawCerts[0]
-		cert, err := sm2.ParseCertificate(tlsCertBytes)
+		cert, err := cmx509.ParseCertificate(tlsCertBytes)
 		if err != nil {
 			return fmt.Errorf("parse certificate failed: %s", err.Error())
 		}
@@ -195,7 +196,7 @@ func isRevoked(revokeValidator *revoke.RevokedValidator, rawCerts [][]byte) (boo
 
 // SecureInbound runs the TLS handshake as a server.
 func (t *Transport) SecureInbound(ctx context.Context, insecure net.Conn) (sec.SecureConn, error) {
-	conn := gmtls.Server(insecure, t.config.Clone())
+	conn := cmtls.Server(insecure, t.config.Clone())
 	if err := conn.Handshake(); err != nil {
 		insecure.Close()
 		return nil, err
@@ -211,7 +212,7 @@ func (t *Transport) SecureInbound(ctx context.Context, insecure net.Conn) (sec.S
 
 // SecureOutbound runs the TLS handshake as a client.
 func (t *Transport) SecureOutbound(ctx context.Context, insecure net.Conn, p peer.ID) (sec.SecureConn, error) {
-	conn := gmtls.Client(insecure, t.config.Clone())
+	conn := cmtls.Client(insecure, t.config.Clone())
 	if err := conn.Handshake(); err != nil {
 		insecure.Close()
 		return nil, err
@@ -225,7 +226,7 @@ func (t *Transport) SecureOutbound(ctx context.Context, insecure net.Conn, p pee
 	return t.setupConn(conn, remotePubKey)
 }
 
-func (t *Transport) getPeerPubKey(conn *gmtls.Conn) (crypto.PubKey, error) {
+func (t *Transport) getPeerPubKey(conn *cmtls.Conn) (crypto.PubKey, error) {
 	state := conn.ConnectionState()
 	if len(state.PeerCertificates) <= 0 {
 		return nil, errors.New("expected one certificates in the chain")
@@ -238,7 +239,7 @@ func (t *Transport) getPeerPubKey(conn *gmtls.Conn) (crypto.PubKey, error) {
 	return pubKey, err
 }
 
-func (t *Transport) setupConn(tlsConn *gmtls.Conn, remotePubKey crypto.PubKey) (sec.SecureConn, error) {
+func (t *Transport) setupConn(tlsConn *cmtls.Conn, remotePubKey crypto.PubKey) (sec.SecureConn, error) {
 	remotePeerID, err := peer.IDFromPublicKey(remotePubKey)
 	if err != nil {
 		return nil, err
@@ -254,10 +255,13 @@ func (t *Transport) setupConn(tlsConn *gmtls.Conn, remotePubKey crypto.PubKey) (
 }
 
 func parsePublicKeyToPubKey(publicKey gocrypto.PublicKey) (crypto.PubKey, error) {
+	if stPublicKey, ok := publicKey.(cmcrypto.PublicKey); ok{
+		publicKey = stPublicKey.ToStandardKey()
+	}
 	switch p := publicKey.(type) {
 	case *ecdsa.PublicKey:
 		if p.Curve == sm2.P256Sm2() {
-			b, err := sm2.MarshalPKIXPublicKey(p)
+			b, err := cmx509.MarshalPKIXPublicKey(p)
 			if err != nil {
 				return nil, err
 			}
@@ -273,5 +277,6 @@ func parsePublicKeyToPubKey(publicKey gocrypto.PublicKey) (crypto.PubKey, error)
 	case *rsa.PublicKey:
 		return crypto.NewRsaPublicKey(*p), nil
 	}
+
 	return nil, errors.New("unsupported public key type")
 }

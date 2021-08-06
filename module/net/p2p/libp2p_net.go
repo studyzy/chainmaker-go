@@ -18,7 +18,6 @@ import (
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
-	"github.com/tjfoc/gmsm/sm2"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -594,7 +593,7 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 		if ln.libP2pHost.isGmTls {
 			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
 			for pid, bytes := range peerIdTlsCertMap {
-				cert, err := sm2.ParseCertificate(bytes)
+				cert, err := cmx509.ParseCertificate(bytes)
 				if err != nil {
 					logger.Errorf("[Net] parse tls cert failed. %s", err.Error())
 					continue
