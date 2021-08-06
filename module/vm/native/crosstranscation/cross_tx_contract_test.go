@@ -8,6 +8,12 @@ import (
 	"fmt"
 	"testing"
 
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"github.com/gogo/protobuf/proto"
+
 	"chainmaker.org/chainmaker-go/logger"
 
 	"chainmaker.org/chainmaker/common/serialize"
@@ -209,6 +215,79 @@ func Test_ReadProof(t *testing.T) {
 
 	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_READ_PROOF.String())
 	params := map[string][]byte{paramCrossID: CrossID, paramProofKey: proofKey}
+	ret, err := call(txSimContext, params)
+	require.Nil(t, err)
+	t.Log(string(ret))
+}
+
+func Test_Arbitrate(t *testing.T) {
+	CrossID := crossID
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_ExecOK)})
+	chainConfig := &configPb.ChainConfig{
+		Consensus: &configPb.ConsensusConfig{
+			Nodes: []*configPb.OrgConfig{
+				&configPb.OrgConfig{
+					NodeId: []string{"hello", "9HdRUYfrzSER2EbY8b1NFuVSFp4cKNznE1ucRgtHoK6s"},
+				},
+			},
+		},
+	}
+	pbccPayload, _ := proto.Marshal(chainConfig)
+	gCache.Put(syscontract.SystemContract_CHAIN_CONFIG.String(), []byte(syscontract.SystemContract_CHAIN_CONFIG.String()), pbccPayload)
+	txSimContext := mock.NewMockTxSimContext(ctrl)
+	txSimContext.EXPECT().Get(gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+		func(name string, key []byte) ([]byte, error) {
+			return gCache.Get(name, key)
+		},
+	).AnyTimes()
+	txSimContext.EXPECT().Put(gomock.Eq(store.genName(CrossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+		func(name string, key []byte, value []byte) error {
+			gCache.Put(name, key, value)
+			return nil
+		},
+	).AnyTimes()
+
+	txSimContext.EXPECT().GetSender().DoAndReturn(
+		func() *pbac.Member {
+			return &pbac.Member{
+				MemberType: accesscontrol.MemberType_CERT,
+				MemberInfo: []byte(`-----BEGIN CERTIFICATE-----
+MIICnTCCAYUCCQDNeorE6MGDgjANBgkqhkiG9w0BAQUFADANMQswCQYDVQQKDAJD
+QTAeFw0yMTA4MDUxMjQ2MDdaFw0zNTA0MTQxMjQ2MDdaMBQxEjAQBgNVBAMMCWxv
+Y2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMeCwVXCFqCg
+jJWgNpOxPRkOHAg0sX5RMzgQ+5T313d6Qr5WPDa/rQEhNr0kf63m5x51l/hz0Sgs
+pMYJdZEm70vj8dBPz8HJ/+WhMFd89Rj9lo8zqj3sK6jWqkmSdewzoin3r6Cx2FHz
+RT6T1c0wo+pwWeikARfW+UD+u+yticQkkUrziooFQrrukU+FwAM8q3ZXEj32Asqn
+/6rkGsdwUTs3E8M+nD+D9chmEuxOk3QJ6RqTAPEFehfDeTfniWOw/oEKmUlJ9Qqa
+zBO6Yk2UMvuQsXlEK0ynXNGT6OFNPOQf6N1WFWHSWV/d6reJLGgt+D6Ld9mBSAuL
+XvXbilf5VVkCAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAAI2BeblnAFw+0rhNEGln
+Kpieomz+7lBYOiXzLEf9nqcFiYsUL7YQjflXfxFTiPES+Q2L+Tyxm8IhILHhy2h8
+ICl60gIAAZAu/M2hclOekzLA7W7s3kyh40s2eKMh4E+4dJtUqEd+dmyElhCJlLNA
+D2IzK4Bz/FvnSxjgv2psjjq/g41mrsm0+J5ZqeCLbaKoFqA7+QA7f/dkHwPVrZ8n
+9ip8iY4YVB6jIiDRpnjmPD8P9s7ztFVqQ46a9wShWzZYCaSq2whxyjcakKE4PxSm
+MmUZz2wJML7wFsZw+IZ1MH28g3IRc67NcHiV7TX97kqwcTrfD10aV8UZn/+8aDQ5
++g==
+-----END CERTIFICATE-----`),
+			}
+		},
+	).AnyTimes()
+
+	txSimContext.EXPECT().CallContract(gomock.Not(nil), gomock.Not(nil), gomock.Nil(), gomock.Any(), gomock.Eq(uint64(0)), gomock.Eq(commonPb.TxType_INVOKE_CONTRACT)).DoAndReturn(
+		func(contract *commonPb.Contract, method string, byteCode []byte, parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+			if contract.Name == "tx" {
+				return &commonPb.ContractResult{
+					Code:   0,
+					Result: []byte("hello world"),
+				}, commonPb.TxStatusCode_SUCCESS
+			}
+			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
+		},
+	).AnyTimes()
+
+	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_ARBITRATE.String())
+	params := map[string][]byte{paramCrossID: CrossID, paramArbitrateCmd: []byte(syscontract.CrossArbitrateCmd_ROLLBACK_CMD.String())}
 	ret, err := call(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))
