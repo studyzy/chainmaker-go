@@ -6,9 +6,9 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210730091111-cd7813a002c3
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210803102358-b7047f9f665d
-	chainmaker.org/chainmaker/protocol v0.0.0-20210730061517-ec081b24f778
+	chainmaker.org/chainmaker/common v0.0.0-20210804033544-04ebb04bd759
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210806073751-79069d7d343e
+	chainmaker.org/chainmaker/protocol v0.0.0-20210806071345-cc79eac7afe6
 	github.com/gogo/protobuf v1.3.2
 	github.com/stretchr/testify v1.7.0
 )

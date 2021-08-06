@@ -219,7 +219,7 @@ func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.R
 	acs.createDefaultResourcePolicy()
 	for _, resourcePolicy := range resourcePolicies {
 		if acs.validateResourcePolicy(resourcePolicy) {
-			policy := newPolicyFromPb(resourcePolicy.Policy)
+			policy := NewPolicyFromPb(resourcePolicy.Policy)
 			acs.resourceNamePolicyMap.Store(resourcePolicy.ResourceName, policy)
 		}
 	}
