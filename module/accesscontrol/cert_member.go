@@ -143,10 +143,17 @@ func NewCertMember(member *pbac.Member, acs *accessControlService) (*certMember,
 		return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, acs.hashType)
 	}
 	if member.MemberType == pbac.MemberType_CERT_HASH {
-		certPEM, err := acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
-			[]byte(member.MemberInfo))
-		if err != nil {
-			return nil, fmt.Errorf("setup member failed, get cert failed: %s", err.Error())
+		var certPEM []byte
+		var err error
+		certBlock, _ := pem.Decode(member.MemberInfo)
+		if certBlock == nil {
+			certPEM, err = acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
+				member.MemberInfo)
+			if err != nil {
+				return nil, fmt.Errorf("setup member failed, get cert failed: %s", err.Error())
+			}
+		} else {
+			certPEM = member.MemberInfo
 		}
 		return newMemberFromCertPem(member.OrgId, string(certPEM), false, acs.hashType)
 	}

@@ -606,8 +606,6 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 				continue
 			}
 			memInfo = string(memInfoBytes)
-			endorsement.Signer.MemberType = pbac.MemberType_CERT_HASH
-			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 
 		signerInfo, ok := cp.acService.lookUpMemberInCache(memInfo)
@@ -763,16 +761,16 @@ func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *memberCache, 
 // Check whether the provided member is a valid member of this group
 func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certificate, error) {
 	if mem == nil {
-		return nil, fmt.Errorf("authentication failed, invalid member: member should not be nil")
+		return nil, fmt.Errorf("invalid member: member should not be nil")
 	}
 	certMember, ok := mem.(*certMember)
 	if !ok {
-		return nil, fmt.Errorf("authentication failed, invalid member: member type err")
+		return nil, fmt.Errorf("invalid member: member type err")
 	}
 	for _, v := range cp.acService.localTrustMembers {
 		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
 		if certBlock == nil {
-			return nil, fmt.Errorf("setup member failed, none public key or certificate given")
+			return nil, fmt.Errorf("load trust member info failed, none certificate given")
 		}
 		trustMemberCert, err := bcx509.ParseCertificate(certBlock.Bytes)
 		if err == nil {
@@ -783,18 +781,18 @@ func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certifica
 	}
 	certChains, err := certMember.cert.Verify(cp.opts)
 	if err != nil {
-		return nil, fmt.Errorf("authentication failed, not ac valid certificate from trusted CAs: %v", err)
+		return nil, fmt.Errorf("not ac valid certificate from trusted CAs: %v", err)
 	}
 	orgIdFromCert := certMember.cert.Subject.Organization[0]
 	if mem.GetOrgId() != orgIdFromCert {
-		return nil, fmt.Errorf("authentication failed, signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
+		return nil, fmt.Errorf("signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
 	}
 	org := cp.acService.getOrgInfoByOrgId(orgIdFromCert)
 	if org == nil {
-		return nil, fmt.Errorf("authentication failed, no orgnization found")
+		return nil, fmt.Errorf("no orgnization found")
 	}
 	if len(org.(*organization).trustedRootCerts) <= 0 {
-		return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate")
+		return nil, fmt.Errorf("no trusted root: please configure trusted root certificate")
 	}
 
 	certChain := cp.findCertChain(org.(*organization), certChains)
