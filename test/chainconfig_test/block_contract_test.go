@@ -46,7 +46,8 @@ func init() {
 //GetLastBlock
 //GetFullBlockByHeight
 
-func TestGetBlock(t *testing.T) {
+// capitalize 't' to make it a unit test
+func testGetBlock(t *testing.T) {
 	testHeight := -1
 	height := int64(testHeight)
 	blockByHeight, blockHashStringByHeight, txId := testGetBlockByHeight(t, client, height)
