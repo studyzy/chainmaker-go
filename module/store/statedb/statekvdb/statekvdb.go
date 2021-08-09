@@ -7,10 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package statekvdb
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
 
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	configPb "chainmaker.org/chainmaker/pb-go/config"
@@ -29,6 +31,7 @@ import (
 const (
 	contractStoreSeparator = '#'
 	stateDBSavepointKey    = "stateDBSavePointKey"
+	memberPrefix           = "m:"
 )
 
 // StateKvDB provider a implementation of `statedb.StateDB`
@@ -65,6 +68,16 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerialize
 		err := s.updateConsensusArgs(batch, block)
 		if err != nil {
 			return err
+		}
+	}
+	//process account sequence
+	for _, tx := range block.Txs {
+		if tx.Payload.Sequence > 0 {
+			err := s.saveMemberExtraData(batch, tx.Sender.Signer,
+				&accesscontrol.MemberExtraData{Sequence: tx.Payload.Sequence})
+			if err != nil {
+				return err
+			}
 		}
 	}
 	err := s.writeBatch(block.Header.BlockHeight, batch)
@@ -249,4 +262,32 @@ func (s *StateKvDB) GetChainConfig() (*configPb.ChainConfig, error) {
 		return nil, err
 	}
 	return conf, nil
+}
+func (s *StateKvDB) GetMemberExtraData(member *accesscontrol.Member) (*accesscontrol.MemberExtraData, error) {
+	key := append([]byte(memberPrefix), getMemberHash(member)...)
+	value, err := s.get(key)
+	if err != nil {
+		return nil, err
+	}
+	mei := &accesscontrol.MemberAndExtraData{}
+	err = mei.Unmarshal(value)
+	if err != nil {
+		return nil, err
+	}
+	return mei.ExtraData, nil
+}
+func (s *StateKvDB) saveMemberExtraData(batch protocol.StoreBatcher, member *accesscontrol.Member, extra *accesscontrol.MemberExtraData) error {
+	key := append([]byte(memberPrefix), getMemberHash(member)...)
+	mei := &accesscontrol.MemberAndExtraData{Member: member, ExtraData: extra}
+	value, err := mei.Marshal()
+	if err != nil {
+		return err
+	}
+	batch.Put(key, value)
+	return nil
+}
+func getMemberHash(member *accesscontrol.Member) []byte {
+	data, _ := member.Marshal()
+	hash := sha256.Sum256(data)
+	return hash[:]
 }

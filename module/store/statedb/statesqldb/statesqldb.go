@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	configPb "chainmaker.org/chainmaker/pb-go/config"
@@ -545,4 +546,22 @@ func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
 		return nil, err
 	}
 	return conf, nil
+}
+
+func (s *StateSqlDB) GetMemberExtraData(member *accesscontrol.Member) (*accesscontrol.MemberExtraData, error) {
+	s.Lock()
+	defer s.Unlock()
+	mei := &MemberExtraInfo{}
+	sql := "select * from " + mei.GetTableName() + " where member_hash=?"
+	row, err := s.db.QuerySingle(sql, getMemberHash(member))
+	if err != nil {
+		return nil, err
+	}
+	err = mei.ScanObject(row.ScanColumns)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mei.GetExtraData(), nil
 }

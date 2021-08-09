@@ -25,6 +25,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
@@ -846,4 +847,8 @@ func (bs *BlockStoreImpl) GetContractByName(name string) (*commonPb.Contract, er
 }
 func (bs *BlockStoreImpl) GetContractBytecode(name string) ([]byte, error) {
 	return utils.GetContractBytecode(bs.stateDB.ReadObject, name)
+}
+
+func (bs *BlockStoreImpl) GetMemberExtraData(member *accesscontrol.Member) (*accesscontrol.MemberExtraData, error) {
+	return bs.stateDB.GetMemberExtraData(member)
 }
