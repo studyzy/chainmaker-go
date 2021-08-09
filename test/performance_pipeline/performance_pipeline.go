@@ -284,7 +284,7 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 	if rawTxBytes, err = utils.CalcUnsignedTxRequestBytes(req); err != nil {
 		log.Fatalf("CalcUnsignedTxRequest failed, %s", err.Error())
 	}
-	if signBytes, err = signer.Sign("SM3", rawTxBytes); err != nil {
+	if signBytes, err = signer.Sign("SHA256", rawTxBytes); err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 	}
 

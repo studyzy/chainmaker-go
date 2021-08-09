@@ -1,3 +1,10 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package accesscontrol
 
 import (
@@ -64,9 +71,9 @@ func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
 	}
 
 	if hash != hashAlgo {
-		return fmt.Errorf("cert member verify failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+		return fmt.Errorf("cert member verify failed: The hash algorithm doesn't match the hash algorithm in the certificate,expected: [%v],actual: [%v]",
+			hashAlgo, hash)
 	}
-
 	ok, err = cm.cert.PublicKey.VerifyWithOpts(msg, sig, &bccrypto.SignOpts{
 		Hash: hashAlgo,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
@@ -121,7 +128,8 @@ func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) 
 	}
 
 	if hash != hashAlgo {
-		return nil, fmt.Errorf("sign failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+		return nil, fmt.Errorf("sign failed: The hash algorithm doesn't match the hash algorithm in the certificate,expected: [%v],actual: [%v]",
+			hashAlgo, hash)
 	}
 
 	return scm.sk.SignWithOpts(msg, &bccrypto.SignOpts{
@@ -166,18 +174,19 @@ func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType strin
 			return nil, fmt.Errorf("new member failed: unsupport hash type")
 		}
 		if hash != hashAlgo {
-			return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate")
+			return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate,expected: [%v],actual: [%v]",
+				hashAlgo, hash)
 		}
 		certMember.hashType = hashType
 		orgIdFromCert := cert.Subject.Organization[0]
 		if orgIdFromCert != orgId {
 			return nil, fmt.Errorf("setup cert member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
 		}
-		// id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
-		// if err != nil {
-		// 	id = []byte(cert.Subject.CommonName)
-		// }
-		id := []byte(cert.Subject.CommonName)
+		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+		if err != nil {
+			id = []byte(cert.Subject.CommonName)
+		}
+		//id := []byte(cert.Subject.CommonName)
 		certMember.id = string(id)
 		certMember.cert = cert
 		ou := ""

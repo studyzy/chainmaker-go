@@ -155,7 +155,7 @@ func contructTxRequest(orgid string, sk3 crypto.PrivateKey, userCrtPath string, 
 
 	signer := getSigner(sk3, sender)
 	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 		return nil, err

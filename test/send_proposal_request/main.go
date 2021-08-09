@@ -729,7 +729,7 @@ func configUpdateRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg 
 		return nil, "", err
 	}
 	signer := getSigner(sk3, senderFull)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf("sign msg failed")
 	}

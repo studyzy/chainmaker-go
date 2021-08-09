@@ -1,3 +1,10 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package accesscontrol
 
 import (
@@ -466,13 +473,21 @@ func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatu
 		(member.MemberType != pbac.MemberType_CERT) {
 		return pbac.MemberStatus_INVALID, fmt.Errorf("get member status failed: member type error")
 	}
-	certBlock, _ := pem.Decode(member.MemberInfo)
+	var (
+		cert *bcx509.Certificate
+		err  error
+	)
+	certBlock, rest := pem.Decode(member.MemberInfo)
 	if certBlock == nil {
-		return pbac.MemberStatus_INVALID, fmt.Errorf("member info decode failed")
-	}
-	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
-	if err != nil {
-		return pbac.MemberStatus_INVALID, fmt.Errorf("parsing member info failed: %s", err.Error())
+		cert, err = bcx509.ParseCertificate(rest)
+		if err != nil {
+			return pbac.MemberStatus_INVALID, fmt.Errorf("parsing member info failed: %s", err.Error())
+		}
+	} else {
+		cert, err = bcx509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			return pbac.MemberStatus_INVALID, fmt.Errorf("parsing member info failed: %s", err.Error())
+		}
 	}
 	var certChain []*bcx509.Certificate
 	certChain = append(certChain, cert)

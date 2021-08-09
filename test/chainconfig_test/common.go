@@ -220,7 +220,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	}
 
 	signer := getSigner(sk3, senderFull)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 	}
@@ -288,7 +288,7 @@ func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *Invoke
 	}
 
 	signer := getSigner(sk3, sender)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 		panic(err)

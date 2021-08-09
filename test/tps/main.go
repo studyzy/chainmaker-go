@@ -235,7 +235,7 @@ func proposalRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, txType c
 	}
 
 	fmt.Errorf("################ %s", string(sender.MemberInfo))
-	signBytes, err := getSigner(sk3, sender).Sign("SM3", rawTxBytes)
+	signBytes, err := getSigner(sk3, sender).Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 		return nil
