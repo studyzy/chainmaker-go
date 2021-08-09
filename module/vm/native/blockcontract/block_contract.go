@@ -980,7 +980,8 @@ func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxS
 	return block, nil
 }
 
-func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext, transactionInfo *commonPb.TransactionInfo) (*commonPb.TransactionInfo, error) {
+func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext,
+	transactionInfo *commonPb.TransactionInfo) (*commonPb.TransactionInfo, error) {
 	var (
 		reqSender *protocol.Role
 		err       error
