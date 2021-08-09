@@ -9,6 +9,7 @@ package leveldbprovider
 
 import (
 	"bytes"
+	"fmt"
 
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/syndtr/goleveldb/leveldb/memdb"
@@ -58,13 +59,21 @@ func (db *MemdbHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error 
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (db *MemdbHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
-	return db.db.NewIterator(&util.Range{Start: start, Limit: limit})
+func (db *MemdbHandle) NewIteratorWithRange(start []byte, limit []byte) (protocol.Iterator, error) {
+	if len(start) == 0 || len(limit) == 0 {
+		return nil, fmt.Errorf("iterator range should not start(%s) or limit(%s) with empty key",
+			string(start), string(limit))
+	}
+	return db.db.NewIterator(&util.Range{Start: start, Limit: limit}), nil
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (db *MemdbHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
-	return db.db.NewIterator(util.BytesPrefix(prefix))
+func (db *MemdbHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, error) {
+	if len(prefix) == 0 {
+		return nil, fmt.Errorf("iterator prefix should not be empty key")
+	}
+
+	return db.db.NewIterator(util.BytesPrefix(prefix)), nil
 }
 func (db *MemdbHandle) Close() error {
 	db.db.Reset()

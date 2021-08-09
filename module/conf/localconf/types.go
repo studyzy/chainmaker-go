@@ -290,7 +290,9 @@ type LevelDbConfig struct {
 }
 
 type BadgerDbConfig struct {
-	StorePath string `mapstructure:"store_path"`
+	StorePath      string `mapstructure:"store_path"`
+	Compression    uint8  `mapstructure:"compression"`
+	ValueThreshold int64  `mapstructure:"value_threshold"`
 }
 
 type SqlDbConfig struct {

@@ -14,11 +14,15 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol"
-	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3/options"
 	"github.com/pkg/errors"
 )
 
-//const defaultBloomFilterBits = 10
+const (
+	defaultCompression    = 0
+	defaultValueThreshold = 1024 * 10
+)
 
 const (
 	//StoreBlockDBDir blockdb folder name
@@ -43,6 +47,16 @@ func NewBadgerDBHandle(chainId string, dbFolder string, dbconfig *localconf.Badg
 	dbPath := filepath.Join(dbconfig.StorePath, chainId, dbFolder)
 	opt := badger.DefaultOptions(dbPath)
 	opt.SyncWrites = false
+	opt.Compression = defaultCompression
+	opt.ValueThreshold = defaultValueThreshold
+
+	if dbconfig.Compression != 0 && dbconfig.Compression < 3 {
+		opt.Compression = options.CompressionType(dbconfig.Compression)
+	}
+	if dbconfig.ValueThreshold > 0 {
+		opt.ValueThreshold = dbconfig.ValueThreshold
+	}
+
 	err := createDirIfNotExist(dbPath)
 	if err != nil {
 		panic(fmt.Sprintf("Error create dir %s by badgerdbprovider: %s", dbPath, err))
@@ -184,15 +198,23 @@ func (h *BadgerDBHandle) CompactRange(start, limit []byte) error { //nolint:goli
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (h *BadgerDBHandle) NewIteratorWithRange(startKey []byte, limitKey []byte) protocol.Iterator {
-	return NewIterator(h.db, badger.DefaultIteratorOptions, startKey, limitKey)
+func (h *BadgerDBHandle) NewIteratorWithRange(startKey []byte, limitKey []byte) (protocol.Iterator, error) {
+	if len(startKey) == 0 || len(limitKey) == 0 {
+		return nil, fmt.Errorf("iterator range should not start(%s) or limit(%s) with empty key",
+			string(startKey), string(limitKey))
+	}
+	return NewIterator(h.db, badger.DefaultIteratorOptions, startKey, limitKey), nil
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (h *BadgerDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
+func (h *BadgerDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, error) {
+	if len(prefix) == 0 {
+		return nil, fmt.Errorf("iterator prefix should not be empty key")
+	}
+
 	opts := badger.DefaultIteratorOptions
 	opts.Prefix = prefix
-	return NewIterator(h.db, opts, nil, nil)
+	return NewIterator(h.db, opts, nil, nil), nil
 }
 
 // Close closes the badgerdb
