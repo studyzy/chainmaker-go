@@ -217,14 +217,10 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		}
 	}
 	//4. 更新MemberExtra
-	for _, tx := range block.Txs {
-		if tx.Payload.Sequence > 0 {
-			err = s.saveMemberExtraData(dbTx, tx)
-			if err != nil {
-				s.logger.Error(err.Error())
-				return err
-			}
-		}
+	err = s.updateBlockMemberExtra(dbTx, block)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
 	}
 	//5. 更新SavePoint
 	err = s.updateSavePoint(dbTx, block.Header.BlockHeight)
@@ -239,6 +235,17 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		return err
 	}
 	s.logger.Debugf("chain[%s]: commit state block[%d]", block.Header.ChainId, block.Header.BlockHeight)
+	return nil
+}
+func (s *StateSqlDB) updateBlockMemberExtra(dbTx protocol.SqlDBTransaction, block *commonPb.Block) error {
+	for _, tx := range block.Txs {
+		if tx.Payload.Sequence > 0 {
+			err := s.saveMemberExtraData(dbTx, tx)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,

@@ -276,7 +276,8 @@ func (s *StateKvDB) GetMemberExtraData(member *accesscontrol.Member) (*accesscon
 	}
 	return mei.ExtraData, nil
 }
-func (s *StateKvDB) saveMemberExtraData(batch protocol.StoreBatcher, member *accesscontrol.Member, extra *accesscontrol.MemberExtraData) error {
+func (s *StateKvDB) saveMemberExtraData(batch protocol.StoreBatcher, member *accesscontrol.Member,
+	extra *accesscontrol.MemberExtraData) error {
 	key := append([]byte(memberPrefix), getMemberHash(member)...)
 	mei := &accesscontrol.MemberAndExtraData{Member: member, ExtraData: extra}
 	value, err := mei.Marshal()
