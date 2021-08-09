@@ -239,7 +239,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 }
 func (s *StateSqlDB) updateBlockMemberExtra(dbTx protocol.SqlDBTransaction, block *commonPb.Block) error {
 	for _, tx := range block.Txs {
-		if tx.Payload.Sequence > 0 {
+		if tx.Payload.Sequence > 0 && tx.Sender != nil {
 			err := s.saveMemberExtraData(dbTx, tx)
 			if err != nil {
 				return err
