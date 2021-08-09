@@ -143,7 +143,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 	}
 
 	if endBlock != -1 && endBlock <= lastBlockHeight {
-		_, err := s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
+		_, err = s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
 			withRWSet, onlyHeader, reqSender, reqSenderOrgId)
 
 		if err != nil {
@@ -154,7 +154,9 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		return status.Error(codes.OK, "OK")
 	}
 
-	alreadySendHistoryBlockHeight, err := s.sendHistoryBlock(db, server, startBlockHeight, endBlock, withRWSet, onlyHeader, reqSender, reqSenderOrgId)
+	alreadySendHistoryBlockHeight, err := s.sendHistoryBlock(db, server, startBlockHeight, endBlock,
+		withRWSet, onlyHeader, reqSender, reqSenderOrgId)
+
 	if err != nil {
 		s.log.Errorf("sendHistoryBlock failed, %s", err)
 		return err
@@ -351,7 +353,8 @@ func (s *ApiService) doSendTx(tx *commonPb.Transaction, db protocol.BlockchainSt
 		return status.Error(codes.OK, "OK")
 	}
 
-	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap, alreadySendHistoryBlockHeight, reqSender, reqSenderOrgId)
+	return s.sendNewTx(db, tx, server, startBlock, endBlock, contractName, txIds, txIdsMap,
+		alreadySendHistoryBlockHeight, reqSender, reqSenderOrgId)
 }
 
 func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
@@ -378,7 +381,7 @@ func (s *ApiService) doSendHistoryTx(db protocol.BlockchainStore, server apiPb.R
 	}
 
 	if endBlock != -1 && endBlock <= lastBlockHeight {
-		_, err := s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
+		_, err = s.sendHistoryTx(db, server, startBlockHeight, endBlock, contractName,
 			txIds, txIdsMap, reqSender, reqSenderOrgId)
 
 		if err != nil {
@@ -509,8 +512,9 @@ func (s *ApiService) dealBlockSubscribeResult(server apiPb.RpcNode_SubscribeServ
 
 // sendNewTx - send new tx to subscriber
 func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Transaction,
-	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string, txIds []string,
-	txIdsMap map[string]struct{}, alreadySendHistoryBlockHeight int64, reqSender *protocol.Role, reqSenderOrgId string) error {
+	server apiPb.RpcNode_SubscribeServer, startBlock, endBlock int64, contractName string,
+	txIds []string, txIdsMap map[string]struct{}, alreadySendHistoryBlockHeight int64,
+	reqSender *protocol.Role, reqSenderOrgId string) error {
 
 	var (
 		errCode         commonErr.ErrCode
@@ -596,7 +600,8 @@ func (s *ApiService) getRateLimitToken() error {
 
 // sendHistoryBlock - send history block to subscriber
 func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server apiPb.RpcNode_SubscribeServer,
-	startBlockHeight, endBlockHeight int64, withRWSet, onlyHeader bool, reqSender *protocol.Role, reqSenderOrgId string) (int64, error) {
+	startBlockHeight, endBlockHeight int64, withRWSet, onlyHeader bool, reqSender *protocol.Role,
+	reqSenderOrgId string) (int64, error) {
 
 	var (
 		err    error
@@ -618,7 +623,9 @@ func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server api
 				return i - 1, nil
 			}
 
-			blockInfo, alreadySendHistoryBlockHeight, err := s.getBlockInfoFromStore(store, i, withRWSet, reqSender, reqSenderOrgId)
+			blockInfo, alreadySendHistoryBlockHeight, err := s.getBlockInfoFromStore(store, i, withRWSet,
+				reqSender, reqSenderOrgId)
+
 			if err != nil {
 				return -1, status.Error(codes.Internal, errMsg)
 			}
@@ -644,8 +651,10 @@ func (s *ApiService) sendHistoryBlock(store protocol.BlockchainStore, server api
 	}
 }
 
-func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curblockHeight int64, withRWSet bool, reqSender *protocol.Role, reqSenderOrgId string) (
-	blockInfo *commonPb.BlockInfo, alreadySendHistoryBlockHeight int64, err error) {
+func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curblockHeight int64, withRWSet bool,
+	reqSender *protocol.Role, reqSenderOrgId string) (blockInfo *commonPb.BlockInfo,
+	alreadySendHistoryBlockHeight int64, err error) {
+
 	var (
 		errMsg         string
 		block          *commonPb.Block
@@ -715,7 +724,8 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 	server apiPb.RpcNode_SubscribeServer,
 	startBlockHeight, endBlockHeight int64,
-	contractName string, txIds []string, txIdsMap map[string]struct{}, reqSender *protocol.Role, reqSenderOrgId string) (int64, error) {
+	contractName string, txIds []string, txIdsMap map[string]struct{},
+	reqSender *protocol.Role, reqSenderOrgId string) (int64, error) {
 
 	var (
 		err    error
@@ -753,7 +763,8 @@ func (s *ApiService) sendHistoryTx(store protocol.BlockchainStore,
 				return i - 1, nil
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap, reqSender, reqSenderOrgId); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap,
+				reqSender, reqSenderOrgId); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return -1, status.Error(codes.Internal, errMsg)
@@ -880,7 +891,9 @@ func (s *ApiService) checkIsContinue(tx *commonPb.Transaction, contractName stri
 	return false
 }
 
-func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx *commonPb.Transaction, reqSender *protocol.Role, reqSenderOrgId string) error {
+func (s *ApiService) doSendSubscribeTx(server apiPb.RpcNode_SubscribeServer, tx *commonPb.Transaction,
+	reqSender *protocol.Role, reqSenderOrgId string) error {
+
 	var (
 		err    error
 		errMsg string
@@ -955,7 +968,8 @@ func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender *protocol.Role,
 		if tx.Sender != nil {
 
 			fmt.Printf("Tx [%d] of subscribed block, from org %v, TxSenderOrgId is %s, "+
-				"verify: this tx is of the same organization [%t]\n", i, tx.Sender.Signer.OrgId, reqSenderOrgId, tx.Sender.Signer.OrgId == reqSenderOrgId)
+				"verify: this tx is of the same organization [%t]\n", i, tx.Sender.Signer.OrgId,
+				reqSenderOrgId, tx.Sender.Signer.OrgId == reqSenderOrgId)
 		}
 	}
 	fmt.Println()
