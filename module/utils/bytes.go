@@ -24,7 +24,7 @@ func BytesToInt(b []byte) (int32, error) {
 	return x, nil
 }
 
-// BytesToInt le bytes to int64, little endian
+// BytesToInt64 le bytes to int64, little endian
 func BytesToInt64(b []byte) (int64, error) {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x int64
@@ -55,7 +55,7 @@ func Int64ToBytes(x int64) ([]byte, error) {
 	return bytesBuffer.Bytes(), nil
 }
 
-// BytesToInt le bytes to uint64, little endian
+// BytesToUint64 le bytes to uint64, little endian
 func BytesToUint64(b []byte) (uint64, error) {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x uint64

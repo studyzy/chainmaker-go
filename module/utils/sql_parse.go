@@ -37,7 +37,7 @@ func extract(rootNode *ast.StmtNode) []string {
 	return v.tableNames
 }
 
-//获得SQL中使用到的表名，如果带有dbName.tableName，那么返回完整的dbName.tableName
+//GetSqlTableName 获得SQL中使用到的表名，如果带有dbName.tableName，那么返回完整的dbName.tableName
 func GetSqlTableName(sql string) []string {
 	p := parser.New()
 	stmtNodes, _, err := p.Parse(sql, "", "")
@@ -47,7 +47,7 @@ func GetSqlTableName(sql string) []string {
 	return extract(&stmtNodes[0])
 }
 
-//判断一个sql字符串是由多少条独立的SQL语句组成
+//GetSqlStatementCount 判断一个sql字符串是由多少条独立的SQL语句组成
 func GetSqlStatementCount(sql string) int {
 	p := parser.New()
 	stmtNodes, _, err := p.Parse(sql, "", "")

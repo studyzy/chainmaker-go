@@ -12,6 +12,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 )
 
+//nolint
 const (
 	PrefixContractInfo     = "Contract:"
 	PrefixContractByteCode = "ContractByteCode:"
