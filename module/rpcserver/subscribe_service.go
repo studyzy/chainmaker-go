@@ -554,7 +554,8 @@ func (s *ApiService) sendNewTx(store protocol.BlockchainStore, tx *commonPb.Tran
 				continue
 			}
 
-			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap, reqSender, reqSenderOrgId); err != nil {
+			if err := s.sendSubscribeTx(server, block.Txs, contractName, txIds, txIdsMap,
+				reqSender, reqSenderOrgId); err != nil {
 				errMsg = fmt.Sprintf("send subscribe tx failed, %s", err)
 				s.log.Error(errMsg)
 				return status.Error(codes.Internal, errMsg)
