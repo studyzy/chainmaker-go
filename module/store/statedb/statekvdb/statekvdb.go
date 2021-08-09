@@ -72,7 +72,7 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerialize
 	}
 	//process account sequence
 	for _, tx := range block.Txs {
-		if tx.Payload.Sequence > 0 {
+		if tx.Payload.Sequence > 0 && tx.Sender != nil {
 			err := s.saveMemberExtraData(batch, tx.Sender.Signer,
 				&accesscontrol.MemberExtraData{Sequence: tx.Payload.Sequence})
 			if err != nil {
@@ -279,7 +279,8 @@ func (s *StateKvDB) GetMemberExtraData(member *accesscontrol.Member) (*accesscon
 	}
 	return mei.ExtraData, nil
 }
-func (s *StateKvDB) saveMemberExtraData(batch protocol.StoreBatcher, member *accesscontrol.Member, extra *accesscontrol.MemberExtraData) error {
+func (s *StateKvDB) saveMemberExtraData(batch protocol.StoreBatcher, member *accesscontrol.Member,
+	extra *accesscontrol.MemberExtraData) error {
 	key := append([]byte(memberPrefix), getMemberHash(member)...)
 	mei := &accesscontrol.MemberAndExtraData{Member: member, ExtraData: extra}
 	value, err := mei.Marshal()

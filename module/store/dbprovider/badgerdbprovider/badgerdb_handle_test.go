@@ -9,7 +9,9 @@ package badgerdbprovider
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
@@ -18,8 +20,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()))
-var dbPath = "./"
+var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()))
+//var dbPath = "./"
 var log = &test.GoLogger{}
 var dbConfig = &localconf.BadgerDbConfig{
 	StorePath: dbPath,
