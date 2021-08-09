@@ -8,12 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker/pb-go/common"
 	sdk "chainmaker.org/chainmaker/sdk-go"
 	"github.com/spf13/cobra"
@@ -86,6 +88,9 @@ func invokeUserContractCMD() *cobra.Command {
 		Short: "invoke user contract command",
 		Long:  "invoke user contract command",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			if runtimeType == "EVM" {
+				method = hex.EncodeToString(evmutils.Keccak256([]byte(method))[:4])
+			}
 			return invokeUserContract()
 		},
 	}
@@ -108,6 +113,9 @@ func invokeContractTimesCMD() *cobra.Command {
 		Short: "invoke contract times command",
 		Long:  "invoke contract times command",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			if runtimeType == "EVM" {
+				method = hex.EncodeToString(evmutils.Keccak256([]byte(method))[:4])
+			}
 			return invokeContractTimes()
 		},
 	}
