@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	configPb "chainmaker.org/chainmaker/pb-go/config"
@@ -58,23 +59,28 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	if err != nil {
 		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
 	}
+
 	return nil
 }
 func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	db.logger.Debugf("try to create state db %s", dbName)
 	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
-		panic("init state sql db fail")
+		db.logger.Panic("init state sql db fail")
 	}
 	db.logger.Debug("try to create system state db table: state_infos")
 	err = db.db.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state sql db table fail:" + err.Error())
 	}
 	db.logger.Debug("try to create system state db table: save_points")
 	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
-		panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state sql db table fail:" + err.Error())
+	}
+	err = db.db.CreateTableIfNotExist(&MemberExtraInfo{})
+	if err != nil {
+		db.logger.Panic("init member extra info table fail:" + err.Error())
 	}
 	_, err = db.db.Save(&types.SavePoint{BlockHeight: 0})
 	return err
@@ -210,7 +216,17 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			}
 		}
 	}
-	//4. 更新SavePoint
+	//4. 更新MemberExtra
+	for _, tx := range block.Txs {
+		if tx.Payload.Sequence > 0 {
+			err = s.saveMemberExtraData(dbTx, tx)
+			if err != nil {
+				s.logger.Error(err.Error())
+				return err
+			}
+		}
+	}
+	//5. 更新SavePoint
 	err = s.updateSavePoint(dbTx, block.Header.BlockHeight)
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -545,4 +561,30 @@ func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
 		return nil, err
 	}
 	return conf, nil
+}
+
+func (s *StateSqlDB) GetMemberExtraData(member *accesscontrol.Member) (*accesscontrol.MemberExtraData, error) {
+	s.Lock()
+	defer s.Unlock()
+	mei := &MemberExtraInfo{}
+	sql := "select * from " + mei.GetTableName() + " where member_hash=?"
+	row, err := s.db.QuerySingle(sql, getMemberHash(member))
+	if err != nil {
+		return nil, err
+	}
+	err = mei.ScanObject(row.ScanColumns)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mei.GetExtraData(), nil
+}
+func (s *StateSqlDB) saveMemberExtraData(dbTx protocol.SqlDBTransaction, tx *commonPb.Transaction) error {
+	extraData := NewMemberExtraInfo(tx.Sender.Signer, &accesscontrol.MemberExtraData{Sequence: tx.Payload.Sequence})
+	_, err := dbTx.Save(extraData)
+	if err != nil {
+		return err
+	}
+	return nil
 }

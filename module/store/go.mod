@@ -9,6 +9,8 @@ require (
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210809024420-84332310603e
 	chainmaker.org/chainmaker/protocol v0.0.0-20210809092617-addc5bb4d3fd
 	github.com/dgraph-io/badger/v3 v3.2103.1
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210809024420-84332310603e
+	chainmaker.org/chainmaker/protocol v0.0.0-20210809025435-1ca089468862
 	github.com/emirpasic/gods v1.12.0
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
