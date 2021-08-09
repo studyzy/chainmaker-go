@@ -75,8 +75,8 @@ func TestGetBlock(t *testing.T) {
 	lastBlockByHeight, _, _ := testGetBlockByHeight(t, client, int64(lastBlock.Header.BlockHeight))
 	require.Equal(t, lastBlock, lastBlockByHeight)
 
-	fullBlock := testGetFullBlockByHeight(t, client, 6)
-	block, _, _ := testGetBlockByHeight(t, client, 6)
+	fullBlock := testGetFullBlockByHeight(t, client, height)
+	block, _, _ := testGetBlockByHeight(t, client, height)
 	require.Equal(t, fullBlock, block)
 
 	lastConfigBlock := testGetLastConfigBlock(t, client)
