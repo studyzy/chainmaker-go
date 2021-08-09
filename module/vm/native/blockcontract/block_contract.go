@@ -415,8 +415,8 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 
 	hashes := make([][]byte, len(block.Txs))
 	for i, tx := range block.Txs {
-		txHash, err := utils.CalcTxHash(SHA256, tx)
-		if err != nil {
+		txHash, err1 := utils.CalcTxHash(SHA256, tx)
+		if err1 != nil {
 			return nil, err
 		}
 

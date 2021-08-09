@@ -72,7 +72,7 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerialize
 	}
 	//process account sequence
 	for _, tx := range block.Txs {
-		if tx.Payload.Sequence > 0 {
+		if tx.Payload.Sequence > 0 && tx.Sender != nil {
 			err := s.saveMemberExtraData(batch, tx.Sender.Signer,
 				&accesscontrol.MemberExtraData{Sequence: tx.Payload.Sequence})
 			if err != nil {
