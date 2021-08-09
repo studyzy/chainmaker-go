@@ -126,7 +126,7 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 		return status.Error(codes.Internal, errMsg)
 	}
 
-	reqSender, err = s.getRoleOfRequestSender(tx)
+	reqSender, err = s.getRoleFromTx(tx)
 	reqSenderOrgId := tx.Sender.Signer.OrgId
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
 		return status.Error(codes.Internal, errMsg)
 	}
 
-	reqSender, err = s.getRoleOfRequestSender(tx)
+	reqSender, err = s.getRoleFromTx(tx)
 	if err != nil {
 		return err
 	}
@@ -961,7 +961,7 @@ func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender *protocol.Role,
 	fmt.Println()
 }
 
-func (s *ApiService) getRoleOfRequestSender(tx *commonPb.Transaction) (*protocol.Role, error) {
+func (s *ApiService) getRoleFromTx(tx *commonPb.Transaction) (*protocol.Role, error) {
 	bc, err := s.chainMakerServer.GetBlockchain(tx.Payload.ChainId)
 	if err != nil {
 		errCode := commonErr.ERR_CODE_GET_BLOCKCHAIN
@@ -971,5 +971,5 @@ func (s *ApiService) getRoleOfRequestSender(tx *commonPb.Transaction) (*protocol
 	}
 
 	ac := bc.GetAccessControl()
-	return utils.GetRoleOfRequestSender(tx, ac)
+	return utils.GetRoleFromTx(tx, ac)
 }

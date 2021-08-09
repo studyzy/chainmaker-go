@@ -592,7 +592,7 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 		BlockHeight: uint64(block.Header.BlockHeight),
 	}
 
-	if err = checkRoleAndGenerateTransactionInfo(txSimContext, tx, transactionInfo); err != nil {
+	if transactionInfo, err = checkRoleAndGenerateTransactionInfo(txSimContext, transactionInfo); err != nil {
 		return nil, err
 	}
 
@@ -966,7 +966,7 @@ func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxS
 		return block, err
 	}
 
-	reqSender, err = utils.GetRoleOfRequestSender(txSimContext.GetTx(), ac)
+	reqSender, err = utils.GetRoleFromTx(txSimContext.GetTx(), ac)
 	if err != nil {
 		return block, err
 	}
@@ -980,25 +980,32 @@ func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxS
 	return block, nil
 }
 
-func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext, tx *commonPb.Transaction, transactionInfo *commonPb.TransactionInfo) error {
+func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext, transactionInfo *commonPb.TransactionInfo) (*commonPb.TransactionInfo, error) {
 	var (
 		reqSender *protocol.Role
 		err       error
 		ac        protocol.AccessControlProvider
 	)
+	tx := transactionInfo.Transaction
 
 	if ac, err = txSimContext.GetAccessControl(); err != nil {
-		return err
+		return nil, err
 	}
 
-	if reqSender, err = utils.GetRoleOfRequestSender(txSimContext.GetTx(), ac); err != nil {
-		return err
+	if reqSender, err = utils.GetRoleFromTx(txSimContext.GetTx(), ac); err != nil {
+		return nil, err
 	}
 
 	if *reqSender == protocol.RoleLight {
 		if tx.Sender.Signer.OrgId != txSimContext.GetTx().Sender.Signer.OrgId {
-			transactionInfo.Transaction = nil
+			newTransactionInfo := &commonPb.TransactionInfo{
+				Transaction: nil,
+				BlockHeight: transactionInfo.BlockHeight,
+				BlockHash:   transactionInfo.BlockHash,
+				TxIndex:     transactionInfo.TxIndex,
+			}
+			return newTransactionInfo, nil
 		}
 	}
-	return nil
+	return transactionInfo, nil
 }

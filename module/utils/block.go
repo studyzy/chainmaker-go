@@ -254,6 +254,5 @@ func FilterBlockTxs(reqSenderOrgId string, block *commonPb.Block) *commonPb.Bloc
 		}
 	}
 	newBlock.Txs = results
-	block.Txs = results
 	return newBlock
 }
