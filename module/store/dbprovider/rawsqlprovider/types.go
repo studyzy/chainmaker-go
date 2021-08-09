@@ -16,3 +16,6 @@ type TableDMLGenerator interface {
 	GetUpdateSql() (string, []interface{})
 	GetCountSql() (string, []interface{})
 }
+type UserDefineSave interface {
+	GetSaveSql() (string, []interface{})
+}

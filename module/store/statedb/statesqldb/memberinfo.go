@@ -62,6 +62,14 @@ func (b *MemberExtraInfo) GetCountSql() (string, []interface{}) {
 	return "select count(*) FROM member_extra_infos WHERE member_hash=?",
 		[]interface{}{b.MemberHash}
 }
+func (b *MemberExtraInfo) GetSaveSql() (string, []interface{}) {
+	if b.Seq > 1 { //update
+		return "UPDATE member_extra_infos set seq=? WHERE member_hash=?",
+			[]interface{}{b.Seq, b.MemberHash}
+	}
+	return b.GetInsertSql()
+}
+
 func NewMemberExtraInfo(member *accesscontrol.Member, extra *accesscontrol.MemberExtraData) *MemberExtraInfo {
 
 	hash := getMemberHash(member)
