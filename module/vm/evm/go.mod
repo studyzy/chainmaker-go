@@ -7,7 +7,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
-	chainmaker.org/chainmaker/protocol v0.0.0-20210809025435-1ca089468862
+	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
 	github.com/ethereum/go-ethereum v1.10.3
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 
