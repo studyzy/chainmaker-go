@@ -476,7 +476,7 @@ func (r *ChainConsensusRuntime) NodeIdAdd(txSimContext protocol.TxSimContext, pa
 	}
 
 	if index == -1 {
-		err = fmt.Errorf("add node id failed, param [%s] not found from nodes", orgId)
+		err = fmt.Errorf("add node id failed, org[%s] not found from nodes, you should call NodeOrgAdd first", orgId)
 		r.log.Error(err)
 		return nil, err
 	}
