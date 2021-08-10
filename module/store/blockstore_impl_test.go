@@ -367,7 +367,7 @@ func Test_blockchainStoreImpl_GetBlockLevledb(t *testing.T) {
 }
 
 func Test_blockchainStoreImpl_GetBlockBadgerdb(t *testing.T) {
-	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig("./"))
+	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig(""))
 }
 
 func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
