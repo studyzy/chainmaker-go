@@ -255,28 +255,31 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 func (r *MultiSignRuntime) Query(txSimContext protocol.TxSimContext, parameters map[string][]byte) (result []byte, err error) {
 	//func (r *MultiSignRuntime) Query(txSimContext protocol.TxSimContext) (result []byte,err error) {
 	// 1、校验并获取参数
-	txId := txSimContext.GetTx().Payload.TxId
-	var payloadHash []byte
+	multiPayload := parameters["multiPayload"]
+	oldPayload := &commonPb.Payload{}
+	multiSignInfo := &syscontract.MultiSignInfo{}
+	proto.Unmarshal(multiPayload, oldPayload)
+
+	//txId := txSimContext.GetTx().Payload.TxId
+	txId := oldPayload.TxId
+
 	if utils.IsAnyBlank(txId) {
 		err = fmt.Errorf("params txIdStr cannot be empty")
 		return nil, err
-	} else {
-		payloadHash, _ = txSimContext.Get(syscontract.SystemContract_MULTI_SIGN.String(), []byte(txId))
 	}
-
-	if payloadHash == nil || len(payloadHash) == 0 {
-		err = fmt.Errorf("the params of payload_hash is not exist")
-		r.log.Error(err.Error(), "err", err)
-		return nil, err
-	}
-
-	// 2、返回结果
-
-	multiSignInfoBytes, err := txSimContext.Get(syscontract.SystemContract_MULTI_SIGN.String(), payloadHash)
+	multiSignInfoDB, err := txSimContext.Get("multi_sign_contract", []byte(oldPayload.TxId)) // MultiSignInfo
 	if err != nil {
 		r.log.Error(err)
 		return nil, err
 	}
+	proto.Unmarshal(multiSignInfoDB, multiSignInfo)
+	//r.log.Infof("query sign old payload:%s \n", oldPayload)
+	mPayloadByte, _ := multiSignInfo.Payload.Marshal()
+	//r.log.Infof("query  multisigninfo payload:%s \n", multiSignInfo.Payload)
+	//r.log.Infof("bool equal %s", strconv.FormatBool(bytes.Equal(multiPayload,mPayloadByte)))
+	if !bytes.Equal(multiPayload, mPayloadByte) {
+		panic("the payload are inconsistent ")
+	}
 
-	return multiSignInfoBytes, nil
+	return multiSignInfoDB, nil
 }
