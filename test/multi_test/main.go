@@ -518,10 +518,10 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 	return nil
 }
 
-func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contractName, chainId string) []byte {
+func testMultiSignQuery(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contractName, chainId string) []byte {
 	fmt.Println("========================================================================================================")
 	fmt.Println("========================================================================================================")
-	fmt.Println("==========================================testMultiSignVote2 ===========================================")
+	fmt.Println("==========================================testMultiSignQuery ===========================================")
 	fmt.Println("========================================================================================================")
 	fmt.Println("========================================================================================================")
 
@@ -530,68 +530,17 @@ func testMultiSignVoteAdmin2(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient,
 	if err != nil {
 		panic(err)
 	}
-	var (
-		certPathPrefix = "../../config"
-		admin2KeyPath  = certPathPrefix + "/crypto-config/" + multiOrg3Id + "/user/admin1/admin1.tls.key"
-		admin2CrtPath  = certPathPrefix + "/crypto-config/" + multiOrg3Id + "/user/admin1/admin1.tls.crt"
-	)
-
-	var eeByte []byte
-	var msviByte []byte
-	{
-		admin2File, err := ioutil.ReadFile(admin2CrtPath)
-		if err != nil {
-			panic(err)
-		}
-		fadminKeyFile, err := ioutil.ReadFile(admin2KeyPath)
-		if err != nil {
-			panic(err)
-		}
-		admin2 := &acPb.Member{
-			OrgId:      multiOrg3Id,
-			MemberInfo: admin2File,
-		}
-		skAdmin2, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
-		signerAdmin2 := GetSigner(skAdmin2, admin2)
-		//signerAdmin2Bytes, err := signerAdmin2.Sign("SHA256", payloadBytes)//modify
-		signerAdmin2Bytes, err := signerAdmin2.Sign("SM3", payloadBytes)
-		if err != nil {
-			log.Fatalf("sign failed, %s", err.Error())
-			os.Exit(0)
-		}
-
-		ee := &commonPb.EndorsementEntry{
-			Signer:    admin2,
-			Signature: signerAdmin2Bytes,
-		}
-		eeByte, _ = ee.Marshal()
-
-		msvi := &syscontract.MultiSignVoteInfo{
-			Vote:        syscontract.VoteStatus_AGREE,
-			Endorsement: ee,
-		}
-		msviByte, _ = msvi.Marshal()
-
-	}
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "multiPayload",
 			Value: payloadBytes,
-		},
-		{
-			Key:   "signature",
-			Value: eeByte,
-		},
-		{
-			Key:   "voteState",
-			Value: msviByte,
 		},
 	}
 
 	payload := &commonPb.Payload{
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
-		Method:       syscontract.MultiSignFunction_VOTE.String(),
+		Method:       syscontract.MultiSignFunction_QUERY.String(),
 		Parameters:   pairs,
 	}
 
