@@ -335,15 +335,15 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType co
 	return payload, nil
 }
 
-func GetRoleFromTx(tx *commonPb.Transaction, ac protocol.AccessControlProvider) (*protocol.Role, error) {
+func GetRoleFromTx(tx *commonPb.Transaction, ac protocol.AccessControlProvider) (protocol.Role, error) {
 
 	var member protocol.Member
 	var err error
 	member, err = ac.NewMemberFromProto(tx.Sender.Signer)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &member.GetRole()[0], nil
+	return member.GetRole()[0], nil
 }

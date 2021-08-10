@@ -956,7 +956,7 @@ func (r *BlockRuntime) getValue(parameters map[string][]byte, key string) (strin
 
 func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxSimContext) (*commonPb.Block, error) {
 	var (
-		reqSender *protocol.Role
+		reqSender protocol.Role
 		err       error
 		ac        protocol.AccessControlProvider
 	)
@@ -972,7 +972,7 @@ func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxS
 	}
 
 	reqSenderOrgId := txSimContext.GetTx().Sender.Signer.OrgId
-	if *reqSender == protocol.RoleLight {
+	if reqSender == protocol.RoleLight {
 		newBlock := utils.FilterBlockTxs(reqSenderOrgId, block)
 		return newBlock, nil
 	}
@@ -983,7 +983,7 @@ func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxS
 func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext,
 	transactionInfo *commonPb.TransactionInfo) (*commonPb.TransactionInfo, error) {
 	var (
-		reqSender *protocol.Role
+		reqSender protocol.Role
 		err       error
 		ac        protocol.AccessControlProvider
 	)
@@ -997,7 +997,7 @@ func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext,
 		return nil, err
 	}
 
-	if *reqSender == protocol.RoleLight {
+	if reqSender == protocol.RoleLight {
 		if tx.Sender.Signer.OrgId != txSimContext.GetTx().Sender.Signer.OrgId {
 			newTransactionInfo := &commonPb.TransactionInfo{
 				Transaction: nil,
