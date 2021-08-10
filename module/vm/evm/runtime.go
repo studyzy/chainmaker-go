@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"runtime/debug"
+	"strings"
 
 	evm_go "chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
@@ -106,11 +107,12 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 	}
 
 	// contract
-	address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
+	//address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
+	address := contractNameToAddress(contract.Name)
 
-	if err != nil {
-		return r.errorResult(contractResult, err, "make address fail")
-	}
+	//if err != nil {
+	//	return r.errorResult(contractResult, err, "make address fail")
+	//}
 	codeHash := evmutils.BytesDataToEVMIntHash(byteCode)
 	eContract := environment.Contract{
 		Address: address,
@@ -158,7 +160,14 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 	contractResult.ContractEvent = r.ContractEvent
 	return contractResult
 }
+func contractNameToAddress(cname string) *evmutils.Int {
+	name := cname
+	if strings.HasPrefix(name, "0x") || strings.HasPrefix(name, "0X") {
+		name = name[2:]
+	}
 
+	return evmutils.FromHexString(name)
+}
 func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	if result.ExitOpCode == opcodes.REVERT {
 		err = fmt.Errorf("revert instruction was encountered during execution")
@@ -181,6 +190,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
 			r.TxSimContext.Put(n, []byte(k), val.Bytes())
+			r.Log.Infof("put CachedData,name[%s],key[%s],value[%x]", n, k, val.Bytes())
 			//fmt.Println("n k val", n, k, val, val.String())
 		}
 	}

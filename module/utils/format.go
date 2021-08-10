@@ -11,7 +11,7 @@ import "regexp"
 
 var (
 	contractNameReg = regexp.MustCompile("^[a-zA-Z0-9_]{1,128}$")
-	evmAddressReg   = regexp.MustCompile("^(0x)?[0-9a-fA-F]{40}$")
+	evmAddressReg   = regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 	chainIdReg      = regexp.MustCompile("^[a-zA-Z0-9_]{1,30}$")
 	txIDReg         = regexp.MustCompile("^\\S{1,64}$")
 )

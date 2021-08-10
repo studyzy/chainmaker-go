@@ -291,6 +291,10 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 	txId := txContext.GetTx().Payload.TxId
 	txType := txContext.GetTx().Payload.TxType
 	runtimeType := contract.RuntimeType
+	m.Log.InfoDynamic(func() string {
+		return fmt.Sprintf("invoke user contract[%s], runtime:%s,method:%s",
+			contract.Name, contract.RuntimeType.String(), method)
+	})
 	var runtimeInstance RuntimeInstance
 	var err error
 	switch runtimeType {

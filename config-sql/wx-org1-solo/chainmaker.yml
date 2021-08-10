@@ -75,13 +75,13 @@ storage:
   blockdb_config:
     provider: sql
     sqldb_config:
-      sqldb_type: sqlite
-      dsn: ../data/org1/block.db
+      sqldb_type: mysql
+      dsn: root:123@tcp(127.0.0.1:3306)/mysql
   statedb_config:
     provider: sql
     sqldb_config:
-      sqldb_type: sqlite
-      dsn: ../data/org1/state.db
+      sqldb_type: mysql
+      dsn: root:123@tcp(127.0.0.1:3306)/mysql
   historydb_config:
     provider: leveldb
     leveldb_config:
