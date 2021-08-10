@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -141,31 +139,17 @@ func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) 
 
 func NewCertMember(member *pbac.Member, acs *accessControlService) (*certMember, error) {
 
-	certBlock, _ := pem.Decode(member.MemberInfo)
-	if certBlock == nil {
-		_, err := bcx509.ParseCertificate(member.MemberInfo)
-		if err == nil {
-			return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, acs.hashType)
-
-		} else {
-			certIdHex := hex.EncodeToString(member.MemberInfo)
-			certPEM, err := acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
-				[]byte(certIdHex))
-			noHexcertPEM, err := acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
-				member.MemberInfo)
-			if err != nil {
-				return nil, fmt.Errorf("setup member failed, get cert info by cert hash failed: %s", err.Error())
-			}
-			if certPEM != nil {
-				return newMemberFromCertPem(member.OrgId, string(certPEM), false, acs.hashType)
-			}
-			if noHexcertPEM != nil {
-				return newMemberFromCertPem(member.OrgId, string(noHexcertPEM), false, acs.hashType)
-			}
-			return nil, fmt.Errorf("setup member failed, unsupport cert member type")
+	if member.MemberType == pbac.MemberType_CERT {
+		certBlock, rest := pem.Decode(member.MemberInfo)
+		if certBlock == nil {
+			return newMemberFromCertPem(member.OrgId, string(rest), true, acs.hashType)
 		}
+		return newMemberFromCertPem(member.OrgId, string(certBlock.Bytes), true, acs.hashType)
 	}
-	return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, acs.hashType)
+	if member.MemberType == pbac.MemberType_CERT_HASH {
+		return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), false, acs.hashType)
+	}
+	return nil, fmt.Errorf("setup member failed, unsupport cert member type")
 }
 
 func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType string) (*certMember, error) {

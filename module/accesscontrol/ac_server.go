@@ -492,7 +492,7 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg str
 
 		member, err := acs.newMember(entry.Signer)
 		if err != nil {
-			acs.log.Errorf("failed to convert endorsement to member: %s,member info: [%v]",
+			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
 				err.Error(), string(entry.Signer.MemberInfo))
 			continue
 		}
@@ -521,11 +521,10 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAnyCase(p *policy, end
 
 		member, err := acs.newMember(endorsement.Signer)
 		if err != nil {
-			acs.log.Errorf("failed to convert endorsement to member: %s,member info: [%v]",
+			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
 				err.Error(), string(endorsement.Signer.MemberInfo))
 			continue
 		}
-
 		if _, ok := roleList[member.GetRole()]; ok {
 			return true, nil
 		}
@@ -625,7 +624,7 @@ func (acs *accessControlService) getValidEndorsements(orgList map[string]bool, r
 
 		member, err := acs.newMember(endorsement.Signer)
 		if err != nil {
-			acs.log.Errorf("failed to convert endorsement to member: %s,member info: [%v]",
+			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
 				err.Error(), string(endorsement.Signer.MemberInfo))
 			continue
 		}

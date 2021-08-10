@@ -441,6 +441,13 @@ func (cp *certACProvider) GetHashAlg() string {
 }
 
 func (cp *certACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
+	if member.MemberType == pbac.MemberType_CERT_HASH {
+		memInfoBytes, ok := cp.lookUpCertCache(string(member.MemberInfo))
+		if !ok {
+			cp.log.Errorf("authentication failed, unknown signer, the provided certificate ID is not registered")
+		}
+		member.MemberInfo = memInfoBytes
+	}
 	return cp.acService.newMember(member)
 }
 
@@ -598,7 +605,8 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 		if endorsement.Signer.MemberType == pbac.MemberType_CERT {
 			cp.log.Debugf("target endorser uses full certificate")
 			memInfo = string(endorsement.Signer.MemberInfo)
-		} else {
+		}
+		if endorsement.Signer.MemberType == pbac.MemberType_CERT_HASH {
 			cp.log.Debugf("target endorser uses compressed certificate")
 			memInfoBytes, ok := cp.lookUpCertCache(string(endorsement.Signer.MemberInfo))
 			if !ok {
@@ -606,6 +614,7 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 				continue
 			}
 			memInfo = string(memInfoBytes)
+			endorsement.Signer.MemberInfo = memInfoBytes
 		}
 
 		signerInfo, ok := cp.acService.lookUpMemberInCache(memInfo)
@@ -679,7 +688,7 @@ func (cp *certACProvider) addCertCache(signer string, cert []byte) {
 func (cp *certACProvider) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte,
 	memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, resultMsg string) {
 	var err error
-	remoteMember, err = cp.NewMember(endorsement.Signer)
+	remoteMember, err = cp.acService.newMember(endorsement.Signer)
 	if err != nil {
 		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
 		cp.log.Warn(resultMsg)
