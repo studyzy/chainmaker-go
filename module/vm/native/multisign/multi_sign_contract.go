@@ -262,21 +262,13 @@ func (r *MultiSignRuntime) Query(txSimContext protocol.TxSimContext, parameters 
 
 	//txId := txSimContext.GetTx().Payload.TxId
 	txId := oldPayload.TxId
-
-	if utils.IsAnyBlank(txId) {
-		err = fmt.Errorf("params txIdStr cannot be empty")
-		return nil, err
-	}
-	multiSignInfoDB, err := txSimContext.Get("multi_sign_contract", []byte(oldPayload.TxId)) // MultiSignInfo
+	multiSignInfoDB, err := txSimContext.Get("multi_sign_contract", []byte(txId)) // MultiSignInfo
 	if err != nil {
 		r.log.Error(err)
 		return nil, err
 	}
 	proto.Unmarshal(multiSignInfoDB, multiSignInfo)
-	//r.log.Infof("query sign old payload:%s \n", oldPayload)
 	mPayloadByte, _ := multiSignInfo.Payload.Marshal()
-	//r.log.Infof("query  multisigninfo payload:%s \n", multiSignInfo.Payload)
-	//r.log.Infof("bool equal %s", strconv.FormatBool(bytes.Equal(multiPayload,mPayloadByte)))
 	if !bytes.Equal(multiPayload, mPayloadByte) {
 		panic("the payload are inconsistent ")
 	}
