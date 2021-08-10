@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4
+	chainmaker.org/chainmaker/common v0.0.0-20210810165337-0dfb329fc60b
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
 	chainmaker.org/chainmaker/protocol v0.0.0-20210809025435-1ca089468862
 	github.com/gogo/protobuf v1.3.2
