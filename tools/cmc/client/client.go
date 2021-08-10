@@ -26,6 +26,7 @@ var (
 	sdkConfPath string // SDK配置路径
 
 	// 合约参数
+	abiFilePath    string
 	contractName   string
 	version        string
 	byteCodePath   string
@@ -71,6 +72,7 @@ const (
 	flagConcurrency            = "concurrency"
 	flagTotalCountPerGoroutine = "total-count-per-goroutine"
 	flagSdkConfPath            = "sdk-conf-path"
+	flagAbiFilePath            = "abi-file-path"
 	flagContractName           = "contract-name"
 	flagVersion                = "version"
 	flagMethod                 = "method"
@@ -137,6 +139,7 @@ func init() {
 	flags.StringVar(&sdkConfPath, flagSdkConfPath, "", "specify sdk config path")
 
 	// 用户合约
+	flags.StringVar(&abiFilePath, flagAbiFilePath, "", "specify user EVM contract abi file path, eg: /home/abi.json")
 	flags.StringVar(&contractName, flagContractName, "", "specify user contract name, eg: counter-go-1")
 	flags.StringVar(&version, flagVersion, "", "specify user contract version, eg: 1.0.0")
 	flags.StringVar(&byteCodePath, flagByteCodePath, "", "specify user contract byte code path")
