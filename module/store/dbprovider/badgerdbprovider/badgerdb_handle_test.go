@@ -21,6 +21,7 @@ import (
 )
 
 var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()))
+
 //var dbPath = "./"
 var log = &test.GoLogger{}
 var dbConfig = &localconf.BadgerDbConfig{

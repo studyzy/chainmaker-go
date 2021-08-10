@@ -12,9 +12,9 @@ import (
 	"strings"
 	"sync"
 
-	"go.uber.org/zap/zapcore"
 	"chainmaker.org/chainmaker/common/log"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Log module
