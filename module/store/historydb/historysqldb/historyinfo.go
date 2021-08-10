@@ -17,12 +17,12 @@ type StateHistoryInfo struct {
 }
 
 func (b *StateHistoryInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE state_history_infos (
     contract_name varchar(128),state_key varbinary(128),tx_id varchar(128),block_height bigint unsigned,
     PRIMARY KEY (contract_name,state_key,tx_id,block_height)
     ) default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE state_history_infos (
     contract_name text,state_key blob,tx_id text,block_height integer,
     PRIMARY KEY (contract_name,state_key,tx_id,block_height))`
@@ -64,12 +64,12 @@ type AccountTxHistoryInfo struct {
 }
 
 func (b *AccountTxHistoryInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE account_tx_history_infos (
     account_id varbinary(2048),block_height bigint unsigned,tx_id varchar(128),
     PRIMARY KEY (account_id,block_height,tx_id)
     ) default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE account_tx_history_infos (
 account_id blob,block_height integer,tx_id text,
 PRIMARY KEY (account_id,block_height,tx_id))`
@@ -100,12 +100,12 @@ type ContractTxHistoryInfo struct {
 }
 
 func (b *ContractTxHistoryInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE contract_tx_history_infos (
     contract_name varchar(128),block_height bigint unsigned,tx_id varchar(128),
     account_id varbinary(2048),PRIMARY KEY (contract_name,block_height,tx_id)
     ) default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE contract_tx_history_infos (
     contract_name text,block_height integer,tx_id text,account_id blob,
     PRIMARY KEY (contract_name,block_height,tx_id)

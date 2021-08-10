@@ -166,7 +166,7 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
 		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbConfig_Provider_Sql {
+			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
 			err = bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
 			if err != nil {
 				bs.logger.Errorf("chain[%s] failed to write event db, block[%d]",
@@ -549,7 +549,7 @@ func (bs *BlockStoreImpl) Close() error {
 	}
 	if !bs.storeConfig.DisableContractEventDB && bs.contractEventDB != nil {
 		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbConfig_Provider_Sql {
+			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
 			bs.contractEventDB.Close()
 		} else {
 			return errors.New("contract event db config err")
@@ -589,7 +589,7 @@ func (bs *BlockStoreImpl) recover() error {
 	}
 	if !bs.storeConfig.DisableContractEventDB {
 		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbConfig_Provider_Sql {
+			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
 			if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
 				return err
 			}

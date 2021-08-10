@@ -42,7 +42,10 @@ func splitKey(dbKey []byte) (contractName string, key []byte, blockHeight uint64
 	return
 }
 func (h *HistoryKvDB) GetHistoryForKey(contractName string, key []byte) (historydb.HistoryIterator, error) {
-	iter := h.dbHandle.NewIteratorWithPrefix(constructKeyPrefix(contractName, key))
+	iter, erro := h.dbHandle.NewIteratorWithPrefix(constructKeyPrefix(contractName, key))
+	if erro != nil {
+		return nil, erro
+	}
 	splitKeyFunc := func(key []byte) (*historydb.BlockHeightTxId, error) {
 		_, _, height, txId, err := splitKey(key)
 		if err != nil {

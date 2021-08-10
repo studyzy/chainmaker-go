@@ -27,7 +27,7 @@ func (b *MemberExtraInfo) ScanObject(scan func(dest ...interface{}) error) error
 	return scan(&b.MemberHash, &b.MemberType, &b.MemberInfo, &b.OrgId, &b.Seq)
 }
 func (b *MemberExtraInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE member_extra_infos (
     member_hash binary(32) primary key,
     member_type int,
@@ -35,7 +35,7 @@ func (b *MemberExtraInfo) GetCreateTableSql(dbType string) string {
     org_id varchar(200),
     seq bigint default 0
     ) default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE member_extra_infos (
 	member_hash blob primary key,
     member_type integer,
