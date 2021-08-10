@@ -492,7 +492,8 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg str
 
 		member, err := acs.newMember(entry.Signer)
 		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s", err.Error())
+			acs.log.Errorf("failed to convert endorsement to member: %s,member info: [%v]",
+				err.Error(), string(entry.Signer.MemberInfo))
 			continue
 		}
 		if member.GetRole() == role {
@@ -520,7 +521,8 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAnyCase(p *policy, end
 
 		member, err := acs.newMember(endorsement.Signer)
 		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s", err.Error())
+			acs.log.Errorf("failed to convert endorsement to member: %s,member info: [%v]",
+				err.Error(), string(endorsement.Signer.MemberInfo))
 			continue
 		}
 
@@ -531,7 +533,8 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAnyCase(p *policy, end
 			member.GetRole(), p.GetRoleList())
 	}
 
-	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)", resourceName)
+	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)",
+		resourceName)
 }
 
 func (acs *accessControlService) verifyPrincipalPolicyRuleAllCase(p *policy, endorsements []*common.EndorsementEntry) (
@@ -622,7 +625,8 @@ func (acs *accessControlService) getValidEndorsements(orgList map[string]bool, r
 
 		member, err := acs.newMember(endorsement.Signer)
 		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s", err.Error())
+			acs.log.Errorf("failed to convert endorsement to member: %s,member info: [%v]",
+				err.Error(), string(endorsement.Signer.MemberInfo))
 			continue
 		}
 

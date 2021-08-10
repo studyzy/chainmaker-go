@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -20,7 +22,6 @@ import (
 	"chainmaker.org/chainmaker/common/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 )
 
@@ -139,25 +140,32 @@ func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) 
 }
 
 func NewCertMember(member *pbac.Member, acs *accessControlService) (*certMember, error) {
-	if member.MemberType == pbac.MemberType_CERT {
-		return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, acs.hashType)
-	}
-	if member.MemberType == pbac.MemberType_CERT_HASH {
-		var certPEM []byte
-		var err error
-		certBlock, _ := pem.Decode(member.MemberInfo)
-		if certBlock == nil {
-			certPEM, err = acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
+
+	certBlock, _ := pem.Decode(member.MemberInfo)
+	if certBlock == nil {
+		_, err := bcx509.ParseCertificate(member.MemberInfo)
+		if err == nil {
+			return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, acs.hashType)
+
+		} else {
+			certIdHex := hex.EncodeToString(member.MemberInfo)
+			certPEM, err := acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
+				[]byte(certIdHex))
+			noHexcertPEM, err := acs.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(),
 				member.MemberInfo)
 			if err != nil {
-				return nil, fmt.Errorf("setup member failed, get cert failed: %s", err.Error())
+				return nil, fmt.Errorf("setup member failed, get cert info by cert hash failed: %s", err.Error())
 			}
-		} else {
-			certPEM = member.MemberInfo
+			if certPEM != nil {
+				return newMemberFromCertPem(member.OrgId, string(certPEM), false, acs.hashType)
+			}
+			if noHexcertPEM != nil {
+				return newMemberFromCertPem(member.OrgId, string(noHexcertPEM), false, acs.hashType)
+			}
+			return nil, fmt.Errorf("setup member failed, unsupport cert member type")
 		}
-		return newMemberFromCertPem(member.OrgId, string(certPEM), false, acs.hashType)
 	}
-	return nil, fmt.Errorf("setup member failed, unsupport cert member type")
+	return newMemberFromCertPem(member.OrgId, string(member.MemberInfo), true, acs.hashType)
 }
 
 func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType string) (*certMember, error) {
@@ -165,46 +173,56 @@ func newMemberFromCertPem(orgId, certPEM string, isFullCert bool, hashType strin
 	certMember.orgId = orgId
 	certMember.isFullCert = isFullCert
 
-	certBlock, _ := pem.Decode([]byte(certPEM))
+	var cert *bcx509.Certificate
+	var err error
+	certBlock, rest := pem.Decode([]byte(certPEM))
 	if certBlock == nil {
-		return nil, fmt.Errorf("setup cert member failed, pem decode failed")
+		cert, err = bcx509.ParseCertificate(rest)
+		if err != nil {
+			return nil, fmt.Errorf("setup cert member failed, invalid certificate")
+		}
+	} else {
+		cert, err = bcx509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("setup cert member failed, invalid certificate")
+		}
 	}
 
-	cert, err := bcx509.ParseCertificate(certBlock.Bytes)
-	if err == nil {
-		hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
-		if err != nil {
-			return nil, fmt.Errorf("new member failed: get hash from signature algorithm: %s", err.Error())
-		}
-		hash, ok := bccrypto.HashAlgoMap[hashType]
-		if !ok {
-			return nil, fmt.Errorf("new member failed: unsupport hash type")
-		}
-		if hash != hashAlgo {
-			return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate,expected: [%v],actual: [%v]",
-				hashAlgo, hash)
-		}
-		certMember.hashType = hashType
-		orgIdFromCert := cert.Subject.Organization[0]
-		if orgIdFromCert != orgId {
-			return nil, fmt.Errorf("setup cert member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
-		}
-		id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
-		if err != nil {
-			id = []byte(cert.Subject.CommonName)
-		}
-		//id := []byte(cert.Subject.CommonName)
-		certMember.id = string(id)
-		certMember.cert = cert
-		ou := ""
-		if len(cert.Subject.OrganizationalUnit) > 0 {
-			ou = cert.Subject.OrganizationalUnit[0]
-		}
-		ou = strings.ToUpper(ou)
-		certMember.role = protocol.Role(ou)
-		return &certMember, nil
+	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+	if err != nil {
+		return nil, fmt.Errorf("new member failed: get hash from signature algorithm: %s", err.Error())
 	}
-	return nil, fmt.Errorf("setup cert member failed, invalid public key or certificate")
+
+	hash, ok := bccrypto.HashAlgoMap[hashType]
+	if !ok {
+		return nil, fmt.Errorf("new member failed: unsupport hash type")
+	}
+
+	if hash != hashAlgo {
+		return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate,expected: [%v],actual: [%v]",
+			hashAlgo, hash)
+	}
+
+	certMember.hashType = hashType
+	orgIdFromCert := cert.Subject.Organization[0]
+	if orgIdFromCert != orgId {
+		return nil, fmt.Errorf("setup cert member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
+	}
+
+	id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+	if err != nil {
+		id = []byte(cert.Subject.CommonName)
+	}
+	//id := []byte(cert.Subject.CommonName)
+	certMember.id = string(id)
+	certMember.cert = cert
+	ou := ""
+	if len(cert.Subject.OrganizationalUnit) > 0 {
+		ou = cert.Subject.OrganizationalUnit[0]
+	}
+	ou = strings.ToUpper(ou)
+	certMember.role = protocol.Role(ou)
+	return &certMember, nil
 }
 
 var NilCertMemberProvider MemberProvider = (*certMemberProvider)(nil)
