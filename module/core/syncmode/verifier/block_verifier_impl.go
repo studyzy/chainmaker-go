@@ -94,6 +94,7 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		BlockchainStore: config.BlockchainStore,
 		ProposalCache:   config.ProposedCache,
 		StoreHelper:     config.StoreHelper,
+		TxScheduler:     config.TxScheduler,
 	}
 	v.verifierBlock = common.NewVerifierBlock(conf)
 
