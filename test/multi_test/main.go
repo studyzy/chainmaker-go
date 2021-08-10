@@ -112,19 +112,14 @@ func runTest() {
 	txId = utils.GetRandTxId()
 	//timestamp = 1628580218
 	timestamp = time.Now().Unix()
-	//timestampBak = timestamp
-	//fmt.Println("timestamp", timestamp)
+	fmt.Println("timestamp", timestamp)
 	testMultiSign(sk3, &client, "", CHAIN1)
 
 	time.Sleep(time.Second * 3)
 	multiOrgId = "wx-org2.chainmaker.org"
 	testMultiSignVote(sk3, &client, "", CHAIN1)
-
-	//time.Sleep(time.Second * 3)
 	multiOrgId = "wx-org3.chainmaker.org"
 	testMultiSignVote(sk3, &client, "", CHAIN1)
-	//
-	//time.Sleep(time.Second * 3)
 	multiOrgId = "wx-org4.chainmaker.org"
 	testMultiSignVote(sk3, &client, "", CHAIN1)
 
@@ -207,7 +202,7 @@ func runTest() {
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-func-verify-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
-	contractName = "contract103"
+	contractName = "contract106"
 	runtimeType = commonPb.RuntimeType_WASMER
 	printConfig("wasmer")
 }

@@ -14,15 +14,13 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"crypto/md5"
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 
 var (
-	contractName              = syscontract.SystemContract_MULTI_SIGN.String()
-	KEY_SystemContractPayload = "SystemContractPayload"
+	contractName = syscontract.SystemContract_MULTI_SIGN.String()
 )
 
 type MultiSignContract struct {
@@ -58,19 +56,14 @@ func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters ma
 	// 1、校验并获取参数
 	sysContractName := parameters[syscontract.MultiReq_SYS_CONTRACT_NAME.String()]
 	sysMethod := parameters[syscontract.MultiReq_SYS_METHOD.String()]
+	r.log.Infof("multi sign req start. ContractName[%s] Method[%s]", sysContractName, sysMethod)
 	if utils.IsAnyBlank(sysContractName, sysMethod) {
 		err = fmt.Errorf("multi req params verify fail. sysContractName/sysMethod cannot be empty")
 		return nil, err
 	}
 
+	// 构建多签对象并记录
 	tx := txSimContext.GetTx()
-	r.log.Infof("multi sign req start. ContractName[%s] Method[%s] ParamsLen[%d]", sysContractName, sysMethod, len(tx.Payload.Parameters))
-	{
-		// md5 payload log
-		bytes, _ := tx.Payload.Marshal()
-		m5 := fmt.Sprintf("%x", md5.Sum(bytes))
-		r.log.Debugf("multi req payload md5 is %s", m5)
-	}
 	multiSignInfo := &syscontract.MultiSignInfo{
 		Payload:      tx.Payload,
 		ContractName: string(sysContractName),
@@ -79,11 +72,10 @@ func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters ma
 		VoteInfos:    nil,
 	}
 
-	// multi sign record
 	for _, endorser := range tx.Endorsers {
 		multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, &syscontract.MultiSignVoteInfo{
 			Vote:        syscontract.VoteStatus_AGREE,
-			Endorsement: endorser,
+			Endorsement: endorser, // 签名在接收交易时已被验证
 		})
 	}
 
@@ -101,18 +93,11 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 	// 4、根据传入参数的状态修改多签结果
 	// 5、根据结果调用accessControl校验是否认证成功
 
-	voteInfo := &syscontract.MultiSignVoteInfo{}
-
 	voteInfoBytes := parameters[syscontract.MultiVote_VOTE_INFO.String()]
 	txId := parameters[syscontract.MultiVote_TX_ID.String()]
+	r.log.Infof("multi sign vote start. MultiVote_TX_ID[%s]", txId)
 	if utils.IsAnyBlank(voteInfoBytes, txId) {
 		err = fmt.Errorf("multi vote params verify fail. voteInfo/txId cannot be empty")
-		r.log.Warn(err)
-		return nil, err
-	}
-	r.log.Infof("multi sign vote start. MultiVote_TX_ID[%s]", txId)
-	err = proto.Unmarshal(voteInfoBytes, voteInfo)
-	if err != nil {
 		r.log.Warn(err)
 		return nil, err
 	}
@@ -122,11 +107,16 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 		r.log.Warn(err)
 		return nil, err
 	}
-	if len(multiSignInfoBytes) == 0 {
+	if multiSignInfoBytes == nil {
 		return nil, fmt.Errorf("not found tx id from db %s", txId)
 	}
+
 	multiSignInfo := &syscontract.MultiSignInfo{}
-	proto.Unmarshal(multiSignInfoBytes, multiSignInfo)
+	err = proto.Unmarshal(multiSignInfoBytes, multiSignInfo)
+	if err != nil {
+		r.log.Warn(err)
+		return nil, err
+	}
 
 	// 校验：该多签是否已完成投票
 	if multiSignInfo.Status != syscontract.MultiSignStatus_PROCESSING {
@@ -135,25 +125,40 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 		return nil, err
 	}
 
-	// 校验：该用户是否已投票
-	for _, info := range multiSignInfo.VoteInfos {
-		if bytes.Equal(voteInfo.Endorsement.Signer.MemberInfo, info.Endorsement.Signer.MemberInfo) {
-			err = fmt.Errorf("the signer is voted")
-			r.log.Warn(err)
-			return nil, err
-		}
+	reqVoteInfo := &syscontract.MultiSignVoteInfo{}
+	err = proto.Unmarshal(voteInfoBytes, reqVoteInfo)
+	if err != nil {
+		r.log.Warn(err)
+		return nil, err
 	}
 
-	resourceName := multiSignInfo.ContractName + "-" + multiSignInfo.Method
 	ac, err := txSimContext.GetAccessControl()
 	if err != nil {
 		r.log.Warn(err)
 		return nil, err
 	}
+	// 校验：该用户是否已投票
+	{
+		signer, err := ac.NewMemberFromProto(reqVoteInfo.Endorsement.Signer)
+		if err != nil {
+			r.log.Warn(err)
+			return nil, err
+		}
+		signerSki := signer.GetSKI()
+		for _, info := range multiSignInfo.VoteInfos {
+			signed, _ := ac.NewMemberFromProto(info.Endorsement.Signer)
+			if bytes.Equal(signerSki, signed.GetSKI()) {
+				err = fmt.Errorf("the signer[org:%s] is voted", signed.GetOrgId())
+				r.log.Warn(err)
+				return nil, err
+			}
+		}
+	}
 	mPayloadByte, _ := multiSignInfo.Payload.Marshal()
+	resourceName := multiSignInfo.ContractName + "-" + multiSignInfo.Method
 	// 校验当前签名
 	{
-		principal, err := ac.CreatePrincipal(resourceName, []*commonPb.EndorsementEntry{voteInfo.Endorsement}, mPayloadByte)
+		principal, err := ac.CreatePrincipal(resourceName, []*commonPb.EndorsementEntry{reqVoteInfo.Endorsement}, mPayloadByte)
 		if err != nil {
 			r.log.Warn(err)
 			return nil, err
@@ -164,11 +169,11 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 			return nil, err
 		}
 		if endorsement == nil || len(endorsement) == 0 {
-			err = fmt.Errorf("the multi sign vote signature is err, error:%s", err)
+			err = fmt.Errorf("the multi sign vote signature[org:%s] is err, error:%s", reqVoteInfo.Endorsement.Signer.OrgId, err)
 			r.log.Error(err)
 			return nil, err
 		}
-		multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, voteInfo)
+		multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, reqVoteInfo)
 	}
 
 	var (
