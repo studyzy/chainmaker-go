@@ -55,10 +55,10 @@ func prePathFmt() string {
 	return certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 }
 func userKeyPath() string {
-	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
 }
 func userCrtPath() string {
-	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 }
 func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string, wasmPath string,
 	runtimeType commonPb.RuntimeType) string {
@@ -182,8 +182,8 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	fmt.Errorf("################ %s", string(sender.MemberInfo))
 
 	signer := GetSigner(sk3, sender)
-	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
+	//signBytes, err := signer.Sign("SM3", rawTxBytes)
 	if err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 		os.Exit(0)

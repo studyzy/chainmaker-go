@@ -50,8 +50,8 @@ const (
 	certPathPrefix   = "../../build/crypto-config"
 	certWasmPath     = "../wasm/rust-fact-2.0.0.wasm"
 	addWasmPath      = "../wasm/rust-counter-2.0.0.wasm"
-	userKeyPath      = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath      = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	userKeyPath      = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.sign.key"
+	userCrtPath      = certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 	orgId            = "wx-org1.chainmaker.org"
 	certContractName = "ex_fact"
 	addContractName  = "add"
@@ -60,8 +60,8 @@ const (
 	OrgIdFormat = "wx-org%d.chainmaker.org"
 	tps         = 10000 //
 
-	userKeyPathFormat  = certPathPrefix + "/wx-org%d.chainmaker.org/user/client1/client1.tls.key"
-	userCertPathFormat = certPathPrefix + "/wx-org%d.chainmaker.org/user/client1/client1.tls.crt"
+	userKeyPathFormat  = certPathPrefix + "/wx-org%d.chainmaker.org/user/client1/client1.sign.key"
+	userCertPathFormat = certPathPrefix + "/wx-org%d.chainmaker.org/user/client1/client1.sign.crt"
 )
 
 var (
@@ -75,22 +75,22 @@ var (
 		{certPathPrefix + "/wx-org7.chainmaker.org/ca"},
 	}
 	userKeyPaths = []string{
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org5.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org6.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "/wx-org7.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "/wx-org5.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "/wx-org6.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "/wx-org7.chainmaker.org/user/client1/client1.sign.key",
 	}
 	userCrtPaths = []string{
-		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org5.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org6.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "/wx-org7.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "/wx-org1.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "/wx-org2.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "/wx-org3.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "/wx-org4.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "/wx-org5.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "/wx-org6.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "/wx-org7.chainmaker.org/user/client1/client1.sign.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",

@@ -63,16 +63,16 @@ var (
 		{certPathPrefix + "wx-org4.chainmaker.org/ca/"},
 	}
 	userKeyPaths = []string{
-		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.sign.key",
 	}
 	userCrtPaths = []string{
-		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.sign.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",
