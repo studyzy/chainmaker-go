@@ -79,7 +79,7 @@ func newCertACProvider(chainConfig *config.ChainConfig, localOrgId string,
 		localOrg: nil,
 		log:      log,
 	}
-	certACProvider.acService = initAccessControlService(certACProvider.hashType, chainConfig, store, log)
+	certACProvider.acService = initAccessControlService(certACProvider.hashType, localOrgId, chainConfig, store, log)
 
 	err := certACProvider.initTrustRoots(chainConfig.TrustRoots, localOrgId)
 	if err != nil {
@@ -841,12 +841,12 @@ func (cp *certACProvider) Module() string {
 
 func (cp *certACProvider) Watch(chainConfig *config.ChainConfig) error {
 	cp.hashType = chainConfig.GetCrypto().GetHash()
-	err := cp.initTrustRootsForUpdatingChainConfig(chainConfig.TrustRoots, cp.localOrg.id)
+	err := cp.initTrustRootsForUpdatingChainConfig(chainConfig, cp.localOrg.id)
 	if err != nil {
 		return err
 	}
 
-	cp.acService.initResourcePolicy(chainConfig.ResourcePolicies)
+	cp.acService.initResourcePolicy(chainConfig.ResourcePolicies, cp.localOrg.id)
 
 	cp.opts.KeyUsages = make([]x509.ExtKeyUsage, 1)
 	cp.opts.KeyUsages[0] = x509.ExtKeyUsageAny
@@ -872,7 +872,7 @@ func (cp *certACProvider) Callback(contractName string, payloadBytes []byte) err
 	}
 }
 
-func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(roots []*config.TrustRootConfig,
+func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *config.ChainConfig,
 	localOrgId string) error {
 
 	var orgNum int32
@@ -881,7 +881,7 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(roots []*config.T
 		Intermediates: bcx509.NewCertPool(),
 		Roots:         bcx509.NewCertPool(),
 	}
-	for _, orgRoot := range roots {
+	for _, orgRoot := range chainConfig.TrustRoots {
 		org := &organization{
 			id:                       orgRoot.OrgId,
 			trustedRootCerts:         map[string]*bcx509.Certificate{},
@@ -922,6 +922,7 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(roots []*config.T
 		}
 	}
 	cp.localOrg = localOrg.(*organization)
+	cp.acService.localTrustMembers = chainConfig.TrustMembers
 	return nil
 }
 

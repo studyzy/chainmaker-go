@@ -319,7 +319,7 @@ func (ac *accessControl) initResourcePolicy(resourcePolicies []*config.ResourceP
 	resourceNamePolicyMap := ac.createDefaultResourcePolicy()
 	for _, resourcePolicy := range resourcePolicies {
 		if ac.ValidateResourcePolicy(resourcePolicy) {
-			policy := NewPolicyFromPb(resourcePolicy.Policy)
+			policy := newPolicyFromPb(resourcePolicy.Policy)
 			resourceNamePolicyMap.Store(resourcePolicy.ResourceName, policy)
 		}
 	}

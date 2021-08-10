@@ -46,7 +46,7 @@ func (p *policy) GetRoleList() []protocol.Role {
 	return p.roleList
 }
 
-func NewPolicy(rule protocol.Rule, orgList []string, roleList []protocol.Role) *policy {
+func newPolicy(rule protocol.Rule, orgList []string, roleList []protocol.Role) *policy {
 	return &policy{
 		rule:     rule,
 		orgList:  orgList,
@@ -54,7 +54,7 @@ func NewPolicy(rule protocol.Rule, orgList []string, roleList []protocol.Role) *
 	}
 }
 
-func NewPolicyFromPb(input *pbac.Policy) *policy {
+func newPolicyFromPb(input *pbac.Policy) *policy {
 	p := &policy{
 		rule:     protocol.Rule(input.Rule),
 		orgList:  input.OrgList,

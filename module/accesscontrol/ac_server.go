@@ -60,26 +60,26 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 }
 
 var (
-	policyRead      = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
-	policyWrite     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
-	policyConsensus = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
-	policyP2P       = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
-	policyAdmin     = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
-	policySubscribe = NewPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
-	policyArchive   = NewPolicy(protocol.RuleAny, []string{localconf.ChainMakerConfig.NodeConfig.OrgId}, []protocol.Role{protocol.RoleAdmin})
+	policyRead      = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
+	policyWrite     = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
+	policyConsensus = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
+	policyP2P       = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
+	policyAdmin     = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
+	policySubscribe = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
+	policyArchive   = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
 
-	policyConfig = NewPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
+	policyConfig = newPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
 
-	policySelfConfig = NewPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
+	policySelfConfig = newPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
 
-	policyForbidden = NewPolicy(protocol.RuleForbidden, nil, nil)
+	policyForbidden = newPolicy(protocol.RuleForbidden, nil, nil)
 
-	policyAllTest = NewPolicy(protocol.RuleAll, nil, []protocol.Role{protocol.RoleAdmin})
+	policyAllTest = newPolicy(protocol.RuleAll, nil, []protocol.Role{protocol.RoleAdmin})
 
-	policyLimitTestAny        = NewPolicy("2", nil, nil)
-	policyLimitTestAdmin      = NewPolicy("2", nil, []protocol.Role{protocol.RoleAdmin})
-	policyPortionTestAny      = NewPolicy("3/4", nil, nil)
-	policyPortionTestAnyAdmin = NewPolicy("3/4", nil, []protocol.Role{protocol.RoleAdmin})
+	policyLimitTestAny        = newPolicy("2", nil, nil)
+	policyLimitTestAdmin      = newPolicy("2", nil, []protocol.Role{protocol.RoleAdmin})
+	policyPortionTestAny      = newPolicy("3/4", nil, nil)
+	policyPortionTestAnyAdmin = newPolicy("3/4", nil, []protocol.Role{protocol.RoleAdmin})
 )
 
 type accessControlService struct {
@@ -98,7 +98,7 @@ type memberCache struct {
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType string, chainConf *config.ChainConfig,
+func initAccessControlService(hashType, localOrgId string, chainConf *config.ChainConfig,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
@@ -110,11 +110,13 @@ func initAccessControlService(hashType string, chainConf *config.ChainConfig,
 		log:                   log,
 		hashType:              hashType,
 	}
-	acService.initResourcePolicy(chainConf.ResourcePolicies)
+	acService.initResourcePolicy(chainConf.ResourcePolicies, localOrgId)
 	return acService
 }
 
-func (acs *accessControlService) createDefaultResourcePolicy() {
+func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) {
+
+	policyArchive.orgList = []string{localOrgId}
 
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameReadData, policyRead)
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
@@ -222,11 +224,11 @@ func (acs *accessControlService) createDefaultResourcePolicy() {
 		syscontract.CertManageFunction_CERTS_REVOKE.String(), policyAdmin)
 }
 
-func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy) {
-	acs.createDefaultResourcePolicy()
+func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy, localOrgId string) {
+	acs.createDefaultResourcePolicy(localOrgId)
 	for _, resourcePolicy := range resourcePolicies {
 		if acs.validateResourcePolicy(resourcePolicy) {
-			policy := NewPolicyFromPb(resourcePolicy.Policy)
+			policy := newPolicyFromPb(resourcePolicy.Policy)
 			acs.resourceNamePolicyMap.Store(resourcePolicy.ResourceName, policy)
 		}
 	}
