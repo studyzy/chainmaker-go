@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
@@ -430,6 +429,7 @@ type VerifierBlockConf struct {
 	BlockchainStore protocol.BlockchainStore
 	ProposalCache   protocol.ProposalCache // proposal cache
 	StoreHelper     conf.StoreHelper
+	TxScheduler     protocol.TxScheduler
 }
 
 type VerifierBlock struct {
@@ -458,9 +458,9 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		blockchainStore: conf.BlockchainStore,
 		proposalCache:   conf.ProposalCache,
 		storeHelper:     conf.StoreHelper,
+		txScheduler:     conf.TxScheduler,
 	}
-	var schedulerFactory scheduler.TxSchedulerFactory
-	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf, conf.StoreHelper)
+
 	return verifyBlock
 }
 
