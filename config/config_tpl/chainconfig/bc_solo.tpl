@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-chain_id: { chain_id }    # 链标识
-version: v1.2.0         # 链版本
+chain_id: {chain_id}    # 链标识
+version: v2.0.0         # 链版本
 sequence: 0             # 配置版本
 auth_type: "identity"   # 认证类型
 
