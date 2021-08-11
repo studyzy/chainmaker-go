@@ -7,6 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package evm
 
 import (
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"runtime/debug"
+
 	evm_go "chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
@@ -15,10 +20,6 @@ import (
 	"chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"encoding/hex"
-	"errors"
-	"fmt"
-	"runtime/debug"
 )
 
 // RuntimeInstance evm runtime
@@ -191,7 +192,7 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
 			r.TxSimContext.Put(n, []byte(k), val.Bytes())
-			r.Log.Infof("put CachedData,name[%s],key[%s],value[%x]", n, k, val.Bytes())
+			//r.Log.Infof("put CachedData,name[%s],key[%s],value[%x]", n, k, val.Bytes())
 			//fmt.Println("n k val", n, k, val, val.String())
 		}
 	}
