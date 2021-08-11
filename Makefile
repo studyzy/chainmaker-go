@@ -8,7 +8,7 @@ else
   endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
-VERSION=v2.0.0
+VERSION=v2.0.2
 
 chainmaker:
 	@cd main && go build -o ../bin/chainmaker
@@ -17,7 +17,7 @@ chainmaker-vendor:
 	@cd main && go build -mod=vendor -o ../bin/chainmaker
 
 package:
-	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
+	@cd main && go mod tidy && GOPATH=${GOPATH} go build -o ../bin/chainmaker
 	@mkdir -p ./release
 	@rm -rf ./tmp/chainmaker/
 	@mkdir -p ./tmp/chainmaker/
