@@ -1,11 +1,14 @@
 package evm
 
 import (
+	"encoding/hex"
+	"strings"
+	"testing"
+
 	"chainmaker.org/chainmaker-go/evm/test"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
-	"encoding/hex"
-	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRuntimeInstance_Install(t *testing.T) {
@@ -26,7 +29,7 @@ func TestRuntimeInstance_Install(t *testing.T) {
 
 	byteCode, _ = hex.DecodeString(string(byteCode))
 	test.BaseParam(parameters)
-	parameters["data"] = []byte( "00000000000000000000000013f0c1639a9931b0ce17e14c83f96d4732865b58")
+	parameters["data"] = []byte("00000000000000000000000013f0c1639a9931b0ce17e14c83f96d4732865b58")
 	contractResult := runtimeInstance.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 	loggerByChain.Infof("ContractResult Code:%+v", contractResult.Code)
 	loggerByChain.Infof("ContractResult ContractEvent:%+v", contractResult.ContractEvent)
@@ -59,4 +62,10 @@ func TestRuntimeInstance_Invoke(t *testing.T) {
 	loggerByChain.Infof("ContractResult GasUsed:%+v", contractResult.GasUsed)
 	loggerByChain.Infof("ContractResult Message:%+v", contractResult.Message)
 	loggerByChain.Infof("ContractResult Result:%+X", contractResult.Result)
+}
+func TestConvertEvmContractName(t *testing.T) {
+	name := "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
+	addr, _ := contractNameToAddress(name)
+	t.Logf("evm addr:%s", addr.Text(16))
+	assert.Equal(t, strings.ToLower(name[2:]), addr.Text(16))
 }

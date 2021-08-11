@@ -38,11 +38,19 @@ func TestCheckEvmAddressFormat(t *testing.T) {
 		pass bool
 	}{
 		{"a", false},
+		{"1346478487042892172349946970630736756658846205592", true},
+		{"440902816914877365849934251651973913683067062725", true},
+		{"94250082384390137379817105468624512268792773790", true},
+		{"810227444454088037217518958892195931403787508", true},
+		{"4409028169148773658499342516519739136830670625", true},
+		{"123", false},
+		{"1233", false},
+		{"12333", true},
 		{"", false},
 		{"a123456789B", false},
 		{"1abc", false},
-		{"0x60acF8D95fd365122e56F414b2C13D9dc7742A07", true},
-		{"60acF8D95fd365122e56F414b2C13D9dc7742A07", true},
+		{"0x60acF8D95fd365122e56F414b2C13D9dc7742A07", false},
+		{"60acF8D95fd365122e56F414b2C13D9dc7742A07", false},
 		{"测试", false},
 		{"aaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccddddddddddddddddeeeeeeeeeeeeeeeeeeeeeeeffffffffffffffffffffgggggggggggggggggg", false},
 	}

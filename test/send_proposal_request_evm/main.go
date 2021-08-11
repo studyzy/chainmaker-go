@@ -18,6 +18,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/evmutils"
 	evm "chainmaker.org/chainmaker/common/evmutils"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
@@ -56,7 +58,6 @@ const (
 	adminCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
 
 	orgId         = "wx-org1.chainmaker.org"
-	contractName  = "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
 	contractName1 = "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
 	runtimeType   = commonPb.RuntimeType_EVM
 	prePathFmt    = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
@@ -64,11 +65,18 @@ const (
 	//client1Addr = "1087848554046178479107522336262214072175637027873"
 )
 
+var (
+	contractAddr, _ = evmutils.MakeAddressFromString("cont_01")
+	contractName    = contractAddr.String()
+)
+
 //var caPaths = []string{certPathPrefix + "/certs/wx-org1/ca"}
 var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
 var AbiJson = ""
 
 func main() {
+	fmt.Println("contractName:", contractName)
+
 	flag.Parse()
 	common.SetCertPathPrefix(certPathPrefix)
 
@@ -117,6 +125,72 @@ func main() {
 	}
 }
 
+func testAddress() {
+
+	{
+		fmt.Println()
+		evmInt := evmutils.FromDecimalString("123")
+		fmt.Println(evmInt.String())
+		fmt.Printf("%x \n", evmInt.AsStringKey())
+		fmt.Printf("%x \n\n", evmInt.Bytes())
+	}
+	{
+		name := "000000000000000000000000000000000007b"
+		evmInt := evmutils.FromHexString(name)
+		fmt.Println(evmInt.String())
+		fmt.Printf("%x \n\n", evmInt.AsStringKey())
+	}
+	for i := 0; i < 100000; i++ {
+		evmInt, _ := evmutils.MakeAddressFromString("contractNamecontractNamecontractNamecontractName" + strconv.Itoa(i))
+		if len(evmInt.String()) != 49 && len(evmInt.String()) != 48 && len(evmInt.String()) != 47 {
+			fmt.Println(evmInt.String()+" i="+strconv.Itoa(i)+" len", len(evmInt.String()))
+		}
+		val := "@#$%^&*()_{PKJHCVBN<" + strconv.Itoa(i)
+		evmInt, _ = evmutils.MakeAddressFromString(val)
+		decimalString := evmInt.String()
+		if len(decimalString) != 49 && len(decimalString) != 48 && len(decimalString) != 47 {
+			fmt.Println(evmInt.String()+" i="+strconv.Itoa(i)+" len", len(decimalString))
+
+			address := evmutils.Keccak256([]byte(val))
+			addr := hex.EncodeToString(address)[24:]
+			if len(addr) != 40 || len(evmInt.String()) == 45 {
+				fmt.Println(addr, len(addr))
+
+				evmAddr := evmutils.FromDecimalString(decimalString)
+				hexAddr := hex.EncodeToString(evmAddr.Bytes())
+				fmt.Println("hexAddr", hexAddr, len(hexAddr))
+				hexAddr = hex.EncodeToString([]byte(evmAddr.AsStringKey()))
+				fmt.Println("hexAddr", hexAddr, len(hexAddr))
+			}
+		}
+	}
+	name := "ebda2efd8e80ade444cd77891a3551a2ccc68698"
+	evmInt, _ := evmutils.MakeAddressFromHex(name)
+	fmt.Println(evmInt.String())
+	fmt.Printf("%x", evmInt.AsStringKey())
+
+	if evmutils.Has0xPrefix(name) {
+		name = name[2:]
+	}
+	fmt.Println("FromHexString")
+	evmInt = evmutils.FromHexString(name)
+	fmt.Println(evmInt.String())
+	fmt.Printf("%x \n", evmInt.AsStringKey())
+
+	evmInt = evmutils.FromString(name)
+	fmt.Println(evmInt.String())
+	fmt.Println(evmInt.AsStringKey())
+
+	fmt.Println()
+	evmInt = evmutils.FromDecimalString("4409028169148773658499342516519739136830670")
+	fmt.Println(evmInt.String())
+	fmt.Printf("%x \n", evmInt.AsStringKey())
+
+	fmt.Println()
+	evmInt, _ = evmutils.MakeAddressFromString("contractNamecontractNamecontractNamecontractName")
+	fmt.Println(evmInt.String())
+	fmt.Printf("%x \n", evmInt.AsStringKey())
+}
 func convertHex2Bin(hexPath, binPath string) error {
 	hexBytes, err := ioutil.ReadFile(hexPath)
 	if err != nil {
