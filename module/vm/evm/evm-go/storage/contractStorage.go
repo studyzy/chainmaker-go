@@ -22,6 +22,7 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker/protocol"
+	"encoding/hex"
 )
 
 var log = logger.GetLogger(logger.MODULE_VM)
@@ -63,7 +64,8 @@ func (c *ContractStorage) CanTransfer(from, to, val *evmutils.Int) bool {
 }
 
 func (c *ContractStorage) GetCode(address *evmutils.Int) (code []byte, err error) {
-	return utils.GetContractBytecode(c.Ctx.Get, address.String())
+	//return utils.GetContractBytecode(c.Ctx.Get, address.String())
+	return utils.GetContractBytecode(c.Ctx.Get, hex.EncodeToString(address.Bytes()))
 	//if contractName, err := c.Ctx.Get(address.String(), []byte(protocol.ContractAddress)); err == nil {
 	//	versionKey := []byte(protocol.ContractVersion + address.String())
 	//	if contractVersion, err := c.Ctx.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey); err == nil {

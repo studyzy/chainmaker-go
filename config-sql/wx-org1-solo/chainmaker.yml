@@ -71,6 +71,7 @@ pprof:
   port: 24321
 
 storage:
+  db_prefix: org1_solo_
   store_path: ../data/org1/ledgerData1
   blockdb_config:
     provider: sql

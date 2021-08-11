@@ -107,7 +107,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 
 	// contract
 	//address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
-	address, err := contractNameToAddress(contract.Name)
+	address, err := contractNameHexToAddress(contract.Name)
 	if err != nil {
 		return r.errorResult(contractResult, err, "make address fail")
 	}
@@ -158,7 +158,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 	contractResult.ContractEvent = r.ContractEvent
 	return contractResult
 }
-func contractNameToAddress(cname string) (*evmutils.Int, error) {
+func contractNameDecimalToAddress(cname string) (*evmutils.Int, error) {
 	// hexStr2 == hexStr2
 	// hexStr := hex.EncodeToString(evmutils.Keccak256([]byte("contractName")))[24:]
 	// hexStr2 := hex.EncodeToString(evmutils.Keccak256([]byte("contractName"))[12:])
@@ -166,6 +166,13 @@ func contractNameToAddress(cname string) (*evmutils.Int, error) {
 	evmAddr := evmutils.FromDecimalString(cname)
 	if evmAddr == nil {
 		return nil, errors.New("contractName[%s] not DecimalString, you can use evmutils.MakeAddressFromString(\"contractName\").String() get a decimal string")
+	}
+	return evmAddr, nil
+}
+func contractNameHexToAddress(cname string) (*evmutils.Int, error) {
+	evmAddr := evmutils.FromHexString(cname)
+	if evmAddr == nil {
+		return nil, errors.New("contractName[%s] not HexString, you can use hex.EncodeToString(evmutils.MakeAddressFromString(\"contractName\").Bytes()) get a hex string address")
 	}
 	return evmAddr, nil
 }

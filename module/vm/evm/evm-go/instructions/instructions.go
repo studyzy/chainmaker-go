@@ -242,11 +242,11 @@ func (i *instructionsContext) dumpVM(instruction opCodeInstruction, opCode byte)
 	}
 
 	i.memory.All()
-	for n, value := range i.storage.ResultCache.CachedData {
-		for k, v := range value {
-			fmt.Println("current result.Catch.CachedData", n, "k", k, "v", v.String())
-		}
-	}
+	//for n, value := range i.storage.ResultCache.CachedData {
+	//	for k, v := range value {
+	//		fmt.Println("current result.Catch.CachedData", n, "k", k, "v", v.String())
+	//	}
+	//}
 }
 
 func Load() {
