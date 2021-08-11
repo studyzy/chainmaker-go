@@ -120,7 +120,10 @@ func (s *StateKvDB) SelectObject(contractName string, startKey []byte, limit []b
 	s.Cache.LockForFlush()
 	defer s.Cache.UnLockFlush()
 	//logger.Debugf("start[%s], limit[%s]", objectStartKey, objectLimitKey)
-	iter := s.DbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
+	iter, err := s.DbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
+	if err != nil {
+		return nil, err
+	}
 	return &kvi{
 		iter:         iter,
 		contractName: contractName,

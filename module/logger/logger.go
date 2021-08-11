@@ -12,10 +12,9 @@ import (
 	"strings"
 	"sync"
 
-	"go.uber.org/zap/zapcore"
-
 	"chainmaker.org/chainmaker/common/log"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Log module
@@ -29,7 +28,7 @@ const (
 	MODULE_CORE       = "[Core]"
 	MODULE_VM         = "[Vm]"
 	MODULE_RPC        = "[Rpc]"
-	MODULE_LEDGER     = "[Ledger]"
+	MODULE_LEDGER     = "[Ledger]" //nolint:golint,unused
 	MODULE_CLI        = "[Cli]"
 	MODULE_CHAINCONF  = "[ChainConf]"
 	MODULE_ACCESS     = "[Access]"
@@ -196,7 +195,6 @@ func createLoggerByChain(name, chainId string) (*zap.SugaredLogger, log.LOG_LEVE
 			LogLevel:     log.GetLogLevel(defaultLogNode.LogLevelDefault),
 			MaxAge:       defaultLogNode.MaxAge,
 			RotationTime: defaultLogNode.RotationTime,
-			RotationSize: defaultLogNode.RotationSize,
 			JsonFormat:   false,
 			ShowLine:     true,
 			LogInConsole: defaultLogNode.LogInConsole,

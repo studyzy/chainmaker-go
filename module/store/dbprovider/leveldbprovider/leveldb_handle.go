@@ -171,15 +171,22 @@ func (h *LevelDBHandle) CompactRange(start, limit []byte) error {
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (h *LevelDBHandle) NewIteratorWithRange(startKey []byte, limitKey []byte) protocol.Iterator {
-
+func (h *LevelDBHandle) NewIteratorWithRange(startKey []byte, limitKey []byte) (protocol.Iterator, error) {
+	if len(startKey) == 0 || len(limitKey) == 0 {
+		return nil, fmt.Errorf("iterator range should not start(%s) or limit(%s) with empty key",
+			string(startKey), string(limitKey))
+	}
 	keyRange := &util.Range{Start: startKey, Limit: limitKey}
-	return h.db.NewIterator(keyRange, nil)
+	return h.db.NewIterator(keyRange, nil), nil
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (h *LevelDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
-	return h.db.NewIterator(util.BytesPrefix(prefix), nil)
+func (h *LevelDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, error) {
+	if len(prefix) == 0 {
+		return nil, fmt.Errorf("iterator prefix should not be empty key")
+	}
+
+	return h.db.NewIterator(util.BytesPrefix(prefix), nil), nil
 }
 
 // Close closes the leveldb

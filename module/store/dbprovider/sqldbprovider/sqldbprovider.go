@@ -195,14 +195,15 @@ func createDirIfNotExist(path string) error {
 	return nil
 }
 
-func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
+func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) (bool, error) {
 	p.Lock()
 	defer p.Unlock()
+	defultb := false
 	if p.contextDbName == dbName {
-		return nil
+		return defultb, nil
 	}
 	if p.dbType == types.Sqlite {
-		return nil
+		return defultb, nil
 	}
 	//尝试切换数据库
 	res := p.db.Exec("use " + dbName)
@@ -210,16 +211,16 @@ func (p *SqlDBHandle) CreateDatabaseIfNotExist(dbName string) error {
 		p.log.Debugf("try to run 'use %s' get an error, it means database not exist, create it!", dbName)
 		tx := p.db.Exec("create database " + dbName)
 		if tx.Error != nil {
-			return tx.Error //创建失败
+			return defultb, tx.Error //创建失败
 		}
 		p.log.Debugf("create database %s", dbName)
 		//创建成功，再次切换数据库
 		res = p.db.Exec("use " + dbName)
-		return res.Error
+		return defultb, res.Error
 	}
 	p.log.Debugf("use database %s", dbName)
 	p.contextDbName = dbName
-	return nil
+	return defultb, nil
 }
 
 func (p *SqlDBHandle) CreateTableIfNotExist(obj interface{}) error {
