@@ -115,7 +115,8 @@ func (cp *certACProvider) initTrustRoots(roots []*config.TrustRootConfig, localO
 			if certificateChain == nil || !certificateChain[len(certificateChain)-1].IsCA {
 				return fmt.Errorf("the certificate configured as root for organization %s is not a CA certificate", orgRoot.OrgId)
 			}
-			org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] = certificateChain[len(certificateChain)-1]
+			org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] =
+				certificateChain[len(certificateChain)-1]
 			cp.opts.Roots.AddCert(certificateChain[len(certificateChain)-1])
 			for i := 0; i < len(certificateChain); i++ {
 				org.trustedIntermediateCerts[string(certificateChain[i].Raw)] = certificateChain[i]
@@ -133,7 +134,11 @@ func (cp *certACProvider) initTrustRoots(roots []*config.TrustRootConfig, localO
 			}*/
 
 			if len(org.trustedRootCerts) <= 0 {
-				return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
+				return fmt.Errorf(
+					"setup organization failed, no trusted root (for %s): "+
+						"please configure trusted root certificate or trusted public key whitelist",
+					orgRoot.OrgId,
+				)
 			}
 		}
 		cp.acService.addOrg(orgRoot.OrgId, org)
@@ -147,7 +152,7 @@ func (cp *certACProvider) initTrustRoots(roots []*config.TrustRootConfig, localO
 			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
 	}
-	cp.localOrg = localOrg.(*organization)
+	cp.localOrg, _ = localOrg.(*organization)
 	return nil
 }
 
@@ -465,7 +470,8 @@ func (cp *certACProvider) CreatePrincipalForTargetOrg(resourceName string,
 }
 
 // CreatePrincipal creates a principal for one time authentication
-func (cp *certACProvider) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (
+func (cp *certACProvider) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry,
+	message []byte) (
 	protocol.Principal, error) {
 	return cp.acService.createPrincipal(resourceName, endorsements, message)
 }
@@ -523,7 +529,7 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 	for crlPEM != nil {
 		crl, err := x509.ParseCRL(crlPEM.Bytes)
 		if err != nil {
-			return false, fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPEM.Bytes))
+			return false, fmt.Errorf("invalid CRL: %v\n[%s]", err, hex.EncodeToString(crlPEM.Bytes))
 		}
 
 		err = cp.validateCrlVersion(crlPEM.Bytes, crl)
@@ -537,7 +543,12 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 		err1 := cp.checkCRLAgainstTrustedCerts(crl, orgs, false)
 		err2 := cp.checkCRLAgainstTrustedCerts(crl, orgs, true)
 		if err1 != nil && err2 != nil {
-			return false, fmt.Errorf("invalid CRL: \n\t[verification against trusted root certs: %v], \n\t[verification against trusted intermediate certs: %v]", err1, err2)
+			return false, fmt.Errorf(
+				"invalid CRL: \n\t[verification against trusted root certs: %v], "+
+					"\n\t[verification against trusted intermediate certs: %v]",
+				err1,
+				err2,
+			)
 		}
 	}
 
@@ -794,7 +805,11 @@ func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certifica
 	}
 	orgIdFromCert := certMember.cert.Subject.Organization[0]
 	if mem.GetOrgId() != orgIdFromCert {
-		return nil, fmt.Errorf("signer does not belong to the organization it claims [claim: %s, certificate: %s]", mem.GetOrgId(), orgIdFromCert)
+		return nil, fmt.Errorf(
+			"signer does not belong to the organization it claims [claim: %s, certificate: %s]",
+			mem.GetOrgId(),
+			orgIdFromCert,
+		)
 	}
 	org := cp.acService.getOrgInfoByOrgId(orgIdFromCert)
 	if org == nil {
@@ -904,7 +919,11 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 			}
 
 			if len(org.trustedRootCerts) <= 0 {
-				return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
+				return fmt.Errorf(
+					"update configuration failed, no trusted root (for %s): "+
+						"please configure trusted root certificate or trusted public key whitelist",
+					orgRoot.OrgId,
+				)
 			}
 		}
 		orgList.Store(org.id, org)
@@ -921,7 +940,7 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 			trustedIntermediateCerts: map[string]*bcx509.Certificate{},
 		}
 	}
-	cp.localOrg = localOrg.(*organization)
+	cp.localOrg, _ = localOrg.(*organization)
 	cp.acService.localTrustMembers = chainConfig.TrustMembers
 	return nil
 }

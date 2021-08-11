@@ -18,11 +18,11 @@ type memberFactory struct {
 }
 
 var once sync.Once
-var mem_instance *memberFactory
+var memInstance *memberFactory
 
 func MemberFactory() *memberFactory {
-	once.Do(func() { mem_instance = new(memberFactory) })
-	return mem_instance
+	once.Do(func() { memInstance = new(memberFactory) })
+	return memInstance
 }
 
 func (mf *memberFactory) NewMember(pbMember *pbac.Member, acs *accessControlService) (protocol.Member, error) {

@@ -12,11 +12,11 @@ import "chainmaker.org/chainmaker/protocol"
 type acFactory struct {
 }
 
-var ac_instance *acFactory
+var acInstance *acFactory
 
 func ACFactory() *acFactory {
-	once.Do(func() { ac_instance = new(acFactory) })
-	return ac_instance
+	once.Do(func() { acInstance = new(acFactory) })
+	return acInstance
 }
 
 func (af *acFactory) NewACProvider(memberType string, chainConf protocol.ChainConf, localOrgId string,

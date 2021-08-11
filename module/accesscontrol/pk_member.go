@@ -88,7 +88,8 @@ type signingPkMember struct {
 	sk bccrypto.PrivateKey
 }
 
-// When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
+// Sign When using public key instead of certificate,
+// hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
 func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
@@ -103,27 +104,26 @@ func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
 func NewPkMember(member *pbac.Member, acs *accessControlService) (*pkMember, error) {
 	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
 		return nil, fmt.Errorf("setup public key member failed, unsupport member type")
-	} else {
-		return newMemberFromPkPem(member.OrgId, string(member.MemberInfo), acs.hashType)
 	}
+	return newMemberFromPkPem(member.OrgId, string(member.MemberInfo), acs.hashType)
 }
 
 func newMemberFromPkPem(orgId, pkPEM string, hashType string) (*pkMember, error) {
-	var pkMember pkMember
-	pkMember.orgId = orgId
-	pkMember.hashType = hashType
+	var pkMBR pkMember
+	pkMBR.orgId = orgId
+	pkMBR.hashType = hashType
 
 	pk, err := asym.PublicKeyFromPEM([]byte(pkPEM))
 	if err != nil {
 		return nil, fmt.Errorf("setup pk member failed, err: %s", err.Error())
 	}
 
-	pkMember.pk = pk
-	pkMember.id = pkPEM
+	pkMBR.pk = pk
+	pkMBR.id = pkPEM
 	//TODO ROLE
-	//pkMember.role
+	//pkMBR.role
 
-	return &pkMember, nil
+	return &pkMBR, nil
 }
 
 var NilPkMemberProvider MemberProvider = (*pkMemberProvider)(nil)

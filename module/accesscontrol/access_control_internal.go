@@ -34,6 +34,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
+var (
+	ErrCrtRevoked = errors.New("certificate is revoked")
+)
+
 func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOrgId string) error {
 	ac.orgNum = 0
 	ac.orgList = &sync.Map{}
@@ -49,9 +53,14 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 				return err
 			}
 			if certificateChain == nil || !certificateChain[len(certificateChain)-1].IsCA {
-				return fmt.Errorf("the certificate configured as root for organization %s is not a CA certificate", orgRoot.OrgId)
+				return fmt.Errorf(
+					"the certificate configured as root for organization %s is not a CA certificate",
+					orgRoot.OrgId,
+				)
 			}
-			org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] = certificateChain[len(certificateChain)-1]
+			org.trustedRootCerts[string(certificateChain[len(certificateChain)-1].Raw)] =
+				certificateChain[len(certificateChain)-1]
+
 			ac.opts.Roots.AddCert(certificateChain[len(certificateChain)-1])
 			for i := 0; i < len(certificateChain); i++ {
 				org.trustedIntermediateCerts[string(certificateChain[i].Raw)] = certificateChain[i]
@@ -69,7 +78,11 @@ func (ac *accessControl) initTrustRoots(roots []*config.TrustRootConfig, localOr
 			}*/
 
 			if len(org.trustedRootCerts) <= 0 {
-				return fmt.Errorf("setup organizaiton failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
+				return fmt.Errorf(
+					"setup organizaiton failed, no trusted root (for %s): "+
+						"please configure trusted root certificate or trusted public key whitelist",
+					orgRoot.OrgId,
+				)
 			}
 		}
 		ac.addOrg(org)
@@ -155,7 +168,11 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 			}
 
 			if len(org.trustedRootCerts) <= 0 {
-				return fmt.Errorf("update configuration failed, no trusted root (for %s): please configure trusted root certificate or trusted public key whitelist", orgRoot.OrgId)
+				return fmt.Errorf(
+					"update configuration failed, no trusted root (for %s): "+
+						"please configure trusted root certificate or trusted public key whitelist",
+					orgRoot.OrgId,
+				)
 			}
 		}
 		orgList.Store(org.id, org)
@@ -178,7 +195,8 @@ func (ac *accessControl) initTrustRootsForUpdatingChainConfig(roots []*config.Tr
 	return nil
 }
 
-func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId string, org *organization) ([]*bcx509.Certificate, error) {
+func (ac *accessControl) buildCertificateChainForUpdatingChainConfig(root, orgId string, org *organization) (
+	[]*bcx509.Certificate, error) {
 	var certificates, certificateChain []*bcx509.Certificate
 
 	if ac.identityType == pbac.MemberType_PUBLIC_KEY {
@@ -522,7 +540,11 @@ func (ac *accessControl) verifyPrincipalPolicyRuleAnyCase(p *policy, endorsement
 		if _, ok := roleList[signerRole]; ok {
 			return true, nil
 		}
-		ac.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", signerRole, p.GetRoleList())
+		ac.log.Debugf(
+			"authentication warning: signer's role [%v] is not permitted, requires [%v]",
+			signerRole,
+			p.GetRoleList(),
+		)
 	}
 
 	return false, fmt.Errorf("authentication fail: signers do not meet the requirement (%s)", resourceName)
@@ -856,7 +878,7 @@ func (ac *accessControl) checkCRL(certChain []*bcx509.Certificate) error {
 			// we have ac CRL, check whether the serial number is revoked
 			for _, rc := range crl.(*pkix.CertificateList).TBSCertList.RevokedCertificates {
 				if rc.SerialNumber.Cmp(cert.SerialNumber) == 0 {
-					return errors.New("certificate is revoked")
+					return ErrCrtRevoked
 				}
 			}
 		}
@@ -1036,7 +1058,8 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 			return nil, fmt.Errorf("authentication failed, no orgnization found")
 		}
 		if len(org.trustedRootCerts) <= 0 {
-			return nil, fmt.Errorf("authentication failed, no trusted root: please configure trusted root certificate or trusted public key whitelist")
+			return nil, fmt.Errorf(
+				"authentication failed, no trusted root: please configure trusted root certificate or trusted public key whitelist")
 		}
 
 		certChain := ac.findCertChain(org, certChains)

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	logger2 "chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -48,6 +49,148 @@ func TestVerifyPrincipal(t *testing.T) {
 		orgMemberMap[orgId] = initOrgMember(t, info)
 	}
 
+	tests := []struct {
+		// give
+		orgMemberMap    map[string]*orgMember
+		currentOrgId    string
+		acProviderOrgId string
+		hashType        string
+		msg             string
+		resourceName    string
+		signType        string
+		// want
+		wantErr          error
+		wantVerifyResult bool
+	}{
+		{ // read
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg1,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     common.TxType_QUERY_CONTRACT.String(),
+			signType:         common.TxType_QUERY_CONTRACT.String(),
+			wantErr:          nil,
+			wantVerifyResult: true,
+		},
+		{ // read invalid
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg5,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     common.TxType_QUERY_CONTRACT.String(),
+			signType:         common.TxType_QUERY_CONTRACT.String(),
+			wantErr:          nil,
+			wantVerifyResult: false,
+		},
+		{ // write
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg4,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     protocol.ResourceNameWriteData,
+			signType:         protocol.ResourceNameWriteData,
+			wantErr:          nil,
+			wantVerifyResult: true,
+		},
+		{ // write invalid
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg5,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     protocol.ResourceNameWriteData,
+			signType:         protocol.ResourceNameWriteData,
+			wantErr:          nil,
+			wantVerifyResult: false,
+		},
+		{ // P2P
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg1,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     protocol.ResourceNameP2p,
+			signType:         string(protocol.RoleConsensusNode),
+			wantErr:          nil,
+			wantVerifyResult: true,
+		},
+		{ // P2P invalid ?
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg1,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     protocol.ResourceNameP2p,
+			signType:         string(protocol.RoleAdmin),
+			wantErr:          nil,
+			wantVerifyResult: false,
+		},
+		{ // consensus
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg1,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     protocol.ResourceNameConsensusNode,
+			signType:         string(protocol.RoleConsensusNode),
+			wantErr:          nil,
+			wantVerifyResult: true,
+		},
+		{ // consensus invalid
+			orgMemberMap:     orgMemberMap,
+			currentOrgId:     testOrg1,
+			acProviderOrgId:  testOrg2,
+			hashType:         testHashType,
+			msg:              testMsg,
+			resourceName:     protocol.ResourceNameConsensusNode,
+			signType:         string(protocol.RoleClient),
+			wantErr:          nil,
+			wantVerifyResult: false,
+		},
+		//{ // self
+		//	orgMemberMap:     orgMemberMap,
+		//	currentOrgId:     testOrg4,
+		//	acProviderOrgId:  testOrg2,
+		//	hashType:         testHashType,
+		//	msg:              testMsg,
+		//	resourceName:     protocol.ResourceNameUpdateSelfConfig,
+		//	signType:         string(protocol.RoleAdmin),
+		//	wantErr:          nil,
+		//	wantVerifyResult: true,
+		//},
+		//{ // self invalid
+		//	orgMemberMap:     orgMemberMap,
+		//	currentOrgId:     testOrg4,
+		//	acProviderOrgId:  testOrg3,
+		//	hashType:         testHashType,
+		//	msg:              testMsg,
+		//	resourceName:     protocol.ResourceNameUpdateSelfConfig,
+		//	signType:         string(protocol.RoleAdmin),
+		//	wantErr:          nil,
+		//	wantVerifyResult: false,
+		//},
+	}
+
+	for _, test := range tests {
+		endorsementResourceZephyrus, err := createEndorsementEntry(test.orgMemberMap, test.signType, test.currentOrgId, test.hashType, test.msg)
+		require.Nil(t, err)
+		currentPrincipal, err := createCurrentPrincipal(test.orgMemberMap, test.resourceName, test.acProviderOrgId, endorsementResourceZephyrus)
+		require.Nil(t, err)
+		verifyResult, validEndorsements, err := testVerifyCurrentPrincipal(test.orgMemberMap, test.acProviderOrgId, currentPrincipal)
+		if test.wantVerifyResult {
+			require.Nil(t, err)
+			require.Equal(t, test.wantVerifyResult, verifyResult)
+			require.Equal(t, endorsementResourceZephyrus.String(), validEndorsements[0].String())
+		} else {
+			require.NotNil(t, err)
+			require.Equal(t, test.wantVerifyResult, verifyResult)
+		}
+
+	}
+
 	// read
 	sigRead, err := orgMemberMap[testOrg1].client.Sign(hashType, []byte(testMsg))
 	require.Nil(t, err)
@@ -57,121 +200,6 @@ func TestVerifyPrincipal(t *testing.T) {
 		Signer:    signerRead,
 		Signature: sigRead,
 	}
-	principalRead, err := orgMemberMap[testOrg1].acProvider.CreatePrincipal(common.TxType_QUERY_CONTRACT.String(), []*common.EndorsementEntry{endorsementReadZephyrus}, []byte(testMsg))
-	require.Nil(t, err)
-
-	ok, err := orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalRead)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
-	validEndorsements, err := orgMemberMap[testOrg2].acProvider.(*certACProvider).GetValidEndorsements(principalRead)
-	require.Nil(t, err)
-	require.Equal(t, len(validEndorsements), 1)
-	require.Equal(t, endorsementReadZephyrus.String(), validEndorsements[0].String())
-
-	// read invalid
-	sigRead, err = orgMemberMap[testOrg5].client.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerRead, err = orgMemberMap[testOrg5].client.GetMember()
-	require.Nil(t, err)
-	endorsementRead := &common.EndorsementEntry{
-		Signer:    signerRead,
-		Signature: sigRead,
-	}
-	principalRead, err = orgMemberMap[testOrg2].acProvider.CreatePrincipal(common.TxType_QUERY_CONTRACT.String(), []*common.EndorsementEntry{endorsementRead}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalRead)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
-
-	// write
-	sigWrite, err := orgMemberMap[testOrg4].admin.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerWrite, err := orgMemberMap[testOrg4].admin.GetMember()
-	require.Nil(t, err)
-	endorsementWrite := &common.EndorsementEntry{
-		Signer:    signerWrite,
-		Signature: sigWrite,
-	}
-	principalWrite, err := orgMemberMap[testOrg1].acProvider.CreatePrincipal(protocol.ResourceNameWriteData, []*common.EndorsementEntry{endorsementWrite}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg1].acProvider.VerifyPrincipal(principalWrite)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
-
-	// invalid
-	sigWrite, err = orgMemberMap[testOrg5].admin.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerWrite, err = orgMemberMap[testOrg5].admin.GetMember()
-	require.Nil(t, err)
-	endorsementWrite = &common.EndorsementEntry{
-		Signer:    signerWrite,
-		Signature: sigWrite,
-	}
-	principalWrite, err = orgMemberMap[testOrg1].acProvider.CreatePrincipal(protocol.ResourceNameWriteData, []*common.EndorsementEntry{endorsementWrite}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg1].acProvider.VerifyPrincipal(principalWrite)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
-
-	// P2P
-	sigP2P, err := orgMemberMap[testOrg1].consensus.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerP2P, err := orgMemberMap[testOrg1].consensus.GetMember()
-	require.Nil(t, err)
-	endorsementP2P := &common.EndorsementEntry{
-		Signer:    signerP2P,
-		Signature: sigP2P,
-	}
-	principalP2P, err := orgMemberMap[testOrg2].acProvider.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementP2P}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalP2P)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
-
-	// invalid
-	sigP2P, err = orgMemberMap[testOrg1].admin.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerP2P, err = orgMemberMap[testOrg1].admin.GetMember()
-	require.Nil(t, err)
-	endorsementP2P = &common.EndorsementEntry{
-		Signer:    signerRead,
-		Signature: sigRead,
-	}
-	principalP2P, err = orgMemberMap[testOrg2].acProvider.CreatePrincipal(protocol.ResourceNameP2p, []*common.EndorsementEntry{endorsementP2P}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalP2P)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
-
-	// consensus
-	sigConsensus, err := orgMemberMap[testOrg1].consensus.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerConsensus, err := orgMemberMap[testOrg1].consensus.GetMember()
-	require.Nil(t, err)
-	endorsementConsensus := &common.EndorsementEntry{
-		Signer:    signerConsensus,
-		Signature: sigConsensus,
-	}
-	principalConsensus, err := orgMemberMap[testOrg2].acProvider.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementConsensus}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalConsensus)
-	require.Nil(t, err)
-	require.Equal(t, true, ok)
-
-	// invalid
-	sigConsensus, err = orgMemberMap[testOrg1].client.Sign(hashType, []byte(testMsg))
-	require.Nil(t, err)
-	signerConsensus, err = orgMemberMap[testOrg1].client.GetMember()
-	require.Nil(t, err)
-	endorsementConsensus = &common.EndorsementEntry{
-		Signer:    signerConsensus,
-		Signature: sigConsensus,
-	}
-	principalConsensus, err = orgMemberMap[testOrg2].acProvider.CreatePrincipal(protocol.ResourceNameConsensusNode, []*common.EndorsementEntry{endorsementConsensus}, []byte(testMsg))
-	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalConsensus)
-	require.NotNil(t, err)
-	require.Equal(t, false, ok)
 
 	// self
 	sigSelf, err := orgMemberMap[testOrg4].admin.Sign(hashType, []byte(testMsg))
@@ -184,7 +212,7 @@ func TestVerifyPrincipal(t *testing.T) {
 	}
 	principalSelf, err := orgMemberMap[testOrg2].acProvider.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementSelf}, []byte(testMsg), testOrg4)
 	require.Nil(t, err)
-	ok, err = orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalSelf)
+	ok, err := orgMemberMap[testOrg2].acProvider.VerifyPrincipal(principalSelf)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 
@@ -242,7 +270,7 @@ func TestVerifyPrincipal(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 
-	validEndorsements, err = orgMemberMap[testOrg2].acProvider.(*certACProvider).GetValidEndorsements(principalMajority)
+	validEndorsements, err := orgMemberMap[testOrg2].acProvider.(*certACProvider).GetValidEndorsements(principalMajority)
 	require.Nil(t, err)
 	require.Equal(t, len(validEndorsements), 4)
 
@@ -371,7 +399,7 @@ func TestVerifyPrincipal(t *testing.T) {
 	require.Equal(t, true, ok)
 	fmt.Printf("Verify ANY average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
 	// self
-	principalRead, err = orgMemberMap[testOrg2].acProvider.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementEurus}, []byte(testMsg), testOrg4)
+	principalRead, err := orgMemberMap[testOrg2].acProvider.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig, []*common.EndorsementEntry{endorsementEurus}, []byte(testMsg), testOrg4)
 	require.Nil(t, err)
 	timeStart = time.Now().UnixNano()
 	for i := 0; i < int(count); i++ {
@@ -400,4 +428,70 @@ func TestVerifyPrincipal(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
 	fmt.Printf("Verify CONSENSUS average time (over %d runs in nanoseconds): %d\n", count, (timeEnd-timeStart)/count)
+}
+
+func createCurrentPrincipal(orgMemberMap map[string]*orgMember, resourceName, acProviderOrgId string, endorsementResourceZephyrus ...*common.EndorsementEntry) (protocol.Principal, error) {
+	var endorsementResourceZephyrusList []*common.EndorsementEntry
+	endorsementResourceZephyrusList = append(endorsementResourceZephyrusList, endorsementResourceZephyrus...)
+	resourcePrincipal, err := orgMemberMap[acProviderOrgId].acProvider.CreatePrincipal(resourceName, endorsementResourceZephyrusList, []byte(testMsg))
+	return resourcePrincipal, err
+}
+
+func createEndorsementEntry(orgMemberMap map[string]*orgMember, signType, currentOrgId, hashType, msg string) (*common.EndorsementEntry, error) {
+	var (
+		sigResource    []byte
+		err            error
+		signerResource *accesscontrol.Member
+	)
+	switch signType {
+	case string(protocol.RoleConsensusNode):
+		sigResource, err = orgMemberMap[currentOrgId].consensus.Sign(hashType, []byte(msg))
+		if err != nil {
+			return nil, err
+		}
+
+		signerResource, err = orgMemberMap[currentOrgId].consensus.GetMember()
+		if err != nil {
+			return nil, err
+		}
+	case string(protocol.RoleAdmin):
+		sigResource, err = orgMemberMap[currentOrgId].admin.Sign(hashType, []byte(msg))
+		if err != nil {
+			return nil, err
+		}
+
+		signerResource, err = orgMemberMap[currentOrgId].admin.GetMember()
+		if err != nil {
+			return nil, err
+		}
+	default:
+		sigResource, err = orgMemberMap[currentOrgId].client.Sign(hashType, []byte(msg))
+		if err != nil {
+			return nil, err
+		}
+
+		signerResource, err = orgMemberMap[currentOrgId].client.GetMember()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &common.EndorsementEntry{
+		Signer:    signerResource,
+		Signature: sigResource,
+	}, nil
+}
+
+func testVerifyCurrentPrincipal(orgMemberMap map[string]*orgMember, acProviderOrgId string, resourcePrincipal protocol.Principal) (bool, []*common.EndorsementEntry, error) {
+
+	ok, err := orgMemberMap[acProviderOrgId].acProvider.VerifyPrincipal(resourcePrincipal)
+	if err != nil {
+		return false, nil, err
+	}
+
+	validEndorsements, err := orgMemberMap[acProviderOrgId].acProvider.(*certACProvider).GetValidEndorsements(resourcePrincipal)
+	if err != nil {
+		return ok, nil, err
+	}
+	return ok, validEndorsements, nil
 }

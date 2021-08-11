@@ -12,6 +12,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/hex"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -125,12 +126,17 @@ func (ac *accessControl) GetHashAlg() string {
 // ValidateResourcePolicy checks whether the given resource principal is valid
 func (ac *accessControl) ValidateResourcePolicy(resourcePolicy *config.ResourcePolicy) bool {
 	if _, ok := restrainedResourceList[resourcePolicy.ResourceName]; ok {
-		ac.log.Errorf("bad configuration: should not modify the access policy of the resource: %s", resourcePolicy.ResourceName)
+		ac.log.Errorf(
+			"bad configuration: should not modify the access policy of the resource: %s",
+			resourcePolicy.ResourceName,
+		)
 		return false
 	}
 
 	if resourcePolicy.Policy == nil {
-		ac.log.Errorf("bad configuration: access principle should not be nil when modifying access control configurations")
+		ac.log.Errorf(
+			"bad configuration: access principle should not be nil when modifying access control configurations",
+		)
 		return false
 	}
 
@@ -143,7 +149,8 @@ func (ac *accessControl) ValidateResourcePolicy(resourcePolicy *config.ResourceP
 
 // CreatePrincipalForTargetOrg creates a principal for "SELF" type principal,
 // which needs to convert SELF to a sepecific organization id in one authentication
-func (ac *accessControl) CreatePrincipalForTargetOrg(resourceName string, endorsements []*common.EndorsementEntry, message []byte, targetOrgId string) (protocol.Principal, error) {
+func (ac *accessControl) CreatePrincipalForTargetOrg(resourceName string, endorsements []*common.EndorsementEntry,
+	message []byte, targetOrgId string) (protocol.Principal, error) {
 	p, err := ac.CreatePrincipal(resourceName, endorsements, message)
 	if err != nil {
 		return nil, err
@@ -153,12 +160,18 @@ func (ac *accessControl) CreatePrincipalForTargetOrg(resourceName string, endors
 }
 
 // CreatePrincipal creates a principal for one time authentication
-func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (protocol.Principal, error) {
+func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry,
+	message []byte) (protocol.Principal, error) {
 	if len(endorsements) == 0 || message == nil {
-		return nil, fmt.Errorf("setup access control principal failed, a principal should contain valid (non-empty) signer information, signature, and message")
+		return nil, fmt.Errorf(
+			"setup access control principal failed," +
+				" a principal should contain valid (non-empty) signer information, signature, and message",
+		)
 	}
 	if endorsements[0] == nil {
-		return nil, fmt.Errorf("setup access control principal failed, signer-signature pair should not be nil")
+		return nil, fmt.Errorf(
+			"setup access control principal failed, signer-signature pair should not be nil",
+		)
 	}
 	return &principal{
 		resourceName: resourceName,
@@ -171,7 +184,9 @@ func (ac *accessControl) CreatePrincipal(resourceName string, endorsements []*co
 // VerifyPrincipal verifies if the principal for the resource is met
 func (ac *accessControl) VerifyPrincipal(principal protocol.Principal) (bool, error) {
 	if atomic.LoadInt32(&ac.orgNum) <= 0 {
-		return false, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
+		return false, fmt.Errorf(
+			"authentication fail: empty organization list or trusted node list on this chain",
+		)
 	}
 
 	refinedPrincipal, err := ac.refinePrincipal(principal)
@@ -244,7 +259,7 @@ func (ac *accessControl) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus
 		var certChain []*bcx509.Certificate
 		certChain = append(certChain, cert)
 		err = ac.checkCRL(certChain)
-		if err != nil && err.Error() == "certificate is revoked" {
+		if err != nil && errors.Is(err, ErrCrtRevoked) {
 			return pbac.MemberStatus_REVOKED, nil
 		}
 		return pbac.MemberStatus_NORMAL, nil
@@ -265,7 +280,7 @@ func (ac *accessControl) VerifyRelatedMaterial(verifyType pbac.VerifyType, data 
 		for crlPEM != nil {
 			crl, err := x509.ParseCRL(crlPEM.Bytes)
 			if err != nil {
-				return false, fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPEM.Bytes))
+				return false, fmt.Errorf("invalid CRL: %v\n[%s]", err, hex.EncodeToString(crlPEM.Bytes))
 			}
 
 			err = ac.validateCrlVersion(crlPEM.Bytes, crl)
@@ -276,7 +291,12 @@ func (ac *accessControl) VerifyRelatedMaterial(verifyType pbac.VerifyType, data 
 			err1 := ac.checkCRLAgainstTrustedCerts(crl, orgs, false)
 			err2 := ac.checkCRLAgainstTrustedCerts(crl, orgs, true)
 			if err1 != nil && err2 != nil {
-				return false, fmt.Errorf("invalid CRL: \n\t[verification against trusted root certs: %v], \n\t[verification against trusted intermediate certs: %v]", err1, err2)
+				return false, fmt.Errorf(
+					"invalid CRL: \n\t[verification against trusted root certs: %v], "+
+						"\n\t[verification against trusted intermediate certs: %v]",
+					err1,
+					err2,
+				)
 			}
 		}
 		return true, nil
@@ -325,7 +345,7 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 	for crlPEM != nil {
 		crl, err := x509.ParseCRL(crlPEM.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("invalid CRL: %v\n[%s]\n", err, hex.EncodeToString(crlPEM.Bytes))
+			return nil, fmt.Errorf("invalid CRL: %v\n[%s]", err, hex.EncodeToString(crlPEM.Bytes))
 		}
 
 		err = ac.validateCrlVersion(crlPEM.Bytes, crl)
@@ -336,7 +356,12 @@ func (ac *accessControl) ValidateCRL(crlBytes []byte) ([]*pkix.CertificateList, 
 		err1 := ac.checkCRLAgainstTrustedCerts(crl, orgs, false)
 		err2 := ac.checkCRLAgainstTrustedCerts(crl, orgs, true)
 		if err1 != nil && err2 != nil {
-			return nil, fmt.Errorf("invalid CRL: \n\t[verification against trusted root certs: %v], \n\t[verification against trusted intermediate certs: %v]", err1, err2)
+			return nil, fmt.Errorf(
+				"invalid CRL: \n\t[verification against trusted root certs: %v], "+
+					"\n\t[verification against trusted intermediate certs: %v]",
+				err1,
+				err2,
+			)
 		}
 
 		crls = append(crls, crl)
