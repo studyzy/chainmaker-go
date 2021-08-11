@@ -1014,7 +1014,7 @@ func (ac *accessControl) verifyMember(mem protocol.Member) ([]*bcx509.Certificat
 		for _, v := range ac.localTrustMembers {
 			certBlock, _ := pem.Decode([]byte(v.MemberInfo))
 			if certBlock == nil {
-				return nil, fmt.Errorf("setup member failed, none public key or certificate given")
+				return nil, fmt.Errorf("setup member failed, the trsut member cert is not PEM")
 			}
 			trustMemberCert, err := bcx509.ParseCertificate(certBlock.Bytes)
 			if err == nil {

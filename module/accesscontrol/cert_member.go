@@ -47,6 +47,51 @@ type certMember struct {
 	isFullCert bool
 }
 
+func newCertMember(orgId, role, hashType string, isFullCert bool, certPEM []byte) (*certMember, error) {
+	var (
+		cert *bcx509.Certificate
+		err  error
+	)
+	certBlock, rest := pem.Decode(certPEM)
+	if certBlock == nil {
+		cert, err = bcx509.ParseCertificate(rest)
+		if err != nil {
+			return nil, fmt.Errorf("setup cert member failed, invalid certificate")
+		}
+	} else {
+		cert, err = bcx509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("setup cert member failed, invalid certificate")
+		}
+	}
+
+	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(cert.SignatureAlgorithm)
+	if err != nil {
+		return nil, fmt.Errorf("new member failed: get hash from signature algorithm: %s", err.Error())
+	}
+	hash, ok := bccrypto.HashAlgoMap[hashType]
+	if !ok {
+		return nil, fmt.Errorf("new member failed: unsupport hash type")
+	}
+	if hash != hashAlgo {
+		return nil, fmt.Errorf("new member failed: The hash algorithm doesn't match the hash algorithm in the certificate,expected: [%v],actual: [%v]",
+			hashAlgo, hash)
+	}
+
+	id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+	if err != nil {
+		id = []byte(cert.Subject.CommonName)
+	}
+
+	return &certMember{
+		id:       string(id),
+		orgId:    orgId,
+		role:     protocol.Role(role),
+		cert:     cert,
+		hashType: hashType,
+	}, nil
+}
+
 func (cm *certMember) GetMemberId() string {
 	return cm.id
 }
@@ -138,6 +183,20 @@ func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) 
 }
 
 func NewCertMember(member *pbac.Member, acs *accessControlService) (*certMember, error) {
+
+	for _, v := range acs.localTrustMembers {
+		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
+		if certBlock == nil {
+			return nil, fmt.Errorf("setup member failed, the trsut member cert is not PEM")
+		}
+		if v.MemberInfo == string(member.MemberInfo) {
+			var isFullCert bool
+			if member.MemberType == pbac.MemberType_CERT {
+				isFullCert = true
+			}
+			return newCertMember(v.OrgId, v.Role, acs.hashType, isFullCert, []byte(v.MemberInfo))
+		}
+	}
 
 	if member.MemberType == pbac.MemberType_CERT {
 		certBlock, rest := pem.Decode(member.MemberInfo)
