@@ -67,7 +67,8 @@ const (
 
 var (
 	contractAddr, _ = evmutils.MakeAddressFromString("cont_01")
-	contractName    = contractAddr.String()
+	//contractName    = contractAddr.String()
+	contractName = hex.EncodeToString(contractAddr.Bytes())
 )
 
 //var caPaths = []string{certPathPrefix + "/certs/wx-org1/ca"}
