@@ -8,7 +8,6 @@
 package utils
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
 	"regexp"
 )
 
@@ -27,10 +26,11 @@ func CheckContractNameFormat(name string) bool {
 	return contractNameReg.MatchString(name)
 }
 func CheckEvmAddressFormat(addr string) bool {
-	if len(addr) <= reservedAddressLen {
-		return false
-	}
-	return evmutils.FromDecimalString(addr) != nil
+	//if len(addr) <= reservedAddressLen {
+	//	return false
+	//}
+	//return evmutils.FromDecimalString(addr) != nil
+	return evmAddressHexReg.MatchString(addr)
 }
 func CheckTxIDFormat(txID string) bool {
 	return txIDReg.MatchString(txID)
