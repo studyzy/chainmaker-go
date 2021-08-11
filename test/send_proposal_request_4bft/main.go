@@ -57,10 +57,10 @@ func prePathFmt() string {
 	return certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 }
 func userKeyPath() string {
-	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
 }
 func userCrtPath() string {
-	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 }
 
 var (

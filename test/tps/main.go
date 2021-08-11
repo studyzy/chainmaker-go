@@ -40,8 +40,8 @@ var (
 	Port           = 12301
 	certPathPrefix = "../config"
 	WasmPath       = "wasm/fact-rust-0.7.1.wasm"
-	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
+	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 	orgIdFormat    = "wx-org%d.chainmaker.org"
 	orgId          = fmt.Sprintf(orgIdFormat, 1)
 	contractName   = "contract2"

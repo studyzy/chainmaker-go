@@ -158,16 +158,14 @@ func IsTxRWSetValid(block *commonpb.Block, tx *commonpb.Transaction, rwSet *comm
 }
 
 type VerifierTx struct {
-	block         *commonpb.Block
-	txRWSetMap    map[string]*commonpb.TxRWSet
-	txResultMap   map[string]*commonpb.Result
-	log           protocol.Logger
-	store         protocol.BlockchainStore
-	txPool        protocol.TxPool
-	ac            protocol.AccessControlProvider
-	hashType      string
-	chainId       string
-	consensusType consensuspb.ConsensusType
+	block       *commonpb.Block
+	txRWSetMap  map[string]*commonpb.TxRWSet
+	txResultMap map[string]*commonpb.Result
+	log         protocol.Logger
+	store       protocol.BlockchainStore
+	txPool      protocol.TxPool
+	ac          protocol.AccessControlProvider
+	chainConf   protocol.ChainConf
 }
 
 type VerifierTxConfig struct {
@@ -190,8 +188,7 @@ func NewVerifierTx(conf *VerifierTxConfig) *VerifierTx {
 		store:       conf.Store,
 		txPool:      conf.TxPool,
 		ac:          conf.Ac,
-		hashType:    conf.ChainConf.ChainConfig().Crypto.Hash,
-		chainId:     conf.ChainConf.ChainConfig().ChainId,
+		chainConf:   conf.ChainConf,
 	}
 }
 
@@ -256,13 +253,13 @@ func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*c
 	for _, tx := range txs {
 		blockHeight := txsHeightRet[tx.Payload.TxId]
 		if err := ValidateTx(txsRet, tx, blockHeight, stat, newAddTxs, block,
-			vt.consensusType, vt.hashType, vt.store, vt.chainId, vt.ac); err != nil {
+			vt.chainConf.ChainConfig().Consensus.Type, vt.chainConf.ChainConfig().Crypto.Hash, vt.store, vt.chainConf.ChainConfig().ChainId, vt.ac); err != nil {
 			return nil, nil, err
 		}
 		startOthersTicker := utils.CurrentTimeMillisSeconds()
 		rwSet := vt.txRWSetMap[tx.Payload.TxId]
 		result := vt.txResultMap[tx.Payload.TxId]
-		rwsetHash, err := utils.CalcRWSetHash(vt.hashType, rwSet)
+		rwsetHash, err := utils.CalcRWSetHash(vt.chainConf.ChainConfig().Crypto.Hash, rwSet)
 		if err != nil {
 			log.Warnf("calc rwset hash error (tx:%s), %s", tx.Payload.TxId, err)
 			return nil, nil, err
@@ -272,10 +269,10 @@ func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*c
 		}
 		result.RwSetHash = rwsetHash
 		// verify if rwset hash is equal
-		if err := VerifyTxResult(tx, result, vt.hashType); err != nil {
+		if err := VerifyTxResult(tx, result, vt.chainConf.ChainConfig().Crypto.Hash); err != nil {
 			return nil, nil, err
 		}
-		hash, err := utils.CalcTxHash(vt.hashType, tx)
+		hash, err := utils.CalcTxHash(vt.chainConf.ChainConfig().Crypto.Hash, tx)
 		if err != nil {
 			log.Warnf("calc txhash error (tx:%s), %s", tx.Payload.TxId, err)
 			return nil, nil, err

@@ -6,42 +6,42 @@
 #
 
 log:
-  config_file: ../config/wx-org1-solo-sql/log.yml          # config file of logger configuration.
+  config_file: ../config-sql/wx-org1-solo/log.yml          # config file of logger configuration.
 
 blockchain:
   - chainId: chain1
-    genesis: ../config/wx-org1-solo-sql/chainconfig/bc1.yml
+    genesis: ../config-sql/wx-org1-solo/chainconfig/bc1.yml
 #  - chainId: chain2
-#    genesis: ../config/wx-org1-solo-sql/chainconfig/bc2.yml
+#    genesis: ../config-sql/wx-org1-solo/chainconfig/bc2.yml
 #  - chainId: chain3
-#    genesis: ../config/wx-org1-solo-sql/chainconfig/bc3.yml
+#    genesis: ../config-sql/wx-org1-solo/chainconfig/bc3.yml
 #  - chainId: chain4
-#    genesis: ../config/wx-org1-solo-sql/chainconfig/bc4.yml
+#    genesis: ../config-sql/wx-org1-solo/chainconfig/bc4.yml
 
 node:
   # 节点类型：full
-  type:              full
-  org_id:            wx-org1.chainmaker.org
-  priv_key_file:     ../config/wx-org1-solo-sql/certs/node/consensus1/consensus1.sign.key
-  cert_file:         ../config/wx-org1-solo-sql/certs/node/consensus1/consensus1.sign.crt
+  type: full
+  org_id: wx-org1.chainmaker.org
+  priv_key_file: ../config-sql/wx-org1-solo/certs/node/consensus1/consensus1.sign.key
+  cert_file: ../config-sql/wx-org1-solo/certs/node/consensus1/consensus1.sign.crt
   signer_cache_size: 1000
-  cert_cache_size:   1000
+  cert_cache_size: 1000
 
 net:
   provider: LibP2P
   listen_addr: /ip4/0.0.0.0/tcp/11351
   seeds:
     - "/ip4/127.0.0.1/tcp/11301/p2p/QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
-#    - "/ip4/127.0.0.1/tcp/11302/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
-#    - "/ip4/127.0.0.1/tcp/11303/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
-#    - "/ip4/127.0.0.1/tcp/11304/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
-#    - "/ip4/127.0.0.1/tcp/11305/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
-#    - "/ip4/127.0.0.1/tcp/11306/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
-#    - "/ip4/127.0.0.1/tcp/11307/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
+  #    - "/ip4/127.0.0.1/tcp/11302/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+  #    - "/ip4/127.0.0.1/tcp/11303/p2p/QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
+  #    - "/ip4/127.0.0.1/tcp/11304/p2p/QmRRWXJpAVdhFsFtd9ah5F4LDQWFFBDVKpECAF8hssqj6H"
+  #    - "/ip4/127.0.0.1/tcp/11305/p2p/QmVSCXfPweL1GRSNt8gjcw1YQ2VcCirAtTdLKGkgGKsHqi"
+  #    - "/ip4/127.0.0.1/tcp/11306/p2p/QmPpx5dTZ4A1GQ9a4nsSoMJ72AtT3VDgcX2EVKAFxJUHb1"
+  #    - "/ip4/127.0.0.1/tcp/11307/p2p/QmVGSXfz6vgXBjWiZh5rV8T5nutevvunHAfEoe6Sh5Xcyx"
   tls:
     enabled: true
-    priv_key_file: ../config/wx-org1-solo-sql/certs/node/consensus1/consensus1.tls.key
-    cert_file:     ../config/wx-org1-solo-sql/certs/node/consensus1/consensus1.tls.crt
+    priv_key_file: ../config-sql/wx-org1-solo/certs/node/consensus1/consensus1.tls.key
+    cert_file: ../config-sql/wx-org1-solo/certs/node/consensus1/consensus1.tls.crt
 
 txpool:
   max_txpool_size: 51200 # 普通交易池上限
@@ -50,7 +50,7 @@ txpool:
 
 rpc:
   provider: grpc
-  port: 12351
+  port: 12301
   tls:
     # TLS模式:
     #   disable - 不启用TLS
@@ -58,9 +58,9 @@ rpc:
     #   twoway  - 双向认证
     #mode: disable
     #mode: oneway
-    mode:           twoway
-    priv_key_file:  ../config/wx-org1-solo-sql/certs/node/consensus1/consensus1.tls.key
-    cert_file:      ../config/wx-org1-solo-sql/certs/node/consensus1/consensus1.tls.crt
+    mode: twoway
+    priv_key_file: ../config-sql/wx-org1-solo/certs/node/consensus1/consensus1.tls.key
+    cert_file: ../config-sql/wx-org1-solo/certs/node/consensus1/consensus1.tls.crt
 
 monitor:
   enabled: false
@@ -73,9 +73,10 @@ pprof:
 storage:
   store_path: ../data/org1/ledgerData1
   blockdb_config:
-    provider: leveldb
-    leveldb_config:
-      store_path: ../data/org1/blocks
+    provider: sql
+    sqldb_config:
+      sqldb_type: sqlite
+      dsn: ../data/org1/block.db
   statedb_config:
     provider: sql
     sqldb_config:

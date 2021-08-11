@@ -353,7 +353,10 @@ func (b *BlockKvDB) GetBlockByTx(txId string) (*commonPb.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	height, _, _ := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	height, _, _, err := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	if err != nil {
+		return nil, err
+	}
 	return b.GetBlock(height)
 }
 
@@ -368,8 +371,8 @@ func (b *BlockKvDB) GetTxHeight(txId string) (uint64, error) {
 	if txIdBlockInfoBytes == nil {
 		return 0, errValueNotFound
 	}
-	height, _, _ := parseTxIdBlockInfo(txIdBlockInfoBytes)
-	return height, nil
+	height, _, _, err := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	return height, err
 }
 
 // GetTx retrieves a transaction by txid, or returns nil if none exists.
@@ -417,7 +420,10 @@ func (b *BlockKvDB) GetTxWithBlockInfo(txId string) (*commonPb.TransactionInfo, 
 	if err != nil {
 		return nil, err
 	}
-	height, blockHash, txIndex := parseTxIdBlockInfo(txIDBlockInfoBytes)
+	height, blockHash, txIndex, err := parseTxIdBlockInfo(txIDBlockInfoBytes)
+	if err != nil {
+		return nil, err
+	}
 	return &commonPb.TransactionInfo{Transaction: &tx, BlockHeight: height, BlockHash: blockHash, TxIndex: txIndex}, nil
 }
 
@@ -446,7 +452,10 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	height, _, _ := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	height, _, _, err := parseTxIdBlockInfo(txIdBlockInfoBytes)
+	if err != nil {
+		return false, err
+	}
 	if height <= archivedPivot {
 		return true, nil
 	}
@@ -641,11 +650,21 @@ func constructTxIDBlockInfo(height uint64, blockHash []byte, txIndex uint32) []b
 	value := fmt.Sprintf("%d,%x,%d", height, blockHash, txIndex)
 	return []byte(value)
 }
-func parseTxIdBlockInfo(value []byte) (height uint64, blockHash []byte, txIndex uint32) {
+func parseTxIdBlockInfo(value []byte) (height uint64, blockHash []byte, txIndex uint32, err error) {
 	strArray := strings.Split(string(value), ",")
-	height, _ = strconv.ParseUint(strArray[0], 10, 64)
-	blockHash, _ = hex.DecodeString(strArray[1])
-	idx, _ := strconv.Atoi(strArray[2])
+	if len(strArray) != 3 {
+		err = fmt.Errorf("invalid input[%s]", value)
+		return
+	}
+	height, err = strconv.ParseUint(strArray[0], 10, 64)
+	if err != nil {
+		return 0, nil, 0, err
+	}
+	blockHash, err = hex.DecodeString(strArray[1])
+	if err != nil {
+		return 0, nil, 0, err
+	}
+	idx, err := strconv.Atoi(strArray[2])
 	txIndex = uint32(idx)
 	return
 }
