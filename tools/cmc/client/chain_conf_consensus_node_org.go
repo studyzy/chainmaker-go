@@ -75,7 +75,7 @@ func removeConsensusNodeOrgCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeId,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 

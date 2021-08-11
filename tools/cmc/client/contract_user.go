@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
@@ -274,14 +275,30 @@ func createUserContract() error {
 		return fmt.Errorf("unknown runtime type [%s]", runtimeType)
 	}
 
-	pairs := make(map[string]string)
-	if params != "" {
-		err := json.Unmarshal([]byte(params), &pairs)
+	var kvs []*common.KeyValuePair
+
+	if runtimeType != "EVM" {
+		if params != "" {
+			kvsMap := make(map[string]string)
+			err := json.Unmarshal([]byte(params), &kvsMap)
+			if err != nil {
+				return err
+			}
+			kvs = util.ConvertParameters(kvsMap)
+		}
+	} else {
+		byteCode, err := ioutil.ReadFile(byteCodePath)
 		if err != nil {
 			return err
 		}
+		byteCodePath = string(byteCode)
+
+		if !ethcmn.IsHexAddress(contractName) {
+			contractName = util.CalcEvmContractName(contractName)
+		}
+		fmt.Printf("EVM contract name in hex: %s\n", contractName)
 	}
-	kvs := util.ConvertParameters(pairs)
+
 	payload, err := client.CreateContractCreatePayload(contractName, version, byteCodePath, common.RuntimeType(rt), kvs)
 	if err != nil {
 		return err
@@ -350,10 +367,19 @@ func invokeUserContract() error {
 				Value: []byte(inputDataHexStr),
 			},
 		}
+
+		if !ethcmn.IsHexAddress(contractName) {
+			contractName = util.CalcEvmContractName(contractName)
+		}
+		fmt.Printf("EVM contract name in hex: %s\n", contractName)
 	} else {
-		err := json.Unmarshal([]byte(params), &kvs)
-		if err != nil {
-			return err
+		if params != "" {
+			kvsMap := make(map[string]string)
+			err := json.Unmarshal([]byte(params), &kvsMap)
+			if err != nil {
+				return err
+			}
+			kvs = util.ConvertParameters(kvsMap)
 		}
 	}
 
@@ -402,10 +428,19 @@ func invokeContractTimes() error {
 				Value: []byte(inputDataHexStr),
 			},
 		}
+
+		if !ethcmn.IsHexAddress(contractName) {
+			contractName = util.CalcEvmContractName(contractName)
+		}
+		fmt.Printf("EVM contract name in hex: %s\n", contractName)
 	} else {
-		err := json.Unmarshal([]byte(params), &kvs)
-		if err != nil {
-			return err
+		if params != "" {
+			kvsMap := make(map[string]string)
+			err := json.Unmarshal([]byte(params), &kvsMap)
+			if err != nil {
+				return err
+			}
+			kvs = util.ConvertParameters(kvsMap)
 		}
 	}
 
