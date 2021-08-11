@@ -65,7 +65,7 @@ func TestRuntimeInstance_Invoke(t *testing.T) {
 }
 func TestConvertEvmContractName(t *testing.T) {
 	name := "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
-	addr := contractNameToAddress(name)
+	addr, _ := contractNameToAddress(name)
 	t.Logf("evm addr:%s", addr.Text(16))
 	assert.Equal(t, strings.ToLower(name[2:]), addr.Text(16))
 }

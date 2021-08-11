@@ -7,11 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package evm
 
 import (
-	"encoding/hex"
-	"fmt"
-	"runtime/debug"
-	"strings"
-
 	evm_go "chainmaker.org/chainmaker-go/evm/evm-go"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
@@ -20,6 +15,10 @@ import (
 	"chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"runtime/debug"
 )
 
 // RuntimeInstance evm runtime
@@ -108,11 +107,10 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 
 	// contract
 	//address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
-	address := contractNameToAddress(contract.Name)
-
-	//if err != nil {
-	//	return r.errorResult(contractResult, err, "make address fail")
-	//}
+	address, err := contractNameToAddress(contract.Name)
+	if err != nil {
+		return r.errorResult(contractResult, err, "make address fail")
+	}
 	codeHash := evmutils.BytesDataToEVMIntHash(byteCode)
 	eContract := environment.Contract{
 		Address: address,
@@ -160,13 +158,16 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 	contractResult.ContractEvent = r.ContractEvent
 	return contractResult
 }
-func contractNameToAddress(cname string) *evmutils.Int {
-	name := cname
-	if strings.HasPrefix(name, "0x") || strings.HasPrefix(name, "0X") {
-		name = name[2:]
+func contractNameToAddress(cname string) (*evmutils.Int, error) {
+	// hexStr2 == hexStr2
+	// hexStr := hex.EncodeToString(evmutils.Keccak256([]byte("contractName")))[24:]
+	// hexStr2 := hex.EncodeToString(evmutils.Keccak256([]byte("contractName"))[12:])
+	// 为什么使用十进制字符串转换，因为在./evm-go中，使用的是 address.String()作为key，也就是说数据库的名称是十进制字符串。
+	evmAddr := evmutils.FromDecimalString(cname)
+	if evmAddr == nil {
+		return nil, errors.New("contractName[%s] not DecimalString, you can use evmutils.MakeAddressFromString(\"contractName\").String() get a decimal string")
 	}
-
-	return evmutils.FromHexString(name)
+	return evmAddr, nil
 }
 func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	if result.ExitOpCode == opcodes.REVERT {
