@@ -1,7 +1,7 @@
 chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
 chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4/go.mod h1:i7XbQVJubFm+ehtT0em44u0waZEIFFZThTS1d8vnKRQ=
-chainmaker.org/chainmaker/common v0.0.0-20210810165337-0dfb329fc60b h1:3k6+BT6j5mqyRHeJEfWDDjZXGXjKm0I7Ylw2mSv2r/w=
-chainmaker.org/chainmaker/common v0.0.0-20210810165337-0dfb329fc60b/go.mod h1:JYIrRtyWi1uHv4SCckKdaicROJLHaLC7kchPbY2st7Y=
+chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071 h1:FN/DuoHZ7WTzzdhpG6+alyX6EXM+2KibcRBJFPnBkMc=
+chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210809024420-84332310603e/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d h1:Tt8EQeH5r10/CAg4/1RDMzQ7aHuBsh4TscLA9hkuSfA=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
@@ -1163,7 +1163,6 @@ github.com/tjfoc/gmsm v1.2.3/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn
 github.com/tjfoc/gmsm v1.3.0/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
-github.com/tjfoc/gmtls v1.2.1 h1:0RKm1A6hUbpFH0BzkUUmo2FxzMIUSMFle8IUoaDorNI=
 github.com/tjfoc/gmtls v1.2.1/go.mod h1:+mIfCjj3QuRGrW527hj12JLjI6DTt2MvBDxb3/86ykM=
 github.com/tklauser/go-sysconf v0.3.5/go.mod h1:MkWzOF4RMCshBAMXuhXJs64Rte09mITnppBXY/rYEFI=
 github.com/tklauser/numcpus v0.2.2/go.mod h1:x3qojaO3uyYt0i56EW/VUYs7uBvdl2fkfZFu0T9wgjM=
