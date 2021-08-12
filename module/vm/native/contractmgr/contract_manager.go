@@ -214,10 +214,10 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 	//实例化合约，并init合约，产生读写集
 	result, statusCode := context.CallContract(contract, protocol.ContractInitMethod, byteCode, initParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
 	if statusCode != commonPb.TxStatusCode_SUCCESS {
-		return nil, errContractInitFail
+		return nil, fmt.Errorf("%s, %s", errContractInitFail, result.Message)
 	}
 	if result.Code > 0 { //throw error
-		return nil, errContractInitFail
+		return nil, fmt.Errorf("%s, %s", errContractInitFail, result.Message)
 	}
 	if runTime == commonPb.RuntimeType_EVM {
 		//save bytecode body
@@ -225,7 +225,7 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 		if len(result.Result) > 0 {
 			err := context.Put(ContractName, byteCodeKey, result.Result)
 			if err != nil {
-				return nil, errContractInitFail
+				return nil, fmt.Errorf("%s, %s", errContractInitFail, err)
 			}
 		}
 	}
@@ -260,10 +260,11 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 	//运行新合约的upgrade方法，产生读写集
 	result, statusCode := context.CallContract(contract, protocol.ContractUpgradeMethod, byteCode, upgradeParameters, 0, commonPb.TxType_INVOKE_CONTRACT)
 	if statusCode != commonPb.TxStatusCode_SUCCESS {
-		return nil, errContractUpgradeFail
+		return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, result.Message)
+
 	}
 	if result.Code > 0 { //throw error
-		return nil, errContractUpgradeFail
+		return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, result.Message)
 	}
 	if runTime == commonPb.RuntimeType_EVM {
 		//save bytecode body
@@ -271,7 +272,7 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 		if len(result.Result) > 0 {
 			err := context.Put(ContractName, byteCodeKey, result.Result)
 			if err != nil {
-				return nil, errContractUpgradeFail
+				return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, err)
 			}
 		}
 	}
@@ -319,8 +320,9 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		return nil, err
 	}
 	if contract.Status != oldStatus {
-		r.log.Errorf("contract[%s] expect status:%s,actual status:%s", name, oldStatus.String(), contract.Status.String())
-		return nil, errContractStatusInvalid
+		msg := fmt.Sprintf("contract[%s] expect status:%s,actual status:%s", name, oldStatus.String(), contract.Status.String())
+		r.log.Errorf(msg)
+		return nil, fmt.Errorf("%s, %s", errContractStatusInvalid, msg)
 	}
 	contract.Status = newStatus
 	key := utils.GetContractDbKey(name)
