@@ -94,11 +94,7 @@ func (bc *Blockchain) Init() (err error) {
 
 	bc.log.Debug("start to init blockchain ...")
 
-	if err := bc.initExtModules(extModules); err != nil {
-		return err
-	}
-
-	return nil
+	return bc.initExtModules(extModules)
 }
 
 func (bc *Blockchain) initBaseModules(baseModules []map[string]func() error) (err error) {
@@ -147,7 +143,8 @@ func (bc *Blockchain) initNetService() (err error) {
 		return
 	}
 	var netServiceFactory net.NetServiceFactory
-	if bc.netService, err = netServiceFactory.NewNetService(bc.net, bc.chainId, bc.ac, bc.chainConf, net.WithMsgBus(bc.msgBus)); err != nil {
+	if bc.netService, err = netServiceFactory.NewNetService(
+		bc.net, bc.chainId, bc.ac, bc.chainConf, net.WithMsgBus(bc.msgBus)); err != nil {
 		bc.log.Errorf("new net service failed, %s", err)
 		return
 	}
@@ -163,7 +160,8 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
-	if bc.store, err = storeFactory.NewStore(bc.chainId, &localconf.ChainMakerConfig.StorageConfig, storeLogger); err != nil {
+	if bc.store, err = storeFactory.NewStore(
+		bc.chainId, &localconf.ChainMakerConfig.StorageConfig, storeLogger); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -214,15 +212,19 @@ func (bc *Blockchain) initCache() (err error) {
 	}
 	// create genesis block
 	// 1) if not exist on chain, create it
-	// 2) if exist on chain, load the config in genesis, it will be changed to load the config in config transactions in the future
+	// 2) if exist on chain, load the config in genesis
+	// it will be changed to load the config in config transactions in the future
 	bc.lastBlock, err = bc.store.GetLastBlock()
 	if err != nil { //可能是全新数据库没有任何数据，而且还没创世，所以可能报错，不返回错误，继续进行创世操作即可
 		bc.log.Infof("get last block failed, if it's a genesis block, ignore this error, %s", err.Error())
 	}
 
 	if bc.lastBlock != nil {
-		bc.log.Infof("get last block [chainId:%s]/[height:%d]/[blockhash:%s] success, no need to create genesis block",
-			bc.lastBlock.GetHeader().ChainId, bc.lastBlock.GetHeader().BlockHeight, hex.EncodeToString(bc.lastBlock.GetHeader().BlockHash))
+		bc.log.Infof(
+			"get last block [chainId:%s]/[height:%d]/[blockhash:%s] success, no need to create genesis block",
+			bc.lastBlock.GetHeader().ChainId, bc.lastBlock.GetHeader().BlockHeight,
+			hex.EncodeToString(bc.lastBlock.GetHeader().BlockHash),
+		)
 	} else {
 		chainConfig, err := chainconf.Genesis(bc.genesis)
 		if err != nil {
@@ -233,7 +235,8 @@ func (bc *Blockchain) initCache() (err error) {
 		if err != nil {
 			return fmt.Errorf("create chain [%s] genesis failed, %s", bc.chainId, err.Error())
 		}
-		if err = bc.store.InitGenesis(&storePb.BlockWithRWSet{Block: genesisBlock, TxRWSets: rwSetList, ContractEvents: nil}); err != nil {
+		if err = bc.store.InitGenesis(
+			&storePb.BlockWithRWSet{Block: genesisBlock, TxRWSets: rwSetList, ContractEvents: nil}); err != nil {
 			return fmt.Errorf("put chain[%s] genesis block failed, %s", bc.chainId, err.Error())
 		}
 
@@ -277,7 +280,8 @@ func (bc *Blockchain) initAC() (err error) {
 		}
 	}
 	acLog := logger.GetLoggerByChain(logger.MODULE_ACCESS, bc.chainId)
-	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(
+		skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
 		bc.log.Errorf("get organization information failed, %s", err.Error())
 		return
@@ -331,9 +335,15 @@ func (bc *Blockchain) initVM() (err error) {
 	// init VM
 	var vmFactory vm.Factory
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(
+			localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
 	} else {
-		bc.vmMgr = vmFactory.NewVmManager(localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
+		bc.vmMgr = vmFactory.NewVmManager(
+			localconf.ChainMakerConfig.StorageConfig.StorePath,
+			bc.ac,
+			bc.netService.GetChainNodesInfoProvider(),
+			bc.chainConf,
+		)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return

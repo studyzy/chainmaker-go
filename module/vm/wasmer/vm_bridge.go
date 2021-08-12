@@ -11,9 +11,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"chainmaker.org/chainmaker-go/wasi"
-
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/wasi"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker/protocol"
@@ -171,7 +170,7 @@ func (s *WaciInstance) invoke(method interface{}) int32 {
 	case protocol.ContractMethodRSHasNext:
 		return s.RSHasNext()
 	case protocol.ContractMethodRSNextLen:
-		return  s.RSNextLen()
+		return s.RSNextLen()
 	case protocol.ContractMethodRSNext:
 		return s.RSNext()
 	case protocol.ContractMethodRSClose:
@@ -202,7 +201,7 @@ func (s *WaciInstance) CallContract() int32 {
 }
 
 func (s *WaciInstance) callContractCore(isLen bool) int32 {
-	data, err, gas := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed(), isLen)
+	data, gas, err := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed(), isLen)
 	s.Sc.GetStateCache = data // reset data
 	s.Sc.Instance.SetGasUsed(gas)
 	if err != nil {

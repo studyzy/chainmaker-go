@@ -19,6 +19,6 @@ var NilRAFTProvider provider.CoreProvider = (*raftProvider)(nil)
 type raftProvider struct {
 }
 
-func (rp *raftProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (rp *raftProvider) NewCoreEngine(config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	return NewCoreEngine(config)
 }
