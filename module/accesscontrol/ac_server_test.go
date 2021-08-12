@@ -125,7 +125,7 @@ func TestVerifyPrincipalPolicy(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, policyRead.GetPbPolicy(), policy)
 
-	principal, err := acServices.createPrincipal(common.TxType_QUERY_CONTRACT.String(),
+	principal, err := acServices.createPrincipal(txTypeToResourceNameMap[common.TxType_QUERY_CONTRACT],
 		[]*common.EndorsementEntry{endorsement}, []byte(testMsg))
 	require.Nil(t, err)
 

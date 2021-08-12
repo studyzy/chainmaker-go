@@ -111,7 +111,7 @@ func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
 
 func (cm *certMember) GetMember() (*pbac.Member, error) {
 
-	if cm.isCompressed == false {
+	if !cm.isCompressed {
 		id, err := utils.GetCertificateIdFromDER(cm.cert.Raw, cm.hashType)
 		if err != nil {
 			return nil, fmt.Errorf("get pb member failed: [%s]", err.Error())
@@ -138,7 +138,8 @@ type signingCertMember struct {
 	sk bccrypto.PrivateKey
 }
 
-// When using certificate, the signature-hash algorithm suite is from the certificate, and the input hashType is ignored.
+// Sign When using certificate, the signature-hash algorithm suite is from the certificate
+// and the input hashType is ignored.
 func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	hashAlgo, err := bcx509.GetHashFromSignatureAlgorithm(scm.cert.SignatureAlgorithm)
 	if err != nil {
@@ -151,7 +152,7 @@ func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) 
 	})
 }
 
-func NewCertMember(member *pbac.Member, acs *accessControlService) (*certMember, error) {
+func newCertMemberFromPb(member *pbac.Member, acs *accessControlService) (*certMember, error) {
 
 	for _, v := range acs.trustMembers {
 		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
@@ -183,9 +184,9 @@ func NewCertMember(member *pbac.Member, acs *accessControlService) (*certMember,
 }
 
 func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed bool) (*certMember, error) {
-	var certMember certMember
-	certMember.orgId = orgId
-	certMember.isCompressed = isCompressed
+	var member certMember
+	member.orgId = orgId
+	member.isCompressed = isCompressed
 
 	var cert *bcx509.Certificate
 	var err error
@@ -202,28 +203,34 @@ func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed b
 		}
 	}
 
-	certMember.hashType = hashType
+	member.hashType = hashType
 	orgIdFromCert := cert.Subject.Organization[0]
 	if orgIdFromCert != orgId {
-		return nil, fmt.Errorf("setup cert member failed, organization information in certificate and in input parameter do not match [certificate: %s, parameter: %s]", orgIdFromCert, orgId)
+		return nil, fmt.Errorf(
+			"setup cert member failed, organization information in certificate "+
+				"and in input parameter do not match [certificate: %s, parameter: %s]",
+			orgIdFromCert,
+			orgId,
+		)
 	}
 
 	id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
 	if err != nil {
 		id = []byte(cert.Subject.CommonName)
 	}
-	certMember.id = string(id)
-	certMember.cert = cert
+	member.id = string(id)
+	member.cert = cert
 	ou := ""
 	if len(cert.Subject.OrganizationalUnit) > 0 {
 		ou = cert.Subject.OrganizationalUnit[0]
 	}
 	ou = strings.ToUpper(ou)
-	certMember.role = protocol.Role(ou)
-	return &certMember, nil
+	member.role = protocol.Role(ou)
+	return &member, nil
 }
 
-func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem string, password string) (protocol.SigningMember, error) {
+func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem,
+	password string) (protocol.SigningMember, error) {
 	certMember, err := newMemberFromCertPem(member.OrgId, hashType, member.MemberInfo, true)
 	if err != nil {
 		return nil, err
@@ -231,7 +238,8 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem st
 	var sk bccrypto.PrivateKey
 	p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
 	if p11Config.Enabled {
-		p11Handle, err := getP11Handle()
+		var p11Handle *pkcs11.P11Handle
+		p11Handle, err = getP11Handle()
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
 		}
@@ -252,7 +260,8 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem st
 	}, nil
 }
 
-func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (protocol.SigningMember, error) {
+func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
+	protocol.SigningMember, error) {
 	if localPrivKeyFile != "" && localCertFile != "" {
 		certPEM, err := ioutil.ReadFile(localCertFile)
 		if err != nil {
@@ -269,7 +278,8 @@ func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyP
 		var sk bccrypto.PrivateKey
 		p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
 		if p11Config.Enabled {
-			p11Handle, err := getP11Handle()
+			var p11Handle *pkcs11.P11Handle
+			p11Handle, err = getP11Handle()
 			if err != nil {
 				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 			}

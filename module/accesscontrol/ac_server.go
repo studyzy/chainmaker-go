@@ -60,26 +60,123 @@ var txTypeToResourceNameMap = map[common.TxType]string{
 }
 
 var (
-	policyRead      = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode, protocol.RoleClient, protocol.RoleAdmin})
-	policyWrite     = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleClient, protocol.RoleAdmin})
-	policyConsensus = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode})
-	policyP2P       = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleConsensusNode, protocol.RoleCommonNode})
-	policyAdmin     = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
-	policySubscribe = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleLight, protocol.RoleClient, protocol.RoleAdmin})
-	policyArchive   = newPolicy(protocol.RuleAny, nil, []protocol.Role{protocol.RoleAdmin})
+	policyRead = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleConsensusNode,
+			protocol.RoleCommonNode,
+			protocol.RoleClient,
+			protocol.RoleAdmin,
+		},
+	)
 
-	policyConfig = newPolicy(protocol.RuleMajority, nil, []protocol.Role{protocol.RoleAdmin})
+	policyWrite = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleClient,
+			protocol.RoleAdmin,
+		},
+	)
 
-	policySelfConfig = newPolicy(protocol.RuleSelf, nil, []protocol.Role{protocol.RoleAdmin})
+	policyConsensus = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleConsensusNode,
+		},
+	)
 
-	policyForbidden = newPolicy(protocol.RuleForbidden, nil, nil)
+	policyP2P = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleConsensusNode,
+			protocol.RoleCommonNode,
+		},
+	)
+	policyAdmin = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
 
-	policyAllTest = newPolicy(protocol.RuleAll, nil, []protocol.Role{protocol.RoleAdmin})
+	policySubscribe = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleLight, protocol.RoleClient,
+			protocol.RoleAdmin,
+		},
+	)
 
-	policyLimitTestAny        = newPolicy("2", nil, nil)
-	policyLimitTestAdmin      = newPolicy("2", nil, []protocol.Role{protocol.RoleAdmin})
-	policyPortionTestAny      = newPolicy("3/4", nil, nil)
-	policyPortionTestAnyAdmin = newPolicy("3/4", nil, []protocol.Role{protocol.RoleAdmin})
+	policyArchive = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
+
+	policyConfig = newPolicy(
+		protocol.RuleMajority,
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
+
+	policySelfConfig = newPolicy(
+		protocol.RuleSelf,
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
+
+	policyForbidden = newPolicy(
+		protocol.RuleForbidden,
+		nil,
+		nil)
+
+	policyAllTest = newPolicy(
+		protocol.RuleAll,
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
+
+	policyLimitTestAny = newPolicy(
+		"2",
+		nil,
+		nil,
+	)
+
+	policyLimitTestAdmin = newPolicy(
+		"2",
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
+
+	policyPortionTestAny = newPolicy(
+		"3/4",
+		nil,
+		nil,
+	)
+
+	policyPortionTestAnyAdmin = newPolicy(
+		"3/4",
+		nil,
+		[]protocol.Role{
+			protocol.RoleAdmin,
+		},
+	)
 )
 
 type accessControlService struct {
@@ -388,8 +485,9 @@ func (acs *accessControlService) validateResourcePolicy(resourcePolicy *config.R
 	return acs.checkResourcePolicyRule(resourcePolicy)
 }
 
-func (acs *accessControlService) createPrincipal(resourceName string, endorsements []*common.EndorsementEntry, message []byte) (
-	protocol.Principal, error) {
+func (acs *accessControlService) createPrincipal(resourceName string, endorsements []*common.EndorsementEntry,
+	message []byte) (protocol.Principal, error) {
+
 	if len(endorsements) == 0 || message == nil {
 		return nil, fmt.Errorf("setup access control principal failed, a principal should contain valid (non-empty)" +
 			" signer information, signature, and message")
@@ -405,8 +503,8 @@ func (acs *accessControlService) createPrincipal(resourceName string, endorsemen
 	}, nil
 }
 
-func (acs *accessControlService) createPrincipalForTargetOrg(resourceName string, endorsements []*common.EndorsementEntry,
-	message []byte, targetOrgId string) (protocol.Principal, error) {
+func (acs *accessControlService) createPrincipalForTargetOrg(resourceName string,
+	endorsements []*common.EndorsementEntry, message []byte, targetOrgId string) (protocol.Principal, error) {
 	p, err := acs.createPrincipal(resourceName, endorsements, message)
 	if err != nil {
 		return nil, err
@@ -467,8 +565,8 @@ func (acs *accessControlService) verifyPrincipalPolicy(principal, refinedPrincip
 	}
 }
 
-func (acs *accessControlService) verifyPrincipalPolicyRuleMajorityCase(p *policy, endorsements []*common.EndorsementEntry) (
-	bool, error) {
+func (acs *accessControlService) verifyPrincipalPolicyRuleMajorityCase(p *policy,
+	endorsements []*common.EndorsementEntry) (bool, error) {
 	// notice: accept admin role only, and require majority of all the organizations on the chain
 	role := protocol.RoleAdmin
 	// orgList, _ := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
@@ -489,8 +587,8 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleMajorityCase(p *policy
 		notEnoughParticipantsSupportError, int(float64(acs.orgNum)/2.0+1), numOfValid)
 }
 
-func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg string, endorsements []*common.EndorsementEntry) (
-	bool, error) {
+func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg string,
+	endorsements []*common.EndorsementEntry) (bool, error) {
 	role := protocol.RoleAdmin
 	if targetOrg == "" {
 		return false, fmt.Errorf("authentication fail: SELF keyword requires the owner of the affected target")
@@ -559,8 +657,8 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAllCase(p *policy, end
 	return false, fmt.Errorf("authentication fail: not all of the listed organtizations consend to this action")
 }
 
-func (acs *accessControlService) verifyPrincipalPolicyRuleDefaultCase(p *policy, endorsements []*common.EndorsementEntry) (
-	bool, error) {
+func (acs *accessControlService) verifyPrincipalPolicyRuleDefaultCase(p *policy,
+	endorsements []*common.EndorsementEntry) (bool, error) {
 	rule := p.GetRule()
 	orgList, roleList := buildOrgListRoleListOfPolicyForVerifyPrincipal(p)
 	nums := strings.Split(string(rule), LIMIT_DELIMITER)
@@ -610,7 +708,8 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleDefaultCase(p *policy,
 	}
 }
 
-func (acs *accessControlService) countValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool, endorsements []*common.EndorsementEntry) int {
+func (acs *accessControlService) countValidEndorsements(orgList map[string]bool, roleList map[protocol.Role]bool,
+	endorsements []*common.EndorsementEntry) int {
 	refinedEndorsements := acs.getValidEndorsements(orgList, roleList, endorsements)
 	return countOrgsFromEndorsements(refinedEndorsements)
 }
@@ -641,14 +740,19 @@ func (acs *accessControlService) getValidEndorsements(orgList map[string]bool, r
 
 		isRoleMatching := isRoleMatching(member.GetRole(), roleList, &refinedEndorsements, endorsement)
 		if !isRoleMatching {
-			acs.log.Debugf("authentication warning: signer's role [%v] is not permitted, requires [%v]", member.GetRole(), roleList)
+			acs.log.Debugf(
+				"authentication warning: signer's role [%v] is not permitted, requires [%v]",
+				member.GetRole(),
+				roleList,
+			)
 		}
 	}
 
 	return refinedEndorsements
 }
 
-func isRoleMatching(signerRole protocol.Role, roleList map[protocol.Role]bool, refinedEndorsements *[]*common.EndorsementEntry, endorsement *common.EndorsementEntry) bool {
+func isRoleMatching(signerRole protocol.Role, roleList map[protocol.Role]bool,
+	refinedEndorsements *[]*common.EndorsementEntry, endorsement *common.EndorsementEntry) bool {
 	isRoleMatching := false
 	if _, ok := roleList[signerRole]; ok {
 		*refinedEndorsements = append(*refinedEndorsements, endorsement)

@@ -856,7 +856,8 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 	return certAc
 }
 
-func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, hashType string) ([]*commonPb.EndorsementEntry, error) {
+func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, hashType string) (
+	[]*commonPb.EndorsementEntry, error) {
 	var ret []*commonPb.EndorsementEntry
 	for _, signer := range signers {
 		sig, err := signer.Sign(hashType, msg)
