@@ -174,12 +174,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMembe
 		log.Fatalf("get sk PEM failed, %s", err.Error())
 	}
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
 	if err != nil {
 		panic(err)
 	}

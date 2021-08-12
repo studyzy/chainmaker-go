@@ -875,3 +875,20 @@ func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, has
 	}
 	return ret, nil
 }
+
+func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string,
+	chainConfig protocol.ChainConf, localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (
+	protocol.AccessControlProvider, error) {
+	conf := chainConfig.ChainConfig()
+	acp, err := newCertACProvider(conf, localOrgId, store, log)
+	if err != nil {
+		return nil, err
+	}
+	chainConfig.AddWatch(acp)
+	chainConfig.AddVmWatch(acp)
+	InitCertSigningMember(conf.Crypto.Hash, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
+	return acp, err
+}
+
+//func NewMemberFromCertPem(orgID ,certPEM string){
+//}
