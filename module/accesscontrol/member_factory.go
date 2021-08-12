@@ -29,7 +29,7 @@ func MemberFactory() *memberFactory {
 func (mf *memberFactory) NewMember(pbMember *pbac.Member, acs *accessControlService) (protocol.Member, error) {
 	switch pbMember.MemberType {
 	case pbac.MemberType_CERT, pbac.MemberType_CERT_HASH:
-		return NewCertMember(pbMember, acs)
+		return newCertMemberFromPb(pbMember, acs)
 	}
 	return nil, fmt.Errorf("new member failed: the member type is not supported")
 }
