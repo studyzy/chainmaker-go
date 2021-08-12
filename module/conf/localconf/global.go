@@ -9,7 +9,7 @@ package localconf
 
 var (
 	//CurrentVersion current version
-	CurrentVersion = ""
+	CurrentVersion = "v2.0.2"
 	// CurrentCommit current git commit hash
 	GitCommit = ""
 	// CurrentBranch current git branch

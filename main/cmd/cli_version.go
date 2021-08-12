@@ -33,13 +33,19 @@ func logo() string {
 	s := fig.String()
 	fragment := "================================================================================="
 	//versionInfo := "::ChainMaker::  version(" + localconf.CurrentVersion + ")"
-	versionInfo := fmt.Sprintf("ChainMaker Version: %s\nBuild Time:%9s%s\nGit Commit:%9s%s(%s)",
-		localconf.CurrentVersion,
-		" ",
-		localconf.BuildDateTime,
-		" ",
-		localconf.GitBranch,
-		localconf.GitCommit)
+	versionInfo := fmt.Sprintf("ChainMaker Version: %s\n", localconf.CurrentVersion)
+
+	if localconf.BuildDateTime != "" {
+		versionInfo += fmt.Sprintf("Build Time:%9s%s\n", " ", localconf.BuildDateTime)
+	}
+
+	if localconf.GitBranch != "" {
+		versionInfo += fmt.Sprintf("Git Commit:%9s%s", " ", localconf.GitBranch)
+		if localconf.GitCommit != "" {
+			versionInfo += fmt.Sprintf("(%s)", localconf.GitCommit)
+		}
+	}
+
 	return fmt.Sprintf("\n%s\n%s%s\n%s\n", fragment, s, fragment, versionInfo)
 }
 
