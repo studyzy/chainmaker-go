@@ -21,13 +21,11 @@ import (
 	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
 	"chainmaker.org/chainmaker-go/utils"
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/helper"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"github.com/tjfoc/gmsm/sm2"
-
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/common/helper"
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p-core/network"
 
@@ -596,7 +594,7 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 		if ln.libP2pHost.isGmTls {
 			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
 			for pid, bytes := range peerIdTlsCertMap {
-				cert, err := sm2.ParseCertificate(bytes)
+				cert, err := cmx509.ParseCertificate(bytes)
 				if err != nil {
 					logger.Errorf("[Net] parse tls cert failed. %s", err.Error())
 					continue

@@ -8,6 +8,7 @@ package blocksqldb
 
 import (
 	"errors"
+	//"github.com/Workiva/go-datastructures/threadsafe/err"
 	"runtime"
 
 	"chainmaker.org/chainmaker-go/localconf"
