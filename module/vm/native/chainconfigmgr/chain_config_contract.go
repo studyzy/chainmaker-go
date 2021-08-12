@@ -113,7 +113,9 @@ func registerChainConfigContractMethods(log protocol.Logger) map[string]common.C
 
 	return methodMap
 }
-
+func GetChainConfig(txSimContext protocol.TxSimContext) (*configPb.ChainConfig, error) {
+	return getChainConfig(txSimContext, make(map[string][]byte))
+}
 func getChainConfig(txSimContext protocol.TxSimContext, params map[string][]byte) (*configPb.ChainConfig, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty

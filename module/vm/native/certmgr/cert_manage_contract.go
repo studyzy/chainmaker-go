@@ -9,6 +9,9 @@ package certmgr
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/hex"
@@ -17,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
@@ -69,7 +73,7 @@ type CertManageRuntime struct {
 }
 
 // Add cert add
-func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[string][]byte) (
+func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, _ map[string][]byte) (
 	result []byte, err error) {
 
 	tx := txSimContext.GetTx()
@@ -178,8 +182,7 @@ func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map
 }
 
 // Freeze certs
-func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params map[string][]byte) (
-	[]byte, error) {
+func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// verify params
 	changed := false
 
@@ -198,9 +201,14 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 		return nil, err
 	}
 
+	config, _ := chainconfigmgr.GetChainConfig(txSimContext)
+
 	certs := strings.Split(certsStr, ",")
 
 	for _, cert := range certs {
+		if msg := r.checkCert(cert, config.TrustRoots); msg != nil {
+			return nil, msg
+		}
 		certHash, err1 := utils.GetCertificateIdHex([]byte(cert), hashType)
 		if err1 != nil {
 			r.log.Errorf("utils.GetCertificateIdHex failed, err: %s", err1.Error())
@@ -282,8 +290,12 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 		return nil, err
 	}
 
+	config, _ := chainconfigmgr.GetChainConfig(txSimContext)
 	certs := strings.Split(certsStr, ",")
 	for _, cert := range certs {
+		if msg := r.checkCert(cert, config.TrustRoots); msg != nil {
+			return nil, msg
+		}
 		if len(cert) == 0 {
 			continue
 		}
@@ -502,4 +514,36 @@ func (r *CertManageRuntime) recoverFrozenCert(txSimContext protocol.TxSimContext
 		}
 	}
 	return freezeKeyArray, changed
+}
+
+func (r *CertManageRuntime) checkCert(cert string, trustRoots []*configPb.TrustRootConfig) error {
+	c, err := utils.ParseCert([]byte(cert))
+	if err != nil {
+		return err
+	}
+	if c.IsCA {
+		return errors.New("can not freeze/unfreeze root certificate")
+	}
+
+	// 判断是否是该ca签发的证书
+	caPool := bcx509.NewCertPool()
+	for _, root := range trustRoots {
+		pemBlock, rest := pem.Decode([]byte(root.Root))
+		for pemBlock != nil {
+			cert, _ := bcx509.ParseCertificate(pemBlock.Bytes)
+			caPool.AddCert(cert)
+			pemBlock, rest = pem.Decode(rest)
+		}
+	}
+	certChain, err := c.Verify(bcx509.VerifyOptions{
+		Intermediates:             caPool,
+		CurrentTime:               time.Time{},
+		KeyUsages:                 []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		MaxConstraintComparisions: 0,
+	})
+	if len(certChain) > 0 && len(certChain[0]) > 0 {
+		return nil
+	}
+	return errors.New("the cert is not in trust root")
+
 }
