@@ -98,6 +98,7 @@ func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, para
 	[]byte, error) {
 	var errMsg string
 	var err error
+	var chainListBytes []byte
 
 	// check params
 	if _, err = r.validateParams(parameters); err != nil {
@@ -113,7 +114,7 @@ func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, para
 	chainList := &discoveryPb.ChainList{
 		ChainIdList: chainIds,
 	}
-	chainListBytes, err := proto.Marshal(chainList)
+	chainListBytes, err = proto.Marshal(chainList)
 	if err != nil {
 		errMsg = fmt.Sprintf("marshal chain list failed, %s", err.Error())
 		r.log.Errorf(errMsg)
@@ -413,6 +414,8 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 	[]byte, error) {
 	var errMsg string
 	var err error
+	var merkleTree [][]byte
+	var merklePathsBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -435,7 +438,8 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 
 	hashes := make([][]byte, len(block.Txs))
 	for i, tx := range block.Txs {
-		txHash, err := utils.CalcTxHash(SHA256, tx)
+		var txHash []byte
+		txHash, err = utils.CalcTxHash(SHA256, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -443,7 +447,7 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 		hashes[i] = txHash
 	}
 
-	merkleTree, err := hash.BuildMerkleTree(SHA256, hashes)
+	merkleTree, err = hash.BuildMerkleTree(SHA256, hashes)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +455,7 @@ func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, p
 	merklePaths := make([][]byte, 0)
 	hash.GetMerklePath(SHA256, []byte(param.txId), merkleTree, &merklePaths, false) //todo withRoot hashType
 
-	merklePathsBytes, err := json.Marshal(merklePaths)
+	merklePathsBytes, err = json.Marshal(merklePaths)
 	if err != nil {
 		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
 		r.log.Errorf(errMsg)
@@ -466,6 +470,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 	[]byte, error) {
 	var errMsg string
 	var err error
+	var blockInfoBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -501,7 +506,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 		Block:     block,
 		RwsetList: txRWSets,
 	}
-	blockInfoBytes, err := proto.Marshal(blockInfo)
+	blockInfoBytes, err = proto.Marshal(blockInfo)
 	if err != nil {
 		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
 		r.log.Errorf(errMsg)
@@ -514,6 +519,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
+	var blockInfoBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -549,7 +555,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 		Block:     block,
 		RwsetList: txRWSets,
 	}
-	blockInfoBytes, err := proto.Marshal(blockInfo)
+	blockInfoBytes, err = proto.Marshal(blockInfo)
 	if err != nil {
 		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
 		r.log.Errorf(errMsg)
@@ -562,6 +568,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
+	var transactionInfoBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -596,7 +603,7 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 		return nil, err
 	}
 
-	transactionInfoBytes, err := proto.Marshal(transactionInfo)
+	transactionInfoBytes, err = proto.Marshal(transactionInfo)
 	if err != nil {
 		errMsg = fmt.Sprintf("marshal tx failed, %s", err.Error())
 		r.log.Errorf(errMsg)
@@ -611,6 +618,7 @@ func (r *BlockRuntime) GetFullBlockByHeight(txSimContext protocol.TxSimContext, 
 	var errMsg string
 	var err error
 	var block *commonPb.Block
+	var blockWithRWSetBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -640,7 +648,7 @@ func (r *BlockRuntime) GetFullBlockByHeight(txSimContext protocol.TxSimContext, 
 		ContractEvents: blockWithRWSet.ContractEvents,
 	}
 
-	blockWithRWSetBytes, err := blockWithRWSet.Marshal()
+	blockWithRWSetBytes, err = blockWithRWSet.Marshal()
 	if err != nil {
 		errMsg = fmt.Sprintf("marshal block with rwset failed, %s", err.Error())
 		r.log.Errorf(errMsg)
@@ -680,6 +688,7 @@ func (r *BlockRuntime) GetBlockHeightByTxId(txSimContext protocol.TxSimContext, 
 func (r *BlockRuntime) GetBlockHeightByHash(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
 	error) {
 	var err error
+	var blockHeight uint64
 
 	// check params
 	var param *BlockRuntimeParam
@@ -693,7 +702,7 @@ func (r *BlockRuntime) GetBlockHeightByHash(txSimContext protocol.TxSimContext, 
 		return nil, errStoreIsNil
 	}
 
-	blockHeight, err := r.getBlockHeightByHash(store, chainId, param.hash)
+	blockHeight, err = r.getBlockHeightByHash(store, chainId, param.hash)
 	if err != nil {
 		return nil, err
 	}
@@ -706,6 +715,7 @@ func (r *BlockRuntime) GetBlockHeaderByHeight(txSimContext protocol.TxSimContext
 	error) {
 	var err error
 	var errMsg string
+	var blockHeaderBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -725,7 +735,7 @@ func (r *BlockRuntime) GetBlockHeaderByHeight(txSimContext protocol.TxSimContext
 		return nil, err
 	}
 
-	blockHeaderBytes, err := blockHeader.Marshal()
+	blockHeaderBytes, err = blockHeader.Marshal()
 	if err != nil {
 		errMsg = fmt.Sprintf("block header marshal err is %s ", err.Error())
 		r.log.Error(errMsg)
