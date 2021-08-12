@@ -19,6 +19,6 @@ var NilSOLOProvider provider.CoreProvider = (*soloProvider)(nil)
 type soloProvider struct {
 }
 
-func (sp *soloProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (sp *soloProvider) NewCoreEngine(config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	return NewCoreEngine(config)
 }

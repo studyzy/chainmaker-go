@@ -18,7 +18,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	netpb "chainmaker.org/chainmaker/pb-go/net"
+	netpb "chainmaker.org/chainmaker/pb-go/net" //nolint:typecheck
 	"github.com/tidwall/wal"
 
 	"chainmaker.org/chainmaker-go/chainconf"

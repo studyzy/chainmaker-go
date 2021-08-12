@@ -12,12 +12,9 @@ import (
 	"time"
 )
 
-func TestInitAndStart(*testing.T) {
+func TestInitAndStart(t *testing.T) {
 	chainmakerServer := ChainMakerServer{}
 	chainmakerServer.Init()
 	timer := time.NewTimer(5 * time.Second)
-	select {
-	case <-timer.C:
-		break
-	}
+	<-timer.C
 }
