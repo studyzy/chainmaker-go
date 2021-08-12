@@ -51,9 +51,60 @@ func registerContractManagerMethods(log protocol.Logger) map[string]common.Contr
 	methodMap[syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()] = runtime.unfreezeContract
 	methodMap[syscontract.ContractManageFunction_REVOKE_CONTRACT.String()] = runtime.revokeContract
 	methodMap[syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String()] = runtime.getContractInfo
+
+	methodMap[syscontract.ContractManageFunction_GRANT_CONTRACT_ACCESS.String()] = runtime.grantContractAccess
+	methodMap[syscontract.ContractManageFunction_REVOKE_CONTRACT_ACCESS.String()] = runtime.revokeContractAccess
+	methodMap[syscontract.ContractManageFunction_VERIFY_CONTRACT_ACCESS.String()] = runtime.verifyContractAccess
+	methodMap[syscontract.ContractQueryFunction_GET_ALLOWED_CONTRACT_LIST.String()] = runtime.getPermittedContractList
+
 	return methodMap
 
 }
+
+func (r *ContractManagerRuntime) grantContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	// Todo:
+	if !r.initializedContractList {
+		//if chainConfig, err := txSimContext.GetBlockchainStore().GetLastChainConfig(); err != nil {
+		//	return nil, err
+		//}
+		txSimContext.Put("chainConfig")
+	} else {
+
+	}
+
+	return nil, nil
+}
+
+func (r *ContractManagerRuntime) revokeContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	// Todo:
+	if !r.initializedContractList {
+
+	} else {
+
+	}
+	return nil, nil
+}
+
+func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	// Todo:
+	if !r.initializedContractList {
+
+	} else {
+
+	}
+	return nil, nil
+}
+
+func (r *ContractManagerRuntime) getPermittedContractList(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	// Todo:
+	if !r.initializedContractList {
+
+	} else {
+
+	}
+	return nil, nil
+}
+
 func (r *ContractManagerRuntime) getContractInfo(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
 	[]byte, error) {
 	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
@@ -154,7 +205,8 @@ func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimConte
 }
 
 type ContractManagerRuntime struct {
-	log protocol.Logger
+	log                     protocol.Logger
+	initializedContractList bool
 }
 
 //GetContractInfo 根据合约名字查询合约的详细信息
