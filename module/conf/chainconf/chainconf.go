@@ -14,7 +14,6 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
-	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 
@@ -130,42 +129,6 @@ func (c *ChainConf) Init() error {
 	return c.latestChainConfig()
 }
 
-// HandleCompatibility will make new version to be compatible with old version
-func HandleCompatibility(chainConfig *config.ChainConfig) error {
-	// For v1.1 to be compatible with v1.0, check consensus config
-	for _, orgConfig := range chainConfig.Consensus.Nodes {
-		if orgConfig.NodeId == nil {
-			orgConfig.NodeId = make([]string, 0)
-		}
-		if len(orgConfig.NodeId) == 0 {
-			for _, addr := range orgConfig.Address {
-				nid, err := helper.GetNodeUidFromAddr(addr)
-				if err != nil {
-					return err
-				}
-				orgConfig.NodeId = append(orgConfig.NodeId, nid)
-			}
-			orgConfig.Address = nil
-		}
-	}
-	/*
-		// For v1.1 to be compatible with v1.0, check resource policies
-		for _, rp := range chainConfig.ResourcePolicies {
-			switch rp.ResourceName {
-			case syscontract.ChainConfigFunction_NODE_ID_ADD.String():
-				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_ADD.String()
-			case syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
-				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()
-			case syscontract.ChainConfigFunction_NODE_ID_DELETE.String():
-				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_DELETE.String()
-			default:
-				continue
-			}
-		}
-	*/
-	return nil
-}
-
 // latestChainConfig load latest chainConfig
 func (c *ChainConf) latestChainConfig() error {
 	// load chain config from store
@@ -178,11 +141,6 @@ func (c *ChainConf) latestChainConfig() error {
 	}
 	var chainConfig config.ChainConfig
 	err = proto.Unmarshal(bytes, &chainConfig)
-	if err != nil {
-		return err
-	}
-
-	err = HandleCompatibility(&chainConfig)
 	if err != nil {
 		return err
 	}
@@ -261,10 +219,6 @@ func GetChainConfigAt(log protocol.Logger, lru *lru.Cache, configLru *lru.Cache,
 		return nil, err
 	}
 
-	err = HandleCompatibility(chainConfig)
-	if err != nil {
-		return nil, err
-	}
 	return chainConfig, nil
 }
 
