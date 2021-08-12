@@ -8,8 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -17,7 +21,6 @@ import (
 const (
 	addTrustMember = iota
 	removeTrustMember
-	updateTrustMember
 )
 
 func configTrustMemberCMD() *cobra.Command {
@@ -44,7 +47,7 @@ func addTrustMemberCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath, flagTrustMemberOrgId, flagTrustMemberRole, flagTrustMemberNodeId,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -69,7 +72,7 @@ func removeTrustMemberCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagTrustMemberCrtPath,
-		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagClientCrtFilePaths, flagClientKeyFilePaths,
+		flagAdminCrtFilePaths, flagAdminKeyFilePaths,
 	})
 
 	cmd.MarkFlagRequired(flagSdkConfPath)
@@ -81,16 +84,20 @@ func removeTrustMemberCMD() *cobra.Command {
 }
 
 func configTrustMember(op int) error {
-	client, err := createClientWithConfig()
-	if err != nil {
-		return fmt.Errorf("create user client failed, %s", err.Error())
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminCrts := strings.Split(adminCrtFilePaths, ",")
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
+		return ErrAdminOrgIdKeyCertIsEmpty
+	}
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	adminClient, err := createAdminWithConfig(adminKeyFilePaths, adminCrtFilePaths)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
-		return fmt.Errorf("create admin client failed, %s", err.Error())
+		return err
 	}
-	defer adminClient.Stop()
+	defer client.Stop()
 
 	var trustMemberBytes []byte
 	if op == addTrustMember || op == removeTrustMember {
@@ -104,31 +111,37 @@ func configTrustMember(op int) error {
 		}
 	}
 
-	var payloadBytes []byte
+	var payload *common.Payload
 	switch op {
 	case addTrustMember:
-		payloadBytes, err = client.CreateChainConfigTrustMemberAddPayload(trustMemberOrgId, trustMemberNodeId, trustMemberRole, string(trustMemberBytes))
+		payload, err = client.CreateChainConfigTrustMemberAddPayload(trustMemberOrgId, trustMemberNodeId, trustMemberRole, string(trustMemberBytes))
 	case removeTrustMember:
-		payloadBytes, err = client.CreateChainConfigTrustMemberDeletePayload(string(trustMemberBytes))
+		payload, err = client.CreateChainConfigTrustMemberDeletePayload(string(trustMemberBytes))
 	default:
 		err = fmt.Errorf("invalid trust member operation")
 	}
 	if err != nil {
 		return err
 	}
-	signedPayload, err := adminClient.SignChainConfigPayload(payloadBytes)
-	if err != nil {
-		return err
-	}
-	mergeSignedPayloadBytes, err := client.MergeChainConfigSignedPayload([][]byte{signedPayload})
-	if err != nil {
-		return err
-	}
-	resp, err := client.SendChainConfigUpdateRequest(mergeSignedPayloadBytes)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("add or remove request response %+v\n", resp)
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
+	for i := range adminKeys {
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		if err != nil {
+			return err
+		}
 
+		endorsementEntrys[i] = e
+	}
+
+	resp, err := client.SendChainConfigUpdateRequest(payload, endorsementEntrys, -1, syncResult)
+	if err != nil {
+		return err
+	}
+	err = util.CheckProposalRequestResp(resp, false)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("add or remove request response %+v\n", resp)
 	return nil
 }

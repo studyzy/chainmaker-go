@@ -666,9 +666,9 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 
 // Cache for compressed certificate
 func (cp *certACProvider) lookUpCertCache(certId []byte) ([]byte, bool) {
-	ret, ok := cp.certCache.Get(certId)
+	ret, ok := cp.certCache.Get(string(certId))
 	if !ok {
-		cp.log.Debugf("looking up the full certificate for the compressed one [%v]", []byte(certId))
+		cp.log.Debugf("looking up the full certificate for the compressed one [%v]", certId)
 		if cp.acService.dataStore == nil {
 			cp.log.Debugf("local data storage is not set up")
 			return nil, false
@@ -683,7 +683,7 @@ func (cp *certACProvider) lookUpCertCache(certId []byte) ([]byte, bool) {
 			cp.log.Debugf("cert id [%s] does not exist in local storage", certIdHex)
 			return nil, false
 		}
-		cp.addCertCache(certId, cert)
+		cp.addCertCache(string(certId), cert)
 		cp.log.Debugf("compressed certificate [%s] found and stored in cache", certIdHex)
 		return cert, true
 	} else if ret != nil {
@@ -696,7 +696,7 @@ func (cp *certACProvider) lookUpCertCache(certId []byte) ([]byte, bool) {
 	}
 }
 
-func (cp *certACProvider) addCertCache(certId []byte, cert []byte) {
+func (cp *certACProvider) addCertCache(certId string, cert []byte) {
 	cp.certCache.Add(certId, cert)
 }
 
