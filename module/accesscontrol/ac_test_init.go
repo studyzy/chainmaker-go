@@ -807,14 +807,14 @@ var mockAcLogger = logger.GetLogger(logger.MODULE_ACCESS)
 func MockAccessControl() protocol.AccessControlProvider {
 	certAc := &certACProvider{
 		acService: &accessControlService{
-			orgList:               sync.Map{},
+			orgList:               &sync.Map{},
 			orgNum:                0,
-			resourceNamePolicyMap: sync.Map{},
+			resourceNamePolicyMap: &sync.Map{},
 			hashType:              "",
 			dataStore:             nil,
 			memberCache:           concurrentlru.New(0),
 			log:                   mockAcLogger,
-			localTrustMembers:     nil,
+			trustMembers:          nil,
 		},
 		certCache:  concurrentlru.New(0),
 		crl:        sync.Map{},
@@ -833,14 +833,14 @@ func MockAccessControl() protocol.AccessControlProvider {
 func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 	certAc := &certACProvider{
 		acService: &accessControlService{
-			orgList:               sync.Map{},
+			orgList:               &sync.Map{},
 			orgNum:                0,
-			resourceNamePolicyMap: sync.Map{},
+			resourceNamePolicyMap: &sync.Map{},
 			hashType:              hashAlg,
 			dataStore:             nil,
 			memberCache:           concurrentlru.New(0),
 			log:                   mockAcLogger,
-			localTrustMembers:     nil,
+			trustMembers:          nil,
 		},
 		certCache:  concurrentlru.New(0),
 		crl:        sync.Map{},

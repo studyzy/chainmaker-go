@@ -39,6 +39,5 @@ func NewACProviderByMemberType(memberType string) ACProvider {
 	if !found {
 		panic("accesscontrol provider[" + memberType + "] not found!")
 	}
-
 	return reflect.New(t).Elem().Interface().(ACProvider)
 }

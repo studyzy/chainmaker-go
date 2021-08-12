@@ -55,11 +55,13 @@ func newPolicy(rule protocol.Rule, orgList []string, roleList []protocol.Role) *
 }
 
 func newPolicyFromPb(input *pbac.Policy) *policy {
+
 	p := &policy{
 		rule:     protocol.Rule(input.Rule),
 		orgList:  input.OrgList,
 		roleList: nil,
 	}
+
 	for _, role := range input.RoleList {
 		role = strings.ToUpper(role)
 		p.roleList = append(p.roleList, protocol.Role(role))

@@ -30,7 +30,7 @@ const (
 	LIMIT_DELIMITER = "/"
 	PARAM_CERTS     = "certs"
 
-	authenticationFailedErrorTemplate        = "authentication failed, %v"
+	unsupportedRuleErrorTemplate             = "bad configuration: unsupported rule [%s]"
 	failToGetRoleInfoFromCertWarningTemplate = "authentication warning: fail to get role information from " +
 		"certificate [%v], certificate information: \n%s\n"
 )
@@ -83,17 +83,25 @@ var (
 )
 
 type accessControlService struct {
-	orgNum                int32
-	orgList               sync.Map                    // map[string]interface{} , orgId -> interface{}
-	resourceNamePolicyMap sync.Map                    // map[string]*policy , resourceName -> *policy
-	localTrustMembers     []*config.TrustMemberConfig //local trust members
-	memberCache           *concurrentlru.Cache
-	dataStore             protocol.BlockchainStore
-	log                   protocol.Logger
-	hashType              string
+	orgNum int32
+
+	orgList *sync.Map // map[string]interface{} , orgId -> interface{}
+
+	resourceNamePolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
+
+	trustMembers []*config.TrustMemberConfig
+
+	memberCache *concurrentlru.Cache
+
+	dataStore protocol.BlockchainStore
+
+	log protocol.Logger
+
+	// hash algorithm for chains
+	hashType string
 }
 
-type memberCache struct {
+type cachedMember struct {
 	member    protocol.Member
 	certChain []*bcx509.Certificate
 }
@@ -102,9 +110,9 @@ func initAccessControlService(hashType, localOrgId string, chainConf *config.Cha
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
-		orgList:               sync.Map{},
-		resourceNamePolicyMap: sync.Map{},
-		localTrustMembers:     chainConf.TrustMembers,
+		orgList:               &sync.Map{},
+		resourceNamePolicyMap: &sync.Map{},
+		trustMembers:          chainConf.TrustMembers,
 		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
 		dataStore:             store,
 		log:                   log,
@@ -416,15 +424,15 @@ func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string)
 	return p.(*policy), nil
 }
 
-func (acs *accessControlService) lookUpMemberInCache(memberInfo string) (*memberCache, bool) {
+func (acs *accessControlService) lookUpMemberInCache(memberInfo string) (*cachedMember, bool) {
 	ret, ok := acs.memberCache.Get(memberInfo)
 	if ok {
-		return ret.(*memberCache), true
+		return ret.(*cachedMember), true
 	}
 	return nil, false
 }
 
-func (acs *accessControlService) addMemberToCache(memberInfo string, member *memberCache) {
+func (acs *accessControlService) addMemberToCache(memberInfo string, member *cachedMember) {
 	acs.memberCache.Add(memberInfo, member)
 }
 

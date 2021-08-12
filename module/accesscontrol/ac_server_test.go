@@ -84,17 +84,17 @@ func TestCertMemberInfo(t *testing.T) {
 	err = signingMember.Verify(testChainConfig.Crypto.Hash, []byte(testMsg), signRead)
 	require.Nil(t, err)
 
-	memberCache := &memberCache{
+	cachedMember := &cachedMember{
 		member:    member,
 		certChain: nil,
 	}
 	mem, err := member.GetMember()
 	require.Nil(t, err)
 	require.NotNil(t, mem)
-	acServices.addMemberToCache(string(mem.MemberInfo), memberCache)
+	acServices.addMemberToCache(string(mem.MemberInfo), cachedMember)
 	memCache, ok := acServices.lookUpMemberInCache(string(mem.MemberInfo))
 	require.Equal(t, true, ok)
-	require.Equal(t, memberCache, memCache)
+	require.Equal(t, cachedMember, memCache)
 }
 
 func TestVerifyPrincipalPolicy(t *testing.T) {

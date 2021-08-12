@@ -31,9 +31,12 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
+const ModuleNameAccessControl = "Access Control"
+
 type certACProvider struct {
 	acService *accessControlService
 
+	// hash algorithm for chains (It's not the hash algorithm that the certificate uses)
 	hashType string
 	// local cache for certificates (reduce the size of block)
 	certCache *concurrentlru.Cache
@@ -442,9 +445,9 @@ func (cp *certACProvider) GetHashAlg() string {
 
 func (cp *certACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
 	if member.MemberType == pbac.MemberType_CERT_HASH {
-		memInfoBytes, ok := cp.lookUpCertCache(string(member.MemberInfo))
+		memInfoBytes, ok := cp.lookUpCertCache(member.MemberInfo)
 		if !ok {
-			cp.log.Errorf("authentication failed, unknown signer, the provided certificate ID is not registered")
+			return nil, fmt.Errorf("new member failed, the provided certificate ID is not registered")
 		}
 		member.MemberInfo = memInfoBytes
 	}
@@ -548,12 +551,12 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 func (cp *certACProvider) VerifyPrincipal(principal protocol.Principal) (bool, error) {
 
 	if atomic.LoadInt32(&cp.acService.orgNum) <= 0 {
-		return false, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
+		return false, fmt.Errorf("authentication failed: empty organization list or trusted node list on this chain")
 	}
 
 	refinedPrincipal, err := cp.refinePrincipal(principal)
 	if err != nil {
-		return false, fmt.Errorf("authentication fail, not ac member on this chain: [%v]", err)
+		return false, fmt.Errorf("authentication failed, [%s]", err.Error())
 	}
 
 	if localconf.ChainMakerConfig.DebugConfig.IsSkipAccessControl {
@@ -562,7 +565,7 @@ func (cp *certACProvider) VerifyPrincipal(principal protocol.Principal) (bool, e
 
 	p, err := cp.acService.lookUpPolicyByResourceName(principal.GetResourceName())
 	if err != nil {
-		return false, fmt.Errorf("authentication fail: [%v]", err)
+		return false, fmt.Errorf("authentication failed, [%s]", err.Error())
 	}
 
 	return cp.acService.verifyPrincipalPolicy(principal, refinedPrincipal, p)
@@ -572,26 +575,25 @@ func (cp *certACProvider) VerifyPrincipal(principal protocol.Principal) (bool, e
 func (cp *certACProvider) refinePrincipal(principal protocol.Principal) (protocol.Principal, error) {
 	endorsements := principal.GetEndorsement()
 	msg := principal.GetMessage()
-	refinedEndorsement, resultMsg := cp.refineEndorsements(endorsements, msg)
+	refinedEndorsement := cp.refineEndorsements(endorsements, msg)
 	if len(refinedEndorsement) <= 0 {
-		return nil, fmt.Errorf("authentication failed: message not signed by ac member on this chain %s", resultMsg)
+		return nil, fmt.Errorf("refine endorsements failed, all endorsers have failed verification")
 	}
 
 	refinedPrincipal, err := cp.CreatePrincipal(principal.GetResourceName(), refinedEndorsement, msg)
 	if err != nil {
-		return nil, fmt.Errorf("authentication failed: message not signed by ac member on this chain [%v]", err)
+		return nil, fmt.Errorf("create principal failed: [%s]", err.Error())
 	}
 
 	return refinedPrincipal, nil
 }
 
 func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementEntry,
-	msg []byte) ([]*common.EndorsementEntry, string) {
+	msg []byte) []*common.EndorsementEntry {
 
 	refinedSigners := map[string]bool{}
 	var refinedEndorsement []*common.EndorsementEntry
 	var memInfo string
-	resultMsg := ""
 
 	for _, endorsementEntry := range endorsements {
 		endorsement := &common.EndorsementEntry{
@@ -608,9 +610,9 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 		}
 		if endorsement.Signer.MemberType == pbac.MemberType_CERT_HASH {
 			cp.log.Debugf("target endorser uses compressed certificate")
-			memInfoBytes, ok := cp.lookUpCertCache(string(endorsement.Signer.MemberInfo))
+			memInfoBytes, ok := cp.lookUpCertCache(endorsement.Signer.MemberInfo)
 			if !ok {
-				cp.log.Errorf("authentication failed, unknown signer, the provided certificate ID is not registered")
+				cp.log.Infof("authentication failed, unknown signer, the provided certificate ID is not registered")
 				continue
 			}
 			memInfo = string(memInfoBytes)
@@ -621,22 +623,24 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 		if !ok {
 			cp.log.Debugf("certificate not in local cache, should verify it against the trusted root certificates: "+
 				"\n%s", memInfo)
-			remoteMember, certChain, ok, msgTmp := cp.verifyPrincipalSignerNotInCache(endorsement, msg, memInfo)
+			remoteMember, certChain, ok, err := cp.verifyPrincipalSignerNotInCache(endorsement, msg, memInfo)
 			if !ok {
-				resultMsg += msgTmp
+				cp.log.Infof("verify principal signer not in cache failed, [endorsement: %v],[err: %s]",
+					endorsement, err.Error())
 				continue
 			}
 
-			signerInfo = &memberCache{
+			signerInfo = &cachedMember{
 				member:    remoteMember,
 				certChain: certChain,
 			}
 
 			cp.acService.addMemberToCache(memInfo, signerInfo)
 		} else {
-			flat, msgTmp := cp.verifyPrincipalSignerInCache(signerInfo, endorsement, msg, memInfo)
-			resultMsg += msgTmp
+			flat, err := cp.verifyPrincipalSignerInCache(signerInfo, endorsement, msg, memInfo)
 			if !flat {
+				cp.log.Infof("verify principal signer in cache failed, [endorsement: %v],[err: %s]",
+					endorsement, err.Error())
 				continue
 			}
 		}
@@ -646,11 +650,11 @@ func (cp *certACProvider) refineEndorsements(endorsements []*common.EndorsementE
 			refinedEndorsement = append(refinedEndorsement, endorsement)
 		}
 	}
-	return refinedEndorsement, resultMsg
+	return refinedEndorsement
 }
 
 // Cache for compressed certificate
-func (cp *certACProvider) lookUpCertCache(certId string) ([]byte, bool) {
+func (cp *certACProvider) lookUpCertCache(certId []byte) ([]byte, bool) {
 	ret, ok := cp.certCache.Get(certId)
 	if !ok {
 		cp.log.Debugf("looking up the full certificate for the compressed one [%v]", []byte(certId))
@@ -658,7 +662,7 @@ func (cp *certACProvider) lookUpCertCache(certId string) ([]byte, bool) {
 			cp.log.Debugf("local data storage is not set up")
 			return nil, false
 		}
-		certIdHex := hex.EncodeToString([]byte(certId))
+		certIdHex := hex.EncodeToString(certId)
 		cert, err := cp.acService.dataStore.ReadObject(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certIdHex))
 		if err != nil {
 			cp.log.Debugf("fail to load compressed certificate from local storage [%s]", certIdHex)
@@ -681,25 +685,22 @@ func (cp *certACProvider) lookUpCertCache(certId string) ([]byte, bool) {
 	}
 }
 
-func (cp *certACProvider) addCertCache(signer string, cert []byte) {
-	cp.certCache.Add(signer, cert)
+func (cp *certACProvider) addCertCache(certId []byte, cert []byte) {
+	cp.certCache.Add(certId, cert)
 }
 
 func (cp *certACProvider) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte,
-	memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, resultMsg string) {
-	var err error
+	memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, err error) {
 	remoteMember, err = cp.acService.newMember(endorsement.Signer)
 	if err != nil {
-		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
-		cp.log.Warn(resultMsg)
+		err = fmt.Errorf("new member failed: [%s]", err.Error())
 		ok = false
 		return
 	}
 
 	certChain, err = cp.verifyMember(remoteMember)
 	if err != nil {
-		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
-		cp.log.Warn(resultMsg)
+		err = fmt.Errorf("verify member failed: [%s]", err.Error())
 		ok = false
 		return
 	}
@@ -714,10 +715,9 @@ func (cp *certACProvider) verifyPrincipalSignerNotInCache(endorsement *common.En
 	// }
 
 	if err = remoteMember.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
-		resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
+		err = fmt.Errorf("member verify signature failed: [%s]", err.Error())
 		cp.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
 			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
-		cp.log.Warn(resultMsg)
 		ok = false
 		return
 	}
@@ -725,12 +725,12 @@ func (cp *certACProvider) verifyPrincipalSignerNotInCache(endorsement *common.En
 	return
 }
 
-func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *memberCache, endorsement *common.EndorsementEntry,
-	msg []byte, memInfo string) (bool, string) {
+func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *cachedMember, endorsement *common.EndorsementEntry,
+	msg []byte, memInfo string) (bool, error) {
 	// check CRL and certificate frozen list
 
 	isTrustMember := false
-	for _, v := range cp.acService.localTrustMembers {
+	for _, v := range cp.acService.trustMembers {
 		if v.MemberInfo == memInfo {
 			isTrustMember = true
 			break
@@ -739,32 +739,27 @@ func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *memberCache, 
 	if !isTrustMember {
 		err := cp.checkCRL(signerInfo.certChain)
 		if err != nil {
-			resultMsg := fmt.Sprintf("authentication failed, checking CRL returns error: %v", err)
-			return false, resultMsg
+			return false, fmt.Errorf("check CRL, error: [%s]", err.Error())
 		}
 		err = cp.checkCertFrozenList(signerInfo.certChain)
 		if err != nil {
-			resultMsg := fmt.Sprintf("authentication failed, checking certificate frozen list returns error: %v", err)
-			return false, resultMsg
+			return false, fmt.Errorf("check cert forzen list, error: [%s]", err.Error())
 		}
-
 		cp.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
 	}
 
 	if endorsement.Signer.OrgId != signerInfo.member.GetOrgId() {
-		resultMsg := fmt.Sprintf("authentication failed, signer does not belong to the organization it claims "+
+		err := fmt.Errorf("authentication failed, signer does not belong to the organization it claims "+
 			"[claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.member.GetOrgId())
-		cp.log.Warn(resultMsg)
-		return false, resultMsg
+		return false, err
 	}
 	if err := signerInfo.member.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
-		resultMsg := fmt.Sprintf(authenticationFailedErrorTemplate, err)
+		err := fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
 		cp.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
 			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
-		cp.log.Warn(resultMsg)
-		return false, resultMsg
+		return false, err
 	}
-	return true, ""
+	return true, nil
 }
 
 // Check whether the provided member is a valid member of this group
@@ -776,7 +771,7 @@ func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certifica
 	if !ok {
 		return nil, fmt.Errorf("invalid member: member type err")
 	}
-	for _, v := range cp.acService.localTrustMembers {
+	for _, v := range cp.acService.trustMembers {
 		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
 		if certBlock == nil {
 			return nil, fmt.Errorf("load trust member info failed, none certificate given")
@@ -854,7 +849,18 @@ func (cp *certACProvider) Watch(chainConfig *config.ChainConfig) error {
 	cp.acService.memberCache.Clear()
 	cp.certCache.Clear()
 
-	cp.acService.localTrustMembers = chainConfig.TrustMembers
+	trustMembersMap := make(map[string]bool, len(chainConfig.TrustMembers))
+	trustMembers := make([]*config.TrustMemberConfig, 0)
+	for _, member := range chainConfig.TrustMembers {
+		if _, ok := trustMembersMap[member.MemberInfo]; ok {
+			cp.log.Warnf("after updating chainconfig, update the trust member failed: the member info is already exist, [%s]",
+				member.MemberInfo)
+			continue
+		}
+		trustMembersMap[member.MemberInfo] = true
+		trustMembers = append(trustMembers, member)
+	}
+	cp.acService.trustMembers = trustMembers
 	return nil
 }
 
@@ -911,7 +917,7 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 		orgNum++
 	}
 	atomic.StoreInt32(&cp.acService.orgNum, orgNum)
-	cp.acService.orgList = orgList
+	cp.acService.orgList = &orgList
 	cp.opts = opts
 	localOrg := cp.acService.getOrgInfoByOrgId(localOrgId)
 	if localOrg == nil {
@@ -922,7 +928,7 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 		}
 	}
 	cp.localOrg = localOrg.(*organization)
-	cp.acService.localTrustMembers = chainConfig.TrustMembers
+	cp.acService.trustMembers = chainConfig.TrustMembers
 	return nil
 }
 
