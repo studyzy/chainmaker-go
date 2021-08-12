@@ -71,6 +71,18 @@ var (
 		},
 	)
 
+	policyQuery = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleConsensusNode,
+			protocol.RoleCommonNode,
+			protocol.RoleClient,
+			protocol.RoleAdmin,
+			protocol.RoleLight,
+		},
+	)
+
 	policyWrite = newPolicy(
 		protocol.RuleAny,
 		nil,
@@ -243,6 +255,34 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 	acs.resourceNamePolicyMap.Store(common.TxType_INVOKE_CONTRACT.String(), policyWrite)
 	acs.resourceNamePolicyMap.Store(common.TxType_SUBSCRIBE.String(), policySubscribe)
 	acs.resourceNamePolicyMap.Store(common.TxType_ARCHIVE.String(), policyArchive)
+
+	// query contract opened for light user
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_LAST_BLOCK.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String(), policyQuery)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String(), policyQuery)
 
 	// transaction resource definitions
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)

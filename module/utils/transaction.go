@@ -258,6 +258,7 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 // verify transaction sender's authentication (include signature verification,
 //cert-chain verification, access verification)
 func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) error {
+	var principal protocol.Principal
 	var err error
 	txBytes, err := CalcUnsignedTxBytes(t)
 	if err != nil {
@@ -266,13 +267,30 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 
 	endorsements := []*commonPb.EndorsementEntry{t.Sender}
 	txType := t.Payload.TxType
-	principal, err := ac.CreatePrincipal(txType.String(), endorsements, txBytes)
-	if err != nil {
-		return fmt.Errorf("fail to construct authentication principal: %s", err)
+	resourceId := t.Payload.ContractName + "-" + t.Payload.Method
+
+	// authentication for sender
+	for_light := 0
+	if txType == commonPb.TxType_QUERY_CONTRACT {
+		_, err := ac.LookUpPolicy(resourceId)
+		if err == nil {
+			for_light = 1;
+		}
+	}
+	if for_light == 1 {
+		principal, err = ac.CreatePrincipal(resourceId, endorsements, txBytes)
+		if err != nil {
+			return fmt.Errorf("fail to construct authentication principal for %s : %s", resourceId, err)
+		}
+	} else {
+		principal, err = ac.CreatePrincipal(txType.String(), endorsements, txBytes)
+		if err != nil {
+			return fmt.Errorf("fail to construct authentication principal for %s : %s", txType.String(), err)
+		}
 	}
 	ok, err := ac.VerifyPrincipal(principal)
 	if err != nil {
-		return fmt.Errorf("authentication error, %s", err)
+		return fmt.Errorf("authentication error: %s", err)
 	}
 	if !ok {
 		return fmt.Errorf("authentication failed")
@@ -280,7 +298,6 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 
 	//authentication for invoke_contract
 	if t.Payload.TxType == commonPb.TxType_INVOKE_CONTRACT {
-		resourceId := t.Payload.ContractName + "-" + t.Payload.Method
 		p, err := ac.LookUpPolicy(resourceId)
 		if err != nil {
 			return nil
