@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/localconf"
+
 	"github.com/common-nighthawk/go-figure"
 
 	"github.com/spf13/cobra"
@@ -31,7 +32,14 @@ func logo() string {
 	fig := figure.NewFigure("ChainMaker", "slant", true)
 	s := fig.String()
 	fragment := "================================================================================="
-	versionInfo := "::ChainMaker::  version(" + localconf.CurrentVersion + ")"
+	//versionInfo := "::ChainMaker::  version(" + localconf.CurrentVersion + ")"
+	versionInfo := fmt.Sprintf("ChainMaker Version: %s\nBuild Time:%9s%s\nGit Commit:%9s%s(%s)",
+		localconf.CurrentVersion,
+		" ",
+		localconf.BuildDateTime,
+		" ",
+		localconf.GitBranch,
+		localconf.GitCommit)
 	return fmt.Sprintf("\n%s\n%s%s\n%s\n", fragment, s, fragment, versionInfo)
 }
 

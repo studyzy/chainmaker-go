@@ -7,9 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 
 package localconf
 
-const (
-	//CurrentVersion 当前应用程序的版本
-	CurrentVersion = "V2.0.0"
+var (
+	//CurrentVersion current version
+	CurrentVersion = ""
+	// CurrentCommit current git commit hash
+	GitCommit = ""
+	// CurrentBranch current git branch
+	GitBranch = ""
+	// BuildDateTime compile datetime
+	BuildDateTime = ""
 )
 
 var (
