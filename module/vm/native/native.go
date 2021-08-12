@@ -92,7 +92,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 
 	f, err := r.getContractFunc(contract, methodName)
 	if err != nil {
-		r.log.Error(err)
+		r.log.Warn(err)
 		result.Message = err.Error()
 		return result
 	}
@@ -100,7 +100,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	// exec
 	bytes, err := f(txContext, parameters)
 	if err != nil {
-		r.log.Error(err)
+		r.log.Warn(err)
 		result.Message = err.Error()
 		return result
 	}

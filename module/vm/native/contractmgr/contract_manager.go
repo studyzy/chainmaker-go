@@ -147,7 +147,7 @@ type ContractManagerRuntime struct {
 func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, name string) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
 	return utils.GetContractByName(context.Get, name)
@@ -155,7 +155,7 @@ func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, 
 func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimContext, name string) ([]byte, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
 	return utils.GetContractBytecode(context.Get, name)
@@ -287,7 +287,7 @@ func (r *ContractManagerRuntime) UnfreezeContract(context protocol.TxSimContext,
 func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, name string) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
 	contract, err := utils.GetContractByName(context.Get, name)
@@ -295,7 +295,7 @@ func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, n
 		return nil, err
 	}
 	if contract.Status != commonPb.ContractStatus_NORMAL && contract.Status != commonPb.ContractStatus_FROZEN {
-		r.log.Errorf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s", name, contract.Status.String())
+		r.log.Warnf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s", name, contract.Status.String())
 		return nil, errContractStatusInvalid
 	}
 	contract.Status = commonPb.ContractStatus_REVOKED
@@ -312,7 +312,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 	oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
 	contract, err := utils.GetContractByName(context.Get, name)
@@ -321,7 +321,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 	}
 	if contract.Status != oldStatus {
 		msg := fmt.Sprintf("contract[%s] expect status:%s,actual status:%s", name, oldStatus.String(), contract.Status.String())
-		r.log.Errorf(msg)
+		r.log.Warnf(msg)
 		return nil, fmt.Errorf("%s, %s", errContractStatusInvalid, msg)
 	}
 	contract.Status = newStatus

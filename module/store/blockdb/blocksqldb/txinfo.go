@@ -35,9 +35,9 @@ type TxInfo struct {
 	SenderOrgId      string `gorm:"size:128"`
 	SenderMemberInfo []byte `gorm:"type:blob;size:65535"`
 	SenderMemberType int    `gorm:"default:0"`
-	SenderSA         uint32 `gorm:"default:0"`
-	SenderSignature  []byte `gorm:"type:blob;size:65535"`
-	Endorsers        string `gorm:"type:longtext"` //json
+	//SenderSA         uint32 `gorm:"default:0"`
+	SenderSignature []byte `gorm:"type:blob;size:65535"`
+	Endorsers       string `gorm:"type:longtext"` //json
 
 	TxStatusCode       int32
 	ContractResultCode uint32
@@ -56,7 +56,7 @@ type TxInfo struct {
 func (t *TxInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&t.ChainId, &t.TxType, &t.TxId, &t.Timestamp, &t.ExpirationTime,
 		&t.ContractName, &t.Method, &t.Parameters, &t.Sequence, &t.Limit,
-		&t.SenderOrgId, &t.SenderMemberInfo, &t.SenderMemberType, &t.SenderSA, &t.SenderSignature, &t.Endorsers,
+		&t.SenderOrgId, &t.SenderMemberInfo, &t.SenderMemberType, &t.SenderSignature, &t.Endorsers,
 		&t.TxStatusCode, &t.ContractResultCode, &t.ResultData, &t.ResultMessage, &t.GasUsed,
 		&t.ContractEvents, &t.RwSetHash, &t.Message,
 		&t.BlockHeight, &t.BlockHash, &t.Offset)
@@ -66,7 +66,7 @@ func (t *TxInfo) GetCreateTableSql(dbType string) string {
 		return `CREATE TABLE tx_infos (chain_id varchar(128),tx_type int,tx_id varchar(128),timestamp bigint DEFAULT 0,
 expiration_time bigint DEFAULT 0,
 contract_name varchar(128),method varchar(128),parameters longblob,sequence bigint,limits blob,
-sender_org_id varchar(128),sender_member_info blob,sender_member_type int,sender_sa int,sender_signature blob,
+sender_org_id varchar(128),sender_member_info blob,sender_member_type int,sender_signature blob,
 endorsers longtext,
 tx_status_code int,contract_result_code int,result_data longblob,result_message varchar(2000),
 gas_used bigint,contract_events longtext,rw_set_hash varbinary(128),message varchar(2000),
@@ -78,7 +78,7 @@ INDEX idx_height_offset (block_height,offset)) default character set utf8`
 		return `CREATE TABLE tx_infos (chain_id text,tx_type int,tx_id text,timestamp integer DEFAULT 0,
 expiration_time integer DEFAULT 0,
 contract_name text,method text,parameters longblob,sequence bigint,limits blob,
-sender_org_id text,sender_member_info blob,sender_member_type integer,sender_sa integer,sender_signature blob,
+sender_org_id text,sender_member_info blob,sender_member_type integer,sender_signature blob,
 endorsers longtext,
 tx_status_code integer,contract_result_code integer,result_data longblob,result_message text,
 gas_used integer,contract_events longtext,rw_set_hash blob,message text,
@@ -91,10 +91,10 @@ func (t *TxInfo) GetTableName() string {
 	return "tx_infos"
 }
 func (t *TxInfo) GetInsertSql() (string, []interface{}) {
-	return "INSERT INTO tx_infos values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", []interface{}{
+	return "INSERT INTO tx_infos values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", []interface{}{
 		t.ChainId, t.TxType, t.TxId, t.Timestamp, t.ExpirationTime,
 		t.ContractName, t.Method, t.Parameters, t.Sequence, t.Limit,
-		t.SenderOrgId, t.SenderMemberInfo, t.SenderMemberType, t.SenderSA, t.SenderSignature, t.Endorsers,
+		t.SenderOrgId, t.SenderMemberInfo, t.SenderMemberType, t.SenderSignature, t.Endorsers,
 		t.TxStatusCode, t.ContractResultCode, t.ResultData, t.ResultMessage, t.GasUsed,
 		t.ContractEvents, t.RwSetHash, t.Message, t.BlockHeight, t.BlockHash, t.Offset}
 }

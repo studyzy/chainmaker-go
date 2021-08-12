@@ -18,6 +18,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/utils"
+
 	//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	//	"chainmaker.org/chainmaker/pb-go/syscontract"
@@ -241,7 +242,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 					if txResult, err = ts.runVM(tx, txSimContext); err != nil {
 						runVmSuccess = false
 						txSimContext.SetTxResult(txResult)
-						ts.log.Errorf("failed to run vm for tx id:%s during simulate with dag, tx result:%+v, error:%+v", tx.Payload.GetTxId(), txResult, err)
+						ts.log.Warnf("failed to run vm for tx id:%s during simulate with dag, tx result:%+v, error:%+v", tx.Payload.GetTxId(), txResult, err)
 					} else {
 						//ts.log.Debugf("success to run vm for tx id:%s during simulate with dag, tx result:%+v", tx.Payload.GetTxId(), txResult)
 						txSimContext.SetTxResult(txResult)
