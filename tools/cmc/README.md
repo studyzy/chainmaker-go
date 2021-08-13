@@ -28,8 +28,6 @@ $ ./build_release.sh
 $ ./cluster_quick_start.sh normal
 # 配置测试数据
 $ cd ~/chainmaker
-$ git clone -b v2.0.0 https://git.chainmaker.org.cn/chainmaker/sdk-go.git
-$ cp -rf ./sdk-go/testdata ./chainmaker-go/tools/cmc/
 $ cp -rf ./chainmaker-go/build/crypto-config ./chainmaker-go/tools/cmc/testdata/ # 使用chainmaker-cryptogen生成的测试链的证书
 # 配置完成
 $ cd ~/chainmaker/chainmaker-go/tools/cmc
