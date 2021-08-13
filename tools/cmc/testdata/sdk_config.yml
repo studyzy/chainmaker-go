@@ -4,13 +4,13 @@ chain_client:
   # 组织ID
   org_id: "wx-org1.chainmaker.org"
   # 客户端用户私钥路径
-  user_key_file_path: "../../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+  user_key_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
   # 客户端用户证书路径
-  user_crt_file_path: "../../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+  user_crt_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
   # 客户端用户交易签名私钥路径(若未设置，将使用user_key_file_path)
-  user_sign_key_file_path: "../../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
+  user_sign_key_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
   # 客户端用户交易签名证书路径(若未设置，将使用user_crt_file_path)
-  user_sign_crt_file_path: "../../config/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
+  user_sign_crt_file_path: "./testdata/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 
   nodes:
     - # 节点地址，格式为：IP:端口:连接数
@@ -21,8 +21,8 @@ chain_client:
       enable_tls: true
       # 信任证书池路径
       trust_root_paths:
-        - "../../config/crypto-config/wx-org1.chainmaker.org/ca"
-        - "../../config/crypto-config/wx-org2.chainmaker.org/ca"
+        - "./testdata/crypto-config/wx-org1.chainmaker.org/ca"
+        - "./testdata/crypto-config/wx-org2.chainmaker.org/ca"
       # TLS hostname
       tls_host_name: "chainmaker.org"
   archive:
