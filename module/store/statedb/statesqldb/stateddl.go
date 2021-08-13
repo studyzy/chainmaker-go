@@ -35,7 +35,7 @@ type StateRecordSql struct {
 }
 
 func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE state_record_sql (
 					id varchar(64),
 					contract_name varchar(100),
@@ -46,7 +46,7 @@ func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
 					updated_at datetime(3) NULL DEFAULT null,
 					PRIMARY KEY (id)
 				) default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE state_record_sql (
 					id text,
 					contract_name text,

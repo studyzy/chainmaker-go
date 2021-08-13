@@ -4,8 +4,8 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210802022101-dc6daf93f738
-	chainmaker.org/chainmaker/protocol v0.0.0-20210804070206-a6b73cec5918
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
+	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
 	github.com/gogo/protobuf v1.3.2
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb

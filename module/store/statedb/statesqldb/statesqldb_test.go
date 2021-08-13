@@ -114,8 +114,9 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) *storePb.Blo
 	for i := 0; i < txNum; i++ {
 		tx := &commonPb.Transaction{
 			Payload: &commonPb.Payload{
-				ChainId: chainId,
-				TxId:    generateTxId(chainId, height, i),
+				ChainId:  chainId,
+				TxId:     generateTxId(chainId, height, i),
+				Sequence: uint64(i),
 			},
 			Sender: &commonPb.EndorsementEntry{
 				Signer: &acPb.Member{
@@ -273,4 +274,16 @@ func TestGetContractDbName(t *testing.T) {
 	t.Log(contractName)
 	dbName := getContractDbName(config, "chain1", contractName)
 	t.Log(dbName, len(dbName))
+}
+func TestStateSqlDB_GetMemberExtraData(t *testing.T) {
+	db := initStateSqlDB()
+	member := block1.Block.Txs[0].Sender.Signer
+	data, err := db.GetMemberExtraData(member)
+	assert.Equal(t, uint64(0), data.Sequence)
+	_, blockInfo1, _ := serialization.SerializeBlock(block1)
+	err = db.CommitBlock(blockInfo1)
+	assert.Nil(t, err)
+	data, err = db.GetMemberExtraData(member)
+	assert.Nil(t, err)
+	t.Logf("%v", data)
 }

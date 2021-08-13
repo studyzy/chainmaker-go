@@ -34,12 +34,13 @@ import (
 
 const unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
 
-// authentication mode: white list, identity, certificate chain, etc.
+//AuthMode authentication mode: white list, identity, certificate chain, etc.
 type AuthMode string
 
-// type used to specify the public information type: certificate or public key
+//IdentityType type used to specify the public information type: certificate or public key
 type IdentityType string
 
+//nolint
 const (
 	ModuleNameAccessControl = "Access Control"
 

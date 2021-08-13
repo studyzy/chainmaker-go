@@ -128,11 +128,16 @@ func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
+func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) (protocol.Iterator, error) {
+	if len(start) == 0 || len(limit) == 0 {
+		return nil, fmt.Errorf("iterator range should not start(%s) or limit(%s) with empty key",
+			string(start), string(limit))
+	}
+
 	sql := "select * from key_values where object_key >= ? and object_key < ?"
 	rows, err := p.QueryMulti(sql, start, limit)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer rows.Close()
 	result := &kvIterator{}
@@ -141,16 +146,20 @@ func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.
 		_ = rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
 		result.append(&kv)
 	}
-	return result
+	return result, nil
 
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
+func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, error) {
+	if len(prefix) == 0 {
+		return nil, fmt.Errorf("iterator prefix should not be empty key")
+	}
+
 	sql := "select * from key_values where object_key like ?%"
 	rows, err := p.QueryMulti(sql, prefix)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer rows.Close()
 	result := &kvIterator{}
@@ -159,7 +168,7 @@ func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 		_ = rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
 		result.append(&kv)
 	}
-	return result
+	return result, nil
 }
 
 type kvIterator struct {

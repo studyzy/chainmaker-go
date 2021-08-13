@@ -106,6 +106,11 @@ pprof:
   enabled: false
   port: {pprof_port}
 
+consensus:
+  raft:
+    snap_count: 10
+    # 是否异步Wal文件保存，true异步保存，false同步保存
+    async_wal_save: true
 
 storage:
   store_path: ../data/{org_id}/ledgerData1

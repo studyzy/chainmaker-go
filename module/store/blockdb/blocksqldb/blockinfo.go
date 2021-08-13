@@ -47,7 +47,7 @@ func (b *BlockInfo) ScanObject(scan func(dest ...interface{}) error) error {
 		&b.Signature, &b.BlockType, &b.Dag, &b.TxIds, &b.AdditionalData)
 }
 func (b *BlockInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqlDbConfig_SqlDbType_MySQL {
+	if dbType == localconf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE block_infos (chain_id varchar(128),block_height bigint,pre_block_hash varbinary(128),
 block_hash varbinary(128),
 pre_conf_height bigint DEFAULT 0,
@@ -70,7 +70,7 @@ additional_data longblob,
 PRIMARY KEY (block_height),
 INDEX idx_hash (block_hash)) 
 default character set utf8`
-	} else if dbType == localconf.SqlDbConfig_SqlDbType_Sqlite {
+	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE block_infos (
     chain_id text,block_height integer,pre_block_hash blob,block_hash blob,
     pre_conf_height integer DEFAULT 0,block_version integer,dag_hash blob,
