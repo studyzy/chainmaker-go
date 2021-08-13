@@ -844,7 +844,7 @@ func sendRequest(sk3 crypto.PrivateKey, client apiPb.RpcNodeClient, msg *Invoker
 	if err != nil {
 		return nil, err
 	}
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		return nil, err
 	}

@@ -100,7 +100,28 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 	// load the trust root certs than set the bytes as value
 	// need verify org and root certs
 	for _, root := range chainConfig.TrustRoots {
-		filePath := root.Root
+		for i := 0; i < len(root.Root); i++ {
+			filePath := root.Root[i]
+			if !filepath.IsAbs(filePath) {
+				filePath, err = filepath.Abs(filePath)
+				if err != nil {
+					return nil, err
+				}
+			}
+			log.Infof("load trust root file path: %s", filePath)
+			entry, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("fail to read whiltlist file [%s]: %v", filePath, err)
+			}
+			root.Root[i] = string(entry)
+		}
+	}
+
+	// load the trust member certs than set the bytes as value
+	// need verify org
+	trustMemberInfoMap := make(map[string]bool, len(chainConfig.TrustMembers))
+	for _, member := range chainConfig.TrustMembers {
+		filePath := member.MemberInfo
 		if !filepath.IsAbs(filePath) {
 			filePath, err = filepath.Abs(filePath)
 			if err != nil {
@@ -110,9 +131,13 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 		log.Infof("load trust root file path: %s", filePath)
 		entry, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("fail to read whiltlist file [%s]: %v", filePath, err)
+			return nil, fmt.Errorf("fail to read trust memberInfo file [%s]: %v", filePath, err)
 		}
-		root.Root = string(entry)
+		if _, ok := trustMemberInfoMap[string(entry)]; ok {
+			return nil, fmt.Errorf("the trust member info is exist, member info: %s", string(entry))
+		}
+		member.MemberInfo = string(entry)
+		trustMemberInfoMap[string(entry)] = true
 	}
 
 	// verify

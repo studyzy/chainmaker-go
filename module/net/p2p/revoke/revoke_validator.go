@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package revoke
 
 import (
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/protocol"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"sync"
+
+	"chainmaker.org/chainmaker/protocol"
 )
 
 // RevokedValidator is a validator for validating revoked peer use revoked tls cert.
@@ -44,19 +45,35 @@ func (rv *RevokedValidator) AddAC(chainId string, ac protocol.AccessControlProvi
 	rv.accessControls.LoadOrStore(chainId, ac)
 }
 
-// ValidateCertsIsRevoked return whether certs given is revoked.
-func (rv *RevokedValidator) ValidateCertsIsRevoked(certs []*cmx509.Certificate) bool {
-	bl := false
+// ValidateMemberStatus check the status of members.
+func (rv *RevokedValidator) ValidateMemberStatus(members []*pbac.Member) (bool, error) {
+	bl := true
+	var err error
 	rv.accessControls.Range(func(key, value interface{}) bool {
 		ac, _ := value.(protocol.AccessControlProvider)
 		if ac == nil {
 			return false
 		}
-		bl = ac.IsCertRevoked(certs)
-		if bl {
+		allOk := true
+		for _, member := range members {
+			var s pbac.MemberStatus
+			s, err = ac.GetMemberStatus(member)
+			if err != nil {
+				return false
+			}
+			if s == pbac.MemberStatus_INVALID || s == pbac.MemberStatus_FROZEN || s == pbac.MemberStatus_REVOKED {
+				allOk = false
+				break
+			}
+		}
+		if allOk {
+			bl = false
 			return false
 		}
 		return true
 	})
-	return bl
+	if err != nil {
+		return false, err
+	}
+	return bl, nil
 }
