@@ -28,7 +28,6 @@ build
 pkg
 tools
 tools/cmc/cmc
-tools/cmc/testdata
 !tools/
 /data/
 /log/
