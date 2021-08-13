@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package revoke
 
 import (
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"sync"
+
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -67,7 +68,7 @@ func (rv *RevokedValidator) ValidateMemberStatus(members []*pbac.Member) (bool, 
 			}
 		}
 		if allOk {
-			bl = false
+			bl = true
 			return false
 		}
 		return true
