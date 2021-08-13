@@ -8,6 +8,8 @@
 package contractmgr
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,7 +25,9 @@ import (
 )
 
 var (
-	ContractName = syscontract.SystemContract_CONTRACT_MANAGE.String()
+	ContractName    = syscontract.SystemContract_CONTRACT_MANAGE.String()
+	keyContractName = "_Native_Contract_List"
+	times           uint8
 )
 
 type ContractManager struct {
@@ -55,54 +59,193 @@ func registerContractManagerMethods(log protocol.Logger) map[string]common.Contr
 	methodMap[syscontract.ContractManageFunction_GRANT_CONTRACT_ACCESS.String()] = runtime.grantContractAccess
 	methodMap[syscontract.ContractManageFunction_REVOKE_CONTRACT_ACCESS.String()] = runtime.revokeContractAccess
 	methodMap[syscontract.ContractManageFunction_VERIFY_CONTRACT_ACCESS.String()] = runtime.verifyContractAccess
-	methodMap[syscontract.ContractQueryFunction_GET_ALLOWED_CONTRACT_LIST.String()] = runtime.getPermittedContractList
+	methodMap[syscontract.ContractQueryFunction_GET_DISABLED_CONTRACT_LIST.String()] = runtime.getDisabledContractList
 
 	return methodMap
 
 }
 
 func (r *ContractManagerRuntime) grantContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
-	// Todo:
-	if !r.initializedContractList {
-		//if chainConfig, err := txSimContext.GetBlockchainStore().GetLastChainConfig(); err != nil {
-		//	return nil, err
-		//}
-		txSimContext.Put("chainConfig")
-	} else {
 
+	var (
+		err                      error
+		requestContractListBytes []byte
+		updatedContractListBytes []byte
+		disabledContractList     []string
+		requestContractList      []string
+		updatedContractList      []string
+	)
+
+	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
+	if err != nil {
+		return nil, err
 	}
+
+	requestContractListBytes = params["native_contract_name"]
+	err = json.Unmarshal(requestContractListBytes, &requestContractList)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedContractList = filterContracts(disabledContractList, requestContractList)
+
+	updatedContractListBytes, err = json.Marshal(updatedContractList)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = txSimContext.Put(ContractName, []byte(keyContractName), updatedContractListBytes); err != nil {
+		return nil, err
+	}
+
+	//  for test only //
+	var disabledContractListBytesUpdated []byte
+	var resultList []string
+	disabledContractListBytesUpdated, err = txSimContext.Get(ContractName, []byte(keyContractName))
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(disabledContractListBytesUpdated, &resultList)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("the disabled list before granting access is: %v\n requested contracts are: %v\n"+
+		"the expected result list is: %v\nthe actual result list is: %v\n", disabledContractList,
+		requestContractList, updatedContractList, resultList)
 
 	return nil, nil
 }
 
-func (r *ContractManagerRuntime) revokeContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
-	// Todo:
-	if !r.initializedContractList {
+// filter out request contracts from disabled contract list, return a newly updated list
+func filterContracts(disabledContractList []string, requestedContractList []string) []string {
+	var updatedContractList []string
 
-	} else {
-
+	// return the original list if no contracts have been requested
+	if len(requestedContractList) == 0 {
+		return disabledContractList
 	}
+
+	m := make(map[string]int, len(requestedContractList))
+	for _, cn := range requestedContractList {
+		m[cn] = 1
+	}
+
+	// populate the updatedContractList
+	for _, cn := range disabledContractList {
+		_, found := m[cn]
+		if !found {
+			updatedContractList = append(updatedContractList, cn)
+		}
+	}
+
+	return updatedContractList
+}
+
+func (r *ContractManagerRuntime) revokeContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	var (
+		err                      error
+		requestContractListBytes []byte
+		updatedContractListBytes []byte
+		disabledContractList     []string
+		requestContractList      []string
+		updatedContractList      []string
+	)
+
+	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
+	if err != nil {
+		return nil, err
+	}
+
+	requestContractListBytes = params["native_contract_name"]
+	err = json.Unmarshal(requestContractListBytes, &requestContractList)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedContractList = append(disabledContractList, requestContractList...)
+
+	updatedContractListBytes, err = json.Marshal(updatedContractList)
+	if err != nil {
+		return nil, err
+	}
+	if err = txSimContext.Put(ContractName, []byte(keyContractName), updatedContractListBytes); err != nil {
+		return nil, err
+	}
+
+	//  for test only //
+	var disabledContractListBytesUpdated []byte
+	var resultList []string
+	disabledContractListBytesUpdated, err = txSimContext.Get(ContractName, []byte(keyContractName))
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(disabledContractListBytesUpdated, &resultList)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("the disabled list before revoking access is: %v\n, requested contracts are: %v\n"+
+		"the expected result list is: %v\nthe actual result list is: %v\n", disabledContractList,
+		requestContractList, updatedContractList, resultList)
+
 	return nil, nil
 }
 
 func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
-	// Todo:
-	if !r.initializedContractList {
+	var (
+		err                  error
+		disabledContractList []string
+		contractName         string
+	)
 
-	} else {
-
+	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	contractName = txSimContext.GetTx().Payload.ContractName
+
+	for _, cn := range disabledContractList {
+		if cn == contractName {
+			return []byte("false"), nil
+		}
+	}
+
+	return []byte("true"), nil
 }
 
-func (r *ContractManagerRuntime) getPermittedContractList(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
-	// Todo:
-	if !r.initializedContractList {
+func (r *ContractManagerRuntime) getDisabledContractList(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+	var (
+		err                       error
+		disabledContractList      []string
+		disabledContractListBytes []byte
+	)
 
-	} else {
+	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
+	fmt.Printf("the result is %v\n", disabledContractList)
 
+	disabledContractListBytes, err = json.Marshal(disabledContractList)
+
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+	return disabledContractListBytes, nil
+}
+
+func (r *ContractManagerRuntime) fetchDisabledContractList(txSimContext protocol.TxSimContext) ([]string, error) {
+	disabledContractListBytes, err := txSimContext.Get(ContractName, []byte(keyContractName))
+	if disabledContractListBytes == nil {
+		disabledContractListBytes, err = r.initializeDisabledNativeContractList(txSimContext)
+		if err != nil {
+			r.log.Error(err)
+			return nil, err
+		}
+	}
+
+	var disabledContractList []string
+	err = json.Unmarshal(disabledContractListBytes, &disabledContractList)
+	return disabledContractList, err
 }
 
 func (r *ContractManagerRuntime) getContractInfo(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
@@ -113,6 +256,34 @@ func (r *ContractManagerRuntime) getContractInfo(txSimContext protocol.TxSimCont
 		return nil, err
 	}
 	return json.Marshal(contract)
+}
+
+func (r *ContractManagerRuntime) initializeDisabledNativeContractList(txSimContext protocol.TxSimContext) ([]byte, error) {
+	var (
+		err                       error
+		chainConfig               *configPb.ChainConfig
+		disabledContractListBytes []byte
+	)
+
+	// 1. fetch chainConfig
+	chainConfig, err = chainconfigmgr.GetChainConfig(txSimContext, make(map[string][]byte, 0))
+	if err != nil {
+		r.log.Error(err)
+		return nil, err
+	}
+
+	disabledContractList := chainConfig.DisabledNativeContract
+
+	disabledContractListBytes, err = json.Marshal(disabledContractList)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = txSimContext.Put(ContractName, []byte(keyContractName), disabledContractListBytes); err != nil {
+		return nil, err
+	}
+
+	return disabledContractListBytes, nil
 }
 
 //func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
@@ -205,8 +376,8 @@ func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimConte
 }
 
 type ContractManagerRuntime struct {
-	log                     protocol.Logger
-	initializedContractList bool
+	log           protocol.Logger
+	isInitialized bool
 }
 
 //GetContractInfo 根据合约名字查询合约的详细信息

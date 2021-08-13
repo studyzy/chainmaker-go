@@ -7,6 +7,7 @@
 package native
 
 import (
+	"fmt"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
@@ -93,16 +94,42 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 		return result
 	}
 
-	// exec
-	bytes, err := f(txContext, parameters)
+	// verification
+	var verifyAccessFunc common.ContractFunc
+	var accessResultBytes []byte
+	verifyAccessContract := &commonPb.Contract{
+		Name:        "CONTRACT_MANAGE",
+		Version:     contract.Version,
+		RuntimeType: commonPb.RuntimeType_NATIVE,
+		Status:      commonPb.ContractStatus_NORMAL,
+		Creator:     nil,
+	}
+	verifyMethodName := "VERIFY_CONTRACT_ACCESS"
+	verifyAccessFunc, err = r.getContractFunc(verifyAccessContract, verifyMethodName)
 	if err != nil {
 		r.log.Error(err)
 		result.Message = err.Error()
 		return result
 	}
-	result.Code = 0
-	result.Message = "OK"
-	result.Result = bytes
+
+	accessResultBytes, err = verifyAccessFunc(txContext, nil)
+	if string(accessResultBytes) == "true" {
+		// exec
+		bytes, err := f(txContext, parameters)
+		if err != nil {
+			r.log.Error(err)
+			result.Message = err.Error()
+			return result
+		}
+		result.Code = 0
+		result.Message = "OK"
+		result.Result = bytes
+		return result
+	}
+
+	result.Code = 1
+	result.Message = fmt.Sprintf("access denied for native contract (%v)", txContext.GetTx().Payload.ContractName)
+	result.Result = nil
 	return result
 }
 
