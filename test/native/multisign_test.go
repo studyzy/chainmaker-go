@@ -1,79 +1,53 @@
-package native_test
+package native
 
 import (
-	"chainmaker.org/chainmaker-go/accesscontrol"
-	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/test/common"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
 	"crypto/md5"
 	"fmt"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
-	"strconv"
 	"testing"
 	"time"
 )
 
-const (
-	CHAIN1              = "chain1"
-	certPathPrefix      = "../../config"
-	userKeyPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
-	prePathFmt          = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
-	AdminSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.key"
-	AdminSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.crt"
-)
-
 var (
-	OrgIdFormat     = "wx-org%s.chainmaker.org"
-	txId            = ""
-	memberNum       int
-	timestamp       int64
-	WasmPath        = "../wasm/rust-func-verify-2.0.0.wasm"
-	WasmUpgradePath = WasmPath
-	contractName    = "contract107"
-	runtimeType     = commonPb.RuntimeType_WASMER
-	isTls           = true
+	timestamp int64
 )
-var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
 
 func TestMultiSignReq(t *testing.T) {
-	common.SetCertPathPrefix(certPathPrefix)
-	txId = utils.GetRandTxId()
-	log.Printf("txId:%s\n", txId)
 	timestamp = time.Now().Unix()
+	testMultiSignReq(t)
+}
+func testMultiSignReq(t *testing.T) {
+	common.SetCertPathPrefix(certPathPrefix)
+	//txId = utils.GetRandTxId()
+	txId = "b93bc2c1ac2d42398d8d90a414e1f3c03544defe9cb345578f970a7d51f7877a"
+	log.Printf("txId:%s\n", txId)
 	log.Printf("timestamp:%d\n", timestamp)
-	//client, sk3 := InitRun()
-	conn, err := native.InitGRPCConnect(isTls)
-	require.NoError(t, err)
-	client := apiPb.NewRpcNodeClient(conn)
-	sk, _ := native.GetUserSK(1)
 	payload := initPayload()
 
-	resp := common.ProposalMultiRequest(sk, &client, payload.TxType,
+	resp := common.ProposalMultiRequest(sk3, &client, payload.TxType,
 		CHAIN1, payload.TxId, payload, []int{1}, timestamp)
 	fmt.Println("testMultiSignReq timestamp", timestamp)
 	fmt.Println(resp)
 }
 
 func TestMultiSignVote(t *testing.T) {
-	//txId = utils.GetRandTxId()
-	//timestamp = time.Now().Unix()
-	memberNum = 2
-	conn, err := native.InitGRPCConnect(isTls)
-	require.NoError(t, err)
-	client := apiPb.NewRpcNodeClient(conn)
-	sk, _ := native.GetAdminSK(memberNum)
-	//client, sk3 := InitRun()
+	timestamp = 1628771607
+	txId = "b93bc2c1ac2d42398d8d90a414e1f3c03544defe9cb345578f970a7d51f7877a"
+	testMultiSignVote(t, 2, txId)
+}
+
+func testMultiSignVote(t *testing.T, memberNum int, txId string) {
+	log.Printf("timestamp:%d\n", timestamp)
+	common.SetCertPathPrefix(certPathPrefix)
+	log.Printf("memberNum:%d\n", memberNum)
 	payload1 := initPayload()
 	payload1.Timestamp = timestamp
 	payloadBytes, err := payload1.Marshal()
@@ -86,6 +60,7 @@ func TestMultiSignVote(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+
 	msvi := &syscontract.MultiSignVoteInfo{
 		Vote:        syscontract.VoteStatus_AGREE,
 		Endorsement: ee,
@@ -110,19 +85,18 @@ func TestMultiSignVote(t *testing.T) {
 		Parameters:   pairs,
 	}
 
-	resp := common.ProposalMultiRequest(sk, &client, payload.TxType,
+	resp := common.ProposalMultiRequest(sk3, &client, payload.TxType,
 		CHAIN1, "", payload, nil, time.Now().Unix())
 
 	fmt.Println(resp)
 }
 func TestMultiSignQuery(t *testing.T) {
-	//txId = utils.GetRandTxId()
-	//timestamp = time.Now().Unix()
-	//client, sk3 := InitRun()
-	conn, err := native.InitGRPCConnect(isTls)
-	require.NoError(t, err)
-	client := apiPb.NewRpcNodeClient(conn)
-	sk, _ := native.GetUserSK(1)
+	timestamp = 1628771607
+	txId = "b93bc2c1ac2d42398d8d90a414e1f3c03544defe9cb345578f970a7d51f7877a"
+	testMultiSignQuery(t, txId)
+}
+func testMultiSignQuery(t *testing.T, txId string) {
+	common.SetCertPathPrefix(certPathPrefix)
 	payload1 := initPayload()
 	payload1.Timestamp = timestamp
 	payloadBytes, err := payload1.Marshal()
@@ -134,19 +108,40 @@ func TestMultiSignQuery(t *testing.T) {
 			Key:   "multiPayload",
 			Value: payloadBytes,
 		},
+		{
+			Key:   syscontract.MultiVote_TX_ID.String(),
+			Value: []byte(payload1.TxId),
+		},
 	}
 
 	payload := &commonPb.Payload{
+		TxId:         txId,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_QUERY.String(),
 		Parameters:   pairs,
 	}
 
-	resp := common.ProposalRequest(sk, &client, payload.TxType,
+	resp := common.ProposalRequest(sk3, &client, payload.TxType,
 		CHAIN1, "", payload, nil)
 
 	fmt.Println(resp)
+}
+
+func TestMultiSign(t *testing.T) {
+	timestamp = time.Now().Unix()
+	testMultiSignReq(t)
+	time.Sleep(4 * time.Second)
+	txId = "b93bc2c1ac2d42398d8d90a414e1f3c03544defe9cb345578f970a7d51f7877a"
+	for i := 2; i < 5; i++ {
+		testMultiSignVote(t, i, txId)
+	}
+	time.Sleep(4 * time.Second)
+	testMultiSignQuery(t, txId)
+	var excepted []byte = []byte("3")
+	_, rst := testUpgradeInvokeSum(sk3, &client, CHAIN1)
+	assert.Equal(t, excepted, rst)
+
 }
 
 func initPayload() *commonPb.Payload {
@@ -189,132 +184,29 @@ func initPayload() *commonPb.Payload {
 	return payload
 }
 
-//func InitRun()(apiPb.RpcNodeClient,crypto.PrivateKey){
-//	var (
-//		conn   *grpc.ClientConn
-//		client apiPb.RpcNodeClient
-//		sk3    crypto.PrivateKey
-//		err    error
-//	)
-//	// init
-//	{
-//		conn, err = initGRPCConnect(true)
-//		if err != nil {
-//			fmt.Println(err)
-//			return nil,nil
-//		}
-//		defer conn.Close()
-//
-//		client = apiPb.NewRpcNodeClient(conn)
-//
-//		file, err := ioutil.ReadFile(userKeyPath)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		sk3, err = asym.PrivateKeyFromPEM(file, nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//	}
-//	return client,sk3
-//}
-//
-//
-//func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
-//	url := fmt.Sprintf("%s:%d", IP, Port)
-//
-//	if useTLS {
-//		tlsClient := ca.CAClient{
-//			ServerName: "chainmaker.org",
-//			CaPaths:    caPaths,
-//			CertFile:   userCrtPath,
-//			KeyFile:    userKeyPath,
-//		}
-//
-//		c, err := tlsClient.GetCredentialsByCA()
-//		if err != nil {
-//			log.Fatalf("GetTLSCredentialsByCA err: %v", err)
-//			return nil, err
-//		}
-//		return grpc.Dial(url, grpc.WithTransportCredentials(*c))
-//	} else {
-//		return grpc.Dial(url, grpc.WithInsecure())
-//	}
-//}
+func testUpgradeInvokeSum(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) (string, []byte) {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract %s[sum][%s] ============\n", contractName, txId)
 
-func AclSignOne(bytes []byte, index int) (*commonPb.EndorsementEntry, error) {
-	signers := make([]protocol.SigningMember, 0)
-	sk, member := GetAdminSK(index)
-	signer := getSigner(sk, member)
-	signers = append(signers, signer)
-	return signWith(bytes, signer, crypto.CRYPTO_ALGO_SHA256)
-}
-
-// 获取admin的私钥
-func GetAdminSK(index int) (crypto.PrivateKey, *acPb.Member) {
-	numStr := strconv.Itoa(index)
-
-	path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
+	// 构造Payload
+	pairs := []*commonPb.KeyValuePair{
+		{
+			Key:   "arg1",
+			Value: []byte("1"),
+		},
+		{
+			Key:   "arg2",
+			Value: []byte("2"),
+		},
 	}
-	sk3, err := asym.PrivateKeyFromPEM(file, nil)
-	if err != nil {
-		panic(err)
+	payload := &commonPb.Payload{
+		ContractName: contractName,
+		Method:       "sum",
+		Parameters:   pairs,
 	}
 
-	userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-	file2, err := ioutil.ReadFile(userCrtPath)
-	//fmt.Println("node", numStr, "crt", string(file2))
-	if err != nil {
-		panic(err)
-	}
-
-	// 获取peerId
-	peerId, err := helper.GetLibp2pPeerIdFromCert(file2)
-	fmt.Println("node", numStr, "peerId", peerId)
-
-	// 构造Sender
-	sender := &acPb.Member{
-		OrgId:      fmt.Sprintf(OrgIdFormat, numStr),
-		MemberInfo: file2,
-		////IsFullCert: true,
-	}
-
-	return sk3, sender
-}
-
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
-	skPEM, err := sk3.String()
-	if err != nil {
-		log.Fatalf("get sk PEM failed, %s", err.Error())
-	}
-
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
-	if err != nil {
-		panic(err)
-	}
-	return signer
-}
-
-func signWith(msg []byte, signer protocol.SigningMember, hashType string) (*commonPb.EndorsementEntry, error) {
-	sig, err := signer.Sign(hashType, msg)
-	if err != nil {
-		return nil, err
-	}
-	signerSerial, err := signer.GetMember()
-	if err != nil {
-		return nil, err
-	}
-	return &commonPb.EndorsementEntry{
-		Signer:    signerSerial,
-		Signature: sig,
-	}, nil
+	resp := common.ProposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
+		chainId, txId, payload, nil)
+	fmt.Printf(logTempSendTx, resp.Code, resp.Message, resp.ContractResult)
+	return txId, resp.ContractResult.Result
 }
