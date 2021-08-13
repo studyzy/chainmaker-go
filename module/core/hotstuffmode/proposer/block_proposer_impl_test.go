@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 package proposer
+
 //
 //import (
 //	"chainmaker.org/chainmaker/common/random/uuid"
