@@ -94,7 +94,8 @@ func (r *ContractManagerRuntime) grantContractAccess(txSimContext protocol.TxSim
 		return nil, err
 	}
 
-	if err = txSimContext.Put(ContractName, []byte(keyContractName), updatedContractListBytes); err != nil {
+	err = storeDisabledContractList(txSimContext, updatedContractListBytes)
+	if err != nil {
 		return nil, err
 	}
 
@@ -115,6 +116,40 @@ func (r *ContractManagerRuntime) grantContractAccess(txSimContext protocol.TxSim
 		requestContractList, updatedContractList, resultList)
 
 	return nil, nil
+}
+
+func storeDisabledContractList(txSimContext protocol.TxSimContext, disabledContractListBytes []byte) error {
+	var (
+		err                              error
+		refinedDisabledContractListBytes []byte
+		disabledContractList             []string
+		refinedDisabledContractList      []string
+	)
+	err = json.Unmarshal(disabledContractListBytes, &disabledContractList)
+	if err != nil {
+		return err
+	}
+
+	uniqueMap := make(map[string]string)
+
+	for _, cn := range disabledContractList {
+		if _, ok := uniqueMap[cn]; !ok {
+			uniqueMap[cn] = cn
+			refinedDisabledContractList = append(refinedDisabledContractList, cn)
+		}
+	}
+
+	refinedDisabledContractListBytes, err = json.Marshal(refinedDisabledContractList)
+	if err != nil {
+		return err
+	}
+
+	err = txSimContext.Put(ContractName, []byte(keyContractName), refinedDisabledContractListBytes)
+	if err != nil {
+		return err
+	}
+	_ = refinedDisabledContractListBytes
+	return nil
 }
 
 // filter out request contracts from disabled contract list, return a newly updated list
@@ -169,7 +204,8 @@ func (r *ContractManagerRuntime) revokeContractAccess(txSimContext protocol.TxSi
 	if err != nil {
 		return nil, err
 	}
-	if err = txSimContext.Put(ContractName, []byte(keyContractName), updatedContractListBytes); err != nil {
+	err = storeDisabledContractList(txSimContext, updatedContractListBytes)
+	if err != nil {
 		return nil, err
 	}
 
@@ -279,7 +315,8 @@ func (r *ContractManagerRuntime) initializeDisabledNativeContractList(txSimConte
 		return nil, err
 	}
 
-	if err = txSimContext.Put(ContractName, []byte(keyContractName), disabledContractListBytes); err != nil {
+	err = storeDisabledContractList(txSimContext, disabledContractListBytes)
+	if err != nil {
 		return nil, err
 	}
 

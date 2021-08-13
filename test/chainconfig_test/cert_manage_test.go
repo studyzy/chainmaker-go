@@ -216,7 +216,7 @@ func TestAddNativeContract(t *testing.T) {
 	require.True(t, len(txId) > 0)
 
 	fmt.Println("============test add native contract============")
-	val, _ := json.Marshal([]string{syscontract.SystemContract_DPOS_ERC20.String()})
+	val, _ := json.Marshal([]string{syscontract.SystemContract_DPOS_ERC20.String(), syscontract.SystemContract_DPOS_STAKE.String()})
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "native_contract_name",
