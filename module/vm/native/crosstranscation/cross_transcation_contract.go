@@ -29,7 +29,7 @@ import (
 type cacheKey []byte
 
 var (
-	crossTxContractName = syscontract.SystemContract_Cross_Transaction.String()
+	crossTxContractName = syscontract.SystemContract_CROSS_TRANSACTION.String()
 
 	paramCrossID      = "crossID"
 	paramExecData     = "execData"
@@ -99,11 +99,11 @@ func (r *CrossTransactionRuntime) Execute(ctx protocol.TxSimContext, params map[
 	rollbackData := params[paramRollbackData]
 	//检测crossID对应状态是否存在，存在的话直接返回error，不存在进行状态初始化
 	state := r.cache.GetCrossState(ctx, crossID)
-	if state != syscontract.CrossTxState_NonExist {
+	if state != syscontract.CrossTxState_NON_EXIST {
 		r.log.Infof("crossID [%s] state is [%s], repeated tx execution", crossID, state.String())
 		return nil, fmt.Errorf("crossID [%s] repeated tx execution ", crossID)
 	}
-	r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_Init)
+	r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_INIT)
 	//存储执行数据
 	r.cache.Set(ctx, crossID, r.cache.ExecParamKey, executeData)
 	//探测一下回滚数据是否可用
@@ -116,19 +116,20 @@ func (r *CrossTransactionRuntime) Execute(ctx protocol.TxSimContext, params map[
 }
 
 func (r *CrossTransactionRuntime) execute(ctx protocol.TxSimContext, crossID, executeData []byte) ([]byte, error) {
-	callResp, err := callBusinessContract(ctx, crossID, executeData)
+	result, err := callBusinessContract(ctx, crossID, executeData)
 	//调用失败，退出
 	if err != nil {
 		r.log.Errorf("crossID [%s] call execute business contract error: [%v]", crossID, err)
 		return nil, err
 	}
+	r.log.Infof("executeCall result: %v", result)
 	//执行结果OK, 则
-	if contractProcessSuccess(callResp) {
-		r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ExecOK)
-		return callResp.Result, nil
+	if contractProcessSuccess(result) {
+		r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_EXECUTE_OK)
+		return result.Result, nil
 	}
-	r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ExecFail)
-	return nil, errors.New(callResp.Message)
+	r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_EXECUTE_FAIL)
+	return nil, errors.New(result.Message)
 }
 
 func (r *CrossTransactionRuntime) Commit(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
@@ -140,22 +141,22 @@ func (r *CrossTransactionRuntime) Commit(ctx protocol.TxSimContext, params map[s
 	//获取参数crossID
 	crossID := params[paramCrossID]
 	state := r.cache.GetCrossState(ctx, crossID)
-	if state != syscontract.CrossTxState_ExecOK {
+	if state != syscontract.CrossTxState_EXECUTE_OK {
 		err = fmt.Errorf("crossID [%s] tx's state is [%s], cannot be committed", crossID, state.String())
 		r.log.Info(err)
 		return nil, err
 	}
-	return nil, r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_CommitOK)
+	return nil, r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_COMMIT_OK)
 }
 
 func (r *CrossTransactionRuntime) commit(ctx protocol.TxSimContext, crossID []byte) ([]byte, error) {
 	state := r.cache.GetCrossState(ctx, crossID)
-	if state != syscontract.CrossTxState_ExecOK {
+	if state != syscontract.CrossTxState_EXECUTE_OK {
 		err := fmt.Errorf("crossID [%s] tx's state is [%s], cannot be committed", crossID, state.String())
 		r.log.Info(err)
 		return nil, err
 	}
-	return nil, r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_CommitOK)
+	return nil, r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_COMMIT_OK)
 }
 
 func (r *CrossTransactionRuntime) Rollback(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
@@ -173,12 +174,14 @@ func (r *CrossTransactionRuntime) rollback(ctx protocol.TxSimContext, crossID []
 	state := r.cache.GetCrossState(ctx, crossID)
 	r.log.Infof("crossID [%s] state is [%s]", crossID, state.String())
 	switch state {
-	case syscontract.CrossTxState_RollbackOK: //应该有个message去表示[]byte("已回滚,重复回滚")
+	case syscontract.CrossTxState_NON_EXIST:
 		return []byte{}, nil
-	case syscontract.CrossTxState_ExecFail:
-		r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_RollbackOK)
+	case syscontract.CrossTxState_ROLLBACK_OK: //应该有个message去表示[]byte("已回滚,重复回滚")
 		return []byte{}, nil
-	case syscontract.CrossTxState_ExecOK, syscontract.CrossTxState_RollbackFail:
+	case syscontract.CrossTxState_EXECUTE_FAIL:
+		r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ROLLBACK_OK)
+		return []byte{}, nil
+	case syscontract.CrossTxState_EXECUTE_OK, syscontract.CrossTxState_ROLLBACK_FAIL:
 		result, err := r.rollbackCall(ctx, crossID)
 		if err != nil {
 			r.log.Error("crossID [%s] rollback failed:[%v]", crossID, err)
@@ -202,10 +205,11 @@ func (r *CrossTransactionRuntime) SaveProof(ctx protocol.TxSimContext, params ma
 	proofKey := params[paramProofKey]
 	//获取参数TxProof
 	proof := params[paramTxProof]
+	r.log.Infof("SaveProof crossID[%s] proofKey[%s] proof [%s]", crossID, proofKey, proof)
 	//检测是否已经存储proof 是则返回存储的proof， 否则存储
 	ret, err := r.cache.GetProof(ctx, crossID, proofKey)
 	if err == nil && len(ret) > 0 {
-		r.log.Infof("crossID[%s] proofKey[%s] already exists", crossID, proofKey)
+		r.log.Infof("crossID[%s] proofKey[%s] already exists: [%v]", crossID, proofKey, ret)
 		return ret, nil
 	}
 	return proof, r.cache.SetProof(ctx, crossID, proofKey, proof)
@@ -236,8 +240,8 @@ func (r *CrossTransactionRuntime) ReadState(ctx protocol.TxSimContext, params ma
 	//获取参数crossID
 	crossID := params[paramCrossID]
 	state := r.cache.GetCrossState(ctx, crossID)
-	if state == syscontract.CrossTxState_NonExist {
-		return nil, fmt.Errorf("crossID [%s] transaction is not exist", paramCrossID)
+	if state == syscontract.CrossTxState_NON_EXIST {
+		return nil, fmt.Errorf("crossID [%s] transaction is not exist", crossID)
 	}
 	result := syscontract.CrossState{
 		State: state,
@@ -277,9 +281,9 @@ func (r *CrossTransactionRuntime) Arbitrate(ctx protocol.TxSimContext, params ma
 
 func (r *CrossTransactionRuntime) arbitrateExec(ctx protocol.TxSimContext, crossID []byte) ([]byte, error) {
 	switch r.cache.GetCrossState(ctx, crossID) {
-	case syscontract.CrossTxState_NonExist:
-		return nil, fmt.Errorf("crossID [%s] transaction is not exist", crossID)
-	case syscontract.CrossTxState_Init, syscontract.CrossTxState_ExecFail:
+	//case syscontract.CrossTxState_NON_EXIST:
+	//	return nil, fmt.Errorf("crossID [%s] transaction is not exist", crossID)
+	case syscontract.CrossTxState_NON_EXIST, syscontract.CrossTxState_INIT, syscontract.CrossTxState_EXECUTE_FAIL:
 		execParams, err := r.cache.Get(ctx, crossID, r.cache.ExecParamKey)
 		if err != nil {
 			return nil, err
@@ -316,11 +320,12 @@ func (r *CrossTransactionRuntime) rollbackCall(ctx protocol.TxSimContext, crossI
 	if err != nil {
 		return nil, err
 	}
+	r.log.Infof("rollbackCall result: %v", result)
 	if contractProcessSuccess(result) {
-		r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_RollbackOK)
+		r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ROLLBACK_OK)
 		return result, nil
 	}
-	r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_RollbackFail)
+	r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ROLLBACK_FAIL)
 	return nil, errors.New(result.Message)
 }
 
@@ -503,7 +508,10 @@ func callBusinessContract(ctx protocol.TxSimContext, crossID, params []byte) (*c
 func callContract(ctx protocol.TxSimContext, contract *Contract) (*commonPb.ContractResult, error) {
 	result, code := ctx.CallContract(&commonPb.Contract{Name: contract.Name}, contract.Method, nil, contract.Params, 0, commonPb.TxType_INVOKE_CONTRACT)
 	if code != commonPb.TxStatusCode_SUCCESS {
-		return nil, errors.New(code.String())
+		if result != nil {
+			return nil, fmt.Errorf("invoke contract [%s/%s] %s %v", contract.Name, contract.Method, code.String(), result.Message)
+		}
+		return nil, fmt.Errorf("invoke contract [%s/%s] %s", contract.Name, contract.Method, code.String())
 	}
 	return result, nil
 }
@@ -522,7 +530,7 @@ type cache struct {
 func (c *cache) GetCrossState(ctx protocol.TxSimContext, crossID []byte) syscontract.CrossTxState {
 	ret, err := c.Get(ctx, crossID, c.StateKey)
 	if err != nil || len(ret) == 0 {
-		return syscontract.CrossTxState_NonExist
+		return syscontract.CrossTxState_NON_EXIST
 	}
 	return syscontract.CrossTxState(ret[0])
 }
