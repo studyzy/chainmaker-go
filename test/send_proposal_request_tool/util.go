@@ -56,6 +56,7 @@ func constructInvokePayload(chainId, contractName, method string, pairs []*commo
 
 	return payload, nil
 }
+
 func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMember, error) {
 	skPEM, err := sk3.String()
 	if err != nil {
@@ -63,12 +64,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMemb
 	}
 	//fmt.Printf("skPEM: %s\n", skPEM)
 
-	m, err := accesscontrol.MockAccessControlWithHash(hashAlgo).NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		return nil, err
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember(hashAlgo, sender, skPEM, "")
 	if err != nil {
 		return nil, err
 	}

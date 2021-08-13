@@ -3,9 +3,9 @@ module chainmaker.org/chainmaker-go/tools/cmc
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common v0.0.0-20210804033544-04ebb04bd759
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210810062511-a30ddac7d0e1
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210729080049-e8ddce10b9e6
+	chainmaker.org/chainmaker/common v0.0.0-20210812042900-40fd24729b4a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210812134751-dc3557ac21d8
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210812234137-172f039a1e4c
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2

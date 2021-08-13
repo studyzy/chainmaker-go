@@ -182,7 +182,7 @@ func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService
 	if signerpb == nil {
 		return "", fmt.Errorf("signer is nil")
 	}
-	member, err := ac.NewMemberFromProto(signerpb)
+	member, err := ac.NewMember(signerpb)
 	if err != nil {
 		return "", fmt.Errorf("new member from proto failed, err: %v", err)
 	}
