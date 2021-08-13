@@ -121,7 +121,7 @@ func Test_Rollback(t *testing.T) {
 	CrossID := crossID
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_ExecOK)})
+	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_EXECUTE_OK)})
 	txSimContext := mock.NewMockTxSimContext(ctrl)
 	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
@@ -224,7 +224,7 @@ func Test_Arbitrate(t *testing.T) {
 	CrossID := crossID
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_ExecOK)})
+	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_EXECUTE_OK)})
 	chainConfig := &configPb.ChainConfig{
 		Consensus: &configPb.ConsensusConfig{
 			Nodes: []*configPb.OrgConfig{
