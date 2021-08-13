@@ -84,7 +84,7 @@ storage:
     provider: sql
     sqldb_config:
       sqldb_type:  mysql
-      dsn:  root:passw0rd@tcp(192.168.1.89:3307)/mysql
+      dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
   historydb_config:
     provider: leveldb
     leveldb_config:

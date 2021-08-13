@@ -64,19 +64,26 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "wx-org1.chainmaker.org"
-    root: "../config-sql/wx-org1/certs/ca/wx-org1.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org1.chainmaker.org/ca.crt"
   - org_id: "wx-org2.chainmaker.org"
-    root: "../config-sql/wx-org2/certs/ca/wx-org2.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org2.chainmaker.org/ca.crt"
   - org_id: "wx-org3.chainmaker.org"
-    root: "../config-sql/wx-org3/certs/ca/wx-org3.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org3.chainmaker.org/ca.crt"
   - org_id: "wx-org4.chainmaker.org"
-    root: "../config-sql/wx-org4/certs/ca/wx-org4.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org4.chainmaker.org/ca.crt"
   - org_id: "wx-org5.chainmaker.org"
-    root: "../config-sql/wx-org5/certs/ca/wx-org5.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org5.chainmaker.org/ca.crt"
   - org_id: "wx-org6.chainmaker.org"
-    root: "../config-sql/wx-org6/certs/ca/wx-org6.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org6.chainmaker.org/ca.crt"
   - org_id: "wx-org7.chainmaker.org"
-    root: "../config-sql/wx-org7/certs/ca/wx-org7.chainmaker.org/ca.crt"
+    root:
+      - "../config-sql/wx-org1/certs/ca/wx-org7.chainmaker.org/ca.crt"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
