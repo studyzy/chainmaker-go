@@ -15,9 +15,9 @@ import (
 	"chainmaker.org/chainmaker-go/core/syncmode/verifier"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker/common/msgbus"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"      //nolint: typecheck
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft" //nolint: typeckeck
-	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"      //nolint: typecheck
+	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/google/martian/log"
 )
