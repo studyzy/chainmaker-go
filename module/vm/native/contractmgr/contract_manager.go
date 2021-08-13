@@ -8,6 +8,7 @@
 package contractmgr
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -78,6 +79,10 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
+	{ // for debug
+		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
+		r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
+	}
 	r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
 }
@@ -90,6 +95,10 @@ func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimCont
 	contract, err := r.UpgradeContract(txSimContext, name, version, byteCode, runtimeType, parameters)
 	if err != nil {
 		return nil, err
+	}
+	{ // for debug
+		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
+		r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
 	}
 	r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
