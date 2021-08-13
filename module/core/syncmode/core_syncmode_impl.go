@@ -8,23 +8,22 @@ SPDX-License-Identifier: Apache-2.0
 package syncmode
 
 import (
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/core/syncmode/proposer"
 	"chainmaker.org/chainmaker-go/core/syncmode/verifier"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/subscriber"
 	"github.com/google/martian/log"
 )
 
 // CoreEngine is a block handle engine.
 // One core engine for one chain.
-//nolint: structcheck,unused
 type CoreEngine struct {
 	chainId   string             // chainId, identity of a chain
 	chainConf protocol.ChainConf // chain config
@@ -147,7 +146,7 @@ func (c *CoreEngine) OnMessage(message *msgbus.Message) {
 		}
 	case msgbus.VerifyBlock:
 		if block, ok := message.Payload.(*commonpb.Block); ok {
-			c.BlockVerifier.VerifyBlock(block, protocol.CONSENSUS_VERIFY) //nolint: errcheck
+			c.BlockVerifier.VerifyBlock(block, protocol.CONSENSUS_VERIFY)
 		}
 	case msgbus.CommitBlock:
 		if block, ok := message.Payload.(*commonpb.Block); ok {
@@ -176,13 +175,13 @@ func (c *CoreEngine) Start() {
 	c.msgBus.Register(msgbus.CommitBlock, c)
 	c.msgBus.Register(msgbus.TxPoolSignal, c)
 	c.msgBus.Register(msgbus.BuildProposal, c)
-	c.blockProposer.Start() //nolint: errcheck
+	c.blockProposer.Start()
 }
 
 // Stop, stop core engine
 func (c *CoreEngine) Stop() {
 	defer log.Infof("core stoped.")
-	c.blockProposer.Stop() //nolint: errcheck
+	c.blockProposer.Stop()
 }
 
 func (c *CoreEngine) GetBlockCommitter() protocol.BlockCommitter {

@@ -126,7 +126,7 @@ func FinalizeBlockSync(
 	hashType string,
 	logger protocol.Logger) error {
 
-	if aclFailTxs != nil && len(aclFailTxs) > 0 { //nolint: gosimple
+	if aclFailTxs != nil && len(aclFailTxs) > 0 {
 		// append acl check failed txs to the end of block.Txs
 		block.Txs = append(block.Txs, aclFailTxs...)
 	}
@@ -148,8 +148,7 @@ func FinalizeBlockSync(
 				TxWrites: nil,
 			}
 		}
-		var rwSetHash []byte
-		rwSetHash, err = utils.CalcRWSetHash(hashType, rwSet)
+		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
 		logger.DebugDynamic(func() string {
 			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
 		})
@@ -164,8 +163,7 @@ func FinalizeBlockSync(
 		}
 		tx.Result.RwSetHash = rwSetHash
 		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-		var txHash []byte
-		txHash, err = utils.CalcTxHash(hashType, tx)
+		txHash, err := utils.CalcTxHash(hashType, tx)
 		if err != nil {
 			return err
 		}

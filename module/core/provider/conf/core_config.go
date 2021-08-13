@@ -1,10 +1,10 @@
 package conf
 
 import (
-	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker/common/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/subscriber"
 )
 
 type CoreEngineConfig struct {

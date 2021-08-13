@@ -55,17 +55,14 @@ func (sql *SQLStoreHelper) RollBack(block *commonpb.Block, blockchainStore proto
 		contractName := string(payload.GetParameter(syscontract.InitContract_CONTRACT_NAME.String()))
 		if len(contractName) != 0 {
 			dbName := statesqldb.GetContractDbName(sql.chainId, contractName)
-			if err = blockchainStore.ExecDdlSql(contractName, "drop database "+dbName, "1"); err != nil {
-				return err
-			}
+			blockchainStore.ExecDdlSql(contractName, "drop database "+dbName, "1")
 		}
 	}
 	return nil
 }
 
 func (sql *SQLStoreHelper) BeginDbTransaction(blockchainStore protocol.BlockchainStore, txKey string) {
-	// TODO: handle error
-	blockchainStore.BeginDbTransaction(txKey) //nolint: errcheck
+	blockchainStore.BeginDbTransaction(txKey)
 }
 
 func (sql *SQLStoreHelper) GetPoolCapacity() int {

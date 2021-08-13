@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/utils"
 )
 
 type ManagerEvidence struct {
@@ -40,12 +41,7 @@ func (m *ManagerEvidence) NewSnapshot(prevBlock *commonPb.Block, block *commonPb
 		evidenceSnapshot.SetPreSnapshot(prevSnapshot)
 	}
 
-	log.Infof(
-		"create snapshot at height %d, fingerPrint[%v] -> prevFingerPrint[%v]",
-		blockHeight,
-		fingerPrint,
-		prevFingerPrint,
-	)
+	log.Infof("create snapshot at height %d, fingerPrint[%v] -> prevFingerPrint[%v]", blockHeight, fingerPrint, prevFingerPrint)
 	return evidenceSnapshot
 }
 
@@ -76,7 +72,7 @@ func (m *ManagerEvidence) NotifyBlockCommitted(block *commonPb.Block) error {
 		if snapshot == nil || snapshot.GetPreSnapshot() == nil {
 			continue
 		}
-		preSnapshot, _ := snapshot.GetPreSnapshot().(*SnapshotEvidence)
+		preSnapshot := snapshot.GetPreSnapshot().(*SnapshotEvidence)
 		if block.Header.BlockHeight-preSnapshot.GetBlockHeight() > 8 {
 			deleteOldFp := m.delegate.calcSnapshotFingerPrint(preSnapshot.delegate)
 			delete(m.snapshots, deleteOldFp)

@@ -67,8 +67,7 @@ func NewCommitBlock(cbConf *CommitBlockConf) *CommitBlock {
 func (cb *CommitBlock) CommitBlock(
 	block *commonpb.Block,
 	rwSetMap map[string]*commonpb.TxRWSet,
-	conEventMap map[string][]*commonpb.ContractEvent) (
-	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent int64, err error) {
+	conEventMap map[string][]*commonpb.ContractEvent) (dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent int64, err error) {
 	// record block
 	rwSet := RearrangeRWSet(block, rwSetMap)
 	// record contract event
@@ -104,11 +103,7 @@ func (cb *CommitBlock) CommitBlock(
 	var startPublishContractEventTick int64
 	if len(events) > 0 {
 		startPublishContractEventTick = utils.CurrentTimeMillisSeconds()
-		cb.log.Infof(
-			"start publish contractEventsInfo: block[%d] ,time[%d]",
-			block.Header.BlockHeight,
-			startPublishContractEventTick,
-		)
+		cb.log.Infof("start publish contractEventsInfo: block[%d] ,time[%d]", block.Header.BlockHeight, startPublishContractEventTick)
 		var eventsInfo []*commonpb.ContractEventInfo
 		for _, t := range events {
 			eventInfo := &commonpb.ContractEventInfo{
@@ -167,15 +162,16 @@ func NotifyChainConf(block *commonpb.Block, chainConf protocol.ChainConf) (err e
 	return nil
 }
 
-func rearrangeContractEvent(block *commonpb.Block,
-	conEventMap map[string][]*commonpb.ContractEvent) []*commonpb.ContractEvent {
+func rearrangeContractEvent(block *commonpb.Block, conEventMap map[string][]*commonpb.ContractEvent) []*commonpb.ContractEvent {
 	conEvent := make([]*commonpb.ContractEvent, 0)
 	if conEventMap == nil {
 		return conEvent
 	}
 	for _, tx := range block.Txs {
 		if event, ok := conEventMap[tx.Payload.TxId]; ok {
-			conEvent = append(conEvent, event...)
+			for _, e := range event {
+				conEvent = append(conEvent, e)
+			}
 		}
 	}
 	return conEvent

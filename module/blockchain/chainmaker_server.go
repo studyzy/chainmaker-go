@@ -8,6 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package blockchain
 
 import (
+	"chainmaker.org/chainmaker/common/helper"
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker-go/subscriber"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,13 +20,9 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/net"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker/common/helper"
 	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker/protocol"
 )
 
@@ -116,9 +116,6 @@ func (server *ChainMakerServer) initNet() error {
 		return err
 	}
 	nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
-	if err != nil {
-		return err
-	}
 	localconf.ChainMakerConfig.SetNodeId(nodeId)
 
 	// load custom chain trust roots
@@ -215,7 +212,7 @@ func (server *ChainMakerServer) Start() error {
 
 	// 2) start blockchains
 	server.blockchains.Range(func(_, value interface{}) bool {
-		chain, _ := value.(*Blockchain)
+		chain := value.(*Blockchain)
 		go startBlockchain(chain)
 		return true
 	})
@@ -228,7 +225,7 @@ func (server *ChainMakerServer) Stop() {
 	// stop all blockchains
 	var wg sync.WaitGroup
 	server.blockchains.Range(func(_, value interface{}) bool {
-		chain, _ := value.(*Blockchain)
+		chain := value.(*Blockchain)
 		wg.Add(1)
 		go func(chain *Blockchain) {
 			defer wg.Done()
@@ -277,7 +274,7 @@ func (server *ChainMakerServer) GetChainConf(chainId string) (protocol.ChainConf
 func (server *ChainMakerServer) GetAllChainConf() ([]protocol.ChainConf, error) {
 	var chainConfs []protocol.ChainConf
 	server.blockchains.Range(func(_, value interface{}) bool {
-		blockchain, _ := value.(*Blockchain)
+		blockchain := value.(*Blockchain)
 		chainConfs = append(chainConfs, blockchain.chainConf)
 		return true
 	})

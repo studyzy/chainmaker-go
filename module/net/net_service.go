@@ -39,7 +39,6 @@ const (
 	msgBusTopicTemplate          = "msgbus_topic_%s"
 	msgBusConsensusTopicTemplate = "msgbus_consensus_topic_%s"
 	msgBusMsgFlagTemplate        = "msgbus_%s"
-	moduleNetService             = "NetService"
 )
 
 var _ protocol.NetService = (*NetService)(nil)
@@ -54,20 +53,15 @@ type NetService struct {
 	consensusNodeIds     map[string]struct{}
 	consensusNodeIdsLock sync.Mutex
 
-	ac        protocol.AccessControlProvider
-	vmWatcher *VmWatcher
+	ac            protocol.AccessControlProvider
+	revokeNodeIds sync.Map // node id of node cert revoked , map[string]struct{}
+	vmWatcher     *VmWatcher
 }
 
 // NewNetService create a new net service instance.
 func NewNetService(chainId string, localNet Net, ac protocol.AccessControlProvider) *NetService {
 	logger := rootLog.GetLoggerByChain(rootLog.MODULE_NET, chainId)
-	ns := &NetService{
-		chainId:          chainId,
-		localNet:         localNet,
-		consensusNodeIds: make(map[string]struct{}),
-		ac:               ac,
-		logger:           logger,
-	}
+	ns := &NetService{chainId: chainId, localNet: localNet, consensusNodeIds: make(map[string]struct{}), ac: ac, logger: logger}
 	return ns
 }
 
@@ -139,8 +133,7 @@ func (ns *NetService) ConsensusBroadcastMsg(msg []byte, msgType netPb.NetMsg_Msg
 	return ns.consensusBroadcastMsg(pbMsg, fmt.Sprintf(consensusTopicNameTemplate, pbMsg.Type.String()))
 }
 
-// ConsensusSubscribe create a listener for receiving the msg which type is the given netPb.NetMsg_MsgType
-// that be broadcast with ConsensusBroadcastMsg method by the other consensus node.
+// ConsensusSubscribe create a listener for receiving the msg which type is the given netPb.NetMsg_MsgType that be broadcast with ConsensusBroadcastMsg method by the other consensus node.
 func (ns *NetService) ConsensusSubscribe(msgType netPb.NetMsg_MsgType, handler protocol.MsgHandler) error {
 	err := ns.receiveMsg(handler, fmt.Sprintf(consensusTopicNameTemplate, msgType.String()))
 	if err != nil {
@@ -149,8 +142,7 @@ func (ns *NetService) ConsensusSubscribe(msgType netPb.NetMsg_MsgType, handler p
 	return nil
 }
 
-// CancelConsensusSubscribe stop receiving the msg which type is the given netPb.NetMsg_MsgType
-// that be broadcast with ConsensusBroadcastMsg method by the other consensus node.
+// CancelConsensusSubscribe stop receiving the msg which type is the given netPb.NetMsg_MsgType that be broadcast with ConsensusBroadcastMsg method by the other consensus node.
 func (ns *NetService) CancelConsensusSubscribe(msgType netPb.NetMsg_MsgType) error {
 	return ns.cancelReceiveMsg(fmt.Sprintf(consensusTopicNameTemplate, msgType.String()))
 }
@@ -180,11 +172,13 @@ func (ns *NetService) sendMsg(pbMsg *netPb.NetMsg, flag string) error {
 	return nil
 }
 
-// ReceiveMsg create a listener for receiving the msg which type is the given netPb.NetMsg_MsgType
-// that be sended with ConsensusBroadcastMsg method by the other consensus node.
+// ReceiveMsg create a listener for receiving the msg which type is the given netPb.NetMsg_MsgType that be sended with ConsensusBroadcastMsg method by the other consensus node.
 func (ns *NetService) ReceiveMsg(msgType netPb.NetMsg_MsgType, handler protocol.MsgHandler) error {
 	msgFlag := msgType.String()
-	return ns.receiveMsg(handler, msgFlag)
+	if err := ns.receiveMsg(handler, msgFlag); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ns *NetService) receiveMsg(handler protocol.MsgHandler, flag string) error {
@@ -195,11 +189,17 @@ func (ns *NetService) receiveMsg(handler protocol.MsgHandler, flag string) error
 		}
 		return nil
 	}
-	return ns.localNet.DirectMsgHandle(ns.chainId, flag, h)
+	if err := ns.localNet.DirectMsgHandle(ns.chainId, flag, h); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ns *NetService) cancelReceiveMsg(flag string) error {
-	return ns.localNet.CancelDirectMsgHandle(ns.chainId, flag)
+	if err := ns.localNet.CancelDirectMsgHandle(ns.chainId, flag); err != nil {
+		return err
+	}
+	return nil
 }
 
 // MsgForMsgBusHandler is a handler function that receive the msg from net than publish to msg-bus.
@@ -213,7 +213,10 @@ func (ns *NetService) receiveMsgForMsgBus(handler MsgForMsgBusHandler, flag stri
 		}
 		return nil
 	}
-	return ns.localNet.DirectMsgHandle(ns.chainId, flag, h)
+	if err := ns.localNet.DirectMsgHandle(ns.chainId, flag, h); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ns *NetService) subscribeTopicForMsgBus(handler MsgForMsgBusHandler, topic string) error {
@@ -224,7 +227,10 @@ func (ns *NetService) subscribeTopicForMsgBus(handler MsgForMsgBusHandler, topic
 		}
 		return nil
 	}
-	return ns.localNet.SubscribeWithChainId(ns.chainId, topic, h)
+	if err := ns.localNet.SubscribeWithChainId(ns.chainId, topic, h); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetNodeUidByCertId return the id of the node connected to us which mapped to tls cert id given.
@@ -284,7 +290,7 @@ type ConfigWatcher struct {
 
 // Module
 func (cw *ConfigWatcher) Module() string {
-	return moduleNetService
+	return "NetService"
 }
 
 // Watch
@@ -338,8 +344,7 @@ func (cw *ConfigWatcher) Watch(chainConfig *configPb.ChainConfig) error {
 	return nil
 }
 
-// VmWatcher return a implementation of protocol.VmWatcher.
-// It is used for refreshing revoked peer which use revoked tls cert.
+// VmWatcher return a implementation of protocol.VmWatcher. It is used for refreshing revoked peer which use revoked tls cert.
 func (ns *NetService) VmWatcher() protocol.VmWatcher {
 	if ns.vmWatcher == nil {
 		ns.vmWatcher = &VmWatcher{ns: ns}
@@ -352,7 +357,7 @@ type VmWatcher struct {
 }
 
 func (v *VmWatcher) Module() string {
-	return moduleNetService
+	return "NetService"
 }
 
 func (v *VmWatcher) ContractNames() []string {
@@ -369,47 +374,30 @@ func (v *VmWatcher) Callback(contractName string, payloadBytes []byte) error {
 }
 
 // HandleMsgBusSubscriberOnMessage is a handler used for msg-bus subscriber OnMessage method.
-func HandleMsgBusSubscriberOnMessage(netService *NetService, msgType netPb.NetMsg_MsgType,
-	logMsgDescription string, message *msgbus.Message) error {
+func HandleMsgBusSubscriberOnMessage(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, message *msgbus.Message) error {
 	if netMsg, ok := message.Payload.(*netPb.NetMsg); ok {
 		if netMsg.Type.String() != msgType.String() {
-			netService.logger.Errorf(
-				"[NetService/msg-bus %s subscriber] wrong net msg type(expect %s, got %s)",
-				logMsgDescription,
-				msgType.String(),
-				netMsg.Type.String(),
-			)
+			netService.logger.Errorf("[NetService/msg-bus %s subscriber] wrong net msg type(expect %s, got %s)", logMsgDescription, msgType.String(), netMsg.Type.String())
 			return errors.New("wrong net msg type")
 		}
 		if netMsg.To == "" {
 			return handleMsgBusSubscriberOnMessageBroadcast(netService, msgType, logMsgDescription, netMsg)
+		} else {
+			return handleMsgBusSubscriberOnMessageSend(netService, msgType, logMsgDescription, netMsg)
 		}
-
-		return handleMsgBusSubscriberOnMessageSend(netService, msgType, logMsgDescription, netMsg)
 	}
 	return nil
 }
 
-func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType netPb.NetMsg_MsgType,
-	logMsgDescription string, netMsg *netPb.NetMsg) error {
+func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, netMsg *netPb.NetMsg) error {
 	if msgType == netPb.NetMsg_TX || msgType == netPb.NetMsg_CONSENSUS_MSG {
-		if err := netService.consensusBroadcastMsg(
-			netMsg,
-			fmt.Sprintf(msgBusConsensusTopicTemplate, msgType.String()),
-		); err != nil {
-			netService.logger.Debugf(
-				"[NetService/msg-bus %s subscriber] broadcast failed, %s",
-				logMsgDescription, err.Error(),
-			)
+		if err := netService.consensusBroadcastMsg(netMsg, fmt.Sprintf(msgBusConsensusTopicTemplate, msgType.String())); err != nil {
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] broadcast failed, %s", logMsgDescription, err.Error())
 			return err
 		}
 	} else {
 		if err := netService.broadcastMsg(netMsg, fmt.Sprintf(msgBusTopicTemplate, msgType.String())); err != nil {
-			netService.logger.Debugf(
-				"[NetService/msg-bus %s subscriber] broadcast failed, %s",
-				logMsgDescription,
-				err.Error(),
-			)
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] broadcast failed, %s", logMsgDescription, err.Error())
 			return err
 		}
 	}
@@ -417,24 +405,12 @@ func handleMsgBusSubscriberOnMessageBroadcast(netService *NetService, msgType ne
 	return nil
 }
 
-func handleMsgBusSubscriberOnMessageSend(netService *NetService, msgType netPb.NetMsg_MsgType,
-	logMsgDescription string, netMsg *netPb.NetMsg) error {
+func handleMsgBusSubscriberOnMessageSend(netService *NetService, msgType netPb.NetMsg_MsgType, logMsgDescription string, netMsg *netPb.NetMsg) error {
 	go func() {
 		if err := netService.sendMsg(netMsg, fmt.Sprintf(msgBusMsgFlagTemplate, msgType.String())); err != nil {
-			netService.logger.Debugf(
-				"[NetService/msg-bus %s subscriber] send msg failed (size:%d) (reason:%s) (to:%s)",
-				logMsgDescription,
-				proto.Size(netMsg),
-				err.Error(),
-				netMsg.To,
-			)
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg failed (size:%d) (reason:%s) (to:%s)", logMsgDescription, proto.Size(netMsg), err.Error(), netMsg.To)
 		} else {
-			netService.logger.Debugf(
-				"[NetService/msg-bus %s subscriber] send msg ok (size:%d) (to:%s)",
-				logMsgDescription,
-				proto.Size(netMsg),
-				netMsg.To,
-			)
+			netService.logger.Debugf("[NetService/msg-bus %s subscriber] send msg ok (size:%d) (to:%s)", logMsgDescription, proto.Size(netMsg), netMsg.To)
 		}
 	}()
 	return nil
@@ -449,8 +425,7 @@ func (cms *ConsensusMsgSubscriber) OnMessage(message *msgbus.Message) {
 	switch message.Topic {
 	case msgbus.SendConsensusMsg:
 		go func() {
-			err := HandleMsgBusSubscriberOnMessage(
-				cms.netService, netPb.NetMsg_CONSENSUS_MSG, "consensus msg", message)
+			err := HandleMsgBusSubscriberOnMessage(cms.netService, netPb.NetMsg_CONSENSUS_MSG, "consensus msg", message)
 			if err != nil {
 				cms.netService.logger.Warnf("[ConsensusMsgSubscriber] handle message failed, %s", err.Error())
 			}
@@ -496,8 +471,7 @@ func (cms *SyncBlockMsgSubscriber) OnMessage(message *msgbus.Message) {
 	switch message.Topic {
 	case msgbus.SendSyncBlockMsg:
 		go func() {
-			err := HandleMsgBusSubscriberOnMessage(
-				cms.netService, netPb.NetMsg_SYNC_BLOCK_MSG, "sync block msg", message)
+			err := HandleMsgBusSubscriberOnMessage(cms.netService, netPb.NetMsg_SYNC_BLOCK_MSG, "sync block msg", message)
 			if err != nil {
 				cms.netService.logger.Warnf("[SyncBlockMsgSubscriber] handle message failed, %s", err.Error())
 			}
@@ -511,21 +485,11 @@ func (cms *SyncBlockMsgSubscriber) OnQuit() {
 	//panic("implement me")
 }
 
-func CreateMsgHandlerForMsgBus(netService *NetService, topic msgbus.Topic, logMsgDescription string) func(
-	chainId string, node string, pbMsg *netPb.NetMsg) error {
+func CreateMsgHandlerForMsgBus(netService *NetService, topic msgbus.Topic, logMsgDescription string) func(chainId string, node string, pbMsg *netPb.NetMsg) error {
 	return func(chainId string, node string, pbMsg *netPb.NetMsg) error {
-		netService.logger.Debugf(
-			"[NetService/%s handler for msg-bus] receive msg (size:%d) (from:%s)",
-			logMsgDescription,
-			proto.Size(pbMsg),
-			node,
-		)
+		netService.logger.Debugf("[NetService/%s handler for msg-bus] receive msg (size:%d) (from:%s)", logMsgDescription, proto.Size(pbMsg), node)
 		if netService.chainId != chainId {
-			netService.logger.Warnf(
-				"[NetService/%s handler for msg-bus] wrong chain-id(chain-id:%s), ignored.",
-				logMsgDescription,
-				chainId,
-			)
+			netService.logger.Warnf("[NetService/%s handler for msg-bus] wrong chain-id(chain-id:%s), ignored.", logMsgDescription, chainId)
 			return nil
 		}
 		netService.msgBus.Publish(topic, pbMsg)
@@ -554,19 +518,14 @@ func (ns *NetService) initBindMsgBus() error {
 	// for consensus module
 	// receive consensus msg from net then publish to msg-bus
 	consensusMsgHandler := CreateMsgHandlerForMsgBus(ns, msgbus.RecvConsensusMsg, "consensus msg")
-	if err := ns.receiveMsgForMsgBus(
-		consensusMsgHandler, fmt.Sprintf(msgBusMsgFlagTemplate, netPb.NetMsg_CONSENSUS_MSG.String())); err != nil {
+	if err := ns.receiveMsgForMsgBus(consensusMsgHandler, fmt.Sprintf(msgBusMsgFlagTemplate, netPb.NetMsg_CONSENSUS_MSG.String())); err != nil {
 		return err
 	}
-	if err := ns.receiveMsgForMsgBus(
-		consensusMsgHandler,
-		fmt.Sprintf(msgBusConsensusTopicTemplate, netPb.NetMsg_CONSENSUS_MSG.String()),
-	); err != nil {
+	if err := ns.receiveMsgForMsgBus(consensusMsgHandler, fmt.Sprintf(msgBusConsensusTopicTemplate, netPb.NetMsg_CONSENSUS_MSG.String())); err != nil {
 		return err
 	}
 
-	// subscribe a consensus msg subscriber for receiving consensus msg
-	// from msg-bus then broadcast the msg to consensus nodes.
+	// subscribe a consensus msg subscriber for receiving consensus msg from msg-bus then broadcast the msg to consensus nodes.
 	cmSubscriber := &ConsensusMsgSubscriber{
 		netService: ns,
 	}
@@ -577,17 +536,14 @@ func (ns *NetService) initBindMsgBus() error {
 	// for tx pool module
 	// receive tx msg from net then publish to msg-bus
 	txPoolMsgHandler := CreateMsgHandlerForMsgBus(ns, msgbus.RecvTxPoolMsg, "tx_pool msg")
-	if err := ns.receiveMsgForMsgBus(
-		txPoolMsgHandler, fmt.Sprintf(msgBusMsgFlagTemplate, netPb.NetMsg_TX.String())); err != nil {
+	if err := ns.receiveMsgForMsgBus(txPoolMsgHandler, fmt.Sprintf(msgBusMsgFlagTemplate, netPb.NetMsg_TX.String())); err != nil {
 		return err
 	}
-	if err := ns.receiveMsgForMsgBus(
-		txPoolMsgHandler, fmt.Sprintf(msgBusConsensusTopicTemplate, netPb.NetMsg_TX.String())); err != nil {
+	if err := ns.receiveMsgForMsgBus(txPoolMsgHandler, fmt.Sprintf(msgBusConsensusTopicTemplate, netPb.NetMsg_TX.String())); err != nil {
 		return err
 	}
 	// subscribe the topic that ths spv node broadcast to
-	if err := ns.subscribeTopicForMsgBus(
-		txPoolMsgHandler, fmt.Sprintf(topicNameTemplate, netPb.NetMsg_TX.String())); err != nil {
+	if err := ns.subscribeTopicForMsgBus(txPoolMsgHandler, fmt.Sprintf(topicNameTemplate, netPb.NetMsg_TX.String())); err != nil {
 		return err
 	}
 
@@ -602,16 +558,13 @@ func (ns *NetService) initBindMsgBus() error {
 	// for sync module
 	// receive sync block msg from net then publish to msg-bus
 	sbmHandler := CreateMsgHandlerForMsgBus(ns, msgbus.RecvSyncBlockMsg, "sync block msg")
-	if err := ns.receiveMsgForMsgBus(
-		sbmHandler, fmt.Sprintf(msgBusMsgFlagTemplate, netPb.NetMsg_SYNC_BLOCK_MSG.String())); err != nil {
+	if err := ns.receiveMsgForMsgBus(sbmHandler, fmt.Sprintf(msgBusMsgFlagTemplate, netPb.NetMsg_SYNC_BLOCK_MSG.String())); err != nil {
 		return err
 	}
-	if err := ns.subscribeTopicForMsgBus(
-		sbmHandler, fmt.Sprintf(msgBusTopicTemplate, netPb.NetMsg_SYNC_BLOCK_MSG.String())); err != nil {
+	if err := ns.subscribeTopicForMsgBus(sbmHandler, fmt.Sprintf(msgBusTopicTemplate, netPb.NetMsg_SYNC_BLOCK_MSG.String())); err != nil {
 		return err
 	}
-	// subscribe a sync block msg subscriber for receiving sync block msg from msg-bus
-	// then broadcast the msg to consensus nodes.
+	// subscribe a sync block msg subscriber for receiving sync block msg from msg-bus then broadcast the msg to consensus nodes.
 	sbmSubscriber := &SyncBlockMsgSubscriber{
 		netService: ns,
 	}

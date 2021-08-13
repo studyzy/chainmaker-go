@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+
 	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/utils"
 )
 
 type ManagerImpl struct {
@@ -18,8 +19,7 @@ type ManagerImpl struct {
 	delegate  *ManagerDelegate
 }
 
-func (m *ManagerImpl) storeAndLinkSnapshotImpl(snapshotImpl *SnapshotImpl,
-	prevFingerPrint *utils.BlockFingerPrint, fingerPrint *utils.BlockFingerPrint) {
+func (m *ManagerImpl) storeAndLinkSnapshotImpl(snapshotImpl *SnapshotImpl, prevFingerPrint *utils.BlockFingerPrint, fingerPrint *utils.BlockFingerPrint) {
 	// 存储当前指纹的snapshot
 	m.snapshots[*fingerPrint] = snapshotImpl
 
@@ -41,13 +41,7 @@ func (m *ManagerImpl) NewSnapshot(prevBlock *commonPb.Block, block *commonPb.Blo
 	fingerPrint := utils.CalcBlockFingerPrint(block)
 	m.storeAndLinkSnapshotImpl(snapshotImpl, &prevFingerPrint, &fingerPrint)
 
-	log.Infof(
-		"create snapshot@%s at height %d, fingerPrint[%v] -> prevFingerPrint[%v]",
-		block.Header.ChainId,
-		blockHeight,
-		fingerPrint,
-		prevFingerPrint,
-	)
+	log.Infof("create snapshot@%s at height %d, fingerPrint[%v] -> prevFingerPrint[%v]", block.Header.ChainId, blockHeight, fingerPrint, prevFingerPrint)
 	return snapshotImpl
 }
 
@@ -78,7 +72,7 @@ func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
 		if snapshot == nil || snapshot.GetPreSnapshot() == nil {
 			continue
 		}
-		preSnapshot, _ := snapshot.GetPreSnapshot().(*SnapshotImpl)
+		preSnapshot := snapshot.GetPreSnapshot().(*SnapshotImpl)
 		if block.Header.BlockHeight-preSnapshot.GetBlockHeight() > 8 {
 			deleteOldFp := m.delegate.calcSnapshotFingerPrint(preSnapshot)
 			delete(m.snapshots, deleteOldFp)

@@ -1,5 +1,4 @@
 package common
-
 //
 //import (
 //	"chainmaker.org/chainmaker-go/logger"

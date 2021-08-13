@@ -7,12 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package cache
 
 import (
-	"testing"
-
 	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestLedger(t *testing.T) {

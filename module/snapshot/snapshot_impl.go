@@ -8,10 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
+	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"fmt"
 	"sync"
-
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -88,8 +87,7 @@ func (s *SnapshotImpl) GetTxRWSetTable() []*commonPb.TxRWSet {
 				info += fmt.Sprintf("read set for tx id:[%s], count [%d]<", s.txTable[i].Payload.TxId, len(txRWSet.TxReads))
 				//for _, txRead := range txRWSet.TxReads {
 				//	if !strings.HasPrefix(string(txRead.Key), protocol.ContractByteCode) {
-				//		info += fmt.Sprintf("[%v] -> [%v], contract name [%v], version [%v],",
-				//		txRead.Key, txRead.Value, txRead.ContractName, txRead.Version)
+				//		info += fmt.Sprintf("[%v] -> [%v], contract name [%v], version [%v],", txRead.Key, txRead.Value, txRead.ContractName, txRead.Version)
 				//	}
 				//}
 				info += "> "
@@ -125,7 +123,7 @@ func (s *SnapshotImpl) GetKey(txExecSeq int, contractName string, key []byte) ([
 
 	{
 		if txExecSeq > snapshotSize || txExecSeq < 0 {
-			txExecSeq = snapshotSize //nolint: ineffassign, staticcheck
+			txExecSeq = snapshotSize
 		}
 		finalKey := constructKey(contractName, key)
 		if sv, ok := s.writeTable[finalKey]; ok {
@@ -141,8 +139,9 @@ func (s *SnapshotImpl) GetKey(txExecSeq int, contractName string, key []byte) ([
 	for iter != nil {
 		if value, err := iter.GetKey(-1, contractName, key); err == nil {
 			return value, nil
+		} else {
+			iter = iter.GetPreSnapshot()
 		}
-		iter = iter.GetPreSnapshot()
 	}
 
 	return s.blockchainStore.ReadObject(contractName, key)
@@ -283,8 +282,7 @@ func (s *SnapshotImpl) buildRWBitmaps() ([]*bitmap.Bitmap, []*bitmap.Bitmap) {
 	return readBitmap, writeBitmap
 }
 
-func (s *SnapshotImpl) buildCumulativeBitmap(readBitmap []*bitmap.Bitmap,
-	writeBitmap []*bitmap.Bitmap) ([]*bitmap.Bitmap, []*bitmap.Bitmap) {
+func (s *SnapshotImpl) buildCumulativeBitmap(readBitmap []*bitmap.Bitmap, writeBitmap []*bitmap.Bitmap) ([]*bitmap.Bitmap, []*bitmap.Bitmap) {
 	cumulativeReadBitmap := make([]*bitmap.Bitmap, len(readBitmap))
 	cumulativeWriteBitmap := make([]*bitmap.Bitmap, len(writeBitmap))
 
@@ -360,8 +358,7 @@ func (s *SnapshotImpl) BuildDAG(isSql bool) *commonPb.DAG {
 			reachFromI := &bitmap.Bitmap{}
 			reachFromI.Set(i)
 
-			if i > 0 && s.fastConflicted(
-				readBitmapForI, writeBitmapForI, cumulativeReadBitmap[i-1], cumulativeWriteBitmap[i-1]) {
+			if i > 0 && s.fastConflicted(readBitmapForI, writeBitmapForI, cumulativeReadBitmap[i-1], cumulativeWriteBitmap[i-1]) {
 				// check reachability one by one, then build table
 				s.buildReach(i, reachFromI, readBitmaps, writeBitmaps, readBitmapForI, writeBitmapForI, directReachFromI, reachMap)
 			}
@@ -401,22 +398,16 @@ func (s *SnapshotImpl) buildReach(i int, reachFromI *bitmap.Bitmap,
 }
 
 // Conflict cases: I read & J write; I write & J read; I write & J write
-func (s *SnapshotImpl) conflicted(readBitmapForI, writeBitmapForI,
-	readBitmapForJ, writeBitmapForJ *bitmap.Bitmap) bool {
-	if readBitmapForI.InterExist(writeBitmapForJ) ||
-		writeBitmapForI.InterExist(writeBitmapForJ) ||
-		writeBitmapForI.InterExist(readBitmapForJ) {
+func (s *SnapshotImpl) conflicted(readBitmapForI, writeBitmapForI, readBitmapForJ, writeBitmapForJ *bitmap.Bitmap) bool {
+	if readBitmapForI.InterExist(writeBitmapForJ) || writeBitmapForI.InterExist(writeBitmapForJ) || writeBitmapForI.InterExist(readBitmapForJ) {
 		return true
 	}
 	return false
 }
 
 // fast conflict cases: I read & J write; I write & J read; I write & J write
-func (s *SnapshotImpl) fastConflicted(readBitmapForI, writeBitmapForI, cumulativeReadBitmap,
-	cumulativeWriteBitmap *bitmap.Bitmap) bool {
-	if readBitmapForI.InterExist(cumulativeWriteBitmap) ||
-		writeBitmapForI.InterExist(cumulativeWriteBitmap) ||
-		writeBitmapForI.InterExist(cumulativeReadBitmap) {
+func (s *SnapshotImpl) fastConflicted(readBitmapForI, writeBitmapForI, cumulativeReadBitmap, cumulativeWriteBitmap *bitmap.Bitmap) bool {
+	if readBitmapForI.InterExist(cumulativeWriteBitmap) || writeBitmapForI.InterExist(cumulativeWriteBitmap) || writeBitmapForI.InterExist(cumulativeReadBitmap) {
 		return true
 	}
 	return false

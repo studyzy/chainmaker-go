@@ -17,8 +17,7 @@ func RegisterCoreEngineProvider(consensusType string, cp CoreProvider) {
 	coreEngineRegistry[consensusType] = reflect.TypeOf(cp)
 }
 
-// NewCoreEngineProviderByConsensusType create a new provider by name, returning it as CoreEngineProvider interface.
-// If type not found, will panic.
+// NewCoreEngineProviderByConsensusType create a new provider by name, returning it as CoreEngineProvider interface. If type not found, will panic.
 func NewCoreEngineProviderByConsensusType(consensusType string) CoreProvider {
 	consensusType = strings.ToUpper(consensusType)
 	t, found := coreEngineRegistry[consensusType]
