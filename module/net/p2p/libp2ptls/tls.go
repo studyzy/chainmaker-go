@@ -202,7 +202,9 @@ func isRevoked(revokeValidator *revoke.RevokedValidator, rawCerts [][]byte) (boo
 		}
 		members = append(members, m)
 	}
-	return revokeValidator.ValidateMemberStatus(members)
+
+	ok, err := revokeValidator.ValidateMemberStatus(members)
+	return !ok, err
 }
 
 // SecureInbound runs the TLS handshake as a server.
