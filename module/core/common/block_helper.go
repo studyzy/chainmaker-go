@@ -80,7 +80,11 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte,
 	if lastBlock == nil {
 		return nil, nil, fmt.Errorf("no pre block found [%d] (%x)", proposingHeight-1, preHash)
 	}
-	block, err := InitNewBlock(lastBlock, bb.identity, bb.chainId, bb.chainConf)
+	isConfigBlock := false
+	if len(txBatch) == 1 && utils.IsConfigTx(txBatch[0]) {
+		isConfigBlock = true
+	}
+	block, err := initNewBlock(lastBlock, bb.identity, bb.chainId, bb.chainConf, isConfigBlock)
 	if err != nil {
 		return block, timeLasts, err
 	}
@@ -169,11 +173,11 @@ func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight uint64, preHash [
 	return lastBlock
 }
 
-func InitNewBlock(
+func initNewBlock(
 	lastBlock *commonpb.Block,
 	identity protocol.SigningMember,
 	chainId string,
-	chainConf protocol.ChainConf) (*commonpb.Block, error) {
+	chainConf protocol.ChainConf, isConfigBlock bool) (*commonpb.Block, error) {
 	// get node pk from identity
 	proposer, err := identity.GetMember()
 	if err != nil {
@@ -205,6 +209,9 @@ func InitNewBlock(
 		Dag:            &commonpb.DAG{},
 		Txs:            nil,
 		AdditionalData: nil,
+	}
+	if isConfigBlock {
+		block.Header.BlockType = commonpb.BlockType_CONFIG_BLOCK
 	}
 	return block, nil
 }
