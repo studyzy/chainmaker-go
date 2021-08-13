@@ -56,7 +56,7 @@ consensus:
 trust_roots:
   - org_id: "{org1_id}"
     root:
-    - "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
+      - "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
 
 # 证书库
 #trust_members:
