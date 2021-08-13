@@ -82,7 +82,7 @@ func updateBlockInterval() error {
 	if err != nil {
 		return fmt.Errorf("merge chain config signed payload failed, %s", err.Error())
 	}
-	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayload)
+	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayload, -1, true)
 	if err != nil {
 		return fmt.Errorf("send chain config update request failed, %s", err.Error())
 	}

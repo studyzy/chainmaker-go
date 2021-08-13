@@ -170,7 +170,7 @@ func configConsensusNodeId(op int) error {
 		return err
 	}
 
-	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayloadBytes)
+	resp, err := client.SendChainConfigUpdateRequest(mergedSignedPayloadBytes, -1, true)
 	if err != nil {
 		return err
 	}
