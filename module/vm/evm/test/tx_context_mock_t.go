@@ -7,12 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/utils"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -204,7 +205,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
 	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		dbByteCode, err := s.GetContractBytecode(contract.Name)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
 		}

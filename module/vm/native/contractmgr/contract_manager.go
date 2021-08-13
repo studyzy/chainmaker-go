@@ -159,7 +159,7 @@ func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, 
 		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	return utils.GetContractByName(context.Get, name)
+	return context.GetContractByName(name)
 }
 func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimContext, name string) ([]byte, error) {
 	if utils.IsAnyBlank(name) {
@@ -167,7 +167,7 @@ func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimConte
 		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	return utils.GetContractBytecode(context.Get, name)
+	return context.GetContractBytecode(name)
 }
 
 //GetAllContracts 查询所有合约的详细信息
@@ -299,7 +299,7 @@ func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, n
 		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	contract, err := utils.GetContractByName(context.Get, name)
+	contract, err := context.GetContractByName(name)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +324,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	contract, err := utils.GetContractByName(context.Get, name)
+	contract, err := context.GetContractByName(name)
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,6 @@
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sort"
@@ -96,7 +95,7 @@ func (s *txSimContextImpl) Select(contractName string, startKey []byte, limit []
 }
 
 func (s *txSimContextImpl) GetCreator(contractName string) *acpb.Member {
-	contract, err := utils.GetContractByName(s.Get, contractName)
+	contract, err := s.GetContractByName(contractName)
 	if err != nil {
 		//TODO log
 		return nil
@@ -259,7 +258,7 @@ func (s *txSimContextImpl) CallContract(contract *commonpb.Contract, method stri
 		return contractResult, commonpb.TxStatusCode_CONTRACT_FAIL
 	}
 	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		dbByteCode, err := s.GetContractBytecode(contract.Name)
 		if err != nil {
 			return nil, commonpb.TxStatusCode_CONTRACT_FAIL
 		}
@@ -316,4 +315,13 @@ func (s *txSimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator
 }
 func (s *txSimContextImpl) GetBlockVersion() uint32 {
 	return s.blockVersion
+}
+
+func (s *txSimContextImpl) GetContractByName(name string) (*commonpb.Contract, error) {
+	return s.snapshot.GetBlockchainStore().GetContractByName(name)
+}
+
+//GetContractBytecode get contract bytecode
+func (s *txSimContextImpl) GetContractBytecode(name string) ([]byte, error) {
+	return s.snapshot.GetBlockchainStore().GetContractBytecode(name)
 }

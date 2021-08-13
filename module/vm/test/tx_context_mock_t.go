@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
-	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"sync"
+
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/utils"
@@ -150,6 +151,14 @@ type TxContextMockTest struct {
 	kvRowCache map[int32]protocol.StateIterator
 }
 
+func (s *TxContextMockTest) GetContractByName(name string) (*commonPb.Contract, error) {
+	return utils.GetContractByName(s.Get, name)
+}
+
+func (s *TxContextMockTest) GetContractBytecode(name string) ([]byte, error) {
+	return utils.GetContractBytecode(s.Get, name)
+}
+
 func (s *TxContextMockTest) GetBlockVersion() uint32 {
 	return protocol.DefaultBlockVersion
 }
@@ -265,7 +274,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method str
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
 	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		dbByteCode, err := s.GetContractBytecode(contract.Name)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
 		}

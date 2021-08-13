@@ -17,8 +17,6 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
-	"chainmaker.org/chainmaker-go/utils"
-
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
@@ -109,7 +107,7 @@ func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, 
 
 	if len(contract.Version) == 0 {
 		var err error
-		contract, err = utils.GetContractByName(txContext.Get, contractName)
+		contract, err = txContext.GetContractByName(contractName)
 		if err != nil {
 			contractResult.Message = fmt.Sprintf("query contract[%s] error", contractName)
 			return contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_CONTRACT_NAME
@@ -252,7 +250,7 @@ func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *c
 	var byteCode []byte
 	if v.requireByteCode {
 		//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+contractName), []byte(resultVersion)...)
-		if byteCodeInContext, err := utils.GetContractBytecode(txContext.Get, contractName); err != nil {
+		if byteCodeInContext, err := txContext.GetContractBytecode(contractName); err != nil {
 			contractResult.Message = fmt.Sprintf("%s failed to check byte code in tx context for contract[%s], %s", msgPre, contractName, err.Error())
 			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
 		} else if len(byteCodeInContext) == 0 {
