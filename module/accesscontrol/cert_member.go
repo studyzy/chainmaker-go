@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"chainmaker.org/chainmaker/pb-go/config"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -70,12 +71,15 @@ func newCertMember(orgId, role, hashType string, isCompressed bool, certPEM []by
 		id = []byte(cert.Subject.CommonName)
 	}
 
+	role = strings.ToUpper(role)
+
 	return &certMember{
-		id:       string(id),
-		orgId:    orgId,
-		role:     protocol.Role(role),
-		cert:     cert,
-		hashType: hashType,
+		id:           string(id),
+		orgId:        orgId,
+		role:         protocol.Role(role),
+		cert:         cert,
+		hashType:     hashType,
+		isCompressed: isCompressed,
 	}, nil
 }
 
@@ -110,8 +114,7 @@ func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
 }
 
 func (cm *certMember) GetMember() (*pbac.Member, error) {
-
-	if !cm.isCompressed {
+	if cm.isCompressed {
 		id, err := utils.GetCertificateIdFromDER(cm.cert.Raw, cm.hashType)
 		if err != nil {
 			return nil, fmt.Errorf("get pb member failed: [%s]", err.Error())
@@ -162,7 +165,7 @@ func newCertMemberFromPb(member *pbac.Member, acs *accessControlService) (*certM
 		if v.MemberInfo == string(member.MemberInfo) {
 			var isCompressed bool
 			if member.MemberType == pbac.MemberType_CERT {
-				isCompressed = true
+				isCompressed = false
 			}
 			return newCertMember(v.OrgId, v.Role, acs.hashType, isCompressed, []byte(v.MemberInfo))
 		}
@@ -171,13 +174,13 @@ func newCertMemberFromPb(member *pbac.Member, acs *accessControlService) (*certM
 	if member.MemberType == pbac.MemberType_CERT {
 		certBlock, rest := pem.Decode(member.MemberInfo)
 		if certBlock == nil {
-			return newMemberFromCertPem(member.OrgId, acs.hashType, rest, true)
+			return newMemberFromCertPem(member.OrgId, acs.hashType, rest, false)
 		}
-		return newMemberFromCertPem(member.OrgId, acs.hashType, certBlock.Bytes, true)
+		return newMemberFromCertPem(member.OrgId, acs.hashType, certBlock.Bytes, false)
 	}
 
 	if member.MemberType == pbac.MemberType_CERT_HASH {
-		return newMemberFromCertPem(member.OrgId, acs.hashType, member.MemberInfo, false)
+		return newMemberFromCertPem(member.OrgId, acs.hashType, member.MemberInfo, true)
 	}
 
 	return nil, fmt.Errorf("setup member failed, unsupport cert member type")
@@ -231,7 +234,7 @@ func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed b
 
 func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem,
 	password string) (protocol.SigningMember, error) {
-	certMember, err := newMemberFromCertPem(member.OrgId, hashType, member.MemberInfo, true)
+	certMember, err := newMemberFromCertPem(member.OrgId, hashType, member.MemberInfo, false)
 	if err != nil {
 		return nil, err
 	}
@@ -260,17 +263,41 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem,
 	}, nil
 }
 
-func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
+func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
 	protocol.SigningMember, error) {
+	var (
+		certMember *certMember
+	)
 	if localPrivKeyFile != "" && localCertFile != "" {
 		certPEM, err := ioutil.ReadFile(localCertFile)
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 		}
-		certMember, err := newMemberFromCertPem(localOrgId, hashType, certPEM, true)
-		if err != nil {
-			return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
+
+		isTrustMember := false
+		for _, v := range chainConfig.TrustMembers {
+			certBlock, _ := pem.Decode([]byte(v.MemberInfo))
+			if certBlock == nil {
+				return nil, fmt.Errorf("new member failed, the trsut member cert is not PEM")
+			}
+			if v.MemberInfo == string(certPEM) {
+				certMember, err = newCertMember(v.OrgId, v.Role,
+					chainConfig.Crypto.Hash, false, certPEM)
+				if err != nil {
+					return nil, fmt.Errorf("init signing member failed, init trust member failed: [%s]", err.Error())
+				}
+				isTrustMember = true
+				break
+			}
 		}
+
+		if !isTrustMember {
+			certMember, err = newMemberFromCertPem(localOrgId, chainConfig.Crypto.Hash, certPEM, false)
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
+			}
+		}
+
 		skPEM, err := ioutil.ReadFile(localPrivKeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
@@ -289,7 +316,7 @@ func InitCertSigningMember(hashType, localOrgId, localPrivKeyFile, localPrivKeyP
 				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 			}
 		} else {
-			sk, err = asym.PrivateKeyFromPEM([]byte(skPEM), []byte(localPrivKeyPwd))
+			sk, err = asym.PrivateKeyFromPEM(skPEM, []byte(localPrivKeyPwd))
 			if err != nil {
 				return nil, err
 			}

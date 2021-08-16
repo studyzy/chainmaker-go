@@ -289,7 +289,7 @@ func (bc *Blockchain) initAC() (err error) {
 		return
 	}
 
-	bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig().GetCrypto().GetHash(), nodeConfig.OrgId,
+	bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
 		nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
 	if err != nil {
 		bc.log.Errorf("initialize identity failed, %s", err.Error())
