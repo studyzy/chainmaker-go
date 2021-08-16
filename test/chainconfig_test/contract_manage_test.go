@@ -8,7 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -16,8 +18,8 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 )
 
-var client apiPb.RpcNodeClient
 var chainConfig *configPb.ChainConfig
+var disabledContractListChainConfig []string
 
 func init() {
 	conn, err := native.InitGRPCConnect(isTls)
@@ -26,26 +28,36 @@ func init() {
 	}
 	client = apiPb.NewRpcNodeClient(conn)
 	chainConfig = getChainConfig()
-	fmt.Printf("disabled contract list from bc1.yml: %v\n", chainConfig.DisabledNativeContract)
+	disabledContractListChainConfig = chainConfig.DisabledNativeContract
+	fmt.Printf("disabled contract list from bc1.yml: %v\n", disabledContractListChainConfig)
 }
 
-func TestGetDisabledNativeContractListTwice(t *testing.T) {
-	fmt.Printf("\n						STEP (1/2)  ===>\n\n")
-	TestGetDisabledNativeContractList(t)
-	fmt.Println()
-	fmt.Printf("\n						STEP (2/2) ===>\n\n")
-	TestGetDisabledNativeContractList(t)
+func TestNativeContractAccessControl(t *testing.T) {
+	expectedDisabledContractList := disabledContractListChainConfig
 
-	fmt.Println()
-	fmt.Println("						-------end---------")
+	toAddContractList := []string{syscontract.SystemContract_DPOS_ERC20.String(), syscontract.SystemContract_DPOS_STAKE.String()}
+	toRevokeContractList := []string{syscontract.SystemContract_CERT_MANAGE.String(),
+		syscontract.SystemContract_GOVERNANCE.String(), syscontract.SystemContract_PRIVATE_COMPUTE.String()}
+
+	testGetDisabledNativeContractList(t, expectedDisabledContractList)
+
+	testAddNativeContract(t, toAddContractList...)
+
+	time.Sleep(2 * time.Second)
+
+	//expectedDisabledContractList = append(expectedDisabledContractList[:0], expectedDisabledContractList[2:]...)
+	expectedDisabledContractList = nil
+	testGetDisabledNativeContractList(t, expectedDisabledContractList)
+
+	//testRevokeNativeContract(t, toRevokeContractList...)
+	//expectedDisabledContractList = append(expectedDisabledContractList, toRevokeContractList...)
+	//testGetDisabledNativeContractList(t, expectedDisabledContractList)
+
+	_, _ = toRevokeContractList, toAddContractList
 }
 
 // Native合约list查询
-func TestGetDisabledNativeContractList(t *testing.T) {
-	conn, err := native.InitGRPCConnect(isTls)
-	require.NoError(t, err)
-	client := apiPb.NewRpcNodeClient(conn)
-
+func testGetDisabledNativeContractList(t *testing.T, expectedList []string) {
 	fmt.Println("============ test get disabled contract list ===========")
 
 	sk, member := native.GetUserSK(1)
@@ -54,14 +66,13 @@ func TestGetDisabledNativeContractList(t *testing.T) {
 	processResults(resp, err)
 
 	assert.Nil(t, err)
-	//disabledContractList := string(resp.ContractResult.Result)
+	disabledContractList := parseDisabledContractList(resp.ContractResult.Result)
+	require.Equal(t, expectedList, disabledContractList)
 	fmt.Printf("\n\n ========finished get disabled contract list======== \n ")
-	//fmt.Println(c)
-	//assert.NotNil(t, c.CertInfos[0].Cert, "not found certs")
 }
 
 // 新增Native合约权限
-func TestAddNativeContract(t *testing.T) {
+func testAddNativeContract(t *testing.T, list ...string) {
 	txId := utils.GetRandTxId()
 	require.True(t, len(txId) > 0)
 
@@ -84,12 +95,12 @@ func TestAddNativeContract(t *testing.T) {
 }
 
 // Revoke Native合约权限
-func TestRevokeNativeContract(t *testing.T) {
+func testRevokeNativeContract(t *testing.T, list ...string) {
 	txId := utils.GetRandTxId()
 	require.True(t, len(txId) > 0)
 
 	fmt.Println("============test add native contract============")
-	val, _ := json.Marshal([]string{syscontract.SystemContract_CERT_MANAGE.String(), syscontract.SystemContract_GOVERNANCE.String(), syscontract.SystemContract_PRIVATE_COMPUTE.String()})
+	val, _ := json.Marshal(list)
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "native_contract_name",
@@ -104,4 +115,15 @@ func TestRevokeNativeContract(t *testing.T) {
 
 	assert.Nil(t, err)
 	fmt.Printf("\n\n ========end test add native contract======== \n ")
+}
+
+func parseDisabledContractList(result []byte) []string {
+	if string(result) == "null" {
+		return nil
+	}
+	disabledContractList := string(result)
+	disabledContractList = strings.Trim(strings.Trim(disabledContractList[1:len(disabledContractList)-1], "["), "]")
+	disabledContractList = strings.Replace(disabledContractList, "\"", "", -1)
+	r := strings.Split(disabledContractList, ",")
+	return r
 }

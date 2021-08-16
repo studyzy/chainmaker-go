@@ -6,9 +6,9 @@ require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210730091111-cd7813a002c3
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b
-	chainmaker.org/chainmaker/protocol v0.0.0-20210727101110-59285b10f1ef
+	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
+	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
 	github.com/Rican7/retry v0.1.0
 	github.com/ethereum/go-ethereum v1.10.2
 	github.com/gogo/protobuf v1.3.2

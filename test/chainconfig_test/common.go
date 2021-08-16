@@ -40,8 +40,8 @@ var (
 	IP   = "localhost"
 	Port = 12301
 
-	certPathPrefix = "../../config"
-	//certPathPrefix = "../../build"
+	//certPathPrefix = "../../config"
+	certPathPrefix     = "../../build"
 	WasmPath           = "../wasm/counter-go.wasm"
 	OrgIdFormat        = "wx-org%s.chainmaker.org"
 	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
