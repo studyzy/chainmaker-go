@@ -1,7 +1,7 @@
 chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071 h1:FN/DuoHZ7WTzzdhpG6+alyX6EXM+2KibcRBJFPnBkMc=
 chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73 h1:izzrYWUGtnl7QoL7rWdOcldgcygURTeEyOOPFgwIyCM=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210816122318-5281b78fdd2e h1:AyK5YSyVhD9yRP2s0NcYh5eDhybpVgR4qBdT7ykSDhc=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210816122318-5281b78fdd2e/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Azure/azure-pipeline-go v0.2.1/go.mod h1:UGSo8XybXnIGZ3epmeBw7Jdz+HiUVpqIlpz/HKHylF4=
 github.com/Azure/azure-pipeline-go v0.2.2/go.mod h1:4rQ/NZncSvGqNkkOsNpOU1tgoNuIlp9AfUH5G1tvCHc=
