@@ -202,7 +202,8 @@ func testSnapshot(t *testing.T, i int) {
 			readKey := randKey()
 			writeKey := randKey()
 			txSimContext.txRwSet = genRwSet(readKey, writeKey)
-			txSimContext.txExecSeq = int32(rand.Intn(len(snapshot.txTable) + 1))
+			// TODO: Use of weak random number generator (math/rand instead of crypto/rand) ?
+			txSimContext.txExecSeq = int32(rand.Intn(len(snapshot.txTable) + 1)) //nolint: gosec
 
 			applyResult, _ := snapshot.ApplyTxSimContext(txSimContext, true)
 			atomic.AddInt64(&count, 1)
@@ -210,7 +211,14 @@ func testSnapshot(t *testing.T, i int) {
 				fmt.Printf("!!!")
 				for {
 					txSimContext.txRwSet = genRwSet(readKey, writeKey)
-					txSimContext.txExecSeq = txSimContext.txExecSeq + int32(rand.Intn(len(snapshot.txTable)-int(txSimContext.txExecSeq)+1))
+					// TODO: Use of weak random number generator (math/rand instead of crypto/rand) ?
+					// nolint: gosec
+					txSimContext.txExecSeq = txSimContext.txExecSeq +
+						int32(
+							rand.Intn(
+								len(snapshot.txTable)-int(txSimContext.txExecSeq)+1,
+							),
+						)
 					applyResult, _ = snapshot.ApplyTxSimContext(txSimContext, true)
 
 					atomic.AddInt64(&count, 1)
@@ -243,11 +251,13 @@ func testSnapshot(t *testing.T, i int) {
 
 func randKey() []string {
 	kRange := 1000000000
-	size := rand.Intn(5) + 1
+	// TODO: Use of weak random number generator (math/rand instead of crypto/rand) ?
+	size := rand.Intn(5) + 1 //nolint: gosec
 
 	var keySlice []string
 	for i := 0; i < size; i++ {
-		kId := rand.Intn(kRange)
+		// TODO: Use of weak random number generator (math/rand instead of crypto/rand) ?
+		kId := rand.Intn(kRange) //nolint: gosec
 		key := "K" + strconv.Itoa(kId)
 		keySlice = append(keySlice, key)
 	}
