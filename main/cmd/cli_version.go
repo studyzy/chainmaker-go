@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package cmd
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/protocol"
 	"fmt"
 	"github.com/common-nighthawk/go-figure"
 
@@ -30,7 +30,7 @@ func logo() string {
 	fig := figure.NewFigure("ChainMaker", "slant", true)
 	s := fig.String()
 	fragment := "================================================================================="
-	versionInfo := "::ChainMaker::  version(" + localconf.CurrentVersion + ")"
+	versionInfo := "::ChainMaker::  version(" + protocol.DefaultBlockVersion + ")"
 	return fmt.Sprintf("\n%s\n%s%s\n%s\n", fragment, s, fragment, versionInfo)
 }
 

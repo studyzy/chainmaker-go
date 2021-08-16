@@ -13,7 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/pb/protogo/txpool"
 )
 
-const DefaultBlockVersion = "v1.2.0" // default version of chain
+const DefaultBlockVersion = "v1.2.4" // default version of chain
 // Block committer, put block and read write set into ledger(DB).
 type BlockCommitter interface {
 	// Put block into ledger(DB) after block verify. Invoke by consensus or sync module.
