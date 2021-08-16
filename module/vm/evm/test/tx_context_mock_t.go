@@ -320,6 +320,10 @@ func BaseParam(parameters map[string][]byte) {
 type mockBlockchainStore struct {
 }
 
+func (m mockBlockchainStore) GetMemberExtraData(member *acPb.Member) (*acPb.MemberExtraData, error) {
+	panic("implement me")
+}
+
 func (m mockBlockchainStore) GetContractByName(name string) (*commonPb.Contract, error) {
 	panic("implement me")
 }

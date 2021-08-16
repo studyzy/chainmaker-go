@@ -40,15 +40,16 @@ var (
 	IP   = "localhost"
 	Port = 12301
 
-	//certPathPrefix      = "../../config"
-	certPathPrefix = "../../build"
-
-	WasmPath            = "../wasm/counter-go.wasm"
-	OrgIdFormat         = "wx-org%s.chainmaker.org"
-	UserKeyPathFmt      = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
-	UserCrtPathFmt      = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
-	UserSignKeyPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
-	UserSignCrtPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
+	certPathPrefix = "../../config"
+	//certPathPrefix = "../../build"
+	WasmPath           = "../wasm/counter-go.wasm"
+	OrgIdFormat        = "wx-org%s.chainmaker.org"
+	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
+	UserCrtPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
+	UserSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
+	UserSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
+	//UserSignKeyPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/light1/light1.sign.key"
+	//UserSignCrtPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/light1/light1.sign.crt"
 	AdminSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.key"
 	AdminSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.crt"
 

@@ -8,16 +8,24 @@ else
   endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
-VERSION=v2.0.0
+VERSION=v2.0.2
+GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
+
+LOCALCONF_HOME=chainmaker.org/chainmaker-go/localconf
+GOLDFLAGS += -X "${LOCALCONF_HOME}.CurrentVersion=${VERSION}"
+GOLDFLAGS += -X "${LOCALCONF_HOME}.BuildDateTime=${DATETIME}"
+GOLDFLAGS += -X "${LOCALCONF_HOME}.GitBranch=${GIT_BRANCH}"
+GOLDFLAGS += -X "${LOCALCONF_HOME}.GitCommit=${GIT_COMMIT}"
 
 chainmaker:
-	@cd main && go build -o ../bin/chainmaker
+	@cd main && go mod tidy && go build -ldflags '${GOLDFLAGS}' -o ../bin/chainmaker
 
 chainmaker-vendor:
 	@cd main && go build -mod=vendor -o ../bin/chainmaker
 
 package:
-	@cd main && GOPATH=${GOPATH} go build -o ../bin/chainmaker
+	@cd main && go mod tidy && GOPATH=${GOPATH} go build -ldflags '${GOLDFLAGS}' -o ../bin/chainmaker
 	@mkdir -p ./release
 	@rm -rf ./tmp/chainmaker/
 	@mkdir -p ./tmp/chainmaker/
@@ -30,7 +38,7 @@ package:
 	@rm -rf ./tmp/
 
 compile:
-	@cd main && go build -o ../bin/chainmaker
+	@cd main && go mod tidy && go build -ldflags '${GOLDFLAGS}' -o ../bin/chainmaker
 
 cmc:
 	@cd tools/cmc && GOPATH=${GOPATH} go build -o ../../bin/cmc
@@ -97,7 +105,13 @@ lint:
 	cd module/sync && golangci-lint run ./...
 	cd module/txpool && golangci-lint run ./...
 	cd module/utils && golangci-lint run ./...
-	cd module/vm && golangci-lint run ./...
+	cd module/vm/evm && golangci-lint run ./...
+	cd module/vm/gasm && golangci-lint run ./...
+	cd module/vm/native && golangci-lint run ./...
+	cd module/vm/test && golangci-lint run ./...
+	#cd module/vm/wasi && golangci-lint run ./...
+	cd module/vm/wasmer && golangci-lint run ./...
+	cd module/vm/wxvm && golangci-lint run ./...
 	cd tools/cmc && golangci-lint run ./...
 	cd tools/scanner && golangci-lint run ./...
 
