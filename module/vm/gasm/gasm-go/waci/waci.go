@@ -9,12 +9,12 @@ waci: WebAssembly Chainmaker Interface
 package waci
 
 import (
-	"chainmaker.org/chainmaker-go/wasi"
 	"fmt"
 	"reflect"
 
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
 	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/wasi"
 	"chainmaker.org/chainmaker/common/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -220,7 +220,7 @@ func (s *WaciInstance) CallContract() int32 {
 }
 
 func (s *WaciInstance) callContractCore(isLen bool) int32 {
-	data, err, gas := wacsi.CallContract(s.RequestBody, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.Vm.Gas, isLen)
+	data, gas, err := wacsi.CallContract(s.RequestBody, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.Vm.Gas, isLen)
 	s.GetStateCache = data // reset data
 	s.Vm.Gas = gas
 	if err != nil {

@@ -7,12 +7,12 @@
 package scheduler
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 
+	"chainmaker.org/chainmaker-go/utils"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -62,13 +62,14 @@ func (s *txSimContextImpl) Get(contractName string, key []byte) ([]byte, error) 
 	}
 
 	// Get from db
-	if value, err := s.snapshot.GetKey(s.txExecSeq, contractName, key); err != nil {
+	var value []byte
+	var err error
+	if value, err = s.snapshot.GetKey(s.txExecSeq, contractName, key); err != nil {
 		return nil, err
-	} else {
-		// if get from db success, put into read set
-		s.putIntoReadSet(contractName, key, value)
-		return value, nil
 	}
+	// if get from db success, put into read set
+	s.putIntoReadSet(contractName, key, value)
+	return value, nil
 }
 func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)

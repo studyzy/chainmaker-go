@@ -74,7 +74,8 @@ func NewBlockBuilder(conf *BlockBuilderConf) *BlockBuilder {
 	return creatorBlock
 }
 
-func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte, txBatch []*commonpb.Transaction) (*commonpb.Block, []int64, error) {
+func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte, txBatch []*commonpb.Transaction) (
+	*commonpb.Block, []int64, error) {
 	timeLasts := make([]int64, 0)
 	currentHeight, _ := bb.ledgerCache.CurrentHeight()
 	lastBlock := bb.findLastBlockFromCache(proposingHeight, preHash, currentHeight)
@@ -160,7 +161,8 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte,
 	return block, timeLasts, nil
 }
 
-func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight uint64, preHash []byte, currentHeight uint64) *commonpb.Block {
+func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight uint64, preHash []byte,
+	currentHeight uint64) *commonpb.Block {
 	var lastBlock *commonpb.Block
 	if currentHeight+1 == proposingHeight {
 		lastBlock = bb.ledgerCache.GetLastCommittedBlock()
@@ -217,7 +219,7 @@ func FinalizeBlock(
 	hashType string,
 	logger protocol.Logger) error {
 
-	if aclFailTxs != nil && len(aclFailTxs) > 0 {
+	if aclFailTxs != nil && len(aclFailTxs) > 0 { //nolint: gosimple
 		// append acl check failed txs to the end of block.Txs
 		block.Txs = append(block.Txs, aclFailTxs...)
 	}
@@ -239,7 +241,9 @@ func FinalizeBlock(
 				TxWrites: nil,
 			}
 		}
-		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+
+		var rwSetHash []byte
+		rwSetHash, err = utils.CalcRWSetHash(hashType, rwSet)
 		logger.DebugDynamic(func() string {
 			str := fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
 			if len(str) > 1024 {
@@ -258,7 +262,8 @@ func FinalizeBlock(
 		}
 		tx.Result.RwSetHash = rwSetHash
 		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-		txHash, err := utils.CalcTxHash(hashType, tx)
+		var txHash []byte
+		txHash, err = utils.CalcTxHash(hashType, tx)
 		if err != nil {
 			return err
 		}
@@ -277,7 +282,8 @@ func FinalizeBlock(
 	}
 
 	// DagDigest
-	dagHash, err := utils.CalcDagHash(hashType, block.Dag)
+	var dagHash []byte
+	dagHash, err = utils.CalcDagHash(hashType, block.Dag)
 	if err != nil {
 		logger.Warnf("get dag hash error %s", err)
 		return err
@@ -411,10 +417,10 @@ func CheckVacuumBlock(block *commonpb.Block, consensusType consensus.ConsensusTy
 		if utils.CanProposeEmptyBlock(consensusType) {
 			// for consensus that allows empty block, skip txs verify
 			return nil
-		} else {
-			// for consensus that NOT allows empty block, return error
-			return fmt.Errorf("tx must not empty")
 		}
+
+		// for consensus that NOT allows empty block, return error
+		return fmt.Errorf("tx must not empty")
 	}
 	return nil
 }
@@ -460,20 +466,26 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		storeHelper:     conf.StoreHelper,
 	}
 	var schedulerFactory scheduler.TxSchedulerFactory
-	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(verifyBlock.vmMgr, verifyBlock.chainConf, conf.StoreHelper)
+	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(
+		verifyBlock.vmMgr,
+		verifyBlock.chainConf,
+		conf.StoreHelper,
+	)
 	return verifyBlock
 }
 
-func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block, lastBlock *commonpb.Block) (*commonpb.Block, error) {
+func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block,
+	lastBlock *commonpb.Block) (*commonpb.Block, error) { //nolint: staticcheck
 	currentHeight, _ := vb.ledgerCache.CurrentHeight()
 	if currentHeight >= block.Header.BlockHeight {
 		return nil, commonErrors.ErrBlockHadBeenCommited
 	}
 
 	if currentHeight+1 == block.Header.BlockHeight {
-		lastBlock = vb.ledgerCache.GetLastCommittedBlock()
+		lastBlock = vb.ledgerCache.GetLastCommittedBlock() //nolint: staticcheck
 	} else {
-		lastBlock, _ = vb.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
+		lastBlock, _ = vb.proposalCache.GetProposedBlockByHashAndHeight(
+			block.Header.PreBlockHash, block.Header.BlockHeight-1)
 	}
 	if lastBlock == nil {
 		return nil, fmt.Errorf("no pre block found [%d](%x)", block.Header.BlockHeight-1, block.Header.PreBlockHash)
@@ -483,8 +495,8 @@ func (vb *VerifierBlock) FetchLastBlock(block *commonpb.Block, lastBlock *common
 
 // validateBlock, validate block and transactions
 func (vb *VerifierBlock) ValidateBlock(
-	block, lastBlock *commonpb.Block,
-	hashType string, timeLasts []int64) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
+	block, lastBlock *commonpb.Block, hashType string, timeLasts []int64) (
+	map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
 
 	if err := IsBlockHashValid(block, vb.chainConf.ChainConfig().Crypto.Hash); err != nil {
 		return nil, nil, timeLasts, err
@@ -580,8 +592,9 @@ func (vb *VerifierBlock) ValidateBlock(
 	return txRWSetMap, contractEventMap, timeLasts, nil
 }
 
-func CheckPreBlock(block *commonpb.Block, lastBlock *commonpb.Block, err error,
-	lastBlockHash []byte, proposedHeight uint64) error {
+//nolint: staticcheck
+func CheckPreBlock(block *commonpb.Block, lastBlock *commonpb.Block,
+	err error, lastBlockHash []byte, proposedHeight uint64) error {
 
 	if err = IsHeightValid(block, proposedHeight); err != nil {
 		return err
@@ -646,17 +659,35 @@ func NewBlockCommitter(config BlockCommitterConfig, log protocol.Logger) (protoc
 	}
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		blockchain.metricBlockSize = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_COMMITTER, monitor.MetricBlockSize,
-			monitor.HelpCurrentBlockSizeMetric, prometheus.ExponentialBuckets(1024, 2, 12), monitor.ChainId)
+		blockchain.metricBlockSize = monitor.NewHistogramVec(
+			monitor.SUBSYSTEM_CORE_COMMITTER,
+			monitor.MetricBlockSize,
+			monitor.HelpCurrentBlockSizeMetric,
+			prometheus.ExponentialBuckets(1024, 2, 12),
+			monitor.ChainId,
+		)
 
-		blockchain.metricBlockCounter = monitor.NewCounterVec(monitor.SUBSYSTEM_CORE_COMMITTER, monitor.MetricBlockCounter,
-			monitor.HelpBlockCountsMetric, monitor.ChainId)
+		blockchain.metricBlockCounter = monitor.NewCounterVec(
+			monitor.SUBSYSTEM_CORE_COMMITTER,
+			monitor.MetricBlockCounter,
+			monitor.HelpBlockCountsMetric,
+			monitor.ChainId,
+		)
 
-		blockchain.metricTxCounter = monitor.NewCounterVec(monitor.SUBSYSTEM_CORE_COMMITTER, monitor.MetricTxCounter,
-			monitor.HelpTxCountsMetric, monitor.ChainId)
+		blockchain.metricTxCounter = monitor.NewCounterVec(
+			monitor.SUBSYSTEM_CORE_COMMITTER,
+			monitor.MetricTxCounter,
+			monitor.HelpTxCountsMetric,
+			monitor.ChainId,
+		)
 
-		blockchain.metricBlockCommitTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_COMMITTER, monitor.MetricBlockCommitTime,
-			monitor.HelpBlockCommitTimeMetric, []float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10}, monitor.ChainId)
+		blockchain.metricBlockCommitTime = monitor.NewHistogramVec(
+			monitor.SUBSYSTEM_CORE_COMMITTER,
+			monitor.MetricBlockCommitTime,
+			monitor.HelpBlockCommitTimeMetric,
+			[]float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10},
+			monitor.ChainId,
+		)
 	}
 
 	cbConf := &CommitBlockConf{
@@ -742,7 +773,8 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
 
-	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(block, rwSetMap, conEventMap)
+	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
+		block, rwSetMap, conEventMap)
 	if err != nil {
 		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)", err.Error(), block.Header.BlockHeight)
 	}
@@ -757,8 +789,11 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	chain.proposalCache.ClearProposedBlockAt(height)
 
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	chain.log.Infof("commit block [%d](count:%d,hash:%x), time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d)",
-		height, block.Header.TxCount, block.Header.BlockHash, checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed)
+	chain.log.Infof(
+		"commit block [%d](count:%d,hash:%x), "+
+			"time used(check:%d,db:%d,ss:%d,conf:%d,pool:%d,pubConEvent:%d,other:%d,total:%d)",
+		height, block.Header.TxCount, block.Header.BlockHash,
+		checkLasts, dbLasts, snapshotLasts, confLasts, poolLasts, pubEvent, otherLasts, elapsed)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		chain.metricBlockCommitTime.WithLabelValues(chain.chainId).Observe(float64(elapsed) / 1000)
 	}
@@ -786,8 +821,10 @@ func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height ui
 	return txRetry
 }
 
-func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block, lastProposed *commonpb.Block,
-	err error, height uint64, rwSetMap map[string]*commonpb.TxRWSet, conEventMap map[string][]*commonpb.ContractEvent) error {
+//nolint: ineffassign, staticcheck
+func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block,
+	lastProposed *commonpb.Block, err error, height uint64, rwSetMap map[string]*commonpb.TxRWSet,
+	conEventMap map[string][]*commonpb.ContractEvent) error { //nolint: ineffassign, staticcheck
 	if lastProposed != nil {
 		return nil
 	}

@@ -12,12 +12,11 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/utils"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 )
 
@@ -318,6 +317,10 @@ func BaseParam(parameters map[string][]byte) {
 }
 
 type mockBlockchainStore struct {
+}
+
+func (m mockBlockchainStore) GetMemberExtraData(member *acPb.Member) (*acPb.MemberExtraData, error) {
+	panic("implement me")
 }
 
 func (m mockBlockchainStore) GetContractByName(name string) (*commonPb.Contract, error) {

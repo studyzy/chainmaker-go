@@ -15,26 +15,20 @@ import (
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker-go/chainconf"
+	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/msgbus"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/config"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	netpb "chainmaker.org/chainmaker/pb-go/net"
-	"github.com/tidwall/wal"
-
-	"chainmaker.org/chainmaker-go/chainconf"
-
-	"chainmaker.org/chainmaker-go/localconf"
-
-	"chainmaker.org/chainmaker/protocol"
-	"go.uber.org/zap"
-
-	"github.com/gogo/protobuf/proto"
-
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/msgbus"
-
-	"chainmaker.org/chainmaker-go/logger"
 	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	netpb "chainmaker.org/chainmaker/pb-go/net"
+	"chainmaker.org/chainmaker/protocol"
+	"github.com/gogo/protobuf/proto"
+	"github.com/tidwall/wal"
+	"go.uber.org/zap"
 )
 
 var clog = zap.S()

@@ -17,7 +17,7 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 )
 
-var defaultHashType = "SHA256"
+var defaultHashType = "SHA256" //nolint: unused
 
 // ProposalCache is used for cache proposal blocks
 type ProposalCache struct {
@@ -58,7 +58,8 @@ func (pc *ProposalCache) ClearProposedBlockAt(height uint64) {
 }
 
 // GetProposedBlock get proposed block with specific block hash in current consensus height.
-func (pc *ProposalCache) GetProposedBlock(b *commonpb.Block) (*commonpb.Block, map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent) {
+func (pc *ProposalCache) GetProposedBlock(b *commonpb.Block) (
+	*commonpb.Block, map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent) {
 	if b == nil || b.Header == nil {
 		return nil, nil, nil
 	}
@@ -91,8 +92,9 @@ func (pc *ProposalCache) GetProposedBlocksAt(height uint64) []*commonpb.Block {
 }
 
 // GetProposedBlockByHashAndHeight get proposed block by block hash and block height.
-func (pc *ProposalCache) GetProposedBlockByHashAndHeight(hash []byte, height uint64) (*commonpb.Block, map[string]*commonpb.TxRWSet) {
-	if hash == nil || height < 0 {
+func (pc *ProposalCache) GetProposedBlockByHashAndHeight(hash []byte, height uint64) (
+	*commonpb.Block, map[string]*commonpb.TxRWSet) {
+	if hash == nil {
 		return nil, nil
 	}
 	// starting lock when we read the map
@@ -109,7 +111,8 @@ func (pc *ProposalCache) GetProposedBlockByHashAndHeight(hash []byte, height uin
 }
 
 // SetProposedBlock set porposed block in current consensus height, after it's generated or verified.
-func (pc *ProposalCache) SetProposedBlock(b *commonpb.Block, rwSetMap map[string]*commonpb.TxRWSet, contractEventMap map[string][]*commonpb.ContractEvent, selfPropose bool) error {
+func (pc *ProposalCache) SetProposedBlock(b *commonpb.Block, rwSetMap map[string]*commonpb.TxRWSet,
+	contractEventMap map[string][]*commonpb.ContractEvent, selfPropose bool) error {
 	if b == nil || b.Header == nil {
 		return nil
 	}
@@ -244,7 +247,7 @@ func (pc *ProposalCache) DiscardAboveHeight(baseHeight uint64) []*commonpb.Block
 }
 
 // getHashType return hash type claimed in this chain.
-func (pc *ProposalCache) getHashType() string {
+func (pc *ProposalCache) getHashType() string { //nolint: unused
 	if pc.chainConf == nil || pc.chainConf.ChainConfig() == nil {
 		return defaultHashType
 	}

@@ -19,6 +19,6 @@ var NilTHOTSTUFFProvider provider.CoreProvider = (*hotstuffProvider)(nil)
 type hotstuffProvider struct {
 }
 
-func (hp *hotstuffProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (hp *hotstuffProvider) NewCoreEngine(config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	return NewCoreEngine(config)
 }
