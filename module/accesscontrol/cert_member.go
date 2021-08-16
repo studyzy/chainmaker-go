@@ -8,11 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"chainmaker.org/chainmaker/pb-go/config"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	"chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/utils"
@@ -93,6 +95,10 @@ func (cm *certMember) GetOrgId() string {
 
 func (cm *certMember) GetRole() protocol.Role {
 	return cm.role
+}
+
+func (cm *certMember) GetUid() string {
+	return hex.EncodeToString(cm.cert.SubjectKeyId)
 }
 
 func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
