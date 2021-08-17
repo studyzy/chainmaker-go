@@ -8,11 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/require"
 
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/utils"
@@ -33,6 +31,11 @@ func init() {
 }
 
 func TestNativeContractAccessControl(t *testing.T) {
+	var (
+		txId  string
+		block *commonPb.Block
+		tx    *commonPb.Transaction
+	)
 	expectedDisabledContractList := disabledContractListChainConfig
 
 	toAddContractList := []string{syscontract.SystemContract_DPOS_ERC20.String(), syscontract.SystemContract_DPOS_STAKE.String()}
@@ -41,19 +44,38 @@ func TestNativeContractAccessControl(t *testing.T) {
 
 	testGetDisabledNativeContractList(t, expectedDisabledContractList)
 
-	testAddNativeContract(t, toAddContractList...)
+	txId = testAddNativeContract(t, toAddContractList...)
+	for block == nil {
+		block = testGetBlockByTxId(t, client, txId)
+	}
 
-	time.Sleep(2 * time.Second)
+	tx = block.Txs[0]
+	require.True(t, tx.Result.ContractResult.Code == 0)
+	require.True(t, tx.Result.ContractResult.Message == "OK")
+	block = nil
 
-	//expectedDisabledContractList = append(expectedDisabledContractList[:0], expectedDisabledContractList[2:]...)
 	expectedDisabledContractList = nil
 	testGetDisabledNativeContractList(t, expectedDisabledContractList)
 
-	//testRevokeNativeContract(t, toRevokeContractList...)
-	//expectedDisabledContractList = append(expectedDisabledContractList, toRevokeContractList...)
-	//testGetDisabledNativeContractList(t, expectedDisabledContractList)
+	txId = testRevokeNativeContract(t, toRevokeContractList...)
+	for block == nil {
+		block = testGetBlockByTxId(t, client, txId)
+	}
+	tx = block.Txs[0]
+	require.True(t, tx.Result.ContractResult.Code == 0)
+	require.True(t, tx.Result.ContractResult.Message == "OK")
+	block = nil
 
-	_, _ = toRevokeContractList, toAddContractList
+	expectedDisabledContractList = append(expectedDisabledContractList, toRevokeContractList...)
+	testGetDisabledNativeContractList(t, expectedDisabledContractList)
+
+	txId = testVerifyContractAccessWithCertManage(t)
+	for block == nil {
+		block = testGetBlockByTxId(t, client, txId)
+	}
+	tx = block.Txs[0]
+	require.True(t, tx.Result.ContractResult.Code == 1)
+	require.True(t, tx.Result.ContractResult.Message == "Access Denied")
 }
 
 // Native合约list查询
@@ -72,12 +94,12 @@ func testGetDisabledNativeContractList(t *testing.T, expectedList []string) {
 }
 
 // 新增Native合约权限
-func testAddNativeContract(t *testing.T, list ...string) {
+func testAddNativeContract(t *testing.T, list ...string) string {
 	txId := utils.GetRandTxId()
 	require.True(t, len(txId) > 0)
 
 	fmt.Println("============test add native contract============")
-	val, _ := json.Marshal([]string{syscontract.SystemContract_DPOS_ERC20.String(), syscontract.SystemContract_DPOS_STAKE.String()})
+	val, _ := json.Marshal(list)
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   "native_contract_name",
@@ -92,10 +114,11 @@ func testAddNativeContract(t *testing.T, list ...string) {
 
 	assert.Nil(t, err)
 	fmt.Printf("\n\n ========end test add native contract======== \n ")
+	return txId
 }
 
 // Revoke Native合约权限
-func testRevokeNativeContract(t *testing.T, list ...string) {
+func testRevokeNativeContract(t *testing.T, list ...string) string {
 	txId := utils.GetRandTxId()
 	require.True(t, len(txId) > 0)
 
@@ -115,6 +138,35 @@ func testRevokeNativeContract(t *testing.T, list ...string) {
 
 	assert.Nil(t, err)
 	fmt.Printf("\n\n ========end test add native contract======== \n ")
+	return txId
+}
+
+// Native合约list查询
+func testVerifyContractAccessWithCertManage(t *testing.T) string {
+	fmt.Println("============ test verify contract access with Cert Manage ===========")
+
+	txId := utils.GetRandTxId()
+	require.True(t, len(txId) > 0)
+	// 构造Payload
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key: "cert_crl",
+		// 多个就换行就行
+		Value: []byte("-----BEGIN CRL-----\nMIIBXjCCAQMCAQEwCgYIKoZIzj0EAwIwgYoxCzAJBgNVBAYTAkNOMRAwDgYDVQQI\n" +
+			"EwdCZWlqaW5nMRAwDgYDVQQHEwdCZWlqaW5nMR8wHQYDVQQKExZ3eC1vcmcxLmNo\nYWlubWFrZXIub3JnMRIwEAYDVQQL" +
+			"Ewlyb290LWNlcnQxIjAgBgNVBAMTGWNhLnd4\nLW9yZzEuY2hhaW5tYWtlci5vcmcXDTIxMDcyMDEyMjYzMloXDTIxMDcyMDE2MjYz\n" +
+			"MlowFjAUAgMFL28XDTI0MDMyMzE1MDMwNVqgLzAtMCsGA1UdIwQkMCKAIDUkP3Ec\nubfENS6TH3DFczH5dAnC2eD73+wcUF" +
+			"/bEIlnMAoGCCqGSM49BAMCA0kAMEYCIQDy\nwvxZL30HRdyQYJzb1HsczH9xnh3iY+aW1ZbY46KX8AIhAPw8140++BTkBnlKBtAH\n" +
+			"PajXB4S3hsYlNv0RwV5Gfui4\n-----END CRL-----\n"),
+	})
+
+	sk, member := native.GetUserSK(1)
+	resp, err := native.UpdateSysRequest(sk, member, &native.InvokeContractMsg{TxId: txId, TxType: commonPb.TxType_INVOKE_CONTRACT, ChainId: CHAIN1,
+		ContractName: syscontract.SystemContract_CERT_MANAGE.String(), MethodName: syscontract.CertManageFunction_CERTS_REVOKE.String(), Pairs: pairs})
+
+	processResults(resp, err)
+	fmt.Printf("\n\n ========finished test verify contract access with cert ======== \n ")
+	return txId
 }
 
 func parseDisabledContractList(result []byte) []string {

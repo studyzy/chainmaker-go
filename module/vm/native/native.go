@@ -7,7 +7,6 @@
 package native
 
 import (
-	"fmt"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
@@ -128,7 +127,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	}
 
 	result.Code = 1
-	result.Message = fmt.Sprintf("access denied for native contract (%v)", txContext.GetTx().Payload.ContractName)
+	result.Message = "Access Denied"
 	result.Result = nil
 	return result
 }

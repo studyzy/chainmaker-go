@@ -47,7 +47,7 @@ func init() {
 //GetFullBlockByHeight
 
 // capitalize 't' to make it a unit test
-func testGetBlock(t *testing.T) {
+func TestGetBlock(t *testing.T) {
 	testHeight := -1
 	height := int64(testHeight)
 	blockByHeight, blockHashStringByHeight, txId := testGetBlockByHeight(t, client, height)
@@ -208,6 +208,9 @@ func testGetBlockByTxId(t *testing.T, client apiPb.RpcNodeClient, txId string) *
 	//fmt.Printf("response: %v\n", resp)
 
 	blockInfo := &commonPb.BlockInfo{}
+	if resp == nil {
+		return nil
+	}
 	if err = proto.Unmarshal(resp.ContractResult.Result, blockInfo); err != nil {
 		panic(err)
 	}
