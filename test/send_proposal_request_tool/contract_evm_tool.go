@@ -308,7 +308,7 @@ func makePairs(method string, abiPath string, pairs []*commonPb.KeyValuePair, ru
 							fmt.Println("[append][bytes] pair.Key: ", pair.Key, "pair.Value: ", pair.Value, ", params:", params)
 						}
 					case "bytes", "string":
-						params = append(params, pair.Value)
+						params = append(params, string(pair.Value))
 						if printEnable {
 							fmt.Println("[append][string] pair.Key: ", pair.Key, "pair.Value: ", pair.Value, ", params:", params)
 						}
@@ -470,7 +470,7 @@ func makeCreateContractPairs(method string, abiPath string, pairs []*commonPb.Ke
 							fmt.Println("[append][bytes] pair.Key: ", pair.Key, "pair.Value: ", pair.Value, ", params:", params)
 						}
 					case "bytes", "string":
-						params = append(params, pair.Value)
+						params = append(params, string(pair.Value))
 						if printEnable {
 							fmt.Println("[append][string] pair.Key: ", pair.Key, "pair.Value: ", pair.Value, ", params:", params)
 						}
