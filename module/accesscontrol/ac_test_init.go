@@ -760,7 +760,6 @@ var orgMemberInfoMap = map[string]*orgMemberInfo{
 }
 
 func initOrgMember(t *testing.T, info *orgMemberInfo) *orgMember {
-	hashType := testHashType
 	td, cleanFunc, err := createTempDirWithCleanFunc()
 	require.Nil(t, err)
 	defer cleanFunc()
@@ -776,21 +775,21 @@ func initOrgMember(t *testing.T, info *orgMemberInfo) *orgMember {
 	require.Nil(t, err)
 	err = ioutil.WriteFile(localCertFile, []byte(info.consensus.cert), os.ModePerm)
 	require.Nil(t, err)
-	consensus, err := InitCertSigningMember(hashType, info.orgId, localPrivKeyFile, "", localCertFile)
+	consensus, err := InitCertSigningMember(testChainConfig, info.orgId, localPrivKeyFile, "", localCertFile)
 	require.Nil(t, err)
 
 	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.admin.sk), os.ModePerm)
 	require.Nil(t, err)
 	err = ioutil.WriteFile(localCertFile, []byte(info.admin.cert), os.ModePerm)
 	require.Nil(t, err)
-	admin, err := InitCertSigningMember(hashType, info.orgId, localPrivKeyFile, "", localCertFile)
+	admin, err := InitCertSigningMember(testChainConfig, info.orgId, localPrivKeyFile, "", localCertFile)
 	require.Nil(t, err)
 
 	err = ioutil.WriteFile(localPrivKeyFile, []byte(info.client.sk), os.ModePerm)
 	require.Nil(t, err)
 	err = ioutil.WriteFile(localCertFile, []byte(info.client.cert), os.ModePerm)
 	require.Nil(t, err)
-	client, err := InitCertSigningMember(hashType, info.orgId, localPrivKeyFile, "", localCertFile)
+	client, err := InitCertSigningMember(testChainConfig, info.orgId, localPrivKeyFile, "", localCertFile)
 	require.Nil(t, err)
 
 	return &orgMember{
@@ -886,7 +885,7 @@ func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCer
 	}
 	chainConfig.AddWatch(acp)
 	chainConfig.AddVmWatch(acp)
-	InitCertSigningMember(conf.Crypto.Hash, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
+	InitCertSigningMember(testChainConfig, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
 	return acp, err
 }
 

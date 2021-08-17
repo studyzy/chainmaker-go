@@ -76,7 +76,7 @@ func TestCertMemberInfo(t *testing.T) {
 	require.Nil(t, err)
 	err = ioutil.WriteFile(localCertFile, []byte(testConsensusSignOrg2.cert), os.ModePerm)
 	require.Nil(t, err)
-	signingMember, err := InitCertSigningMember(testChainConfig.Crypto.Hash, testOrg2, localPrivKeyFile, "", localCertFile)
+	signingMember, err := InitCertSigningMember(testChainConfig, testOrg2, localPrivKeyFile, "", localCertFile)
 	require.Nil(t, err)
 	require.NotNil(t, signingMember)
 	signRead, err := signingMember.Sign(testChainConfig.Crypto.Hash, []byte(testMsg))
