@@ -16,8 +16,8 @@ chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543/go.mod h1:
 chainmaker.org/chainmaker/protocol v0.0.0-20210709171355-90bbfd38e3cc/go.mod h1:e/31KHE18Rr0ChD5GCx8XsSm0BcY0GmN1YPvwMMSLog=
 chainmaker.org/chainmaker/protocol v0.0.0-20210713021825-63c58dd0297f/go.mod h1:JI/zwWF3xHTKswcjr3cTkUjQhexi33zm0IPUrUoZkTE=
 chainmaker.org/chainmaker/protocol v0.0.0-20210727101110-59285b10f1ef/go.mod h1:Ty7YcLmUmfhuvUtWc3jwx8ajmjQq6/0u97wXDiS0A0I=
-chainmaker.org/chainmaker/protocol v0.0.0-20210813101412-754cc134be43 h1:PSkRFMnSoLZP3U2l7cYHk+mzrHSu7zczCVvImf1VsAc=
-chainmaker.org/chainmaker/protocol v0.0.0-20210813101412-754cc134be43/go.mod h1:tXeXUrL89KO0hxYxuCRDkM8gug/LlmcliyQD84VwCdE=
+chainmaker.org/chainmaker/protocol v0.0.0-20210817020238-7ad0d408ae23 h1:NJ5B7re6bx3i3MG6M6uEfyktEjdQuOcvIJLUiUfgstk=
+chainmaker.org/chainmaker/protocol v0.0.0-20210817020238-7ad0d408ae23/go.mod h1:tXeXUrL89KO0hxYxuCRDkM8gug/LlmcliyQD84VwCdE=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
