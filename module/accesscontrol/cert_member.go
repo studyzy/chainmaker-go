@@ -213,7 +213,11 @@ func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed b
 	}
 
 	member.hashType = hashType
-	orgIdFromCert := cert.Subject.Organization[0]
+
+	orgIdFromCert := ""
+	if len(cert.Subject.Organization) > 0 {
+		orgIdFromCert = cert.Subject.Organization[0]
+	}
 	if orgIdFromCert != orgId {
 		return nil, fmt.Errorf(
 			"setup cert member failed, organization information in certificate "+

@@ -128,7 +128,7 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 				return nil, err
 			}
 		}
-		log.Infof("load trust root file path: %s", filePath)
+		log.Infof("load trust member file path: %s", filePath)
 		entry, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			return nil, fmt.Errorf("fail to read trust memberInfo file [%s]: %v", filePath, err)
