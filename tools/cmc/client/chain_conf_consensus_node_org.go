@@ -99,7 +99,7 @@ func updateConsensusNodeOrgCMD() *cobra.Command {
 
 	attachFlags(cmd, []string{
 		flagUserSignKeyFilePath, flagUserSignCrtFilePath,
-		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeIdOld, flagNodeIds,
+		flagSdkConfPath, flagOrgId, flagEnableCertHash, flagNodeOrgId, flagNodeIds,
 		flagAdminCrtFilePaths, flagAdminKeyFilePaths, flagUserTlsCrtFilePath, flagUserTlsKeyFilePath,
 	})
 
