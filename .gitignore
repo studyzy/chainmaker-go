@@ -15,6 +15,7 @@ bin
 *.log.*
 **/go.sum
 /module/vm/wasm/wasmer/wasmer_runtime_c_api.dll
+/config/
 /config-sql/
 **/crypto-config/
 /testdata
