@@ -15,7 +15,7 @@ crypto:
 
 # 合约支持类型的配置
 contract:
-  enable_sql_support: false # 此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
+  enable_sql_support: false # 合约是否支持sql，此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
 
 # 交易、区块相关配置
 block:

@@ -40,7 +40,7 @@ scheduler:
 
 #共识配置
 consensus:
-  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,10-POW)
+  # 共识类型(0-SOLO,1-TBFT,2-MBFT,3-HOTSTUFF,4-RAFT,5-DPOS,10-POW)
   type: {consensus_type}
   # 共识节点列表，组织必须出现在trust_roots的org_id中，每个组织可配置多个共识节点，节点地址采用libp2p格式
   # 其中node_id为chainmaker.yml中 node.cert_file证书对应的nodeid
