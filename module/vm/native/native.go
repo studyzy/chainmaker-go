@@ -112,6 +112,11 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	}
 
 	accessResultBytes, err = verifyAccessFunc(txContext, nil)
+	if err != nil {
+		r.log.Error(err)
+		result.Message = err.Error()
+		return result
+	}
 	if string(accessResultBytes) == "true" {
 		// exec
 		bytes, err := f(txContext, parameters)

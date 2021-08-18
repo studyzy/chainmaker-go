@@ -27,7 +27,6 @@ import (
 var (
 	ContractName    = syscontract.SystemContract_CONTRACT_MANAGE.String()
 	keyContractName = "_Native_Contract_List"
-	times           uint8
 )
 
 type ContractManager struct {
@@ -189,6 +188,10 @@ func (r *ContractManagerRuntime) getDisabledContractList(txSimContext protocol.T
 	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
 	fmt.Printf("the result is %v\n", disabledContractList)
 
+	if err != nil {
+		return nil, err
+	}
+
 	disabledContractListBytes, err = json.Marshal(disabledContractList)
 
 	if err != nil {
@@ -261,6 +264,9 @@ func filterContracts(disabledContractList []string, requestedContractList []stri
 func (r *ContractManagerRuntime) fetchDisabledContractList(txSimContext protocol.TxSimContext) ([]string, error) {
 	// try to get disabled contract list from database
 	disabledContractListBytes, err := txSimContext.Get(ContractName, []byte(keyContractName))
+	if err != nil {
+		return nil, err
+	}
 
 	// if the config file does not exist in the database yet, try fetch it from the genesis config file and store it
 	// to the database
@@ -296,7 +302,7 @@ func (r *ContractManagerRuntime) initializeDisabledNativeContractList(
 	)
 
 	// 1. fetch chainConfig from genesis config file
-	chainConfig, err = chainconfigmgr.GetChainConfig(txSimContext, make(map[string][]byte, 0))
+	chainConfig, err = chainconfigmgr.GetChainConfig(txSimContext, make(map[string][]byte))
 	if err != nil {
 		r.log.Error(err)
 		return nil, err
@@ -407,8 +413,7 @@ func (r *ContractManagerRuntime) revokeContract(txSimContext protocol.TxSimConte
 }
 
 type ContractManagerRuntime struct {
-	log           protocol.Logger
-	isInitialized bool
+	log protocol.Logger
 }
 
 //GetContractInfo 根据合约名字查询合约的详细信息
