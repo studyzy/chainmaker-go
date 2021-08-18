@@ -39,17 +39,21 @@ var (
 	gProofKey     = []byte("1233211234567")
 )
 
+const (
+	contractName   = "tx"
+	rollbackMethod = "rollback"
+)
+
 func Test_Execute(t *testing.T) {
-	CrossID := crossID
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	)
-	txSimContext.EXPECT().Put(gomock.Eq(store.genName(CrossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Put(gomock.Eq(store.genName(crossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte, value []byte) error {
 			gCache.Put(name, key, value)
 			return nil
@@ -57,7 +61,7 @@ func Test_Execute(t *testing.T) {
 	).AnyTimes()
 	txSimContext.EXPECT().CallContract(gomock.Not(nil), gomock.Eq("exec"), gomock.Nil(), gomock.Any(), gomock.Eq(uint64(0)), gomock.Eq(commonPb.TxType_INVOKE_CONTRACT)).DoAndReturn(
 		func(contract *commonPb.Contract, method string, byteCode []byte, parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
-			if contract.Name == "tx" {
+			if contract.Name == contractName {
 				return &commonPb.ContractResult{
 					Code:   0,
 					Result: []byte("hello world"),
@@ -67,27 +71,27 @@ func Test_Execute(t *testing.T) {
 		},
 	)
 	exec := crossContract.GetMethod(syscontract.CrossTransactionFunction_EXECUTE.String())
-	params := genExecParams(CrossID)
+	params := genExecParams(crossID)
 	ret, err := exec(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))
 }
-func genExecParams(CrossID []byte) map[string][]byte {
+func genExecParams(crossID []byte) map[string][]byte {
 	eParams := map[string][]byte{
-		paramCrossID:    CrossID,
+		paramCrossID:    crossID,
 		paramContract:   []byte("tx"),
 		paramMethod:     []byte("exec"),
 		paramCallParams: serialize.EasyMarshal(serialize.ParamsMapToEasyCodecItem(map[string][]byte{})),
 	}
 	rParams := map[string][]byte{
-		paramCrossID:    CrossID,
+		paramCrossID:    crossID,
 		paramContract:   []byte("tx"),
 		paramMethod:     []byte("rollback"),
 		paramCallParams: serialize.EasyMarshal(serialize.ParamsMapToEasyCodecItem(map[string][]byte{})),
 	}
 
 	return map[string][]byte{
-		paramCrossID:      CrossID,
+		paramCrossID:      crossID,
 		paramExecData:     serialize.EasyMarshal(serialize.ParamsMapToEasyCodecItem(eParams)),
 		paramRollbackData: serialize.EasyMarshal(serialize.ParamsMapToEasyCodecItem(rParams)),
 	}
@@ -96,14 +100,13 @@ func genExecParams(CrossID []byte) map[string][]byte {
 func Test_Commit(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	CrossID := crossID
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	)
-	txSimContext.EXPECT().Put(gomock.Eq(store.genName(CrossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Put(gomock.Eq(store.genName(crossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte, value []byte) error {
 			gCache.Put(name, key, value)
 			return nil
@@ -111,24 +114,23 @@ func Test_Commit(t *testing.T) {
 	).AnyTimes()
 
 	commit := crossContract.GetMethod(syscontract.CrossTransactionFunction_COMMIT.String())
-	params := map[string][]byte{paramCrossID: CrossID}
+	params := map[string][]byte{paramCrossID: crossID}
 	ret, err := commit(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))
 }
 
 func Test_Rollback(t *testing.T) {
-	CrossID := crossID
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_EXECUTE_OK)})
+	gCache.Put(store.genName(crossID), store.StateKey, []byte{byte(syscontract.CrossTxState_EXECUTE_OK)})
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	).AnyTimes()
-	txSimContext.EXPECT().Put(gomock.Eq(store.genName(CrossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Put(gomock.Eq(store.genName(crossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte, value []byte) error {
 			gCache.Put(name, key, value)
 			return nil
@@ -137,7 +139,7 @@ func Test_Rollback(t *testing.T) {
 	//if state == syscontract.CrossTxState_ExecOK || state == syscontract.CrossTxState_RollbackFail {
 	txSimContext.EXPECT().CallContract(gomock.Not(nil), gomock.Eq("rollback"), gomock.Nil(), gomock.Any(), gomock.Eq(uint64(0)), gomock.Eq(commonPb.TxType_INVOKE_CONTRACT)).DoAndReturn(
 		func(contract *commonPb.Contract, method string, byteCode []byte, parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
-			if contract.Name == "tx" && method == "rollback" {
+			if contract.Name == contractName && method == rollbackMethod {
 				return &commonPb.ContractResult{
 					Code:   0,
 					Result: []byte("hello world"),
@@ -149,25 +151,24 @@ func Test_Rollback(t *testing.T) {
 	//}
 
 	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_ROLLBACK.String())
-	params := map[string][]byte{paramCrossID: CrossID}
+	params := map[string][]byte{paramCrossID: crossID}
 	ret, err := call(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))
 }
 
 func Test_ReadState(t *testing.T) {
-	CrossID := crossID
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	).AnyTimes()
 
 	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_READ_STATE.String())
-	params := map[string][]byte{paramCrossID: CrossID}
+	params := map[string][]byte{paramCrossID: crossID}
 	ret, err := call(txSimContext, params)
 	require.Nil(t, err)
 	result := syscontract.CrossState{}
@@ -176,18 +177,17 @@ func Test_ReadState(t *testing.T) {
 }
 
 func Test_SaveProof(t *testing.T) {
-	CrossID := crossID
 	proofKey := gProofKey
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	).AnyTimes()
 
-	txSimContext.EXPECT().Put(gomock.Eq(store.genName(CrossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Put(gomock.Eq(store.genName(crossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte, value []byte) error {
 			gCache.Put(name, key, value)
 			return nil
@@ -195,40 +195,38 @@ func Test_SaveProof(t *testing.T) {
 	).AnyTimes()
 
 	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_SAVE_PROOF.String())
-	params := map[string][]byte{paramCrossID: CrossID, paramProofKey: proofKey, paramTxProof: []byte("中国奥运健儿加油")}
+	params := map[string][]byte{paramCrossID: crossID, paramProofKey: proofKey, paramTxProof: []byte("中国奥运健儿加油")}
 	ret, err := call(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))
 }
 
 func Test_ReadProof(t *testing.T) {
-	CrossID := crossID
 	proofKey := gProofKey
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(CrossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	).AnyTimes()
 
 	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_READ_PROOF.String())
-	params := map[string][]byte{paramCrossID: CrossID, paramProofKey: proofKey}
+	params := map[string][]byte{paramCrossID: crossID, paramProofKey: proofKey}
 	ret, err := call(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))
 }
 
 func Test_Arbitrate(t *testing.T) {
-	CrossID := crossID
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	gCache.Put(store.genName(CrossID), store.StateKey, []byte{byte(syscontract.CrossTxState_EXECUTE_OK)})
+	gCache.Put(store.genName(crossID), store.StateKey, []byte{byte(syscontract.CrossTxState_EXECUTE_OK)})
 	chainConfig := &configPb.ChainConfig{
 		Consensus: &configPb.ConsensusConfig{
 			Nodes: []*configPb.OrgConfig{
-				&configPb.OrgConfig{
+				{
 					NodeId: []string{"hello", "9HdRUYfrzSER2EbY8b1NFuVSFp4cKNznE1ucRgtHoK6s"},
 				},
 			},
@@ -242,7 +240,7 @@ func Test_Arbitrate(t *testing.T) {
 			return gCache.Get(name, key)
 		},
 	).AnyTimes()
-	txSimContext.EXPECT().Put(gomock.Eq(store.genName(CrossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Put(gomock.Eq(store.genName(crossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte, value []byte) error {
 			gCache.Put(name, key, value)
 			return nil
@@ -287,7 +285,7 @@ MmUZz2wJML7wFsZw+IZ1MH28g3IRc67NcHiV7TX97kqwcTrfD10aV8UZn/+8aDQ5
 	).AnyTimes()
 
 	call := crossContract.GetMethod(syscontract.CrossTransactionFunction_ARBITRATE.String())
-	params := map[string][]byte{paramCrossID: CrossID, paramArbitrateCmd: []byte(syscontract.CrossArbitrateCmd_ROLLBACK_CMD.String())}
+	params := map[string][]byte{paramCrossID: crossID, paramArbitrateCmd: []byte(syscontract.CrossArbitrateCmd_ROLLBACK_CMD.String())}
 	ret, err := call(txSimContext, params)
 	require.Nil(t, err)
 	t.Log(string(ret))

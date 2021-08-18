@@ -1,7 +1,9 @@
 /*
  Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
  SPDX-License-Identifier: Apache-2.0
 */
+
 package crosstranscation
 
 import (
@@ -32,13 +34,13 @@ type cacheKey []byte
 var (
 	crossTxContractName = syscontract.SystemContract_CROSS_TRANSACTION.String()
 
-	paramCrossID          = "crossID"
-	paramExecData         = "execData"
-	paramRollbackData     = "rollbackData"
-	paramProofKey         = "proofKey"
-	paramTxProof          = "txProof"
-	paramArbitrateCmd     = "command"
-	paramArbitrateEnforce = "enforce"
+	paramCrossID      = "crossID"
+	paramExecData     = "execData"
+	paramRollbackData = "rollbackData"
+	paramProofKey     = "proofKey"
+	paramTxProof      = "txProof"
+	paramArbitrateCmd = "command"
+	//paramArbitrateEnforce = "enforce"
 
 	paramContract   = "contract"
 	paramMethod     = "method"
@@ -48,7 +50,7 @@ var (
 const (
 	resultSuccess = iota
 	resultFailure
-	resultIgnore
+	//resultIgnore
 )
 
 type CrossTransactionContract struct {
@@ -119,7 +121,8 @@ func (r *CrossTransactionRuntime) Execute(ctx protocol.TxSimContext, params map[
 	}
 	err = r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_INIT)
 	if err != nil {
-		return nil, fmt.Errorf("crossID [%s] set state to [%s] fail: %v", crossID, syscontract.CrossTxState_INIT.String(), err)
+		err = fmt.Errorf("crossID [%s] set state to [%s] fail: %v", crossID, syscontract.CrossTxState_INIT.String(), err)
+		return nil, err
 	}
 	//存储执行数据
 	err = r.cache.Set(ctx, crossID, r.cache.ExecParamKey, executeData)
@@ -127,7 +130,8 @@ func (r *CrossTransactionRuntime) Execute(ctx protocol.TxSimContext, params map[
 		return nil, fmt.Errorf("crossID [%s] save execute param  fail: %v", crossID, err)
 	}
 	//探测一下回滚数据是否可用
-	if _, err := parseContractCallParams(crossID, rollbackData); err != nil {
+	_, err = parseContractCallParams(crossID, rollbackData)
+	if err != nil {
 		r.log.Errorf("crossID [%s] parse rollback params error: [%v]", crossID, err)
 		//return nil, errors.WithMessage(err, "rollback params parse")
 		return r.genCrossResult(resultFailure, errors.WithMessage(err, "rollback params parse").Error(), nil)
@@ -199,17 +203,20 @@ func (r *CrossTransactionRuntime) rollback(ctx protocol.TxSimContext, crossID []
 	r.log.Infof("crossID [%s] state is [%s]", crossID, state.String())
 	switch state {
 	case syscontract.CrossTxState_NON_EXIST:
-		return r.genCrossResult(resultSuccess, fmt.Sprintf("crossID [%s] state is [%s]", crossID, syscontract.CrossTxState_NON_EXIST.String()), nil)
+		msg := fmt.Sprintf("crossID [%s] state is [%s]", crossID, syscontract.CrossTxState_NON_EXIST.String())
+		return r.genCrossResult(resultSuccess, msg, nil)
 	case syscontract.CrossTxState_ROLLBACK_OK: //应该有个message去表示[]byte("已回滚,重复回滚")
-		msg := fmt.Sprintf("crossID [%s] has been rollbacked, repeated rollback", crossID, syscontract.CrossTxState_NON_EXIST.String())
+		msg := fmt.Sprintf("crossID [%s] repeated rollback", crossID)
 		return r.genCrossResult(resultSuccess, msg, nil)
 	case syscontract.CrossTxState_EXECUTE_FAIL:
 		err := r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ROLLBACK_OK)
 		if err != nil {
-			r.log.Errorf("executed fail crossID [%s] set state to [%s] fail: %v", crossID, syscontract.CrossTxState_ROLLBACK_OK.String(), err)
+			st := syscontract.CrossTxState_ROLLBACK_OK.String()
+			r.log.Errorf("executed fail crossID [%s] set state to [%s] fail: %v", crossID, st, err)
 			//return nil, err
 		}
-		msg := fmt.Sprintf("crossID [%s] state is [%s], no need to roll back", crossID, syscontract.CrossTxState_EXECUTE_FAIL.String())
+		st := syscontract.CrossTxState_EXECUTE_FAIL.String()
+		msg := fmt.Sprintf("crossID [%s] state is [%s], no need to roll back", crossID, st)
 		return r.genCrossResult(resultSuccess, msg, nil)
 	case syscontract.CrossTxState_EXECUTE_OK, syscontract.CrossTxState_ROLLBACK_FAIL:
 		result, err := r.rollbackCall(ctx, crossID)
@@ -368,13 +375,15 @@ func (r *CrossTransactionRuntime) rollbackCall(ctx protocol.TxSimContext, crossI
 	if contractProcessSuccess(result) {
 		err = r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ROLLBACK_OK)
 		if err != nil {
-			r.log.Errorf("rollbackCall crossID [%s] set state to [%s] fail: %v", crossID, syscontract.CrossTxState_ROLLBACK_OK.String(), err)
+			st := syscontract.CrossTxState_ROLLBACK_OK.String()
+			r.log.Errorf("rollbackCall crossID [%s] set state to [%s] fail: %v", crossID, st, err)
 		}
 		return r.genCrossResult(resultSuccess, result.Message, result.Result)
 	}
 	err = r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_ROLLBACK_FAIL)
 	if err != nil {
-		r.log.Errorf("rollbackCall crossID [%s] set state to [%s] fail: %v", crossID, syscontract.CrossTxState_ROLLBACK_OK.String(), err)
+		st := syscontract.CrossTxState_ROLLBACK_FAIL.String()
+		r.log.Errorf("rollbackCall crossID [%s] set state to [%s] fail: %v", crossID, st, err)
 	}
 	return r.genCrossResult(resultFailure, result.Message, result.Result)
 }
@@ -387,7 +396,7 @@ func checkParams(params map[string][]byte, keys ...string) error {
 		if v, ok := params[key]; !ok {
 			return fmt.Errorf("params has no such key: [%s]", key)
 		} else if len(v) == 0 {
-			fmt.Errorf("param [%s] is invalid: value is nil", key)
+			return fmt.Errorf("param [%s] is invalid: value is nil", key)
 		}
 	}
 	return nil
@@ -529,7 +538,7 @@ func (c *codec) GetBytes(key string) ([]byte, error) {
 		} else if item.ValueType == serialize.EasyValueType_STRING {
 			return []byte(item.Value.(string)), nil
 		}
-		errors.New("value type not bytes")
+		return nil, errors.New("value type is not bytes")
 	}
 	return nil, errors.New("not found key")
 }
@@ -542,7 +551,7 @@ func (c *codec) GetString(key string) (string, error) {
 		} else if item.ValueType == serialize.EasyValueType_STRING {
 			return item.Value.(string), nil
 		}
-		errors.New("value type not string")
+		return "", errors.New("value type not string")
 	}
 	return "", errors.New("not found key")
 }
@@ -556,11 +565,11 @@ func callBusinessContract(ctx protocol.TxSimContext, crossID, params []byte) (*c
 }
 
 func callContract(ctx protocol.TxSimContext, contract *Contract) (*commonPb.ContractResult, error) {
-	result, code := ctx.CallContract(&commonPb.Contract{Name: contract.Name}, contract.Method, nil, contract.Params, 0, commonPb.TxType_INVOKE_CONTRACT)
+	c := &commonPb.Contract{Name: contract.Name}
+	result, code := ctx.CallContract(c, contract.Method, nil, contract.Params, 0, commonPb.TxType_INVOKE_CONTRACT)
 
 	if code != commonPb.TxStatusCode_SUCCESS {
 		if result != nil {
-			//return nil, fmt.Errorf("invoke contract [%s/%s] %s %v", contract.Name, contract.Method, code.String(), result.Message)
 			return result, nil
 		}
 		return nil, fmt.Errorf("invoke contract [%s/%s] %s", contract.Name, contract.Method, code.String())
