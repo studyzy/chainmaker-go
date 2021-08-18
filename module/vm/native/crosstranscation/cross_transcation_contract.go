@@ -347,7 +347,7 @@ func (r *CrossTransactionRuntime) genCrossResult(code int32, message string, dat
 			message = "ok"
 		}
 	}
-	result := result{
+	result := &result{
 		Code:    code,
 		Message: message,
 		Result:  data,
