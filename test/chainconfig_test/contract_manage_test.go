@@ -122,7 +122,7 @@ func testRevokeNativeContract(t *testing.T, list ...string) string {
 	txId := utils.GetRandTxId()
 	require.True(t, len(txId) > 0)
 
-	fmt.Println("============test add native contract============")
+	fmt.Println("============test revoke native contract============")
 	val, _ := json.Marshal(list)
 	pairs := []*commonPb.KeyValuePair{
 		{
@@ -137,7 +137,7 @@ func testRevokeNativeContract(t *testing.T, list ...string) string {
 	processResults(resp, err)
 
 	assert.Nil(t, err)
-	fmt.Printf("\n\n ========end test add native contract======== \n ")
+	fmt.Printf("\n\n ========end test revoke native contract======== \n ")
 	return txId
 }
 

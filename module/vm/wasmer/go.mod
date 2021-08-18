@@ -6,8 +6,8 @@ require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasi v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210812071728-a0312d5ac16a
+	chainmaker.org/chainmaker/common v0.0.0-20210817020650-d1da07a0dff3
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210817120132-aa8479d1720d
 	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
 )
 
