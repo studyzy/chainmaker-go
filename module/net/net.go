@@ -41,7 +41,8 @@ type Net interface {
 	AddTrustRoot(chainId string, rootCertByte []byte) error
 	// RefreshTrustRoots refresh the cert pool of chain.
 	RefreshTrustRoots(chainId string, rootsCertsBytes [][]byte) error
-	// ReVerifyTrustRoots will verify tls certs existed with the trust roots pool of the chain which id is the given chainId.
+	// ReVerifyTrustRoots will verify tls certs existed with the trust roots pool of the chain
+	// which id is the given chainId.
 	ReVerifyTrustRoots(chainId string)
 	// IsRunning return true when the net instance is running.
 	IsRunning() bool

@@ -37,3 +37,4 @@ tools/cmc/testdata
 nohup.out
 main/chainmaker
 vendor
+cover.out
