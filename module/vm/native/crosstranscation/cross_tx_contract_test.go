@@ -1,5 +1,6 @@
 /*
  Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
  SPDX-License-Identifier: Apache-2.0
 */
 package crosstranscation
@@ -181,13 +182,13 @@ func Test_SaveProof(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(crossTxContractName), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},
 	).AnyTimes()
 
-	txSimContext.EXPECT().Put(gomock.Eq(store.genName(crossID)), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Put(gomock.Eq(crossTxContractName), gomock.Not(nil), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte, value []byte) error {
 			gCache.Put(name, key, value)
 			return nil
@@ -206,7 +207,7 @@ func Test_ReadProof(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	txSimContext := mock.NewMockTxSimContext(ctrl)
-	txSimContext.EXPECT().Get(gomock.Eq(store.genName(crossID)), gomock.Not(nil)).DoAndReturn(
+	txSimContext.EXPECT().Get(gomock.Eq(crossTxContractName), gomock.Not(nil)).DoAndReturn(
 		func(name string, key []byte) ([]byte, error) {
 			return gCache.Get(name, key)
 		},

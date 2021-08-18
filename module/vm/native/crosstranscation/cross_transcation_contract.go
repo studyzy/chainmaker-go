@@ -601,13 +601,13 @@ func (c *cache) SetCrossState(ctx protocol.TxSimContext, crossID []byte, state s
 }
 
 func (c *cache) GetProof(ctx protocol.TxSimContext, proofKey []byte) ([]byte, error) {
-	key := c.genKey(c.ProofPreKey, proofKey)
-	return c.Get(ctx, nil, key)
+	//key := c.genKey(c.ProofPreKey, proofKey)
+	return c.Get(ctx, nil, proofKey)
 }
 
 func (c *cache) SetProof(ctx protocol.TxSimContext, proofKey []byte, proof []byte) error {
-	key := c.genKey(c.ProofPreKey, proofKey)
-	return c.Set(ctx, nil, key, proof)
+	//key := c.genKey(c.ProofPreKey, proofKey)
+	return c.Set(ctx, nil, proofKey, proof)
 }
 
 func (c *cache) genKey(crossID []byte, suffix []byte) []byte {
