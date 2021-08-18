@@ -30,6 +30,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const GRPCMaxCallRecvMsgSize = 16 * 1024 * 1024
+
 func constructQueryPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	payload := &commonPb.Payload{
 		ContractName: contractName,
@@ -86,9 +88,11 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 		if err != nil {
 			return nil, err
 		}
-		return grpc.Dial(url, grpc.WithTransportCredentials(*c))
+		return grpc.Dial(url, grpc.WithTransportCredentials(*c),
+			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(GRPCMaxCallRecvMsgSize)))
 	} else {
-		return grpc.Dial(url, grpc.WithInsecure())
+		return grpc.Dial(url, grpc.WithInsecure(),
+			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(GRPCMaxCallRecvMsgSize)))
 	}
 }
 
