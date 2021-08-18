@@ -146,7 +146,7 @@ func (r *CrossTransactionRuntime) execute(ctx protocol.TxSimContext, crossID, ex
 		r.log.Errorf("crossID [%s] call execute business contract error: [%v]", crossID, err)
 		return nil, err
 	}
-	r.log.Infof("executeCall result: %v", result)
+	r.log.Infof("crossID [%s] executeCall result: %v", crossID, result)
 	//执行结果OK, 则
 	if contractProcessSuccess(result) {
 		err = r.cache.SetCrossState(ctx, crossID, syscontract.CrossTxState_EXECUTE_OK)
@@ -224,48 +224,45 @@ func (r *CrossTransactionRuntime) rollback(ctx protocol.TxSimContext, crossID []
 }
 
 func (r *CrossTransactionRuntime) SaveProof(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
-	err := checkParams(params, paramCrossID, paramProofKey, paramTxProof)
+	err := checkParams(params, paramProofKey, paramTxProof)
 	if err != nil {
 		r.log.Errorf("CrossTransactionRuntime.SaveProof checkParams param error: [%v]", err)
 		return nil, err
 	}
-	//获取参数crossID
-	crossID := params[paramCrossID]
 	//获取参数proofKey
 	proofKey := params[paramProofKey]
 	//获取参数TxProof
 	proof := params[paramTxProof]
-	r.log.Infof("SaveProof crossID[%s] proofKey[%s] proof [%s]", crossID, proofKey, proof)
+	r.log.Infof("SaveProof  proofKey[%s] proof [%s]", proofKey, proof)
 	//检测是否已经存储proof 是则返回存储的proof， 否则存储
-	ret, err := r.cache.GetProof(ctx, crossID, proofKey)
+	ret, err := r.cache.GetProof(ctx, proofKey)
 	if err == nil && len(ret) > 0 {
-		msg := fmt.Sprintf("crossID[%s] proofKey[%s] already exists: [%v]", crossID, proofKey, ret)
+		msg := fmt.Sprintf("proofKey[%s] already exists: [%v]", proofKey, ret)
 		r.log.Info(msg)
 		return r.genCrossResult(resultSuccess, msg, ret)
 		//return ret, nil
 	}
-	err = r.cache.SetProof(ctx, crossID, proofKey, proof)
+	err = r.cache.SetProof(ctx, proofKey, proof)
 	if err != nil {
 		return nil, errors.WithMessage(err, "save proof fail")
 	}
-	return r.genCrossResult(resultSuccess, "", ret)
+	return r.genCrossResult(resultSuccess, "", proof)
 }
 
 func (r *CrossTransactionRuntime) ReadProof(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
-	err := checkParams(params, paramCrossID, paramProofKey)
+	err := checkParams(params, paramProofKey)
 	if err != nil {
 		r.log.Errorf("CrossTransactionRuntime.ReadProof checkParams param error: [%v]", err)
 		return nil, err
 	}
-	crossID := params[paramCrossID]
 	//获取参数proofKey
 	proofKey := params[paramProofKey]
-	ret, err := r.cache.GetProof(ctx, crossID, proofKey)
+	ret, err := r.cache.GetProof(ctx, proofKey)
 	if err == nil && len(ret) > 0 {
 		return r.genCrossResult(resultSuccess, "", ret)
 		//return ret, nil
 	}
-	return nil, fmt.Errorf("crossID [%s], proof_key [%s]'s proof is not exist", crossID, proofKey)
+	return nil, fmt.Errorf("proof_key [%s]'s proof is not exist", proofKey)
 }
 
 func (r *CrossTransactionRuntime) ReadState(ctx protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
@@ -277,9 +274,9 @@ func (r *CrossTransactionRuntime) ReadState(ctx protocol.TxSimContext, params ma
 	//获取参数crossID
 	crossID := params[paramCrossID]
 	state := r.cache.GetCrossState(ctx, crossID)
-	//if state == syscontract.CrossTxState_NON_EXIST {
-	//	return nil, fmt.Errorf("crossID [%s] transaction is not exist", crossID)
-	//}
+	if state == syscontract.CrossTxState_NON_EXIST {
+		return nil, fmt.Errorf("crossID [%s] is not exist", crossID)
+	}
 	//result := syscontract.CrossState{
 	//	State: state,
 	//}
@@ -594,14 +591,14 @@ func (c *cache) SetCrossState(ctx protocol.TxSimContext, crossID []byte, state s
 	return c.Set(ctx, crossID, c.StateKey, []byte{byte(state)})
 }
 
-func (c *cache) GetProof(ctx protocol.TxSimContext, crossID []byte, proofKey []byte) ([]byte, error) {
+func (c *cache) GetProof(ctx protocol.TxSimContext, proofKey []byte) ([]byte, error) {
 	key := c.genKey(c.ProofPreKey, proofKey)
-	return c.Get(ctx, crossID, key)
+	return c.Get(ctx, nil, key)
 }
 
-func (c *cache) SetProof(ctx protocol.TxSimContext, crossID []byte, proofKey []byte, proof []byte) error {
+func (c *cache) SetProof(ctx protocol.TxSimContext, proofKey []byte, proof []byte) error {
 	key := c.genKey(c.ProofPreKey, proofKey)
-	return c.Set(ctx, crossID, key, proof)
+	return c.Set(ctx, nil, key, proof)
 }
 
 func (c *cache) genKey(crossID []byte, suffix []byte) []byte {
@@ -613,6 +610,9 @@ func (c *cache) genKey(crossID []byte, suffix []byte) []byte {
 }
 
 func (c *cache) genName(crossID []byte) string {
+	if len(crossID) == 0 {
+		return crossTxContractName
+	}
 	return crossTxContractName + "/" + string(crossID)
 }
 
