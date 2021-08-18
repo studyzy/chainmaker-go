@@ -806,7 +806,7 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value := val.(string)
+		value := val.([]byte)
 		if _, ok := extConfigMap[key]; ok {
 			parseParamErr = fmt.Errorf("ext_config key[%s] is exist", key)
 			r.log.Error(parseParamErr.Error())
@@ -967,7 +967,7 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value := val.(string)
+		value := val.([]byte)
 
 		_, ok := resourceMap[key]
 		if ok {
@@ -977,7 +977,7 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 		}
 
 		policy := &acPb.Policy{}
-		err := proto.Unmarshal([]byte(value), policy)
+		err := proto.Unmarshal(value, policy)
 		if err != nil {
 			parseParamErr = fmt.Errorf("policy Unmarshal err:%s", err)
 			r.log.Errorf(parseParamErr.Error())
@@ -1050,7 +1050,7 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value := val.(string)
+		value := val.([]byte)
 		_, ok := resourceMap[key]
 		if !ok {
 			parseParamErr = fmt.Errorf("permission resource name does not exist resource_name[%s]", value)
