@@ -54,7 +54,8 @@ var (
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
 	DefaultOrgId       = fmt.Sprintf(OrgIdFormat, "1")
 
-	caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
+	// caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
+	caPaths    = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
 	prePathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
 	isTls = true

@@ -63,10 +63,8 @@ var (
 	contractName    = ""
 	runtimeType     = commonPb.RuntimeType_WASMER
 	multiOrgId      = "wx-org1.chainmaker.org"
-	multiOrg3Id     = "wx-org3.chainmaker.org"
 	txId            = ""
 	timestamp       int64
-	timestampBak    int64
 )
 
 var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
@@ -411,7 +409,7 @@ func initPayloadTimestamp() *commonPb.Payload {
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
-		Timestamp:    timestampBak,
+		Timestamp:    timestamp,
 		TxId:         txId,
 		ChainId:      CHAIN1,
 	}
