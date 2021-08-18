@@ -19,6 +19,6 @@ var NilTBFTProvider provider.CoreProvider = (*tbftProvider)(nil)
 type tbftProvider struct {
 }
 
-func (tp *tbftProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (tp *tbftProvider) NewCoreEngine(config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	return NewCoreEngine(config)
 }

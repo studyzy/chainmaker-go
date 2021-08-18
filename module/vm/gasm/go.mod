@@ -5,8 +5,8 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/wasi v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
+	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73
 	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
 	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
 	github.com/stretchr/testify v1.7.0

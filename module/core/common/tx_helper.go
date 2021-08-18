@@ -7,13 +7,14 @@ package common
 
 import (
 	"bytes"
+	"fmt"
+	"sync"
+
 	"chainmaker.org/chainmaker-go/utils"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
 	"chainmaker.org/chainmaker/protocol"
-	"fmt"
 	"github.com/prometheus/common/log"
-	"sync"
 )
 
 type VerifyBlockBatch struct {
@@ -40,9 +41,8 @@ type VerifyStat struct {
 }
 
 func ValidateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transaction, blockHeight uint64,
-	stat *VerifyStat, newAddTxs []*commonpb.Transaction, block *commonpb.Block,
-	consensusType consensuspb.ConsensusType, hashType string, store protocol.BlockchainStore,
-	chainId string, ac protocol.AccessControlProvider) error {
+	stat *VerifyStat, block *commonpb.Block, consensusType consensuspb.ConsensusType, hashType string,
+	store protocol.BlockchainStore, chainId string, ac protocol.AccessControlProvider) error {
 	txInPool, existTx := txsRet[tx.Payload.TxId]
 	if existTx {
 		if consensuspb.ConsensusType_HOTSTUFF == consensusType &&
@@ -52,10 +52,7 @@ func ValidateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transactio
 				tx.Payload.TxId, blockHeight, block.Header.BlockHeight)
 			return err
 		}
-		if err := IsTxHashValid(tx, txInPool, hashType); err != nil {
-			return err
-		}
-		return nil
+		return IsTxHashValid(tx, txInPool, hashType)
 	}
 	startDBTicker := utils.CurrentTimeMillisSeconds()
 	isExist, err := store.TxExists(tx.Payload.TxId)
@@ -72,8 +69,6 @@ func ValidateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transactio
 		return err
 	}
 	stat.SigLasts += utils.CurrentTimeMillisSeconds() - startSigTicker
-	// tx valid and put into txpool
-	newAddTxs = append(newAddTxs, tx)
 
 	return nil
 }
@@ -82,12 +77,20 @@ func TxVerifyResultsMerge(resultTasks map[int]VerifyBlockBatch,
 	verifyBatchs map[int][]*commonpb.Transaction, errTxs []*commonpb.Transaction, txHashes [][]byte,
 	txNewAdd []*commonpb.Transaction) ([][]byte, []*commonpb.Transaction, []*commonpb.Transaction, error) {
 	if len(resultTasks) < len(verifyBatchs) {
-		return nil, nil, errTxs, fmt.Errorf("tx verify error, batch num mismatch, received: %d,expected:%d", len(resultTasks), len(verifyBatchs))
+		return nil, nil, errTxs, fmt.Errorf(
+			"tx verify error, batch num mismatch, received: %d,expected:%d",
+			len(resultTasks),
+			len(verifyBatchs),
+		)
 	}
 	for i := 0; i < len(resultTasks); i++ {
 		batch := resultTasks[i]
 		if len(batch.txs) != len(batch.txHash) {
-			return nil, nil, errTxs, fmt.Errorf("tx verify error, txs in batch mismatch, received: %d, expected:%d", len(batch.txHash), len(batch.txs))
+			return nil, nil, errTxs, fmt.Errorf(
+				"tx verify error, txs in batch mismatch, received: %d, expected:%d",
+				len(batch.txHash),
+				len(batch.txs),
+			)
 		}
 		txHashes = append(txHashes, batch.txHash...)
 		txNewAdd = append(txNewAdd, batch.newAddTxs...)
@@ -197,7 +200,8 @@ func NewVerifierTx(conf *VerifierTxConfig) *VerifierTx {
 
 // VerifyTxs verify transactions in block
 // include if transaction is double spent, transaction signature
-func (vt *VerifierTx) verifierTxs(block *commonpb.Block) (txHashes [][]byte, txNewAdd []*commonpb.Transaction, errTxs []*commonpb.Transaction, err error) {
+func (vt *VerifierTx) verifierTxs(block *commonpb.Block) (txHashes [][]byte,
+	txNewAdd []*commonpb.Transaction, errTxs []*commonpb.Transaction, err error) {
 
 	verifyBatchs := utils.DispatchTxVerifyTask(block.Txs)
 	resultTasks := make(map[int]VerifyBlockBatch)
@@ -218,7 +222,8 @@ func (vt *VerifierTx) verifierTxs(block *commonpb.Block) (txHashes [][]byte, txN
 			stat := &VerifyStat{
 				TotalCount: len(txs),
 			}
-			txHashes, newAddTxs, err := vt.verifyTx(txs, txsRet, txsHeightRet, stat, block)
+			var newAddTxs []*commonpb.Transaction
+			txHashes, newAddTxs, err = vt.verifyTx(txs, txsRet, txsHeightRet, stat, block)
 			if err != nil {
 				vt.log.Error(err)
 				return
@@ -250,15 +255,18 @@ func (vt *VerifierTx) verifierTxs(block *commonpb.Block) (txHashes [][]byte, txN
 	return txHashes, txNewAdd, nil, nil
 }
 
-func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*commonpb.Transaction, txsHeightRet map[string]uint64, stat *VerifyStat, block *commonpb.Block) ([][]byte, []*commonpb.Transaction, error) {
+func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*commonpb.Transaction,
+	txsHeightRet map[string]uint64, stat *VerifyStat, block *commonpb.Block) (
+	[][]byte, []*commonpb.Transaction, error) {
 	txHashes := make([][]byte, 0)
 	newAddTxs := make([]*commonpb.Transaction, 0) // tx that verified and not in txpool, need to be added to txpool
 	for _, tx := range txs {
 		blockHeight := txsHeightRet[tx.Payload.TxId]
-		if err := ValidateTx(txsRet, tx, blockHeight, stat, newAddTxs, block,
+		if err := ValidateTx(txsRet, tx, blockHeight, stat, block,
 			vt.consensusType, vt.hashType, vt.store, vt.chainId, vt.ac); err != nil {
 			return nil, nil, err
 		}
+		newAddTxs = append(newAddTxs, tx)
 		startOthersTicker := utils.CurrentTimeMillisSeconds()
 		rwSet := vt.txRWSetMap[tx.Payload.TxId]
 		result := vt.txResultMap[tx.Payload.TxId]
@@ -267,15 +275,16 @@ func (vt *VerifierTx) verifyTx(txs []*commonpb.Transaction, txsRet map[string]*c
 			log.Warnf("calc rwset hash error (tx:%s), %s", tx.Payload.TxId, err)
 			return nil, nil, err
 		}
-		if err := IsTxRWSetValid(vt.block, tx, rwSet, result, rwsetHash); err != nil {
+		if err = IsTxRWSetValid(vt.block, tx, rwSet, result, rwsetHash); err != nil {
 			return nil, nil, err
 		}
 		result.RwSetHash = rwsetHash
 		// verify if rwset hash is equal
-		if err := VerifyTxResult(tx, result, vt.hashType); err != nil {
+		if err = VerifyTxResult(tx, result, vt.hashType); err != nil {
 			return nil, nil, err
 		}
-		hash, err := utils.CalcTxHash(vt.hashType, tx)
+		var hash []byte
+		hash, err = utils.CalcTxHash(vt.hashType, tx)
 		if err != nil {
 			log.Warnf("calc txhash error (tx:%s), %s", tx.Payload.TxId, err)
 			return nil, nil, err

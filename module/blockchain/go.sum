@@ -1,11 +1,11 @@
 chainmaker.org/chainmaker/common v0.0.0-20210722032200-380ced605d25/go.mod h1:rHlgGtCfXzEUjwiHCmN5ZVQsf5isfSIUtsNOREJYCww=
-chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4 h1:l0fYScJZ6lR19hsfQI0rSV9ZDzwHEmXD4zw4ifOihQU=
 chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4/go.mod h1:i7XbQVJubFm+ehtT0em44u0waZEIFFZThTS1d8vnKRQ=
+chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071 h1:FN/DuoHZ7WTzzdhpG6+alyX6EXM+2KibcRBJFPnBkMc=
+chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210809024420-84332310603e/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d h1:Tt8EQeH5r10/CAg4/1RDMzQ7aHuBsh4TscLA9hkuSfA=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
-chainmaker.org/chainmaker/protocol v0.0.0-20210809025435-1ca089468862/go.mod h1:3l2H3O4Mp5BBwFGMvywMqL1QxGR4oGbN8YU2WUORYME=
-chainmaker.org/chainmaker/protocol v0.0.0-20210809092617-addc5bb4d3fd/go.mod h1:3l2H3O4Mp5BBwFGMvywMqL1QxGR4oGbN8YU2WUORYME=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73 h1:izzrYWUGtnl7QoL7rWdOcldgcygURTeEyOOPFgwIyCM=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306 h1:/0ILbYin9HKOEjj8LdrvtWfR9BHAn7qekCAlqSFR8Rw=
 chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306/go.mod h1:3l2H3O4Mp5BBwFGMvywMqL1QxGR4oGbN8YU2WUORYME=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
@@ -1159,7 +1159,6 @@ github.com/tjfoc/gmsm v1.2.3/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn
 github.com/tjfoc/gmsm v1.3.0/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
-github.com/tjfoc/gmtls v1.2.1 h1:0RKm1A6hUbpFH0BzkUUmo2FxzMIUSMFle8IUoaDorNI=
 github.com/tjfoc/gmtls v1.2.1/go.mod h1:+mIfCjj3QuRGrW527hj12JLjI6DTt2MvBDxb3/86ykM=
 github.com/tklauser/go-sysconf v0.3.5/go.mod h1:MkWzOF4RMCshBAMXuhXJs64Rte09mITnppBXY/rYEFI=
 github.com/tklauser/numcpus v0.2.2/go.mod h1:x3qojaO3uyYt0i56EW/VUYs7uBvdl2fkfZFu0T9wgjM=

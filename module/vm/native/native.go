@@ -57,7 +57,7 @@ func GetRuntimeInstance(chainId string) *RuntimeInstance {
 func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts := make(map[string]common.Contract, 64)
 	contracts[syscontract.SystemContract_CHAIN_CONFIG.String()] = chainconfigmgr.NewChainConfigContract(log)
-	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContact(log)
+	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContract(log)
 	contracts[syscontract.SystemContract_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
 	contracts[syscontract.SystemContract_GOVERNANCE.String()] = government.NewGovernmentContract(log)
 	//contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
