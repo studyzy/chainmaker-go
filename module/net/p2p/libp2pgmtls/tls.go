@@ -7,10 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package libp2pgmtls
 
 import (
-	"chainmaker.org/chainmaker-go/net/p2p/revoke"
-	cmcrypto "chainmaker.org/chainmaker/common/crypto"
-	cmtls "chainmaker.org/chainmaker/common/crypto/tls"
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"context"
 	gocrypto "crypto"
 	"crypto/ecdsa"
@@ -18,11 +14,16 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net"
+
+	"chainmaker.org/chainmaker-go/net/p2p/revoke"
+	cmcrypto "chainmaker.org/chainmaker/common/crypto"
+	cmtls "chainmaker.org/chainmaker/common/crypto/tls"
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
 	"github.com/tjfoc/gmsm/sm2"
-	"net"
 )
 
 // ID is the protocol ID (used when negotiating with multistream)

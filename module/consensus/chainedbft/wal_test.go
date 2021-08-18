@@ -15,10 +15,10 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/wal"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/wal"
 )
 
 func TestBaseWriteWal(t *testing.T) {

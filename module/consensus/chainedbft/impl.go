@@ -23,6 +23,7 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/msgbus"
+	"chainmaker.org/chainmaker/common/wal"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
@@ -30,7 +31,6 @@ import (
 	"chainmaker.org/chainmaker/protocol"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/tidwall/wal"
 )
 
 const (

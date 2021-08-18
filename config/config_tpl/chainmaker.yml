@@ -119,7 +119,7 @@ storage:
   blockdb_config:
     provider: leveldb
     leveldb_config:
-      store_path: ../data/{org_id}/blocks
+      store_path: ../data/{org_id}/block
   statedb_config:
     provider: leveldb # leveldb/sql 二选一
     leveldb_config: # leveldb config
@@ -131,6 +131,16 @@ storage:
     provider: leveldb
     leveldb_config:
       store_path: ../data/{org_id}/history
+#  historydb_config:
+#    provider: rocksdb
+#    rocksdb_config:
+#      write_buffer_size: 64
+#      db_write_buffer_size: 4
+#      block_cache_size: 128
+#      max_write_buffer_number: 10
+#      max_background_compactions: 4
+#      max_background_flushes: 2
+#      bloom_filter_bits: 10
   resultdb_config:
     provider: leveldb
     leveldb_config:

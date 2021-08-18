@@ -6,9 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
+	"chainmaker.org/chainmaker/common/wal"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
-	"github.com/tidwall/wal"
 )
 
 func (cbi *ConsensusChainedBftImpl) saveWalEntry(msgType chainedbftpb.MessageType, msg *chainedbftpb.ConsensusMsg) {

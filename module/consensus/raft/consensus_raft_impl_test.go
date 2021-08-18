@@ -16,7 +16,12 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/logger"
+	configpb "chainmaker.org/chainmaker/pb-go/config"
+	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/protocol/mock"
+	"github.com/golang/mock/gomock"
 	"go.etcd.io/etcd/raft/v3"
+	"go.uber.org/zap"
 
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 )
@@ -153,6 +158,89 @@ func BenchmarkDebugDynamic(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		log.DebugDynamic(func() string {
 			return fmt.Sprintf(reg, id, describeReady(ready))
+		})
+	}
+}
+
+func sortU8(input ...uint64) []uint64 {
+	output := make([]uint64, len(input))
+	copy(output, input)
+	sorty.SortU8(output)
+	return output
+}
+
+func TestConsensusRaftImpl_getPeersFromChainConf(t *testing.T) {
+	logger := NewLogger(zap.L().Sugar())
+	config := &configpb.ChainConfig{
+		Consensus: &configpb.ConsensusConfig{
+			Type:  consensuspb.ConsensusType_RAFT,
+			Nodes: nil,
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	chainConf := mock.NewMockChainConf(ctrl)
+	chainConf.EXPECT().ChainConfig().AnyTimes().Return(config)
+
+	const (
+		nodeId1 = "QmcQHCuAXaFkbcsPUj7e37hXXfZ9DdN7bozseo5oX4qiC4"
+		nodeId2 = "QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH"
+		nodeId3 = "QmXf6mnQDBR9aHauRmViKzSuZgpumkn7x6rNxw1oqqRr45"
+	)
+
+	type fields struct {
+		Nodes []*configpb.OrgConfig
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []uint64
+	}{
+		{
+			"1 org 1 node",
+			fields{Nodes: []*configpb.OrgConfig{
+				{
+					NodeId: []string{nodeId1},
+				},
+			}},
+			[]uint64{computeRaftIdFromNodeId(nodeId1)},
+		},
+		{
+			"3 org 1 node",
+			fields{Nodes: []*configpb.OrgConfig{
+				{
+					NodeId: []string{nodeId1},
+				},
+				{
+					NodeId: []string{nodeId2},
+				},
+				{
+					NodeId: []string{nodeId3},
+				},
+			}},
+			sortU8(computeRaftIdFromNodeId(nodeId1), computeRaftIdFromNodeId(nodeId2), computeRaftIdFromNodeId(nodeId3)),
+		},
+		{
+			"1 org 2 node",
+			fields{Nodes: []*configpb.OrgConfig{
+				{
+					NodeId: []string{nodeId1, nodeId2, nodeId3},
+				},
+			}},
+			sortU8(computeRaftIdFromNodeId(nodeId1), computeRaftIdFromNodeId(nodeId2), computeRaftIdFromNodeId(nodeId3)),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config.Consensus.Nodes = tt.fields.Nodes
+			consensus := &ConsensusRaftImpl{
+				logger:    logger,
+				chainConf: chainConf,
+			}
+			if got := consensus.getPeersFromChainConf(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConsensusRaftImpl.getPeersFromChainConf() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
