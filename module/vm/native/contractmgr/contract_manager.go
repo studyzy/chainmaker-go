@@ -173,6 +173,11 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 		}
 	}
 
+	// if the requested contract name is multisignature
+
+	//syscontract.SystemContract_MULTI_SIGN.String()
+
+	//if contractName
 	return []byte("true"), nil
 }
 
