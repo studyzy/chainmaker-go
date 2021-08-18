@@ -15,11 +15,8 @@ bin
 *.log.*
 **/go.sum
 /module/vm/wasm/wasmer/wasmer_runtime_c_api.dll
-/config/dev/certs/
-/config/wx-org1/certs/
-/config/wx-org2/certs/
-/config/wx-org3/certs/
-/config/wx-org4/certs/
+/config/
+/config-sql/
 **/crypto-config/
 /testdata
 */main
@@ -37,3 +34,4 @@ tools/cmc/testdata
 nohup.out
 main/chainmaker
 vendor
+cover.out
