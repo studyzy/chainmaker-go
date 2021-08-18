@@ -610,13 +610,13 @@ func (c *cache) SetProof(ctx protocol.TxSimContext, proofKey []byte, proof []byt
 	return c.Set(ctx, nil, proofKey, proof)
 }
 
-func (c *cache) genKey(crossID []byte, suffix []byte) []byte {
-	key := make([]byte, len(crossID)+len(suffix)+1)
-	i := copy(key, crossID)
-	key[i] = '_'
-	copy(key[i+1:], suffix)
-	return key
-}
+//func (c *cache) genKey(crossID []byte, suffix []byte) []byte {
+//	key := make([]byte, len(crossID)+len(suffix)+1)
+//	i := copy(key, crossID)
+//	key[i] = '_'
+//	copy(key[i+1:], suffix)
+//	return key
+//}
 
 func (c *cache) genName(crossID []byte) string {
 	if len(crossID) == 0 {
