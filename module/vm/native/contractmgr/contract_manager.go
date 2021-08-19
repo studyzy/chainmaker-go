@@ -154,9 +154,10 @@ func (r *ContractManagerRuntime) revokeContractAccess(txSimContext protocol.TxSi
 func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSimContext,
 	params map[string][]byte) ([]byte, error) {
 	var (
-		err                  error
-		disabledContractList []string
-		contractName         string
+		err                   error
+		disabledContractList  []string
+		contractName          string
+		multiSignContractName string
 	)
 
 	// 1. fetch the disabled native contract list
@@ -173,12 +174,30 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 		}
 	}
 
-	// if the requested contract name is multisignature
+	// 3. if the requested contract name is multisignature, get the underlying contract name from
+	// the tx payload and verify if it has access to it
+	if contractName == syscontract.SystemContract_MULTI_SIGN.String() {
+		multiSignContractName, err = getContractNameForMultiSign(txSimContext.GetTx().Payload.Parameters)
+		if err != nil {
+			return nil, err
+		}
+		for _, cn := range disabledContractList {
+			if cn == multiSignContractName {
+				return []byte("false"), nil
+			}
+		}
+	}
 
-	//syscontract.SystemContract_MULTI_SIGN.String()
-
-	//if contractName
 	return []byte("true"), nil
+}
+
+func getContractNameForMultiSign(params []*commonPb.KeyValuePair) (string, error) {
+	for i, key := range params {
+		if key == syscontract.MultiReq_SYS_CONTRACT_NAME.string() {
+			return string(params[i].Value), nil
+		}
+	}
+	return "", errors.New("can't find the contract name for multi sign")
 }
 
 // fetch the disabled contract list
