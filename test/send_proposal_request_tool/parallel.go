@@ -47,6 +47,7 @@ var (
 	climbTime   int
 	checkResult bool
 	recordLog   bool
+	showKey     bool
 
 	hostsString        string
 	userCrtPathsString string
@@ -143,6 +144,7 @@ func ParallelCMD() *cobra.Command {
 	flags.BoolVarP(&checkResult, "check-result", "Y", false, "specify whether check result")
 	flags.BoolVarP(&recordLog, "record-log", "g", false, "specify whether record log")
 	flags.BoolVarP(&outputResult, "output-result", "", false, "output rpc result, eg: txid")
+	flags.BoolVarP(&showKey, "showKey", "SK", false, "bool")
 
 	cmd.AddCommand(invokeCMD())
 	cmd.AddCommand(queryCMD())
@@ -582,18 +584,15 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 	// 构造Payload
 	pairs := []*commonPb.KeyValuePair{}
 	for _, p := range ps {
+		key := p.Key
+		val := []byte(p.Value)
 		if p.Unique {
-			pairs = append(pairs, &commonPb.KeyValuePair{
-				Key: fmt.Sprintf("%s_%d_%d_%d", p.Key, h.threadId, loopId, time.Now().UnixNano()),
-				//Key:   p.Key,
-				Value: []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano())),
-			})
-		} else {
-			pairs = append(pairs, &commonPb.KeyValuePair{
-				Key:   p.Key,
-				Value: []byte(p.Value),
-			})
+			val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
 		}
+		pairs = append(pairs, &commonPb.KeyValuePair{
+			Key:   key,
+			Value: val,
+		})
 	}
 
 	// 支持evm
@@ -645,18 +644,15 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 	//}
 	pairs := []*commonPb.KeyValuePair{}
 	for _, p := range ps {
+		key := p.Key
+		val := []byte(p.Value)
 		if p.Unique {
-			pairs = append(pairs, &commonPb.KeyValuePair{
-				//Key:   fmt.Sprintf("%s_%d_%d_%d", p.Key, h.threadId, loopId, time.Now().UnixNano()),
-				Key:   p.Key,
-				Value: []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano())),
-			})
-		} else {
-			pairs = append(pairs, &commonPb.KeyValuePair{
-				Key:   p.Key,
-				Value: []byte(p.Value),
-			})
+			val = []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano()))
 		}
+		pairs = append(pairs, &commonPb.KeyValuePair{
+			Key:   key,
+			Value: val,
+		})
 	}
 
 	payloadBytes, err := constructQueryPayload(chainId, contractName, method, pairs)
