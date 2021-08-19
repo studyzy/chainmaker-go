@@ -25,8 +25,13 @@ import (
 )
 
 var (
-	ContractName    = syscontract.SystemContract_CONTRACT_MANAGE.String()
-	keyContractName = "_Native_Contract_List"
+	ContractName                   = syscontract.SystemContract_CONTRACT_MANAGE.String()
+	keyContractName                = "_Native_Contract_List"
+	contractsForMultiSignWhiteList = map[string]bool{
+		syscontract.SystemContract_CERT_MANAGE.String():     true,
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(): true,
+		syscontract.SystemContract_CONTRACT_MANAGE.String(): true,
+	}
 )
 
 type ContractManager struct {
@@ -103,6 +108,8 @@ func (r *ContractManagerRuntime) grantContractAccess(txSimContext protocol.TxSim
 	if err != nil {
 		return nil, err
 	}
+
+	r.log.Infof("grant access to contract: %v succeed!", requestContractList)
 	return nil, nil
 }
 
@@ -175,16 +182,38 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 	}
 
 	// 3. if the requested contract name is multisignature, get the underlying contract name from
-	// the tx payload and verify if it has access to it
+	// the tx payload and verify if it has access
 	if contractName == syscontract.SystemContract_MULTI_SIGN.String() {
+
+		// if the method name is not req, return true since it does not contain contract names in parameters
+		multiSignMethodName := txSimContext.GetTx().Payload.Method
+		if multiSignContractName == syscontract.MultiSignFunction_QUERY.String() ||
+			multiSignMethodName == syscontract.MultiSignFunction_VOTE.String() {
+			return []byte("true"), nil
+		}
+
 		multiSignContractName, err = getContractNameForMultiSign(txSimContext.GetTx().Payload.Parameters)
 		if err != nil {
 			return nil, err
 		}
+
+		// check if the requested contract is on the disabled contract list
 		for _, cn := range disabledContractList {
 			if cn == multiSignContractName {
 				return []byte("false"), nil
 			}
+		}
+
+		var onTheWhiteList bool = false
+		// check if the requested contract list is on the multi sign white list
+		for cn, _ := range contractsForMultiSignWhiteList {
+			if cn == multiSignContractName {
+				onTheWhiteList = true
+			}
+		}
+
+		if !onTheWhiteList {
+			return []byte("false"), nil
 		}
 	}
 
@@ -192,8 +221,8 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 }
 
 func getContractNameForMultiSign(params []*commonPb.KeyValuePair) (string, error) {
-	for i, key := range params {
-		if key == syscontract.MultiReq_SYS_CONTRACT_NAME.string() {
+	for i, pair := range params {
+		if pair.Key == syscontract.MultiReq_SYS_CONTRACT_NAME.String() {
 			return string(params[i].Value), nil
 		}
 	}

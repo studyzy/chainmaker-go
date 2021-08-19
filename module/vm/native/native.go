@@ -7,6 +7,7 @@
 package native
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/multisign"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
@@ -60,7 +61,7 @@ func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContract(log)
 	contracts[syscontract.SystemContract_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
 	contracts[syscontract.SystemContract_GOVERNANCE.String()] = government.NewGovernmentContract(log)
-	//contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
+	contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
 	contracts[syscontract.SystemContract_PRIVATE_COMPUTE.String()] = privatecompute.NewPrivateComputeContact(log)
 	contracts[syscontract.SystemContract_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
 	contracts[syscontract.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)

@@ -98,3 +98,7 @@ resource_policies:
       org_list:
       role_list:
         - admin
+
+disabled_native_contract:
+  - DPOS_ERC20
+  - DPOS_STAKE

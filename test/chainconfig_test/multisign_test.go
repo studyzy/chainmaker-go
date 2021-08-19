@@ -63,6 +63,16 @@ func TestMultiSignReq(t *testing.T) {
 		CHAIN1, payload.TxId, payload, []int{1}, timestamp)
 	fmt.Println("testMultiSignReq timestamp", timestamp)
 	fmt.Println(resp)
+
+	var block *commonPb.Block
+	var tx *commonPb.Transaction
+	txId = testVerifyContractAccessWithCertManage(t)
+	for block == nil {
+		block = testGetBlockByTxId(t, client, txId)
+	}
+	tx = block.Txs[0]
+	require.True(t, tx.Result.ContractResult.Code == 1)
+	require.True(t, tx.Result.ContractResult.Message == "Access Denied")
 }
 
 func TestMultiSignVote(t *testing.T) {
@@ -154,7 +164,7 @@ func initPayload() *commonPb.Payload {
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   syscontract.MultiReq_SYS_CONTRACT_NAME.String(),
-			Value: []byte(syscontract.SystemContract_CONTRACT_MANAGE.String()),
+			Value: []byte(syscontract.SystemContract_DPOS_ERC20.String()),
 		},
 		{
 			Key:   syscontract.MultiReq_SYS_METHOD.String(),

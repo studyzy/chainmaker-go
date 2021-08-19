@@ -11,8 +11,8 @@ require (
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73
+	chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210817120132-aa8479d1720d
 	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0

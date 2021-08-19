@@ -5,6 +5,8 @@ chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4 h1:l0fYScJZ6
 chainmaker.org/chainmaker/common v0.0.0-20210804033713-22bae864e5c4/go.mod h1:i7XbQVJubFm+ehtT0em44u0waZEIFFZThTS1d8vnKRQ=
 chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071 h1:FN/DuoHZ7WTzzdhpG6+alyX6EXM+2KibcRBJFPnBkMc=
 chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
+chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add h1:58w/fipc1yBwG35Jf/VCKJM2XjGR2fD2gxnW1esH7Ck=
+chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210722032511-d7299b62eae6/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b h1:ZXOLnpa87F268NZeyW7Ce2Y9SgCgC0ggR4EFkTSiSNc=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210727071340-d546973e655b/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
@@ -15,6 +17,10 @@ chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d h1:Tt8EQeH5r1
 chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73 h1:izzrYWUGtnl7QoL7rWdOcldgcygURTeEyOOPFgwIyCM=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210813115122-8a967005df73/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210817120132-aa8479d1720d h1:WA+N87Przw42YY9Dw6cb9WswTkI/vIVlThdCYL/s0Dw=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210817120132-aa8479d1720d/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210819081938-1bd6048af1d7 h1:oXqXVA1ApZLP7qNlv5BkYuqSMbHyqJYh3bXZeGGRJsQ=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210819081938-1bd6048af1d7/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/protocol v0.0.0-20210727101110-59285b10f1ef h1:9YM/uqQ/aOVP+a67HnRjI1CmwI7LHHAuujaHpdttEbc=
 chainmaker.org/chainmaker/protocol v0.0.0-20210727101110-59285b10f1ef/go.mod h1:Ty7YcLmUmfhuvUtWc3jwx8ajmjQq6/0u97wXDiS0A0I=
 chainmaker.org/chainmaker/protocol v0.0.0-20210804070206-a6b73cec5918 h1:HcNhOZUA889ZT4yHCn+kvfmlh+IsCA2x9u1KtWroObA=

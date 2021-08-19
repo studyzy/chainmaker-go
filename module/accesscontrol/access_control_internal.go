@@ -381,6 +381,12 @@ func (ac *accessControl) createDefaultResourcePolicy() *sync.Map {
 		syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String(), policyConfig)
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
 		syscontract.ContractManageFunction_REVOKE_CONTRACT.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_GRANT_CONTRACT_ACCESS.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_REVOKE_CONTRACT_ACCESS.String(), policyConfig)
+	resourceNamePolicyMap.Store(syscontract.SystemContract_CONTRACT_MANAGE.String()+"-"+
+		syscontract.ContractManageFunction_VERIFY_CONTRACT_ACCESS.String(), policyConfig)
 
 	// certificate management
 	resourceNamePolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
