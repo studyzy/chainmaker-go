@@ -27,10 +27,10 @@ import (
 var (
 	ContractName                   = syscontract.SystemContract_CONTRACT_MANAGE.String()
 	keyContractName                = "_Native_Contract_List"
-	contractsForMultiSignWhiteList = map[string]bool{
-		syscontract.SystemContract_CERT_MANAGE.String():     true,
-		syscontract.SystemContract_PRIVATE_COMPUTE.String(): true,
-		syscontract.SystemContract_CONTRACT_MANAGE.String(): true,
+	contractsForMultiSignWhiteList = []string{
+		syscontract.SystemContract_CERT_MANAGE.String(),
+		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
+		syscontract.SystemContract_CONTRACT_MANAGE.String(),
 	}
 )
 
@@ -204,17 +204,14 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 			}
 		}
 
-		var onTheWhiteList bool = false
 		// check if the requested contract list is on the multi sign white list
-		for cn, _ := range contractsForMultiSignWhiteList {
+		for _, cn := range contractsForMultiSignWhiteList {
 			if cn == multiSignContractName {
-				onTheWhiteList = true
+				return []byte("true"), nil
 			}
 		}
 
-		if !onTheWhiteList {
-			return []byte("false"), nil
-		}
+		return []byte("false"), nil
 	}
 
 	return []byte("true"), nil
