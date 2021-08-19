@@ -487,6 +487,10 @@ func (cp *certACProvider) LookUpPolicy(resourceName string) (*pbac.Policy, error
 	return cp.acService.lookUpPolicy(resourceName)
 }
 
+func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
+	return cp.acService.lookUpExceptionalPolicy(resourceName)
+}
+
 func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
 
 	if (member.MemberType != pbac.MemberType_CERT_HASH) &&

@@ -269,15 +269,9 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	txType := t.Payload.TxType
 	resourceId := t.Payload.ContractName + "-" + t.Payload.Method
 
-	// authentication for sender
-	for_light := 0
-	if txType == commonPb.TxType_QUERY_CONTRACT {
-		_, err := ac.LookUpPolicy(resourceId)
-		if err == nil {
-			for_light = 1;
-		}
-	}
-	if for_light == 1 {
+	// sender authentication
+	_, err = ac.LookUpExceptionalPolicy(resourceId)
+	if err == nil {
 		principal, err = ac.CreatePrincipal(resourceId, endorsements, txBytes)
 		if err != nil {
 			return fmt.Errorf("fail to construct authentication principal for %s : %s", resourceId, err)
@@ -296,7 +290,7 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 		return fmt.Errorf("authentication failed")
 	}
 
-	//authentication for invoke_contract
+	// endorsers authentication for invoke_contract
 	if t.Payload.TxType == commonPb.TxType_INVOKE_CONTRACT {
 		p, err := ac.LookUpPolicy(resourceId)
 		if err != nil {
