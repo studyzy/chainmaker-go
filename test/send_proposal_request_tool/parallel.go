@@ -584,8 +584,8 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 	for _, p := range ps {
 		if p.Unique {
 			pairs = append(pairs, &commonPb.KeyValuePair{
-				//Key:   fmt.Sprintf("%s_%d_%d_%d", p.Key, h.threadId, loopId, time.Now().UnixNano()),
-				Key:   p.Key,
+				Key: fmt.Sprintf("%s_%d_%d_%d", p.Key, h.threadId, loopId, time.Now().UnixNano()),
+				//Key:   p.Key,
 				Value: []byte(fmt.Sprintf(templateStr, p.Value, h.threadId, loopId, time.Now().UnixNano())),
 			})
 		} else {
