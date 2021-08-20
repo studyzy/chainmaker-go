@@ -360,11 +360,11 @@ func GetRoleFromTx(tx *commonPb.Transaction, ac protocol.AccessControlProvider) 
 
 	var member protocol.Member
 	var err error
-	member, err = ac.NewMemberFromProto(tx.Sender.Signer)
+	member, err = ac.NewMember(tx.Sender.Signer)
 
 	if err != nil {
 		return "", err
 	}
 
-	return member.GetRole()[0], nil
+	return member.GetRole(), nil
 }

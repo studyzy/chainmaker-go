@@ -12,8 +12,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"chainmaker.org/chainmaker-go/utils"
-
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"

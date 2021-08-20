@@ -1047,7 +1047,7 @@ func (s *DPoSStakeRuntime) updateValidatorAndDelegationByUndelegate(
 		}
 		if cmp == -1 {
 			// 检查当前网络情况下，节点是否能退出
-			if err = s.canDelete(context); err != nil {
+			if err = s.canDelete(context, ""); err != nil { //TODO Devin Merge
 				return nil, nil, err
 			}
 

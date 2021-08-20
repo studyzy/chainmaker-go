@@ -351,10 +351,10 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 		return nil, err
 	}
 
-	if len(crlList) == 0 {
-		r.log.Errorf("certManage crlList is empty")
-		return nil, errors.New("certManage crlList is empty")
-	}
+	//if len(crlList) == 0 {
+	//	r.log.Errorf("certManage crlList is empty")
+	//	return nil, errors.New("certManage crlList is empty")
+	//}
 	var crls []*pkix.CertificateList
 
 	crl, err := x509.ParseCRL([]byte(crlStr))

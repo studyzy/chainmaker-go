@@ -16,14 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/store/archive"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
+	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/wal"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"

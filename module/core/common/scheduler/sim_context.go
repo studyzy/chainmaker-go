@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strconv"
 
-	"chainmaker.org/chainmaker-go/utils"
 	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"

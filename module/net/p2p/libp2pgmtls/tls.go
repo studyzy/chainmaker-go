@@ -20,6 +20,7 @@ import (
 	cmcrypto "chainmaker.org/chainmaker/common/crypto"
 	cmtls "chainmaker.org/chainmaker/common/crypto/tls"
 	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"

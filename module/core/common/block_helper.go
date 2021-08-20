@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
@@ -281,6 +282,9 @@ func FinalizeBlock(
 		logger.Warnf("get tx merkle root error %s", err)
 		return err
 	}
+	logger.InfoDynamic(func() string {
+		return fmt.Sprintf("GetMerkleRoot(%s,%v) get %x", hashType, txHashes, block.Header.TxRoot)
+	})
 	block.Header.RwSetRoot, err = utils.CalcRWSetRoot(hashType, block.Txs)
 	if err != nil {
 		logger.Warnf("get rwset merkle root error %s", err)
@@ -353,7 +357,8 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 func IsMerkleRootValid(block *commonpb.Block, txHashes [][]byte, hashType string) error {
 	txRoot, err := hash.GetMerkleRoot(hashType, txHashes)
 	if err != nil || !bytes.Equal(txRoot, block.Header.TxRoot) {
-		return fmt.Errorf("txroot expect %x, got %x, err: %s", block.Header.TxRoot, txRoot, err)
+		return fmt.Errorf("GetMerkleRoot(%s,%v) get %x ,txroot expect %x, got %x, err: %s", hashType, txHashes, txRoot,
+			block.Header.TxRoot, txRoot, err)
 	}
 	return nil
 }
@@ -565,6 +570,7 @@ func (vb *VerifierBlock) ValidateBlock(
 	}
 	verifiertx := NewVerifierTx(verifierTxConf)
 	txHashes, _, errTxs, err := verifiertx.verifierTxs(block)
+	vb.log.Warnf("verifierTxs txhashes %d, block.txs %d, %x", len(txHashes), len(block.Txs), block.Header.TxRoot)
 	txLasts := utils.CurrentTimeMillisSeconds() - startTxTick
 	timeLasts = append(timeLasts, txLasts)
 	if err != nil {
