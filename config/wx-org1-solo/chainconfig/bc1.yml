@@ -64,7 +64,7 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "wx-org1.chainmaker.org"
-    root: "../config/wx-org1-solo-sql/certs/ca/wx-org1.chainmaker.org/ca.crt"
+    root: "../config/wx-org1-solo/certs/ca/wx-org1.chainmaker.org/ca.crt"
   - org_id: "wx-org2.chainmaker.org"
     root: "../config/wx-org2/certs/ca/wx-org2.chainmaker.org/ca.crt"
   - org_id: "wx-org3.chainmaker.org"

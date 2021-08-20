@@ -347,7 +347,7 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 func IsMerkleRootValid(block *commonpb.Block, txHashes [][]byte, hashType string) error {
 	txRoot, err := hash.GetMerkleRoot(hashType, txHashes)
 	if err != nil || !bytes.Equal(txRoot, block.Header.TxRoot) {
-		return fmt.Errorf("txroot expect %x, got %x, err: %s", block.Header.TxRoot, txRoot, err.Error())
+		return fmt.Errorf("txroot expect %x, got %x, err: %s", block.Header.TxRoot, txRoot, err)
 	}
 	return nil
 }
