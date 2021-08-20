@@ -22,9 +22,10 @@ const (
 	accountTxHistoryPrefix  = "a"
 	contractTxHistoryPrefix = "c"
 	historyDBSavepointKey   = "historySavepointKey"
+	splitChar               = "#"
 )
 
-// HistoryKvDB provider a implementation of `historydb.HistoryDB`
+// HistoryKvDB provider an implementation of `historydb.HistoryDB`
 // This implementation provides a key-value based data model
 type HistoryKvDB struct {
 	dbHandle protocol.DBHandle
@@ -50,9 +51,9 @@ func (h *HistoryKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedIn
 	// 1. last block height
 	block := blockInfo.Block
 	lastBlockNumBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(lastBlockNumBytes, uint64(block.Header.BlockHeight))
+	binary.BigEndian.PutUint64(lastBlockNumBytes, block.Header.BlockHeight)
 	batch.Put([]byte(historyDBSavepointKey), lastBlockNumBytes)
-	blockHeight := uint64(block.Header.BlockHeight)
+	blockHeight := block.Header.BlockHeight
 	txRWSets := blockInfo.TxRWSets
 	for _, txRWSet := range txRWSets {
 		txId := txRWSet.TxId
@@ -99,14 +100,16 @@ func (h *HistoryKvDB) Close() {
 func (h *HistoryKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
 	h.cache.AddBlock(blockHeight, batch)
-	go func() {
-		err := h.dbHandle.WriteBatch(batch, false)
-		if err != nil {
-			panic(fmt.Sprintf("Error writing db: %s", err))
-		}
-		//db committed, clean cache
-		h.cache.DelBlock(blockHeight)
-	}()
+	//Devin: 这里如果用了协程，那么UT就不会过，因为查询主要是Prefix查询，而缓存是不支持前缀查询的。
+	//TODO: 如果Cache能提供 GetByPrefix 查询就可以重新启用
+	//go func() {
+	err := h.dbHandle.WriteBatch(batch, false)
+	if err != nil {
+		panic(fmt.Sprintf("Error writing db: %s", err))
+	}
+	//db committed, clean cache
+	h.cache.DelBlock(blockHeight)
+	//}()
 	return nil
 }
 
@@ -118,6 +121,7 @@ func (h *HistoryKvDB) get(key []byte) ([]byte, error) {
 	}
 	//get from database
 	return h.dbHandle.Get(key)
+
 }
 
 //func (h *HistoryKvDB) has(key []byte) (bool, error) {

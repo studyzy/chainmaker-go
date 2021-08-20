@@ -1348,19 +1348,30 @@ func (consensus *ConsensusTBFTImpl) verifyVote(voteProto *tbftpb.Vote) error {
 		return fmt.Errorf("verifyVote result: %v", result)
 	}
 
-	member, err := consensus.ac.NewMemberFromProto(voteProto.Endorsement.Signer)
+	member, err := consensus.ac.NewMember(voteProto.Endorsement.Signer)
 	if err != nil {
 		consensus.logger.Errorf("[%s](%d/%d/%s) verifyVote new member failed %v",
 			consensus.Id, consensus.Height, consensus.Round, consensus.Step, err)
 		return err
 	}
 
-	certId := member.GetMemberId()
-	uid, err := consensus.netService.GetNodeUidByCertId(certId)
-	if err != nil {
-		consensus.logger.Errorf("[%s](%d/%d/%s) verifyVote certId: %v, GetNodeUidByCertId failed %v",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step, certId, err)
-		return err
+	var uid string
+	chainConf := consensus.chainConf.ChainConfig()
+	for _, v := range chainConf.TrustMembers {
+		if v.MemberInfo == string(voteProto.Endorsement.Signer.MemberInfo) {
+			uid = v.NodeId
+			break
+		}
+	}
+
+	if uid == "" {
+		certId := member.GetMemberId()
+		uid, err = consensus.netService.GetNodeUidByCertId(certId)
+		if err != nil {
+			consensus.logger.Errorf("[%s](%d/%d/%s) verifyVote certId: %v, GetNodeUidByCertId failed %v",
+				consensus.Id, consensus.Height, consensus.Round, consensus.Step, certId, err)
+			return err
+		}
 	}
 
 	if uid != voteProto.Voter {

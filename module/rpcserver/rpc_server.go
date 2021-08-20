@@ -183,8 +183,10 @@ func (s *RPCServer) getCurChainConfTrustRootsHash() (string, error) {
 
 	var caCerts []string
 	for _, chainConf := range chainConfs {
-		for _, trustRoot := range chainConf.ChainConfig().TrustRoots {
-			caCerts = append(caCerts, trustRoot.Root)
+		for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
+			for _, trustRoot:=range orgRoot.Root{
+				caCerts = append(caCerts, trustRoot)
+			}
 		}
 	}
 
@@ -281,8 +283,10 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 
 		var caCerts []string
 		for _, chainConf := range chainConfs {
-			for _, trustRoot := range chainConf.ChainConfig().TrustRoots {
-				caCerts = append(caCerts, trustRoot.Root)
+			for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
+				for _,trustRoot := range orgRoot.Root{
+					caCerts = append(caCerts, trustRoot)
+				}
 			}
 		}
 

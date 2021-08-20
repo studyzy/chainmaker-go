@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/wal"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-
 	"github.com/stretchr/testify/require"
 )
 

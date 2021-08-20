@@ -16,7 +16,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
 	commonpb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
 	"github.com/panjf2000/ants/v2"
@@ -488,13 +487,13 @@ func (ts *TxScheduler) runVM(tx *commonpb.Transaction, txSimContext protocol.TxS
 		)
 	}
 
-	contract, err := utils.GetContractByName(txSimContext.Get, contractName)
+	contract, err := txSimContext.GetContractByName(contractName)
 	if err != nil {
 		ts.log.Errorf("Get contract info by name[%s] error:%s", contractName, err)
 		return nil, err
 	}
 	if contract.RuntimeType != commonpb.RuntimeType_NATIVE {
-		byteCode, err = utils.GetContractBytecode(txSimContext.Get, contractName)
+		byteCode, err = txSimContext.GetContractBytecode(contractName)
 		if err != nil {
 			ts.log.Errorf("Get contract bytecode by name[%s] error:%s", contractName, err)
 			return nil, err

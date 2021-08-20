@@ -44,8 +44,8 @@ const (
 	IP             = "localhost"
 	Port           = 12351
 	certPathPrefix = "../../../config"
-	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	userKeyPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
+	userCrtPath    = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 	orgId          = "wx-org1.chainmaker.org"
 	prePathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 )
@@ -463,8 +463,8 @@ func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	}
 
 	signer := getSigner(sk3, sender)
-	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
+	//signBytes, err := signer.Sign("SM3", rawTxBytes)
 	if err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 		os.Exit(0)
@@ -493,12 +493,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMembe
 	}
 	//fmt.Printf("skPEM: %s\n", skPEM)
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
 	if err != nil {
 		panic(err)
 	}

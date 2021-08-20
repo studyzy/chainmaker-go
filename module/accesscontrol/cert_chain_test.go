@@ -24,6 +24,15 @@ const (
 	sortedChainTemplate = "sorted chain: %v\n"
 )
 
+type certificatePair struct {
+	certificate string
+	sk          string
+}
+
+var (
+	sans = []string{"127.0.0.1", "localhost", "chainmaker.org", "8.8.8.8"}
+)
+
 var rootCert = certificatePair{
 	certificate: `-----BEGIN CERTIFICATE-----
 MIICJzCCAc6gAwIBAgIEAKWqRTAKBggqhkjOPQQDAjBZMQswCQYDVQQGEwJDTjES
@@ -93,6 +102,9 @@ D5Hjj7XE/FGXkI4aNKW1BYQUPpSAP425EDF5FLF+iGLcKQN8d+VNJATN
 }
 
 func TestCertChainFunction(t *testing.T) {
+	{
+		fmt.Printf("sans is unused: [sans: %s]\n", sans)
+	}
 	blockCA, _ := pem.Decode([]byte(rootCert.certificate))
 	certRootCA, err := bcx509.ParseCertificate(blockCA.Bytes)
 	require.Nil(t, err)

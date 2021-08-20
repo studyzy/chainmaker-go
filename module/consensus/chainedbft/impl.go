@@ -29,7 +29,6 @@ import (
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
 	"chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/protocol"
-
 	"github.com/gogo/protobuf/proto"
 )
 

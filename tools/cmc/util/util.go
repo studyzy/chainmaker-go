@@ -1,6 +1,11 @@
 package util
 
-import "chainmaker.org/chainmaker/pb-go/common"
+import (
+	"encoding/hex"
+
+	"chainmaker.org/chainmaker/common/evmutils"
+	"chainmaker.org/chainmaker/pb-go/common"
+)
 
 func MaxInt(i, j int) int {
 	if j > i {
@@ -18,4 +23,8 @@ func ConvertParameters(pars map[string]string) []*common.KeyValuePair {
 		})
 	}
 	return kvp
+}
+
+func CalcEvmContractName(contractName string) string {
+	return hex.EncodeToString(evmutils.Keccak256([]byte(contractName)))[24:]
 }

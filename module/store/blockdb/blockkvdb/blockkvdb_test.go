@@ -92,3 +92,12 @@ func generateTxId(chainId string, height uint64, index int) string {
 	txIdBytes := sha256.Sum256([]byte(fmt.Sprintf("%s-%d-%d", chainId, height, index)))
 	return hex.EncodeToString(txIdBytes[:32])
 }
+func TestBlockKvDB_parseTxIdBlockInfo(t *testing.T) {
+	value := constructTxIDBlockInfo(1, []byte("hash1"), 2)
+	a, b, c, e := parseTxIdBlockInfo(value)
+	assert.Nil(t, e)
+	t.Log(a, b, c)
+	a, b, c, e = parseTxIdBlockInfo([]byte("bad data"))
+	assert.NotNil(t, e)
+	t.Log(a, b, c, e)
+}

@@ -8,6 +8,8 @@
 package contractmgr
 
 import (
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -82,6 +84,10 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
+	{ // for debug
+		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
+		r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
+	}
 	r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
 		contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
@@ -96,6 +102,10 @@ func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimCont
 	contract, err := r.UpgradeContract(txSimContext, name, version, byteCode, runtimeType, parameters)
 	if err != nil {
 		return nil, err
+	}
+	{ // for debug
+		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
+		r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
 	}
 	r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
 		contract.Version, contract.RuntimeType, len(byteCode))
@@ -162,18 +172,18 @@ func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, 
 	error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	return utils.GetContractByName(context.Get, name)
+	return context.GetContractByName(name)
 }
 func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimContext, name string) ([]byte, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	return utils.GetContractBytecode(context.Get, name)
+	return context.GetContractBytecode(name)
 }
 
 //GetAllContracts 查询所有合约的详细信息
@@ -232,14 +242,18 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 	if err != nil {
 		return nil, err
 	}
+	r.log.DebugDynamic(func() string {
+		codeHash := sha256.Sum256(byteCode)
+		return fmt.Sprintf("put contract[%s] bytecode hash:%x", name, codeHash)
+	})
 	//实例化合约，并init合约，产生读写集
 	result, statusCode := context.CallContract(contract, protocol.ContractInitMethod, byteCode, initParameters,
 		0, commonPb.TxType_INVOKE_CONTRACT)
 	if statusCode != commonPb.TxStatusCode_SUCCESS {
-		return nil, errContractInitFail
+		return nil, fmt.Errorf("%s, %s", errContractInitFail, result.Message)
 	}
 	if result.Code > 0 { //throw error
-		return nil, errContractInitFail
+		return nil, fmt.Errorf("%s, %s", errContractInitFail, result.Message)
 	}
 	if runTime == commonPb.RuntimeType_EVM {
 		//save bytecode body
@@ -247,8 +261,12 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 		if len(result.Result) > 0 {
 			err := context.Put(ContractName, byteCodeKey, result.Result)
 			if err != nil {
-				return nil, errContractInitFail
+				return nil, fmt.Errorf("%s, %s", errContractInitFail, err)
 			}
+			r.log.DebugDynamic(func() string {
+				codeHash := sha256.Sum256(result.Result)
+				return fmt.Sprintf("update EVM contract[%s] bytecode hash:%x", name, codeHash)
+			})
 		}
 	}
 	return contract, nil
@@ -289,10 +307,11 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 	result, statusCode := context.CallContract(contract, protocol.ContractUpgradeMethod, byteCode, upgradeParameters,
 		0, commonPb.TxType_INVOKE_CONTRACT)
 	if statusCode != commonPb.TxStatusCode_SUCCESS {
-		return nil, errContractUpgradeFail
+		return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, result.Message)
+
 	}
 	if result.Code > 0 { //throw error
-		return nil, errContractUpgradeFail
+		return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, result.Message)
 	}
 	if runTime == commonPb.RuntimeType_EVM {
 		//save bytecode body
@@ -300,7 +319,7 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 		if len(result.Result) > 0 {
 			err := context.Put(ContractName, byteCodeKey, result.Result)
 			if err != nil {
-				return nil, errContractUpgradeFail
+				return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, err)
 			}
 		}
 	}
@@ -318,15 +337,15 @@ func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, n
 	*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	contract, err := utils.GetContractByName(context.Get, name)
+	contract, err := context.GetContractByName(name)
 	if err != nil {
 		return nil, err
 	}
 	if contract.Status != commonPb.ContractStatus_NORMAL && contract.Status != commonPb.ContractStatus_FROZEN {
-		r.log.Errorf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s",
+		r.log.Warnf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s",
 			name, contract.Status.String())
 		return nil, errContractStatusInvalid
 	}
@@ -344,17 +363,18 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 	oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	contract, err := utils.GetContractByName(context.Get, name)
+	contract, err := context.GetContractByName(name)
 	if err != nil {
 		return nil, err
 	}
 	if contract.Status != oldStatus {
-		r.log.Errorf("contract[%s] expect status:%s,actual status:%s",
+		msg := fmt.Sprintf("contract[%s] expect status:%s,actual status:%s",
 			name, oldStatus.String(), contract.Status.String())
-		return nil, errContractStatusInvalid
+		r.log.Warnf(msg)
+		return nil, fmt.Errorf("%s, %s", errContractStatusInvalid, msg)
 	}
 	contract.Status = newStatus
 	key := utils.GetContractDbKey(name)

@@ -92,12 +92,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMembe
 		log.Fatalf("get sk PEM failed, %s", err.Error())
 	}
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
 	if err != nil {
 		panic(err)
 	}
@@ -224,7 +219,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	}
 
 	signer := getSigner(sk3, senderFull)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 	}
@@ -292,7 +287,7 @@ func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *Invoke
 	}
 
 	signer := getSigner(sk3, sender)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 		panic(err)

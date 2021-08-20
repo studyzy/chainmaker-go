@@ -63,16 +63,16 @@ var (
 		{certPathPrefix + "wx-org4.chainmaker.org/ca/"},
 	}
 	userKeyPaths = []string{
-		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.tls.key",
-		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.tls.key",
+		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.sign.key",
+		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.sign.key",
 	}
 	userCrtPaths = []string{
-		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.tls.crt",
-		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.tls.crt",
+		certPathPrefix + "wx-org1.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "wx-org2.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "wx-org3.chainmaker.org/user/client1/client1.sign.crt",
+		certPathPrefix + "wx-org4.chainmaker.org/user/client1/client1.sign.crt",
 	}
 	orgIds = []string{
 		"wx-org1.chainmaker.org",
@@ -212,11 +212,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMembe
 		log.Fatalf("get sk PEM failed, %s", err.Error())
 	}
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
 	if err != nil {
 		panic(err)
 	}
@@ -284,7 +280,7 @@ func createInvokePackage(signer protocol.SigningMember, certId []byte, index int
 	if rawTxBytes, err = utils.CalcUnsignedTxRequestBytes(req); err != nil {
 		log.Fatalf("CalcUnsignedTxRequest failed, %s", err.Error())
 	}
-	if signBytes, err = signer.Sign("SM3", rawTxBytes); err != nil {
+	if signBytes, err = signer.Sign("SHA256", rawTxBytes); err != nil {
 		log.Fatalf("sign failed, %s", err.Error())
 	}
 

@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/core/common/scheduler"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
@@ -82,7 +81,11 @@ func (bb *BlockBuilder) GenerateNewBlock(proposingHeight uint64, preHash []byte,
 	if lastBlock == nil {
 		return nil, nil, fmt.Errorf("no pre block found [%d] (%x)", proposingHeight-1, preHash)
 	}
-	block, err := InitNewBlock(lastBlock, bb.identity, bb.chainId, bb.chainConf)
+	isConfigBlock := false
+	if len(txBatch) == 1 && utils.IsConfigTx(txBatch[0]) {
+		isConfigBlock = true
+	}
+	block, err := initNewBlock(lastBlock, bb.identity, bb.chainId, bb.chainConf, isConfigBlock)
 	if err != nil {
 		return block, timeLasts, err
 	}
@@ -172,11 +175,11 @@ func (bb *BlockBuilder) findLastBlockFromCache(proposingHeight uint64, preHash [
 	return lastBlock
 }
 
-func InitNewBlock(
+func initNewBlock(
 	lastBlock *commonpb.Block,
 	identity protocol.SigningMember,
 	chainId string,
-	chainConf protocol.ChainConf) (*commonpb.Block, error) {
+	chainConf protocol.ChainConf, isConfigBlock bool) (*commonpb.Block, error) {
 	// get node pk from identity
 	proposer, err := identity.GetMember()
 	if err != nil {
@@ -208,6 +211,9 @@ func InitNewBlock(
 		Dag:            &commonpb.DAG{},
 		Txs:            nil,
 		AdditionalData: nil,
+	}
+	if isConfigBlock {
+		block.Header.BlockType = commonpb.BlockType_CONFIG_BLOCK
 	}
 	return block, nil
 }
@@ -436,6 +442,7 @@ type VerifierBlockConf struct {
 	BlockchainStore protocol.BlockchainStore
 	ProposalCache   protocol.ProposalCache // proposal cache
 	StoreHelper     conf.StoreHelper
+	TxScheduler     protocol.TxScheduler
 }
 
 type VerifierBlock struct {
@@ -464,6 +471,7 @@ func NewVerifierBlock(conf *VerifierBlockConf) *VerifierBlock {
 		blockchainStore: conf.BlockchainStore,
 		proposalCache:   conf.ProposalCache,
 		storeHelper:     conf.StoreHelper,
+		txScheduler:     conf.TxScheduler,
 	}
 	var schedulerFactory scheduler.TxSchedulerFactory
 	verifyBlock.txScheduler = schedulerFactory.NewTxScheduler(
@@ -767,8 +775,10 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 		return err
 	}
 	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
-	if err = chain.checkLastProposedBlock(block, lastProposed, err, height, rwSetMap, conEventMap); err != nil {
-		return err
+	if lastProposed == nil {
+		if err, lastProposed, rwSetMap, conEventMap = chain.checkLastProposedBlock(block); err != nil {
+			return err
+		}
 	}
 
 	checkLasts := utils.CurrentTimeMillisSeconds() - startTick
@@ -822,21 +832,18 @@ func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height ui
 }
 
 //nolint: ineffassign, staticcheck
-func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block,
-	lastProposed *commonpb.Block, err error, height uint64, rwSetMap map[string]*commonpb.TxRWSet,
-	conEventMap map[string][]*commonpb.ContractEvent) error { //nolint: ineffassign, staticcheck
-	if lastProposed != nil {
-		return nil
-	}
-	err = chain.verifier.VerifyBlock(block, protocol.SYNC_VERIFY)
+func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block) (
+	error, *commonpb.Block, map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent) {
+	err := chain.verifier.VerifyBlock(block, protocol.SYNC_VERIFY)
 	if err != nil {
-		chain.log.Error("block verify failed [%d](hash:%x), %s", height, block.Header.BlockHash, err)
-		return err
+		chain.log.Error("block verify failed [%d](hash:%x), %s", block.Header.BlockHeight, block.Header.BlockHash, err)
+		return err, nil, nil, nil
 	}
-	lastProposed, rwSetMap, conEventMap = chain.proposalCache.GetProposedBlock(block)
+
+	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
-		chain.log.Error("block not verified [%d](hash:%x)", height, block.Header.BlockHash)
-		return fmt.Errorf("block not verified [%d](hash:%x)", height, block.Header.BlockHash)
+		chain.log.Error("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash)
+		return fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash), lastProposed, rwSetMap, conEventMap
 	}
-	return nil
+	return nil, lastProposed, rwSetMap, conEventMap
 }

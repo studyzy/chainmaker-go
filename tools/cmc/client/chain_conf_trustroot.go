@@ -131,14 +131,18 @@ func configTrustRoot(op int) error {
 	}
 	defer client.Stop()
 
-	var trustRootBytes []byte
+	var trustRootBytes []string
 	if op == addTrustRoot || op == updateTrustRoot {
-		if trustRootPath == "" {
+
+		if len(trustRootPaths) == 0 {
 			return fmt.Errorf("please specify trust root path")
 		}
-		trustRootBytes, err = ioutil.ReadFile(trustRootPath)
-		if err != nil {
-			return err
+		for _, trustRootPath := range trustRootPaths {
+			trustRoot, err := ioutil.ReadFile(trustRootPath)
+			if err != nil {
+				return err
+			}
+			trustRootBytes = append(trustRootBytes, string(trustRoot))
 		}
 	}
 
