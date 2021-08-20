@@ -11,7 +11,6 @@ set -e
 CURRENT_PATH=$(pwd)
 PROJECT_PATH=$(dirname "${CURRENT_PATH}")
 RELEASE_PATH=${PROJECT_PATH}/build/release
-VERSION=V1.0.0
 ARG1=$1
 
 function cluster_stop() {
