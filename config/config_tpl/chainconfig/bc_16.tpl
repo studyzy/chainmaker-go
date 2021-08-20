@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}    # 链标识
-version: v1.2.0         # 链版本
+version: v2.0.0         # 链版本
 sequence: 0             # 配置版本
 auth_type: "identity"   # 认证类型
 
@@ -15,7 +15,7 @@ crypto:
 
 # 合约支持类型的配置
 contract:
-  enable_sql_support: false # 此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
+  enable_sql_support: false # 合约是否支持sql，此处若为true，则chainmaker.yml中则需配置storage.statedb_config.provider=sql，否则无法启动
 
 # 交易、区块相关配置
 block:
@@ -75,15 +75,24 @@ consensus:
     - org_id: "{org10_id}"
       node_id:
         - "{org10_peerid}"
-#    - org_id: "{org11_id}"
-#      node_id:
-#        - "{org11_peerid}"
-#    - org_id: "{org12_id}"
-#      node_id:
-#        - "{org12_peerid}"
-#    - org_id: "{org13_id}"
-#      node_id:
-#        - "{org13_peerid}"
+    - org_id: "{org11_id}"
+      node_id:
+        - "{org11_peerid}"
+    - org_id: "{org12_id}"
+      node_id:
+        - "{org12_peerid}"
+    - org_id: "{org13_id}"
+      node_id:
+        - "{org13_peerid}"
+    - org_id: "{org14_id}"
+      node_id:
+        - "{org14_peerid}"
+    - org_id: "{org15_id}"
+      node_id:
+        - "{org15_peerid}"
+    - org_id: "{org16_id}"
+      node_id:
+        - "{org16_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -126,12 +135,18 @@ consensus:
       value: "2500000"
     - key: stake.candidate:{org10_peeraddr}
       value: "2500000"
-#    - key: stake.candidate:{org11_peeraddr}
-#      value: "2500000"
-#    - key: stake.candidate:{org12_peeraddr}
-#      value: "2500000"
-#    - key: stake.candidate:{org13_peeraddr}
-#      value: "2500000"
+    - key: stake.candidate:{org11_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org12_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org13_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org14_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org15_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org16_peeraddr}
+      value: "2500000"
     - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
     - key: stake.nodeID:{org2_peeraddr}
@@ -152,12 +167,18 @@ consensus:
       value: "{org9_peerid}"
     - key: stake.nodeID:{org10_peeraddr}
       value: "{org10_peerid}"
-#    - key: stake.nodeID:{org11_peeraddr}
-#      value: "{org11_peerid}"
-#    - key: stake.nodeID:{org12_peeraddr}
-#      value: "{org12_peerid}"
-#    - key: stake.nodeID:{org13_peeraddr}
-#      value: "{org13_peerid}"
+    - key: stake.nodeID:{org11_peeraddr}
+      value: "{org11_peerid}"
+    - key: stake.nodeID:{org12_peeraddr}
+      value: "{org12_peerid}"
+    - key: stake.nodeID:{org13_peeraddr}
+      value: "{org13_peerid}"
+    - key: stake.nodeID:{org14_peeraddr}
+      value: "{org14_peerid}"
+    - key: stake.nodeID:{org15_peeraddr}
+      value: "{org15_peerid}"
+    - key: stake.nodeID:{org16_peeraddr}
+      value: "{org16_peerid}"
 
 # 信任组织和根证书
 trust_roots:
@@ -181,12 +202,18 @@ trust_roots:
     root: "../config/{org_path}/certs/ca/{org9_id}/ca.crt"
   - org_id: "{org10_id}"
     root: "../config/{org_path}/certs/ca/{org10_id}/ca.crt"
-#  - org_id: "{org11_id}"
-#    root: "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
-#  - org_id: "{org12_id}"
-#    root: "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
-#  - org_id: "{org13_id}"
-#    root: "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
+  - org_id: "{org11_id}"
+    root: "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
+  - org_id: "{org12_id}"
+    root: "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
+  - org_id: "{org13_id}"
+    root: "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
+  - org_id: "{org14_id}"
+    root: "../config/{org_path}/certs/ca/{org14_id}/ca.crt"
+  - org_id: "{org15_id}"
+    root: "../config/{org_path}/certs/ca/{org15_id}/ca.crt"
+  - org_id: "{org16_id}"
+    root: "../config/{org_path}/certs/ca/{org16_id}/ca.crt"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

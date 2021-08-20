@@ -6,7 +6,7 @@
 #
 
 chain_id: {chain_id}    # 链标识
-version: v1.2.0         # 链版本
+version: v2.0.0         # 链版本
 sequence: 0             # 配置版本
 auth_type: "identity"   # 认证类型
 
@@ -32,7 +32,7 @@ core:
 
 # snapshot module
 snapshot:
-  enable_evidence: false # enable the evidence support
+  enable_evidence: false # enable the evidence support 
 
 # scheduler module
 scheduler:
@@ -57,20 +57,38 @@ consensus:
     - org_id: "{org4_id}"
       node_id:
         - "{org4_peerid}"
-#    - org_id: "{org5_id}"
+    - org_id: "{org5_id}"
+      node_id:
+        - "{org5_peerid}"
+    - org_id: "{org6_id}"
+      node_id:
+        - "{org6_peerid}"
+    - org_id: "{org7_id}"
+      node_id:
+        - "{org7_peerid}"
+    - org_id: "{org8_id}"
+      node_id:
+        - "{org8_peerid}"
+    - org_id: "{org9_id}"
+      node_id:
+        - "{org9_peerid}"
+    - org_id: "{org10_id}"
+      node_id:
+        - "{org10_peerid}"
+#    - org_id: "{org11_id}"
 #      node_id:
-#        - "{org5_peerid}"
-#    - org_id: "{org6_id}"
+#        - "{org11_peerid}"
+#    - org_id: "{org12_id}"
 #      node_id:
-#        - "{org6_peerid}"
-#    - org_id: "{org7_id}"
+#        - "{org12_peerid}"
+#    - org_id: "{org13_id}"
 #      node_id:
-#        - "{org7_peerid}"
+#        - "{org13_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
   dpos_config: # DPoS
-  #ERC20合约配置
+    #ERC20合约配置
     - key: erc20.total
       value: "{erc20_total}"
     - key: erc20.owner
@@ -79,7 +97,7 @@ consensus:
       value: "18"
     - key: erc20.account:DPOS_STAKE
       value: "{erc20_total}"
-  #Stake合约配置
+    #Stake合约配置
     - key: stake.minSelfDelegation
       value: "2500000"
     - key: stake.epochValidatorNum
@@ -96,11 +114,23 @@ consensus:
       value: "2500000"
     - key: stake.candidate:{org4_peeraddr}
       value: "2500000"
-#    - key: stake.candidate:{org5_peeraddr}
+    - key: stake.candidate:{org5_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org6_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org7_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org8_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org9_peeraddr}
+      value: "2500000"
+    - key: stake.candidate:{org10_peeraddr}
+      value: "2500000"
+#    - key: stake.candidate:{org11_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:{org6_peeraddr}
+#    - key: stake.candidate:{org12_peeraddr}
 #      value: "2500000"
-#    - key: stake.candidate:{org7_peeraddr}
+#    - key: stake.candidate:{org13_peeraddr}
 #      value: "2500000"
     - key: stake.nodeID:{org1_peeraddr}
       value: "{org1_peerid}"
@@ -110,12 +140,24 @@ consensus:
       value: "{org3_peerid}"
     - key: stake.nodeID:{org4_peeraddr}
       value: "{org4_peerid}"
-#    - key: stake.nodeID:{org5_peeraddr}
-#      value: "{org5_peerid}"
-#    - key: stake.nodeID:{org6_peeraddr}
-#      value: "{org6_peerid}"
-#    - key: stake.nodeID:{org7_peeraddr}
-#      value: "{org7_peerid}"
+    - key: stake.nodeID:{org5_peeraddr}
+      value: "{org5_peerid}"
+    - key: stake.nodeID:{org6_peeraddr}
+      value: "{org6_peerid}"
+    - key: stake.nodeID:{org7_peeraddr}
+      value: "{org7_peerid}"
+    - key: stake.nodeID:{org8_peeraddr}
+      value: "{org8_peerid}"
+    - key: stake.nodeID:{org9_peeraddr}
+      value: "{org9_peerid}"
+    - key: stake.nodeID:{org10_peeraddr}
+      value: "{org10_peerid}"
+#    - key: stake.nodeID:{org11_peeraddr}
+#      value: "{org11_peerid}"
+#    - key: stake.nodeID:{org12_peeraddr}
+#      value: "{org12_peerid}"
+#    - key: stake.nodeID:{org13_peeraddr}
+#      value: "{org13_peerid}"
 
 # 信任组织和根证书
 trust_roots:
@@ -127,12 +169,24 @@ trust_roots:
     root: "../config/{org_path}/certs/ca/{org3_id}/ca.crt"
   - org_id: "{org4_id}"
     root: "../config/{org_path}/certs/ca/{org4_id}/ca.crt"
-#  - org_id: "{org5_id}"
-#    root: "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
-#  - org_id: "{org6_id}"
-#    root: "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
-#  - org_id: "{org7_id}"
-#    root: "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
+  - org_id: "{org5_id}"
+    root: "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
+  - org_id: "{org6_id}"
+    root: "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
+  - org_id: "{org7_id}"
+    root: "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
+  - org_id: "{org8_id}"
+    root: "../config/{org_path}/certs/ca/{org8_id}/ca.crt"
+  - org_id: "{org9_id}"
+    root: "../config/{org_path}/certs/ca/{org9_id}/ca.crt"
+  - org_id: "{org10_id}"
+    root: "../config/{org_path}/certs/ca/{org10_id}/ca.crt"
+#  - org_id: "{org11_id}"
+#    root: "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
+#  - org_id: "{org12_id}"
+#    root: "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
+#  - org_id: "{org13_id}"
+#    root: "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

@@ -152,9 +152,9 @@ function generate_config() {
         echo "begin generate node$i config..."
         mkdir -p ${BUILD_PATH}/config/node$i
         mkdir -p ${BUILD_PATH}/config/node$i/chainconfig
-        cp $CONFIG_TPL_PATH/log.yml node$i
+        cp $CONFIG_TPL_PATH/log.tpl node$i/log.yml
         xsed "s%{log_level}%$LOG_LEVEL%g" node$i/log.yml
-        cp $CONFIG_TPL_PATH/chainmaker.yml node$i
+        cp $CONFIG_TPL_PATH/chainmaker.tpl node$i/chainmaker.yml
 
         xsed "s%{net_port}%$(($P2P_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
         xsed "s%{rpc_port}%$(($RPC_PORT_PREFIX+$i))%g" node$i/chainmaker.yml
@@ -194,16 +194,16 @@ function generate_config() {
             xsed "s%#\(.*\)genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
 
             if  [ $NODE_CNT -eq 1 ]; then
-                cp $CONFIG_TPL_PATH/chainconfig/bc_solo.yml node$i/chainconfig/bc$j.yml
+                cp $CONFIG_TPL_PATH/chainconfig/bc_solo.tpl node$i/chainconfig/bc$j.yml
                 xsed "s%{consensus_type}%0%g" node$i/chainconfig/bc$j.yml
             elif [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
-                cp $CONFIG_TPL_PATH/chainconfig/bc_4_7.yml node$i/chainconfig/bc$j.yml
+                cp $CONFIG_TPL_PATH/chainconfig/bc_4_7.tpl node$i/chainconfig/bc$j.yml
                 xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
             elif [ $NODE_CNT -eq 16 ]; then
-                cp $CONFIG_TPL_PATH/chainconfig/bc_16.yml node$i/chainconfig/bc$j.yml
+                cp $CONFIG_TPL_PATH/chainconfig/bc_16.tpl node$i/chainconfig/bc$j.yml
                 xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
             else
-                cp $CONFIG_TPL_PATH/chainconfig/bc_10_13.yml node$i/chainconfig/bc$j.yml
+                cp $CONFIG_TPL_PATH/chainconfig/bc_10_13.tpl node$i/chainconfig/bc$j.yml
                 xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
             fi
 
