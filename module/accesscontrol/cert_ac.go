@@ -757,13 +757,14 @@ func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *cachedMember,
 			return false, fmt.Errorf("check cert forzen list, error: [%s]", err.Error())
 		}
 		cp.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
+
+		if endorsement.Signer.OrgId != signerInfo.member.GetOrgId() {
+			err := fmt.Errorf("authentication failed, signer does not belong to the organization it claims "+
+				"[claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.member.GetOrgId())
+			return false, err
+		}
 	}
 
-	if endorsement.Signer.OrgId != signerInfo.member.GetOrgId() {
-		err := fmt.Errorf("authentication failed, signer does not belong to the organization it claims "+
-			"[claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.member.GetOrgId())
-		return false, err
-	}
 	if err := signerInfo.member.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
 		err := fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
 		cp.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
