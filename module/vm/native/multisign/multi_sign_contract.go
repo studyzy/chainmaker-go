@@ -80,7 +80,11 @@ func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters ma
 	}
 
 	bytes, _ := multiSignInfo.Marshal()
-	txSimContext.Put(contractName, []byte(tx.Payload.TxId), bytes)
+	err = txSimContext.Put(contractName, []byte(tx.Payload.TxId), bytes)
+	if err != nil {
+		r.log.Warn(err)
+		return nil, err
+	}
 
 	r.log.Infof("multi sign req end")
 	return []byte(tx.Payload.TxId), nil
@@ -168,7 +172,7 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 			r.log.Warn(err)
 			return nil, err
 		}
-		if endorsement == nil || len(endorsement) == 0 {
+		if len(endorsement) == 0 {
 			err = fmt.Errorf("the multi sign vote signature[org:%s] is err, error:%s", reqVoteInfo.Endorsement.Signer.OrgId, err)
 			r.log.Error(err)
 			return nil, err
