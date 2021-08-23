@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker/pb-go/common"
-	sdk "chainmaker.org/chainmaker/sdk-go"
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/common"
+	sdk "chainmaker.org/chainmaker/sdk-go"
 
 	"github.com/spf13/cobra"
 )
@@ -87,7 +88,7 @@ func configTrustMember(op int) error {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return ErrAdminOrgIdKeyCertIsEmpty
+		return errAdminOrgIdKeyCertIsEmpty
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))

@@ -114,6 +114,7 @@ go mod tidy
 cd ../wxvm
 go mod tidy
 cd ../../../test
+go get chainmaker.org/chainmaker/sdk-go@${BRANCH}
 go get chainmaker.org/chainmaker/protocol@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go@${BRANCH}
 go get chainmaker.org/chainmaker/common@${BRANCH}
