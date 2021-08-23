@@ -9,6 +9,8 @@ package native
 import (
 	"sync"
 
+	"chainmaker.org/chainmaker-go/vm/native/crosstranscation"
+
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 
@@ -65,6 +67,7 @@ func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts[syscontract.SystemContract_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
 	contracts[syscontract.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
 	contracts[syscontract.SystemContract_CONTRACT_MANAGE.String()] = contractmgr.NewContractManager(log)
+	contracts[syscontract.SystemContract_CROSS_TRANSACTION.String()] = crosstranscation.NewCrossTransactionContract(log)
 	return contracts
 }
 
