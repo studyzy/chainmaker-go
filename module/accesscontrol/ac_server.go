@@ -51,14 +51,6 @@ var restrainedResourceList = map[string]bool{
 	common.TxType_ARCHIVE.String():         true,
 }
 
-// Default access principals for predefined operation categories
-var txTypeToResourceNameMap = map[common.TxType]string{
-	common.TxType_QUERY_CONTRACT:  protocol.ResourceNameReadData,
-	common.TxType_INVOKE_CONTRACT: protocol.ResourceNameWriteData,
-	common.TxType_SUBSCRIBE:       protocol.ResourceNameSubscribe,
-	common.TxType_ARCHIVE:         protocol.ResourceNameArchive,
-}
-
 var (
 	policyRead = newPolicy(
 		protocol.RuleAny,
@@ -68,6 +60,28 @@ var (
 			protocol.RoleCommonNode,
 			protocol.RoleClient,
 			protocol.RoleAdmin,
+		},
+	)
+
+	policySpecialRead = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleConsensusNode,
+			protocol.RoleCommonNode,
+			protocol.RoleClient,
+			protocol.RoleAdmin,
+			protocol.RoleLight,
+		},
+	)
+
+	policySpecialWrite = newPolicy(
+		protocol.RuleAny,
+		nil,
+		[]protocol.Role{
+			protocol.RoleClient,
+			protocol.RoleAdmin,
+			protocol.RoleLight,
 		},
 	)
 
@@ -186,6 +200,8 @@ type accessControlService struct {
 
 	resourceNamePolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
 
+	exceptionalPolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
+
 	trustMembers []*config.TrustMemberConfig
 
 	memberCache *concurrentlru.Cache
@@ -209,6 +225,7 @@ func initAccessControlService(hashType, localOrgId string, chainConf *config.Cha
 		orgNum:                0,
 		orgList:               &sync.Map{},
 		resourceNamePolicyMap: &sync.Map{},
+		exceptionalPolicyMap:  &sync.Map{},
 		trustMembers:          chainConf.TrustMembers,
 		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
 		dataStore:             store,
@@ -227,7 +244,6 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameWriteData, policyWrite)
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateSelfConfig, policySelfConfig)
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameUpdateConfig, policyConfig)
-
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameConsensusNode, policyConsensus)
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNameP2p, policyP2P)
 
@@ -244,21 +260,48 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 	acs.resourceNamePolicyMap.Store(common.TxType_SUBSCRIBE.String(), policySubscribe)
 	acs.resourceNamePolicyMap.Store(common.TxType_ARCHIVE.String(), policyArchive)
 
-	// transaction resource definitions
-	acs.resourceNamePolicyMap.Store(protocol.ResourceNameTxQuery, policyRead)
-	acs.resourceNamePolicyMap.Store(protocol.ResourceNameTxTransact, policyWrite)
+	// exceptional resourceName opened for light user
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_LAST_BLOCK.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_QUERY.String()+"-"+
+		syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
+		syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERTS_QUERY.String(), policySpecialRead)
+	acs.exceptionalPolicyMap.Store(syscontract.SystemContract_CERT_MANAGE.String()+"-"+
+		syscontract.CertManageFunction_CERT_ADD.String(), policySpecialWrite)
 
 	//for private compute
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
-	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
-	//syscontract.PrivateComputeContractFunction_SAVE_CA_CERT.String(), policyConfig)
-	//resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
-	//syscontract.PrivateComputeContractFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
+		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(), policyConfig)
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
+		syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
-	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
-		syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), policyRead)
-
 	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_CHAIN_CONFIG.String()+"-"+
 		syscontract.ChainConfigFunction_CORE_UPDATE.String(), policyConfig)
 
@@ -516,8 +559,10 @@ func (acs *accessControlService) createPrincipalForTargetOrg(resourceName string
 func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string) (*policy, error) {
 	p, ok := acs.resourceNamePolicyMap.Load(resourceName)
 	if !ok {
-		return nil, fmt.Errorf("look up access policy failed, did not configure access policy "+
-			"for resource %s", resourceName)
+		 if p, ok = acs.exceptionalPolicyMap.Load(resourceName); !ok {
+			return nil, fmt.Errorf("look up access policy failed, did not configure access policy "+
+				"for resource %s", resourceName)
+		 }
 	}
 	return p.(*policy), nil
 }
@@ -787,6 +832,15 @@ func (acs *accessControlService) lookUpPolicy(resourceName string) (*pbac.Policy
 	p, ok := acs.resourceNamePolicyMap.Load(resourceName)
 	if !ok {
 		return nil, fmt.Errorf("policy not found for resource %s", resourceName)
+	}
+	pbPolicy := p.(*policy).GetPbPolicy()
+	return pbPolicy, nil
+}
+
+func (acs *accessControlService) lookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
+	p, ok := acs.exceptionalPolicyMap.Load(resourceName)
+	if !ok {
+		return nil, fmt.Errorf("exceptional policy not found for resource %s", resourceName)
 	}
 	pbPolicy := p.(*policy).GetPbPolicy()
 	return pbPolicy, nil

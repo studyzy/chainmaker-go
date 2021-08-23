@@ -53,10 +53,6 @@ type certACProvider struct {
 	log protocol.Logger
 }
 
-func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
-	panic("implement me")
-}
-
 var _ protocol.AccessControlProvider = (*certACProvider)(nil)
 
 var NilCertACProvider ACProvider = (*certACProvider)(nil)
@@ -485,6 +481,10 @@ func (cp *certACProvider) CreatePrincipal(resourceName string, endorsements []*c
 
 func (cp *certACProvider) LookUpPolicy(resourceName string) (*pbac.Policy, error) {
 	return cp.acService.lookUpPolicy(resourceName)
+}
+
+func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
+	return cp.acService.lookUpExceptionalPolicy(resourceName)
 }
 
 func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
