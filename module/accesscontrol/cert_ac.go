@@ -877,6 +877,7 @@ func (cp *certACProvider) Watch(chainConfig *config.ChainConfig) error {
 		trustMembers = append(trustMembers, member)
 	}
 	cp.acService.trustMembers = trustMembers
+	cp.log.Debug("update chain config, trust member update: [%v]", cp.acService.trustMembers)
 	return nil
 }
 
@@ -948,7 +949,6 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 		}
 	}
 	cp.localOrg, _ = localOrg.(*organization)
-	cp.acService.trustMembers = chainConfig.TrustMembers
 	return nil
 }
 
