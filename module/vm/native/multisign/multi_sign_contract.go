@@ -8,7 +8,6 @@
 package multisign
 
 import (
-	"bytes"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
@@ -143,16 +142,16 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 	}
 	// 校验：该用户是否已投票
 	{
-		signer, err := ac.NewMemberFromProto(reqVoteInfo.Endorsement.Signer)
+		signer, err := ac.NewMember(reqVoteInfo.Endorsement.Signer)
 		if err != nil {
 			r.log.Warn(err)
 			return nil, err
 		}
-		signerSki := signer.GetSKI()
+		signerUid := signer.GetUid()
 		for _, info := range multiSignInfo.VoteInfos {
-			signed, _ := ac.NewMemberFromProto(info.Endorsement.Signer)
-			if bytes.Equal(signerSki, signed.GetSKI()) {
-				err = fmt.Errorf("the signer[org:%s] is voted", signed.GetOrgId())
+			signed, _ := ac.NewMember(info.Endorsement.Signer)
+			if signerUid == signed.GetUid() {
+				err = fmt.Errorf("the signer[org:%s] is voted", signed.GetUid())
 				r.log.Warn(err)
 				return nil, err
 			}
@@ -179,7 +178,6 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 		}
 		multiSignInfo.VoteInfos = append(multiSignInfo.VoteInfos, reqVoteInfo)
 	}
-
 	var (
 		contractResultBytes []byte
 		contractErr         error
