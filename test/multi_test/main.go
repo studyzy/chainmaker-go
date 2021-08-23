@@ -415,24 +415,6 @@ func initPayloadTimestamp() *commonPb.Payload {
 	}
 	return payload
 }
-func GetSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
-	skPEM, err := sk3.String()
-	if err != nil {
-		log.Fatalf("get sk PEM failed, %s", err.Error())
-	}
-	//fmt.Printf("skPEM: %s\n", skPEM)
-
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
-	if err != nil {
-		panic(err)
-	}
-	return signer
-}
 
 func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contractName, chainId string) []byte {
 	fmt.Println("========================================================================================================")
@@ -469,7 +451,7 @@ func testMultiSignVote(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, contr
 			MemberInfo: admin1File,
 		}
 		skAdmin1, err := asym.PrivateKeyFromPEM(fadminKeyFile, nil)
-		signerAdmin1 := GetSigner(skAdmin1, admin1)
+		signerAdmin1 := getSigner(skAdmin1, admin1)
 		signerAdmin1Bytes, err := signerAdmin1.Sign("SHA256", payloadBytes) //modify
 		//signerAdmin1Bytes, err := signerAdmin1.Sign("SM3", payloadBytes) //modify
 		if err != nil {
@@ -1037,25 +1019,6 @@ func testQueryFindByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 //	return result
 //}
 
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
-	skPEM, err := sk3.String()
-	if err != nil {
-		log.Fatalf("get sk PEM failed, %s", err.Error())
-	}
-	//fmt.Printf("skPEM: %s\n", skPEM)
-
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
-	if err != nil {
-		panic(err)
-	}
-	return signer
-}
-
 func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	url := fmt.Sprintf("%s:%d", IP, Port)
 
@@ -1076,6 +1039,20 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	} else {
 		return grpc.Dial(url, grpc.WithInsecure())
 	}
+}
+
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
+	skPEM, err := sk3.String()
+	if err != nil {
+		log.Fatalf("get sk PEM failed, %s", err.Error())
+	}
+	//fmt.Printf("skPEM: %s\n", skPEM)
+
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
+	if err != nil {
+		panic(err)
+	}
+	return signer
 }
 
 //func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
