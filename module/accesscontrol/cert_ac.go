@@ -53,10 +53,6 @@ type certACProvider struct {
 	log protocol.Logger
 }
 
-func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
-	panic("implement me")
-}
-
 var _ protocol.AccessControlProvider = (*certACProvider)(nil)
 
 var NilCertACProvider ACProvider = (*certACProvider)(nil)
