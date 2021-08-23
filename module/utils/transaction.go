@@ -306,7 +306,8 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 				}
 				principal, err = ac.CreatePrincipalForTargetOrg(resourceId, endorsements, txBytes, targetOrg)
 				if err != nil {
-					return fmt.Errorf("fail to construct authentication principal with orgId %s for %s-%s: %s", targetOrg, t.Payload.ContractName, t.Payload.Method, err)
+					return fmt.Errorf("fail to construct authentication principal with orgId %s for %s-%s: %s",
+						targetOrg, t.Payload.ContractName, t.Payload.Method, err)
 				}
 			}
 		} else {

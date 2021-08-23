@@ -357,8 +357,8 @@ func IsTxDuplicate(txs []*commonpb.Transaction) bool {
 func IsMerkleRootValid(block *commonpb.Block, txHashes [][]byte, hashType string) error {
 	txRoot, err := hash.GetMerkleRoot(hashType, txHashes)
 	if err != nil || !bytes.Equal(txRoot, block.Header.TxRoot) {
-		return fmt.Errorf("GetMerkleRoot(%s,%v) get %x ,txroot expect %x, got %x, err: %s", hashType, txHashes, txRoot,
-			block.Header.TxRoot, txRoot, err)
+		return fmt.Errorf("GetMerkleRoot(%s,%v) get %x ,txroot expect %x, got %x, err: %s",
+			hashType, txHashes, txRoot, block.Header.TxRoot, txRoot, err)
 	}
 	return nil
 }
@@ -771,7 +771,8 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 
 	startTick := utils.CurrentTimeMillisSeconds()
 	chain.log.Debugf("add block(%d,%x)=(%x,%d,%d)",
-		block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, block.Header.TxCount, len(block.Txs))
+		block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash,
+		block.Header.TxCount, len(block.Txs))
 	chain.mu.Lock()
 	defer chain.mu.Unlock()
 
@@ -792,7 +793,8 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	dbLasts, snapshotLasts, confLasts, otherLasts, pubEvent, err := chain.commonCommit.CommitBlock(
 		block, rwSetMap, conEventMap)
 	if err != nil {
-		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)", err.Error(), block.Header.BlockHeight)
+		chain.log.Errorf("block common commit failed: %s, blockHeight: (%d)",
+			err.Error(), block.Header.BlockHeight)
 	}
 
 	// Remove txs from txpool. Remove will invoke proposeSignal from txpool if pool size > txcount
@@ -842,14 +844,16 @@ func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block) (
 	error, *commonpb.Block, map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent) {
 	err := chain.verifier.VerifyBlock(block, protocol.SYNC_VERIFY)
 	if err != nil {
-		chain.log.Error("block verify failed [%d](hash:%x), %s", block.Header.BlockHeight, block.Header.BlockHash, err)
+		chain.log.Error("block verify failed [%d](hash:%x), %s",
+			block.Header.BlockHeight, block.Header.BlockHash, err)
 		return err, nil, nil, nil
 	}
 
 	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
 		chain.log.Error("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash)
-		return fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash), lastProposed, rwSetMap, conEventMap
+		return fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash),
+			lastProposed, rwSetMap, conEventMap
 	}
 	return nil, lastProposed, rwSetMap, conEventMap
 }

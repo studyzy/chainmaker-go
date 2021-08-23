@@ -7,12 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
+
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
 	"chainmaker.org/chainmaker/protocol/test"
 

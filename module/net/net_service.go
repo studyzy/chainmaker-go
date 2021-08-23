@@ -308,7 +308,7 @@ func (cw *ConfigWatcher) Watch(chainConfig *configPb.ChainConfig) error {
 	// 2.1 get all new roots
 	newCerts := make([][]byte, 0)
 	for _, orgRoot := range chainConfig.TrustRoots {
-		for _,root:=range orgRoot.Root{
+		for _, root := range orgRoot.Root {
 			newCerts = append(newCerts, []byte(root))
 		}
 	}

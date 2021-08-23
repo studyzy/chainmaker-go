@@ -104,7 +104,7 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 	if data, err = proto.Marshal(voteData); err != nil {
 		return nil, err
 	}
-	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash,data); err != nil {
+	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash, data); err != nil {
 		cbi.logger.Errorf("sign data failed, err %v data %v", err, data)
 		return nil, err
 	}

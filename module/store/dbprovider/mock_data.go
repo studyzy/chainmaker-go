@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package dbprovider
 
 import (
@@ -66,7 +73,7 @@ func (g *predefinedKeyGenerator) Key(i int) []byte {
 
 func newFullRandomKeys(n int, start int, format string) [][]byte {
 	keys := newSequentialKeys(n, start, format)
-	r := rand.New(rand.NewSource(time.Now().Unix()))
+	r := rand.New(rand.NewSource(time.Now().Unix())) //nolint: gosec
 	for i := 0; i < n; i++ {
 		j := r.Intn(n)
 		keys[i], keys[j] = keys[j], keys[i]
@@ -102,7 +109,7 @@ func makeRandomValueGenerator(r *rand.Rand, ratio float64, valueSize int) random
 	return randomValueGenerator{b: b, k: valueSize}
 }
 
-func compressibleBytes(r *rand.Rand, ratio float64, n int) []byte {
+func compressibleBytes(r *rand.Rand, ratio float64, n int) []byte { //nolint: gosec
 	m := maxInt(int(float64(n)*ratio), 1)
 	p := randomBytes(r, m)
 	b := make([]byte, 0, n+n%m)
@@ -119,7 +126,7 @@ func maxInt(a int, b int) int {
 	return b
 }
 
-func randomBytes(r *rand.Rand, n int) []byte {
+func randomBytes(r *rand.Rand, n int) []byte { //nolint: gosec
 	b := make([]byte, n)
 	for i := 0; i < n; i++ {
 		b[i] = ' ' + byte(r.Intn('~'-' '+1))
@@ -128,7 +135,7 @@ func randomBytes(r *rand.Rand, n int) []byte {
 }
 
 func NewFullRandomEntryGenerator(start, n int) EntryGenerator {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
+	r := rand.New(rand.NewSource(time.Now().Unix())) //nolint: gosec
 	return &pairedEntryGenerator{
 		keyGenerator:         newFullRandomKeyGenerator(start, n),
 		randomValueGenerator: makeRandomValueGenerator(r, 0.5, 100),

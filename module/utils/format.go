@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	contractNameReg    = regexp.MustCompile("^[a-zA-Z0-9_]{1,128}$")
-	evmAddressHexReg   = regexp.MustCompile("^(0x)?[0-9a-fA-F]{40}$")
-	chainIdReg         = regexp.MustCompile("^[a-zA-Z0-9_]{1,30}$")
-	txIDReg            = regexp.MustCompile(`^\S{1,64}$`)
-	reservedAddressLen = 4 // FFF -> 4096
+	contractNameReg  = regexp.MustCompile("^[a-zA-Z0-9_]{1,128}$")
+	evmAddressHexReg = regexp.MustCompile("^(0x)?[0-9a-fA-F]{40}$")
+	chainIdReg       = regexp.MustCompile("^[a-zA-Z0-9_]{1,30}$")
+	txIDReg          = regexp.MustCompile(`^\S{1,64}$`)
+	//reservedAddressLen = 4 // FFF -> 4096
 )
 
 func CheckChainIdFormat(chainId string) bool {
