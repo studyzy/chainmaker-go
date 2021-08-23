@@ -8,8 +8,8 @@
 package contractmgr
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,13 +25,7 @@ import (
 )
 
 var (
-	ContractName                   = syscontract.SystemContract_CONTRACT_MANAGE.String()
-	keyContractName                = "_Native_Contract_List"
-	contractsForMultiSignWhiteList = []string{
-		syscontract.SystemContract_CERT_MANAGE.String(),
-		syscontract.SystemContract_PRIVATE_COMPUTE.String(),
-		syscontract.SystemContract_CONTRACT_MANAGE.String(),
-	}
+	ContractName = syscontract.SystemContract_CONTRACT_MANAGE.String()
 )
 
 type ContractManager struct {
@@ -59,280 +53,9 @@ func registerContractManagerMethods(log protocol.Logger) map[string]common.Contr
 	methodMap[syscontract.ContractManageFunction_UNFREEZE_CONTRACT.String()] = runtime.unfreezeContract
 	methodMap[syscontract.ContractManageFunction_REVOKE_CONTRACT.String()] = runtime.revokeContract
 	methodMap[syscontract.ContractQueryFunction_GET_CONTRACT_INFO.String()] = runtime.getContractInfo
-
-	methodMap[syscontract.ContractManageFunction_GRANT_CONTRACT_ACCESS.String()] = runtime.grantContractAccess
-	methodMap[syscontract.ContractManageFunction_REVOKE_CONTRACT_ACCESS.String()] = runtime.revokeContractAccess
-	methodMap[syscontract.ContractManageFunction_VERIFY_CONTRACT_ACCESS.String()] = runtime.verifyContractAccess
-	methodMap[syscontract.ContractQueryFunction_GET_DISABLED_CONTRACT_LIST.String()] = runtime.getDisabledContractList
-
 	return methodMap
 
 }
-
-// enable access to a native contract
-// this method will take off the contract name from the disabled contract list
-func (r *ContractManagerRuntime) grantContractAccess(txSimContext protocol.TxSimContext,
-	params map[string][]byte) ([]byte, error) {
-
-	var (
-		err                      error
-		requestContractListBytes []byte
-		updatedContractListBytes []byte
-		disabledContractList     []string
-		requestContractList      []string
-		updatedContractList      []string
-	)
-
-	// 1. fetch the disabled contract list
-	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. get the requested contracts to enable access from parameters
-	requestContractListBytes = params["native_contract_name"]
-	err = json.Unmarshal(requestContractListBytes, &requestContractList)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. adjust the disabled native contract list per the requested contract names
-	updatedContractList = filterContracts(disabledContractList, requestContractList)
-	updatedContractListBytes, err = json.Marshal(updatedContractList)
-	if err != nil {
-		return nil, err
-	}
-
-	// 4. store the adjusted native contract list back to the database
-	err = storeDisabledContractList(txSimContext, updatedContractListBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	r.log.Infof("grant access to contract: %v succeed!", requestContractList)
-	return nil, nil
-}
-
-// disable access to a native contract
-// this method will add the contract names to the disabled contract list
-func (r *ContractManagerRuntime) revokeContractAccess(txSimContext protocol.TxSimContext,
-	params map[string][]byte) ([]byte, error) {
-	var (
-		err                      error
-		requestContractListBytes []byte
-		updatedContractListBytes []byte
-		disabledContractList     []string
-		requestContractList      []string
-		updatedContractList      []string
-	)
-
-	// 1. fetch the disabled contract list
-	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. 2. get the requested contracts to disable access from parameters
-	requestContractListBytes = params["native_contract_name"]
-	err = json.Unmarshal(requestContractListBytes, &requestContractList)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. adjust the disabled native contract list per the requested contract names
-	updatedContractList = append(disabledContractList, requestContractList...)
-
-	updatedContractListBytes, err = json.Marshal(updatedContractList)
-	if err != nil {
-		return nil, err
-	}
-
-	// 4. store the updated native contract list back to the database
-	err = storeDisabledContractList(txSimContext, updatedContractListBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
-}
-
-// verify if access to the requested contract is enabled according to the disabled contract list
-// returns true as []byte if so or false otherwise
-func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSimContext,
-	params map[string][]byte) ([]byte, error) {
-	var (
-		err                   error
-		disabledContractList  []string
-		contractName          string
-		multiSignContractName string
-	)
-
-	// 1. fetch the disabled native contract list
-	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. get the requested contract name and verify if it's on the disabled native contract list
-	contractName = txSimContext.GetTx().Payload.ContractName
-	for _, cn := range disabledContractList {
-		if cn == contractName {
-			return []byte("false"), nil
-		}
-	}
-
-	// 3. if the requested contract name is multisignature, get the underlying contract name from
-	// the tx payload and verify if it has access
-	if contractName == syscontract.SystemContract_MULTI_SIGN.String() {
-
-		// if the method name is not req, return true since it does not contain contract names in parameters
-		multiSignMethodName := txSimContext.GetTx().Payload.Method
-		if multiSignContractName == syscontract.MultiSignFunction_QUERY.String() ||
-			multiSignMethodName == syscontract.MultiSignFunction_VOTE.String() {
-			return []byte("true"), nil
-		}
-
-		multiSignContractName, err = getContractNameForMultiSign(txSimContext.GetTx().Payload.Parameters)
-		if err != nil {
-			return nil, err
-		}
-
-		// check if the requested contract is on the disabled contract list
-		for _, cn := range disabledContractList {
-			if cn == multiSignContractName {
-				return []byte("false"), nil
-			}
-		}
-
-		// check if the requested contract list is on the multi sign white list
-		for _, cn := range contractsForMultiSignWhiteList {
-			if cn == multiSignContractName {
-				return []byte("true"), nil
-			}
-		}
-
-		return []byte("false"), nil
-	}
-
-	return []byte("true"), nil
-}
-
-func getContractNameForMultiSign(params []*commonPb.KeyValuePair) (string, error) {
-	for i, pair := range params {
-		if pair.Key == syscontract.MultiReq_SYS_CONTRACT_NAME.String() {
-			return string(params[i].Value), nil
-		}
-	}
-	return "", errors.New("can't find the contract name for multi sign")
-}
-
-// fetch the disabled contract list
-func (r *ContractManagerRuntime) getDisabledContractList(txSimContext protocol.TxSimContext,
-	params map[string][]byte) ([]byte, error) {
-	var (
-		err                       error
-		disabledContractList      []string
-		disabledContractListBytes []byte
-	)
-
-	disabledContractList, err = r.fetchDisabledContractList(txSimContext)
-	fmt.Printf("the result is %v\n", disabledContractList)
-
-	if err != nil {
-		return nil, err
-	}
-
-	disabledContractListBytes, err = json.Marshal(disabledContractList)
-
-	if err != nil {
-		return nil, err
-	}
-	return disabledContractListBytes, nil
-}
-
-// store the disabled contract list to the database
-func storeDisabledContractList(txSimContext protocol.TxSimContext, disabledContractListBytes []byte) error {
-	var (
-		err                              error
-		refinedDisabledContractListBytes []byte
-		disabledContractList             []string
-		refinedDisabledContractList      []string
-	)
-	err = json.Unmarshal(disabledContractListBytes, &disabledContractList)
-	if err != nil {
-		return err
-	}
-
-	// filter out redundant contract names in the disabled contract list
-	uniqueMap := make(map[string]string)
-	for _, cn := range disabledContractList {
-		if _, ok := uniqueMap[cn]; !ok {
-			uniqueMap[cn] = cn
-			refinedDisabledContractList = append(refinedDisabledContractList, cn)
-		}
-	}
-
-	refinedDisabledContractListBytes, err = json.Marshal(refinedDisabledContractList)
-	if err != nil {
-		return err
-	}
-
-	err = txSimContext.Put(ContractName, []byte(keyContractName), refinedDisabledContractListBytes)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// filter out request contracts from disabled contract list, return a newly updated list
-func filterContracts(disabledContractList []string, requestedContractList []string) []string {
-	var updatedContractList []string
-
-	// return the original list if no contracts have been requested
-	if len(requestedContractList) == 0 {
-		return disabledContractList
-	}
-
-	m := make(map[string]int, len(requestedContractList))
-	for _, cn := range requestedContractList {
-		m[cn] = 1
-	}
-
-	// populate the updatedContractList
-	for _, cn := range disabledContractList {
-		_, found := m[cn]
-		if !found {
-			updatedContractList = append(updatedContractList, cn)
-		}
-	}
-
-	return updatedContractList
-}
-
-// helper method to fetch the disabled contract list from genesis config file
-// if not initialized or from the database otherwise
-func (r *ContractManagerRuntime) fetchDisabledContractList(txSimContext protocol.TxSimContext) ([]string, error) {
-	// try to get disabled contract list from database
-	disabledContractListBytes, err := txSimContext.Get(ContractName, []byte(keyContractName))
-	if err != nil {
-		return nil, err
-	}
-
-	// if the config file does not exist in the database yet, try fetch it from the genesis config file and store it
-	// to the database
-	if disabledContractListBytes == nil {
-		disabledContractListBytes, err = r.initializeDisabledNativeContractList(txSimContext)
-		if err != nil {
-			r.log.Error(err)
-			return nil, err
-		}
-	}
-
-	var disabledContractList []string
-	err = json.Unmarshal(disabledContractListBytes, &disabledContractList)
-	return disabledContractList, err
-}
-
 func (r *ContractManagerRuntime) getContractInfo(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
 	[]byte, error) {
 	name := string(parameters[syscontract.GetContractInfo_CONTRACT_NAME.String()])
@@ -341,36 +64,6 @@ func (r *ContractManagerRuntime) getContractInfo(txSimContext protocol.TxSimCont
 		return nil, err
 	}
 	return json.Marshal(contract)
-}
-
-func (r *ContractManagerRuntime) initializeDisabledNativeContractList(
-	txSimContext protocol.TxSimContext) ([]byte, error) {
-	var (
-		err                       error
-		chainConfig               *configPb.ChainConfig
-		disabledContractListBytes []byte
-	)
-
-	// 1. fetch chainConfig from genesis config file
-	chainConfig, err = chainconfigmgr.GetChainConfig(txSimContext, make(map[string][]byte))
-	if err != nil {
-		r.log.Error(err)
-		return nil, err
-	}
-
-	disabledContractList := chainConfig.DisabledNativeContract
-	disabledContractListBytes, err = json.Marshal(disabledContractList)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. store the disabledContractList field to the database
-	err = storeDisabledContractList(txSimContext, disabledContractListBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return disabledContractListBytes, nil
 }
 
 //func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
@@ -391,6 +84,10 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
+	{ // for debug
+		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
+		r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
+	}
 	r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
 		contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
@@ -406,13 +103,17 @@ func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
+	{ // for debug
+		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
+		r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
+	}
 	r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
 		contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
 }
 
-func (r *ContractManagerRuntime) parseParam(parameters map[string][]byte) (string, string, []byte,
-	commonPb.RuntimeType, error) {
+func (r *ContractManagerRuntime) parseParam(parameters map[string][]byte) (string, string, []byte, commonPb.RuntimeType,
+	error) {
 	name := string(parameters[syscontract.InitContract_CONTRACT_NAME.String()])
 	version := string(parameters[syscontract.InitContract_CONTRACT_VERSION.String()])
 	byteCode := parameters[syscontract.InitContract_CONTRACT_BYTECODE.String()]
@@ -471,18 +172,18 @@ func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, 
 	error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	return utils.GetContractByName(context.Get, name)
+	return context.GetContractByName(name)
 }
 func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimContext, name string) ([]byte, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] of get contract not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	return utils.GetContractBytecode(context.Get, name)
+	return context.GetContractBytecode(name)
 }
 
 //GetAllContracts 查询所有合约的详细信息
@@ -541,14 +242,18 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 	if err != nil {
 		return nil, err
 	}
+	r.log.DebugDynamic(func() string {
+		codeHash := sha256.Sum256(byteCode)
+		return fmt.Sprintf("put contract[%s] bytecode hash:%x", name, codeHash)
+	})
 	//实例化合约，并init合约，产生读写集
 	result, statusCode := context.CallContract(contract, protocol.ContractInitMethod, byteCode, initParameters,
 		0, commonPb.TxType_INVOKE_CONTRACT)
 	if statusCode != commonPb.TxStatusCode_SUCCESS {
-		return nil, errContractInitFail
+		return nil, fmt.Errorf("%s, %s", errContractInitFail, result.Message)
 	}
 	if result.Code > 0 { //throw error
-		return nil, errContractInitFail
+		return nil, fmt.Errorf("%s, %s", errContractInitFail, result.Message)
 	}
 	if runTime == commonPb.RuntimeType_EVM {
 		//save bytecode body
@@ -556,8 +261,12 @@ func (r *ContractManagerRuntime) InstallContract(context protocol.TxSimContext, 
 		if len(result.Result) > 0 {
 			err := context.Put(ContractName, byteCodeKey, result.Result)
 			if err != nil {
-				return nil, errContractInitFail
+				return nil, fmt.Errorf("%s, %s", errContractInitFail, err)
 			}
+			r.log.DebugDynamic(func() string {
+				codeHash := sha256.Sum256(result.Result)
+				return fmt.Sprintf("update EVM contract[%s] bytecode hash:%x", name, codeHash)
+			})
 		}
 	}
 	return contract, nil
@@ -598,10 +307,11 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 	result, statusCode := context.CallContract(contract, protocol.ContractUpgradeMethod, byteCode, upgradeParameters,
 		0, commonPb.TxType_INVOKE_CONTRACT)
 	if statusCode != commonPb.TxStatusCode_SUCCESS {
-		return nil, errContractUpgradeFail
+		return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, result.Message)
+
 	}
 	if result.Code > 0 { //throw error
-		return nil, errContractUpgradeFail
+		return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, result.Message)
 	}
 	if runTime == commonPb.RuntimeType_EVM {
 		//save bytecode body
@@ -609,7 +319,7 @@ func (r *ContractManagerRuntime) UpgradeContract(context protocol.TxSimContext, 
 		if len(result.Result) > 0 {
 			err := context.Put(ContractName, byteCodeKey, result.Result)
 			if err != nil {
-				return nil, errContractUpgradeFail
+				return nil, fmt.Errorf("%s, %s", errContractUpgradeFail, err)
 			}
 		}
 	}
@@ -627,15 +337,15 @@ func (r *ContractManagerRuntime) RevokeContract(context protocol.TxSimContext, n
 	*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	contract, err := utils.GetContractByName(context.Get, name)
+	contract, err := context.GetContractByName(name)
 	if err != nil {
 		return nil, err
 	}
 	if contract.Status != commonPb.ContractStatus_NORMAL && contract.Status != commonPb.ContractStatus_FROZEN {
-		r.log.Errorf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s",
+		r.log.Warnf("contract[%s] expect status:NORMAL or FROZEN,actual status:%s",
 			name, contract.Status.String())
 		return nil, errContractStatusInvalid
 	}
@@ -653,17 +363,18 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 	oldStatus, newStatus commonPb.ContractStatus) (*commonPb.Contract, error) {
 	if utils.IsAnyBlank(name) {
 		err := fmt.Errorf("%s, param[contract_name] not found", common.ErrParams.Error())
-		r.log.Errorf(err.Error())
+		r.log.Warnf(err.Error())
 		return nil, err
 	}
-	contract, err := utils.GetContractByName(context.Get, name)
+	contract, err := context.GetContractByName(name)
 	if err != nil {
 		return nil, err
 	}
 	if contract.Status != oldStatus {
-		r.log.Errorf("contract[%s] expect status:%s,actual status:%s",
+		msg := fmt.Sprintf("contract[%s] expect status:%s,actual status:%s",
 			name, oldStatus.String(), contract.Status.String())
-		return nil, errContractStatusInvalid
+		r.log.Warnf(msg)
+		return nil, fmt.Errorf("%s, %s", errContractStatusInvalid, msg)
 	}
 	contract.Status = newStatus
 	key := utils.GetContractDbKey(name)
