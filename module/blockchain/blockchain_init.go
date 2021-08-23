@@ -10,7 +10,6 @@ package blockchain
 import (
 	"encoding/hex"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
@@ -265,29 +264,41 @@ func (bc *Blockchain) initAC() (err error) {
 	}
 	// initialize access control: policy list and resource-policy mapping
 	nodeConfig := localconf.ChainMakerConfig.NodeConfig
-	skFile := nodeConfig.PrivKeyFile
-	if !filepath.IsAbs(skFile) {
-		skFile, err = filepath.Abs(skFile)
-		if err != nil {
-			return err
-		}
-	}
-	certFile := nodeConfig.CertFile
-	if !filepath.IsAbs(certFile) {
-		certFile, err = filepath.Abs(certFile)
-		if err != nil {
-			return err
-		}
-	}
+	//skFile := nodeConfig.PrivKeyFile
+	//if !filepath.IsAbs(skFile) {
+	//	skFile, err = filepath.Abs(skFile)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	//certFile := nodeConfig.CertFile
+	//if !filepath.IsAbs(certFile) {
+	//	certFile, err = filepath.Abs(certFile)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	acLog := logger.GetLoggerByChain(logger.MODULE_ACCESS, bc.chainId)
-	bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(
-		skFile, nodeConfig.PrivKeyPassword, certFile, bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	//bc.ac, err = accesscontrol.NewAccessControlWithChainConfig(
+	//	bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	//if err != nil {
+	//	bc.log.Errorf("get organization information failed, %s", err.Error())
+	//	return
+	//}
+	acFactory := accesscontrol.ACFactory()
+	bc.ac, err = acFactory.NewACProvider("CERT", bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
 		bc.log.Errorf("get organization information failed, %s", err.Error())
 		return
 	}
 
-	bc.identity = bc.ac.GetLocalSigningMember()
+	bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
+		nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
+	if err != nil {
+		bc.log.Errorf("initialize identity failed, %s", err.Error())
+		return
+	}
+
 	bc.initModules[moduleNameAccessControl] = struct{}{}
 	return
 }

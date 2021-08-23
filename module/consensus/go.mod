@@ -22,7 +22,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/thoas/go-funk v0.8.0
-	github.com/tidwall/wal v0.1.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/raft/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/server/v3 v3.5.0-beta.4

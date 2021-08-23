@@ -215,7 +215,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract,
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
 	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		dbByteCode, err := s.GetContractBytecode(contract.Name)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
 		}

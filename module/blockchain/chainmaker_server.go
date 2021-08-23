@@ -327,5 +327,5 @@ func (server *ChainMakerServer) GetBlockchain(chainId string) (*Blockchain, erro
 
 // Version of chainmaker.
 func (server *ChainMakerServer) Version() string {
-	return localconf.CurrentVersion
+	return fmt.Sprintf("%d", protocol.DefaultBlockVersion)
 }

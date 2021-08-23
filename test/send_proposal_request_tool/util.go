@@ -30,6 +30,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const GRPCMaxCallRecvMsgSize = 16 * 1024 * 1024
+
 func constructQueryPayload(chainId, contractName, method string, pairs []*commonPb.KeyValuePair) (*commonPb.Payload, error) {
 	payload := &commonPb.Payload{
 		ContractName: contractName,
@@ -56,6 +58,7 @@ func constructInvokePayload(chainId, contractName, method string, pairs []*commo
 
 	return payload, nil
 }
+
 func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMember, error) {
 	skPEM, err := sk3.String()
 	if err != nil {
@@ -63,12 +66,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) (protocol.SigningMemb
 	}
 	//fmt.Printf("skPEM: %s\n", skPEM)
 
-	m, err := accesscontrol.MockAccessControlWithHash(hashAlgo).NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		return nil, err
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember(hashAlgo, sender, skPEM, "")
 	if err != nil {
 		return nil, err
 	}
@@ -90,9 +88,11 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 		if err != nil {
 			return nil, err
 		}
-		return grpc.Dial(url, grpc.WithTransportCredentials(*c))
+		return grpc.Dial(url, grpc.WithTransportCredentials(*c),
+			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(GRPCMaxCallRecvMsgSize)))
 	} else {
-		return grpc.Dial(url, grpc.WithInsecure())
+		return grpc.Dial(url, grpc.WithInsecure(),
+			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(GRPCMaxCallRecvMsgSize)))
 	}
 }
 

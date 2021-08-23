@@ -96,6 +96,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 		Header: &commonPb.BlockHeader{
 			ChainId:        cc.ChainId,
 			BlockHeight:    0,
+			BlockType:      commonPb.BlockType_CONFIG_BLOCK,
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,

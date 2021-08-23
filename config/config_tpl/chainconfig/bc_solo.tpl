@@ -55,7 +55,16 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "{org1_id}"
-    root: "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
+
+# 证书库
+#trust_members:
+#  - member_info: ""
+#    org_id: ""
+#    role: "consensus"
+#    node_id:  ""
+
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:

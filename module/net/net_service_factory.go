@@ -54,9 +54,11 @@ func (nsf *NetServiceFactory) setAllConsensusNodeIds(ns *NetService, chainConf p
 
 func (nsf *NetServiceFactory) setAllTlsTrustRoots(ns *NetService, chainConf protocol.ChainConf) error {
 	// set all tls trust root certs
-	for _, root := range chainConf.ChainConfig().TrustRoots {
-		if err := ns.localNet.AddTrustRoot(ns.chainId, []byte(root.Root)); err != nil {
-			return err
+	for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
+		for _, root := range orgRoot.Root {
+			if err := ns.localNet.AddTrustRoot(ns.chainId, []byte(root)); err != nil {
+				return err
+			}
 		}
 	}
 	ns.logger.Infof("[NetServiceFactory] add trust root certs ok(chain-id:%s)", ns.chainId)

@@ -7,6 +7,8 @@ import (
 
 	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
 	"github.com/spf13/cobra"
+
+	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"
 )
 
 var (

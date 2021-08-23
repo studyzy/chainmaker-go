@@ -162,31 +162,55 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "{org1_id}"
-    root: "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org1_id}/ca.crt"
   - org_id: "{org2_id}"
-    root: "../config/{org_path}/certs/ca/{org2_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org2_id}/ca.crt"
   - org_id: "{org3_id}"
-    root: "../config/{org_path}/certs/ca/{org3_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org3_id}/ca.crt"
   - org_id: "{org4_id}"
-    root: "../config/{org_path}/certs/ca/{org4_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org4_id}/ca.crt"
   - org_id: "{org5_id}"
-    root: "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org5_id}/ca.crt"
   - org_id: "{org6_id}"
-    root: "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org6_id}/ca.crt"
   - org_id: "{org7_id}"
-    root: "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org7_id}/ca.crt"
   - org_id: "{org8_id}"
-    root: "../config/{org_path}/certs/ca/{org8_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org8_id}/ca.crt"
   - org_id: "{org9_id}"
-    root: "../config/{org_path}/certs/ca/{org9_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org9_id}/ca.crt"
   - org_id: "{org10_id}"
-    root: "../config/{org_path}/certs/ca/{org10_id}/ca.crt"
+    root:
+      - "../config/{org_path}/certs/ca/{org10_id}/ca.crt"
 #  - org_id: "{org11_id}"
-#    root: "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
+#    root:
+#      - "../config/{org_path}/certs/ca/{org11_id}/ca.crt"
 #  - org_id: "{org12_id}"
-#    root: "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
+#    root:
+#      - "../config/{org_path}/certs/ca/{org12_id}/ca.crt"
 #  - org_id: "{org13_id}"
-#    root: "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
+#    root:
+#      - "../config/{org_path}/certs/ca/{org13_id}/ca.crt"
+
+# 证书库
+#trust_members:
+#  - member_info: ""
+#    org_id: ""
+#    role: "consensus"
+#    node_id:  ""
+#  - member_info: ""
+#    org_id: ""
+#    role: "common"
+#    node_id:  ""
 
 # 权限配置（只能整体添加、修改、删除）
 resource_policies:
