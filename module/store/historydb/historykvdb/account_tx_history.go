@@ -18,11 +18,11 @@ import (
 )
 
 func constructAcctTxHistKey(accountId []byte, blockHeight uint64, txId string) []byte {
-	key := fmt.Sprintf(accountTxHistoryPrefix+"%x_%d_%s", accountId, blockHeight, txId)
+	key := fmt.Sprintf(accountTxHistoryPrefix+"%x"+splitChar+"%d"+splitChar+"%s", accountId, blockHeight, txId)
 	return []byte(key)
 }
 func constructAcctTxHistKeyPrefix(accountId []byte) []byte {
-	key := fmt.Sprintf(accountTxHistoryPrefix+"%x_", accountId)
+	key := fmt.Sprintf(accountTxHistoryPrefix+"%x"+splitChar, accountId)
 	return []byte(key)
 }
 func splitAcctTxHistKey(key []byte) (accountId []byte, blockHeight uint64, txId string, err error) {
@@ -30,7 +30,7 @@ func splitAcctTxHistKey(key []byte) (accountId []byte, blockHeight uint64, txId 
 		err = errors.New("empty dbKey")
 		return
 	}
-	array := strings.Split(string(key[1:]), "_")
+	array := strings.Split(string(key[1:]), splitChar)
 	if len(array) != 3 {
 		err = errors.New("invalid dbKey format")
 		return

@@ -17,11 +17,11 @@ import (
 )
 
 func constructContractTxHistKey(contractName string, blockHeight uint64, txId string) []byte {
-	key := fmt.Sprintf(contractTxHistoryPrefix+"%s_%d_%s", contractName, blockHeight, txId)
+	key := fmt.Sprintf(contractTxHistoryPrefix+"%s"+splitChar+"%d"+splitChar+"%s", contractName, blockHeight, txId)
 	return []byte(key)
 }
 func constructContractTxHistKeyPrefix(contractName string) []byte {
-	key := fmt.Sprintf(contractTxHistoryPrefix+"%s_", contractName)
+	key := fmt.Sprintf(contractTxHistoryPrefix+"%s"+splitChar, contractName)
 	return []byte(key)
 }
 func splitContractTxHistKey(key []byte) (contractName string, blockHeight uint64, txId string, err error) {
@@ -29,7 +29,7 @@ func splitContractTxHistKey(key []byte) (contractName string, blockHeight uint64
 		err = errors.New("empty dbKey")
 		return
 	}
-	array := strings.Split(string(key[1:]), "_")
+	array := strings.Split(string(key[1:]), splitChar)
 	if len(array) != 3 {
 		err = errors.New("invalid dbKey format")
 		return
