@@ -37,15 +37,15 @@ consensus:
     - org_id: "wx-org4.chainmaker.org"
       address:
         - "/ip4/127.0.0.1/tcp/11304/p2p/QmQFbHeNiQG4NSMFr4f16DKgS3VVCbwp5MdzYoYmgqN8LA"
-#    - org_id: "{org5_id}"
-#      address:
-#        - "/ip4/127.0.0.1/tcp/{org5_port}/p2p/{org5_peerid}"
-#    - org_id: "{org6_id}"
-#      address:
-#        - "/ip4/127.0.0.1/tcp/{org6_port}/p2p/{org6_peerid}"
-#    - org_id: "{org7_id}"
-#      address:
-#        - "/ip4/127.0.0.1/tcp/{org7_port}/p2p/{org7_peerid}"
+  #    - org_id: "{org5_id}"
+  #      address:
+  #        - "/ip4/127.0.0.1/tcp/{org5_port}/p2p/{org5_peerid}"
+  #    - org_id: "{org6_id}"
+  #      address:
+  #        - "/ip4/127.0.0.1/tcp/{org6_port}/p2p/{org6_peerid}"
+  #    - org_id: "{org7_id}"
+  #      address:
+  #        - "/ip4/127.0.0.1/tcp/{org7_port}/p2p/{org7_peerid}"
   ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
     - key: aa
       value: chain01_ext11
@@ -53,19 +53,26 @@ consensus:
 # 信任组织和根证书
 trust_roots:
   - org_id: "wx-org1.chainmaker.org"
-    root: "./certs/ca/wx-org1.chainmaker.org/ca.crt"
+    root:
+      - "./certs/ca/wx-org1.chainmaker.org/ca.crt"
   - org_id: "wx-org2.chainmaker.org"
-    root: "./certs/ca/wx-org2.chainmaker.org/ca.crt"
+    root:
+      - "./certs/ca/wx-org2.chainmaker.org/ca.crt"
   - org_id: "wx-org3.chainmaker.org"
-    root: "./certs/ca/wx-org3.chainmaker.org/ca.crt"
+    root:
+      - "./certs/ca/wx-org3.chainmaker.org/ca.crt"
   - org_id: "wx-org4.chainmaker.org"
-    root: "./certs/ca/wx-org4.chainmaker.org/ca.crt"
+    root:
+      - "./certs/ca/wx-org4.chainmaker.org/ca.crt"
 #  - org_id: "{org5_id}"
-#    root: "./certs/ca/{org5_id}/ca.crt"
+#    root:
+#      - "./certs/ca/{org5_id}/ca.crt"
 #  - org_id: "{org6_id}"
-#    root: "./certs/ca/{org6_id}/ca.crt"
+#    root:
+#      - "./certs/ca/{org6_id}/ca.crt"
 #  - org_id: "{org7_id}"
-#    root: "./certs/ca/{org7_id}/ca.crt"
+#    root:
+#      - "./certs/ca/{org7_id}/ca.crt"
 
 # 权限配置（只能整体添加、修改、删除）
 permissions:

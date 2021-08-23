@@ -12,8 +12,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"chainmaker.org/chainmaker-go/utils"
-
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -112,7 +110,7 @@ func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, lim
 }
 
 func (s *txQuerySimContextImpl) GetCreator(contractName string) *acPb.Member {
-	contract, err := utils.GetContractByName(s.Get, contractName)
+	contract, err := s.GetContractByName(contractName)
 	if err != nil {
 		return nil
 	}
@@ -268,7 +266,7 @@ func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
 	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		dbByteCode, err := s.GetContractBytecode(contract.Name)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
 		}
@@ -314,4 +312,12 @@ func (s *txQuerySimContextImpl) SetStateKvHandle(index int32, rows protocol.Stat
 func (s *txQuerySimContextImpl) GetStateKvHandle(index int32) (protocol.StateIterator, bool) {
 	data, ok := s.kvRowCache[index]
 	return data, ok
+}
+func (s *txQuerySimContextImpl) GetContractByName(name string) (*commonPb.Contract, error) {
+	return s.blockchainStore.GetContractByName(name)
+}
+
+//GetContractBytecode get contract bytecode
+func (s *txQuerySimContextImpl) GetContractBytecode(name string) ([]byte, error) {
+	return s.blockchainStore.GetContractBytecode(name)
 }

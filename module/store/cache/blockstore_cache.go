@@ -150,7 +150,6 @@ func (c *storeCache) has(key string) (bool, bool) {
 		return value == nil, true
 	}
 	return false, false
-
 }
 
 //func (c *storeCache) len() int {

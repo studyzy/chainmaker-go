@@ -7,10 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package libp2pgmtls
 
 import (
-	"chainmaker.org/chainmaker-go/net/p2p/revoke"
-	cmcrypto "chainmaker.org/chainmaker/common/crypto"
-	cmtls "chainmaker.org/chainmaker/common/crypto/tls"
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"context"
 	gocrypto "crypto"
 	"crypto/ecdsa"
@@ -18,11 +14,17 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net"
+
+	"chainmaker.org/chainmaker-go/net/p2p/revoke"
+	cmcrypto "chainmaker.org/chainmaker/common/crypto"
+	cmtls "chainmaker.org/chainmaker/common/crypto/tls"
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
 	"github.com/tjfoc/gmsm/sm2"
-	"net"
 )
 
 // ID is the protocol ID (used when negotiating with multistream)
@@ -183,15 +185,26 @@ func createVerifyPeerCertificateFunc(
 }
 
 func isRevoked(revokeValidator *revoke.RevokedValidator, rawCerts [][]byte) (bool, error) {
-	certs := make([]*cmx509.Certificate, 0)
+	//certs := make([]*cmx509.Certificate, 0)
+	//for idx := range rawCerts {
+	//	cert, err := cmx509.ParseCertificate(rawCerts[idx])
+	//	if err != nil {
+	//		return false, err
+	//	}
+	//	certs = append(certs, cert)
+	//}
+	//return revokeValidator.ValidateCertsIsRevoked(certs), nil
+	members := make([]*pbac.Member, 0)
 	for idx := range rawCerts {
-		cert, err := cmx509.ParseCertificate(rawCerts[idx])
-		if err != nil {
-			return false, err
+		m := &pbac.Member{
+			OrgId:      "",
+			MemberType: pbac.MemberType_CERT,
+			MemberInfo: rawCerts[idx],
 		}
-		certs = append(certs, cert)
+		members = append(members, m)
 	}
-	return revokeValidator.ValidateCertsIsRevoked(certs), nil
+	ok, err := revokeValidator.ValidateMemberStatus(members)
+	return !ok, err
 }
 
 // SecureInbound runs the TLS handshake as a server.

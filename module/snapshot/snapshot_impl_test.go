@@ -32,6 +32,14 @@ type MockSimContextImpl struct {
 	txResult     *commonPb.Result
 }
 
+func (s *MockSimContextImpl) GetContractByName(name string) (*commonPb.Contract, error) {
+	panic("implement me")
+}
+
+func (s *MockSimContextImpl) GetContractBytecode(name string) ([]byte, error) {
+	panic("implement me")
+}
+
 const implement_me = "implement me"
 
 func (s *MockSimContextImpl) GetTxExecSeq() int {

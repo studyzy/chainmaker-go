@@ -5,9 +5,9 @@ go 1.15
 require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210816122318-5281b78fdd2e
-	chainmaker.org/chainmaker/protocol v0.0.0-20210816123128-9b1f9078b209
+	chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210820090923-daeaf929a7c0
+	chainmaker.org/chainmaker/protocol v0.0.0-20210820091045-f54164dfaf0e
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/pingcap/errors v0.11.5-0.20201029093017-5a7df2af2ac7 // indirect
 	go.uber.org/atomic v1.7.0 // indirect

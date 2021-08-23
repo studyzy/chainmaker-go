@@ -57,10 +57,10 @@ func prePathFmt() string {
 	return certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 }
 func userKeyPath() string {
-	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
 }
 func userCrtPath() string {
-	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 }
 
 var (
@@ -839,12 +839,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMembe
 	}
 	//fmt.Printf("skPEM: %s\n", skPEM)
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
 	if err != nil {
 		panic(err)
 	}

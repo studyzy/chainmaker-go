@@ -10,9 +10,9 @@ require (
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210816122318-5281b78fdd2e
-	chainmaker.org/chainmaker/protocol v0.0.0-20210816123128-9b1f9078b209
+	chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210820090923-daeaf929a7c0
+	chainmaker.org/chainmaker/protocol v0.0.0-20210820091045-f54164dfaf0e
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -22,7 +22,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/thoas/go-funk v0.8.0
-	github.com/tidwall/wal v0.1.4
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/raft/v3 v3.5.0-beta.4
 	go.etcd.io/etcd/server/v3 v3.5.0-beta.4

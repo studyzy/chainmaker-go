@@ -12,13 +12,15 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210816122318-5281b78fdd2e
-	chainmaker.org/chainmaker/protocol v0.0.0-20210816123128-9b1f9078b209
+	chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210820090923-daeaf929a7c0
+	chainmaker.org/chainmaker/protocol v0.0.0-20210820091045-f54164dfaf0e
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.4.3
+	github.com/google/uuid v1.1.5
 	github.com/mr-tron/base58 v1.2.0
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0

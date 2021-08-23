@@ -17,9 +17,10 @@
 package storage
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
+	"chainmaker.org/chainmaker/common/evmutils"
+	"encoding/hex"
 )
 
 type Storage struct {
@@ -55,8 +56,10 @@ func (s *Storage) SLoad(n *evmutils.Int, k *evmutils.Int) (*evmutils.Int, error)
 		return nil, utils.ErrStorageNotInitialized
 	}
 
-	nsStr := n.String()
-	keyStr := k.String()
+	nsStr := hex.EncodeToString(n.Bytes())
+	keyStr := hex.EncodeToString(k.Bytes())
+	//nsStr := n.String()
+	//keyStr := k.String()
 
 	var err error = nil
 	i := s.ResultCache.CachedData.Get(nsStr, keyStr)
@@ -74,12 +77,15 @@ func (s *Storage) SLoad(n *evmutils.Int, k *evmutils.Int) (*evmutils.Int, error)
 }
 
 func (s *Storage) SStore(n *evmutils.Int, k *evmutils.Int, v *evmutils.Int) {
-	s.ResultCache.CachedData.Set(n.String(), k.String(), v)
+	nsStr := hex.EncodeToString(n.Bytes())
+	keyStr := hex.EncodeToString(k.Bytes())
+	s.ResultCache.CachedData.Set(nsStr, keyStr, v)
 	//fmt.Println("SStore", n.String(), "k", k.String(), "v", v.String())
 }
 
 func (s *Storage) BalanceModify(address *evmutils.Int, value *evmutils.Int, neg bool) {
-	kString := address.String()
+	//kString := address.String()
+	kString := hex.EncodeToString(address.Bytes())
 
 	b, exist := s.ResultCache.Balance[kString]
 	if !exist {
@@ -99,7 +105,8 @@ func (s *Storage) BalanceModify(address *evmutils.Int, value *evmutils.Int, neg 
 }
 
 func (s *Storage) Log(address *evmutils.Int, topics [][]byte, data []byte, context environment.Context) {
-	kString := address.String()
+	//kString := address.String()
+	kString := hex.EncodeToString(address.Bytes())
 
 	var theLog = Log{
 		Topics:  topics,
@@ -113,13 +120,15 @@ func (s *Storage) Log(address *evmutils.Int, topics [][]byte, data []byte, conte
 }
 
 func (s *Storage) Destruct(address *evmutils.Int) {
-	s.ResultCache.Destructs[address.String()] = address
+	//s.ResultCache.Destructs[address.String()] = address
+	s.ResultCache.Destructs[hex.EncodeToString(address.Bytes())] = address
 }
 
 type commonGetterFunc func(*evmutils.Int) (*evmutils.Int, error)
 
 func (s *Storage) commonGetter(key *evmutils.Int, cache Cache, getterFunc commonGetterFunc) (*evmutils.Int, error) {
-	keyStr := key.String()
+	//keyStr := key.String()
+	keyStr := hex.EncodeToString(key.Bytes())
 	if b, exists := cache[keyStr]; exists {
 		return evmutils.FromBigInt(b.Int), nil
 	}
@@ -136,11 +145,13 @@ func (s *Storage) Balance(address *evmutils.Int) (*evmutils.Int, error) {
 	return s.ExternalStorage.GetBalance(address)
 }
 func (s *Storage) SetCode(address *evmutils.Int, code []byte) {
-	keyStr := address.String()
+	//keyStr := address.String()
+	keyStr := hex.EncodeToString(address.Bytes())
 	s.readOnlyCache.Code[keyStr] = code
 }
 func (s *Storage) GetCode(address *evmutils.Int) ([]byte, error) {
-	keyStr := address.String()
+	//keyStr := address.String()
+	keyStr := hex.EncodeToString(address.Bytes())
 	if b, exists := s.readOnlyCache.Code[keyStr]; exists {
 		return b, nil
 	}
@@ -153,11 +164,13 @@ func (s *Storage) GetCode(address *evmutils.Int) ([]byte, error) {
 	return b, err
 }
 func (s *Storage) SetCodeSize(address *evmutils.Int, size *evmutils.Int) {
-	keyStr := address.String()
+	//keyStr := address.String()
+	keyStr := hex.EncodeToString(address.Bytes())
 	s.readOnlyCache.CodeSize[keyStr] = size
 }
 func (s *Storage) GetCodeSize(address *evmutils.Int) (*evmutils.Int, error) {
-	keyStr := address.String()
+	//keyStr := address.String()
+	keyStr := hex.EncodeToString(address.Bytes())
 	if size, exists := s.readOnlyCache.CodeSize[keyStr]; exists {
 		return size, nil
 	}
@@ -170,11 +183,13 @@ func (s *Storage) GetCodeSize(address *evmutils.Int) (*evmutils.Int, error) {
 	return size, err
 }
 func (s *Storage) SetCodeHash(address *evmutils.Int, codeHash *evmutils.Int) {
-	keyStr := address.String()
+	//keyStr := address.String()
+	keyStr := hex.EncodeToString(address.Bytes())
 	s.readOnlyCache.CodeHash[keyStr] = codeHash
 }
 func (s *Storage) GetCodeHash(address *evmutils.Int) (*evmutils.Int, error) {
-	keyStr := address.String()
+	//keyStr := address.String()
+	keyStr := hex.EncodeToString(address.Bytes())
 	if hash, exists := s.readOnlyCache.CodeHash[keyStr]; exists {
 		return hash, nil
 	}
@@ -188,7 +203,8 @@ func (s *Storage) GetCodeHash(address *evmutils.Int) (*evmutils.Int, error) {
 }
 
 func (s *Storage) GetBlockHash(block *evmutils.Int) (*evmutils.Int, error) {
-	keyStr := block.String()
+	//keyStr := block.String()
+	keyStr := hex.EncodeToString(block.Bytes())
 	if hash, exists := s.readOnlyCache.BlockHash[keyStr]; exists {
 		return hash, nil
 	}

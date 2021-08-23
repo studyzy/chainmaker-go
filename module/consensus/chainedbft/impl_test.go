@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+
 	"chainmaker.org/chainmaker/protocol/test"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
@@ -154,7 +156,13 @@ func createCertNodesTotal() map[string]string {
 		}
 		acLog := &test.GoLogger{}
 		ac, _ := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
-		member, _ := ac.NewMemberFromCertPem(lf.NodeConfig.OrgId, string(certPEM))
+		pbMember := &pbac.Member{
+			OrgId:      lf.NodeConfig.OrgId,
+			MemberType: pbac.MemberType_CERT_HASH,
+			MemberInfo: certPEM,
+		}
+
+		member, _ := ac.NewMember(pbMember)
 		// member, _ := accesscontrol.MockAccessControl().NewMember(lf.NodeConfig.OrgId, string(certPEM))
 		nodecert[member.GetMemberId()] = nodeLists[i]
 	}

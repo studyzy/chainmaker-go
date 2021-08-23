@@ -22,6 +22,14 @@ type TxContextMock struct {
 	cacheMap dataStore
 }
 
+func (mock *TxContextMock) GetContractByName(name string) (*commonPb.Contract, error) {
+	panic("implement me")
+}
+
+func (mock *TxContextMock) GetContractBytecode(name string) ([]byte, error) {
+	panic("implement me")
+}
+
 func newTxContextMock(cache dataStore) *TxContextMock {
 	return &TxContextMock{
 		lock:     &sync.Mutex{},
