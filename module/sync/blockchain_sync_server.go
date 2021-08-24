@@ -222,7 +222,7 @@ func (sync *BlockChainSyncServer) sendBlocks(req *syncPb.BlockSyncReq, from stri
 		blk *commonPb.Block
 	)
 
-	for i := int64(0); i < req.BatchSize; i++ {
+	for i := uint64(0); i < req.BatchSize; i++ {
 		if blk, err = sync.blockChainStore.GetBlock(req.BlockHeight + i); err != nil || blk == nil {
 			return err
 		}
@@ -245,7 +245,7 @@ func (sync *BlockChainSyncServer) sendInfos(req *syncPb.BlockSyncReq, from strin
 		blkRwInfo *storePb.BlockWithRWSet
 	)
 
-	for i := int64(0); i < req.BatchSize; i++ {
+	for i := uint64(0); i < req.BatchSize; i++ {
 		if blkRwInfo, err = sync.blockChainStore.GetBlockWithRWSets(req.BlockHeight + i); err != nil || blkRwInfo == nil {
 			return err
 		}
