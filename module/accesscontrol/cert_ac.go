@@ -769,7 +769,7 @@ func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *cachedMember,
 		return false, err
 	}
 	if err := signerInfo.member.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
-		err := fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
+		err = fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
 		cp.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
 			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		return false, err

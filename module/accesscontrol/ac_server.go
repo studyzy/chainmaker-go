@@ -30,9 +30,7 @@ const (
 	LIMIT_DELIMITER = "/"
 	PARAM_CERTS     = "certs"
 
-	unsupportedRuleErrorTemplate             = "bad configuration: unsupported rule [%s]"
-	failToGetRoleInfoFromCertWarningTemplate = "authentication warning: fail to get role information from " +
-		"certificate [%v], certificate information: \n%s\n"
+	unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
 )
 
 var notEnoughParticipantsSupportError = "authentication fail: not enough participants support this action"
@@ -151,10 +149,10 @@ var (
 		},
 	)
 
-	policyForbidden = newPolicy(
-		protocol.RuleForbidden,
-		nil,
-		nil)
+	//policyForbidden = newPolicy(
+	//	protocol.RuleForbidden,
+	//	nil,
+	//	nil)
 
 	policyAllTest = newPolicy(
 		protocol.RuleAll,
@@ -296,9 +294,9 @@ func (acs *accessControlService) createDefaultResourcePolicy(localOrgId string) 
 
 	//for private compute
 	acs.resourceNamePolicyMap.Store(protocol.ResourceNamePrivateCompute, policyWrite)
-	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String()+"-"+
 		syscontract.PrivateComputeFunction_SAVE_CA_CERT.String(), policyConfig)
-	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String() + "-" +
+	acs.resourceNamePolicyMap.Store(syscontract.SystemContract_PRIVATE_COMPUTE.String()+"-"+
 		syscontract.PrivateComputeFunction_SAVE_ENCLAVE_REPORT.String(), policyConfig)
 
 	// system contract interface resource definitions
@@ -559,10 +557,10 @@ func (acs *accessControlService) createPrincipalForTargetOrg(resourceName string
 func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string) (*policy, error) {
 	p, ok := acs.resourceNamePolicyMap.Load(resourceName)
 	if !ok {
-		 if p, ok = acs.exceptionalPolicyMap.Load(resourceName); !ok {
+		if p, ok = acs.exceptionalPolicyMap.Load(resourceName); !ok {
 			return nil, fmt.Errorf("look up access policy failed, did not configure access policy "+
 				"for resource %s", resourceName)
-		 }
+		}
 	}
 	return p.(*policy), nil
 }
