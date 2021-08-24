@@ -72,7 +72,7 @@ func ValidateTx(txsRet map[string]*commonpb.Transaction, tx *commonpb.Transactio
 	}
 	stat.SigLasts += utils.CurrentTimeMillisSeconds() - startSigTicker
 	// tx valid and put into txpool
-	newAddTxs = append(newAddTxs, tx)
+	newAddTxs = append(newAddTxs, tx) //nolint
 
 	return nil
 }

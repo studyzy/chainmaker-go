@@ -224,14 +224,16 @@ func newVmPool(contractId *commonPb.Contract, byteCode []byte, log *logger.CMLog
 	}
 
 	if ok := wasm.Validate(byteCode); !ok {
-		err := fmt.Errorf("[%s_%s], wasmer byte code validation failed, byteCodeLen[%d]", contractId.Name, contractId.Version, len(byteCode))
+		err := fmt.Errorf("[%s_%s], wasmer byte code validation failed, byteCodeLen[%d]",
+			contractId.Name, contractId.Version, len(byteCode))
 		log.Warn(err)
 		return nil, err
 	}
 
 	module, err := wasm.Compile(byteCode)
 	if err != nil {
-		msg := fmt.Errorf("[%s_%s], wasmer byte code compile failed, byteCodeLen[%d], error:%s", contractId.Name, contractId.Version, len(byteCode), err)
+		msg := fmt.Errorf("[%s_%s], wasmer byte code compile failed, byteCodeLen[%d], error:%s",
+			contractId.Name, contractId.Version, len(byteCode), err)
 		log.Warn(msg)
 		return nil, err
 	}
@@ -255,7 +257,8 @@ func newVmPool(contractId *commonPb.Contract, byteCode []byte, log *logger.CMLog
 
 	instance, err := vmPool.newInstanceFromModule()
 	if err != nil {
-		msg := fmt.Errorf("[%s_%s], wasmer byte code compile failed, byteCodeLen[%d], error: %s", contractId.Name, contractId.Version, len(byteCode), err)
+		msg := fmt.Errorf("[%s_%s], wasmer byte code compile failed, byteCodeLen[%d], error: %s",
+			contractId.Name, contractId.Version, len(byteCode), err)
 		log.Warn(msg)
 		return nil, msg
 	}

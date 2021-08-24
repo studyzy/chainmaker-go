@@ -1,14 +1,19 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package evm
 
 import (
 	"encoding/hex"
-	"strings"
 	"testing"
 
 	"chainmaker.org/chainmaker-go/evm/test"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/pb-go/common"
-	"gotest.tools/assert"
 )
 
 const certFilePath = "./test/config/admin1.sing.crt"
@@ -66,9 +71,10 @@ func TestRuntimeInstance_Invoke(t *testing.T) {
 	loggerByChain.Infof("ContractResult Message:%+v", contractResult.Message)
 	loggerByChain.Infof("ContractResult Result:%+X", contractResult.Result)
 }
-func TestConvertEvmContractName(t *testing.T) {
-	name := "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
-	addr, _ := contractNameToAddress(name)
-	t.Logf("evm addr:%s", addr.Text(16))
-	assert.Equal(t, strings.ToLower(name[2:]), addr.Text(16))
-}
+
+//func TestConvertEvmContractName(t *testing.T) {
+//	name := "0x7162629f540a9e19eCBeEa163eB8e48eC898Ad00"
+//	addr, _ := contractNameToAddress(name)
+//	t.Logf("evm addr:%s", addr.Text(16))
+//	assert.Equal(t, strings.ToLower(name[2:]), addr.Text(16))
+//}

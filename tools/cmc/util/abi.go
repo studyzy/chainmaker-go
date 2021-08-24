@@ -118,7 +118,8 @@ func GetPaddedParam(method *ethabi.Method, param []Param) ([]byte, error) {
 					}
 				}
 
-				if (ty.Elem.T == ethabi.IntTy || ty.Elem.T == ethabi.UintTy) && reflect.TypeOf(v).Elem().Kind() == reflect.Interface {
+				if (ty.Elem.T == ethabi.IntTy || ty.Elem.T == ethabi.UintTy) &&
+					reflect.TypeOf(v).Elem().Kind() == reflect.Interface {
 					if ty.Elem.Size > 64 {
 						tmp := make([]*big.Int, 0)
 						for _, i := range v.([]interface{}) {

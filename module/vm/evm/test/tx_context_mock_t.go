@@ -106,6 +106,14 @@ type TxContextMockTest struct {
 	cacheMap map[string][]byte
 }
 
+func (s *TxContextMockTest) GetContractByName(name string) (*commonPb.Contract, error) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetContractBytecode(name string) ([]byte, error) {
+	panic("implement me")
+}
+
 func (s *TxContextMockTest) GetBlockVersion() uint32 {
 	panic("implement me")
 }
