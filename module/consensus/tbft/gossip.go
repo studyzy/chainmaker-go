@@ -119,6 +119,7 @@ func (g *gossipService) removeValidators(validators []string) error {
 }
 
 func (g *gossipService) triggerEvent() {
+	g.logger.Infof("eventC len: %d", len(g.eventC))
 	g.eventC <- struct{}{}
 }
 
