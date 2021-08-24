@@ -27,7 +27,7 @@ function show_help() {
     echo "Usage:  "
     echo "  prepare.sh node_cnt(1/4/7/10/13/16) chain_cnt(1-4) p2p_port(default:11301) rpc_port(default:12301)"
     echo "    eg1: prepare.sh 4 1"
-    echo "    eg2: prepare.sh 4 1 11300 12300"
+    echo "    eg2: prepare.sh 4 1 11301 12301"
 }
 
 if [ ! $# -eq 2 ] && [ ! $# -eq 3 ] && [ ! $# -eq 4 ]; then
