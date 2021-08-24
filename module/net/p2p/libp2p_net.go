@@ -21,21 +21,19 @@ import (
 	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
 	"chainmaker.org/chainmaker-go/utils"
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/helper"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"github.com/tjfoc/gmsm/sm2"
-
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/common/helper"
+	api "chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p-core/network"
-
-	api "chainmaker.org/chainmaker/protocol"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/protocol"
 	libP2pPubSub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 // ErrorPubSubNotExist
@@ -78,8 +76,10 @@ type LibP2pNet struct {
 	libP2pHost                *LibP2pHost     // libP2pHost is a LibP2pHost instance.
 	messageHandlerDistributor *MessageHandlerDistributor
 
-	pubSubs          sync.Map                      // pubSubs mapping the chainId to the LibP2pPubSub . Same as map[string]*LibP2pPubSub .
-	subscribedTopics map[string]*topicSubscription // subscribedTopics mapping the chainId to a map which mapping the topic name to the Subscription.
+	// pubSubs mapping the chainId to the LibP2pPubSub . Same as map[string]*LibP2pPubSub .
+	pubSubs sync.Map
+	// subscribedTopics mapping the chainId to a map which mapping the topic name to the Subscription.
+	subscribedTopics map[string]*topicSubscription
 	subscribeLock    sync.Mutex
 
 	prepare *LibP2pNetPrepare // prepare contains the base info for the net starting.
@@ -205,7 +205,8 @@ func (ln *LibP2pNet) getSubscribeTopicMap(chainId string) *topicSubscription {
 	return topics
 }
 
-// SubscribeWithChainId subscribe the given topic of the target chain which id is the given chainId with the given sub-msg handler function.
+// SubscribeWithChainId subscribe the given topic of the target chain
+// which id is the given chainId with the given sub-msg handler function.
 func (ln *LibP2pNet) SubscribeWithChainId(chainId string, topic string, handler api.PubsubMsgHandler) error {
 	ln.subscribeLock.Lock()
 	defer ln.subscribeLock.Unlock()
@@ -349,7 +350,8 @@ func (ln *LibP2pNet) SendMsg(chainId string, node string, msgFlag string, netMsg
 		}
 		isCompressed[0] = byte(1)
 		lengthAfterCompress := len(bytes)
-		logger.Debugf("[Net] compress net msg bytes ok(length before/after compress: %d/%d)", lengthBeforeCompress, lengthAfterCompress)
+		logger.Debugf("[Net] compress net msg bytes ok(length before/after compress: %d/%d)",
+			lengthBeforeCompress, lengthAfterCompress)
 	}
 
 	lengthBytes := IntToBytes(len(bytes))
@@ -426,7 +428,8 @@ func NewStreamReadHandlerFunc(mhd *MessageHandlerDistributor) func(stream networ
 			}
 			handler := mhd.handler(msg.GetChainId(), msg.GetFlag())
 			if handler == nil {
-				logger.Warnf("[Net] handler not registered. drop message. (chainId:%s, flag:%s)", msg.GetChainId(), msg.GetFlag())
+				logger.Warnf("[Net] handler not registered. drop message. (chainId:%s, flag:%s)",
+					msg.GetChainId(), msg.GetFlag())
 				continue
 			}
 			readMsgCallHandler(id, msg.GetMsg(), handler)
@@ -748,7 +751,8 @@ func (ln *LibP2pNet) reloadChainPubSubWhiteList(chainId string) {
 				}
 				err = ps.AddWhitelistPeer(pid)
 				if err != nil {
-					logger.Errorf("[Net] add pubsub white list failed. %s (pid: %s, chain id: %s)", err.Error(), pid, chainId)
+					logger.Errorf("[Net] add pubsub white list failed. %s (pid: %s, chain id: %s)",
+						err.Error(), pid, chainId)
 					continue
 				}
 				logger.Infof("[Net] add peer to chain pubsub white list, (pid: %s, chain id: %s)", pid, chainId)
@@ -861,10 +865,12 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnAddC() {
 				if err != nil {
 					logger.Errorf("[Net] peer decode failed, %s", err.Error())
 				}
-				logger.Infof("[Net] add to pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
+				logger.Infof("[Net] add to pubsub white list(peer-id:%s, chain-id:%s)",
+					peerIdAndChainId[0], peerIdAndChainId[1])
 				err = pubsub.AddWhitelistPeer(pid)
 				if err != nil {
-					logger.Errorf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
+					logger.Errorf("[Net] add to pubsub white list(peer-id:%s, chain-id:%s) failed, %s",
+						peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
 				}
 			}
 		}
@@ -891,10 +897,12 @@ func (ln *LibP2pNet) handlePubSubWhiteListOnRemoveC() {
 					logger.Errorf("[Net] peer decode failed, %s", err.Error())
 					continue
 				}
-				logger.Debugf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s)", peerIdAndChainId[0], peerIdAndChainId[1])
+				logger.Debugf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s)",
+					peerIdAndChainId[0], peerIdAndChainId[1])
 				err = pubsub.RemoveWhitelistPeer(pid)
 				if err != nil {
-					logger.Errorf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s) failed, %s", peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
+					logger.Errorf("[Net] remove from pubsub white list(peer-id:%s, chain-id:%s) failed, %s",
+						peerIdAndChainId[0], peerIdAndChainId[1], err.Error())
 				}
 			}
 		}
@@ -997,7 +1005,8 @@ func (ln *LibP2pNet) CheckRevokeTlsCerts(ac api.AccessControlProvider, certManag
 	}
 }
 
-func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethod(ac api.AccessControlProvider, payload *commonPb.Payload) error {
+func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethod(
+	ac api.AccessControlProvider, payload *commonPb.Payload) error {
 	// get all node tls cert
 	peerIdCertBytesMap := ln.libP2pHost.peerIdTlsCertStore.storeCopy()
 	if len(peerIdCertBytesMap) == 0 {
@@ -1010,7 +1019,8 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethod(ac api.AccessControlPr
 	return ln.checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac, payload, peerIdCertMap)
 }
 
-func parsePeerIdCertBytesMapToPeerIdCertMap(peerIdCertBytesMap map[string][]byte) (map[string]*cmx509.Certificate, error) {
+func parsePeerIdCertBytesMapToPeerIdCertMap(
+	peerIdCertBytesMap map[string][]byte) (map[string]*cmx509.Certificate, error) {
 	peerIdCertMap := make(map[string]*cmx509.Certificate)
 	for pid := range peerIdCertBytesMap {
 		certBytes := peerIdCertBytesMap[pid]
@@ -1024,7 +1034,10 @@ func parsePeerIdCertBytesMapToPeerIdCertMap(peerIdCertBytesMap map[string][]byte
 	return peerIdCertMap, nil
 }
 
-func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.AccessControlProvider, payload *commonPb.Payload, peerIdCertMap map[string]*cmx509.Certificate) error {
+func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(
+	ac api.AccessControlProvider,
+	payload *commonPb.Payload,
+	peerIdCertMap map[string]*cmx509.Certificate) error {
 	for _, param := range payload.Parameters {
 		if param.Key == "cert_crl" {
 
@@ -1057,7 +1070,9 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.Acc
 	return nil
 }
 
-func (ln *LibP2pNet) findRevokedPeerIdsByCRLs(crls []*pkix.CertificateList, peerIdCertMap map[string]*cmx509.Certificate) []string {
+func (ln *LibP2pNet) findRevokedPeerIdsByCRLs(
+	crls []*pkix.CertificateList,
+	peerIdCertMap map[string]*cmx509.Certificate) []string {
 	revokedPeerIds := make([]string, 0)
 	for _, crl := range crls {
 		for _, rc := range crl.TBSCertList.RevokedCertificates {
