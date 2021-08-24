@@ -57,6 +57,20 @@ func (pcr *PeerIdChainIdsRecorder) addPeerChainId(peerId string, chainId string)
 	return result
 }
 
+func (pcr *PeerIdChainIdsRecorder) removePeerChainId(peerId string, chainId string) bool {
+	pcr.lock.Lock()
+	defer pcr.lock.Unlock()
+	mapList, ok := pcr.records[peerId]
+	if !ok {
+		return false
+	}
+	result := mapList.Remove(chainId)
+	if result && pcr.onRemoveC != nil {
+		pcr.onRemoveC <- peerId + "<-->" + chainId
+	}
+	return result
+}
+
 func (pcr *PeerIdChainIdsRecorder) removeAllByPeerId(peerId string) bool {
 	pcr.lock.Lock()
 	defer pcr.lock.Unlock()
@@ -89,6 +103,18 @@ func (pcr *PeerIdChainIdsRecorder) peerIdsOfChain(chainId string) []string {
 	result := make([]string, 0)
 	for peerId, mapList := range pcr.records {
 		if mapList.Contains(chainId) {
+			result = append(result, peerId)
+		}
+	}
+	return result
+}
+
+func (pcr *PeerIdChainIdsRecorder) peerIdsOfNoChain() []string {
+	pcr.lock.Lock()
+	defer pcr.lock.Unlock()
+	result := make([]string, 0)
+	for peerId, mapList := range pcr.records {
+		if mapList.Size() == 0 {
 			result = append(result, peerId)
 		}
 	}

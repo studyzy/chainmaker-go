@@ -412,8 +412,13 @@ func (acs *accessControlService) checkResourcePolicyRuleDefaultCase(policy *pbac
 	nums := strings.Split(policy.Rule, LIMIT_DELIMITER)
 	switch len(nums) {
 	case 1:
-		_, err := strconv.Atoi(nums[0])
+		num, err := strconv.Atoi(nums[0])
 		if err != nil {
+			acs.log.Errorf(unsupportedRuleErrorTemplate, policy.Rule)
+			return false
+		}
+
+		if num <= 0 {
 			acs.log.Errorf(unsupportedRuleErrorTemplate, policy.Rule)
 			return false
 		}
