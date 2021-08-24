@@ -49,6 +49,7 @@ func MultiSignReqCMD() *cobra.Command {
 		Long:  "Multi sign req（need the admin）",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return multiSignReq()
+			proposalRequestWithMultiSign()
 		},
 	}
 
