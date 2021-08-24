@@ -589,40 +589,150 @@ func (ln *LibP2pNet) AddTrustRoot(chainId string, rootCertByte []byte) error {
 }
 
 func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
-	if ln.startUp {
-		peerIdTlsCertMap := ln.libP2pHost.peerIdTlsCertStore.storeCopy()
-		if len(peerIdTlsCertMap) == 0 {
-			return
-		}
-		if ln.libP2pHost.isGmTls {
-			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
-			for pid, bytes := range peerIdTlsCertMap {
+	if !ln.startUp {
+		return
+	}
+	peerIdTlsCertMap := ln.libP2pHost.peerIdTlsCertStore.storeCopy()
+	if len(peerIdTlsCertMap) == 0 {
+		return
+	}
+
+	// re verify exist peers
+	existPeers := ln.libP2pHost.peerChainIdsRecorder.peerIdsOfChain(chainId)
+	for _, existPeerId := range existPeers {
+		bytes, ok := peerIdTlsCertMap[existPeerId]
+		if ok {
+			if ln.libP2pHost.isGmTls {
+				chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
+				// tls cert exist, parse to cert
 				cert, err := sm2.ParseCertificate(bytes)
 				if err != nil {
-					logger.Errorf("[Net] parse tls cert failed. %s", err.Error())
+					logger.Errorf("[Net] [ReVerifyTrustRoots] parse tls cert failed. %s", err.Error())
 					continue
 				}
-				if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
-					ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
-					logger.Infof("[Net] add peer to chain, (pid: %s, chain id: %s)", pid, chainId)
+				// whether verify failed, if failed remove it
+				if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+					ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
+					logger.Infof("[Net] [ReVerifyTrustRoots] remove peer from chain, (pid: %s, chain id: %s)",
+						existPeerId, chainId)
 				}
-			}
-		} else if ln.libP2pHost.isTls {
-			chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
-			for pid, bytes := range peerIdTlsCertMap {
+				delete(peerIdTlsCertMap, existPeerId)
+				if err = ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
+					logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
+						err.Error())
+				}
+				continue
+			} else if ln.libP2pHost.isTls {
+				chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
+				// tls cert exist, parse to cert
 				cert, err := x509.ParseCertificate(bytes)
 				if err != nil {
-					logger.Errorf("[Net] parse tls cert failed. %s", err.Error())
+					logger.Errorf("[Net] [ReVerifyTrustRoots] parse tls cert failed. %s", err.Error())
 					continue
 				}
-				if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
-					ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
-					logger.Infof("[Net] add peer to chain, (pid: %s, chain id: %s)", pid, chainId)
+				// whether verify failed, if failed remove it
+				if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+					ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
+					logger.Infof("[Net] [ReVerifyTrustRoots] remove peer from chain, (pid: %s, chain id: %s)",
+						existPeerId, chainId)
+				}
+				delete(peerIdTlsCertMap, existPeerId)
+				if err = ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
+					logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
+						err.Error())
+				}
+				continue
+			}
+		} else {
+			ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
+			logger.Infof("[Net] [ReVerifyTrustRoots] remove peer from chain, (pid: %s, chain id: %s)",
+				existPeerId, chainId)
+		}
+	}
+	// verify other peers
+	for pid, bytes := range peerIdTlsCertMap {
+		if ln.libP2pHost.isGmTls {
+			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
+			cert, err := sm2.ParseCertificate(bytes)
+			if err != nil {
+				logger.Errorf("[Net] [ReVerifyTrustRoots] re-verify tls cert failed. %s", err.Error())
+				continue
+			}
+			// whether verify success, if success add it
+			if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+				ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
+				logger.Infof("[Net] [ReVerifyTrustRoots] add peer to chain, (pid: %s, chain id: %s)",
+					pid, chainId)
+				if err = ln.addChainPubSubWhiteList(chainId, pid); err != nil {
+					logger.Warnf("[Net] [ReVerifyTrustRoots] add chain pub-sub white list failed, %s",
+						err.Error())
+				}
+			}
+			continue
+		} else if ln.libP2pHost.isTls {
+			chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
+			cert, err := x509.ParseCertificate(bytes)
+			if err != nil {
+				logger.Errorf("[Net] [ReVerifyTrustRoots] re-verify tls cert failed. %s", err.Error())
+				continue
+			}
+			// whether verify success, if success add it
+			if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+				ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
+				logger.Infof("[Net] [ReVerifyTrustRoots] add peer to chain, (pid: %s, chain id: %s)",
+					pid, chainId)
+				if err = ln.addChainPubSubWhiteList(chainId, pid); err != nil {
+					logger.Warnf("[Net] [ReVerifyTrustRoots] add chain pub-sub white list failed, %s",
+						err.Error())
 				}
 			}
 		}
-		ln.reloadChainPubSubWhiteList(chainId)
 	}
+
+	// close all connections of peers not belong to any chain
+	for _, s := range ln.libP2pHost.peerChainIdsRecorder.peerIdsOfNoChain() {
+		pid, err := peer.Decode(s)
+		if err != nil {
+			continue
+		}
+		for c := ln.libP2pHost.connManager.GetConn(pid); c != nil; c = ln.libP2pHost.connManager.GetConn(pid) {
+			_ = c.Close()
+			logger.Infof("[Net] [ReVerifyTrustRoots] close connection of peer %s", s)
+			time.Sleep(time.Second)
+		}
+	}
+}
+
+func (ln *LibP2pNet) removeChainPubSubWhiteList(chainId, pidStr string) error {
+	if ln.startUp {
+		v, ok := ln.pubSubs.Load(chainId)
+		if ok {
+			ps := v.(*LibP2pPubSub)
+			pid, err := peer.Decode(pidStr)
+			if err != nil {
+				logger.Errorf("[Net] parse peer id string to pid failed. %s", err.Error())
+				return err
+			}
+			return ps.RemoveWhitelistPeer(pid)
+		}
+	}
+	return nil
+}
+
+func (ln *LibP2pNet) addChainPubSubWhiteList(chainId, pidStr string) error {
+	if ln.startUp {
+		v, ok := ln.pubSubs.Load(chainId)
+		if ok {
+			ps := v.(*LibP2pPubSub)
+			pid, err := peer.Decode(pidStr)
+			if err != nil {
+				logger.Errorf("[Net] parse peer id string to pid failed. %s", err.Error())
+				return err
+			}
+			return ps.AddWhitelistPeer(pid)
+		}
+	}
+	return nil
 }
 
 func (ln *LibP2pNet) reloadChainPubSubWhiteList(chainId string) {
