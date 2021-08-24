@@ -198,7 +198,7 @@ func testMultiSignVote(t *testing.T, memberNum int, Id string, method string) {
 	payload1 := &commonPb.Payload{
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
-		Method:       syscontract.MultiSignFunction_REQ.String(),
+		Method:       syscontract.MultiSignFunction_VOTE.String(),
 		Parameters:   pairs1,
 		TxId:         txId,
 		ChainId:      CHAIN1,
