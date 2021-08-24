@@ -594,14 +594,14 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 			return nil, err
 		}
 		// compare self delegation
-		cmp, err := compareMinSelfDelegation(context, v.SelfDelegation)
-		if err != nil {
-			s.log.Errorf("compare min self delegation error: ", err.Error())
-			return nil, err
+		cmp, err1 := compareMinSelfDelegation(context, v.SelfDelegation)
+		if err1 != nil {
+			s.log.Errorf("compare min self delegation error: ", err1.Error())
+			return nil, err1
 		}
 		if cmp == -1 {
 			// 检查当前网络情况下，节点是否能退出
-			if err := s.canDelete(context, undelegateValidatorAddress); err != nil {
+			if err = s.canDelete(context, undelegateValidatorAddress); err != nil {
 				return nil, err
 			}
 

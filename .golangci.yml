@@ -124,7 +124,7 @@ issues:
       text: "json.Unmarshal"
     - linters:
         - gosec
-      text: "G108|G204"
+      text: "G108|G204|G501|G401"
   max-same-issues: 0
   new: false
   max-issues-per-linter: 0
