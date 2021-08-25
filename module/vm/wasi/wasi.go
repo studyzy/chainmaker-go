@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
@@ -73,12 +74,16 @@ type Wacsi interface {
 type WacsiImpl struct {
 	verifySql *types.StandardSqlVerify
 	rowIndex  int32
+	enableSql map[string]bool // map[chainId]enableSql
+	lock      *sync.Mutex
 }
 
 func NewWacsi() Wacsi {
 	return &WacsiImpl{
 		verifySql: &types.StandardSqlVerify{},
 		rowIndex:  0,
+		enableSql: make(map[string]bool, 0),
+		lock:      &sync.Mutex{},
 	}
 }
 
@@ -251,7 +256,6 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	return contractEvent, nil
 }
 
-//author:whang1234
 func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	startKey, _ := ec.GetString("start_key")
@@ -655,15 +659,16 @@ func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.Pub
 }
 
 func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, chainId string) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
-
 	// verify
 	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
 		return fmt.Errorf("[execute query] verify sql error, %s", err.Error())
 	}
-
 	// execute query
 	var rows protocol.SqlRows
 	var err error
@@ -689,6 +694,9 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 }
 
 func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, data []byte, chainId string, isLen bool) ([]byte, error) {
+	if !w.isSupportSql(txSimContext) {
+		return nil, fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -741,7 +749,10 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 	}
 }
 
-func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	valuePtr, _ := ec.GetInt32("value_ptr")
@@ -759,7 +770,10 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 	return nil
 }
 
-func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
+func (w *WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, isLen bool) ([]byte, error) {
+	if !w.isSupportSql(txSimContext) {
+		return nil, fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -797,7 +811,10 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 	}
 }
 
-func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	valuePtr, _ := ec.GetInt32("value_ptr")
@@ -821,6 +838,9 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 	}
 	if method == protocol.ContractUpgradeMethod {
 		return fmt.Errorf("[execute update] upgrade contract transaction cannot be execute dml")
+	}
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
 	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
@@ -849,6 +869,9 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 }
 
 func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext, memory []byte, method string) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	if !w.isManageContract(method) {
 		return ErrorNotManageContract
 	}
@@ -879,4 +902,15 @@ func changeCurrentDB(chainId string, contractName string, transaction protocol.S
 	transaction.ChangeContextDb(dbName)
 	//setCurrentDb(chainId, dbName)
 	//}
+}
+func (w *WacsiImpl) isSupportSql(txSimContext protocol.TxSimContext) bool {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	chainId := txSimContext.GetTx().Payload.ChainId
+	if b, ok := w.enableSql[chainId]; ok {
+		return b
+	}
+	cc, _ := txSimContext.GetBlockchainStore().GetLastChainConfig()
+	w.enableSql[chainId] = cc.Contract.EnableSqlSupport
+	return cc.Contract.EnableSqlSupport
 }
