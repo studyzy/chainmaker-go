@@ -222,8 +222,9 @@ func (sync *BlockChainSyncServer) sendBlocks(req *syncPb.BlockSyncReq, from stri
 		err error
 		blk *commonPb.Block
 	)
+
 	for i := uint64(0); i < req.BatchSize; i++ {
-		if blk, err = sync.blockChainStore.GetBlock(req.BlockHeight + i); err != nil {
+		if blk, err = sync.blockChainStore.GetBlock(req.BlockHeight + i); err != nil || blk == nil {
 			return err
 		}
 		if bz, err = proto.Marshal(&syncPb.SyncBlockBatch{
@@ -244,8 +245,9 @@ func (sync *BlockChainSyncServer) sendInfos(req *syncPb.BlockSyncReq, from strin
 		err       error
 		blkRwInfo *storePb.BlockWithRWSet
 	)
+
 	for i := uint64(0); i < req.BatchSize; i++ {
-		if blkRwInfo, err = sync.blockChainStore.GetBlockWithRWSets(req.BlockHeight + i); err != nil {
+		if blkRwInfo, err = sync.blockChainStore.GetBlockWithRWSets(req.BlockHeight + i); err != nil || blkRwInfo == nil {
 			return err
 		}
 		info := &commonPb.BlockInfo{Block: blkRwInfo.Block, RwsetList: blkRwInfo.TxRWSets}

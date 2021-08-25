@@ -379,6 +379,7 @@ func (r *ContractManagerRuntime) changeContractStatus(context protocol.TxSimCont
 		msg := fmt.Sprintf("contract[%s] expect status:%s,actual status:%s",
 			name, oldStatus.String(), contract.Status.String())
 		r.log.Warnf(msg)
+		r.log.Warnf(msg)
 		return nil, fmt.Errorf("%s, %s", errContractStatusInvalid, msg)
 	}
 	contract.Status = newStatus
