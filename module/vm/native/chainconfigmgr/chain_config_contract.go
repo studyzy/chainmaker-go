@@ -18,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/sortedmap"
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
@@ -870,7 +869,7 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	changed := false
 	extConfig := chainConfig.Consensus.ExtConfig
 	if extConfig == nil {
-		extConfig = make([]*commonPb.KeyValuePair, 0)
+		extConfig = make([]*configPb.ConfigKeyValue, 0)
 	}
 
 	extConfigMap := make(map[string]string)
@@ -888,9 +887,9 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 			r.log.Error(parseParamErr.Error())
 			return false
 		}
-		extConfig = append(extConfig, &commonPb.KeyValuePair{
+		extConfig = append(extConfig, &configPb.ConfigKeyValue{
 			Key:   key,
-			Value: []byte(value),
+			Value: string(value),
 		})
 		chainConfig.Consensus.ExtConfig = extConfig
 		changed = true
@@ -927,7 +926,7 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 	changed := false
 	extConfig := chainConfig.Consensus.ExtConfig
 	if extConfig == nil {
-		extConfig = make([]*commonPb.KeyValuePair, 0)
+		extConfig = make([]*configPb.ConfigKeyValue, 0)
 	}
 
 	extConfigMap := make(map[string]string)
@@ -941,9 +940,9 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 		}
 		for i, config := range extConfig {
 			if key == config.Key {
-				extConfig[i] = &commonPb.KeyValuePair{
+				extConfig[i] = &configPb.ConfigKeyValue{
 					Key:   key,
-					Value: []byte(val),
+					Value: string(val),
 				}
 				chainConfig.Consensus.ExtConfig = extConfig
 				changed = true
