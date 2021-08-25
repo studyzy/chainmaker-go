@@ -1,5 +1,5 @@
-chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a h1:CM+nPwFAtzNj6qPRGgRraf7rVPoq9fixn/552QMf98s=
-chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
+chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e h1:dBJXEsOYWjT1JQ4FvZ++MuKCrNgbul6iJUmPmoK3N6A=
+chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849 h1:ThrvxkEd/9GoaN1HANLRJx1KmMdhWFBgOABc+hd1rGs=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=

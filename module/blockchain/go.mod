@@ -17,7 +17,7 @@ require (
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a
+	chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849
 	chainmaker.org/chainmaker/protocol v0.0.0-20210825021221-02ac5d5a967e
 )
