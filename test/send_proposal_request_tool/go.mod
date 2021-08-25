@@ -6,9 +6,9 @@ require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
-	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
+	chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210820090923-daeaf929a7c0
+	chainmaker.org/chainmaker/protocol v0.0.0-20210820091045-f54164dfaf0e
 	github.com/Rican7/retry v0.1.0
 	github.com/ethereum/go-ethereum v1.10.2
 	github.com/gogo/protobuf v1.3.2
@@ -17,6 +17,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.2.0
+	github.com/tjfoc/gmtls v1.2.1 // indirect
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 // indirect
 	google.golang.org/grpc v1.37.0
 )
