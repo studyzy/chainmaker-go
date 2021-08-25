@@ -53,10 +53,6 @@ type certACProvider struct {
 	log protocol.Logger
 }
 
-func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
-	panic("implement me")
-}
-
 var _ protocol.AccessControlProvider = (*certACProvider)(nil)
 
 var NilCertACProvider ACProvider = (*certACProvider)(nil)
@@ -487,6 +483,10 @@ func (cp *certACProvider) LookUpPolicy(resourceName string) (*pbac.Policy, error
 	return cp.acService.lookUpPolicy(resourceName)
 }
 
+func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
+	return cp.acService.lookUpExceptionalPolicy(resourceName)
+}
+
 func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
 
 	if (member.MemberType != pbac.MemberType_CERT_HASH) &&
@@ -769,7 +769,7 @@ func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *cachedMember,
 		return false, err
 	}
 	if err := signerInfo.member.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
-		err := fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
+		err = fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
 		cp.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
 			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		return false, err

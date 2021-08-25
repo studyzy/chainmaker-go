@@ -84,12 +84,14 @@ func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
-	{ // for debug
+	r.log.DebugDynamic(func() string {
 		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
-		r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
-	}
-	r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
-		contract.Version, contract.RuntimeType, len(byteCode))
+		return fmt.Sprintf(
+			"install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]",
+			contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
+	})
+	//r.log.Infof("install contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
+	//	contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
 }
 
@@ -103,12 +105,15 @@ func (r *ContractManagerRuntime) upgradeContract(txSimContext protocol.TxSimCont
 	if err != nil {
 		return nil, err
 	}
-	{ // for debug
+	r.log.DebugDynamic(func() string {
 		md5Hex := fmt.Sprintf("%x", md5.Sum(byteCode))
-		r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]", contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
-	}
-	r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
-		contract.Version, contract.RuntimeType, len(byteCode))
+		return fmt.Sprintf(
+			"upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d byteCodeMd5:%s]",
+			contract.Name, contract.Version, contract.RuntimeType, len(byteCode), md5Hex)
+	})
+
+	//r.log.Infof("upgrade contract success[name:%s version:%s runtimeType:%d byteCodeLen:%d]", contract.Name,
+	//	contract.Version, contract.RuntimeType, len(byteCode))
 	return contract.Marshal()
 }
 

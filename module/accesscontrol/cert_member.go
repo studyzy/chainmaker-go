@@ -273,7 +273,8 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem,
 	}, nil
 }
 
-func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
+func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId,
+	localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
 	protocol.SigningMember, error) {
 	var (
 		certMember *certMember

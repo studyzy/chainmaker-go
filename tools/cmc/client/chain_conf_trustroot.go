@@ -149,11 +149,11 @@ func configTrustRoot(op int) error {
 	var payload *common.Payload
 	switch op {
 	case addTrustRoot:
-		payload, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, []string{string(trustRootBytes)})
+		payload, err = client.CreateChainConfigTrustRootAddPayload(trustRootOrgId, trustRootBytes)
 	case removeTrustRoot:
 		payload, err = client.CreateChainConfigTrustRootDeletePayload(trustRootOrgId)
 	case updateTrustRoot:
-		payload, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, []string{string(trustRootBytes)})
+		payload, err = client.CreateChainConfigTrustRootUpdatePayload(trustRootOrgId, trustRootBytes)
 	default:
 		err = errors.New("invalid trust root operation")
 	}

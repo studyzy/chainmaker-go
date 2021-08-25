@@ -127,7 +127,8 @@ func getChainConfig(txSimContext protocol.TxSimContext, params map[string][]byte
 	}
 	bytes, err := txSimContext.Get(chainConfigContractName, []byte(keyChainConfig))
 	if err != nil {
-		msg := fmt.Errorf("txSimContext get failed, name[%s] key[%s] err: %+v", chainConfigContractName, keyChainConfig, err)
+		msg := fmt.Errorf("txSimContext get failed, name[%s] key[%s] err: %+v",
+			chainConfigContractName, keyChainConfig, err)
 		return nil, msg
 	}
 
@@ -452,7 +453,8 @@ type ChainTrustMembersRuntime struct {
 	log protocol.Logger
 }
 
-func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -465,7 +467,8 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 	role := string(params[paramNameRole])
 	nodeId := string(params[paramNameNodeId])
 	if utils.IsAnyBlank(memberInfo, orgId, role, nodeId) {
-		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
+		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found",
+			common.ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -474,14 +477,17 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 	chainConfig.TrustMembers = append(chainConfig.TrustMembers, trustMember)
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
-		r.log.Errorf("trust member add fail, %s, orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", err.Error(), orgId, memberInfo, role, nodeId)
+		r.log.Errorf("trust member add fail, %s, orgId[%s] memberInfo[%s] role[%s] nodeId[%s]",
+			err.Error(), orgId, memberInfo, role, nodeId)
 	} else {
-		r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", orgId, memberInfo, role, nodeId)
+		r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]",
+			orgId, memberInfo, role, nodeId)
 	}
 	return result, err
 }
 
-func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {

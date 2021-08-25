@@ -4,6 +4,7 @@
 //SPDX-License-Identifier: Apache-2.0
 //*/
 //
+
 package common
 
 import (
@@ -783,7 +784,7 @@ func (chain *BlockCommitterImpl) AddBlock(block *commonpb.Block) (err error) {
 	}
 	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
-		if err, lastProposed, rwSetMap, conEventMap = chain.checkLastProposedBlock(block); err != nil {
+		if _, rwSetMap, conEventMap, err = chain.checkLastProposedBlock(block); err != nil {
 			return err
 		}
 	}
@@ -841,19 +842,19 @@ func (chain *BlockCommitterImpl) syncWithTxPool(block *commonpb.Block, height ui
 
 //nolint: ineffassign, staticcheck
 func (chain *BlockCommitterImpl) checkLastProposedBlock(block *commonpb.Block) (
-	error, *commonpb.Block, map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent) {
+	*commonpb.Block, map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, error) {
 	err := chain.verifier.VerifyBlock(block, protocol.SYNC_VERIFY)
 	if err != nil {
 		chain.log.Error("block verify failed [%d](hash:%x), %s",
 			block.Header.BlockHeight, block.Header.BlockHash, err)
-		return err, nil, nil, nil
+		return nil, nil, nil, err
 	}
 
 	lastProposed, rwSetMap, conEventMap := chain.proposalCache.GetProposedBlock(block)
 	if lastProposed == nil {
 		chain.log.Error("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash)
-		return fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash),
-			lastProposed, rwSetMap, conEventMap
+		return lastProposed, rwSetMap, conEventMap,
+			fmt.Errorf("block not verified [%d](hash:%x)", block.Header.BlockHeight, block.Header.BlockHash)
 	}
-	return nil, lastProposed, rwSetMap, conEventMap
+	return lastProposed, rwSetMap, conEventMap, nil
 }

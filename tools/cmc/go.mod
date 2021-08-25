@@ -3,9 +3,9 @@ module chainmaker.org/chainmaker-go/tools/cmc
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210820090923-daeaf929a7c0
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210820100440-88c0ed796dd4
+	chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210823033359-1fe817a6d3f4
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2
@@ -22,3 +22,5 @@ require (
 	gorm.io/driver/mysql v1.0.6
 	gorm.io/gorm v1.21.9
 )
+
+replace chainmaker.org/chainmaker/sdk-go v0.0.0-20210802095520-35ed0b5cc75c => /Users/hxy/go/src/chainmaker.org/sdk-go

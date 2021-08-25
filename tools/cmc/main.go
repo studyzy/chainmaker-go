@@ -8,10 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"chainmaker.org/chainmaker-go/tools/cmc/tee"
 	"strings"
-
-	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
 	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
@@ -24,6 +21,7 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/payload"
 	"chainmaker.org/chainmaker-go/tools/cmc/query"
 	"chainmaker.org/chainmaker-go/tools/cmc/tee"
+	"github.com/spf13/cobra"
 )
 
 func main() {

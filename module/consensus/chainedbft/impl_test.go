@@ -155,7 +155,7 @@ func createCertNodesTotal() map[string]string {
 			certFile = filepath.Join(confDir, certFile)
 		}
 		acLog := &test.GoLogger{}
-		ac, _ := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
+		ac, _ := accesscontrol.NewAccessControlWithChainConfig(nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
 		pbMember := &pbac.Member{
 			OrgId:      lf.NodeConfig.OrgId,
 			MemberType: pbac.MemberType_CERT_HASH,
