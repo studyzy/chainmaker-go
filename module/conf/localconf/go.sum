@@ -1,4 +1,3 @@
-chainmaker.org/chainmaker/common v0.0.0-20210818084533-a9eaa4199add/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
 chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a h1:CM+nPwFAtzNj6qPRGgRraf7rVPoq9fixn/552QMf98s=
 chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849 h1:ThrvxkEd/9GoaN1HANLRJx1KmMdhWFBgOABc+hd1rGs=

@@ -8,14 +8,14 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849
-	chainmaker.org/chainmaker/protocol v0.0.0-20210823033144-bcf0422b11ea
-	chainmaker.org/chainmaker/sdk-go v0.0.0-20210823033359-1fe817a6d3f4 // indirect
+	chainmaker.org/chainmaker/protocol v0.0.0-20210825021221-02ac5d5a967e
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210823033359-1fe817a6d3f4
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2
 	github.com/mr-tron/base58 v1.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
+	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
-	github.com/tjfoc/gmtls v1.2.1 // indirect
 	google.golang.org/genproto v0.0.0-20210303154014-9728d6b83eeb // indirect
 	google.golang.org/grpc v1.37.0
 )
