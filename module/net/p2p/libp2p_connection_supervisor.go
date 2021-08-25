@@ -73,6 +73,7 @@ func (cs *ConnSupervisor) startSupervising() {
 			}
 		}()
 		cs.startUp = true
+		time.Sleep(5 * time.Second)
 		for cs.getSignal() {
 			//if cs.host.connManager.ConnCount() < len(cs.getPeerAddrInfos()) {
 			cs.try()

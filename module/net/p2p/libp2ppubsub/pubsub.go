@@ -323,6 +323,7 @@ func (p *PubSub) AddWhitelistPeer(pid peer.ID) {
 	p.whitelistLock.Lock()
 	defer p.whitelistLock.Unlock()
 	p.whitelist.Add(pid)
+	p.TryToReloadPeer(pid)
 }
 
 // TryToReloadPeer try to reload peer as new peer.
@@ -337,6 +338,7 @@ func (p *PubSub) RemoveWhitelistPeer(pid peer.ID) {
 	p.whitelistLock.Lock()
 	defer p.whitelistLock.Unlock()
 	p.whitelist.Remove(pid)
+	p.rt.RemovePeer(pid)
 }
 
 // Customize part end
@@ -559,35 +561,24 @@ func (p *PubSub) processLoop(ctx context.Context) {
 
 			messages := make(chan *RPC, p.peerOutboundQueueSize)
 			messages <- p.getHelloPacket()
-			go p.handleNewPeer(ctx, pid, messages)
 			p.peers[pid] = messages
+			go p.handleNewPeer(ctx, pid, messages)
 
 		case s := <-p.newPeerStream:
 			pid := s.Conn().RemotePeer()
-			_, ok := p.peers[pid]
+			ch, ok := p.peers[pid]
 			if !ok {
 				log.Warn("new stream for unknown peer: ", pid)
-				//s.Reset()
+				s.Reset()
 				continue
 			}
 
 			if p.blacklist.Contains(pid) {
 				log.Warn("closing stream for blacklisted peer: ", pid)
-				//close(ch)
-				//s.Reset()
+				close(ch)
+				s.Reset()
 				continue
 			}
-
-			// Customize part start
-
-			if p.whitelist.Size() > 0 && !p.whitelist.Contains(pid) {
-				//log.Warn("closing stream for not whitelisted peer: ", pid)
-				//close(ch)
-				//s.Reset()
-				continue
-			}
-
-			// Customize part end
 
 			p.rt.AddPeer(pid, s.Protocol())
 

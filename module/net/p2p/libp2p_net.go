@@ -756,9 +756,7 @@ func (ln *LibP2pNet) reloadChainPubSubWhiteList(chainId string) {
 					continue
 				}
 				logger.Infof("[Net] add peer to chain pubsub white list, (pid: %s, chain id: %s)", pid, chainId)
-				_ = ps.TryToReloadPeer(pid)
 			}
-
 		}
 	}
 }
@@ -946,14 +944,7 @@ func (ln *LibP2pNet) Start() error {
 	if ln.libP2pHost.isTls && ln.libP2pHost.peerChainIdsRecorder != nil {
 		ln.handlePubSubWhiteList()
 	}
-	// setup discovery
-	adis := make([]string, 0)
-	for bp := range ln.prepare.bootstrapsPeers {
-		adis = append(adis, bp)
-	}
-	if err := SetupDiscovery(ln.libP2pHost, true, adis); err != nil {
-		return err
-	}
+
 	// start pubsub
 	var psErr error = nil
 	ln.pubSubs.Range(func(_, value interface{}) bool {
@@ -966,6 +957,15 @@ func (ln *LibP2pNet) Start() error {
 	})
 	if psErr != nil {
 		return psErr
+	}
+
+	// setup discovery
+	adis := make([]string, 0)
+	for bp := range ln.prepare.bootstrapsPeers {
+		adis = append(adis, bp)
+	}
+	if err := SetupDiscovery(ln.libP2pHost, true, adis); err != nil {
+		return err
 	}
 	return nil
 }
