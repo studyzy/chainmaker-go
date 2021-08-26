@@ -600,6 +600,53 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 		return
 	}
 
+	// re verify myself
+	removeSelf := false
+	myCertBytes, ok := peerIdTlsCertMap[ln.GetNodeUid()]
+	if ok {
+		if ln.libP2pHost.isGmTls {
+			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
+			// tls cert exist, parse to cert
+			cert, err := sm2.ParseCertificate(myCertBytes)
+			if err != nil {
+				logger.Errorf("[Net] [ReVerifyTrustRoots] parse tls cert failed. %s", err.Error())
+				return
+			}
+			// whether verify failed, if failed remove it
+			if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+				removeSelf = true
+			}
+			delete(peerIdTlsCertMap, ln.GetNodeUid())
+		} else if ln.libP2pHost.isTls {
+			chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
+			// tls cert exist, parse to cert
+			cert, err := x509.ParseCertificate(myCertBytes)
+			if err != nil {
+				logger.Errorf("[Net] [ReVerifyTrustRoots] parse tls cert failed. %s", err.Error())
+				return
+			}
+			// whether verify failed, if failed remove it
+			if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
+				removeSelf = true
+			}
+			delete(peerIdTlsCertMap, ln.GetNodeUid())
+		}
+	}
+
+	if removeSelf {
+		logger.Infof("[Net] [ReVerifyTrustRoots] remove myself from chain, (pid: %s, chain id: %s)",
+			ln.GetNodeUid(), chainId)
+		existPeers := ln.libP2pHost.peerChainIdsRecorder.peerIdsOfChain(chainId)
+		for _, existPeerId := range existPeers {
+			ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
+			if err := ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
+				logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
+					err.Error())
+			}
+		}
+		return
+	}
+
 	// re verify exist peers
 	existPeers := ln.libP2pHost.peerChainIdsRecorder.peerIdsOfChain(chainId)
 	for _, existPeerId := range existPeers {
@@ -616,14 +663,14 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 				// whether verify failed, if failed remove it
 				if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
 					ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
+					if err = ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
+						logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
+							err.Error())
+					}
 					logger.Infof("[Net] [ReVerifyTrustRoots] remove peer from chain, (pid: %s, chain id: %s)",
 						existPeerId, chainId)
 				}
 				delete(peerIdTlsCertMap, existPeerId)
-				if err = ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
-					logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
-						err.Error())
-				}
 				continue
 			} else if ln.libP2pHost.isTls {
 				chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
@@ -636,14 +683,14 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 				// whether verify failed, if failed remove it
 				if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
 					ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
+					if err = ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
+						logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
+							err.Error())
+					}
 					logger.Infof("[Net] [ReVerifyTrustRoots] remove peer from chain, (pid: %s, chain id: %s)",
 						existPeerId, chainId)
 				}
 				delete(peerIdTlsCertMap, existPeerId)
-				if err = ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
-					logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
-						err.Error())
-				}
 				continue
 			}
 		} else {
@@ -664,12 +711,12 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 			// whether verify success, if success add it
 			if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
 				ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
-				logger.Infof("[Net] [ReVerifyTrustRoots] add peer to chain, (pid: %s, chain id: %s)",
-					pid, chainId)
 				if err = ln.addChainPubSubWhiteList(chainId, pid); err != nil {
 					logger.Warnf("[Net] [ReVerifyTrustRoots] add chain pub-sub white list failed, %s",
 						err.Error())
 				}
+				logger.Infof("[Net] [ReVerifyTrustRoots] add peer to chain, (pid: %s, chain id: %s)",
+					pid, chainId)
 			}
 			continue
 		} else if ln.libP2pHost.isTls {
@@ -682,12 +729,12 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 			// whether verify success, if success add it
 			if chainTrustRoots.VerifyCertOfChain(chainId, cert) {
 				ln.libP2pHost.peerChainIdsRecorder.addPeerChainId(pid, chainId)
-				logger.Infof("[Net] [ReVerifyTrustRoots] add peer to chain, (pid: %s, chain id: %s)",
-					pid, chainId)
 				if err = ln.addChainPubSubWhiteList(chainId, pid); err != nil {
 					logger.Warnf("[Net] [ReVerifyTrustRoots] add chain pub-sub white list failed, %s",
 						err.Error())
 				}
+				logger.Infof("[Net] [ReVerifyTrustRoots] add peer to chain, (pid: %s, chain id: %s)",
+					pid, chainId)
 			}
 		}
 	}
@@ -756,9 +803,7 @@ func (ln *LibP2pNet) reloadChainPubSubWhiteList(chainId string) {
 					continue
 				}
 				logger.Infof("[Net] add peer to chain pubsub white list, (pid: %s, chain id: %s)", pid, chainId)
-				_ = ps.TryToReloadPeer(pid)
 			}
-
 		}
 	}
 }
@@ -946,14 +991,7 @@ func (ln *LibP2pNet) Start() error {
 	if ln.libP2pHost.isTls && ln.libP2pHost.peerChainIdsRecorder != nil {
 		ln.handlePubSubWhiteList()
 	}
-	// setup discovery
-	adis := make([]string, 0)
-	for bp := range ln.prepare.bootstrapsPeers {
-		adis = append(adis, bp)
-	}
-	if err := SetupDiscovery(ln.libP2pHost, true, adis); err != nil {
-		return err
-	}
+
 	// start pubsub
 	var psErr error = nil
 	ln.pubSubs.Range(func(_, value interface{}) bool {
@@ -966,6 +1004,15 @@ func (ln *LibP2pNet) Start() error {
 	})
 	if psErr != nil {
 		return psErr
+	}
+
+	// setup discovery
+	adis := make([]string, 0)
+	for bp := range ln.prepare.bootstrapsPeers {
+		adis = append(adis, bp)
+	}
+	if err := SetupDiscovery(ln.libP2pHost, true, adis); err != nil {
+		return err
 	}
 	return nil
 }
