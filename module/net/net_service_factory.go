@@ -15,7 +15,8 @@ type NetServiceFactory struct {
 }
 
 // NewNetService create a new net service instance.
-func (nsf *NetServiceFactory) NewNetService(net Net, chainId string, ac protocol.AccessControlProvider, chainConf protocol.ChainConf, opts ...NetServiceOption) (protocol.NetService, error) {
+func (nsf *NetServiceFactory) NewNetService(net Net, chainId string, ac protocol.AccessControlProvider,
+	chainConf protocol.ChainConf, opts ...NetServiceOption) (protocol.NetService, error) {
 	//初始化工厂实例
 	ns := NewNetService(chainId, net, ac)
 	if err := ns.Apply(opts...); err != nil {
@@ -40,9 +41,7 @@ func (nsf *NetServiceFactory) setAllConsensusNodeIds(ns *NetService, chainConf p
 	consensusNodeUidList := make([]string, 0)
 	// add all the seeds
 	for _, node := range chainConf.ChainConfig().Consensus.Nodes {
-		for _, nodeUid := range node.NodeId {
-			consensusNodeUidList = append(consensusNodeUidList, nodeUid)
-		}
+		consensusNodeUidList = append(consensusNodeUidList, node.NodeId...)
 	}
 	// set all consensus node id for net service
 	err := ns.Apply(WithConsensusNodeUid(consensusNodeUidList...))
@@ -55,9 +54,11 @@ func (nsf *NetServiceFactory) setAllConsensusNodeIds(ns *NetService, chainConf p
 
 func (nsf *NetServiceFactory) setAllTlsTrustRoots(ns *NetService, chainConf protocol.ChainConf) error {
 	// set all tls trust root certs
-	for _, root := range chainConf.ChainConfig().TrustRoots {
-		if err := ns.localNet.AddTrustRoot(ns.chainId, []byte(root.Root)); err != nil {
-			return err
+	for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
+		for _, root := range orgRoot.Root {
+			if err := ns.localNet.AddTrustRoot(ns.chainId, []byte(root)); err != nil {
+				return err
+			}
 		}
 	}
 	ns.logger.Infof("[NetServiceFactory] add trust root certs ok(chain-id:%s)", ns.chainId)

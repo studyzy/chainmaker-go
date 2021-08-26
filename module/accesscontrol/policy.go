@@ -10,7 +10,6 @@ package accesscontrol
 import (
 	"strings"
 
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/protocol"
 )
@@ -23,6 +22,19 @@ type policy struct {
 
 func (p *policy) GetRule() protocol.Rule {
 	return p.rule
+}
+
+func (p *policy) GetPbPolicy() *pbac.Policy {
+	var pbRoleList []string
+	for _, role := range p.roleList {
+		var roleStr = string(role)
+		pbRoleList = append(pbRoleList, roleStr)
+	}
+	return &pbac.Policy{
+		Rule:     string(p.rule),
+		OrgList:  p.orgList,
+		RoleList: pbRoleList,
+	}
 }
 
 func (p *policy) GetOrgList() []string {
@@ -42,21 +54,17 @@ func newPolicy(rule protocol.Rule, orgList []string, roleList []protocol.Role) *
 }
 
 func newPolicyFromPb(input *pbac.Policy) *policy {
+
 	p := &policy{
 		rule:     protocol.Rule(input.Rule),
 		orgList:  input.OrgList,
 		roleList: nil,
 	}
+
 	for _, role := range input.RoleList {
 		role = strings.ToUpper(role)
 		p.roleList = append(p.roleList, protocol.Role(role))
 	}
 
 	return p
-}
-
-// Authentication validation policy
-type policyWhiteList struct {
-	policyType AuthMode
-	policyList map[string]*bcx509.Certificate
 }

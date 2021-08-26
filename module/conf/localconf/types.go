@@ -347,6 +347,15 @@ type pprofConfig struct {
 	Port    int  `mapstructure:"port"`
 }
 
+type raftConfig struct {
+	SnapCount    uint64 `mapstructure:"snap_count"`
+	AsyncWalSave bool   `mapstructure:"async_wal_save"`
+}
+
+type ConsensusConfig struct {
+	RaftConfig raftConfig `mapstructure:"raft"`
+}
+
 //type redisConfig struct {
 //	Url          string `mapstructure:"url"`
 //	Auth         string `mapstructure:"auth"`
@@ -379,6 +388,7 @@ type CMConfig struct {
 	NodeConfig       nodeConfig         `mapstructure:"node"`
 	RpcConfig        rpcConfig          `mapstructure:"rpc"`
 	BlockChainConfig []BlockchainConfig `mapstructure:"blockchain"`
+	ConsensusConfig  ConsensusConfig    `mapstructure:"consensus"`
 	StorageConfig    StorageConfig      `mapstructure:"storage"`
 	TxPoolConfig     txPoolConfig       `mapstructure:"txpool"`
 	SyncConfig       syncConfig         `mapstructure:"sync"`

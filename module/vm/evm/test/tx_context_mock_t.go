@@ -12,12 +12,11 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/utils"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-
 	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
 )
 
@@ -105,6 +104,14 @@ type TxContextMockTest struct {
 	sender   *acPb.Member
 	creator  *acPb.Member
 	cacheMap map[string][]byte
+}
+
+func (s *TxContextMockTest) GetContractByName(name string) (*commonPb.Contract, error) {
+	panic("implement me")
+}
+
+func (s *TxContextMockTest) GetContractBytecode(name string) ([]byte, error) {
+	panic("implement me")
 }
 
 func (s *TxContextMockTest) GetBlockVersion() uint32 {
@@ -216,7 +223,7 @@ func (s *TxContextMockTest) CallContract(contract *commonPb.Contract,
 		return contractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
 	if len(byteCode) == 0 {
-		dbByteCode, err := utils.GetContractBytecode(s.Get, contract.Name)
+		dbByteCode, err := s.GetContractBytecode(contract.Name)
 		if err != nil {
 			return nil, commonPb.TxStatusCode_CONTRACT_FAIL
 		}
@@ -318,6 +325,10 @@ func BaseParam(parameters map[string][]byte) {
 }
 
 type mockBlockchainStore struct {
+}
+
+func (m mockBlockchainStore) GetMemberExtraData(member *acPb.Member) (*acPb.MemberExtraData, error) {
+	panic("implement me")
 }
 
 func (m mockBlockchainStore) GetContractByName(name string) (*commonPb.Contract, error) {

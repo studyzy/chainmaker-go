@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 package verifier
+
 //
 //import (
 //	"chainmaker.org/chainmaker/common/crypto/hash"

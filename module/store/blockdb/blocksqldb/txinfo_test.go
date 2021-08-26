@@ -24,3 +24,13 @@ func TestNewTxInfo(t *testing.T) {
 	assert.Nil(t, err)
 	t.Logf("%#v", info)
 }
+func TestInsertTxInfo(t *testing.T) {
+	p := initProvider()
+	chainConfig := &config.ChainConfig{ChainId: "chain1", Crypto: &config.CryptoConfig{Hash: "SM3"}, Consensus: &config.ConsensusConfig{Type: consensus.ConsensusType_SOLO}}
+	genesis, _, _ := utils.CreateGenesis(chainConfig)
+	tx := genesis.Txs[0]
+	info, _ := NewTxInfo(tx, 0, []byte("hash"), 0)
+	i, err := p.Save(info)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(1), i)
+}

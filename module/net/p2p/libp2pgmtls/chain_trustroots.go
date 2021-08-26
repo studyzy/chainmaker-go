@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package libp2pgmtls
 
 import (
-	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"fmt"
 	"sync"
+
+	cmx509 "chainmaker.org/chainmaker/common/crypto/x509"
 )
 
 // ChainTrustRoots keep the trust root cert pools and the trust intermediates cert pools of all chains.

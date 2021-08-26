@@ -73,6 +73,14 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*ChainConfig, error) {
 		return nil, err
 	}
 
+	if err := verifyChainConfigTrustMembers(cconfig); err != nil {
+		return nil, err
+	}
+
+	if err := verifyChainConfigTrustMembers(cconfig); err != nil {
+		return nil, err
+	}
+
 	if err := verifyChainConfigConsensus(cconfig, mConfig, chainLog); err != nil {
 		return nil, err
 	}
@@ -154,22 +162,36 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*ChainConfig, error) {
 
 func verifyChainConfigTrustRoots(config *config.ChainConfig, mConfig *ChainConfig, log protocol.Logger) error {
 	// load all ca root certs
-	for _, root := range config.TrustRoots {
-		if _, ok := mConfig.CaRoots[root.OrgId]; ok {
-			err := fmt.Errorf("check root certificate failed, org id [%s] already exists", root.OrgId)
+	for _, orgRoots := range config.TrustRoots {
+		if _, ok := mConfig.CaRoots[orgRoots.OrgId]; ok {
+			err := fmt.Errorf("check root certificate failed, org id [%s] already exists", orgRoots.OrgId)
 			log.Error(err)
 			return err
 		}
-		// check root cert
-		if ok, err := utils.CheckRootCertificate(root.Root); err != nil && !ok {
-			log.Errorf("check root certificate failed, %s", err.Error())
-			return err
+		for _, root := range orgRoots.Root {
+			// check root cert
+			if ok, err := utils.CheckRootCertificate(root); err != nil && !ok {
+				log.Errorf("check root certificate failed, %s", err.Error())
+				return err
+			}
+			block, _ := pem.Decode([]byte(root))
+			if block == nil {
+				return errors.New("root is empty")
+			}
 		}
-		mConfig.CaRoots[root.OrgId] = struct{}{}
-		block, _ := pem.Decode([]byte(root.Root))
+		mConfig.CaRoots[orgRoots.OrgId] = struct{}{}
+	}
+	return nil
+}
+
+func verifyChainConfigTrustMembers(config *config.ChainConfig) error {
+	// load all ca root certs
+	for _, member := range config.TrustMembers {
+		block, _ := pem.Decode([]byte(member.MemberInfo))
 		if block == nil {
-			return errors.New("root is empty")
+			return errors.New("trust member is empty")
 		}
+
 	}
 	return nil
 }

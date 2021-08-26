@@ -14,15 +14,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
-
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
-	"chainmaker.org/chainmaker/common/crypto/paillier"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"chainmaker.org/chainmaker/common/serialize"
 	"chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
@@ -43,8 +43,8 @@ type Wacsi interface {
 		data []byte, isLen bool) ([]byte, error)
 	DeleteState(requestBody []byte, contractName string, txSimContext protocol.TxSimContext) error
 	// call other contract
-	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte, gasUsed uint64,
-		isLen bool) ([]byte, error, uint64)
+	CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+		gasUsed uint64, isLen bool) ([]byte, uint64, error)
 	// result record
 	SuccessResult(contractResult *common.ContractResult, data []byte) int32
 	ErrorResult(contractResult *common.ContractResult, data []byte) int32
@@ -82,12 +82,16 @@ type Wacsi interface {
 type WacsiImpl struct {
 	verifySql *types.StandardSqlVerify
 	rowIndex  int32
+	enableSql map[string]bool // map[chainId]enableSql
+	lock      *sync.Mutex
 }
 
 func NewWacsi() Wacsi {
 	return &WacsiImpl{
 		verifySql: &types.StandardSqlVerify{},
 		rowIndex:  0,
+		enableSql: make(map[string]bool),
+		lock:      &sync.Mutex{},
 	}
 }
 
@@ -143,8 +147,8 @@ func (*WacsiImpl) DeleteState(requestBody []byte, contractName string, txSimCont
 	}
 	return nil
 }
-func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
-	gasUsed uint64, isLen bool) ([]byte, error, uint64) {
+func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte,
+	data []byte, gasUsed uint64, isLen bool) ([]byte, uint64, error) {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	valuePtr, _ := ec.GetInt32("value_ptr")
 	contractName, _ := ec.GetString("contract_name")
@@ -157,38 +161,43 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 	if !isLen { // get value from cache
 		result := txSimContext.GetCurrentResult()
 		copy(memory[valuePtr:valuePtr+int32(len(result))], result)
-		return nil, nil, gasUsed
+		return nil, gasUsed, nil
 	}
 
 	// check param
 	if len(contractName) == 0 {
-		return nil, fmt.Errorf("[call contract] contract_name is null"), gasUsed
+		return nil, gasUsed, fmt.Errorf("[call contract] contract_name is null")
 	}
 	if len(method) == 0 {
-		return nil, fmt.Errorf("[call contract] method is null"), gasUsed
+		return nil, gasUsed, fmt.Errorf("[call contract] method is null")
 	}
 	if len(paramItem) > protocol.ParametersKeyMaxCount {
-		return nil, fmt.Errorf("[call contract] expect less than %d parameters, but got %d",
-			protocol.ParametersKeyMaxCount, len(paramItem)), gasUsed
+		return nil, gasUsed, fmt.Errorf("[call contract] expect less than %d parameters, but got %d",
+			protocol.ParametersKeyMaxCount, len(paramItem))
 	}
 	paramMap := ecData.ToMap()
 	for key, val := range paramMap {
 		if len(key) > protocol.DefaultMaxStateKeyLen {
-			return nil, fmt.Errorf("[call contract] param expect key length less than %d, but got %d",
-				protocol.DefaultMaxStateKeyLen, len(key)), gasUsed
+			return nil, gasUsed, fmt.Errorf("[call contract] param expect key length less than %d, but got %d",
+				protocol.DefaultMaxStateKeyLen, len(key))
 		}
-		match, err := regexp.MatchString(protocol.DefaultStateRegex, key)
-		if err != nil || !match {
-			return nil, fmt.Errorf("[call contract] param expect key no special characters, but got %s. "+
-				"letter, number, dot and underline are allowed", key), gasUsed
+
+		re, err := regexp.Compile(protocol.DefaultStateRegex)
+		if err != nil {
+			return nil, 0, err
+		}
+		match := re.MatchString(key)
+		if !match {
+			return nil, gasUsed, fmt.Errorf("[call contract] param expect key no special characters, but got %s. "+
+				"letter, number, dot and underline are allowed", key)
 		}
 		if len(val) > protocol.ParametersValueMaxLength {
-			return nil, fmt.Errorf("[call contract] expect value length less than %d, but got %d",
-				protocol.ParametersValueMaxLength, len(val)), gasUsed
+			return nil, gasUsed, fmt.Errorf("[call contract] expect value length less than %d, but got %d",
+				protocol.ParametersValueMaxLength, len(val))
 		}
 	}
 	if err := protocol.CheckKeyFieldStr(contractName, method); err != nil {
-		return nil, err, gasUsed
+		return nil, gasUsed, err
 	}
 
 	// call contract
@@ -198,15 +207,15 @@ func (*WacsiImpl) CallContract(requestBody []byte, txSimContext protocol.TxSimCo
 		paramMap, gasUsed, txSimContext.GetTx().Payload.TxType)
 	gasUsed += uint64(result.GasUsed)
 	if code != common.TxStatusCode_SUCCESS {
-		return nil, fmt.Errorf("[call contract] execute error code: %s, msg: %s", code.String(), result.Message), gasUsed
+		return nil, gasUsed, fmt.Errorf("[call contract] execute error code: %s, msg: %s", code.String(), result.Message)
 	}
 	// set value length to memory
 	l := utils.IntToBytes(int32(len(result.Result)))
 	copy(memory[valuePtr:valuePtr+4], l)
 	if len(result.Result) == 0 {
-		return nil, nil, gasUsed
+		return nil, gasUsed, nil
 	}
-	return result.Result, nil, gasUsed
+	return result.Result, gasUsed, nil
 }
 
 func (*WacsiImpl) SuccessResult(contractResult *common.ContractResult, data []byte) int32 {
@@ -243,7 +252,7 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	req := ec.GetItems()
 	var eventData []string
 	for i := 1; i < len(req); i++ {
-		data := req[i].Value.(string)
+		data, _ := req[i].Value.(string)
 		eventData = append(eventData, data)
 		log.Debugf("[emit event] event data :%v", data)
 	}
@@ -268,7 +277,6 @@ func (w *WacsiImpl) EmitEvent(requestBody []byte, txSimContext protocol.TxSimCon
 	return contractEvent, nil
 }
 
-//author:whang1234
 func (w *WacsiImpl) KvIterator(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
 	memory []byte) error {
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
@@ -459,7 +467,7 @@ func (*WacsiImpl) BulletProofsOperation(requestBody []byte, memory []byte, data 
 
 func pedersenAddNum(commitment, num interface{}) ([]byte, error) {
 	//bulletproofs.Helper().NewBulletproofs()
-	c := commitment.([]byte)
+	c, _ := commitment.([]byte)
 	x, err := strconv.ParseUint(string(num.([]byte)), 10, 64)
 	if err != nil {
 		return nil, err
@@ -469,14 +477,14 @@ func pedersenAddNum(commitment, num interface{}) ([]byte, error) {
 }
 
 func pedersenAddCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
-	commitmentX := commitment1.([]byte)
-	commitmentY := commitment2.([]byte)
+	commitmentX, _ := commitment1.([]byte)
+	commitmentY, _ := commitment2.([]byte)
 
 	return bulletproofs.PedersenAddCommitment(commitmentX, commitmentY)
 }
 
 func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
-	c := commitment.([]byte)
+	c, _ := commitment.([]byte)
 	x, err := strconv.ParseUint(string(num.([]byte)), 10, 64)
 	if err != nil {
 		return nil, err
@@ -486,14 +494,14 @@ func pedersenSubNum(commitment, num interface{}) ([]byte, error) {
 }
 
 func pedersenSubCommitment(commitment1, commitment2 interface{}) ([]byte, error) {
-	commitmentX := commitment1.([]byte)
-	commitmentY := commitment2.([]byte)
+	commitmentX, _ := commitment1.([]byte)
+	commitmentY, _ := commitment2.([]byte)
 	return bulletproofs.PedersenSubCommitment(commitmentX, commitmentY)
 
 }
 
 func pedersenMulNum(commitment, num interface{}) ([]byte, error) {
-	c := commitment.([]byte)
+	c, _ := commitment.([]byte)
 	x, err := strconv.ParseUint(string(num.([]byte)), 10, 64)
 	if err != nil {
 		return nil, err
@@ -503,8 +511,8 @@ func pedersenMulNum(commitment, num interface{}) ([]byte, error) {
 }
 
 func bulletproofsVerify(proof, commitment interface{}) ([]byte, error) {
-	p := proof.([]byte)
-	c := commitment.([]byte)
+	p, _ := proof.([]byte)
+	c, _ := commitment.([]byte)
 	ok, err := bulletproofs.Verify(p, c)
 	if err != nil {
 		return nil, err
@@ -538,7 +546,7 @@ func (*WacsiImpl) PaillierOperation(requestBody []byte, memory []byte, data []by
 		return nil, nil
 	}
 
-	resultBytes := make([]byte, 0)
+	var resultBytes []byte
 	switch opTypeStr {
 	case protocol.PaillierOpTypeAddCiphertext:
 		resultBytes, err = addCiphertext(operandOne, operandTwo, pubKey)
@@ -677,18 +685,19 @@ func numMul(operandOne interface{}, operandTwo interface{}, pubKey *paillier.Pub
 
 func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
 	memory []byte, chainId string) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
-
 	// verify
-	if err := w.verifySql.VerifyDQLSql(sql); err != nil {
+	var err error
+	if err = w.verifySql.VerifyDQLSql(sql); err != nil {
 		return fmt.Errorf("[execute query] verify sql error, %s", err.Error())
 	}
-
 	// execute query
 	var rows protocol.SqlRows
-	var err error
 	if txSimContext.GetTx().Payload.TxType == common.TxType_QUERY_CONTRACT {
 		rows, err = txSimContext.GetBlockchainStore().QueryMulti(contractName, sql)
 		if err != nil {
@@ -696,12 +705,16 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 		}
 	} else {
 		txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer().MemberInfo, txSimContext.GetBlockHeight())
-		transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
+		var transaction protocol.SqlDBTransaction
+		transaction, err = txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 		if err != nil {
 			return fmt.Errorf("[execute query] get db transaction error, [%s]", err.Error())
 		}
 		changeCurrentDB(chainId, contractName, transaction)
 		rows, err = transaction.QueryMulti(sql)
+		if err != nil {
+			return fmt.Errorf("[execute query] query multi error, [%s]", err.Error())
+		}
 	}
 
 	index := atomic.AddInt32(&w.rowIndex, 1)
@@ -712,6 +725,9 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 
 func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
 	memory []byte, data []byte, chainId string, isLen bool) ([]byte, error) {
+	if !w.isSupportSql(txSimContext) {
+		return nil, fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -733,16 +749,20 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 			}
 		} else {
 			txKey := common.GetTxKeyWith(txSimContext.GetBlockProposer().MemberInfo, txSimContext.GetBlockHeight())
-			transaction, err := txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
+			var transaction protocol.SqlDBTransaction
+			transaction, err = txSimContext.GetBlockchainStore().GetDbTransaction(txKey)
 			if err != nil {
 				return nil, fmt.Errorf("[execute query one] get db transaction error, [%s]", err.Error())
 			}
 			changeCurrentDB(chainId, contractName, transaction)
 			row, err = transaction.QuerySingle(sql)
+			if err != nil {
+				return nil, fmt.Errorf("[execute query one] query single error, [%s]", err.Error())
+			}
 		}
 		var dataRow map[string][]byte
 		if row.IsEmpty() {
-			dataRow = make(map[string][]byte, 0)
+			dataRow = make(map[string][]byte)
 		} else {
 			dataRow, err = row.Data()
 			if err != nil {
@@ -756,15 +776,19 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 			return nil, nil
 		}
 		return rsBytes, nil
-	} else { // get data
-		if data != nil && len(data) > 0 {
-			copy(memory[ptr:ptr+int32(len(data))], data)
-		}
-		return nil, nil
 	}
+	// get data
+	if len(data) > 0 {
+		copy(memory[ptr:ptr+int32(len(data))], data)
+	}
+
+	return nil, nil
 }
 
-func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	valuePtr, _ := ec.GetInt32("value_ptr")
@@ -782,8 +806,11 @@ func (*WacsiImpl) RSHasNext(requestBody []byte, txSimContext protocol.TxSimConte
 	return nil
 }
 
-func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
+func (w *WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte, data []byte,
 	isLen bool) ([]byte, error) {
+	if !w.isSupportSql(txSimContext) {
+		return nil, fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	ptr, _ := ec.GetInt32("value_ptr")
@@ -799,7 +826,7 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 		var dataRow map[string][]byte
 		var err error
 		if rows == nil {
-			dataRow = make(map[string][]byte, 0)
+			dataRow = make(map[string][]byte)
 		} else {
 			dataRow, err = rows.Data()
 			if err != nil {
@@ -813,15 +840,18 @@ func (*WacsiImpl) RSNext(requestBody []byte, txSimContext protocol.TxSimContext,
 			return nil, nil
 		}
 		return rsBytes, nil
-	} else { // get data
-		if len(data) > 0 {
-			copy(memory[ptr:ptr+int32(len(data))], data)
-		}
-		return nil, nil
 	}
+	// get data
+	if len(data) > 0 {
+		copy(memory[ptr:ptr+int32(len(data))], data)
+	}
+	return nil, nil
 }
 
-func (*WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+func (w *WacsiImpl) RSClose(requestBody []byte, txSimContext protocol.TxSimContext, memory []byte) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	rsIndex, _ := ec.GetInt32("rs_index")
 	valuePtr, _ := ec.GetInt32("value_ptr")
@@ -846,6 +876,9 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 	}
 	if method == protocol.ContractUpgradeMethod {
 		return fmt.Errorf("[execute update] upgrade contract transaction cannot be execute dml")
+	}
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
 	}
 	ec := serialize.NewEasyCodecWithBytes(requestBody)
 	sql, _ := ec.GetString("sql")
@@ -875,6 +908,9 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 
 func (w *WacsiImpl) ExecuteDDL(requestBody []byte, contractName string, txSimContext protocol.TxSimContext,
 	memory []byte, method string) error {
+	if !w.isSupportSql(txSimContext) {
+		return fmt.Errorf("not support sql, you must set chainConfig[contract.enable_sql_support=true]")
+	}
 	if !w.isManageContract(method) {
 		return ErrorNotManageContract
 	}
@@ -902,7 +938,18 @@ func changeCurrentDB(chainId string, contractName string, transaction protocol.S
 	dbName := statesqldb.GetContractDbName(chainId, contractName)
 	//currentDbName := getCurrentDb(chainId)
 	//if contractName != "" && dbName != currentDbName {
-	transaction.ChangeContextDb(dbName)
+	_ = transaction.ChangeContextDb(dbName)
 	//setCurrentDb(chainId, dbName)
 	//}
+}
+func (w *WacsiImpl) isSupportSql(txSimContext protocol.TxSimContext) bool {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	chainId := txSimContext.GetTx().Payload.ChainId
+	if b, ok := w.enableSql[chainId]; ok {
+		return b
+	}
+	cc, _ := txSimContext.GetBlockchainStore().GetLastChainConfig()
+	w.enableSql[chainId] = cc.Contract.EnableSqlSupport
+	return cc.Contract.EnableSqlSupport
 }

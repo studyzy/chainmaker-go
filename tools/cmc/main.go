@@ -10,8 +10,6 @@ package main
 import (
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	"chainmaker.org/chainmaker-go/tools/cmc/archive"
 	"chainmaker.org/chainmaker-go/tools/cmc/bulletproofs"
 	"chainmaker.org/chainmaker-go/tools/cmc/cert"
@@ -23,6 +21,7 @@ import (
 	"chainmaker.org/chainmaker-go/tools/cmc/payload"
 	"chainmaker.org/chainmaker-go/tools/cmc/query"
 	"chainmaker.org/chainmaker-go/tools/cmc/tee"
+	"github.com/spf13/cobra"
 )
 
 func main() {

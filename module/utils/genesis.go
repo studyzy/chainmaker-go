@@ -96,6 +96,7 @@ func CreateGenesis(cc *configPb.ChainConfig) (*commonPb.Block, []*commonPb.TxRWS
 		Header: &commonPb.BlockHeader{
 			ChainId:        cc.ChainId,
 			BlockHeight:    0,
+			BlockType:      commonPb.BlockType_CONFIG_BLOCK,
 			PreBlockHash:   nil,
 			BlockHash:      nil,
 			PreConfHeight:  0,
@@ -329,7 +330,7 @@ func (e *ERC20Config) legal() error {
 }
 
 // loadERC20Config load config of erc20 contract
-func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config, error) {
+func loadERC20Config(consensusExtConfig []*configPb.ConfigKeyValue) (*ERC20Config, error) {
 	/**
 	  erc20合约的配置
 	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
@@ -556,7 +557,7 @@ func (s *StakeConfig) setNodeID(key, value string) error {
 	return nil
 }
 
-func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig, error) {
+func loadStakeConfig(consensusExtConfig []*configPb.ConfigKeyValue) (*StakeConfig, error) {
 	/**
 	  stake合约的配置
 	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置

@@ -28,6 +28,7 @@ import (
 
 // BlockVerifierImpl implements BlockVerifier interface.
 // Verify block and transactions.
+//nolint: structcheck,unused
 type BlockVerifierImpl struct {
 	chainId         string                   // chain id, to identity this chain
 	msgBus          msgbus.MessageBus        // message bus
@@ -94,6 +95,7 @@ func NewBlockVerifier(config BlockVerifierConfig, log protocol.Logger) (protocol
 		BlockchainStore: config.BlockchainStore,
 		ProposalCache:   config.ProposedCache,
 		StoreHelper:     config.StoreHelper,
+		TxScheduler:     config.TxScheduler,
 	}
 	v.verifierBlock = common.NewVerifierBlock(conf)
 
@@ -126,14 +128,13 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	var isValid bool
 	var contractEventMap map[string][]*commonpb.ContractEvent
 	// to check if the block has verified before
-	b, txRwSet, EventMap := v.proposalCache.GetProposedBlock(block)
-	contractEventMap = EventMap
+	b, txRwSet, eventMap := v.proposalCache.GetProposedBlock(block)
+	// contractEventMap = eventMap
 
 	if b != nil {
 		isSqlDb := v.chainConf.ChainConfig().Contract.EnableSqlSupport
 		notSolo := consensuspb.ConsensusType_SOLO != v.chainConf.ChainConfig().Consensus.Type
 		if notSolo || isSqlDb {
-			// the block has verified befo
 			// the block has verified before
 			v.log.Infof("verify success repeat [%d](%x)", block.Header.BlockHeight, block.Header.BlockHash)
 			isValid = true
@@ -141,17 +142,30 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 				// consensus mode, publish verify result to message bus
 				v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRwSet))
 			}
-			lastBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(block.Header.PreBlockHash, block.Header.BlockHeight-1)
+			lastBlock, _ := v.proposalCache.GetProposedBlockByHashAndHeight(
+				block.Header.PreBlockHash, block.Header.BlockHeight-1)
 			if lastBlock == nil {
-				v.log.Debugf("no pre-block be found, preHeight:%d, preBlockHash:%x", block.Header.BlockHeight-1, block.Header.PreBlockHash)
+				v.log.Debugf(
+					"no pre-block be found, preHeight:%d, preBlockHash:%x",
+					block.Header.BlockHeight-1,
+					block.Header.PreBlockHash,
+				)
 				return nil
 			}
 			cutBlocks := v.proposalCache.KeepProposedBlock(lastBlock.Header.BlockHash, lastBlock.Header.BlockHeight)
 			if len(cutBlocks) > 0 {
-				v.log.Infof("cut block block hash: %s, height: %v", hex.EncodeToString(lastBlock.Header.BlockHash), lastBlock.Header.BlockHeight)
+				v.log.Infof(
+					"cut block block hash: %s, height: %v",
+					hex.EncodeToString(lastBlock.Header.BlockHash),
+					lastBlock.Header.BlockHeight,
+				)
 				v.cutBlocks(cutBlocks, lastBlock)
 			}
-			err := v.proposalCache.SetProposedBlock(block, txRwSet, EventMap, v.proposalCache.IsProposedAt(block.Header.BlockHeight))
+			err = v.proposalCache.SetProposedBlock(
+				block, txRwSet,
+				eventMap,
+				v.proposalCache.IsProposedAt(block.Header.BlockHeight),
+			)
 			return err
 		}
 	}
@@ -202,7 +216,8 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	return nil
 }
 
-func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
+func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (
+	map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, []int64, error) {
 	hashType := v.chainConf.ChainConfig().Crypto.Hash
 	timeLasts := make([]int64, 0)
 	var err error
@@ -236,7 +251,8 @@ func (v *BlockVerifierImpl) verifyVoteSig(block *commonpb.Block) error {
 	return consensus.VerifyBlockSignatures(v.chainConf, v.ac, v.blockchainStore, block, v.ledgerCache)
 }
 
-func parseVerifyResult(block *commonpb.Block, isValid bool, txsRwSet map[string]*commonpb.TxRWSet) *consensuspb.VerifyResult {
+func parseVerifyResult(block *commonpb.Block, isValid bool,
+	txsRwSet map[string]*commonpb.TxRWSet) *consensuspb.VerifyResult {
 	verifyResult := &consensuspb.VerifyResult{
 		VerifiedBlock: block,
 		TxsRwSet:      txsRwSet,

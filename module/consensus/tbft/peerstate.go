@@ -174,6 +174,8 @@ func (pcs *PeerStateService) sendStateChange() {
 	if pcs.tbftImpl.Height < pcs.Height {
 		return
 	} else if pcs.tbftImpl.Height == pcs.Height {
+		pcs.logger.Debugf("[%s](%d) sendStateOfRound to [%s](%d/%d/%s)",
+			pcs.tbftImpl.Id, pcs.tbftImpl.Height, pcs.Id, pcs.Height, pcs.Round, pcs.Step)
 		pcs.sendStateOfRound()
 	} else {
 		pcs.logger.Debugf("[%s](%d) sendStateOfHeight to [%s](%d/%d/%s)",
@@ -193,6 +195,8 @@ func (pcs *PeerStateService) sendProposalOfRound() {
 	if pcs.tbftImpl.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
 		pcs.Step >= tbftpb.Step_PROPOSE {
+		pcs.logger.Debugf("[%s] sendProposalOfRound: [%d,%d]",
+			pcs.Id, pcs.tbftImpl.Proposal.Height, pcs.tbftImpl.Proposal.Round)
 		pcs.sendProposal(pcs.tbftImpl.Proposal)
 	}
 }
@@ -204,7 +208,6 @@ func (pcs *PeerStateService) sendPrevoteOfRound(round int32) {
 	if prevoteVs != nil {
 		vote, ok := prevoteVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Prevotes != nil {
-
 			var builder strings.Builder
 			fmt.Fprintf(&builder, " prevote: [")
 			for k := range pcs.RoundVoteSet.Prevotes.Votes {
@@ -227,7 +230,6 @@ func (pcs *PeerStateService) sendPrecommitOfRound(round int32) {
 	if precommitVs != nil {
 		vote, ok := precommitVs.Votes[pcs.tbftImpl.Id]
 		if ok && pcs.RoundVoteSet != nil && pcs.RoundVoteSet.Precommits != nil {
-
 			var builder strings.Builder
 			fmt.Fprintf(&builder, " precommit: [")
 			for k := range pcs.RoundVoteSet.Precommits.Votes {
@@ -299,6 +301,7 @@ func (pcs *PeerStateService) sendPrecommit(precommit *Vote) {
 func (pcs *PeerStateService) sendStateOfHeight(height uint64) {
 	state := pcs.tbftImpl.consensusStateCache.getConsensusState(pcs.Height)
 	if state == nil {
+		pcs.logger.Debugf("[%s] no caching consensusState, height:%d", pcs.Id, pcs.Height)
 		return
 	}
 	pcs.sendProposalInState(state)
@@ -311,6 +314,8 @@ func (pcs *PeerStateService) sendProposalInState(state *ConsensusState) {
 	if state.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
 		pcs.Step >= tbftpb.Step_PROPOSE {
+		pcs.logger.Debugf("[%s] sendProposalInState: [%d,%d]",
+			pcs.Id, state.Proposal.Height, state.Proposal.Round)
 		pcs.sendProposal(state.Proposal)
 	}
 }

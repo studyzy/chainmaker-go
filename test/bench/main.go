@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -18,6 +17,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
@@ -30,8 +31,8 @@ var (
 	PORT                           = 17988
 	DEFAULT_CERT_ROOT_PATH         = "../config"
 	DEFAULT_WASM_PATH              = "../wasm/fact.wasm"
-	DEFAULT_USER_KEY_PATH          = "/crypto-config/%s/user/client1/client1.tls.key"
-	DEFAULT_USER_CRT_PATH          = "/crypto-config/%s/user/client1/client1.tls.crt"
+	DEFAULT_USER_KEY_PATH          = "/crypto-config/%s/user/client1/client1.sign.key"
+	DEFAULT_USER_CRT_PATH          = "/crypto-config/%s/user/client1/client1.sign.crt"
 	DEFAULT_CA_PATH                = "/crypto-config/%s/ca"
 	DEFAULT_USER_ADMIN_PATH        = "/crypto-config/%s/user/admin1/"
 	DEFAULT_ORGID                  = "wx-org1.chainmaker.org"

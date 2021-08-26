@@ -8,6 +8,7 @@ package evm
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"runtime/debug"
 
@@ -107,8 +108,8 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string,
 	}
 
 	// contract
-	address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
-
+	//address, err := evmutils.MakeAddressFromString(contract.Name) // reference vm_factory.go RunContract
+	address, err := contractNameHexToAddress(contract.Name)
 	if err != nil {
 		return r.errorResult(contractResult, err, "make address fail")
 	}
@@ -160,6 +161,26 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string,
 	return contractResult
 }
 
+//func contractNameDecimalToAddress(cname string) (*evmutils.Int, error) {
+//	// hexStr2 == hexStr2
+//	// hexStr := hex.EncodeToString(evmutils.Keccak256([]byte("contractName")))[24:]
+//	// hexStr2 := hex.EncodeToString(evmutils.Keccak256([]byte("contractName"))[12:])
+//	// 为什么使用十进制字符串转换，因为在./evm-go中，使用的是 address.String()作为key，也就是说数据库的名称是十进制字符串。
+//	evmAddr := evmutils.FromDecimalString(cname)
+//	if evmAddr == nil {
+//		return nil, errors.New("contractName[%s] not DecimalString,
+//		you can use evmutils.MakeAddressFromString(\"contractName\").String() get a decimal string")
+//	}
+//	return evmAddr, nil
+//}
+func contractNameHexToAddress(cname string) (*evmutils.Int, error) {
+	evmAddr := evmutils.FromHexString(cname)
+	if evmAddr == nil {
+		return nil, errors.New("contractName[%s] not HexString, you can use hex.EncodeToString(" +
+			"evmutils.MakeAddressFromString(\"contractName\").Bytes()) get a hex string address")
+	}
+	return evmAddr, nil
+}
 func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	if result.ExitOpCode == opcodes.REVERT {
 		err = fmt.Errorf("revert instruction was encountered during execution")

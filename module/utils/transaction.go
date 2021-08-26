@@ -258,6 +258,7 @@ func verifyTxHeader(header *commonPb.Payload, targetChainId string) error {
 // verify transaction sender's authentication (include signature verification,
 //cert-chain verification, access verification)
 func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) error {
+	var principal protocol.Principal
 	var err error
 	txBytes, err := CalcUnsignedTxBytes(t)
 	if err != nil {
@@ -265,37 +266,69 @@ func verifyTxAuth(t *commonPb.Transaction, ac protocol.AccessControlProvider) er
 	}
 
 	endorsements := []*commonPb.EndorsementEntry{t.Sender}
-	resourceId, err := ac.LookUpResourceNameByTxType(t.Payload.TxType)
-	if err != nil {
-		return err
-	}
-	principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
-	if err != nil {
-		return fmt.Errorf("fail to construct authentication principal: %s", err)
+	txType := t.Payload.TxType
+	resourceId := t.Payload.ContractName + "-" + t.Payload.Method
+
+	// sender authentication
+	_, err = ac.LookUpExceptionalPolicy(resourceId)
+	if err == nil {
+		principal, err = ac.CreatePrincipal(resourceId, endorsements, txBytes)
+		if err != nil {
+			return fmt.Errorf("fail to construct authentication principal for %s : %s", resourceId, err)
+		}
+	} else {
+		principal, err = ac.CreatePrincipal(txType.String(), endorsements, txBytes)
+		if err != nil {
+			return fmt.Errorf("fail to construct authentication principal for %s : %s", txType.String(), err)
+		}
 	}
 	ok, err := ac.VerifyPrincipal(principal)
 	if err != nil {
-		return fmt.Errorf("authentication error, %s", err)
+		return fmt.Errorf("authentication error: %s", err)
 	}
 	if !ok {
 		return fmt.Errorf("authentication failed")
 	}
 
-	//authentication for invoke_contract
+	// endorsers authentication for invoke_contract
 	if t.Payload.TxType == commonPb.TxType_INVOKE_CONTRACT {
-		resourceId := t.Payload.ContractName + "-" + t.Payload.Method
-		if !ac.ResourcePolicyExists(resourceId) {
+		p, err := ac.LookUpPolicy(resourceId)
+		if err != nil {
 			return nil
 		}
 		endorsements := t.Endorsers
 		if endorsements == nil {
 			return fmt.Errorf("endorsement is nil in verifyTxAuth for resourceId[%s]", resourceId)
 		}
-		principal, err := ac.CreatePrincipal(resourceId, endorsements, txBytes)
-		if err != nil {
-			return fmt.Errorf("fail to construct authentication principal for %s-%s: %s",
-				t.Payload.ContractName, t.Payload.Method, err)
+
+		if p.Rule == string(protocol.RuleSelf) {
+			var targetOrg string
+			parameterPairs := t.Payload.Parameters
+			if parameterPairs != nil {
+				for i := 0; i < len(parameterPairs); i++ {
+					key := parameterPairs[i].Key
+					if key == protocol.ConfigNameOrgId {
+						targetOrg = string(parameterPairs[i].Value)
+						break
+					}
+				}
+				if targetOrg == "" {
+					return fmt.Errorf("verification rule is [SELF], but org_id is not set in the parameter")
+				}
+				principal, err = ac.CreatePrincipalForTargetOrg(resourceId, endorsements, txBytes, targetOrg)
+				if err != nil {
+					return fmt.Errorf("fail to construct authentication principal with orgId %s for %s-%s: %s",
+						targetOrg, t.Payload.ContractName, t.Payload.Method, err)
+				}
+			}
+		} else {
+			principal, err = ac.CreatePrincipal(resourceId, endorsements, txBytes)
+			if err != nil {
+				return fmt.Errorf("fail to construct authentication principal for %s-%s: %s",
+					t.Payload.ContractName, t.Payload.Method, err)
+			}
 		}
+
 		ok, err := ac.VerifyPrincipal(principal)
 		if err != nil {
 			return fmt.Errorf("authentication error for %s-%s: %s", t.Payload.ContractName, t.Payload.Method, err)
@@ -333,4 +366,17 @@ func GenerateInstallContractPayload(contractName, version string, runtimeType co
 		Parameters:   pairs,
 	}
 	return payload, nil
+}
+
+func GetRoleFromTx(tx *commonPb.Transaction, ac protocol.AccessControlProvider) (protocol.Role, error) {
+
+	var member protocol.Member
+	var err error
+	member, err = ac.NewMember(tx.Sender.Signer)
+
+	if err != nil {
+		return "", err
+	}
+
+	return member.GetRole(), nil
 }
