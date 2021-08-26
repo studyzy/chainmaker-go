@@ -4,6 +4,8 @@ chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e/go.mod h1:Rj
 chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210825133553-b1953ac0acac h1:zD4CuDcW3pL+UI1uYZmAFzMoINSJP3iMaMNKfIB87D4=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210825133553-b1953ac0acac/go.mod h1:z7MzCd1JDm5wRIFsI3LRqSHMeTJU5D8yR1TWXCEMsM4=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210826130850-b78ed618ce07 h1:oPJZxdUChO5sJry5Ex5kaXVy3IdC+2r6dWaE0owEOwY=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210826130850-b78ed618ce07/go.mod h1:z7MzCd1JDm5wRIFsI3LRqSHMeTJU5D8yR1TWXCEMsM4=
 chainmaker.org/chainmaker/protocol v0.0.0-20210825021221-02ac5d5a967e h1:yNvX5G0YfUEIR7RF2/w0hwt13FKQM4WmctjJNuKExnM=
 chainmaker.org/chainmaker/protocol v0.0.0-20210825021221-02ac5d5a967e/go.mod h1:/OHIj02TbY6hChL5HV93lQo7BUHaYlhb5aedFaazAJg=
 chainmaker.org/chainmaker/sdk-go v0.0.0-20210823033359-1fe817a6d3f4 h1:JAKdUNXcVe2niGbcn+vv+IUk+gJ5uZr+FwmckhnRgas=
@@ -1370,4 +1372,3 @@ rsc.io/pdf v0.1.1/go.mod h1:n8OzWcQ6Sp37PL01nO98y4iUCRdTGarVfzxY20ICaU4=
 sigs.k8s.io/yaml v1.1.0/go.mod h1:UJmg0vDUVViEyp3mgSv9WPwZCDxu4rQW1olrI1uml+o=
 sourcegraph.com/sourcegraph/appdash v0.0.0-20180531100431-4c381bd170b4/go.mod h1:hI742Nqp5OhwiqlzhgfbWU4mW4yO10fP+LoT9WOswdU=
 sourcegraph.com/sourcegraph/appdash-data v0.0.0-20151005221446-73f23eafcf67/go.mod h1:L5q+DGLGOQFpo1snNEkLOJT2d1YTW66rWNzatr3He1k=
-
