@@ -207,30 +207,32 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 
 	for _, cert := range certs {
 		if msg := r.checkCert(cert, config.TrustRoots); msg != nil {
+			r.log.Warnf("checkCert failed, err: %s", msg)
 			return nil, msg
 		}
 		certHash, err1 := utils.GetCertificateIdHex([]byte(cert), hashType)
 		if err1 != nil {
-			r.log.Errorf("utils.GetCertificateIdHex failed, err: %s", err1.Error())
-			continue
+			r.log.Warnf("utils.GetCertificateIdHex failed, err: %s", err1.Error())
+			return nil, err1
 		}
 		certHashKey := protocol.CertFreezeKeyPrefix + certHash
 		certHashBytes, err1 := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHashKey))
 		if err1 != nil {
 			r.log.Warnf("txSimContext get certHashKey certHashKey[%s], err:", certHashKey, err1.Error())
-			continue
+			return nil, err1
 		}
 
 		if len(certHashBytes) > 0 {
 			// the certHashKey is exist
-			r.log.Warnf("the certHashKey is exist certHashKey[%s]", certHashKey)
-			continue
+			msg := fmt.Errorf("the certHashKey is exist certHashKey[%s]", certHashKey)
+			r.log.Warn(msg)
+			return nil, msg
 		}
 
 		err = txSimContext.Put(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHashKey), []byte(cert))
 		if err != nil {
-			r.log.Errorf("txSimContext.Put err, err: %s", err.Error())
-			continue
+			r.log.Warnf("txSimContext.Put err, err: %s", err.Error())
+			return nil, err
 		}
 
 		// add the certHashKey
@@ -537,13 +539,17 @@ func (r *CertManageRuntime) checkCert(cert string, trustRoots []*configPb.TrustR
 	}
 	certChain, err := c.Verify(bcx509.VerifyOptions{
 		Intermediates:             caPool,
+		Roots:                     caPool,
 		CurrentTime:               time.Time{},
 		KeyUsages:                 []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 		MaxConstraintComparisions: 0,
 	})
+	if err != nil {
+		r.log.Warn(err)
+		return err
+	}
 	if len(certChain) > 0 && len(certChain[0]) > 0 {
 		return nil
 	}
 	return errors.New("the cert is not in trust root")
-
 }
