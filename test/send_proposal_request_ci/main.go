@@ -8,37 +8,47 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"context"
 	"encoding/hex"
+	"encoding/pem"
+	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
+	"math/big"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker-go/accesscontrol"
+	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/evmutils"
+	evm "chainmaker.org/chainmaker/common/evmutils"
+	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/protocol"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"chainmaker.org/chainmaker-go/test/common"
 
-	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
 	"chainmaker.org/chainmaker/common/crypto/asym"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	"chainmaker.org/chainmaker/protocol"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )
 
 const (
-	logTempMarshalPayLoadFailed     = "marshal payload failed, %s"
 	logTempUnmarshalBlockInfoFailed = "blockInfo unmarshal error %s\n"
 	logTempSendTx                   = "send tx resp: code:%d, msg:%s, txid:%s, payload:%+v\n"
 	logTempSendBlock                = "send tx resp: code:%d, msg:%s, blockInfo:%+v\n"
@@ -68,11 +78,8 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 // vm wasmer 整体功能测试，合约创建、升级、执行、查询、冻结、解冻、吊销、交易区块的查询、链配置信息的查询
 func main() {
 	common.SetCertPathPrefix(certPathPrefix)
-
-	//initWasmerTest()
-	//runTest()
-
-	initGasmTest()
+	evmtest()
+	initWasmerTest()
 	runTest()
 }
 
@@ -184,13 +191,6 @@ func initWasmerTest() {
 	contractName = "contract101"
 	runtimeType = commonPb.RuntimeType_WASMER
 	printConfig("wasmer")
-}
-func initGasmTest() {
-	WasmPath = "../wasm/go-fact-2.0.0.wasm"
-	WasmUpgradePath = WasmPath
-	contractName = "contract201"
-	runtimeType = commonPb.RuntimeType_GASM
-	printConfig("gasm")
 }
 
 func printConfig(wasmType string) {
@@ -747,93 +747,6 @@ func testQueryFindByHash(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, cha
 	return txId, resp.ContractResult.Result
 }
 
-//
-//func common.ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
-//	chainId, txId string, payload *commonPb.Payload) *commonPb.TxResponse {
-//
-//	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(5*time.Second)))
-//	defer cancel()
-//
-//	if txId == "" {
-//		txId = utils.GetRandTxId()
-//	}
-//
-//	file, err := ioutil.ReadFile(userCrtPath)
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	// 构造Sender
-//	//pubKeyString, _ := sk3.PublicKey().String()
-//	sender := &acPb.Member{
-//		OrgId:      orgId,
-//		MemberInfo: file,
-//		//IsFullCert: true,
-//		//MemberInfo: []byte(pubKeyString),
-//	}
-//
-//	// 构造Header
-//	header := &commonPb.Payload{
-//		ChainId: chainId,
-//		//Sender:         sender,
-//		TxType:         txType,
-//		TxId:           txId,
-//		Timestamp:      time.Now().Unix(),
-//		ExpirationTime: 0,
-//	}
-//
-//	req := &commonPb.TxRequest{
-//		Payload: header,
-//		Sender:  &commonPb.EndorsementEntry{Signer: sender},
-//	}
-//
-//	// 拼接后，计算Hash，对hash计算签名
-//	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
-//	if err != nil {
-//		log.Fatalf("CalcUnsignedTxRequest failed, %s", err.Error())
-//		os.Exit(0)
-//	}
-//
-//	fmt.Errorf("################ %s", string(sender.MemberInfo))
-//
-//	signer := getSigner(sk3, sender)
-//	//signBytes, err := signer.Sign("SHA256", rawTxBytes)
-//	signBytes, err := signer.Sign("SM3", rawTxBytes)
-//	if err != nil {
-//		log.Fatalf("sign failed, %s", err.Error())
-//		os.Exit(0)
-//	}
-//
-//	req.Sender.Signature = signBytes
-//
-//	result, err := (*client).SendRequest(ctx, req)
-//
-//	if err != nil {
-//		statusErr, ok := status.FromError(err)
-//		if ok && statusErr.Code() == codes.DeadlineExceeded {
-//			fmt.Println("WARN: client.call err: deadline")
-//			os.Exit(0)
-//		}
-//		fmt.Printf("ERROR: client.call err: %v\n", err)
-//		os.Exit(0)
-//	}
-//	return result
-//}
-
-func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
-	skPEM, err := sk3.String()
-	if err != nil {
-		log.Fatalf("get sk PEM failed, %s", err.Error())
-	}
-	//fmt.Printf("skPEM: %s\n", skPEM)
-
-	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
-	if err != nil {
-		panic(err)
-	}
-	return signer
-}
-
 func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	url := fmt.Sprintf("%s:%d", IP, Port)
 
@@ -856,49 +769,6 @@ func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {
 	}
 }
 
-//func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntry, error) {
-//	msg.Endorsement = nil
-//	bytes, _ := proto.Marshal(msg)
-//
-//	signers := make([]protocol.SigningMember, 0)
-//	for _, orgId := range orgIdList {
-//
-//		numStr := strconv.Itoa(orgId)
-//		path := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.key"
-//		file, err := ioutil.ReadFile(path)
-//		if err != nil {
-//			panic(err)
-//		}
-//		sk, err := asym.PrivateKeyFromPEM(file, nil)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		userCrtPath := fmt.Sprintf(prePathFmt, numStr) + "admin1.sign.crt"
-//		file2, err := ioutil.ReadFile(userCrtPath)
-//		//fmt.Println("node", orgId, "crt", string(file2))
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		// 获取peerId
-//		_, err = helper.GetLibp2pPeerIdFromCert(file2)
-//		//fmt.Println("node", orgId, "peerId", peerId)
-//
-//		// 构造Sender
-//		sender1 := &acPb.Member{
-//			OrgId:      "wx-org" + numStr + ".chainmaker.org",
-//			MemberInfo: file2,
-//			//IsFullCert: true,
-//		}
-//
-//		signer := getSigner(sk, sender1)
-//		signers = append(signers, signer)
-//	}
-//
-//	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
-//}
-
 func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, txId string) {
 	fmt.Printf("\n============ testWaitTx [%s] ============\n", txId)
 	// 构造Payload
@@ -915,5 +785,303 @@ func testWaitTx(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId stri
 		testWaitTx(sk3, client, chainId, txId)
 	} else if resp != nil && len(resp.Message) != 0 {
 		fmt.Println(resp.Message)
+	}
+}
+
+///////////////////////////////EVM/////////////////////////////
+
+const (
+	ByteCodeHexPath = "../../test/wasm/evm-token.hex"
+	ByteCodePath    = "../../test/wasm/evm-token.bin"
+	ABIPath         = "../../test/wasm/evm-token.abi"
+
+	adminCrtPath = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+)
+
+var AbiJson = ""
+
+func evmtest() {
+	runtimeType = commonPb.RuntimeType_EVM
+
+	contractAddr, _ := evmutils.MakeAddressFromString("cont_01")
+	//contractName    = contractAddr.String()
+	contractName = hex.EncodeToString(contractAddr.Bytes())
+	fmt.Println("contractName:", contractName)
+
+	flag.Parse()
+	common.SetCertPathPrefix(certPathPrefix)
+
+	conn, err := initGRPCConnect(true)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer conn.Close()
+
+	client := apiPb.NewRpcNodeClient(conn)
+
+	file, err := ioutil.ReadFile(userKeyPath)
+	if err != nil {
+		panic(err)
+	}
+
+	sk3, err := asym.PrivateKeyFromPEM(file, nil)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("---------------A(User1) 创建ERC20合约-------------")
+	testCreateEvm(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
+	fmt.Println("---------------查询A(User1) B(Admin1)账户余额-------------")
+
+	balanceA := testQueryBalance(sk3, &client, CHAIN1, userCrtPath)
+	if balanceA != "1000000000000000000000000000" {
+		panic("balance A not equal 1000000000000000000000000000")
+	}
+	balanceB := testQueryBalance(sk3, &client, CHAIN1, adminCrtPath)
+	if balanceB != "0" {
+		panic("balance B not equal 0")
+	}
+	fmt.Println("---------------发起User1给Admin1的转账-------------")
+	testTransfer(sk3, &client, CHAIN1)
+	time.Sleep(4 * time.Second)
+	fmt.Println("---------------查询AB账户余额-------------")
+	balanceA = testQueryBalance(sk3, &client, CHAIN1, userCrtPath)
+	if balanceA != "999999999999999999999999990" {
+		panic("balance A not equal 999999999999999999999999990")
+	}
+	balanceB = testQueryBalance(sk3, &client, CHAIN1, adminCrtPath)
+	if balanceB != "10" {
+		panic("balance B not equal 10")
+	}
+}
+
+func convertHex2Bin(hexPath, binPath string) error {
+	hexBytes, err := ioutil.ReadFile(hexPath)
+	if err != nil {
+		return err
+	}
+	bin, err := hex.DecodeString(string(hexBytes))
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(binPath, bin, 777)
+}
+
+func testCreateEvm(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+	convertHex2Bin(ByteCodeHexPath, ByteCodePath)
+	abi, err := ioutil.ReadFile(ABIPath)
+	if err != nil {
+		panic(err.Error())
+	}
+	AbiJson = string(abi)
+	common.CreateContract(sk3, client, chainId, contractName, ByteCodePath, runtimeType)
+}
+
+func testQueryBalance(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, certPath string) string {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ query contract [%s] ============\n", txId)
+
+	// 构造Payload
+	var pairs []*commonPb.KeyValuePair
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
+	method0 := "balanceOf"
+	var method string
+	if runtimeType == commonPb.RuntimeType_EVM {
+
+		method = method0
+
+		myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		checkErr(err)
+		client1Addr, err := getSKI(certPath)
+		checkErr(err)
+		fmt.Printf("User1 SKI:%s\n", client1Addr)
+		addr, err := evm.MakeAddressFromHex(client1Addr)
+
+		dataByte, err := myAbi.Pack(method, evm.BigToAddress(addr))
+
+		checkErr(err)
+
+		data := hex.EncodeToString(dataByte)
+		fmt.Println("data 1 :", data)
+		method = data[0:8]
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "data",
+				Value: []byte(data),
+			},
+		}
+
+	}
+
+	payload := &commonPb.Payload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_QUERY_CONTRACT,
+		chainId, txId, payload)
+	result := ""
+	if resp.ContractResult != nil {
+		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
+		fmt.Println(method0, "->", v)
+		result = fmt.Sprintf("%v", v[0])
+	}
+	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+	return result
+}
+func getSKI(certPath string) (string, error) {
+	certBytes, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return "", fmt.Errorf("read cert file [%s] failed, %s", certPath, err)
+	}
+
+	block, rest := pem.Decode(certBytes)
+	if len(rest) != 0 {
+		return "", errors.New("pem.Decode failed, invalid cert")
+	}
+	cert, err := bcx509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("parseCertificate cert failed, %s", err)
+	}
+
+	ski := hex.EncodeToString(cert.SubjectKeyId)
+	return ski, nil
+}
+
+func testTransfer(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string) {
+	txId := utils.GetRandTxId()
+	fmt.Printf("\n============ invoke contract [%s] ============\n", txId)
+
+	// 构造Payload
+	var pairs []*commonPb.KeyValuePair
+	myAbi, _ := abi.JSON(strings.NewReader(AbiJson))
+	method0 := "transfer"
+	var method string
+	if runtimeType == commonPb.RuntimeType_EVM {
+		method = method0
+		myAbi, err := abi.JSON(strings.NewReader(AbiJson))
+		checkErr(err)
+		toSki, err := getSKI(adminCrtPath)
+		checkErr(err)
+		addr, err := evm.MakeAddressFromHex(toSki)
+		checkErr(err)
+		dataByte, err := myAbi.Pack(method, evm.BigToAddress(addr), big.NewInt(10))
+		checkErr(err)
+
+		data := hex.EncodeToString(dataByte)
+		fmt.Println("data 1 :", data)
+		method = data[0:8]
+		pairs = []*commonPb.KeyValuePair{
+			{
+				Key:   "data",
+				Value: []byte(data),
+			},
+		}
+
+	}
+
+	payload := &commonPb.Payload{
+		ContractName: contractName,
+		Method:       method,
+		Parameters:   pairs,
+	}
+
+	resp := proposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
+		chainId, txId, payload)
+	if resp.ContractResult != nil {
+		v, _ := myAbi.Unpack(method0, resp.ContractResult.Result)
+		fmt.Println(method0, "->", v)
+	}
+	fmt.Printf("send tx resp: code:%d, msg:%s, payload:%+v\n", resp.Code, resp.Message, resp.ContractResult)
+
+}
+
+func proposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload) *commonPb.TxResponse {
+
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(5*time.Second)))
+	defer cancel()
+
+	if txId == "" {
+		txId = utils.GetRandTxId()
+	}
+
+	file, err := ioutil.ReadFile(userCrtPath)
+	if err != nil {
+		panic(err)
+	}
+
+	// 构造Sender
+	//pubKeyString, _ := sk3.PublicKey().String()
+	sender := &acPb.Member{
+		OrgId:      orgId,
+		MemberInfo: file,
+		//IsFullCert: true,
+		//MemberInfo: []byte(pubKeyString),
+	}
+	payload.ChainId = chainId
+	payload.TxType = txType
+	payload.TxId = txId
+	payload.Timestamp = time.Now().Unix()
+
+	req := &commonPb.TxRequest{
+		Payload: payload,
+		Sender:  &commonPb.EndorsementEntry{Signer: sender},
+	}
+
+	// 拼接后，计算Hash，对hash计算签名
+	rawTxBytes, err := utils.CalcUnsignedTxRequestBytes(req)
+	if err != nil {
+		log.Fatalf("CalcUnsignedTxRequest failed, %s", err.Error())
+		os.Exit(0)
+	}
+
+	fmt.Errorf("################ %s", string(sender.MemberInfo))
+
+	signer := getSigner(sk3, sender)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
+	//signBytes, err := signer.Sign("SM3", rawTxBytes)
+	if err != nil {
+		log.Fatalf("sign failed, %s", err.Error())
+		os.Exit(0)
+	}
+
+	req.Sender.Signature = signBytes
+
+	result, err := (*client).SendRequest(ctx, req)
+
+	if err != nil {
+		statusErr, ok := status.FromError(err)
+		if ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				fmt.Println("WARN: client.call err: deadline")
+				os.Exit(0)
+			}
+		}
+
+		fmt.Printf("ERROR: client.call err: %v\n", err)
+		os.Exit(0)
+	}
+	return result
+}
+func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {
+	skPEM, err := sk3.String()
+	if err != nil {
+		log.Fatalf("get sk PEM failed, %s", err.Error())
+	}
+	//fmt.Printf("skPEM: %s\n", skPEM)
+
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
+	if err != nil {
+		panic(err)
+	}
+	return signer
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
 	}
 }
