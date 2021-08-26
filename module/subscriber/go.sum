@@ -1,7 +1,7 @@
-chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a h1:CM+nPwFAtzNj6qPRGgRraf7rVPoq9fixn/552QMf98s=
-chainmaker.org/chainmaker/common v0.0.0-20210819015845-c6b778b6349a/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849 h1:ThrvxkEd/9GoaN1HANLRJx1KmMdhWFBgOABc+hd1rGs=
-chainmaker.org/chainmaker/pb-go v0.0.0-20210823032707-b3e96f797849/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
+chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e h1:dBJXEsOYWjT1JQ4FvZ++MuKCrNgbul6iJUmPmoK3N6A=
+chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e/go.mod h1:Rj/EX6aRpnbp+IlX0sETPEykYTNJFzflm6lF/a0xR0o=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210825133553-b1953ac0acac h1:zD4CuDcW3pL+UI1uYZmAFzMoINSJP3iMaMNKfIB87D4=
+chainmaker.org/chainmaker/pb-go v0.0.0-20210825133553-b1953ac0acac/go.mod h1:z7MzCd1JDm5wRIFsI3LRqSHMeTJU5D8yR1TWXCEMsM4=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Azure/azure-pipeline-go v0.2.1/go.mod h1:UGSo8XybXnIGZ3epmeBw7Jdz+HiUVpqIlpz/HKHylF4=
 github.com/Azure/azure-pipeline-go v0.2.2/go.mod h1:4rQ/NZncSvGqNkkOsNpOU1tgoNuIlp9AfUH5G1tvCHc=
@@ -279,8 +279,9 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
-github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
+github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca/go.mod h1:u2MKkTVTVJWe5D1rCvame8WqhBd88EuIwODJZ1VHCPM=
 github.com/tebeka/strftime v0.1.5/go.mod h1:29/OidkoWHdEKZqzyDLUyC+LmgDgdHo4WAFCDT7D/Ig=
 github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161/go.mod h1:wM7WEvslTq+iOEAMDLSzhVuOt5BRZ05WirO+b09GHQU=

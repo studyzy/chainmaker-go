@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/config"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -215,14 +215,14 @@ func RefreshLogLevelsConfig() error {
 }
 
 // UpdateDebugConfig refresh the switches of the debug mode.
-func UpdateDebugConfig(pairs []*common.KeyValuePair) error {
+func UpdateDebugConfig(pairs []*config.ConfigKeyValue) error {
 	value := reflect.ValueOf(&ChainMakerConfig.DebugConfig)
 	elem := value.Elem()
 	for _, pair := range pairs {
 		if _, ok := elem.Type().FieldByName(pair.Key); !ok {
 			continue
 		}
-		elem.FieldByName(pair.Key).SetBool(strings.ToLower(string(pair.Value)) == "true")
+		elem.FieldByName(pair.Key).SetBool(strings.ToLower(pair.Value) == "true")
 	}
 	return nil
 }
