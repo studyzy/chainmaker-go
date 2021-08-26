@@ -2,9 +2,8 @@
 Copyright (C) BABEC. All rights reserved.
 
 SPDX-License-Identifier: Apache-2.0
-
-Wacsi WebAssembly chainmaker system interface
 */
+
 package wasi
 
 import (
