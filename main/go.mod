@@ -7,7 +7,7 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
-	chainmaker.org/chainmaker-go/rpcserver v0.0.0
+	chainmaker.org/chainmaker-go/rpcserver v0.0.0-00010101000000-000000000000
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/spf13/cobra v1.1.3

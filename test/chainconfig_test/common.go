@@ -41,7 +41,7 @@ var (
 	Port = 12301
 
 	certPathPrefix = "../../config"
-	//certPathPrefix = "../../build"
+	//certPathPrefix     = "../../build"
 	WasmPath           = "../wasm/counter-go.wasm"
 	OrgIdFormat        = "wx-org%s.chainmaker.org"
 	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
@@ -57,7 +57,7 @@ var (
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
 	DefaultOrgId       = fmt.Sprintf(OrgIdFormat, "1")
 
-	//caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
+	// caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
 	caPaths    = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
 	prePathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
