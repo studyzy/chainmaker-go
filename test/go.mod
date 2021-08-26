@@ -33,4 +33,3 @@ replace (
 	github.com/libp2p/go-libp2p-core => ../module/net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ../module/net/p2p/libp2ppubsub
 )
-

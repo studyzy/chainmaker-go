@@ -9,6 +9,8 @@ package certmgr
 
 import (
 	"bytes"
+	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -18,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 
@@ -72,7 +75,7 @@ type CertManageRuntime struct {
 }
 
 // Add cert add
-func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, params map[string][]byte) (
+func (r *CertManageRuntime) Add(txSimContext protocol.TxSimContext, _ map[string][]byte) (
 	result []byte, err error) {
 
 	tx := txSimContext.GetTx()
@@ -181,8 +184,7 @@ func (r *CertManageRuntime) Query(txSimContext protocol.TxSimContext, params map
 }
 
 // Freeze certs
-func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params map[string][]byte) (
-	[]byte, error) {
+func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	// verify params
 	changed := false
 
@@ -201,31 +203,38 @@ func (r *CertManageRuntime) Freeze(txSimContext protocol.TxSimContext, params ma
 		return nil, err
 	}
 
+	config, _ := chainconfigmgr.GetChainConfig(txSimContext)
+
 	certs := strings.Split(certsStr, ",")
 
 	for _, cert := range certs {
+		if msg := r.checkCert(cert, config.TrustRoots); msg != nil {
+			r.log.Warnf("checkCert failed, err: %s", msg)
+			return nil, msg
+		}
 		certHash, err1 := utils.GetCertificateIdHex([]byte(cert), hashType)
 		if err1 != nil {
-			r.log.Errorf("utils.GetCertificateIdHex failed, err: %s", err1.Error())
-			continue
+			r.log.Warnf("utils.GetCertificateIdHex failed, err: %s", err1.Error())
+			return nil, err1
 		}
 		certHashKey := protocol.CertFreezeKeyPrefix + certHash
 		certHashBytes, err1 := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHashKey))
 		if err1 != nil {
 			r.log.Warnf("txSimContext get certHashKey certHashKey[%s], err:", certHashKey, err1.Error())
-			continue
+			return nil, err1
 		}
 
 		if len(certHashBytes) > 0 {
 			// the certHashKey is exist
-			r.log.Warnf("the certHashKey is exist certHashKey[%s]", certHashKey)
-			continue
+			msg := fmt.Errorf("the certHashKey is exist certHashKey[%s]", certHashKey)
+			r.log.Warn(msg)
+			return nil, msg
 		}
 
 		err = txSimContext.Put(syscontract.SystemContract_CERT_MANAGE.String(), []byte(certHashKey), []byte(cert))
 		if err != nil {
-			r.log.Errorf("txSimContext.Put err, err: %s", err.Error())
-			continue
+			r.log.Warnf("txSimContext.Put err, err: %s", err.Error())
+			return nil, err
 		}
 
 		// add the certHashKey
@@ -285,8 +294,12 @@ func (r *CertManageRuntime) Unfreeze(txSimContext protocol.TxSimContext, params 
 		return nil, err
 	}
 
+	config, _ := chainconfigmgr.GetChainConfig(txSimContext)
 	certs := strings.Split(certsStr, ",")
 	for _, cert := range certs {
+		if msg := r.checkCert(cert, config.TrustRoots); msg != nil {
+			return nil, msg
+		}
 		if len(cert) == 0 {
 			continue
 		}
@@ -509,4 +522,42 @@ func (r *CertManageRuntime) recoverFrozenCert(txSimContext protocol.TxSimContext
 		}
 	}
 	return freezeKeyArray, changed
+}
+
+func (r *CertManageRuntime) checkCert(cert string, trustRoots []*configPb.TrustRootConfig) error {
+	c, err := utils.ParseCert([]byte(cert))
+	if err != nil {
+		return err
+	}
+	if c.IsCA {
+		return errors.New("can not freeze/unfreeze root certificate")
+	}
+
+	// 判断是否是该ca签发的证书
+	caPool := bcx509.NewCertPool()
+	for _, root := range trustRoots {
+		for _, s := range root.Root {
+			pemBlock, rest := pem.Decode([]byte(s))
+			for pemBlock != nil {
+				cert, _ := bcx509.ParseCertificate(pemBlock.Bytes)
+				caPool.AddCert(cert)
+				pemBlock, rest = pem.Decode(rest)
+			}
+		}
+	}
+	certChain, err := c.Verify(bcx509.VerifyOptions{
+		Intermediates:             caPool,
+		Roots:                     caPool,
+		CurrentTime:               time.Time{},
+		KeyUsages:                 []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		MaxConstraintComparisions: 0,
+	})
+	if err != nil {
+		r.log.Warn(err)
+		return err
+	}
+	if len(certChain) > 0 && len(certChain[0]) > 0 {
+		return nil
+	}
+	return errors.New("the cert is not in trust root")
 }
