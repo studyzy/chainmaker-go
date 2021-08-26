@@ -6,13 +6,15 @@ require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/net v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210811075857-d3b57d983071
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210809091134-f6303e12573d
-	chainmaker.org/chainmaker/protocol v0.0.0-20210810081254-4947fb9a5306
+	chainmaker.org/chainmaker/common v0.0.0-20210825071035-c1f0524e591e
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210825133553-b1953ac0acac
+	chainmaker.org/chainmaker/protocol v0.0.0-20210825021221-02ac5d5a967e
+	chainmaker.org/chainmaker/sdk-go v0.0.0-20210823033359-1fe817a6d3f4
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gogo/protobuf v1.3.2
 	github.com/mr-tron/base58 v1.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
+	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/genproto v0.0.0-20210303154014-9728d6b83eeb // indirect
 	google.golang.org/grpc v1.37.0
@@ -31,3 +33,4 @@ replace (
 	github.com/libp2p/go-libp2p-core => ../module/net/p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ../module/net/p2p/libp2ppubsub
 )
+

@@ -40,13 +40,16 @@ var (
 	IP   = "localhost"
 	Port = 12301
 
-	certPathPrefix      = "../../config"
-	WasmPath            = "../wasm/counter-go.wasm"
-	OrgIdFormat         = "wx-org%s.chainmaker.org"
-	UserKeyPathFmt      = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
-	UserCrtPathFmt      = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
-	UserSignKeyPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
-	UserSignCrtPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
+	certPathPrefix = "../../config"
+	//certPathPrefix = "../../build"
+	WasmPath           = "../wasm/counter-go.wasm"
+	OrgIdFormat        = "wx-org%s.chainmaker.org"
+	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
+	UserCrtPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.crt"
+	UserSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.key"
+	UserSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.sign.crt"
+	//UserSignKeyPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/light1/light1.sign.key"
+	//UserSignCrtPathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/light1/light1.sign.crt"
 	AdminSignKeyPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.key"
 	AdminSignCrtPathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/admin1.sign.crt"
 
@@ -54,6 +57,7 @@ var (
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
 	DefaultOrgId       = fmt.Sprintf(OrgIdFormat, "1")
 
+	//caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
 	caPaths    = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
 	prePathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 
@@ -88,12 +92,7 @@ func getSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMembe
 		log.Fatalf("get sk PEM failed, %s", err.Error())
 	}
 
-	m, err := accesscontrol.MockAccessControl().NewMemberFromCertPem(sender.OrgId, string(sender.MemberInfo))
-	if err != nil {
-		panic(err)
-	}
-
-	signer, err := accesscontrol.MockAccessControl().NewSigningMember(m, skPEM, "")
+	signer, err := accesscontrol.NewCertSigningMember("", sender, skPEM, "")
 	if err != nil {
 		panic(err)
 	}
@@ -220,7 +219,7 @@ func QueryRequestWithCertID(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, 
 	}
 
 	signer := getSigner(sk3, senderFull)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 	}
@@ -288,7 +287,7 @@ func ConfigUpdateRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *Invoke
 	}
 
 	signer := getSigner(sk3, sender)
-	signBytes, err := signer.Sign("SM3", rawTxBytes)
+	signBytes, err := signer.Sign("SHA256", rawTxBytes)
 	if err != nil {
 		log.Fatalf(signFailedErr, err.Error())
 		panic(err)
@@ -463,3 +462,4 @@ func UpdateSysRequest(sk3 crypto.PrivateKey, sender *acPb.Member, msg *InvokeCon
 	fmt.Printf("\n\n============request param↓============\n %+v \n============request param↑============\n\n", req)
 	return client.SendRequest(ctx, req)
 }
+
