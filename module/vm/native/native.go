@@ -7,6 +7,7 @@
 package native
 
 import (
+	"chainmaker.org/chainmaker-go/vm/native/multisign"
 	"sync"
 
 	"chainmaker.org/chainmaker-go/vm/native/crosstranscation"
@@ -62,7 +63,7 @@ func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts[syscontract.SystemContract_CHAIN_QUERY.String()] = blockcontract.NewBlockContract(log)
 	contracts[syscontract.SystemContract_CERT_MANAGE.String()] = certmgr.NewCertManageContract(log)
 	contracts[syscontract.SystemContract_GOVERNANCE.String()] = government.NewGovernmentContract(log)
-	//contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
+	contracts[syscontract.SystemContract_MULTI_SIGN.String()] = multisign.NewMultiSignContract(log)
 	contracts[syscontract.SystemContract_PRIVATE_COMPUTE.String()] = privatecompute.NewPrivateComputeContact(log)
 	contracts[syscontract.SystemContract_DPOS_ERC20.String()] = dposmgr.NewDPoSERC20Contract(log)
 	contracts[syscontract.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
@@ -96,16 +97,47 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 		return result
 	}
 
-	// exec
-	bytes, err := f(txContext, parameters)
+	// verification
+	var verifyAccessFunc common.ContractFunc
+	var accessResultBytes []byte
+	verifyAccessContract := &commonPb.Contract{
+		Name:        "CONTRACT_MANAGE",
+		Version:     contract.Version,
+		RuntimeType: commonPb.RuntimeType_NATIVE,
+		Status:      commonPb.ContractStatus_NORMAL,
+		Creator:     nil,
+	}
+	verifyMethodName := "VERIFY_CONTRACT_ACCESS"
+	verifyAccessFunc, err = r.getContractFunc(verifyAccessContract, verifyMethodName)
 	if err != nil {
 		r.log.Warn(err)
 		result.Message = err.Error()
 		return result
 	}
-	result.Code = 0
-	result.Message = "OK"
-	result.Result = bytes
+
+	accessResultBytes, err = verifyAccessFunc(txContext, nil)
+	if err != nil {
+		r.log.Error(err)
+		result.Message = err.Error()
+		return result
+	}
+	if string(accessResultBytes) == "true" {
+		// exec
+		bytes, err := f(txContext, parameters)
+		if err != nil {
+			r.log.Error(err)
+			result.Message = err.Error()
+			return result
+		}
+		result.Code = 0
+		result.Message = "OK"
+		result.Result = bytes
+		return result
+	}
+
+	result.Code = 1
+	result.Message = "Access Denied"
+	result.Result = nil
 	return result
 }
 

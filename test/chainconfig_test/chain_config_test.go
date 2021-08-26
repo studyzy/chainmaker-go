@@ -50,7 +50,7 @@ func getChainConfig() *configPb.ChainConfig {
 	var pairs []*commonPb.KeyValuePair
 	//Pairs = append(Pairs, pair)
 
-	sk, member := native.GetUserSK(5)
+	sk, member := native.GetUserSK(1)
 	resp, err := native.QueryRequest(sk, member, &client, &native.InvokeContractMsg{TxType: commonPb.TxType_QUERY_CONTRACT, ChainId: CHAIN1,
 		ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(), MethodName: syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String(), Pairs: pairs})
 	if err == nil {
