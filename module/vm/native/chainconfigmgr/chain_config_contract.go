@@ -459,7 +459,14 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 		r.log.Error(err)
 		return nil, err
 	}
-
+	for _, member := range chainConfig.TrustMembers {
+		if member.MemberInfo == memberInfo {
+			err = fmt.Errorf("%s, add trsut member failed, the memberinfo[%s] is exist in chainconfig",
+				common.ErrParams, memberInfo)
+			r.log.Error(err)
+			return nil, err
+		}
+	}
 	trustMember := &configPb.TrustMemberConfig{MemberInfo: memberInfo, OrgId: orgId, Role: role, NodeId: nodeId}
 	chainConfig.TrustMembers = append(chainConfig.TrustMembers, trustMember)
 	result, err = setChainConfig(txSimContext, chainConfig)
