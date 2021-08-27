@@ -7,9 +7,9 @@ require (
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/wasi v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210630062216-42b826d5ecea
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210708095431-3ed1d2a0d58e
-	chainmaker.org/chainmaker/protocol v0.0.0-20210708083310-ae8118431543
+	chainmaker.org/chainmaker/common v0.0.0-20210812042900-40fd24729b4a
+	chainmaker.org/chainmaker/pb-go v0.0.0-20210825102713-0125b30c15d4
+	chainmaker.org/chainmaker/protocol v0.0.0-20210817020238-7ad0d408ae23
 )
 
 replace (
