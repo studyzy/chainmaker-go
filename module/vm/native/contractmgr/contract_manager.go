@@ -8,11 +8,12 @@
 package contractmgr
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	"chainmaker.org/chainmaker-go/vm/native/common"
 
@@ -478,7 +479,6 @@ func (r *ContractManagerRuntime) GetContractInfo(context protocol.TxSimContext, 
 		return nil, err
 	}
 	return context.GetContractByName(name)
-	return utils.GetContractByName(context.Get, name)
 }
 func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimContext, name string) ([]byte, error) {
 	if utils.IsAnyBlank(name) {
@@ -487,7 +487,6 @@ func (r *ContractManagerRuntime) GetContractByteCode(context protocol.TxSimConte
 		return nil, err
 	}
 	return context.GetContractBytecode(name)
-	return utils.GetContractBytecode(context.Get, name)
 }
 
 //GetAllContracts 查询所有合约的详细信息

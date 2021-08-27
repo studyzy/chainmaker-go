@@ -9,8 +9,6 @@ package certmgr
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -21,6 +19,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
+	configPb "chainmaker.org/chainmaker/pb-go/config"
 
 	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 

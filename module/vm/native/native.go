@@ -7,8 +7,9 @@
 package native
 
 import (
-	"chainmaker.org/chainmaker-go/vm/native/multisign"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/vm/native/multisign"
 
 	"chainmaker.org/chainmaker-go/vm/native/crosstranscation"
 

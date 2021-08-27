@@ -8,13 +8,14 @@
 package multisign
 
 import (
+	"errors"
+	"fmt"
+
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"errors"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -51,7 +52,8 @@ type MultiSignRuntime struct {
 }
 
 // Req request to multi sign
-func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters map[string][]byte) (result []byte, err error) {
+func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	result []byte, err error) {
 	// 1、校验并获取参数
 	sysContractName := parameters[syscontract.MultiReq_SYS_CONTRACT_NAME.String()]
 	sysMethod := parameters[syscontract.MultiReq_SYS_METHOD.String()]
@@ -89,7 +91,8 @@ func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters ma
 	return []byte(tx.Payload.TxId), nil
 }
 
-func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters map[string][]byte) (result []byte, err error) {
+func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	result []byte, err error) {
 	// 1、检查参数
 	// 2、获取历史投票记录
 	// 3、判断是否继续可以对该多签交易投票
@@ -161,7 +164,8 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 	resourceName := multiSignInfo.ContractName + "-" + multiSignInfo.Method
 	// 校验当前签名
 	{
-		principal, err := ac.CreatePrincipal(resourceName, []*commonPb.EndorsementEntry{reqVoteInfo.Endorsement}, mPayloadByte)
+		principal, err := ac.CreatePrincipal(resourceName, []*commonPb.EndorsementEntry{reqVoteInfo.Endorsement},
+			mPayloadByte)
 		if err != nil {
 			r.log.Warn(err)
 			return nil, err
@@ -172,7 +176,8 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 			return nil, err
 		}
 		if len(endorsement) == 0 {
-			err = fmt.Errorf("the multi sign vote signature[org:%s] is err, error:%s", reqVoteInfo.Endorsement.Signer.OrgId, err)
+			err = fmt.Errorf("the multi sign vote signature[org:%s] is err, error:%s",
+				reqVoteInfo.Endorsement.Signer.OrgId, err)
 			r.log.Error(err)
 			return nil, err
 		}
@@ -221,13 +226,15 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 			initParam := make(map[string][]byte)
 			for _, parameter := range multiSignInfo.Payload.Parameters {
 				// is sysContractName or sysMethod continue
-				if parameter.Key == syscontract.MultiReq_SYS_CONTRACT_NAME.String() || parameter.Key == syscontract.MultiReq_SYS_METHOD.String() {
+				if parameter.Key == syscontract.MultiReq_SYS_CONTRACT_NAME.String() ||
+					parameter.Key == syscontract.MultiReq_SYS_METHOD.String() {
 					continue
 				}
 				initParam[parameter.Key] = parameter.Value
 			}
 			byteCode := initParam[syscontract.InitContract_CONTRACT_BYTECODE.String()]
-			contractResult, statusCode := txSimContext.CallContract(contract, multiSignInfo.Method, byteCode, initParam, 0, commonPb.TxType_INVOKE_CONTRACT)
+			contractResult, statusCode := txSimContext.CallContract(contract, multiSignInfo.Method, byteCode,
+				initParam, 0, commonPb.TxType_INVOKE_CONTRACT)
 			if statusCode == commonPb.TxStatusCode_SUCCESS {
 				contractResultBytes = contractResult.Result
 				multiSignInfo.Status = syscontract.MultiSignStatus_ADOPTED
@@ -259,7 +266,8 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 	return contractResultBytes, contractErr
 }
 
-func (r *MultiSignRuntime) Query(txSimContext protocol.TxSimContext, parameters map[string][]byte) (result []byte, err error) {
+func (r *MultiSignRuntime) Query(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	result []byte, err error) {
 	// 1、校验并获取参数
 	txId := parameters[syscontract.MultiVote_TX_ID.String()]
 	if utils.IsAnyBlank(txId) {
