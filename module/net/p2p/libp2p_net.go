@@ -238,12 +238,12 @@ func (ln *LibP2pNet) SubscribeWithChainId(chainId string, topic string, handler 
 				logger.Error(debug.Stack())
 			}
 		}()
-		ln.topicSubLoop(topicSub, topic, handler)
+		ln.topicSubLoop(chainId, topicSub, topic, handler)
 	}()
 	return nil
 }
 
-func (ln *LibP2pNet) topicSubLoop(topicSub *libP2pPubSub.Subscription, topic string, handler api.PubsubMsgHandler) {
+func (ln *LibP2pNet) topicSubLoop(chainId string, topicSub *libP2pPubSub.Subscription, topic string, handler api.PubsubMsgHandler) {
 	for {
 		message, err := topicSub.Next(ln.ctx)
 		if err != nil {
@@ -259,6 +259,11 @@ func (ln *LibP2pNet) topicSubLoop(topicSub *libP2pPubSub.Subscription, topic str
 		}
 		// if author of the msg is myself , just skip and continue
 		if message.ReceivedFrom == ln.libP2pHost.host.ID() || message.GetFrom() == ln.libP2pHost.host.ID() {
+			continue
+		}
+		// if author of the msg not belong to this chain, drop it
+		if !ln.peerChainIdsRecorder().isPeerBelongToChain(message.ReceivedFrom.Pretty(), chainId) ||
+			!ln.peerChainIdsRecorder().isPeerBelongToChain(message.GetFrom().Pretty(), chainId) {
 			continue
 		}
 		bytes := message.GetData()
@@ -372,7 +377,7 @@ func (ln *LibP2pNet) SendMsg(chainId string, node string, msgFlag string, netMsg
 
 func (ln *LibP2pNet) registerMsgHandle() error {
 	var streamReadHandler = func(stream network.Stream) {
-		streamReadHandlerFunc := NewStreamReadHandlerFunc(ln.messageHandlerDistributor)
+		streamReadHandlerFunc := NewStreamReadHandlerFunc(ln)
 		go streamReadHandlerFunc(stream)
 
 		// if you want to use two-way stream , open this
@@ -383,7 +388,7 @@ func (ln *LibP2pNet) registerMsgHandle() error {
 }
 
 // NewStreamReadHandlerFunc create new function for listening stream reading.
-func NewStreamReadHandlerFunc(mhd *MessageHandlerDistributor) func(stream network.Stream) {
+func NewStreamReadHandlerFunc(ln *LibP2pNet) func(stream network.Stream) {
 	return func(stream network.Stream) {
 		id := stream.Conn().RemotePeer().Pretty() // sender peer id
 		reader := bufio.NewReader(stream)
@@ -426,7 +431,11 @@ func NewStreamReadHandlerFunc(mhd *MessageHandlerDistributor) func(stream networ
 				logger.Error("[Net] unmarshal net pb msg failed, %s", err.Error())
 				continue
 			}
-			handler := mhd.handler(msg.GetChainId(), msg.GetFlag())
+			if !ln.peerChainIdsRecorder().isPeerBelongToChain(id, msg.GetChainId()) {
+				logger.Debugf("[Net] sender not belong to chain. drop message. (chainId:%s, sender:%s)",
+					msg.GetChainId(), id)
+			}
+			handler := ln.messageHandlerDistributor.handler(msg.GetChainId(), msg.GetFlag())
 			if handler == nil {
 				logger.Warnf("[Net] handler not registered. drop message. (chainId:%s, flag:%s)",
 					msg.GetChainId(), msg.GetFlag())
@@ -597,53 +606,6 @@ func (ln *LibP2pNet) ReVerifyTrustRoots(chainId string) {
 	}
 	peerIdTlsCertMap := ln.libP2pHost.peerIdTlsCertStore.storeCopy()
 	if len(peerIdTlsCertMap) == 0 {
-		return
-	}
-
-	// re verify myself
-	removeSelf := false
-	myCertBytes, ok := peerIdTlsCertMap[ln.GetNodeUid()]
-	if ok {
-		if ln.libP2pHost.isGmTls {
-			chainTrustRoots := ln.libP2pHost.gmTlsChainTrustRoots
-			// tls cert exist, parse to cert
-			cert, err := sm2.ParseCertificate(myCertBytes)
-			if err != nil {
-				logger.Errorf("[Net] [ReVerifyTrustRoots] parse tls cert failed. %s", err.Error())
-				return
-			}
-			// whether verify failed, if failed remove it
-			if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
-				removeSelf = true
-			}
-			delete(peerIdTlsCertMap, ln.GetNodeUid())
-		} else if ln.libP2pHost.isTls {
-			chainTrustRoots := ln.libP2pHost.tlsChainTrustRoots
-			// tls cert exist, parse to cert
-			cert, err := x509.ParseCertificate(myCertBytes)
-			if err != nil {
-				logger.Errorf("[Net] [ReVerifyTrustRoots] parse tls cert failed. %s", err.Error())
-				return
-			}
-			// whether verify failed, if failed remove it
-			if !chainTrustRoots.VerifyCertOfChain(chainId, cert) {
-				removeSelf = true
-			}
-			delete(peerIdTlsCertMap, ln.GetNodeUid())
-		}
-	}
-
-	if removeSelf {
-		logger.Infof("[Net] [ReVerifyTrustRoots] remove myself from chain, (pid: %s, chain id: %s)",
-			ln.GetNodeUid(), chainId)
-		existPeers := ln.libP2pHost.peerChainIdsRecorder.peerIdsOfChain(chainId)
-		for _, existPeerId := range existPeers {
-			ln.libP2pHost.peerChainIdsRecorder.removePeerChainId(existPeerId, chainId)
-			if err := ln.removeChainPubSubWhiteList(chainId, existPeerId); err != nil {
-				logger.Warnf("[Net] [ReVerifyTrustRoots] remove chain pub-sub white list failed, %s",
-					err.Error())
-			}
-		}
 		return
 	}
 
