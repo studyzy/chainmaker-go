@@ -434,6 +434,7 @@ func NewStreamReadHandlerFunc(ln *LibP2pNet) func(stream network.Stream) {
 			if !ln.peerChainIdsRecorder().isPeerBelongToChain(id, msg.GetChainId()) {
 				logger.Debugf("[Net] sender not belong to chain. drop message. (chainId:%s, sender:%s)",
 					msg.GetChainId(), id)
+				continue
 			}
 			handler := ln.messageHandlerDistributor.handler(msg.GetChainId(), msg.GetFlag())
 			if handler == nil {
