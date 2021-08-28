@@ -8,10 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
+	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 
 	"github.com/spf13/cobra"
@@ -48,8 +48,9 @@ func invoke() error {
 		}
 		pairsString = string(bytes)
 	}
-	var pairs []*commonPb.KeyValuePair
-	err := json.Unmarshal([]byte(pairsString), &pairs)
+	//var pairs []*commonPb.KeyValuePair
+	//err := json.Unmarshal([]byte(pairsString), &pairs)
+	pairs, err := utils.UnmarshalJsonStrKV2KVPairs(pairsString)
 	if err != nil {
 		return err
 	}

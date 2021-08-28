@@ -5,10 +5,6 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// description: chainmaker-go
-//
-// @author: xwc1125
-// @date: 2020/11/24
 package native
 
 import (

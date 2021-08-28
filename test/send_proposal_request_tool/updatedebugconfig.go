@@ -42,7 +42,7 @@ func updateDebugConfig() error {
 	defer cancel()
 
 	// 构造Payload
-	var pairs []*commonPb.KeyValuePair
+	var pairs []*configPb.ConfigKeyValue
 	err := json.Unmarshal([]byte(pairsString), &pairs)
 	if err != nil {
 		return err

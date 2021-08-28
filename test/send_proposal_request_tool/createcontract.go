@@ -9,7 +9,6 @@ package main
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"time"
@@ -50,8 +49,9 @@ func createContract() error {
 		}
 		pairsString = string(bytes)
 	}
-	var pairs []*commonPb.KeyValuePair
-	err := json.Unmarshal([]byte(pairsString), &pairs)
+	//var pairs []*commonPb.KeyValuePair
+	//err := json.Unmarshal([]byte(pairsString), &pairs)
+	pairs, err := utils.UnmarshalJsonStrKV2KVPairs(pairsString)
 	if err != nil {
 		return err
 	}

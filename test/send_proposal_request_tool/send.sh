@@ -3,8 +3,7 @@
 contract_name=$1
 server_ip="127.0.0.1"
 server_port=12301
-tools_path=/mnt/d/develop/workspace/chainMaker/chainmaker-go/test/send_proposal_request_tool
-project_path=/mnt/d/develop/workspace/chainMaker/chainmaker-go
+project_path=../..
 
 if [ $# != 1 ];then
   echo "input param error as:  ./send.sh contractName"
@@ -12,9 +11,9 @@ if [ $# != 1 ];then
 fi
 
 
-${tools_path}/send_proposal_request_tool parallel invoke  \
+./send_proposal_request_tool parallel invoke  \
 --method=increase  \
---pairs="[]"   \
+--pairs="[{\"value\": \"value_1\", \"key\": \"value\", \"unique\": false}, {\"value\": \"name_1\", \"key\": \"name\",\"unique\":true}, {\"value\": \"key_1\", \"key\": \"key\",\"unique\":true}]"   \
 --ip=127.0.0.1  \
 --port=12301  \
 --hosts=localhost:12301  \
@@ -36,3 +35,4 @@ ${tools_path}/send_proposal_request_tool parallel invoke  \
 --loopNum=1000  \
 --timeout=30  \
 --printTime=1  \
+--showKey=false

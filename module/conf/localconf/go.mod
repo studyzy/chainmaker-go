@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/logger v0.0.0
+	chainmaker.org/chainmaker/common v0.0.0-20210828064653-da1cfc1db5ea // indirect
 	chainmaker.org/chainmaker/pb-go v0.0.0-20210826130850-b78ed618ce07
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20201222001619-a42f9ac2ec8e
