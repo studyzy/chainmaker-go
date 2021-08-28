@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +15,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	netPb "chainmaker.org/chainmaker/pb-go/net"
 
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker/protocol"
@@ -103,7 +104,7 @@ func StartSender(senderIp, receiverIp string, msgKb int) error {
 
 	// test A send msg to B
 	data := make([]byte, 1024)
-	for i, _ := range data {
+	for i := range data {
 		data[i] = byte(1)
 	}
 	data2 := make([]byte, 0)

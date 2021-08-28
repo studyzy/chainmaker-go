@@ -1,6 +1,11 @@
 package native
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"strconv"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker/common/ca"
 	"chainmaker.org/chainmaker/common/crypto"
@@ -10,11 +15,7 @@ import (
 	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/protocol"
-	"fmt"
 	"google.golang.org/grpc"
-	"io/ioutil"
-	"log"
-	"strconv"
 )
 
 const (

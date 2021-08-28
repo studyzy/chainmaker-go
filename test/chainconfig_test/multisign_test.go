@@ -1,6 +1,14 @@
 package native_test
 
 import (
+	"crypto/md5"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"strconv"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/test/common"
@@ -13,14 +21,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"crypto/md5"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"log"
-	"strconv"
-	"testing"
-	"time"
 )
 
 const (

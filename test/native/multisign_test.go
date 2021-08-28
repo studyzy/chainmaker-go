@@ -1,6 +1,13 @@
 package native
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"strings"
+	"testing"
+	"time"
+
 	"chainmaker.org/chainmaker-go/test/common"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/crypto"
@@ -9,14 +16,8 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 	"chainmaker.org/chainmaker/protocol"
-	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"log"
-	"strings"
-	"testing"
-	"time"
 )
 
 var (
@@ -280,7 +281,7 @@ func testContractInitMultiSign(t *testing.T) {
 	}
 	time.Sleep(4 * time.Second)
 	testMultiSignQuery(t, txId, syscontract.ContractManageFunction_INIT_CONTRACT.String())
-	var excepted []byte = []byte("3")
+	var excepted = []byte("3")
 	_, rst := testUpgradeInvokeSum(sk3, &client, CHAIN1)
 	assert.Equal(t, excepted, rst)
 

@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
+	"fmt"
+
 	evm "chainmaker.org/chainmaker/common/evmutils"
 	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 

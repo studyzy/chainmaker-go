@@ -10,9 +10,10 @@ package native_test
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"chainmaker.org/chainmaker/pb-go/syscontract"
 

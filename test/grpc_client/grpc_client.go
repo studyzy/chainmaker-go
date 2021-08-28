@@ -8,9 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package grpc_client
 
 import (
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
 	"fmt"
 	"log"
+
+	apiPb "chainmaker.org/chainmaker/pb-go/api"
 
 	"chainmaker.org/chainmaker/common/ca"
 	"google.golang.org/grpc"
