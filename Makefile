@@ -45,7 +45,8 @@ generate:
 	go generate ./...
 
 docker-build:
-	cd main && go mod vendor
+	rm -rf build/ data/ log/
+	cd main && go mod tidy
 	docker build -t chainmaker -f ./DOCKER/Dockerfile .
 	docker tag chainmaker chainmaker:${VERSION}
 
@@ -84,8 +85,8 @@ lint:
 #	cd tools/scanner && golangci-lint run ./...
 #	cd tools/sdk && golangci-lint run ./...
 
-gomod:
-	cd scripts && ./gomod_update.sh
+#gomod:
+#	cd scripts && ./gomod_update.sh
 
 test-deploy:
 	cd scripts/test/ && ./quick_deploy.sh
