@@ -11,10 +11,10 @@ import (
 	"testing"
 
 	logger2 "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"
 )
 

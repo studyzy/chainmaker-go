@@ -16,12 +16,12 @@ import (
 
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	//	"chainmaker.org/chainmaker/pb-go/syscontract"
+	//	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	//	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 )
 
 const (

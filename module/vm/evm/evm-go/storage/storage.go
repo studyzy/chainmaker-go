@@ -17,10 +17,11 @@
 package storage
 
 import (
+	"encoding/hex"
+
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
-	"chainmaker.org/chainmaker/common/evmutils"
-	"encoding/hex"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 type Storage struct {

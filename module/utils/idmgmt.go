@@ -12,8 +12,8 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 )
 
 // CheckRootCertificate check the root certificate

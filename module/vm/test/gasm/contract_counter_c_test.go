@@ -12,8 +12,8 @@ package gasmtest
 //	"time"
 //
 //	"chainmaker.org/chainmaker-go/gasm"
-//	commonPb "chainmaker.org/chainmaker/pb-go/common"
-//	"chainmaker.org/chainmaker/protocol"
+//	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+//	"chainmaker.org/chainmaker/protocol/v2"
 //	"chainmaker.org/chainmaker-go/vm/test"
 //)
 //

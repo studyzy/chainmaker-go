@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker-go/test/grpc_client"
 )

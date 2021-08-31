@@ -13,7 +13,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 

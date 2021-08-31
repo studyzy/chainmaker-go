@@ -9,9 +9,9 @@ package chainedbft
 import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
 )
 

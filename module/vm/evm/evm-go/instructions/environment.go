@@ -17,11 +17,12 @@
 package instructions
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
+	"math/big"
+
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/precompiledContracts"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
-	"math/big"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 func loadEnvironment() {

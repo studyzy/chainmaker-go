@@ -14,16 +14,16 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/utils"
-	bccrypto "chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/pkcs11"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/protocol"
+	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/crypto/pkcs11"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var _ protocol.Member = (*certMember)(nil)

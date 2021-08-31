@@ -10,12 +10,12 @@ import (
 
 	"chainmaker.org/chainmaker-go/test/common"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/crypto"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 )

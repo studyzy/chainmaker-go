@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package p2p
 
 import (
-	api "chainmaker.org/chainmaker/protocol"
 	"errors"
 	"sync"
+
+	api "chainmaker.org/chainmaker/protocol/v2"
 )
 
 // MessageHandlerDistributor is a MessageHandler distributor.

@@ -11,9 +11,9 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 const (

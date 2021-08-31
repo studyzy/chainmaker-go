@@ -14,10 +14,10 @@ import (
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/pb-go/common"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	"chainmaker.org/chainmaker/protocol"
+	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

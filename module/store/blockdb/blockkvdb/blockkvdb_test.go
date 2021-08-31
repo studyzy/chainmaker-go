@@ -14,14 +14,14 @@ import (
 	"strconv"
 	"testing"
 
-	storePb "chainmaker.org/chainmaker/pb-go/store"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol/test"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sync/semaphore"
 )

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 func TestBlockTree_InsertBlock(t *testing.T) {

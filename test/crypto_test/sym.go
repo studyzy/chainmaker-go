@@ -11,8 +11,8 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/sym"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/sym"
 )
 
 func testSym() error {

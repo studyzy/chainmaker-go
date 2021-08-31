@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	sdk "chainmaker.org/chainmaker/sdk-go"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 )
 
 var (

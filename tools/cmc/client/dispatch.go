@@ -14,9 +14,9 @@ import (
 	ethabi "github.com/ethereum/go-ethereum/accounts/abi"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
-	sdk "chainmaker.org/chainmaker/sdk-go"
-	sdkutils "chainmaker.org/chainmaker/sdk-go/utils"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/v2/common"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
+	sdkutils "chainmaker.org/chainmaker/sdk-go/v2/utils"
 )
 
 func Dispatch(client *sdk.ChainClient, contractName, method string, kvs []*sdkPbCommon.KeyValuePair,

@@ -16,8 +16,8 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"

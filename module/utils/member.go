@@ -7,7 +7,7 @@
 
 package utils
 
-import "chainmaker.org/chainmaker/pb-go/accesscontrol"
+import "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
 type MemberGetter interface {
 	//GetFullMemberInfo根据CERT_HASH获得完整的Cert，根据DID获得DID Document

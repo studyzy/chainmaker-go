@@ -16,11 +16,11 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	sdkPbAc "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	sdkPbAc "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 var (

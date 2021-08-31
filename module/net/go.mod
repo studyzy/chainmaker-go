@@ -6,9 +6,9 @@ require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/logger v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210828064653-da1cfc1db5ea
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210826130850-b78ed618ce07
-	chainmaker.org/chainmaker/protocol v1.2.3-0.20210828065550-3d6fac33d331
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210831112613-754cd525d627
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210831114653-68cf6bb191f9
+	chainmaker.org/chainmaker/protocol/v2 v2.0.0-20210831114940-7b97fb540200
 	github.com/gogo/protobuf v1.3.2
 	github.com/libp2p/go-libp2p v0.11.0
 	github.com/libp2p/go-libp2p-circuit v0.3.1

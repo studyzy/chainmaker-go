@@ -13,11 +13,11 @@ import (
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 )
 
 //const (

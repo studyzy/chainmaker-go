@@ -14,8 +14,8 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/wasi"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"chainmaker.org/chainmaker/common/serialize"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // #include <stdlib.h>

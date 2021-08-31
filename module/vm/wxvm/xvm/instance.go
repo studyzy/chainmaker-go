@@ -11,7 +11,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 func CreateInstance(contextId int64, code exec.Code, method string, contract *commonPb.Contract, gasUsed uint64,

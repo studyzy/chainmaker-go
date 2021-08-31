@@ -18,11 +18,11 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/utils"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
+	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

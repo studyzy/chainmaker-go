@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
 
 	"github.com/stretchr/testify/assert"
 )

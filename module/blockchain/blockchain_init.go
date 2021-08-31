@@ -29,9 +29,9 @@ import (
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm"
-	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/protocol"
+	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // Init all the modules.

@@ -15,7 +15,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
 
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"

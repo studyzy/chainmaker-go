@@ -15,7 +15,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker/protocol/test"
+	"chainmaker.org/chainmaker/protocol/v2/test"
 	"github.com/stretchr/testify/assert"
 )
 

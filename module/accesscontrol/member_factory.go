@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"sync"
 
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/protocol"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type MemFactory struct {

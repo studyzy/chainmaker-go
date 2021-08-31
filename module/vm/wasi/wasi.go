@@ -20,11 +20,11 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
-	"chainmaker.org/chainmaker/common/crypto/paillier"
-	"chainmaker.org/chainmaker/common/serialize"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/v2/crypto/paillier"
+	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var ErrorNotManageContract = fmt.Errorf("method is not init_contract or upgrade")

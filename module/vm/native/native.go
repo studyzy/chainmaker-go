@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/crosstranscation"
 
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
@@ -24,8 +24,8 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/contractmgr"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker-go/vm/native/government"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var (

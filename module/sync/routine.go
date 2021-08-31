@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
+	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"github.com/Workiva/go-datastructures/queue"
 )
 

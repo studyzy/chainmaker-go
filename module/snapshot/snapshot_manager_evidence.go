@@ -9,8 +9,8 @@ package snapshot
 
 import (
 	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type ManagerEvidence struct {

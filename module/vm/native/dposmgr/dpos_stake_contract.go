@@ -17,9 +17,9 @@ import (
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/syndtr/goleveldb/leveldb/util"

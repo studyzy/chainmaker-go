@@ -8,8 +8,8 @@ package blockdb
 
 import (
 	"chainmaker.org/chainmaker-go/store/serialization"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 )
 
 // BlockDB provides handle to block and tx instances

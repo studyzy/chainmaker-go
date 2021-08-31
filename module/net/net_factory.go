@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 
 	"chainmaker.org/chainmaker-go/net/p2p"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // ErrorNetType

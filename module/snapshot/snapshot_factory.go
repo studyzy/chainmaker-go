@@ -10,7 +10,7 @@ package snapshot
 import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var log = logger.GetLogger(logger.MODULE_SNAPSHOT)

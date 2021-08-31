@@ -11,12 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	netpb "chainmaker.org/chainmaker/pb-go/net"
+	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	"chainmaker.org/chainmaker/common/msgbus"
-	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 	"github.com/gogo/protobuf/proto"
 )
 

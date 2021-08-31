@@ -10,8 +10,8 @@ package accesscontrol
 import (
 	"reflect"
 
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/protocol"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 func init() {

@@ -11,7 +11,7 @@ import (
 	"crypto/sha256"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 )
 
 // MemberExtraInfo defines mysql orm model, used to create mysql table 'member_extra_infos'

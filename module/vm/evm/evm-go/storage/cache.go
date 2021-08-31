@@ -17,8 +17,8 @@
 package storage
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 type Cache map[string]*evmutils.Int

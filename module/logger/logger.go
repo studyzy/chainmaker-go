@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/common/log"
+	"chainmaker.org/chainmaker/common/v2/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

@@ -12,8 +12,8 @@ import (
 	"math"
 	"sync"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // LedgerCache is used for cache current block info

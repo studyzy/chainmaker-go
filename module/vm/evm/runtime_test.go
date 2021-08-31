@@ -13,7 +13,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/evm/test"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 const certFilePath = "./test/config/admin1.sing.crt"

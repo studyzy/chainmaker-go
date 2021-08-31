@@ -16,10 +16,10 @@ import (
 	"sync"
 	"time"
 
-	netPb "chainmaker.org/chainmaker/pb-go/net"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 
 	"chainmaker.org/chainmaker-go/net"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 func main() {

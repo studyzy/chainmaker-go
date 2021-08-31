@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
-	"chainmaker.org/chainmaker/common/wal"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/common/v2/wal"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
 )
 

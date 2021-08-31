@@ -12,10 +12,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

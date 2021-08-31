@@ -10,7 +10,7 @@ import (
 	"sort"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 func TestConsensusChainedBftImpl_ProcessProposedBlock(t *testing.T) {

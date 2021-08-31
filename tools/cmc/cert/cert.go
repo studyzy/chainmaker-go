@@ -21,11 +21,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"chainmaker.org/chainmaker/common/cert"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/common/random/uuid"
+	"chainmaker.org/chainmaker/common/v2/cert"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/crypto/x509"
+	"chainmaker.org/chainmaker/common/v2/random/uuid"
 )
 
 const (

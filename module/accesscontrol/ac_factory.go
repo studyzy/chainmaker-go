@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package accesscontrol
 
-import "chainmaker.org/chainmaker/protocol"
+import "chainmaker.org/chainmaker/protocol/v2"
 
 type AcFactory struct {
 }

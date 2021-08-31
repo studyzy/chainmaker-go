@@ -11,9 +11,9 @@ import (
 	"crypto/sha256"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mr-tron/base58/base58"

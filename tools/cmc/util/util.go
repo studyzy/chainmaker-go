@@ -8,8 +8,8 @@ package util
 import (
 	"encoding/hex"
 
-	"chainmaker.org/chainmaker/common/evmutils"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 func MaxInt(i, j int) int {

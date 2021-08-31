@@ -20,12 +20,12 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	discoveryPb "chainmaker.org/chainmaker/pb-go/discovery"
-	storage "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
+	storage "chainmaker.org/chainmaker/pb-go/v2/store"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

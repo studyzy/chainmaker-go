@@ -8,9 +8,9 @@ package statedb
 
 import (
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // StateDB provides handle to world state instances

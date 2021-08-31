@@ -9,18 +9,18 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	configPb "chainmaker.org/chainmaker/pb-go/config"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"github.com/gogo/protobuf/proto"
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	"chainmaker.org/chainmaker/common/serialize"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/common/v2/serialize"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"

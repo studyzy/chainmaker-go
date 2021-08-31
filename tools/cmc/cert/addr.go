@@ -17,10 +17,10 @@ import (
 	"github.com/mr-tron/base58"
 	"github.com/spf13/cobra"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	hashAlo "chainmaker.org/chainmaker/common/crypto/hash"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/common/evmutils"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	hashAlo "chainmaker.org/chainmaker/common/v2/crypto/hash"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 func addrCMD() *cobra.Command {

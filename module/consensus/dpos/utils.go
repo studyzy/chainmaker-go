@@ -16,9 +16,9 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
 	"chainmaker.org/chainmaker-go/utils"
-	pbdpos "chainmaker.org/chainmaker/pb-go/consensus/dpos"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	pbdpos "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 
