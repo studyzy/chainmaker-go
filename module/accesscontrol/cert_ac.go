@@ -865,18 +865,6 @@ func (cp *certACProvider) Watch(chainConfig *config.ChainConfig) error {
 	cp.acService.memberCache.Clear()
 	cp.certCache.Clear()
 
-	trustMembersMap := make(map[string]bool, len(chainConfig.TrustMembers))
-	trustMembers := make([]*config.TrustMemberConfig, 0)
-	for _, member := range chainConfig.TrustMembers {
-		if _, ok := trustMembersMap[member.MemberInfo]; ok {
-			cp.log.Warnf("after updating chainconfig, update the trust member failed: the member info is already exist, [%s]",
-				member.MemberInfo)
-			continue
-		}
-		trustMembersMap[member.MemberInfo] = true
-		trustMembers = append(trustMembers, member)
-	}
-	cp.acService.trustMembers = trustMembers
 	cp.log.Debug("update chain config, trust member update: [%v]", cp.acService.trustMembers)
 	return nil
 }
@@ -949,6 +937,7 @@ func (cp *certACProvider) initTrustRootsForUpdatingChainConfig(chainConfig *conf
 		}
 	}
 	cp.localOrg, _ = localOrg.(*organization)
+	cp.acService.trustMembers = chainConfig.TrustMembers
 	return nil
 }
 
