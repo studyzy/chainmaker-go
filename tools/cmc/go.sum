@@ -1,10 +1,9 @@
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210831112613-754cd525d627 h1:JzZQtOfoiuPs+4p+vVQEE6bJqvh5wJR9AW7Z40eTbXw=
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210831112613-754cd525d627/go.mod h1:VJLpZdcgAq+8UUQWDf6SazKoQHPSznyh6wy28VLsQ5M=
-chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210831114653-68cf6bb191f9/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
-chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210831160840-24d6ff2d780c h1:f5M6r5DKbAOvuyaRl31g+EJhOlIiWyBWlCdIKbFTkPA=
-chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210831160840-24d6ff2d780c/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
-chainmaker.org/chainmaker/sdk-go/v2 v2.0.0-20210831115528-10b53e1a75c7 h1:ZWOe3Qk9hX9Rx8wQV+IvZltu1FjY8x5Hyr59E+FLsWg=
-chainmaker.org/chainmaker/sdk-go/v2 v2.0.0-20210831115528-10b53e1a75c7/go.mod h1:S8+FtYDUYwYO08+PpYFGTP3DlMusX6d9K5PRxy7gwzQ=
+chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70 h1:Y3klc6aehukNmgvogvJ1xI9fJ7lPLn6w3HI/7eK8KfM=
+chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
+chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2 h1:O6NtNV9UAO71LBsu0512AaKOoOZHse4yyBOQUhvtVOA=
+chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2/go.mod h1:gDZodc1Kp6snzGXugS/REqfCqNNizhniQmjeOKUVf64=
+chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210901134700-b15039ff50f4 h1:FNOh8Z82vNTk+i5IAzenHDe1KZjimW72zKqI8zYJeWw=
+chainmaker.org/chainmaker/sdk-go/v2 v2.0.1-0.20210901134700-b15039ff50f4/go.mod h1:r6e2SxmBju8gb/4JYVs01Q7MjpYLpXOky5HYSmDm9E8=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -497,6 +496,8 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954/go.mod h1:u2MKkTVTVJWe5D1rCvame8WqhBd88EuIwODJZ1VHCPM=
 github.com/tebeka/strftime v0.1.5 h1:1NQKN1NiQgkqd/2moD6ySP/5CoZQsKa1d3ZhJ44Jpmg=
 github.com/tebeka/strftime v0.1.5/go.mod h1:29/OidkoWHdEKZqzyDLUyC+LmgDgdHo4WAFCDT7D/Ig=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.238/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/kms v1.0.238/go.mod h1:yrBKWhChnDqNz1xuXdSbWXG56XawEq0G5j1lg4VwBD4=
 github.com/tidwall/gjson v1.6.1/go.mod h1:BaHyNc5bjzYkPqgLq7mdVzeiRtULKULXLgZFKsxEHI0=
 github.com/tidwall/match v1.0.1/go.mod h1:LujAq0jyVjBy028G1WhWfIzbpQfMO8bBZ6Tyb0+pL9E=
 github.com/tidwall/pretty v1.0.2/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
