@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/queue/lockfreequeue"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/stretchr/testify/require"
 )

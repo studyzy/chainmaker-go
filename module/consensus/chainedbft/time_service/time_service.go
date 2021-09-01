@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/logger"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
 //TimerEventType defines the consensus event type

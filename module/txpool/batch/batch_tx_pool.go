@@ -16,13 +16,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	"chainmaker.org/chainmaker-go/utils"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker/common/queue/lockfreequeue"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
-	"chainmaker.org/chainmaker/protocol"
+	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/common/v2/queue/lockfreequeue"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+	txpoolPb "chainmaker.org/chainmaker/pb-go/v2/txpool"
+	"chainmaker.org/chainmaker/protocol/v2"
 
 	"github.com/gogo/protobuf/proto"
 )

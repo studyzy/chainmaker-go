@@ -23,16 +23,16 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	"chainmaker.org/chainmaker/common/crypto/tee"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym/rsa"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	"chainmaker.org/chainmaker/common/v2/crypto/tee"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 const (
@@ -485,7 +485,7 @@ func (r *PrivateComputeRuntime) SaveData(context protocol.TxSimContext, params m
 	if isDeploy {
 		requestBytes = []byte(params["deploy_req"])
 		deployReq, err := r.getDeployRequest(params)
-		if err != nil || deployReq.SignPair == nil || deployReq.Payload == nil  {
+		if err != nil || deployReq.SignPair == nil || deployReq.Payload == nil {
 			err := fmt.Errorf("get private deploy request from params failed, err: %v", err)
 			r.log.Errorf(err.Error())
 			return nil, err

@@ -9,9 +9,9 @@ package chainedbft
 import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -100,7 +100,7 @@ func (cbi *ConsensusChainedBftImpl) constructVote(height uint64, level uint64, e
 	if data, err = proto.Marshal(voteData); err != nil {
 		return nil, err
 	}
-	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash,data); err != nil {
+	if sign, err = cbi.singer.Sign(cbi.chainConf.ChainConfig().Crypto.Hash, data); err != nil {
 		cbi.logger.Errorf("sign data failed, err %v data %v", err, data)
 		return nil, err
 	}

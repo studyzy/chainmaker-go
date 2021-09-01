@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -17,8 +16,10 @@ import (
 	"sync"
 	"time"
 
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+
 	"chainmaker.org/chainmaker-go/net"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 func main() {

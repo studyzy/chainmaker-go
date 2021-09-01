@@ -17,11 +17,11 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 	logger2 "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/common/concurrentlru"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/concurrentlru"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"
 )
 

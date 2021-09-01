@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // NetServiceFactory is a net service instance factory.
@@ -56,7 +56,7 @@ func (nsf *NetServiceFactory) setAllConsensusNodeIds(ns *NetService, chainConf p
 func (nsf *NetServiceFactory) setAllTlsTrustRoots(ns *NetService, chainConf protocol.ChainConf) error {
 	// set all tls trust root certs
 	for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
-		for _,root:=range orgRoot.Root{
+		for _, root := range orgRoot.Root {
 			if err := ns.localNet.AddTrustRoot(ns.chainId, []byte(root)); err != nil {
 				return err
 			}

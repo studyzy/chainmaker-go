@@ -8,10 +8,10 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
-	"chainmaker.org/chainmaker/protocol"
 	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type ManagerImpl struct {

@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package types
 
 import (
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/store"
 )
 
 type BlockHeader struct {

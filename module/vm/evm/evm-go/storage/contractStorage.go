@@ -21,8 +21,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/common/evmutils"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var log = logger.GetLogger(logger.MODULE_VM)

@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"sort"
 
-	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // Storage interface for smart contracts

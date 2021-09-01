@@ -7,15 +7,16 @@ SPDX-License-Identifier: Apache-2.0
 package tbft
 
 import (
-	"chainmaker.org/chainmaker/pb-go/common"
-	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	netpb "chainmaker.org/chainmaker/pb-go/net"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/common/msgbus"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
+
+	"chainmaker.org/chainmaker/common/v2/msgbus"
 )
 
 type Blocker struct {

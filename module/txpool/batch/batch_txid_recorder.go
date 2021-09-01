@@ -9,7 +9,7 @@ package batch
 import (
 	"sync"
 
-	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
+	txpoolPb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 )
 
 type batchTxIdRecorder struct {

@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package utils
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 )
 
 // CheckRootCertificate check the root certificate

@@ -7,16 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
-	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"chainmaker.org/chainmaker/common/random/uuid"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"crypto/md5"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/utils"
+	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	"chainmaker.org/chainmaker/common/v2/random/uuid"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 const (

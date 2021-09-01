@@ -7,14 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 	"github.com/golang/mock/gomock"
 
-	"chainmaker.org/chainmaker/common/msgbus"
-	msgbusmock "chainmaker.org/chainmaker/common/msgbus/mock"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	msgbusmock "chainmaker.org/chainmaker/common/v2/msgbus/mock"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type mockBlockChainStore struct {

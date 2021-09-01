@@ -14,13 +14,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	commonErrors "chainmaker.org/chainmaker/common/errors"
-	"chainmaker.org/chainmaker/common/msgbus"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	syncPb "chainmaker.org/chainmaker/pb-go/sync"
-	"chainmaker.org/chainmaker/protocol"
+	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
+	syncPb "chainmaker.org/chainmaker/pb-go/v2/sync"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

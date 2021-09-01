@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
 	"chainmaker.org/chainmaker-go/vm/native/certmgr"
@@ -22,9 +22,9 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/multisign"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

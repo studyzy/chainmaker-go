@@ -8,8 +8,8 @@
 package utils
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

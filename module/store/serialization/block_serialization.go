@@ -9,8 +9,8 @@ package serialization
 import (
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 
 	"github.com/gogo/protobuf/proto"
 )

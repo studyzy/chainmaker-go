@@ -17,15 +17,15 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
-	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	dpospb "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
 )

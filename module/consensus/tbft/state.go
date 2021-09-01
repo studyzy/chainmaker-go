@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/logger"
-	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 )
 
 // ConsensusState represents the consensus state of the node

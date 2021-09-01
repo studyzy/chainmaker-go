@@ -1,15 +1,7 @@
 package xvm
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/compile"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
 	"errors"
-	"golang.org/x/sync/singleflight"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +9,15 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/compile"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
+	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
+	"golang.org/x/sync/singleflight"
 )
 
 const OptLevel = 0

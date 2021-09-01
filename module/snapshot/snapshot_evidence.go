@@ -8,13 +8,14 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"errors"
 	"math"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type SnapshotEvidence struct {

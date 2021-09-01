@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
 )

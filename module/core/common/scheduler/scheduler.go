@@ -17,10 +17,10 @@ import (
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	//	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	//	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	//	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/panjf2000/ants/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )

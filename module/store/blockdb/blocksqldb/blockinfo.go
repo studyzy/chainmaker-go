@@ -8,10 +8,10 @@ package blocksqldb
 
 import (
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/common/json"
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
+	"chainmaker.org/chainmaker/common/v2/json"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"github.com/gogo/protobuf/proto"
 )
 

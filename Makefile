@@ -85,8 +85,8 @@ lint:
 #	cd tools/scanner && golangci-lint run ./...
 #	cd tools/sdk && golangci-lint run ./...
 
-#gomod:
-#	cd scripts && ./gomod_update.sh
+gomod:
+	cd scripts && ./gomod_update.sh
 
 test-deploy:
 	cd scripts/test/ && ./quick_deploy.sh

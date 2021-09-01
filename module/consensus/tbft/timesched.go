@@ -12,7 +12,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 )
 
 var (

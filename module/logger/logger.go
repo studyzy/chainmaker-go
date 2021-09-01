@@ -14,7 +14,7 @@ import (
 
 	"go.uber.org/zap/zapcore"
 
-	"chainmaker.org/chainmaker/common/log"
+	"chainmaker.org/chainmaker/common/v2/log"
 	"go.uber.org/zap"
 )
 

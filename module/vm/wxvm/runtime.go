@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package wxvm
 
 import (
+	"runtime/debug"
+
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
-	"runtime/debug"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type RuntimeInstance struct {

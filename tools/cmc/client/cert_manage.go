@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/spf13/cobra"
 

@@ -9,9 +9,9 @@ package revoke
 import (
 	"sync"
 
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // RevokedValidator is a validator for validating revoked peer use revoked tls cert.

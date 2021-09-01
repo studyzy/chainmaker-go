@@ -7,12 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package wasmertest
 
 import (
-	"chainmaker.org/chainmaker-go/vm/test"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"fmt"
 	"net/http"
 	"runtime/debug"
 	"testing"
+
+	"chainmaker.org/chainmaker-go/vm/test"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
 	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
@@ -56,8 +57,6 @@ import (
 //	end := time.Now().UnixNano() / 1e6
 //	println("【spend】", end-start)
 //}
-
-
 
 func TestInstanceNewAndClose(t *testing.T) {
 	go func() {

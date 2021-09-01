@@ -10,7 +10,7 @@ package utils
 import (
 	"encoding/json"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 //UnmarshalJsonStrKV2KVPairs  传入一个json字符串，该字符串key value都是string，转换为系统需要的KeyValuePair列表

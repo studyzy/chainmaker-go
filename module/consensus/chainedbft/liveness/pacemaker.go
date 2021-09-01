@@ -12,7 +12,7 @@ import (
 
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/logger"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
 //Pacemaker govern the advancement of levels and height in the local node.

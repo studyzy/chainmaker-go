@@ -9,8 +9,8 @@ package batch
 import (
 	"testing"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	txpoolPb "chainmaker.org/chainmaker/pb-go/txpool"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	txpoolPb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 
 	"github.com/stretchr/testify/require"
 

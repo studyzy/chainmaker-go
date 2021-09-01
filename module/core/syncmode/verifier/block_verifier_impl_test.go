@@ -5,17 +5,18 @@ SPDX-License-Identifier: Apache-2.0
 */
 
 package verifier
+
 //
 //import (
-//	"chainmaker.org/chainmaker/common/crypto/hash"
-//	"chainmaker.org/chainmaker/common/msgbus"
+//	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+//	"chainmaker.org/chainmaker/common/v2/msgbus"
 //	"chainmaker.org/chainmaker-go/core/cache"
 //	"chainmaker.org/chainmaker-go/logger"
-//	"chainmaker.org/chainmaker/protocol/mock"
-//	commonpb "chainmaker.org/chainmaker/pb-go/common"
-//	configpb "chainmaker.org/chainmaker/pb-go/config"
-//	"chainmaker.org/chainmaker/pb-go/consensus"
-//	"chainmaker.org/chainmaker/protocol"
+//	"chainmaker.org/chainmaker/protocol/v2/mock"
+//	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+//	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
+//	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+//	"chainmaker.org/chainmaker/protocol/v2"
 //	"chainmaker.org/chainmaker-go/utils"
 //	"fmt"
 //	"github.com/golang/mock/gomock"

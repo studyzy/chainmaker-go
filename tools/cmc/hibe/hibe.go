@@ -18,7 +18,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"chainmaker.org/chainmaker/common/crypto/hibe"
+	"chainmaker.org/chainmaker/common/v2/crypto/hibe"
 )
 
 var (

@@ -8,17 +8,18 @@ package privatecompute
 
 import (
 	"bytes"
-	bccrypto "chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/asym/rsa"
-	"chainmaker.org/chainmaker/common/crypto/tee"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
+
+	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym/rsa"
+	"chainmaker.org/chainmaker/common/v2/crypto/tee"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 )
 
-var(
+var (
 	cryptoPubkeyOid = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 12, 10, 1, 1}
 )
 
@@ -27,7 +28,7 @@ func splitProof(proof []byte) (bool, *tee.TEEProof, []byte, error) {
 	if err != nil {
 		return false, nil, nil, fmt.Errorf("invalid input: %v", err)
 	}
-	challenge := proof[tee.KLV_LENGTH_SIZE : challengeLen+ tee.KLV_LENGTH_SIZE]
+	challenge := proof[tee.KLV_LENGTH_SIZE : challengeLen+tee.KLV_LENGTH_SIZE]
 
 	reportLen, err := tee.BinaryToUint32(proof[challengeLen+tee.KLV_LENGTH_SIZE : challengeLen+tee.KLV_LENGTH_SIZE*2])
 	if err != nil {

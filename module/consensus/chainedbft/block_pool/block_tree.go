@@ -11,8 +11,8 @@ import (
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/queue"
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/queue"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 //BlockNode save one block and its children

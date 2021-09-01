@@ -8,15 +8,16 @@ SPDX-License-Identifier: Apache-2.0
 package snapshot
 
 import (
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	"chainmaker.org/chainmaker/common/bitmap"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker-go/localconf"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+
+	"chainmaker.org/chainmaker/common/v2/bitmap"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var ForceConflictedKey = []byte{0xFF}

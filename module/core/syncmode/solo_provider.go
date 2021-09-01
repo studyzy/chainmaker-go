@@ -9,7 +9,7 @@ package syncmode
 import (
 	"chainmaker.org/chainmaker-go/core/provider"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 const ConsensusTypeSOLO = "SOLO"
@@ -19,6 +19,6 @@ var NilSOLOProvider provider.CoreProvider = (*soloProvider)(nil)
 type soloProvider struct {
 }
 
-func (sp *soloProvider) NewCoreEngine (config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (sp *soloProvider) NewCoreEngine(config *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	return NewCoreEngine(config)
 }

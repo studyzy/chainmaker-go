@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 )
 
 type organization struct {

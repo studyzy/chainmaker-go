@@ -8,8 +8,8 @@ package util
 import (
 	"encoding/hex"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/hash"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
 )
 
 func SM3(data []byte) (string, error) {

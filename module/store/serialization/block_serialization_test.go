@@ -12,10 +12,10 @@ import (
 	"fmt"
 	"testing"
 
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"github.com/stretchr/testify/assert"
 )
 

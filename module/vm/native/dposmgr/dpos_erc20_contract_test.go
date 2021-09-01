@@ -11,12 +11,12 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 	"github.com/golang/mock/gomock"
 
 	"chainmaker.org/chainmaker-go/logger"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	"chainmaker.org/chainmaker/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"
 )
 

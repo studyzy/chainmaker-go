@@ -10,9 +10,9 @@ require (
 	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/common v0.0.0-20210812042900-40fd24729b4a
-	chainmaker.org/chainmaker/pb-go v0.0.0-20210825102713-0125b30c15d4
-	chainmaker.org/chainmaker/protocol v0.0.0-20210817020238-7ad0d408ae23
+	chainmaker.org/chainmaker/common/v2 v2.0.0
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.0
+	chainmaker.org/chainmaker/protocol/v2 v2.0.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2

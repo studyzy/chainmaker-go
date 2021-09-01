@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/config"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"

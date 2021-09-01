@@ -7,14 +7,15 @@ SPDX-License-Identifier: Apache-2.0
 package chainedbft
 
 import (
-	pbac "chainmaker.org/chainmaker/pb-go/accesscontrol"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/protocol/test"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+
+	"chainmaker.org/chainmaker/protocol/v2/test"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
@@ -22,12 +23,12 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/common/msgbus"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	systemPb "chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	systemPb "chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"

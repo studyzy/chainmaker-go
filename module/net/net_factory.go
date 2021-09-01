@@ -7,10 +7,11 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	"chainmaker.org/chainmaker-go/net/p2p"
-	"chainmaker.org/chainmaker/protocol"
 	"errors"
 	"io/ioutil"
+
+	"chainmaker.org/chainmaker-go/net/p2p"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // ErrorNetType

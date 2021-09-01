@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
 //MsgPool manages all of consensus messages received for protocol

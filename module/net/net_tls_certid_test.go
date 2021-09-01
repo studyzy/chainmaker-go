@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	"chainmaker.org/chainmaker/protocol"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"
 )
 

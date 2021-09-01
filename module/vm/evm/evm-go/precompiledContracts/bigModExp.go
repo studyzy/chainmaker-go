@@ -17,9 +17,10 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
-	"chainmaker.org/chainmaker-go/evm/evm-go/math"
 	"math/big"
+
+	"chainmaker.org/chainmaker-go/evm/evm-go/math"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 // bigModExp implements a native big integer exponential modular operation.

@@ -7,11 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package core
 
 import (
+	"sync"
+
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/provider"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker/protocol"
-	"sync"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type coreEngineFactory struct {

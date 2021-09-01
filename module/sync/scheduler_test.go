@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	syncPb "chainmaker.org/chainmaker/pb-go/sync"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	syncPb "chainmaker.org/chainmaker/pb-go/v2/sync"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"

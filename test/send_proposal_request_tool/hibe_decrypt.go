@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/hibe"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/hibe"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"github.com/spf13/cobra"
 )
 

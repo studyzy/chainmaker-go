@@ -7,13 +7,14 @@ package common
 
 import (
 	"bytes"
-	"chainmaker.org/chainmaker-go/utils"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
 	"fmt"
-	"github.com/prometheus/common/log"
 	"sync"
+
+	"chainmaker.org/chainmaker-go/utils"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
+	"github.com/prometheus/common/log"
 )
 
 type VerifyBlockBatch struct {

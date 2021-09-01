@@ -1,9 +1,10 @@
 package xvm
 
 import (
-	"chainmaker.org/chainmaker/common/serialize"
-	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"fmt"
+
+	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
+	"chainmaker.org/chainmaker/common/v2/serialize"
 )
 
 const (
