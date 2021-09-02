@@ -15,6 +15,8 @@ if [ "${alreadyBuild}" != "true" ]; then
   make cmc
 fi
 cd bin
+
+echo "create contract..."
 ## create contract
 ./cmc client contract user create \
 --contract-name=fact \
@@ -28,6 +30,7 @@ cd bin
 --sync-result=true \
 --params="{}"
 
+sleep 3
 ## invoke tx
 ./cmc client contract user invoke \
 --contract-name=fact \
