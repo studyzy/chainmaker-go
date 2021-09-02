@@ -13,7 +13,8 @@ alreadyBuild=$1
 cd ..
 ./cluster_quick_stop.sh clean
 sleep 1
-mv ../build ../build-bak
+ps -ef|grep chainmaker
+rm -rf ../build
 echo -e "\nINFO\n" | ./prepare.sh 4 1
 ./build_release.sh
 ./cluster_quick_start.sh normal
