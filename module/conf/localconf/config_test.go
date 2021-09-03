@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,10 +25,10 @@ func TestLoadConf(_ *testing.T) {
 }
 
 func TestUpdateDebugConfig(t *testing.T) {
-	pairs := []*common.KeyValuePair{
-		{Key: "IsCliOpen", Value: []byte("true")},
-		{Key: "IsHttpOpen", Value: []byte("true")},
-		{Key: "invalid", Value: []byte("true")},
+	pairs := []*config.ConfigKeyValue{
+		{Key: "IsCliOpen", Value: "true"},
+		{Key: "IsHttpOpen", Value: "true"},
+		{Key: "invalid", Value: "true"},
 	}
 	err := UpdateDebugConfig(pairs)
 	assert.NoError(t, err)

@@ -17,9 +17,9 @@ package raft
 //	"testing"
 //
 //	"chainmaker.org/chainmaker-go/logger"
-//	configpb "chainmaker.org/chainmaker/pb-go/config"
-//	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-//	"chainmaker.org/chainmaker/protocol/mock"
+//	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
+//	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+//	"chainmaker.org/chainmaker/protocol/v2/mock"
 //	"github.com/golang/mock/gomock"
 //	"go.etcd.io/etcd/raft/v3"
 //	"go.uber.org/zap"

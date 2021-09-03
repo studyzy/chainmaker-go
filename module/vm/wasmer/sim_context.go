@@ -13,9 +13,9 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"chainmaker.org/chainmaker/common/serialize"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/serialize"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // SimContext record the contract context

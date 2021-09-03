@@ -8,12 +8,13 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
 	"context"
 	"fmt"
 	"time"
 
-	grpc_client "chainmaker.org/chainmaker-go/test/grpc_client"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+
+	"chainmaker.org/chainmaker-go/test/grpc_client"
 )
 
 type BenchmarkerSender interface {

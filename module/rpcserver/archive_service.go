@@ -1,15 +1,22 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package rpcserver
 
 import (
 	"chainmaker.org/chainmaker-go/utils"
-	commonErr "chainmaker.org/chainmaker/common/errors"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonErr "chainmaker.org/chainmaker/common/v2/errors"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 func (s *ApiService) doArchive(tx *commonPb.Transaction) *commonPb.TxResponse {

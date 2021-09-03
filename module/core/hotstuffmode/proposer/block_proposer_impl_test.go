@@ -8,16 +8,16 @@ package proposer
 
 //
 //import (
-//	"chainmaker.org/chainmaker/common/random/uuid"
+//	"chainmaker.org/chainmaker/common/v2/random/uuid"
 //	"chainmaker.org/chainmaker-go/core/cache"
 //	"chainmaker.org/chainmaker-go/localconf"
 //	"chainmaker.org/chainmaker-go/logger"
-//	"chainmaker.org/chainmaker/protocol/mock"
-//	acpb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-//	commonpb "chainmaker.org/chainmaker/pb-go/common"
-//	configpb "chainmaker.org/chainmaker/pb-go/config"
-//	"chainmaker.org/chainmaker/pb-go/consensus"
-//	txpoolpb "chainmaker.org/chainmaker/pb-go/txpool"
+//	"chainmaker.org/chainmaker/protocol/v2/mock"
+//	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+//	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+//	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
+//	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+//	txpoolpb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 //	"chainmaker.org/chainmaker-go/utils"
 //	"crypto/sha256"
 //	"fmt"

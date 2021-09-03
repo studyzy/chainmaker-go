@@ -17,15 +17,15 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
-	dpospb "chainmaker.org/chainmaker/pb-go/consensus/dpos"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	dpospb "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58/base58"
 )
@@ -330,7 +330,7 @@ func (e *ERC20Config) legal() error {
 }
 
 // loadERC20Config load config of erc20 contract
-func loadERC20Config(consensusExtConfig []*commonPb.KeyValuePair) (*ERC20Config, error) {
+func loadERC20Config(consensusExtConfig []*configPb.ConfigKeyValue) (*ERC20Config, error) {
 	/**
 	  erc20合约的配置
 	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置
@@ -557,7 +557,7 @@ func (s *StakeConfig) setNodeID(key, value string) error {
 	return nil
 }
 
-func loadStakeConfig(consensusExtConfig []*commonPb.KeyValuePair) (*StakeConfig, error) {
+func loadStakeConfig(consensusExtConfig []*configPb.ConfigKeyValue) (*StakeConfig, error) {
 	/**
 	  stake合约的配置
 	  ext_config: # 扩展字段，记录难度、奖励等其他类共识算法配置

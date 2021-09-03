@@ -1,17 +1,18 @@
 package evm_go
 
 import (
-	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
-	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
-	"chainmaker.org/chainmaker-go/evm/test"
-	"chainmaker.org/chainmaker/common/evmutils"
-	pb "chainmaker.org/chainmaker/pb-go/common"
 	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"math/big"
 	"strings"
 	"testing"
+
+	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
+	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
+	"chainmaker.org/chainmaker-go/evm/test"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
+	pb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 var (

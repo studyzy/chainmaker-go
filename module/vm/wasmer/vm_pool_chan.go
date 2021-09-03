@@ -16,8 +16,8 @@ import (
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	"chainmaker.org/chainmaker/common/random/uuid"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/random/uuid"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 const (
@@ -211,6 +211,7 @@ func (p *vmPool) RevertInstance(instance *wrappedInstance) {
 		go func() {
 			p.removeInstanceC <- struct{}{}
 			p.addInstanceC <- struct{}{}
+			p.CloseInstance(instance)
 		}()
 	} else {
 		p.instances <- instance

@@ -16,7 +16,7 @@
 package precompiledContracts
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 type PrecompiledContract interface {

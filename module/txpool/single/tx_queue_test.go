@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/logger"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

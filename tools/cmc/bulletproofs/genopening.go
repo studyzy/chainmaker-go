@@ -10,7 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/v2/crypto/bulletproofs"
 	"github.com/spf13/cobra"
 )
 

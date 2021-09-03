@@ -11,7 +11,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/syndtr/goleveldb/leveldb/memdb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )

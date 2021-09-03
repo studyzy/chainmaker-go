@@ -1,3 +1,4 @@
+//go:build rocksdb
 // +build rocksdb
 
 /*
@@ -16,7 +17,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	//logImpl "chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/pkg/errors"
 	"github.com/tecbot/gorocksdb"
 )

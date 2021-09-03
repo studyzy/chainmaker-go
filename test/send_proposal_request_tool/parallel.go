@@ -18,16 +18,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/ca"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/spf13/cobra"
@@ -144,7 +144,7 @@ func ParallelCMD() *cobra.Command {
 	flags.BoolVarP(&checkResult, "check-result", "Y", false, "specify whether check result")
 	flags.BoolVarP(&recordLog, "record-log", "g", false, "specify whether record log")
 	flags.BoolVarP(&outputResult, "output-result", "", false, "output rpc result, eg: txid")
-	flags.BoolVarP(&showKey, "showKey", "SK", false, "bool")
+	flags.BoolVarP(&showKey, "showKey", "", false, "bool")
 
 	cmd.AddCommand(invokeCMD())
 	cmd.AddCommand(queryCMD())
@@ -593,6 +593,9 @@ func (h *invokeHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey
 			Key:   key,
 			Value: val,
 		})
+		if showKey {
+			fmt.Printf("key:%s val:%s\n", key, val)
+		}
 	}
 
 	// 支持evm
@@ -653,6 +656,9 @@ func (h *queryHandler) handle(client apiPb.RpcNodeClient, sk3 crypto.PrivateKey,
 			Key:   key,
 			Value: val,
 		})
+		if showKey {
+			fmt.Printf("key:%s val:%s\n", key, val)
+		}
 	}
 
 	payloadBytes, err := constructQueryPayload(chainId, contractName, method, pairs)

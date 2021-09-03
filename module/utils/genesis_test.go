@@ -11,10 +11,9 @@ import (
 	"crypto/sha256"
 	"testing"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mr-tron/base58/base58"
@@ -50,26 +49,26 @@ func TestERC20Config_load(t *testing.T) {
 		owner = base58.Encode(hash[:])
 	)
 
-	var tests = []*commonPb.KeyValuePair{
+	var tests = []*config.ConfigKeyValue{
 		{
 			Key:   keyERC20Total,
-			Value: []byte("1000000"),
+			Value: "1000000",
 		},
 		{
 			Key:   keyERC20Owner,
-			Value: []byte(owner),
+			Value: owner,
 		},
 		{
 			Key:   keyERC20Decimals,
-			Value: []byte("18"),
+			Value: "18",
 		},
 		{
 			Key:   keyERC20Acc + owner,
-			Value: []byte("800000"),
+			Value: "800000",
 		},
 		{
 			Key:   keyERC20Acc + syscontract.SystemContract_DPOS_STAKE.String(),
-			Value: []byte("200000"),
+			Value: "200000",
 		},
 	}
 	erc20Config, err := loadERC20Config(tests)

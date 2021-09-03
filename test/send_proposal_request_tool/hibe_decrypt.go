@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/hibe"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/hibe"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +47,7 @@ func decryptHibeMessageExec() (string, commonPb.TxStatusCode, string) {
 
 	localParams, ok := new(hibe.Params).Unmarshal(hibeParamsBytes)
 	if !ok {
-		return result_output, 1, fmt.Sprintf("hibe.Params.Unmarshal failed, please check your file, err: %s", ok)
+		return result_output, 1, fmt.Sprintf("hibe.Params.Unmarshal failed, please check your file, err: %v", ok)
 	}
 
 	hibePrvKeyBytes, err := readHibePrvKeysWithFilePath(hibePrvKey)
@@ -57,7 +57,7 @@ func decryptHibeMessageExec() (string, commonPb.TxStatusCode, string) {
 
 	prvKey, ok := new(hibe.PrivateKey).Unmarshal(hibePrvKeyBytes)
 	if !ok {
-		return result_output, 1, fmt.Sprintf("hibe.PrivateKey.Unmarshal failed, please check your file, err: %s", ok)
+		return result_output, 1, fmt.Sprintf("hibe.PrivateKey.Unmarshal failed, please check your file, err: %v", ok)
 	}
 
 	hibeMsgMap := make(map[string]string)

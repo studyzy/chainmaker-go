@@ -9,9 +9,9 @@ package cache
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,12 +1,20 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
-	"chainmaker.org/chainmaker/common/crypto/paillier"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"math/big"
+
+	"chainmaker.org/chainmaker/common/v2/crypto/paillier"
+	"github.com/spf13/cobra"
 )
 
 const (

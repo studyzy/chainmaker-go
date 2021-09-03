@@ -15,9 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/sdk-go/utils"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/sdk-go/v2/utils"
 )
 
 func SubscribeBlockCMD() *cobra.Command {

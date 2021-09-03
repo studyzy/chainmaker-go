@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package chainconf
 
 import (
-	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type options struct {

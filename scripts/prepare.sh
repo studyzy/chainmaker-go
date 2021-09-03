@@ -25,7 +25,7 @@ CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/crypto_config_template.yml
 
 function show_help() {
     echo "Usage:  "
-    echo "  prepare.sh node_cnt(1/4/7/10/13/16) chain_cnt(1-4) p2p_port_prefix(default:11301) rpc_port_prefix(default:12301)"
+    echo "  prepare.sh node_cnt(1/4/7/10/13/16) chain_cnt(1-4) p2p_port(default:11301) rpc_port(default:12301)"
     echo "    eg1: prepare.sh 4 1"
     echo "    eg2: prepare.sh 4 1 11301 12301"
 }

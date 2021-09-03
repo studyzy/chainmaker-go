@@ -12,7 +12,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/logger"
 
-	tbftpb "chainmaker.org/chainmaker/pb-go/consensus/tbft"
+	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 )
 
 var (
@@ -93,6 +93,7 @@ func (ts *timeScheduler) stopTimer() {
 
 // AddTimeoutInfo add a timeoutInfo event to timeScheduler
 func (ts *timeScheduler) AddTimeoutInfo(ti timeoutInfo) {
+	ts.logger.Infof("len(ts.bufferC): %d", len(ts.bufferC))
 	ts.bufferC <- ti
 }
 
@@ -108,7 +109,7 @@ func (ts *timeScheduler) handle() {
 	for {
 		select {
 		case t := <-ts.bufferC:
-			ts.logger.Debugf("[%s] %s receive timeoutInfo: %s", ts.id, ti, t)
+			ts.logger.Debugf("[%s] %s receive timeoutInfo: %s, ts.bufferC len: %d", ts.id, ti, t, len(ts.bufferC))
 
 			// ignore outdated timeouts
 			if t.Height < ti.Height {

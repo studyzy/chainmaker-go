@@ -17,16 +17,17 @@
 package instructions
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
+	"fmt"
+	"reflect"
+	"runtime"
+
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/memory"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/stack"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
-	"fmt"
-	"reflect"
-	"runtime"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 type DynamicGasCostSetting struct {

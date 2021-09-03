@@ -21,8 +21,8 @@ import (
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"golang.org/x/sync/singleflight"
 )
 

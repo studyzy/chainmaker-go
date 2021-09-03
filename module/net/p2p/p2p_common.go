@@ -9,13 +9,14 @@ package p2p
 
 import (
 	"bytes"
-	rootLog "chainmaker.org/chainmaker-go/logger"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
 	"encoding/binary"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/multiformats/go-multiaddr"
 	"os"
 	"sync"
+
+	rootLog "chainmaker.org/chainmaker-go/logger"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multiaddr"
 )
 
 const (

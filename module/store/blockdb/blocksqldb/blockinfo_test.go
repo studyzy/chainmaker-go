@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"github.com/stretchr/testify/assert"
 )
 

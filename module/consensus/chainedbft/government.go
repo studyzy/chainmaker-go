@@ -11,7 +11,7 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
-	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
+	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 )
 
 //epochManager manages the components that shared across epoch

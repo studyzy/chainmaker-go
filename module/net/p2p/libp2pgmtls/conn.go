@@ -11,7 +11,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
 
-	cmtls "chainmaker.org/chainmaker/common/crypto/tls"
+	cmtls "chainmaker.org/chainmaker/common/v2/crypto/tls"
 )
 
 type conn struct {

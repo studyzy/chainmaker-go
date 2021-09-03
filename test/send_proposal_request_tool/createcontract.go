@@ -9,13 +9,12 @@ package main
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"time"
 
 	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/spf13/cobra"
 )
@@ -50,8 +49,9 @@ func createContract() error {
 		}
 		pairsString = string(bytes)
 	}
-	var pairs []*commonPb.KeyValuePair
-	err := json.Unmarshal([]byte(pairsString), &pairs)
+	//var pairs []*commonPb.KeyValuePair
+	//err := json.Unmarshal([]byte(pairsString), &pairs)
+	pairs, err := utils.UnmarshalJsonStrKV2KVPairs(pairsString)
 	if err != nil {
 		return err
 	}

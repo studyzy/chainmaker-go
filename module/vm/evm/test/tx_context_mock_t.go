@@ -12,12 +12,12 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/utils"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var testOrgId = "wx-org1.chainmaker.org"

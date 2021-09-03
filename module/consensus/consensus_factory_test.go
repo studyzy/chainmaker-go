@@ -13,11 +13,11 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/dpos"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker/common/msgbus"
-	configpb "chainmaker.org/chainmaker/pb-go/config"
-	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
+	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 
 	"github.com/golang/mock/gomock"
 )

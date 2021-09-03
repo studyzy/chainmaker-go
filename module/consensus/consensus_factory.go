@@ -11,14 +11,14 @@ import (
 
 	"chainmaker.org/chainmaker-go/consensus/chainedbft"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
-	consensuspb "chainmaker.org/chainmaker/pb-go/consensus"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 
 	"chainmaker.org/chainmaker-go/consensus/raft"
 	"chainmaker.org/chainmaker-go/consensus/solo"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
-	"chainmaker.org/chainmaker/common/msgbus"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type Factory struct {

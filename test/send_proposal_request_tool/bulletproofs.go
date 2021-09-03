@@ -1,3 +1,9 @@
+/*
+Copyright (C) BABEC. All rights reserved.
+
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
@@ -5,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/crypto/bulletproofs"
+	"chainmaker.org/chainmaker/common/v2/crypto/bulletproofs"
 	"github.com/spf13/cobra"
 
 	"chainmaker.org/chainmaker-go/common/crypto/bulletproofs"

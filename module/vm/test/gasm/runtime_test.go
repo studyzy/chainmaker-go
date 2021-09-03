@@ -17,8 +17,8 @@ import (
 	"chainmaker.org/chainmaker-go/gasm"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/test"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var (
@@ -35,8 +35,8 @@ func TestContract_Fact(t *testing.T) {
 	start := time.Now().UnixNano() / 1e6
 	x := 0
 	wg := sync.WaitGroup{}
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 10; j++ {
+	for i := 0; i < 1; i++ {
+		for j := 0; j < 1; j++ {
 			x++
 			y := int32(x)
 			wg.Add(1)

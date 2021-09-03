@@ -19,8 +19,8 @@ import (
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"gotest.tools/assert"
 )
 
@@ -44,7 +44,7 @@ func TestCallFact(t *testing.T) {
 	println("start") // 2.9m
 	start := time.Now().UnixNano() / 1e6
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 1; i++ {
 		fmt.Printf("######## %v \n", i)
 		for j := 0; j < 1; j++ {
 			x++

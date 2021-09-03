@@ -14,14 +14,16 @@ import (
 )
 
 func TestToCamelCase(t *testing.T) {
-	val := ToCamelCase("abc_def")
-	assert.Equal(t, "AbcDef", val)
+	param := make(map[string]string)
+	param["abc_def"] = "AbcDef"
+	param["aBc_deFdd"] = "ABcDeFdd"
+	param["abc_1f"] = "Abc1f"
+	param[""] = ""
 
-	val = ToCamelCase("aBc_deFdd")
-	assert.Equal(t, "ABcDeFdd", val)
-
-	val = ToCamelCase("abc_1f")
-	assert.Equal(t, "Abc1f", val)
+	for k, v := range param {
+		val := ToCamelCase(k)
+		assert.Equal(t, v, val)
+	}
 }
 
 func TestIsAnyBlank(t *testing.T) {
@@ -60,6 +62,9 @@ func TestIsAllBlank(t *testing.T) {
 	assert.False(t, r)
 
 	r = IsAllBlank("1", "1", []byte("1"), make([]byte, 0))
+	assert.False(t, r)
+
+	r = IsAllBlank([]byte("1"))
 	assert.False(t, r)
 
 	r = IsAllBlank(nil)

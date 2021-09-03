@@ -13,7 +13,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
-	storePb "chainmaker.org/chainmaker/pb-go/store"
+	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 )
 
 type HistoryIteratorImpl struct {

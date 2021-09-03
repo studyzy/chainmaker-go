@@ -11,13 +11,13 @@ import (
 	"math"
 	"sync"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/linkedhashmap"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/linkedhashmap"
+	"chainmaker.org/chainmaker/protocol/v2"
 
 	"github.com/prometheus/client_golang/prometheus"
 )

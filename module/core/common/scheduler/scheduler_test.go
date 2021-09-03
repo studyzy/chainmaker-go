@@ -12,9 +12,9 @@ package scheduler
 //	"fmt"
 //	"testing"
 //
-//	"chainmaker.org/chainmaker/protocol/mock"
-//	commonpb "chainmaker.org/chainmaker/pb-go/common"
-//	configpb "chainmaker.org/chainmaker/pb-go/config"
+//	"chainmaker.org/chainmaker/protocol/v2/mock"
+//	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+//	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 //	"github.com/gogo/protobuf/proto"
 //	"github.com/golang/mock/gomock"
 //	"github.com/stretchr/testify/require"

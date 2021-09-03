@@ -18,10 +18,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"github.com/gogo/protobuf/proto"
 )
 

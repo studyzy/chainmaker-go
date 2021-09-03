@@ -10,15 +10,16 @@ package native_test
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"github.com/stretchr/testify/require"
+
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -47,7 +48,7 @@ func init() {
 //GetFullBlockByHeight
 
 // capitalize 't' to make it a unit test
-func testGetBlock(t *testing.T) {
+func TestGetBlock(t *testing.T) {
 	testHeight := -1
 	height := int64(testHeight)
 	blockByHeight, blockHashStringByHeight, txId := testGetBlockByHeight(t, client, height)
@@ -208,6 +209,9 @@ func testGetBlockByTxId(t *testing.T, client apiPb.RpcNodeClient, txId string) *
 	//fmt.Printf("response: %v\n", resp)
 
 	blockInfo := &commonPb.BlockInfo{}
+	if resp == nil {
+		return nil
+	}
 	if err = proto.Unmarshal(resp.ContractResult.Result, blockInfo); err != nil {
 		panic(err)
 	}

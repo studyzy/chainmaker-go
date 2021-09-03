@@ -11,10 +11,10 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	bccrypto "chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/crypto/tee"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
+	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/crypto/tee"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 )
 
 func getPubkeyPairFromCert(pemData []byte) (verificationPubKey bccrypto.PublicKey,

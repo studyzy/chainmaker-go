@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package net
 
 import (
-	netPb "chainmaker.org/chainmaker/pb-go/net"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"github.com/gogo/protobuf/proto"
 )
 

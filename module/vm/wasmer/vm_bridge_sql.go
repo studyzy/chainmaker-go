@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package wasmer
 
 import (
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 //var rowIndex int32 = 0

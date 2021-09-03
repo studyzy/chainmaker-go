@@ -14,18 +14,18 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/common/msgbus"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	systemPb "chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker/protocol/mock"
+	"chainmaker.org/chainmaker/common/v2/msgbus"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+	systemPb "chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 
 	"github.com/gogo/protobuf/proto"
 )

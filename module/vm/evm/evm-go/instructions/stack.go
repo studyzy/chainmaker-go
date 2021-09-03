@@ -17,8 +17,8 @@
 package instructions
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
 )
 
 func loadStack() {

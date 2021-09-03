@@ -17,9 +17,9 @@ import (
 	"strconv"
 
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mr-tron/base58"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -571,46 +571,8 @@ func (s *DPoSStakeRuntime) UnDelegate(context protocol.TxSimContext, params map[
 	// update validator and delegation
 	v, d, err := s.updateValidatorAndDelegationByUndelegate(context, sender, undelegateValidatorAddress, amount, shares)
 	if err != nil {
-		s.log.Errorf("get validator [%s] error: ", undelegateValidatorAddress, err.Error())
+		s.log.Errorf("update validator and delegation error: ", err.Error())
 		return nil, err
-	}
-	negShare := &big.Int{}
-	negShare.Mul(shares, big.NewInt(-1))
-	err = updateValidatorShares(v, negShare)
-	if err != nil {
-		s.log.Errorf("update validator [%s] share error: ", undelegateValidatorAddress, err.Error())
-		return nil, err
-	}
-	err = updateValidatorTokens(v, "-"+amount)
-	if err != nil {
-		s.log.Errorf("update validator [%s] tokens error: ", undelegateValidatorAddress, err.Error())
-		return nil, err
-	}
-	// 如果是 验证人自身 解除抵押
-	if sender == undelegateValidatorAddress {
-		err = updateValidatorSelfDelegate(v, "-"+amount)
-		if err != nil {
-			s.log.Errorf("update validator [%s] self delegation error: ", undelegateValidatorAddress, err.Error())
-			return nil, err
-		}
-		// compare self delegation
-		cmp, err1 := compareMinSelfDelegation(context, v.SelfDelegation)
-		if err1 != nil {
-			s.log.Errorf("compare min self delegation error: ", err1.Error())
-			return nil, err1
-		}
-		if cmp == -1 {
-			// 检查当前网络情况下，节点是否能退出
-			if err = s.canDelete(context, undelegateValidatorAddress); err != nil {
-				return nil, err
-			}
-
-			if v.SelfDelegation == "0" {
-				updateValidatorStatus(v, syscontract.BondStatus_UNBONDED)
-			} else {
-				updateValidatorStatus(v, syscontract.BondStatus_UNBONDING)
-			}
-		}
 	}
 	// save
 	err = save(context, ToUnbondingDelegationKey(completeEpoch, sender, undelegateValidatorAddress), ud)

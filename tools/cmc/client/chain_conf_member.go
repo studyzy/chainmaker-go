@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/tools/cmc/util"
-	"chainmaker.org/chainmaker/pb-go/common"
-	sdk "chainmaker.org/chainmaker/sdk-go"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 
 	"github.com/spf13/cobra"
 )
@@ -94,8 +94,7 @@ func configTrustMember(op int) error {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
-		userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -116,8 +115,7 @@ func configTrustMember(op int) error {
 	var payload *common.Payload
 	switch op {
 	case addTrustMember:
-		payload, err = client.CreateChainConfigTrustMemberAddPayload(trustMemberOrgId, trustMemberNodeId,
-			trustMemberRole, string(trustMemberBytes))
+		payload, err = client.CreateChainConfigTrustMemberAddPayload(trustMemberOrgId, trustMemberNodeId, trustMemberRole, string(trustMemberBytes))
 	case removeTrustMember:
 		payload, err = client.CreateChainConfigTrustMemberDeletePayload(string(trustMemberBytes))
 	default:

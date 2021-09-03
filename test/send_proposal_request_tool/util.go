@@ -16,16 +16,16 @@ import (
 
 	"chainmaker.org/chainmaker-go/utils"
 
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/ca"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )

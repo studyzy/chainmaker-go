@@ -14,17 +14,17 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/localconf"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/helper"
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/helper"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type consensusVerifier map[consensus.ConsensusType]protocol.Verifier
@@ -70,6 +70,10 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*ChainConfig, error) {
 	}
 
 	if err := verifyChainConfigTrustRoots(cconfig, mConfig, chainLog); err != nil {
+		return nil, err
+	}
+
+	if err := verifyChainConfigTrustMembers(cconfig); err != nil {
 		return nil, err
 	}
 

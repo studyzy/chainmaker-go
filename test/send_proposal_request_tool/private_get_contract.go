@@ -11,8 +11,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"

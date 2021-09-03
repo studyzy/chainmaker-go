@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	netPb "chainmaker.org/chainmaker/pb-go/net"
-	syncPb "chainmaker.org/chainmaker/pb-go/sync"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
+	syncPb "chainmaker.org/chainmaker/pb-go/v2/sync"
 
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"

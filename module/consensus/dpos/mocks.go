@@ -12,11 +12,11 @@ import (
 	"fmt"
 
 	native "chainmaker.org/chainmaker-go/vm/native/dposmgr"
-	configpb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
-	"chainmaker.org/chainmaker/protocol/mock"
+	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/protocol/v2/mock"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"

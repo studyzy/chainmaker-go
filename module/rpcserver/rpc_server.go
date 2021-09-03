@@ -21,10 +21,10 @@ import (
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
+	"chainmaker.org/chainmaker/common/v2/ca"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -184,9 +184,7 @@ func (s *RPCServer) getCurChainConfTrustRootsHash() (string, error) {
 	var caCerts []string
 	for _, chainConf := range chainConfs {
 		for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
-
 			caCerts = append(caCerts, orgRoot.Root...)
-
 		}
 	}
 
@@ -284,7 +282,6 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 		var caCerts []string
 		for _, chainConf := range chainConfs {
 			for _, orgRoot := range chainConf.ChainConfig().TrustRoots {
-
 				caCerts = append(caCerts, orgRoot.Root...)
 			}
 

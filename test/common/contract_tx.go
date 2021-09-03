@@ -16,17 +16,17 @@ import (
 	"strconv"
 	"time"
 
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/helper"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/crypto"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -133,9 +133,8 @@ func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntr
 	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
 }
 
-func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
-
+func ProposalMultiRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int, timestamp int64) *commonPb.TxResponse {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 	defer cancel()
 
@@ -158,8 +157,7 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	payload.ChainId = chainId
 	payload.TxType = txType
 	payload.TxId = txId
-	payload.Timestamp = time.Now().Unix()
-
+	payload.Timestamp = timestamp
 	req := &commonPb.TxRequest{
 		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
@@ -203,6 +201,11 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 	return result
+
+}
+func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
+	return ProposalMultiRequest(sk3, client, txType, chainId, txId, payload, orgIdList, time.Now().Unix())
 }
 
 func GetSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {

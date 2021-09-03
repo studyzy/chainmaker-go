@@ -5,10 +5,6 @@ Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-// description: chainmaker-go
-//
-// @author: xwc1125
-// @date: 2020/11/24
 package native
 
 import (
@@ -19,17 +15,17 @@ import (
 	"strconv"
 	"time"
 
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/common/ca"
-	"chainmaker.org/chainmaker/common/crypto"
-	"chainmaker.org/chainmaker/common/crypto/asym"
-	"chainmaker.org/chainmaker/common/helper"
-	apiPb "chainmaker.org/chainmaker/pb-go/api"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/ca"
+	"chainmaker.org/chainmaker/common/v2/crypto"
+	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/helper"
+	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )
@@ -41,7 +37,7 @@ var (
 	Port = 12301
 
 	certPathPrefix = "../../config"
-	//certPathPrefix = "../../build"
+	//certPathPrefix     = "../../build"
 	WasmPath           = "../wasm/counter-go.wasm"
 	OrgIdFormat        = "wx-org%s.chainmaker.org"
 	UserKeyPathFmt     = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/client1/client1.tls.key"
@@ -57,7 +53,7 @@ var (
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
 	DefaultOrgId       = fmt.Sprintf(OrgIdFormat, "1")
 
-	//caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
+	// caPaths    = []string{"D:/develop/workspace/chainMaker/chainmaker-go/build/crypto-config/wx-org5.chainmaker.org/ca"}
 	caPaths    = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
 	prePathFmt = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 

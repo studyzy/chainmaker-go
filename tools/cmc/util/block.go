@@ -8,8 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package util
 
 import (
-	"chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 )
 
 // IsConfBlock is it a configuration block

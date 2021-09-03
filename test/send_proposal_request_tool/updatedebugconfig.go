@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"time"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -42,7 +42,7 @@ func updateDebugConfig() error {
 	defer cancel()
 
 	// 构造Payload
-	var pairs []*commonPb.KeyValuePair
+	var pairs []*configPb.ConfigKeyValue
 	err := json.Unmarshal([]byte(pairsString), &pairs)
 	if err != nil {
 		return err

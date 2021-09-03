@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package types
 
-import "chainmaker.org/chainmaker/protocol"
+import "chainmaker.org/chainmaker/protocol/v2"
 
 // UpdateBatch encloses the details of multiple `updates`
 type UpdateBatch struct {

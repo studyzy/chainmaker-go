@@ -10,9 +10,9 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/logger"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	consensusPb "chainmaker.org/chainmaker/pb-go/consensus"
-	"chainmaker.org/chainmaker/protocol"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type GovernanceContractImp struct {

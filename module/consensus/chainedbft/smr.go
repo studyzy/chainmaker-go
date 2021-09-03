@@ -16,8 +16,8 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker/pb-go/common"
-	chainedbftpb "chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
 //chainedbftSMR manages current smr of consensus at height and level

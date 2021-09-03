@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	sdkPbCommon "chainmaker.org/chainmaker/pb-go/common"
+	sdkPbCommon "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/hokaccha/go-prettyjson"

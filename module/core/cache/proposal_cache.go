@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"sync"
 
-	commonpb "chainmaker.org/chainmaker/pb-go/common"
+	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 var defaultHashType = "SHA256" //nolint: unused

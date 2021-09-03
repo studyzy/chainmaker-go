@@ -16,12 +16,11 @@ import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
-	"chainmaker.org/chainmaker/common/sortedmap"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	configPb "chainmaker.org/chainmaker/pb-go/config"
-	"chainmaker.org/chainmaker/pb-go/syscontract"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/common/v2/sortedmap"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -120,7 +119,9 @@ func registerChainConfigContractMethods(log protocol.Logger) map[string]common.C
 
 	return methodMap
 }
-
+func GetChainConfig(txSimContext protocol.TxSimContext) (*configPb.ChainConfig, error) {
+	return getChainConfig(txSimContext, make(map[string][]byte))
+}
 func getChainConfig(txSimContext protocol.TxSimContext, params map[string][]byte) (*configPb.ChainConfig, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
@@ -472,7 +473,14 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 		r.log.Error(err)
 		return nil, err
 	}
-
+	for _, member := range chainConfig.TrustMembers {
+		if member.MemberInfo == memberInfo {
+			err = fmt.Errorf("%s, add trsut member failed, the memberinfo[%s] is exist in chainconfig",
+				common.ErrParams, memberInfo)
+			r.log.Error(err)
+			return nil, err
+		}
+	}
 	trustMember := &configPb.TrustMemberConfig{MemberInfo: memberInfo, OrgId: orgId, Role: role, NodeId: nodeId}
 	chainConfig.TrustMembers = append(chainConfig.TrustMembers, trustMember)
 	result, err = setChainConfig(txSimContext, chainConfig)
@@ -895,7 +903,7 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	changed := false
 	extConfig := chainConfig.Consensus.ExtConfig
 	if extConfig == nil {
-		extConfig = make([]*commonPb.KeyValuePair, 0)
+		extConfig = make([]*configPb.ConfigKeyValue, 0)
 	}
 
 	extConfigMap := make(map[string]string)
@@ -916,9 +924,9 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 			r.log.Error(parseParamErr.Error())
 			return false
 		}
-		extConfig = append(extConfig, &commonPb.KeyValuePair{
+		extConfig = append(extConfig, &configPb.ConfigKeyValue{
 			Key:   key,
-			Value: []byte(value),
+			Value: string(value),
 		})
 		chainConfig.Consensus.ExtConfig = extConfig
 		changed = true
@@ -956,7 +964,7 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 	changed := false
 	extConfig := chainConfig.Consensus.ExtConfig
 	if extConfig == nil {
-		extConfig = make([]*commonPb.KeyValuePair, 0)
+		extConfig = make([]*configPb.ConfigKeyValue, 0)
 	}
 
 	extConfigMap := make(map[string]string)
@@ -970,9 +978,9 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 		}
 		for i, config := range extConfig {
 			if key == config.Key {
-				extConfig[i] = &commonPb.KeyValuePair{
+				extConfig[i] = &configPb.ConfigKeyValue{
 					Key:   key,
-					Value: []byte(val),
+					Value: string(val),
 				}
 				chainConfig.Consensus.ExtConfig = extConfig
 				changed = true

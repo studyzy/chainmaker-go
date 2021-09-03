@@ -1,3 +1,4 @@
+//go:build rocksdb
 // +build rocksdb
 
 /*
@@ -10,7 +11,7 @@ package store
 
 import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/rocksdbprovider"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 func init() {

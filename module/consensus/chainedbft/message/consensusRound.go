@@ -8,7 +8,7 @@ package message
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker/pb-go/consensus/chainedbft"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
 //consensusRound caches consensus msg per round

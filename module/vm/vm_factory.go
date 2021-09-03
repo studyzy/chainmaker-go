@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/gasm"
@@ -23,9 +23,9 @@ import (
 	"chainmaker.org/chainmaker-go/wasmer"
 	"chainmaker.org/chainmaker-go/wxvm"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
-	"chainmaker.org/chainmaker/protocol"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 const WxvmCodeFolder = "wxvm"

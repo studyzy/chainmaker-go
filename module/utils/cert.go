@@ -11,9 +11,9 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"chainmaker.org/chainmaker/common/crypto/hash"
-	bcx509 "chainmaker.org/chainmaker/common/crypto/x509"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 )
 
 // GetCertHash get certificate hash

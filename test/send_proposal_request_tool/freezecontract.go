@@ -10,9 +10,9 @@ package main
 import (
 	"fmt"
 
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
-	"chainmaker.org/chainmaker/pb-go/syscontract"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/utils"
 	"github.com/spf13/cobra"

@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package eventsqldb
 
 import (
@@ -7,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker/protocol"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 // BlockMysqlDB provider a implementation of `contracteventdb.ContractEventDB`
@@ -36,7 +43,7 @@ func newContractEventDB(dbName string, db protocol.SqlDBHandle, logger protocol.
 }
 
 func (c *ContractEventSqlDB) initDb(dbName string) {
-	_ ,err := c.db.CreateDatabaseIfNotExist(dbName)
+	_, err := c.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create database %s db:%s", dbName, err))
 	}

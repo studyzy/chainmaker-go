@@ -16,7 +16,8 @@
 package evm_go
 
 import (
-	"chainmaker.org/chainmaker/common/evmutils"
+	"errors"
+
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/instructions"
 	"chainmaker.org/chainmaker-go/evm/evm-go/memory"
@@ -25,8 +26,8 @@ import (
 	"chainmaker.org/chainmaker-go/evm/evm-go/stack"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
 	"chainmaker.org/chainmaker-go/evm/evm-go/utils"
-	"chainmaker.org/chainmaker/protocol"
-	"errors"
+	"chainmaker.org/chainmaker/common/v2/evmutils"
+	"chainmaker.org/chainmaker/protocol/v2"
 )
 
 type EVMResultCallback func(result ExecuteResult, err error)
@@ -109,7 +110,7 @@ func (e *EVM) executePreCompiled(addr uint64, input []byte) (ExecuteResult, erro
 		input = []byte(e.context.Parameters[protocol.ContractCreatorPkParam])
 		//contract.SetValue(e.context.Parameters[protocol.ContractCreatorPkParam])
 	default:
-		if addr<1||addr>15{
+		if addr < 1 || addr > 15 {
 			return ExecuteResult{}, errors.New("not existed precompiled contract")
 		}
 	}

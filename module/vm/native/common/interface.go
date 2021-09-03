@@ -7,7 +7,7 @@
 
 package common
 
-import "chainmaker.org/chainmaker/protocol"
+import "chainmaker.org/chainmaker/protocol/v2"
 
 type ContractFunc func(context protocol.TxSimContext, params map[string][]byte) ([]byte, error)
 

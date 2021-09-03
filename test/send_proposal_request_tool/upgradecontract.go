@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/utils"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/spf13/cobra"
 )

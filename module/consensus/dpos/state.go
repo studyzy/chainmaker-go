@@ -9,7 +9,7 @@ package dpos
 import (
 	"bytes"
 
-	"chainmaker.org/chainmaker/pb-go/common"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 func (impl *DPoSImpl) getState(

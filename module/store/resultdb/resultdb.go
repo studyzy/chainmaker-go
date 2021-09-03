@@ -8,7 +8,7 @@ package resultdb
 
 import (
 	"chainmaker.org/chainmaker-go/store/serialization"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 // ResultDB provides handle to rwSets instances

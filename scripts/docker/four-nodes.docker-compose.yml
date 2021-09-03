@@ -14,11 +14,12 @@ services:
     volumes:
       - ./config/four-nodes/wx-org1.chainmaker.org:/chainmaker-go/config/wx-org1.chainmaker.org
       - node1_data:/chainmaker-go/data
+      - ./tmp/log1:/chainmaker-go/log
     networks:
       localnet:
         aliases:      
           - cm-node1
-        ipv4_address: 172.44.1.11
+        ipv4_address: 172.48.1.11
   node2:
     container_name: cm-node2
     hostname: cm-node2
@@ -32,11 +33,12 @@ services:
     volumes:
       - ./config/four-nodes/wx-org2.chainmaker.org:/chainmaker-go/config/wx-org2.chainmaker.org
       - node2_data:/chainmaker-go/data
+      - ./tmp/log2:/chainmaker-go/log
     networks:
       localnet:
         aliases:      
           - cm-node2
-        ipv4_address: 172.44.1.12
+        ipv4_address: 172.48.1.12
   node3:
     container_name: cm-node3
     hostname: cm-node3
@@ -50,11 +52,12 @@ services:
     volumes:
       - ./config/four-nodes/wx-org3.chainmaker.org:/chainmaker-go/config/wx-org3.chainmaker.org
       - node3_data:/chainmaker-go/data
+      - ./tmp/log3:/chainmaker-go/log
     networks:
       localnet:
         aliases:      
           - cm-node3
-        ipv4_address: 172.44.1.13
+        ipv4_address: 172.48.1.13
   node4:
     container_name: cm-node4
     hostname: cm-node4
@@ -68,18 +71,19 @@ services:
     volumes:
       - ./config/four-nodes/wx-org4.chainmaker.org:/chainmaker-go/config/wx-org4.chainmaker.org
       - node4_data:/chainmaker-go/data
+      - ./tmp/log4:/chainmaker-go/log
     networks:
       localnet:
         aliases:      
           - cm-node4
-        ipv4_address: 172.44.1.14
+        ipv4_address: 172.48.1.14
 
 networks:
   localnet:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.44.1.0/16
+        - subnet: 172.48.1.0/16
 
 volumes:
   node1_data: {}  

@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	acPb "chainmaker.org/chainmaker/pb-go/accesscontrol"
-	commonPb "chainmaker.org/chainmaker/pb-go/common"
+	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
 
 // TxInfo defines mysql orm model, used to create mysql table 'tx_infos'
