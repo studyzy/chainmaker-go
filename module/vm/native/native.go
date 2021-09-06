@@ -102,7 +102,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	var verifyAccessFunc common.ContractFunc
 	var accessResultBytes []byte
 	verifyAccessContract := &commonPb.Contract{
-		Name:        "CONTRACT_MANAGE",
+		Name:        syscontract.SystemContract_CONTRACT_MANAGE.String(),
 		Version:     contract.Version,
 		RuntimeType: commonPb.RuntimeType_NATIVE,
 		Status:      commonPb.ContractStatus_NORMAL,
