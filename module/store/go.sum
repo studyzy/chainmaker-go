@@ -1,7 +1,8 @@
 chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a h1:JjoKIZRZUiB7g4ncPp1Cke4dbCA+GlSzBw6SF2FEwDc=
 chainmaker.org/chainmaker/common v0.0.0-20210621032315-84fb389d0a0a/go.mod h1:/Xk1SQl6o4Jv35+gP+6DQOvHz0RxILCX/SGIO/QtpO8=
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70 h1:Y3klc6aehukNmgvogvJ1xI9fJ7lPLn6w3HI/7eK8KfM=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
+chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0 h1:Ysg+JEiSS5hmTYipHQxQhqmqtilsGRfwe++T+i1JxHg=
+chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210624151108-e5510b9cdc7e h1:AUre4gum9+eYvt6vI2XMSMyMybWBYvWIhraT1fCNjr0=
 chainmaker.org/chainmaker/pb-go v0.0.0-20210624151108-e5510b9cdc7e/go.mod h1:Zp+Tpx/wT01gHu2fnc8/HtFX3puOgVUfs3T6bcu8j6k=
 chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2 h1:O6NtNV9UAO71LBsu0512AaKOoOZHse4yyBOQUhvtVOA=
