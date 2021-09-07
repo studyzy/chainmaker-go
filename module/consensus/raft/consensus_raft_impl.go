@@ -510,7 +510,8 @@ func (consensus *ConsensusRaftImpl) publishSnapshot(snapshot raftpb.Snapshot) {
 	for {
 		// Loop until catch up to snapshotData.Height from Sync module
 		current, _ := consensus.ledgerCache.CurrentHeight()
-		if current > snapshotData.Height {
+		consensus.logger.Debugf("publishSnapshot current height: %d, ledgerCache height", current, snapshotData.Height)
+		if current >= snapshotData.Height {
 			break
 		}
 		time.Sleep(500 * time.Microsecond)
