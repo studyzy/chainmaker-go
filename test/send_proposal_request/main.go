@@ -30,10 +30,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/ca"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"

@@ -16,13 +16,13 @@ import (
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
-	chainUtils "chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol/v2"
+	chainUtils "chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

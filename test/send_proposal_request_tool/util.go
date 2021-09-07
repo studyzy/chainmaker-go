@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"

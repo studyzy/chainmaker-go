@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker/common/v2/random/uuid"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 const (

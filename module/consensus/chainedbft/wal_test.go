@@ -14,9 +14,9 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/require"
 )
 

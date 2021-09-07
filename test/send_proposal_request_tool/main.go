@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	evm "chainmaker.org/chainmaker/common/v2/evmutils"
@@ -28,6 +27,7 @@ import (
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/pretty"

@@ -29,7 +29,7 @@ import (
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

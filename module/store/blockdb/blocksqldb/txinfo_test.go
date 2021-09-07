@@ -10,9 +10,9 @@ package blocksqldb
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/assert"
 )
 

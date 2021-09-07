@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -26,6 +25,7 @@ import (
 	storage "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

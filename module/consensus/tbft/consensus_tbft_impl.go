@@ -18,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
@@ -27,6 +26,7 @@ import (
 	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
 )

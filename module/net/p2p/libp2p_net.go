@@ -20,13 +20,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
-	"chainmaker.org/chainmaker-go/utils"
 	cmx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p-core/network"
 

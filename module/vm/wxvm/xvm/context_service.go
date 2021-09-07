@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/serialize"

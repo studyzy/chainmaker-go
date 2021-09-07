@@ -17,7 +17,7 @@ package verifier
 //	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 //	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 //	"chainmaker.org/chainmaker/protocol/v2"
-//	"chainmaker.org/chainmaker-go/utils"
+//	"chainmaker.org/chainmaker/utils/v2"
 //	"fmt"
 //	"github.com/golang/mock/gomock"
 //	"github.com/stretchr/testify/require"

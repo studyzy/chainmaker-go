@@ -16,7 +16,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )
@@ -45,7 +45,7 @@ func MultiSignReqCMD() *cobra.Command {
 		Long:  "Multi sign req（need the admin）",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return multiSignReq()
-			proposalRequestWithMultiSign()
+			//proposalRequestWithMultiSign()
 		},
 	}
 

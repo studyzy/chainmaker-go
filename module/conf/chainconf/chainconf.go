@@ -18,10 +18,10 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 
 	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/json"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/groupcache/lru"

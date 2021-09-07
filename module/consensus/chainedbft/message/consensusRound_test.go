@@ -8,7 +8,7 @@ package message
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/stretchr/testify/require"
 

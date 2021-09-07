@@ -14,8 +14,8 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"

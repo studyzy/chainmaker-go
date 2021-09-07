@@ -27,11 +27,11 @@ import (
 	"chainmaker.org/chainmaker-go/subscriber"
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 // Init all the modules.

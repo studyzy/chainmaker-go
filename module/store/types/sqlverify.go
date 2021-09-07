@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 var errorNullSql = errors.New("null sql")

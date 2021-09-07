@@ -12,9 +12,9 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
-	"chainmaker.org/chainmaker-go/utils"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 type KVStoreHelper struct {

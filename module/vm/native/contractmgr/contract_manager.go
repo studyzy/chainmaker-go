@@ -19,7 +19,7 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -165,7 +165,7 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 		err                   error
 		disabledContractList  []string
 		contractName          string
-		method				  string
+		method                string
 		multiSignContractName string
 	)
 

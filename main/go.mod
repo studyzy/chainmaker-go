@@ -32,7 +32,6 @@ replace (
 	chainmaker.org/chainmaker-go/subscriber => ./../module/subscriber
 	chainmaker.org/chainmaker-go/sync => ./../module/sync
 	chainmaker.org/chainmaker-go/txpool => ./../module/txpool
-	chainmaker.org/chainmaker-go/utils => ./../module/utils
 	chainmaker.org/chainmaker-go/vm => ./../module/vm
 	chainmaker.org/chainmaker-go/wasi => ../module/vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../module/vm/wasmer

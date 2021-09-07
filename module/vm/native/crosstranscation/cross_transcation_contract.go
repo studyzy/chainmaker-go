@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
