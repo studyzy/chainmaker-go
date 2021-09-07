@@ -1,4 +1,4 @@
-package native
+package native_test1
 
 import (
 	"fmt"
@@ -26,15 +26,16 @@ const (
 )
 
 var (
-	isTls               = true
-	WasmPath            = ""
-	WasmUpgradePath     = ""
-	contractName        = ""
-	runtimeType         commonPb.RuntimeType
-	certPathPrefix      = "../../config"
-	caPaths             = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
-	userKeyPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
-	userCrtPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	isTls           = true
+	WasmPath        = ""
+	WasmUpgradePath = ""
+	contractName    = ""
+	runtimeType     commonPb.RuntimeType
+	caPaths         = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/ca"}
+	//userKeyPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.key"
+	userKeyPath = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.key"
+	//userCrtPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.tls.crt"
+	userCrtPath         = certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 	prePathFmt          = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 	OrgIdFormat         = "wx-org%s.chainmaker.org"
 	conn                *grpc.ClientConn
@@ -53,6 +54,8 @@ var (
 	DefaultUserCrtPath = fmt.Sprintf(UserCrtPathFmt, "1")
 	DefaultOrgId       = fmt.Sprintf(OrgIdFormat, "1")
 )
+
+const certPathPrefix = "../../config"
 
 func init() {
 	// init
@@ -75,10 +78,10 @@ func init() {
 		panic(err)
 	}
 
-	WasmPath = "../wasm/go-fact-2.0.0.wasm"
+	WasmPath = "../wasm/rust-func-verify-2.0.0.wasm"
 	WasmUpgradePath = WasmPath
-	contractName = "contract106"
-	runtimeType = commonPb.RuntimeType_GASM
+	contractName = "contract101"
+	runtimeType = commonPb.RuntimeType_WASMER
 }
 
 func initGRPCConnect(useTLS bool) (*grpc.ClientConn, error) {

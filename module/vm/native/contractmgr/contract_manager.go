@@ -186,7 +186,8 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 
 	// 3. if the requested contract name is multisignature, get the underlying contract name from
 	// the tx payload and verify if it has access
-	if contractName == syscontract.SystemContract_MULTI_SIGN.String() && method == syscontract.MultiSignFunction_REQ.String() {
+	if contractName == syscontract.SystemContract_MULTI_SIGN.String() &&
+		method == syscontract.MultiSignFunction_REQ.String() {
 
 		// if the method name is not req, return true since it does not contain contract names in parameters
 		multiSignMethodName := txSimContext.GetTx().Payload.Method
@@ -380,12 +381,12 @@ func (r *ContractManagerRuntime) initializeDisabledNativeContractList(
 }
 
 //func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
-//	[]byte, error) {
-//	contracts, err := r.GetAllContracts(txSimContext)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return json.Marshal(contracts)
+// []byte, error) {
+// contracts, err := r.GetAllContracts(txSimContext)
+// if err != nil {
+//    return nil, err
+// }
+// return json.Marshal(contracts)
 //}
 func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
 	[]byte, error) {
