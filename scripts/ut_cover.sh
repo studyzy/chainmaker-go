@@ -30,7 +30,7 @@ ut_cover "module/logger" 50
 ut_cover "module/net" 29
 ut_cover "module/rpcserver" 0
 ut_cover "module/snapshot" 25
-ut_cover "module/store" 40
+ut_cover "module/store" 70
 ut_cover "module/sync" 61
 ut_cover "module/txpool" 47
 ut_cover "module/utils" 28

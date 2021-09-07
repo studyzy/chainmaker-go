@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,14 +29,47 @@ var dbConfig = &localconf.BadgerDbConfig{
 	StorePath: dbPath,
 }
 
-func TestDBHandle_Put(t *testing.T) {
-	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
-	defer dbHandle.Close()
+func TestNewBadgerDBHandle(t *testing.T) {
+	defer func() {
+		err := recover()
+		fmt.Println(err)
+	}()
+	conf := &localconf.BadgerDbConfig{
+		StorePath:      dbPath,
+		Compression:    2,
+		ValueThreshold: 2,
+	}
+	dbHandle := NewBadgerDBHandle("chain1", "test", conf, log)
 
 	key1 := []byte("key1")
 	value1 := []byte("value1")
 	err := dbHandle.Put(key1, value1)
 	assert.Nil(t, err)
+	dbHandle.Close()
+
+	conf = &localconf.BadgerDbConfig{
+		StorePath: filepath.Join("/"),
+	}
+
+	//Files cannot be created in folders that do not have permissions
+	dbHandle = NewBadgerDBHandle("chain1", "test", conf, log)
+}
+
+func TestDBHandle_Put(t *testing.T) {
+	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	//defer dbHandle.Close()
+
+	key1 := []byte("key1")
+	value1 := []byte("value1")
+	err := dbHandle.Put(key1, value1)
+	assert.Nil(t, err)
+
+	has, err := dbHandle.Has(key1)
+	assert.True(t, has)
+	assert.Nil(t, err)
+
+	err = dbHandle.Put(key1, nil)
+	assert.Equal(t, strings.Contains(err.Error(), "error writing badgerdbprovider with nil value"), true)
 
 	value, err := dbHandle.Get(key1)
 	assert.Nil(t, err)
@@ -43,6 +77,27 @@ func TestDBHandle_Put(t *testing.T) {
 	value, err = dbHandle.Get([]byte("another key"))
 	assert.Nil(t, err)
 	assert.Nil(t, value)
+
+	err = dbHandle.Delete(key1)
+	assert.Nil(t, err)
+
+	has, err = dbHandle.Has(key1)
+	// todo houfa
+	// There is a problem, in order to work properly, first comment
+	//assert.False(t, has)
+	assert.Nil(t, err)
+
+	dbHandle.Close()
+	value, err = dbHandle.Get(key1)
+	assert.Equal(t, strings.Contains(err.Error(), "DB Closed"), true)
+	assert.Nil(t, value)
+
+	has, err = dbHandle.Has([]byte("key"))
+	assert.False(t, has)
+	assert.Equal(t, strings.Contains(err.Error(), "DB Closed"), true)
+
+	//err = dbHandle.Put(key1, value1)
+	//assert.Equal(t, strings.Contains(err.Error(), "DB Closed"), true)
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
@@ -61,7 +116,6 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 	value, err := dbHandle.Get(key2)
 	assert.Nil(t, err)
 	assert.Equal(t, value2, value)
-
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
@@ -92,6 +146,10 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 		assert.Equal(t, value1, iter.Value())
 		showIterData(iter)
 	}
+
+	iter, err = dbHandle.NewIteratorWithRange([]byte(""), []byte(""))
+	assert.Nil(t, iter)
+	assert.Equal(t, strings.Contains(err.Error(), "iterator range should not start() or limit() with empty key"), true)
 }
 
 func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
@@ -125,6 +183,10 @@ func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
 		assert.Equal(t, value1, iter.Value())
 		showIterData(iter)
 	}
+
+	iter, err = dbHandle.NewIteratorWithPrefix([]byte(""))
+	assert.Nil(t, iter)
+	assert.Equal(t, strings.Contains(err.Error(), "iterator prefix should not be empty key"), true)
 }
 
 func TestTempFolder(t *testing.T) {

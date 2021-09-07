@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -197,6 +198,11 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 	return block
 }
 
+func commitBlock(db *HistoryKvDB, block *commonPb.Block) error {
+	_, bl, _ := serialization.SerializeBlock(&storePb.BlockWithRWSet{Block: block})
+	return db.CommitBlock(bl)
+}
+
 func initProvider() protocol.DBHandle {
 	conf := &localconf.StorageConfig{}
 	path := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
@@ -218,12 +224,20 @@ func initKvDb() *HistoryKvDB {
 }
 
 func TestHistorySqlDB_CommitBlock(t *testing.T) {
+	defer func() {
+		err := recover()
+		assert.Equal(t, err.(string), "Error writing db: error writing batch to leveldb provider: leveldb: closed")
+	}()
 	db := initKvDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
 	assert.Nil(t, err)
 	err = db.CommitBlock(blockInfo)
 	assert.Nil(t, err)
+
+	db.Close()
+	// should panic
+	err = commitBlock(db, block2.Block)
 }
 
 func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
@@ -243,6 +257,11 @@ func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
 	height, err = db.GetLastSavepoint()
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(block2.Block.Header.BlockHeight), height)
+
+	db.Close()
+	height, err = db.GetLastSavepoint()
+	assert.Equal(t, height, uint64(0))
+	assert.Equal(t, strings.Contains(err.Error(), "error getting leveldbprovider key"), true)
 }
 func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
 	db := initKvDb()
@@ -255,6 +274,12 @@ func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 1, getCount(result))
+
+	result, err = db.GetHistoryForKey("contract1", []byte("key_1"))
+	assert.Nil(t, err)
+	result.Next()
+	value, err := result.Value()
+	assert.Equal(t, value.BlockHeight, block1.Block.Header.BlockHeight)
 
 }
 func getCount(i historydb.HistoryIterator) int {
@@ -278,6 +303,12 @@ func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
 		v, _ := result.Value()
 		t.Logf("%#v", v)
 	}
+
+	result, err = db.GetAccountTxHistory([]byte("User1"))
+	assert.Nil(t, err)
+	result.Next()
+	value, err := result.Value()
+	assert.Equal(t, value.BlockHeight, block1.Block.Header.BlockHeight)
 }
 func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
 	db := initKvDb()
@@ -292,4 +323,14 @@ func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
 		v, _ := result.Value()
 		t.Logf("%#v", v)
 	}
+	value, err := result.Value()
+	assert.Error(t, err, "empty dbKey")
+	assert.Nil(t, value)
+	result.Release()
+
+	result, err = db.GetContractTxHistory("contract1")
+	assert.Nil(t, err)
+	result.Next()
+	value, err = result.Value()
+	assert.Equal(t, value.BlockHeight, block1.Block.Header.BlockHeight)
 }

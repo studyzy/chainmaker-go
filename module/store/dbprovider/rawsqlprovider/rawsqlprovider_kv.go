@@ -20,11 +20,33 @@ type KeyValue struct {
 	ObjectValue []byte `gorm:"type:longblob"`
 }
 
-func (kv *KeyValue) GetInsertSql() string {
-	return "TODO GetInsertSql"
+//func (kv *KeyValue) GetInsertSql() string {
+//	return "TODO GetInsertSql"
+//}
+//func (kv *KeyValue) GetUpdateSql() string {
+//	return "TODO GetUpdateSql"
+//}
+
+func (kv *KeyValue) GetCreateTableSql(dbType string) string {
+	if dbType == mysqlStr {
+		return "CREATE TABLE `key_values` (`object_key` varbinary(128), `object_value` longblob, PRIMARY KEY (`object_key`))"
+	} else if dbType == sqliteStr {
+		return "CREATE TABLE `key_values` (`object_key` varbinary(128), `object_value` longblob)"
+	}
+	panic("Unsupported db type:" + dbType)
 }
-func (kv *KeyValue) GetUpdateSql() string {
-	return "TODO GetUpdateSql"
+func (kv *KeyValue) GetTableName() string {
+	return "key_values"
+}
+
+func (kv *KeyValue) GetInsertSql() (string, []interface{}) {
+	return "INSERT INTO key_values values(?, ?)", []interface{}{kv.ObjectKey, kv.ObjectValue}
+}
+func (kv *KeyValue) GetUpdateSql() (string, []interface{}) {
+	return "UPDATE key_values set object_value=? WHERE object_key=?", []interface{}{kv.ObjectValue, kv.ObjectKey}
+}
+func (kv *KeyValue) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM key_values WHERE  object_key=?", []interface{}{kv.ObjectKey}
 }
 
 // Get returns the value for the given key, or returns nil if none exists
@@ -156,7 +178,7 @@ func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, e
 		return nil, fmt.Errorf("iterator prefix should not be empty key")
 	}
 
-	sql := "select * from key_values where object_key like ?%"
+	sql := "select * from key_values where object_key like ?"
 	rows, err := p.QueryMulti(sql, prefix)
 	if err != nil {
 		return nil, nil

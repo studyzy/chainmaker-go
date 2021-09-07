@@ -8,6 +8,7 @@ require (
 	chainmaker.org/chainmaker-go/utils v0.0.0
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
+	chainmaker.org/chainmaker/protocol v1.2.2
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210901134008-4b83cf573272
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/emirpasic/gods v1.12.0

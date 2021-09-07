@@ -28,6 +28,8 @@ import (
 var defaultMaxIdleConns = 10
 var defaultMaxOpenConns = 10
 var defaultConnMaxLifeTime = 60
+var mysqlStr = "mysql"
+var sqliteStr = "sqlite"
 
 type SqlDBHandle struct {
 	sync.Mutex
@@ -44,9 +46,9 @@ func (p *SqlDBHandle) CompactRange(start, limit []byte) error {
 
 func ParseSqlDbType(str string) (types.EngineType, error) {
 	switch str {
-	case "mysql":
+	case mysqlStr:
 		return types.MySQL, nil
-	case "sqlite":
+	case sqliteStr:
 		return types.Sqlite, nil
 	default:
 		return types.UnknownDb, errors.New("unknown sql db type:" + str)
@@ -91,7 +93,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	provider.dbType = sqlType
 	if sqlType == types.MySQL {
 		dsn := replaceMySqlDsn(conf.Dsn, dbName)
-		db, err := sql.Open("mysql", dsn)
+		db, err := sql.Open(mysqlStr, dsn)
 		if err != nil {
 			log.Panic("connect to mysql error:" + err.Error())
 		}
@@ -104,7 +106,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 				if err != nil {
 					log.Panicf("failed to open mysql[%s] and create database %s, %s", dsn, dbName, err)
 				}
-				db, err = sql.Open("mysql", dsn)
+				db, err = sql.Open(mysqlStr, dsn)
 				if err != nil {
 					log.Panicf("failed to open mysql:%s , %s", dsn, err)
 				}
@@ -153,7 +155,7 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	return provider
 }
 func (p *SqlDBHandle) createDatabase(dsn string, dbName string) error {
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open(mysqlStr, dsn)
 	if err != nil {
 		p.log.Error(err)
 		return errConnection

@@ -145,7 +145,8 @@ func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, e
 		return nil, fmt.Errorf("iterator prefix should not be empty key")
 	}
 
-	sql := "select * from key_values where object_key like ?%"
+	prefix = []byte(string(prefix) + "%")
+	sql := "select * from key_values where object_key like ?"
 	rows, err := p.QueryMulti(sql, prefix)
 	if err != nil {
 		return nil, nil
