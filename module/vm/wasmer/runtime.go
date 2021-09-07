@@ -9,7 +9,7 @@ package wasmer
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"

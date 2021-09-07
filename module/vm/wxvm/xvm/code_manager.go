@@ -16,11 +16,11 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/compile"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/wasi"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"golang.org/x/sync/singleflight"

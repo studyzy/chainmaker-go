@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/consensus/dpos"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"

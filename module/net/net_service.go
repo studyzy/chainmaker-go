@@ -18,8 +18,8 @@ import (
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	rootLog "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	rootLog "chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
 )

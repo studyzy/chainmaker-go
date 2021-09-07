@@ -9,7 +9,7 @@ package chainedbft
 import (
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 

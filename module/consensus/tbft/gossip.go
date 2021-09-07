@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"

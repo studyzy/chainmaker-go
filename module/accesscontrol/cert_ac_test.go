@@ -10,7 +10,7 @@ package accesscontrol
 import (
 	"testing"
 
-	logger2 "chainmaker.org/chainmaker-go/logger"
+	logger2 "chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"

@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
-	logger2 "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	"chainmaker.org/chainmaker/logger/v2"
+	logger2 "chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"

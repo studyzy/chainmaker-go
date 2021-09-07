@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/evm/test"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 )
 

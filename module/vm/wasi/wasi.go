@@ -16,12 +16,12 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/common/v2/crypto/bulletproofs"
 	"chainmaker.org/chainmaker/common/v2/crypto/paillier"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"

@@ -15,7 +15,7 @@ import (
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"github.com/gogo/protobuf/proto"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	"chainmaker.org/chainmaker/common/v2/serialize"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"

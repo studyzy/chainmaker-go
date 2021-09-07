@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )

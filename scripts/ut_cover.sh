@@ -33,7 +33,6 @@ else
   ut_cover "module/conf/localconf" 11
   ut_cover "module/consensus" 11
   ut_cover "module/core" 2.3
-  ut_cover "module/logger" 50
   ut_cover "module/net" 29
   ut_cover "module/rpcserver" 0
   ut_cover "module/snapshot" 25

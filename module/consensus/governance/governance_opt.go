@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strconv"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"

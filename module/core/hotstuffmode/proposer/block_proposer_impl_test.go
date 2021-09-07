@@ -11,7 +11,7 @@ package proposer
 //	"chainmaker.org/chainmaker/common/v2/random/uuid"
 //	"chainmaker.org/chainmaker-go/core/cache"
 //	"chainmaker.org/chainmaker-go/localconf"
-//	"chainmaker.org/chainmaker-go/logger"
+//	"chainmaker.org/chainmaker/logger/v2"
 //	"chainmaker.org/chainmaker/protocol/v2/mock"
 //	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 //	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"

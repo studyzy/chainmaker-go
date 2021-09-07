@@ -1,4 +1,5 @@
-//+build rocksdb
+//go:build rocksdb
+// +build rocksdb
 
 /*
 Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
@@ -12,16 +13,16 @@ import (
 	"bytes"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
 	"chainmaker.org/chainmaker-go/store/types"
+	"chainmaker.org/chainmaker/protocol/v2/test"
 	"github.com/stretchr/testify/assert"
 )
 
 var dbPath = "/tmp/rocksdbprovider/unit_test_db"
 var dbName = "db_test"
 var chainId = "testchain"
-var log = logger.GetLoggerByChain(logger.MODULE_STORAGE, chainId)
+var log = &test.GoLogger{}
 
 func TestDBHandle_Put(t *testing.T) {
 	rocksDbConfig := dbprovider.GetMockDBConfig("").BlockDbConfig.RocksDbConfig
