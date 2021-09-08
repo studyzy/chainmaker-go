@@ -152,6 +152,7 @@ func (h *ResultKvDB) GetLastSavepoint() (uint64, error) {
 func (h *ResultKvDB) Close() {
 	h.Logger.Info("close result kv db")
 	h.DbHandle.Close()
+	h.Cache.Clear()
 }
 
 func (h *ResultKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {

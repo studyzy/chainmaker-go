@@ -476,6 +476,7 @@ func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
 func (b *BlockKvDB) Close() {
 	b.Logger.Info("close block kv db")
 	b.DbHandle.Close()
+	b.Cache.Clear()
 }
 
 func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error) {
