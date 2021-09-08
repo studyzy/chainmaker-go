@@ -91,7 +91,8 @@ func (r *MultiSignRuntime) Req(txSimContext protocol.TxSimContext, parameters ma
 	return []byte(tx.Payload.TxId), nil
 }
 
-func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters map[string][]byte) (result []byte, err error) {
+func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	result []byte, err error) {
 	// 1、检查参数
 	// 2、获取历史投票记录
 	// 3、判断是否继续可以对该多签交易投票
@@ -105,7 +106,6 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 		r.log.Warn(err)
 		return nil, err
 	}
-
 	multiSignInfoBytes, err := txSimContext.Get(contractName, txId)
 	if err != nil {
 		r.log.Warn(err)
@@ -121,9 +121,7 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 		r.log.Warn(err)
 		return nil, err
 	}
-
 	// 校验：该多签是否已完成投票
-
 	reqVoteInfo := &syscontract.MultiSignVoteInfo{}
 	err = proto.Unmarshal(voteInfoBytes, reqVoteInfo)
 	if err != nil {
@@ -190,8 +188,7 @@ func (r *MultiSignRuntime) Vote(txSimContext protocol.TxSimContext, parameters m
 	}
 	multiSignVerify, err := ac.VerifyPrincipal(principal1)
 	if err != nil {
-		r.log.Warn("multi sign vote verify fail.")
-		r.log.Warn(err)
+		r.log.Warn("multi sign vote verify fail.", err)
 	}
 
 	if multiSignVerify {
