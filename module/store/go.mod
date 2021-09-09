@@ -7,9 +7,9 @@ require (
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210901134008-4b83cf573272
+	chainmaker.org/chainmaker/store-badgerdb/v2 v2.0.0-20210909150251-a7a79b6b6f24
 	chainmaker.org/chainmaker/store-leveldb/v2 v2.0.0-20210909122843-d0874400838a
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
-	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/emirpasic/gods v1.12.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gogo/protobuf v1.3.2

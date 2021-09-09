@@ -263,7 +263,7 @@ type DbConfig struct {
 	//leveldb,badgerdb,sql
 	Provider       string                 `mapstructure:"provider"`
 	LevelDbConfig  map[string]interface{} `mapstructure:"leveldb_config"`
-	BadgerDbConfig *BadgerDbConfig        `mapstructure:"badgerdb_config"`
+	BadgerDbConfig map[string]interface{} `mapstructure:"badgerdb_config"`
 	SqlDbConfig    *SqlDbConfig           `mapstructure:"sqldb_config"`
 }
 
@@ -282,12 +282,6 @@ func (dbc *DbConfig) IsKVDB() bool {
 
 func (dbc *DbConfig) IsSqlDB() bool {
 	return dbc.Provider == DbconfigProviderSql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
-}
-
-type BadgerDbConfig struct {
-	StorePath      string `mapstructure:"store_path"`
-	Compression    uint8  `mapstructure:"compression"`
-	ValueThreshold int64  `mapstructure:"value_threshold"`
 }
 
 type SqlDbConfig struct {

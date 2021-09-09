@@ -36,7 +36,7 @@ else
   ut_cover "module/net" 29
   ut_cover "module/rpcserver" 0
   ut_cover "module/snapshot" 25
-  ut_cover "module/store" 70
+  ut_cover "module/store" 65
   ut_cover "module/sync" 61
   ut_cover "module/txpool" 47
   ut_cover "module/vm" 32

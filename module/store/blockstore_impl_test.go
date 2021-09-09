@@ -101,9 +101,8 @@ func getBadgerConfig(path string) *localconf.StorageConfig {
 	}
 	conf.StorePath = path
 
-	badgerConfig := &localconf.BadgerDbConfig{
-		StorePath: path,
-	}
+	badgerConfig := make(map[string]interface{})
+	badgerConfig["store_path"] = path
 	dbConfig := &localconf.DbConfig{
 		Provider:       "badgerdb",
 		BadgerDbConfig: badgerConfig,

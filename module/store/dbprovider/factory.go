@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker/protocol/v2"
+	badgerdbprovider "chainmaker.org/chainmaker/store-badgerdb/v2"
 	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 	"github.com/mitchellh/mapstructure"
 )
@@ -36,6 +37,21 @@ func (f *DBFactory) NewKvDB(chainId, providerName, dbFolder string, config map[s
 			DbFolder:  dbFolder,
 		}
 		return leveldbprovider.NewLevelDBHandle(input), nil
+	}
+	if providerName == "badgerdb" {
+		dbConfig := &badgerdbprovider.BadgerDbConfig{}
+		err := mapstructure.Decode(config, dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		input := &badgerdbprovider.NewBadgerDBOptions{
+			Config:    dbConfig,
+			Logger:    logger,
+			Encryptor: nil,
+			ChainId:   chainId,
+			DbFolder:  dbFolder,
+		}
+		return badgerdbprovider.NewBadgerDBHandle(input), nil
 	}
 	return nil, fmt.Errorf("unsupported provider:%s", providerName)
 }

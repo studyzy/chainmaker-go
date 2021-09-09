@@ -22,7 +22,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb/eventsqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
-	"chainmaker.org/chainmaker-go/store/dbprovider/badgerdbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
 	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
@@ -146,15 +145,14 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 
 func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log protocol.Logger) protocol.DBHandle {
 
-	storeType := parseEngineType(config.BlockDbConfig.Provider)
-	if storeType == types.BadgerDb {
-		return badgerdbprovider.NewBadgerDBHandle(chainId, StoreLocalDBDir,
-			config.GetDefaultDBConfig().BadgerDbConfig, log)
-	}
+	//storeType := parseEngineType(config.BlockDbConfig.Provider)
+	//if storeType == types.BadgerDb {
+	//	return badgerdbprovider.NewBadgerDBHandle(chainId, StoreLocalDBDir,
+	//		config.GetDefaultDBConfig().BadgerDbConfig, log)
+	//}
 	dbHandle, _ := dbFactory.NewKvDB(chainId, "leveldb", StoreLocalDBDir,
 		config.GetDefaultDBConfig().LevelDbConfig, log)
 	return dbHandle
-
 }
 
 func parseEngineType(dbType string) types.EngineType {
@@ -195,16 +193,12 @@ func (m *Factory) NewBlockKvDB(chainId string, provider string, dbConfig *localc
 // NewStateKvDB constructs new `StabeKvDB`
 func (m *Factory) NewStateKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
 	logger protocol.Logger) (statedb.StateDB, error) {
-	stateDB := &statekvdb.StateKvDB{
-		Logger: logger,
-		Cache:  cache.NewStoreCacheMgr(chainId, 10, logger),
-	}
+
 	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreStateDBDir, dbConfig.LevelDbConfig, logger)
 	if err != nil {
 		return nil, err
 	}
-	stateDB.DbHandle = dbHandle
-
+	stateDB := statekvdb.NewStateKvDB(chainId, dbHandle, logger)
 	return stateDB, nil
 }
 
@@ -227,10 +221,6 @@ func (m *Factory) NewResultKvDB(chainId string, provider string, dbConfig *local
 	if err != nil {
 		return nil, err
 	}
-	resultDB := &resultkvdb.ResultKvDB{
-		Cache:    cache.NewStoreCacheMgr(chainId, 10, logger),
-		Logger:   logger,
-		DbHandle: dbHandle,
-	}
+	resultDB := resultkvdb.NewResultKvDB(chainId, dbHandle, logger)
 	return resultDB, nil
 }
