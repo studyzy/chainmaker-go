@@ -193,16 +193,12 @@ func (m *Factory) NewBlockKvDB(chainId string, provider string, dbConfig *localc
 // NewStateKvDB constructs new `StabeKvDB`
 func (m *Factory) NewStateKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
 	logger protocol.Logger) (statedb.StateDB, error) {
-	stateDB := &statekvdb.StateKvDB{
-		Logger: logger,
-		Cache:  cache.NewStoreCacheMgr(chainId, 10, logger),
-	}
+
 	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreStateDBDir, dbConfig.LevelDbConfig, logger)
 	if err != nil {
 		return nil, err
 	}
-	stateDB.DbHandle = dbHandle
-
+	stateDB := statekvdb.NewStateKvDB(chainId, dbHandle, logger)
 	return stateDB, nil
 }
 
@@ -225,10 +221,6 @@ func (m *Factory) NewResultKvDB(chainId string, provider string, dbConfig *local
 	if err != nil {
 		return nil, err
 	}
-	resultDB := &resultkvdb.ResultKvDB{
-		Cache:    cache.NewStoreCacheMgr(chainId, 10, logger),
-		Logger:   logger,
-		DbHandle: dbHandle,
-	}
+	resultDB := resultkvdb.NewResultKvDB(chainId, dbHandle, logger)
 	return resultDB, nil
 }
