@@ -224,6 +224,8 @@ func (config *StorageConfig) GetContractEventDbConfig() *DbConfig {
 	return config.ContractEventDbConfig
 }
 func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
+	lconfig := make(map[string]interface{})
+	lconfig["store_path"] = config.StorePath
 	//lconfig := &LevelDbConfig{
 	//	StorePath:            config.StorePath,
 	//	WriteBufferSize:      config.WriteBufferSize,
@@ -231,14 +233,14 @@ func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
 	//	BlockWriteBufferSize: config.WriteBufferSize,
 	//}
 
-	bconfig := &BadgerDbConfig{
-		StorePath: config.StorePath,
-	}
+	//bconfig := &BadgerDbConfig{
+	//	StorePath: config.StorePath,
+	//}
 
 	return &DbConfig{
-		Provider: "leveldb",
-		//LevelDbConfig:  lconfig,
-		BadgerDbConfig: bconfig,
+		Provider:      "leveldb",
+		LevelDbConfig: lconfig,
+		//BadgerDbConfig: bconfig,
 	}
 }
 

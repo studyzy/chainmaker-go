@@ -47,6 +47,7 @@ const (
 	StoreHistoryDBDir = "store_history"
 	//StoreResultDBDir resultdb folder name
 	StoreResultDBDir = "store_result"
+	StoreLocalDBDir  = "localdb"
 )
 
 // Factory is a factory function to create an instance of the block store
@@ -69,7 +70,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	var err error
 	blocDBConfig := storeConfig.GetBlockDbConfig()
 	if blocDBConfig.IsKVDB() {
-		blockDB, err = m.NewBlockKvDB(chainId, (blocDBConfig.Provider),
+		blockDB, err = m.NewBlockKvDB(chainId, blocDBConfig.Provider,
 			blocDBConfig, logger)
 		if err != nil {
 			return nil, err
@@ -83,7 +84,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	var stateDB statedb.StateDB
 	stateDBConfig := storeConfig.GetStateDbConfig()
 	if stateDBConfig.IsKVDB() {
-		stateDB, err = m.NewStateKvDB(chainId, (stateDBConfig.Provider),
+		stateDB, err = m.NewStateKvDB(chainId, stateDBConfig.Provider,
 			stateDBConfig, logger)
 		if err != nil {
 			return nil, err
@@ -98,7 +99,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	historyDBConfig := storeConfig.GetHistoryDbConfig()
 	if !storeConfig.DisableHistoryDB {
 		if historyDBConfig.IsKVDB() {
-			historyDB, err = m.NewHistoryKvDB(chainId, (historyDBConfig.Provider),
+			historyDB, err = m.NewHistoryKvDB(chainId, historyDBConfig.Provider,
 				historyDBConfig, logger)
 			if err != nil {
 				return nil, err
@@ -114,7 +115,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	resultDBConfig := storeConfig.GetResultDbConfig()
 	if !storeConfig.DisableResultDB {
 		if resultDBConfig.IsKVDB() {
-			resultDB, err = m.NewResultKvDB(chainId, (resultDBConfig.Provider),
+			resultDB, err = m.NewResultKvDB(chainId, resultDBConfig.Provider,
 				resultDBConfig, logger)
 			if err != nil {
 				return nil, err
@@ -146,12 +147,13 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 }
 
 func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log protocol.Logger) protocol.DBHandle {
-	dbFolder := "localdb"
+
 	storeType := parseEngineType(config.BlockDbConfig.Provider)
 	if storeType == types.BadgerDb {
-		return badgerdbprovider.NewBadgerDBHandle(chainId, dbFolder, config.GetDefaultDBConfig().BadgerDbConfig, log)
+		return badgerdbprovider.NewBadgerDBHandle(chainId, StoreLocalDBDir,
+			config.GetDefaultDBConfig().BadgerDbConfig, log)
 	}
-	dbHandle, _ := dbFactory.NewKvDB(chainId, "leveldb", StoreBlockDBDir,
+	dbHandle, _ := dbFactory.NewKvDB(chainId, "leveldb", StoreLocalDBDir,
 		config.GetDefaultDBConfig().LevelDbConfig, log)
 	return dbHandle
 
