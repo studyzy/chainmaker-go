@@ -1,0 +1,15 @@
+  node{id}:
+    container_name: cm-node{id}
+    hostname: cm-node{id}
+    image: "{image}"
+    restart: always
+    working_dir: "/chainmaker-go/bin"
+    command: "./chainmaker start -c ../config/wx-org{id}.chainmaker.org/chainmaker.yml"
+    ports:
+      - "{rpc_port}:{rpc_port}"
+      - "{p2p_port}:{p2p_port}"
+    volumes:
+      - {config_dir}:/chainmaker-go/config/wx-org{id}.chainmaker.org
+      - ./data/data{id}:/chainmaker-go/data
+      - ./log/log{id}:/chainmaker-go/log
+
