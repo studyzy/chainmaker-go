@@ -142,7 +142,7 @@ func New(config ConsensusTBFTImplConfig) (*ConsensusTBFTImpl, error) {
 	consensus.dpos = config.Dpos
 	consensus.closeC = make(chan struct{})
 
-	consensus.waldir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, walDir)
+	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
 	consensus.wal, err = wal.Open(consensus.waldir, nil)
 	if err != nil {
 		return nil, err

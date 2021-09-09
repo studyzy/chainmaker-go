@@ -149,15 +149,13 @@ func GetMockDBConfig(path string) *localconf.StorageConfig {
 	}
 	conf.StorePath = path
 
-	lvlConfig := &localconf.LevelDbConfig{
-		StorePath: path,
-	}
-
+	lvlConfig := make(map[string]interface{})
+	lvlConfig["store_path"] = path
 	//rocksConfig := &localconf.RocksDbConfig{
 	//	StorePath: path,
 	//}
 	dbConfig := &localconf.DbConfig{
-		Provider:      "rocksdb",
+		Provider:      "leveldb",
 		LevelDbConfig: lvlConfig,
 		//RocksDbConfig: rocksConfig,
 	}

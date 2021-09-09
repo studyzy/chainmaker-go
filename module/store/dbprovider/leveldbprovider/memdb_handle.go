@@ -9,6 +9,7 @@ package leveldbprovider
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -17,8 +18,11 @@ import (
 )
 
 type MemdbHandle struct {
-	db *memdb.DB
+	db     *memdb.DB
+	closed bool
 }
+
+var errClosed = errors.New("leveldb: closed")
 
 type bytesComparer struct{}
 
@@ -29,26 +33,41 @@ func NewMemdbHandle() *MemdbHandle {
 	return &MemdbHandle{db: memdb.New(&bytesComparer{}, 1000)}
 }
 func (db *MemdbHandle) Get(key []byte) ([]byte, error) {
+	if db.closed {
+		return nil, errClosed
+	}
 	return db.db.Get(key)
 }
 
 // Put saves the key-values
 func (db *MemdbHandle) Put(key []byte, value []byte) error {
+	if db.closed {
+		return errClosed
+	}
 	return db.db.Put(key, value)
 }
 
 // Has return true if the given key exist, or return false if none exists
 func (db *MemdbHandle) Has(key []byte) (bool, error) {
+	if db.closed {
+		return false, errClosed
+	}
 	return db.db.Contains(key), nil
 }
 
 // Delete deletes the given key
 func (db *MemdbHandle) Delete(key []byte) error {
+	if db.closed {
+		return errClosed
+	}
 	return db.db.Delete(key)
 }
 
 // WriteBatch writes a batch in an atomic operation
 func (db *MemdbHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
+	if db.closed {
+		return errClosed
+	}
 	for k, v := range batch.KVs() {
 		if err := db.db.Put([]byte(k), v); err != nil {
 			return err
@@ -64,6 +83,9 @@ func (db *MemdbHandle) NewIteratorWithRange(start []byte, limit []byte) (protoco
 		return nil, fmt.Errorf("iterator range should not start(%s) or limit(%s) with empty key",
 			string(start), string(limit))
 	}
+	if db.closed {
+		return nil, errClosed
+	}
 	return db.db.NewIterator(&util.Range{Start: start, Limit: limit}), nil
 }
 
@@ -72,7 +94,9 @@ func (db *MemdbHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, 
 	if len(prefix) == 0 {
 		return nil, fmt.Errorf("iterator prefix should not be empty key")
 	}
-
+	if db.closed {
+		return nil, errClosed
+	}
 	return db.db.NewIterator(util.BytesPrefix(prefix)), nil
 }
 func (db *MemdbHandle) CompactRange(start []byte, limit []byte) error {
@@ -80,6 +104,10 @@ func (db *MemdbHandle) CompactRange(start []byte, limit []byte) error {
 }
 
 func (db *MemdbHandle) Close() error {
+	if db.closed {
+		return errClosed
+	}
 	db.db.Reset()
+	db.closed = true
 	return nil
 }

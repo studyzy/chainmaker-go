@@ -32,6 +32,7 @@ import (
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
+	"github.com/mitchellh/mapstructure"
 )
 
 // Init all the modules.
@@ -159,8 +160,10 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
+	config := &localconf.StorageConfig{}
+	mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
 	if bc.store, err = storeFactory.NewStore(
-		bc.chainId, &localconf.ChainMakerConfig.StorageConfig, storeLogger); err != nil {
+		bc.chainId, config, storeLogger); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -347,10 +350,10 @@ func (bc *Blockchain) initVM() (err error) {
 	var vmFactory vm.Factory
 	if bc.netService == nil {
 		bc.vmMgr = vmFactory.NewVmManager(
-			localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
+			localconf.ChainMakerConfig.GetStorePath(), bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
 	} else {
 		bc.vmMgr = vmFactory.NewVmManager(
-			localconf.ChainMakerConfig.StorageConfig.StorePath,
+			localconf.ChainMakerConfig.GetStorePath(),
 			bc.ac,
 			bc.netService.GetChainNodesInfoProvider(),
 			bc.chainConf,

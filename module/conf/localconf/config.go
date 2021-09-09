@@ -28,7 +28,7 @@ var (
 	// FindNewBlockChainNotifyC is the chan for finding new block chain configs.
 	FindNewBlockChainNotifyC = make(chan string)
 	// ChainMakerConfig is the CMConfig instance for global.
-	ChainMakerConfig = &CMConfig{StorageConfig: StorageConfig{DisableContractEventDB: true}}
+	ChainMakerConfig = &CMConfig{}
 )
 
 // InitLocalConfig init local config.

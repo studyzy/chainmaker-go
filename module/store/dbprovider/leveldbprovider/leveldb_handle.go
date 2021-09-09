@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -40,9 +40,19 @@ type LevelDBHandle struct {
 	db        *leveldb.DB
 	logger    protocol.Logger
 }
+type NewLevelDBOptions struct {
+	Config    *LevelDbConfig
+	Logger    protocol.Logger
+	Encryptor crypto.Encryptor
+	ChainId   string
+	DbFolder  string
+}
 
-func NewLevelDBHandle(chainId string, dbFolder string, dbconfig *localconf.LevelDbConfig,
-	logger protocol.Logger) *LevelDBHandle {
+func NewLevelDBHandle(options *NewLevelDBOptions) *LevelDBHandle {
+	chainId := options.ChainId
+	dbFolder := options.DbFolder
+	dbconfig := options.Config
+	logger := options.Logger
 	dbOpts := &opt.Options{}
 	writeBufferSize := dbconfig.BlockWriteBufferSize
 	if writeBufferSize <= 0 {

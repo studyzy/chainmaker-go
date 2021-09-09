@@ -145,7 +145,7 @@ func commitBlock(db *BlockKvDB, block *commonPb.Block) error {
 func initDb() *BlockKvDB {
 	blockDB := &BlockKvDB{
 		WorkersSemaphore: semaphore.NewWeighted(int64(1)),
-		Cache:            cache.NewStoreCacheMgr(chainId, logger),
+		Cache:            cache.NewStoreCacheMgr(chainId, 10, logger),
 		Logger:           logger,
 		DbHandle:         leveldbprovider.NewMemdbHandle(),
 	}
@@ -156,7 +156,7 @@ func TestBlockKvDB_GetTxWithBlockInfo(t *testing.T) {
 	block := block1
 	blockDB := &BlockKvDB{
 		WorkersSemaphore: semaphore.NewWeighted(int64(1)),
-		Cache:            cache.NewStoreCacheMgr(chainId, logger),
+		Cache:            cache.NewStoreCacheMgr(chainId, 10, logger),
 		Logger:           logger,
 		DbHandle:         leveldbprovider.NewMemdbHandle(),
 	}
@@ -296,7 +296,7 @@ func TestBlockKvDB_GetLastBlock(t *testing.T) {
 	db.Close()
 	block, err = db.GetLastBlock()
 	assert.Nil(t, block)
-	assert.Equal(t, strings.Contains(err.Error(), "leveldb: not found"), true)
+	assert.Equal(t, strings.Contains(err.Error(), "closed"), true)
 }
 
 func TestBlockKvDB_GetLastConfigBlock(t *testing.T) {

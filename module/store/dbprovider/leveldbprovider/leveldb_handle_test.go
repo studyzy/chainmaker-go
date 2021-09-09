@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol/v2/test"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ import (
 
 var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()))
 var log = &test.GoLogger{}
-var dbConfig = &localconf.LevelDbConfig{
+var dbConfig = &LevelDbConfig{
 	StorePath: dbPath,
 }
 
@@ -32,28 +31,29 @@ func TestDBHandle_NewLevelDBHandle(t *testing.T) {
 		//assert.Equal(t, strings.Contains(err.(string), "Error create dir"), true)
 		fmt.Println(err)
 	}()
-	dbConfigTest := &localconf.LevelDbConfig{
+	dbConfigTest := &LevelDbConfig{
 		StorePath:            dbPath,
 		BlockWriteBufferSize: 2,
 	}
-	dbHandle1 := NewLevelDBHandle("chain1", "test", dbConfigTest, log)
+	op := &NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfigTest, Logger: log}
+	dbHandle1 := NewLevelDBHandle(op)
 	dbHandle1.Close()
 
-	dbConfigTest = &localconf.LevelDbConfig{
+	dbConfigTest = &LevelDbConfig{
 		StorePath: dbPath,
 	}
-	dbHandle2 := NewLevelDBHandle("chain1", "test", dbConfigTest, log)
+	dbHandle2 := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfigTest, Logger: log})
 	dbHandle2.Close()
 
-	dbConfigTest = &localconf.LevelDbConfig{
+	dbConfigTest = &LevelDbConfig{
 		StorePath: filepath.Join("/"),
 	}
-	dbHandle3 := NewLevelDBHandle("chain1", "test", dbConfigTest, log)
+	dbHandle3 := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfigTest, Logger: log})
 	dbHandle3.Close()
 }
 
 func TestDBHandle_Put(t *testing.T) {
-	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfig, Logger: log}) //dbPath：db文件的存储路径
 	//defer dbHandle.Close()
 
 	key1 := []byte("key1")
@@ -86,7 +86,7 @@ func TestDBHandle_Put(t *testing.T) {
 }
 
 func TestDBHandle_Delete(t *testing.T) {
-	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfig, Logger: log}) //dbPath：db文件的存储路径
 	//defer dbHandle.Close()
 
 	key1 := []byte("key1")
@@ -115,7 +115,7 @@ func TestDBHandle_Delete(t *testing.T) {
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
-	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfig, Logger: log}) //dbPath：db文件的存储路径
 	//defer dbHandle.Close()
 	batch := types.NewUpdateBatch()
 
@@ -149,7 +149,7 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 }
 
 func TestDBHandle_CompactRange(t *testing.T) {
-	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfig, Logger: log}) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
 
 	batch := types.NewUpdateBatch()
@@ -167,7 +167,7 @@ func TestDBHandle_CompactRange(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
-	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfig, Logger: log}) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
 
 	batch := types.NewUpdateBatch()
@@ -195,7 +195,7 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
-	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewLevelDBHandle(&NewLevelDBOptions{ChainId: "chain1", DbFolder: "test", Config: dbConfig, Logger: log}) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
 
 	batch := types.NewUpdateBatch()

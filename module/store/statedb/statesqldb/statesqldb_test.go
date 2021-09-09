@@ -269,10 +269,9 @@ func TestStateSqlDB_ReadObject(t *testing.T) {
 //
 //}
 func TestGetContractDbName(t *testing.T) {
-	config := &localconf.SqlDbConfig{DbPrefix: "org1_"}
 	contractName := "0x61e778670e7c6e2b65f0f0491963afd10d9bfd90308388361ce7ea5916437571"
 	t.Log(contractName)
-	dbName := getContractDbName(config, "chain1", contractName)
+	dbName := getContractDbName("org1_", "chain1", contractName)
 	t.Log(dbName, len(dbName))
 }
 func TestStateSqlDB_GetMemberExtraData(t *testing.T) {
