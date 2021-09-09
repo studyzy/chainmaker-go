@@ -19,14 +19,12 @@ import (
 
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 
-	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2/test"
+	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/sync/semaphore"
 )
 
 var (
@@ -143,23 +141,13 @@ func commitBlock(db *BlockKvDB, block *commonPb.Block) error {
 }
 
 func initDb() *BlockKvDB {
-	blockDB := &BlockKvDB{
-		WorkersSemaphore: semaphore.NewWeighted(int64(1)),
-		Cache:            cache.NewStoreCacheMgr(chainId, logger),
-		Logger:           logger,
-		DbHandle:         leveldbprovider.NewMemdbHandle(),
-	}
+	blockDB := NewBlockKvDB("test-chain", leveldbprovider.NewMemdbHandle(), logger)
 	return blockDB
 }
 
 func TestBlockKvDB_GetTxWithBlockInfo(t *testing.T) {
 	block := block1
-	blockDB := &BlockKvDB{
-		WorkersSemaphore: semaphore.NewWeighted(int64(1)),
-		Cache:            cache.NewStoreCacheMgr(chainId, logger),
-		Logger:           logger,
-		DbHandle:         leveldbprovider.NewMemdbHandle(),
-	}
+	blockDB := NewBlockKvDB("test-chain", leveldbprovider.NewMemdbHandle(), logger)
 	_, sb, _ := serialization.SerializeBlock(&storePb.BlockWithRWSet{Block: block})
 	blockDB.InitGenesis(sb)
 	tx, err := blockDB.GetTxWithBlockInfo(block.Txs[1].Payload.TxId)
@@ -201,7 +189,7 @@ func TestBlockKvDB_GetArchivedPivot(t *testing.T) {
 	assert.Equal(t, uint64(0), archivedPivot)
 	assert.Equal(t, strings.Contains(err.Error(), "leveldb: not found"), true)
 
-	err = db.DbHandle.Put([]byte(archivedPivotKey), constructBlockNumKey(10))
+	err = db.dbHandle.Put([]byte(archivedPivotKey), constructBlockNumKey(10))
 	assert.Nil(t, err)
 	archivedPivot, err = db.GetArchivedPivot()
 	assert.Equal(t, uint64(10), archivedPivot)
@@ -296,7 +284,7 @@ func TestBlockKvDB_GetLastBlock(t *testing.T) {
 	db.Close()
 	block, err = db.GetLastBlock()
 	assert.Nil(t, block)
-	assert.Equal(t, strings.Contains(err.Error(), "leveldb: not found"), true)
+	assert.Equal(t, strings.Contains(err.Error(), "closed"), true)
 }
 
 func TestBlockKvDB_GetLastConfigBlock(t *testing.T) {

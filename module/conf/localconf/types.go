@@ -224,21 +224,23 @@ func (config *StorageConfig) GetContractEventDbConfig() *DbConfig {
 	return config.ContractEventDbConfig
 }
 func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
-	lconfig := &LevelDbConfig{
-		StorePath:            config.StorePath,
-		WriteBufferSize:      config.WriteBufferSize,
-		BloomFilterBits:      config.BloomFilterBits,
-		BlockWriteBufferSize: config.WriteBufferSize,
-	}
+	lconfig := make(map[string]interface{})
+	lconfig["store_path"] = config.StorePath
+	//lconfig := &LevelDbConfig{
+	//	StorePath:            config.StorePath,
+	//	WriteBufferSize:      config.WriteBufferSize,
+	//	BloomFilterBits:      config.BloomFilterBits,
+	//	BlockWriteBufferSize: config.WriteBufferSize,
+	//}
 
-	bconfig := &BadgerDbConfig{
-		StorePath: config.StorePath,
-	}
+	//bconfig := &BadgerDbConfig{
+	//	StorePath: config.StorePath,
+	//}
 
 	return &DbConfig{
-		Provider:       "leveldb",
-		LevelDbConfig:  lconfig,
-		BadgerDbConfig: bconfig,
+		Provider:      "leveldb",
+		LevelDbConfig: lconfig,
+		//BadgerDbConfig: bconfig,
 	}
 }
 
@@ -259,10 +261,10 @@ func (config *StorageConfig) GetActiveDBCount() int {
 
 type DbConfig struct {
 	//leveldb,badgerdb,sql
-	Provider       string          `mapstructure:"provider"`
-	LevelDbConfig  *LevelDbConfig  `mapstructure:"leveldb_config"`
-	BadgerDbConfig *BadgerDbConfig `mapstructure:"badgerdb_config"`
-	SqlDbConfig    *SqlDbConfig    `mapstructure:"sqldb_config"`
+	Provider       string                 `mapstructure:"provider"`
+	LevelDbConfig  map[string]interface{} `mapstructure:"leveldb_config"`
+	BadgerDbConfig *BadgerDbConfig        `mapstructure:"badgerdb_config"`
+	SqlDbConfig    *SqlDbConfig           `mapstructure:"sqldb_config"`
 }
 
 //nolint
@@ -280,13 +282,6 @@ func (dbc *DbConfig) IsKVDB() bool {
 
 func (dbc *DbConfig) IsSqlDB() bool {
 	return dbc.Provider == DbconfigProviderSql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
-}
-
-type LevelDbConfig struct {
-	StorePath            string `mapstructure:"store_path"`
-	WriteBufferSize      int    `mapstructure:"write_buffer_size"`
-	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
-	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
 }
 
 type BadgerDbConfig struct {
@@ -383,15 +378,15 @@ type coreConfig struct {
 
 // CMConfig - Local config struct
 type CMConfig struct {
-	LogConfig        logger.LogConfig   `mapstructure:"log"`
-	NetConfig        netConfig          `mapstructure:"net"`
-	NodeConfig       nodeConfig         `mapstructure:"node"`
-	RpcConfig        rpcConfig          `mapstructure:"rpc"`
-	BlockChainConfig []BlockchainConfig `mapstructure:"blockchain"`
-	ConsensusConfig  ConsensusConfig    `mapstructure:"consensus"`
-	StorageConfig    StorageConfig      `mapstructure:"storage"`
-	TxPoolConfig     txPoolConfig       `mapstructure:"txpool"`
-	SyncConfig       syncConfig         `mapstructure:"sync"`
+	LogConfig        logger.LogConfig       `mapstructure:"log"`
+	NetConfig        netConfig              `mapstructure:"net"`
+	NodeConfig       nodeConfig             `mapstructure:"node"`
+	RpcConfig        rpcConfig              `mapstructure:"rpc"`
+	BlockChainConfig []BlockchainConfig     `mapstructure:"blockchain"`
+	ConsensusConfig  ConsensusConfig        `mapstructure:"consensus"`
+	StorageConfig    map[string]interface{} `mapstructure:"storage"`
+	TxPoolConfig     txPoolConfig           `mapstructure:"txpool"`
+	SyncConfig       syncConfig             `mapstructure:"sync"`
 
 	// 开发调试使用
 	DebugConfig     debugConfig     `mapstructure:"debug"`
@@ -404,4 +399,10 @@ type CMConfig struct {
 // GetBlockChains - get blockchain config list
 func (c *CMConfig) GetBlockChains() []BlockchainConfig {
 	return c.BlockChainConfig
+}
+func (c *CMConfig) GetStorePath() string {
+	if path, ok := c.StorageConfig["store_path"]; ok {
+		return path.(string)
+	}
+	return ""
 }

@@ -10,7 +10,6 @@ import (
 	"context"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/emirpasic/gods/maps/treemap"
 	"golang.org/x/sync/semaphore"
@@ -30,8 +29,7 @@ type StoreCacheMgr struct {
 }
 
 // NewStoreCacheMgr construct a new `StoreCacheMgr` with given chainId
-func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
-	blockWriteBufferSize := localconf.ChainMakerConfig.StorageConfig.BlockWriteBufferSize
+func NewStoreCacheMgr(chainId string, blockWriteBufferSize int, logger protocol.Logger) *StoreCacheMgr {
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
 	}

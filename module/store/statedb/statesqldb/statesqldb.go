@@ -43,7 +43,7 @@ type StateSqlDB struct {
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *StateSqlDB) initContractDb(contractName string) error {
-	dbName := getContractDbName(db.dbConfig, db.chainId, contractName)
+	dbName := getContractDbName("db.dbConfig", db.chainId, contractName)
 	db.logger.Debugf("try to create state db %s", dbName)
 	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
@@ -88,7 +88,7 @@ func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 
 // NewStateSqlDB construct a new `StateDB` for given chainId
 func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
-	dbName := getDbName(dbConfig, chainId)
+	dbName := getDbName("dbConfig", chainId)
 	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
 	return newStateSqlDB(dbName, chainId, db, dbConfig, logger)
 }
@@ -115,20 +115,27 @@ func (s *StateSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerialized
 	}
 	return s.commitBlock(genesisBlock)
 }
-func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
-	return dbConfig.DbPrefix + "statedb_" + chainId
+func getDbName(dbPrefix, chainId string) string {
+	return dbPrefix + "statedb_" + chainId
 }
 
 func GetContractDbName(chainId, contractName string) string {
-	return getContractDbName(localconf.ChainMakerConfig.StorageConfig.StateDbConfig.SqlDbConfig, chainId, contractName)
+	dbPrefix := getDbConfigDbPrefix(localconf.ChainMakerConfig.StorageConfig)
+	return getContractDbName(dbPrefix, chainId, contractName)
+}
+func getDbConfigDbPrefix(config map[string]interface{}) string {
+	if dbPrefix, ok := config["db_prefix"]; ok {
+		return dbPrefix.(string)
+	}
+	return ""
 }
 
 //getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
-func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
+func getContractDbName(dbPrefix, chainId, contractName string) string {
 	if _, ok := syscontract.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
-		return getDbName(dbConfig, chainId)
+		return getDbName(dbPrefix, chainId)
 	}
-	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
+	dbName := dbPrefix + "statedb_" + chainId + "_" + contractName
 	if len(dbName) > 64 { //for mysql only support 64 chars
 		h := sha256.New()
 		h.Write([]byte(dbName))
@@ -250,7 +257,7 @@ func (s *StateSqlDB) updateBlockMemberExtra(dbTx protocol.SqlDBTransaction, bloc
 }
 func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 	block *commonPb.Block, txWrite *commonPb.TxWrite, processStateDbSqlOutside bool) error {
-	contractDbName := getContractDbName(s.dbConfig, s.chainId, txWrite.ContractName)
+	contractDbName := getContractDbName("s.dbConfig", s.chainId, txWrite.ContractName)
 	if txWrite.ContractName != "" { //切换DB
 		err := dbTx.ChangeContextDb(contractDbName)
 		if err != nil {
@@ -292,7 +299,7 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint
 func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block,
 	contractId *commonPb.Contract, writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
-	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.Name)
+	dbName := getContractDbName("s.dbConfig", block.Header.ChainId, contractId.Name)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.Name)
 	err := s.initContractDb(contractId.Name) //创建合约的数据库和KV表
 	if err != nil {
@@ -310,7 +317,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 		if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
-				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
+				writeDbName := getContractDbName("s.dbConfig", block.Header.ChainId, txWrite.ContractName)
 				err = dbTx.ChangeContextDb(writeDbName)
 				if err != nil {
 					s.logger.Errorf("change context db to %s get an error:%s", writeDbName, err)
@@ -325,7 +332,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 		} else { //是KV数据，直接存储到StateInfo表
 			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
 				uint64(block.Header.BlockHeight), block.GetTimestamp())
-			writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
+			writeDbName := getContractDbName("s.dbConfig", block.Header.ChainId, txWrite.ContractName)
 			err = dbTx.ChangeContextDb(writeDbName)
 			if err != nil {
 				return err
@@ -424,7 +431,7 @@ func (s *StateSqlDB) getContractDbHandle(contractName string) protocol.SqlDBHand
 		s.contractDbs[contractName] = s.db
 		return s.db
 	}
-	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
+	dbName := getContractDbName("s.dbConfig", s.chainId, contractName)
 	db := rawsqlprovider.NewSqlDBHandle(dbName, s.dbConfig, s.logger)
 	s.contractDbs[contractName] = db
 	s.logger.Infof("create new sql db handle[%p] database[%s] for contract[%s]", db, dbName, contractName)
@@ -469,7 +476,7 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
-	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
+	dbName := getContractDbName("s.dbConfig", s.chainId, contractName)
 	exist, err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err
