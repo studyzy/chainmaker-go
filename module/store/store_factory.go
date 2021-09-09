@@ -11,7 +11,6 @@ package store
 
 import (
 	"errors"
-	"runtime"
 	"strings"
 
 	"chainmaker.org/chainmaker-go/localconf"
@@ -35,7 +34,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol/v2"
-	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -179,17 +177,12 @@ func parseEngineType(dbType string) types.EngineType {
 // NewBlockKvDB constructs new `BlockDB`
 func (m *Factory) NewBlockKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
 	logger protocol.Logger) (blockdb.BlockDB, error) {
-	nWorkers := runtime.NumCPU()
-	blockDB := &blockkvdb.BlockKvDB{
-		WorkersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
-		Cache:            cache.NewStoreCacheMgr(chainId, 10, logger),
-		Logger:           logger,
-	}
+
 	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreBlockDBDir, dbConfig.LevelDbConfig, logger)
 	if err != nil {
 		return nil, err
 	}
-	blockDB.DbHandle = dbHandle
+	blockDB := blockkvdb.NewBlockKvDB(chainId, dbHandle, logger)
 
 	//Get and update archive pivot
 	if _, err := blockDB.GetArchivedPivot(); err != nil {
