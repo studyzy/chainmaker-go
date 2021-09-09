@@ -43,11 +43,7 @@ go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 # go test ./...
-cd ../logger
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
+
 # go test ./...
 cd ../net
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
@@ -86,12 +82,6 @@ go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 # go test ./...
 cd ../txpool
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
-# go test ./...
-cd ../utils
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}

@@ -161,7 +161,10 @@ func (bc *Blockchain) initStore() (err error) {
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
 	config := &localconf.StorageConfig{}
-	mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
+	err = mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
+	if err != nil {
+		return err
+	}
 	if bc.store, err = storeFactory.NewStore(
 		bc.chainId, config, storeLogger); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())

@@ -19,7 +19,8 @@ import (
 type DBFactory struct {
 }
 
-func (f *DBFactory) NewKvDB(chainId, providerName, dbFolder string, config map[string]interface{}, logger protocol.Logger) (protocol.DBHandle, error) {
+func (f *DBFactory) NewKvDB(chainId, providerName, dbFolder string, config map[string]interface{},
+	logger protocol.Logger) (protocol.DBHandle, error) {
 	providerName = strings.ToLower(providerName)
 	if providerName == "leveldb" {
 		dbConfig := &leveldbprovider.LevelDbConfig{}

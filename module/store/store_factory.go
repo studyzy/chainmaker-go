@@ -131,7 +131,8 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 	if !storeConfig.DisableContractEventDB {
 		if parseEngineType(storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
 			storeConfig.ContractEventDbConfig.Provider == "sql" {
-			contractEventDB, err = eventsqldb.NewContractEventMysqlDB(chainId, contractEventDBConfig.SqlDbConfig, logger)
+			contractEventDB, err = eventsqldb.NewContractEventMysqlDB(chainId,
+				contractEventDBConfig.SqlDbConfig, logger)
 			if err != nil {
 				return nil, err
 			}
@@ -149,11 +150,11 @@ func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log proto
 	storeType := parseEngineType(config.BlockDbConfig.Provider)
 	if storeType == types.BadgerDb {
 		return badgerdbprovider.NewBadgerDBHandle(chainId, dbFolder, config.GetDefaultDBConfig().BadgerDbConfig, log)
-	} else {
-		dbHandle, _ := dbFactory.NewKvDB(chainId, "leveldb", StoreBlockDBDir,
-			config.GetDefaultDBConfig().LevelDbConfig, log)
-		return dbHandle
 	}
+	dbHandle, _ := dbFactory.NewKvDB(chainId, "leveldb", StoreBlockDBDir,
+		config.GetDefaultDBConfig().LevelDbConfig, log)
+	return dbHandle
+
 }
 
 func parseEngineType(dbType string) types.EngineType {
@@ -220,7 +221,8 @@ func (m *Factory) NewHistoryKvDB(chainId string, provider string, dbConfig *loca
 		return nil, err
 	}
 
-	historyDB := historykvdb.NewHistoryKvDB(dbHandle, cache.NewStoreCacheMgr(chainId, 10, logger), logger)
+	historyDB := historykvdb.NewHistoryKvDB(dbHandle,
+		cache.NewStoreCacheMgr(chainId, 10, logger), logger)
 	return historyDB, nil
 }
 

@@ -214,7 +214,8 @@ func TestDPoSImpl_GetAllCandidateInfo(t *testing.T) {
 func initDPoSWithStore(t *testing.T) (*DPoSImpl, func()) {
 	ctrl := gomock.NewController(t)
 	mockConf := newMockChainConf(ctrl)
-
+	dbConfig := make(map[string]interface{})
+	dbConfig["store_path"] = "test/state"
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, "test-chain")
 	testStore, err := storeFactory.NewStore("test-chain", &localconf.StorageConfig{
@@ -222,15 +223,15 @@ func initDPoSWithStore(t *testing.T) (*DPoSImpl, func()) {
 		DisableContractEventDB: true,
 		StateDbConfig: &localconf.DbConfig{
 			Provider:      "leveldb",
-			LevelDbConfig: &localconf.LevelDbConfig{StorePath: "test/state"},
+			LevelDbConfig: dbConfig,
 		},
 		BlockDbConfig: &localconf.DbConfig{
 			Provider:      "leveldb",
-			LevelDbConfig: &localconf.LevelDbConfig{StorePath: "test/block"},
+			LevelDbConfig: dbConfig,
 		},
 		ResultDbConfig: &localconf.DbConfig{
 			Provider:      "leveldb",
-			LevelDbConfig: &localconf.LevelDbConfig{StorePath: "test/result"},
+			LevelDbConfig: dbConfig,
 		},
 	}, storeLogger)
 	defer require.NoError(t, err)

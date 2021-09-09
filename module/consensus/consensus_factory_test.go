@@ -37,12 +37,12 @@ func TestNewConsensusEngine(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	prePath := localconf.ChainMakerConfig.StorageConfig.StorePath
+	prePath := localconf.ChainMakerConfig.GetStorePath()
 	defer func() {
-		localconf.ChainMakerConfig.StorageConfig.StorePath = prePath
+		localconf.ChainMakerConfig.StorageConfig["store_path"] = prePath
 	}()
 	//localconf.ChainMakerConfig.StorageConfig.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	localconf.ChainMakerConfig.StorageConfig.StorePath = t.TempDir()
+	localconf.ChainMakerConfig.StorageConfig["store_path"] = t.TempDir()
 
 	signer := mock.NewMockSigningMember(ctrl)
 	ledgerCache := mock.NewMockLedgerCache(ctrl)
