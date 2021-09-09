@@ -6,7 +6,6 @@ require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
 	chainmaker.org/chainmaker-go/chainconf v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
-	chainmaker.org/chainmaker-go/store v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97

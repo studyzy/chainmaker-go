@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker/protocol/v2"
+	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 	"github.com/mitchellh/mapstructure"
 )
 

@@ -19,11 +19,11 @@ import (
 
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 
-	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2/test"
+	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 	"github.com/stretchr/testify/assert"
 )
 

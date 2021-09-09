@@ -15,8 +15,8 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
