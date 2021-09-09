@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/dgraph-io/badger/v3/options"
@@ -41,9 +41,19 @@ type BadgerDBHandle struct {
 	db        *badger.DB
 	logger    protocol.Logger
 }
+type NewBadgerDBOptions struct {
+	Config    *BadgerDbConfig
+	Logger    protocol.Logger
+	Encryptor crypto.Encryptor
+	ChainId   string
+	DbFolder  string
+}
 
-func NewBadgerDBHandle(chainId string, dbFolder string, dbconfig *localconf.BadgerDbConfig,
-	logger protocol.Logger) *BadgerDBHandle {
+func NewBadgerDBHandle(input *NewBadgerDBOptions) *BadgerDBHandle {
+	chainId := input.ChainId
+	dbFolder := input.DbFolder
+	dbconfig := input.Config
+	logger := input.Logger
 	dbPath := filepath.Join(dbconfig.StorePath, chainId, dbFolder)
 	opt := badger.DefaultOptions(dbPath)
 	opt.SyncWrites = false

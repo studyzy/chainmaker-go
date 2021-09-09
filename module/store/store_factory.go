@@ -22,7 +22,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb/eventsqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
-	"chainmaker.org/chainmaker-go/store/dbprovider/badgerdbprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/historydb/historykvdb"
 	"chainmaker.org/chainmaker-go/store/historydb/historysqldb"
@@ -146,15 +145,14 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 
 func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log protocol.Logger) protocol.DBHandle {
 
-	storeType := parseEngineType(config.BlockDbConfig.Provider)
-	if storeType == types.BadgerDb {
-		return badgerdbprovider.NewBadgerDBHandle(chainId, StoreLocalDBDir,
-			config.GetDefaultDBConfig().BadgerDbConfig, log)
-	}
+	//storeType := parseEngineType(config.BlockDbConfig.Provider)
+	//if storeType == types.BadgerDb {
+	//	return badgerdbprovider.NewBadgerDBHandle(chainId, StoreLocalDBDir,
+	//		config.GetDefaultDBConfig().BadgerDbConfig, log)
+	//}
 	dbHandle, _ := dbFactory.NewKvDB(chainId, "leveldb", StoreLocalDBDir,
 		config.GetDefaultDBConfig().LevelDbConfig, log)
 	return dbHandle
-
 }
 
 func parseEngineType(dbType string) types.EngineType {

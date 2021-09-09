@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/test"
@@ -25,8 +24,21 @@ var dbPath = filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now
 
 //var dbPath = "./"
 var log = &test.GoLogger{}
-var dbConfig = &localconf.BadgerDbConfig{
-	StorePath: dbPath,
+
+//var dbConfig = &BadgerDbConfig{
+//	StorePath: dbPath,
+//}
+var conf = &BadgerDbConfig{
+	StorePath:      dbPath,
+	Compression:    2,
+	ValueThreshold: 2,
+}
+var op = &NewBadgerDBOptions{
+	Config:    conf,
+	Logger:    log,
+	Encryptor: nil,
+	ChainId:   "chain1",
+	DbFolder:  "test",
 }
 
 func TestNewBadgerDBHandle(t *testing.T) {
@@ -34,12 +46,8 @@ func TestNewBadgerDBHandle(t *testing.T) {
 		err := recover()
 		fmt.Println(err)
 	}()
-	conf := &localconf.BadgerDbConfig{
-		StorePath:      dbPath,
-		Compression:    2,
-		ValueThreshold: 2,
-	}
-	dbHandle := NewBadgerDBHandle("chain1", "test", conf, log)
+
+	dbHandle := NewBadgerDBHandle(op)
 
 	key1 := []byte("key1")
 	value1 := []byte("value1")
@@ -47,16 +55,17 @@ func TestNewBadgerDBHandle(t *testing.T) {
 	assert.Nil(t, err)
 	dbHandle.Close()
 
-	conf = &localconf.BadgerDbConfig{
+	conf = &BadgerDbConfig{
 		StorePath: filepath.Join("/"),
 	}
 
 	//Files cannot be created in folders that do not have permissions
-	dbHandle = NewBadgerDBHandle("chain1", "test", conf, log)
+	dbHandle = NewBadgerDBHandle(op)
 }
 
 func TestDBHandle_Put(t *testing.T) {
-	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	op.DbFolder = "test2"
+	dbHandle := NewBadgerDBHandle(op) //dbPath：db文件的存储路径
 	//defer dbHandle.Close()
 
 	key1 := []byte("key1")
@@ -101,7 +110,7 @@ func TestDBHandle_Put(t *testing.T) {
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
-	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewBadgerDBHandle(op) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
 	batch := types.NewUpdateBatch()
 	key1 := []byte("key1")
@@ -119,7 +128,7 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
-	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewBadgerDBHandle(op) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
 
 	batch := types.NewUpdateBatch()
@@ -153,7 +162,7 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 }
 
 func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
-	dbHandle := NewBadgerDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	dbHandle := NewBadgerDBHandle(op) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
 
 	batch := types.NewUpdateBatch()
