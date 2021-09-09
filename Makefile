@@ -1,16 +1,19 @@
 ifeq ($(OS),Windows_NT)
-  PLATFORM="Windows"
+    PLATFORM="Windows"
 else
-  ifeq ($(shell uname),Darwin)
-    PLATFORM="MacOS"
-  else
-    PLATFORM="Linux"
-  endif
+    ifeq ($(shell uname),Darwin)
+        PLATFORM="MacOS"
+    else
+        PLATFORM="Linux"
+    endif
 endif
 DATETIME=$(shell date "+%Y%m%d%H%M%S")
 VERSION=v2.0.2
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT = $(shell git log --pretty=format:'%h' -n 1)
+
+AARCH64="aarch64"
+CPU=$(shell uname -m)
 
 LOCALCONF_HOME=chainmaker.org/chainmaker-go/localconf
 GOLDFLAGS += -X "${LOCALCONF_HOME}.CurrentVersion=${VERSION}"
@@ -19,6 +22,17 @@ GOLDFLAGS += -X "${LOCALCONF_HOME}.GitBranch=${GIT_BRANCH}"
 GOLDFLAGS += -X "${LOCALCONF_HOME}.GitCommit=${GIT_COMMIT}"
 
 chainmaker:
+ifeq ("$(CPU)",$(AARCH64))
+ifneq ($(wildcard module/vm/wasmer/wasmer-go/libwasmer.so.aarch64),)
+	mv module/vm/wasmer/wasmer-go/libwasmer.so module/vm/wasmer/wasmer-go/libwasmer.so.x86_64
+	mv module/vm/wasmer/wasmer-go/libwasmer.so.aarch64 module/vm/wasmer/wasmer-go/libwasmer.so
+endif
+else
+ifneq ($(wildcard module/vm/wasmer/wasmer-go/libwasmer.so.x86_64),)
+	mv module/vm/wasmer/wasmer-go/libwasmer.so module/vm/wasmer/wasmer-go/libwasmer.so.aarch64
+	mv module/vm/wasmer/wasmer-go/libwasmer.so.x86_64 module/vm/wasmer/wasmer-go/libwasmer.so
+endif
+endif
 	@cd main && go mod tidy && go build -ldflags '${GOLDFLAGS}' -o ../bin/chainmaker
 
 chainmaker-vendor:
