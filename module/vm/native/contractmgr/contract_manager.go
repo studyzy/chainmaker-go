@@ -19,7 +19,7 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -165,6 +165,7 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 		err                   error
 		disabledContractList  []string
 		contractName          string
+		method                string
 		multiSignContractName string
 	)
 
@@ -176,6 +177,7 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 
 	// 2. get the requested contract name and verify if it's on the disabled native contract list
 	contractName = txSimContext.GetTx().Payload.ContractName
+	method = txSimContext.GetTx().Payload.Method
 	for _, cn := range disabledContractList {
 		if cn == contractName {
 			return []byte("false"), nil
@@ -184,7 +186,8 @@ func (r *ContractManagerRuntime) verifyContractAccess(txSimContext protocol.TxSi
 
 	// 3. if the requested contract name is multisignature, get the underlying contract name from
 	// the tx payload and verify if it has access
-	if contractName == syscontract.SystemContract_MULTI_SIGN.String() {
+	if contractName == syscontract.SystemContract_MULTI_SIGN.String() &&
+		method == syscontract.MultiSignFunction_REQ.String() {
 
 		// if the method name is not req, return true since it does not contain contract names in parameters
 		multiSignMethodName := txSimContext.GetTx().Payload.Method
@@ -378,12 +381,12 @@ func (r *ContractManagerRuntime) initializeDisabledNativeContractList(
 }
 
 //func (r *ContractManagerRuntime) getAllContracts(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
-//	[]byte, error) {
-//	contracts, err := r.GetAllContracts(txSimContext)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return json.Marshal(contracts)
+// []byte, error) {
+// contracts, err := r.GetAllContracts(txSimContext)
+// if err != nil {
+//    return nil, err
+// }
+// return json.Marshal(contracts)
 //}
 func (r *ContractManagerRuntime) installContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
 	[]byte, error) {

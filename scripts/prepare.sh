@@ -30,6 +30,11 @@ function show_help() {
     echo "    eg2: prepare.sh 4 1 11301 12301"
 }
 
+if ( [ $# -eq 1 ] && [ "$1" ==  "-h" ] ) ; then
+    show_help
+    exit 1
+fi
+
 if [ ! $# -eq 2 ] && [ ! $# -eq 3 ] && [ ! $# -eq 4 ]; then
     echo "invalid params"
     show_help

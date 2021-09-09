@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/queue/lockfreequeue"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/stretchr/testify/require"
 )

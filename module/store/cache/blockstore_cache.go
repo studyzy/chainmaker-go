@@ -90,6 +90,10 @@ func (mgr *StoreCacheMgr) Has(key string) (bool, bool) {
 	return mgr.cache.has(key)
 }
 
+func (mgr *StoreCacheMgr) Clear() {
+	mgr.cache.clear()
+}
+
 // LockForFlush used to lock cache until all cache item be flushed to db
 func (mgr *StoreCacheMgr) LockForFlush() {
 	err := mgr.blockSizeSem.Acquire(context.Background(), defaultMaxBlockSize)
@@ -150,6 +154,10 @@ func (c *storeCache) has(key string) (bool, bool) {
 		return value == nil, true
 	}
 	return false, false
+}
+
+func (c *storeCache) clear() {
+	c.table.Clear()
 }
 
 //func (c *storeCache) len() int {

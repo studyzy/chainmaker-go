@@ -25,12 +25,12 @@ import (
 
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 

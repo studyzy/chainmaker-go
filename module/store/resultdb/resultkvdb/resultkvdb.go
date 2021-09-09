@@ -13,9 +13,9 @@ import (
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -152,6 +152,7 @@ func (h *ResultKvDB) GetLastSavepoint() (uint64, error) {
 func (h *ResultKvDB) Close() {
 	h.Logger.Info("close result kv db")
 	h.DbHandle.Close()
+	h.Cache.Clear()
 }
 
 func (h *ResultKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {

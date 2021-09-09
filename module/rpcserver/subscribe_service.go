@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/subscriber/model"

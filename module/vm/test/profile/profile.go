@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/gasm"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/spf13/cobra"

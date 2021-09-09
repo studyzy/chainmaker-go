@@ -18,7 +18,7 @@ import (
 
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"

@@ -16,7 +16,7 @@ package raft
 //	"reflect"
 //	"testing"
 //
-//	"chainmaker.org/chainmaker-go/logger"
+//	"chainmaker.org/chainmaker/logger/v2"
 //	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 //	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 //	"chainmaker.org/chainmaker/protocol/v2/mock"

@@ -16,7 +16,6 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/privatecompute"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native/blockcontract"
 	"chainmaker.org/chainmaker-go/vm/native/certmgr"
 	"chainmaker.org/chainmaker-go/vm/native/chainconfigmgr"
@@ -24,6 +23,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/contractmgr"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker-go/vm/native/government"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -102,7 +102,7 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, methodName string,
 	var verifyAccessFunc common.ContractFunc
 	var accessResultBytes []byte
 	verifyAccessContract := &commonPb.Contract{
-		Name:        "CONTRACT_MANAGE",
+		Name:        syscontract.SystemContract_CONTRACT_MANAGE.String(),
 		Version:     contract.Version,
 		RuntimeType: commonPb.RuntimeType_NATIVE,
 		Status:      commonPb.ContractStatus_NORMAL,

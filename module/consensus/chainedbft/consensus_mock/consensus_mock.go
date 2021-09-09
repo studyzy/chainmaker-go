@@ -18,8 +18,8 @@ import (
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"

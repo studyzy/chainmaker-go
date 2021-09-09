@@ -8,9 +8,9 @@
 package rpcserver
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	commonErr "chainmaker.org/chainmaker/common/v2/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"errors"
 	"fmt"

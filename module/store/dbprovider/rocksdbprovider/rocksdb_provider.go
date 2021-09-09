@@ -16,7 +16,7 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	//logImpl "chainmaker.org/chainmaker-go/logger"
+	//logImpl "chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/pkg/errors"
 	"github.com/tecbot/gorocksdb"

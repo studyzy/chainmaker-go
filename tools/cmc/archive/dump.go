@@ -127,7 +127,8 @@ func runDumpByHeightCMD(targetBlkHeight uint64) error {
 			if err := runBatch(cc, db, batchStartBlkHeight, batchEndBlkHeight); err == nil {
 				batchStartBlkHeight = batchEndBlkHeight
 			} else if !strings.Contains(err.Error(), configBlockArchiveErrorString) {
-				return err
+				fmt.Printf("Warning: %s\n", err)
+				return nil
 			}
 		}
 

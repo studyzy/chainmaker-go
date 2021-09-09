@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 )
 
 type nodeConfig struct {

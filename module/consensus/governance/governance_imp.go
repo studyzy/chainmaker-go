@@ -9,7 +9,7 @@ package governance
 import (
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"

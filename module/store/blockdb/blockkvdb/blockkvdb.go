@@ -19,23 +19,23 @@ import (
 	"chainmaker.org/chainmaker-go/store/cache"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/sync/semaphore"
 )
 
 const (
-	blockNumIdxKeyPrefix     = 'n'
-	blockHashIdxKeyPrefix    = 'h'
-	txIDIdxKeyPrefix         = 't'
-	txConfirmedTimeKeyPrefix = 'c'
-	blockTxIDIdxKeyPrefix    = 'b'
-	lastBlockNumKeyStr       = "lastBlockNumKey"
-	lastConfigBlockNumKey    = "lastConfigBlockNumKey"
-	archivedPivotKey         = "archivedPivotKey"
+	blockNumIdxKeyPrefix  = 'n'
+	blockHashIdxKeyPrefix = 'h'
+	txIDIdxKeyPrefix      = 't'
+	//txConfirmedTimeKeyPrefix = 'c'
+	blockTxIDIdxKeyPrefix = 'b'
+	lastBlockNumKeyStr    = "lastBlockNumKey"
+	lastConfigBlockNumKey = "lastConfigBlockNumKey"
+	archivedPivotKey      = "archivedPivotKey"
 )
 
 var (
@@ -465,21 +465,18 @@ func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
 
 // GetTxConfirmedTime returns the confirmed time of a given tx
 func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
-	txConfirmedTimeKey := constructTxConfirmedTimeKey(txId)
-	bytes, err := b.get(txConfirmedTimeKey)
+	block, err := b.GetBlockByTx(txId)
 	if err != nil {
-		return 0, err
-	} else if len(bytes) == 0 {
-		return -1, nil
+		return -1, err
 	}
-	confirmedTime := binary.BigEndian.Uint64(bytes)
-	return int64(confirmedTime), nil
+	return block.Header.BlockTimestamp, nil
 }
 
 // Close is used to close database
 func (b *BlockKvDB) Close() {
 	b.Logger.Info("close block kv db")
 	b.DbHandle.Close()
+	b.Cache.Clear()
 }
 
 func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error) {
@@ -614,9 +611,9 @@ func constructTxIDKey(txId string) []byte {
 	return append([]byte{txIDIdxKeyPrefix}, txId...)
 }
 
-func constructTxConfirmedTimeKey(txId string) []byte {
-	return append([]byte{txConfirmedTimeKeyPrefix}, txId...)
-}
+//func constructTxConfirmedTimeKey(txId string) []byte {
+//	return append([]byte{txConfirmedTimeKeyPrefix}, txId...)
+//}
 
 func constructBlockTxIDKey(txID string) []byte {
 	return append([]byte{blockTxIDIdxKeyPrefix}, []byte(txID)...)

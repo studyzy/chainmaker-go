@@ -14,10 +14,10 @@ import (
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
 	bftUtils "chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 //func TestSafetyRules_VoteRules(t *testing.T) {

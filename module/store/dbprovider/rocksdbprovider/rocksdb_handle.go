@@ -16,8 +16,8 @@ import (
 	"path/filepath"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/pkg/errors"
 	"github.com/yiyanwannian/gorocksdb"
 )

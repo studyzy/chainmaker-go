@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,9 +26,35 @@ var dbConfig = &localconf.LevelDbConfig{
 	StorePath: dbPath,
 }
 
+func TestDBHandle_NewLevelDBHandle(t *testing.T) {
+	defer func() {
+		err := recover()
+		//assert.Equal(t, strings.Contains(err.(string), "Error create dir"), true)
+		fmt.Println(err)
+	}()
+	dbConfigTest := &localconf.LevelDbConfig{
+		StorePath:            dbPath,
+		BlockWriteBufferSize: 2,
+	}
+	dbHandle1 := NewLevelDBHandle("chain1", "test", dbConfigTest, log)
+	dbHandle1.Close()
+
+	dbConfigTest = &localconf.LevelDbConfig{
+		StorePath: dbPath,
+	}
+	dbHandle2 := NewLevelDBHandle("chain1", "test", dbConfigTest, log)
+	dbHandle2.Close()
+
+	dbConfigTest = &localconf.LevelDbConfig{
+		StorePath: filepath.Join("/"),
+	}
+	dbHandle3 := NewLevelDBHandle("chain1", "test", dbConfigTest, log)
+	dbHandle3.Close()
+}
+
 func TestDBHandle_Put(t *testing.T) {
 	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
-	defer dbHandle.Close()
+	//defer dbHandle.Close()
 
 	key1 := []byte("key1")
 	value1 := []byte("value1")
@@ -40,11 +67,91 @@ func TestDBHandle_Put(t *testing.T) {
 	value, err = dbHandle.Get([]byte("another key"))
 	assert.Nil(t, err)
 	assert.Nil(t, value)
+
+	dbHandle.Close()
+
+	_, err = dbHandle.Get(key1)
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "getting leveldbprovider key"), true)
+
+	err = dbHandle.Put(key1, nil)
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "writing leveldbprovider with nil value"), true)
+
+	key2 := []byte("key2")
+	value2 := []byte("value2")
+	err = dbHandle.Put(key2, value2)
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "writing leveldbprovider key"), true)
+}
+
+func TestDBHandle_Delete(t *testing.T) {
+	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	//defer dbHandle.Close()
+
+	key1 := []byte("key1")
+	value1 := []byte("value1")
+	err := dbHandle.Put(key1, value1)
+	assert.Nil(t, err)
+
+	exist, err := dbHandle.Has(key1)
+	assert.True(t, exist)
+
+	err = dbHandle.Delete(key1)
+	assert.Nil(t, err)
+
+	exist, err = dbHandle.Has(key1)
+	assert.False(t, exist)
+
+	dbHandle.Close()
+
+	err = dbHandle.Delete(key1)
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "deleting leveldbprovider key"), true)
+
+	exist, err = dbHandle.Has(key1)
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "getting leveldbprovider key"), true)
 }
 
 func TestDBHandle_WriteBatch(t *testing.T) {
 	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
+	//defer dbHandle.Close()
+	batch := types.NewUpdateBatch()
+
+	err := dbHandle.WriteBatch(batch, true)
+	assert.Nil(t, err)
+
+	key1 := []byte("key1")
+	value1 := []byte("value1")
+	key2 := []byte("key2")
+	value2 := []byte("value2")
+	batch.Put(key1, value1)
+	batch.Put(key2, value2)
+	err = dbHandle.WriteBatch(batch, true)
+	assert.Nil(t, err)
+
+	key3 := []byte("key3")
+	value3 := []byte("")
+	batch.Put(key3, value3)
+	err = dbHandle.WriteBatch(batch, true)
+	assert.Nil(t, err)
+
+	value, err := dbHandle.Get(key2)
+	assert.Nil(t, err)
+	assert.Equal(t, value2, value)
+
+	dbHandle.Close()
+
+	err = dbHandle.WriteBatch(batch, true)
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "error writing batch to leveldb provider"), true)
+}
+
+func TestDBHandle_CompactRange(t *testing.T) {
+	dbHandle := NewLevelDBHandle("chain1", "test", dbConfig, log) //dbPath：db文件的存储路径
 	defer dbHandle.Close()
+
 	batch := types.NewUpdateBatch()
 	key1 := []byte("key1")
 	value1 := []byte("value1")
@@ -55,10 +162,8 @@ func TestDBHandle_WriteBatch(t *testing.T) {
 	err := dbHandle.WriteBatch(batch, true)
 	assert.Nil(t, err)
 
-	value, err := dbHandle.Get(key2)
+	err = dbHandle.CompactRange(key1, key2)
 	assert.Nil(t, err)
-	assert.Equal(t, value2, value)
-
 }
 
 func TestDBHandle_NewIteratorWithRange(t *testing.T) {
@@ -83,6 +188,10 @@ func TestDBHandle_NewIteratorWithRange(t *testing.T) {
 		count++
 	}
 	assert.Equal(t, 2, count)
+
+	_, err = dbHandle.NewIteratorWithRange([]byte(""), []byte(""))
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "iterator range should not start"), true)
 }
 
 func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
@@ -110,6 +219,10 @@ func TestDBHandle_NewIteratorWithPrefix(t *testing.T) {
 		//fmt.Println(fmt.Sprintf("key: %s", key))
 	}
 	assert.Equal(t, 5, count)
+
+	_, err = dbHandle.NewIteratorWithPrefix([]byte(""))
+	assert.NotNil(t, err)
+	assert.Equal(t, strings.Contains(err.Error(), "iterator prefix should not be empty key"), true)
 }
 
 func TestTempFolder(t *testing.T) {

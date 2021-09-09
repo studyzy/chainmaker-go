@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"

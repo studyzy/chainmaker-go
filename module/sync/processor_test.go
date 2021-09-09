@@ -10,7 +10,7 @@ package sync
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/golang/mock/gomock"

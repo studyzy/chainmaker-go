@@ -17,7 +17,7 @@ import (
 
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
@@ -170,6 +170,7 @@ func (b *StateKvDB) GetLastSavepoint() (uint64, error) {
 func (s *StateKvDB) Close() {
 	s.Logger.Info("close state kv db")
 	s.DbHandle.Close()
+	s.Cache.Clear()
 }
 
 func (s *StateKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {

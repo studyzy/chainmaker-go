@@ -20,8 +20,8 @@ import (
 	"encoding/hex"
 
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/evmutils"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 

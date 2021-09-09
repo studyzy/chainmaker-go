@@ -15,8 +15,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 func generateTxsBySource(num int, isConfig bool) (rpcTxs, p2pTxs, internalTxs *mempoolTxs) {
