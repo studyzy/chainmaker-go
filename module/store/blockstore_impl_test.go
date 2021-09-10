@@ -101,9 +101,8 @@ func getBadgerConfig(path string) *localconf.StorageConfig {
 	}
 	conf.StorePath = path
 
-	badgerConfig := &localconf.BadgerDbConfig{
-		StorePath: path,
-	}
+	badgerConfig := make(map[string]interface{})
+	badgerConfig["store_path"] = path
 	dbConfig := &localconf.DbConfig{
 		Provider:       "badgerdb",
 		BadgerDbConfig: badgerConfig,
@@ -122,9 +121,9 @@ func getlvldbConfig(path string) *localconf.StorageConfig {
 	}
 	conf.StorePath = path
 
-	lvlConfig := &localconf.LevelDbConfig{
-		StorePath: path,
-	}
+	lvlConfig := make(map[string]interface{})
+	lvlConfig["store_path"] = path
+
 	dbConfig := &localconf.DbConfig{
 		Provider:      "leveldb",
 		LevelDbConfig: lvlConfig,
@@ -360,13 +359,14 @@ var log = &test.GoLogger{}
 func Test_blockchainStoreImpl_GetBlockSqlDb(t *testing.T) {
 	testBlockchainStoreImpl_GetBlock(t, config1)
 }
-func Test_blockchainStoreImpl_GetBlockLevledb(t *testing.T) {
+func Test_blockchainStoreImpl_GetBlockLevelDb(t *testing.T) {
 	testBlockchainStoreImpl_GetBlock(t, getlvldbConfig(""))
 }
 
-func Test_blockchainStoreImpl_GetBlockBadgerdb(t *testing.T) {
-	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig(""))
-}
+//TODO Devin
+//func Test_blockchainStoreImpl_GetBlockBadgerdb(t *testing.T) {
+//	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig(""))
+//}
 
 func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
 	var funcName = "get block"

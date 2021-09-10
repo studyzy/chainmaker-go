@@ -8,10 +8,12 @@ package blockkvdb
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -45,12 +47,24 @@ var (
 // BlockKvDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a key-value based data model
 type BlockKvDB struct {
-	DbHandle         protocol.DBHandle
-	WorkersSemaphore *semaphore.Weighted
-	Cache            *cache.StoreCacheMgr
+	dbHandle         protocol.DBHandle
+	workersSemaphore *semaphore.Weighted
+	worker           int64
+	cache            *cache.StoreCacheMgr
 	archivedPivot    uint64
+	logger           protocol.Logger
+}
 
-	Logger protocol.Logger
+func NewBlockKvDB(chainId string, dbHandle protocol.DBHandle, logger protocol.Logger) *BlockKvDB {
+	nWorkers := int64(runtime.NumCPU())
+	return &BlockKvDB{
+		dbHandle:         dbHandle,
+		worker:           nWorkers,
+		workersSemaphore: semaphore.NewWeighted(nWorkers),
+		cache:            cache.NewStoreCacheMgr(chainId, 10, logger),
+		archivedPivot:    0,
+		logger:           logger,
+	}
 }
 
 func (b *BlockKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
@@ -88,7 +102,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 		blockTxIdKey := constructBlockTxIDKey(tx.Payload.TxId)
 		txBlockInf := constructTxIDBlockInfo(block.Header.BlockHeight, block.Header.BlockHash, uint32(index))
 		batch.Put(blockTxIdKey, txBlockInf)
-		b.Logger.Debugf("chain[%s]: blockInfo[%d] batch transaction index[%d] txid[%s]",
+		b.logger.Debugf("chain[%s]: blockInfo[%d] batch transaction index[%d] txid[%s]",
 			block.Header.ChainId, block.Header.BlockHeight, index, tx.Payload.TxId)
 	}
 	elapsedPrepareTxs := utils.CurrentTimeMillisSeconds() - startPrepareTxs
@@ -96,7 +110,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 	// last configBlock height
 	if utils.IsConfBlock(block) {
 		batch.Put([]byte(lastConfigBlockNumKey), heightKey)
-		b.Logger.Infof("chain[%s]: commit config blockInfo[%d]", block.Header.ChainId, block.Header.BlockHeight)
+		b.logger.Infof("chain[%s]: commit config blockInfo[%d]", block.Header.ChainId, block.Header.BlockHeight)
 	}
 
 	startCommitBlock := utils.CurrentTimeMillisSeconds()
@@ -105,7 +119,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 		return err
 	}
 	elapsedCommitBlock := utils.CurrentTimeMillisSeconds() - startCommitBlock
-	b.Logger.Infof("chain[%s]: commit blockInfo[%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
+	b.logger.Infof("chain[%s]: commit blockInfo[%d] time used (prepare_txs:%d write_batch:%d, total:%d)",
 		block.Header.ChainId, block.Header.BlockHeight, elapsedPrepareTxs, elapsedCommitBlock,
 		utils.CurrentTimeMillisSeconds()-startMarshalBlock)
 	return nil
@@ -113,7 +127,7 @@ func (b *BlockKvDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo
 
 // GetArchivedPivot return archived pivot
 func (b *BlockKvDB) GetArchivedPivot() (uint64, error) {
-	heightBytes, err := b.DbHandle.Get([]byte(archivedPivotKey))
+	heightBytes, err := b.dbHandle.Get([]byte(archivedPivotKey))
 	if err != nil {
 		return 0, err
 	}
@@ -125,7 +139,7 @@ func (b *BlockKvDB) GetArchivedPivot() (uint64, error) {
 	}
 
 	if dbHeight != b.archivedPivot {
-		b.Logger.Warnf("DB archivedPivot:[%d] is not match using archivedPivot:[%d], use write DB overwrite it!")
+		b.logger.Warnf("DB archivedPivot:[%d] is not match using archivedPivot:[%d], use write DB overwrite it!")
 		b.archivedPivot = dbHeight
 	}
 
@@ -157,7 +171,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 		}
 
 		if utils.IsConfBlock(blk) {
-			b.Logger.Infof("skip shrink conf block: [%d]", block.Header.BlockHeight)
+			b.logger.Infof("skip shrink conf block: [%d]", block.Header.BlockHeight)
 			continue
 		}
 
@@ -171,7 +185,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 		txIdsMap[height] = txIds
 		//set archivedPivotKey to db
 		batch.Put([]byte(archivedPivotKey), constructBlockNumKey(height))
-		if err = b.DbHandle.WriteBatch(batch, false); err != nil {
+		if err = b.dbHandle.WriteBatch(batch, false); err != nil {
 			return nil, err
 		}
 
@@ -181,7 +195,7 @@ func (b *BlockKvDB) ShrinkBlocks(startHeight uint64, endHeight uint64) (map[uint
 	go b.compactRange()
 
 	usedTime := utils.CurrentTimeMillisSeconds() - startTime
-	b.Logger.Infof("shrink block from [%d] to [%d] time used: %d",
+	b.logger.Infof("shrink block from [%d] to [%d] time used: %d",
 		startHeight, endHeight, usedTime)
 	return txIdsMap, nil
 }
@@ -195,7 +209,7 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 
 		//check whether block can be archived
 		if utils.IsConfBlock(blockInfo.Block) {
-			b.Logger.Infof("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
+			b.logger.Infof("skip store conf block: [%d]", blockInfo.Block.Header.BlockHeight)
 			continue
 		}
 
@@ -222,7 +236,7 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 		}
 
 		batch.Put([]byte(archivedPivotKey), constructBlockNumKey(archivePivot))
-		err = b.DbHandle.WriteBatch(batch, false)
+		err = b.dbHandle.WriteBatch(batch, false)
 		if err != nil {
 			return err
 		}
@@ -232,7 +246,7 @@ func (b *BlockKvDB) RestoreBlocks(blockInfos []*serialization.BlockWithSerialize
 	go b.compactRange()
 
 	usedTime := utils.CurrentTimeMillisSeconds() - startTime
-	b.Logger.Infof("shrink block from [%d] to [%d] time used: %d",
+	b.logger.Infof("shrink block from [%d] to [%d] time used: %d",
 		blockInfos[len(blockInfos)-1].Block.Header.BlockHeight, blockInfos[0].Block.Header.BlockHeight, usedTime)
 	return nil
 }
@@ -312,7 +326,7 @@ func (b *BlockKvDB) GetLastConfigBlock() (*commonPb.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	b.Logger.Debugf("configBlock height:%v", heightKey)
+	b.logger.Debugf("configBlock height:%v", heightKey)
 	return b.getBlockByHeightBytes(heightKey)
 }
 
@@ -439,7 +453,7 @@ func (b *BlockKvDB) TxExists(txId string) (bool, error) {
 
 // TxArchived returns true if the tx archived, or returns false.
 func (b *BlockKvDB) TxArchived(txId string) (bool, error) {
-	txIdBlockInfoBytes, err := b.DbHandle.Get(constructBlockTxIDKey(txId))
+	txIdBlockInfoBytes, err := b.dbHandle.Get(constructBlockTxIDKey(txId))
 	if err != nil {
 		return false, err
 	}
@@ -474,9 +488,15 @@ func (b *BlockKvDB) GetTxConfirmedTime(txId string) (int64, error) {
 
 // Close is used to close database
 func (b *BlockKvDB) Close() {
-	b.Logger.Info("close block kv db")
-	b.DbHandle.Close()
-	b.Cache.Clear()
+	//获得所有信号量，表示没有任何写操作了
+	b.logger.Infof("wait semaphore[%d]", b.worker)
+	err := b.workersSemaphore.Acquire(context.Background(), b.worker)
+	if err != nil {
+		b.logger.Errorf("semaphore Acquire error:%s", err)
+	}
+	b.logger.Info("close block kv db")
+	b.dbHandle.Close()
+	b.cache.Clear()
 }
 
 func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error) {
@@ -507,9 +527,9 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 	block.Txs = make([]*commonPb.Transaction, len(blockStoreInfo.TxIds))
 	for index, txid := range blockStoreInfo.TxIds {
 		//used to limit the num of concurrency goroutine
-		//b.WorkersSemaphore.Acquire(context.Background(), 1)
+		//b.workersSemaphore.Acquire(context.Background(), 1)
 		//go func(i int, txid string) {
-		//	defer b.WorkersSemaphore.Release(1)
+		//	defer b.workersSemaphore.Release(1)
 		//	defer batchWG.Done()
 		tx, err1 := b.GetTx(txid)
 		if err1 != nil {
@@ -527,49 +547,55 @@ func (b *BlockKvDB) getBlockByHeightBytes(height []byte) (*commonPb.Block, error
 	//if len(errsChan) > 0 {
 	//	return nil, <-errsChan
 	//}
-	b.Logger.Debugf("chain[%s]: get block[%d] with transactions[%d]",
+	b.logger.Debugf("chain[%s]: get block[%d] with transactions[%d]",
 		block.Header.ChainId, block.Header.BlockHeight, len(block.Txs))
 	return &block, nil
 }
 
 func (b *BlockKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
-	b.Cache.AddBlock(blockHeight, batch)
+	b.cache.AddBlock(blockHeight, batch)
 	go func() {
+		defer b.workersSemaphore.Release(1)
+		err := b.workersSemaphore.Acquire(context.Background(), 1)
+		if err != nil {
+			b.logger.Errorf("semaphore Acquire error:%s", err)
+			return
+		}
 		startWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		err := b.DbHandle.WriteBatch(batch, false)
+		err = b.dbHandle.WriteBatch(batch, false)
 		endWriteBatchTime := utils.CurrentTimeMillisSeconds()
-		b.Logger.Infof("write block db, block[%d], time used:%d",
+		b.logger.Infof("write block db, block[%d], time used:%d",
 			blockHeight, endWriteBatchTime-startWriteBatchTime)
 
 		if err != nil {
 			panic(fmt.Sprintf("Error writing leveldb: %s", err))
 		}
 		//db committed, clean cache
-		b.Cache.DelBlock(blockHeight)
+		b.cache.DelBlock(blockHeight)
 	}()
 	return nil
 }
 
 func (b *BlockKvDB) get(key []byte) ([]byte, error) {
 	//get from cache
-	value, exist := b.Cache.Get(string(key))
+	value, exist := b.cache.Get(string(key))
 	if exist {
-		b.Logger.Debugf("get content: [%x] by [%d] in cache", value, key)
+		b.logger.Debugf("get content: [%x] by [%d] in cache", value, key)
 		return value, nil
 	}
 	//get from database
-	val, err := b.DbHandle.Get(key)
+	val, err := b.dbHandle.Get(key)
 	return val, err
 }
 
 func (b *BlockKvDB) has(key []byte) (bool, error) {
 	//check has from cache
-	isDelete, exist := b.Cache.Has(string(key))
+	isDelete, exist := b.cache.Has(string(key))
 	if exist {
 		return !isDelete, nil
 	}
-	return b.DbHandle.Has(key)
+	return b.dbHandle.Has(key)
 }
 
 func (b *BlockKvDB) getNextArchivePivot(pivotBlock *commonPb.Block) (uint64, error) {
@@ -636,9 +662,9 @@ func decodeBlockNum(blockNumBytes []byte) uint64 {
 func (b *BlockKvDB) compactRange() {
 	//trigger level compact
 	for i := 1; i <= 1; i++ {
-		b.Logger.Infof("Do %dst time CompactRange", i)
-		if err := b.DbHandle.CompactRange(nil, nil); err != nil {
-			b.Logger.Warnf("blockdb level compact failed: %v", err)
+		b.logger.Infof("Do %dst time CompactRange", i)
+		if err := b.dbHandle.CompactRange(nil, nil); err != nil {
+			b.logger.Warnf("blockdb level compact failed: %v", err)
 		}
 		//time.Sleep(2 * time.Second)
 	}

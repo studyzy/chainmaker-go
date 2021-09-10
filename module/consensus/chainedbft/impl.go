@@ -150,7 +150,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService, service)
 	epoch := service.nextEpoch
 	service.nextEpoch = nil
-	walDirPath := path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainID, WalDirSuffix)
+	walDirPath := path.Join(localconf.ChainMakerConfig.GetStorePath(), chainID, WalDirSuffix)
 	if service.wal, err = wal.Open(walDirPath, nil); err != nil {
 		return nil, err
 	}

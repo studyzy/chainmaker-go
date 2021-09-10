@@ -37,13 +37,20 @@ const (
 // StateKvDB provider a implementation of `statedb.StateDB`
 // This implementation provides a key-value based data model
 type StateKvDB struct {
-	DbHandle protocol.DBHandle
-	Cache    *cache.StoreCacheMgr
-	Logger   protocol.Logger
+	dbHandle protocol.DBHandle
+	cache    *cache.StoreCacheMgr
+	logger   protocol.Logger
 }
 
+func NewStateKvDB(chainId string, handle protocol.DBHandle, logger protocol.Logger) *StateKvDB {
+	return &StateKvDB{
+		dbHandle: handle,
+		cache:    cache.NewStoreCacheMgr(chainId, 10, logger),
+		logger:   logger,
+	}
+}
 func (s *StateKvDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	s.Logger.Debug("initial genesis state data into leveldb")
+	s.logger.Debug("initial genesis state data into leveldb")
 	return s.CommitBlock(genesisBlock)
 }
 
@@ -84,7 +91,7 @@ func (s *StateKvDB) CommitBlock(blockWithRWSet *serialization.BlockWithSerialize
 	if err != nil {
 		return err
 	}
-	s.Logger.Debugf("chain[%s]: commit state block[%d]",
+	s.logger.Debugf("chain[%s]: commit state block[%d]",
 		block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 }
@@ -93,11 +100,11 @@ func (s *StateKvDB) updateConsensusArgs(batch protocol.StoreBatcher, block *comm
 	//try to add consensusArgs
 	consensusArgs, err := utils.GetConsensusArgsFromBlock(block)
 	if err != nil {
-		s.Logger.Errorf("parse header.ConsensusArgs get an error:%s", err)
+		s.logger.Errorf("parse header.ConsensusArgs get an error:%s", err)
 		return err
 	}
 	if consensusArgs.ConsensusData != nil {
-		s.Logger.Debugf("add consensusArgs ConsensusData to statedb")
+		s.logger.Debugf("add consensusArgs ConsensusData to statedb")
 		for _, write := range consensusArgs.ConsensusData.TxWrites {
 			s.operateDbByWriteSet(batch, write)
 		}
@@ -117,10 +124,10 @@ func (s *StateKvDB) SelectObject(contractName string, startKey []byte, limit []b
 	objectStartKey := constructStateKey(contractName, startKey)
 	objectLimitKey := constructStateKey(contractName, limit)
 	//todo combine cache and database
-	s.Cache.LockForFlush()
-	defer s.Cache.UnLockFlush()
+	s.cache.LockForFlush()
+	defer s.cache.UnLockFlush()
 	//logger.Debugf("start[%s], limit[%s]", objectStartKey, objectLimitKey)
-	iter, err := s.DbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
+	iter, err := s.dbHandle.NewIteratorWithRange(objectStartKey, objectLimitKey)
 	if err != nil {
 		return nil, err
 	}
@@ -168,42 +175,42 @@ func (b *StateKvDB) GetLastSavepoint() (uint64, error) {
 
 // Close is used to close database
 func (s *StateKvDB) Close() {
-	s.Logger.Info("close state kv db")
-	s.DbHandle.Close()
-	s.Cache.Clear()
+	s.logger.Info("close state kv db")
+	s.dbHandle.Close()
+	s.cache.Clear()
 }
 
 func (s *StateKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {
 	//update cache
-	s.Cache.AddBlock(blockHeight, batch)
+	s.cache.AddBlock(blockHeight, batch)
 	go func() {
-		err := s.DbHandle.WriteBatch(batch, false)
+		err := s.dbHandle.WriteBatch(batch, false)
 		if err != nil {
 			panic(fmt.Sprintf("Error writing leveldb: %s", err))
 		}
 		//db committed, clean cache
-		s.Cache.DelBlock(blockHeight)
+		s.cache.DelBlock(blockHeight)
 	}()
 	return nil
 }
 
 func (s *StateKvDB) get(key []byte) ([]byte, error) {
 	//get from cache
-	value, exist := s.Cache.Get(string(key))
+	value, exist := s.cache.Get(string(key))
 	if exist {
 		return value, nil
 	}
 	//get from database
-	return s.DbHandle.Get(key)
+	return s.dbHandle.Get(key)
 }
 
 //func (s *StateKvDB) has(key []byte) (bool, error) {
 //	//check has from cache
-//	isDelete, exist := s.Cache.Has(string(key))
+//	isDelete, exist := s.cache.Has(string(key))
 //	if exist {
 //		return !isDelete, nil
 //	}
-//	return s.DbHandle.Has(key)
+//	return s.dbHandle.Has(key)
 //}
 
 func constructStateKey(contractName string, key []byte) []byte {
