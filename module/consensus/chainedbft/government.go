@@ -46,9 +46,13 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 		validators        []*types.Validator
 		members           []*consensusPb.GovernanceMember
 		validatorsMembers []*consensusPb.GovernanceMember
+		ok                bool
 	)
 	if validators := cbi.governanceContract.GetValidators(); validators != nil {
-		validatorsMembers = validators.([]*consensusPb.GovernanceMember)
+		if validatorsMembers, ok = validators.([]*consensusPb.GovernanceMember); !ok {
+			cbi.logger.Errorf("create epoch failed:validator invalid")
+			return
+		}
 	}
 	for _, v := range validatorsMembers {
 		validators = append(validators, &types.Validator{
@@ -70,7 +74,10 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 			GetGovMembersValidatorCount()), int(cbi.governanceContract.GetGovMembersValidatorMinCount())),
 	}
 	if membersInterface := cbi.governanceContract.GetMembers(); membersInterface != nil {
-		members = membersInterface.([]*consensusPb.GovernanceMember)
+		if members, ok = membersInterface.([]*consensusPb.GovernanceMember); !ok {
+			cbi.logger.Errorf("create epoch failed: governace member invalid")
+			return
+		}
 	}
 	for _, v := range members {
 		if v.NodeId == cbi.id {
@@ -85,10 +92,7 @@ func (cbi *ConsensusChainedBftImpl) createEpoch(height uint64) {
 //isValidProposer checks whether given index is valid at level
 func (cbi *ConsensusChainedBftImpl) isValidProposer(level uint64, index uint64) bool {
 	proposerIndex := cbi.getProposer(level)
-	if proposerIndex == index {
-		return true
-	}
-	return false
+	return proposerIndex == index
 }
 
 func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
@@ -96,10 +100,11 @@ func (cbi *ConsensusChainedBftImpl) getProposer(level uint64) uint64 {
 	if validatorsInterface == nil {
 		return 0
 	}
-	validators := validatorsInterface.([]*consensusPb.GovernanceMember)
-	validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
-	if validator != nil {
-		return uint64(validator.Index)
+	if validators, ok := validatorsInterface.([]*consensusPb.GovernanceMember); ok {
+		validator, _ := governance.GetProposer(level, cbi.governanceContract.GetNodeProposeRound(), validators)
+		if validator != nil {
+			return uint64(validator.Index)
+		}
 	}
 	return utils.InvalidIndex
 }

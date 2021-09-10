@@ -20,11 +20,33 @@ type KeyValue struct {
 	ObjectValue []byte `gorm:"type:longblob"`
 }
 
-func (kv *KeyValue) GetInsertSql() string {
-	return "TODO GetInsertSql"
+//func (kv *KeyValue) GetInsertSql() string {
+//	return "TODO GetInsertSql"
+//}
+//func (kv *KeyValue) GetUpdateSql() string {
+//	return "TODO GetUpdateSql"
+//}
+
+func (kv *KeyValue) GetCreateTableSql(dbType string) string {
+	if dbType == mysqlStr {
+		return "CREATE TABLE `key_values` (`object_key` varbinary(128), `object_value` longblob, PRIMARY KEY (`object_key`))"
+	} else if dbType == sqliteStr {
+		return "CREATE TABLE `key_values` (`object_key` varbinary(128), `object_value` longblob)"
+	}
+	panic("Unsupported db type:" + dbType)
 }
-func (kv *KeyValue) GetUpdateSql() string {
-	return "TODO GetUpdateSql"
+func (kv *KeyValue) GetTableName() string {
+	return "key_values"
+}
+
+func (kv *KeyValue) GetInsertSql() (string, []interface{}) {
+	return "INSERT INTO key_values values(?, ?)", []interface{}{kv.ObjectKey, kv.ObjectValue}
+}
+func (kv *KeyValue) GetUpdateSql() (string, []interface{}) {
+	return "UPDATE key_values set object_value=? WHERE object_key=?", []interface{}{kv.ObjectValue, kv.ObjectKey}
+}
+func (kv *KeyValue) GetCountSql() (string, []interface{}) {
+	return "SELECT count(*) FROM key_values WHERE  object_key=?", []interface{}{kv.ObjectKey}
 }
 
 // Get returns the value for the given key, or returns nil if none exists
@@ -128,11 +150,16 @@ func (p *SqlDBHandle) WriteBatch(batch protocol.StoreBatcher, sync bool) error {
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
+func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) (protocol.Iterator, error) {
+	if len(start) == 0 || len(limit) == 0 {
+		return nil, fmt.Errorf("iterator range should not start(%s) or limit(%s) with empty key",
+			string(start), string(limit))
+	}
+
 	sql := "select * from key_values where object_key >= ? and object_key < ?"
 	rows, err := p.QueryMulti(sql, start, limit)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer rows.Close()
 	result := &kvIterator{}
@@ -141,16 +168,20 @@ func (p *SqlDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.
 		_ = rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
 		result.append(&kv)
 	}
-	return result
+	return result, nil
 
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
-	sql := "select * from key_values where object_key like ?%"
+func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, error) {
+	if len(prefix) == 0 {
+		return nil, fmt.Errorf("iterator prefix should not be empty key")
+	}
+
+	sql := "select * from key_values where object_key like ?"
 	rows, err := p.QueryMulti(sql, prefix)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer rows.Close()
 	result := &kvIterator{}
@@ -159,7 +190,7 @@ func (p *SqlDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
 		_ = rows.ScanColumns(&kv.ObjectKey, &kv.ObjectValue)
 		result.append(&kv)
 	}
-	return result
+	return result, nil
 }
 
 type kvIterator struct {

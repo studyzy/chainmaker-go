@@ -14,13 +14,13 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/v2/sortedmap"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -108,9 +108,9 @@ func registerChainConfigContractMethods(log protocol.Logger) map[string]common.C
 	methodMap[syscontract.ChainConfigFunction_PERMISSION_DELETE.String()] = consensusRuntime.ResourcePolicyDelete
 
 	// [chainConfig]
-	ChainConfigRuntime := &ChainConfigRuntime{log: log}
-	methodMap[syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String()] = ChainConfigRuntime.GetChainConfig
-	methodMap[syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String()] = ChainConfigRuntime.GetChainConfigFromBlockHeight
+	ccRuntime := &ChainConfigRuntime{log: log}
+	methodMap[syscontract.ChainConfigFunction_GET_CHAIN_CONFIG.String()] = ccRuntime.GetChainConfig
+	methodMap[syscontract.ChainConfigFunction_GET_CHAIN_CONFIG_AT.String()] = ccRuntime.GetChainConfigFromBlockHeight
 
 	//// [archive]
 	//archiveStoreRuntime := &ArchiveStoreRuntime{log: log}
@@ -119,14 +119,17 @@ func registerChainConfigContractMethods(log protocol.Logger) map[string]common.C
 
 	return methodMap
 }
-
+func GetChainConfig(txSimContext protocol.TxSimContext) (*configPb.ChainConfig, error) {
+	return getChainConfig(txSimContext, make(map[string][]byte))
+}
 func getChainConfig(txSimContext protocol.TxSimContext, params map[string][]byte) (*configPb.ChainConfig, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
 	}
 	bytes, err := txSimContext.Get(chainConfigContractName, []byte(keyChainConfig))
 	if err != nil {
-		msg := fmt.Errorf("txSimContext get failed, name[%s] key[%s] err: %+v", chainConfigContractName, keyChainConfig, err)
+		msg := fmt.Errorf("txSimContext get failed, name[%s] key[%s] err: %+v",
+			chainConfigContractName, keyChainConfig, err)
 		return nil, msg
 	}
 
@@ -166,7 +169,8 @@ type ChainConfigRuntime struct {
 }
 
 // GetChainConfig get newest chain config
-func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
 		return nil, err
@@ -179,7 +183,8 @@ func (r *ChainConfigRuntime) GetChainConfig(txSimContext protocol.TxSimContext, 
 }
 
 // GetChainConfigAt get chain config from less than or equal to block height
-func (r *ChainConfigRuntime) GetChainConfigFromBlockHeight(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConfigRuntime) GetChainConfigFromBlockHeight(txSimContext protocol.TxSimContext,
+	params map[string][]byte) (result []byte, err error) {
 	if params == nil {
 		r.log.Error(common.ErrParamsEmpty)
 		return nil, common.ErrParamsEmpty
@@ -190,7 +195,8 @@ func (r *ChainConfigRuntime) GetChainConfigFromBlockHeight(txSimContext protocol
 		r.log.Error(err)
 		return nil, err
 	}
-	chainConfig, err := chainconf.GetChainConfigAt(r.log, nil, nil, txSimContext.GetBlockchainStore(), blockHeight)
+	chainConfig, err := chainconf.GetChainConfigAt(r.log, nil, nil, txSimContext.GetBlockchainStore(),
+		blockHeight)
 	if err != nil {
 		r.log.Error("get chain config from block height failed, err: %s", err)
 		return nil, err
@@ -208,7 +214,7 @@ type ChainCoreRuntime struct {
 	log protocol.Logger
 }
 
-func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
 		r.log.Error(err)
@@ -221,9 +227,9 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 
 	// [0, 60] tx_scheduler_timeout
 	if txSchedulerTimeout, ok := params[paramNameTxSchedulerTimeout]; ok {
-		parseUint, err := strconv.ParseUint(string(txSchedulerTimeout), 10, 0)
-		if err != nil {
-			r.log.Error(err)
+		parseUint, err1 := strconv.ParseUint(string(txSchedulerTimeout), 10, 0)
+		if err1 != nil {
+			r.log.Error(err1)
 			return nil, err
 		}
 		if parseUint > defaultConfigMaxValidateTimeout {
@@ -235,9 +241,9 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 	}
 	// [0, 60] tx_scheduler_validate_timeout
 	if txSchedulerValidateTimeout, ok := params[paramNameTxSchedulerValidateTimeout]; ok {
-		parseUint, err := strconv.ParseUint(string(txSchedulerValidateTimeout), 10, 0)
-		if err != nil {
-			r.log.Error(err)
+		parseUint, err1 := strconv.ParseUint(string(txSchedulerValidateTimeout), 10, 0)
+		if err1 != nil {
+			r.log.Error(err1)
 			return nil, err
 		}
 		if parseUint > defaultConfigMaxSchedulerTimeout {
@@ -253,7 +259,7 @@ func (r *ChainCoreRuntime) CoreUpdate(txSimContext protocol.TxSimContext, params
 		return nil, common.ErrParams
 	}
 	// [end]
-	result, err = setChainConfig(txSimContext, chainConfig)
+	result, err := setChainConfig(txSimContext, chainConfig)
 	if err != nil {
 		r.log.Errorf("core update update fail, %s, params %+v", err.Error(), params)
 	} else {
@@ -267,7 +273,8 @@ type ChainBlockRuntime struct {
 	log protocol.Logger
 }
 
-func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainBlockRuntime) BlockUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]start verify
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -321,7 +328,8 @@ type ChainTrustRootsRuntime struct {
 }
 
 // TrustRootAdd add trustRoot
-func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -332,7 +340,8 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 	orgId := string(params[paramNameOrgId])
 	rootCasStr := string(params[paramNameRoot])
 	if utils.IsAnyBlank(orgId, rootCasStr) {
-		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found",
+			common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -350,7 +359,8 @@ func (r *ChainTrustRootsRuntime) TrustRootAdd(txSimContext protocol.TxSimContext
 }
 
 // TrustRootUpdate update the trustRoot
-func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -362,7 +372,8 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 
 	rootCasStr := string(params[paramNameRoot])
 	if utils.IsAnyBlank(orgId, rootCasStr) {
-		err = fmt.Errorf("%s, add trust root cert require param [%s, %s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
+		err = fmt.Errorf("%s, add trust root cert require param [%s, %s]  not found",
+			common.ErrParams.Error(), paramNameOrgId, paramNameRoot)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -389,7 +400,8 @@ func (r *ChainTrustRootsRuntime) TrustRootUpdate(txSimContext protocol.TxSimCont
 }
 
 // TrustRootDelete delete trustRoot
-func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustRootsRuntime) TrustRootDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -442,7 +454,8 @@ type ChainTrustMembersRuntime struct {
 	log protocol.Logger
 }
 
-func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -455,7 +468,8 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 	role := string(params[paramNameRole])
 	nodeId := string(params[paramNameNodeId])
 	if utils.IsAnyBlank(memberInfo, orgId, role, nodeId) {
-		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found", common.ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
+		err = fmt.Errorf("%s, add trust member require param [%s, %s,%s,%s] not found",
+			common.ErrParams.Error(), paramNameOrgId, paramNameMemberInfo, paramNameRole, paramNameNodeId)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -471,14 +485,17 @@ func (r *ChainTrustMembersRuntime) TrustMemberAdd(txSimContext protocol.TxSimCon
 	chainConfig.TrustMembers = append(chainConfig.TrustMembers, trustMember)
 	result, err = setChainConfig(txSimContext, chainConfig)
 	if err != nil {
-		r.log.Errorf("trust member add fail, %s, orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", err.Error(), orgId, memberInfo, role, nodeId)
+		r.log.Errorf("trust member add fail, %s, orgId[%s] memberInfo[%s] role[%s] nodeId[%s]",
+			err.Error(), orgId, memberInfo, role, nodeId)
 	} else {
-		r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]", orgId, memberInfo, role, nodeId)
+		r.log.Infof("trust member add success. orgId[%s] memberInfo[%s] role[%s] nodeId[%s]",
+			orgId, memberInfo, role, nodeId)
 	}
 	return result, err
 }
 
-func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainTrustMembersRuntime) TrustMemberDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -526,7 +543,8 @@ type ChainConsensusRuntime struct {
 }
 
 // NodeIdAdd add nodeId
-func (r *ChainConsensusRuntime) NodeIdAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) NodeIdAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -589,7 +607,8 @@ func (r *ChainConsensusRuntime) NodeIdAdd(txSimContext protocol.TxSimContext, pa
 }
 
 // NodeIdUpdate update nodeId
-func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -603,7 +622,8 @@ func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext,
 	newNodeId := string(params[paramNameNewNodeId]) // new node id
 
 	if utils.IsAnyBlank(orgId, nodeId, newNodeId) {
-		err = fmt.Errorf("update node id failed, require param [%s, %s, %s], but not found", paramNameOrgId, paramNameNodeId, paramNameNewNodeId)
+		err = fmt.Errorf("update node id failed, require param [%s, %s, %s], but not found",
+			paramNameOrgId, paramNameNodeId, paramNameNewNodeId)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -635,7 +655,8 @@ func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext,
 			chainConfig.Consensus.Nodes = nodes
 			result, err = setChainConfig(txSimContext, chainConfig)
 			if err != nil {
-				r.log.Errorf("node id update fail, %s, orgId[%s] addr[%s] newAddr[%s]", err.Error(), orgId, nid, newNodeId)
+				r.log.Errorf("node id update fail, %s, orgId[%s] addr[%s] newAddr[%s]",
+					err.Error(), orgId, nid, newNodeId)
 			} else {
 				r.log.Infof("node id update success. orgId[%s] addr[%s] newAddr[%s]", orgId, nid, newNodeId)
 			}
@@ -649,7 +670,8 @@ func (r *ChainConsensusRuntime) NodeIdUpdate(txSimContext protocol.TxSimContext,
 }
 
 // NodeIdDelete delete nodeId
-func (r *ChainConsensusRuntime) NodeIdDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) NodeIdDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -705,7 +727,8 @@ func (r *ChainConsensusRuntime) NodeIdDelete(txSimContext protocol.TxSimContext,
 }
 
 // NodeOrgAdd add nodeOrg
-func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -757,7 +780,8 @@ func (r *ChainConsensusRuntime) NodeOrgAdd(txSimContext protocol.TxSimContext, p
 }
 
 // NodeOrgUpdate update nodeOrg
-func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -771,7 +795,8 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 	nodeIdsStr := string(params[paramNameNodeIds])
 
 	if utils.IsAnyBlank(orgId, nodeIdsStr) {
-		err = fmt.Errorf("update node org failed, require param [%s, %s], but not found", paramNameOrgId, paramNameNodeIds)
+		err = fmt.Errorf("update node org failed, require param [%s, %s], but not found",
+			paramNameOrgId, paramNameNodeIds)
 		r.log.Error(err)
 		return nil, err
 	}
@@ -820,7 +845,8 @@ func (r *ChainConsensusRuntime) NodeOrgUpdate(txSimContext protocol.TxSimContext
 }
 
 // NodeOrgDelete delete nodeOrg
-func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -839,9 +865,9 @@ func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext
 
 	nodes := chainConfig.Consensus.Nodes
 	if len(nodes) == 1 {
-		err := fmt.Errorf("there is at least one org")
-		r.log.Error(err)
-		return nil, err
+		err1 := fmt.Errorf("there is at least one org")
+		r.log.Error(err1)
+		return nil, err1
 	}
 	for i, node := range nodes {
 		if orgId == node.OrgId {
@@ -864,7 +890,8 @@ func (r *ChainConsensusRuntime) NodeOrgDelete(txSimContext protocol.TxSimContext
 }
 
 // ConsensusExtAdd add consensus extra
-func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -888,8 +915,11 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value := val.([]byte)
-		if _, ok := extConfigMap[key]; ok {
+		value, ok := val.([]byte)
+		if !ok {
+			r.log.Error("value not a string")
+		}
+		if _, ok = extConfigMap[key]; ok {
 			parseParamErr = fmt.Errorf("ext_config key[%s] is exist", key)
 			r.log.Error(parseParamErr.Error())
 			return false
@@ -921,7 +951,8 @@ func (r *ChainConsensusRuntime) ConsensusExtAdd(txSimContext protocol.TxSimConte
 }
 
 // ConsensusExtUpdate update consensus extra
-func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -973,7 +1004,8 @@ func (r *ChainConsensusRuntime) ConsensusExtUpdate(txSimContext protocol.TxSimCo
 }
 
 // ConsensusExtDelete delete consensus extra
-func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -1021,12 +1053,13 @@ func (r *ChainConsensusRuntime) ConsensusExtDelete(txSimContext protocol.TxSimCo
 }
 
 // [permissions]
-type ChainPermissionRuntime struct {
-	log protocol.Logger
-}
+//type ChainPermissionRuntime struct {
+//	log protocol.Logger
+//}
 
 // ResourcePolicyAdd add permission
-func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -1049,9 +1082,11 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value := val.([]byte)
-
-		_, ok := resourceMap[key]
+		value, ok := val.([]byte)
+		if !ok {
+			r.log.Error("value not a string")
+		}
+		_, ok = resourceMap[key]
 		if ok {
 			parseParamErr = fmt.Errorf("permission resource_name[%s] is exist", key)
 			r.log.Errorf(parseParamErr.Error())
@@ -1059,9 +1094,9 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 		}
 
 		policy := &acPb.Policy{}
-		err := proto.Unmarshal([]byte(value), policy)
-		if err != nil {
-			parseParamErr = fmt.Errorf("policy Unmarshal err:%s", err)
+		err1 := proto.Unmarshal([]byte(value), policy)
+		if err1 != nil {
+			parseParamErr = fmt.Errorf("policy Unmarshal err:%s", err1)
 			r.log.Errorf(parseParamErr.Error())
 			return false
 		}
@@ -1071,16 +1106,18 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 			Policy:       policy,
 		}
 
-		ac, err := txSimContext.GetAccessControl()
-		if err != nil {
-			parseParamErr = fmt.Errorf("add resource policy GetAccessControl err:%s", err)
+		ac, err1 := txSimContext.GetAccessControl()
+		if err1 != nil {
+			parseParamErr = fmt.Errorf("add resource policy GetAccessControl err:%s", err1)
 			r.log.Errorf(parseParamErr.Error())
 			return false
 		}
 
 		b := ac.ValidateResourcePolicy(resourcePolicy)
 		if !b {
-			parseParamErr = fmt.Errorf("add resource policy failed this resourcePolicy is restricted CheckPrincipleValidity err resourcePolicy[%s]", resourcePolicy)
+			parseParamErr = fmt.Errorf(
+				"add resource policy failed this resourcePolicy is restricted CheckPrincipleValidity"+
+					" err resourcePolicy[%s]", resourcePolicy)
 			r.log.Errorf(parseParamErr.Error())
 			return false
 		}
@@ -1109,7 +1146,8 @@ func (r *ChainConsensusRuntime) ResourcePolicyAdd(txSimContext protocol.TxSimCon
 }
 
 // ResourcePolicyUpdate update resource policy
-func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -1132,17 +1170,20 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 	sortedParams := sortedmap.NewStringKeySortedMapWithBytesData(params)
 	var parseParamErr error
 	sortedParams.Range(func(key string, val interface{}) (isContinue bool) {
-		value := val.([]byte)
-		_, ok := resourceMap[key]
+		value, ok := val.([]byte)
+		if !ok {
+			r.log.Error("value not a string")
+		}
+		_, ok = resourceMap[key]
 		if !ok {
 			parseParamErr = fmt.Errorf("permission resource name does not exist resource_name[%s]", value)
 			r.log.Errorf(parseParamErr.Error())
 			return false
 		}
 		policy := &acPb.Policy{}
-		err := proto.Unmarshal(value, policy)
-		if err != nil {
-			parseParamErr = fmt.Errorf("policy Unmarshal err:%s", err)
+		err1 := proto.Unmarshal(value, policy)
+		if err1 != nil {
+			parseParamErr = fmt.Errorf("policy Unmarshal err:%s", err1)
 			r.log.Errorf(parseParamErr.Error())
 			return false
 		}
@@ -1154,15 +1195,17 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 				ResourceName: key,
 				Policy:       policy,
 			}
-			ac, err := txSimContext.GetAccessControl()
-			if err != nil {
-				parseParamErr = fmt.Errorf("GetAccessControl, err:%s", err)
+			ac, err1 := txSimContext.GetAccessControl()
+			if err1 != nil {
+				parseParamErr = fmt.Errorf("GetAccessControl, err:%s", err1)
 				r.log.Errorf(parseParamErr.Error())
 				return false
 			}
 			b := ac.ValidateResourcePolicy(rp)
 			if !b {
-				parseParamErr = fmt.Errorf("update resource policy this resourcePolicy is restricted. CheckPrincipleValidity err resourcePolicy %+v", rp)
+				parseParamErr = fmt.Errorf(
+					"update resource policy this resourcePolicy is restricted. CheckPrincipleValidity"+
+						" err resourcePolicy %+v", rp)
 				r.log.Errorf(parseParamErr.Error())
 				return false
 			}
@@ -1192,7 +1235,8 @@ func (r *ChainConsensusRuntime) ResourcePolicyUpdate(txSimContext protocol.TxSim
 }
 
 // ResourcePolicyDelete delete permission
-func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSimContext, params map[string][]byte) (
+	result []byte, err error) {
 	// [start]
 	chainConfig, err := getChainConfig(txSimContext, params)
 	if err != nil {
@@ -1230,15 +1274,16 @@ func (r *ChainConsensusRuntime) ResourcePolicyDelete(txSimContext protocol.TxSim
 				RoleList: nil,
 			},
 		}
-		ac, err := txSimContext.GetAccessControl()
-		if err != nil {
-			parseParamErr = fmt.Errorf("delete resource policy GetAccessControl err:%s", err)
+		ac, err1 := txSimContext.GetAccessControl()
+		if err1 != nil {
+			parseParamErr = fmt.Errorf("delete resource policy GetAccessControl err:%s", err1)
 			r.log.Error(parseParamErr.Error())
 			return false
 		}
 		b := ac.ValidateResourcePolicy(resourcePolicy)
 		if !b {
-			parseParamErr = fmt.Errorf("delete resource policy this resourcePolicy is restricted, CheckPrincipleValidity err resourcePolicy %+v", resourcePolicy)
+			parseParamErr = fmt.Errorf("delete resource policy this resourcePolicy is restricted,"+
+				" CheckPrincipleValidity err resourcePolicy %+v", resourcePolicy)
 			r.log.Error(parseParamErr.Error())
 			return false
 		}

@@ -18,9 +18,9 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/mr-tron/base58/base58"
 )
 
@@ -95,12 +95,11 @@ func NewDPoSRuntime(log protocol.Logger) *DPoSRuntime {
 // BalanceOf return balance(token) of owner
 // params["owner"]:${owner}
 // return balance of ${owner}
-func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
 	}
 	owner := string(params[paramNameOwner])
-	//if owner, ok := params[paramNameOwner]; ok {
 	if owner == "" {
 		r.log.Errorf("contract[%s] param [%s] is nil", dposErc20ContractName, paramNameOwner)
 		return nil, common.ErrParams
@@ -114,8 +113,6 @@ func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[s
 		bigInteger = utils.NewZeroBigInteger()
 	}
 	return []byte(bigInteger.String()), nil
-	//}
-	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameOwner)
 }
 
 // Transfer
@@ -123,14 +120,12 @@ func (r *DPoSRuntime) BalanceOf(txSimContext protocol.TxSimContext, params map[s
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value of ${sender} after transfer
-func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
 	}
 	to := string(params[paramNameTo])
 	value := string(params[paramNameValue])
-	//if to, ok := params[paramNameTo]; ok {
-	//	if value, ok := params[paramNameValue]; ok {
 	val, err := loadAndCheckValue(value)
 	if err != nil {
 		// 转账的值不正确
@@ -143,15 +138,11 @@ func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[st
 		r.log.Errorf("contract[%s] load sender address failed, %s", dposErc20ContractName, err.Error())
 		return nil, err
 	}
-	result, err = transfer(txSimContext, from, to, val)
+	result, err := transfer(txSimContext, from, to, val)
 	if err != nil {
 		r.log.Errorf("transfer from [%s] to [%s] failed: %s", from, to, err.Error())
 	}
 	return result, err
-	//}
-	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
-	//}
-	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // TransferFrom 交易的发送者，从from的账号中转移指定数目的token给to账户
@@ -160,16 +151,13 @@ func (r *DPoSRuntime) Transfer(txSimContext protocol.TxSimContext, params map[st
 // params["to"]:${to}
 // params["value"]:${value}
 // return token value of ${from} after transfer
-func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
 	}
 	from := string(params[paramNameFrom])
 	to := string(params[paramNameTo])
 	value := string(params[paramNameValue])
-	//if to, ok := params[paramNameTo]; ok {
-	//	if from, ok := params[paramNameFrom]; ok {
-	//		if value, ok := params[paramNameValue]; ok {
 	val, err := loadAndCheckValue(value)
 	if err != nil {
 		// 转账的值不正确
@@ -206,12 +194,6 @@ func (r *DPoSRuntime) TransferFrom(txSimContext protocol.TxSimContext, params ma
 		return nil, err
 	}
 	return transfer(txSimContext, from, to, val)
-	//}
-	//		return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameValue)
-	//	}
-	//	return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameFrom)
-	//}
-	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Approve
@@ -355,7 +337,9 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 	}
 	if beforeFromBalance == nil {
 		r.log.Errorf("load address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
-		return nil, fmt.Errorf("load address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
+		return nil, fmt.Errorf(
+			"load address balance error which is zero, contract[%s] address[%s]",
+			dposErc20ContractName, from)
 	}
 	// 处理总量
 	beforeTotalSupply, err := totalSupply(txSimContext)
@@ -367,15 +351,21 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 	var afterTotalSupply, afterFromBalance *utils.BigInteger
 	// 检查总量是否够燃烧
 	if beforeTotalSupply.Cmp(val) < 0 {
-		r.log.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
-		return nil, fmt.Errorf("total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
+		r.log.Errorf(
+			"total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
+		return nil, fmt.Errorf(
+			"total supply is not enough for burn, before[%s] burn-value[%s]", beforeTotalSupply.String(), val.String())
 	}
 	// 计算燃烧后的值
 	afterTotalSupply = utils.Sub(beforeTotalSupply, val)
 	// 检查当前账号总量是否够燃烧
 	if beforeFromBalance.Cmp(val) < 0 {
-		r.log.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
-		return nil, fmt.Errorf("address[%s] is not enough for burn, before[%s] burn-value[%s]", from, beforeTotalSupply.String(), val.String())
+		r.log.Errorf(
+			"address[%s] is not enough for burn, before[%s] burn-value[%s]",
+			from, beforeTotalSupply.String(), val.String())
+		return nil, fmt.Errorf(
+			"address[%s] is not enough for burn, before[%s] burn-value[%s]",
+			from, beforeTotalSupply.String(), val.String())
 	}
 	afterFromBalance = utils.Sub(beforeFromBalance, val)
 	// 重置总量和当前账号的值
@@ -397,13 +387,12 @@ func (r *DPoSRuntime) Burn(txSimContext protocol.TxSimContext, params map[string
 // TransferOwnership 转移拥有者给其他账户
 // params["to"]:${to}
 // return new owner
-func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
 	}
 	to := string(params[paramNameTo])
 
-	//if to, ok := params[paramNameTo]; ok {
 	// 获取当前用户
 	from, err := loadSenderAddress(txSimContext)
 	if err != nil {
@@ -425,21 +414,18 @@ func (r *DPoSRuntime) TransferOwnership(txSimContext protocol.TxSimContext, para
 	// 将owner设置魏to
 	// 返回新的owner
 	return setOwner(txSimContext, to)
-	//}
-	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Allowance
 // params["from"]:${from}
 // params["to"]:${to}
 // return value of approve
-func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	if params == nil {
 		return nil, common.ErrParamsEmpty
 	}
 	to := string(params[paramNameTo])
 	from := string(params[paramNameFrom])
-	//if to, ok := params[paramNameTo]; ok {
 	// 检查是否有from
 	var fromAddress string
 	if len(from) != 0 {
@@ -454,8 +440,6 @@ func (r *DPoSRuntime) Allowance(txSimContext protocol.TxSimContext, params map[s
 		fromAddress = sender
 	}
 	return allowance(txSimContext, fromAddress, to)
-	//}
-	//return nil, fmt.Errorf("can not find param, contract[%s] param[%s]", dposErc20ContractName, paramNameTo)
 }
 
 // Owner
@@ -476,7 +460,7 @@ func (r *DPoSRuntime) Total(txSimContext protocol.TxSimContext, params map[strin
 
 // Decimals
 // return decimals of DPoS
-func (r *DPoSRuntime) Decimals(txSimContext protocol.TxSimContext, params map[string][]byte) (result []byte, err error) {
+func (r *DPoSRuntime) Decimals(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
 	decimalsBytes, err := txSimContext.Get(dposErc20ContractName, []byte(KeyDecimals))
 	if err != nil {
 		r.log.Errorf("load [%s] from cache failed, %s", KeyDecimals, err.Error())
@@ -568,7 +552,9 @@ func loadSenderAddress(txSimContext protocol.TxSimContext) (string, error) {
 			memberInfoHex := hex.EncodeToString(sender.MemberInfo)
 			certInfo, err := getWholeCertInfo(txSimContext, memberInfoHex)
 			if err != nil {
-				return "", fmt.Errorf("can not load whole cert info , contract[%s] member[%s]", dposErc20ContractName, memberInfoHex)
+				return "", fmt.Errorf(
+					"can not load whole cert info , contract[%s] member[%s]",
+					dposErc20ContractName, memberInfoHex)
 			}
 			member = certInfo.Cert
 		} else {
@@ -640,12 +626,15 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.Bi
 		return nil, fmt.Errorf("load from address balance error, contract[%s] address[%s]", dposErc20ContractName, from)
 	}
 	if fromBalance == nil {
-		return nil, fmt.Errorf("load from address balance error which is zero, contract[%s] address[%s]", dposErc20ContractName, from)
+		return nil, fmt.Errorf(
+			"load from address balance error which is zero, contract[%s] address[%s]",
+			dposErc20ContractName, from)
 	}
 	// 判断其值是否满足
 	if fromBalance.Cmp(val) < 0 {
 		// 账户剩余的钱不满足需求
-		return nil, fmt.Errorf("address balance is not enough, contract[%s] from address[%s] balance[%s] < value[%s]",
+		return nil, fmt.Errorf(
+			"address balance is not enough, contract[%s] from address[%s] balance[%s] < value[%s]",
 			dposErc20ContractName, from, fromBalance.String(), val.String())
 	}
 	toBalance, err := balanceOf(txSimContext, to)
@@ -668,7 +657,8 @@ func transfer(txSimContext protocol.TxSimContext, from, to string, val *utils.Bi
 	afterSum := utils.Sum(afterFromBalance, afterToBalance)
 	if beforeSum.Cmp(afterSum) != 0 {
 		// 前后值存在问题
-		return nil, fmt.Errorf("balance is not equal before and after operation, contract[%s] before-balance[%s] after-balance[%s]",
+		return nil, fmt.Errorf(
+			"balance is not equal before and after operation, contract[%s] before-balance[%s] after-balance[%s]",
 			dposErc20ContractName, beforeSum.String(), afterSum.String())
 	}
 	// 一致的情况下更新存储

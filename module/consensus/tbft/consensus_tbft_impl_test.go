@@ -12,11 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
-
-	"chainmaker.org/chainmaker/common/v2/msgbus"
 )
 
 type Blocker struct {
@@ -148,7 +147,7 @@ func (ce *mockCoreEngine) OnMessage(msg *msgbus.Message) {
 		clog.Infof("mockCoreEngine %s, topic: %s, blockHeight: %d", ce.ToStringWithoutLock(), msg.Topic, block.Header.BlockHeight)
 		ce.commitedBlocks = append(ce.commitedBlocks, block)
 		ce.reachingConsensus = false
-		ce.height += 1
+		ce.height++
 		ce.commitEventC <- block.Header.BlockHeight
 	default:
 		ce.t.Errorf("error msg topic: %d", msg.Topic)

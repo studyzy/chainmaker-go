@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
-	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/queue/lockfreequeue"
@@ -23,6 +22,7 @@ import (
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	txpoolPb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -167,7 +167,11 @@ func (p *BatchTxPool) createConfigTxBatch() {
 		return
 	}
 
-	tx := val.(*commonPb.Transaction)
+	tx, ok := val.(*commonPb.Transaction)
+	if !ok {
+		p.log.Errorf("transfer val interface into *commonPb.Transaction failed")
+		return
+	}
 	batchId := atomic.AddInt32(&p.currentBatchId, 1)
 	batch := &txpoolPb.TxBatch{
 		BatchId: batchId,
@@ -208,7 +212,10 @@ func (p *BatchTxPool) popTxsFromQueue() ([]*commonPb.Transaction, map[string]int
 	defer timer.Stop()
 	for i := 0; i < int(p.batchMaxSize); {
 		if val, ok, _ := p.txQueue.Pull(); ok {
-			tx := val.(*commonPb.Transaction)
+			tx, ok := val.(*commonPb.Transaction)
+			if !ok {
+				p.log.Errorf("transfer val interface into *commonPb.Transaction failed")
+			}
 			if _, ok := txIdToIndex[tx.Payload.GetTxId()]; ok {
 				continue
 			}
@@ -243,7 +250,8 @@ func (p *BatchTxPool) createCommonTxBatch() {
 		Size_:    int32(len(txs)),
 	}
 	p.log.Infof("create txBatch size: %d, batchId: %d, txMapLen: %d, txsLen: %d, totalTxCount: %d",
-		batch.Size(), batch.BatchId, len(batch.TxIdsMap), len(batch.Txs), atomic.LoadInt32(&p.currentTxCount)+int32(batch.Size()))
+		batch.GetSize_(), batch.BatchId, len(batch.TxIdsMap), len(batch.Txs),
+		atomic.LoadInt32(&p.currentTxCount)+int32(batch.GetSize_()))
 
 	var (
 		err      error
@@ -306,13 +314,13 @@ func (p *BatchTxPool) getBatch(batchId int32) *txpoolPb.TxBatch {
 	if batch := p.commonBatchPool.GetBatch(batchId); batch != nil {
 		return batch
 	}
-	if batch := p.configBatchPool.GetBatch(batchId); batch != nil {
-		return batch
-	}
-	return nil
+	batch := p.configBatchPool.GetBatch(batchId)
+	return batch
+
 }
 
-func (p *BatchTxPool) generateTxsInfoFromBatch(batch *txpoolPb.TxBatch) (map[string]*commonPb.Transaction, map[string]uint64) {
+func (p *BatchTxPool) generateTxsInfoFromBatch(batch *txpoolPb.TxBatch) (map[string]*commonPb.Transaction,
+	map[string]uint64) {
 	txsRet := make(map[string]*commonPb.Transaction, batch.Size_)
 	txsHeightInfo := make(map[string]uint64)
 
@@ -368,7 +376,11 @@ func (p *BatchTxPool) fetchTxsFromCfgPool(blockHeight uint64) []*commonPb.Transa
 		if val == nil {
 			return true
 		}
-		batch = val.(*txpoolPb.TxBatch)
+		var ok bool
+		batch, ok = val.(*txpoolPb.TxBatch)
+		if !ok {
+			p.log.Errorf("transfer val interface into *txpoolPb.TxBatch failed")
+		}
 		return false
 	})
 	if batch != nil {
@@ -394,12 +406,16 @@ func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight uint64) []*commonPb.Tra
 	var (
 		batch         *txpoolPb.TxBatch
 		commonTxsPool = p.commonBatchPool
+		ok            bool
 	)
 	commonTxsPool.pool.Range(func(val interface{}) (isContinue bool) {
 		if val == nil {
 			return true
 		}
-		batch = val.(*txpoolPb.TxBatch)
+		batch, ok = val.(*txpoolPb.TxBatch)
+		if !ok {
+			p.log.Errorf("transfer val interface into *txpoolPb.TxBatch failed")
+		}
 		return false
 	})
 	if batch != nil {
@@ -409,15 +425,15 @@ func (p *BatchTxPool) fetchTxsFromCommonPool(blockHeight uint64) []*commonPb.Tra
 	return nil
 }
 
-func (p *BatchTxPool) filterTxs(txs []*commonPb.Transaction) []*commonPb.Transaction {
-	noExistInDb := make([]*commonPb.Transaction, 0, len(txs))
-	for _, tx := range txs {
-		if !p.isTxExistInDB(tx) {
-			noExistInDb = append(noExistInDb, tx)
-		}
-	}
-	return noExistInDb
-}
+//func (p *BatchTxPool) filterTxs(txs []*commonPb.Transaction) []*commonPb.Transaction {
+//	noExistInDb := make([]*commonPb.Transaction, 0, len(txs))
+//	for _, tx := range txs {
+//		if !p.isTxExistInDB(tx) {
+//			noExistInDb = append(noExistInDb, tx)
+//		}
+//	}
+//	return noExistInDb
+//}
 
 func (p *BatchTxPool) RetryAndRemoveTxs(retryTxs []*commonPb.Transaction, removeTxs []*commonPb.Transaction) {
 	if atomic.LoadInt32(&p.stat) == 0 {
@@ -427,7 +443,6 @@ func (p *BatchTxPool) RetryAndRemoveTxs(retryTxs []*commonPb.Transaction, remove
 	p.log.Debugf("retry txs num: %d, remove txs num: %d", len(retryTxs), len(removeTxs))
 	p.retryTxBatch(retryTxs)
 	p.removeTxBatch(removeTxs)
-	return
 }
 
 // todo. may be update logic
@@ -453,7 +468,6 @@ func (p *BatchTxPool) retryTxBatch(txs []*commonPb.Transaction) {
 		p.commonBatchPool.PutIfNotExist(batch)
 	}
 	atomic.AddInt32(&p.currentTxCount, batch.Size_)
-	return
 }
 
 func createTxIdsMap(txs []*commonPb.Transaction) map[string]int32 {
@@ -479,18 +493,34 @@ func (p *BatchTxPool) removeTxBatch(txs []*commonPb.Transaction) {
 		return
 	}
 
-	batch := &txpoolPb.TxBatch{NodeId: p.nodeId, BatchId: batchId, Txs: txs, TxIdsMap: createTxIdsMap(txs), Size_: int32(len(txs))}
+	batch := &txpoolPb.TxBatch{NodeId: p.nodeId, BatchId: batchId, Txs: txs, TxIdsMap: createTxIdsMap(txs),
+		Size_: int32(len(txs))}
+	if p.pendingPool.GetBatch(batchId) != nil {
+		batch.Size_ = p.pendingPool.GetBatch(batchId).GetSize_()
+	} else if utils.IsConfigTx(txs[0]) {
+		if p.configBatchPool.GetBatch(batchId) != nil {
+			batch.Size_ = p.configBatchPool.GetBatch(batchId).GetSize_()
+		}
+	} else {
+		if p.commonBatchPool.GetBatch(batchId) != nil {
+			batch.Size_ = p.commonBatchPool.GetBatch(batchId).GetSize_()
+		}
+	}
+
 	if p.pendingPool.RemoveIfExist(batch) {
 		remove = true
-		p.log.Infof("remove txs[%d] from pending pool, current pool size [%d]", len(txs), atomic.LoadInt32(&p.currentTxCount)-int32(len(txs)))
+		p.log.Infof("remove txs[%d] from pending pool, current pool size [%d]", len(txs),
+			atomic.LoadInt32(&p.currentTxCount)-int32(len(txs)))
 	} else if utils.IsConfigTx(txs[0]) {
 		if p.configBatchPool.RemoveIfExist(batch) {
-			p.log.Infof("remove txs[%d] from config tx pool, current pool size [%d]", len(txs), atomic.LoadInt32(&p.currentTxCount)-int32(len(txs)))
+			p.log.Infof("remove txs[%d] from config tx pool, current pool size [%d]", len(txs),
+				atomic.LoadInt32(&p.currentTxCount)-int32(len(txs)))
 			remove = true
 		}
 	} else {
 		if p.commonBatchPool.RemoveIfExist(batch) {
-			p.log.Infof("remove txs[%d] from common tx pool, current pool size [%d]", len(txs), atomic.LoadInt32(&p.currentTxCount)-int32(len(txs)))
+			p.log.Infof("remove txs[%d] from common tx pool, current pool size [%d]", len(txs),
+				atomic.LoadInt32(&p.currentTxCount)-int32(len(txs)))
 			remove = true
 		}
 	}
@@ -501,7 +531,6 @@ func (p *BatchTxPool) removeTxBatch(txs []*commonPb.Transaction) {
 	} else {
 		p.log.Errorf("remove batch failed, batch(batch id:%d) not found in all batch pool", batchId)
 	}
-	return
 }
 
 func (p *BatchTxPool) publishSignal() {

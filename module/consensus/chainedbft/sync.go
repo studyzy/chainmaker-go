@@ -9,7 +9,7 @@ package chainedbft
 import (
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
@@ -17,23 +17,11 @@ const (
 	MaxSyncBlockNum = 10
 )
 
-type orderBlocks []*chainedbftpb.BlockPair
-
-//Len returns the size of orderBlocks
-func (ob orderBlocks) Len() int { return len(ob) }
-
-//Swap swaps the ith object with jth object in orderBlocks
-func (ob orderBlocks) Swap(i, j int) { ob[i], ob[j] = ob[j], ob[i] }
-
-//Less checks the ith object's level < the jth object's level
-func (ob orderBlocks) Less(i, j int) bool { return ob[i].Qc.Level < ob[j].Qc.Level }
-
 //blockSyncReq defines a block sync request
 type blockSyncReq struct {
-	height      uint64 // Height of QC received from other nodes
-	blockID     []byte // BlockID of QC received from other nodes
-	targetPeer  uint64 // The identity of the requested node
-	startHeight uint64 //
+	height     uint64 // Height of QC received from other nodes
+	blockID    []byte // BlockID of QC received from other nodes
+	targetPeer uint64 // The identity of the requested node
 }
 
 // syncManager Synchronize block data from other peers

@@ -8,11 +8,12 @@ package p2p
 
 import (
 	"errors"
-	"github.com/libp2p/go-libp2p-core/peer"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/libp2p/go-libp2p-core/peer"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 // ErrorHostNotRunning
@@ -140,6 +141,34 @@ func (ps *LibP2pPubSub) AddWhitelistPeer(pid peer.ID) error {
 		}
 	case 2:
 		ps.pubsub.AddWhitelistPeer(pid)
+	default:
+
+	}
+	return nil
+}
+
+// TryToReloadPeer try to reload peer as new peer.
+func (ps *LibP2pPubSub) TryToReloadPeer(pid peer.ID) error {
+	switch atomic.LoadInt32(&ps.startUp) {
+	case 0:
+		for i := 0; i < 10; i++ {
+			time.Sleep(500 * time.Millisecond)
+			if atomic.LoadInt32(&ps.startUp) != 1 {
+				ps.pubsub.TryToReloadPeer(pid)
+				return nil
+			}
+		}
+		return ErrorPubSubNotRunning
+	case 1:
+		for {
+			time.Sleep(500 * time.Millisecond)
+			if atomic.LoadInt32(&ps.startUp) != 1 {
+				ps.pubsub.TryToReloadPeer(pid)
+				return nil
+			}
+		}
+	case 2:
+		ps.pubsub.TryToReloadPeer(pid)
 	default:
 
 	}

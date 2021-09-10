@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package message
 
 import (
-	"bytes"
 	"fmt"
 	"sync"
 
@@ -17,10 +16,11 @@ import (
 //MsgPool manages all of consensus messages received for protocol
 type MsgPool struct {
 	sync.RWMutex
-	size          int                        //The size of validators
-	msgs          map[uint64]*consensusRound //format: [height] = [consensusRound]; Stores consensus information at the same height and different levels
-	cachedLen     uint64                     //Cache the max length of latest heights
-	minVotesForQc int                        //Quorum certification
+	size int                        //The size of validators
+	msgs map[uint64]*consensusRound //format: [height] = [consensusRound];
+	// Stores consensus information at the same height and different levels
+	cachedLen     uint64 //Cache the max length of latest heights
+	minVotesForQc int    //Quorum certification
 }
 
 //NewMsgPool initializes a msg pool to manage all of consensus msgs for protocol
@@ -29,7 +29,7 @@ func NewMsgPool(cachedLen uint64, size, minVotesForQc int) *MsgPool {
 		size:          size,
 		cachedLen:     cachedLen,
 		minVotesForQc: minVotesForQc,
-		msgs:          make(map[uint64]*consensusRound, 0),
+		msgs:          make(map[uint64]*consensusRound),
 	}
 }
 
@@ -135,19 +135,11 @@ func (mp *MsgPool) OnBlockSealed(height uint64) {
 	}
 }
 
-func (mp *MsgPool) details() string {
-	msgPoolContent := bytes.NewBufferString(fmt.Sprintf("MsgPool contents, %d heights blockInfo to cache \n", len(mp.msgs)))
-	for _, heightMsgs := range mp.msgs {
-		msgPoolContent.WriteString(fmt.Sprintf("%d", heightMsgs.height))
-	}
-	return ""
-}
-
 //Cleanup cleans up the cached messages
 func (mp *MsgPool) Cleanup() {
 	mp.Lock()
 	defer mp.Unlock()
-	mp.msgs = make(map[uint64]*consensusRound, 0)
+	mp.msgs = make(map[uint64]*consensusRound)
 }
 
 //Reset resets msg pool
@@ -156,5 +148,5 @@ func (mp *MsgPool) Reset(size, minVotesForQc int) {
 	defer mp.Unlock()
 	mp.minVotesForQc = minVotesForQc
 	mp.size = size
-	mp.msgs = make(map[uint64]*consensusRound, 0)
+	mp.msgs = make(map[uint64]*consensusRound)
 }

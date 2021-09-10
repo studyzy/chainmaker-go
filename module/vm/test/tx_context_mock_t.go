@@ -9,24 +9,23 @@ package test
 import (
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"sync"
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
+	"chainmaker.org/chainmaker/logger/v2"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
@@ -34,7 +33,11 @@ import (
 )
 
 var testOrgId = "wx-org1.chainmaker.org"
+
+// CertFilePath is used to specify the admin cert file path
 var CertFilePath = "../../../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+
+// WasmFile is the wasm path of contract
 var WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
 var isSql = false
 
@@ -42,10 +45,12 @@ var txType = commonPb.TxType_INVOKE_CONTRACT
 var pool *wasmer.VmPoolManager
 
 var (
-	ContractNameTest    = "contract01"
+	// ContractNameTest is the contract name for test
+	ContractNameTest = "contract01"
+	// ContractVersionTest is the contract version for test
 	ContractVersionTest = "v1.0.0"
-	ChainIdTest         = "chain01"
-	MockTestLock        = sync.Mutex{}
+	// ChainIdTest is the chain id for test
+	ChainIdTest = "chain01"
 )
 
 func GetVmPoolManager() *wasmer.VmPoolManager {
@@ -57,7 +62,7 @@ func GetVmPoolManager() *wasmer.VmPoolManager {
 
 var file []byte
 
-// 初始化上下文和wasm字节码
+// InitContextTest inits a test context for vm
 func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, protocol.TxSimContext, []byte) {
 	bytes, _ := wasm.ReadBytes(WasmFile)
 	fmt.Printf("Wasm file size=%d\n", len(bytes))
@@ -116,16 +121,13 @@ func InitContextTest(runtimeType commonPb.RuntimeType) (*commonPb.Contract, prot
 	}
 	data, _ := contractId.Marshal()
 	key := utils.GetContractDbKey(contractId.Name)
-	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data)
+	if err := txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), key, data); err != nil {
+		fmt.Println("context put key: ", key, "value: ", data, "failed")
+	}
 	byteCodeKey := utils.GetContractByteCodeDbKey(contractId.Name)
-	txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), byteCodeKey, bytes)
-	//versionKey := []byte(protocol.ContractVersion + ContractNameTest)
-	//runtimeTypeKey := []byte(protocol.ContractRuntimeType + ContractNameTest)
-	//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+ContractNameTest), []byte(contractId.Version)...)
-
-	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, bytes)
-	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(contractId.Version))
-	//txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey, []byte(strconv.Itoa(int(runtimeType))))
+	if err := txContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), byteCodeKey, bytes); err != nil {
+		fmt.Println("context put bytecode failed")
+	}
 
 	return &contractId, txContext, bytes
 }
@@ -219,11 +221,10 @@ const contractStoreSeparator = '#'
 func (s *TxContextMockTest) Put(name string, key []byte, value []byte) error {
 	key = constructStateKey(name, key)
 	k := string(key)
-	if !strings.Contains(k, "SYSTEM_CONTRACT_STATE#:B:") {
-		//fmt.Println("【put】 key:", k, "val:", string(value))
-	}
 	wo := &opt.WriteOptions{Sync: true}
-	s.db.Put([]byte(k), value, wo)
+	if err := s.db.Put([]byte(k), value, wo); err != nil {
+		fmt.Println("put key: ", k, "value: ", value, "failed")
+	}
 	//s.cacheMap[k] = value
 	return nil
 }
@@ -243,17 +244,17 @@ func (s *TxContextMockTest) Select(name string, startKey []byte, limit []byte) (
 func (s *TxContextMockTest) Del(name string, key []byte) error {
 	key = constructStateKey(name, key)
 	k := string(key)
-	if !strings.Contains(k, "SYSTEM_CONTRACT_STATE#:B:") {
-		//fmt.Println("【put】 key:", k, "val:", string(value))
-	}
 	wo := &opt.WriteOptions{Sync: true}
-	s.db.Put([]byte(k), nil, wo)
+	if err := s.db.Put([]byte(k), nil, wo); err != nil {
+		fmt.Println("【put】 key:", k, "val: nil failed")
+	}
 	//s.cacheMap[k] = value
 	return nil
 }
 
 func (s *TxContextMockTest) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
-	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult,
+	commonPb.TxStatusCode) {
 	fmt.Println(">>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.>>>>>>>>>.CallContract>>>>", contract.Name)
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
@@ -378,6 +379,10 @@ func BaseParam(parameters map[string][]byte) {
 type mockBlockchainStore struct {
 }
 
+func (m mockBlockchainStore) GetMemberExtraData(member *acPb.Member) (*acPb.MemberExtraData, error) {
+	panic("implement me")
+}
+
 func (m mockBlockchainStore) GetContractByName(name string) (*commonPb.Contract, error) {
 	panic("implement me")
 }
@@ -414,7 +419,8 @@ func (m mockBlockchainStore) GetLastChainConfig() (*config.ChainConfig, error) {
 	panic("implement me")
 }
 
-func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+func (m mockBlockchainStore) SelectObject(contractName string, startKey []byte, limit []byte) (
+	protocol.StateIterator, error) {
 	panic("implement me")
 }
 

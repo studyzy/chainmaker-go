@@ -7,10 +7,18 @@ SPDX-License-Identifier: Apache-2.0
 
 package localconf
 
-const (
-	CurrentVersion = "V2.0.0"
+var (
+	//CurrentVersion current version
+	CurrentVersion = "v2.0.2"
+	// CurrentCommit current git commit hash
+	GitCommit = ""
+	// CurrentBranch current git branch
+	GitBranch = ""
+	// BuildDateTime compile datetime
+	BuildDateTime = ""
 )
 
 var (
+	//ConfigFilepath 配置文件的路径，默认为当前文件夹的chainmaker.yml文件
 	ConfigFilepath = "./chainmaker.yml"
 )

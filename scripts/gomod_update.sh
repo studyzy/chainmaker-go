@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 set -x
-BRANCH=v2.0.0
+BRANCH=develop
 
 cd ../module/accesscontrol
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
@@ -43,11 +43,7 @@ go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 # go test ./...
-cd ../logger
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
+
 # go test ./...
 cd ../net
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
@@ -91,19 +87,22 @@ go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 # go test ./...
-cd ../utils
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
-# go test ./...
 cd ../vm
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
-# go test ./...
-cd ../../test
+cd gasm
+go mod tidy
+cd ../evm
+go mod tidy
+cd ../wasi
+go mod tidy
+cd ../wasmer
+go mod tidy
+cd ../wxvm
+go mod tidy
+cd ../../../test
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
@@ -117,6 +116,8 @@ go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 ## go test ./...
 go build .
+cd ../scanner
+go mod tidy
 cd ../../main
 go mod tidy
 go build .

@@ -12,7 +12,7 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/consensus/dpos"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
@@ -22,21 +22,23 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-func GetValidatorList(chainConfig *config.ChainConfig, store protocol.BlockchainStore) (validators []string, err error) {
+func GetValidatorList(chainConfig *config.ChainConfig, store protocol.BlockchainStore) (validators []string,
+	err error) {
 	if chainConfig.Consensus.Type == consensus.ConsensusType_TBFT {
 		return GetValidatorListFromConfig(chainConfig)
 	} else if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
 		return GetValidatorListFromLedger(store)
 	}
-	return nil, fmt.Errorf("unkonwn consensus type: %s", chainConfig.Consensus.Type)
+	return nil, fmt.Errorf("unknown consensus type: %s", chainConfig.Consensus.Type)
 }
 
 func GetValidatorListFromConfig(chainConfig *config.ChainConfig) (validators []string, err error) {
 	nodes := chainConfig.Consensus.Nodes
 	for _, node := range nodes {
-		for _, nid := range node.NodeId {
-			validators = append(validators, nid)
-		}
+		//for _, nid := range node.NodeId {
+		//	validators = append(validators, nid)
+		//}
+		validators = append(validators, node.NodeId...)
 	}
 	return validators, nil
 }
@@ -60,8 +62,7 @@ func GetValidatorListFromLedger(store protocol.BlockchainStore) (validators []st
 func VerifyBlockSignatures(chainConf protocol.ChainConf,
 	ac protocol.AccessControlProvider, block *common.Block, store protocol.BlockchainStore) error {
 
-	if block == nil || block.Header == nil || block.Header.BlockHeight < 0 ||
-		block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
+	if block == nil || block.Header == nil || block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return fmt.Errorf("invalid block")
 	}
 	blockVoteSet, ok := block.AdditionalData.ExtraData[protocol.TBFTAddtionalDataKey]
@@ -103,7 +104,10 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf,
 	for _, v := range blockVotes.Votes {
 		voteProto := v.ToProto()
 		voteProtoCopy := proto.Clone(voteProto)
-		vote := voteProtoCopy.(*tbftpb.Vote)
+		vote, ok := voteProtoCopy.(*tbftpb.Vote)
+		if !ok {
+			return fmt.Errorf("interface transfer to *tbftpb.Vote failed")
+		}
 		vote.Endorsement = nil
 		message := mustMarshal(vote)
 

@@ -7,8 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package single
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"sync"
 	"testing"
 	"time"
@@ -17,11 +18,11 @@ import (
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -406,9 +407,9 @@ func TestPoolImplConcurrencyInvoke(t *testing.T) {
 		for {
 			select {
 			case <-getTicker.C:
-				start := rand.Intn(len(txIds) - 1000)
+				start, _ := rand.Int(rand.Reader, new(big.Int).SetInt64(int64((len(txIds) - 1000))))
 				begin := utils.CurrentTimeMillisSeconds()
-				getTxs, _ := txPool.GetTxsByTxIds(txIds[start : start+1000])
+				getTxs, _ := txPool.GetTxsByTxIds(txIds[int(start.Int64()) : int(start.Int64())+1000])
 				getTimes = append(getTimes, utils.CurrentTimeMillisSeconds()-begin)
 				imlPool.log.Debugf("get txs num: ", len(getTxs))
 			case <-getTimer.C:

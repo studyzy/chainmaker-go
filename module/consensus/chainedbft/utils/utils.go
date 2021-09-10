@@ -11,12 +11,12 @@ import (
 	"math"
 	"time"
 
-	chainUtils "chainmaker.org/chainmaker-go/utils"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol/v2"
+	chainUtils "chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -47,7 +47,7 @@ func GetLevelFromBlock(block *common.Block) (uint64, error) {
 
 //GetQCFromBlock get qc from block
 func GetQCFromBlock(block *common.Block) []byte {
-	var qc []byte = nil
+	var qc []byte
 	if block == nil || block.AdditionalData == nil || block.AdditionalData.ExtraData == nil {
 		return nil
 	}
@@ -178,7 +178,8 @@ func VerifyDataSign(data []byte, signEnrty *common.EndorsementEntry,
 }
 
 //GetUidFromProtoSigner get uid from Member using netservice
-func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService, ac protocol.AccessControlProvider) (string, error) {
+func GetUidFromProtoSigner(signerpb *pbac.Member, netservice protocol.NetService,
+	ac protocol.AccessControlProvider) (string, error) {
 	if signerpb == nil {
 		return "", fmt.Errorf("signer is nil")
 	}

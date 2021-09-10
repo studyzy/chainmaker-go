@@ -10,6 +10,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
+
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -20,9 +21,9 @@ import (
 
 	"chainmaker.org/chainmaker-go/blockchain"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/rpcserver"
+	"chainmaker.org/chainmaker/logger/v2"
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/spf13/cobra"
 )
@@ -99,15 +100,14 @@ func mainStart() {
 	printLogo()
 
 	// listen error signal in main function
-	select {
-	case err := <-errorC:
-		if err != nil {
-			log.Error("chainmaker encounters error ", err)
-		}
-		rpcServer.Stop()
-		chainMakerServer.Stop()
-		log.Info("All is stopped!")
+	errC := <-errorC
+	if errC != nil {
+		log.Error("chainmaker encounters error ", errC)
 	}
+	rpcServer.Stop()
+	chainMakerServer.Stop()
+	log.Info("All is stopped!")
+
 }
 
 func handleExitSignal(exitC chan<- error) {
@@ -145,17 +145,19 @@ func traceMemoryUsage() {
 			panic(err)
 		}
 		w := csv.NewWriter(f)
-		w.Write([]string{
+		err = w.Write([]string{
 			"Alloc", "TotalAlloc", "Sys", "Mallocs", "Frees", "HeapAlloc", "HeapSys",
 			"HeapIdle", "HeapInuse", "HeapReleased", "HeapObjects", "StackInuse",
 			"StackSys", "MSpanInuse", "MSpanSys", "MCacheInuse", "MCacheSys",
 			"BuckHashSys", "GCSys", "OtherSys",
 		})
-
+		if err != nil {
+			panic(err)
+		}
 		for range time.Tick(time.Second) {
 			mem := new(runtime.MemStats)
 			runtime.ReadMemStats(mem)
-			w.Write([]string{
+			err = w.Write([]string{
 				bytefmt.ByteSize(mem.Alloc),
 				bytefmt.ByteSize(mem.TotalAlloc),
 				bytefmt.ByteSize(mem.Sys),
@@ -177,6 +179,9 @@ func traceMemoryUsage() {
 				bytefmt.ByteSize(mem.GCSys),
 				bytefmt.ByteSize(mem.OtherSys),
 			})
+			if err != nil {
+				panic(err)
+			}
 			w.Flush()
 		}
 	}()

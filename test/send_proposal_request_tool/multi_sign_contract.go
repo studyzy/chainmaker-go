@@ -9,14 +9,17 @@ package main
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strconv"
+	"time"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 )
@@ -32,6 +35,24 @@ var (
 
 	multiTxId   string
 	payloadHash string
+
+	syscontractName string
+	sysMethod       string
+	txId            string
+	height          uint64
+	hash            string
+	withRWSets      bool
+	useTLS          bool
+	runTime         int32
+	reqpairsString  string
+	pairsString     string
+	pairsFile       string
+	method          string
+	version         string
+	requestTimeout  int
+	reqTimestamp    int64
+	memberNum       int
+	timestamp		int64
 )
 
 var (
@@ -42,19 +63,17 @@ func MultiSignReqCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "multiSignReq",
 		Short: "Multi sign req",
-		Long:  "Multi sign req（need the admin）",
+		Long:  "Multi sign req",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return multiSignReq()
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&txType, "tx_type", "", "the payload tx_type")
-	flags.IntVar(&deadlineBlock, "deadline_block", 0, "the deadline block,default is 0. 0 for unlimited")
-	flags.StringVar(&payload, "payload", "", "transfer the payloadBytes to hex.")
-	//flags.StringVar(&adminOrgId, "admin_org_id", "", "the admin orgId")
-	//flags.StringVar(&adminKeyPath, "admin_key_path", "", "the admin keyPath")
-	//flags.StringVar(&adminCrtPath, "admin_crt_path", "", "the admin certPath")
+	flags.StringVarP(&syscontractName, "syscontractName", "s", "", "specify syscontractName")
+	flags.StringVarP(&sysMethod, "sysMethod", "m", "", "specify sysMethod")
+	flags.StringVarP(&pairsString, "pairs", "", "", "specify pairs")
+	//flags.StringVarP(&pairsFile, "pairs-file", "", "", "specify pairs file, if used, set --pairs=\"\"")
 	return cmd
 }
 
@@ -70,8 +89,13 @@ func MultiSignVoteCMD() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVar(&multiTxId, "multi_tx_id", "", "the multi sign req tx_id")
-	flags.StringVar(&payloadHash, payloadHashStr, "", "the multi sign req payload_hash")
-	flags.BoolVar(&voteStatus, "vote_status", false, "vote or no")
+	flags.StringVarP(&syscontractName, "syscontractName", "s", "", "specify syscontractName")
+	flags.StringVarP(&sysMethod, "sysMethod", "m", "", "specify sysMethod")
+	flags.StringVarP(&reqpairsString, "reqpairs", "", "", "specify reqpairs")
+	flags.Int64VarP(&reqTimestamp, "reqtimestamp", "", 0, "specify reqtimestamp")
+	flags.IntVarP(&memberNum, "memberNum", "", 2, "specify reqtimestamp")
+
+	//flags.StringVarP(&pairsFile, "pairs-file", "", "", "specify pairs file, if used, set --pairs=\"\"")
 	//flags.StringVar(&adminOrgId, "admin_org_id", "", "the admin orgId")
 	//flags.StringVar(&adminKeyPath, "admin_key_path", "", "the admin keyPath")
 	//flags.StringVar(&adminCrtPath, "admin_crt_path", "", "the admin certPath")
@@ -90,82 +114,76 @@ func MultiSignQueryCMD() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVar(&multiTxId, "multi_tx_id", "", "the multi_sign req tx_id")
-	flags.StringVar(&payloadHash, payloadHashStr, "", "the multi_sign req payload_hash")
 	return cmd
+}
+
+type ParamMultiSign struct {
+	Key    string
+	Value  string
+	IsFile bool
 }
 
 func multiSignReq() error {
 	// 构造Payload
 	txId := utils.GetRandTxId()
-	pairs := make([]*commonPb.KeyValuePair, 0)
+	fmt.Println("req txid:%s", txId)
+	//log.Infof("req txid:%s",txId)
+	timestamp = time.Now().Unix()
+	fmt.Println("req timestamp:%d", timestamp)
+	//sk, _ := GetUserSK(1)
+	var pairs []*commonPb.KeyValuePair
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "tx_type", // 多签内的交易类型
-		Value: []byte(txType),
+		Key:   syscontract.MultiReq_SYS_CONTRACT_NAME.String(),
+		Value: []byte(syscontractName),
 	})
 	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "deadline_block", // 过期的区块高度
-		Value: []byte(strconv.Itoa(deadlineBlock)),
+		Key:   syscontract.MultiReq_SYS_METHOD.String(),
+		Value: []byte(sysMethod),
 	})
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "payload",
-		Value: []byte(payload),
-	})
+	var pms []*ParamMultiSign
+	json.Unmarshal([]byte(pairsString), &pms)
+	for _, pm := range pms {
+		if pm.IsFile {
+			byteCode, err := ioutil.ReadFile(pm.Value)
+			if err != nil {
+				panic(err)
+			}
+			pairs = append(pairs, &commonPb.KeyValuePair{
+				Key:   pm.Key,
+				Value: byteCode,
+			})
 
-	multiPayloadBytes, err := hex.DecodeString(payload)
-	if err != nil {
-		fmt.Printf("hex.DecodeString err: %v\n", err)
-		return err
-	}
-
-	payloadHash, err := utils.GetCertificateIdFromDER(multiPayloadBytes, "SHA256")
-
-	if txType == "UPDATE_CHAIN_CONFIG" {
-		contractPayload := &commonPb.Payload{}
-		err := proto.Unmarshal(multiPayloadBytes, contractPayload)
-		if err != nil {
-			return err
+		} else {
+			pairs = append(pairs, &commonPb.KeyValuePair{
+				Key:   pm.Key,
+				Value: []byte(pm.Value),
+			})
 		}
-		fmt.Println(contractPayload)
-	}
 
-	//endorsementEntry, err := aclSignOne(multiPayloadBytes, adminOrgId, adminKeyPath, adminCrtPath)
-	endorsementEntry, err := aclSignOne(multiPayloadBytes, orgId, userKeyPath, userCrtPath)
-	if err != nil {
-		fmt.Printf("signWith err: %v\n", err)
-		return err
 	}
-
-	voteInfo := &commonPb.MultiSignVoteInfo{
-		Vote:        commonPb.VoteStatus_AGREE,
-		Endorsement: endorsementEntry,
-	}
-
-	voteInfoBytes, err := proto.Marshal(voteInfo)
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "vote_info",
-		Value: voteInfoBytes,
-	})
 
 	payload := &commonPb.Payload{
-		ChainId:      chainId,
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs,
-		Sequence:     seq,
-		TxType:       commonPb.TxType_INVOKE_CONTRACT,
-		TxId:         utils.GetRandTxId(),
+		TxId:         txId,
+		ChainId:      CHAIN1,
+		Timestamp:    timestamp,
 	}
-
-	resp, err := proposalRequest(sk3, client, payload)
+	endorsement, err := acSign(payload)
+	if err != nil {
+		return err
+	}
+	resp, err := proposalRequestWithMultiSign(sk3, client, payload, endorsement)
 	if err != nil {
 		return err
 	}
 
 	result := &Result{
-		Code:        resp.Code,
-		Message:     resp.Message,
-		TxId:        txId,
-		PayloadHash: hex.EncodeToString(payloadHash),
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
 	}
 	fmt.Println(result.ToJsonString())
 
@@ -175,56 +193,79 @@ func multiSignReq() error {
 func multiSignVote() error {
 	// 构造Payload
 	txId := utils.GetRandTxId()
-	pairs := make([]*commonPb.KeyValuePair, 0)
+	timestamp = time.Now().Unix()
+	var reqpairs []*commonPb.KeyValuePair
+	reqpairs = append(reqpairs, &commonPb.KeyValuePair{
+		Key:   syscontract.MultiReq_SYS_CONTRACT_NAME.String(),
+		Value: []byte(syscontractName),
+	})
+	reqpairs = append(reqpairs, &commonPb.KeyValuePair{
+		Key:   syscontract.MultiReq_SYS_METHOD.String(),
+		Value: []byte(sysMethod),
+	})
+	var pms []*ParamMultiSign
+	json.Unmarshal([]byte(reqpairsString), &pms)
+	for _, pm := range pms {
+		if pm.IsFile {
+			byteCode, err := ioutil.ReadFile(pm.Value)
+			if err != nil {
+				panic(err)
+			}
+			reqpairs = append(reqpairs, &commonPb.KeyValuePair{
+				Key:   pm.Key,
+				Value: byteCode,
+			})
+
+		} else {
+			reqpairs = append(reqpairs, &commonPb.KeyValuePair{
+				Key:   pm.Key,
+				Value: []byte(pm.Value),
+			})
+		}
+
+	}
+
+	payload1 := &commonPb.Payload{
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
+		Method:       syscontract.MultiSignFunction_REQ.String(),
+		Parameters:   reqpairs,
+		TxId:         multiTxId,
+		ChainId:      CHAIN1,
+		Timestamp:    reqTimestamp,
+	}
+	ee, err := acSign(payload1)
+	if err != nil {
+		panic(err)
+	}
+	//构造多签投票信息
+	msvi := &syscontract.MultiSignVoteInfo{
+		Vote:        syscontract.VoteStatus_AGREE,
+		Endorsement: ee[0],
+	}
+	msviByte, _ := msvi.Marshal()
+	fmt.Printf("msviByte:%s", msviByte)
+
+	var pairs []*commonPb.KeyValuePair
+	pairs = append(pairs, &commonPb.KeyValuePair{
+		Key:   syscontract.MultiVote_VOTE_INFO.String(),
+		Value: msviByte,
+	})
 	if multiTxId != "" {
 		pairs = append(pairs, &commonPb.KeyValuePair{
-			Key:   "tx_id",
+			Key:   syscontract.MultiVote_TX_ID.String(),
 			Value: []byte(multiTxId),
 		})
 	}
-	if payloadHash != "" {
-		pairs = append(pairs, &commonPb.KeyValuePair{
-			Key:   payloadHashStr,
-			Value: []byte(payloadHash),
-		})
-	}
-	_, multiSignInfo, err := getMultiSign()
-	if err != nil {
-		return err
-	}
-
-	var voteInfo *commonPb.MultiSignVoteInfo
-	if voteStatus {
-		//endorsementEntry, err := aclSignOne(multiSignInfo.PayloadBytes, adminOrgId, adminKeyPath, adminCrtPath)
-		endorsementEntry, err := aclSignOne(multiSignInfo.PayloadBytes, orgId, userKeyPath, userCrtPath)
-		if err != nil {
-			fmt.Printf("signWith err: %v\n", err)
-			return err
-		}
-		voteInfo = &commonPb.MultiSignVoteInfo{
-			Vote:        commonPb.VoteStatus_AGREE,
-			Endorsement: endorsementEntry,
-		}
-	} else {
-		voteInfo = &commonPb.MultiSignVoteInfo{
-			Vote: commonPb.VoteStatus_DISAGREE,
-		}
-	}
-
-	voteInfoBytes, err := proto.Marshal(voteInfo)
-	pairs = append(pairs, &commonPb.KeyValuePair{
-		Key:   "vote_info",
-		Value: voteInfoBytes,
-	})
 
 	payload := &commonPb.Payload{
 		ChainId:      chainId,
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_VOTE.String(),
 		Parameters:   pairs,
-		Sequence:     seq,
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		TxId:         utils.GetRandTxId(),
+		Timestamp:    timestamp,
 	}
 
 	resp, err := proposalRequest(sk3, client, payload)
@@ -233,10 +274,9 @@ func multiSignVote() error {
 	}
 
 	result := &Result{
-		Code:        resp.Code,
-		Message:     resp.Message,
-		TxId:        txId,
-		PayloadHash: payloadHash,
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
 	}
 	fmt.Println(result.ToJsonString())
 
@@ -244,60 +284,35 @@ func multiSignVote() error {
 }
 
 func multiSignQuery() error {
-	resp, multiSignInfo, err := getMultiSign()
+	pairs := make([]*commonPb.KeyValuePair, 0)
+	if multiTxId != "" {
+		pairs = append(pairs, &commonPb.KeyValuePair{
+			Key:   syscontract.MultiVote_TX_ID.String(),
+			Value: []byte(multiTxId),
+		})
+	}
+
+	if len(pairs) == 0 {
+		return errors.New("params is emtpy")
+	}
+	payload := &commonPb.Payload{
+		TxType:       commonPb.TxType_INVOKE_CONTRACT,
+		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
+		Method:       syscontract.MultiSignFunction_QUERY.String(),
+		Parameters:   pairs,
+		ChainId:      CHAIN1,
+	}
+	resp, err := proposalRequest(sk3, client, payload)
 	if err != nil {
 		return err
 	}
 
-	payloadHash, err := utils.GetCertificateIdFromDER(multiSignInfo.PayloadBytes, "SHA256")
-
 	result := &Result{
-		Code:          resp.Code,
-		Message:       resp.Message,
-		TxId:          txId,
-		PayloadHash:   hex.EncodeToString(payloadHash),
-		MultiSignInfo: multiSignInfo,
+		Code:    resp.Code,
+		Message: resp.Message,
+		TxId:    txId,
 	}
 	fmt.Println(result.ToJsonString())
 
 	return nil
-}
-
-func getMultiSign() (*commonPb.TxResponse, *commonPb.MultiSignInfo, error) {
-	pairs := make([]*commonPb.KeyValuePair, 0)
-	if multiTxId != "" {
-		pairs = append(pairs, &commonPb.KeyValuePair{
-			Key:   "tx_id",
-			Value: []byte(multiTxId),
-		})
-	}
-	if payloadHash != "" {
-		pairs = append(pairs, &commonPb.KeyValuePair{
-			Key:   payloadHashStr,
-			Value: []byte(payloadHash),
-		})
-	}
-	if len(pairs) == 0 {
-		return nil, nil, errors.New("params is emtpy")
-	}
-	payloadBytes, err := constructQueryPayload(chainId, syscontract.SystemContract_MULTI_SIGN.String(), syscontract.MultiSignFunction_QUERY.String(), pairs)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	resp, err := proposalRequest(sk3, client, payloadBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-	if resp.Code == commonPb.TxStatusCode_SUCCESS && resp.ContractResult.Code == 0 {
-		multiSignInfo := new(commonPb.MultiSignInfo)
-		result := resp.ContractResult.Result
-		err = proto.Unmarshal(result, multiSignInfo)
-		if err != nil {
-			return resp, nil, err
-		}
-		fmt.Println("multiSignInfo", multiSignInfo)
-		return resp, multiSignInfo, nil
-	}
-	return resp, nil, nil
 }

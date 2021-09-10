@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package dpos
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"sort"
 	"strings"
 	"testing"
@@ -28,12 +28,12 @@ import (
 
 func TestCandidateInfos(t *testing.T) {
 	var tests = []*pbdpos.CandidateInfo{
-		{"peer0", "100"},
-		{"peer1", "100"},
-		{"peer2", "100"},
-		{"peer3", "0"},
-		{"peer4", "300"},
-		{"peer5", "500"},
+		{PeerId: "peer0", Weight: "100"},
+		{PeerId: "peer1", Weight: "100"},
+		{PeerId: "peer2", Weight: "100"},
+		{PeerId: "peer3", Weight: "0"},
+		{PeerId: "peer4", Weight: "300"},
+		{PeerId: "peer5", Weight: "500"},
 	}
 	sort.Sort(CandidateInfos(tests))
 	require.Equal(t, tests[0].Weight, "500")
@@ -52,11 +52,11 @@ func TestCandidateInfos(t *testing.T) {
 
 func TestValidatorsElection2(t *testing.T) {
 	var candidates = []*pbdpos.CandidateInfo{
-		{"3tPTFsFAYjtEkJa3MYfV63TK2uYP9e3DZq97KrZMYxhy", "25000000000000000000000"},
-		{"4WUXfiUpLkx7meaNu8TNS5rNM7YtZk6fkNWXihc54PbM", "250000000000000000000000"},
-		{"4yKy5YebxygcXuid6F2vnfMhpTL94qbJELLodbCMg1Tn", "250000000000000000000000"},
-		{"AwLW3zpAsmhMDMqp1DkCCFajh9pTTXHcpeBRZybRTF2X", "250000000000000000000000"},
-		{"3BugkfMLdgXsif1Zg9sCwi4BBxFxqdjEQNjCmYgtGAtr", "250000000000000000000000"},
+		{PeerId: "3tPTFsFAYjtEkJa3MYfV63TK2uYP9e3DZq97KrZMYxhy", Weight: "25000000000000000000000"},
+		{PeerId: "4WUXfiUpLkx7meaNu8TNS5rNM7YtZk6fkNWXihc54PbM", Weight: "250000000000000000000000"},
+		{PeerId: "4yKy5YebxygcXuid6F2vnfMhpTL94qbJELLodbCMg1Tn", Weight: "250000000000000000000000"},
+		{PeerId: "AwLW3zpAsmhMDMqp1DkCCFajh9pTTXHcpeBRZybRTF2X", Weight: "250000000000000000000000"},
+		{PeerId: "3BugkfMLdgXsif1Zg9sCwi4BBxFxqdjEQNjCmYgtGAtr", Weight: "250000000000000000000000"},
 	}
 	seed := make([]byte, 32)
 	num, err := hex.Decode(seed, []byte("0efdfa8a4db5715fd03fa0ace3c01ca09e19b15a98e78cd05c09983921880282"))
@@ -83,24 +83,24 @@ func TestValidatorsElection2(t *testing.T) {
 
 func TestValidatorsElection(t *testing.T) {
 	var tests = []*pbdpos.CandidateInfo{
-		{"peer0", "100"},
-		{"peer1", "100"},
-		{"peer2", "100"},
-		{"peer3", "0"},
-		{"peer4", "300"},
-		{"peer5", "500"},
-		{"peer6", "200"},
-		{"peer7", "400"},
-		{"peer8", "550"},
-		{"peer9", "250"},
-		{"peer10", "150"},
-		{"peer11", "600"},
-		{"peer12", "601"},
-		{"peer13", "660"},
-		{"peer14", "1000"},
+		{PeerId: "peer0", Weight: "100"},
+		{PeerId: "peer1", Weight: "100"},
+		{PeerId: "peer2", Weight: "100"},
+		{PeerId: "peer3", Weight: "0"},
+		{PeerId: "peer4", Weight: "300"},
+		{PeerId: "peer5", Weight: "500"},
+		{PeerId: "peer6", Weight: "200"},
+		{PeerId: "peer7", Weight: "400"},
+		{PeerId: "peer8", Weight: "550"},
+		{PeerId: "peer9", Weight: "250"},
+		{PeerId: "peer10", Weight: "150"},
+		{PeerId: "peer11", Weight: "600"},
+		{PeerId: "peer12", Weight: "601"},
+		{PeerId: "peer13", Weight: "660"},
+		{PeerId: "peer14", Weight: "1000"},
 	}
 	seed := make([]byte, 32)
-	rand.Read(seed)
+	_, _ = rand.Read(seed)
 	validators, err := ValidatorsElection(tests, 0, seed, false)
 	require.NotNil(t, err)
 	require.Nil(t, validators)
@@ -131,9 +131,9 @@ func TestValidatorsElection(t *testing.T) {
 	require.Equal(t, len(validators), len(tests)-1)
 	var count = 0
 	for i := 0; i < len(validators); i++ {
-		PeerId := validators[i].PeerId
+		peerId := validators[i].PeerId
 		for j := 0; j < len(tests); j++ {
-			if strings.EqualFold(PeerId, tests[j].PeerId) {
+			if strings.EqualFold(peerId, tests[j].PeerId) {
 				count++
 				break
 			}
@@ -159,21 +159,21 @@ func TestValidatorsElection(t *testing.T) {
 	}
 }
 
-func TestRandPerm(t *testing.T) {
-	for i := 0; i < 1000; i++ {
-		rand.Seed(time.Now().Unix() + int64(i*20)) // 设置种子
-		randSlice := rand.Perm(20)[:8]
-		hasSeen := make(map[int]struct{}, len(randSlice))
-		for _, v := range randSlice {
-			if _, ok := hasSeen[v]; ok {
-				require.False(t, ok, fmt.Sprintf("should not be repetition in randSlice"))
-			} else {
-				hasSeen[v] = struct{}{}
-			}
-		}
-		fmt.Println(randSlice)
-	}
-}
+//func TestRandPerm(t *testing.T) {
+//	for i := 0; i < 1000; i++ {
+//		rand.Seed(time.Now().Unix() + int64(i*20)) // 设置种子
+//		randSlice := rand.Perm(20)[:8]
+//		hasSeen := make(map[int]struct{}, len(randSlice))
+//		for _, v := range randSlice {
+//			if _, ok := hasSeen[v]; ok {
+//				require.False(t, ok, "should not be repetition in randSlice")
+//			} else {
+//				hasSeen[v] = struct{}{}
+//			}
+//		}
+//		fmt.Println(randSlice)
+//	}
+//}
 
 func TestGetLatestEpochInfo(t *testing.T) {
 	ctrl := gomock.NewController(t)

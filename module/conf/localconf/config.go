@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
@@ -28,7 +28,7 @@ var (
 	// FindNewBlockChainNotifyC is the chan for finding new block chain configs.
 	FindNewBlockChainNotifyC = make(chan string)
 	// ChainMakerConfig is the CMConfig instance for global.
-	ChainMakerConfig = &CMConfig{StorageConfig: StorageConfig{DisableContractEventDB: true}}
+	ChainMakerConfig = &CMConfig{StorageConfig: map[string]interface{}{}}
 )
 
 // InitLocalConfig init local config.

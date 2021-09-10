@@ -75,34 +75,41 @@ pprof:
 
 storage:
   db_prefix: org4_
-  store_path: ../data/org1/ledgerData4
+  store_path: ../data/org4/ledgerData1
   blockdb_config:
     provider: sql
+    leveldb_config:
+      store_path: ../data/org4/blocks
     sqldb_config:
       sqldb_type:  mysql
       dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
   statedb_config:
     provider: sql
+    leveldb_config:
+      store_path: ../data/org4/state
     sqldb_config:
       sqldb_type:  mysql
       dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
   historydb_config:
     provider: sql
+    leveldb_config:
+      store_path: ../data/org4/history
     sqldb_config:
       sqldb_type:  mysql
       dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
   resultdb_config:
     provider: sql
+    leveldb_config:
+      store_path: ../data/org4/result
     sqldb_config:
       sqldb_type:  mysql
       dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
   disable_contract_eventdb: false  #是否禁止合约事件存储功能，默认为true，如果设置为false,需要配置mysql
   contract_eventdb_config:
-    provider: sql
+    provider: sql                 #如果开启contract event db 功能，需要指定provider为sql
     sqldb_config:
       sqldb_type:  mysql
       dsn:  root:passw0rd@tcp(192.168.1.35:3307)/mysql
-
 debug:
   # 是否开启CLI功能，过度期间使用
   is_cli_open: true

@@ -24,6 +24,7 @@ import (
 
 // CoreEngine is a block handle engine.
 // One core engine for one chain.
+//nolint: structcheck,unused
 type CoreEngine struct {
 	chainId   string             // chainId, identity of a chain
 	chainConf protocol.ChainConf // chain config
@@ -146,7 +147,7 @@ func (c *CoreEngine) OnMessage(message *msgbus.Message) {
 		}
 	case msgbus.VerifyBlock:
 		if block, ok := message.Payload.(*commonpb.Block); ok {
-			c.BlockVerifier.VerifyBlock(block, protocol.CONSENSUS_VERIFY)
+			c.BlockVerifier.VerifyBlock(block, protocol.CONSENSUS_VERIFY) //nolint: errcheck
 		}
 	case msgbus.CommitBlock:
 		if block, ok := message.Payload.(*commonpb.Block); ok {
@@ -175,13 +176,13 @@ func (c *CoreEngine) Start() {
 	c.msgBus.Register(msgbus.CommitBlock, c)
 	c.msgBus.Register(msgbus.TxPoolSignal, c)
 	c.msgBus.Register(msgbus.BuildProposal, c)
-	c.blockProposer.Start()
+	c.blockProposer.Start() //nolint: errcheck
 }
 
 // Stop, stop core engine
 func (c *CoreEngine) Stop() {
 	defer log.Infof("core stoped.")
-	c.blockProposer.Stop()
+	c.blockProposer.Stop() //nolint: errcheck
 }
 
 func (c *CoreEngine) GetBlockCommitter() protocol.BlockCommitter {

@@ -11,12 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -126,7 +126,7 @@ func FinalizeBlockSync(
 	hashType string,
 	logger protocol.Logger) error {
 
-	if aclFailTxs != nil && len(aclFailTxs) > 0 {
+	if aclFailTxs != nil && len(aclFailTxs) > 0 { //nolint: gosimple
 		// append acl check failed txs to the end of block.Txs
 		block.Txs = append(block.Txs, aclFailTxs...)
 	}
@@ -148,7 +148,8 @@ func FinalizeBlockSync(
 				TxWrites: nil,
 			}
 		}
-		rwSetHash, err := utils.CalcRWSetHash(hashType, rwSet)
+		var rwSetHash []byte
+		rwSetHash, err = utils.CalcRWSetHash(hashType, rwSet)
 		logger.DebugDynamic(func() string {
 			return fmt.Sprintf("CalcRWSetHash rwset: %+v ,hash: %x", rwSet, rwSetHash)
 		})
@@ -163,7 +164,8 @@ func FinalizeBlockSync(
 		}
 		tx.Result.RwSetHash = rwSetHash
 		// calculate complete tx hash, include tx.Header, tx.Payload, tx.Result
-		txHash, err := utils.CalcTxHash(hashType, tx)
+		var txHash []byte
+		txHash, err = utils.CalcTxHash(hashType, tx)
 		if err != nil {
 			return err
 		}

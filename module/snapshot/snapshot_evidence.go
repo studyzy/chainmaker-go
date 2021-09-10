@@ -12,9 +12,7 @@ import (
 	"math"
 
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
-
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
-
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 

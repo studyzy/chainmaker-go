@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package emscripten
 
 import (
@@ -29,9 +35,9 @@ type mutableGlobals struct {
 	HeapBase uint32
 }
 
-func getMutableGlobals(ctx exec.Context) *mutableGlobals {
-	return ctx.GetUserData(mutableGlobalsKey).(*mutableGlobals)
-}
+//func getMutableGlobals(ctx exec.Context) *mutableGlobals {
+//	return ctx.GetUserData(mutableGlobalsKey).(*mutableGlobals)
+//}//unused(deadcode)
 
 func memoryStackBase(ctx exec.Context) (uint32, error) {
 	base, err := ctx.Exec(stackAllocFunc, []int64{0})
@@ -41,7 +47,7 @@ func memoryStackBase(ctx exec.Context) (uint32, error) {
 		}
 		// stackAllocFunc not found, fallback to StaticTop method.
 		base := ctx.StaticTop()
-		// align 4K boundry
+		// align 4K boundary
 		if base%4096 != 0 {
 			base += 4096 - base%4096
 		}

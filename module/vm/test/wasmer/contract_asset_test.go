@@ -8,6 +8,7 @@ package wasmertest
 
 import (
 	"fmt"
+	_ "net/http/pprof"
 	"testing"
 	"time"
 
@@ -15,10 +16,17 @@ import (
 	"chainmaker.org/chainmaker-go/wasmer"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+)
 
-	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
-	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
-	_ "net/http/pprof"
+const (
+	MethodNameAllowance    = "allowance"
+	MethodNameApprove      = "approve"
+	MethodNameBalanceOf    = "balance_of"
+	MethodNameIssueAmount  = "issue_amount"
+	MethodNameQueryAddress = "query_address"
+	MethodNameRegister     = "register"
+	MethodNameTransfer     = "transfer"
+	MethodNameTransferFrom = "transfer_from"
 )
 
 // 转账合约
@@ -92,7 +100,7 @@ func invokeWalletInit(contractId *commonPb.Contract, txContext protocol.TxSimCon
 }
 
 func invokeWalletRegister1(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "register"
+	method := MethodNameRegister
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -101,7 +109,7 @@ func invokeWalletRegister1(contractId *commonPb.Contract, txContext protocol.TxS
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletRegister2(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "register"
+	method := MethodNameRegister
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk2")
@@ -110,7 +118,7 @@ func invokeWalletRegister2(contractId *commonPb.Contract, txContext protocol.TxS
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletRegister3(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "register"
+	method := MethodNameRegister
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk3")
@@ -120,7 +128,7 @@ func invokeWalletRegister3(contractId *commonPb.Contract, txContext protocol.TxS
 }
 
 func invokeWalletEmitAmountTo1(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "issue_amount"
+	method := MethodNameIssueAmount
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["to"] = []byte("pk1")
@@ -131,7 +139,7 @@ func invokeWalletEmitAmountTo1(contractId *commonPb.Contract, txContext protocol
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletEmitAmountTo2(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "issue_amount"
+	method := MethodNameIssueAmount
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["to"] = []byte("pk2")
@@ -142,7 +150,7 @@ func invokeWalletEmitAmountTo2(contractId *commonPb.Contract, txContext protocol
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletEmitAmountTo1OutOfLimit(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "issue_amount"
+	method := MethodNameIssueAmount
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["to"] = []byte("pk2")
@@ -153,7 +161,7 @@ func invokeWalletEmitAmountTo1OutOfLimit(contractId *commonPb.Contract, txContex
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletEmitAmountTo1OutOfInt(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "issue_amount"
+	method := MethodNameIssueAmount
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["to"] = []byte("pk2")
@@ -165,7 +173,7 @@ func invokeWalletEmitAmountTo1OutOfInt(contractId *commonPb.Contract, txContext 
 }
 
 func invokeWalletTransfer1to2(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer"
+	method := MethodNameTransfer
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -176,7 +184,7 @@ func invokeWalletTransfer1to2(contractId *commonPb.Contract, txContext protocol.
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletTransfer1to1(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer"
+	method := MethodNameTransfer
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -188,7 +196,7 @@ func invokeWalletTransfer1to1(contractId *commonPb.Contract, txContext protocol.
 }
 
 func invokeWalletTransfer1to2ErrorPk(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer"
+	method := MethodNameTransfer
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -199,7 +207,7 @@ func invokeWalletTransfer1to2ErrorPk(contractId *commonPb.Contract, txContext pr
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletTransfer1to2ErrorAmount(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer"
+	method := MethodNameTransfer
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -210,7 +218,7 @@ func invokeWalletTransfer1to2ErrorAmount(contractId *commonPb.Contract, txContex
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletTransfer2to1(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer"
+	method := MethodNameTransfer
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk2")
@@ -221,7 +229,7 @@ func invokeWalletTransfer2to1(contractId *commonPb.Contract, txContext protocol.
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletTransfer2to1NoEnough(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer"
+	method := MethodNameTransfer
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk2")
@@ -232,7 +240,7 @@ func invokeWalletTransfer2to1NoEnough(contractId *commonPb.Contract, txContext p
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletBalanceOf1(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "balance_of"
+	method := MethodNameBalanceOf
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["owner"] = []byte("pk1")
@@ -242,7 +250,7 @@ func invokeWalletBalanceOf1(contractId *commonPb.Contract, txContext protocol.Tx
 }
 
 func invokeWalletBalanceOf2(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "balance_of"
+	method := MethodNameBalanceOf
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["owner"] = []byte("pk2")
@@ -251,7 +259,7 @@ func invokeWalletBalanceOf2(contractId *commonPb.Contract, txContext protocol.Tx
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletBalanceOfCreator(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "balance_of"
+	method := MethodNameBalanceOf
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["owner"] = []byte("CREATOR_PK")
@@ -261,7 +269,7 @@ func invokeWalletBalanceOfCreator(contractId *commonPb.Contract, txContext proto
 }
 
 func invokeWalletQueryAddress1(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "query_address"
+	method := MethodNameQueryAddress
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -270,7 +278,7 @@ func invokeWalletQueryAddress1(contractId *commonPb.Contract, txContext protocol
 	runtime.Invoke(contractId, method, byteCode, parameters, txContext, 0)
 }
 func invokeWalletQueryAddress3(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "query_address"
+	method := MethodNameQueryAddress
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk3")
@@ -280,7 +288,7 @@ func invokeWalletQueryAddress3(contractId *commonPb.Contract, txContext protocol
 }
 
 func invokeWalletApprove1to3(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "approve"
+	method := MethodNameApprove
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk1")
@@ -292,7 +300,7 @@ func invokeWalletApprove1to3(contractId *commonPb.Contract, txContext protocol.T
 }
 
 func invokeWallet3TransferFrom1to2(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "transfer_from"
+	method := MethodNameTransferFrom
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters[protocol.ContractSenderPkParam] = []byte("pk3")
@@ -305,7 +313,7 @@ func invokeWallet3TransferFrom1to2(contractId *commonPb.Contract, txContext prot
 }
 
 func invokeWalletAllowance1to3(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "allowance"
+	method := MethodNameAllowance
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["spender"] = []byte("pk3")
@@ -316,7 +324,7 @@ func invokeWalletAllowance1to3(contractId *commonPb.Contract, txContext protocol
 }
 
 func invokeWalletAllowance1to2(contractId *commonPb.Contract, txContext protocol.TxSimContext, pool *wasmer.VmPoolManager, byteCode []byte) {
-	method := "allowance"
+	method := MethodNameAllowance
 	parameters := make(map[string][]byte)
 	baseParam(parameters)
 	parameters["spender"] = []byte("pk2")

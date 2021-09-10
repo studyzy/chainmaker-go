@@ -56,13 +56,14 @@ func updateBlockInterval() error {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return ErrAdminOrgIdKeyCertIsEmpty
+		return errAdminOrgIdKeyCertIsEmpty
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,8 @@ func updateBlockInterval() error {
 	blockTxCap := chainConfig.Block.BlockTxCapacity
 	blockSize := chainConfig.Block.BlockSize
 
-	payload, err := client.CreateChainConfigBlockUpdatePayload(txTimestampVerify, txTimeout, blockTxCap, blockSize, blockInterval)
+	payload, err := client.CreateChainConfigBlockUpdatePayload(txTimestampVerify, txTimeout, blockTxCap,
+		blockSize, blockInterval)
 	if err != nil {
 		return fmt.Errorf("create chain config block update payload failed, %s", err.Error())
 	}

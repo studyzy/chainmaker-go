@@ -1,4 +1,4 @@
-#/bin/bash
+#!/usr/bin/env bash
 
 start() {
 	export LD_LIBRARY_PATH=$(dirname $PWD)/lib:$LD_LIBRARY_PATH

@@ -483,6 +483,10 @@ func (cp *certACProvider) LookUpPolicy(resourceName string) (*pbac.Policy, error
 	return cp.acService.lookUpPolicy(resourceName)
 }
 
+func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
+	return cp.acService.lookUpExceptionalPolicy(resourceName)
+}
+
 func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
 
 	if (member.MemberType != pbac.MemberType_CERT_HASH) &&
@@ -757,16 +761,15 @@ func (cp *certACProvider) verifyPrincipalSignerInCache(signerInfo *cachedMember,
 			return false, fmt.Errorf("check cert forzen list, error: [%s]", err.Error())
 		}
 		cp.log.Debugf("certificate is already seen, no need to verify against the trusted root certificates")
-
-		if endorsement.Signer.OrgId != signerInfo.member.GetOrgId() {
-			err := fmt.Errorf("authentication failed, signer does not belong to the organization it claims "+
-				"[claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.member.GetOrgId())
-			return false, err
-		}
 	}
 
+	if endorsement.Signer.OrgId != signerInfo.member.GetOrgId() {
+		err := fmt.Errorf("authentication failed, signer does not belong to the organization it claims "+
+			"[claim: %s, root cert: %s]", endorsement.Signer.OrgId, signerInfo.member.GetOrgId())
+		return false, err
+	}
 	if err := signerInfo.member.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
-		err := fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
+		err = fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
 		cp.log.Debugf("information for invalid signature:\norganization: %s\ncertificate: %s\nmessage: %s\n"+
 			"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 		return false, err
@@ -865,7 +868,18 @@ func (cp *certACProvider) Watch(chainConfig *config.ChainConfig) error {
 	cp.acService.memberCache.Clear()
 	cp.certCache.Clear()
 
-	cp.log.Debug("update chain config, trust member update: [%v]", cp.acService.trustMembers)
+	trustMembersMap := make(map[string]bool, len(chainConfig.TrustMembers))
+	trustMembers := make([]*config.TrustMemberConfig, 0)
+	for _, member := range chainConfig.TrustMembers {
+		if _, ok := trustMembersMap[member.MemberInfo]; ok {
+			cp.log.Warnf("after updating chainconfig, update the trust member failed: the member info is already exist, [%s]",
+				member.MemberInfo)
+			continue
+		}
+		trustMembersMap[member.MemberInfo] = true
+		trustMembers = append(trustMembers, member)
+	}
+	cp.acService.trustMembers = trustMembers
 	return nil
 }
 

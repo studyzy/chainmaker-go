@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package message
 
 import (
-	"bytes"
 	"fmt"
 
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
@@ -14,10 +13,11 @@ import (
 
 //consensusRound caches consensus msg per round
 type consensusRound struct {
-	size      int                                             //The size of validators
-	height    uint64                                          //Bound to a block height
-	msgs      map[uint64]map[chainedbft.MessageType]*votePool //format: [round][Type] = votePool; store all votes(proposal/newView) msg
-	proposals map[uint64]*chainedbft.ConsensusMsg             //format: [round] = ConsensusMsg; only store proposal msg
+	size   int                                             //The size of validators
+	height uint64                                          //Bound to a block height
+	msgs   map[uint64]map[chainedbft.MessageType]*votePool //format: [round][Type] = votePool;
+	// store all votes(proposal/newView) msg
+	proposals map[uint64]*chainedbft.ConsensusMsg //format: [round] = ConsensusMsg; only store proposal msg
 }
 
 //newConsensusRound initializes a consensus round with given params
@@ -25,8 +25,8 @@ func newConsensusRound(size int, height uint64) *consensusRound {
 	return &consensusRound{
 		size:      size,
 		height:    height,
-		msgs:      make(map[uint64]map[chainedbft.MessageType]*votePool, 0),
-		proposals: make(map[uint64]*chainedbft.ConsensusMsg, 0),
+		msgs:      make(map[uint64]map[chainedbft.MessageType]*votePool),
+		proposals: make(map[uint64]*chainedbft.ConsensusMsg),
 	}
 }
 
@@ -88,18 +88,10 @@ func (cr *consensusRound) getLastValidRound() int64 {
 }
 
 //checkVoteDone checks whether self have received enough votes with given vote type at round
-func (cr *consensusRound) checkVoteDone(round uint64, voteType chainedbft.MessageType) (blkID []byte, isNewView bool, done bool) {
+func (cr *consensusRound) checkVoteDone(round uint64,
+	voteType chainedbft.MessageType) (blkID []byte, isNewView bool, done bool) {
 	if _, ok := cr.msgs[round]; !ok {
 		return nil, false, false
 	}
 	return cr.msgs[round][voteType].checkVoteDone()
-}
-
-func (cr *consensusRound) details() string {
-	buf := bytes.NewBufferString(fmt.Sprintf("have %d round msg", len(cr.msgs)))
-	for roundLevel, roundMsgs := range cr.msgs {
-		_ = roundMsgs
-		buf.WriteString(fmt.Sprintf("%d", roundLevel))
-	}
-	return buf.String()
 }

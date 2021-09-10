@@ -21,7 +21,7 @@ type roundMetrics struct {
 	persistStateDurations map[string][]time.Duration
 }
 
-func NewRoundMetrics(round int32) *roundMetrics {
+func newRoundMetrics(round int32) *roundMetrics {
 	return &roundMetrics{
 		round:                 round,
 		persistStateDurations: make(map[string][]time.Duration),
@@ -84,7 +84,7 @@ type heightMetrics struct {
 	rounds             map[int32]*roundMetrics
 }
 
-func NewHeightMetrics(height uint64) *heightMetrics {
+func newHeightMetrics(height uint64) *heightMetrics {
 	return &heightMetrics{
 		height: height,
 		rounds: make(map[int32]*roundMetrics),
@@ -127,7 +127,7 @@ func (h *heightMetrics) SetEnterNewHeightTime() {
 
 func (h *heightMetrics) getRoundMertrics(round int32) *roundMetrics {
 	if _, ok := h.rounds[round]; !ok {
-		h.rounds[round] = NewRoundMetrics(round)
+		h.rounds[round] = newRoundMetrics(round)
 	}
 
 	return h.rounds[round]

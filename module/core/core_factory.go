@@ -22,15 +22,17 @@ var once sync.Once
 var _instance *coreEngineFactory
 
 // Factory return the global core engine factory.
+//nolint: revive
 func Factory() *coreEngineFactory {
 	once.Do(func() { _instance = new(coreEngineFactory) })
 	return _instance
 }
 
-// NewCoreEngine new the core engine.
+// NewConsensusEngine new the core engine.
 // consensusType specifies the core engine type.
 // consensusConfig specifies the necessary config parameters.
-func (cf *coreEngineFactory) NewConsensusEngine(consensusType string, providerConf *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
+func (cf *coreEngineFactory) NewConsensusEngine(consensusType string,
+	providerConf *conf.CoreEngineConfig) (protocol.CoreEngine, error) {
 	p := provider.NewCoreEngineProviderByConsensusType(consensusType)
 	var storeHelper conf.StoreHelper
 	if providerConf.ChainConf.ChainConfig().Contract.EnableSqlSupport {

@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	logger2 "chainmaker.org/chainmaker-go/logger"
+	logger2 "chainmaker.org/chainmaker/logger/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
@@ -125,7 +125,7 @@ func TestVerifyPrincipalPolicy(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, policyRead.GetPbPolicy(), policy)
 
-	principal, err := acServices.createPrincipal(txTypeToResourceNameMap[common.TxType_QUERY_CONTRACT],
+	principal, err := acServices.createPrincipal(common.TxType_QUERY_CONTRACT.String(),
 		[]*common.EndorsementEntry{endorsement}, []byte(testMsg))
 	require.Nil(t, err)
 

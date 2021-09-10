@@ -14,16 +14,16 @@ import (
 
 	"chainmaker.org/chainmaker-go/blockchain"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/store/archive"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/native"
 	commonErr "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/logger/v2"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
 )
@@ -45,7 +45,7 @@ type ApiService struct {
 }
 
 // NewApiService - new ApiService object
-func NewApiService(chainMakerServer *blockchain.ChainMakerServer, ctx context.Context) *ApiService {
+func NewApiService(ctx context.Context, chainMakerServer *blockchain.ChainMakerServer) *ApiService {
 	log := logger.GetLogger(logger.MODULE_RPC)
 
 	tokenBucketSize := localconf.ChainMakerConfig.RpcConfig.SubscriberConfig.RateLimitConfig.TokenBucketSize
@@ -208,8 +208,8 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		txWriteKeyMap:    map[string]*commonPb.TxWrite{},
 		txWriteKeySql:    make([]*commonPb.TxWrite, 0),
 		txWriteKeyDdlSql: make([]*commonPb.TxWrite, 0),
-		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
-		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		sqlRowCache:      make(map[int32]protocol.SqlRows),
+		kvRowCache:       make(map[int32]protocol.StateIterator),
 		blockchainStore:  store,
 		vmManager:        vmMgr,
 		blockVersion:     protocol.DefaultBlockVersion,
@@ -237,8 +237,10 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 	txResult, txStatusCode := vmMgr.RunContract(contract, tx.Payload.Method,
 		bytecode, s.kvPair2Map(tx.Payload.Parameters), ctx, 0, tx.Payload.TxType)
 	s.log.DebugDynamic(func() string {
-		return fmt.Sprintf("vmMgr.RunContract: txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], message[%s],result len: %d",
-			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method, tx.Payload.TxType, txResult.Message, len(txResult.Result))
+		return fmt.Sprintf("vmMgr.RunContract: txStatusCode:%d, resultCode:%d, contractName[%s], "+
+			"method[%s], txType[%s], message[%s],result len: %d",
+			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method,
+			tx.Payload.TxType, txResult.Message, len(txResult.Result))
 	})
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		if txStatusCode == commonPb.TxStatusCode_SUCCESS && txResult.Code != 1 {
@@ -248,7 +250,6 @@ func (s *ApiService) dealQuery(tx *commonPb.Transaction, source protocol.TxSourc
 		}
 	}
 	if txStatusCode != commonPb.TxStatusCode_SUCCESS {
-		errCode = commonErr.ERR_CODE_INVOKE_CONTRACT
 		errMsg = fmt.Sprintf("txStatusCode:%d, resultCode:%d, contractName[%s] method[%s] txType[%s], %s",
 			txStatusCode, txResult.Code, tx.Payload.ContractName, tx.Payload.Method, tx.Payload.TxType, txResult.Message)
 		s.log.Warn(errMsg)
@@ -295,8 +296,8 @@ func (s *ApiService) dealSystemChainQuery(tx *commonPb.Transaction, vmMgr protoc
 		txWriteKeyMap:    map[string]*commonPb.TxWrite{},
 		txWriteKeySql:    make([]*commonPb.TxWrite, 0),
 		txWriteKeyDdlSql: make([]*commonPb.TxWrite, 0),
-		sqlRowCache:      make(map[int32]protocol.SqlRows, 0),
-		kvRowCache:       make(map[int32]protocol.StateIterator, 0),
+		sqlRowCache:      make(map[int32]protocol.SqlRows),
+		kvRowCache:       make(map[int32]protocol.StateIterator),
 		vmManager:        vmMgr,
 		blockVersion:     protocol.DefaultBlockVersion,
 	}
@@ -391,7 +392,9 @@ func (s *ApiService) incInvokeCounter(chainId string, err error) {
 }
 
 // RefreshLogLevelsConfig - refresh log level
-func (s *ApiService) RefreshLogLevelsConfig(ctx context.Context, req *configPb.LogLevelsRequest) (*configPb.LogLevelsResponse, error) {
+func (s *ApiService) RefreshLogLevelsConfig(ctx context.Context, req *configPb.LogLevelsRequest) (
+	*configPb.LogLevelsResponse, error) {
+
 	if err := localconf.RefreshLogLevelsConfig(); err != nil {
 		return &configPb.LogLevelsResponse{
 			Code:    int32(1),
@@ -404,7 +407,9 @@ func (s *ApiService) RefreshLogLevelsConfig(ctx context.Context, req *configPb.L
 }
 
 // UpdateDebugConfig - update debug config for test
-func (s *ApiService) UpdateDebugConfig(ctx context.Context, req *configPb.DebugConfigRequest) (*configPb.DebugConfigResponse, error) {
+func (s *ApiService) UpdateDebugConfig(ctx context.Context, req *configPb.DebugConfigRequest) (
+	*configPb.DebugConfigResponse, error) {
+
 	if err := localconf.UpdateDebugConfig(req.Pairs); err != nil {
 		return &configPb.DebugConfigResponse{
 			Code:    int32(1),
@@ -417,7 +422,9 @@ func (s *ApiService) UpdateDebugConfig(ctx context.Context, req *configPb.DebugC
 }
 
 // CheckNewBlockChainConfig check new block chain config.
-func (s *ApiService) CheckNewBlockChainConfig(context.Context, *configPb.CheckNewBlockChainConfigRequest) (*configPb.CheckNewBlockChainConfigResponse, error) {
+func (s *ApiService) CheckNewBlockChainConfig(context.Context, *configPb.CheckNewBlockChainConfigRequest) (
+	*configPb.CheckNewBlockChainConfigResponse, error) {
+
 	if err := localconf.CheckNewCmBlockChainConfig(); err != nil {
 		return &configPb.CheckNewBlockChainConfigResponse{
 			Code:    int32(1),
@@ -430,7 +437,9 @@ func (s *ApiService) CheckNewBlockChainConfig(context.Context, *configPb.CheckNe
 }
 
 // GetChainMakerVersion get chainmaker version by rpc request
-func (s *ApiService) GetChainMakerVersion(ctx context.Context, req *configPb.ChainMakerVersionRequest) (*configPb.ChainMakerVersionResponse, error) {
+func (s *ApiService) GetChainMakerVersion(ctx context.Context, req *configPb.ChainMakerVersionRequest) (
+	*configPb.ChainMakerVersionResponse, error) {
+
 	return &configPb.ChainMakerVersionResponse{
 		Code:    int32(0),
 		Version: s.chainMakerServer.Version(),

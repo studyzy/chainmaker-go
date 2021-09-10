@@ -9,6 +9,7 @@ package wasmer
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 )
 
 // BytesToInt transform bytes to int32, little endian
@@ -16,7 +17,9 @@ func BytesToInt(b []byte) int32 {
 	bytesBuffer := bytes.NewBuffer(b)
 
 	var x int32
-	binary.Read(bytesBuffer, binary.LittleEndian, &x)
+	if err := binary.Read(bytesBuffer, binary.LittleEndian, &x); err != nil {
+		panic(fmt.Sprintf("binary.Read() error: %v", err))
+	}
 
 	return int32(x)
 }
@@ -25,20 +28,26 @@ func BytesToInt(b []byte) int32 {
 func BytesToInt64(b []byte) int64 {
 	bytesBuffer := bytes.NewBuffer(b)
 	var x int64
-	binary.Read(bytesBuffer, binary.LittleEndian, &x)
+	if err := binary.Read(bytesBuffer, binary.LittleEndian, &x); err != nil {
+		panic(fmt.Sprintf("binary.Read() error: %v", err))
+	}
 	return int64(x)
 }
 
 // IntToBytes transform int32 to bytes, little endian
 func IntToBytes(x int32) []byte {
 	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.LittleEndian, x)
+	if err := binary.Write(bytesBuffer, binary.LittleEndian, x); err != nil {
+		panic("binary.Write() error.")
+	}
 	return bytesBuffer.Bytes()
 }
 
 // Int64ToBytes transform int64 to bytes, little endian
 func Int64ToBytes(x int64) []byte {
 	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.LittleEndian, x)
+	if err := binary.Write(bytesBuffer, binary.LittleEndian, x); err != nil {
+		panic("binary.Write() error.")
+	}
 	return bytesBuffer.Bytes()
 }

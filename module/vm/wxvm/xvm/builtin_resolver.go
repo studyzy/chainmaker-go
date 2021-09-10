@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) BABEC. All rights reserved.
+ * Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package xvm
 
 import (
@@ -5,15 +11,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash"
-	"unsafe"
 
 	"chainmaker.org/chainmaker-go/wxvm/xvm/exec"
 	"chainmaker.org/chainmaker-go/wxvm/xvm/runtime/emscripten"
 )
 
-func touint32(n int32) uint32 {
-	return *(*uint32)(unsafe.Pointer(&n))
-}
+//func touint32(n int32) uint32 {
+//	return *(*uint32)(unsafe.Pointer(&n))
+//}//unused function(deadcode)
 
 func hashFunc(name string) hash.Hash {
 	switch name {
@@ -129,18 +134,19 @@ func bytesdup(ctx exec.Context, b []byte) uint32 {
 
 // Returns a pointer to a null-terminated string, which is a duplicate of the string s.
 // The returned pointer must be passed to free to avoid a memory leak
-func strdup(ctx exec.Context, s string) uint32 {
-	codec := exec.NewCodec(ctx)
-	memptr, err := emscripten.Malloc(ctx, len(s)+1)
-	if err != nil {
-		exec.ThrowError(err)
-	}
-	mem := codec.Bytes(memptr, uint32(len(s)+1))
-	copy(mem, s)
-	mem[len(s)] = 0
-	return memptr
-}
+//func strdup(ctx exec.Context, s string) uint32 {
+//	codec := exec.NewCodec(ctx)
+//	memptr, err := emscripten.Malloc(ctx, len(s)+1)
+//	if err != nil {
+//		exec.ThrowError(err)
+//	}
+//	mem := codec.Bytes(memptr, uint32(len(s)+1))
+//	copy(mem, s)
+//	mem[len(s)] = 0
+//	return memptr
+//}//unused code(deadcode)
 
+//BuiltinResolver export
 var BuiltinResolver = exec.MapResolver(map[string]interface{}{
 	"env._wxvm_hash":   wxvmHash,
 	"env._wxvm_encode": wxvmEncode,

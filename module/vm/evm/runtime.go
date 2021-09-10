@@ -16,8 +16,8 @@ import (
 	"chainmaker.org/chainmaker-go/evm/evm-go/environment"
 	"chainmaker.org/chainmaker-go/evm/evm-go/opcodes"
 	"chainmaker.org/chainmaker-go/evm/evm-go/storage"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/evmutils"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -34,7 +34,8 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string,
+	byteCode []byte, parameters map[string][]byte,
 	txSimContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 	txId := txSimContext.GetTx().Payload.TxId
 
@@ -159,21 +160,24 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 	contractResult.ContractEvent = r.ContractEvent
 	return contractResult
 }
-func contractNameDecimalToAddress(cname string) (*evmutils.Int, error) {
-	// hexStr2 == hexStr2
-	// hexStr := hex.EncodeToString(evmutils.Keccak256([]byte("contractName")))[24:]
-	// hexStr2 := hex.EncodeToString(evmutils.Keccak256([]byte("contractName"))[12:])
-	// 为什么使用十进制字符串转换，因为在./evm-go中，使用的是 address.String()作为key，也就是说数据库的名称是十进制字符串。
-	evmAddr := evmutils.FromDecimalString(cname)
-	if evmAddr == nil {
-		return nil, errors.New("contractName[%s] not DecimalString, you can use evmutils.MakeAddressFromString(\"contractName\").String() get a decimal string")
-	}
-	return evmAddr, nil
-}
+
+//func contractNameDecimalToAddress(cname string) (*evmutils.Int, error) {
+//	// hexStr2 == hexStr2
+//	// hexStr := hex.EncodeToString(evmutils.Keccak256([]byte("contractName")))[24:]
+//	// hexStr2 := hex.EncodeToString(evmutils.Keccak256([]byte("contractName"))[12:])
+//	// 为什么使用十进制字符串转换，因为在./evm-go中，使用的是 address.String()作为key，也就是说数据库的名称是十进制字符串。
+//	evmAddr := evmutils.FromDecimalString(cname)
+//	if evmAddr == nil {
+//		return nil, errors.New("contractName[%s] not DecimalString,
+//		you can use evmutils.MakeAddressFromString(\"contractName\").String() get a decimal string")
+//	}
+//	return evmAddr, nil
+//}
 func contractNameHexToAddress(cname string) (*evmutils.Int, error) {
 	evmAddr := evmutils.FromHexString(cname)
 	if evmAddr == nil {
-		return nil, errors.New("contractName[%s] not HexString, you can use hex.EncodeToString(evmutils.MakeAddressFromString(\"contractName\").Bytes()) get a hex string address")
+		return nil, errors.New("contractName[%s] not HexString, you can use hex.EncodeToString(" +
+			"evmutils.MakeAddressFromString(\"contractName\").Bytes()) get a hex string address")
 	}
 	return evmAddr, nil
 }
@@ -192,58 +196,23 @@ func (r *RuntimeInstance) callback(result evm_go.ExecuteResult, err error) {
 	//emit  contract event
 	err = r.emitContractEvent(result)
 	if err != nil {
-		r.Log.Debugf("emit contract event err:%s", err.Error())
+		r.Log.Errorf("emit contract event err:%s", err.Error())
 		panic(err)
-		return
 	}
 	for n, v := range result.StorageCache.CachedData {
 		for k, val := range v {
-			r.TxSimContext.Put(n, []byte(k), val.Bytes())
-			//r.Log.Infof("put CachedData,name[%s],key[%s],value[%x]", n, k, val.Bytes())
+			err := r.TxSimContext.Put(n, []byte(k), val.Bytes())
+			if err != nil {
+				r.Log.Errorf("callback txSimContext put err:%s", err.Error())
+			}
 			//fmt.Println("n k val", n, k, val, val.String())
 		}
 	}
-	//TODO：Devin:销毁一个合约是在ContractManage合约中去操作的，这里能操作系统合约的状态数据？
-	//if len(result.StorageCache.Destructs) > 0 {
-	//	revokeKey := []byte(protocol.ContractRevoke + r.Contract.Name)
-	//	if err := r.TxSimContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), revokeKey, []byte(r.Contract.Name)); err != nil {
-	//		panic(err)
-	//	}
-	//	r.Log.Infof("destruction encountered in contract [%s] execution, tx: [%s]",
-	//		r.Contract.Name, r.TxSimContext.GetTx().Payload.TxId)
-	//}
-	//TODO:Devin:合约的安装升级只更新自己的合约状态数据，系统合约那边自己管理，不需要在这里操作。
-	// save address -> contractName,version
-	//if r.Method == protocol.ContractInitMethod || r.Method == protocol.ContractUpgradeMethod {
-	//	if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractAddress), []byte(r.Contract.Name)); err != nil {
-	//		r.Log.Errorf("failed to save contractName %s", err.Error())
-	//		panic(err)
-	//	}
-	//	versionKey := []byte(protocol.ContractVersion + r.Address.String())
-	//	//if err := r.TxSimContext.Put(r.Address.String(), []byte(protocol.ContractVersion), []byte(r.Contract.Version)); err != nil {
-	//	if err := r.TxSimContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey, []byte(r.Contract.Version)); err != nil {
-	//		r.Log.Errorf("failed to save ContractVersion %s", err.Error())
-	//		panic(err)
-	//	}
-	//	// if is create/upgrade contract then override solidity byteCode
-	//	if len(result.ByteCodeBody) > 0 && len(result.ByteCodeHead) > 0 {
-	//		// save byteCodeBody
-	//		versionedByteCodeKey := append([]byte(protocol.ContractByteCode+r.Contract.Name), []byte(r.Contract.Version)...)
-	//		//if err := r.TxSimContext.Put(r.Contract.Name, versionedByteCodeKey, result.ByteCodeBody); err != nil {
-	//		if err := r.TxSimContext.Put(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionedByteCodeKey, result.ByteCodeBody); err != nil {
-	//			r.Log.Errorf("failed to save byte code body %s", err.Error())
-	//			panic(err)
-	//		}
-	//	} else {
-	//		r.Log.Errorf("failed to parse evm byte code, head length = %d, body length = %d", len(result.ByteCodeHead), len(result.ByteCodeBody))
-	//		panic(err)
-	//	}
-	//}
-
 	r.Log.Debug("result:", result.ResultData)
 }
 
-func (r *RuntimeInstance) errorResult(contractResult *commonPb.ContractResult, err error, errMsg string) *commonPb.ContractResult {
+func (r *RuntimeInstance) errorResult(
+	contractResult *commonPb.ContractResult, err error, errMsg string) *commonPb.ContractResult {
 	contractResult.Code = 1
 	if err != nil {
 		errMsg += ", " + err.Error()

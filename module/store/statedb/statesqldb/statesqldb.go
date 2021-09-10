@@ -10,13 +10,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 
+	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
@@ -41,7 +43,7 @@ type StateSqlDB struct {
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *StateSqlDB) initContractDb(contractName string) error {
-	dbName := getContractDbName(db.dbConfig, db.chainId, contractName)
+	dbName := getContractDbName("db.dbConfig", db.chainId, contractName)
 	db.logger.Debugf("try to create state db %s", dbName)
 	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
@@ -57,23 +59,28 @@ func (db *StateSqlDB) initContractDb(contractName string) error {
 	if err != nil {
 		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
 	}
+
 	return nil
 }
 func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 	db.logger.Debugf("try to create state db %s", dbName)
 	_, err := db.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
-		panic("init state sql db fail")
+		db.logger.Panic("init state sql db fail")
 	}
 	db.logger.Debug("try to create system state db table: state_infos")
 	err = db.db.CreateTableIfNotExist(&StateInfo{})
 	if err != nil {
-		panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state sql db table fail:" + err.Error())
 	}
 	db.logger.Debug("try to create system state db table: save_points")
 	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
 	if err != nil {
-		panic("init state sql db table fail:" + err.Error())
+		db.logger.Panic("init state sql db table fail:" + err.Error())
+	}
+	err = db.db.CreateTableIfNotExist(&MemberExtraInfo{})
+	if err != nil {
+		db.logger.Panic("init member extra info table fail:" + err.Error())
 	}
 	_, err = db.db.Save(&types.SavePoint{BlockHeight: 0})
 	return err
@@ -81,7 +88,7 @@ func (db *StateSqlDB) initSystemStateDb(dbName string) error {
 
 // NewStateSqlDB construct a new `StateDB` for given chainId
 func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
-	dbName := getDbName(dbConfig, chainId)
+	dbName := getDbName("dbConfig", chainId)
 	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
 	return newStateSqlDB(dbName, chainId, db, dbConfig, logger)
 }
@@ -108,20 +115,27 @@ func (s *StateSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerialized
 	}
 	return s.commitBlock(genesisBlock)
 }
-func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
-	return dbConfig.DbPrefix + "statedb_" + chainId
+func getDbName(dbPrefix, chainId string) string {
+	return dbPrefix + "statedb_" + chainId
 }
 
 func GetContractDbName(chainId, contractName string) string {
-	return getContractDbName(localconf.ChainMakerConfig.StorageConfig.StateDbConfig.SqlDbConfig, chainId, contractName)
+	dbPrefix := getDbConfigDbPrefix(localconf.ChainMakerConfig.StorageConfig)
+	return getContractDbName(dbPrefix, chainId, contractName)
+}
+func getDbConfigDbPrefix(config map[string]interface{}) string {
+	if dbPrefix, ok := config["db_prefix"]; ok {
+		return dbPrefix.(string)
+	}
+	return ""
 }
 
 //getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
-func getContractDbName(dbConfig *localconf.SqlDbConfig, chainId, contractName string) string {
+func getContractDbName(dbPrefix, chainId, contractName string) string {
 	if _, ok := syscontract.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
-		return getDbName(dbConfig, chainId)
+		return getDbName(dbPrefix, chainId)
 	}
-	dbName := dbConfig.DbPrefix + "statedb_" + chainId + "_" + contractName
+	dbName := dbPrefix + "statedb_" + chainId + "_" + contractName
 	if len(dbName) > 64 { //for mysql only support 64 chars
 		h := sha256.New()
 		h.Write([]byte(dbName))
@@ -209,7 +223,13 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			}
 		}
 	}
-	//4. 更新SavePoint
+	//4. 更新MemberExtra
+	err = s.updateBlockMemberExtra(dbTx, block)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return err
+	}
+	//5. 更新SavePoint
 	err = s.updateSavePoint(dbTx, block.Header.BlockHeight)
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -224,16 +244,27 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	s.logger.Debugf("chain[%s]: commit state block[%d]", block.Header.ChainId, block.Header.BlockHeight)
 	return nil
 }
+func (s *StateSqlDB) updateBlockMemberExtra(dbTx protocol.SqlDBTransaction, block *commonPb.Block) error {
+	for _, tx := range block.Txs {
+		if tx.Payload.Sequence > 0 && tx.Sender != nil {
+			err := s.saveMemberExtraData(dbTx, tx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 	block *commonPb.Block, txWrite *commonPb.TxWrite, processStateDbSqlOutside bool) error {
-	contractDbName := getContractDbName(s.dbConfig, s.chainId, txWrite.ContractName)
+	contractDbName := getContractDbName("s.dbConfig", s.chainId, txWrite.ContractName)
 	if txWrite.ContractName != "" { //切换DB
 		err := dbTx.ChangeContextDb(contractDbName)
 		if err != nil {
 			return err
 		}
 	}
-	if len(txWrite.Key) == 0 { //是sql
+	if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 		if !processStateDbSqlOutside { // 没有在外面处理过，则在这里进行处理
 			sql := string(txWrite.Value)
 			if _, err := dbTx.ExecSql(sql); err != nil {
@@ -268,7 +299,7 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint
 func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block,
 	contractId *commonPb.Contract, writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
-	dbName := getContractDbName(s.dbConfig, block.Header.ChainId, contractId.Name)
+	dbName := getContractDbName("s.dbConfig", block.Header.ChainId, contractId.Name)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.Name)
 	err := s.initContractDb(contractId.Name) //创建合约的数据库和KV表
 	if err != nil {
@@ -283,10 +314,10 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 	})
 
 	for _, txWrite := range writes {
-		if len(txWrite.Key) == 0 { //这是SQL语句
+		if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
-				writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
+				writeDbName := getContractDbName("s.dbConfig", block.Header.ChainId, txWrite.ContractName)
 				err = dbTx.ChangeContextDb(writeDbName)
 				if err != nil {
 					s.logger.Errorf("change context db to %s get an error:%s", writeDbName, err)
@@ -301,7 +332,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 		} else { //是KV数据，直接存储到StateInfo表
 			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
 				uint64(block.Header.BlockHeight), block.GetTimestamp())
-			writeDbName := getContractDbName(s.dbConfig, block.Header.ChainId, txWrite.ContractName)
+			writeDbName := getContractDbName("s.dbConfig", block.Header.ChainId, txWrite.ContractName)
 			err = dbTx.ChangeContextDb(writeDbName)
 			if err != nil {
 				return err
@@ -400,7 +431,7 @@ func (s *StateSqlDB) getContractDbHandle(contractName string) protocol.SqlDBHand
 		s.contractDbs[contractName] = s.db
 		return s.db
 	}
-	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
+	dbName := getContractDbName("s.dbConfig", s.chainId, contractName)
 	db := rawsqlprovider.NewSqlDBHandle(dbName, s.dbConfig, s.logger)
 	s.contractDbs[contractName] = db
 	s.logger.Infof("create new sql db handle[%p] database[%s] for contract[%s]", db, dbName, contractName)
@@ -445,7 +476,7 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
-	dbName := getContractDbName(s.dbConfig, s.chainId, contractName)
+	dbName := getContractDbName("s.dbConfig", s.chainId, contractName)
 	exist, err := s.db.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err
@@ -544,4 +575,30 @@ func (s *StateSqlDB) GetChainConfig() (*configPb.ChainConfig, error) {
 		return nil, err
 	}
 	return conf, nil
+}
+
+func (s *StateSqlDB) GetMemberExtraData(member *accesscontrol.Member) (*accesscontrol.MemberExtraData, error) {
+	s.Lock()
+	defer s.Unlock()
+	mei := &MemberExtraInfo{}
+	sql := "select * from " + mei.GetTableName() + " where member_hash=?"
+	row, err := s.db.QuerySingle(sql, getMemberHash(member))
+	if err != nil {
+		return nil, err
+	}
+	err = mei.ScanObject(row.ScanColumns)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mei.GetExtraData(), nil
+}
+func (s *StateSqlDB) saveMemberExtraData(dbTx protocol.SqlDBTransaction, tx *commonPb.Transaction) error {
+	extraData := NewMemberExtraInfo(tx.Sender.Signer, &accesscontrol.MemberExtraData{Sequence: tx.Payload.Sequence})
+	_, err := dbTx.Save(extraData)
+	if err != nil {
+		return err
+	}
+	return nil
 }

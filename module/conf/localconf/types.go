@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 )
 
 type nodeConfig struct {
@@ -93,35 +93,44 @@ type subscriberConfig struct {
 }
 
 type debugConfig struct {
-	IsCliOpen           bool `mapstructure:"is_cli_open"`
-	IsHttpOpen          bool `mapstructure:"is_http_open"`
-	IsProposer          bool `mapstructure:"is_proposer"`
-	IsNotRWSetCheck     bool `mapstructure:"is_not_rwset_check"`
-	IsConcurPropose     bool `mapstructure:"is_concur_propose"`
-	IsConcurVerify      bool `mapstructure:"is_concur_verify"`
-	IsSolo              bool `mapstructure:"is_solo"`
-	IsHaltPropose       bool `mapstructure:"is_halt_propose"`
-	IsSkipAccessControl bool `mapstructure:"is_skip_access_control"` // true: minimize access control; false: use full access control
-	IsTraceMemoryUsage  bool `mapstructure:"is_trace_memory_usage"`  // true for trace memory usage information periodically
-
-	IsProposeDuplicately          bool `mapstructure:"is_propose_duplicately"`           // Simulate a node which would propose duplicate after it has proposed Proposal
-	IsProposeMultiNodeDuplicately bool `mapstructure:"is_propose_multinode_duplicately"` // Simulate a malicious node which would propose duplicate proposals
+	IsCliOpen       bool `mapstructure:"is_cli_open"`
+	IsHttpOpen      bool `mapstructure:"is_http_open"`
+	IsProposer      bool `mapstructure:"is_proposer"`
+	IsNotRWSetCheck bool `mapstructure:"is_not_rwset_check"`
+	IsConcurPropose bool `mapstructure:"is_concur_propose"`
+	IsConcurVerify  bool `mapstructure:"is_concur_verify"`
+	IsSolo          bool `mapstructure:"is_solo"`
+	IsHaltPropose   bool `mapstructure:"is_halt_propose"`
+	// true: minimize access control; false: use full access control
+	IsSkipAccessControl bool `mapstructure:"is_skip_access_control"`
+	// true for trace memory usage information periodically
+	IsTraceMemoryUsage bool `mapstructure:"is_trace_memory_usage"`
+	// Simulate a node which would propose duplicate after it has proposed Proposal
+	IsProposeDuplicately bool `mapstructure:"is_propose_duplicately"`
+	// Simulate a malicious node which would propose duplicate proposals
+	IsProposeMultiNodeDuplicately bool `mapstructure:"is_propose_multinode_duplicately"`
 	IsProposalOldHeight           bool `mapstructure:"is_proposal_old_height"`
-	IsPrevoteDuplicately          bool `mapstructure:"is_prevote_duplicately"`   // Simulate a malicious node which would prevote duplicately
-	IsPrevoteOldHeight            bool `mapstructure:"is_prevote_old_height"`    // Simulate a malicious node which would prevote for oldheight
-	IsPrevoteLost                 bool `mapstructure:"is_prevote_lost"`          //prevote vote lost
-	IsPrecommitDuplicately        bool `mapstructure:"is_precommit_duplicately"` //Simulate a malicious node which would propose duplicate precommits
-	IsPrecommitOldHeight          bool `mapstructure:"is_precommit_old_height"`  // Simulate a malicious node which would Precommit a lower height than current height
+	// Simulate a malicious node which would prevote duplicately
+	IsPrevoteDuplicately bool `mapstructure:"is_prevote_duplicately"`
+	// Simulate a malicious node which would prevote for oldheight
+	IsPrevoteOldHeight bool `mapstructure:"is_prevote_old_height"`
+	IsPrevoteLost      bool `mapstructure:"is_prevote_lost"` //prevote vote lost
+	//Simulate a malicious node which would propose duplicate precommits
+	IsPrecommitDuplicately bool `mapstructure:"is_precommit_duplicately"`
+	// Simulate a malicious node which would Precommit a lower height than current height
+	IsPrecommitOldHeight bool `mapstructure:"is_precommit_old_height"`
 
 	IsProposeLost    bool `mapstructure:"is_propose_lost"`     //proposal vote lost
 	IsProposeDelay   bool `mapstructure:"is_propose_delay"`    //proposal lost
 	IsPrevoteDelay   bool `mapstructure:"is_prevote_delay"`    //network problem resulting in preovote lost
 	IsPrecommitLost  bool `mapstructure:"is_precommit_lost"`   //precommit vote lost
 	IsPrecommitDelay bool `mapstructure:"is_prevcommit_delay"` //network problem resulting in precommit lost
-
-	IsCommitWithoutPublish bool `mapstructure:"is_commit_without_publish"` //if the node committing block without publishing, TRUE；else, FALSE
-	IsPrevoteInvalid       bool `mapstructure:"is_prevote_invalid"`        //simulate a node which sends an invalid prevote(hash=nil)
-	IsPrecommitInvalid     bool `mapstructure:"is_precommit_invalid"`      //simulate a node which sends an invalid precommit(hash=nil)
+	//if the node committing block without publishing, TRUE；else, FALSE
+	IsCommitWithoutPublish bool `mapstructure:"is_commit_without_publish"`
+	//simulate a node which sends an invalid prevote(hash=nil)
+	IsPrevoteInvalid bool `mapstructure:"is_prevote_invalid"`
+	//simulate a node which sends an invalid precommit(hash=nil)
+	IsPrecommitInvalid bool `mapstructure:"is_precommit_invalid"`
 
 	IsModifyTxPayload    bool `mapstructure:"is_modify_tx_payload"`
 	IsExtreme            bool `mapstructure:"is_extreme"` //extreme fast mode
@@ -129,7 +138,7 @@ type debugConfig struct {
 	IsNetInsecurity      bool `mapstructure:"is_net_insecurity"`
 }
 
-type blockchainConfig struct {
+type BlockchainConfig struct {
 	ChainId string
 	Genesis string
 }
@@ -157,19 +166,24 @@ type StorageConfig struct {
 
 func (config *StorageConfig) setDefault() {
 	if config.DbPrefix != "" {
-		if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil && config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
+		if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil &&
+			config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.BlockDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil && config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
+		if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil &&
+			config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.StateDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil && config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
+		if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil &&
+			config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.HistoryDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil && config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
+		if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil &&
+			config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.ResultDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
-		if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
+		if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil &&
+			config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
 			config.ContractEventDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
 		}
 	}
@@ -210,19 +224,27 @@ func (config *StorageConfig) GetContractEventDbConfig() *DbConfig {
 	return config.ContractEventDbConfig
 }
 func (config *StorageConfig) GetDefaultDBConfig() *DbConfig {
-	lconfig := &LevelDbConfig{
-		StorePath:            config.StorePath,
-		WriteBufferSize:      config.WriteBufferSize,
-		BloomFilterBits:      config.BloomFilterBits,
-		BlockWriteBufferSize: config.WriteBufferSize,
-	}
+	lconfig := make(map[string]interface{})
+	lconfig["store_path"] = config.StorePath
+	//lconfig := &LevelDbConfig{
+	//	StorePath:            config.StorePath,
+	//	WriteBufferSize:      config.WriteBufferSize,
+	//	BloomFilterBits:      config.BloomFilterBits,
+	//	BlockWriteBufferSize: config.WriteBufferSize,
+	//}
+
+	//bconfig := &BadgerDbConfig{
+	//	StorePath: config.StorePath,
+	//}
+
 	return &DbConfig{
 		Provider:      "leveldb",
 		LevelDbConfig: lconfig,
+		//BadgerDbConfig: bconfig,
 	}
 }
 
-//根据配置的DisableDB的情况，确定当前配置活跃的数据库数量
+//GetActiveDBCount 根据配置的DisableDB的情况，确定当前配置活跃的数据库数量
 func (config *StorageConfig) GetActiveDBCount() int {
 	count := 5
 	if config.DisableContractEventDB {
@@ -238,29 +260,30 @@ func (config *StorageConfig) GetActiveDBCount() int {
 }
 
 type DbConfig struct {
-	//leveldb,rocksdb,sql
-	Provider      string         `mapstructure:"provider"`
-	LevelDbConfig *LevelDbConfig `mapstructure:"leveldb_config"`
-	SqlDbConfig   *SqlDbConfig   `mapstructure:"sqldb_config"`
+	//leveldb,badgerdb,sql
+	Provider       string                 `mapstructure:"provider"`
+	LevelDbConfig  map[string]interface{} `mapstructure:"leveldb_config"`
+	BadgerDbConfig map[string]interface{} `mapstructure:"badgerdb_config"`
+	SqlDbConfig    *SqlDbConfig           `mapstructure:"sqldb_config"`
 }
 
-const DbConfig_Provider_Sql = "sql"
-const DbConfig_Provider_LevelDb = "leveldb"
-const DbConfig_Provider_RocksDb = "rocksdb"
+//nolint
+const (
+	DbconfigProviderSql      = "sql"
+	DbconfigProviderLeveldb  = "leveldb"
+	DbconfigProviderBadgerdb = "badgerdb"
+)
 
 func (dbc *DbConfig) IsKVDB() bool {
-	return dbc.Provider == DbConfig_Provider_LevelDb || dbc.Provider == DbConfig_Provider_RocksDb
-}
-func (dbc *DbConfig) IsSqlDB() bool {
-	return dbc.Provider == DbConfig_Provider_Sql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
+	return dbc.Provider == DbconfigProviderLeveldb ||
+		//dbc.Provider == DbconfigProviderRocksdb ||
+		dbc.Provider == DbconfigProviderBadgerdb
 }
 
-type LevelDbConfig struct {
-	StorePath            string `mapstructure:"store_path"`
-	WriteBufferSize      int    `mapstructure:"write_buffer_size"`
-	BloomFilterBits      int    `mapstructure:"bloom_filter_bits"`
-	BlockWriteBufferSize int    `mapstructure:"block_write_buffer_size"`
+func (dbc *DbConfig) IsSqlDB() bool {
+	return dbc.Provider == DbconfigProviderSql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
 }
+
 type SqlDbConfig struct {
 	//mysql, sqlite, postgres, sqlserver
 	SqlDbType       string `mapstructure:"sqldb_type"`
@@ -273,8 +296,8 @@ type SqlDbConfig struct {
 	DbPrefix        string `mapstructure:"db_prefix"`
 }
 
-const SqlDbConfig_SqlDbType_MySQL = "mysql"
-const SqlDbConfig_SqlDbType_Sqlite = "sqlite"
+const SqldbconfigSqldbtypeMysql = "mysql"
+const SqldbconfigSqldbtypeSqlite = "sqlite"
 
 type txPoolConfig struct {
 	PoolType            string `mapstructure:"pool_type"`
@@ -313,22 +336,31 @@ type pprofConfig struct {
 	Port    int  `mapstructure:"port"`
 }
 
-type redisConfig struct {
-	Url          string `mapstructure:"url"`
-	Auth         string `mapstructure:"auth"`
-	DB           int    `mapstructure:"db"`
-	MaxIdle      int    `mapstructure:"max_idle"`
-	MaxActive    int    `mapstructure:"max_active"`
-	IdleTimeout  int    `mapstructure:"idle_timeout"`
-	CacheTimeout int    `mapstructure:"cache_timeout"`
+type raftConfig struct {
+	SnapCount    uint64 `mapstructure:"snap_count"`
+	AsyncWalSave bool   `mapstructure:"async_wal_save"`
 }
 
-type clientConfig struct {
-	OrgId           string `mapstructure:"org_id"`
-	UserKeyFilePath string `mapstructure:"user_key_file_path"`
-	UserCrtFilePath string `mapstructure:"user_crt_file_path"`
-	HashType        string `mapstructure:"hash_type"`
+type ConsensusConfig struct {
+	RaftConfig raftConfig `mapstructure:"raft"`
 }
+
+//type redisConfig struct {
+//	Url          string `mapstructure:"url"`
+//	Auth         string `mapstructure:"auth"`
+//	DB           int    `mapstructure:"db"`
+//	MaxIdle      int    `mapstructure:"max_idle"`
+//	MaxActive    int    `mapstructure:"max_active"`
+//	IdleTimeout  int    `mapstructure:"idle_timeout"`
+//	CacheTimeout int    `mapstructure:"cache_timeout"`
+//}
+
+//type clientConfig struct {
+//	OrgId           string `mapstructure:"org_id"`
+//	UserKeyFilePath string `mapstructure:"user_key_file_path"`
+//	UserCrtFilePath string `mapstructure:"user_crt_file_path"`
+//	HashType        string `mapstructure:"hash_type"`
+//}
 
 type schedulerConfig struct {
 	RWSetLog bool `mapstructure:"rwset_log"`
@@ -340,14 +372,15 @@ type coreConfig struct {
 
 // CMConfig - Local config struct
 type CMConfig struct {
-	LogConfig        logger.LogConfig   `mapstructure:"log"`
-	NetConfig        netConfig          `mapstructure:"net"`
-	NodeConfig       nodeConfig         `mapstructure:"node"`
-	RpcConfig        rpcConfig          `mapstructure:"rpc"`
-	BlockChainConfig []blockchainConfig `mapstructure:"blockchain"`
-	StorageConfig    StorageConfig      `mapstructure:"storage"`
-	TxPoolConfig     txPoolConfig       `mapstructure:"txpool"`
-	SyncConfig       syncConfig         `mapstructure:"sync"`
+	LogConfig        logger.LogConfig       `mapstructure:"log"`
+	NetConfig        netConfig              `mapstructure:"net"`
+	NodeConfig       nodeConfig             `mapstructure:"node"`
+	RpcConfig        rpcConfig              `mapstructure:"rpc"`
+	BlockChainConfig []BlockchainConfig     `mapstructure:"blockchain"`
+	ConsensusConfig  ConsensusConfig        `mapstructure:"consensus"`
+	StorageConfig    map[string]interface{} `mapstructure:"storage"`
+	TxPoolConfig     txPoolConfig           `mapstructure:"txpool"`
+	SyncConfig       syncConfig             `mapstructure:"sync"`
 
 	// 开发调试使用
 	DebugConfig     debugConfig     `mapstructure:"debug"`
@@ -358,6 +391,12 @@ type CMConfig struct {
 }
 
 // GetBlockChains - get blockchain config list
-func (c *CMConfig) GetBlockChains() []blockchainConfig {
+func (c *CMConfig) GetBlockChains() []BlockchainConfig {
 	return c.BlockChainConfig
+}
+func (c *CMConfig) GetStorePath() string {
+	if path, ok := c.StorageConfig["store_path"]; ok {
+		return path.(string)
+	}
+	return ""
 }

@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/logger"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/logger/v2"
 	"github.com/Workiva/go-datastructures/queue"
 )
 
@@ -44,8 +44,8 @@ func NewRoutine(name string, handle handleFunc, queryState getServiceState, log 
 		log:        log,
 
 		queue: queue.NewPriorityQueue(bufferSize, true),
-		out:   make(chan queue.Item, 0),
-		stop:  make(chan struct{}, 0),
+		out:   make(chan queue.Item),
+		stop:  make(chan struct{}),
 	}
 }
 

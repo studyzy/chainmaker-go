@@ -12,10 +12,9 @@ import (
 	"unsafe"
 
 	"chainmaker.org/chainmaker-go/wasi"
-
-	"chainmaker.org/chainmaker-go/logger"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
@@ -61,7 +60,10 @@ func logMessage(context unsafe.Pointer, pointer int32, length int32) {
 
 // sysCall wasmer vm call chain entry
 //export sysCall
-func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen int32, requestBodyPtr int32, requestBodyLen int32) int32 {
+func sysCall(context unsafe.Pointer,
+	requestHeaderPtr int32, requestHeaderLen int32,
+	requestBodyPtr int32, requestBodyLen int32) int32 {
+
 	if requestHeaderLen == 0 {
 		log.Error("wasmer log>> requestHeader is null.")
 		return protocol.ContractSdkSignalResultFail
@@ -77,7 +79,8 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 	ec := serialize.NewEasyCodecWithBytes(requestHeaderByte)
 	ctxPtr, err := ec.GetValue("ctx_ptr", serialize.EasyKeyType_SYSTEM)
 	if err != nil {
-		log.Error("get ctx_ptr failed:%s requestHeader=%s requestBody=%s", "request header have no ctx_ptr", string(requestHeaderByte), string(requestBody), err)
+		log.Error("get ctx_ptr failed:%s requestHeader=%s requestBody=%s", "request header have no ctx_ptr",
+			string(requestHeaderByte), string(requestBody), err)
 	}
 	vbm := GetVmBridgeManager()
 	sc := vbm.get(ctxPtr.(int32))
@@ -91,82 +94,90 @@ func sysCall(context unsafe.Pointer, requestHeaderPtr int32, requestHeaderLen in
 
 	method, err := ec.GetValue("method", serialize.EasyKeyType_SYSTEM)
 	if err != nil {
-		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method", string(requestHeaderByte), string(requestBody), err)
+		log.Error("get method failed:%s requestHeader=%s requestBody=%s", "request header have no method",
+			string(requestHeaderByte), string(requestBody), err)
 	}
 
 	log.Debugf("### enter syscall handling, method = '%v'", method)
 	var ret int32
-	switch method.(string) {
-	// common
-	case protocol.ContractMethodLogMessage:
-		ret = s.LogMessage()
-	case protocol.ContractMethodSuccessResult:
-		ret = s.SuccessResult()
-	case protocol.ContractMethodErrorResult:
-		ret = s.ErrorResult()
-	case protocol.ContractMethodCallContract:
-		ret = s.CallContract()
-	case protocol.ContractMethodCallContractLen:
-		ret = s.CallContractLen()
-	case protocol.ContractMethodEmitEvent:
-		ret = s.EmitEvent()
-		// paillier
-	case protocol.ContractMethodGetPaillierOperationResultLen:
-		ret = s.GetPaillierResultLen()
-	case protocol.ContractMethodGetPaillierOperationResult:
-		ret = s.GetPaillierResult()
-		// bulletproofs
-	case protocol.ContractMethodGetBulletproofsResultLen:
-		ret = s.GetBulletProofsResultLen()
-	case protocol.ContractMethodGetBulletproofsResult:
-		ret = s.GetBulletProofsResult()
-	// kv
-	case protocol.ContractMethodGetStateLen:
-		ret = s.GetStateLen()
-	case protocol.ContractMethodGetState:
-		ret = s.GetState()
-	case protocol.ContractMethodPutState:
-		ret = s.PutState()
-	case protocol.ContractMethodDeleteState:
-		ret = s.DeleteState()
-	case protocol.ContractMethodKvIterator:
-		ret = s.KvIterator()
-	case protocol.ContractMethodKvPreIterator:
-		ret = s.KvPreIterator()
-	case protocol.ContractMethodKvIteratorHasNext:
-		ret = s.KvIteratorHasNext()
-	case protocol.ContractMethodKvIteratorNextLen:
-		ret = s.KvIteratorNextLen()
-	case protocol.ContractMethodKvIteratorNext:
-		ret = s.KvIteratorNext()
-	case protocol.ContractMethodKvIteratorClose:
-		ret = s.KvIteratorClose()
-	// sql
-	case protocol.ContractMethodExecuteUpdate:
-		ret = s.ExecuteUpdate()
-	case protocol.ContractMethodExecuteDdl:
-		ret = s.ExecuteDDL()
-	case protocol.ContractMethodExecuteQuery:
-		ret = s.ExecuteQuery()
-	case protocol.ContractMethodExecuteQueryOne:
-		ret = s.ExecuteQueryOne()
-	case protocol.ContractMethodExecuteQueryOneLen:
-		ret = s.ExecuteQueryOneLen()
-	case protocol.ContractMethodRSHasNext:
-		ret = s.RSHasNext()
-	case protocol.ContractMethodRSNextLen:
-		ret = s.RSNextLen()
-	case protocol.ContractMethodRSNext:
-		ret = s.RSNext()
-	case protocol.ContractMethodRSClose:
-		ret = s.RSClose()
-	default:
-		ret = protocol.ContractSdkSignalResultFail
-		log.Errorf("method[%s] is not match.", method)
+	if ret = s.invoke(method); ret == protocol.ContractSdkSignalResultFail {
+		log.Errorf("invoke WaciInstance error: method = %v", method)
 	}
+
 	log.Debugf("### leave syscall handling, method = '%v'", method)
 
 	return ret
+}
+
+//nolint
+func (s *WaciInstance) invoke(method interface{}) int32 {
+	switch method.(string) {
+	// common
+	case protocol.ContractMethodLogMessage:
+		return s.LogMessage()
+	case protocol.ContractMethodSuccessResult:
+		return s.SuccessResult()
+	case protocol.ContractMethodErrorResult:
+		return s.ErrorResult()
+	case protocol.ContractMethodCallContract:
+		return s.CallContract()
+	case protocol.ContractMethodCallContractLen:
+		return s.CallContractLen()
+	case protocol.ContractMethodEmitEvent:
+		return s.EmitEvent()
+		// paillier
+	case protocol.ContractMethodGetPaillierOperationResultLen:
+		return s.GetPaillierResultLen()
+	case protocol.ContractMethodGetPaillierOperationResult:
+		return s.GetPaillierResult()
+		// bulletproofs
+	case protocol.ContractMethodGetBulletproofsResultLen:
+		return s.GetBulletProofsResultLen()
+	case protocol.ContractMethodGetBulletproofsResult:
+		return s.GetBulletProofsResult()
+	// kv
+	case protocol.ContractMethodGetStateLen:
+		return s.GetStateLen()
+	case protocol.ContractMethodGetState:
+		return s.GetState()
+	case protocol.ContractMethodPutState:
+		return s.PutState()
+	case protocol.ContractMethodDeleteState:
+		return s.DeleteState()
+	case protocol.ContractMethodKvIterator:
+		return s.KvIterator()
+	case protocol.ContractMethodKvPreIterator:
+		return s.KvPreIterator()
+	case protocol.ContractMethodKvIteratorHasNext:
+		return s.KvIteratorHasNext()
+	case protocol.ContractMethodKvIteratorNextLen:
+		return s.KvIteratorNextLen()
+	case protocol.ContractMethodKvIteratorNext:
+		return s.KvIteratorNext()
+	case protocol.ContractMethodKvIteratorClose:
+		return s.KvIteratorClose()
+	// sql
+	case protocol.ContractMethodExecuteUpdate:
+		return s.ExecuteUpdate()
+	case protocol.ContractMethodExecuteDdl:
+		return s.ExecuteDDL()
+	case protocol.ContractMethodExecuteQuery:
+		return s.ExecuteQuery()
+	case protocol.ContractMethodExecuteQueryOne:
+		return s.ExecuteQueryOne()
+	case protocol.ContractMethodExecuteQueryOneLen:
+		return s.ExecuteQueryOneLen()
+	case protocol.ContractMethodRSHasNext:
+		return s.RSHasNext()
+	case protocol.ContractMethodRSNextLen:
+		return s.RSNextLen()
+	case protocol.ContractMethodRSNext:
+		return s.RSNext()
+	case protocol.ContractMethodRSClose:
+		return s.RSClose()
+	default:
+		return protocol.ContractSdkSignalResultFail
+	}
 }
 
 // SuccessResult record the results of contract execution success
@@ -190,7 +201,7 @@ func (s *WaciInstance) CallContract() int32 {
 }
 
 func (s *WaciInstance) callContractCore(isLen bool) int32 {
-	data, err, gas := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed(), isLen)
+	data, gas, err := wacsi.CallContract(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Instance.GetGasUsed(), isLen)
 	s.Sc.GetStateCache = data // reset data
 	s.Sc.Instance.SetGasUsed(gas)
 	if err != nil {
@@ -342,19 +353,35 @@ func (b *vmBridgeManager) NewWasmInstance(byteCode []byte) (wasm.Instance, error
 
 // GetImports return export interface to cgo
 func (b *vmBridgeManager) GetImports() *wasm.Imports {
+	var err error
 	imports := wasm.NewImports().Namespace("env")
 	// parameter explain:  1、["log_message"]: rust extern "C" method name 2、[logMessage] go method ptr 3、[C.logMessage] cgo function pointer.
-	imports.Append("sys_call", sysCall, C.sysCall)
-	imports.Append("log_message", logMessage, C.logMessage)
+	if _, err = imports.Append("sys_call", sysCall, C.sysCall); err != nil {
+		panic("add 'sys_call' into Imports error")
+	}
+	if _, err = imports.Append("log_message", logMessage, C.logMessage); err != nil {
+		panic("add 'log_message' into Imports error")
+	}
 	// for wacsi empty interface
 	imports.Namespace("wasi_unstable")
-	imports.Append("fd_write", fdWrite, C.fdWrite)
-	imports.Append("fd_read", fdRead, C.fdRead)
-	imports.Append("fd_close", fdClose, C.fdClose)
-	imports.Append("fd_seek", fdSeek, C.fdSeek)
+
+	if _, err = imports.Append("fd_write", fdWrite, C.fdWrite); err != nil {
+		panic("add 'fd_write' into Imports error")
+	}
+	if _, err = imports.Append("fd_read", fdRead, C.fdRead); err != nil {
+		panic("add 'fd_read' into Imports error")
+	}
+	if _, err = imports.Append("fd_close", fdClose, C.fdClose); err != nil {
+		panic("add 'fd_close' into Imports error")
+	}
+	if _, err = imports.Append("fd_seek", fdSeek, C.fdSeek); err != nil {
+		panic("add 'fd_seek' into Imports error")
+	}
 
 	imports.Namespace("wasi_snapshot_preview1")
-	imports.Append("proc_exit", procExit, C.procExit)
+	if _, err = imports.Append("proc_exit", procExit, C.procExit); err != nil {
+		panic("add 'proc_exit' into Imports error")
+	}
 	//imports.Append("fd_write", fdWrite2, C.fdWrite2)
 	//imports.Append("environ_sizes_get", fdWrite, C.fdWrite)
 	//imports.Append("proc_exit", fdWrite, C.fdWrite)

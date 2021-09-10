@@ -9,9 +9,8 @@ package snapshot
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
-
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 type ManagerImpl struct {
@@ -19,7 +18,8 @@ type ManagerImpl struct {
 	delegate  *ManagerDelegate
 }
 
-func (m *ManagerImpl) storeAndLinkSnapshotImpl(snapshotImpl *SnapshotImpl, prevFingerPrint *utils.BlockFingerPrint, fingerPrint *utils.BlockFingerPrint) {
+func (m *ManagerImpl) storeAndLinkSnapshotImpl(snapshotImpl *SnapshotImpl,
+	prevFingerPrint *utils.BlockFingerPrint, fingerPrint *utils.BlockFingerPrint) {
 	// 存储当前指纹的snapshot
 	m.snapshots[*fingerPrint] = snapshotImpl
 
@@ -41,7 +41,13 @@ func (m *ManagerImpl) NewSnapshot(prevBlock *commonPb.Block, block *commonPb.Blo
 	fingerPrint := utils.CalcBlockFingerPrint(block)
 	m.storeAndLinkSnapshotImpl(snapshotImpl, &prevFingerPrint, &fingerPrint)
 
-	log.Infof("create snapshot@%s at height %d, fingerPrint[%v] -> prevFingerPrint[%v]", block.Header.ChainId, blockHeight, fingerPrint, prevFingerPrint)
+	log.Infof(
+		"create snapshot@%s at height %d, fingerPrint[%v] -> prevFingerPrint[%v]",
+		block.Header.ChainId,
+		blockHeight,
+		fingerPrint,
+		prevFingerPrint,
+	)
 	return snapshotImpl
 }
 
@@ -72,7 +78,7 @@ func (m *ManagerImpl) NotifyBlockCommitted(block *commonPb.Block) error {
 		if snapshot == nil || snapshot.GetPreSnapshot() == nil {
 			continue
 		}
-		preSnapshot := snapshot.GetPreSnapshot().(*SnapshotImpl)
+		preSnapshot, _ := snapshot.GetPreSnapshot().(*SnapshotImpl)
 		if block.Header.BlockHeight-preSnapshot.GetBlockHeight() > 8 {
 			deleteOldFp := m.delegate.calcSnapshotFingerPrint(preSnapshot)
 			delete(m.snapshots, deleteOldFp)

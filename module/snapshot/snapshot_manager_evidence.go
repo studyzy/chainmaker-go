@@ -9,9 +9,8 @@ package snapshot
 
 import (
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
-
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 type ManagerEvidence struct {
@@ -41,7 +40,12 @@ func (m *ManagerEvidence) NewSnapshot(prevBlock *commonPb.Block, block *commonPb
 		evidenceSnapshot.SetPreSnapshot(prevSnapshot)
 	}
 
-	log.Infof("create snapshot at height %d, fingerPrint[%v] -> prevFingerPrint[%v]", blockHeight, fingerPrint, prevFingerPrint)
+	log.Infof(
+		"create snapshot at height %d, fingerPrint[%v] -> prevFingerPrint[%v]",
+		blockHeight,
+		fingerPrint,
+		prevFingerPrint,
+	)
 	return evidenceSnapshot
 }
 
@@ -72,7 +76,7 @@ func (m *ManagerEvidence) NotifyBlockCommitted(block *commonPb.Block) error {
 		if snapshot == nil || snapshot.GetPreSnapshot() == nil {
 			continue
 		}
-		preSnapshot := snapshot.GetPreSnapshot().(*SnapshotEvidence)
+		preSnapshot, _ := snapshot.GetPreSnapshot().(*SnapshotEvidence)
 		if block.Header.BlockHeight-preSnapshot.GetBlockHeight() > 8 {
 			deleteOldFp := m.delegate.calcSnapshotFingerPrint(preSnapshot.delegate)
 			delete(m.snapshots, deleteOldFp)

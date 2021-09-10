@@ -1,6 +1,6 @@
 chain_id: chain1     # 链标识
 version: v1.0.0         # 链版本
-sequence: 1          # 配置版本
+sequence: 0          # 配置版本
 auth_type: "identity"
 
 crypto:

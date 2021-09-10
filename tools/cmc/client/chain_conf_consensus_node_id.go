@@ -118,13 +118,14 @@ func configConsensusNodeId(op int) error {
 	adminKeys := strings.Split(adminKeyFilePaths, ",")
 	adminCrts := strings.Split(adminCrtFilePaths, ",")
 	if len(adminKeys) == 0 || len(adminCrts) == 0 {
-		return ErrAdminOrgIdKeyCertIsEmpty
+		return errAdminOrgIdKeyCertIsEmpty
 	}
 	if len(adminKeys) != len(adminCrts) {
 		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
 	}
 
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func configConsensusNodeId(op int) error {
 	case updateNodeId:
 		payload, err = client.CreateChainConfigConsensusNodeIdUpdatePayload(nodeOrgId, nodeIdOld, nodeId)
 	default:
-		err = errors.New("invalid node addres operation")
+		err = errors.New("invalid node address operation")
 	}
 	if err != nil {
 		return err

@@ -21,9 +21,9 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
@@ -64,10 +64,12 @@ type ConsensusChainedBftImpl struct {
 	doneReplayWal    bool
 
 	// Services within the module
-	smr          *chainedbftSMR            // State machine replication in hotstuff
-	syncer       *syncManager              // The information synchronization of the consensus module
-	msgPool      *message.MsgPool          // manages all of consensus messages received for protocol
-	chainStore   *chainStore               // Cache blocks, status information of QC, and the process of the commit blocks on the chain
+	smr        *chainedbftSMR   // State machine replication in hotstuff
+	syncer     *syncManager     // The information synchronization of the consensus module
+	msgPool    *message.MsgPool // manages all of consensus messages received for protocol
+	chainStore *chainStore      // Cache blocks, status information of QC,
+	// and the process of the commit blocks on the chain
+
 	timerService *timeservice.TimerService // Timer service
 
 	// Services of other modules
@@ -94,7 +96,8 @@ type ConsensusChainedBftImpl struct {
 func New(chainID string, id string, singer protocol.SigningMember, ac protocol.AccessControlProvider,
 	ledgerCache protocol.LedgerCache, proposalCache protocol.ProposalCache, blockVerifier protocol.BlockVerifier,
 	blockCommitter protocol.BlockCommitter, netService protocol.NetService, store protocol.BlockchainStore,
-	msgBus msgbus.MessageBus, chainConf protocol.ChainConf, helper protocol.HotStuffHelper) (*ConsensusChainedBftImpl, error) {
+	msgBus msgbus.MessageBus, chainConf protocol.ChainConf,
+	helper protocol.HotStuffHelper) (*ConsensusChainedBftImpl, error) {
 
 	slog := logger.GetLoggerByChain(logger.MODULE_CONSENSUS, chainConf.ChainConfig().ChainId)
 	if chainConf.ChainConfig().Contract.EnableSqlSupport {
@@ -147,12 +150,14 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService, service)
 	epoch := service.nextEpoch
 	service.nextEpoch = nil
-	walDirPath := path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainID, WalDirSuffix)
+	walDirPath := path.Join(localconf.ChainMakerConfig.GetStorePath(), chainID, WalDirSuffix)
 	if service.wal, err = wal.Open(walDirPath, nil); err != nil {
 		return nil, err
 	}
-	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d", epoch.epochId, epoch.index, epoch.createHeight)
-	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF, service.governanceContract); err != nil {
+	service.logger.Debugf("init epoch, epochID: %d, index: %d, createHeight: %d",
+		epoch.epochId, epoch.index, epoch.createHeight)
+	if err := chainconf.RegisterVerifier(chainID, consensus.ConsensusType_HOTSTUFF,
+		service.governanceContract); err != nil {
 		return nil, err
 	}
 	service.logger.Debugf("register config success")
@@ -288,7 +293,8 @@ func (cbi *ConsensusChainedBftImpl) protocolLoop() {
 			case chainedbftpb.MessageType_VOTE_MESSAGE:
 				cbi.onReceivedVote(msg)
 			default:
-				cbi.logger.Warnf("service selfIndexInEpoch [%v] received non-protocol msg %v", cbi.selfIndexInEpoch, msg.Payload.Type)
+				cbi.logger.Warnf("service selfIndexInEpoch [%v] received non-protocol msg %v",
+					cbi.selfIndexInEpoch, msg.Payload.Type)
 			}
 		case <-cbi.quitSyncCh:
 			return
@@ -400,7 +406,8 @@ func (cbi *ConsensusChainedBftImpl) onFiredEvent(te *timeservice.TimerEvent) {
 			cbi.smr.getHeight(), cbi.smr.getCurrentLevel(), cbi.smr.state, cbi.smr.getEpochId())
 		return
 	}
-	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s", te.State.String(), te.Height, te.Level, te.Duration.String())
+	cbi.logger.Infof("receive time out event, state: %s, height: %d, level: %d, duration: %s",
+		te.State.String(), te.Height, te.Level, te.Duration.String())
 	switch te.State {
 	case chainedbftpb.ConsStateType_PACEMAKER:
 		cbi.processLocalTimeout(te.Height, te.Level)
@@ -434,7 +441,9 @@ func (cbi *ConsensusChainedBftImpl) onReceivedVote(msg *chainedbftpb.ConsensusMs
 }
 
 func (cbi *ConsensusChainedBftImpl) onReceivedProposal(msg *chainedbftpb.ConsensusMsg) {
-	cbi.processProposal(msg)
+	if err := cbi.processProposal(msg); err != nil {
+		cbi.logger.Errorf("processProposal error:%+v", err)
+	}
 }
 
 // VerifyBlockSignatures verify consensus qc at incoming block
@@ -488,7 +497,7 @@ func (cbi *ConsensusChainedBftImpl) countNumFromVotes(qc *chainedbftpb.QuorumCer
 	var (
 		votedBlock   = make(map[uint64]*chainedbftpb.VoteData)
 		votedNewView = make(map[uint64]*chainedbftpb.VoteData)
-		voteIdxs     = make(map[uint64]bool, 0)
+		voteIdxs     = make(map[uint64]bool)
 	)
 	//for each vote
 	for _, vote := range qc.Votes {
@@ -538,8 +547,8 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	if qc.BlockId == nil {
 		return fmt.Errorf("nil block id in qc")
 	}
-	if BlockId := block.GetHeader().GetBlockHash(); !bytes.Equal(qc.BlockId, BlockId) {
-		return fmt.Errorf("wrong qc block id [%v], expected [%v]", qc.BlockId, BlockId)
+	if blockId := block.GetHeader().GetBlockHash(); !bytes.Equal(qc.BlockId, blockId) {
+		return fmt.Errorf("wrong qc block id [%v], expected [%v]", qc.BlockId, blockId)
 	}
 
 	// because the validator set has changed after the generation switch, so that validate by validators
@@ -555,13 +564,16 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	if validatorsMembersInterface == nil {
 		return fmt.Errorf("current validators is nil")
 	}
-	validatorsMembers := validatorsMembersInterface.([]*consensus.GovernanceMember)
-	for _, v := range validatorsMembers {
-		validator := &types.Validator{
-			Index:  uint64(v.Index),
-			NodeID: v.NodeId,
+	if validatorsMembers, ok := validatorsMembersInterface.([]*consensus.GovernanceMember); ok {
+		for _, v := range validatorsMembers {
+			validator := &types.Validator{
+				Index:  uint64(v.Index),
+				NodeID: v.NodeId,
+			}
+			curValidators = append(curValidators, validator)
 		}
-		curValidators = append(curValidators, validator)
+	} else {
+		return fmt.Errorf("validator invalid")
 	}
 
 	newViewNum, votedBlockNum, err := countNumFromVotes(qc, curValidators, ac)
@@ -580,7 +592,8 @@ func VerifyBlockSignatures(chainConf protocol.ChainConf, ac protocol.AccessContr
 	return nil
 }
 
-func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Validator, ac protocol.AccessControlProvider) error {
+func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Validator,
+	ac protocol.AccessControlProvider) error {
 	author := voteData.GetAuthor()
 	authorIdx := voteData.GetAuthorIdx()
 	if author == nil {
@@ -588,7 +601,7 @@ func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Valid
 	}
 
 	// get validator by authorIdx
-	var validator *types.Validator = nil
+	var validator *types.Validator
 	for _, v := range validators {
 		if v.Index == authorIdx {
 			validator = v
@@ -624,10 +637,13 @@ func validateVoteData(voteData *chainedbftpb.VoteData, validators []*types.Valid
 	return nil
 }
 
-func countNumFromVotes(qc *chainedbftpb.QuorumCert, curvalidators []*types.Validator, ac protocol.AccessControlProvider) (uint64, uint64, error) {
-	var newViewNum uint64 = 0
-	var votedBlockNum uint64 = 0
-	voteIdxes := make(map[uint64]bool, 0)
+func countNumFromVotes(qc *chainedbftpb.QuorumCert, curvalidators []*types.Validator,
+	ac protocol.AccessControlProvider) (uint64, uint64, error) {
+	var (
+		newViewNum    uint64
+		votedBlockNum uint64
+	)
+	voteIdxes := make(map[uint64]bool)
 	//for each vote
 	for _, vote := range qc.Votes {
 		if vote == nil {

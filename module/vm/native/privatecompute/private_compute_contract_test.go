@@ -8,17 +8,17 @@
 package privatecompute
 
 import (
-	"chainmaker.org/chainmaker-go/logger"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"chainmaker.org/chainmaker/logger/v2"
 )
 
 var certCaFilename = "testdata/remote_attestation/enclave_cacert.crt"
 var certFilename = "testdata/remote_attestation/in_teecert.pem"
-var proofFilename = "testdata/remote_attestation/proof.hex"
 var reportFilename = "testdata/remote_attestation/report.dat"
 
 func readFileData(filename string, t *testing.T) []byte {

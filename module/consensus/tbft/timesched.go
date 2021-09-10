@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 )
@@ -62,7 +62,7 @@ type timeScheduler struct {
 }
 
 // NewTimeSheduler returns a new timeScheduler
-func NewTimeSheduler(logger *logger.CMLogger, id string) *timeScheduler {
+func newTimeSheduler(logger *logger.CMLogger, id string) *timeScheduler {
 	ts := &timeScheduler{
 		logger:   logger,
 		id:       id,

@@ -12,18 +12,17 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"strconv"
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker-go/evm"
 	"chainmaker.org/chainmaker-go/gasm"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm/native"
 	"chainmaker.org/chainmaker-go/wasmer"
 	"chainmaker.org/chainmaker-go/wxvm"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
+	"chainmaker.org/chainmaker/logger/v2"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -86,8 +85,9 @@ func (m *VmManagerImpl) GetChainNodesInfoProvider() protocol.ChainNodesInfoProvi
 	return m.ChainNodesInfoProvider
 }
 
-func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
-	txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (m *VmManagerImpl) RunContract(contract *commonPb.Contract, method string, byteCode []byte,
+	parameters map[string][]byte, txContext protocol.TxSimContext, gasUsed uint64, refTxType commonPb.TxType) (
+	*commonPb.ContractResult, commonPb.TxStatusCode) {
 
 	contractResult := &commonPb.ContractResult{
 		Code:    uint32(1),
@@ -158,8 +158,9 @@ func (m *VmManagerImpl) runNativeContract(contract *commonPb.Contract, method st
 }
 
 // runUserContract invoke user contract
-func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
-	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
+func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method string, byteCode []byte,
+	parameters map[string][]byte, txContext protocol.TxSimContext, gasUsed uint64) (
+	contractResult *commonPb.ContractResult, code commonPb.TxStatusCode) {
 
 	var (
 		myContract = contract
@@ -178,113 +179,110 @@ func (m *VmManagerImpl) runUserContract(contract *commonPb.Contract, method stri
 	return m.invokeUserContractByRuntime(myContract, method, parameters, txContext, byteCode, gasUsed)
 }
 
-type verifyType struct {
-	requireVersion       bool     // get contract version from TxSimContext, if not exist then return error message
-	requireNullVersion   bool     // get contract version from TxSimContext, if exist then return error message
-	requireFormatVersion bool     // get contract version from parameter, if format error  then return error message
-	requireExcludeMethod bool     // get contract method from parameter, if `currentMethod`in excludeMethodList then return error message
-	requireByteCode      bool     // get contract byteCode from parameter, if not exist then return error message
-	requireRuntimeType   bool     // get contract runtimeType from TxSimContext, if not exist then return error message
-	currentMethod        string   // for requireExcludeMethod
-	excludeMethodList    []string // for requireExcludeMethod
-}
+//
+//type verifyType struct {
+//	requireVersion       bool // get contract version from TxSimContext, if not exist then return error message
+//	requireNullVersion   bool // get contract version from TxSimContext, if exist then return error message
+//	requireFormatVersion bool // get contract version from parameter, if format error  then return error message
+//	requireExcludeMethod bool
+//	// get contract method from parameter, if `currentMethod`in excludeMethodList
+//	// then return error message
+//	requireByteCode    bool     // get contract byteCode from parameter, if not exist then return error message
+//	requireRuntimeType bool     // get contract runtimeType from TxSimContext, if not exist then return error message
+//	currentMethod      string   // for requireExcludeMethod
+//	excludeMethodList  []string // for requireExcludeMethod
+//}
+//
+//// commonVerify verify version、method、byteCode、runtimeType, return (result, code, byteCode, version, runtimeType)
+//func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *commonPb.Contract,
+//	contractResult *commonPb.ContractResult) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, string, int) {
+//	contractName := contractId.Name
+//	//versionKey := []byte(protocol.ContractVersion + contractName)
+//	var resultVersion string
+//	msgPre := "verify fail,"
+//
+//	if v.requireVersion {
+//
+//		resultVersion = contractId.Version
+//	}
+//
+//	if v.requireNullVersion {
+//
+//		//TODO:不知道检查啥
+//	}
+//
+//	if v.requireExcludeMethod {
+//		for i := range v.excludeMethodList {
+//			if v.currentMethod == v.excludeMethodList[i] {
+//				contractResult.Message = fmt.Sprintf(
+//					"%s contract[%s], method[%s] is not allowed to be called, it's the retention method",
+//					msgPre, contractName, v.excludeMethodList[i])
+//				return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_INVOKE_METHOD_FAILED, resultVersion)
+//			}
+//		}
+//	}
+//
+//	if v.requireFormatVersion {
+//		if contractId.Version == "" {
+//			contractResult.Message = fmt.Sprintf("%s please provide the param[version] of the contract[%s]",
+//				msgPre, contractId.Name)
+//			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+//		}
+//		if len(contractId.Version) > protocol.DefaultVersionLen {
+//			contractResult.Message = fmt.Sprintf(
+//				"%s param[version] string of the contract[%+v] too long, should be less than %d",
+//				msgPre, contractId, protocol.DefaultVersionLen)
+//			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION,
+//				resultVersion)
+//		}
+//
+//		match, err := regexp.MatchString(protocol.DefaultVersionRegex, contractId.Version)
+//		if err != nil || !match {
+//			contractResult.Message = fmt.Sprintf(
+//				"%s param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]",
+//				msgPre, contractId, protocol.DefaultVersionRegex)
+//			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION,
+//				resultVersion)
+//		}
+//
+//	}
+//
+//	var byteCode []byte
+//	if v.requireByteCode {
+//		//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+contractName), []byte(resultVersion)...)
+//		if byteCodeInContext, err := txContext.GetContractBytecode(contractName); err != nil {
+//			contractResult.Message = fmt.Sprintf(
+//				"%s failed to check byte code in tx context for contract[%s], %s",
+//				msgPre, contractName, err.Error())
+//			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
+//		} else if len(byteCodeInContext) == 0 {
+//			contractResult.Message = fmt.Sprintf(
+//				"%s the contract byte code not found from db. contract[%s], please create a contract ",
+//				msgPre, contractName)
+//			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_BYTE_CODE,
+//				resultVersion)
+//		} else {
+//			byteCode = byteCodeInContext
+//		}
+//	}
+//
+//	runtimeType := 0
+//	if v.requireRuntimeType {
+//
+//		runtimeType = int(contractId.RuntimeType)
+//	}
+//
+//	return nil, commonPb.TxStatusCode_SUCCESS, byteCode, resultVersion, runtimeType
+//}
+//
+//func (v *verifyType) errorResult(contractResult *commonPb.ContractResult,code commonPb.TxStatusCode,version string) (
+//	*commonPb.ContractResult, commonPb.TxStatusCode, []byte, string, int) {
+//	return contractResult, code, nil, version, 0
+//}
 
-// commonVerify verify version、method、byteCode、runtimeType, return (result, code, byteCode, version, runtimeType)
-func (v *verifyType) commonVerify(txContext protocol.TxSimContext, contractId *commonPb.Contract, contractResult *commonPb.ContractResult) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, string, int) {
-	contractName := contractId.Name
-	//versionKey := []byte(protocol.ContractVersion + contractName)
-	var resultVersion string
-	msgPre := "verify fail,"
-
-	if v.requireVersion {
-		//if versionInContext, err := txContext.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey); err != nil {
-		//	contractResult.Message = fmt.Sprintf("%s unable to find latest version for contract[%s], system error:%s", msgPre, contractName, err.Error())
-		//	return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
-		//} else if len(versionInContext) == 0 {
-		//	contractResult.Message = fmt.Sprintf("%s the contract does not exist. contract[%s], please create a contract ", msgPre, contractName)
-		//	return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_VERSION_NOT_EXIST_FAILED, resultVersion)
-		//} else {
-		//	resultVersion = string(versionInContext)
-		//}
-		resultVersion = contractId.Version
-	}
-
-	if v.requireNullVersion {
-		//if versionInContext, err := txContext.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), versionKey); err != nil {
-		//	contractResult.Message = fmt.Sprintf("%s unable to find latest version for contract[%s], system error:%s", msgPre, contractName, err.Error())
-		//	return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
-		//} else if versionInContext != nil {
-		//	contractResult.Message = fmt.Sprintf("%s the contract already exists. contract[%s], version[%s]", msgPre, contractName, string(versionInContext))
-		//	return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_VERSION_EXIST_FAILED, resultVersion)
-		//}
-		//TODO:不知道检查啥
-	}
-
-	if v.requireExcludeMethod {
-		for i := range v.excludeMethodList {
-			if v.currentMethod == v.excludeMethodList[i] {
-				contractResult.Message = fmt.Sprintf("%s contract[%s], method[%s] is not allowed to be called, it's the retention method", msgPre, contractName, v.excludeMethodList[i])
-				return v.errorResult(contractResult, commonPb.TxStatusCode_CONTRACT_INVOKE_METHOD_FAILED, resultVersion)
-			}
-		}
-	}
-
-	if v.requireFormatVersion {
-		if contractId.Version == "" {
-			contractResult.Message = fmt.Sprintf("%s please provide the param[version] of the contract[%s]", msgPre, contractId.Name)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
-		} else {
-			if len(contractId.Version) > protocol.DefaultVersionLen {
-				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] too long, should be less than %d", msgPre, contractId, protocol.DefaultVersionLen)
-				return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION, resultVersion)
-			}
-
-			match, err := regexp.MatchString(protocol.DefaultVersionRegex, contractId.Version)
-			if err != nil || !match {
-				contractResult.Message = fmt.Sprintf("%s param[version] string of the contract[%+v] invalid while invoke user contract, should match [%s]", msgPre, contractId, protocol.DefaultVersionRegex)
-				return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_VERSION, resultVersion)
-			}
-		}
-	}
-
-	var byteCode []byte
-	if v.requireByteCode {
-		//versionedByteCodeKey := append([]byte(protocol.ContractByteCode+contractName), []byte(resultVersion)...)
-		if byteCodeInContext, err := txContext.GetContractBytecode(contractName); err != nil {
-			contractResult.Message = fmt.Sprintf("%s failed to check byte code in tx context for contract[%s], %s", msgPre, contractName, err.Error())
-			return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
-		} else if len(byteCodeInContext) == 0 {
-			contractResult.Message = fmt.Sprintf("%s the contract byte code not found from db. contract[%s], please create a contract ", msgPre, contractName)
-			return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_BYTE_CODE, resultVersion)
-		} else {
-			byteCode = byteCodeInContext
-		}
-	}
-
-	runtimeType := 0
-	if v.requireRuntimeType {
-		//runtimeTypeKey := []byte(protocol.ContractRuntimeType + contractName)
-		//if runtimeTypeBytes, err := txContext.Get(syscontract.SystemContract_CONTRACT_MANAGE.String(), runtimeTypeKey); err != nil {
-		//	contractResult.Message = fmt.Sprintf("%s failed to find runtime type %s, system error: %s", msgPre, contractName, err.Error())
-		//	return v.errorResult(contractResult, commonPb.TxStatusCode_GET_FROM_TX_CONTEXT_FAILED, resultVersion)
-		//} else if runtimeTypeTmp, err := strconv.Atoi(string(runtimeTypeBytes)); err != nil {
-		//	contractResult.Message = fmt.Sprintf("%s the contract runtime type not found from db. contract[%s], please create a contract ", msgPre, contractName)
-		//	return v.errorResult(contractResult, commonPb.TxStatusCode_INVALID_CONTRACT_PARAMETER_RUNTIME_TYPE, resultVersion)
-		//} else {
-		//	runtimeType = runtimeTypeTmp
-		//}
-		runtimeType = int(contractId.RuntimeType)
-	}
-
-	return nil, commonPb.TxStatusCode_SUCCESS, byteCode, resultVersion, runtimeType
-}
-
-func (v *verifyType) errorResult(contractResult *commonPb.ContractResult, code commonPb.TxStatusCode, version string) (*commonPb.ContractResult, commonPb.TxStatusCode, []byte, string, int) {
-	return contractResult, code, nil, version, 0
-}
-
-func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string, parameters map[string][]byte,
-	txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract, method string,
+	parameters map[string][]byte, txContext protocol.TxSimContext, byteCode []byte, gasUsed uint64) (
+	*commonPb.ContractResult, commonPb.TxStatusCode) {
 	contractResult := &commonPb.ContractResult{Code: uint32(1)}
 	txId := txContext.GetTx().Payload.TxId
 	txType := txContext.GetTx().Payload.TxType
@@ -347,32 +345,32 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 	}
 
 	// Get three items in the certificate: orgid PK role
-	if senderMember, err := m.AccessControl.NewMember(sender); err != nil {
+	senderMember, err := m.AccessControl.NewMember(sender)
+	if err != nil {
 		contractResult.Message = fmt.Sprintf("failed to unmarshal sender %q", runtimeType)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_SENDER_FAILED
-	} else {
-		parameters[protocol.ContractSenderOrgIdParam] = []byte(senderMember.GetOrgId())
-		parameters[protocol.ContractSenderRoleParam] = []byte(senderMember.GetRole())
-		parameters[protocol.ContractSenderPkParam] = []byte(senderMember.GetUid())
 	}
+	parameters[protocol.ContractSenderOrgIdParam] = []byte(senderMember.GetOrgId())
+	parameters[protocol.ContractSenderRoleParam] = []byte(senderMember.GetRole())
+	parameters[protocol.ContractSenderPkParam] = []byte(senderMember.GetUid())
 
 	// Get three items in the certificate: orgid PK role
-	if creatorMember, err := m.AccessControl.NewMember(creator); err != nil {
+	creatorMember, err := m.AccessControl.NewMember(creator)
+	if err != nil {
 		contractResult.Message = fmt.Sprintf("failed to unmarshal creator %q", creator)
 		return contractResult, commonPb.TxStatusCode_UNMARSHAL_CREATOR_FAILED
-	} else {
-		parameters[protocol.ContractCreatorOrgIdParam] = []byte(creator.OrgId)
-		parameters[protocol.ContractCreatorRoleParam] = []byte(creatorMember.GetRole())
-		parameters[protocol.ContractCreatorPkParam] = []byte(creatorMember.GetUid())
 	}
-
+	parameters[protocol.ContractCreatorOrgIdParam] = []byte(creator.OrgId)
+	parameters[protocol.ContractCreatorRoleParam] = []byte(creatorMember.GetRole())
+	parameters[protocol.ContractCreatorPkParam] = []byte(creatorMember.GetUid())
 	parameters[protocol.ContractTxIdParam] = []byte(txId)
 	parameters[protocol.ContractBlockHeightParam] = []byte(strconv.FormatUint(txContext.GetBlockHeight(), 10))
 
 	// calc the gas used by byte code
 	// gasUsed := uint64(GasPerByte * len(byteCode))
 
-	m.Log.Debugf("invoke vm, tx id:%s, tx type:%+v, contractId:%+v, method:%+v, runtime type:%+v, byte code len:%+v, params:%+v",
+	m.Log.Debugf("invoke vm, tx id:%s, tx type:%+v, contractId:%+v, method:%+v,"+
+		" runtime type:%+v, byte code len:%+v, params:%+v",
 		txId, txType, contract, method, runtimeType, len(byteCode), len(parameters))
 
 	// begin save point for sql
@@ -394,15 +392,15 @@ func (m *VmManagerImpl) invokeUserContractByRuntime(contract *commonPb.Contract,
 	runtimeContractResult := runtimeInstance.Invoke(contract, method, byteCode, parameters, txContext, gasUsed)
 	if runtimeContractResult.Code == 0 {
 		return runtimeContractResult, commonPb.TxStatusCode_SUCCESS
-	} else {
-		if m.ChainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_CONTRACT {
-			err := dbTransaction.RollbackDbSavePoint(txId)
-			if err != nil {
-				m.Log.Warn("[%s] rollback db save point error, %s", txId, err.Error())
-			}
-		}
-		return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
 	}
+	if m.ChainConf.ChainConfig().Contract.EnableSqlSupport && txType != commonPb.TxType_QUERY_CONTRACT {
+		err := dbTransaction.RollbackDbSavePoint(txId)
+		if err != nil {
+			m.Log.Warn("[%s] rollback db save point error, %s", txId, err.Error())
+		}
+	}
+	return runtimeContractResult, commonPb.TxStatusCode_CONTRACT_FAIL
+
 }
 
 func getFullCertMember(sender *acPb.Member, txContext protocol.TxSimContext) (*acPb.Member, commonPb.TxStatusCode) {
@@ -411,7 +409,8 @@ func getFullCertMember(sender *acPb.Member, txContext protocol.TxSimContext) (*a
 		memberInfoHex := hex.EncodeToString(sender.MemberInfo)
 		var fullCertMemberInfo []byte
 		var err error
-		if fullCertMemberInfo, err = txContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(memberInfoHex)); err != nil {
+		if fullCertMemberInfo, err = txContext.Get(syscontract.SystemContract_CERT_MANAGE.String(),
+			[]byte(memberInfoHex)); err != nil {
 			return nil, commonPb.TxStatusCode_GET_SENDER_CERT_FAILED
 		}
 		sender = &acPb.Member{

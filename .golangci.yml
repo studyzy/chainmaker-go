@@ -12,6 +12,9 @@ run:
     - protogo #from pb generate
     - sqldbprovider #will remove
     - eventsqldb
+    - evm-go
+    - gasm-go
+    - wasmer-go
 linters:
   disable-all: true
   enable:
@@ -97,7 +100,7 @@ issues:
   include:
     - EXC0002 # golint (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
     - EXC0003 # golint func name will be used as test\.Test.* by other packages, and that stutters; consider calling this
-    - EXC0004 # govet (possible misuse of unsafe.Pointer|should have signature)
+    #- EXC0004 # govet (possible misuse of unsafe.Pointer|should have signature)
     - EXC0005 # staticcheck ineffective break statement. Did you mean to break out of the outer loop
     - EXC0011 # stylecheck (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
 
@@ -114,11 +117,14 @@ issues:
         - lll
         - funlen
     - linters:
-      - revive
+        - revive
       text: "stutters"
     - linters:
-      - errcheck
+        - errcheck
       text: "json.Unmarshal"
+    - linters:
+        - gosec
+      text: "G108|G204|G501|G401"
   max-same-issues: 0
   new: false
   max-issues-per-linter: 0

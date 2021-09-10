@@ -125,7 +125,8 @@ func WithMaxPeerCountAllow(max int) NetOption {
 	}
 }
 
-// WithPeerEliminationStrategy set the strategy for eliminating node when the count of nodes that connected to us reach the max value.
+// WithPeerEliminationStrategy set the strategy for eliminating node when the count of nodes
+// that connected to us reach the max value.
 func WithPeerEliminationStrategy(strategy int) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {

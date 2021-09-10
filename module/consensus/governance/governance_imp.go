@@ -9,7 +9,7 @@ package governance
 import (
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -44,7 +44,7 @@ func (gcr *GovernanceContractImp) GetGovernmentContract() (*consensusPb.Governan
 	}
 	var (
 		err                error
-		governmentContract *consensusPb.GovernanceContract = nil
+		governmentContract *consensusPb.GovernanceContract
 	)
 	//get from chainStore
 	if block.Header.GetBlockHeight() > 0 {
@@ -200,7 +200,8 @@ func (gcr *GovernanceContractImp) GetEpochId() uint64 {
 }
 
 //use by chainConf, check chain config before chain_config_contract run
-func (gcr *GovernanceContractImp) Verify(consensusType consensusPb.ConsensusType, chainConfig *configPb.ChainConfig) error {
+func (gcr *GovernanceContractImp) Verify(consensusType consensusPb.ConsensusType,
+	chainConfig *configPb.ChainConfig) error {
 	governmentContract, err := gcr.GetGovernmentContract()
 	if err != nil {
 		gcr.log.Warnw("GetGovernmentContract err,", "err", err)

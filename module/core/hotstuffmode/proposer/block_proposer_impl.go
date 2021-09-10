@@ -11,19 +11,18 @@ import (
 	"sync"
 	"time"
 
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
-
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -121,8 +120,13 @@ func NewBlockProposer(config BlockProposerConfig, log protocol.Logger) (protocol
 	}
 
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		blockProposerImpl.metricBlockPackageTime = monitor.NewHistogramVec(monitor.SUBSYSTEM_CORE_PROPOSER, "metric_block_package_time",
-			"block package time metric", []float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10}, "chainId")
+		blockProposerImpl.metricBlockPackageTime = monitor.NewHistogramVec(
+			monitor.SUBSYSTEM_CORE_PROPOSER,
+			"metric_block_package_time",
+			"block package time metric",
+			[]float64{0.005, 0.01, 0.015, 0.05, 0.1, 1, 10},
+			"chainId",
+		)
 	}
 
 	bbConf := &common.BlockBuilderConf{
@@ -260,15 +264,15 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 			bp.log.Infof("proposer success repeat [%d](txs:%d,hash:%x)",
 				selfProposedBlock.Header.BlockHeight, selfProposedBlock.Header.TxCount, selfProposedBlock.Header.BlockHash)
 			return nil
-		} else {
-			bp.proposalCache.ClearTheBlock(selfProposedBlock)
-			// Note: It is not possible to re-add the transactions in the deleted block to txpool; because some transactions may
-			// be included in other blocks to be confirmed, and it is impossible to quickly exclude these pending transactions
-			// that have been entered into the block. Comprehensive considerations, directly discard this block is the optimal
-			// choice. This processing method may only cause partial transaction loss at the current node, but it can be solved
-			// by rebroadcasting on the client side.
-			bp.txPool.RetryAndRemoveTxs(nil, selfProposedBlock.Txs)
 		}
+		bp.proposalCache.ClearTheBlock(selfProposedBlock)
+		// Note: It is not possible to re-add the transactions in the deleted block to txpool; because some transactions may
+		// be included in other blocks to be confirmed, and it is impossible to quickly exclude these pending transactions
+		// that have been entered into the block. Comprehensive considerations, directly discard this block is the optimal
+		// choice. This processing method may only cause partial transaction loss at the current node, but it can be solved
+		// by rebroadcasting on the client side.
+		bp.txPool.RetryAndRemoveTxs(nil, selfProposedBlock.Txs)
+
 	}
 
 	// retrieve tx batch from tx pool
@@ -280,8 +284,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 	startDupTick := utils.CurrentTimeMillisSeconds()
 	checkedBatch := bp.txDuplicateCheck(fetchBatch)
 	dupLasts := utils.CurrentTimeMillisSeconds() - startDupTick
-	if !utils.CanProposeEmptyBlock(bp.chainConf.ChainConfig().Consensus.Type) &&
-		(checkedBatch == nil || len(checkedBatch) == 0) {
+	if !utils.CanProposeEmptyBlock(bp.chainConf.ChainConfig().Consensus.Type) && len(checkedBatch) == 0 {
 		// can not propose empty block and tx batch is empty, then yield proposing.
 		bp.log.Debugf("no txs in tx pool, proposing block stoped")
 		bp.txPool.RetryAndRemoveTxs(nil, fetchBatch)
@@ -290,7 +293,8 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 
 	txCapacity := int(bp.chainConf.ChainConfig().Block.BlockTxCapacity)
 	if len(checkedBatch) > txCapacity {
-		// check if checkedBatch > txCapacity, if so, strict block tx count according to  config, and put other txs back to txpool.
+		// check if checkedBatch > txCapacity, if so, strict block tx count according to  config,
+		// and put other txs back to txpool.
 		txRetry := checkedBatch[txCapacity:]
 		checkedBatch = checkedBatch[:txCapacity]
 		bp.txPool.RetryAndRemoveTxs(txRetry, nil)
@@ -322,7 +326,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 
 // txDuplicateCheck, to check if transactions that are about to proposing are double spenting.
 func (bp *BlockProposerImpl) txDuplicateCheck(batch []*commonpb.Transaction) []*commonpb.Transaction {
-	if batch == nil || len(batch) == 0 {
+	if len(batch) == 0 {
 		return nil
 	}
 	checked := make([]*commonpb.Transaction, 0, len(batch))
@@ -375,10 +379,10 @@ func (bp *BlockProposerImpl) OnReceiveProposeStatusChange(proposeStatus bool) {
 		bp.yieldProposing() // try to yield if proposer self is proposing right now.
 		bp.log.Debug("current node is not proposer ")
 		return
-	} else {
-		bp.proposeTimer.Reset(bp.getDuration())
-		bp.log.Debugf("current node is proposer, timeout period is %v", bp.getDuration())
 	}
+	bp.proposeTimer.Reset(bp.getDuration())
+	bp.log.Debugf("current node is proposer, timeout period is %v", bp.getDuration())
+
 }
 
 // OnReceiveChainedBFTProposal, to check if this proposer should propose a new block
@@ -438,14 +442,15 @@ func (bp *BlockProposerImpl) getDuration() time.Duration {
 	duration := chainConfig.Block.BlockInterval
 	if duration <= 0 {
 		return DEFAULTDURATION * time.Millisecond
-	} else {
-		return time.Duration(duration) * time.Millisecond
 	}
+	return time.Duration(duration) * time.Millisecond
+
 }
 
 // getChainVersion, get chain version from config.
 // If not access from config, use default value.
 // @Deprecated
+//nolint: unused
 func (bp *BlockProposerImpl) getChainVersion() uint32 {
 	//if bp.chainConf == nil || bp.chainConf.ChainConfig() == nil {
 	//	return []byte(protocol.DefaultBlockVersion)
@@ -461,9 +466,8 @@ func (bp *BlockProposerImpl) setNotIdle() bool {
 	if bp.idle {
 		bp.idle = false
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
 // isIdle, to check if proposer is idle
@@ -519,11 +523,11 @@ func (bp *BlockProposerImpl) shouldProposeByChainedBFT(height uint64, preHash []
 		// height follows the last committed block
 		if bytes.Equal(committedBlock.Header.BlockHash, preHash) {
 			return true
-		} else {
-			bp.log.Errorf("block pre hash error, expect %x, got %x, can not propose",
-				committedBlock.Header.BlockHash, preHash)
-			return false
 		}
+		bp.log.Errorf("block pre hash error, expect %x, got %x, can not propose",
+			committedBlock.Header.BlockHash, preHash)
+		return false
+
 	}
 	// if height not follows the last committed block, then check last proposed block
 	b, _ := bp.proposalCache.GetProposedBlockByHashAndHeight(preHash, height-1)

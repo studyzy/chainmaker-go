@@ -13,10 +13,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/wal"
+	"chainmaker.org/chainmaker/logger/v2"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,15 +44,16 @@ func TestBaseWriteWal(t *testing.T) {
 
 	// 3. read content from wal file
 	count := 0
+	var data []byte
 	for i := firstIndex + 1; i < lastIndex+1; i++ {
-		data, err := walFile.Read(i)
+		data, err = walFile.Read(i)
 		require.NoError(t, err)
 		count++
 		fmt.Println(i, ": ", string(data))
 	}
 	require.EqualValues(t, 4, count)
 
-	data, err := walFile.Read(lastIndex)
+	data, err = walFile.Read(lastIndex)
 	require.NoError(t, err)
 	require.EqualValues(t, data, []byte("hello4"))
 
@@ -93,7 +94,8 @@ func TestSaveWal(t *testing.T) {
 	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
 			Type: chainedbftpb.MessageType_VOTE_MESSAGE,
-			Data: &chainedbftpb.ConsensusPayload_VoteMsg{&voteBlock},
+			Data: &chainedbftpb.ConsensusPayload_VoteMsg{
+				VoteMsg: &voteBlock},
 		},
 	})
 
@@ -105,7 +107,8 @@ func TestSaveWal(t *testing.T) {
 	cbi.saveWalEntry(chainedbftpb.MessageType_PROPOSAL_MESSAGE, &chainedbftpb.ConsensusMsg{
 		Payload: &chainedbftpb.ConsensusPayload{
 			Type: chainedbftpb.MessageType_PROPOSAL_MESSAGE,
-			Data: &chainedbftpb.ConsensusPayload_ProposalMsg{proposalMsg},
+			Data: &chainedbftpb.ConsensusPayload_ProposalMsg{
+				ProposalMsg: proposalMsg},
 		},
 	})
 

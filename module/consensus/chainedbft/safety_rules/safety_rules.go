@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	blockpool "chainmaker.org/chainmaker-go/consensus/chainedbft/block_pool"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -38,7 +38,8 @@ type SafetyRules struct {
 }
 
 //NewSafetyRules init a SafetyRules
-func NewSafetyRules(logger *logger.CMLogger, blkPool *blockpool.BlockPool, chainStore protocol.BlockchainStore) *SafetyRules {
+func NewSafetyRules(logger *logger.CMLogger, blkPool *blockpool.BlockPool,
+	chainStore protocol.BlockchainStore) *SafetyRules {
 	sf := &SafetyRules{
 		logger:      logger,
 		blockPool:   blkPool,
@@ -63,7 +64,7 @@ func (sr *SafetyRules) GetLastVoteMsg() *chainedbftpb.ConsensusPayload {
 	return sr.lastVoteMsg
 }
 
-//GetLastCommittedBlock get last commiteed block
+//GetLastCommittedBlock get last committed block
 func (sr *SafetyRules) GetLastCommittedBlock() *common.Block {
 	sr.RLock()
 	defer sr.RUnlock()
@@ -133,13 +134,15 @@ func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
 		justQc = proposal.JustifyQc
 	)
 
-	// 1. 活性规则：The liveness rule is the replica will accept m if m.justify has a higher view than the current locked QC
+	// 1. 活性规则：The liveness rule is the replica will accept m
+	// if m.justify has a higher view than the current locked QC
 	if justQc.Level > sr.lockedLevel {
 		sr.logger.Infof("safeNode success: proposal: %x satisfy liveness rules", proposal.Block.Header.BlockHash)
 		return nil
 	}
 
-	// 2. 安全规则：The safety rule to accept a proposal is the branch of m.node extends from the currently locked node locked QC.node
+	// 2. 安全规则：The safety rule to accept a proposal is the branch of m.node
+	// extends from the currently locked node locked QC.node
 	currBlock := proposal.Block
 	currHeight := proposal.Height
 	for currBlock != nil && currHeight > uint64(sr.lockedBlock.Header.BlockHeight) {
@@ -153,14 +156,16 @@ func (sr *SafetyRules) SafeNode(proposal *chainedbftpb.ProposalData) error {
 	}
 	if !bytes.Equal(currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash) {
 		return fmt.Errorf("safety rules failed, not extend block from lockedBlock, proposal: %x extend "+
-			"from: %x, lockedBlock: %x", proposal.Block.Header.BlockHash, currBlock.Header.BlockHash, sr.lockedBlock.Header.BlockHash)
+			"from: %x, lockedBlock: %x", proposal.Block.Header.BlockHash, currBlock.Header.BlockHash,
+			sr.lockedBlock.Header.BlockHash)
 	}
 	sr.logger.Infof("safeNode success: proposal: %x satisfy safety rules", proposal.Block.Header.BlockHash)
 	return nil
 }
 
 //CommitRules validate incoming qc to commit by three-chain
-func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (commit bool, commitBlock *common.Block, commitLevel uint64) {
+func (sr *SafetyRules) CommitRules(qc *chainedbftpb.QuorumCert) (commit bool, commitBlock *common.Block,
+	commitLevel uint64) {
 	if qc == nil {
 		sr.logger.Debugf("commit rules, qc is nil")
 		return false, nil, 0

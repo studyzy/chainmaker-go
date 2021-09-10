@@ -4,11 +4,11 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/localconf v0.0.0
-	chainmaker.org/chainmaker-go/logger v0.0.0
-	chainmaker.org/chainmaker-go/utils v0.0.0
-	chainmaker.org/chainmaker/common/v2 v2.0.0
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.0
-	chainmaker.org/chainmaker/protocol/v2 v2.0.0
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579
+	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210901134008-4b83cf573272
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
 	github.com/gogo/protobuf v1.3.2
 	github.com/libp2p/go-libp2p v0.11.0
 	github.com/libp2p/go-libp2p-circuit v0.3.1
@@ -19,14 +19,12 @@ require (
 	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tjfoc/gmsm v1.3.2
-	github.com/tjfoc/gmtls v1.2.1
 )
 
 replace (
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 	chainmaker.org/chainmaker-go/logger => ./../logger
 
-	chainmaker.org/chainmaker-go/utils => ../utils
 	github.com/libp2p/go-libp2p => ./p2p/libp2p
 	github.com/libp2p/go-libp2p-core => ./p2p/libp2pcore
 	github.com/libp2p/go-libp2p-pubsub => ./p2p/libp2ppubsub

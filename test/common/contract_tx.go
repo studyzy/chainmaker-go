@@ -20,13 +20,13 @@ import (
 	"chainmaker.org/chainmaker/common/v2/helper"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -60,13 +60,21 @@ func userKeyPath() string {
 func userCrtPath() string {
 	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 }
+
+func adminCrtPath() string {
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+}
+
 func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string, wasmPath string,
 	runtimeType commonPb.RuntimeType) string {
 
 	txId := utils.GetRandTxId()
 	fmt.Printf("\n============ create contract %s [%s] ============\n", contractName, txId)
 
-	wasmBin, _ := ioutil.ReadFile(wasmPath)
+	wasmBin, err := ioutil.ReadFile(wasmPath)
+	if err != nil {
+		panic(err)
+	}
 	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.2.1", runtimeType, wasmBin, nil)
 
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
@@ -133,9 +141,8 @@ func acSign(msg *commonPb.Payload, orgIdList []int) ([]*commonPb.EndorsementEntr
 	return accesscontrol.MockSignWithMultipleNodes(bytes, signers, "SHA256")
 }
 
-func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
-	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
-
+func ProposalMultiRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int, timestamp int64) *commonPb.TxResponse {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 	defer cancel()
 
@@ -158,8 +165,7 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	payload.ChainId = chainId
 	payload.TxType = txType
 	payload.TxId = txId
-	payload.Timestamp = time.Now().Unix()
-
+	payload.Timestamp = timestamp
 	req := &commonPb.TxRequest{
 		Payload: payload,
 		Sender:  &commonPb.EndorsementEntry{Signer: sender},
@@ -192,6 +198,7 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 	req.Sender.Signature = signBytes
 	fmt.Printf("client signed tx request sender:%+v,\nendorsers:%+v\n", req.Sender, req.Endorsers)
 	result, err := (*client).SendRequest(ctx, req)
+	//result, err := client.SendRequest(ctx, req)
 
 	if err != nil {
 		statusErr, ok := status.FromError(err)
@@ -203,6 +210,13 @@ func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType 
 		os.Exit(0)
 	}
 	return result
+
+}
+
+
+func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
+	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
+	return ProposalMultiRequest(sk3, client, txType, chainId, txId, payload, orgIdList, time.Now().Unix())
 }
 
 func GetSigner(sk3 crypto.PrivateKey, sender *acPb.Member) protocol.SigningMember {

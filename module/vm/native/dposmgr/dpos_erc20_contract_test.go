@@ -14,7 +14,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2/mock"
 	"github.com/golang/mock/gomock"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/stretchr/testify/require"

@@ -7,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 package p2p
 
 import (
-	"github.com/libp2p/go-libp2p-core/peer"
 	"sync"
 	"time"
+
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 const DefaultTryTimes = 50

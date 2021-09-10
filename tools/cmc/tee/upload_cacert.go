@@ -14,6 +14,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"chainmaker.org/chainmaker-go/tools/cmc/util"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 )
 
 func uploadCaCertCmd() *cobra.Command {
@@ -33,11 +37,18 @@ func uploadCaCertCmd() *cobra.Command {
 	uploadCaCertCmd.Flags().AddFlagSet(flags)
 	uploadCaCertCmd.MarkFlagRequired("ca_cert")
 	uploadCaCertCmd.MarkFlagRequired("sdk-conf-path")
+	uploadCaCertCmd.MarkFlagRequired("admin-key-file-paths")
+	uploadCaCertCmd.MarkFlagRequired("admin-crt-file-paths")
 
 	return uploadCaCertCmd
 }
 
 func cliUploadCaCert() error {
+	adminKeys, adminCrts, err := createMultiSignAdmins(adminKeyFilePaths, adminCrtFilePaths)
+	if err != nil {
+		return err
+	}
+
 	file, err := os.Open(caCertFile)
 	if err != nil {
 		return fmt.Errorf("open file '%s' error: %v", reportFile, err)
@@ -60,9 +71,27 @@ func cliUploadCaCert() error {
 		return fmt.Errorf("check new blockchains failed, %s", err.Error())
 	}
 
-	_, err = client.SaveEnclaveCACert(string(cacertData), "", true, 3)
+	payload, err := client.CreateSaveEnclaveCACertPayload(string(cacertData), "")
 	if err != nil {
-		return fmt.Errorf("save ca cert failed, %s", err.Error())
+		return fmt.Errorf("save enclave ca cert failed, %s", err.Error())
+	}
+
+	endorsementEntrys := make([]*common.EndorsementEntry, len(adminKeys))
+	for i := range adminKeys {
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		if err != nil {
+			return err
+		}
+		endorsementEntrys[i] = e
+	}
+
+	resp, err := client.SendContractManageRequest(payload, endorsementEntrys, 5, false)
+	if err != nil {
+		return err
+	}
+	err = util.CheckProposalRequestResp(resp, false)
+	if err != nil {
+		return err
 	}
 
 	fmt.Println("command execute successfully.")

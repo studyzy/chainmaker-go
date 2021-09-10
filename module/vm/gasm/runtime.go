@@ -16,8 +16,8 @@ import (
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/waci"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasi"
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/golang/groupcache/lru"
@@ -71,8 +71,9 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
-	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
+func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, byteCode []byte,
+	parameters map[string][]byte, txContext protocol.TxSimContext,
+	gasUsed uint64) (contractResult *commonPb.ContractResult) {
 	tx := txContext.GetTx()
 
 	defer func() {
@@ -122,7 +123,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		if err = baseMod.BuildIndexSpaces(externalMods); err != nil {
 			contractResult.Code = 1
 			contractResult.Message = err.Error()
-			r.Log.Errorf("invoke gasm, failed to build wasm index space, tx id:%s, error= %s, bytecode len=%d", tx.GetPayload().TxId, err.Error(), len(byteCode))
+			r.Log.Errorf("invoke gasm, failed to build wasm index space, tx id:%s, error= %s, bytecode len=%d",
+				tx.GetPayload().TxId, err.Error(), len(byteCode))
 			return
 		}
 		putContractDecodedMod(r.ChainId, contractId, baseMod)
@@ -144,7 +146,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		if err = mod.BuildIndexSpacesUsingOldNativeFunction(externalMods, baseMod.IndexSpace.Function); err != nil {
 			contractResult.Code = 1
 			contractResult.Message = err.Error()
-			r.Log.Errorf("invoke gasm, failed to build wasm index space using old native function, tx id:%s, error= %s, bytecode len=%d", tx.GetPayload().TxId, err.Error(), len(byteCode))
+			r.Log.Errorf("invoke gasm, failed to build wasm index space using old native function, "+
+				"tx id:%s, error= %s, bytecode len=%d", tx.GetPayload().TxId, err.Error(), len(byteCode))
 			return
 		}
 	}
@@ -169,7 +172,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		ec := serialize.NewEasyCodecWithMap(parameters)
 		paramMarshalBytes = ec.Marshal()
 	} else {
-		msg := fmt.Sprintf("runtime type error, expect gasm:%d, but got %d", uint64(commonPb.RuntimeType_GASM), runtimeSdkType[0])
+		msg := fmt.Sprintf("runtime type error, expect gasm:%d, but got %d", uint64(commonPb.RuntimeType_GASM),
+			runtimeSdkType[0])
 		contractResult.Code = 1
 		contractResult.Message = msg
 		r.Log.Errorf(msg)
@@ -177,14 +181,15 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 	}
 
 	var allocateSize = uint64(len(paramMarshalBytes))
-	if allocatePtr, _, err := vm.ExecExportedFunction(protocol.ContractAllocateMethod, allocateSize); err != nil {
+	var allocatePtr []uint64
+	if allocatePtr, _, err = vm.ExecExportedFunction(protocol.ContractAllocateMethod, allocateSize); err != nil {
 		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		r.Log.Errorf("invoke gasm, tx id:%s,failed to allocate, error=", tx.GetPayload().TxId, err.Error())
 		return
-	} else {
-		copy(vm.Memory[allocatePtr[0]:allocatePtr[0]+allocateSize], paramMarshalBytes)
 	}
+
+	copy(vm.Memory[allocatePtr[0]:allocatePtr[0]+allocateSize], paramMarshalBytes)
 
 	if ret, retTypes, err := vm.ExecExportedFunction(method); err != nil {
 		contractResult.Code = 1
@@ -192,7 +197,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 		r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", tx.GetPayload().TxId, err.Error())
 	} else {
 		contractResult.ContractEvent = waciInstance.ContractEvent
-		r.Log.Debugf("invoke gasm success, tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]", tx.GetPayload().TxId, vm.Gas, ret, retTypes)
+		r.Log.Debugf("invoke gasm success, tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]",
+			tx.GetPayload().TxId, vm.Gas, ret, retTypes)
 	}
 
 	// gasm 无需释放内存, 借助golang自动回收
@@ -202,7 +208,8 @@ func (r *RuntimeInstance) Invoke(contractId *commonPb.Contract, method string, b
 			contractResult.Message = err.Error()
 			r.Log.Errorf("invoke gasm, tx id:%s,error=%+v", tx.GetPayload().TxId, err.Error())
 		} else {
-			r.Log.Debugf("invoke gasm deallocate success,tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]", tx.GetPayload().TxId, vm.Gas, ret, retTypes)
+			r.Log.Debugf("invoke gasm deallocate success,tx id:%s, gas cost %+v,[IGNORE: ret %+v, retTypes %+v]",
+				tx.GetPayload().TxId, vm.Gas, ret, retTypes)
 		}
 	}
 	contractResult.GasUsed = vm.Gas

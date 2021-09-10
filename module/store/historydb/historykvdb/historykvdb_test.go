@@ -10,17 +10,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
-	"time"
 
 	"chainmaker.org/chainmaker-go/store/cache"
-	"chainmaker.org/chainmaker-go/store/dbprovider/leveldbprovider"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
@@ -197,36 +194,50 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 	return block
 }
 
-func initProvider() protocol.DBHandle {
-	conf := &localconf.StorageConfig{}
-	path := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	conf.StorePath = path
+func commitBlock(db *HistoryKvDB, block *commonPb.Block) error {
+	_, bl, _ := serialization.SerializeBlock(&storePb.BlockWithRWSet{Block: block})
+	return db.CommitBlock(bl)
+}
 
-	lvlConfig := &localconf.LevelDbConfig{
-		StorePath: path,
-	}
-	p := leveldbprovider.NewLevelDBHandle(testChainId, "test", lvlConfig, log)
-	return p
+func initProvider() protocol.DBHandle {
+	//conf := &localconf.StorageConfig{}
+	//path := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	//conf.StorePath = path
+	//
+	//lvlConfig := &localconf.LevelDbConfig{
+	//	StorePath: path,
+	//}
+	//p := leveldbprovider.NewLevelDBHandle(testChainId, "test", lvlConfig, log)
+	//return p
+	return leveldbprovider.NewMemdbHandle()
 }
 
 //初始化DB并同时初始化创世区块
 func initKvDb() *HistoryKvDB {
-	db := NewHistoryKvDB(initProvider(), cache.NewStoreCacheMgr(testChainId, log), log)
+	db := NewHistoryKvDB(initProvider(), cache.NewStoreCacheMgr(testChainId, 10, log), log)
 	_, blockInfo, _ := serialization.SerializeBlock(block0)
 	db.InitGenesis(blockInfo)
 	return db
 }
 
-func TestHistorySqlDB_CommitBlock(t *testing.T) {
+func TestHistoryKVDB_CommitBlock(t *testing.T) {
+	defer func() {
+		err := recover()
+		assert.True(t, strings.Contains(err.(string), "closed"))
+	}()
 	db := initKvDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
 	assert.Nil(t, err)
 	err = db.CommitBlock(blockInfo)
 	assert.Nil(t, err)
+
+	db.Close()
+	// should panic
+	err = commitBlock(db, block2.Block)
 }
 
-func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
+func TestHistoryKvDB_GetLastSavepoint(t *testing.T) {
 	db := initKvDb()
 	_, block1, err := serialization.SerializeBlock(block1)
 	assert.Nil(t, err)
@@ -243,8 +254,14 @@ func TestHistorySqlDB_GetLastSavepoint(t *testing.T) {
 	height, err = db.GetLastSavepoint()
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(block2.Block.Header.BlockHeight), height)
+
+	db.Close()
+	height, err = db.GetLastSavepoint()
+	assert.Equal(t, height, uint64(0))
+	t.Log(err)
+	assert.Equal(t, strings.Contains(err.Error(), "closed"), true)
 }
-func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
+func TestHistoryKvDB_GetHistoryForKey(t *testing.T) {
 	db := initKvDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
@@ -256,6 +273,12 @@ func TestHistorySqlDB_GetHistoryForKey(t *testing.T) {
 
 	assert.Equal(t, 1, getCount(result))
 
+	result, err = db.GetHistoryForKey("contract1", []byte("key_1"))
+	assert.Nil(t, err)
+	result.Next()
+	value, err := result.Value()
+	assert.Equal(t, value.BlockHeight, block1.Block.Header.BlockHeight)
+
 }
 func getCount(i historydb.HistoryIterator) int {
 	count := 0
@@ -264,7 +287,7 @@ func getCount(i historydb.HistoryIterator) int {
 	}
 	return count
 }
-func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
+func TestHistoryKvDB_GetAccountTxHistory(t *testing.T) {
 	db := initKvDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
@@ -278,8 +301,14 @@ func TestHistorySqlDB_GetAccountTxHistory(t *testing.T) {
 		v, _ := result.Value()
 		t.Logf("%#v", v)
 	}
+
+	result, err = db.GetAccountTxHistory([]byte("User1"))
+	assert.Nil(t, err)
+	result.Next()
+	value, err := result.Value()
+	assert.Equal(t, value.BlockHeight, block1.Block.Header.BlockHeight)
 }
-func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
+func TestHistoryKvDB_GetContractTxHistory(t *testing.T) {
 	db := initKvDb()
 	block1.TxRWSets[0].TxWrites[0].Value = nil
 	_, blockInfo, err := serialization.SerializeBlock(block1)
@@ -292,4 +321,14 @@ func TestHistorySqlDB_GetContractTxHistory(t *testing.T) {
 		v, _ := result.Value()
 		t.Logf("%#v", v)
 	}
+	value, err := result.Value()
+	assert.Error(t, err, "empty dbKey")
+	assert.Nil(t, value)
+	result.Release()
+
+	result, err = db.GetContractTxHistory("contract1")
+	assert.Nil(t, err)
+	result.Next()
+	value, err = result.Value()
+	assert.Equal(t, value.BlockHeight, block1.Block.Header.BlockHeight)
 }

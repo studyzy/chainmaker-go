@@ -8,32 +8,32 @@ package wasmertest
 
 import (
 	"fmt"
+	_ "net/http/pprof"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"gotest.tools/assert"
-
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker-go/vm/test"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
-
-	// pprof 的init函数会将pprof里的一些handler注册到http.DefaultServeMux上
-	// 当不使用http.DefaultServeMux来提供http api时，可以查阅其init函数，自己注册handler
-	_ "net/http/pprof"
+	"chainmaker.org/chainmaker/utils/v2"
+	"gotest.tools/assert"
 )
 
+const FileNameRustFuncVerify = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
+const SubjectContentWithEmoticon = "Wasmer 🐹"
+
+//nolint
 var log = logger.GetLoggerByChain(logger.MODULE_VM, test.ChainIdTest)
 
 // 存证合约 单例需要大于65536次，因为内存是64K
 func TestCallFact(t *testing.T) {
 	test.ContractNameTest = "contract_fact"
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
+	test.WasmFile = FileNameRustFuncVerify
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	println("bytes len", len(bytes))
 
@@ -52,13 +52,14 @@ func TestCallFact(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				invokeFact("save", y, contractId, txContext, pool, bytes)
+				invokeFact("functional_verify", y, contractId, txContext, pool, bytes)
 				//invokeFact("query", y, contractId, txContext, pool, bytes)
 				end := time.Now().UnixNano() / 1e6
 				if (end-start)/1000 > 0 && y%1000 == 0 {
 					fmt.Printf("【tps】 %d 【spend】%d i = %d, count=%d \n", int(y)/int((end-start)/1000), end-start, i+1, y)
 				}
 			}()
+			fmt.Printf("###### %v \n", i)
 		}
 
 		wg.Wait()
@@ -87,7 +88,7 @@ func invokeFact(method string, id int32, contractId *commonPb.Contract, txContex
 
 func TestFunctionalContract(t *testing.T) {
 	test.ContractNameTest = "contract_functional"
-	test.WasmFile = "../../../../test/wasm/rust-func-verify-2.0.0.wasm"
+	test.WasmFile = FileNameRustFuncVerify
 	contractId, txContext, bytes := test.InitContextTest(commonPb.RuntimeType_WASMER)
 	pool := test.GetVmPoolManager()
 
@@ -174,9 +175,9 @@ func testCallHelloWorldUseOrigin(t *testing.T) {
 	defer instance.Close()
 
 	// Set the subject to greet.
-	subject := "Wasmer 🐹"
+	subject := SubjectContentWithEmoticon
 	for i := 0; i < 1000; i++ {
-		subject += "Wasmer 🐹"
+		subject += SubjectContentWithEmoticon
 	}
 	lengthOfSubject := len(subject)
 

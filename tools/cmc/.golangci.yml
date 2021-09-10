@@ -1,0 +1,120 @@
+
+run:
+  timeout: 10m
+  tests: true
+  # default is true. Enables skipping of directories:
+  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  skip-dirs-use-default: true
+  #  skip-files:
+  skip-dirs:
+    - tee
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - goconst
+    - gocyclo
+    - gofmt
+    - ineffassign
+    - staticcheck
+    - structcheck # 当非导出结构嵌入另一个结构, 前一个结构被使用就不会监测到, 这个需要每个业务自己屏蔽
+    - typecheck
+    - goimports
+    - revive
+    - gosimple
+    - govet
+    - lll
+    - rowserrcheck
+    - misspell
+    - unused
+    - varcheck
+    - sqlclosecheck
+    - gosec
+
+
+linters-settings:
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  gocyclo:
+    min-complexity: 25
+  goimports:
+  #local-prefixes: git.code.oa.com
+  golint:
+  #min-confidence: 0
+  govet:
+    check-shadowing: false
+  gosimple:
+    go: "1.15"
+  lll:
+    line-length: 120
+  errcheck:
+    check-type-assertions: true
+  gocritic:
+    enabled-checks:
+      - nestingReduce
+    settings:
+      nestingReduce:
+        bodyWidth: 5
+  revive:
+    # see https://github.com/mgechev/revive#available-rules for details.
+    rules:
+      #      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      #      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      #      - name: receiver-naming
+      - name: time-naming
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unexported-naming
+      - name: unreachable-code
+      - name: redefines-builtin-id
+      - name: function-length
+        arguments: [ 80,0 ]
+
+issues:
+  exclude-use-default: true
+  include:
+    - EXC0002 # golint (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
+    - EXC0003 # golint func name will be used as test\.Test.* by other packages, and that stutters; consider calling this
+    - EXC0004 # govet (possible misuse of unsafe.Pointer|should have signature)
+    - EXC0005 # staticcheck ineffective break statement. Did you mean to break out of the outer loop
+    - EXC0011 # stylecheck (comment on exported (method|function|type|const)|should have( a package)? comment|comment should be of the form)
+
+  exclude-rules:
+    - path: .*_test.go
+      linters:
+        - unused
+        - deadcode
+        - ineffassign
+        - staticcheck
+        - forbidigo
+        - dupl
+        - errcheck
+        - lll
+        - funlen
+    - linters:
+      - revive
+      text: "stutters"
+    - linters:
+      - errcheck
+      text: "json.Unmarshal"
+  max-same-issues: 0
+  new: false
+  max-issues-per-linter: 0
+
+output:
+  sort-results: true

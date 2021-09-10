@@ -10,6 +10,7 @@ package rpcserver
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -33,6 +34,7 @@ type txQuerySimContextImpl struct {
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
 	blockVersion     uint32
+	keyIndex         int
 }
 
 type callContractResult struct {
@@ -81,7 +83,7 @@ func (s *txQuerySimContextImpl) Put(contractName string, key []byte, value []byt
 
 func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	txWrite := &commonPb.TxWrite{
-		Key:          nil,
+		Key:          []byte(s.getSqlKey()),
 		Value:        value,
 		ContractName: contractName,
 	}
@@ -91,12 +93,19 @@ func (s *txQuerySimContextImpl) PutRecord(contractName string, value []byte, sql
 	}
 }
 
+func (s *txQuerySimContextImpl) getSqlKey() string {
+	s.keyIndex++
+	return "#sql#" + s.tx.Payload.TxId + "#" + strconv.Itoa(s.keyIndex)
+}
+
 func (s *txQuerySimContextImpl) Del(contractName string, key []byte) error {
 	s.putIntoWriteSet(contractName, key, nil)
 	return nil
 }
 
-func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (protocol.StateIterator, error) {
+func (s *txQuerySimContextImpl) Select(contractName string, startKey []byte, limit []byte) (
+	protocol.StateIterator, error) {
+
 	return s.blockchainStore.SelectObject(contractName, startKey, limit)
 }
 
@@ -113,19 +122,28 @@ func (s *txQuerySimContextImpl) GetSender() *acPb.Member {
 }
 
 func (s *txQuerySimContextImpl) GetBlockHeight() uint64 {
-	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
+	var (
+		lastBlock *commonPb.Block
+		err       error
+	)
+	if lastBlock, err = s.blockchainStore.GetLastBlock(); err != nil {
 		return 0
-	} else {
-		return lastBlock.Header.BlockHeight
 	}
+
+	return lastBlock.Header.BlockHeight
 }
 
 func (s *txQuerySimContextImpl) GetBlockProposer() *acPb.Member {
-	if lastBlock, err := s.blockchainStore.GetLastBlock(); err != nil {
+	var (
+		lastBlock *commonPb.Block
+		err       error
+	)
+
+	if lastBlock, err = s.blockchainStore.GetLastBlock(); err != nil {
 		return nil
-	} else {
-		return lastBlock.Header.Proposer
 	}
+
+	return lastBlock.Header.Proposer
 }
 
 func (s *txQuerySimContextImpl) putIntoReadSet(contractName string, key []byte, value []byte) {
@@ -209,7 +227,6 @@ func (s *txQuerySimContextImpl) GetTxExecSeq() int {
 }
 
 func (s *txQuerySimContextImpl) SetTxExecSeq(int) {
-	return
 }
 
 // Get the tx result
@@ -226,8 +243,10 @@ func constructKey(contractName string, key []byte) string {
 	return contractName + string(key)
 }
 
-func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string, byteCode []byte,
-	parameter map[string][]byte, gasUsed uint64, refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+func (s *txQuerySimContextImpl) CallContract(contract *commonPb.Contract, method string,
+	byteCode []byte, parameter map[string][]byte, gasUsed uint64,
+	refTxType commonPb.TxType) (*commonPb.ContractResult, commonPb.TxStatusCode) {
+
 	s.gasUsed = gasUsed
 	s.currentDepth = s.currentDepth + 1
 	if s.currentDepth > protocol.CallContractDepth {

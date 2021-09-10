@@ -12,11 +12,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"chainmaker.org/chainmaker-go/wasi"
-
 	"chainmaker.org/chainmaker-go/gasm/gasm-go/wasm"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker-go/wasi"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -221,7 +220,7 @@ func (s *WaciInstance) CallContract() int32 {
 }
 
 func (s *WaciInstance) callContractCore(isLen bool) int32 {
-	data, err, gas := wacsi.CallContract(s.RequestBody, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.Vm.Gas, isLen)
+	data, gas, err := wacsi.CallContract(s.RequestBody, s.TxSimContext, s.Vm.Memory, s.GetStateCache, s.Vm.Gas, isLen)
 	s.GetStateCache = data // reset data
 	s.Vm.Gas = gas
 	if err != nil {

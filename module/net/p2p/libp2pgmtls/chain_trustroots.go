@@ -8,24 +8,25 @@ package libp2pgmtls
 
 import (
 	"fmt"
-	"github.com/tjfoc/gmsm/sm2"
 	"sync"
+
+	cmx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 )
 
 // ChainTrustRoots keep the trust root cert pools and the trust intermediates cert pools of all chains.
 type ChainTrustRoots struct {
 	lock               sync.Mutex
-	trustRoots         map[string]*sm2.CertPool
-	trustIntermediates map[string]*sm2.CertPool
+	trustRoots         map[string]*cmx509.CertPool
+	trustIntermediates map[string]*cmx509.CertPool
 }
 
 // NewChainTrustRoots create a new ChainTrustRoots instance.
 func NewChainTrustRoots() *ChainTrustRoots {
-	return &ChainTrustRoots{trustRoots: make(map[string]*sm2.CertPool), trustIntermediates: make(map[string]*sm2.CertPool)}
+	return &ChainTrustRoots{trustRoots: make(map[string]*cmx509.CertPool), trustIntermediates: make(map[string]*cmx509.CertPool)}
 }
 
 // RootsPool return the trust root cert pool of the chain which id is the id given.
-func (ctr *ChainTrustRoots) RootsPool(chainId string) (*sm2.CertPool, bool) {
+func (ctr *ChainTrustRoots) RootsPool(chainId string) (*cmx509.CertPool, bool) {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
 	cp, ok := ctr.trustRoots[chainId]
@@ -33,12 +34,12 @@ func (ctr *ChainTrustRoots) RootsPool(chainId string) (*sm2.CertPool, bool) {
 }
 
 // AddRoot add a trust root cert to cert pool.
-func (ctr *ChainTrustRoots) AddRoot(chainId string, root *sm2.Certificate) {
+func (ctr *ChainTrustRoots) AddRoot(chainId string, root *cmx509.Certificate) {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
 	cp, ok := ctr.trustRoots[chainId]
 	if !ok {
-		ctr.trustRoots[chainId] = sm2.NewCertPool()
+		ctr.trustRoots[chainId] = cmx509.NewCertPool()
 		cp = ctr.trustRoots[chainId]
 	}
 	cp.AddCert(root)
@@ -50,7 +51,7 @@ func (ctr *ChainTrustRoots) AppendRootsFromPem(chainId string, rootPem []byte) b
 	defer ctr.lock.Unlock()
 	cp, ok := ctr.trustRoots[chainId]
 	if !ok {
-		ctr.trustRoots[chainId] = sm2.NewCertPool()
+		ctr.trustRoots[chainId] = cmx509.NewCertPool()
 		cp = ctr.trustRoots[chainId]
 	}
 	return cp.AppendCertsFromPEM(rootPem)
@@ -60,7 +61,7 @@ func (ctr *ChainTrustRoots) AppendRootsFromPem(chainId string, rootPem []byte) b
 func (ctr *ChainTrustRoots) RefreshRootsFromPem(chainId string, rootsPem [][]byte) bool {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
-	newCertPool := sm2.NewCertPool()
+	newCertPool := cmx509.NewCertPool()
 	for _, bytes := range rootsPem {
 		if !newCertPool.AppendCertsFromPEM(bytes) {
 			return false
@@ -71,7 +72,7 @@ func (ctr *ChainTrustRoots) RefreshRootsFromPem(chainId string, rootsPem [][]byt
 }
 
 // IntermediatesPool return the trust intermediates cert pool of the chain which id is the id given.
-func (ctr *ChainTrustRoots) IntermediatesPool(chainId string) (*sm2.CertPool, bool) {
+func (ctr *ChainTrustRoots) IntermediatesPool(chainId string) (*cmx509.CertPool, bool) {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
 	cp, ok := ctr.trustIntermediates[chainId]
@@ -79,12 +80,12 @@ func (ctr *ChainTrustRoots) IntermediatesPool(chainId string) (*sm2.CertPool, bo
 }
 
 // AddIntermediates add a trust intermediates cert to cert pool.
-func (ctr *ChainTrustRoots) AddIntermediates(chainId string, intermediates *sm2.Certificate) {
+func (ctr *ChainTrustRoots) AddIntermediates(chainId string, intermediates *cmx509.Certificate) {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
 	cp, ok := ctr.trustIntermediates[chainId]
 	if !ok {
-		ctr.trustIntermediates[chainId] = sm2.NewCertPool()
+		ctr.trustIntermediates[chainId] = cmx509.NewCertPool()
 		cp = ctr.trustIntermediates[chainId]
 	}
 	cp.AddCert(intermediates)
@@ -96,7 +97,7 @@ func (ctr *ChainTrustRoots) AppendIntermediatesFromPem(chainId string, intermedi
 	defer ctr.lock.Unlock()
 	cp, ok := ctr.trustIntermediates[chainId]
 	if !ok {
-		ctr.trustIntermediates[chainId] = sm2.NewCertPool()
+		ctr.trustIntermediates[chainId] = cmx509.NewCertPool()
 		cp = ctr.trustIntermediates[chainId]
 	}
 	return cp.AppendCertsFromPEM(intermediatesPem)
@@ -106,7 +107,7 @@ func (ctr *ChainTrustRoots) AppendIntermediatesFromPem(chainId string, intermedi
 func (ctr *ChainTrustRoots) RefreshIntermediatesFromPem(chainId string, intermediatesPem [][]byte) bool {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
-	newCertPool := sm2.NewCertPool()
+	newCertPool := cmx509.NewCertPool()
 	for _, bytes := range intermediatesPem {
 		if !newCertPool.AppendCertsFromPEM(bytes) {
 			return false
@@ -117,7 +118,7 @@ func (ctr *ChainTrustRoots) RefreshIntermediatesFromPem(chainId string, intermed
 }
 
 // VerifyCert verify the cert given. If ok, return chain id list.
-func (ctr *ChainTrustRoots) VerifyCert(cert *sm2.Certificate) ([]string, error) {
+func (ctr *ChainTrustRoots) VerifyCert(cert *cmx509.Certificate) ([]string, error) {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
 	if cert == nil {
@@ -126,7 +127,7 @@ func (ctr *ChainTrustRoots) VerifyCert(cert *sm2.Certificate) ([]string, error) 
 	chainIds := make([]string, 0)
 	var err error
 	for chainId, certPool := range ctr.trustRoots {
-		vo := sm2.VerifyOptions{Roots: certPool}
+		vo := cmx509.VerifyOptions{Roots: certPool}
 		trustIntermediates, ok := ctr.trustIntermediates[chainId]
 		if ok {
 			vo.Intermediates = trustIntermediates
@@ -144,7 +145,7 @@ func (ctr *ChainTrustRoots) VerifyCert(cert *sm2.Certificate) ([]string, error) 
 }
 
 // VerifyCertOfChain verify the cert given with chainId. If ok, return true.
-func (ctr *ChainTrustRoots) VerifyCertOfChain(chainId string, cert *sm2.Certificate) bool {
+func (ctr *ChainTrustRoots) VerifyCertOfChain(chainId string, cert *cmx509.Certificate) bool {
 	ctr.lock.Lock()
 	defer ctr.lock.Unlock()
 	if cert == nil {
@@ -154,7 +155,7 @@ func (ctr *ChainTrustRoots) VerifyCertOfChain(chainId string, cert *sm2.Certific
 	if !ok {
 		return false
 	}
-	vo := sm2.VerifyOptions{Roots: certPool}
+	vo := cmx509.VerifyOptions{Roots: certPool}
 	trustIntermediates, ok := ctr.trustIntermediates[chainId]
 	if ok {
 		vo.Intermediates = trustIntermediates

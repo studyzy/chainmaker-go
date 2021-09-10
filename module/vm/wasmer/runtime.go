@@ -9,10 +9,10 @@ package wasmer
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 // RuntimeInstance wasm runtime
@@ -27,7 +27,9 @@ func (r *RuntimeInstance) Pool() *vmPool {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
+func (r *RuntimeInstance) Invoke(
+	contract *commonPb.Contract, method string,
+	byteCode []byte, parameters map[string][]byte,
 	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
 	logStr := fmt.Sprintf("wasmer runtime invoke[%s]: ", txContext.GetTx().Payload.TxId)

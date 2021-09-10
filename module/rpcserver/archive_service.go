@@ -8,9 +8,9 @@
 package rpcserver
 
 import (
-	"chainmaker.org/chainmaker-go/utils"
 	commonErr "chainmaker.org/chainmaker/common/v2/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"errors"
 	"fmt"
@@ -49,7 +49,7 @@ func (s *ApiService) getArchiveBlockHeight(params []*commonPb.KeyValuePair) (uin
 
 	key := syscontract.ArchiveBlock_BLOCK_HEIGHT.String()
 	if params[0].Key != key {
-		return 0, errors.New(fmt.Sprintf("invalid key, must be %s", key))
+		return 0, fmt.Errorf("invalid key, must be %s", key)
 	}
 
 	blockHeight, err := utils.BytesToUint64(params[0].Value)
@@ -110,7 +110,7 @@ func (s *ApiService) getRestoreBlock(params []*commonPb.KeyValuePair) ([]byte, e
 
 	key := syscontract.RestoreBlock_FULL_BLOCK.String()
 	if params[0].Key != key {
-		return nil, errors.New(fmt.Sprintf("invalid key, must be %s", key))
+		return nil, fmt.Errorf("invalid key, must be %s", key)
 	}
 
 	fullBlock := params[0].Value

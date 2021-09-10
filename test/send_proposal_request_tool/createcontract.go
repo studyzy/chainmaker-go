@@ -13,8 +13,8 @@ import (
 	"io/ioutil"
 	"time"
 
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/spf13/cobra"
 )

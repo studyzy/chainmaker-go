@@ -39,18 +39,18 @@ var (
 func TestFormatKey(t *testing.T) {
 	// test validator key
 	validatorKey := "V/4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	ValidatorAddressKey := ToValidatorKey(ValidatorAddress)
-	require.Equal(t, validatorKey, string(ValidatorAddressKey))
+	validatorAddressKey := ToValidatorKey(ValidatorAddress)
+	require.Equal(t, validatorKey, string(validatorAddressKey))
 
 	// test validator prefix
 	vPrefix := "V/"
-	ValidatorPrefix := ToValidatorPrefix()
-	require.Equal(t, vPrefix, string(ValidatorPrefix))
+	validatorPrefix := ToValidatorPrefix()
+	require.Equal(t, vPrefix, string(validatorPrefix))
 
 	// test delegate key
 	delegationKey := "D/GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB/4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	DelegationAddressKey := ToDelegationKey(DelegateAddress, ValidatorAddress)
-	require.Equal(t, delegationKey, string(DelegationAddressKey))
+	delegationAddressKey := ToDelegationKey(DelegateAddress, ValidatorAddress)
+	require.Equal(t, delegationKey, string(delegationAddressKey))
 
 	// test delegate prefix
 	dPrefix := "D/GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB"
@@ -58,36 +58,36 @@ func TestFormatKey(t *testing.T) {
 	require.Equal(t, dPrefix, string(delegationPrefix))
 
 	// test epoch key
-	EpochKey := ToEpochKey("99")
+	epoch := ToEpochKey("99")
 	epochKey := "E/99"
-	require.Equal(t, epochKey, string(EpochKey))
+	require.Equal(t, epochKey, string(epoch))
 
 	// test node id
-	NodeIDKey := ToNodeIDKey(NodeID)
+	nodeIDKey := ToNodeIDKey(NodeID)
 	nodeKey := "N/NodeTestc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	require.Equal(t, nodeKey, string(NodeIDKey))
+	require.Equal(t, nodeKey, string(nodeIDKey))
 
 	// test unbonding delegation key
 	unbondingDelegationKey := "U/\u0000\u0000\u0000\u0000\u0000\u0000\u0000c/GMx5CwXvH9FyGwD5CbHsCXfM6XmAyzjb9iVRDiYBTxdB/4yp3FUSrc1jyCgHMXswPeSE9N4Dnys1Hsg3NtBbzu2F4"
-	UnbondingDelegationKey := ToUnbondingDelegationKey(99, DelegateAddress, ValidatorAddress)
-	require.Equal(t, unbondingDelegationKey, string(UnbondingDelegationKey))
+	unbondingDelegation := ToUnbondingDelegationKey(99, DelegateAddress, ValidatorAddress)
+	require.Equal(t, unbondingDelegationKey, string(unbondingDelegation))
 
 	// test unbonding delegation prefix
 	udPrefix := "U/\u0000\u0000\u0000\u0000\u0000\u0000\u0000c"
-	UnbondingDelegationPrefix := ToUnbondingDelegationPrefix(99)
-	require.Equal(t, udPrefix, string(UnbondingDelegationPrefix))
+	unbondingDelegationPrefix := ToUnbondingDelegationPrefix(99)
+	require.Equal(t, udPrefix, string(unbondingDelegationPrefix))
 
 	// test ToReverseNodeIDKey
-	ReverseNodeIDKey := "NR/nodeID"
+	reverseNodeID := "NR/nodeID"
 	reverseNodeIDKey := ToReverseNodeIDKey("nodeID")
-	require.Equal(t, ReverseNodeIDKey, string(reverseNodeIDKey))
+	require.Equal(t, reverseNodeID, string(reverseNodeIDKey))
 }
 
 func TestStakeContractAddr(t *testing.T) {
 	// test StakeContractAddr
-	StakeContractAddress := "FmGvrEHewSTDUHR4sDTCoxVq1JRRJU9QYUVsEy13zf2X"
+	stakeContractAddressKey := "FmGvrEHewSTDUHR4sDTCoxVq1JRRJU9QYUVsEy13zf2X"
 	stakeContractAddress := StakeContractAddr()
-	require.EqualValues(t, StakeContractAddress, stakeContractAddress)
+	require.EqualValues(t, stakeContractAddressKey, stakeContractAddress)
 }
 
 func TestDPosStakeRuntime_NodeID(t *testing.T) {

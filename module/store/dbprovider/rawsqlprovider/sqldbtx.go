@@ -55,11 +55,25 @@ func (p *SqlDBTx) ChangeContextDb(dbName string) error {
 func (p *SqlDBTx) Save(val interface{}) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
+
+	userDefineSave, ok := val.(UserDefineSave)
+	if ok {
+		saveSql, args := userDefineSave.GetSaveSql()
+		p.logger.Debug("Exec sql:", saveSql, args)
+		result, err := p.db.Exec(saveSql, args...)
+		if err != nil {
+			p.logger.Error(err)
+			return 0, errSql
+		}
+		return result.RowsAffected()
+	}
+
 	value, ok := val.(TableDMLGenerator)
 	if !ok {
 		p.logger.Errorf("%v not a TableDMLGenerator", val)
 		return 0, errTypeConvert
 	}
+
 	countSql, args := value.GetCountSql()
 	p.logger.Debug("Query sql:", countSql, args)
 	row := p.db.QueryRow(countSql, args...)

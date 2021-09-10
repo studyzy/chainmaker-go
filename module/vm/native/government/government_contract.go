@@ -48,7 +48,8 @@ type GovernmentRuntime struct {
 	log protocol.Logger
 }
 
-func (r *GovernmentRuntime) GetGovernmentContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *GovernmentRuntime) GetGovernmentContract(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	store := txSimContext.GetBlockchainStore()
 	governmentContractName := GovernmentContractName
 	bytes, err := store.ReadObject(governmentContractName, []byte(governmentContractName))

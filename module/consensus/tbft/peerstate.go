@@ -13,7 +13,7 @@ import (
 
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
@@ -92,7 +92,7 @@ func (pcs *PeerStateService) updateWithProto(pcsProto *tbftpb.GossipState) {
 	pcs.Proposal = pcsProto.Proposal
 	pcs.VerifingProposal = pcsProto.VerifingProposal
 	validatorSet := pcs.tbftImpl.getValidatorSet()
-	pcs.RoundVoteSet = NewRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
+	pcs.RoundVoteSet = newRoundVoteSetFromProto(pcs.logger, pcsProto.RoundVoteSet, validatorSet)
 	pcs.logger.Debugf("[%s] RoundVoteSet: %s", pcs.Id, pcs.RoundVoteSet)
 }
 
@@ -123,7 +123,6 @@ func (pcs *PeerStateService) procStateChange() {
 			pcs.sendStateChange()
 		case <-pcs.closeC:
 			loop = false
-			break
 		}
 	}
 }
@@ -196,7 +195,8 @@ func (pcs *PeerStateService) sendProposalOfRound() {
 	if pcs.tbftImpl.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
 		pcs.Step >= tbftpb.Step_PROPOSE {
-		pcs.logger.Debugf("[%s] sendProposalOfRound: [%d,%d]", pcs.Id, pcs.tbftImpl.Proposal.Height, pcs.tbftImpl.Proposal.Round)
+		pcs.logger.Debugf("[%s] sendProposalOfRound: [%d,%d]",
+			pcs.Id, pcs.tbftImpl.Proposal.Height, pcs.tbftImpl.Proposal.Round)
 		pcs.sendProposal(pcs.tbftImpl.Proposal)
 	}
 }
@@ -314,7 +314,8 @@ func (pcs *PeerStateService) sendProposalInState(state *ConsensusState) {
 	if state.Proposal != nil &&
 		pcs.VerifingProposal == nil &&
 		pcs.Step >= tbftpb.Step_PROPOSE {
-		pcs.logger.Debugf("[%s] sendProposalInState: [%d,%d]", pcs.Id, state.Proposal.Height, state.Proposal.Round)
+		pcs.logger.Debugf("[%s] sendProposalInState: [%d,%d]",
+			pcs.Id, state.Proposal.Height, state.Proposal.Round)
 		pcs.sendProposal(state.Proposal)
 	}
 }

@@ -15,7 +15,8 @@ type NetServiceFactory struct {
 }
 
 // NewNetService create a new net service instance.
-func (nsf *NetServiceFactory) NewNetService(net Net, chainId string, ac protocol.AccessControlProvider, chainConf protocol.ChainConf, opts ...NetServiceOption) (protocol.NetService, error) {
+func (nsf *NetServiceFactory) NewNetService(net Net, chainId string, ac protocol.AccessControlProvider,
+	chainConf protocol.ChainConf, opts ...NetServiceOption) (protocol.NetService, error) {
 	//初始化工厂实例
 	ns := NewNetService(chainId, net, ac)
 	if err := ns.Apply(opts...); err != nil {
@@ -40,9 +41,7 @@ func (nsf *NetServiceFactory) setAllConsensusNodeIds(ns *NetService, chainConf p
 	consensusNodeUidList := make([]string, 0)
 	// add all the seeds
 	for _, node := range chainConf.ChainConfig().Consensus.Nodes {
-		for _, nodeUid := range node.NodeId {
-			consensusNodeUidList = append(consensusNodeUidList, nodeUid)
-		}
+		consensusNodeUidList = append(consensusNodeUidList, node.NodeId...)
 	}
 	// set all consensus node id for net service
 	err := ns.Apply(WithConsensusNodeUid(consensusNodeUidList...))

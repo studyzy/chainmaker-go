@@ -14,7 +14,7 @@ import (
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
-	grpc_client "chainmaker.org/chainmaker-go/test/grpc_client"
+	"chainmaker.org/chainmaker-go/test/grpc_client"
 )
 
 type BenchmarkerSender interface {

@@ -13,10 +13,6 @@ import (
 	"testing"
 	"time"
 
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
-
-	"chainmaker.org/chainmaker/protocol/v2/test"
-
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/consensus_mock"
@@ -24,11 +20,13 @@ import (
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	systemPb "chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/mock"
+	"chainmaker.org/chainmaker/protocol/v2/test"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/spf13/viper"
@@ -155,7 +153,7 @@ func createCertNodesTotal() map[string]string {
 			certFile = filepath.Join(confDir, certFile)
 		}
 		acLog := &test.GoLogger{}
-		ac, _ := accesscontrol.NewAccessControlWithChainConfig(skFile, lf.NodeConfig.PrivKeyPassword, certFile, nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
+		ac, _ := accesscontrol.NewAccessControlWithChainConfig(nodeChainConf[i], lf.NodeConfig.OrgId, nil, acLog)
 		pbMember := &pbac.Member{
 			OrgId:      lf.NodeConfig.OrgId,
 			MemberType: pbac.MemberType_CERT_HASH,
@@ -297,7 +295,7 @@ func initOneNode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	chainid := "TestConsensusChainedBftImpl"
+	chainid := "TestConsensusChainedBftImplOneNode"
 
 	nodeLocalConf = make([]*localconf.CMConfig, 0)
 	nodeChainConf = make([]*chainconf.ChainConf, 0)

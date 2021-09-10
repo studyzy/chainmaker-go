@@ -4,9 +4,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-rm -rf ../../data
+rm -rf ../../data/*
 rm -rf ../../log/*/*
-rm -rf ../../main/panic.log
+rm -rf ../../main/panic*.log
 rm -rf ../../../cmdata
 
 for((i=1;i<=4;i++))

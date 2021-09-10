@@ -17,13 +17,13 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 var _ protocol.Member = (*certMember)(nil)
@@ -273,7 +273,8 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem,
 	}, nil
 }
 
-func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
+func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId,
+	localPrivKeyFile, localPrivKeyPwd, localCertFile string) (
 	protocol.SigningMember, error) {
 	var (
 		certMember *certMember

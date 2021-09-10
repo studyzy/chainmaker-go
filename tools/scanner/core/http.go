@@ -25,7 +25,7 @@ type resultModel struct {
 	Message string `json:"retmsg"`
 }
 
-func Post(url string, data interface{}) (*resultModel, error) {
+func post(url string, data interface{}) (*resultModel, error) {
 	client := &http.Client{Timeout: 5 * time.Second}
 	jsonString, err := json.Marshal(data)
 	if err != nil {

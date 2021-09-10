@@ -10,8 +10,9 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+
+	"github.com/spf13/cobra"
 )
 
 func GenerateHashCMD() *cobra.Command {

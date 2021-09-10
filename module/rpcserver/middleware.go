@@ -12,10 +12,11 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -23,6 +24,10 @@ import (
 )
 
 var log = logger.GetLogger(logger.MODULE_RPC)
+
+const (
+	UNKNOWN = "unknown"
+)
 
 // LoggingInterceptor - set logging interceptor
 func LoggingInterceptor(ctx context.Context, req interface{},
@@ -92,7 +97,9 @@ func RateLimitInterceptor() grpc.UnaryServerInterceptor {
 		bucket = rate.NewLimiter(rate.Limit(tokenPerSecond), tokenBucketSize)
 	}
 
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (
+		interface{}, error) {
+
 		if tokenBucketSize >= 0 && tokenPerSecond >= 0 && !bucket.Allow() {
 			errMsg := fmt.Sprintf("%s is rejected by ratelimit, try later pls", info.FullMethod)
 			log.Warn(errMsg)
@@ -101,4 +108,12 @@ func RateLimitInterceptor() grpc.UnaryServerInterceptor {
 
 		return handler(ctx, req)
 	}
+}
+
+func splitMethodName(fullMethodName string) (string, string) {
+	fullMethodName = strings.TrimPrefix(fullMethodName, "/") // remove leading slash
+	if i := strings.Index(fullMethodName, "/"); i >= 0 {
+		return fullMethodName[:i], fullMethodName[i+1:]
+	}
+	return UNKNOWN, UNKNOWN
 }

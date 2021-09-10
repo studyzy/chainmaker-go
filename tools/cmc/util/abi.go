@@ -45,12 +45,12 @@ func Signature(method string) []byte {
 }
 
 func convetToAddress(v interface{}) (ethcmn.Address, error) {
-	switch v.(type) {
+	switch v := v.(type) {
 	case string:
-		if !ethcmn.IsHexAddress(v.(string)) {
-			return ethcmn.Address{}, fmt.Errorf("invalid address %s", v.(string))
+		if !ethcmn.IsHexAddress(v) {
+			return ethcmn.Address{}, fmt.Errorf("invalid address %s", v)
 		}
-		return ethcmn.HexToAddress(v.(string)), nil
+		return ethcmn.HexToAddress(v), nil
 	}
 	return ethcmn.Address{}, fmt.Errorf("invalid address %v", v)
 }
@@ -87,6 +87,7 @@ func convertToInt(ty ethabi.Type, v interface{}) interface{} {
 }
 
 // GetPaddedParam return padded params bytes
+//nolint
 func GetPaddedParam(method *ethabi.Method, param []Param) ([]byte, error) {
 	values := make([]interface{}, 0)
 
@@ -118,7 +119,8 @@ func GetPaddedParam(method *ethabi.Method, param []Param) ([]byte, error) {
 					}
 				}
 
-				if (ty.Elem.T == ethabi.IntTy || ty.Elem.T == ethabi.UintTy) && reflect.TypeOf(v).Elem().Kind() == reflect.Interface {
+				if (ty.Elem.T == ethabi.IntTy || ty.Elem.T == ethabi.UintTy) &&
+					reflect.TypeOf(v).Elem().Kind() == reflect.Interface {
 					if ty.Elem.Size > 64 {
 						tmp := make([]*big.Int, 0)
 						for _, i := range v.([]interface{}) {

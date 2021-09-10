@@ -29,7 +29,7 @@ type BlockPool struct {
 func NewBlockPool(rootBlock *common.Block,
 	rootQC *chainedbftpb.QuorumCert, maxPrunedSize int) *BlockPool {
 	blockPool := &BlockPool{
-		idToQC:                make(map[string]*chainedbftpb.QuorumCert, 0),
+		idToQC:                make(map[string]*chainedbftpb.QuorumCert),
 		blockTree:             NewBlockTree(rootBlock, maxPrunedSize),
 		highestQC:             rootQC,
 		highestCertifiedBlock: rootBlock,

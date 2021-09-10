@@ -48,7 +48,10 @@ func splitAcctTxHistKey(key []byte) (accountId []byte, blockHeight uint64, txId 
 
 //GetAccountTxHistory AccountId+BlockHeight+ TxId
 func (h *HistoryKvDB) GetAccountTxHistory(account []byte) (historydb.HistoryIterator, error) {
-	iter := h.dbHandle.NewIteratorWithPrefix(constructAcctTxHistKeyPrefix(account))
+	iter, err := h.dbHandle.NewIteratorWithPrefix(constructAcctTxHistKeyPrefix(account))
+	if err != nil {
+		return nil, err
+	}
 	splitKeyFunc := func(key []byte) (*historydb.BlockHeightTxId, error) {
 		_, height, txId, err := splitAcctTxHistKey(key)
 		if err != nil {

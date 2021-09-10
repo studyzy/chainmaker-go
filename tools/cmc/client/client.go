@@ -158,7 +158,8 @@ func init() {
 	flags.IntVar(&sendTimes, flagSendTimes, 1, "specify SendTimes , default once")
 	flags.Int64Var(&timeout, flagTimeout, 10, "specify timeout in seconds, default 10s")
 	flags.StringVar(&method, flagMethod, "", "specify invoke contract method")
-	flags.StringVar(&params, flagParams, "", "specify invoke contract params, json format, such as: \"{\\\"key\\\":\\\"value\\\",\\\"key1\\\":\\\"value1\\\"}\"")
+	flags.StringVar(&params, flagParams, "", "specify invoke contract params, json format, "+
+		"such as: \"{\\\"key\\\":\\\"value\\\",\\\"key1\\\":\\\"value1\\\"}\"")
 	flags.StringVar(&orgId, flagOrgId, "", "specify the orgId, such as wx-org1.chainmaker.com")
 	flags.BoolVar(&syncResult, flagSyncResult, false, "whether wait the result of the transaction, default false")
 	flags.BoolVar(&enableCertHash, flagEnableCertHash, true, "whether enable cert hash, default true")
@@ -173,8 +174,10 @@ func init() {
 	flags.StringVar(&adminKeyFilePaths, flagAdminKeyFilePaths, "", "specify admin key file paths, use ',' to separate")
 	flags.StringVar(&adminCrtFilePaths, flagAdminCrtFilePaths, "", "specify admin cert file paths, use ',' to separate")
 
-	flags.StringVar(&userTlsKeyFilePath, flagUserTlsKeyFilePath, "", "specify user tls key file path for chainclient tls connection")
-	flags.StringVar(&userTlsCrtFilePath, flagUserTlsCrtFilePath, "", "specify user tls cert file path for chainclient tls connection")
+	flags.StringVar(&userTlsKeyFilePath, flagUserTlsKeyFilePath, "", "specify user tls key file path for "+
+		"chainclient tls connection")
+	flags.StringVar(&userTlsCrtFilePath, flagUserTlsCrtFilePath, "", "specify user tls cert file path for "+
+		"chainclient tls connection")
 	flags.StringVar(&userSignKeyFilePath, flagUserSignKeyFilePath, "", "specify user sign key file path to sign tx")
 	flags.StringVar(&userSignCrtFilePath, flagUserSignCrtFilePath, "", "specify user sign cert file path to sign tx")
 
@@ -256,7 +259,8 @@ func getChainMakerServerVersionCMD() *cobra.Command {
 }
 
 func getChainMakerServerVersion() error {
-	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath, userSignCrtFilePath, userSignKeyFilePath)
+	client, err := util.CreateChainClient(sdkConfPath, chainId, orgId, userTlsCrtFilePath, userTlsKeyFilePath,
+		userSignCrtFilePath, userSignKeyFilePath)
 	if err != nil {
 		return err
 	}

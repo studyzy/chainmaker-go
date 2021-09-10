@@ -8,15 +8,18 @@ package blocksqldb
 
 import (
 	"errors"
+	"math"
+
+	//"github.com/Workiva/go-datastructures/threadsafe/err"
 	"runtime"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -37,11 +40,14 @@ func (db *BlockSqlDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	var height uint64
 	res, err := db.db.QuerySingle(sql, blockHash)
 	if err != nil {
-		return 0, err
+		return math.MaxUint64, err
+	}
+	if res.IsEmpty() {
+		return math.MaxUint64, nil
 	}
 	err = res.ScanColumns(&height)
 	if err != nil {
-		return 0, err
+		return math.MaxUint64, err
 	}
 	return height, nil
 }
@@ -63,11 +69,14 @@ func (db *BlockSqlDB) GetTxHeight(txId string) (uint64, error) {
 	var height uint64
 	res, err := db.db.QuerySingle(sql, txId)
 	if err != nil {
-		return 0, err
+		return math.MaxUint64, err
+	}
+	if res.IsEmpty() {
+		return math.MaxUint64, nil
 	}
 	err = res.ScanColumns(&height)
 	if err != nil {
-		return 0, err
+		return math.MaxUint64, err
 	}
 	return height, nil
 

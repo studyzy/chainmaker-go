@@ -88,7 +88,8 @@ func (s *WaciInstance) KvIteratorNext() int32 {
 }
 
 func (s *WaciInstance) kvIteratorNextCore(isLen bool) int32 {
-	data, err := wacsi.KvIteratorNext(s.RequestBody, s.Sc.TxSimContext, s.Memory, s.Sc.GetStateCache, s.Sc.Contract.Name, isLen)
+	data, err := wacsi.KvIteratorNext(s.RequestBody, s.Sc.TxSimContext,
+		s.Memory, s.Sc.GetStateCache, s.Sc.Contract.Name, isLen)
 	s.Sc.GetStateCache = data // reset data
 	if err != nil {
 		s.recordMsg(err.Error())

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 
 	acpb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -35,6 +36,7 @@ type txSimContextImpl struct {
 	sqlRowCache      map[int32]protocol.SqlRows
 	kvRowCache       map[int32]protocol.StateIterator
 	blockVersion     uint32
+	keyIndex         int
 }
 
 type callContractResult struct {
@@ -59,13 +61,14 @@ func (s *txSimContextImpl) Get(contractName string, key []byte) ([]byte, error) 
 	}
 
 	// Get from db
-	if value, err := s.snapshot.GetKey(s.txExecSeq, contractName, key); err != nil {
+	var value []byte
+	var err error
+	if value, err = s.snapshot.GetKey(s.txExecSeq, contractName, key); err != nil {
 		return nil, err
-	} else {
-		// if get from db success, put into read set
-		s.putIntoReadSet(contractName, key, value)
-		return value, nil
 	}
+	// if get from db success, put into read set
+	s.putIntoReadSet(contractName, key, value)
+	return value, nil
 }
 func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) error {
 	s.putIntoWriteSet(contractName, key, value)
@@ -74,7 +77,7 @@ func (s *txSimContextImpl) Put(contractName string, key []byte, value []byte) er
 
 func (s *txSimContextImpl) PutRecord(contractName string, value []byte, sqlType protocol.SqlType) {
 	txWrite := &commonpb.TxWrite{
-		Key:          nil,
+		Key:          []byte(s.getSqlKey()),
 		Value:        value,
 		ContractName: contractName,
 	}
@@ -82,6 +85,11 @@ func (s *txSimContextImpl) PutRecord(contractName string, value []byte, sqlType 
 	if sqlType == protocol.SqlTypeDdl {
 		s.txWriteKeyDdlSql = append(s.txWriteKeyDdlSql, txWrite)
 	}
+}
+
+func (s *txSimContextImpl) getSqlKey() string {
+	s.keyIndex++
+	return "#sql#" + s.tx.Payload.TxId + "#" + strconv.Itoa(s.keyIndex)
 }
 
 func (s *txSimContextImpl) Del(contractName string, key []byte) error {

@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	chainedbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 )
 
@@ -84,7 +84,7 @@ func NewTimerService(log *logger.CMLogger) *TimerService {
 		pacemakerTimer: time.NewTimer(RoundTimeout),
 		eventCh:        make(chan *TimerEvent, 10),
 		firedCh:        make(chan *TimerEvent, 10),
-		quitCh:         make(chan struct{}, 0),
+		quitCh:         make(chan struct{}),
 		logger:         log,
 	}
 	dropTimerC(ts.pacemakerTimer, "start timeService", ts.logger)

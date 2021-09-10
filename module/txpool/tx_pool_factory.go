@@ -57,8 +57,10 @@ func (f TxPoolFactory) NewTxPool(log protocol.Logger, txPoolType PoolType, opts 
 		batchPool := batch.NewBatchTxPool(tf.nodeId, tf.chainId, tf.chainConf, tf.blockchainStore, tf.ac, log)
 		if err := batchPool.Apply(batch.WithMsgBus(tf.msgBus),
 			batch.WithPoolSize(int(localconf.ChainMakerConfig.TxPoolConfig.MaxTxPoolSize)),
-			batch.WithBatchMaxSize(localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize),
-			batch.WithBatchCreateTimeout(time.Duration(localconf.ChainMakerConfig.TxPoolConfig.BatchCreateTimeout)*time.Millisecond),
+			//batch.WithBatchMaxSize(localconf.ChainMakerConfig.TxPoolConfig.BatchMaxSize),
+			batch.WithBatchMaxSize(int(tf.chainConf.ChainConfig().Block.BlockTxCapacity)),
+			batch.WithBatchCreateTimeout(time.Duration(localconf.ChainMakerConfig.TxPoolConfig.BatchCreateTimeout)*
+				time.Millisecond),
 		); err != nil {
 			return nil, err
 		}

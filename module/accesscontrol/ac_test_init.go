@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
-	logger2 "chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	"chainmaker.org/chainmaker/logger/v2"
+	logger2 "chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -41,12 +41,8 @@ const (
 	tempOrg1CertFileName = "org1.crt"
 
 	testConsensusRole = protocol.Role("CONSENSUS")
-	testAdminRole     = protocol.Role("ADMIN")
-	testClientRole    = protocol.Role("CLIENT")
 
 	testConsensusCN = "consensus1"
-	testAdminCN     = "admin1"
-	testClientCN    = "client1"
 
 	testMsg = "Winter is coming."
 
@@ -236,31 +232,6 @@ CaPU4DESoRiJYiriYzSRLwb3TBtxMP1fO78u6tkwUTKiXlbT0T9mtr3P410yAjlk
 -----END PRIVATE KEY-----
 `,
 }
-var testConsensusTlsOrg1 = &testCertInfo{
-	cert: `-----BEGIN CERTIFICATE-----
-MIICYTCCAgagAwIBAgIIDVVwVu/XE4owCgYIKoEcz1UBg3UwXzELMAkGA1UEBhMC
-Q04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWppbmcxDTALBgNVBAoT
-BG9yZzExCzAJBgNVBAsTAmNhMRAwDgYDVQQDEwdjYS1vcmcxMB4XDTIxMDcwNjAy
-NTYwM1oXDTIzMDcwNjAyNTYwM1owaTELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0Jl
-aWppbmcxEDAOBgNVBAcTB0JlaWppbmcxDTALBgNVBAoTBG9yZzExEjAQBgNVBAsT
-CWNvbnNlbnN1czETMBEGA1UEAxMKY29uc2Vuc3VzMTBZMBMGByqGSM49AgEGCCqB
-HM9VAYItA0IABDehr437Fiz2+p6uwq8wgC5UoaA9atkaOdd+HhmUt3SfMZfKnGk9
-sJ5N8+i00Vz8zA7MeCZfS6jfbExdT0EopFKjgaEwgZ4wDgYDVR0PAQH/BAQDAgP4
-MB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATApBgNVHQ4EIgQgTzu3yvoP
-jxpdPYRkBWztBa2Pn0QAZD/NtS5YU2AEdk0wKwYDVR0jBCQwIoAgsjfralJ8KKfn
-TEygIv2pBhXEhXymAGe+jGbEAyTwmtAwFQYDVR0RBA4wDIIKY29uc2Vuc3VzMTAK
-BggqgRzPVQGDdQNJADBGAiEAh7Jg6cLNl5JtOu4yhDRb1OGhsd0K25IUlNk3z6qv
-258CIQCL9To7rVk4wNcUFZ8m858tN4VZicgmmJDiDRowo4FDwA==
------END CERTIFICATE-----
-`,
-	sk: `-----BEGIN PRIVATE KEY-----
-MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQg5QriJPiflpuB/S1d
-uIgA8OFj5+n+VZK6mEgI7tV39+ygCgYIKoEcz1UBgi2hRANCAAQ3oa+N+xYs9vqe
-rsKvMIAuVKGgPWrZGjnXfh4ZlLd0nzGXypxpPbCeTfPotNFc/MwOzHgmX0uo32xM
-XU9BKKRS
------END PRIVATE KEY-----
-`,
-}
 
 var testConsensusSignOrg2 = &testCertInfo{
 	cert: `-----BEGIN CERTIFICATE-----
@@ -284,31 +255,6 @@ MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQg9oWqW25x6XwVgiFc
 U9UXN1B3LLUpOeEYYMfwts7Qn7mgCgYIKoEcz1UBgi2hRANCAARezNRchpwTyqk9
 Tz5VCrVidtiymsdrY98ORadNoh8D8LGkvMFzPTBMtKSfvEXITuFjglxCRTC99ndf
 UOJUN/QB
------END PRIVATE KEY-----
-`,
-}
-var testConsensusTlsOrg2 = &testCertInfo{
-	cert: `-----BEGIN CERTIFICATE-----
-MIICYTCCAgagAwIBAgIIFse+TqTc/PgwCgYIKoEcz1UBg3UwXzELMAkGA1UEBhMC
-Q04xEDAOBgNVBAgTB0JlaWppbmcxEDAOBgNVBAcTB0JlaWppbmcxDTALBgNVBAoT
-BG9yZzIxCzAJBgNVBAsTAmNhMRAwDgYDVQQDEwdjYS1vcmcyMB4XDTIxMDcwNjAy
-NTk1NloXDTIzMDcwNjAyNTk1NlowaTELMAkGA1UEBhMCQ04xEDAOBgNVBAgTB0Jl
-aWppbmcxEDAOBgNVBAcTB0JlaWppbmcxDTALBgNVBAoTBG9yZzIxEjAQBgNVBAsT
-CWNvbnNlbnN1czETMBEGA1UEAxMKY29uc2Vuc3VzMTBZMBMGByqGSM49AgEGCCqB
-HM9VAYItA0IABB814d5OtAC1Edevci6J7AS4W8s9mMox2uVJzM8YNEHbNKj0cVH3
-wfPAvCycBFcXrvbcMEZ608ur8+5LkM7to26jgaEwgZ4wDgYDVR0PAQH/BAQDAgP4
-MB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDATApBgNVHQ4EIgQg4LsPC5s0
-s/Mo5frmzr1ctwJP6uQa+sk24bSzs8bFlP4wKwYDVR0jBCQwIoAgH7iJPcW9+Bn0
-0q6x76BbHe1O3vfGzNt/3ZJhxGVpffwwFQYDVR0RBA4wDIIKY29uc2Vuc3VzMTAK
-BggqgRzPVQGDdQNJADBGAiEA+lzq2ghorbkxjcX1MHDhQguuKM8hkaS2H6EOHqCK
-+98CIQDBgXpSTUS9PDz1aLqrYYcEzkiuohAFdKB6d2MICadl0Q==
------END CERTIFICATE-----
-`,
-	sk: `-----BEGIN PRIVATE KEY-----
-MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQgbY8C0eLqJsTr25zS
-KKb/JOqIadvvQ2ehLs24P7KjEX2gCgYIKoEcz1UBgi2hRANCAAQfNeHeTrQAtRHX
-r3IuiewEuFvLPZjKMdrlSczPGDRB2zSo9HFR98HzwLwsnARXF6723DBGetPLq/Pu
-S5DO7aNu
 -----END PRIVATE KEY-----
 `,
 }
@@ -717,11 +663,13 @@ type orgMemberInfo struct {
 }
 
 type orgMember struct {
-	orgId      string
-	acProvider protocol.AccessControlProvider
-	consensus  protocol.SigningMember
-	admin      protocol.SigningMember
-	client     protocol.SigningMember
+	orgId        string
+	acProvider   protocol.AccessControlProvider
+	consensus    protocol.SigningMember
+	admin        protocol.SigningMember
+	client       protocol.SigningMember
+	trustMember1 protocol.SigningMember
+	trustMember2 protocol.SigningMember
 }
 
 var orgMemberInfoMap = map[string]*orgMemberInfo{
@@ -792,12 +740,34 @@ func initOrgMember(t *testing.T, info *orgMemberInfo) *orgMember {
 	client, err := InitCertSigningMember(testChainConfig, info.orgId, localPrivKeyFile, "", localCertFile)
 	require.Nil(t, err)
 
+	var (
+		trustMember1 protocol.SigningMember
+		trustMember2 protocol.SigningMember
+	)
+	if info.trustMember1 != nil && info.trustMember2 != nil {
+		err = ioutil.WriteFile(localPrivKeyFile, []byte(info.trustMember1.sk), os.ModePerm)
+		require.Nil(t, err)
+		err = ioutil.WriteFile(localCertFile, []byte(info.trustMember1.cert), os.ModePerm)
+		require.Nil(t, err)
+		trustMember1, err = InitCertSigningMember(testChainConfig, info.orgId, localPrivKeyFile, "", localCertFile)
+		require.Nil(t, err)
+
+		err = ioutil.WriteFile(localPrivKeyFile, []byte(info.trustMember2.sk), os.ModePerm)
+		require.Nil(t, err)
+		err = ioutil.WriteFile(localCertFile, []byte(info.trustMember2.cert), os.ModePerm)
+		require.Nil(t, err)
+		trustMember2, err = InitCertSigningMember(testChainConfig, info.orgId, localPrivKeyFile, "", localCertFile)
+		require.Nil(t, err)
+	}
+
 	return &orgMember{
-		orgId:      info.orgId,
-		acProvider: certProvider,
-		consensus:  consensus,
-		admin:      admin,
-		client:     client,
+		orgId:        info.orgId,
+		acProvider:   certProvider,
+		consensus:    consensus,
+		admin:        admin,
+		client:       client,
+		trustMember1: trustMember1,
+		trustMember2: trustMember2,
 	}
 }
 
@@ -875,8 +845,8 @@ func MockSignWithMultipleNodes(msg []byte, signers []protocol.SigningMember, has
 	return ret, nil
 }
 
-func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCertFile string,
-	chainConfig protocol.ChainConf, localOrgId string, store protocol.BlockchainStore, log protocol.Logger) (
+func NewAccessControlWithChainConfig(chainConfig protocol.ChainConf, localOrgId string,
+	store protocol.BlockchainStore, log protocol.Logger) (
 	protocol.AccessControlProvider, error) {
 	conf := chainConfig.ChainConfig()
 	acp, err := newCertACProvider(conf, localOrgId, store, log)
@@ -885,9 +855,6 @@ func NewAccessControlWithChainConfig(localPrivKeyFile, localPrivKeyPwd, localCer
 	}
 	chainConfig.AddWatch(acp)
 	chainConfig.AddVmWatch(acp)
-	InitCertSigningMember(testChainConfig, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
+	//InitCertSigningMember(testChainConfig, localOrgId, localPrivKeyFile, localPrivKeyPwd, localCertFile)
 	return acp, err
 }
-
-//func NewMemberFromCertPem(orgID ,certPEM string){
-//}

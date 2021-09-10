@@ -17,10 +17,11 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/json"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/groupcache/lru"
@@ -36,22 +37,23 @@ var _ protocol.ChainConf = (*ChainConf)(nil)
 var log = logger.GetLogger(logger.MODULE_CHAINCONF)
 
 const (
-	AllContract = "ALL_CONTRACT"
+	allContract = "ALL_CONTRACT"
 
 	blockEmptyErrorTemplate = "block is empty"
 )
 
-var blockEmptyError = errors.New(blockEmptyErrorTemplate)
+var errBlockEmpty = errors.New(blockEmptyErrorTemplate)
 
 // ChainConf is the config of a chain.
 type ChainConf struct {
-	log *logger.CMLogger // logger
+	log protocol.Logger // logger
 
 	options                       // extends options
 	ChainConf *config.ChainConfig // chain config
 
-	wLock      sync.RWMutex                             // lock
-	watchers   map[string]protocol.Watcher              // config watchers, all watcher will be invoked when chain config changing.
+	wLock sync.RWMutex // lock
+	// watchers, all watcher will be invoked when chain config changing.
+	watchers   map[string]protocol.Watcher
 	vmWatchers map[string]map[string]protocol.VmWatcher // contractName ==> module ==> VmWatcher
 
 	lru       *lru.Cache
@@ -109,8 +111,8 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 				}
 			}
 			log.Infof("load trust root file path: %s", filePath)
-			entry, err := ioutil.ReadFile(filePath)
-			if err != nil {
+			entry, err1 := ioutil.ReadFile(filePath)
+			if err1 != nil {
 				return nil, fmt.Errorf("fail to read whiltlist file [%s]: %v", filePath, err)
 			}
 			root.Root[i] = string(entry)
@@ -129,9 +131,9 @@ func Genesis(genesisFile string) (*config.ChainConfig, error) {
 			}
 		}
 		log.Infof("load trust member file path: %s", filePath)
-		entry, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			return nil, fmt.Errorf("fail to read trust memberInfo file [%s]: %v", filePath, err)
+		entry, err1 := ioutil.ReadFile(filePath)
+		if err1 != nil {
+			return nil, fmt.Errorf("fail to read trust memberInfo file [%s]: %v", filePath, err1)
 		}
 		if _, ok := trustMemberInfoMap[string(entry)]; ok {
 			return nil, fmt.Errorf("the trust member info is exist, member info: %s", string(entry))
@@ -154,15 +156,52 @@ func (c *ChainConf) Init() error {
 	return c.latestChainConfig()
 }
 
+// HandleCompatibility will make new version to be compatible with old version
+func HandleCompatibility(chainConfig *config.ChainConfig) error {
+	// For v1.1 to be compatible with v1.0, check consensus config
+	for _, orgConfig := range chainConfig.Consensus.Nodes {
+		if orgConfig.NodeId == nil {
+			orgConfig.NodeId = make([]string, 0)
+		}
+		if len(orgConfig.NodeId) == 0 {
+			for _, addr := range orgConfig.Address {
+				nid, err := helper.GetNodeUidFromAddr(addr)
+				if err != nil {
+					return err
+				}
+				orgConfig.NodeId = append(orgConfig.NodeId, nid)
+			}
+			orgConfig.Address = nil
+		}
+	}
+	/*
+		// For v1.1 to be compatible with v1.0, check resource policies
+		for _, rp := range ChainConfig.ResourcePolicies {
+			switch rp.ResourceName {
+			case syscontract.ChainConfigFunction_NODE_ID_ADD.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_ADD.String()
+			case syscontract.ChainConfigFunction_NODE_ID_UPDATE.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_UPDATE.String()
+			case syscontract.ChainConfigFunction_NODE_ID_DELETE.String():
+				rp.ResourceName = syscontract.ChainConfigFunction_NODE_ID_DELETE.String()
+			default:
+				continue
+			}
+		}
+	*/
+	return nil
+}
+
 // latestChainConfig load latest chainConfig
 func (c *ChainConf) latestChainConfig() error {
 	// load chain config from store
-	bytes, err := c.blockchainStore.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(), []byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
+	bytes, err := c.blockchainStore.ReadObject(syscontract.SystemContract_CHAIN_CONFIG.String(),
+		[]byte(syscontract.SystemContract_CHAIN_CONFIG.String()))
 	if err != nil {
 		return err
 	}
 	if len(bytes) == 0 {
-		return errors.New("chainConfig is empty")
+		return errors.New("ChainConfig is empty")
 	}
 	var chainConfig config.ChainConfig
 	err = proto.Unmarshal(bytes, &chainConfig)
@@ -196,7 +235,8 @@ func (c *ChainConf) GetChainConfigAt(futureBlockHeight uint64) (*config.ChainCon
 // GetChainConfigAt get the lasted block info of chain config.
 // The blockHeight must exist in store.
 // If it is a config block , return the current config info.
-func GetChainConfigAt(log protocol.Logger, lru *lru.Cache, configLru *lru.Cache, blockchainStore protocol.BlockchainStore, blockHeight uint64) (*config.ChainConfig, error) {
+func GetChainConfigAt(log protocol.Logger, lru *lru.Cache, configLru *lru.Cache,
+	blockchainStore protocol.BlockchainStore, blockHeight uint64) (*config.ChainConfig, error) {
 	var (
 		block *common.Block
 		err   error
@@ -212,7 +252,7 @@ func GetChainConfigAt(log protocol.Logger, lru *lru.Cache, configLru *lru.Cache,
 
 	if block == nil {
 		log.Errorf("block is empty(height: %d)", blockHeight)
-		return nil, blockEmptyError
+		return nil, errBlockEmpty
 	}
 	if lru != nil {
 		lru.Add(blockHeight, block)
@@ -251,12 +291,12 @@ func getBlockInCache(lru *lru.Cache, configLru *lru.Cache, blockHeight uint64) *
 	var block *common.Block
 	if configLru != nil {
 		if value, ok := configLru.Get(blockHeight); ok {
-			block = value.(*common.Block)
+			block, _ = value.(*common.Block)
 		}
 	}
 	if block == nil && lru != nil {
 		if value, ok := lru.Get(blockHeight); ok {
-			block = value.(*common.Block)
+			block, _ = value.(*common.Block)
 		}
 	}
 	return block
@@ -282,19 +322,17 @@ func (c *ChainConf) ChainConfig() *config.ChainConfig {
 func (c *ChainConf) GetConsensusNodeIdList() ([]string, error) {
 	chainNodeList := make([]string, 0)
 	for _, node := range c.ChainConf.Consensus.Nodes {
-		for _, nid := range node.NodeId {
-			chainNodeList = append(chainNodeList, nid)
-		}
+		chainNodeList = append(chainNodeList, node.NodeId...)
 	}
 	c.log.Debugf("consensus node id list: %v", chainNodeList)
 	return chainNodeList, nil
 }
 
-// BlockComplete complete the block. Invoke all config watchers.
+// CompleteBlock complete the block. Invoke all config watchers.
 func (c *ChainConf) CompleteBlock(block *common.Block) error {
 	if block == nil {
 		c.log.Error(blockEmptyErrorTemplate)
-		return blockEmptyError
+		return errBlockEmpty
 	}
 	if block.Txs == nil || len(block.Txs) == 0 {
 		return nil
@@ -304,8 +342,8 @@ func (c *ChainConf) CompleteBlock(block *common.Block) error {
 	c.wLock.Lock()
 	defer c.wLock.Unlock()
 
-	if utils.IsValidConfigTx(tx) { // tx is chainConfig
-		// watch chainConfig
+	if utils.IsValidConfigTx(tx) { // tx is ChainConfig
+		// watch ChainConfig
 		if err := c.callbackChainConfigWatcher(); err != nil {
 			return err
 		}
@@ -343,7 +381,7 @@ func (c *ChainConf) callbackChainConfigWatcher() error {
 
 func (c *ChainConf) callbackContractVmWatcher(contract string, requestPayload []byte) error {
 	// watch the all contract
-	if vmWatchers, ok := c.vmWatchers[AllContract]; ok {
+	if vmWatchers, ok := c.vmWatchers[allContract]; ok {
 		for m, w := range vmWatchers {
 			err := w.Callback(contract, requestPayload)
 			if err != nil {
@@ -389,16 +427,16 @@ func (c *ChainConf) AddVmWatch(w protocol.VmWatcher) {
 }
 
 func (c *ChainConf) addVmWatcherWithAllContract(w protocol.VmWatcher) {
-	watchers, ok := c.vmWatchers[AllContract]
+	watchers, ok := c.vmWatchers[allContract]
 	if !ok {
 		watchers = make(map[string]protocol.VmWatcher)
 	}
 	if _, ok := watchers[w.Module()]; ok {
-		c.log.Errorf("vm watcher existed(contract: %s, module: %s)", AllContract, w.Module())
+		c.log.Errorf("vm watcher existed(contract: %s, module: %s)", allContract, w.Module())
 		return
 	}
 	watchers[w.Module()] = w
-	c.vmWatchers[AllContract] = watchers
+	c.vmWatchers[allContract] = watchers
 }
 
 func (c *ChainConf) addVmWatcherWithContracts(w protocol.VmWatcher) {

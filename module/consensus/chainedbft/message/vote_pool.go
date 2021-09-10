@@ -31,9 +31,11 @@ type votePool struct {
 	lockedNewView bool   //Indicates whether move to new view
 	lockedBlockId []byte //The +2/3 voted for vp block
 
-	votes        map[uint64]*chainedbft.VoteData            //format: [author index] = voteData; store all vote from author
-	votedNewView map[uint64]*chainedbft.VoteData            //format: [author index] = voteData; only store newView vote from author
-	votedBlockId map[string]map[uint64]*chainedbft.VoteData //format: [block hash][author index] = voteData; only store proposal vote from author
+	votes        map[uint64]*chainedbft.VoteData //format: [author index] = voteData; store all vote from author
+	votedNewView map[uint64]*chainedbft.VoteData //format: [author index] = voteData;
+	// only store newView vote from author
+	votedBlockId map[string]map[uint64]*chainedbft.VoteData //format: [block hash][author index] = voteData;
+	// only store proposal vote from author
 }
 
 //newVotePool initializes a votePool with given params
@@ -92,12 +94,12 @@ func (vp *votePool) insertVoteData(vote *chainedbft.VoteData, minVotesForQc int)
 	if len(vote.BlockId) == 0 {
 		return true, nil
 	}
-	BlockId := string(vote.BlockId)
-	if _, ok := vp.votedBlockId[BlockId]; !ok {
-		vp.votedBlockId[BlockId] = make(map[uint64]*chainedbft.VoteData, 1)
+	blockId := string(vote.BlockId)
+	if _, ok := vp.votedBlockId[blockId]; !ok {
+		vp.votedBlockId[blockId] = make(map[uint64]*chainedbft.VoteData, 1)
 	}
-	vp.votedBlockId[BlockId][vote.AuthorIdx] = vote
-	if vp.lockedBlockId == nil && len(vp.votedBlockId[BlockId]) >= minVotesForQc {
+	vp.votedBlockId[blockId][vote.AuthorIdx] = vote
+	if vp.lockedBlockId == nil && len(vp.votedBlockId[blockId]) >= minVotesForQc {
 		//Over 2/3 votes for same block and executed state root
 		vp.lockedBlockId = vote.BlockId
 	}
@@ -109,7 +111,7 @@ func (vp *votePool) checkDuplicationVote(vote *chainedbft.VoteData) (isValid boo
 	if !ok {
 		return true, nil
 	}
-	if lastVote.BlockId != nil && vote.BlockId != nil && bytes.Compare(lastVote.BlockId, vote.BlockId) != 0 {
+	if lastVote.BlockId != nil && vote.BlockId != nil && !bytes.Equal(lastVote.BlockId, vote.BlockId) {
 		return false, fmt.Errorf("different votes block from same level %d, oldBlockId: %x, newBlockId: %x",
 			vote.Level, lastVote.BlockId, vote.BlockId)
 	} else if lastVote.NewView == vote.NewView && bytes.Equal(lastVote.BlockId, vote.BlockId) {

@@ -5,9 +5,15 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+alreadyBuild=$1
+
 # chainmaker-go/test/send_proposal_request_tool
 cd ../../test/send_proposal_request_tool
-go build
+
+if [ "${alreadyBuild}" != "true" ]; then
+  echo "build send_proposal_request_tool start..."
+  go build
+fi
 cp -f send_proposal_request_tool ../../bin
 # chainmaker-go/bin
 cd ../../bin

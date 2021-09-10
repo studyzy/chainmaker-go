@@ -15,18 +15,18 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
-type memberFactory struct {
+type MemFactory struct {
 }
 
 var once sync.Once
-var memInstance *memberFactory
+var memInstance *MemFactory
 
-func MemberFactory() *memberFactory {
-	once.Do(func() { memInstance = new(memberFactory) })
+func MemberFactory() *MemFactory {
+	once.Do(func() { memInstance = new(MemFactory) })
 	return memInstance
 }
 
-func (mf *memberFactory) NewMember(pbMember *pbac.Member, acs *accessControlService) (protocol.Member, error) {
+func (mf *MemFactory) NewMember(pbMember *pbac.Member, acs *accessControlService) (protocol.Member, error) {
 	switch pbMember.MemberType {
 	case pbac.MemberType_CERT, pbac.MemberType_CERT_HASH:
 		return newCertMemberFromPb(pbMember, acs)

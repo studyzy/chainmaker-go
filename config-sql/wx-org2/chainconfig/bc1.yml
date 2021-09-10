@@ -7,7 +7,7 @@
 
 chain_id: chain1        # 链标识
 version: v1.0.0         # 链版本
-sequence: 1             # 配置版本
+sequence: 0             # 配置版本
 auth_type: "identity"   # 认证类型
 
 crypto:
@@ -16,7 +16,7 @@ crypto:
 # 合约支持类型的配置
 contract:
   enable_sql_support: true
-  
+
 # 交易、区块相关配置
 block:
   tx_timestamp_verify: true # 是否需要开启交易时间戳校验

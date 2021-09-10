@@ -16,14 +16,13 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/subscriber"
-	"chainmaker.org/chainmaker/common/v2/helper"
-	"chainmaker.org/chainmaker/pb-go/v2/common"
-
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
+	"chainmaker.org/chainmaker-go/subscriber"
+	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/logger/v2"
+	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
@@ -117,6 +116,9 @@ func (server *ChainMakerServer) initNet() error {
 		return err
 	}
 	nodeId, err := helper.GetLibp2pPeerIdFromCert(file)
+	if err != nil {
+		return err
+	}
 	localconf.ChainMakerConfig.SetNodeId(nodeId)
 
 	// load custom chain trust roots
@@ -213,7 +215,7 @@ func (server *ChainMakerServer) Start() error {
 
 	// 2) start blockchains
 	server.blockchains.Range(func(_, value interface{}) bool {
-		chain := value.(*Blockchain)
+		chain, _ := value.(*Blockchain)
 		go startBlockchain(chain)
 		return true
 	})
@@ -226,7 +228,7 @@ func (server *ChainMakerServer) Stop() {
 	// stop all blockchains
 	var wg sync.WaitGroup
 	server.blockchains.Range(func(_, value interface{}) bool {
-		chain := value.(*Blockchain)
+		chain, _ := value.(*Blockchain)
 		wg.Add(1)
 		go func(chain *Blockchain) {
 			defer wg.Done()
@@ -275,7 +277,7 @@ func (server *ChainMakerServer) GetChainConf(chainId string) (protocol.ChainConf
 func (server *ChainMakerServer) GetAllChainConf() ([]protocol.ChainConf, error) {
 	var chainConfs []protocol.ChainConf
 	server.blockchains.Range(func(_, value interface{}) bool {
-		blockchain := value.(*Blockchain)
+		blockchain, _ := value.(*Blockchain)
 		chainConfs = append(chainConfs, blockchain.chainConf)
 		return true
 	})
@@ -325,5 +327,5 @@ func (server *ChainMakerServer) GetBlockchain(chainId string) (*Blockchain, erro
 
 // Version of chainmaker.
 func (server *ChainMakerServer) Version() string {
-	return localconf.CurrentVersion
+	return fmt.Sprintf("%d", protocol.DefaultBlockVersion)
 }

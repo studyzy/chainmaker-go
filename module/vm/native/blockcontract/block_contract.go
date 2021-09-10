@@ -9,6 +9,7 @@ package blockcontract
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -18,10 +19,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker/common/v2/crypto/hash"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
+	storage "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -30,6 +34,8 @@ const (
 	paramNameWithRWSet   = "withRWSet"
 	paramNameBlockHash   = "blockHash"
 	paramNameTxId        = "txId"
+	SHA256               = "SHA256"
+	TRUE                 = "true"
 )
 
 var (
@@ -37,42 +43,43 @@ var (
 	errStoreIsNil                     = fmt.Errorf("store is nil")
 )
 
-type BlockContact struct {
+type BlockContract struct {
 	methods map[string]common.ContractFunc
 	log     protocol.Logger
 }
 
-func NewBlockContact(log protocol.Logger) *BlockContact {
-	return &BlockContact{
+func NewBlockContract(log protocol.Logger) *BlockContract {
+	return &BlockContract{
 		log:     log,
-		methods: registerBlockContactMethods(log),
+		methods: registerBlockContractMethods(log),
 	}
 }
 
-func (c *BlockContact) GetMethod(methodName string) common.ContractFunc {
+func (c *BlockContract) GetMethod(methodName string) common.ContractFunc {
 	return c.methods[methodName]
 }
 
-func registerBlockContactMethods(log protocol.Logger) map[string]common.ContractFunc {
-	queryMethodMap := make(map[string]common.ContractFunc, 64)
-	blockRuntime := &BlockRuntime{log: log}
+func registerBlockContractMethods(log protocol.Logger) map[string]common.ContractFunc {
+	q := make(map[string]common.ContractFunc, 64)
+	b := &BlockRuntime{log: log}
 
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetBlockByHeight
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = blockRuntime.GetBlockWithTxRWSetsByHeight
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String()] = blockRuntime.GetBlockByHash
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String()] = blockRuntime.GetBlockWithTxRWSetsByHash
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String()] = blockRuntime.GetBlockByTxId
-	queryMethodMap[syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String()] = blockRuntime.GetTxByTxId
-	queryMethodMap[syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String()] = blockRuntime.GetLastConfigBlock
-	queryMethodMap[syscontract.ChainQueryFunction_GET_LAST_BLOCK.String()] = blockRuntime.GetLastBlock
-	queryMethodMap[syscontract.ChainQueryFunction_GET_CHAIN_INFO.String()] = blockRuntime.GetChainInfo
-	queryMethodMap[syscontract.ChainQueryFunction_GET_NODE_CHAIN_LIST.String()] = blockRuntime.GetNodeChainList
-	queryMethodMap[syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = blockRuntime.GetFullBlockByHeight
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = blockRuntime.GetBlockHeightByTxId
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = blockRuntime.GetBlockHeightByHash
-	queryMethodMap[syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = blockRuntime.GetBlockHeaderByHeight
-	queryMethodMap[syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String()] = blockRuntime.GetArchiveBlockHeight
-	return queryMethodMap
+	q[syscontract.ChainQueryFunction_GET_BLOCK_BY_HEIGHT.String()] = b.GetBlockByHeight
+	q[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HEIGHT.String()] = b.GetBlockWithTxRWSetsByHeight
+	q[syscontract.ChainQueryFunction_GET_BLOCK_BY_HASH.String()] = b.GetBlockByHash
+	q[syscontract.ChainQueryFunction_GET_BLOCK_WITH_TXRWSETS_BY_HASH.String()] = b.GetBlockWithTxRWSetsByHash
+	q[syscontract.ChainQueryFunction_GET_BLOCK_BY_TX_ID.String()] = b.GetBlockByTxId
+	q[syscontract.ChainQueryFunction_GET_TX_BY_TX_ID.String()] = b.GetTxByTxId
+	q[syscontract.ChainQueryFunction_GET_LAST_CONFIG_BLOCK.String()] = b.GetLastConfigBlock
+	q[syscontract.ChainQueryFunction_GET_LAST_BLOCK.String()] = b.GetLastBlock
+	q[syscontract.ChainQueryFunction_GET_CHAIN_INFO.String()] = b.GetChainInfo
+	q[syscontract.ChainQueryFunction_GET_NODE_CHAIN_LIST.String()] = b.GetNodeChainList
+	q[syscontract.ChainQueryFunction_GET_FULL_BLOCK_BY_HEIGHT.String()] = b.GetFullBlockByHeight
+	q[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_TX_ID.String()] = b.GetBlockHeightByTxId
+	q[syscontract.ChainQueryFunction_GET_BLOCK_HEIGHT_BY_HASH.String()] = b.GetBlockHeightByHash
+	q[syscontract.ChainQueryFunction_GET_BLOCK_HEADER_BY_HEIGHT.String()] = b.GetBlockHeaderByHeight
+	q[syscontract.ChainQueryFunction_GET_ARCHIVED_BLOCK_HEIGHT.String()] = b.GetArchiveBlockHeight
+	q[syscontract.ChainQueryFunction_GET_MERKLE_PATH_BY_TX_ID.String()] = b.GetMerklePathByTxId
+	return q
 }
 
 type BlockRuntime struct {
@@ -87,9 +94,11 @@ type BlockRuntimeParam struct {
 }
 
 // GetNodeChainList return list of chain
-func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
+	var chainListBytes []byte
 
 	// check params
 	if _, err = r.validateParams(parameters); err != nil {
@@ -105,7 +114,7 @@ func (r *BlockRuntime) GetNodeChainList(txSimContext protocol.TxSimContext, para
 	chainList := &discoveryPb.ChainList{
 		ChainIdList: chainIds,
 	}
-	chainListBytes, err := proto.Marshal(chainList)
+	chainListBytes, err = proto.Marshal(chainList)
 	if err != nil {
 		errMsg = fmt.Sprintf("marshal chain list failed, %s", err.Error())
 		r.log.Errorf(errMsg)
@@ -160,7 +169,8 @@ func (r *BlockRuntime) GetChainInfo(txSimContext protocol.TxSimContext, paramete
 	return chainInfoBytes, nil
 }
 
-func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
 
@@ -184,7 +194,11 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 		return nil, err
 	}
 
-	if strings.ToLower(param.withRWSet) == "true" {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
+	if strings.ToLower(param.withRWSet) == TRUE {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -204,7 +218,8 @@ func (r *BlockRuntime) GetBlockByHeight(txSimContext protocol.TxSimContext, para
 
 }
 
-func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
 
@@ -228,6 +243,10 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 		return nil, err
 	}
 
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
 	if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 		return nil, err
 	}
@@ -246,7 +265,8 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHeight(txSimContext protocol.TxSimC
 
 }
 
-func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
 
@@ -270,7 +290,11 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 		return nil, err
 	}
 
-	if strings.ToLower(param.withRWSet) == "true" {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
+	if strings.ToLower(param.withRWSet) == TRUE {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -290,7 +314,8 @@ func (r *BlockRuntime) GetBlockByHash(txSimContext protocol.TxSimContext, parame
 
 }
 
-func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
 
@@ -314,6 +339,10 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 		return nil, err
 	}
 
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
 	if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 		return nil, err
 	}
@@ -332,7 +361,8 @@ func (r *BlockRuntime) GetBlockWithTxRWSetsByHash(txSimContext protocol.TxSimCon
 
 }
 
-func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
 
@@ -356,7 +386,11 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 		return nil, err
 	}
 
-	if strings.ToLower(param.withRWSet) == "true" {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
+	if strings.ToLower(param.withRWSet) == TRUE {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -376,9 +410,67 @@ func (r *BlockRuntime) GetBlockByTxId(txSimContext protocol.TxSimContext, parame
 
 }
 
-func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetMerklePathByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
 	var errMsg string
 	var err error
+	var merkleTree [][]byte
+	var merklePathsBytes []byte
+
+	// check params
+	var param *BlockRuntimeParam
+	if param, err = r.validateParams(parameters, paramNameTxId); err != nil {
+		return nil, err
+	}
+
+	chainId := txSimContext.GetTx().Payload.ChainId
+
+	store := txSimContext.GetBlockchainStore()
+	if store == nil {
+		return nil, errStoreIsNil
+	}
+
+	var block *commonPb.Block
+
+	if block, err = r.getBlockByTxId(store, chainId, param.txId); err != nil {
+		return nil, err
+	}
+
+	hashes := make([][]byte, len(block.Txs))
+	for i, tx := range block.Txs {
+		var txHash []byte
+		txHash, err = utils.CalcTxHash(SHA256, tx)
+		if err != nil {
+			return nil, err
+		}
+
+		hashes[i] = txHash
+	}
+
+	merkleTree, err = hash.BuildMerkleTree(SHA256, hashes)
+	if err != nil {
+		return nil, err
+	}
+
+	merklePaths := make([][]byte, 0)
+	hash.GetMerklePath(SHA256, []byte(param.txId), merkleTree, &merklePaths, false) //todo withRoot hashType
+
+	merklePathsBytes, err = json.Marshal(merklePaths)
+	if err != nil {
+		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
+		r.log.Errorf(errMsg)
+		return nil, fmt.Errorf(errMsg)
+	}
+
+	return merklePathsBytes, nil
+
+}
+
+func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, parameters map[string][]byte) (
+	[]byte, error) {
+	var errMsg string
+	var err error
+	var blockInfoBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -400,7 +492,11 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 		return nil, err
 	}
 
-	if strings.ToLower(param.withRWSet) == "true" {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
+	if strings.ToLower(param.withRWSet) == TRUE {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -410,7 +506,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 		Block:     block,
 		RwsetList: txRWSets,
 	}
-	blockInfoBytes, err := proto.Marshal(blockInfo)
+	blockInfoBytes, err = proto.Marshal(blockInfo)
 	if err != nil {
 		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
 		r.log.Errorf(errMsg)
@@ -423,6 +519,7 @@ func (r *BlockRuntime) GetLastConfigBlock(txSimContext protocol.TxSimContext, pa
 func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
+	var blockInfoBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -444,7 +541,11 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 		return nil, err
 	}
 
-	if strings.ToLower(param.withRWSet) == "true" {
+	if block, err = checkRoleAndFilterBlockTxs(block, txSimContext); err != nil {
+		return nil, err
+	}
+
+	if strings.ToLower(param.withRWSet) == TRUE {
 		if txRWSets, err = r.getTxRWSetsByBlock(store, chainId, block); err != nil {
 			return nil, err
 		}
@@ -454,7 +555,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 		Block:     block,
 		RwsetList: txRWSets,
 	}
-	blockInfoBytes, err := proto.Marshal(blockInfo)
+	blockInfoBytes, err = proto.Marshal(blockInfo)
 	if err != nil {
 		errMsg = fmt.Sprintf(logTemplateMarshalBlockInfoFailed, err.Error())
 		r.log.Errorf(errMsg)
@@ -467,6 +568,7 @@ func (r *BlockRuntime) GetLastBlock(txSimContext protocol.TxSimContext, paramete
 func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameters map[string][]byte) ([]byte, error) {
 	var errMsg string
 	var err error
+	var transactionInfoBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
@@ -496,7 +598,12 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 		Transaction: tx,
 		BlockHeight: uint64(block.Header.BlockHeight),
 	}
-	transactionInfoBytes, err := proto.Marshal(transactionInfo)
+
+	if transactionInfo, err = checkRoleAndGenerateTransactionInfo(txSimContext, transactionInfo); err != nil {
+		return nil, err
+	}
+
+	transactionInfoBytes, err = proto.Marshal(transactionInfo)
 	if err != nil {
 		errMsg = fmt.Sprintf("marshal tx failed, %s", err.Error())
 		r.log.Errorf(errMsg)
@@ -506,41 +613,70 @@ func (r *BlockRuntime) GetTxByTxId(txSimContext protocol.TxSimContext, parameter
 
 }
 
-func (a *BlockRuntime) GetFullBlockByHeight(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetFullBlockByHeight(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var errMsg string
 	var err error
+	var block *commonPb.Block
+	var blockWithRWSetBytes []byte
 
 	// check params
 	var param *BlockRuntimeParam
-	if param, err = a.validateParams(params, paramNameBlockHeight); err != nil {
+	if param, err = r.validateParams(params, paramNameBlockHeight); err != nil {
 		return nil, err
 	}
 
-	blockWithRWSet, err := context.GetBlockchainStore().GetBlockWithRWSets(param.height)
-	if err != nil {
+	chainId := txSimContext.GetTx().Payload.ChainId
+
+	store := txSimContext.GetBlockchainStore()
+	if store == nil {
+		return nil, errStoreIsNil
+	}
+
+	var blockWithRWSet *storage.BlockWithRWSet
+	if blockWithRWSet, err = r.getFullBlockByHeight(store, chainId, param.height); err != nil {
 		return nil, err
 	}
 
-	blockWithRWSetBytes, err := blockWithRWSet.Marshal()
+	if block, err = checkRoleAndFilterBlockTxs(blockWithRWSet.Block, txSimContext); err != nil {
+		return nil, err
+	}
+
+	blockWithRWSet = &storage.BlockWithRWSet{
+		Block:          block,
+		TxRWSets:       blockWithRWSet.TxRWSets,
+		ContractEvents: blockWithRWSet.ContractEvents,
+	}
+
+	blockWithRWSetBytes, err = blockWithRWSet.Marshal()
 	if err != nil {
 		errMsg = fmt.Sprintf("marshal block with rwset failed, %s", err.Error())
-		a.log.Errorf(errMsg)
+		r.log.Errorf(errMsg)
 		return nil, fmt.Errorf(errMsg)
 	}
 
 	return blockWithRWSetBytes, nil
 }
 
-func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockHeightByTxId(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var err error
 
 	// check params
 	var param *BlockRuntimeParam
-	if param, err = a.validateParams(params, paramNameTxId); err != nil {
+	if param, err = r.validateParams(params, paramNameTxId); err != nil {
 		return nil, err
 	}
 
-	blockHeight, err := context.GetBlockchainStore().GetTxHeight(param.txId)
+	chainId := txSimContext.GetTx().Payload.ChainId
+
+	store := txSimContext.GetBlockchainStore()
+	if store == nil {
+		return nil, errStoreIsNil
+	}
+
+	var blockHeight uint64
+	blockHeight, err = r.getBlockHeightByTxId(store, chainId, param.txId)
 	if err != nil {
 		return nil, err
 	}
@@ -549,23 +685,24 @@ func (a *BlockRuntime) GetBlockHeightByTxId(context protocol.TxSimContext, param
 	return []byte(resultBlockHeight), nil
 }
 
-func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockHeightByHash(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var err error
-	var errMsg string
+	var blockHeight uint64
+
 	// check params
 	var param *BlockRuntimeParam
-	if param, err = a.validateParams(params, paramNameBlockHash); err != nil {
+	if param, err = r.validateParams(params, paramNameBlockHash); err != nil {
 		return nil, err
 	}
 
-	blockHash, err := hex.DecodeString(param.hash)
-	if err != nil {
-		errMsg = fmt.Sprintf("block hash decode err is %s ", err.Error())
-		a.log.Error(errMsg)
-		return nil, fmt.Errorf(errMsg)
+	chainId := txSimContext.GetTx().Payload.ChainId
+	store := txSimContext.GetBlockchainStore()
+	if store == nil {
+		return nil, errStoreIsNil
 	}
 
-	blockHeight, err := context.GetBlockchainStore().GetHeightByHash(blockHash)
+	blockHeight, err = r.getBlockHeightByHash(store, chainId, param.hash)
 	if err != nil {
 		return nil, err
 	}
@@ -574,31 +711,42 @@ func (a *BlockRuntime) GetBlockHeightByHash(context protocol.TxSimContext, param
 	return []byte(resultBlockHeight), nil
 }
 
-func (a *BlockRuntime) GetBlockHeaderByHeight(context protocol.TxSimContext, params map[string][]byte) ([]byte, error) {
+func (r *BlockRuntime) GetBlockHeaderByHeight(txSimContext protocol.TxSimContext, params map[string][]byte) ([]byte,
+	error) {
 	var err error
 	var errMsg string
+	var blockHeaderBytes []byte
+
 	// check params
 	var param *BlockRuntimeParam
-	if param, err = a.validateParams(params, paramNameBlockHeight); err != nil {
+	if param, err = r.validateParams(params, paramNameBlockHeight); err != nil {
 		return nil, err
 	}
 
-	blockHeader, err := context.GetBlockchainStore().GetBlockHeaderByHeight(param.height)
-	if err != nil {
+	chainId := txSimContext.GetTx().Payload.ChainId
+
+	store := txSimContext.GetBlockchainStore()
+	if store == nil {
+		return nil, errStoreIsNil
+	}
+
+	var blockHeader *commonPb.BlockHeader
+	if blockHeader, err = r.getBlockHeaderByHeight(store, chainId, param.height); err != nil {
 		return nil, err
 	}
 
-	blockHeaderBytes, err := blockHeader.Marshal()
+	blockHeaderBytes, err = blockHeader.Marshal()
 	if err != nil {
 		errMsg = fmt.Sprintf("block header marshal err is %s ", err.Error())
-		a.log.Error(errMsg)
+		r.log.Error(errMsg)
 		return nil, fmt.Errorf(errMsg)
 	}
 
 	return blockHeaderBytes, nil
 }
 
-func (r *BlockRuntime) getChainNodeInfo(provider protocol.ChainNodesInfoProvider, chainId string) ([]*discoveryPb.Node, error) {
+func (r *BlockRuntime) getChainNodeInfo(provider protocol.ChainNodesInfoProvider, chainId string) (
+	[]*discoveryPb.Node, error) {
 	nodeInfos, err := provider.GetChainNodesInfo()
 	if err != nil {
 		r.log.Errorf("get chain node info failed, [chainId:%s], %s", chainId, err.Error())
@@ -615,7 +763,8 @@ func (r *BlockRuntime) getChainNodeInfo(provider protocol.ChainNodesInfoProvider
 	return nodes, nil
 }
 
-func (r *BlockRuntime) getBlockByHeight(store protocol.BlockchainStore, chainId string, height uint64) (*commonPb.Block, error) {
+func (r *BlockRuntime) getBlockByHeight(store protocol.BlockchainStore, chainId string, height uint64) (
+	*commonPb.Block, error) {
 	var (
 		block *commonPb.Block
 		err   error
@@ -630,7 +779,75 @@ func (r *BlockRuntime) getBlockByHeight(store protocol.BlockchainStore, chainId 
 	return block, err
 }
 
-func (r *BlockRuntime) getBlockByHash(store protocol.BlockchainStore, chainId string, hash string) (*commonPb.Block, error) {
+func (r *BlockRuntime) getFullBlockByHeight(store protocol.BlockchainStore, chainId string, height uint64) (
+	*storage.BlockWithRWSet, error) {
+	var (
+		lastBlock      *commonPb.Block
+		blockWithRWSet *storage.BlockWithRWSet
+		err            error
+	)
+
+	if height == math.MaxUint64 {
+		lastBlock, err = store.GetLastBlock()
+		if err != nil {
+			err = r.handleError(lastBlock, err, chainId)
+			return nil, err
+		}
+
+		blockWithRWSet, err = store.GetBlockWithRWSets(lastBlock.Header.BlockHeight)
+	} else {
+		blockWithRWSet, err = store.GetBlockWithRWSets(height)
+	}
+
+	err = r.handleError(blockWithRWSet, err, chainId)
+	return blockWithRWSet, err
+}
+
+func (r *BlockRuntime) getBlockHeaderByHeight(store protocol.BlockchainStore, chainId string, height uint64) (
+	*commonPb.BlockHeader, error) {
+	var (
+		lastBlock   *commonPb.Block
+		blockHeader *commonPb.BlockHeader
+		err         error
+	)
+
+	if height == math.MaxUint64 {
+		lastBlock, err = store.GetLastBlock()
+		if err != nil {
+			err = r.handleError(lastBlock, err, chainId)
+			return nil, err
+		}
+
+		blockHeader, err = store.GetBlockHeaderByHeight(lastBlock.Header.BlockHeight)
+	} else {
+		blockHeader, err = store.GetBlockHeaderByHeight(height)
+	}
+
+	err = r.handleError(blockHeader, err, chainId)
+	return blockHeader, err
+}
+
+func (r *BlockRuntime) getBlockHeightByTxId(store protocol.BlockchainStore, chainId string, txId string) (
+	uint64, error) {
+	height, err := store.GetTxHeight(txId)
+	err = r.handleError(height, err, chainId)
+	return height, err
+}
+
+func (r *BlockRuntime) getBlockHeightByHash(store protocol.BlockchainStore, chainId string, hash string) (
+	uint64, error) {
+	hashBytes, err := hex.DecodeString(hash)
+	if err != nil {
+		r.log.Errorf("decode hash failed, [hash:%s], %s", hash, err.Error())
+		return 0, fmt.Errorf("decode hash failed, %s", err)
+	}
+	height, err := store.GetHeightByHash(hashBytes)
+	err = r.handleError(height, err, chainId)
+	return height, err
+}
+
+func (r *BlockRuntime) getBlockByHash(store protocol.BlockchainStore, chainId string, hash string) (
+	*commonPb.Block, error) {
 	hashBytes, err := hex.DecodeString(hash)
 	if err != nil {
 		r.log.Errorf("decode hash failed, [hash:%s], %s", hash, err.Error())
@@ -641,30 +858,35 @@ func (r *BlockRuntime) getBlockByHash(store protocol.BlockchainStore, chainId st
 	return block, err
 }
 
-func (r *BlockRuntime) getBlockByTxId(store protocol.BlockchainStore, chainId string, txId string) (*commonPb.Block, error) {
+func (r *BlockRuntime) getBlockByTxId(store protocol.BlockchainStore, chainId string, txId string) (
+	*commonPb.Block, error) {
 	block, err := store.GetBlockByTx(txId)
 	err = r.handleError(block, err, chainId)
 	return block, err
 }
 
-func (r *BlockRuntime) getLastConfigBlock(store protocol.BlockchainStore, chainId string) (*commonPb.Block, error) {
+func (r *BlockRuntime) getLastConfigBlock(store protocol.BlockchainStore, chainId string) (
+	*commonPb.Block, error) {
 	block, err := store.GetLastConfigBlock()
 	err = r.handleError(block, err, chainId)
 	return block, err
 }
 
-func (r *BlockRuntime) getTxByTxId(store protocol.BlockchainStore, chainId string, txId string) (*commonPb.Transaction, error) {
+func (r *BlockRuntime) getTxByTxId(store protocol.BlockchainStore, chainId string, txId string) (
+	*commonPb.Transaction, error) {
 	tx, err := store.GetTx(txId)
 	err = r.handleError(tx, err, chainId)
 	return tx, err
 }
 
-func (r *BlockRuntime) getTxRWSetsByBlock(store protocol.BlockchainStore, chainId string, block *commonPb.Block) ([]*commonPb.TxRWSet, error) {
+func (r *BlockRuntime) getTxRWSetsByBlock(store protocol.BlockchainStore, chainId string, block *commonPb.Block) (
+	[]*commonPb.TxRWSet, error) {
 	var txRWSets []*commonPb.TxRWSet
 	for _, tx := range block.Txs {
 		txRWSet, err := store.GetTxRWSet(tx.Payload.TxId)
 		if err != nil {
-			r.log.Errorf("get txRWset from store failed, [chainId:%s|txId:%s], %s", chainId, tx.Payload.TxId, err.Error())
+			r.log.Errorf("get txRWset from store failed, [chainId:%s|txId:%s], %s",
+				chainId, tx.Payload.TxId, err.Error())
 			return nil, fmt.Errorf("get txRWset failed, %s", err)
 		}
 		if txRWSet == nil { //数据库未找到记录，这不正常，记录日志，初始化空实例
@@ -740,4 +962,61 @@ func (r *BlockRuntime) getValue(parameters map[string][]byte, key string) (strin
 		return "", errors.New(errMsg)
 	}
 	return string(value), nil
+}
+
+func checkRoleAndFilterBlockTxs(block *commonPb.Block, txSimContext protocol.TxSimContext) (*commonPb.Block, error) {
+	var (
+		reqSender protocol.Role
+		err       error
+		ac        protocol.AccessControlProvider
+	)
+
+	ac, err = txSimContext.GetAccessControl()
+	if err != nil {
+		return block, err
+	}
+
+	reqSender, err = utils.GetRoleFromTx(txSimContext.GetTx(), ac)
+	if err != nil {
+		return block, err
+	}
+
+	reqSenderOrgId := txSimContext.GetTx().Sender.Signer.OrgId
+	if reqSender == protocol.RoleLight {
+		newBlock := utils.FilterBlockTxs(reqSenderOrgId, block)
+		return newBlock, nil
+	}
+
+	return block, nil
+}
+
+func checkRoleAndGenerateTransactionInfo(txSimContext protocol.TxSimContext,
+	transactionInfo *commonPb.TransactionInfo) (*commonPb.TransactionInfo, error) {
+	var (
+		reqSender protocol.Role
+		err       error
+		ac        protocol.AccessControlProvider
+	)
+	tx := transactionInfo.Transaction
+
+	if ac, err = txSimContext.GetAccessControl(); err != nil {
+		return nil, err
+	}
+
+	if reqSender, err = utils.GetRoleFromTx(txSimContext.GetTx(), ac); err != nil {
+		return nil, err
+	}
+
+	if reqSender == protocol.RoleLight {
+		if tx.Sender.Signer.OrgId != txSimContext.GetTx().Sender.Signer.OrgId {
+			newTransactionInfo := &commonPb.TransactionInfo{
+				Transaction: nil,
+				BlockHeight: transactionInfo.BlockHeight,
+				BlockHash:   transactionInfo.BlockHash,
+				TxIndex:     transactionInfo.TxIndex,
+			}
+			return newTransactionInfo, nil
+		}
+	}
+	return transactionInfo, nil
 }

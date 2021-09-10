@@ -95,6 +95,7 @@ func (h *HistoryKvDB) GetLastSavepoint() (uint64, error) {
 func (h *HistoryKvDB) Close() {
 	h.logger.Info("close history kv db")
 	h.dbHandle.Close()
+	h.cache.Clear()
 }
 
 func (h *HistoryKvDB) writeBatch(blockHeight uint64, batch protocol.StoreBatcher) error {

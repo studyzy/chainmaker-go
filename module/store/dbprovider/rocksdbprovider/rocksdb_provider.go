@@ -1,3 +1,4 @@
+//go:build rocksdb
 // +build rocksdb
 
 /*
@@ -15,7 +16,7 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/localconf"
-	//logImpl "chainmaker.org/chainmaker-go/logger"
+	//logImpl "chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/pkg/errors"
 	"github.com/tecbot/gorocksdb"
@@ -257,13 +258,13 @@ func (dbHandle *RocksDBHandle) CompactRange(start, limit []byte) error {
 
 // NewIteratorWithRange returns an iterator that contains all the key-values between given key ranges
 // start is included in the results and limit is excluded.
-func (dbHandle *RocksDBHandle) NewIteratorWithRange(start []byte, limit []byte) protocol.Iterator {
+func (dbHandle *RocksDBHandle) NewIteratorWithRange(start []byte, limit []byte) (protocol.Iterator, error) {
 	// todo
 	panic("not yet implemented for rocksdb")
 }
 
 // NewIteratorWithPrefix returns an iterator that contains all the key-values with given prefix
-func (dbHandle *RocksDBHandle) NewIteratorWithPrefix(prefix []byte) protocol.Iterator {
+func (dbHandle *RocksDBHandle) NewIteratorWithPrefix(prefix []byte) (protocol.Iterator, error) {
 	// todo
 	panic("not yet implemented for rocksdb")
 }

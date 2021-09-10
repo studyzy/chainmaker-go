@@ -10,7 +10,6 @@ import (
 	"context"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/emirpasic/gods/maps/treemap"
 	"golang.org/x/sync/semaphore"
@@ -30,8 +29,7 @@ type StoreCacheMgr struct {
 }
 
 // NewStoreCacheMgr construct a new `StoreCacheMgr` with given chainId
-func NewStoreCacheMgr(chainId string, logger protocol.Logger) *StoreCacheMgr {
-	blockWriteBufferSize := localconf.ChainMakerConfig.StorageConfig.BlockWriteBufferSize
+func NewStoreCacheMgr(chainId string, blockWriteBufferSize int, logger protocol.Logger) *StoreCacheMgr {
 	if blockWriteBufferSize <= 0 {
 		blockWriteBufferSize = defaultMaxBlockSize
 	}
@@ -88,6 +86,10 @@ func (mgr *StoreCacheMgr) Has(key string) (bool, bool) {
 	mgr.RLock()
 	defer mgr.RUnlock()
 	return mgr.cache.has(key)
+}
+
+func (mgr *StoreCacheMgr) Clear() {
+	mgr.cache.clear()
 }
 
 // LockForFlush used to lock cache until all cache item be flushed to db
@@ -150,7 +152,10 @@ func (c *storeCache) has(key string) (bool, bool) {
 		return value == nil, true
 	}
 	return false, false
+}
 
+func (c *storeCache) clear() {
+	c.table.Clear()
 }
 
 //func (c *storeCache) len() int {

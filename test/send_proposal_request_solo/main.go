@@ -24,7 +24,6 @@ import (
 	"chainmaker.org/chainmaker-go/test/common"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/ca"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
@@ -33,6 +32,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )
@@ -69,8 +69,8 @@ var caPaths = []string{certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/c
 func main() {
 	common.SetCertPathPrefix(certPathPrefix)
 
-	//initWasmerTest()
-	//runTest()
+	initWasmerTest()
+	runTest()
 
 	initGasmTest()
 	runTest()
@@ -176,7 +176,9 @@ func runTest() {
 	// 18) 冻结、解冻、吊销用户合约功能测试
 	testFreezeOrUnfreezeOrRevokeFlow(sk3, client)
 
-	fmt.Println("    【runTest】 pass", "txId", txId)
+	fmt.Println("    【runTest】 all pass")
+	fmt.Println("    【runTest】 all pass")
+	fmt.Println("    【runTest】 all pass")
 }
 func initWasmerTest() {
 	WasmPath = "../wasm/rust-func-verify-2.0.0.wasm"

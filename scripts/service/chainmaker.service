@@ -8,9 +8,9 @@ Environment=BINPATH=/data/chainmaker/chainmaker-go/bin
 WorkingDirectory=/data/chainmaker/chainmaker-go/bin
 Type=forking
 
-ExecStart=/bin/bash -c "${BINPATH}/run.sh start"
-ExecStop=/bin/bash -c "${BINPATH}/run.sh stop"
-ExecReload=/bin/bash -c "${BINPATH}/run.sh restart"
+ExecStart=/usr/bin/bash -c "${BINPATH}/run.sh start"
+ExecStop=/usr/bin/bash -c "${BINPATH}/run.sh stop"
+ExecReload=/usr/bin/bash -c "${BINPATH}/run.sh restart"
 
 Restart=on-failure
 

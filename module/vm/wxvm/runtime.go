@@ -1,6 +1,6 @@
 /*
 Copyright (C) BABEC. All rights reserved.
-
+Copyright (C) THL A29 Limited, a Tencent company. All rights reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
@@ -9,8 +9,8 @@ package wxvm
 import (
 	"runtime/debug"
 
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -23,8 +23,9 @@ type RuntimeInstance struct {
 }
 
 // Invoke contract by call vm, implement protocol.RuntimeInstance
-func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte, parameters map[string][]byte,
-	txContext protocol.TxSimContext, gasUsed uint64) (contractResult *commonPb.ContractResult) {
+func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byteCode []byte,
+	parameters map[string][]byte, txContext protocol.TxSimContext,
+	gasUsed uint64) (contractResult *commonPb.ContractResult) {
 
 	tx := txContext.GetTx()
 
@@ -57,7 +58,8 @@ func (r *RuntimeInstance) Invoke(contract *commonPb.Contract, method string, byt
 		return
 	}
 
-	if inst, err := xvm.CreateInstance(context.ID, execCode, method, contract, gasUsed, int64(protocol.GasLimit)); err != nil {
+	inst, err := xvm.CreateInstance(context.ID, execCode, method, contract, gasUsed, int64(protocol.GasLimit))
+	if err != nil {
 		contractResult.Code = 1
 		contractResult.Message = err.Error()
 		return

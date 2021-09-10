@@ -12,7 +12,7 @@ import (
 	"sort"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 )
 
 var (
@@ -106,7 +106,8 @@ func (valSet *validatorSet) GetProposer(height uint64, round int32) (validator s
 	return valSet.getByIndex(proposerIndex)
 }
 
-func (valSet *validatorSet) updateValidators(validators []string) (addedValidators []string, removedValidators []string, err error) {
+func (valSet *validatorSet) updateValidators(validators []string) (addedValidators []string, removedValidators []string,
+	err error) {
 	valSet.Lock()
 	defer valSet.Unlock()
 

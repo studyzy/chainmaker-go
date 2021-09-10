@@ -104,7 +104,7 @@ func StartSender(senderIp, receiverIp string, msgKb int) error {
 
 	// test A send msg to B
 	data := make([]byte, 1024)
-	for i, _ := range data {
+	for i := range data {
 		data[i] = byte(1)
 	}
 	data2 := make([]byte, 0)

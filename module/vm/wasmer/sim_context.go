@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -66,7 +66,8 @@ func (sc *SimContext) CallMethod(instance *wasm.Instance) error {
 		ec := serialize.NewEasyCodecWithMap(sc.parameters)
 		bytes = ec.Marshal()
 	} else {
-		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d", uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
+		return fmt.Errorf("runtime type error, expect rust:[%d], but got %d",
+			uint64(commonPb.RuntimeType_WASMER), runtimeSdkType)
 	}
 
 	return sc.callContract(instance, sc.method, bytes)

@@ -13,14 +13,14 @@ import (
 
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 )
 
 type DPoSImpl struct {
@@ -45,7 +45,8 @@ func (impl *DPoSImpl) CreateDPoSRWSet(preBlkHash []byte, proposedBlock *consensu
 	return err
 }
 
-func (impl *DPoSImpl) createDPoSRWSet(preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
+func (impl *DPoSImpl) createDPoSRWSet(
+	preBlkHash []byte, proposedBlock *consensus.ProposalBlock) (*common.TxRWSet, error) {
 	impl.log.Debugf("begin createDPoS rwSet, blockInfo: %d:%x ",
 		proposedBlock.Block.Header.BlockHeight, proposedBlock.Block.Header.BlockHash)
 	// 1. judge consensus: DPoS
@@ -93,10 +94,12 @@ func (impl *DPoSImpl) isDPoSConsensus() bool {
 	return impl.chainConf.ChainConfig().Consensus.Type == consensus.ConsensusType_DPOS
 }
 
-func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *syscontract.Epoch, seed []byte) (*syscontract.Epoch, error) {
+func (impl *DPoSImpl) createNewEpoch(
+	proposalHeight uint64, oldEpoch *syscontract.Epoch, seed []byte) (*syscontract.Epoch, error) {
 	impl.log.Debugf("begin create new epoch in blockHeight: %d", proposalHeight)
 	// 1. get property: epochBlockNum
-	epochBlockNumBz, err := impl.stateDB.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochBlockNumber))
+	epochBlockNumBz, err := impl.stateDB.ReadObject(
+		syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochBlockNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
@@ -135,7 +138,8 @@ func (impl *DPoSImpl) createNewEpoch(proposalHeight uint64, oldEpoch *syscontrac
 }
 
 func (impl *DPoSImpl) selectValidators(candidates []*dpos.CandidateInfo, seed []byte) ([]*dpos.CandidateInfo, error) {
-	valNumBz, err := impl.stateDB.ReadObject(syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochValidatorNumber))
+	valNumBz, err := impl.stateDB.ReadObject(
+		syscontract.SystemContract_DPOS_STAKE.String(), []byte(dposmgr.KeyEpochValidatorNumber))
 	if err != nil {
 		impl.log.Errorf("load epochBlockNum from db failed, reason: %s", err)
 		return nil, err
@@ -170,12 +174,15 @@ func (impl *DPoSImpl) addConsensusArgsToBlock(rwSet *common.TxRWSet, block *comm
 }
 
 func (impl *DPoSImpl) VerifyConsensusArgs(block *common.Block, blockTxRwSet map[string]*common.TxRWSet) (err error) {
-	impl.log.Debugf("begin VerifyConsensusArgs, blockHeight: %d, blockHash: %x", block.Header.BlockHeight, block.Header.BlockHash)
+	impl.log.Debugf(
+		"begin VerifyConsensusArgs, blockHeight: %d, blockHash: %x",
+		block.Header.BlockHeight, block.Header.BlockHash)
 	if !impl.isDPoSConsensus() {
 		return nil
 	}
 
-	localConsensus, err := impl.createDPoSRWSet(block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
+	localConsensus, err := impl.createDPoSRWSet(
+		block.Header.PreBlockHash, &consensus.ProposalBlock{Block: block, TxsRwSet: blockTxRwSet})
 	if err != nil {
 		impl.log.Errorf("get DPoS txRwSets failed, reason: %s", err)
 		return err

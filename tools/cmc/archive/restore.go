@@ -99,9 +99,6 @@ func runRestoreCMD() error {
 
 // validateRestore basic params validation
 func validateRestore(archivedBlkHeightOnChain, restoreStartBlkHeight uint64) error {
-	if restoreStartBlkHeight < 0 {
-		return errors.New("restore start block height must >= 0")
-	}
 	// restore start block height is not archived
 	if archivedBlkHeightOnChain < restoreStartBlkHeight {
 		return errors.New("restore start block height is not archived")

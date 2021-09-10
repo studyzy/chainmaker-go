@@ -20,7 +20,6 @@ import (
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/serialization"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -28,6 +27,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/test"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,24 +94,24 @@ func getSqlConfig() *localconf.StorageConfig {
 	conf.DisableContractEventDB = true
 	return conf
 }
-func getMysqlConfig() *localconf.StorageConfig {
+func getBadgerConfig(path string) *localconf.StorageConfig {
 	conf := &localconf.StorageConfig{}
-	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	var sqlconfig = &localconf.SqlDbConfig{
-		SqlDbType: "mysql",
-		Dsn:       "root:123@tcp(9.135.110.53)/",
+	if path == "" {
+		path = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	}
+	conf.StorePath = path
 
+	badgerConfig := make(map[string]interface{})
+	badgerConfig["store_path"] = path
 	dbConfig := &localconf.DbConfig{
-		Provider:    "sql",
-		SqlDbConfig: sqlconfig,
+		Provider:       "badgerdb",
+		BadgerDbConfig: badgerConfig,
 	}
 	conf.BlockDbConfig = dbConfig
 	conf.StateDbConfig = dbConfig
 	conf.HistoryDbConfig = dbConfig
 	conf.ResultDbConfig = dbConfig
 	conf.DisableContractEventDB = true
-
 	return conf
 }
 func getlvldbConfig(path string) *localconf.StorageConfig {
@@ -121,9 +121,9 @@ func getlvldbConfig(path string) *localconf.StorageConfig {
 	}
 	conf.StorePath = path
 
-	lvlConfig := &localconf.LevelDbConfig{
-		StorePath: path,
-	}
+	lvlConfig := make(map[string]interface{})
+	lvlConfig["store_path"] = path
+
 	dbConfig := &localconf.DbConfig{
 		Provider:      "leveldb",
 		LevelDbConfig: lvlConfig,
@@ -359,9 +359,15 @@ var log = &test.GoLogger{}
 func Test_blockchainStoreImpl_GetBlockSqlDb(t *testing.T) {
 	testBlockchainStoreImpl_GetBlock(t, config1)
 }
-func Test_blockchainStoreImpl_GetBlockLevledb(t *testing.T) {
+func Test_blockchainStoreImpl_GetBlockLevelDb(t *testing.T) {
 	testBlockchainStoreImpl_GetBlock(t, getlvldbConfig(""))
 }
+
+//TODO Devin
+//func Test_blockchainStoreImpl_GetBlockBadgerdb(t *testing.T) {
+//	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig(""))
+//}
+
 func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
 	var funcName = "get block"
 	tests := []struct {

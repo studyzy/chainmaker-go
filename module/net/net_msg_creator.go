@@ -17,7 +17,7 @@ func NewNetMsg(msg []byte, msgType netPb.NetMsg_MsgType, to string) *netPb.NetMs
 }
 
 // createMsgWithBytes create netPb.Msg with []byte.
-func createMsgWithBytes(msg []byte) (*netPb.Msg, error) {
+func createMsgWithBytes(msg []byte) (*netPb.Msg, error) { //nolint: deadcode,unused
 	var pbMsg netPb.Msg
 	if err := proto.Unmarshal(msg, &pbMsg); err != nil {
 		return nil, err

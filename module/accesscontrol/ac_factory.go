@@ -9,17 +9,17 @@ package accesscontrol
 
 import "chainmaker.org/chainmaker/protocol/v2"
 
-type acFactory struct {
+type AcFactory struct {
 }
 
-var acInstance *acFactory
+var acInstance *AcFactory
 
-func ACFactory() *acFactory {
-	once.Do(func() { acInstance = new(acFactory) })
+func ACFactory() *AcFactory {
+	once.Do(func() { acInstance = new(AcFactory) })
 	return acInstance
 }
 
-func (af *acFactory) NewACProvider(memberType string, chainConf protocol.ChainConf, localOrgId string,
+func (af *AcFactory) NewACProvider(memberType string, chainConf protocol.ChainConf, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
 	p := NewACProviderByMemberType(memberType)
 	return p.NewACProvider(chainConf, localOrgId, store, log)

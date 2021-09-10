@@ -11,10 +11,10 @@ import (
 
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
 
-	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 func (p *BatchTxPool) validate(tx *commonPb.Transaction, source protocol.TxSource) error {
@@ -43,7 +43,8 @@ func (p *BatchTxPool) validateTxTime(tx *commonPb.Transaction) error {
 	txTimestamp := tx.Payload.Timestamp
 	chainTime := utils.CurrentTimeSeconds()
 	if math.Abs(float64(chainTime-txTimestamp)) > poolconf.MaxTxTimeTimeout(p.chainConf) {
-		p.log.Errorw("the txId timestamp is error", "txId", tx.Payload.GetTxId(), "txTimestamp", txTimestamp, "chainTimestamp", chainTime)
+		p.log.Errorw("the txId timestamp is error", "txId", tx.Payload.GetTxId(), "txTimestamp",
+			txTimestamp, "chainTimestamp", chainTime)
 		return commonErrors.ErrTxTimeout
 	}
 	return nil
