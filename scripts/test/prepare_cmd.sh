@@ -8,7 +8,6 @@
 
 alreadyBuild=$1
 
-
 CURRENT_PATH=$(pwd)
 SCRIPT_PATH=$(dirname "${CURRENT_PATH}")
 PROJECT_PATH=$(dirname "${SCRIPT_PATH}")
@@ -18,6 +17,7 @@ if [ "${alreadyBuild}" != "true" ]; then
   cd $PROJECT_PATH
   make cmc
 fi
+
 
 cd $PROJECT_PATH/bin
 pwd
