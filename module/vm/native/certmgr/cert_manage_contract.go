@@ -337,20 +337,28 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 		r.log.Errorf("certManage txSimContext.GetOrganization failed, err: ", err.Error())
 		return nil, err
 	}
-	_, err = ac.VerifyRelatedMaterial(pbac.VerifyType_CRL, []byte(crlStr))
+	_, err = ac.VerifyRelatedMaterial(pbac.VerifyType_CRL, crlStr)
 	if err != nil {
 		r.log.Errorf("certManage validate crl failed err: ", err.Error())
 		return nil, err
 	}
 
+	crlPEM, rest := pem.Decode(crlStr)
+	if crlPEM == nil {
+		r.log.Errorf("certManage validate crl failed err: empty CRL")
+		return nil, fmt.Errorf("empty CRL")
+	}
+
 	var crls []*pkix.CertificateList
 
-	crl, err := x509.ParseCRL([]byte(crlStr))
-	if err != nil {
-		r.log.Errorf("certManage parse crl failed err: ", err.Error())
-		return nil, err
+	for crlPEM != nil {
+		crl, err := x509.ParseCRL(crlStr)
+		if err != nil {
+			continue
+		}
+		crlPEM, rest = pem.Decode(rest)
+		crls = append(crls, crl)
 	}
-	crls = append(crls, crl)
 
 	crlBytes, err := txSimContext.Get(syscontract.SystemContract_CERT_MANAGE.String(), []byte(protocol.CertRevokeKey))
 	if err != nil {

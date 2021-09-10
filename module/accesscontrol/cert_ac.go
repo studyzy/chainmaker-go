@@ -524,11 +524,15 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 		return false, fmt.Errorf("verify related material failed: cert member should use the CRL")
 	}
 
-	crlPEM, _ := pem.Decode(data)
+	crlPEM, rest := pem.Decode(data)
 	if crlPEM == nil {
+		cp.log.Debug("verify member's related material failed: empty CRL")
 		return false, fmt.Errorf("empty CRL")
 	}
 	orgInfos := cp.acService.getAllOrgInfos()
+
+	var err1, err2 error
+
 	for crlPEM != nil {
 		crl, err := x509.ParseCRL(crlPEM.Bytes)
 		if err != nil {
@@ -543,19 +547,21 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 		for _, org := range orgInfos {
 			orgs = append(orgs, org.(*organization))
 		}
-		err1 := cp.checkCRLAgainstTrustedCerts(crl, orgs, false)
-		err2 := cp.checkCRLAgainstTrustedCerts(crl, orgs, true)
+		err1 = cp.checkCRLAgainstTrustedCerts(crl, orgs, false)
+		err2 = cp.checkCRLAgainstTrustedCerts(crl, orgs, true)
 		if err1 != nil && err2 != nil {
-			return false, fmt.Errorf(
-				"invalid CRL: \n\t[verification against trusted root certs: %v], "+
-					"\n\t[verification against trusted intermediate certs: %v]",
-				err1,
-				err2,
-			)
+			crlPEM, rest = pem.Decode(rest)
+			continue
 		}
+		return true, nil
 	}
 
-	return true, nil
+	return false, fmt.Errorf(
+		"invalid CRL: \n\t[verification against trusted root certs: %v], "+
+			"\n\t[verification against trusted intermediate certs: %v]",
+		err1,
+		err2,
+	)
 }
 
 // VerifyPrincipal verifies if the principal for the resource is met

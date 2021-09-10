@@ -690,6 +690,16 @@ mrY0z9cE
 `,
 }
 
+var testCRL = `-----BEGIN CRL-----
+MIIBNjCB3AIBATAKBggqhkjOPQQDAjBfMQswCQYDVQQGEwJDTjEQMA4GA1UECBMH
+QmVpamluZzEQMA4GA1UEBxMHQmVpamluZzENMAsGA1UEChMEb3JnMTELMAkGA1UE
+CxMCY2ExEDAOBgNVBAMTB2NhLm9yZzgXDTIxMDYxODA4NDEyOFoXDTIxMDYxODA5
+NDEyOFowGzAZAggmTrsNBHY7GBcNMjMwNjE3MTI1MTU3WqAvMC0wKwYDVR0jBCQw
+IoAgYmqb9hiWkAJKn8GnweOVQtp6C7q8FNl+8qmkiGcuoIowCgYIKoZIzj0EAwID
+SQAwRgIhAPmTMGrCxxhq/dvwk1HJp4h17qfeHxv1T7ETg/ri23zoAiEAnz6XlUcn
+7YojGXHlfoxpmV8ao6sZIm+j4ylNoBaawOI=
+-----END CRL-----`
+
 func createTempDirWithCleanFunc() (string, func(), error) {
 	var td = filepath.Join("./temp")
 	err := os.MkdirAll(td, os.ModePerm)
