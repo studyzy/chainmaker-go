@@ -13,9 +13,8 @@ import (
 	"testing"
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -174,13 +173,8 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 //	fmt.Println("end")
 //}
 
-func initProvider() protocol.SqlDBHandle {
-	conf := &localconf.SqlDbConfig{}
-	conf.Dsn = ":memory:"
-	conf.SqlDbType = "sqlite"
-	conf.SqlLogMode = "Info"
-	p := rawsqlprovider.NewSqlDBHandle("chain1", conf, log)
-	return p
+func initProvider() protocol.DBHandle {
+	return leveldbprovider.NewMemdbHandle()
 }
 
 //初始化DB并同时初始化创世区块

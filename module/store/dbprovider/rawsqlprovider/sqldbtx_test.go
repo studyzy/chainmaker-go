@@ -7,17 +7,23 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"github.com/stretchr/testify/assert"
 )
 
-var confSqldbTxTest = &localconf.SqlDbConfig{
+var confSqldbTxTest = &SqlDbConfig{
 	SqlDbType: "sqlite",
 	Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_sql_test_db", time.Now().UnixNano())+":memory:"),
 }
+var sqlTxTestOp = &NewSqlDBOptions{
+	Config:    confSqldbTxTest,
+	Logger:    log,
+	Encryptor: nil,
+	ChainId:   "test-chain1",
+	DbName:    "dbName1",
+}
 
 func TestSqlDBTx_Save(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confSqldbTxTest, log)
+	dbHandle := NewSqlDBHandle(sqlTxTestOp)
 	//defer dbHandle.Close()
 	test := &Test{
 		TestColumn: 1,
@@ -71,7 +77,7 @@ func TestSqlDBTx_BeginDbSavePoint(t *testing.T) {
 }
 
 func TestSqlDBTx_ChangeContextDb(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confSqldbTxTest, log)
+	dbHandle := NewSqlDBHandle(sqlTxTestOp)
 	defer dbHandle.Close()
 	txName1 := "1234567890"
 
@@ -93,7 +99,7 @@ func TestSqlDBTx_ChangeContextDb(t *testing.T) {
 }
 
 func TestSqlDBTx_QueryMulti(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confSqldbTxTest, log)
+	dbHandle := NewSqlDBHandle(sqlTxTestOp)
 	defer dbHandle.Close()
 	txName1 := "qwert"
 	txName2 := "qwert!#"
@@ -144,7 +150,7 @@ func TestSqlDBTx_QueryMulti(t *testing.T) {
 }
 
 func TestSqlDBTx_QuerySingle(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confSqldbTxTest, log)
+	dbHandle := NewSqlDBHandle(sqlTxTestOp)
 	defer dbHandle.Close()
 	txName1 := "1234567890123"
 
@@ -184,7 +190,7 @@ func TestSqlDBTx_Rollback(t *testing.T) {
 }
 
 func TestSqlDBTx_RollbackDbSavePoint(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confSqldbTxTest, log)
+	dbHandle := NewSqlDBHandle(sqlTxTestOp)
 	defer dbHandle.Close()
 	txName1 := "1234567890qwe"
 

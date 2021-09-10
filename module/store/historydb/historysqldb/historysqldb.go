@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package historysqldb
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
@@ -24,9 +22,8 @@ type HistorySqlDB struct {
 }
 
 //NewHistorySqlDB construct a new `HistoryDB` for given chainId
-func NewHistorySqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*HistorySqlDB, error) {
-	dbName := getDbName(dbConfig, chainId)
-	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
+func NewHistorySqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
+
 	return newHistorySqlDB(dbName, db, logger)
 }
 
@@ -61,9 +58,10 @@ func (db *HistorySqlDB) initDb(dbName string) {
 	}
 
 }
-func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
-	return dbConfig.DbPrefix + "historydb_" + chainId
-}
+
+//func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
+//	return dbConfig.DbPrefix + "historydb_" + chainId
+//}
 func newHistorySqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*HistorySqlDB, error) {
 
 	historyDB := &HistorySqlDB{

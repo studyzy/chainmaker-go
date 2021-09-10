@@ -17,10 +17,10 @@ import (
 	"sync"
 	"time"
 
+	"chainmaker.org/chainmaker/common/v2/crypto"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -45,7 +45,7 @@ func (p *SqlDBHandle) CompactRange(start, limit []byte) error {
 }
 
 func ParseSqlDbType(str string) (types.EngineType, error) {
-	switch str {
+	switch strings.ToLower(str) {
 	case mysqlStr:
 		return types.MySQL, nil
 	case sqliteStr:
@@ -83,8 +83,19 @@ func replaceMySqlDsn(dsn string, dbName string) string {
 	return newDsn
 }
 
+type NewSqlDBOptions struct {
+	Config    *SqlDbConfig
+	Logger    protocol.Logger
+	Encryptor crypto.Encryptor
+	ChainId   string
+	DbName    string
+}
+
 // NewSqlDBHandle construct a new SqlDBHandle
-func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Logger) *SqlDBHandle {
+func NewSqlDBHandle(input *NewSqlDBOptions) *SqlDBHandle {
+	dbName := input.DbName
+	conf := input.Config
+	log := input.Logger
 	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx), log: log}
 	sqlType, err := ParseSqlDbType(conf.SqlDbType)
 	if err != nil {
@@ -152,6 +163,15 @@ func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Log
 	log.Debug("inject ChainMaker logger into db logger.")
 	provider.log = log
 	provider.contextDbName = dbName
+	return provider
+}
+
+//NewMemSqlDBHandle for unit test
+func NewMemSqlDBHandle(log protocol.Logger) *SqlDBHandle {
+	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx), log: log}
+	db, _ := sql.Open("sqlite3", ":memory:")
+	provider.db = db
+	provider.dbType = types.Sqlite
 	return provider
 }
 func (p *SqlDBHandle) createDatabase(dsn string, dbName string) error {

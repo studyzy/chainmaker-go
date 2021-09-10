@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 import (
+	"strings"
+
 	"chainmaker.org/chainmaker/logger/v2"
 )
 
@@ -165,28 +167,28 @@ type StorageConfig struct {
 }
 
 func (config *StorageConfig) setDefault() {
-	if config.DbPrefix != "" {
-		if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil &&
-			config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
-			config.BlockDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
-		}
-		if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil &&
-			config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
-			config.StateDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
-		}
-		if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil &&
-			config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
-			config.HistoryDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
-		}
-		if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil &&
-			config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
-			config.ResultDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
-		}
-		if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil &&
-			config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
-			config.ContractEventDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
-		}
-	}
+	//if config.DbPrefix != "" {
+	//	if config.BlockDbConfig != nil && config.BlockDbConfig.SqlDbConfig != nil &&
+	//		config.BlockDbConfig.SqlDbConfig.DbPrefix == "" {
+	//		config.BlockDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+	//	}
+	//	if config.StateDbConfig != nil && config.StateDbConfig.SqlDbConfig != nil &&
+	//		config.StateDbConfig.SqlDbConfig.DbPrefix == "" {
+	//		config.StateDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+	//	}
+	//	if config.HistoryDbConfig != nil && config.HistoryDbConfig.SqlDbConfig != nil &&
+	//		config.HistoryDbConfig.SqlDbConfig.DbPrefix == "" {
+	//		config.HistoryDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+	//	}
+	//	if config.ResultDbConfig != nil && config.ResultDbConfig.SqlDbConfig != nil &&
+	//		config.ResultDbConfig.SqlDbConfig.DbPrefix == "" {
+	//		config.ResultDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+	//	}
+	//	if config.ContractEventDbConfig != nil && config.ContractEventDbConfig.SqlDbConfig != nil &&
+	//		config.ContractEventDbConfig.SqlDbConfig.DbPrefix == "" {
+	//		config.ContractEventDbConfig.SqlDbConfig.DbPrefix = config.DbPrefix
+	//	}
+	//}
 }
 func (config *StorageConfig) GetBlockDbConfig() *DbConfig {
 	if config.BlockDbConfig == nil {
@@ -264,7 +266,20 @@ type DbConfig struct {
 	Provider       string                 `mapstructure:"provider"`
 	LevelDbConfig  map[string]interface{} `mapstructure:"leveldb_config"`
 	BadgerDbConfig map[string]interface{} `mapstructure:"badgerdb_config"`
-	SqlDbConfig    *SqlDbConfig           `mapstructure:"sqldb_config"`
+	SqlDbConfig    map[string]interface{} `mapstructure:"sqldb_config"`
+}
+
+func (c DbConfig) GetDbConfig() map[string]interface{} {
+	switch strings.ToLower(c.Provider) {
+	case "leveldb":
+		return c.LevelDbConfig
+	case "badgerdb":
+		return c.BadgerDbConfig
+	case "sqldb":
+		return c.SqlDbConfig
+	default:
+		return map[string]interface{}{}
+	}
 }
 
 //nolint
@@ -282,18 +297,6 @@ func (dbc *DbConfig) IsKVDB() bool {
 
 func (dbc *DbConfig) IsSqlDB() bool {
 	return dbc.Provider == DbconfigProviderSql || dbc.Provider == "mysql" || dbc.Provider == "rdbms" //兼容其他配置情况
-}
-
-type SqlDbConfig struct {
-	//mysql, sqlite, postgres, sqlserver
-	SqlDbType       string `mapstructure:"sqldb_type"`
-	Dsn             string `mapstructure:"dsn"`
-	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
-	MaxOpenConns    int    `mapstructure:"max_open_conns"`
-	ConnMaxLifeTime int    `mapstructure:"conn_max_lifetime"` //second
-	SqlLogMode      string `mapstructure:"sqllog_mode"`       //Silent,Error,Warn,Info
-	SqlVerifier     string `mapstructure:"sql_verifier"`      //simple,safe
-	DbPrefix        string `mapstructure:"db_prefix"`
 }
 
 const SqldbconfigSqldbtypeMysql = "mysql"

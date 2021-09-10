@@ -48,5 +48,11 @@ type StateDB interface {
 	//RollbackDbTransaction 回滚一个事务
 	RollbackDbTransaction(txName string) error
 
+	CreateDatabase(contractName string) error
+	//DropDatabase 删除一个合约对应的数据库
+	DropDatabase(contractName string) error
+	//GetContractDbName 获得一个合约对应的状态数据库名
+	GetContractDbName(contractName string) string
+
 	GetMemberExtraData(member *accesscontrol.Member) (*accesscontrol.MemberExtraData, error)
 }

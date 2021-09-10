@@ -15,16 +15,19 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol/v2/test"
 
 	"github.com/stretchr/testify/assert"
 )
 
 var log = &test.GoLogger{}
-var confProvideTest = &localconf.SqlDbConfig{
+var confProvideTest = &SqlDbConfig{
 	SqlDbType: "sqlite",
-	Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
+	Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+"-sqlite.db"),
+}
+var confMemSqlite = &SqlDbConfig{
+	SqlDbType: "sqlite",
+	Dsn:       ":memory:",
 }
 
 func TestReplaceMySqlDsn(t *testing.T) {
@@ -55,26 +58,44 @@ func TestNewSqlDBHandle1(t *testing.T) {
 		err := recover()
 		assert.Equal(t, strings.Contains(err.(string), "connect to mysql error"), true)
 	}()
-	conf := &localconf.SqlDbConfig{
+	conf := &SqlDbConfig{
 		SqlDbType: "sqlite",
-		Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
+		Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+"sqlite"),
 	}
-	dbHandle := NewSqlDBHandle("test1", conf, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    conf,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	dbHandle.Close()
 
-	conf = &localconf.SqlDbConfig{
+	conf = &SqlDbConfig{
 		SqlDbType: "sqlite",
 		Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())),
 	}
 	fmt.Println(conf.Dsn)
-	dbHandle = NewSqlDBHandle("test1", conf, log)
+	dbHandle = NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    conf,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	dbHandle.Close()
 
-	conf = &localconf.SqlDbConfig{
+	conf = &SqlDbConfig{
 		SqlDbType: "mysql",
 		Dsn:       "root:123456@tcp(127.0.0.1:3306)",
 	}
-	dbHandle = NewSqlDBHandle("test1", conf, log)
+	dbHandle = NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    conf,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	dbHandle.Close()
 }
 
@@ -83,10 +104,16 @@ func TestNewSqlDBHandle2(t *testing.T) {
 		err := recover()
 		assert.Equal(t, strings.Contains(err.(string), "unknown sql db type:test"), true)
 	}()
-	conf := &localconf.SqlDbConfig{
+	conf := &SqlDbConfig{
 		SqlDbType: "test",
 	}
-	dbHandle := NewSqlDBHandle("test1", conf, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    conf,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	dbHandle.Close()
 }
 
@@ -96,16 +123,28 @@ func TestNewSqlDBHandle3(t *testing.T) {
 		//assert.Equal(t, strings.Contains(err.(string), "failed to create folder for sqlite path"), true)
 		fmt.Println(err)
 	}()
-	conf := &localconf.SqlDbConfig{
+	conf := &SqlDbConfig{
 		SqlDbType: "sqlite",
 		Dsn:       filepath.Join("/", fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())),
 	}
-	dbHandle := NewSqlDBHandle("test1", conf, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    conf,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	dbHandle.Close()
 }
 
 func TestSqlDBHandle_CreateDatabaseIfNotExist(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confMemSqlite,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	defer dbHandle.Close()
 
 	res, err := dbHandle.CreateDatabaseIfNotExist("test2")
@@ -120,7 +159,7 @@ func TestSqlDBHandle_CreateDatabaseIfNotExist(t *testing.T) {
 	res, err = dbHandle.CreateDatabaseIfNotExist("test3")
 	assert.NotNil(t, err)
 	assert.False(t, res)
-
+	dbHandle.dbType, err = ParseSqlDbType("sqlite")
 	res, err = dbHandle.CreateDatabaseIfNotExist("test1")
 	assert.Nil(t, err)
 	assert.True(t, res)
@@ -131,7 +170,13 @@ func TestSqlDBHandle_CreateTableIfNotExist(t *testing.T) {
 		err := recover()
 		assert.Equal(t, strings.Contains(err.(string), "Unsupported db type:mysql"), true)
 	}()
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	defer dbHandle.Close()
 
 	err := dbHandle.CreateTableIfNotExist(&SavePoint{})
@@ -155,7 +200,13 @@ func TestSqlDBHandle_CreateTableIfNotExist(t *testing.T) {
 }
 
 func TestSqlDBHandle_Save(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	//defer dbHandle.Close()
 
 	err := dbHandle.CreateTableIfNotExist(&SavePoint{})
@@ -176,7 +227,13 @@ func TestSqlDBHandle_Save(t *testing.T) {
 }
 
 func TestSqlDBHandle_QuerySingle(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	//defer dbHandle.Close()
 
 	point := &SavePoint{
@@ -209,7 +266,13 @@ func TestSqlDBHandle_QuerySingle(t *testing.T) {
 }
 
 func TestSqlDBHandle_QueryMulti(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	//defer dbHandle.Close()
 
 	point1 := &SavePoint{
@@ -248,7 +311,13 @@ func TestSqlDBHandle_QueryMulti(t *testing.T) {
 }
 
 func TestSqlDBHandle_BeginDbTransaction(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	//defer dbHandle.Close()
 
 	txName1 := "1234567890"
@@ -271,7 +340,13 @@ func TestSqlDBHandle_BeginDbTransaction(t *testing.T) {
 }
 
 func TestSqlDBHandle_CommitDbTransaction(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	defer dbHandle.Close()
 
 	txName1 := "1234567890"
@@ -290,7 +365,13 @@ func TestSqlDBHandle_CommitDbTransaction(t *testing.T) {
 }
 
 func TestSqlDBHandle_RollbackDbTransaction(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	defer dbHandle.Close()
 
 	txName1 := "1234567890"
@@ -305,7 +386,13 @@ func TestSqlDBHandle_RollbackDbTransaction(t *testing.T) {
 }
 
 func TestSqlDBHandle_createDatabase(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	defer dbHandle.Close()
 
 	err := dbHandle.createDatabase("root:123456@tcp(127.0.0.1:3306)", "test2")

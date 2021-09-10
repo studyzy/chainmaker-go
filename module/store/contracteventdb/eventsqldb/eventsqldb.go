@@ -10,8 +10,6 @@ package eventsqldb
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
@@ -26,13 +24,13 @@ type ContractEventSqlDB struct {
 }
 
 // NewContractEventMysqlDB construct a new `ContractEventDB` for given chainId
-func NewContractEventMysqlDB(chainId string, sqlDbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*ContractEventSqlDB, error) {
-	dbName := getDbName(sqlDbConfig, chainId)
-	db := rawsqlprovider.NewSqlDBHandle(dbName, sqlDbConfig, logger)
-	return newContractEventDB(dbName, db, logger)
-}
+//func NewContractEventMysqlDB(chainId string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
+//	dbName := getDbName(sqlDbConfig, chainId)
+//	db := rawsqlprovider.NewSqlDBHandle(dbName, sqlDbConfig, logger)
+//	return newContractEventDB(dbName, db, logger)
+//}
 
-func newContractEventDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
+func NewContractEventDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*ContractEventSqlDB, error) {
 	cdb := &ContractEventSqlDB{
 		db:     db,
 		Logger: logger,
@@ -67,9 +65,9 @@ func (c *ContractEventSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSe
 	return nil
 }
 
-func getDbName(sqlDbConfig *localconf.SqlDbConfig, chainId string) string {
-	return sqlDbConfig.DbPrefix + "contract_eventdb" + chainId
-}
+//func getDbName(sqlDbConfig *localconf.SqlDbConfig, chainId string) string {
+//	return sqlDbConfig.DbPrefix + "contract_eventdb" + chainId
+//}
 
 // CommitBlock commits the event in an atomic operation
 func (c *ContractEventSqlDB) CommitBlock(blockInfo *serialization.BlockWithSerializedInfo) error {

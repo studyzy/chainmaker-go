@@ -20,8 +20,6 @@ import (
 
 	"chainmaker.org/chainmaker/utils/v2"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker-go/store/types"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -31,109 +29,24 @@ import (
 // StateSqlDB provider a implementation of `statedb.StateDB`
 // This implementation provides a mysql based data model
 type StateSqlDB struct {
-	db          protocol.SqlDBHandle
+	sysDbHandle protocol.SqlDBHandle
 	contractDbs map[string]protocol.SqlDBHandle
-	dbConfig    *localconf.SqlDbConfig
+	newDbHandle NewDbHandleFunc
 	logger      protocol.Logger
 	chainId     string
 	sync.Mutex
-	dbName string
+	dbPrefix string
 }
 
-//如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
-//如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
-func (db *StateSqlDB) initContractDb(contractName string) error {
-	dbName := getContractDbName("db.dbConfig", db.chainId, contractName)
-	db.logger.Debugf("try to create state db %s", dbName)
-	_, err := db.db.CreateDatabaseIfNotExist(dbName)
-	if err != nil {
-		db.logger.Panic("init state sql db fail")
-	}
-	db.logger.Debugf("try to create state db table: state_infos for contract[%s]", contractName)
-	dbHandle := db.getContractDbHandle(contractName)
-	err = dbHandle.CreateTableIfNotExist(&StateInfo{})
-	if err != nil {
-		db.logger.Panic("init state info sql db table fail:" + err.Error())
-	}
-	err = dbHandle.CreateTableIfNotExist(&StateRecordSql{})
-	if err != nil {
-		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
-	}
-
-	return nil
-}
-func (db *StateSqlDB) initSystemStateDb(dbName string) error {
-	db.logger.Debugf("try to create state db %s", dbName)
-	_, err := db.db.CreateDatabaseIfNotExist(dbName)
-	if err != nil {
-		db.logger.Panic("init state sql db fail")
-	}
-	db.logger.Debug("try to create system state db table: state_infos")
-	err = db.db.CreateTableIfNotExist(&StateInfo{})
-	if err != nil {
-		db.logger.Panic("init state sql db table fail:" + err.Error())
-	}
-	db.logger.Debug("try to create system state db table: save_points")
-	err = db.db.CreateTableIfNotExist(&types.SavePoint{})
-	if err != nil {
-		db.logger.Panic("init state sql db table fail:" + err.Error())
-	}
-	err = db.db.CreateTableIfNotExist(&MemberExtraInfo{})
-	if err != nil {
-		db.logger.Panic("init member extra info table fail:" + err.Error())
-	}
-	_, err = db.db.Save(&types.SavePoint{BlockHeight: 0})
-	return err
-}
-
-// NewStateSqlDB construct a new `StateDB` for given chainId
-func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
-	dbName := getDbName("dbConfig", chainId)
-	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
-	return newStateSqlDB(dbName, chainId, db, dbConfig, logger)
-}
-
-func newStateSqlDB(dbName, chainId string, db protocol.SqlDBHandle, dbConfig *localconf.SqlDbConfig,
-	logger protocol.Logger) (*StateSqlDB, error) {
-	stateDB := &StateSqlDB{
-		db:          db,
-		dbConfig:    dbConfig,
-		logger:      logger,
-		chainId:     chainId,
-		dbName:      dbName,
-		contractDbs: make(map[string]protocol.SqlDBHandle),
-	}
-
-	return stateDB, nil
-}
-func (s *StateSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
-	s.Lock()
-	defer s.Unlock()
-	err := s.initSystemStateDb(s.dbName)
-	if err != nil {
-		return err
-	}
-	return s.commitBlock(genesisBlock)
-}
-func getDbName(dbPrefix, chainId string) string {
+func getSysDbName(dbPrefix, chainId string) string {
 	return dbPrefix + "statedb_" + chainId
-}
-
-func GetContractDbName(chainId, contractName string) string {
-	dbPrefix := getDbConfigDbPrefix(localconf.ChainMakerConfig.StorageConfig)
-	return getContractDbName(dbPrefix, chainId, contractName)
-}
-func getDbConfigDbPrefix(config map[string]interface{}) string {
-	if dbPrefix, ok := config["db_prefix"]; ok {
-		return dbPrefix.(string)
-	}
-	return ""
 }
 
 //getContractDbName calculate contract db name, if name length>64, keep start 50 chars add 10 hash chars and 4 tail
 func getContractDbName(dbPrefix, chainId, contractName string) string {
-	if _, ok := syscontract.SystemContract_value[contractName]; ok { //如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库
-		return getDbName(dbPrefix, chainId)
+	if _, ok := syscontract.SystemContract_value[contractName]; ok || len(contractName) == 0 {
+		//如果是系统合约，不为每个合约构建数据库，使用统一个statedb数据库,合约名为空也使用系统合约数据库
+		return getSysDbName(dbPrefix, chainId)
 	}
 	dbName := dbPrefix + "statedb_" + chainId + "_" + contractName
 	if len(dbName) > 64 { //for mysql only support 64 chars
@@ -143,6 +56,86 @@ func getContractDbName(dbPrefix, chainId, contractName string) string {
 		dbName = dbName[:50] + hex.EncodeToString(sum)[:10] + contractName[len(contractName)-4:]
 	}
 	return dbName
+}
+
+//如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
+//如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
+func (db *StateSqlDB) initContractDb(contractName string) error {
+	dbName := getContractDbName(db.dbPrefix, db.chainId, contractName)
+	db.logger.Debugf("try to create state db %s", dbName)
+	_, err := db.sysDbHandle.CreateDatabaseIfNotExist(dbName) //为新合约创建对应的数据库
+	if err != nil {
+		db.logger.Panic("init state sql db fail")
+	}
+	db.logger.Debugf("try to create state db table: state_infos for contract[%s]", contractName)
+	dbHandle := db.getContractDbHandle(contractName)   //获得新合约对应数据库的DBHandle
+	err = dbHandle.CreateTableIfNotExist(&StateInfo{}) //为新合约数据库初始化表
+	if err != nil {
+		db.logger.Panic("init state info sql db table fail:" + err.Error())
+	}
+	err = dbHandle.CreateTableIfNotExist(&StateRecordSql{})
+	if err != nil {
+		db.logger.Panic("init state record sql sql db table fail:" + err.Error())
+	}
+	return nil
+}
+
+//initSystemStateDb 初始化系统默认使用的状态数据库
+func (db *StateSqlDB) initSystemStateDb() error {
+	dbName := getSysDbName(db.dbPrefix, db.chainId)
+	db.logger.Debugf("try to create state db %s", dbName)
+	_, err := db.sysDbHandle.CreateDatabaseIfNotExist(dbName)
+	if err != nil {
+		db.logger.Panic("init state sql db fail")
+	}
+	db.logger.Debug("try to create system state db table: state_infos")
+	err = db.sysDbHandle.CreateTableIfNotExist(&StateInfo{})
+	if err != nil {
+		db.logger.Panic("init state sql db table fail:" + err.Error())
+	}
+	err = db.sysDbHandle.CreateTableIfNotExist(&MemberExtraInfo{})
+	if err != nil {
+		db.logger.Panic("init member extra info table fail:" + err.Error())
+	}
+	db.logger.Debug("try to create system state db table: save_points")
+	err = db.sysDbHandle.CreateTableIfNotExist(&types.SavePoint{})
+	if err != nil {
+		db.logger.Panic("init state sql db table fail:" + err.Error())
+	}
+
+	_, err = db.sysDbHandle.Save(&types.SavePoint{BlockHeight: 0})
+	return err
+}
+
+// NewStateSqlDB construct a new `StateDB` for given chainId
+//func NewStateSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*StateSqlDB, error) {
+//	dbName := getDbName("dbConfig", chainId)
+//	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
+//	return newStateSqlDB(dbName, chainId, db, dbConfig, logger)
+//}
+type NewDbHandleFunc func(dbName string) (protocol.SqlDBHandle, error)
+
+func NewStateSqlDB(dbPrefix, chainId string, db protocol.SqlDBHandle, newDbHandle NewDbHandleFunc,
+	logger protocol.Logger) (*StateSqlDB, error) {
+	stateDB := &StateSqlDB{
+		sysDbHandle: db,
+		newDbHandle: newDbHandle,
+		logger:      logger,
+		chainId:     chainId,
+		dbPrefix:    dbPrefix,
+		contractDbs: make(map[string]protocol.SqlDBHandle),
+	}
+
+	return stateDB, nil
+}
+func (s *StateSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
+	s.Lock()
+	defer s.Unlock()
+	err := s.initSystemStateDb()
+	if err != nil {
+		return err
+	}
+	return s.commitBlock(genesisBlock)
 }
 
 // CommitBlock commits the state in an atomic operation
@@ -160,7 +153,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		return nil
 	}
 	//1. get a db transaction
-	dbTx, err := s.db.GetDbTransaction(txKey)
+	dbTx, err := s.sysDbHandle.GetDbTransaction(txKey)
 	s.logger.Infof("GetDbTransaction db:%v,err:%s", dbTx, err)
 	processStateDbSqlOutside := false
 	if err == nil { //外部已经开启了事务，不用重复创建事务
@@ -169,7 +162,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 	}
 	//没有在外部开启事务，则开启事务，进行数据写入
 	if !processStateDbSqlOutside {
-		dbTx, err = s.db.BeginDbTransaction(txKey)
+		dbTx, err = s.sysDbHandle.BeginDbTransaction(txKey)
 		if err != nil {
 			return err
 		}
@@ -191,7 +184,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		//}
 		err = s.updateStateForContractInit(dbTx, block, contractId, txRWSets[0].TxWrites, processStateDbSqlOutside)
 		if err != nil {
-			err2 := s.db.RollbackDbTransaction(txKey)
+			err2 := s.sysDbHandle.RollbackDbTransaction(txKey)
 			if err2 != nil {
 				return err2
 			}
@@ -203,7 +196,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 			for _, txWrite := range txRWSet.TxWrites {
 				err = s.operateDbByWriteSet(dbTx, block, txWrite, processStateDbSqlOutside)
 				if err != nil {
-					err2 := s.db.RollbackDbTransaction(txKey)
+					err2 := s.sysDbHandle.RollbackDbTransaction(txKey)
 					if err2 != nil {
 						return err2
 					}
@@ -215,7 +208,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		if len(block.Header.ConsensusArgs) > 0 {
 			err = s.updateConsensusArgs(dbTx, block)
 			if err != nil {
-				err2 := s.db.RollbackDbTransaction(txKey)
+				err2 := s.sysDbHandle.RollbackDbTransaction(txKey)
 				if err2 != nil {
 					return err2
 				}
@@ -236,7 +229,7 @@ func (s *StateSqlDB) commitBlock(blockWithRWSet *serialization.BlockWithSerializ
 		return err
 	}
 	//5. commit transaction
-	err = s.db.CommitDbTransaction(txKey)
+	err = s.sysDbHandle.CommitDbTransaction(txKey)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return err
@@ -257,7 +250,7 @@ func (s *StateSqlDB) updateBlockMemberExtra(dbTx protocol.SqlDBTransaction, bloc
 }
 func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 	block *commonPb.Block, txWrite *commonPb.TxWrite, processStateDbSqlOutside bool) error {
-	contractDbName := getContractDbName("s.dbConfig", s.chainId, txWrite.ContractName)
+	contractDbName := getContractDbName(s.dbPrefix, s.chainId, txWrite.ContractName)
 	if txWrite.ContractName != "" { //切换DB
 		err := dbTx.ChangeContextDb(contractDbName)
 		if err != nil {
@@ -283,7 +276,8 @@ func (s *StateSqlDB) operateDbByWriteSet(dbTx protocol.SqlDBTransaction,
 	return nil
 }
 func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint64) error {
-	err := dbTx.ChangeContextDb(s.dbName)
+	sysdb := getSysDbName(s.dbPrefix, s.chainId)
+	err := dbTx.ChangeContextDb(sysdb)
 	if err != nil {
 		return err
 	}
@@ -299,7 +293,7 @@ func (s *StateSqlDB) updateSavePoint(dbTx protocol.SqlDBTransaction, height uint
 func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, block *commonPb.Block,
 	contractId *commonPb.Contract, writes []*commonPb.TxWrite, processStateDbSqlOutside bool) error {
 
-	dbName := getContractDbName("s.dbConfig", block.Header.ChainId, contractId.Name)
+	dbName := getContractDbName(s.dbPrefix, block.Header.ChainId, contractId.Name)
 	s.logger.Debugf("start init new db:%s for contract[%s]", dbName, contractId.Name)
 	err := s.initContractDb(contractId.Name) //创建合约的数据库和KV表
 	if err != nil {
@@ -317,7 +311,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 		if strings.Contains(string(txWrite.Key), "#sql#") { // 是sql
 			// 已经在VM执行的时候执行了SQL则不处理，只有快速同步的时候，没有经过VM执行，才需要直接把写集的SQL运行
 			if !processStateDbSqlOutside {
-				writeDbName := getContractDbName("s.dbConfig", block.Header.ChainId, txWrite.ContractName)
+				writeDbName := getContractDbName(s.dbPrefix, block.Header.ChainId, txWrite.ContractName)
 				err = dbTx.ChangeContextDb(writeDbName)
 				if err != nil {
 					s.logger.Errorf("change context db to %s get an error:%s", writeDbName, err)
@@ -332,7 +326,7 @@ func (s *StateSqlDB) updateStateForContractInit(dbTx protocol.SqlDBTransaction, 
 		} else { //是KV数据，直接存储到StateInfo表
 			stateInfo := NewStateInfo(txWrite.ContractName, txWrite.Key, txWrite.Value,
 				uint64(block.Header.BlockHeight), block.GetTimestamp())
-			writeDbName := getContractDbName("s.dbConfig", block.Header.ChainId, txWrite.ContractName)
+			writeDbName := getContractDbName(s.dbPrefix, block.Header.ChainId, txWrite.ContractName)
 			err = dbTx.ChangeContextDb(writeDbName)
 			if err != nil {
 				return err
@@ -408,7 +402,7 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 	s.Lock()
 	defer s.Unlock()
 	sql := "select block_height from save_points"
-	row, err := s.db.QuerySingle(sql)
+	row, err := s.sysDbHandle.QuerySingle(sql)
 	if err != nil {
 		return 0, err
 	}
@@ -422,17 +416,34 @@ func (s *StateSqlDB) GetLastSavepoint() (uint64, error) {
 	}
 	return *height, nil
 }
+func isSystemContract(name string) bool {
+	_, ok := syscontract.SystemContract_value[name]
+	return ok
+}
 func (s *StateSqlDB) getContractDbHandle(contractName string) protocol.SqlDBHandle {
+	//系统合约共用系统默认的DB Handle
+	if isSystemContract(contractName) {
+		return s.sysDbHandle
+	}
 	if handle, ok := s.contractDbs[contractName]; ok {
 		s.logger.Debugf("reuse exist db handle for contract[%s],handle:%p", contractName, handle)
 		return handle
 	}
-	if s.dbConfig.SqlDbType == "sqlite" { //sqlite is a file db, don't create multi connection.
-		s.contractDbs[contractName] = s.db
-		return s.db
+
+	//if s.dbConfig.SqlDbType == "sqlite" { //sqlite is a file db, don't create multi connection.
+	//	s.contractDbs[contractName] = s.db
+	//	return s.db
+	//}
+	dbName := getContractDbName(s.dbPrefix, s.chainId, contractName)
+	//db := rawsqlprovider.NewSqlDBHandle(dbName, s.dbConfig, s.logger)
+	if s.newDbHandle == nil {
+		s.logger.Error("StateSqlDB.newDbHandle is null, use default db handle")
+		return s.sysDbHandle
 	}
-	dbName := getContractDbName("s.dbConfig", s.chainId, contractName)
-	db := rawsqlprovider.NewSqlDBHandle(dbName, s.dbConfig, s.logger)
+	db, err := s.newDbHandle(dbName)
+	if err != nil {
+		s.logger.Error(err)
+	}
 	s.contractDbs[contractName] = db
 	s.logger.Infof("create new sql db handle[%p] database[%s] for contract[%s]", db, dbName, contractName)
 	return db
@@ -443,7 +454,7 @@ func (s *StateSqlDB) Close() {
 	s.Lock()
 	defer s.Unlock()
 	s.logger.Info("close state sql db")
-	s.db.Close()
+	s.sysDbHandle.Close()
 	for contract, db := range s.contractDbs {
 		s.logger.Infof("close state sql db for contract:%s", contract)
 		db.Close()
@@ -476,8 +487,8 @@ func (s *StateSqlDB) QueryMulti(contractName, sql string, values ...interface{})
 func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	s.Lock()
 	defer s.Unlock()
-	dbName := getContractDbName("s.dbConfig", s.chainId, contractName)
-	exist, err := s.db.CreateDatabaseIfNotExist(dbName)
+	dbName := getContractDbName(s.dbPrefix, s.chainId, contractName)
+	exist, err := s.sysDbHandle.CreateDatabaseIfNotExist(dbName)
 	if err != nil {
 		return err
 	}
@@ -491,7 +502,7 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 	record := NewStateRecordSql(contractName, sql, protocol.SqlTypeDdl, version, 0)
 	query, args := record.GetQueryStatusSql()
 	s.logger.Debug("Query sql:", query, args)
-	row, _ := s.db.QuerySingle(query, args)
+	row, _ := s.sysDbHandle.QuerySingle(query, args)
 	//查询数据库中是否有DDL记录，如果有对应记录，而且状态是1，那么就跳过重复执行DDL的情况
 	if row != nil && !row.IsEmpty() {
 		status := 0
@@ -505,7 +516,7 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 		}
 	}
 	insertSql, args2 := record.GetInsertSql()
-	_, err = s.db.ExecSql(insertSql, args2...)
+	_, err = s.sysDbHandle.ExecSql(insertSql, args2...)
 	if err != nil {
 		s.logger.Warnf("DDLRecord[%s] save fail. error: %s", sql, err.Error())
 	}
@@ -515,7 +526,7 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 
 	record.Status = 1
 	updateSql, args3 := record.GetUpdateSql()
-	_, err2 := s.db.ExecSql(updateSql, args3...)
+	_, err2 := s.sysDbHandle.ExecSql(updateSql, args3...)
 	if err2 != nil {
 		s.logger.Warnf("DDLRecord[%s] update fail. error: %s", sql, err2.Error())
 	}
@@ -524,25 +535,43 @@ func (s *StateSqlDB) ExecDdlSql(contractName, sql, version string) error {
 func (s *StateSqlDB) BeginDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	s.Lock()
 	defer s.Unlock()
-	return s.db.BeginDbTransaction(txName)
+	return s.sysDbHandle.BeginDbTransaction(txName)
 }
 func (s *StateSqlDB) GetDbTransaction(txName string) (protocol.SqlDBTransaction, error) {
 	s.Lock()
 	defer s.Unlock()
-	return s.db.GetDbTransaction(txName)
+	return s.sysDbHandle.GetDbTransaction(txName)
 
 }
 func (s *StateSqlDB) CommitDbTransaction(txName string) error {
 	s.Lock()
 	defer s.Unlock()
-	return s.db.CommitDbTransaction(txName)
+	return s.sysDbHandle.CommitDbTransaction(txName)
 
 }
 func (s *StateSqlDB) RollbackDbTransaction(txName string) error {
 	s.Lock()
 	defer s.Unlock()
 	s.logger.Warnw("rollback db transaction:", txName)
-	return s.db.RollbackDbTransaction(txName)
+	return s.sysDbHandle.RollbackDbTransaction(txName)
+}
+
+func (s *StateSqlDB) CreateDatabase(contractName string) error {
+	dbName := getContractDbName(s.dbPrefix, s.chainId, contractName)
+	sql := "CREATE DATABASE " + dbName
+	return s.ExecDdlSql("", sql, "")
+}
+
+//DropDatabase 删除一个合约对应的数据库
+func (s *StateSqlDB) DropDatabase(contractName string) error {
+	dbName := getContractDbName(s.dbPrefix, s.chainId, contractName)
+	sql := "DROP DATABASE " + dbName
+	return s.ExecDdlSql("", sql, "")
+}
+
+//GetContractDbName 获得一个合约对应的状态数据库名
+func (s *StateSqlDB) GetContractDbName(contractName string) string {
+	return getContractDbName(s.dbPrefix, s.chainId, contractName)
 }
 
 func (s *StateSqlDB) updateConsensusArgs(dbTx protocol.SqlDBTransaction, block *commonPb.Block) error {
@@ -582,7 +611,7 @@ func (s *StateSqlDB) GetMemberExtraData(member *accesscontrol.Member) (*accessco
 	defer s.Unlock()
 	mei := &MemberExtraInfo{}
 	sql := "select * from " + mei.GetTableName() + " where member_hash=?"
-	row, err := s.db.QuerySingle(sql, getMemberHash(member))
+	row, err := s.sysDbHandle.QuerySingle(sql, getMemberHash(member))
 	if err != nil {
 		return nil, err
 	}

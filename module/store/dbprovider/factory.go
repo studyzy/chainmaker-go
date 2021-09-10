@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strings"
 
+	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker/protocol/v2"
 	badgerdbprovider "chainmaker.org/chainmaker/store-badgerdb/v2"
 	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
@@ -53,5 +54,37 @@ func (f *DBFactory) NewKvDB(chainId, providerName, dbFolder string, config map[s
 		}
 		return badgerdbprovider.NewBadgerDBHandle(input), nil
 	}
+	if providerName == "sql" {
+		dbConfig := &rawsqlprovider.SqlDbConfig{}
+		err := mapstructure.Decode(config, dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		input := &rawsqlprovider.NewSqlDBOptions{
+			Config:    dbConfig,
+			Logger:    logger,
+			Encryptor: nil,
+			ChainId:   chainId,
+			DbName:    dbFolder,
+		}
+		return rawsqlprovider.NewSqlDBHandle(input), nil
+	}
 	return nil, fmt.Errorf("unsupported provider:%s", providerName)
+}
+
+func (f *DBFactory) NewSqlDB(chainId, providerName, dbName string, config map[string]interface{},
+	logger protocol.Logger) (protocol.SqlDBHandle, error) {
+	dbConfig := &rawsqlprovider.SqlDbConfig{}
+	err := mapstructure.Decode(config, dbConfig)
+	if err != nil {
+		return nil, err
+	}
+	input := &rawsqlprovider.NewSqlDBOptions{
+		Config:    dbConfig,
+		Logger:    logger,
+		Encryptor: nil,
+		ChainId:   chainId,
+		DbName:    dbName,
+	}
+	return rawsqlprovider.NewSqlDBHandle(input), nil
 }

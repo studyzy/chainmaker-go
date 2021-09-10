@@ -251,7 +251,19 @@ func (s *StateKvDB) ExecDdlSql(contractName, sql, version string) error {
 	return errorSqldbOnly
 
 }
+func (s *StateKvDB) CreateDatabase(contractName string) error {
+	return errorSqldbOnly
+}
 
+//DropDatabase 删除一个合约对应的数据库
+func (s *StateKvDB) DropDatabase(contractName string) error {
+	return errorSqldbOnly
+}
+
+//GetContractDbName 获得一个合约对应的状态数据库名
+func (s *StateKvDB) GetContractDbName(contractName string) string {
+	return ""
+}
 func (s *StateKvDB) operateDbByWriteSet(batch protocol.StoreBatcher, txWrite *commonPb.TxWrite) {
 	// 5. state: contractID + stateKey
 	txWriteKey := constructStateKey(txWrite.ContractName, txWrite.Key)

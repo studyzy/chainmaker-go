@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
@@ -25,13 +24,14 @@ import (
 )
 
 var (
-	log  = &test.GoLogger{}
-	conf = &localconf.SqlDbConfig{
-		Dsn:        ":memory:",
-		SqlDbType:  "sqlite",
-		SqlLogMode: "Info",
-	}
+	log = &test.GoLogger{}
+	//conf = &rawsqlprovider.SqlDbConfig{
+	//	Dsn:        ":memory:",
+	//	SqlDbType:  "sqlite",
+	//	SqlLogMode: "Info",
+	//}
 )
+var db = rawsqlprovider.NewMemSqlDBHandle(log)
 
 func generateBlockHash(chainId string, height uint64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
@@ -179,13 +179,13 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 }
 
 func initProvider() *rawsqlprovider.SqlDBHandle {
-	p := rawsqlprovider.NewSqlDBHandle("chain1", conf, log)
+	p := rawsqlprovider.NewMemSqlDBHandle(log)
 	p.CreateTableIfNotExist(&BlockInfo{})
 	p.CreateTableIfNotExist(&TxInfo{})
 	return p
 }
 func initSqlDb() *BlockSqlDB {
-	db, _ := newBlockSqlDB(testChainId, initProvider(), log)
+	db := NewBlockSqlDB(testChainId, initProvider(), log)
 	return db
 }
 
@@ -449,8 +449,7 @@ func TestBlockSqlDB_RestoreBlocks(t *testing.T) {
 }
 
 func Test_newBlockSqlDB(t *testing.T) {
-	db, err := NewBlockSqlDB("chain1", conf, log)
-	assert.Nil(t, err)
+	db := NewBlockSqlDB("chain1", db, log)
 	db.Close()
 }
 

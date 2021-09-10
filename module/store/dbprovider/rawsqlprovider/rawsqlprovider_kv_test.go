@@ -8,12 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
 	"github.com/stretchr/testify/assert"
 )
 
-var confKvTest = &localconf.SqlDbConfig{
+var confKvTest = &SqlDbConfig{
 	SqlDbType: "sqlite",
 	Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
 }
@@ -37,9 +36,16 @@ var (
 	keyFilter3   = []byte("keyFilter3")
 	valueFilter3 = []byte("valueFilter3")
 )
+var op = &NewSqlDBOptions{
+	Config:    confKvTest,
+	Logger:    log,
+	Encryptor: nil,
+	ChainId:   "test-chain1",
+	DbName:    "dbName1",
+}
 
 func TestSqlDBHandle_NewIteratorWithPrefix(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confKvTest, log)
+	dbHandle := NewSqlDBHandle(op)
 	defer dbHandle.Close()
 
 	err := dbHandle.CreateTableIfNotExist(&KeyValue{})
@@ -77,7 +83,7 @@ func TestSqlDBHandle_NewIteratorWithPrefix(t *testing.T) {
 }
 
 func TestSqlDBHandle_NewIteratorWithRange(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confKvTest, log)
+	dbHandle := NewSqlDBHandle(op)
 	//defer dbHandle.Close()
 
 	err := dbHandle.CreateTableIfNotExist(&KeyValue{})
@@ -110,7 +116,7 @@ func TestSqlDBHandle_NewIteratorWithRange(t *testing.T) {
 }
 
 func TestSqlDBHandle_Put(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confKvTest, log)
+	dbHandle := NewSqlDBHandle(op)
 	//defer dbHandle.Close()
 
 	err := dbHandle.CreateTableIfNotExist(&KeyValue{})
@@ -150,7 +156,7 @@ func TestSqlDBHandle_Put(t *testing.T) {
 }
 
 func TestSqlDBHandle_WriteBatch(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confKvTest, log)
+	dbHandle := NewSqlDBHandle(op)
 	//defer dbHandle.Close()
 
 	batch := types.NewUpdateBatch()
@@ -168,7 +174,7 @@ func TestSqlDBHandle_WriteBatch(t *testing.T) {
 }
 
 func Test_deleteInTx(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confKvTest, log)
+	dbHandle := NewSqlDBHandle(op)
 	//defer dbHandle.Close()
 
 	tx, err := dbHandle.BeginDbTransaction("1234567890")

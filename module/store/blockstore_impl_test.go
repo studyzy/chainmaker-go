@@ -36,7 +36,8 @@ var chainId = "ut1"
 //var dbType = types.MySQL
 //var dbType = types.LevelDb
 
-var defaultContractName = "contract1"
+var defaultContractName = syscontract.SystemContract_CHAIN_CONFIG.String()
+var userContractName = "contract1"
 var block0 = createConfigBlock(chainId, 0)
 var block5 = createBlock(chainId, 5, 1)
 
@@ -70,21 +71,17 @@ var config1 = getSqlConfig()
 func getSqlConfig() *localconf.StorageConfig {
 	conf := &localconf.StorageConfig{}
 	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	var sqlconfig = &localconf.SqlDbConfig{
-		SqlDbType: "sqlite",
-		Dsn:       ":memory:",
-	}
+	var sqlconfig = make(map[string]interface{})
+	sqlconfig["sqldb_type"] = "sqlite"
+	sqlconfig["dsn"] = ":memory:"
 
 	dbConfig := &localconf.DbConfig{
 		Provider:    "sql",
 		SqlDbConfig: sqlconfig,
 	}
 	statedbConfig := &localconf.DbConfig{
-		Provider: "sql",
-		SqlDbConfig: &localconf.SqlDbConfig{
-			SqlDbType: "sqlite",
-			Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond())),
-		},
+		Provider:    "sql",
+		SqlDbConfig: sqlconfig,
 	}
 	conf.BlockDbConfig = dbConfig
 	conf.StateDbConfig = statedbConfig
@@ -158,9 +155,10 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 		Txs: []*commonPb.Transaction{
 			{
 				Payload: &commonPb.Payload{
-					ChainId: chainId,
-					TxType:  commonPb.TxType_INVOKE_CONTRACT,
-					TxId:    generateTxId(chainId, height, 0),
+					ChainId:      chainId,
+					TxType:       commonPb.TxType_INVOKE_CONTRACT,
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
+					TxId:         generateTxId(chainId, height, 0),
 				},
 				Sender: &commonPb.EndorsementEntry{
 					Signer: &acPb.Member{
@@ -267,7 +265,8 @@ func createConfBlock(chainId string, height uint64) *commonPb.Block {
 }
 
 func createContractMgrPayload(txId string) *commonPb.Payload {
-	p, _ := utils.GenerateInstallContractPayload(defaultContractName, "1.0", commonPb.RuntimeType_WASMER, nil, nil)
+	p, _ := utils.GenerateInstallContractPayload(userContractName, "2.0",
+		commonPb.RuntimeType_WASMER, []byte("byte code!!!"), nil)
 	p.TxId = txId
 	return p
 }
@@ -283,7 +282,7 @@ func createInitContractBlockAndRWSets(chainId string, height uint64) (*commonPb.
 			{
 				Key:          nil,
 				Value:        []byte("create table t1(name varchar(50) primary key,amount int)"),
-				ContractName: defaultContractName,
+				ContractName: userContractName,
 			},
 		},
 	}
@@ -304,7 +303,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.B
 				{
 					Key:          []byte(key),
 					Value:        []byte(value),
-					ContractName: defaultContractName,
+					ContractName: userContractName,
 				},
 			},
 		}
@@ -438,7 +437,7 @@ func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 func init5Blocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
-	b, rw := createBlockAndRWSets(chainId, 1, 1)
+	b, rw := createInitContractBlockAndRWSets(chainId, 1)
 	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
 	s.PutBlock(b, rw)

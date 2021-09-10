@@ -15,7 +15,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -200,12 +199,6 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 	block.Header.BlockHash = generateBlockHash(chainId, height)
 	block.Txs[0].Payload.TxId = generateTxId(chainId, height, 0)
 	return block
-}
-
-var conf = &localconf.SqlDbConfig{
-	Dsn:        ":memory:",
-	SqlDbType:  "sqlite",
-	SqlLogMode: "Info",
 }
 
 func initProvider() protocol.DBHandle {

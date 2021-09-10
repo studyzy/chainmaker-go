@@ -8,7 +8,13 @@ import (
 )
 
 func TestNewSqlDBRow(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	defer dbHandle.Close()
 
 	point := &SavePoint{
@@ -40,7 +46,13 @@ func TestNewSqlDBRow(t *testing.T) {
 }
 
 func TestNewSqlDBRows(t *testing.T) {
-	dbHandle := NewSqlDBHandle("test1", confProvideTest, log)
+	dbHandle := NewSqlDBHandle(&NewSqlDBOptions{
+		Config:    confProvideTest,
+		Logger:    log,
+		Encryptor: nil,
+		ChainId:   "test-chain1",
+		DbName:    "dbName1",
+	})
 	//defer dbHandle.Close()
 
 	point1 := &SavePoint{

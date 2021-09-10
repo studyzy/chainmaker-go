@@ -1,30 +1,30 @@
 package sqldbprovider
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/types"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"chainmaker.org/chainmaker-go/store/types"
+	"github.com/stretchr/testify/assert"
 )
 
-var kvConf = &localconf.SqlDbConfig{
-	Dsn:        filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano()) + ":memory:"),
+var kvConf = &SqlDbConfig{
+	Dsn:        filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
 	SqlDbType:  "sqlite",
 	SqlLogMode: "info",
 }
 
 var (
-	key1     = []byte("key1")
-	value1   = []byte("value1")
-	key2     = []byte("key2")
-	value2   = []byte("value2")
-	key3     = []byte("key3")
-	value3   = []byte("value3")
+	key1      = []byte("key1")
+	value1    = []byte("value1")
+	key2      = []byte("key2")
+	value2    = []byte("value2")
+	key3      = []byte("key3")
+	value3    = []byte("value3")
 	keyFilter = []byte("key")
 )
 
@@ -234,8 +234,8 @@ func Test_kvIterator_First(t *testing.T) {
 	key := res.Key()
 	value := res.Value()
 
-	assert.Equal(t, strings.Contains(string(key1) + string(key2) + string(key3), string(key)), true)
-	assert.Equal(t, strings.Contains(string(value1) + string(value2) + string(value3), string(value)), true)
+	assert.Equal(t, strings.Contains(string(key1)+string(key2)+string(key3), string(key)), true)
+	assert.Equal(t, strings.Contains(string(value1)+string(value2)+string(value3), string(value)), true)
 
 	res.Release()
 }
