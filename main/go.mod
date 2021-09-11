@@ -23,12 +23,10 @@ replace (
 	chainmaker.org/chainmaker-go/evm => ../module/vm/evm
 	chainmaker.org/chainmaker-go/gasm => ../module/vm/gasm
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
-	chainmaker.org/chainmaker-go/logger => ../module/logger
 	chainmaker.org/chainmaker-go/monitor => ../module/monitor
 	chainmaker.org/chainmaker-go/net => ./../module/net
 	chainmaker.org/chainmaker-go/rpcserver => ./../module/rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ./../module/snapshot
-	chainmaker.org/chainmaker-go/store => ./../module/store
 	chainmaker.org/chainmaker-go/subscriber => ./../module/subscriber
 	chainmaker.org/chainmaker-go/sync => ./../module/sync
 	chainmaker.org/chainmaker-go/txpool => ./../module/txpool
