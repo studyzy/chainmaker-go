@@ -10,7 +10,7 @@ package statesqldb
 import (
 	"crypto/sha256"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 )
 
@@ -27,7 +27,7 @@ func (b *MemberExtraInfo) ScanObject(scan func(dest ...interface{}) error) error
 	return scan(&b.MemberHash, &b.MemberType, &b.MemberInfo, &b.OrgId, &b.Seq)
 }
 func (b *MemberExtraInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqldbconfigSqldbtypeMysql {
+	if dbType == conf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE member_extra_infos (
     member_hash binary(32) primary key,
     member_type int,
@@ -35,7 +35,7 @@ func (b *MemberExtraInfo) GetCreateTableSql(dbType string) string {
     org_id varchar(200),
     seq bigint default 0
     ) default character set utf8`
-	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
+	} else if dbType == conf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE member_extra_infos (
 	member_hash blob primary key,
     member_type integer,

@@ -14,10 +14,10 @@ import (
 	"runtime"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
@@ -52,7 +52,7 @@ type BlockStoreImpl struct {
 	ArchiveMgr       *archive.ArchiveMgr
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
-	storeConfig      *localconf.StorageConfig
+	storeConfig      *conf.StorageConfig
 }
 
 // NewBlockStoreImpl constructs new `BlockStoreImpl`
@@ -63,7 +63,7 @@ func NewBlockStoreImpl(chainId string,
 	contractEventDB contracteventdb.ContractEventDB,
 	resultDB resultdb.ResultDB,
 	commonDB protocol.DBHandle,
-	storeConfig *localconf.StorageConfig,
+	storeConfig *conf.StorageConfig,
 	binLog binlog.BinLoger,
 	logger protocol.Logger) (*BlockStoreImpl, error) {
 	walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)

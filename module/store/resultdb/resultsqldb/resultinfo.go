@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package resultsqldb
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/conf"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"github.com/gogo/protobuf/proto"
 )
@@ -27,13 +27,13 @@ func (b *ResultInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&b.TxId, &b.BlockHeight, &b.TxIndex, &b.Rwset, &b.Status, &b.Result, &b.Message)
 }
 func (b *ResultInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqldbconfigSqldbtypeMysql {
+	if dbType == conf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE result_infos (
     tx_id varchar(128),block_height bigint,tx_index bigint,
     rwset longblob,status bigint DEFAULT 0,result blob,
     message longtext,PRIMARY KEY (tx_id)
     ) default character set utf8`
-	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
+	} else if dbType == conf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE result_infos (
     tx_id text,block_height integer,tx_index integer,rwset longblob,
     status integer DEFAULT 0,result blob,message longtext,

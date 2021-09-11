@@ -200,7 +200,7 @@ func commitBlock(db *HistoryKvDB, block *commonPb.Block) error {
 }
 
 func initProvider() protocol.DBHandle {
-	//conf := &localconf.StorageConfig{}
+	//conf := &conf.StorageConfig{}
 	//path := filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	//conf.StorePath = path
 	//

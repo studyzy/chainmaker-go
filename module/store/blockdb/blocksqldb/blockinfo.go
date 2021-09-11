@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package blocksqldb
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker/common/v2/json"
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -47,7 +47,7 @@ func (b *BlockInfo) ScanObject(scan func(dest ...interface{}) error) error {
 		&b.Signature, &b.BlockType, &b.Dag, &b.TxIds, &b.AdditionalData)
 }
 func (b *BlockInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqldbconfigSqldbtypeMysql {
+	if dbType == conf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE block_infos (chain_id varchar(128),block_height bigint,pre_block_hash varbinary(128),
 block_hash varbinary(128),
 pre_conf_height bigint DEFAULT 0,
@@ -70,7 +70,7 @@ additional_data longblob,
 PRIMARY KEY (block_height),
 INDEX idx_hash (block_hash)) 
 default character set utf8`
-	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
+	} else if dbType == conf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE block_infos (
     chain_id text,block_height integer,pre_block_hash blob,block_hash blob,
     pre_conf_height integer DEFAULT 0,block_version integer,dag_hash blob,

@@ -10,13 +10,12 @@ import (
 	"errors"
 	"sync"
 
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker/protocol/v2"
 
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
 	"chainmaker.org/chainmaker-go/store/serialization"
-
-	"chainmaker.org/chainmaker-go/localconf"
 )
 
 const defaultMinUnArchiveBlockHeight = 10
@@ -46,14 +45,14 @@ type ArchiveMgr struct {
 	unarchiveBlockHeight uint64
 	blockDB              blockdb.BlockDB
 	resultDB             resultdb.ResultDB
-	storeConfig          *localconf.StorageConfig
+	storeConfig          *conf.StorageConfig
 
 	logger protocol.Logger
 }
 
 // NewArchiveMgr construct a new `ArchiveMgr` with given chainId
 func NewArchiveMgr(chainId string, blockDB blockdb.BlockDB, resultDB resultdb.ResultDB,
-	storeConfig *localconf.StorageConfig, logger protocol.Logger) (*ArchiveMgr, error) {
+	storeConfig *conf.StorageConfig, logger protocol.Logger) (*ArchiveMgr, error) {
 	archiveMgr := &ArchiveMgr{
 		blockDB:     blockDB,
 		resultDB:    resultDB,

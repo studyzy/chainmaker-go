@@ -10,12 +10,12 @@ SPDX-License-Identifier: Apache-2.0
 package store
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blockkvdb"
 	"chainmaker.org/chainmaker-go/store/blockdb/blocksqldb"
 	"chainmaker.org/chainmaker-go/store/cache"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/contracteventdb/eventsqldb"
 	"chainmaker.org/chainmaker-go/store/dbprovider"
@@ -51,12 +51,12 @@ type Factory struct {
 var dbFactory = &dbprovider.DBFactory{}
 
 // NewStore constructs new BlockStore
-func (m *Factory) NewStore(chainId string, storeConfig *localconf.StorageConfig,
+func (m *Factory) NewStore(chainId string, storeConfig *conf.StorageConfig,
 	logger protocol.Logger) (protocol.BlockchainStore, error) {
 	return m.newStore(chainId, storeConfig, nil, logger)
 }
 
-func newBlockDB(chainId string, blockDBConfig *localconf.DbConfig, logger protocol.Logger) (
+func newBlockDB(chainId string, blockDBConfig *conf.DbConfig, logger protocol.Logger) (
 	blockdb.BlockDB, error) {
 	if blockDBConfig.IsKVDB() {
 		config := blockDBConfig.GetDbConfig()
@@ -80,7 +80,7 @@ func newBlockDB(chainId string, blockDBConfig *localconf.DbConfig, logger protoc
 
 }
 
-func newStateDB(chainId, dbPrefix string, stateDBConfig *localconf.DbConfig, logger protocol.Logger) (
+func newStateDB(chainId, dbPrefix string, stateDBConfig *conf.DbConfig, logger protocol.Logger) (
 	statedb.StateDB, error) {
 	if stateDBConfig.IsKVDB() {
 		config := stateDBConfig.GetDbConfig()
@@ -103,7 +103,7 @@ func newStateDB(chainId, dbPrefix string, stateDBConfig *localconf.DbConfig, log
 
 }
 
-func newHistoryDB(chainId string, historyDBConfig *localconf.DbConfig, logger protocol.Logger) (
+func newHistoryDB(chainId string, historyDBConfig *conf.DbConfig, logger protocol.Logger) (
 	historydb.HistoryDB, error) {
 	if historyDBConfig.IsKVDB() {
 		config := historyDBConfig.GetDbConfig()
@@ -123,11 +123,11 @@ func newHistoryDB(chainId string, historyDBConfig *localconf.DbConfig, logger pr
 
 }
 
-func newResultDB(chainId string, resultDBConfig *localconf.DbConfig, logger protocol.Logger) (
+func newResultDB(chainId string, resultDBConfig *conf.DbConfig, logger protocol.Logger) (
 	resultdb.ResultDB, error) {
 	if resultDBConfig.IsKVDB() {
 		config := resultDBConfig.GetDbConfig()
-		dbHandle, err := dbFactory.NewKvDB(chainId, resultDBConfig.Provider, StoreHistoryDBDir, config, logger)
+		dbHandle, err := dbFactory.NewKvDB(chainId, resultDBConfig.Provider, StoreResultDBDir, config, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func newResultDB(chainId string, resultDBConfig *localconf.DbConfig, logger prot
 	return resultsqldb.NewResultSqlDB(chainId, db, logger), nil
 
 }
-func newEventDB(chainId string, eventDBConfig *localconf.DbConfig, logger protocol.Logger) (
+func newEventDB(chainId string, eventDBConfig *conf.DbConfig, logger protocol.Logger) (
 	contracteventdb.ContractEventDB, error) {
 	db, err := dbFactory.NewSqlDB(chainId, eventDBConfig.Provider, "eventdb", eventDBConfig.SqlDbConfig, logger)
 	if err != nil {
@@ -149,7 +149,7 @@ func newEventDB(chainId string, eventDBConfig *localconf.DbConfig, logger protoc
 	}
 	return eventsqldb.NewContractEventDB(chainId, db, logger)
 }
-func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig, binLog binlog.BinLoger,
+func (m *Factory) newStore(chainId string, storeConfig *conf.StorageConfig, binLog binlog.BinLoger,
 	logger protocol.Logger) (protocol.BlockchainStore, error) {
 	//new blockdb
 	blockDBConfig := storeConfig.GetBlockDbConfig()
@@ -195,7 +195,7 @@ func (m *Factory) newStore(chainId string, storeConfig *localconf.StorageConfig,
 		storeConfig, binLog, logger)
 }
 
-func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log protocol.Logger) protocol.DBHandle {
+func getLocalCommonDB(chainId string, config *conf.StorageConfig, log protocol.Logger) protocol.DBHandle {
 
 	//storeType := parseEngineType(config.BlockDbConfig.Provider)
 	//if storeType == types.BadgerDb {
@@ -225,7 +225,7 @@ func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log proto
 //}
 
 // NewBlockKvDB constructs new `BlockDB`
-//func (m *Factory) NewBlockKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
+//func (m *Factory) NewBlockKvDB(chainId string, provider string, dbConfig *conf.DbConfig,
 //	logger protocol.Logger) (blockdb.BlockDB, error) {
 //
 //	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreBlockDBDir, dbConfig.LevelDbConfig, logger)
@@ -243,7 +243,7 @@ func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log proto
 //}
 //
 //// NewStateKvDB constructs new `StabeKvDB`
-//func (m *Factory) NewStateKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
+//func (m *Factory) NewStateKvDB(chainId string, provider string, dbConfig *conf.DbConfig,
 //	logger protocol.Logger) (statedb.StateDB, error) {
 //
 //	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreStateDBDir, dbConfig.LevelDbConfig, logger)
@@ -255,7 +255,7 @@ func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log proto
 //}
 //
 //// NewHistoryKvDB constructs new `HistoryKvDB`
-//func (m *Factory) NewHistoryKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
+//func (m *Factory) NewHistoryKvDB(chainId string, provider string, dbConfig *conf.DbConfig,
 //	logger protocol.Logger) (*historykvdb.HistoryKvDB, error) {
 //	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreHistoryDBDir, dbConfig.LevelDbConfig, logger)
 //	if err != nil {
@@ -267,7 +267,7 @@ func getLocalCommonDB(chainId string, config *localconf.StorageConfig, log proto
 //	return historyDB, nil
 //}
 //
-//func (m *Factory) NewResultKvDB(chainId string, provider string, dbConfig *localconf.DbConfig,
+//func (m *Factory) NewResultKvDB(chainId string, provider string, dbConfig *conf.DbConfig,
 //	logger protocol.Logger) (*resultkvdb.ResultKvDB, error) {
 //	dbHandle, err := dbFactory.NewKvDB(chainId, provider, StoreResultDBDir, dbConfig.LevelDbConfig, logger)
 //	if err != nil {

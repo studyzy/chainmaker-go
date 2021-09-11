@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/conf"
 )
 
 var keyLen int
@@ -142,27 +142,27 @@ func NewFullRandomEntryGenerator(start, n int) EntryGenerator {
 	}
 }
 
-func GetMockDBConfig(path string) *localconf.StorageConfig {
-	conf := &localconf.StorageConfig{}
+func GetMockDBConfig(path string) *conf.StorageConfig {
+	config := &conf.StorageConfig{}
 	if path == "" {
 		path = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	}
-	conf.StorePath = path
+	config.StorePath = path
 
 	lvlConfig := make(map[string]interface{})
 	lvlConfig["store_path"] = path
 	//rocksConfig := &localconf.RocksDbConfig{
 	//	StorePath: path,
 	//}
-	dbConfig := &localconf.DbConfig{
+	dbConfig := &conf.DbConfig{
 		Provider:      "leveldb",
 		LevelDbConfig: lvlConfig,
 		//RocksDbConfig: rocksConfig,
 	}
-	conf.BlockDbConfig = dbConfig
-	conf.StateDbConfig = dbConfig
-	conf.HistoryDbConfig = dbConfig
-	conf.ResultDbConfig = dbConfig
-	conf.DisableContractEventDB = true
-	return conf
+	config.BlockDbConfig = dbConfig
+	config.StateDbConfig = dbConfig
+	config.HistoryDbConfig = dbConfig
+	config.ResultDbConfig = dbConfig
+	config.DisableContractEventDB = true
+	return config
 }

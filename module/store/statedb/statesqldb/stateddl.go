@@ -10,10 +10,9 @@ import (
 	"encoding/hex"
 	"time"
 
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
-
-	"chainmaker.org/chainmaker-go/localconf"
 
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -35,7 +34,7 @@ type StateRecordSql struct {
 }
 
 func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqldbconfigSqldbtypeMysql {
+	if dbType == conf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE state_record_sql (
 					id varchar(64),
 					contract_name varchar(100),
@@ -46,7 +45,7 @@ func (b *StateRecordSql) GetCreateTableSql(dbType string) string {
 					updated_at datetime(3) NULL DEFAULT null,
 					PRIMARY KEY (id)
 				) default character set utf8`
-	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
+	} else if dbType == conf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE state_record_sql (
 					id text,
 					contract_name text,

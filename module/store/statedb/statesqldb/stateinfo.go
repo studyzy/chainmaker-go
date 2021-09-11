@@ -9,8 +9,7 @@ package statesqldb
 import (
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
-
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
@@ -30,7 +29,7 @@ func (b *StateInfo) ScanObject(scan func(dest ...interface{}) error) error {
 	return scan(&b.ContractName, &b.ObjectKey, &b.ObjectValue, &b.BlockHeight, &b.UpdatedAt)
 }
 func (b *StateInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqldbconfigSqldbtypeMysql {
+	if dbType == conf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE state_infos (
     contract_name varchar(128),object_key varbinary(128) DEFAULT '',
     object_value longblob,block_height bigint unsigned,
@@ -38,7 +37,7 @@ func (b *StateInfo) GetCreateTableSql(dbType string) string {
     PRIMARY KEY (contract_name,object_key),
     INDEX idx_height (block_height)
     ) default character set utf8`
-	} else if dbType == localconf.SqldbconfigSqldbtypeSqlite {
+	} else if dbType == conf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE state_infos (
     contract_name text,object_key blob DEFAULT '',
     object_value longblob,block_height integer,updated_at datetime DEFAULT null,
