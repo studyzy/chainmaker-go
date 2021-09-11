@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
@@ -20,6 +19,7 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/test"
+	rawsqlprovider "chainmaker.org/chainmaker/store-sqldb/v2"
 	"github.com/stretchr/testify/assert"
 )
 

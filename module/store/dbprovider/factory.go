@@ -11,7 +11,8 @@ import (
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
+	rawsqlprovider "chainmaker.org/chainmaker/store-sqldb/v2"
+
 	"chainmaker.org/chainmaker/protocol/v2"
 	badgerdbprovider "chainmaker.org/chainmaker/store-badgerdb/v2"
 	leveldbprovider "chainmaker.org/chainmaker/store-leveldb/v2"
