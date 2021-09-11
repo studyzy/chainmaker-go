@@ -17,9 +17,6 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/localconf => ./../../conf/localconf
-	chainmaker.org/chainmaker-go/logger => ../../logger
-
-	chainmaker.org/chainmaker-go/store => ../../store
 
 	chainmaker.org/chainmaker-go/wasi => ../wasi
 )

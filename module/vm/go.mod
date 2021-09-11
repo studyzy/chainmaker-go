@@ -34,9 +34,6 @@ replace (
 	chainmaker.org/chainmaker-go/evm => ./evm
 	chainmaker.org/chainmaker-go/gasm => ./gasm
 	chainmaker.org/chainmaker-go/localconf => ../conf/localconf
-
-	chainmaker.org/chainmaker-go/store => ../store
-
 	chainmaker.org/chainmaker-go/wasi => ./wasi
 	chainmaker.org/chainmaker-go/wasmer => ./wasmer
 	chainmaker.org/chainmaker-go/wxvm => ./wxvm

@@ -31,7 +31,6 @@ replace (
 	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 
 	chainmaker.org/chainmaker-go/monitor => ../monitor
-	chainmaker.org/chainmaker-go/store => ../store
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 
 	chainmaker.org/chainmaker-go/vm => ../vm
