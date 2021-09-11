@@ -9,13 +9,12 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210910112253-04256ae9c5ed
 	chainmaker.org/chainmaker/store-badgerdb/v2 v2.0.0-20210909150251-a7a79b6b6f24
 	chainmaker.org/chainmaker/store-leveldb/v2 v2.0.0-20210909122843-d0874400838a
-	chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20210911163035-4e8cbc0401a8 // indirect
+	chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20210911163035-4e8cbc0401a8
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
 	github.com/emirpasic/gods v1.12.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
-	github.com/mattn/go-sqlite3 v2.0.1+incompatible
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pingcap/errors v0.11.5-0.20201029093017-5a7df2af2ac7 // indirect
 	github.com/pkg/errors v0.9.1
