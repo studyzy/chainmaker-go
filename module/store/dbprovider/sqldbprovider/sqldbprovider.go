@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"gorm.io/driver/sqlite"
@@ -36,7 +35,7 @@ import (
 //func NewSqlDBProvider(log protocol.Logger) *SqlDBProvider {
 //	return &SqlDBProvider{dbs: make(map[string]*SqlDBHandle, 1), log: log}
 //}
-//func (p *SqlDBProvider) GetDBHandle(chainId string, conf *localconf.SqlDbConfig) protocol.SqlDBHandle {
+//func (p *SqlDBProvider) GetDBHandle(chainId string, conf *SqlDbConfig) protocol.SqlDBHandle {
 //	h, exist := p.dbs[chainId]
 //	if exist {
 //		return h
@@ -97,7 +96,7 @@ func replaceMySqlDsn(dsn string, dbName string) string {
 }
 
 // NewSqlDBProvider construct a new SqlDBHandle
-func NewSqlDBHandle(dbName string, conf *localconf.SqlDbConfig, log protocol.Logger) *SqlDBHandle {
+func NewSqlDBHandle(dbName string, conf *SqlDbConfig, log protocol.Logger) *SqlDBHandle {
 	provider := &SqlDBHandle{dbTxCache: make(map[string]*SqlDBTx), log: log}
 	sqlType, err := ParseSqlDbType(conf.SqlDbType)
 	if err != nil {

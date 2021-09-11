@@ -3,7 +3,7 @@ package historysqldb
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ func TestAccountTxHistoryInfo_GetCreateTableSql(t *testing.T) {
 		assert.Equal(t, err.(string), "Unsupported db type:test")
 	}()
 	accountTxHistoryInfo := &AccountTxHistoryInfo{}
-	sql := accountTxHistoryInfo.GetCreateTableSql(localconf.SqldbconfigSqldbtypeMysql)
+	sql := accountTxHistoryInfo.GetCreateTableSql(conf.SqldbconfigSqldbtypeMysql)
 	assert.Equal(t, sql, `CREATE TABLE account_tx_history_infos (
     account_id varbinary(2048),block_height bigint unsigned,tx_id varchar(128),
     PRIMARY KEY (account_id,block_height,tx_id)
@@ -36,7 +36,7 @@ func TestContractTxHistoryInfo_GetCreateTableSql(t *testing.T) {
 		assert.Equal(t, err.(string), "Unsupported db type:test")
 	}()
 	contractTxHistoryInfo := &ContractTxHistoryInfo{}
-	sql := contractTxHistoryInfo.GetCreateTableSql(localconf.SqldbconfigSqldbtypeMysql)
+	sql := contractTxHistoryInfo.GetCreateTableSql(conf.SqldbconfigSqldbtypeMysql)
 	assert.Equal(t, sql, `CREATE TABLE contract_tx_history_infos (
     contract_name varchar(128),block_height bigint unsigned,tx_id varchar(128),
     account_id varbinary(2048),PRIMARY KEY (contract_name,block_height,tx_id)
@@ -60,7 +60,7 @@ func TestStateHistoryInfo_GetCreateTableSql(t *testing.T) {
 		assert.Equal(t, err.(string), "Unsupported db type:test")
 	}()
 	stateHistoryInfo := &StateHistoryInfo{}
-	sql := stateHistoryInfo.GetCreateTableSql(localconf.SqldbconfigSqldbtypeMysql)
+	sql := stateHistoryInfo.GetCreateTableSql(conf.SqldbconfigSqldbtypeMysql)
 	assert.Equal(t, sql, `CREATE TABLE state_history_infos (
     contract_name varchar(128),state_key varbinary(128),tx_id varchar(128),block_height bigint unsigned,
     PRIMARY KEY (contract_name,state_key,tx_id,block_height)

@@ -10,17 +10,11 @@ import (
 	"errors"
 	"math"
 
-	//"github.com/Workiva/go-datastructures/threadsafe/err"
-	"runtime"
-
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
-	"golang.org/x/sync/semaphore"
 )
 
 var errNotImplement = errors.New("implement me")
@@ -29,12 +23,23 @@ var errNullPoint = errors.New("null point")
 // BlockSqlDB provider a implementation of `blockdb.BlockDB`
 // This implementation provides a mysql based data model
 type BlockSqlDB struct {
-	db               protocol.SqlDBHandle
-	workersSemaphore *semaphore.Weighted
-	logger           protocol.Logger
-	dbName           string
+	db protocol.SqlDBHandle
+	//workersSemaphore *semaphore.Weighted
+	logger protocol.Logger
+	dbName string
 }
 
+// NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
+func NewBlockSqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) *BlockSqlDB {
+	//nWorkers := runtime.NumCPU()
+	blockDB := &BlockSqlDB{
+		db: db,
+		//workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
+		logger: logger,
+		dbName: dbName,
+	}
+	return blockDB
+}
 func (db *BlockSqlDB) GetHeightByHash(blockHash []byte) (uint64, error) {
 	sql := "SELECT block_height FROM block_infos WHERE block_hash=?"
 	var height uint64
@@ -98,13 +103,6 @@ func (db *BlockSqlDB) RestoreBlocks(blockInfos []*serialization.BlockWithSeriali
 	return errNotImplement
 }
 
-// NewBlockSqlDB constructs a new `BlockSqlDB` given an chainId and engine type
-func NewBlockSqlDB(chainId string, dbConfig *localconf.SqlDbConfig, logger protocol.Logger) (*BlockSqlDB, error) {
-	dbName := getDbName(dbConfig, chainId)
-	db := rawsqlprovider.NewSqlDBHandle(dbName, dbConfig, logger)
-	return newBlockSqlDB(dbName, db, logger)
-}
-
 //如果数据库不存在，则创建数据库，然后切换到这个数据库，创建表
 //如果数据库存在，则切换数据库，检查表是否存在，不存在则创建表。
 func (db *BlockSqlDB) initDb(dbName string) {
@@ -122,20 +120,10 @@ func (db *BlockSqlDB) initDb(dbName string) {
 		panic("init state sql db table `tx_infos` fail")
 	}
 }
-func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
-	return dbConfig.DbPrefix + "blockdb_" + chainId
-}
-func newBlockSqlDB(dbName string, db protocol.SqlDBHandle, logger protocol.Logger) (*BlockSqlDB, error) {
-	nWorkers := runtime.NumCPU()
 
-	blockDB := &BlockSqlDB{
-		db:               db,
-		workersSemaphore: semaphore.NewWeighted(int64(nWorkers)),
-		logger:           logger,
-		dbName:           dbName,
-	}
-	return blockDB, nil
-}
+//func getDbName(dbConfig *localconf.SqlDbConfig, chainId string) string {
+//	return dbConfig.DbPrefix + "blockdb_" + chainId
+//}
 
 func (b *BlockSqlDB) InitGenesis(genesisBlock *serialization.BlockWithSerializedInfo) error {
 	b.initDb(b.dbName)

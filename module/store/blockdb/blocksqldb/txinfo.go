@@ -9,7 +9,7 @@ package blocksqldb
 import (
 	"encoding/json"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker-go/store/conf"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 )
@@ -62,7 +62,7 @@ func (t *TxInfo) ScanObject(scan func(dest ...interface{}) error) error {
 		&t.BlockHeight, &t.BlockHash, &t.Offset)
 }
 func (t *TxInfo) GetCreateTableSql(dbType string) string {
-	if dbType == localconf.SqldbconfigSqldbtypeMysql {
+	if dbType == conf.SqldbconfigSqldbtypeMysql {
 		return `CREATE TABLE tx_infos (chain_id varchar(128),tx_type int,tx_id varchar(128),timestamp bigint DEFAULT 0,
 expiration_time bigint DEFAULT 0,
 contract_name varchar(128),method varchar(128),parameters longblob,sequence bigint,limits blob,
@@ -74,7 +74,7 @@ block_height bigint unsigned,block_hash varbinary(128),offset int unsigned,
 PRIMARY KEY (tx_id),
 INDEX idx_height_offset (block_height,offset)) default character set utf8`
 	}
-	if dbType == localconf.SqldbconfigSqldbtypeSqlite {
+	if dbType == conf.SqldbconfigSqldbtypeSqlite {
 		return `CREATE TABLE tx_infos (chain_id text,tx_type int,tx_id text,timestamp integer DEFAULT 0,
 expiration_time integer DEFAULT 0,
 contract_name text,method text,parameters longblob,sequence bigint,limits blob,

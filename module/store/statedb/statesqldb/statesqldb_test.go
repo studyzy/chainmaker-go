@@ -12,16 +12,14 @@ import (
 	"fmt"
 	"testing"
 
-	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
-
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/store/dbprovider/rawsqlprovider"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/test"
+	rawsqlprovider "chainmaker.org/chainmaker/store-sqldb/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -202,18 +200,18 @@ func createBlock(chainId string, height uint64) *commonPb.Block {
 	return block
 }
 
-var conf = &localconf.SqlDbConfig{
-	Dsn:        ":memory:",
-	SqlDbType:  "sqlite",
-	SqlLogMode: "Info",
-}
+//var conf = &localconf.SqlDbConfig{
+//	Dsn:        ":memory:",
+//	SqlDbType:  "sqlite",
+//	SqlLogMode: "Info",
+//}
 
 func initProvider() protocol.SqlDBHandle {
-	p := rawsqlprovider.NewSqlDBHandle("chain1", conf, log)
+	p := rawsqlprovider.NewMemSqlDBHandle(log)
 	return p
 }
 func initStateSqlDB() *StateSqlDB {
-	db, _ := newStateSqlDB("dbName", "chain1", initProvider(), conf, log)
+	db, _ := NewStateSqlDB("org1_", "chain1", initProvider(), nil, log)
 	_, blockInfo0, _ := serialization.SerializeBlock(block0)
 	db.InitGenesis(blockInfo0)
 	return db

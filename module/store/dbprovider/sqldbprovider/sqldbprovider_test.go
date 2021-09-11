@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/protocol/v2/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,7 +29,7 @@ var log = &test.GoLogger{}
 //	var db SqlDBHandle
 //	db.GetDB("test_chain_1", conf)
 //}
-var conf = &localconf.SqlDbConfig{
+var conf = &SqlDbConfig{
 	Dsn:        "file::memory:?cache=shared",
 	SqlDbType:  "sqlite",
 	SqlLogMode: "info",
@@ -41,26 +40,26 @@ func TestNewSqlDBHandle1(t *testing.T) {
 		err := recover()
 		assert.Equal(t, strings.Contains(err.(string), "failed to open mysql:root:123456@tcp(127.0.0.1:3306)"), true)
 	}()
-	conf :=  &localconf.SqlDbConfig{
-		SqlDbType: "sqlite",
-		Dsn: filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
+	conf := &SqlDbConfig{
+		SqlDbType:  "sqlite",
+		Dsn:        filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
 		SqlLogMode: "Warn",
 	}
 	p := NewSqlDBHandle("test1", conf, log)
 	p.Close()
 
-	conf = &localconf.SqlDbConfig{
-		SqlDbType: "sqlite",
-		Dsn: filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())),
+	conf = &SqlDbConfig{
+		SqlDbType:  "sqlite",
+		Dsn:        filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())),
 		SqlLogMode: "Error",
 	}
 	fmt.Println(conf.Dsn)
 	p = NewSqlDBHandle("test1", conf, log)
 	p.Close()
 
-	conf = &localconf.SqlDbConfig{
+	conf = &SqlDbConfig{
 		SqlDbType: "mysql",
-		Dsn: "root:123456@tcp(127.0.0.1:3306)",
+		Dsn:       "root:123456@tcp(127.0.0.1:3306)",
 	}
 	p = NewSqlDBHandle("test1", conf, log)
 	p.Close()
@@ -71,17 +70,17 @@ func TestNewSqlDBHandle2(t *testing.T) {
 		err := recover()
 		assert.Equal(t, strings.Contains(err.(string), "uknow sql db type"), true)
 	}()
-	conf :=  &localconf.SqlDbConfig{
-		SqlDbType: "sqlite",
-		Dsn: filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
+	conf := &SqlDbConfig{
+		SqlDbType:  "sqlite",
+		Dsn:        filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
 		SqlLogMode: "test",
 	}
 	p := NewSqlDBHandle("test1", conf, log)
 	p.Close()
 
-	conf =  &localconf.SqlDbConfig{
-		SqlDbType: "test",
-		Dsn: filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
+	conf = &SqlDbConfig{
+		SqlDbType:  "test",
+		Dsn:        filepath.Join(os.TempDir(), fmt.Sprintf("%d_unit_test_db", time.Now().UnixNano())+":memory:"),
 		SqlLogMode: "test",
 	}
 	p = NewSqlDBHandle("test1", conf, log)
@@ -95,15 +94,14 @@ func TestNewSqlDBHandle3(t *testing.T) {
 		//t.Logf("%#v", err)
 		fmt.Println(err)
 	}()
-	conf :=  &localconf.SqlDbConfig{
-		SqlDbType: "sqlite",
-		Dsn: filepath.Join("/"),
+	conf := &SqlDbConfig{
+		SqlDbType:  "sqlite",
+		Dsn:        filepath.Join("/"),
 		SqlLogMode: "test",
 	}
 	p := NewSqlDBHandle("test1", conf, log)
 	p.Close()
 }
-
 
 func Test_createDatabase(t *testing.T) {
 	err := createDatabase("root:123456@tcp(127.0.0.1:3306)/", "test1")

@@ -23,6 +23,7 @@ import (
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/snapshot"
 	"chainmaker.org/chainmaker-go/store"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker-go/subscriber"
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
@@ -160,7 +161,7 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
-	config := &localconf.StorageConfig{}
+	config := &conf.StorageConfig{}
 	err = mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
 	if err != nil {
 		return err

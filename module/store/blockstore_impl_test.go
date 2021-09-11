@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker-go/store/serialization"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
@@ -36,7 +36,8 @@ var chainId = "ut1"
 //var dbType = types.MySQL
 //var dbType = types.LevelDb
 
-var defaultContractName = "contract1"
+var defaultContractName = syscontract.SystemContract_CHAIN_CONFIG.String()
+var userContractName = "contract1"
 var block0 = createConfigBlock(chainId, 0)
 var block5 = createBlock(chainId, 5, 1)
 
@@ -67,73 +68,69 @@ func getTxRWSets() []*commonPb.TxRWSet {
 
 var config1 = getSqlConfig()
 
-func getSqlConfig() *localconf.StorageConfig {
-	conf := &localconf.StorageConfig{}
-	conf.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	var sqlconfig = &localconf.SqlDbConfig{
-		SqlDbType: "sqlite",
-		Dsn:       ":memory:",
-	}
+func getSqlConfig() *conf.StorageConfig {
+	conf1 := &conf.StorageConfig{}
+	conf1.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
+	var sqlconfig = make(map[string]interface{})
+	sqlconfig["sqldb_type"] = "sqlite"
+	sqlconfig["dsn"] = ":memory:"
 
-	dbConfig := &localconf.DbConfig{
+	dbConfig := &conf.DbConfig{
 		Provider:    "sql",
 		SqlDbConfig: sqlconfig,
 	}
-	statedbConfig := &localconf.DbConfig{
-		Provider: "sql",
-		SqlDbConfig: &localconf.SqlDbConfig{
-			SqlDbType: "sqlite",
-			Dsn:       filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond())),
-		},
+	statedbConfig := &conf.DbConfig{
+		Provider:    "sql",
+		SqlDbConfig: sqlconfig,
 	}
-	conf.BlockDbConfig = dbConfig
-	conf.StateDbConfig = statedbConfig
-	conf.HistoryDbConfig = dbConfig
-	conf.ResultDbConfig = dbConfig
-	conf.ContractEventDbConfig = dbConfig
-	conf.DisableContractEventDB = true
-	return conf
+	conf1.BlockDbConfig = dbConfig
+	conf1.StateDbConfig = statedbConfig
+	conf1.HistoryDbConfig = dbConfig
+	conf1.ResultDbConfig = dbConfig
+	conf1.ContractEventDbConfig = dbConfig
+	conf1.DisableContractEventDB = true
+	return conf1
 }
-func getBadgerConfig(path string) *localconf.StorageConfig {
-	conf := &localconf.StorageConfig{}
+func getBadgerConfig(path string) *conf.StorageConfig {
+	conf1 := &conf.StorageConfig{}
 	if path == "" {
 		path = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	}
-	conf.StorePath = path
+	conf1.StorePath = path
 
 	badgerConfig := make(map[string]interface{})
 	badgerConfig["store_path"] = path
-	dbConfig := &localconf.DbConfig{
+	dbConfig := &conf.DbConfig{
 		Provider:       "badgerdb",
 		BadgerDbConfig: badgerConfig,
 	}
-	conf.BlockDbConfig = dbConfig
-	conf.StateDbConfig = dbConfig
-	conf.HistoryDbConfig = dbConfig
-	conf.ResultDbConfig = dbConfig
-	conf.DisableContractEventDB = true
-	return conf
+	conf1.BlockDbConfig = dbConfig
+	conf1.StateDbConfig = dbConfig
+	conf1.HistoryDbConfig = dbConfig
+	conf1.ResultDbConfig = dbConfig
+	conf1.DisableContractEventDB = true
+	return conf1
 }
-func getlvldbConfig(path string) *localconf.StorageConfig {
-	conf := &localconf.StorageConfig{}
+func getlvldbConfig(path string) *conf.StorageConfig {
+	conf1 := &conf.StorageConfig{}
 	if path == "" {
 		path = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 	}
-	conf.StorePath = path
+	conf1.StorePath = path
 
 	lvlConfig := make(map[string]interface{})
 	lvlConfig["store_path"] = path
 
-	dbConfig := &localconf.DbConfig{
+	dbConfig := &conf.DbConfig{
 		Provider:      "leveldb",
 		LevelDbConfig: lvlConfig,
 	}
-	conf.BlockDbConfig = dbConfig
-	conf.StateDbConfig = dbConfig
-	conf.HistoryDbConfig = dbConfig
-	conf.ResultDbConfig = dbConfig
-	conf.DisableContractEventDB = true
-	return conf
+	conf1.BlockDbConfig = dbConfig
+	conf1.StateDbConfig = dbConfig
+	conf1.HistoryDbConfig = dbConfig
+	conf1.ResultDbConfig = dbConfig
+	conf1.DisableContractEventDB = true
+	return conf1
 }
 func generateBlockHash(chainId string, height uint64) []byte {
 	blockHash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", chainId, height)))
@@ -158,9 +155,10 @@ func createConfigBlock(chainId string, height uint64) *commonPb.Block {
 		Txs: []*commonPb.Transaction{
 			{
 				Payload: &commonPb.Payload{
-					ChainId: chainId,
-					TxType:  commonPb.TxType_INVOKE_CONTRACT,
-					TxId:    generateTxId(chainId, height, 0),
+					ChainId:      chainId,
+					TxType:       commonPb.TxType_INVOKE_CONTRACT,
+					ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
+					TxId:         generateTxId(chainId, height, 0),
 				},
 				Sender: &commonPb.EndorsementEntry{
 					Signer: &acPb.Member{
@@ -267,7 +265,8 @@ func createConfBlock(chainId string, height uint64) *commonPb.Block {
 }
 
 func createContractMgrPayload(txId string) *commonPb.Payload {
-	p, _ := utils.GenerateInstallContractPayload(defaultContractName, "1.0", commonPb.RuntimeType_WASMER, nil, nil)
+	p, _ := utils.GenerateInstallContractPayload(userContractName, "2.0",
+		commonPb.RuntimeType_WASMER, []byte("byte code!!!"), nil)
 	p.TxId = txId
 	return p
 }
@@ -283,7 +282,7 @@ func createInitContractBlockAndRWSets(chainId string, height uint64) (*commonPb.
 			{
 				Key:          nil,
 				Value:        []byte("create table t1(name varchar(50) primary key,amount int)"),
-				ContractName: defaultContractName,
+				ContractName: userContractName,
 			},
 		},
 	}
@@ -304,7 +303,7 @@ func createBlockAndRWSets(chainId string, height uint64, txNum int) (*commonPb.B
 				{
 					Key:          []byte(key),
 					Value:        []byte(value),
-					ContractName: defaultContractName,
+					ContractName: userContractName,
 				},
 			},
 		}
@@ -368,7 +367,7 @@ func Test_blockchainStoreImpl_GetBlockLevelDb(t *testing.T) {
 //	testBlockchainStoreImpl_GetBlock(t, getBadgerConfig(""))
 //}
 
-func testBlockchainStoreImpl_GetBlock(t *testing.T, config *localconf.StorageConfig) {
+func testBlockchainStoreImpl_GetBlock(t *testing.T, config *conf.StorageConfig) {
 	var funcName = "get block"
 	tests := []struct {
 		name  string
@@ -438,7 +437,7 @@ func Test_blockchainStoreImpl_HasBlock(t *testing.T) {
 func init5Blocks(s protocol.BlockchainStore) {
 	genesis := &storePb.BlockWithRWSet{Block: block0}
 	s.InitGenesis(genesis)
-	b, rw := createBlockAndRWSets(chainId, 1, 1)
+	b, rw := createInitContractBlockAndRWSets(chainId, 1)
 	s.PutBlock(b, rw)
 	b, rw = createBlockAndRWSets(chainId, 2, 2)
 	s.PutBlock(b, rw)

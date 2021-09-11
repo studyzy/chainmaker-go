@@ -14,10 +14,10 @@ import (
 	"runtime"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/store/archive"
 	"chainmaker.org/chainmaker-go/store/binlog"
 	"chainmaker.org/chainmaker-go/store/blockdb"
+	"chainmaker.org/chainmaker-go/store/conf"
 	"chainmaker.org/chainmaker-go/store/contracteventdb"
 	"chainmaker.org/chainmaker-go/store/historydb"
 	"chainmaker.org/chainmaker-go/store/resultdb"
@@ -52,7 +52,7 @@ type BlockStoreImpl struct {
 	ArchiveMgr       *archive.ArchiveMgr
 	workersSemaphore *semaphore.Weighted
 	logger           protocol.Logger
-	storeConfig      *localconf.StorageConfig
+	storeConfig      *conf.StorageConfig
 }
 
 // NewBlockStoreImpl constructs new `BlockStoreImpl`
@@ -63,7 +63,7 @@ func NewBlockStoreImpl(chainId string,
 	contractEventDB contracteventdb.ContractEventDB,
 	resultDB resultdb.ResultDB,
 	commonDB protocol.DBHandle,
-	storeConfig *localconf.StorageConfig,
+	storeConfig *conf.StorageConfig,
 	binLog binlog.BinLoger,
 	logger protocol.Logger) (*BlockStoreImpl, error) {
 	walPath := filepath.Join(storeConfig.StorePath, chainId, logPath)
@@ -165,17 +165,17 @@ func (bs *BlockStoreImpl) InitGenesis(genesisBlock *storePb.BlockWithRWSet) erro
 	}
 	//6. init contract event db
 	if !bs.storeConfig.DisableContractEventDB {
-		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
-			err = bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
-			if err != nil {
-				bs.logger.Errorf("chain[%s] failed to write event db, block[%d]",
-					block.Header.ChainId, block.Header.BlockHeight)
-				return err
-			}
-		} else {
-			return errors.New("contract event db config err")
+		//if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+		//	bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
+		err = bs.contractEventDB.InitGenesis(blockWithSerializedInfo)
+		if err != nil {
+			bs.logger.Errorf("chain[%s] failed to write event db, block[%d]",
+				block.Header.ChainId, block.Header.BlockHeight)
+			return err
 		}
+		//} else {
+		//	return errors.New("contract event db config err")
+		//}
 	}
 	bs.logger.Infof("chain[%s]: put block[%d] hash[%x] (txs:%d bytes:%d), ",
 		block.Header.ChainId, block.Header.BlockHeight, block.Header.BlockHash, len(block.Txs), len(blockBytes))
@@ -548,12 +548,12 @@ func (bs *BlockStoreImpl) Close() error {
 		bs.historyDB.Close()
 	}
 	if !bs.storeConfig.DisableContractEventDB && bs.contractEventDB != nil {
-		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
-			bs.contractEventDB.Close()
-		} else {
-			return errors.New("contract event db config err")
-		}
+		//if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+		//	bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
+		bs.contractEventDB.Close()
+		//} else {
+		//	return errors.New("contract event db config err")
+		//}
 	}
 	if !bs.storeConfig.DisableResultDB && bs.resultDB != nil {
 		bs.resultDB.Close()
@@ -588,14 +588,14 @@ func (bs *BlockStoreImpl) recover() error {
 		}
 	}
 	if !bs.storeConfig.DisableContractEventDB {
-		if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
-			bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
-			if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
-				return err
-			}
-		} else {
-			return errors.New("contract event db config err")
+		//if parseEngineType(bs.storeConfig.ContractEventDbConfig.SqlDbConfig.SqlDbType) == types.MySQL &&
+		//	bs.storeConfig.ContractEventDbConfig.Provider == localconf.DbconfigProviderSql {
+		if contractEventSavepoint, err = bs.contractEventDB.GetLastSavepoint(); err != nil {
+			return err
 		}
+		//} else {
+		//	return errors.New("contract event db config err")
+		//}
 	}
 
 	bs.logger.Debugf("recover checking, savepoint: wal[%d] blockDB[%d] stateDB[%d] historyDB[%d] contractEventDB[%d]",
@@ -811,6 +811,21 @@ func (bs *BlockStoreImpl) CommitDbTransaction(txName string) error {
 //RollbackDbTransaction 回滚一个事务
 func (bs *BlockStoreImpl) RollbackDbTransaction(txName string) error {
 	return bs.stateDB.RollbackDbTransaction(txName)
+}
+
+func (bs *BlockStoreImpl) CreateDatabase(contractName string) error {
+	return bs.stateDB.CreateDatabase(contractName)
+}
+
+//DropDatabase 删除一个合约对应的数据库
+func (bs *BlockStoreImpl) DropDatabase(contractName string) error {
+	return bs.stateDB.DropDatabase(contractName)
+
+}
+
+//GetContractDbName 获得一个合约对应的状态数据库名
+func (bs *BlockStoreImpl) GetContractDbName(contractName string) string {
+	return bs.stateDB.GetContractDbName(contractName)
 }
 
 func (bs *BlockStoreImpl) calculateRecoverHeight(currentHeight uint64, savePoint uint64) uint64 {
