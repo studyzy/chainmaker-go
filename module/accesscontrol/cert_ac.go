@@ -550,18 +550,16 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 		err1 = cp.checkCRLAgainstTrustedCerts(crl, orgs, false)
 		err2 = cp.checkCRLAgainstTrustedCerts(crl, orgs, true)
 		if err1 != nil && err2 != nil {
-			crlPEM, rest = pem.Decode(rest)
-			continue
+			return false, fmt.Errorf(
+				"invalid CRL: \n\t[verification against trusted root certs: %v], "+
+					"\n\t[verification against trusted intermediate certs: %v]",
+				err1,
+				err2,
+			)
 		}
-		return true, nil
+		crlPEM, rest = pem.Decode(rest)
 	}
-
-	return false, fmt.Errorf(
-		"invalid CRL: \n\t[verification against trusted root certs: %v], "+
-			"\n\t[verification against trusted intermediate certs: %v]",
-		err1,
-		err2,
-	)
+	return true, nil
 }
 
 // VerifyPrincipal verifies if the principal for the resource is met
