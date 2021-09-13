@@ -409,10 +409,12 @@ func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
 		consensus.logger.Fatalf("[%x] get serialize member failed: %v", consensus.Id, err)
 		return
 	}
+
 	signature := &common.EndorsementEntry{
 		Signer:    serializeMember,
 		Signature: sig,
 	}
+
 	additionalData := AdditionalData{
 		Signature: mustMarshal(signature),
 	}
