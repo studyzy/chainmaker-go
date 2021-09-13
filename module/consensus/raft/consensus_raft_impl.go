@@ -130,6 +130,7 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.msgbus = config.MsgBus
 	consensus.closeC = make(chan struct{})
 	consensus.Id = computeRaftIdFromNodeId(config.NodeId)
+
 	consensus.snapCount = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.SnapCount
 	if consensus.snapCount == 0 {
 		consensus.snapCount = defaultSnapCount
