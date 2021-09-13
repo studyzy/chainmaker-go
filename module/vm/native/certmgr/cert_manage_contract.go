@@ -344,10 +344,6 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 	}
 
 	crlPEM, rest := pem.Decode(crlStr)
-	if crlPEM == nil {
-		r.log.Errorf("certManage validate crl failed err: empty CRL")
-		return nil, fmt.Errorf("empty CRL")
-	}
 
 	var crls []*pkix.CertificateList
 

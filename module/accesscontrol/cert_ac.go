@@ -521,7 +521,7 @@ func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatu
 func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data []byte) (bool, error) {
 
 	if verifyType != pbac.VerifyType_CRL {
-		return false, fmt.Errorf("verify related material failed: cert member should use the CRL")
+		return false, fmt.Errorf("verify related material failed: only CRL allowed in permissionedWithCert mode")
 	}
 
 	crlPEM, rest := pem.Decode(data)
