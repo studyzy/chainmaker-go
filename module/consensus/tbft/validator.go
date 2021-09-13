@@ -12,7 +12,7 @@ import (
 	"sort"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 )
 
 var (

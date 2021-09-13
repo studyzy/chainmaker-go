@@ -11,6 +11,7 @@ import (
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -923,17 +924,17 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.Acc
 				return err
 			}
 
+			crlPEM, rest := pem.Decode([]byte(crlStr))
+
 			var crls []*pkix.CertificateList
 
-			crl, err := x509.ParseCRL([]byte(crlStr))
-			if err != nil {
-				logger.Errorf("[Net] validate crl failed, %s", err.Error())
-				return err
-			}
-			crls = append(crls, crl)
-			if err != nil {
-				logger.Errorf("[Net] validate crl failed, %s", err.Error())
-				return err
+			for crlPEM != nil {
+				crl, err := x509.ParseCRL([]byte(crlStr))
+				if err != nil {
+					continue
+				}
+				crlPEM, rest = pem.Decode(rest)
+				crls = append(crls, crl)
 			}
 			revokedPeerIds := ln.findRevokedPeerIdsByCRLs(crls, peerIdCertMap)
 			if err := ln.closeRevokedPeerConnection(revokedPeerIds); err != nil {

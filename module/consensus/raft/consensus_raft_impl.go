@@ -25,9 +25,9 @@ import (
 
 	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
@@ -136,8 +136,8 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 		consensus.snapCount = defaultSnapCount
 	}
 	consensus.asyncWalSave = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.AsyncWalSave
-	consensus.waldir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, walDir)
-	consensus.snapdir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, snapDir)
+	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
+	consensus.snapdir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, snapDir)
 	consensus.idToNodeId = make(map[uint64]string)
 
 	consensus.proposedBlockC = make(chan *common.Block, DefaultChanCap)

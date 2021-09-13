@@ -20,18 +20,20 @@ import (
 	"chainmaker.org/chainmaker-go/core/cache"
 	providerConf "chainmaker.org/chainmaker-go/core/provider/conf"
 	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/snapshot"
-	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker-go/vm"
+	"chainmaker.org/chainmaker/logger/v2"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/store/v2"
+	"chainmaker.org/chainmaker/store/v2/conf"
 	"chainmaker.org/chainmaker/utils/v2"
+	"github.com/mitchellh/mapstructure"
 )
 
 // Init all the modules.
@@ -159,8 +161,13 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
+	config := &conf.StorageConfig{}
+	err = mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
+	if err != nil {
+		return err
+	}
 	if bc.store, err = storeFactory.NewStore(
-		bc.chainId, &localconf.ChainMakerConfig.StorageConfig, storeLogger); err != nil {
+		bc.chainId, config, storeLogger); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -347,10 +354,10 @@ func (bc *Blockchain) initVM() (err error) {
 	var vmFactory vm.Factory
 	if bc.netService == nil {
 		bc.vmMgr = vmFactory.NewVmManager(
-			localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
+			localconf.ChainMakerConfig.GetStorePath(), bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
 	} else {
 		bc.vmMgr = vmFactory.NewVmManager(
-			localconf.ChainMakerConfig.StorageConfig.StorePath,
+			localconf.ChainMakerConfig.GetStorePath(),
 			bc.ac,
 			bc.netService.GetChainNodesInfoProvider(),
 			bc.chainConf,

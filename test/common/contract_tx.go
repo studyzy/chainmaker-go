@@ -60,13 +60,21 @@ func userKeyPath() string {
 func userCrtPath() string {
 	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/client1/client1.sign.crt"
 }
+
+func adminCrtPath() string {
+	return certPathPrefix + "/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt"
+}
+
 func CreateContract(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, chainId string, contractName string, wasmPath string,
 	runtimeType commonPb.RuntimeType) string {
 
 	txId := utils.GetRandTxId()
 	fmt.Printf("\n============ create contract %s [%s] ============\n", contractName, txId)
 
-	wasmBin, _ := ioutil.ReadFile(wasmPath)
+	wasmBin, err := ioutil.ReadFile(wasmPath)
+	if err != nil {
+		panic(err)
+	}
 	payload, _ := utils.GenerateInstallContractPayload(contractName, "1.2.1", runtimeType, wasmBin, nil)
 
 	resp := ProposalRequest(sk3, client, commonPb.TxType_INVOKE_CONTRACT,
@@ -190,6 +198,7 @@ func ProposalMultiRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, tx
 	req.Sender.Signature = signBytes
 	fmt.Printf("client signed tx request sender:%+v,\nendorsers:%+v\n", req.Sender, req.Endorsers)
 	result, err := (*client).SendRequest(ctx, req)
+	//result, err := client.SendRequest(ctx, req)
 
 	if err != nil {
 		statusErr, ok := status.FromError(err)
@@ -203,6 +212,8 @@ func ProposalMultiRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, tx
 	return result
 
 }
+
+
 func ProposalRequest(sk3 crypto.PrivateKey, client *apiPb.RpcNodeClient, txType commonPb.TxType,
 	chainId, txId string, payload *commonPb.Payload, orgIdList []int) *commonPb.TxResponse {
 	return ProposalMultiRequest(sk3, client, txType, chainId, txId, payload, orgIdList, time.Now().Unix())

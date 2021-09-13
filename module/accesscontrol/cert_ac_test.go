@@ -10,7 +10,7 @@ package accesscontrol
 import (
 	"testing"
 
-	logger2 "chainmaker.org/chainmaker-go/logger"
+	logger2 "chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
@@ -293,4 +293,17 @@ func testGetValidEndorsements(provider protocol.AccessControlProvider,
 		return nil, err
 	}
 	return test1CertACProvider.(*certACProvider).GetValidEndorsements(principal)
+}
+
+func TestVerifyRelatedMaterial(t *testing.T) {
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
+	certProvider, err := newCertACProvider(testChainConfig, testOrg1, nil, logger)
+	require.Nil(t, err)
+	require.NotNil(t, certProvider)
+	isRevoked, err := certProvider.VerifyRelatedMaterial(pbac.VerifyType_CRL, []byte(""))
+	require.NotNil(t, err)
+	require.Equal(t, false, isRevoked)
+	certProvider.VerifyRelatedMaterial(pbac.VerifyType_CRL, []byte(testCRL))
+	require.NotNil(t, err)
+	require.Equal(t, false, isRevoked)
 }

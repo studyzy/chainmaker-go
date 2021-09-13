@@ -11,7 +11,7 @@ package verifier
 //	"chainmaker.org/chainmaker/common/v2/crypto/hash"
 //	"chainmaker.org/chainmaker/common/v2/msgbus"
 //	"chainmaker.org/chainmaker-go/core/cache"
-//	"chainmaker.org/chainmaker-go/logger"
+//	"chainmaker.org/chainmaker/logger/v2"
 //	"chainmaker.org/chainmaker/protocol/v2/mock"
 //	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 //	configpb "chainmaker.org/chainmaker/pb-go/v2/config"

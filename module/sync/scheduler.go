@@ -13,7 +13,7 @@ import (
 	"sort"
 	"time"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 	syncPb "chainmaker.org/chainmaker/pb-go/v2/sync"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/Workiva/go-datastructures/queue"

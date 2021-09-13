@@ -13,7 +13,7 @@ import (
 	"os"
 	"sync"
 
-	rootLog "chainmaker.org/chainmaker-go/logger"
+	rootLog "chainmaker.org/chainmaker/logger/v2"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"

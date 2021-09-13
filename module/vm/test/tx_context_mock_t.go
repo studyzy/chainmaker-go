@@ -21,11 +21,11 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/vm"
 	"chainmaker.org/chainmaker-go/wasmer"
 	wasm "chainmaker.org/chainmaker-go/wasmer/wasmer-go"
 	"chainmaker.org/chainmaker-go/wxvm/xvm"
+	"chainmaker.org/chainmaker/logger/v2"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
@@ -377,6 +377,18 @@ func BaseParam(parameters map[string][]byte) {
 }
 
 type mockBlockchainStore struct {
+}
+
+func (m mockBlockchainStore) CreateDatabase(contractName string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) DropDatabase(contractName string) error {
+	panic("implement me")
+}
+
+func (m mockBlockchainStore) GetContractDbName(contractName string) string {
+	panic("implement me")
 }
 
 func (m mockBlockchainStore) GetMemberExtraData(member *acPb.Member) (*acPb.MemberExtraData, error) {

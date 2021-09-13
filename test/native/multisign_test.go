@@ -1,10 +1,10 @@
-package native
+package native_test1
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
-	"strings"
 	"testing"
 	"time"
 
@@ -17,7 +17,6 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -33,7 +32,7 @@ func TestInstallContractMultiSignReq(t *testing.T) {
 }
 func TestInstallContractMultiSignVote(t *testing.T) {
 	isRandTxId = false
-	timestamp = 1628771607
+	timestamp = 1630396944
 	txId = "b93bc2c1ac2d42398d8d90a414e1f3c03544defe9cb345578f970a7d51f7877a"
 	testMultiSignVote(t, 2, txId, syscontract.ContractManageFunction_INIT_CONTRACT.String())
 }
@@ -66,10 +65,7 @@ func TestMultiSignAll(t *testing.T) {
 	testPermissionAddMultiSign(t)
 	testPermissionUpdateMultiSign(t)
 	testPermissionDeleteMultiSign(t)
-
 }
-
-var builder strings.Builder
 
 func testMultiSignReq(t *testing.T, method string) {
 	common.SetCertPathPrefix(certPathPrefix)
@@ -82,7 +78,7 @@ func testMultiSignReq(t *testing.T, method string) {
 	//builder.Write([]byte("b93bc2c1ac2d42398d8d90a414e1f3c03544defe9cb345578f970a7d51f7877"))
 	//builder.WriteByte(idFlag)
 	//
-
+	//sk, _ := native.GetUserSK(1)
 	log.Printf("Req txId:%s\n", txId)
 	var pairs1 []*commonPb.KeyValuePair
 	switch method {
@@ -127,11 +123,11 @@ func testMultiSignReq(t *testing.T, method string) {
 	case syscontract.ChainConfigFunction_PERMISSION_DELETE.String():
 		pairs1 = initPermissionDeletePairs()
 		//case syscontract.CertManageFunction_CERTS_DELETE.String():
-		//	payload = initCertDeletePairs()
+		// payload = initCertDeletePairs()
 		//case syscontract.CertManageFunction_CERTS_UNFREEZE.String():
-		//	payload = initCertUnfreezePairs()
+		// payload = initCertUnfreezePairs()
 		//case syscontract.CertManageFunction_CERTS_REVOKE.String():
-		//	payload = initCertRevokePairs()
+		// payload = initCertRevokePairs()
 	}
 	payload := &commonPb.Payload{
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
@@ -141,8 +137,10 @@ func testMultiSignReq(t *testing.T, method string) {
 		TxId:         txId,
 		ChainId:      CHAIN1,
 	}
-	resp := common.ProposalMultiRequest(sk3, &client, payload.TxType,
-		CHAIN1, payload.TxId, payload, []int{1}, timestamp)
+	//resp := common.ProposalMultiRequest(sk3, &client, payload.TxType,
+	//CHAIN1, payload.TxId, payload, []int{1,2,3,4}, timestamp)
+	resp := common.ProposalRequest(sk3, &client, commonPb.TxType_INVOKE_CONTRACT,
+		CHAIN1, txId, payload, []int{1})
 	fmt.Println("testMultiSignReq timestamp", timestamp)
 	fmt.Println(resp)
 
@@ -153,7 +151,9 @@ func testMultiSignVote(t *testing.T, memberNum int, Id string, method string) {
 	log.Printf("timestamp:%d\n", timestamp)
 	common.SetCertPathPrefix(certPathPrefix)
 	log.Printf("memberNum:%d\n", memberNum)
+	//sk, _ := native.GetUserSK(memberNum)
 	var pairs1 []*commonPb.KeyValuePair
+	//sk, _ := native.GetUserSK(1)
 	switch method {
 	case syscontract.ContractManageFunction_INIT_CONTRACT.String():
 		pairs1 = initContractInitPairs() //构造交易发起pairs1
@@ -199,7 +199,7 @@ func testMultiSignVote(t *testing.T, memberNum int, Id string, method string) {
 	payload1 := &commonPb.Payload{
 		TxType:       commonPb.TxType_INVOKE_CONTRACT,
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
-		Method:       syscontract.MultiSignFunction_VOTE.String(),
+		Method:       syscontract.MultiSignFunction_REQ.String(),
 		Parameters:   pairs1,
 		TxId:         txId,
 		ChainId:      CHAIN1,
@@ -237,10 +237,13 @@ func testMultiSignVote(t *testing.T, memberNum int, Id string, method string) {
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_VOTE.String(),
 		Parameters:   pairs,
+		ChainId:      CHAIN1,
 	}
 
-	resp := common.ProposalMultiRequest(sk3, &client, payload.TxType,
-		CHAIN1, "", payload, nil, time.Now().Unix())
+	//resp := common.ProposalMultiRequest(sk3, &client, payload.TxType,
+	// CHAIN1, "", payload, nil, time.Now().Unix())
+	resp := common.ProposalRequest(sk3, &client, commonPb.TxType_INVOKE_CONTRACT,
+		CHAIN1, "", payload, nil)
 
 	fmt.Println(resp)
 }
@@ -248,7 +251,7 @@ func testMultiSignVote(t *testing.T, memberNum int, Id string, method string) {
 func testMultiSignQuery(t *testing.T, Id string, method string) {
 	txId = Id
 	common.SetCertPathPrefix(certPathPrefix)
-
+	//sk, _ := native.GetAdminSK(1)
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   syscontract.MultiVote_TX_ID.String(),
@@ -261,6 +264,7 @@ func testMultiSignQuery(t *testing.T, Id string, method string) {
 		ContractName: syscontract.SystemContract_MULTI_SIGN.String(),
 		Method:       syscontract.MultiSignFunction_QUERY.String(),
 		Parameters:   pairs,
+		ChainId:      CHAIN1,
 	}
 
 	resp := common.ProposalRequest(sk3, &client, payload.TxType,
@@ -547,15 +551,15 @@ func testPermissionDeleteMultiSign(t *testing.T) {
 }
 
 //func TestCertAdd(t *testing.T) {
-//	timestamp = time.Now().Unix()
-//	testMultiSignReq(t,syscontract.CertManageFunction_CERT_ADD.String())
-//	time.Sleep(4 * time.Second)
+// timestamp = time.Now().Unix()
+// testMultiSignReq(t,syscontract.CertManageFunction_CERT_ADD.String())
+// time.Sleep(4 * time.Second)
 //
-//	for i := 2; i < 5; i++ {
-//		testMultiSignVote(t, i, txId,syscontract.CertManageFunction_CERT_ADD.String())
-//	}
-//	time.Sleep(4 * time.Second)
-//	testMultiSignQuery(t, txId,syscontract.CertManageFunction_CERT_ADD.String())
+// for i := 2; i < 5; i++ {
+//    testMultiSignVote(t, i, txId,syscontract.CertManageFunction_CERT_ADD.String())
+// }
+// time.Sleep(4 * time.Second)
+// testMultiSignQuery(t, txId,syscontract.CertManageFunction_CERT_ADD.String())
 //}
 
 func initCoreUpdatePairs() []*commonPb.KeyValuePair {
@@ -928,7 +932,10 @@ func initPermissionDeletePairs() []*commonPb.KeyValuePair {
 }
 
 func initContractInitPairs() []*commonPb.KeyValuePair {
-	wasmBin, _ := ioutil.ReadFile(WasmPath)
+	wasmBin, err := ioutil.ReadFile(WasmPath)
+	if err != nil {
+		panic(err)
+	}
 	pairs := []*commonPb.KeyValuePair{
 		{
 			Key:   syscontract.MultiReq_SYS_CONTRACT_NAME.String(),

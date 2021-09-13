@@ -14,7 +14,7 @@ import (
 	"os"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 )
 
 var certCaFilename = "testdata/remote_attestation/enclave_cacert.crt"

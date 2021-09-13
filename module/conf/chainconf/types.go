@@ -16,10 +16,8 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"chainmaker.org/chainmaker-go/localconf"
-
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker/common/v2/helper"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
@@ -133,13 +131,14 @@ func VerifyChainConfig(cconfig *config.ChainConfig) (*ChainConfig, error) {
 	}
 
 	if cconfig.Contract.EnableSqlSupport {
-		provider := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.Provider
-		if provider != "sql" {
-			chainLog.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql,"+
-				" but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true",
-				provider, provider)
-			return nil, errors.New("chain config error")
-		}
+		//TODO: Devin
+		//provider := localconf.ChainMakerConfig.StorageConfig.StateDbConfig.Provider
+		//if provider != "sql" {
+		//	chainLog.Errorf("chain config error: chain config sql is enable, expect chainmaker config provider is sql,"+
+		//		" but got %s. current config: storage.statedb_config.provider = %s, contract.enable_sql_support = true",
+		//		provider, provider)
+		//	return nil, errors.New("chain config error")
+		//}
 		if cconfig.Consensus.Type == consensus.ConsensusType_HOTSTUFF {
 			chainLog.Errorf("chain config error: chain config sql is enable, expect consensus tbft/raft/solo,"+
 				" but got %s. current config: consensus.type = %s, contract.enable_sql_support = true",

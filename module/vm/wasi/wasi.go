@@ -16,14 +16,13 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/logger"
-	"chainmaker.org/chainmaker-go/store/statedb/statesqldb"
-	"chainmaker.org/chainmaker-go/store/types"
 	"chainmaker.org/chainmaker/common/v2/crypto/bulletproofs"
 	"chainmaker.org/chainmaker/common/v2/crypto/paillier"
 	"chainmaker.org/chainmaker/common/v2/serialize"
+	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/store/v2/types"
 	"chainmaker.org/chainmaker/utils/v2"
 )
 
@@ -709,7 +708,8 @@ func (w *WacsiImpl) ExecuteQuery(requestBody []byte, contractName string, txSimC
 		if err != nil {
 			return fmt.Errorf("[execute query] get db transaction error, [%s]", err.Error())
 		}
-		changeCurrentDB(chainId, contractName, transaction)
+		dbName := txSimContext.GetBlockchainStore().GetContractDbName(contractName)
+		changeCurrentDB(chainId, dbName, transaction)
 		rows, err = transaction.QueryMulti(sql)
 		if err != nil {
 			return fmt.Errorf("[execute query] query multi error, [%s]", err.Error())
@@ -753,7 +753,8 @@ func (w *WacsiImpl) ExecuteQueryOne(requestBody []byte, contractName string, txS
 			if err != nil {
 				return nil, fmt.Errorf("[execute query one] get db transaction error, [%s]", err.Error())
 			}
-			changeCurrentDB(chainId, contractName, transaction)
+			dbName := txSimContext.GetBlockchainStore().GetContractDbName(contractName)
+			changeCurrentDB(chainId, dbName, transaction)
 			row, err = transaction.QuerySingle(sql)
 			if err != nil {
 				return nil, fmt.Errorf("[execute query one] query single error, [%s]", err.Error())
@@ -895,7 +896,8 @@ func (w *WacsiImpl) ExecuteUpdate(requestBody []byte, contractName string, metho
 	}
 
 	// execute
-	changeCurrentDB(chainId, contractName, transaction)
+	dbName := txSimContext.GetBlockchainStore().GetContractDbName(contractName)
+	changeCurrentDB(chainId, dbName, transaction)
 	affectedCount, err := transaction.ExecSql(sql)
 	if err != nil {
 		return fmt.Errorf("[execute update] execute error, [%s], sql[%s]", err.Error(), sql)
@@ -933,8 +935,7 @@ func (w *WacsiImpl) isManageContract(method string) bool {
 	return method == protocol.ContractInitMethod || method == protocol.ContractUpgradeMethod
 }
 
-func changeCurrentDB(chainId string, contractName string, transaction protocol.SqlDBTransaction) {
-	dbName := statesqldb.GetContractDbName(chainId, contractName)
+func changeCurrentDB(chainId string, dbName string, transaction protocol.SqlDBTransaction) {
 	//currentDbName := getCurrentDb(chainId)
 	//if contractName != "" && dbName != currentDbName {
 	_ = transaction.ChangeContextDb(dbName)
