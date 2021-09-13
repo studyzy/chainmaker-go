@@ -19,10 +19,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/json"
+	"chainmaker.org/chainmaker/localconf/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"

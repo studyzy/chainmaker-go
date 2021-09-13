@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 )

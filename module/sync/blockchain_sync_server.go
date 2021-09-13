@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"

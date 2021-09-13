@@ -13,10 +13,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/localconf/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	txpoolPb "chainmaker.org/chainmaker/pb-go/v2/txpool"

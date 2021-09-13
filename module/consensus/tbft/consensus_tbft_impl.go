@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
