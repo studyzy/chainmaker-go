@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
 	"chainmaker.org/chainmaker/logger/v2"

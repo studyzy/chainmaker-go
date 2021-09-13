@@ -3,9 +3,9 @@ module chainmaker.org/chainmaker-go/txpool
 go 1.15
 
 require (
-	chainmaker.org/chainmaker-go/chainconf v0.0.0
 	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2

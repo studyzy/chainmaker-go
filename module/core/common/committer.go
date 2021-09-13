@@ -8,8 +8,8 @@ package common
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"

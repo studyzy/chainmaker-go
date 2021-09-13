@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/vm/native/common"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/common/v2/sortedmap"
 	acPb "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
