@@ -16,8 +16,8 @@ import (
 
 	"chainmaker.org/chainmaker/protocol/v2/test"
 
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	configpb "chainmaker.org/chainmaker/pb-go/v2/config"

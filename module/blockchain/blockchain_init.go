@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/consensus/dpos"
 	"chainmaker.org/chainmaker-go/core"
@@ -26,6 +25,7 @@ import (
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
 	"chainmaker.org/chainmaker-go/vm"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"

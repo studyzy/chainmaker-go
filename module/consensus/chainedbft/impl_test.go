@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/consensus_mock"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/liveness"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
