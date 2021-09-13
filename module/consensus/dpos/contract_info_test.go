@@ -216,18 +216,18 @@ func createUndelegationEntries() []*syscontract.UnbondingDelegation {
 //
 //	var storeFactory store.Factory
 //	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, "test-chain")
-//	testStore, err := storeFactory.NewStore("test-chain", &localconf.StorageConfig{
+//	testStore, err := storeFactory.NewStore("test-chain", &conf.StorageConfig{
 //		StorePath:              "test/data",
 //		DisableContractEventDB: true,
-//		StateDbConfig: &localconf.DbConfig{
+//		StateDbConfig: &conf.DbConfig{
 //			Provider:      "leveldb",
 //			LevelDbConfig: &localconf.LevelDbConfig{StorePath: "test/state"},
 //		},
-//		BlockDbConfig: &localconf.DbConfig{
+//		BlockDbConfig: &conf.DbConfig{
 //			Provider:      "leveldb",
 //			LevelDbConfig: &localconf.LevelDbConfig{StorePath: "test/block"},
 //		},
-//		ResultDbConfig: &localconf.DbConfig{
+//		ResultDbConfig: &conf.DbConfig{
 //			Provider:      "leveldb",
 //			LevelDbConfig: &localconf.LevelDbConfig{StorePath: "test/result"},
 //		},
