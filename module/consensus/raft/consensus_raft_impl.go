@@ -513,6 +513,7 @@ func (consensus *ConsensusRaftImpl) publishSnapshot(snapshot raftpb.Snapshot) {
 
 	snapshotData := &SnapshotHeight{}
 	json.Unmarshal(snapshot.Data, snapshotData)
+
 	for {
 		// Loop until catch up to snapshotData.Height from Sync module
 		current, _ := consensus.ledgerCache.CurrentHeight()
