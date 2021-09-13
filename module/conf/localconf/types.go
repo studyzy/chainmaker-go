@@ -8,6 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 package localconf
 
 import (
+	"time"
+
 	"chainmaker.org/chainmaker-go/logger"
 )
 
@@ -348,8 +350,9 @@ type pprofConfig struct {
 }
 
 type raftConfig struct {
-	SnapCount    uint64 `mapstructure:"snap_count"`
-	AsyncWalSave bool   `mapstructure:"async_wal_save"`
+	SnapCount    uint64        `mapstructure:"snap_count"`
+	AsyncWalSave bool          `mapstructure:"async_wal_save"`
+	Ticker       time.Duration `mapstructure:"ticker"`
 }
 
 type ConsensusConfig struct {
