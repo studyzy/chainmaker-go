@@ -43,6 +43,7 @@ function check_env() {
 
 function build() {
     cd $PROJECT_PATH
+    echo "build chainmaker ${PROJECT_PATH}..."
     make
 }
 
@@ -54,7 +55,8 @@ function package() {
 
     mkdir -p $RELEASE_PATH
     cd $RELEASE_PATH
-    tar -zcvf crypto-config-$DATETIME.tar.gz ../crypto-config
+    echo "tar zcf crypto-config..."
+    tar -zcf crypto-config-$DATETIME.tar.gz ../crypto-config
 
     c=0
     for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
@@ -86,7 +88,8 @@ function package() {
         xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/stop.sh
         xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/restart.sh
         xsed "s%{org_id}%$file%g"         $chainmaker_file/bin/run.sh
-        tar -zcvf chainmaker-$VERSION-$file-$DATETIME-$PLATFORM.tar.gz $chainmaker_file
+        echo "tar zcf ${chainmaker_file}..."
+        tar -zcf chainmaker-$VERSION-$file-$DATETIME-$PLATFORM.tar.gz $chainmaker_file
         rm -rf $chainmaker_file
     done
 }
