@@ -14,7 +14,6 @@ import (
 
 	"chainmaker.org/chainmaker-go/blockchain"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker-go/vm/native"
 	commonErr "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
@@ -24,6 +23,7 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/store/v2/archive"
 	"chainmaker.org/chainmaker/utils/v2"
+	native "chainmaker.org/chainmaker/vm-native"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/time/rate"
 )

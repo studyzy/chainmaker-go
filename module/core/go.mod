@@ -23,18 +23,9 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
-	chainmaker.org/chainmaker-go/chainconf => ./../conf/chainconf
 	chainmaker.org/chainmaker-go/consensus => ../consensus
 	chainmaker.org/chainmaker-go/consensus/dpos => ./../consensus/dpos
-	chainmaker.org/chainmaker-go/evm => ../vm/evm
-	chainmaker.org/chainmaker-go/gasm => ../vm/gasm
-	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
 
 	chainmaker.org/chainmaker-go/monitor => ../monitor
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
-
-	chainmaker.org/chainmaker-go/vm => ../vm
-	chainmaker.org/chainmaker-go/wasi => ../vm/wasi
-	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
-	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
 )

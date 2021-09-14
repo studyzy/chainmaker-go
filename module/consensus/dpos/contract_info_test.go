@@ -11,7 +11,7 @@ import (
 	"math/big"
 	"testing"
 
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 

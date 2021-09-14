@@ -11,7 +11,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	native "chainmaker.org/chainmaker-go/vm/native/dposmgr"
+	native "chainmaker.org/chainmaker/vm-native/dposmgr"
 	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
