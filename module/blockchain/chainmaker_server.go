@@ -329,7 +329,10 @@ func (server *ChainMakerServer) GetBlockchain(chainId string) (*Blockchain, erro
 func (server *ChainMakerServer) GetAllAC() ([]protocol.AccessControlProvider, error) {
 	var accessControls []protocol.AccessControlProvider
 	server.blockchains.Range(func(_, value interface{}) bool {
-		blockchain := value.(*Blockchain)
+		blockchain, ok := value.(*Blockchain)
+		if !ok {
+			panic("invalid blockchain obj")
+		}
 		accessControls = append(accessControls, blockchain.GetAccessControl())
 		return true
 	})
