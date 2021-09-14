@@ -49,30 +49,30 @@ func (pp *pkACProvider) NewPkProvider(chainConf protocol.ChainConf, localOrgId s
 	return pkACProvider, nil
 }
 
-func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
-	store protocol.BlockchainStore, log protocol.Logger) (*certACProvider, error) {
-	pkACProvider := &pkACProvider{
-		hashType:   chainConfig.GetCrypto().Hash,
-		localOrg: nil,
-		log:      log,
-		authType:
-	}
-	certACProvider.acService = initAccessControlService(certACProvider.hashType, localOrgId, chainConfig, store, log)
-
-	err := certACProvider.initTrustRoots(chainConfig.TrustRoots, localOrgId)
-	if err != nil {
-		return nil, err
-	}
-
-	certACProvider.opts.KeyUsages = make([]x509.ExtKeyUsage, 1)
-	certACProvider.opts.KeyUsages[0] = x509.ExtKeyUsageAny
-
-	if err := certACProvider.loadCRL(); err != nil {
-		return nil, err
-	}
-
-	if err := certACProvider.loadCertFrozenList(); err != nil {
-		return nil, err
-	}
-	return certACProvider, nil
-}
+//func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
+//	store protocol.BlockchainStore, log protocol.Logger) (*certACProvider, error) {
+//	pkACProvider := &pkACProvider{
+//		hashType:   chainConfig.GetCrypto().Hash,
+//		localOrg: nil,
+//		log:      log,
+//		authType:
+//	}
+//	certACProvider.acService = initAccessControlService(certACProvider.hashType, localOrgId, chainConfig, store, log)
+//
+//	err := certACProvider.initTrustRoots(chainConfig.TrustRoots, localOrgId)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	certACProvider.opts.KeyUsages = make([]x509.ExtKeyUsage, 1)
+//	certACProvider.opts.KeyUsages[0] = x509.ExtKeyUsageAny
+//
+//	if err := certACProvider.loadCRL(); err != nil {
+//		return nil, err
+//	}
+//
+//	if err := certACProvider.loadCertFrozenList(); err != nil {
+//		return nil, err
+//	}
+//	return certACProvider, nil
+//}

@@ -14,6 +14,18 @@ import (
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
+// chain authentication mode
+type AuthType uint32
+
+const (
+	//permissioned with certificate
+	PermissionedWithCert AuthType = iota + 1
+
+	//
+	PermissionedWithKey
+	Public
+)
+
 func init() {
 	RegisterACProvider(pbac.MemberType_CERT.String(), NilCertACProvider)
 	RegisterACProvider(pbac.MemberType_CERT_HASH.String(), NilCertACProvider)
