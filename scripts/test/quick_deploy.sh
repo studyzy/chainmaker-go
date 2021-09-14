@@ -22,15 +22,15 @@ PROJECT_PATH=$(dirname "${SCRIPT_PATH}")
 function start_chainmaker() {
   cd $SCRIPT_PATH
   ./cluster_quick_stop.sh clean
-  echo -e "\n\ngenerate certs and config..."
+  echo -e "\n\n【generate】 certs and config..."
   echo -e "\nINFO\n" | ./prepare.sh 4 2
-  echo -e "\n\nbuild release..."
+  echo -e "\n\n【build】 release..."
   ./build_release.sh
-  echo -e "\n\nstart chainmaker..."
+  echo -e "\n\n【start】 chainmaker..."
   ./cluster_quick_start.sh normal
   sleep 1
 
-  echo "chainmaker process..."
+  echo "【chainmaker】 process..."
   ps -ef | grep chainmaker
   chainmaker_count=$(ps -ef | grep chainmaker | wc -l)
   if [ $chainmaker_count -lt 4 ]; then
@@ -40,12 +40,12 @@ function start_chainmaker() {
 
   # backups *.gz
   cd $PROJECT_PATH/build
-  mkdir bak
+  mkdir -p bak
   mv release/*.gz bak/
 }
 start_chainmaker
 
 cd $CURRENT_PATH
-./prepare_cmd.sh alreadyBuild
+./prepare_cmc.sh alreadyBuild
 cd $CURRENT_PATH
 ./cmc_test.sh alreadyBuild

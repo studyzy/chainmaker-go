@@ -370,9 +370,10 @@ func (r *CertManageRuntime) Revoke(txSimContext protocol.TxSimContext, params ma
 	var crls []*pkix.CertificateList
 
 	for crlPEM != nil {
-		crl, err1 := x509.ParseCRL(crlStr)
-		if err1 != nil {
-			continue
+		crl, err := x509.ParseCRL(crlPEM.Bytes)
+		if err != nil {
+			r.log.Errorf("certManage parse crl failed err: ", err.Error())
+			return nil, err
 		}
 		crlPEM, rest = pem.Decode(rest)
 		crls = append(crls, crl)
