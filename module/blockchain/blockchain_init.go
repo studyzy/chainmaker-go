@@ -362,7 +362,7 @@ func (bc *Blockchain) initVM() (err error) {
 			bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
 	} else {
 		bc.vmMgr = vm.NewVmManager(wasmer.NewVmPoolManager(bc.chainId), &evm.InstancesManager{},
-			&gasm.InstancesManager{}, &wxvm.InstancesManager{},	localconf.ChainMakerConfig.GetStorePath(),
+			&gasm.InstancesManager{}, &wxvm.InstancesManager{}, localconf.ChainMakerConfig.GetStorePath(),
 			bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}

@@ -22,7 +22,7 @@ require (
 	chainmaker.org/chainmaker/vm v0.0.0-20210914071724-6c8d9d637fc3 // indirect
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210914075919-6899e681474a // indirect
 	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210914080309-c93c4afc11e8 // indirect
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914070828-8f5e35d8e4e1 // indirect
+	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914083029-4f71531d1f83 // indirect
 	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210914075731-ec7bc0766d57 // indirect
 	github.com/mitchellh/mapstructure v1.4.1
 )
