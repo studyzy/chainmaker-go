@@ -13,12 +13,12 @@ SCRIPT_PATH=$(dirname "${CURRENT_PATH}")
 PROJECT_PATH=$(dirname "${SCRIPT_PATH}")
 
 if [ "${alreadyBuild}" != "true" ]; then
-  echo "build cmc start..."
+  echo "【build】 cmc start..."
   cd $PROJECT_PATH
   make cmc
 fi
 
-
+echo "【prepare】 cmc cert and sdk..."
 cd $PROJECT_PATH/bin
 pwd
 rm -rf testdata
