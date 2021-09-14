@@ -511,7 +511,8 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 		if consensus.heightRoundVoteSet != nil && consensus.heightRoundVoteSet.precommits(consensus.Round) != nil {
 			voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
 			quorumHash, ok := voteSet.twoThirdsMajority()
-			if ok && bytes.Compare(quorumHash, consensus.VerifingProposal.Block.Header.BlockHash) == 0 {
+			//if ok && bytes.Compare(quorumHash, consensus.VerifingProposal.Block.Header.BlockHash) == 0 {
+			if ok && bytes.Equal(quorumHash, consensus.VerifingProposal.Block.Header.BlockHash) {
 				consensus.Proposal = consensus.VerifingProposal
 				if !replayMode {
 					consensus.saveWalEntry(consensus.Proposal)
@@ -878,7 +879,8 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 	// Upon >2/3 prevotes, Step into StepPrecommit
 	if consensus.Proposal != nil {
 		if !bytes.Equal(hash, consensus.Proposal.Block.Header.BlockHash) {
-			consensus.logger.Warnf("[%s](%d/%d/%s) block matched failed, receive valid block: %x, but unmatched with proposal: %x",
+			consensus.logger.Warnf("[%s](%d/%d/%s) block matched failed, receive valid block: %x,"+
+				"but unmatched with proposal: %x",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, hash, consensus.Proposal.Block.Header.BlockHash)
 		}
 		consensus.enterPrecommit(consensus.Height, consensus.Round)
