@@ -7,7 +7,10 @@ SPDX-License-Identifier: Apache-2.0
 
 package accesscontrol
 
-import "chainmaker.org/chainmaker/protocol/v2"
+import (
+	"chainmaker.org/chainmaker/protocol/v2"
+	"fmt"
+)
 
 type AcFactory struct {
 }
@@ -19,8 +22,13 @@ func ACFactory() *AcFactory {
 	return acInstance
 }
 
-func (af *AcFactory) NewACProvider(memberType string, chainConf protocol.ChainConf, localOrgId string,
+func (af *AcFactory) NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
-	p := NewACProviderByMemberType(memberType)
+
+	authType, ok := StringToAuthTypeMap[chainConf.ChainConfig().AuthType]
+	if !ok {
+		return nil, fmt.Errorf("new ac provider failed, invalid auth type in chain config")
+	}
+	p := NewACProviderByMemberType(authType)
 	return p.NewACProvider(chainConf, localOrgId, store, log)
 }

@@ -286,7 +286,7 @@ func (bc *Blockchain) initAC() (err error) {
 	//	return
 	//}
 	acFactory := accesscontrol.ACFactory()
-	bc.ac, err = acFactory.NewACProvider("CERT", bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
+	bc.ac, err = acFactory.NewACProvider(bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
 		bc.log.Errorf("get organization information failed, %s", err.Error())
 		return

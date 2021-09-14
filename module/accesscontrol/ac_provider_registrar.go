@@ -10,7 +10,6 @@ package accesscontrol
 import (
 	"reflect"
 
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
@@ -18,38 +17,53 @@ import (
 type AuthType uint32
 
 const (
-	//permissioned with certificate
+	// permissioned with certificate
 	PermissionedWithCert AuthType = iota + 1
 
-	//
+	// permissioned with public key
 	PermissionedWithKey
+
+	// public key
 	Public
 )
 
-func init() {
-	RegisterACProvider(pbac.MemberType_CERT.String(), NilCertACProvider)
-	RegisterACProvider(pbac.MemberType_CERT_HASH.String(), NilCertACProvider)
+var AuthTypeToStringMap = map[AuthType]string{
+	PermissionedWithCert: "permissionedWithCert",
+	PermissionedWithKey:  "permissionedWithKey",
+	Public:               "public",
 }
 
-var acProviderRegistry = map[string]reflect.Type{}
+var StringToAuthTypeMap = map[string]AuthType{
+	"permissionedWithCert": PermissionedWithCert,
+	"permissionedWithKey":  PermissionedWithKey,
+	"public":               Public,
+}
+
+func init() {
+	RegisterACProvider(PermissionedWithCert, NilCertACProvider)
+	RegisterACProvider(PermissionedWithKey, NilPermissionedPkACProvider)
+	RegisterACProvider(Public, NilPkACProvider)
+}
+
+var acProviderRegistry = map[AuthType]reflect.Type{}
 
 type ACProvider interface {
 	NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 		store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error)
 }
 
-func RegisterACProvider(memberType string, acp ACProvider) {
-	_, found := acProviderRegistry[memberType]
+func RegisterACProvider(authType AuthType, acp ACProvider) {
+	_, found := acProviderRegistry[authType]
 	if found {
-		panic("accesscontrol provider[" + memberType + "] already registered!")
+		panic("accesscontrol provider[" + AuthTypeToStringMap[authType] + "] already registered!")
 	}
-	acProviderRegistry[memberType] = reflect.TypeOf(acp)
+	acProviderRegistry[authType] = reflect.TypeOf(acp)
 }
 
-func NewACProviderByMemberType(memberType string) ACProvider {
-	t, found := acProviderRegistry[memberType]
+func NewACProviderByMemberType(authType AuthType) ACProvider {
+	t, found := acProviderRegistry[authType]
 	if !found {
-		panic("accesscontrol provider[" + memberType + "] not found!")
+		panic("accesscontrol provider[" + AuthTypeToStringMap[authType] + "] not found!")
 	}
 	return reflect.New(t).Elem().Interface().(ACProvider)
 }
