@@ -8,11 +8,12 @@ SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
-	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
 
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 
