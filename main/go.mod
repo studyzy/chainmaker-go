@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0-00010101000000-000000000000
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
