@@ -49,7 +49,9 @@ func createGMVerifyPeerCertificateFunc(
 	}
 }
 
-func isRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) (bool, error) {
+func isRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]byte,
+	verifiedChains [][]*x509.Certificate) (bool, error) {
+
 	members := make([]*pbac.Member, 0)
 	for idx := range rawCerts {
 		m := &pbac.Member{
@@ -85,7 +87,9 @@ func isRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]byt
 	return checkMemberStatusIsRevoked(accessControls, members)
 }
 
-func isGMRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]byte, verifiedChains [][]*cmx509.Certificate) (bool, error) {
+func isGMRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]byte,
+	verifiedChains [][]*cmx509.Certificate) (bool, error) {
+
 	members := make([]*pbac.Member, 0)
 	for idx := range rawCerts {
 		m := &pbac.Member{
@@ -126,7 +130,9 @@ func isGMRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]b
 }
 
 // ValidateMemberStatus check the status of members.
-func checkMemberStatusIsRevoked(accessControls []protocol.AccessControlProvider, members []*pbac.Member) (bool, error) {
+func checkMemberStatusIsRevoked(accessControls []protocol.AccessControlProvider,
+	members []*pbac.Member) (bool, error) {
+
 	var err error
 
 	for _, ac := range accessControls {
