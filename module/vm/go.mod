@@ -4,13 +4,13 @@ go 1.15
 
 require (
 	chainmaker.org/chainmaker-go/accesscontrol v0.0.0
-	chainmaker.org/chainmaker-go/chainconf v0.0.0
 	chainmaker.org/chainmaker-go/evm v0.0.0
 	chainmaker.org/chainmaker-go/gasm v0.0.0
-	chainmaker.org/chainmaker-go/localconf v0.0.0
 	chainmaker.org/chainmaker-go/wasmer v0.0.0
 	chainmaker.org/chainmaker-go/wxvm v0.0.0
+	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
 	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210910112253-04256ae9c5ed
@@ -30,10 +30,8 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
-	chainmaker.org/chainmaker-go/chainconf => ../conf/chainconf
 	chainmaker.org/chainmaker-go/evm => ./evm
 	chainmaker.org/chainmaker-go/gasm => ./gasm
-	chainmaker.org/chainmaker-go/localconf => ../conf/localconf
 	chainmaker.org/chainmaker-go/wasi => ./wasi
 	chainmaker.org/chainmaker-go/wasmer => ./wasmer
 	chainmaker.org/chainmaker-go/wxvm => ./wxvm

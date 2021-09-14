@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
