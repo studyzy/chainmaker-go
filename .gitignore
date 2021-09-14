@@ -6,14 +6,12 @@ main/__debug_bin
 main/main
 module/store/store
 ./log
-module/vm/main
 .idea
 **/*.exe
 **/*.log
 release
 bin
 *.log.*
-/module/vm/wasm/wasmer/wasmer_runtime_c_api.dll
 /config/
 /config-sql/
 **/crypto-config/
@@ -28,7 +26,6 @@ tools/cmc/cmc
 /data/
 /log/
 .DS_Store
-/module/vm/test/*/tmp/
 nohup.out
 main/chainmaker
 vendor
