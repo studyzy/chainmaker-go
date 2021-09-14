@@ -17,9 +17,9 @@ import (
 	"strconv"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/vm/native/common"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	"chainmaker.org/chainmaker/localconf/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
 	storage "chainmaker.org/chainmaker/pb-go/v2/store"

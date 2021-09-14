@@ -13,10 +13,10 @@ import (
 	"fmt"
 
 	"chainmaker.org/chainmaker-go/blockchain"
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/vm/native"
 	commonErr "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"

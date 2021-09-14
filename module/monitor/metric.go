@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
