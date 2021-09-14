@@ -19,7 +19,7 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210914063622-6f007edc3a98
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20210913121309-9387122bc431
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
-	chainmaker.org/chainmaker/vm v0.0.0-20210914071724-6c8d9d637fc3 // indirect
+	chainmaker.org/chainmaker/vm v0.0.0-20210914114029-6004e1ebd15e // indirect
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210914075919-6899e681474a // indirect
 	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210914080309-c93c4afc11e8 // indirect
 	chainmaker.org/chainmaker/vm-native v0.0.0-20210914085018-758536c4dc0b // indirect

@@ -38,6 +38,8 @@ chainmaker.org/chainmaker/vm v0.0.0-20210914061625-3d62b7497c7c/go.mod h1:By0wGP
 chainmaker.org/chainmaker/vm v0.0.0-20210914064312-93cc9e6b603e/go.mod h1:wVCcNR8CwbP1UFdUific5Mu2/nEGfGrt6AGEZOWxCOs=
 chainmaker.org/chainmaker/vm v0.0.0-20210914071724-6c8d9d637fc3 h1:43x6pkpWKBgBSzrNiI5KkVBIR6gO1ZwTvnsfn3d+bFg=
 chainmaker.org/chainmaker/vm v0.0.0-20210914071724-6c8d9d637fc3/go.mod h1:/0Yua69XpnKKE+S0RGFTBzLWjkh8Mvqqmw651O+WRwo=
+chainmaker.org/chainmaker/vm v0.0.0-20210914114029-6004e1ebd15e h1:gF68uAEZ3z3ZWwa0GN6ddpxc5A0uLZVzWxpHRT8ZcFM=
+chainmaker.org/chainmaker/vm v0.0.0-20210914114029-6004e1ebd15e/go.mod h1:GMxRvg/YQflDyDZPjnXGPSlbDbh7WyWF35zwgSDQ4Lw=
 chainmaker.org/chainmaker/vm-evm v0.0.0-20210914074125-197225b07aa5 h1:atNZlkqMsagyMQCRzTkvv+tYw/xjn1qNhWRqXmwjp40=
 chainmaker.org/chainmaker/vm-evm v0.0.0-20210914074125-197225b07aa5/go.mod h1:I9MtoYryD0jv6XXXJ7bj8B9m/c7ePh1IKxmc5lb82v0=
 chainmaker.org/chainmaker/vm-evm v0.0.0-20210914075919-6899e681474a h1:gO+antMmZzE5GrZhPTP39IDq3sRFIB8DPb5NnYhsKVI=
