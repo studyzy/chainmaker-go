@@ -1062,9 +1062,6 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 
 	// Broadcast prevote
 	// prevote := createPrevoteMsg(consensus.Id, consensus.Height, consensus.Round, hash)
-	if !consensus.validatorSet.hasValidator(consensus.Id) {
-		return
-	}
 	prevote := NewVote(tbftpb.VoteType_VOTE_PREVOTE, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight {
 		consensus.logger.Infof("[%s](%v/%v/%v) switch IsPrevoteOldHeight: %v, prevote old height: %v",
@@ -1120,9 +1117,6 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 	}
 
 	// Broadcast precommit
-	if !consensus.validatorSet.hasValidator(consensus.Id) {
-		return
-	}
 	precommit := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight {
 		consensus.logger.Infof("[%s](%d/%d/%v) switch IsPrecommitOldHeight: %v, precommit old height: %v",

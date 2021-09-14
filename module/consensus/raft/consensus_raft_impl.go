@@ -20,9 +20,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/thoas/go-funk"
+	"go.uber.org/zap"
 
 	"chainmaker.org/chainmaker/chainconf/v2"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
@@ -50,6 +49,7 @@ var (
 	walDir                  = "raftwal"
 	snapDir                 = "snap"
 	snapshotCatchUpEntriesN = uint64(5)
+	defaultSnapCount        = uint64(10)
 )
 
 // mustMarshal marshals protobuf message to byte slice or panic
@@ -130,7 +130,11 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.msgbus = config.MsgBus
 	consensus.closeC = make(chan struct{})
 	consensus.Id = computeRaftIdFromNodeId(config.NodeId)
+
 	consensus.snapCount = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.SnapCount
+	if consensus.snapCount == 0 {
+		consensus.snapCount = defaultSnapCount
+	}
 	consensus.asyncWalSave = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.AsyncWalSave
 	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
 	consensus.snapdir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, snapDir)
@@ -317,8 +321,11 @@ func (consensus *ConsensusRaftImpl) serve() {
 			consensus.Id, describeSnapshot(snapshot), consensus.appliedIndex)
 	})
 
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
+	tickTime := localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.Ticker
+	if tickTime == 0 {
+		tickTime = time.Nanosecond
+	}
+	ticker := time.NewTicker(tickTime * time.Second)
 
 	for {
 		select {
@@ -402,10 +409,12 @@ func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
 		consensus.logger.Fatalf("[%x] get serialize member failed: %v", consensus.Id, err)
 		return
 	}
+
 	signature := &common.EndorsementEntry{
 		Signer:    serializeMember,
 		Signature: sig,
 	}
+
 	additionalData := AdditionalData{
 		Signature: mustMarshal(signature),
 	}
@@ -507,10 +516,12 @@ func (consensus *ConsensusRaftImpl) publishSnapshot(snapshot raftpb.Snapshot) {
 
 	snapshotData := &SnapshotHeight{}
 	json.Unmarshal(snapshot.Data, snapshotData)
+
 	for {
 		// Loop until catch up to snapshotData.Height from Sync module
 		current, _ := consensus.ledgerCache.CurrentHeight()
-		if current > snapshotData.Height {
+		consensus.logger.Debugf("publishSnapshot current height: %d, ledgerCache height: %d", current, snapshotData.Height)
+		if current >= snapshotData.Height {
 			break
 		}
 		time.Sleep(500 * time.Microsecond)
