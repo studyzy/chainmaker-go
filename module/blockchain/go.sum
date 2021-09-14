@@ -49,6 +49,8 @@ chainmaker.org/chainmaker/vm-gasm v0.0.0-20210914080309-c93c4afc11e8/go.mod h1:I
 chainmaker.org/chainmaker/vm-native v0.0.0-20210913124843-499ae5f4c4c3/go.mod h1:zACbjzxv47tODW7XMRFEBOe2nSDHZoLi7n8wv7Bhnow=
 chainmaker.org/chainmaker/vm-native v0.0.0-20210914041545-8232478a91c4 h1:8kHlT8NuWUKMO6eV+WPESjwK60PKdOOadOLlihtVSmE=
 chainmaker.org/chainmaker/vm-native v0.0.0-20210914041545-8232478a91c4/go.mod h1:hPngXLe44DFgBHepPbsVIhsL6QL2FPIZhvSOSR8Kbfc=
+chainmaker.org/chainmaker/vm-native v0.0.0-20210914085018-758536c4dc0b h1:6P9Z/htMPEN+YYyG5HuvRUnKTfb5wHNJIaPWNAdb5U4=
+chainmaker.org/chainmaker/vm-native v0.0.0-20210914085018-758536c4dc0b/go.mod h1:1QFUhOB+PXwjToeic/pwyBzhDK5yJcVBeAshzYjXsDs=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914070828-8f5e35d8e4e1 h1:1ODqSbftX4v/UfbjsuBDuur/iRLRj57vY6PO+Vtjaaw=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914070828-8f5e35d8e4e1/go.mod h1:Rvzq2E/6CN4pelraN/9Zt0Ne/wFQg23CW0A0TdCPFqE=
 chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914083029-4f71531d1f83 h1:wVskLCGvj4wl59GsqYc8yoOBK4NwsLZV7pb7SNR8Rik=
