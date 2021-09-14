@@ -929,7 +929,8 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.Acc
 			var crls []*pkix.CertificateList
 
 			for crlPEM != nil {
-				crl, err := x509.ParseCRL(crlPEM.Bytes)
+				var crl *pkix.CertificateList
+				crl, err = x509.ParseCRL(crlPEM.Bytes)
 				if err != nil {
 					logger.Errorf("[Net] parse crl failed, %s", err.Error())
 					return err
