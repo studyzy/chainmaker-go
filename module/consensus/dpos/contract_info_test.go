@@ -11,9 +11,9 @@ import (
 	"math/big"
 	"testing"
 
-	"chainmaker.org/chainmaker/vm-native/dposmgr"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/vm-native/dposmgr"
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"

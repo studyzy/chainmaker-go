@@ -11,12 +11,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	native "chainmaker.org/chainmaker/vm-native/dposmgr"
-	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/protocol/v2/mock"
+	native "chainmaker.org/chainmaker/vm-native/dposmgr"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
@@ -66,9 +66,9 @@ func newMockBlockChainStore(ctrl *gomock.Controller) protocol.BlockchainStore {
 
 func newMockChainConf(ctrl *gomock.Controller) protocol.ChainConf {
 	mockConf := mock.NewMockChainConf(ctrl)
-	mockConf.EXPECT().ChainConfig().Return(&configpb.ChainConfig{
+	mockConf.EXPECT().ChainConfig().Return(&configPb.ChainConfig{
 		ChainId: "test_chain",
-		Consensus: &configpb.ConsensusConfig{
+		Consensus: &configPb.ConsensusConfig{
 			Type: consensus.ConsensusType_DPOS,
 		},
 	}).AnyTimes()
