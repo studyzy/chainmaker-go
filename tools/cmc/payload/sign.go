@@ -9,7 +9,6 @@ package payload
 
 import (
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -180,10 +179,7 @@ func sign(msg []byte) (*sdkPbCommon.EndorsementEntry, error) {
 }
 
 func ParseCert(crtPEM []byte) (*bcx509.Certificate, error) {
-	certBlock, rest := pem.Decode(crtPEM)
-	if len(rest) != 0 {
-		return nil, errors.New("pem.Decode failed, invalid cert")
-	}
+	certBlock, _ := pem.Decode(crtPEM)
 	if certBlock == nil {
 		return nil, fmt.Errorf("decode pem failed, invalid certificate")
 	}
