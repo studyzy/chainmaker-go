@@ -200,7 +200,7 @@ func createCrl() error {
 	if err != nil {
 		return fmt.Errorf("create crl failed, %s", err.Error())
 	}
-	err = ioutil.WriteFile(crlPath, pem.EncodeToMemory(&pem.Block{Type: "CRL", Bytes: crlBytes}), os.ModePerm)
+	err = ioutil.WriteFile(crlPath, pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crlBytes}), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("write crl file failed, %s", err.Error())
 	}
