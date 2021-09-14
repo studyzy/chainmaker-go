@@ -325,6 +325,22 @@ func (server *ChainMakerServer) GetBlockchain(chainId string) (*Blockchain, erro
 	return nil, fmt.Errorf(chainIdNotFoundErrorTemplate, chainId)
 }
 
+// GetAllAC get all protocol.AccessControlProvider of all the chains.
+func (server *ChainMakerServer) GetAllAC() ([]protocol.AccessControlProvider, error) {
+	var accessControls []protocol.AccessControlProvider
+	server.blockchains.Range(func(_, value interface{}) bool {
+		blockchain := value.(*Blockchain)
+		accessControls = append(accessControls, blockchain.GetAccessControl())
+		return true
+	})
+
+	if len(accessControls) == 0 {
+		return nil, fmt.Errorf("all chain not found")
+	}
+
+	return accessControls, nil
+}
+
 // Version of chainmaker.
 func (server *ChainMakerServer) Version() string {
 	return fmt.Sprintf("%d", protocol.DefaultBlockVersion)
