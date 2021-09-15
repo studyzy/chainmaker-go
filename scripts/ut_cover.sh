@@ -38,6 +38,5 @@ else
   ut_cover "module/snapshot" 25
   ut_cover "module/sync" 61
   ut_cover "module/txpool" 47
-  ut_cover "module/vm" 32
   ut_cover "tools/cmc" 10
 fi
