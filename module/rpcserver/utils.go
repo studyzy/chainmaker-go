@@ -65,15 +65,10 @@ func isRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]byt
 
 	for i := range verifiedChains {
 		for j := range verifiedChains[i] {
-			cert, err := cmx509.X509CertToChainMakerCert(verifiedChains[i][j])
-			if err != nil {
-				return false, err
-			}
-
 			certBytes := pem.EncodeToMemory(&pem.Block{
 				Type:    "CERTIFICATE",
 				Headers: nil,
-				Bytes:   cert.Raw,
+				Bytes:   verifiedChains[i][j].Raw,
 			})
 
 			m := &pbac.Member{
@@ -103,15 +98,6 @@ func isGMRevoked(accessControls []protocol.AccessControlProvider, rawCerts [][]b
 
 	for i := range verifiedChains {
 		for j := range verifiedChains[i] {
-			//cert, err := cmx509.SM2CertToChainMakerCert(verifiedChains[i][j])
-			//if err != nil {
-			//	return false, err
-			//}
-			//
-			//certs = append(certs, cert)
-
-			//certs = append(certs, verifiedChains[i][j])
-
 			certBytes := pem.EncodeToMemory(&pem.Block{
 				Type:    "CERTIFICATE",
 				Headers: nil,
