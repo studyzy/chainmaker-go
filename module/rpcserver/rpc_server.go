@@ -299,7 +299,19 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			log.Infof("need check client auth")
 		}
 
-		c, err := tlsRPCServer.GetCredentialsByCA(checkClientAuth)
+		acs, err := chainMakerServer.GetAllAC()
+		if err != nil {
+			log.Errorf("get all AccessControlProvider failed, %s", err.Error())
+			return nil, err
+		}
+
+		customVerify := ca.CustomVerify{
+			VerifyPeerCertificate:   createVerifyPeerCertificateFunc(acs),
+			GMVerifyPeerCertificate: createGMVerifyPeerCertificateFunc(acs),
+		}
+
+		//c, err := tlsRPCServer.GetCredentialsByCA(checkClientAuth)
+		c, err := tlsRPCServer.GetCredentialsByCA(checkClientAuth, customVerify)
 		if err != nil {
 			log.Errorf("new gRPC failed, GetTLSCredentialsByCA err: %v", err)
 			return nil, err
