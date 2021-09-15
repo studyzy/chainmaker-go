@@ -10,18 +10,18 @@ import (
 	"errors"
 	"io/ioutil"
 
-	"chainmaker.org/chainmaker-go/net/p2p"
+	libp2p "chainmaker.org/chainmaker/chainmaker-net-libp2p/libp2pnet"
+	liquid "chainmaker.org/chainmaker/chainmaker-net-liquid/liquidnet"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 
-// ErrorNetType
 var ErrorNetType = errors.New("error net type")
 
 // NetFactory provide a way to create net instance.
 type NetFactory struct {
 	netType protocol.NetType
 
-	n Net
+	n protocol.Net
 }
 
 // NetOption is a function apply options to net instance.
@@ -32,10 +32,11 @@ func WithListenAddr(addr string) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetListenAddr(addr)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			return liquid.SetListenAddrStr(n.HostConfig(), addr)
 		}
 		return nil
 	}
@@ -54,11 +55,41 @@ func WithCrypto(keyFile string, certFile string) NetOption {
 		}
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetKey(keyBytes)
 			n.Prepare().SetCert(certBytes)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.CryptoConfig().KeyBytes = keyBytes
+			n.CryptoConfig().CertBytes = certBytes
+		}
+		return nil
+	}
+}
+
+// WithSignCrypto set sign key file and tls sign cert file for gmtls supporting on dual certificate mode.
+func WithSignCrypto(signKeyFile, signCertFile string) NetOption {
+	return func(nf *NetFactory) error {
+		if signKeyFile == "" || signCertFile == "" {
+			return nil
+		}
+		keyBytes, err := ioutil.ReadFile(signKeyFile)
+		if err != nil {
+			return err
+		}
+		certBytes, err := ioutil.ReadFile(signCertFile)
+		if err != nil {
+			return err
+		}
+		switch nf.netType {
+		case protocol.Libp2p:
+			n, _ := nf.n.(*libp2p.LibP2pNet)
+			n.Prepare().SetSignKey(keyBytes)
+			n.Prepare().SetSignCert(certBytes)
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.CryptoConfig().SignKeyBytes = keyBytes
+			n.CryptoConfig().SignCertBytes = certBytes
 		}
 		return nil
 	}
@@ -72,12 +103,18 @@ func WithSeeds(seeds ...string) NetOption {
 		}
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			for _, seed := range seeds {
 				n.Prepare().AddBootstrapsPeer(seed)
 			}
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			for _, seed := range seeds {
+				e := n.HostConfig().AddDirectPeer(seed)
+				if e != nil {
+					return e
+				}
+			}
 		}
 		return nil
 	}
@@ -88,10 +125,11 @@ func WithPeerStreamPoolSize(size int) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPeerStreamPoolSize(size)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().SendStreamPoolCap = int32(size)
 		}
 		return nil
 	}
@@ -102,39 +140,55 @@ func WithPubSubMaxMessageSize(size int) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPubSubMaxMsgSize(size)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.PubSubConfig().MaxPubMessageSize = size
 		}
 		return nil
 	}
 }
 
-// WithMaxPeerCountAllow set max count of nodes that connected to us.
-func WithMaxPeerCountAllow(max int) NetOption {
+// WithMaxPeerCountAllowed set max count of nodes that connected to us.
+func WithMaxPeerCountAllowed(max int) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetMaxPeerCountAllow(max)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().MaxPeerCountAllowed = max
 		}
 		return nil
 	}
 }
 
-// WithPeerEliminationStrategy set the strategy for eliminating node when the count of nodes
-// that connected to us reach the max value.
+// WithMaxConnCountAllowed set max count of connections for each peer that connected to us.
+func WithMaxConnCountAllowed(max int) NetOption {
+	return func(nf *NetFactory) error {
+		switch nf.netType {
+		case protocol.Libp2p:
+			// not supported
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().MaxConnCountEachPeerAllowed = max
+		}
+		return nil
+	}
+}
+
+// WithPeerEliminationStrategy set the strategy for eliminating node when the count of nodes that connected to us reach the max value.
 func WithPeerEliminationStrategy(strategy int) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetPeerEliminationStrategy(strategy)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().ConnEliminationStrategy = strategy
 		}
 		return nil
 	}
@@ -148,12 +202,13 @@ func WithBlackAddresses(blackAddresses ...string) NetOption {
 		}
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			for _, ba := range blackAddresses {
 				n.Prepare().AddBlackAddress(ba)
 			}
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().BlackNetAddr = blackAddresses
 		}
 		return nil
 	}
@@ -167,25 +222,28 @@ func WithBlackNodeIds(blackNodeIds ...string) NetOption {
 		}
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			for _, bn := range blackNodeIds {
 				n.Prepare().AddBlackPeerId(bn)
 			}
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			return n.HostConfig().AddBlackPeers(blackNodeIds...)
 		}
 		return nil
 	}
 }
 
+// WithMsgCompression set whether compressing the payload when sending msg.
 func WithMsgCompression(enable bool) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.SetCompressMsgBytes(enable)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().MsgCompress = enable
 		}
 		return nil
 	}
@@ -195,30 +253,61 @@ func WithInsecurity(isInsecurity bool) NetOption {
 	return func(nf *NetFactory) error {
 		switch nf.netType {
 		case protocol.Libp2p:
-			n, _ := nf.n.(*p2p.LibP2pNet)
+			n, _ := nf.n.(*libp2p.LibP2pNet)
 			n.Prepare().SetIsInsecurity(isInsecurity)
-		case protocol.GRpc:
-			//TODO gRpc
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.HostConfig().Insecurity = isInsecurity
+		}
+		return nil
+	}
+}
+
+func WithPktEnable(pktEnable bool) NetOption {
+	return func(nf *NetFactory) error {
+		switch nf.netType {
+		case protocol.Libp2p:
+			n, _ := nf.n.(*libp2p.LibP2pNet)
+			n.Prepare().SetPktEnable(pktEnable)
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.ExtensionsConfig().EnablePkt = pktEnable
+		}
+		return nil
+	}
+}
+
+// WithPriorityControlEnable config priority controller
+func WithPriorityControlEnable(priorityCtrlEnable bool) NetOption {
+	return func(nf *NetFactory) error {
+		switch nf.netType {
+		case protocol.Libp2p:
+			n, _ := nf.n.(*libp2p.LibP2pNet)
+			n.Prepare().SetPriorityCtrlEnable(priorityCtrlEnable)
+		case protocol.Liquid:
+			n, _ := nf.n.(*liquid.LiquidNet)
+			n.ExtensionsConfig().EnablePriorityCtrl = priorityCtrlEnable
 		}
 		return nil
 	}
 }
 
 // NewNet create a new net instance.
-func (nf *NetFactory) NewNet(netType protocol.NetType, opts ...NetOption) (Net, error) {
+func (nf *NetFactory) NewNet(netType protocol.NetType, opts ...NetOption) (protocol.Net, error) {
 	nf.netType = netType
-	//switch网络类型
 	switch nf.netType {
 	case protocol.Libp2p:
-		//初始化Libp2pNet实现
-		localNet, err := p2p.NewLibP2pNet() //创建Libp2pNet实例
+		localNet, err := libp2p.NewLibP2pNet(GlobalNetLogger)
 		if err != nil {
 			return nil, err
 		}
 		nf.n = localNet
-	case protocol.GRpc:
-		//初始化gRpcNet实现 TODO
-		return nil, nil
+	case protocol.Liquid:
+		liquidNet, err := liquid.NewLiquidNet()
+		if err != nil {
+			return nil, err
+		}
+		nf.n = liquidNet
 	default:
 		return nil, ErrorNetType
 	}
