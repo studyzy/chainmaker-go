@@ -19,7 +19,7 @@ go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 # go test ./...
-cd ../../consensus
+cd ../consensus
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
@@ -69,22 +69,22 @@ go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go mod tidy
 # go test ./...
-cd ../vm
-go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
-go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
-go get chainmaker.org/chainmaker/common/v2@${BRANCH}
-go mod tidy
-cd gasm
-go mod tidy
-cd ../evm
-go mod tidy
-cd ../wasi
-go mod tidy
-cd ../wasmer
-go mod tidy
-cd ../wxvm
-go mod tidy
-cd ../../../test
+#cd ../vm
+#go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
+#go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+#go mod tidy
+#cd gasm
+#go mod tidy
+#cd ../evm
+#go mod tidy
+#cd ../wasi
+#go mod tidy
+#cd ../wasmer
+#go mod tidy
+#cd ../wxvm
+#go mod tidy
+cd ../../test
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}

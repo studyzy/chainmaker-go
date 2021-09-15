@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/dposmgr"
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"

@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/dposmgr"
 
 	pbdpos "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
