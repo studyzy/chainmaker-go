@@ -9,7 +9,7 @@ package dpos
 import (
 	"testing"
 
-	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
+	"chainmaker.org/chainmaker/vm-native/dposmgr"
 
 	"github.com/stretchr/testify/require"
 

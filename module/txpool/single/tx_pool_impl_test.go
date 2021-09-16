@@ -16,13 +16,13 @@ import (
 
 	"chainmaker.org/chainmaker/protocol/v2/test"
 
-	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
+	"chainmaker.org/chainmaker/localconf/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

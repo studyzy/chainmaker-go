@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"

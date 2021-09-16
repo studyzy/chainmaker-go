@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/utils"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/prometheus/common/log"
 )
 

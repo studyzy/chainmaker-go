@@ -15,7 +15,7 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	tbftpb "chainmaker.org/chainmaker/pb-go/v2/consensus/tbft"
 )

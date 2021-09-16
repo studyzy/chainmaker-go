@@ -7,37 +7,45 @@
 ## deploy ChainMaker and test
 
 alreadyBuild=$1
+if [ ! -d "../../tools/chainmaker-cryptogen" ]; then
+  echo "not found chainmaker-go/tools/chainmaker-cryptogen"
+  echo "  you can use "
+  echo "              cd chainmaker-go/tools"
+  echo "              ln -s ../../chainmaker-cryptogen ."
+  echo "              cd chainmaker-cryptogen && make"
+  exit 0
+fi
+CURRENT_PATH=$(pwd)
+SCRIPT_PATH=$(dirname "${CURRENT_PATH}")
+PROJECT_PATH=$(dirname "${SCRIPT_PATH}")
 
-# chainmaker-go/scripts
-# backups & build release & start ChainMaker
-cd ..
-./cluster_quick_stop.sh clean
-sleep 1
-ps -ef|grep chainmaker
-rm -rf ../build
-echo -e "\nINFO\n" | ./prepare.sh 4 1
-./build_release.sh
-./cluster_quick_start.sh normal
-sleep 1
-ps -ef|grep chainmaker
+function start_chainmaker() {
+  cd $SCRIPT_PATH
+  ./cluster_quick_stop.sh clean
+  echo -e "\n\n【generate】 certs and config..."
+  echo -e "\nINFO\n" | ./prepare.sh 4 2
+  echo -e "\n\n【build】 release..."
+  ./build_release.sh
+  echo -e "\n\n【start】 chainmaker..."
+  ./cluster_quick_start.sh normal
+  sleep 1
 
+  echo "【chainmaker】 process..."
+  ps -ef | grep chainmaker
+  chainmaker_count=$(ps -ef | grep chainmaker | wc -l)
+  if [ $chainmaker_count -lt 4 ]; then
+    echo "build error"
+    exit
+  fi
 
-# chainmaker-go/build
-# backups *.gz
-cd ../build
-mkdir bak
-mv release/*.gz bak/
+  # backups *.gz
+  cd $PROJECT_PATH/build
+  mkdir -p bak
+  mv release/*.gz bak/
+}
+start_chainmaker
 
-# chainmaker-go/bin
-# prepare sdk config & crypto config
-cd ../bin
-rm -rf testdata
-mkdir testdata
-cp ../../sdk-go/testdata/sdk_config.yml testdata/
-cp -r ../build/crypto-config/ testdata/
-cd ..
-
-# chainmaker-go/scripts/test
-cd scripts/test
+cd $CURRENT_PATH
+./prepare_cmc.sh alreadyBuild
+cd $CURRENT_PATH
 ./cmc_test.sh alreadyBuild
-#./send_tool_test.sh alreadyBuild

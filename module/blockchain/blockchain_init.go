@@ -12,26 +12,33 @@ import (
 	"fmt"
 	"strings"
 
+	evm "chainmaker.org/chainmaker/vm-evm"
+	gasm "chainmaker.org/chainmaker/vm-gasm"
+	wasmer "chainmaker.org/chainmaker/vm-wasmer"
+	wxvm "chainmaker.org/chainmaker/vm-wxvm"
+
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/consensus/dpos"
 	"chainmaker.org/chainmaker-go/core"
 	"chainmaker.org/chainmaker-go/core/cache"
 	providerConf "chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/snapshot"
-	"chainmaker.org/chainmaker-go/store"
 	"chainmaker.org/chainmaker-go/subscriber"
 	blockSync "chainmaker.org/chainmaker-go/sync"
 	"chainmaker.org/chainmaker-go/txpool"
-	"chainmaker.org/chainmaker-go/utils"
-	"chainmaker.org/chainmaker-go/vm"
+	"chainmaker.org/chainmaker/chainconf/v2"
+	"chainmaker.org/chainmaker/localconf/v2"
+	"chainmaker.org/chainmaker/logger/v2"
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	storePb "chainmaker.org/chainmaker/pb-go/v2/store"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/store/v2"
+	"chainmaker.org/chainmaker/store/v2/conf"
+	"chainmaker.org/chainmaker/utils/v2"
+	"chainmaker.org/chainmaker/vm"
+	"github.com/mitchellh/mapstructure"
 )
 
 // Init all the modules.
@@ -159,8 +166,13 @@ func (bc *Blockchain) initStore() (err error) {
 	}
 	var storeFactory store.Factory
 	storeLogger := logger.GetLoggerByChain(logger.MODULE_STORAGE, bc.chainId)
+	config := &conf.StorageConfig{}
+	err = mapstructure.Decode(localconf.ChainMakerConfig.StorageConfig, config)
+	if err != nil {
+		return err
+	}
 	if bc.store, err = storeFactory.NewStore(
-		bc.chainId, &localconf.ChainMakerConfig.StorageConfig, storeLogger); err != nil {
+		bc.chainId, config, storeLogger); err != nil {
 		bc.log.Errorf("new store failed, %s", err.Error())
 		return err
 	}
@@ -344,17 +356,14 @@ func (bc *Blockchain) initVM() (err error) {
 		return
 	}
 	// init VM
-	var vmFactory vm.Factory
 	if bc.netService == nil {
-		bc.vmMgr = vmFactory.NewVmManager(
-			localconf.ChainMakerConfig.StorageConfig.StorePath, bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
+		bc.vmMgr = vm.NewVmManager(wasmer.NewVmPoolManager(bc.chainId), &evm.InstancesManager{},
+			&gasm.InstancesManager{}, &wxvm.InstancesManager{}, localconf.ChainMakerConfig.GetStorePath(),
+			bc.ac, &soloChainNodesInfoProvider{}, bc.chainConf)
 	} else {
-		bc.vmMgr = vmFactory.NewVmManager(
-			localconf.ChainMakerConfig.StorageConfig.StorePath,
-			bc.ac,
-			bc.netService.GetChainNodesInfoProvider(),
-			bc.chainConf,
-		)
+		bc.vmMgr = vm.NewVmManager(wasmer.NewVmPoolManager(bc.chainId), &evm.InstancesManager{},
+			&gasm.InstancesManager{}, &wxvm.InstancesManager{}, localconf.ChainMakerConfig.GetStorePath(),
+			bc.ac, bc.netService.GetChainNodesInfoProvider(), bc.chainConf)
 	}
 	bc.initModules[moduleNameVM] = struct{}{}
 	return
@@ -412,10 +421,19 @@ func (bc *Blockchain) initConsensus() (err error) {
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
+	isConsensusNode := false
 	for i, node := range nodes {
 		for _, nid := range node.NodeId {
 			nodeIds[i] = nid
+			if nid == id {
+				isConsensusNode = true
+			}
 		}
+	}
+	if !isConsensusNode {
+		// this node is not a consensus node
+		delete(bc.initModules, moduleNameConsensus)
+		return nil
 	}
 	_, ok := bc.initModules[moduleNameConsensus]
 	if ok {

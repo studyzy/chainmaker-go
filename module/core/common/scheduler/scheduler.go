@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/localconf/v2"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/panjf2000/ants/v2"

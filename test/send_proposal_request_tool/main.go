@@ -13,11 +13,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"time"
 
 	"chainmaker.org/chainmaker-go/accesscontrol"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	evm "chainmaker.org/chainmaker/common/v2/evmutils"
@@ -28,6 +28,7 @@ import (
 	consensusPb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	discoveryPb "chainmaker.org/chainmaker/pb-go/v2/discovery"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/pretty"
@@ -37,27 +38,20 @@ import (
 )
 
 var (
-	ip             string
-	port           int
-	chainId        string
-	orgId          string
-	caPaths        []string
-	caPathsString  string
-	userCrtPath    string
-	userKeyPath    string
-	wasmPath       string
-	contractName   string
-	txId           string
-	height         uint64
-	hash           string
-	withRWSets     bool
-	useTLS         bool
-	runTime        int32
-	pairsString    string
-	pairsFile      string
-	method         string
-	version        string
-	requestTimeout int
+	ip                  string
+	port                int
+	chainId             string
+	orgId               string
+	caPaths             []string
+	caPathsString       string
+	userCrtPath         string
+	userKeyPath         string
+	wasmPath            string
+	contractName        string
+	contractNameByte    []byte
+	contractVersion     []byte
+	contractRuntimeType []byte
+
 
 	useShortCrt bool
 	hashAlgo    string
@@ -82,10 +76,15 @@ var (
 	hibeReceiverIdsFilePath string
 	hibeParamsFilePath      string
 
-	abiPath    string
-	initParams string
-	prettyJson bool
+	abiPath     string
+	initParams  string
+	prettyJson  bool
+	OrgIdFormat = "wx-org%s.chainmaker.org"
+	prePathFmt  = certPathPrefix + "/crypto-config/wx-org%s.chainmaker.org/user/admin1/"
 )
+
+const CHAIN1 = "chain1"
+const certPathPrefix = "../../config"
 
 type Result struct {
 	Code                  commonPb.TxStatusCode           `json:"code"`
@@ -165,6 +164,7 @@ func main() {
 	mainFlags.StringVarP(&orgId, "org-id", "O", "wx-org1", "specify org id")
 	mainFlags.StringVarP(&contractName, "contract-name", "n", "contract1", "specify contract name")
 	mainFlags.StringVar(&orgIds, "org-ids", "wx-org1,wx-org2,wx-org3,wx-org4", "orgIds of admin")
+	//mainFlags.StringVar(&orgIds, "org-ids", "wx-org1,wx-org2,wx-org3,wx-org4", "orgIds of admin")
 	mainFlags.StringVar(&adminSignKeys, "admin-sign-keys", "../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.key,../../config/crypto-config/wx-org2.chainmaker.org/user/admin1/admin1.sign.key,../../config/crypto-config/wx-org3.chainmaker.org/user/admin1/admin1.sign.key,../../config/crypto-config/wx-org4.chainmaker.org/user/admin1/admin1.sign.key", "adminSignKeys of admin")
 	mainFlags.StringVar(&adminSignCrts, "admin-sign-crts", "../../config/crypto-config/wx-org1.chainmaker.org/user/admin1/admin1.sign.crt,../../config/crypto-config/wx-org2.chainmaker.org/user/admin1/admin1.sign.crt,../../config/crypto-config/wx-org3.chainmaker.org/user/admin1/admin1.sign.crt,../../config/crypto-config/wx-org4.chainmaker.org/user/admin1/admin1.sign.crt", "adminSignCrts of admin")
 	mainFlags.Uint64Var(&seq, "seq", 1, "sequence of chainConfig")
