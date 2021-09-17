@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/subscriber v0.0.0
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210915063939-b491df711cc3
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210915091854-ee36ee89dc57
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
