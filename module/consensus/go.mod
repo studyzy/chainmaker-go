@@ -14,7 +14,6 @@ require (
 	chainmaker.org/chainmaker/vm-native v0.0.0-20210915072159-1598396850f0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.5.2
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/prometheus/client_golang v1.9.0 // indirect
 	github.com/spf13/viper v1.7.1
