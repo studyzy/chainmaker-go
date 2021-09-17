@@ -8,9 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"encoding/pem"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -20,10 +18,6 @@ import (
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
-
-	"fmt"
-	"sync"
-	"sync/atomic"
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
@@ -141,10 +135,6 @@ func (pp *permissionedPkACProvider) initConsensusMember(consensusConf []*config.
 	return nil
 }
 
-func (pp *permissionedPkACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
-	return pp.acService.newPkMember(member, pp.adminMember, pp.consensusMember)
-}
-
 func (pp *permissionedPkACProvider) Module() string {
 	return ModuleNameAccessControl
 }
@@ -197,32 +187,26 @@ func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementCas
 	}
 }
 
-func (permissionedPkACProvider *permissionedPkACProvider) systemContractCallbackPublicKeyManagementDeleteCase(payload *common.Payload) error {
+func (pp *permissionedPkACProvider) systemContractCallbackPublicKeyManagementDeleteCase(payload *common.Payload) error {
 	for _, param := range payload.Parameters {
-		if param.Key == PARAM_CERTS {
-			certList := strings.Replace(string(param.Value), ",", "\n", -1)
-			certBlock, rest := pem.Decode([]byte(certList))
-			for certBlock != nil {
-				cp.frozenList.Store(string(certBlock.Bytes), true)
-
-				certBlock, rest = pem.Decode(rest)
-			}
-			return nil
+		if param.Key == PUBLIC_KEYS {
+			pp.acService.memberCache.Remove(param.Value)
+			pp.acService.log.Debugf("The public key was removed from the cache,[%v]", param.Value)
 		}
 	}
 	return nil
 }
 
 // all-in-one validation for signing members: certificate chain/whitelist, signature, policies
-func (cp *permissionedPkACProvider) refinePrincipal(principal protocol.Principal) (protocol.Principal, error) {
+func (pp *permissionedPkACProvider) refinePrincipal(principal protocol.Principal) (protocol.Principal, error) {
 	endorsements := principal.GetEndorsement()
 	msg := principal.GetMessage()
-	refinedEndorsement := cp.refineEndorsements(endorsements, msg)
+	refinedEndorsement := pp.refineEndorsements(endorsements, msg)
 	if len(refinedEndorsement) <= 0 {
 		return nil, fmt.Errorf("refine endorsements failed, all endorsers have failed verification")
 	}
 
-	refinedPrincipal, err := cp.CreatePrincipal(principal.GetResourceName(), refinedEndorsement, msg)
+	refinedPrincipal, err := pp.CreatePrincipal(principal.GetResourceName(), refinedEndorsement, msg)
 	if err != nil {
 		return nil, fmt.Errorf("create principal failed: [%s]", err.Error())
 	}
@@ -230,7 +214,7 @@ func (cp *permissionedPkACProvider) refinePrincipal(principal protocol.Principal
 	return refinedPrincipal, nil
 }
 
-func (cp *permissionedPkACProvider) refineEndorsements(endorsements []*common.EndorsementEntry,
+func (pp *permissionedPkACProvider) refineEndorsements(endorsements []*common.EndorsementEntry,
 	msg []byte) []*common.EndorsementEntry {
 
 	refinedSigners := map[string]bool{}
@@ -247,22 +231,22 @@ func (cp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 			Signature: endorsementEntry.Signature,
 		}
 		if endorsement.Signer.MemberType == pbac.MemberType_PUBLIC_KEY {
-			cp.log.Debugf("target endorser uses public key")
+			pp.acService.log.Debugf("target endorser uses public key")
 			memInfo = string(endorsement.Signer.MemberInfo)
 		} else {
-			cp.log.Errorf("member type error")
+			pp.acService.log.Errorf("member type error")
 			continue
 		}
 
-		remoteMember, err := cp.acService.newMember(endorsement.Signer)
+		remoteMember, err := pp.acService.newPkMember(endorsement.Signer, pp.adminMember, pp.consensusMember)
 		if err != nil {
 			err = fmt.Errorf("new member failed: [%s]", err.Error())
 			continue
 		}
 
-		if err := remoteMember.Verify(cp.hashType, msg, endorsement.Signature); err != nil {
+		if err := remoteMember.Verify(pp.GetHashAlg(), msg, endorsement.Signature); err != nil {
 			err = fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
-			cp.log.Debugf("information for invalid signature:\norganization: %s\npubkey: %s\nmessage: %s\n"+
+			pp.acService.log.Debugf("information for invalid signature:\norganization: %s\npubkey: %s\nmessage: %s\n"+
 				"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 			continue
 		}
@@ -275,62 +259,64 @@ func (cp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 	return refinedEndorsement
 }
 
-// GetHashAlg return hash algorithm the access control provider uses
-func (cp *permissionedPkACProvider) GetHashAlg() string {
-	return cp.hashType
+func (pp *permissionedPkACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
+	memberCached, ok := pp.acService.lookUpMemberInCache(string(member.MemberInfo))
+	if ok && memberCached.member.GetOrgId() == member.OrgId {
+		pp.acService.log.Debugf("member found in local cache")
+		return memberCached.member, nil
+	}
+	return newPkMemberFromAcs(member, pp.adminMember, pp.consensusMember, pp.acService)
 }
 
-func (cp *permissionedPkACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
-	if member.MemberType == pbac.MemberType_PUBLIC_KEY {
-		return newMemberFromPkPem(member.GetOrgId(), "", string(member.MemberInfo), cp.hashType)
-	}
-	return nil, fmt.Errorf("new member for permissionedPk failed, member type error")
+// GetHashAlg return hash algorithm the access control provider uses
+func (pp *permissionedPkACProvider) GetHashAlg() string {
+	return pp.acService.hashType
 }
 
 // ValidateResourcePolicy checks whether the given resource principal is valid
-func (cp *permissionedPkACProvider) ValidateResourcePolicy(resourcePolicy *config.ResourcePolicy) bool {
-	return cp.acService.validateResourcePolicy(resourcePolicy)
+func (pp *permissionedPkACProvider) ValidateResourcePolicy(resourcePolicy *config.ResourcePolicy) bool {
+	return pp.acService.validateResourcePolicy(resourcePolicy)
 }
 
 // CreatePrincipalForTargetOrg creates a principal for "SELF" type principal,
 // which needs to convert SELF to a sepecific organization id in one authentication
-func (cp *permissionedPkACProvider) CreatePrincipalForTargetOrg(resourceName string,
+func (pp *permissionedPkACProvider) CreatePrincipalForTargetOrg(resourceName string,
 	endorsements []*common.EndorsementEntry, message []byte,
 	targetOrgId string) (protocol.Principal, error) {
-	return cp.acService.createPrincipalForTargetOrg(resourceName, endorsements, message, targetOrgId)
+	return pp.acService.createPrincipalForTargetOrg(resourceName, endorsements, message, targetOrgId)
 }
 
 // CreatePrincipal creates a principal for one time authentication
-func (cp *permissionedPkACProvider) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry,
+func (pp *permissionedPkACProvider) CreatePrincipal(resourceName string, endorsements []*common.EndorsementEntry,
 	message []byte) (
 	protocol.Principal, error) {
-	return cp.acService.createPrincipal(resourceName, endorsements, message)
+	return pp.acService.createPrincipal(resourceName, endorsements, message)
 }
 
-func (cp *permissionedPkACProvider) LookUpPolicy(resourceName string) (*pbac.Policy, error) {
-	return cp.acService.lookUpPolicy(resourceName)
+func (pp *permissionedPkACProvider) LookUpPolicy(resourceName string) (*pbac.Policy, error) {
+	return pp.acService.lookUpPolicy(resourceName)
 }
 
-func (cp *permissionedPkACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
-	return cp.acService.lookUpExceptionalPolicy(resourceName)
+func (pp *permissionedPkACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Policy, error) {
+	return pp.acService.lookUpExceptionalPolicy(resourceName)
 }
 
-func (cp *permissionedPkACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
+func (pp *permissionedPkACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
 	return pbac.MemberStatus_NORMAL, nil
 }
 
-func (cp *permissionedPkACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data []byte) (bool, error) {
+func (pp *permissionedPkACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data []byte) (bool, error) {
 	return true, nil
 }
 
 // VerifyPrincipal verifies if the principal for the resource is met
-func (cp *permissionedPkACProvider) VerifyPrincipal(principal protocol.Principal) (bool, error) {
+func (pp *permissionedPkACProvider) VerifyPrincipal(principal protocol.Principal) (bool, error) {
 
-	if atomic.LoadInt32(&cp.acService.orgNum) <= 0 {
+	if atomic.LoadInt32(&pp.acService.orgNum) <= 0 {
 		return false, fmt.Errorf("authentication failed: empty organization list or trusted node list on this chain")
 	}
 
-	refinedPrincipal, err := cp.refinePrincipal(principal)
+	refinedPrincipal, err := pp.refinePrincipal(principal)
 	if err != nil {
 		return false, fmt.Errorf("authentication failed, [%s]", err.Error())
 	}
@@ -339,26 +325,26 @@ func (cp *permissionedPkACProvider) VerifyPrincipal(principal protocol.Principal
 		return true, nil
 	}
 
-	p, err := cp.acService.lookUpPolicyByResourceName(principal.GetResourceName())
+	p, err := pp.acService.lookUpPolicyByResourceName(principal.GetResourceName())
 	if err != nil {
 		return false, fmt.Errorf("authentication failed, [%s]", err.Error())
 	}
 
-	return cp.acService.verifyPrincipalPolicy(principal, refinedPrincipal, p)
+	return pp.acService.verifyPrincipalPolicy(principal, refinedPrincipal, p)
 }
 
 //GetValidEndorsements filters all endorsement entries and returns all valid ones
-func (cp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
-	if atomic.LoadInt32(&cp.acService.orgNum) <= 0 {
+func (pp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Principal) ([]*common.EndorsementEntry, error) {
+	if atomic.LoadInt32(&pp.acService.orgNum) <= 0 {
 		return nil, fmt.Errorf("authentication fail: empty organization list or trusted node list on this chain")
 	}
-	refinedPolicy, err := cp.refinePrincipal(principal)
+	refinedPolicy, err := pp.refinePrincipal(principal)
 	if err != nil {
 		return nil, fmt.Errorf("authentication fail, not a member on this chain: [%v]", err)
 	}
 	endorsements := refinedPolicy.GetEndorsement()
 
-	p, err := cp.acService.lookUpPolicyByResourceName(principal.GetResourceName())
+	p, err := pp.acService.lookUpPolicyByResourceName(principal.GetResourceName())
 	if err != nil {
 		return nil, fmt.Errorf("authentication fail: [%v]", err)
 	}
@@ -372,5 +358,5 @@ func (cp *permissionedPkACProvider) GetValidEndorsements(principal protocol.Prin
 	for _, roleRaw := range roleListRaw {
 		roleList[roleRaw] = true
 	}
-	return cp.acService.getValidEndorsements(orgList, roleList, endorsements), nil
+	return pp.acService.getValidEndorsements(orgList, roleList, endorsements), nil
 }

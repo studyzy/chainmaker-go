@@ -27,9 +27,9 @@ import (
 
 // Special characters allowed to define customized access rules
 const (
-	LIMIT_DELIMITER = "/"
-	PARAM_CERTS     = "certs"
-
+	LIMIT_DELIMITER              = "/"
+	PARAM_CERTS                  = "certs"
+	PUBLIC_KEYS                  = "pubkey"
 	unsupportedRuleErrorTemplate = "bad configuration: unsupported rule [%s]"
 )
 
