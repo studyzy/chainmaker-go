@@ -145,7 +145,8 @@ Ds20ILx7wy349jvs8s4Rc1P4hJZQdfkxdI2GhXU=
 var testChainConfig = &config.ChainConfig{
 	ChainId:    testChainId,
 	Version:    testVersion,
-	MemberType: testCertMemberType,
+//	MemberType: testCertMemberType,
+	AuthType: testCertMemberType,
 	Sequence:   0,
 	Crypto: &config.CryptoConfig{
 		Hash: testHashType,

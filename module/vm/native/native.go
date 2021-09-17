@@ -23,6 +23,7 @@ import (
 	"chainmaker.org/chainmaker-go/vm/native/contractmgr"
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 	"chainmaker.org/chainmaker-go/vm/native/government"
+	"chainmaker.org/chainmaker-go/vm/native/pubkeymgr"
 	"chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -70,6 +71,7 @@ func initContract(log protocol.Logger) map[string]common.Contract {
 	contracts[syscontract.SystemContract_DPOS_STAKE.String()] = dposmgr.NewDPoSStakeContract(log)
 	contracts[syscontract.SystemContract_CONTRACT_MANAGE.String()] = contractmgr.NewContractManager(log)
 	contracts[syscontract.SystemContract_CROSS_TRANSACTION.String()] = crosstranscation.NewCrossTransactionContract(log)
+	contracts[syscontract.SystemContract_PUBKEY_MANAGEMENT.String()] = pubkeymgr.NewPubkeyManageContract(log)
 	return contracts
 }
 
