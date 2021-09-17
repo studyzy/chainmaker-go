@@ -8,14 +8,20 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"sync"
 
+	commonCert "chainmaker.org/chainmaker/common/v2/cert"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/helper"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
-	commonCert "chainmaker.org/chainmaker/common/v2/cert"
+	"github.com/gogo/protobuf/proto"
+	"github.com/mr-tron/base58"
 )
 
 var _ protocol.Member = (*pkMember)(nil)
@@ -109,15 +115,89 @@ func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	})
 }
 
-func NewPkMember(member *pbac.Member, acs *accessControlService) (*pkMember, error) {
-	//if member.MemberType != pbac.MemberType_PUBLIC_KEY {
-	//	return nil, fmt.Errorf("setup public key member failed, unsupport member type")
-	//} else {
-	//	return newMemberFromPkPem(member.OrgId, string(member.MemberInfo), acs.hashType)
-	//}
+func loadSyncMap(syncMap *sync.Map, key string) (interface{}, bool) {
+	var tempSyncMap sync.Map
+	tempSyncMap = *syncMap
+	return tempSyncMap.Load(key)
 }
 
-func newMemberFromPkPem(orgId, role, pkPEM string, hashType string) (*pkMember, error) {
+func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
+	acs *accessControlService) (*pkMember, error) {
+
+	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
+		return nil, fmt.Errorf("new public key member failed: memberType and authType do not match")
+	}
+	adminMember, ok := loadSyncMap(adminList, string(member.MemberInfo))
+	if ok {
+		admin, _ := adminMember.(adminMemberModel)
+		return newPkMemberFromParam(admin.orgId, admin.pkPEM, protocol.RoleAdmin, acs.hashType)
+	}
+
+	pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: parse the public key from PEM failed")
+	}
+	nodeId, err := helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
+	}
+
+	consensusMember, ok := loadSyncMap(consensusList, nodeId)
+	if ok {
+		consensus, _ := consensusMember.(consensusMemberModel)
+		return newPkMemberFromParam(consensus.orgId, string(member.MemberInfo),
+			protocol.RoleConsensusNode, acs.hashType)
+	}
+
+	publicKeyIdex := pubkeyHash(string(member.MemberInfo))
+	publicKeyInfoBytes, err := acs.dataStore.ReadObject(syscontract.SystemContract_PUBKEY_MANAGEMENT.String(), []byte(publicKeyIdex))
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
+	}
+
+	if len(publicKeyInfoBytes) == 0 {
+		return nil, fmt.Errorf("new public key member failed: the public key doesn't belong to a member on chain")
+	}
+
+	var publickInfo pbac.PKInfo
+	err = proto.Unmarshal(publicKeyInfoBytes, &publickInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
+	}
+
+	return newPkMemberFromParam(publickInfo.OrgId, publickInfo.PkPem,
+		protocol.Role(publickInfo.Role), acs.hashType)
+}
+
+func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map, hashType string) (*pkMember, error) {
+	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
+		return nil, fmt.Errorf("new public key member failed: memberType and authType do not match")
+	}
+	adminMember, ok := loadSyncMap(adminList, string(member.MemberInfo))
+	if ok {
+		admin, _ := adminMember.(adminMemberModel)
+		return newPkMemberFromParam(admin.orgId, admin.pkPEM, protocol.RoleAdmin, hashType)
+	}
+
+	pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: parse the public key from PEM failed")
+	}
+
+	nodeId, err := helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
+	}
+	consensusMember, ok := loadSyncMap(consensusList, nodeId)
+	if ok {
+		consensus, _ := consensusMember.(consensusMemberModel)
+		return newPkMemberFromParam(consensus.orgId, string(member.MemberInfo),
+			protocol.RoleConsensusNode, hashType)
+	}
+	return newPkMemberFromParam("", string(member.MemberInfo), protocol.Role(""), hashType)
+}
+
+func newPkMemberFromParam(orgId, pkPEM string, role protocol.Role, hashType string) (*pkMember, error) {
 
 	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
@@ -135,7 +215,7 @@ func newMemberFromPkPem(orgId, role, pkPEM string, hashType string) (*pkMember, 
 
 	pkMember.pk = pk
 	pkMember.id = pkPEM
-	pkMember.role = protocol.Role(role)
+	pkMember.role = role
 	ski, err := commonCert.ComputeSKI(hash, pk.ToStandardKey())
 
 	if err != nil {
@@ -145,4 +225,10 @@ func newMemberFromPkPem(orgId, role, pkPEM string, hashType string) (*pkMember, 
 	pkMember.uid = hex.EncodeToString(ski)
 
 	return &pkMember, nil
+}
+
+func pubkeyHash(pubkey string) string {
+	pkHash := sha256.Sum256([]byte(pubkey))
+	strPkHash := base58.Encode(pkHash[:])
+	return strPkHash
 }

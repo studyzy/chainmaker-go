@@ -200,8 +200,7 @@ type accessControlService struct {
 
 	exceptionalPolicyMap *sync.Map // map[string]*policy , resourceName -> *policy
 
-	trustMembers []*config.TrustMemberConfig
-
+	//local cache for member
 	memberCache *concurrentlru.Cache
 
 	dataStore protocol.BlockchainStore
@@ -212,7 +211,7 @@ type accessControlService struct {
 	hashType string
 }
 
-type cachedMember struct {
+type memberCached struct {
 	member    protocol.Member
 	certChain []*bcx509.Certificate
 }
@@ -224,8 +223,7 @@ func initAccessControlService(hashType, localOrgId string, chainConf *config.Cha
 		orgList:               &sync.Map{},
 		resourceNamePolicyMap: &sync.Map{},
 		exceptionalPolicyMap:  &sync.Map{},
-		trustMembers:          chainConf.TrustMembers,
-		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.SignerCacheSize),
+		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
 		dataStore:             store,
 		log:                   log,
 		hashType:              hashType,
@@ -481,6 +479,18 @@ func (acs *accessControlService) checkResourcePolicyRuleDefaultCase(policy *pbac
 	}
 }
 
+func (acs *accessControlService) lookUpMemberInCache(memberInfo string) (*memberCached, bool) {
+	ret, ok := acs.memberCache.Get(memberInfo)
+	if ok {
+		return ret.(*memberCached), true
+	}
+	return nil, false
+}
+
+func (acs *accessControlService) addMemberToCache(memberInfo string, member *memberCached) {
+	acs.memberCache.Add(memberInfo, member)
+}
+
 func (acs *accessControlService) addOrg(orgId string, orgInfo interface{}) {
 	_, loaded := acs.orgList.LoadOrStore(orgId, orgInfo)
 	if loaded {
@@ -565,26 +575,24 @@ func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string)
 	return p.(*policy), nil
 }
 
-func (acs *accessControlService) lookUpMemberInCache(memberInfo string) (*cachedMember, bool) {
-	ret, ok := acs.memberCache.Get(memberInfo)
-	if ok {
-		return ret.(*cachedMember), true
-	}
-	return nil, false
-}
+func (acs *accessControlService) newCertMember(member *pbac.Member) (protocol.Member, error) {
 
-func (acs *accessControlService) addMemberToCache(memberInfo string, member *cachedMember) {
-	acs.memberCache.Add(memberInfo, member)
-}
-
-func (acs *accessControlService) newMember(member *pbac.Member) (protocol.Member, error) {
 	memberCached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
 	if ok && memberCached.member.GetOrgId() == member.OrgId {
 		acs.log.Debugf("member found in local cache")
 		return memberCached.member, nil
 	}
-	memberFactory := MemberFactory()
-	return memberFactory.NewMember(member, acs)
+	return newCertMemberFromPb(member, acs)
+}
+
+func (acs *accessControlService) newPkMember(member *pbac.Member, adminList, consensusList *sync.Map) (protocol.Member, error) {
+
+	memberCached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
+	if ok && memberCached.member.GetOrgId() == member.OrgId {
+		acs.log.Debugf("member found in local cache")
+		return memberCached.member, nil
+	}
+	return newPkMemberFromAcs(member, adminList, consensusList, acs)
 }
 
 func (acs *accessControlService) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, p *policy) (
@@ -641,7 +649,7 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg str
 			continue
 		}
 
-		member, err := acs.newMember(entry.Signer)
+		member, err := acs.newCertMember(entry.Signer)
 		if err != nil {
 			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
 				err.Error(), string(entry.Signer.MemberInfo))
@@ -670,7 +678,7 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAnyCase(p *policy, end
 			return true, nil
 		}
 
-		member, err := acs.newMember(endorsement.Signer)
+		member, err := acs.newCertMember(endorsement.Signer)
 		if err != nil {
 			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
 				err.Error(), string(endorsement.Signer.MemberInfo))
@@ -774,7 +782,7 @@ func (acs *accessControlService) getValidEndorsements(orgList map[string]bool, r
 			continue
 		}
 
-		member, err := acs.newMember(endorsement.Signer)
+		member, err := acs.newCertMember(endorsement.Signer)
 		if err != nil {
 			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
 				err.Error(), string(endorsement.Signer.MemberInfo))

@@ -26,10 +26,10 @@ import (
 )
 
 const (
-	testChainId        = "chain1"
-	testVersion        = "v1.0.0"
-	testCertMemberType = "CERT"
-	testHashType       = "SM3"
+	testChainId      = "chain1"
+	testVersion      = "v1.0.0"
+	testCertAuthType = "permissionedWithCert "
+	testHashType     = "SM3"
 
 	testOrg1 = "org1"
 	testOrg2 = "org2"
@@ -143,10 +143,10 @@ Ds20ILx7wy349jvs8s4Rc1P4hJZQdfkxdI2GhXU=
 )
 
 var testChainConfig = &config.ChainConfig{
-	ChainId:    testChainId,
-	Version:    testVersion,
-	MemberType: testCertMemberType,
-	Sequence:   0,
+	ChainId:  testChainId,
+	Version:  testVersion,
+	AuthType: testCertAuthType,
+	Sequence: 0,
 	Crypto: &config.CryptoConfig{
 		Hash: testHashType,
 	},
@@ -783,7 +783,6 @@ func MockAccessControl() protocol.AccessControlProvider {
 			dataStore:             nil,
 			memberCache:           concurrentlru.New(0),
 			log:                   mockAcLogger,
-			trustMembers:          nil,
 		},
 		certCache:  concurrentlru.New(0),
 		crl:        sync.Map{},
@@ -793,8 +792,6 @@ func MockAccessControl() protocol.AccessControlProvider {
 			Roots:         bcx509.NewCertPool(),
 		},
 		localOrg: nil,
-		log:      mockAcLogger,
-		hashType: "",
 	}
 	return certAc
 }
@@ -809,7 +806,6 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 			dataStore:             nil,
 			memberCache:           concurrentlru.New(0),
 			log:                   mockAcLogger,
-			trustMembers:          nil,
 		},
 		certCache:  concurrentlru.New(0),
 		crl:        sync.Map{},
@@ -819,8 +815,6 @@ func MockAccessControlWithHash(hashAlg string) protocol.AccessControlProvider {
 			Roots:         bcx509.NewCertPool(),
 		},
 		localOrg: nil,
-		log:      mockAcLogger,
-		hashType: hashAlg,
 	}
 	return certAc
 }

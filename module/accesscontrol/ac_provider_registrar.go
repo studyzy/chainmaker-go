@@ -39,6 +39,8 @@ var StringToAuthTypeMap = map[string]AuthType{
 	"public":               Public,
 }
 
+var Identity = "identity"
+
 func init() {
 	RegisterACProvider(PermissionedWithCert, NilCertACProvider)
 	RegisterACProvider(PermissionedWithKey, NilPermissionedPkACProvider)

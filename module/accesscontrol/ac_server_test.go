@@ -64,7 +64,7 @@ func TestCertMemberInfo(t *testing.T) {
 		MemberType: pbac.MemberType_CERT,
 		MemberInfo: []byte(testConsensusSignOrg1.cert),
 	}
-	member, err := acServices.newMember(pbMember)
+	member, err := acServices.newCertMember(pbMember)
 	require.Nil(t, err)
 	require.Equal(t, testOrg1, member.GetOrgId())
 	require.Equal(t, testConsensusRole, member.GetRole())
@@ -84,7 +84,7 @@ func TestCertMemberInfo(t *testing.T) {
 	err = signingMember.Verify(testChainConfig.Crypto.Hash, []byte(testMsg), signRead)
 	require.Nil(t, err)
 
-	cachedMember := &cachedMember{
+	cachedMember := &memberCached{
 		member:    member,
 		certChain: nil,
 	}
