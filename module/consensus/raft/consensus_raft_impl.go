@@ -562,13 +562,15 @@ func (consensus *ConsensusRaftImpl) maybeTriggerSnapshot(configChanged bool) {
 		consensus.logger.Fatalf("save snapshot error: %v", err)
 	}
 
-	compactIndex := uint64(1)
-	if consensus.appliedIndex > snapshotCatchUpEntriesN {
-		compactIndex = consensus.appliedIndex - snapshotCatchUpEntriesN
-		if first, _ := consensus.raftStorage.FirstIndex(); first > compactIndex {
-			compactIndex = first + 1
-		}
+	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, snapshotIndex: %v",
+		consensus.appliedIndex, string(data), consensus.snapshotIndex)
+	consensus.snapshotIndex = consensus.appliedIndex
+
+	if consensus.appliedIndex < snapshotCatchUpEntriesN+1 {
+		return
 	}
+
+	compactIndex := consensus.appliedIndex - snapshotCatchUpEntriesN
 
 	if err := consensus.raftStorage.Compact(compactIndex); err != nil {
 		last, _ := consensus.raftStorage.LastIndex()
@@ -577,9 +579,7 @@ func (consensus *ConsensusRaftImpl) maybeTriggerSnapshot(configChanged bool) {
 			"index: %d, first: %d, last: %d", err, compactIndex, first, last)
 	}
 
-	consensus.snapshotIndex = consensus.appliedIndex
-	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, compactIndex: %v, snapshotIndex: %v",
-		consensus.appliedIndex, string(data), compactIndex, consensus.snapshotIndex)
+	consensus.logger.Infof("compact entries compactIndex:%d", compactIndex)
 }
 
 func (consensus *ConsensusRaftImpl) sendMessages(msgs []raftpb.Message) {
