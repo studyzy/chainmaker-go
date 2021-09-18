@@ -91,7 +91,8 @@ func newCertACProvider(chainConfig *config.ChainConfig, localOrgId string,
 		return nil, err
 	}
 
-	certACProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash, localOrgId, chainConfig, store, log)
+	certACProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash, localOrgId,
+		StringToAuthTypeMap[chainConfig.AuthType], chainConfig, store, log)
 
 	err = certACProvider.initTrustRoots(chainConfig.TrustRoots, localOrgId)
 	if err != nil {
@@ -896,6 +897,7 @@ func (cp *certACProvider) Module() string {
 
 func (cp *certACProvider) Watch(chainConfig *config.ChainConfig) error {
 	cp.acService.hashType = chainConfig.GetCrypto().GetHash()
+	cp.acService.authType = StringToAuthTypeMap[chainConfig.AuthType]
 	err := cp.initTrustRootsForUpdatingChainConfig(chainConfig, cp.localOrg.id)
 	if err != nil {
 		return err

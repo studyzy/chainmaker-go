@@ -209,6 +209,8 @@ type accessControlService struct {
 
 	// hash algorithm for chains
 	hashType string
+
+	authType AuthType
 }
 
 type memberCached struct {
@@ -216,7 +218,7 @@ type memberCached struct {
 	certChain []*bcx509.Certificate
 }
 
-func initAccessControlService(hashType, localOrgId string, chainConf *config.ChainConfig,
+func initAccessControlService(hashType, localOrgId string, authType AuthType, chainConf *config.ChainConfig,
 	store protocol.BlockchainStore, log protocol.Logger) *accessControlService {
 	acService := &accessControlService{
 		orgNum:                0,
@@ -227,6 +229,7 @@ func initAccessControlService(hashType, localOrgId string, chainConf *config.Cha
 		dataStore:             store,
 		log:                   log,
 		hashType:              hashType,
+		authType:              authType,
 	}
 	acService.initResourcePolicy(chainConf.ResourcePolicies, localOrgId)
 	return acService
@@ -511,8 +514,14 @@ func (acs *accessControlService) createDefaultResourcePolicyForPK(localOrgId str
 		syscontract.PubkeyManageFunction_PUBKEY_DELETE.String(), policySelfConfig)
 }
 
-func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy, localOrgId string) {
-	acs.createDefaultResourcePolicy(localOrgId)
+func (acs *accessControlService) initResourcePolicy(resourcePolicies []*config.ResourcePolicy,
+	localOrgId string) {
+	switch acs.authType {
+	case PermissionedWithCert:
+		acs.createDefaultResourcePolicy(localOrgId)
+	case PermissionedWithKey:
+		acs.createDefaultResourcePolicyForPK(localOrgId)
+	}
 	for _, resourcePolicy := range resourcePolicies {
 		if acs.validateResourcePolicy(resourcePolicy) {
 			policy := newPolicyFromPb(resourcePolicy.Policy)
@@ -718,24 +727,46 @@ func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string)
 	return p.(*policy), nil
 }
 
-func (acs *accessControlService) newCertMember(member *pbac.Member) (protocol.Member, error) {
-
-	memberCached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
-	if ok && memberCached.member.GetOrgId() == member.OrgId {
-		acs.log.Debugf("member found in local cache")
-		return memberCached.member, nil
+func (acs *accessControlService) newCertMember(pbMember *pbac.Member) (protocol.Member, error) {
+	member := acs.getMemberFromCache(pbMember)
+	if member != nil {
+		return member, nil
 	}
-	return newCertMemberFromPb(member, acs)
+	return newCertMemberFromPb(pbMember, acs)
 }
 
 func (acs *accessControlService) newPkMember(member *pbac.Member, adminList, consensusList *sync.Map) (protocol.Member, error) {
 
-	memberCached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
-	if ok && memberCached.member.GetOrgId() == member.OrgId {
-		acs.log.Debugf("member found in local cache")
-		return memberCached.member, nil
+	memberCache := acs.getMemberFromCache(member)
+	if memberCache != nil {
+		return memberCache, nil
 	}
-	return newPkMemberFromAcs(member, adminList, consensusList, acs)
+	pkMember, err := newPkMemberFromAcs(member, adminList, consensusList, acs)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
+	}
+	if pkMember.GetOrgId() != member.OrgId {
+		return nil, fmt.Errorf("new public key member failed: member orgId does not match on chain")
+	}
+	cached := &memberCached{
+		member:    pkMember,
+		certChain: nil,
+	}
+	acs.addMemberToCache(string(member.MemberInfo), cached)
+	return pkMember, nil
+}
+
+func (acs *accessControlService) getMemberFromCache(member *pbac.Member) protocol.Member {
+	cached, ok := acs.lookUpMemberInCache(string(member.MemberInfo))
+	if ok {
+		acs.log.Debugf("member found in local cache")
+		if cached.member.GetOrgId() != member.OrgId {
+			acs.log.Debugf("get member from cache failed: member orgId does not match on chain")
+			return nil
+		}
+		return cached.member
+	}
+	return nil
 }
 
 func (acs *accessControlService) verifyPrincipalPolicy(principal, refinedPrincipal protocol.Principal, p *policy) (
@@ -792,12 +823,14 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleSelfCase(targetOrg str
 			continue
 		}
 
-		member, err := acs.newCertMember(entry.Signer)
-		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(entry.Signer.MemberInfo))
+		member := acs.getMemberFromCache(entry.Signer)
+		if member == nil {
+			acs.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(entry.Signer.MemberInfo))
 			continue
 		}
+
 		if member.GetRole() == role {
 			return true, nil
 		}
@@ -821,12 +854,14 @@ func (acs *accessControlService) verifyPrincipalPolicyRuleAnyCase(p *policy, end
 			return true, nil
 		}
 
-		member, err := acs.newCertMember(endorsement.Signer)
-		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(endorsement.Signer.MemberInfo))
+		member := acs.getMemberFromCache(endorsement.Signer)
+		if member == nil {
+			acs.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(endorsement.Signer.MemberInfo))
 			continue
 		}
+
 		if _, ok := roleList[member.GetRole()]; ok {
 			return true, nil
 		}
@@ -925,10 +960,11 @@ func (acs *accessControlService) getValidEndorsements(orgList map[string]bool, r
 			continue
 		}
 
-		member, err := acs.newCertMember(endorsement.Signer)
-		if err != nil {
-			acs.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(endorsement.Signer.MemberInfo))
+		member := acs.getMemberFromCache(endorsement.Signer)
+		if member == nil {
+			acs.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(endorsement.Signer.MemberInfo))
 			continue
 		}
 

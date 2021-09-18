@@ -72,8 +72,9 @@ func newPermissionedPkACProvider(chainConfig *config.ChainConfig, localOrgId str
 		consensusMember: &sync.Map{},
 		localOrg:        localOrgId,
 	}
-
-	ppacProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash, localOrgId, chainConfig, store, log)
+	authType := StringToAuthTypeMap[chainConfig.AuthType]
+	ppacProvider.acService = initAccessControlService(chainConfig.GetCrypto().Hash,
+		localOrgId, authType, chainConfig, store, log)
 
 	err := ppacProvider.initAdminMembers(chainConfig.TrustRoots)
 	if err != nil {
@@ -141,6 +142,7 @@ func (pp *permissionedPkACProvider) Module() string {
 
 func (pp *permissionedPkACProvider) Watch(chainConfig *config.ChainConfig) error {
 	pp.acService.hashType = chainConfig.GetCrypto().GetHash()
+
 	err := pp.initAdminMembers(chainConfig.TrustRoots)
 	if err != nil {
 		return fmt.Errorf("update chainconfig error: %s", err.Error())
@@ -230,15 +232,8 @@ func (pp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 			},
 			Signature: endorsementEntry.Signature,
 		}
-		if endorsement.Signer.MemberType == pbac.MemberType_PUBLIC_KEY {
-			pp.acService.log.Debugf("target endorser uses public key")
-			memInfo = string(endorsement.Signer.MemberInfo)
-		} else {
-			pp.acService.log.Errorf("member type error")
-			continue
-		}
 
-		remoteMember, err := pp.acService.newPkMember(endorsement.Signer, pp.adminMember, pp.consensusMember)
+		remoteMember, err := pp.NewMember(endorsement.Signer)
 		if err != nil {
 			err = fmt.Errorf("new member failed: [%s]", err.Error())
 			continue
@@ -260,12 +255,7 @@ func (pp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 }
 
 func (pp *permissionedPkACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
-	memberCached, ok := pp.acService.lookUpMemberInCache(string(member.MemberInfo))
-	if ok && memberCached.member.GetOrgId() == member.OrgId {
-		pp.acService.log.Debugf("member found in local cache")
-		return memberCached.member, nil
-	}
-	return newPkMemberFromAcs(member, pp.adminMember, pp.consensusMember, pp.acService)
+	return pp.acService.newPkMember(member, pp.adminMember, pp.consensusMember)
 }
 
 // GetHashAlg return hash algorithm the access control provider uses

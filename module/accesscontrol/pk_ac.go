@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
+	"chainmaker.org/chainmaker/pb-go/v2/consensus"
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
@@ -22,7 +24,11 @@ var _ protocol.AccessControlProvider = (*pkACProvider)(nil)
 
 var NilPkACProvider ACProvider = (*pkACProvider)(nil)
 
-const AdminPublicKey = "public"
+const (
+	AdminPublicKey = "public"
+	// chainconfig DPoS the consensus list key
+	DPOS_CONSENSUS_KEY = "stake.candidate"
+)
 
 var (
 	pubPolicyConsensus = newPolicy(
@@ -102,12 +108,29 @@ func (p *pkACProvider) NewACProvider(chainConf protocol.ChainConf, localOrgId st
 func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (*pkACProvider, error) {
 	pkAcProvider := &pkACProvider{
-		authType:        StringToAuthTypeMap[chainConfig.AuthType],
-		adminMember:     &sync.Map{},
-		consensusMember: &sync.Map{},
-		localOrg:        localOrgId,
-		memberCache:     concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
-		log:             log,
+		adminNum:              0,
+		hashType:              chainConfig.Crypto.Hash,
+		authType:              StringToAuthTypeMap[chainConfig.AuthType],
+		adminMember:           &sync.Map{},
+		consensusMember:       &sync.Map{},
+		localOrg:              localOrgId,
+		memberCache:           concurrentlru.New(localconf.ChainMakerConfig.NodeConfig.CertCacheSize),
+		log:                   log,
+		dataStore:             store,
+		resourceNamePolicyMap: &sync.Map{},
+		exceptionalPolicyMap:  &sync.Map{},
+	}
+
+	pkAcProvider.createDefaultResourcePolicy(pkAcProvider.localOrg)
+
+	err := pkAcProvider.initAdminMembers(chainConfig.TrustRoots)
+	if err != nil {
+		return nil, fmt.Errorf("new publick AC provider failed: %s", err.Error())
+	}
+
+	err = pkAcProvider.initConsensusMember(chainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("new publick AC provider failed: %s", err.Error())
 	}
 
 	return pkAcProvider, nil
@@ -122,6 +145,8 @@ func (p *pkACProvider) initAdminMembers(trustRootList []*config.TrustRootConfig)
 		return fmt.Errorf("init admin member failed: trsut root can't be empty")
 	}
 
+	var adminNum int32
+
 	for _, trustRoot := range trustRootList {
 		if strings.ToLower(trustRoot.OrgId) == AdminPublicKey {
 			for _, root := range trustRoot.Root {
@@ -134,10 +159,37 @@ func (p *pkACProvider) initAdminMembers(trustRootList []*config.TrustRootConfig)
 					pkPEM:     root,
 				}
 				tempSyncMap.Store(root, adminMember)
+				adminNum++
 			}
 		}
 	}
 	p.adminMember = &tempSyncMap
+	atomic.StoreInt32(&p.adminNum, adminNum)
+	return nil
+}
+
+func (p *pkACProvider) initConsensusMember(chainConfig *config.ChainConfig) error {
+	if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
+		return p.initDPoSMember(chainConfig.Consensus.DposConfig)
+	}
+	return fmt.Errorf("public chain mode does not support other consensus")
+}
+
+func (p *pkACProvider) initDPoSMember(dposConf []*config.ConfigKeyValue) error {
+	if len(dposConf) == 0 {
+		return fmt.Errorf("init dpos consensus member failed: DPoS config can't be empty in chain config")
+	}
+
+	var consensusMember sync.Map
+
+	for _, conf := range dposConf {
+		ok := strings.HasPrefix(conf.Key, DPOS_CONSENSUS_KEY)
+		if ok {
+			consensusMember.Store(conf.Value, struct{}{})
+		}
+	}
+
+	p.consensusMember = &consensusMember
 	return nil
 }
 
@@ -153,22 +205,49 @@ func (p *pkACProvider) addMemberToCache(memberInfo string, member *memberCached)
 	p.memberCache.Add(memberInfo, member)
 }
 
+func (p *pkACProvider) getMemberFromCache(member *pbac.Member) protocol.Member {
+	cached, ok := p.lookUpMemberInCache(string(member.MemberInfo))
+	if ok {
+		p.log.Debugf("member found in local cache")
+		return cached.member
+	}
+	return nil
+}
+
 func (p *pkACProvider) Module() string {
 	return ModuleNameAccessControl
 }
 
 func (p *pkACProvider) Watch(chainConfig *config.ChainConfig) error {
 
+	p.hashType = chainConfig.GetCrypto().GetHash()
+	err := p.initAdminMembers(chainConfig.TrustRoots)
+	if err != nil {
+		return fmt.Errorf("new publick AC provider failed: %s", err.Error())
+	}
+
+	err = p.initConsensusMember(chainConfig)
+	if err != nil {
+		return fmt.Errorf("new publick AC provider failed: %s", err.Error())
+	}
+	p.memberCache.Clear()
 	return nil
 }
 
-func (p *pkACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
-	memberCached, ok := p.lookUpMemberInCache(string(member.MemberInfo))
-	if ok {
-		p.log.Debugf("member found in local cache")
-		return memberCached.member, nil
+func (p *pkACProvider) NewMember(pbMember *pbac.Member) (protocol.Member, error) {
+	cache := p.getMemberFromCache(pbMember)
+	if cache != nil {
+		return cache, nil
 	}
-	return publicNewPkMemberFromAcs(member, p.adminMember, p.consensusMember, p.hashType)
+	member, err := publicNewPkMemberFromAcs(pbMember, p.adminMember, p.consensusMember, p.hashType)
+	if err != nil {
+		return nil, fmt.Errorf("new member failed: %s", err.Error())
+	}
+	p.memberCache.Add(string(pbMember.MemberInfo), &memberCached{
+		member:    member,
+		certChain: nil,
+	})
+	return member, nil
 }
 
 func (p *pkACProvider) createDefaultResourcePolicy(localOrgId string) {
@@ -293,12 +372,14 @@ func (p *pkACProvider) verifyRuleAnyCase(pol *policy, endorsements []*common.End
 		if len(roleList) == 0 {
 			return true, nil
 		}
-		member, err := p.NewMember(endorsement.Signer)
-		if err != nil {
-			p.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(endorsement.Signer.MemberInfo))
+		member := p.getMemberFromCache(endorsement.Signer)
+		if member == nil {
+			p.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(endorsement.Signer.MemberInfo))
 			continue
 		}
+
 		if _, ok := roleList[member.GetRole()]; ok {
 			return true, nil
 		}
@@ -408,12 +489,14 @@ func (p *pkACProvider) getValidEndorsements(orgList map[string]bool, roleList ma
 			continue
 		}
 
-		member, err := p.NewMember(endorsement.Signer)
-		if err != nil {
-			p.log.Debugf("failed to convert endorsement to member: %s,member info: [%v]",
-				err.Error(), string(endorsement.Signer.MemberInfo))
+		member := p.getMemberFromCache(endorsement.Signer)
+		if member == nil {
+			p.log.Debugf(
+				"authentication warning: the member is not in member cache, memberInfo[%s]",
+				string(endorsement.Signer.MemberInfo))
 			continue
 		}
+
 		p.log.Debugf("getValidEndorsements: signer's role [%v]", member.GetRole())
 
 		if _, ok := roleList[member.GetRole()]; ok {

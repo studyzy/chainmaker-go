@@ -173,10 +173,11 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 	if member.MemberType != pbac.MemberType_PUBLIC_KEY {
 		return nil, fmt.Errorf("new public key member failed: memberType and authType do not match")
 	}
+
 	adminMember, ok := loadSyncMap(adminList, string(member.MemberInfo))
 	if ok {
 		admin, _ := adminMember.(adminMemberModel)
-		return newPkMemberFromParam(admin.orgId, admin.pkPEM, protocol.RoleAdmin, hashType)
+		return newPkMemberFromParam("", admin.pkPEM, protocol.RoleAdmin, hashType)
 	}
 
 	pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
@@ -188,10 +189,9 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 	if err != nil {
 		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
 	}
-	consensusMember, ok := loadSyncMap(consensusList, nodeId)
+	_, ok = loadSyncMap(consensusList, nodeId)
 	if ok {
-		consensus, _ := consensusMember.(consensusMemberModel)
-		return newPkMemberFromParam(consensus.orgId, string(member.MemberInfo),
+		return newPkMemberFromParam("", string(member.MemberInfo),
 			protocol.RoleConsensusNode, hashType)
 	}
 	return newPkMemberFromParam("", string(member.MemberInfo), protocol.Role(""), hashType)

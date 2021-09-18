@@ -9,6 +9,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
@@ -28,6 +29,8 @@ func ACFactory() *AcFactory {
 
 func (af *AcFactory) NewACProvider(chainConf protocol.ChainConf, localOrgId string,
 	store protocol.BlockchainStore, log protocol.Logger) (protocol.AccessControlProvider, error) {
+
+	chainConf.ChainConfig().AuthType = strings.ToLower(chainConf.ChainConfig().AuthType)
 
 	// 兼容1.x ChainConfig authType
 	if chainConf.ChainConfig().AuthType == Identity {

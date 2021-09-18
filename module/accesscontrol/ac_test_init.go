@@ -30,6 +30,7 @@ const (
 	testVersion      = "v1.0.0"
 	testCertAuthType = "permissionedWithCert "
 	testHashType     = "SM3"
+	testAuthType     = PermissionedWithCert
 
 	testOrg1 = "org1"
 	testOrg2 = "org2"

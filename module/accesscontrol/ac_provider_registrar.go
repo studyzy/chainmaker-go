@@ -28,14 +28,14 @@ const (
 )
 
 var AuthTypeToStringMap = map[AuthType]string{
-	PermissionedWithCert: "permissionedWithCert",
-	PermissionedWithKey:  "permissionedWithKey",
+	PermissionedWithCert: "permissionedwithcert",
+	PermissionedWithKey:  "permissionedwithkey",
 	Public:               "public",
 }
 
 var StringToAuthTypeMap = map[string]AuthType{
-	"permissionedWithCert": PermissionedWithCert,
-	"permissionedWithKey":  PermissionedWithKey,
+	"permissionedwithcert": PermissionedWithCert,
+	"permissionedwithkey":  PermissionedWithKey,
 	"public":               Public,
 }
 
