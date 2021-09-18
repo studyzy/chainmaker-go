@@ -47,6 +47,7 @@ go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/utils@${BRANCH}
 go mod tidy
 ## go test ./...
 cd ../snapshot

@@ -12,17 +12,18 @@ require (
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210915091854-ee36ee89dc57
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080817-79b5a4160dae
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
-	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
+	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210916064951-47123db73430
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210914063622-6f007edc3a98
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20210913121309-9387122bc431
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
-	chainmaker.org/chainmaker/vm v0.0.0-20210914114029-6004e1ebd15e
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
+	chainmaker.org/chainmaker/vm v0.0.0-20210918104424-239140ec3366
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210914075919-6899e681474a
-	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210914080309-c93c4afc11e8
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914123344-d12baf7f7cbe
+	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210918095814-3f0ddfe29968
+	chainmaker.org/chainmaker/vm-native v0.0.0-20210917091516-85e8d7855fe5 // indirect
+	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210918173526-7cd16f1a1d3a
 	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210914075731-ec7bc0766d57
 	github.com/mitchellh/mapstructure v1.4.1
 )
