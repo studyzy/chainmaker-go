@@ -13,6 +13,7 @@ require (
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210914063622-6f007edc3a98
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
+	chainmaker.org/chainmaker/vm v0.0.0-20210918031145-b445d38e6979 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/martian v2.1.0+incompatible
 	github.com/panjf2000/ants/v2 v2.4.3
