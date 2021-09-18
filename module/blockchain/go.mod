@@ -19,10 +19,9 @@ require (
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210914063622-6f007edc3a98
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20210913121309-9387122bc431
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
-	chainmaker.org/chainmaker/vm v0.0.0-20210914114029-6004e1ebd15e // indirect
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210914075919-6899e681474a // indirect
-	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210914080309-c93c4afc11e8 // indirect
-	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210914123344-d12baf7f7cbe // indirect
+	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210918041003-eebfe56b834f // indirect
+	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210918060925-983872736100 // indirect
 	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210914075731-ec7bc0766d57 // indirect
 	github.com/mitchellh/mapstructure v1.4.1
 )
