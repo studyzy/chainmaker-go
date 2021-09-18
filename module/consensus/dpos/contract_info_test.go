@@ -16,7 +16,6 @@ import (
 	"chainmaker.org/chainmaker/vm-native/dposmgr"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -286,7 +285,7 @@ func generateCandidateBlockAndRwSet(t *testing.T, txNum, base int, blockHeight u
 			Status:           syscontract.BondStatus_BONDED,
 			SelfDelegation:   testSelfMinDelegation,
 		}
-		bz, err := proto.Marshal(validator)
+		bz, err := validator.Marshal()
 		require.NoError(t, err)
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{
@@ -324,7 +323,7 @@ func generateUnboundingBlock(t *testing.T, txNum, base int, blockHeight uint64, 
 				{CreationEpochId: completeEpoch - 1, CompletionEpochId: completeEpoch, Amount: "1000"},
 			},
 		}
-		bz, err := proto.Marshal(entry)
+		bz, err := entry.Marshal()
 		require.NoError(t, err)
 		rwSet = append(rwSet, &common.TxRWSet{
 			TxWrites: []*common.TxWrite{

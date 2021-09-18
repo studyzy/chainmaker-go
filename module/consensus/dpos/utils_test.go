@@ -20,8 +20,6 @@ import (
 	pbdpos "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2/mock"
-	"github.com/golang/protobuf/proto"
-
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -182,7 +180,8 @@ func TestGetLatestEpochInfo(t *testing.T) {
 	mockStore.EXPECT().ReadObject(gomock.Any(), gomock.Any()).DoAndReturn(func(contractName string, key []byte) ([]byte, error) {
 		epoch := &syscontract.Epoch{EpochId: 100, NextEpochCreateHeight: 990, ProposerVector: []string{
 			"vector1", "vector2", "vector3", "vector4"}}
-		return proto.Marshal(epoch)
+		//return proto.Marshal(epoch)
+		return epoch.Marshal()
 	}).AnyTimes()
 	epoch, err := GetLatestEpochInfo(mockStore)
 	require.NoError(t, err)

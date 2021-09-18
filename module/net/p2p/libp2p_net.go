@@ -929,13 +929,16 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.Acc
 			var crls []*pkix.CertificateList
 
 			for crlPEM != nil {
-				crl, err := x509.ParseCRL([]byte(crlStr))
+				var crl *pkix.CertificateList
+				crl, err = x509.ParseCRL(crlPEM.Bytes)
 				if err != nil {
-					continue
+					logger.Errorf("[Net] parse crl failed, %s", err.Error())
+					return err
 				}
 				crlPEM, rest = pem.Decode(rest)
 				crls = append(crls, crl)
 			}
+
 			revokedPeerIds := ln.findRevokedPeerIdsByCRLs(crls, peerIdCertMap)
 			if err := ln.closeRevokedPeerConnection(revokedPeerIds); err != nil {
 				return err

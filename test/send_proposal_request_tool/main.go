@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"strings"
 	"time"
 
@@ -51,7 +50,6 @@ var (
 	contractNameByte    []byte
 	contractVersion     []byte
 	contractRuntimeType []byte
-
 
 	useShortCrt bool
 	hashAlgo    string

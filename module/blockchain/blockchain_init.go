@@ -421,10 +421,19 @@ func (bc *Blockchain) initConsensus() (err error) {
 	id := localconf.ChainMakerConfig.NodeConfig.NodeId
 	nodes := bc.chainConf.ChainConfig().Consensus.Nodes
 	nodeIds := make([]string, len(nodes))
+	isConsensusNode := false
 	for i, node := range nodes {
 		for _, nid := range node.NodeId {
 			nodeIds[i] = nid
+			if nid == id {
+				isConsensusNode = true
+			}
 		}
+	}
+	if !isConsensusNode {
+		// this node is not a consensus node
+		delete(bc.initModules, moduleNameConsensus)
+		return nil
 	}
 	_, ok := bc.initModules[moduleNameConsensus]
 	if ok {

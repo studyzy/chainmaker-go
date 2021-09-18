@@ -494,23 +494,52 @@ func (consensus *ConsensusTBFTImpl) handleVerifyResult(verifyResult *consensuspb
 		return
 	}
 
-	if consensus.Height != height ||
-		consensus.Step != tbftpb.Step_PROPOSE ||
-		!bytes.Equal(consensus.VerifingProposal.Block.Header.BlockHash, hash) {
-		consensus.logger.Warnf("[%s](%d/%d/%s) %x receive verify result (%d/%x) error",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			consensus.VerifingProposal.Block.Header.BlockHash,
-			height, hash,
+	if consensus.Height == height &&
+		consensus.Round == consensus.VerifingProposal.Round &&
+		verifyResult.Code == consensuspb.VerifyResult_FAIL {
+		consensus.logger.Warnf("[%s](%d/%d/%s) %x receive verify result (%d/%x) %v failed",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
+			height, hash, verifyResult.Code,
 		)
+		consensus.VerifingProposal = nil
+		go consensus.gossip.triggerEvent()
 		return
 	}
 
-	if verifyResult.Code == consensuspb.VerifyResult_FAIL {
-		consensus.logger.Warnf("[%s](%d/%d/%s) %x receive verify result (%d/%x) %v failed",
-			consensus.Id, consensus.Height, consensus.Round, consensus.Step,
-			consensus.VerifingProposal.Block.Header.BlockHash,
-			height, hash, verifyResult.Code,
+	// if there are quorum pre_commit vote, then commit block
+	if bytes.Equal(consensus.VerifingProposal.Block.Header.BlockHash, hash) {
+		if consensus.heightRoundVoteSet != nil && consensus.heightRoundVoteSet.precommits(consensus.Round) != nil {
+			voteSet := consensus.heightRoundVoteSet.precommits(consensus.Round)
+			quorumHash, ok := voteSet.twoThirdsMajority()
+			//if ok && bytes.Compare(quorumHash, consensus.VerifingProposal.Block.Header.BlockHash) == 0 {
+			if ok && bytes.Equal(quorumHash, consensus.VerifingProposal.Block.Header.BlockHash) {
+				consensus.Proposal = consensus.VerifingProposal
+				if !replayMode {
+					consensus.saveWalEntry(consensus.Proposal)
+				}
+
+				qc := mustMarshal(voteSet.ToProto())
+				if consensus.Proposal.Block.AdditionalData == nil {
+					consensus.Proposal.Block.AdditionalData = &common.AdditionalData{
+						ExtraData: make(map[string][]byte),
+					}
+				}
+				consensus.Proposal.Block.AdditionalData.ExtraData[protocol.TBFTAddtionalDataKey] = qc
+				// Commit block to core engine
+				consensus.commitBlock(consensus.Proposal.Block)
+				return
+			}
+		}
+	}
+
+	if consensus.Step != tbftpb.Step_PROPOSE ||
+		!bytes.Equal(consensus.VerifingProposal.Block.Header.BlockHash, hash) {
+		consensus.logger.Warnf("[%s](%d/%d/%s) %x receive verify result (%d/%x) error",
+			consensus.Id, consensus.Height, consensus.Round, consensus.Step, consensus.VerifingProposal.Block.Header.BlockHash,
+			height, hash,
 		)
+		consensus.VerifingProposal = nil
+		go consensus.gossip.triggerEvent()
 		return
 	}
 
@@ -850,8 +879,8 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 	// Upon >2/3 prevotes, Step into StepPrecommit
 	if consensus.Proposal != nil {
 		if !bytes.Equal(hash, consensus.Proposal.Block.Header.BlockHash) {
-			consensus.logger.Errorf("[%s](%d/%d/%s) block matched failed, receive valid block: %x,"+
-				" but unmatched with proposal: %x",
+			consensus.logger.Warnf("[%s](%d/%d/%s) block matched failed, receive valid block: %x,"+
+				"but unmatched with proposal: %x",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, hash, consensus.Proposal.Block.Header.BlockHash)
 		}
 		consensus.enterPrecommit(consensus.Height, consensus.Round)
@@ -859,7 +888,7 @@ func (consensus *ConsensusTBFTImpl) addPrevoteVote(vote *Vote) {
 		if isNilHash(hash) {
 			consensus.enterPrecommit(consensus.Height, consensus.Round)
 		} else {
-			consensus.logger.Errorf("[%s](%d/%d/%s) add vote failed, receive valid block: %x, but proposal is nil",
+			consensus.logger.Warnf("[%s](%d/%d/%s) add vote failed, receive valid block: %x, but proposal is nil",
 				consensus.Id, consensus.Height, consensus.Round, consensus.Step, hash)
 		}
 	}
@@ -1062,9 +1091,6 @@ func (consensus *ConsensusTBFTImpl) enterPrevote(height uint64, round int32) {
 
 	// Broadcast prevote
 	// prevote := createPrevoteMsg(consensus.Id, consensus.Height, consensus.Round, hash)
-	if !consensus.validatorSet.hasValidator(consensus.Id) {
-		return
-	}
 	prevote := NewVote(tbftpb.VoteType_VOTE_PREVOTE, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrevoteOldHeight {
 		consensus.logger.Infof("[%s](%v/%v/%v) switch IsPrevoteOldHeight: %v, prevote old height: %v",
@@ -1120,9 +1146,6 @@ func (consensus *ConsensusTBFTImpl) enterPrecommit(height uint64, round int32) {
 	}
 
 	// Broadcast precommit
-	if !consensus.validatorSet.hasValidator(consensus.Id) {
-		return
-	}
 	precommit := NewVote(tbftpb.VoteType_VOTE_PRECOMMIT, consensus.Id, consensus.Height, consensus.Round, hash)
 	if localconf.ChainMakerConfig.DebugConfig.IsPrecommitOldHeight {
 		consensus.logger.Infof("[%s](%d/%d/%v) switch IsPrecommitOldHeight: %v, precommit old height: %v",
