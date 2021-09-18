@@ -23,7 +23,7 @@ require (
 	chainmaker.org/chainmaker/vm-evm v0.0.0-20210914075919-6899e681474a
 	chainmaker.org/chainmaker/vm-gasm v0.0.0-20210918095814-3f0ddfe29968
 	chainmaker.org/chainmaker/vm-wasmer v0.0.0-20210918095657-f9f05e3f5d05
-	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210914075731-ec7bc0766d57
+	chainmaker.org/chainmaker/vm-wxvm v0.0.0-20210918101823-dce1c76fb189
 	github.com/mitchellh/mapstructure v1.4.1
 )
 
