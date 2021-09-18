@@ -35,12 +35,12 @@ import (
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
+	"chainmaker.org/chainmaker/raftwal/v2/wal"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 	etcdraft "go.etcd.io/etcd/raft/v3"
 	"go.etcd.io/etcd/raft/v3/raftpb"
 	"go.etcd.io/etcd/server/v3/etcdserver/api/snap"
-	"go.etcd.io/etcd/server/v3/wal"
 	"go.etcd.io/etcd/server/v3/wal/walpb"
 )
 
@@ -645,7 +645,8 @@ func (consensus *ConsensusRaftImpl) replayWAL() *wal.WAL {
 		walsnap.Index, walsnap.Term = snapshot.Metadata.Index, snapshot.Metadata.Term
 	}
 
-	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap)
+	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap,
+		consensus.chainConf.ChainConfig().Block.BlockSize * 1024 * 1024)
 	if err != nil {
 		consensus.logger.Fatalf("open wal error: %v", err)
 	}
