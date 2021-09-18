@@ -28,11 +28,11 @@ node:
   cert_cache_size:   1000
   pkcs11:
     enabled: false
-    library: # path to the so file of pkcs11 interface
-    label: # label for the slot to be used
-    password: # password to logon the HSM
-    session_cache_size: 10 # size of HSM session cache, default to 10
-    hash: "SHA256" # hash algorithm used to compute SKI
+    library: /usr/local/lib64/pkcs11/libupkcs11.so      # path to the so file of pkcs11 interface
+    label: HSM                                          # label for the slot to be used
+    password: 11111111                                  # password to logon the HSM
+    session_cache_size: 10                              # size of HSM session cache, default to 10
+    hash: "SHA256"                                      # hash algorithm used to compute SKI
 
 net:
   provider: LibP2P
