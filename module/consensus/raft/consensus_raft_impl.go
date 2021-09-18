@@ -572,9 +572,12 @@ func (consensus *ConsensusRaftImpl) maybeTriggerSnapshot(configChanged bool) {
 
 	compactIndex := consensus.appliedIndex - snapshotCatchUpEntriesN
 
+	first, _ := consensus.raftStorage.FirstIndex()
+	if compactIndex <= first {
+		return
+	}
 	if err := consensus.raftStorage.Compact(compactIndex); err != nil {
 		last, _ := consensus.raftStorage.LastIndex()
-		first, _ := consensus.raftStorage.FirstIndex()
 		consensus.logger.Fatalf("compact snapshot error: %v, compact "+
 			"index: %d, first: %d, last: %d", err, compactIndex, first, last)
 	}
