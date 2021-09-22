@@ -34,8 +34,8 @@ import (
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/protocol/v2"
-	"chainmaker.org/chainmaker/utils/v2"
 	"chainmaker.org/chainmaker/raftwal/v2/wal"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 	etcdraft "go.etcd.io/etcd/raft/v3"
@@ -649,7 +649,7 @@ func (consensus *ConsensusRaftImpl) replayWAL() *wal.WAL {
 	}
 
 	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap,
-		consensus.chainConf.ChainConfig().Block.BlockSize * 1024 * 1024)
+		consensus.chainConf.ChainConfig().Block.BlockSize*1024*1024)
 	if err != nil {
 		consensus.logger.Fatalf("open wal error: %v", err)
 	}
