@@ -8,12 +8,12 @@
 package rpcserver
 
 import (
-	commonErr "chainmaker.org/chainmaker/common/v2/errors"
-	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
-	"chainmaker.org/chainmaker/utils/v2"
-
 	"errors"
 	"fmt"
+
+	"chainmaker.org/chainmaker/common/v2/bytehelper"
+	commonErr "chainmaker.org/chainmaker/common/v2/errors"
+	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -52,7 +52,7 @@ func (s *ApiService) getArchiveBlockHeight(params []*commonPb.KeyValuePair) (uin
 		return 0, fmt.Errorf("invalid key, must be %s", key)
 	}
 
-	blockHeight, err := utils.BytesToUint64(params[0].Value)
+	blockHeight, err := bytehelper.BytesToUint64(params[0].Value)
 	if err != nil {
 		return 0, errors.New("convert blockHeight from bytes to uint64 failed")
 	}

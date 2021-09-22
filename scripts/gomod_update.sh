@@ -17,7 +17,12 @@ cd ../blockchain
 go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
+go get chainmaker.org/chainmaker/store/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/vm-wasmer@${BRANCH}
+go get chainmaker.org/chainmaker/vm-gasm@${BRANCH}
+go get chainmaker.org/chainmaker/vm-wxvm@${BRANCH}
+go get chainmaker.org/chainmaker/vm-evm@${BRANCH}
 go mod tidy
 # go test ./...
 cd ../consensus
@@ -32,6 +37,7 @@ go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/vm@${BRANCH}
 go mod tidy
 # go test ./...
 
@@ -47,6 +53,8 @@ go get chainmaker.org/chainmaker/protocol/v2@${BRANCH}
 go get chainmaker.org/chainmaker/pb-go/v2@${BRANCH}
 go get chainmaker.org/chainmaker/common/v2@${BRANCH}
 go get chainmaker.org/chainmaker/vm-native@${BRANCH}
+go get chainmaker.org/chainmaker/utils/v2@${BRANCH}
+go get chainmaker.org/chainmaker/store/v2@${BRANCH}
 go mod tidy
 ## go test ./...
 cd ../snapshot
