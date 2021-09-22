@@ -489,26 +489,66 @@ func (cp *certACProvider) GetHashAlg() string {
 	return cp.acService.hashType
 }
 
-func (cp *certACProvider) NewMember(member *pbac.Member) (protocol.Member, error) {
-	if member.MemberType == pbac.MemberType_CERT_HASH {
-		memInfoBytes, ok := cp.lookUpCertCache(member.MemberInfo)
+func (cp *certACProvider) NewMember(pbMember *pbac.Member) (protocol.Member, error) {
+	if pbMember.MemberType != pbac.MemberType_CERT &&
+		pbMember.MemberType != pbac.MemberType_CERT_HASH {
+		return nil, fmt.Errorf("new member failed: the member type does not match")
+	}
+
+	if pbMember.MemberType == pbac.MemberType_CERT_HASH {
+		memInfoBytes, ok := cp.lookUpCertCache(pbMember.MemberInfo)
 		if !ok {
 			return nil, fmt.Errorf("new member failed, the provided certificate ID is not registered")
 		}
-		member.MemberInfo = memInfoBytes
+		pbMember.MemberInfo = memInfoBytes
 	}
 
-	cached, ok := cp.loadTrustMembers(string(member.MemberInfo))
+	memberCache, ok := cp.acService.lookUpMemberInCache(string(pbMember.MemberInfo))
+	if !ok {
+		remoteMember, isTrustMember, err := cp.newNoCacheMember(pbMember)
+		if err != nil {
+			return nil, fmt.Errorf("new member failed: %s", err.Error())
+		}
+
+		var certChain []*bcx509.Certificate
+		if !isTrustMember {
+			certChain, err = cp.verifyMember(remoteMember)
+			if err != nil {
+				return nil, fmt.Errorf("new member failed: %s", err.Error())
+			}
+		}
+
+		cp.acService.memberCache.Add(string(pbMember.MemberInfo), &memberCached{
+			member:    remoteMember,
+			certChain: certChain,
+		})
+	}
+
+	return memberCache.member, nil
+}
+
+func (cp *certACProvider) newNoCacheMember(pbMember *pbac.Member) (member protocol.Member,
+	isTrustMember bool, err error) {
+	cached, ok := cp.loadTrustMembers(string(pbMember.MemberInfo))
 	if ok {
 		var isCompressed bool
-		if member.MemberType == pbac.MemberType_CERT {
+		if pbMember.MemberType == pbac.MemberType_CERT {
 			isCompressed = false
 		}
-		return newCertMemberFromParam(cached.trustMember.OrgId, cached.trustMember.Role,
+		certMember, err := newCertMemberFromParam(cached.trustMember.OrgId, cached.trustMember.Role,
 			cp.acService.hashType, isCompressed, []byte(cached.trustMember.MemberInfo))
+		if err != nil {
+			return nil, isTrustMember, err
+		}
+		isTrustMember = true
+		return certMember, isTrustMember, nil
 	}
 
-	return cp.acService.newCertMember(member)
+	member, err = cp.acService.newCertMember(pbMember)
+	if err != nil {
+		return nil, isTrustMember, fmt.Errorf("new member failed: %s", err.Error())
+	}
+	return member, isTrustMember, nil
 }
 
 // ValidateResourcePolicy checks whether the given resource principal is valid
@@ -539,29 +579,17 @@ func (cp *certACProvider) LookUpExceptionalPolicy(resourceName string) (*pbac.Po
 	return cp.acService.lookUpExceptionalPolicy(resourceName)
 }
 
-func (cp *certACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
+func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberStatus, error) {
 
-	if (member.MemberType != pbac.MemberType_CERT_HASH) &&
-		(member.MemberType != pbac.MemberType_CERT) {
-		return pbac.MemberStatus_INVALID, fmt.Errorf("get member status failed: member type error")
+	member, err := cp.NewMember(pbMember)
+	if err != nil {
+		cp.acService.log.Infof("get member status error: %s", err.Error())
+		return pbac.MemberStatus_INVALID, nil
 	}
-	var (
-		cert *bcx509.Certificate
-		err  error
-	)
-	certBlock, rest := pem.Decode(member.MemberInfo)
-	if certBlock == nil {
-		cert, err = bcx509.ParseCertificate(rest)
-		if err != nil {
-			return pbac.MemberStatus_INVALID, fmt.Errorf("parsing member info failed: %s", err.Error())
-		}
-	} else {
-		cert, err = bcx509.ParseCertificate(certBlock.Bytes)
-		if err != nil {
-			return pbac.MemberStatus_INVALID, fmt.Errorf("parsing member info failed: %s", err.Error())
-		}
-	}
+
 	var certChain []*bcx509.Certificate
+	cert := member.(*certMember).cert
+
 	certChain = append(certChain, cert)
 	err = cp.checkCRL(certChain)
 	if err != nil && err.Error() == "certificate is revoked" {
@@ -757,14 +785,13 @@ func (cp *certACProvider) addCertCache(certId string, cert []byte) {
 
 func (cp *certACProvider) verifyPrincipalSignerNotInCache(endorsement *common.EndorsementEntry, msg []byte,
 	memInfo string) (remoteMember protocol.Member, certChain []*bcx509.Certificate, ok bool, err error) {
-	remoteMember, err = cp.NewMember(endorsement.Signer)
+	var isTrustMember bool
+	remoteMember, isTrustMember, err = cp.newNoCacheMember(endorsement.Signer)
 	if err != nil {
 		err = fmt.Errorf("new member failed: [%s]", err.Error())
 		ok = false
 		return
 	}
-
-	cached, isTrustMember := cp.loadTrustMembers(string(endorsement.Signer.MemberInfo))
 
 	if !isTrustMember {
 		certChain, err = cp.verifyMember(remoteMember)
@@ -773,19 +800,7 @@ func (cp *certACProvider) verifyPrincipalSignerNotInCache(endorsement *common.En
 			ok = false
 			return
 		}
-	} else {
-		certChain = []*bcx509.Certificate{cached.cert}
 	}
-
-	// if err = ac.satisfyPolicy(remoteMember, &policyWhiteList{
-	// 	policyType: ac.authMode,
-	// 	policyList: ac.localOrg.trustedRootCerts,
-	// }); err != nil {
-	// 	resultMsg = fmt.Sprintf(authenticationFailedErrorTemplate, err)
-	// 	ac.log.Warn(resultMsg)
-	// 	ok = false
-	// 	return
-	// }
 
 	if err = remoteMember.Verify(cp.acService.hashType, msg, endorsement.Signature); err != nil {
 		err = fmt.Errorf("member verify signature failed: [%s]", err.Error())

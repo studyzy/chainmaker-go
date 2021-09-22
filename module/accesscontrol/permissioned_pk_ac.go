@@ -292,6 +292,10 @@ func (pp *permissionedPkACProvider) LookUpExceptionalPolicy(resourceName string)
 }
 
 func (pp *permissionedPkACProvider) GetMemberStatus(member *pbac.Member) (pbac.MemberStatus, error) {
+	if _, err := pp.NewMember(member); err != nil {
+		pp.acService.log.Infof("get member status error: %s", err.Error())
+		return pbac.MemberStatus_INVALID, nil
+	}
 	return pbac.MemberStatus_NORMAL, nil
 }
 

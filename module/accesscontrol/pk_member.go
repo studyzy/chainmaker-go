@@ -155,7 +155,7 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
 
-	if len(publicKeyInfoBytes) == 0 {
+	if publicKeyInfoBytes == nil {
 		return nil, fmt.Errorf("new public key member failed: the public key doesn't belong to a member on chain")
 	}
 

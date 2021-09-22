@@ -728,10 +728,6 @@ func (acs *accessControlService) lookUpPolicyByResourceName(resourceName string)
 }
 
 func (acs *accessControlService) newCertMember(pbMember *pbac.Member) (protocol.Member, error) {
-	member := acs.getMemberFromCache(pbMember)
-	if member != nil {
-		return member, nil
-	}
 	return newCertMemberFromPb(pbMember, acs)
 }
 
