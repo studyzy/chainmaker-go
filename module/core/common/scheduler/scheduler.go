@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package scheduler
 
 import (
+	"chainmaker.org/chainmaker/vm"
 	//	"encoding/hex"
 	"errors"
 	"fmt"
@@ -44,26 +45,6 @@ type TxScheduler struct {
 // Transaction dependency in adjacency table representation
 type dagNeighbors map[int]bool
 
-func NewTxSimContext(vmManager protocol.VmManager, snapshot protocol.Snapshot, tx *commonpb.Transaction,
-	blockVersion uint32) protocol.TxSimContext {
-	return &txSimContextImpl{
-		txExecSeq:        snapshot.GetSnapshotSize(),
-		tx:               tx,
-		txReadKeyMap:     make(map[string]*commonpb.TxRead, 8),
-		txWriteKeyMap:    make(map[string]*commonpb.TxWrite, 8),
-		sqlRowCache:      make(map[int32]protocol.SqlRows),
-		kvRowCache:       make(map[int32]protocol.StateIterator),
-		txWriteKeySql:    make([]*commonpb.TxWrite, 0),
-		txWriteKeyDdlSql: make([]*commonpb.TxWrite, 0),
-		snapshot:         snapshot,
-		vmManager:        vmManager,
-		gasUsed:          0,
-		currentDepth:     0,
-		hisResult:        make([]*callContractResult, 0),
-		blockVersion:     blockVersion,
-	}
-}
-
 // Schedule according to a batch of transactions, and generating DAG according to the conflict relationship
 func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Transaction,
 	snapshot protocol.Snapshot) (map[string]*commonpb.TxRWSet, map[string][]*commonpb.ContractEvent, error) {
@@ -95,7 +76,7 @@ func (ts *TxScheduler) Schedule(block *commonpb.Block, txBatch []*commonpb.Trans
 						return
 					}
 					ts.log.Debugf("run vm for tx id:%s", tx.Payload.GetTxId())
-					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
+					txSimContext := vm.NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
@@ -238,7 +219,7 @@ func (ts *TxScheduler) SimulateWithDag(block *commonpb.Block, snapshot protocol.
 				tx := txMapping[txIndex]
 				err := goRoutinePool.Submit(func() {
 					ts.log.Debugf("run vm with dag for tx id %s", tx.Payload.GetTxId())
-					txSimContext := NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
+					txSimContext := vm.NewTxSimContext(ts.VmManager, snapshot, tx, block.Header.BlockVersion)
 					runVmSuccess := true
 					var txResult *commonpb.Result
 					var err error
