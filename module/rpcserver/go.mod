@@ -12,7 +12,7 @@ require (
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210916064951-47123db73430
 	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210914063622-6f007edc3a98
 	chainmaker.org/chainmaker/store/v2 v2.0.0-20210913121309-9387122bc431
-	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
+	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b
 	chainmaker.org/chainmaker/vm-native v0.0.0-20210917091516-85e8d7855fe5
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -26,12 +26,10 @@ replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
 	chainmaker.org/chainmaker-go/blockchain => ../blockchain
 	chainmaker.org/chainmaker-go/consensus => ../consensus
-	chainmaker.org/chainmaker-go/consensus/dpos => ./../consensus/dpos
 	chainmaker.org/chainmaker-go/core => ../core
 
 	chainmaker.org/chainmaker-go/monitor => ../monitor
 	chainmaker.org/chainmaker-go/net => ../net
-	chainmaker.org/chainmaker-go/rpcserver => ../rpcserver
 	chainmaker.org/chainmaker-go/snapshot => ../snapshot
 	chainmaker.org/chainmaker-go/subscriber => ../subscriber
 	chainmaker.org/chainmaker-go/sync => ../sync
