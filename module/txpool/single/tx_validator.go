@@ -11,10 +11,10 @@ import (
 	"math"
 
 	"chainmaker.org/chainmaker-go/txpool/poolconf"
-	"chainmaker.org/chainmaker-go/utils"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 // validate verify the validity of the transaction

@@ -22,8 +22,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

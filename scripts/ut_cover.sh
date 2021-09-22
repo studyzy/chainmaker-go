@@ -15,24 +15,28 @@ function ut_cover() {
       # 如果测试覆盖率低于N，认为ut执行失败
   (( $(awk 'BEGIN {print ("'${coverage}'" >= "'$2'")}') )) || (echo "$1 单测覆盖率低于$2%"; exit 1)
 }
-
-cm=$(pwd)/..
-
 set -e
 
-ut_cover "module/accesscontrol" 47
-ut_cover "module/blockchain" 2.2
-ut_cover "module/conf/chainconf" 26
-ut_cover "module/conf/localconf" 11
-ut_cover "module/consensus" 11
-ut_cover "module/core" 2.3
-ut_cover "module/logger" 50
-ut_cover "module/net" 29
-ut_cover "module/rpcserver" 0
-ut_cover "module/snapshot" 25
-ut_cover "module/store" 40
-ut_cover "module/sync" 61
-ut_cover "module/txpool" 47
-ut_cover "module/utils" 28
-ut_cover "module/vm" 32
-ut_cover "tools/cmc" 10
+cm=$(pwd)
+
+if [[ $cm == *"scripts" ]] ;then
+  cm=$cm/..
+fi
+
+if [ -n "$1" ] ;then
+  echo "check UT cover: $1."
+  ut_cover "$1" 40
+else
+  ut_cover "module/accesscontrol" 47
+  ut_cover "module/blockchain" 2
+#  ut_cover "module/conf/chainconf" 26
+#  ut_cover "module/conf/localconf" 11
+  ut_cover "module/consensus" 10
+  ut_cover "module/core" 2.3
+  ut_cover "module/net" 29
+  ut_cover "module/rpcserver" 0
+  ut_cover "module/snapshot" 25
+  ut_cover "module/sync" 61
+  ut_cover "module/txpool" 47
+  ut_cover "tools/cmc" 10
+fi

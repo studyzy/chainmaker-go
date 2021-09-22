@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	logger2 "chainmaker.org/chainmaker-go/logger"
+	logger2 "chainmaker.org/chainmaker/logger/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"

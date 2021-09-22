@@ -12,8 +12,9 @@ import (
 	"fmt"
 	"strings"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/common/v2/bytehelper"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/utils/v2"
 
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker-go/subscriber/model"
@@ -79,9 +80,9 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 
 	for _, kv := range payload.Parameters {
 		if kv.Key == syscontract.SubscribeBlock_START_BLOCK.String() {
-			startBlock, err = utils.BytesToInt64(kv.Value)
+			startBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeBlock_END_BLOCK.String() {
-			endBlock, err = utils.BytesToInt64(kv.Value)
+			endBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeBlock_WITH_RWSET.String() {
 			if string(kv.Value) == TRUE {
 				withRWSet = true
@@ -185,9 +186,9 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
 
 	for _, kv := range payload.Parameters {
 		if kv.Key == syscontract.SubscribeTx_START_BLOCK.String() {
-			startBlock, err = utils.BytesToInt64(kv.Value)
+			startBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeTx_END_BLOCK.String() {
-			endBlock, err = utils.BytesToInt64(kv.Value)
+			endBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeTx_CONTRACT_NAME.String() {
 			contractName = string(kv.Value)
 		} else if kv.Key == syscontract.SubscribeTx_TX_IDS.String() {
@@ -465,7 +466,7 @@ func (s *ApiService) sendNewBlock(store protocol.BlockchainStore, tx *commonPb.T
 				}
 			}
 
-			printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
+			//printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
 
 			if err = s.dealBlockSubscribeResult(server, blockInfo, withRWSet, onlyHeader); err != nil {
 				s.log.Errorf(err.Error())
@@ -716,7 +717,7 @@ func (s *ApiService) getBlockInfoFromStore(store protocol.BlockchainStore, curbl
 		}
 	}
 
-	printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
+	//printAllTxsOfBlock(blockInfo, reqSender, reqSenderOrgId)
 
 	return blockInfo, -1, nil
 }
@@ -960,21 +961,21 @@ func (s *ApiService) checkAndGetLastBlockHeight(store protocol.BlockchainStore,
 	return int64(lastBlock.Header.BlockHeight), nil
 }
 
-func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender protocol.Role, reqSenderOrgId string) {
-	fmt.Printf("Verifying subscribed block of height: %d\n", blockInfo.Block.Header.BlockHeight)
-	fmt.Printf("verify: the role of request sender is Light [%t]\n", reqSender == protocol.RoleLight)
-	fmt.Printf("the block has %d txs\n", len(blockInfo.Block.Txs))
-	for i, tx := range blockInfo.Block.Txs {
-
-		if tx.Sender != nil {
-
-			fmt.Printf("Tx [%d] of subscribed block, from org %v, TxSenderOrgId is %s, "+
-				"verify: this tx is of the same organization [%t]\n", i, tx.Sender.Signer.OrgId,
-				reqSenderOrgId, tx.Sender.Signer.OrgId == reqSenderOrgId)
-		}
-	}
-	fmt.Println()
-}
+//func printAllTxsOfBlock(blockInfo *commonPb.BlockInfo, reqSender protocol.Role, reqSenderOrgId string) {
+//	fmt.Printf("Verifying subscribed block of height: %d\n", blockInfo.Block.Header.BlockHeight)
+//	fmt.Printf("verify: the role of request sender is Light [%t]\n", reqSender == protocol.RoleLight)
+//	fmt.Printf("the block has %d txs\n", len(blockInfo.Block.Txs))
+//	for i, tx := range blockInfo.Block.Txs {
+//
+//		if tx.Sender != nil {
+//
+//			fmt.Printf("Tx [%d] of subscribed block, from org %v, TxSenderOrgId is %s, "+
+//				"verify: this tx is of the same organization [%t]\n", i, tx.Sender.Signer.OrgId,
+//				reqSenderOrgId, tx.Sender.Signer.OrgId == reqSenderOrgId)
+//		}
+//	}
+//	fmt.Println()
+//}
 
 func (s *ApiService) getRoleFromTx(tx *commonPb.Transaction) (protocol.Role, error) {
 	bc, err := s.chainMakerServer.GetBlockchain(tx.Payload.ChainId)

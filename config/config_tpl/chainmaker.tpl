@@ -111,6 +111,8 @@ consensus:
     snap_count: 10
     # 是否异步Wal文件保存，true异步保存，false同步保存
     async_wal_save: true
+    # 1 time.Duration 表示1 * time.Second
+    ticker: 1
 
 storage:
   store_path: ../data/{org_id}/ledgerData1

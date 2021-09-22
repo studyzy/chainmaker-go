@@ -18,14 +18,14 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/utils"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/crypto/pkcs11"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
+	"chainmaker.org/chainmaker/localconf/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 var _ protocol.Member = (*certMember)(nil)

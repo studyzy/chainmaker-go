@@ -11,9 +11,9 @@ import (
 	"math"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/utils"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 type txValidateFunc func(tx *commonPb.Transaction, source protocol.TxSource) error

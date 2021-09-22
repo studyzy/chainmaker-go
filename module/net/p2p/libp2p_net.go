@@ -11,6 +11,7 @@ import (
 	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -20,13 +21,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/net/p2p/libp2pgmtls"
 	"chainmaker.org/chainmaker-go/net/p2p/libp2ptls"
-	"chainmaker.org/chainmaker-go/utils"
 	cmx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	netPb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p-core/network"
 
@@ -923,18 +924,21 @@ func (ln *LibP2pNet) checkRevokeTlsCertsCertsRevokeMethodRevokePeerId(ac api.Acc
 				return err
 			}
 
+			crlPEM, rest := pem.Decode([]byte(crlStr))
+
 			var crls []*pkix.CertificateList
 
-			crl, err := x509.ParseCRL([]byte(crlStr))
-			if err != nil {
-				logger.Errorf("[Net] validate crl failed, %s", err.Error())
-				return err
+			for crlPEM != nil {
+				var crl *pkix.CertificateList
+				crl, err = x509.ParseCRL(crlPEM.Bytes)
+				if err != nil {
+					logger.Errorf("[Net] parse crl failed, %s", err.Error())
+					return err
+				}
+				crlPEM, rest = pem.Decode(rest)
+				crls = append(crls, crl)
 			}
-			crls = append(crls, crl)
-			if err != nil {
-				logger.Errorf("[Net] validate crl failed, %s", err.Error())
-				return err
-			}
+
 			revokedPeerIds := ln.findRevokedPeerIdsByCRLs(crls, peerIdCertMap)
 			if err := ln.closeRevokedPeerConnection(revokedPeerIds); err != nil {
 				return err

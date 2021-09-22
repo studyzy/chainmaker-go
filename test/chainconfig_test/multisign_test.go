@@ -12,7 +12,6 @@ import (
 	"chainmaker.org/chainmaker-go/accesscontrol"
 	native "chainmaker.org/chainmaker-go/test/chainconfig_test"
 	"chainmaker.org/chainmaker-go/test/common"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/helper"
@@ -21,6 +20,7 @@ import (
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/stretchr/testify/require"
 )
 

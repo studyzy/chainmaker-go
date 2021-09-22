@@ -20,10 +20,10 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/blockchain"
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker-go/rpcserver"
+	"chainmaker.org/chainmaker/localconf/v2"
+	"chainmaker.org/chainmaker/logger/v2"
 	"code.cloudfoundry.org/bytefmt"
 	"github.com/spf13/cobra"
 )

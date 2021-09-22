@@ -13,16 +13,16 @@ import (
 
 	"chainmaker.org/chainmaker-go/core/common"
 	"chainmaker.org/chainmaker-go/core/provider/conf"
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
-	"chainmaker.org/chainmaker-go/utils"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/localconf/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus/chainedbft"
 	txpoolpb "chainmaker.org/chainmaker/pb-go/v2/txpool"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

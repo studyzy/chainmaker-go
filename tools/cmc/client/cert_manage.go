@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	sdk "chainmaker.org/chainmaker/sdk-go/v2"
+
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"github.com/spf13/cobra"
@@ -168,6 +170,15 @@ func freezeOrUnfreezeCert(which int) error {
 }
 
 func revokeCert() error {
+	adminKeys := strings.Split(adminKeyFilePaths, ",")
+	adminCrts := strings.Split(adminCrtFilePaths, ",")
+	if len(adminKeys) == 0 || len(adminCrts) == 0 {
+		return errAdminOrgIdKeyCertIsEmpty
+	}
+	if len(adminKeys) != len(adminCrts) {
+		return fmt.Errorf(ADMIN_ORGID_KEY_CERT_LENGTH_NOT_EQUAL_FORMAT, len(adminKeys), len(adminCrts))
+	}
+
 	crlBytes, err := ioutil.ReadFile(certCrlPath)
 	if err != nil {
 		return err
@@ -178,26 +189,31 @@ func revokeCert() error {
 		return fmt.Errorf("create user client failed, %s", err.Error())
 	}
 	defer client.Stop()
-	adminClient, err := createAdminWithConfig(adminKeyFilePaths, adminCrtFilePaths)
-	if err != nil {
-		return fmt.Errorf("create admin client failed, %s", err.Error())
-	}
-	defer adminClient.Stop()
+
 	payload := client.CreateCertManageRevocationPayload(string(crlBytes))
-	if err != nil {
-		return fmt.Errorf("create cert manage revocation payload failed, %s", err.Error())
+
+	endorsementEntrys := make([]*commonpb.EndorsementEntry, len(adminKeys))
+	for i := range adminKeys {
+		e, err := sdk.SignPayloadWithPath(adminKeys[i], adminCrts[i], payload)
+		if err != nil {
+			return fmt.Errorf("sign cert manage payload failed, %s", err.Error())
+		}
+
+		endorsementEntrys[i] = e
 	}
-	signedPayload, err := adminClient.SignCertManagePayload(payload)
-	if err != nil {
-		return fmt.Errorf("sign cert manage payload failed, %s", err.Error())
-	}
-	resp, err := client.SendCertManageRequest(payload, []*commonpb.EndorsementEntry{signedPayload}, -1, syncResult)
+
+	resp, err := client.SendCertManageRequest(payload, endorsementEntrys, -1, syncResult)
+
 	if err != nil {
 		return fmt.Errorf("send cert manage request failed, %s", err.Error())
 	}
+
 	err = util.CheckProposalRequestResp(resp, false)
 	if err != nil {
 		return fmt.Errorf("check proposal request resp failed, %s", err.Error())
 	}
+
+	fmt.Printf("%+v", resp)
+
 	return nil
 }

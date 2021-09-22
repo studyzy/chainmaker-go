@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/logger/v2"
 
 	"github.com/Workiva/go-datastructures/queue"
 )

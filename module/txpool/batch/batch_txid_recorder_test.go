@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"chainmaker.org/chainmaker-go/utils"
+	"chainmaker.org/chainmaker/utils/v2"
 )
 
 func TestBatchTxIdRecorder_FindBatchIdWithTxId(t *testing.T) {

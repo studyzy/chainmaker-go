@@ -12,8 +12,8 @@ import (
 	"net"
 	"net/http"
 
-	"chainmaker.org/chainmaker-go/localconf"
-	"chainmaker.org/chainmaker-go/logger"
+	"chainmaker.org/chainmaker/localconf/v2"
+	"chainmaker.org/chainmaker/logger/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
