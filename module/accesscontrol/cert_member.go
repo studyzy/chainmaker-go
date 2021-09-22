@@ -14,6 +14,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"chainmaker.org/chainmaker/common/v2/cert"
 
 	"chainmaker.org/chainmaker/pb-go/v2/config"
@@ -108,6 +110,11 @@ func (cm *certMember) Verify(hashType string, msg []byte, sig []byte) error {
 	if err != nil {
 		return fmt.Errorf("cert member verify failed: get hash from signature algorithm failed: [%s]", err.Error())
 	}
+	fmt.Printf("msg[%d] = %s\n", len(msg), hex.EncodeToString(msg))
+	fmt.Printf("sig[%d] = %s\n", len(sig), hex.EncodeToString(sig))
+	spew.Dump(cm.cert.PublicKey)
+	spew.Dump(cm.cert.SignatureAlgorithm)
+
 	ok, err := cm.cert.PublicKey.VerifyWithOpts(msg, sig, &bccrypto.SignOpts{
 		Hash: hashAlgo,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
