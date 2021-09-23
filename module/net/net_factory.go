@@ -26,6 +26,19 @@ type NetFactory struct {
 // NetOption is a function apply options to net instance.
 type NetOption func(cfg *NetFactory) error
 
+func WithReadySignalC(signalC chan struct{}) NetOption {
+	return func(nf *NetFactory) error {
+		switch nf.netType {
+		case protocol.Libp2p:
+			n, _ := nf.n.(*libp2p.LibP2pNet)
+			n.Prepare().SetReadySignalC(signalC)
+		case protocol.Liquid:
+
+		}
+		return nil
+	}
+}
+
 // WithListenAddr set addr that the local net will listen on.
 func WithListenAddr(addr string) NetOption {
 	return func(nf *NetFactory) error {

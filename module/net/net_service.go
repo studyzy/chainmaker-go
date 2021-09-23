@@ -267,6 +267,9 @@ func (ns *NetService) Start() error {
 		return err
 	}
 
+	// re verify peers
+	ns.localNet.ReVerifyPeers(ns.chainId)
+
 	if err := ns.initBindMsgBus(); err != nil {
 		return err
 	}

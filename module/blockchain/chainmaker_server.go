@@ -37,6 +37,8 @@ type ChainMakerServer struct {
 
 	// blockchains known by this node
 	blockchains sync.Map // map[string]*Blockchain
+
+	readyC chan struct{}
 }
 
 // NewChainMakerServer create a new ChainMakerServer instance.
@@ -48,6 +50,7 @@ func NewChainMakerServer() *ChainMakerServer {
 func (server *ChainMakerServer) Init() error {
 	var err error
 	log.Debug("begin init chain maker server...")
+	server.readyC = make(chan struct{})
 	// 1) init net
 	if err = server.initNet(); err != nil {
 		return err
@@ -107,6 +110,7 @@ func (server *ChainMakerServer) initNet() error {
 	var netFactory net.NetFactory
 	server.net, err = netFactory.NewNet(
 		netType,
+		net.WithReadySignalC(server.readyC),
 		net.WithListenAddr(localconf.ChainMakerConfig.NetConfig.ListenAddr),
 		net.WithCrypto(pubKeyMode, keyPath, certPath),
 		net.WithPeerStreamPoolSize(localconf.ChainMakerConfig.NetConfig.PeerStreamPoolSize),
@@ -233,6 +237,8 @@ func (server *ChainMakerServer) Start() error {
 		return true
 	})
 
+	// 3) ready
+	close(server.readyC)
 	return nil
 }
 
