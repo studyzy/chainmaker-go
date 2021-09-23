@@ -34,13 +34,13 @@ import (
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/raftwal/v2/wal"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 	etcdraft "go.etcd.io/etcd/raft/v3"
 	"go.etcd.io/etcd/raft/v3/raftpb"
 	"go.etcd.io/etcd/server/v3/etcdserver/api/snap"
-	"go.etcd.io/etcd/server/v3/wal"
 	"go.etcd.io/etcd/server/v3/wal/walpb"
 )
 
@@ -562,24 +562,27 @@ func (consensus *ConsensusRaftImpl) maybeTriggerSnapshot(configChanged bool) {
 		consensus.logger.Fatalf("save snapshot error: %v", err)
 	}
 
-	compactIndex := uint64(1)
-	if consensus.appliedIndex > snapshotCatchUpEntriesN {
-		compactIndex = consensus.appliedIndex - snapshotCatchUpEntriesN
-		if first, _ := consensus.raftStorage.FirstIndex(); first > compactIndex {
-			compactIndex = first + 1
-		}
+	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, snapshotIndex: %v",
+		consensus.appliedIndex, string(data), consensus.snapshotIndex)
+	consensus.snapshotIndex = consensus.appliedIndex
+
+	if consensus.appliedIndex < snapshotCatchUpEntriesN+1 {
+		return
 	}
 
+	compactIndex := consensus.appliedIndex - snapshotCatchUpEntriesN
+
+	first, _ := consensus.raftStorage.FirstIndex()
+	if compactIndex <= first {
+		return
+	}
 	if err := consensus.raftStorage.Compact(compactIndex); err != nil {
 		last, _ := consensus.raftStorage.LastIndex()
-		first, _ := consensus.raftStorage.FirstIndex()
 		consensus.logger.Fatalf("compact snapshot error: %v, compact "+
 			"index: %d, first: %d, last: %d", err, compactIndex, first, last)
 	}
 
-	consensus.snapshotIndex = consensus.appliedIndex
-	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, compactIndex: %v, snapshotIndex: %v",
-		consensus.appliedIndex, string(data), compactIndex, consensus.snapshotIndex)
+	consensus.logger.Infof("compact entries compactIndex:%d", compactIndex)
 }
 
 func (consensus *ConsensusRaftImpl) sendMessages(msgs []raftpb.Message) {
@@ -645,7 +648,8 @@ func (consensus *ConsensusRaftImpl) replayWAL() *wal.WAL {
 		walsnap.Index, walsnap.Term = snapshot.Metadata.Index, snapshot.Metadata.Term
 	}
 
-	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap)
+	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap,
+		consensus.chainConf.ChainConfig().Block.BlockSize*1024*1024)
 	if err != nil {
 		consensus.logger.Fatalf("open wal error: %v", err)
 	}
