@@ -6,8 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 package net
 
-/*
-import (
+/*import (
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -57,12 +56,11 @@ func TestNetDataIsolate(t *testing.T) {
 	a, err := nf.NewNet(
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
-		WithCrypto(key1Path, cert1Path),
+		WithCrypto(false, key1Path, cert1Path),
 	)
 	require.Nil(t, err)
 	err = a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/" + pid2)
-	err = a.AddTrustRoot(chainId1, caBytes6666)
-	err = a.AddTrustRoot(chainId1, caBytes7777)
+	a.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
 	err = a.InitPubSub(chainId1, 0)
 	err = a.Start()
 	require.Nil(t, err)
@@ -72,17 +70,11 @@ func TestNetDataIsolate(t *testing.T) {
 	b, err := nf.NewNet(
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
-		WithCrypto(key2Path, cert2Path),
+		WithCrypto(false, key2Path, cert2Path),
 	)
 	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId1, caBytes6666)
-	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId1, caBytes7777)
-	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId2, caBytes8888)
-	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId2, caBytes7777)
-	require.Nil(t, err)
+	b.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
+	b.SetChainCustomTrustRoots(chainId2, [][]byte{caBytes8888, caBytes7777})
 	err = b.InitPubSub(chainId1, 0)
 	require.Nil(t, err)
 	err = b.InitPubSub(chainId2, 0)
@@ -95,15 +87,12 @@ func TestNetDataIsolate(t *testing.T) {
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/8888"),
 
-		WithCrypto(key3Path, cert3Path),
+		WithCrypto(false, key3Path, cert3Path),
 	)
 	require.Nil(t, err)
 	err = c.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/" + pid2)
 	require.Nil(t, err)
-	err = c.AddTrustRoot(chainId2, caBytes8888)
-	require.Nil(t, err)
-	err = c.AddTrustRoot(chainId2, caBytes7777)
-	require.Nil(t, err)
+	c.SetChainCustomTrustRoots(chainId2, [][]byte{caBytes8888, caBytes7777})
 	err = c.InitPubSub(chainId1, 0)
 	require.Nil(t, err)
 	err = c.InitPubSub(chainId2, 0)

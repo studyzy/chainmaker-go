@@ -15,10 +15,10 @@ require (
 	chainmaker.org/chainmaker-go/sync v0.0.0
 	chainmaker.org/chainmaker-go/txpool v0.0.0
 	chainmaker.org/chainmaker-go/vm v0.0.0
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080251-890936d14d9e
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210901134008-4b83cf573272
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210917094712-7d18b2f609a1
 	chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb
 )
 
@@ -46,7 +46,5 @@ replace (
 	chainmaker.org/chainmaker-go/wasi => ../vm/wasi
 	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
-	github.com/libp2p/go-libp2p => ../net/p2p/libp2p
-	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
-	github.com/libp2p/go-libp2p-pubsub => ../net/p2p/libp2ppubsub
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 )

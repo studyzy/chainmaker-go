@@ -42,5 +42,5 @@ replace (
 	chainmaker.org/chainmaker-go/wasmer => ../vm/wasmer
 	chainmaker.org/chainmaker-go/wxvm => ../vm/wxvm
 
-	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 )

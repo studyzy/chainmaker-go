@@ -8,11 +8,9 @@ package net
 
 import (
 	"errors"
-	"io/ioutil"
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/chainmaker-net-common/common/priorityblocker"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	rootLog "chainmaker.org/chainmaker/logger/v2"
@@ -319,43 +317,14 @@ func (cw *ConfigWatcher) Watch(chainConfig *configPb.ChainConfig) error {
 	cw.ns.consensusNodeIds = newConsensusNodeIds
 	cw.ns.consensusNodeIdsLock.Unlock()
 	cw.ns.logger.Infof("[NetService] refresh ids of consensus nodes ok ")
-	// 2.refresh trust roots
-	// 2.1 get all new roots
-	newCerts := make([][]byte, 0)
-	for _, orgRoot := range chainConfig.TrustRoots {
-		for _, root := range orgRoot.Root {
-			newCerts = append(newCerts, []byte(root))
-		}
-	}
-	// load custom chain trust roots
-	for _, chainTrustRoots := range localconf.ChainMakerConfig.NetConfig.CustomChainTrustRoots {
-		if chainTrustRoots.ChainId != cw.ns.chainId {
-			continue
-		}
-		for _, roots := range chainTrustRoots.TrustRoots {
-			rootBytes, err := ioutil.ReadFile(roots.Root)
-			if err != nil {
-				cw.ns.logger.Errorf("[NetService] load custom chain trust roots failed, %s", err.Error())
-				return err
-			}
-			newCerts = append(newCerts, rootBytes)
-		}
-		cw.ns.logger.Infof("[NetService] load custom chain trust roots ok")
-	}
-	// 2.2 rebuild cert pool
-	if err := cw.ns.localNet.RefreshTrustRoots(cw.ns.chainId, newCerts); err != nil {
-		cw.ns.logger.Errorf("[NetService] refresh root certs pool failed ,%s", err.Error())
-		return err
-	}
-	cw.ns.logger.Infof("[NetService] refresh root certs pool ok")
-	// 2.3 verify trust root again
-	cw.ns.localNet.ReVerifyTrustRoots(cw.ns.chainId)
-	cw.ns.logger.Infof("[NetService] re-verify trust roots ok")
+	// 2.re-verify peers
+	cw.ns.localNet.ReVerifyPeers(cw.ns.chainId)
+	cw.ns.logger.Infof("[NetService] re-verify peers ok")
 	cw.ns.logger.Infof("[NetService] refresh chain config ok")
 	return nil
 }
 
-// VmWatcher return a implementation of protocol.VmWatcher. It is used for refreshing revoked peer which use revoked tls cert.
+// VmWatcher return an implementation of protocol.VmWatcher. It is used for refreshing revoked peer which use revoked tls cert.
 func (ns *NetService) VmWatcher() protocol.VmWatcher {
 	if ns.vmWatcher == nil {
 		ns.vmWatcher = &VmWatcher{ns: ns}
@@ -375,10 +344,11 @@ func (v *VmWatcher) ContractNames() []string {
 	return []string{syscontract.SystemContract_CERT_MANAGE.String()}
 }
 
-func (v *VmWatcher) Callback(contractName string, payloadBytes []byte) error {
+func (v *VmWatcher) Callback(contractName string, _ []byte) error {
 	switch contractName {
 	case syscontract.SystemContract_CERT_MANAGE.String():
-		return v.ns.localNet.CheckRevokeTlsCerts(v.ns.ac, payloadBytes)
+		v.ns.localNet.ReVerifyPeers(v.ns.chainId)
+		return nil
 	default:
 		return nil
 	}

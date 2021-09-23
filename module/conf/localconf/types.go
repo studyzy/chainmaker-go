@@ -383,6 +383,7 @@ type coreConfig struct {
 
 // CMConfig - Local config struct
 type CMConfig struct {
+	AuthType         string             `mapstructure:"auth_type"`
 	LogConfig        logger.LogConfig   `mapstructure:"log"`
 	NetConfig        netConfig          `mapstructure:"net"`
 	NodeConfig       nodeConfig         `mapstructure:"node"`

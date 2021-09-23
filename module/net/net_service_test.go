@@ -56,14 +56,11 @@ func TestNetService(t *testing.T) {
 	a, err := nf.NewNet(
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
-		WithCrypto(key1Path, cert1Path),
+		WithCrypto(false, key1Path, cert1Path),
 	)
 	require.Nil(t, err)
 	//a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/" + pid2)
-	err = a.AddTrustRoot(chainId1, caBytes6666)
-	require.Nil(t, err)
-	err = a.AddTrustRoot(chainId1, caBytes7777)
-	require.Nil(t, err)
+	a.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
 
 	err = a.Start()
 	require.Nil(t, err)
@@ -85,15 +82,12 @@ func TestNetService(t *testing.T) {
 	b, err := nf.NewNet(
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
-		WithCrypto(key2Path, cert2Path),
+		WithCrypto(false, key2Path, cert2Path),
 	)
 	require.Nil(t, err)
 	err = b.AddSeed("/ip4/127.0.0.1/tcp/6666/p2p/" + pid1)
 	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId1, caBytes6666)
-	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId1, caBytes7777)
-	require.Nil(t, err)
+	b.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
 	err = b.Start()
 	require.Nil(t, err)
 	fmt.Println("node B is running...")

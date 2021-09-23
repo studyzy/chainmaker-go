@@ -26,7 +26,5 @@ replace (
 	chainmaker.org/chainmaker-go/localconf => ./../module/conf/localconf
 	chainmaker.org/chainmaker-go/logger => ../module/logger
 	chainmaker.org/chainmaker-go/net => ../module/net
-	github.com/libp2p/go-libp2p => ../module/net/p2p/libp2p
-	github.com/libp2p/go-libp2p-core => ../module/net/p2p/libp2pcore
-	github.com/libp2p/go-libp2p-pubsub => ../module/net/p2p/libp2ppubsub
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 )

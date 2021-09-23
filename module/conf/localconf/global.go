@@ -22,3 +22,12 @@ var (
 	//ConfigFilepath 配置文件的路径，默认为当前文件夹的chainmaker.yml文件
 	ConfigFilepath = "./chainmaker.yml"
 )
+
+const (
+	// AuthTypePermissionedWithCert is an auth type of permissioned with cert.
+	AuthTypePermissionedWithCert = "permissionedWithCert"
+	// AuthTypePermissionedWithKey is an auth type of permissioned with key.
+	AuthTypePermissionedWithKey = "permissionedWithKey"
+	// AuthTypePublic is an auth type for public chain.
+	AuthTypePublic = "public"
+)

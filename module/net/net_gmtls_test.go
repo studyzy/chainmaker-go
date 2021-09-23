@@ -38,15 +38,11 @@ func TestNetGmTls(t *testing.T) {
 	require.Nil(t, err)
 	key1Path := filepath.Join(certPath, "gmkey1.key")
 	cert1Path := filepath.Join(certPath, "gmcert1.crt")
-	signKey1Path := filepath.Join(certPath, "gmsignkey1.key")
-	signCert1Path := filepath.Join(certPath, "gmsigncert1.crt")
 	pid1Bytes, err := ioutil.ReadFile(filepath.Join(pidPath, "gmpid1.nodeid"))
 	require.Nil(t, err)
 	pid1 := string(pid1Bytes)
 	key2Path := filepath.Join(certPath, "gmkey2.key")
 	cert2Path := filepath.Join(certPath, "gmcert2.crt")
-	signKey2Path := filepath.Join(certPath, "gmsignkey2.key")
-	signCert2Path := filepath.Join(certPath, "gmsigncert2.crt")
 	pid2Bytes, err := ioutil.ReadFile(filepath.Join(pidPath, "gmpid2.nodeid"))
 	require.Nil(t, err)
 	pid2 := string(pid2Bytes)
@@ -57,15 +53,11 @@ func TestNetGmTls(t *testing.T) {
 	a, err := nf.NewNet(
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
-		WithCrypto(key1Path, cert1Path),
-		WithSignCrypto(signKey1Path, signCert1Path),
+		WithCrypto(false, key1Path, cert1Path),
 	)
 	require.Nil(t, err)
 	//a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/" + pid2)
-	err = a.AddTrustRoot(chainId1, caBytes6666)
-	require.Nil(t, err)
-	err = a.AddTrustRoot(chainId1, caBytes7777)
-	require.Nil(t, err)
+	a.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
 	err = a.Start()
 	require.Nil(t, err)
 	fmt.Println("node A is running...")
@@ -74,16 +66,12 @@ func TestNetGmTls(t *testing.T) {
 	b, err := nf.NewNet(
 		protocol.Libp2p,
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
-		WithCrypto(key2Path, cert2Path),
-		WithSignCrypto(signKey2Path, signCert2Path),
+		WithCrypto(false, key2Path, cert2Path),
 	)
 	require.Nil(t, err)
 	err = b.AddSeed("/ip4/127.0.0.1/tcp/6666/p2p/" + pid1)
 	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId1, caBytes6666)
-	require.Nil(t, err)
-	err = b.AddTrustRoot(chainId1, caBytes7777)
-	require.Nil(t, err)
+	b.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
 	err = b.Start()
 	require.Nil(t, err)
 	fmt.Println("node B is running...")
@@ -124,6 +112,4 @@ func TestNetGmTls(t *testing.T) {
 	require.Nil(t, err)
 	err = b.Stop()
 	require.Nil(t, err)
-
-}
-*/
+}*/
