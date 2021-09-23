@@ -16,10 +16,9 @@ require (
 	chainmaker.org/chainmaker/vm-native v0.0.0-20210917091516-85e8d7855fe5
 	github.com/gogo/protobuf v1.3.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/prometheus/client_golang v1.9.0
+	github.com/prometheus/client_golang v1.11.0
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	golang.org/x/tools v0.1.5 // indirect
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.38.0
 )
 
 replace (
