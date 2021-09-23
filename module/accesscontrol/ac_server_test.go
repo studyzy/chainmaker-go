@@ -22,7 +22,7 @@ import (
 
 func TestInitAccessControlService(t *testing.T) {
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 }
 
@@ -32,7 +32,7 @@ func TestValidateResourcePolicy(t *testing.T) {
 	defer cleanFunc()
 
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 
 	resourcePolicy := &config.ResourcePolicy{
@@ -56,7 +56,7 @@ func TestCertMemberInfo(t *testing.T) {
 	defer cleanFunc()
 
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 
 	pbMember := &pbac.Member{
@@ -64,7 +64,7 @@ func TestCertMemberInfo(t *testing.T) {
 		MemberType: pbac.MemberType_CERT,
 		MemberInfo: []byte(testConsensusSignOrg1.cert),
 	}
-	member, err := acServices.newMember(pbMember)
+	member, err := acServices.newCertMember(pbMember)
 	require.Nil(t, err)
 	require.Equal(t, testOrg1, member.GetOrgId())
 	require.Equal(t, testConsensusRole, member.GetRole())
@@ -84,7 +84,7 @@ func TestCertMemberInfo(t *testing.T) {
 	err = signingMember.Verify(testChainConfig.Crypto.Hash, []byte(testMsg), signRead)
 	require.Nil(t, err)
 
-	cachedMember := &cachedMember{
+	cachedMember := &memberCached{
 		member:    member,
 		certChain: nil,
 	}
@@ -103,7 +103,7 @@ func TestVerifyPrincipalPolicy(t *testing.T) {
 	defer cleanFunc()
 	hashType := testHashType
 	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
-	acServices := initAccessControlService(testHashType, testOrg1, testChainConfig, nil, logger)
+	acServices := initAccessControlService(testHashType, testOrg1, testAuthType, testChainConfig, nil, logger)
 	require.NotNil(t, acServices)
 
 	var orgMemberMap = make(map[string]*orgMember, len(orgMemberInfoMap))

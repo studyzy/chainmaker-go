@@ -15,11 +15,13 @@ import (
 
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
+	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
 	pbdpos "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
+	goproto "github.com/gogo/protobuf/proto"
 )
 
 // ValidatorsElection select validators from Candidates
@@ -141,4 +143,18 @@ func GetNodeIDsFromValidators(store protocol.BlockchainStore, validators []strin
 		nodeIDs = append(nodeIDs, string(nodeID))
 	}
 	return nodeIDs, nil
+}
+
+func GetChainConfig(store protocol.BlockchainStore) (*configPb.ChainConfig, error) {
+	var chainConfig configPb.ChainConfig
+	bytes, err := store.ReadObject(syscontract.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), []byte(syscontract.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()))
+	if err != nil || len(bytes) == 0 {
+		return nil, fmt.Errorf("read chainConfig failed, reason: %s", err)
+	}
+	err = goproto.Unmarshal(bytes, &chainConfig)
+	if err != nil {
+		err = fmt.Errorf("unmarshal chainConfig failed, contractName %s err: %+v", syscontract.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(), err)
+		return nil, err
+	}
+	return &chainConfig, nil
 }

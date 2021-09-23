@@ -50,41 +50,6 @@ type certMember struct {
 	isCompressed bool
 }
 
-func newCertMember(orgId, role, hashType string, isCompressed bool, certPEM []byte) (*certMember, error) {
-	var (
-		cert *bcx509.Certificate
-		err  error
-	)
-	certBlock, rest := pem.Decode(certPEM)
-	if certBlock == nil {
-		cert, err = bcx509.ParseCertificate(rest)
-		if err != nil {
-			return nil, fmt.Errorf("new cert member failed, invalid certificate")
-		}
-	} else {
-		cert, err = bcx509.ParseCertificate(certBlock.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("new cert member failed, invalid certificate")
-		}
-	}
-
-	id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
-	if err != nil {
-		id = []byte(cert.Subject.CommonName)
-	}
-
-	role = strings.ToUpper(role)
-
-	return &certMember{
-		id:           string(id),
-		orgId:        orgId,
-		role:         protocol.Role(role),
-		cert:         cert,
-		hashType:     hashType,
-		isCompressed: isCompressed,
-	}, nil
-}
-
 func (cm *certMember) GetMemberId() string {
 	return cm.id
 }
@@ -163,26 +128,8 @@ func (scm *signingCertMember) Sign(hashType string, msg []byte) ([]byte, error) 
 
 func newCertMemberFromPb(member *pbac.Member, acs *accessControlService) (*certMember, error) {
 
-	for _, v := range acs.trustMembers {
-		certBlock, _ := pem.Decode([]byte(v.MemberInfo))
-		if certBlock == nil {
-			return nil, fmt.Errorf("new member failed, the trsut member cert is not PEM")
-		}
-		if v.MemberInfo == string(member.MemberInfo) {
-			var isCompressed bool
-			if member.MemberType == pbac.MemberType_CERT {
-				isCompressed = false
-			}
-			return newCertMember(v.OrgId, v.Role, acs.hashType, isCompressed, []byte(v.MemberInfo))
-		}
-	}
-
 	if member.MemberType == pbac.MemberType_CERT {
-		certBlock, rest := pem.Decode(member.MemberInfo)
-		if certBlock == nil {
-			return newMemberFromCertPem(member.OrgId, acs.hashType, rest, false)
-		}
-		return newMemberFromCertPem(member.OrgId, acs.hashType, certBlock.Bytes, false)
+		return newMemberFromCertPem(member.OrgId, acs.hashType, member.MemberInfo, false)
 	}
 
 	if member.MemberType == pbac.MemberType_CERT_HASH {
@@ -190,6 +137,41 @@ func newCertMemberFromPb(member *pbac.Member, acs *accessControlService) (*certM
 	}
 
 	return nil, fmt.Errorf("setup member failed, unsupport cert member type")
+}
+
+func newCertMemberFromParam(orgId, role, hashType string, isCompressed bool, certPEM []byte) (*certMember, error) {
+	var (
+		cert *bcx509.Certificate
+		err  error
+	)
+	certBlock, rest := pem.Decode(certPEM)
+	if certBlock == nil {
+		cert, err = bcx509.ParseCertificate(rest)
+		if err != nil {
+			return nil, fmt.Errorf("new cert member failed, invalid certificate")
+		}
+	} else {
+		cert, err = bcx509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("new cert member failed, invalid certificate")
+		}
+	}
+
+	id, err := bcx509.GetExtByOid(bcx509.OidNodeId, cert.Extensions)
+	if err != nil {
+		id = []byte(cert.Subject.CommonName)
+	}
+
+	role = strings.ToUpper(role)
+
+	return &certMember{
+		id:           string(id),
+		orgId:        orgId,
+		role:         protocol.Role(role),
+		cert:         cert,
+		hashType:     hashType,
+		isCompressed: isCompressed,
+	}, nil
 }
 
 func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed bool) (*certMember, error) {
@@ -292,7 +274,7 @@ func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId,
 				return nil, fmt.Errorf("new member failed, the trsut member cert is not PEM")
 			}
 			if v.MemberInfo == string(certPEM) {
-				certMember, err = newCertMember(v.OrgId, v.Role,
+				certMember, err = newCertMemberFromParam(v.OrgId, v.Role,
 					chainConfig.Crypto.Hash, false, certPEM)
 				if err != nil {
 					return nil, fmt.Errorf("init signing member failed, init trust member failed: [%s]", err.Error())
