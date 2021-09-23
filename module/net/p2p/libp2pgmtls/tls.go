@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"net"
 
+	tjx509 "github.com/tjfoc/gmsm/x509"
+
 	"chainmaker.org/chainmaker-go/net/p2p/revoke"
 	cmcrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	cmtls "chainmaker.org/chainmaker/common/v2/crypto/tls"
@@ -278,7 +280,7 @@ func parsePublicKeyToPubKey(publicKey gocrypto.PublicKey) (crypto.PubKey, error)
 			if err != nil {
 				return nil, err
 			}
-			pub, err := sm2.ParseSm2PublicKey(b)
+			pub, err := tjx509.ParseSm2PublicKey(b)
 			if err != nil {
 				return nil, err
 			}
