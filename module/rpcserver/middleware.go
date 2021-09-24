@@ -185,6 +185,27 @@ func RateLimitInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+// BlackListInterceptor - set ip blacklist interceptor
+func BlackListInterceptor() grpc.UnaryServerInterceptor {
+
+	blackIps := localconf.ChainMakerConfig.RpcConfig.BlackList.Addresses
+
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (
+		interface{}, error) {
+
+		ipAddr := getClientIp(ctx)
+		for _, blackIp := range blackIps {
+			if ipAddr == blackIp {
+				errMsg := fmt.Sprintf("%s is rejected by black list [%s]", info.FullMethod, ipAddr)
+				log.Warn(errMsg)
+				return nil, status.Error(codes.ResourceExhausted, errMsg)
+			}
+		}
+
+		return handler(ctx, req)
+	}
+}
+
 func splitMethodName(fullMethodName string) (string, string) {
 	fullMethodName = strings.TrimPrefix(fullMethodName, "/") // remove leading slash
 	if i := strings.Index(fullMethodName, "/"); i >= 0 {

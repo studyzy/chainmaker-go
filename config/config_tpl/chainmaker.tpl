@@ -100,6 +100,9 @@ rpc:
     mode:           twoway
     priv_key_file:  ../config/{org_path}/certs/{rpc_cert_path}.key
     cert_file:      ../config/{org_path}/certs/{rpc_cert_path}.crt
+  blacklist:
+    addresses:
+      #- "127.0.0.1"
 
 monitor:
   enabled: true
