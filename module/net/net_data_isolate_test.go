@@ -6,7 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 package net
 
-/*import (
+/*
+import (
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -50,56 +51,64 @@ func TestNetDataIsolate(t *testing.T) {
 	require.Nil(t, err)
 	pid3 := string(pid3Bytes)
 
+	readyC := make(chan struct{})
+
 	// start node A
 	var nf NetFactory
 
 	a, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
 		WithCrypto(false, key1Path, cert1Path),
 	)
 	require.Nil(t, err)
 	err = a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/" + pid2)
 	a.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
-	err = a.InitPubSub(chainId1, 0)
 	err = a.Start()
+	require.Nil(t, err)
+	err = a.InitPubSub(chainId1, 0)
 	require.Nil(t, err)
 	fmt.Println("node A is running...")
 
 	// start node B
 	b, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
 		WithCrypto(false, key2Path, cert2Path),
 	)
 	require.Nil(t, err)
 	b.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
 	b.SetChainCustomTrustRoots(chainId2, [][]byte{caBytes8888, caBytes7777})
+	err = b.Start()
+	require.Nil(t, err)
 	err = b.InitPubSub(chainId1, 0)
 	require.Nil(t, err)
 	err = b.InitPubSub(chainId2, 0)
-	require.Nil(t, err)
-	err = b.Start()
 	require.Nil(t, err)
 	fmt.Println("node B is running...")
 	// start node C
 	c, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/8888"),
-
 		WithCrypto(false, key3Path, cert3Path),
 	)
 	require.Nil(t, err)
 	err = c.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/" + pid2)
 	require.Nil(t, err)
 	c.SetChainCustomTrustRoots(chainId2, [][]byte{caBytes8888, caBytes7777})
+	err = c.Start()
+	require.Nil(t, err)
 	err = c.InitPubSub(chainId1, 0)
 	require.Nil(t, err)
 	err = c.InitPubSub(chainId2, 0)
 	require.Nil(t, err)
-	err = c.Start()
-	require.Nil(t, err)
 	fmt.Println("node C is running...")
+
+	close(readyC)
+
 	// test A send msg to B
 	data := []byte("hello")
 	toNodeB := pid2

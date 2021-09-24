@@ -47,11 +47,14 @@ func TestNetGmTls(t *testing.T) {
 	require.Nil(t, err)
 	pid2 := string(pid2Bytes)
 
+	readyC := make(chan struct{})
+
 	// start node A
 	var nf NetFactory
 
 	a, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
 		WithCrypto(false, key1Path, cert1Path),
 	)
@@ -65,6 +68,7 @@ func TestNetGmTls(t *testing.T) {
 	// start node B
 	b, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
 		WithCrypto(false, key2Path, cert2Path),
 	)
@@ -75,6 +79,8 @@ func TestNetGmTls(t *testing.T) {
 	err = b.Start()
 	require.Nil(t, err)
 	fmt.Println("node B is running...")
+
+	close(readyC)
 
 	// test A send msg to B
 	data := []byte("hello")
@@ -112,4 +118,5 @@ func TestNetGmTls(t *testing.T) {
 	require.Nil(t, err)
 	err = b.Stop()
 	require.Nil(t, err)
-}*/
+}
+*/

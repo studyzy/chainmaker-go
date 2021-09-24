@@ -50,11 +50,14 @@ func TestNetService(t *testing.T) {
 	caBytes7777, err = ioutil.ReadFile(filepath.Join(certPath, "ca2.crt"))
 	require.Nil(t, err)
 
+	readyC := make(chan struct{})
+
 	// start node A
 	var nf NetFactory
 
 	a, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
 		WithCrypto(false, key1Path, cert1Path),
 	)
@@ -81,6 +84,7 @@ func TestNetService(t *testing.T) {
 	// start node B
 	b, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
 		WithCrypto(false, key2Path, cert2Path),
 	)
@@ -103,6 +107,8 @@ func TestNetService(t *testing.T) {
 	err = nsb.Start()
 	require.Nil(t, err)
 	fmt.Println("net service B is running...")
+
+	close(readyC)
 
 	// test A send msg to B
 	data := []byte("hello")

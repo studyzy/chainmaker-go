@@ -52,29 +52,33 @@ func TestNet(t *testing.T) {
 	require.Nil(t, err)
 	pid2 := string(pid2Bytes)
 
+	readyC := make(chan struct{})
+
 	// start node A
 	var nf NetFactory
 
 	a, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/6666"),
 		WithCrypto(false, key1Path, cert1Path),
 	)
 	require.Nil(t, err)
 	//a.AddSeed("/ip4/127.0.0.1/tcp/7777/p2p/QmeyNRs2DwWjcHTpcVHoUSaDAAif4VQZ2wQDQAUNDP33gH")
 	a.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
+	err = a.Start()
+	require.Nil(t, err)
 	err = a.InitPubSub(chainId1, 0)
 	require.Nil(t, err)
 	a.SetChainCustomTrustRoots(chainId2, [][]byte{caBytes6666, caBytes7777})
 	err = a.InitPubSub(chainId2, 0)
-	require.Nil(t, err)
-	err = a.Start()
 	require.Nil(t, err)
 	fmt.Println("node A is running...")
 
 	// start node B
 	b, err := nf.NewNet(
 		protocol.Libp2p,
+		WithReadySignalC(readyC),
 		WithListenAddr("/ip4/127.0.0.1/tcp/7777"),
 		WithCrypto(false, key2Path, cert2Path),
 	)
@@ -82,15 +86,17 @@ func TestNet(t *testing.T) {
 	err = b.AddSeed("/ip4/127.0.0.1/tcp/6666/p2p/" + pid1)
 	require.Nil(t, err)
 	b.SetChainCustomTrustRoots(chainId1, [][]byte{caBytes6666, caBytes7777})
-	err = b.InitPubSub(chainId1, 0)
-	require.Nil(t, err)
 	b.SetChainCustomTrustRoots(chainId2, [][]byte{caBytes6666, caBytes7777})
-	require.Nil(t, err)
-	err = b.InitPubSub(chainId2, 0)
 	require.Nil(t, err)
 	err = b.Start()
 	require.Nil(t, err)
+	err = b.InitPubSub(chainId1, 0)
+	require.Nil(t, err)
+	err = b.InitPubSub(chainId2, 0)
+	require.Nil(t, err)
 	fmt.Println("node B is running...")
+
+	close(readyC)
 
 	// test A send msg to B
 	data := []byte("hello")
