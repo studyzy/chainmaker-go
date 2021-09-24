@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 
+	"chainmaker.org/chainmaker/common/v2/bytehelper"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/utils/v2"
 
@@ -79,9 +80,9 @@ func (s *ApiService) dealBlockSubscription(tx *commonPb.Transaction, server apiP
 
 	for _, kv := range payload.Parameters {
 		if kv.Key == syscontract.SubscribeBlock_START_BLOCK.String() {
-			startBlock, err = utils.BytesToInt64(kv.Value)
+			startBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeBlock_END_BLOCK.String() {
-			endBlock, err = utils.BytesToInt64(kv.Value)
+			endBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeBlock_WITH_RWSET.String() {
 			if string(kv.Value) == TRUE {
 				withRWSet = true
@@ -185,9 +186,9 @@ func (s *ApiService) dealTxSubscription(tx *commonPb.Transaction, server apiPb.R
 
 	for _, kv := range payload.Parameters {
 		if kv.Key == syscontract.SubscribeTx_START_BLOCK.String() {
-			startBlock, err = utils.BytesToInt64(kv.Value)
+			startBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeTx_END_BLOCK.String() {
-			endBlock, err = utils.BytesToInt64(kv.Value)
+			endBlock, err = bytehelper.BytesToInt64(kv.Value)
 		} else if kv.Key == syscontract.SubscribeTx_CONTRACT_NAME.String() {
 			contractName = string(kv.Value)
 		} else if kv.Key == syscontract.SubscribeTx_TX_IDS.String() {
