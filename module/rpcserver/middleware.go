@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
+	localconf "chainmaker.org/chainmaker/localconf/v2"
 	"context"
 	"fmt"
 	"net"
