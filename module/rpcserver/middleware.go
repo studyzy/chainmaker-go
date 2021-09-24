@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package rpcserver
 
 import (
-	localconf "chainmaker.org/chainmaker/localconf/v2"
 	"context"
 	"fmt"
 	"net"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	localconf "chainmaker.org/chainmaker/localconf/v2"
 
 	"chainmaker.org/chainmaker/logger/v2"
 	"golang.org/x/time/rate"
@@ -33,8 +34,7 @@ const (
 )
 
 const (
-	rateLimitTypeGlobal = iota
-	rateLimitTypeByIp
+	rateLimitTypeGlobal = 0
 )
 
 func getClientAddr(ctx context.Context) (string, error) {
