@@ -303,9 +303,21 @@ function generate_config() {
                 org_id_tmp=" - org_id: \"${file}\""
                 org_root="   root:"
                 org_root_tmp="     - \"../config/wx-org${i}.chainmaker.org/certs/ca/${file}/ca.crt\""
-                xsed -i "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root_tmp}" node$i/chainconfig/bc$k.yml
-                xsed -i "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root}" node$i/chainconfig/bc$k.yml
-                xsed -i "${BC_YML_TRUST_ROOT_LINE}i\ ${org_id_tmp}"   node$i/chainconfig/bc$k.yml
+                if [ "${system}" = "Linux" ]; then
+                  xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root_tmp}" node$i/chainconfig/bc$k.yml
+                  xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root}" node$i/chainconfig/bc$k.yml
+                  xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_id_tmp}"   node$i/chainconfig/bc$k.yml
+                else
+                  xsed "${BC_YML_TRUST_ROOT_LINE}i\\
+ ${org_root_tmp}\\
+" node$i/chainconfig/bc$k.yml
+                  xsed "${BC_YML_TRUST_ROOT_LINE}i\\
+ ${org_root}\\
+"  node$i/chainconfig/bc$k.yml
+                  xsed "${BC_YML_TRUST_ROOT_LINE}i\\
+ ${org_id_tmp}\\
+"    node$i/chainconfig/bc$k.yml
+                fi
             done
           done
         fi
