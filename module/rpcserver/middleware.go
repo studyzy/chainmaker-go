@@ -10,7 +10,6 @@ package rpcserver
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc/peer"
 	"net"
 	"os"
 	"runtime/debug"
@@ -18,11 +17,11 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
