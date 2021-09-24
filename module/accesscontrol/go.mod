@@ -3,7 +3,7 @@ module chainmaker.org/chainmaker-go/accesscontrol
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210923080701-86b1cd930ac6
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210924090707-3cfec86e5534
 	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210916064951-47123db73430
