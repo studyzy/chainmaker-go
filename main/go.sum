@@ -32,6 +32,9 @@ chainmaker.org/chainmaker/store-sqldb/v2 v2.0.0-20210922082103-b02c57c5988d/go.m
 chainmaker.org/chainmaker/store-tikv/v2 v2.0.0-20210924073704-48711a9c4233 h1:/7u7jC0RmhtLsyhVzZ7fH0CfXlE0Sd4m3cJSswcwJFE=
 chainmaker.org/chainmaker/store-tikv/v2 v2.0.0-20210924073704-48711a9c4233/go.mod h1:h/oAdOSzB1jI6Rp2n4re/9WoVy84z21dNX6SeAWHN/c=
 chainmaker.org/chainmaker/store/v2 v2.0.0-20210913121309-9387122bc431/go.mod h1:UWHYxLRQ4qTZgsQltLkexetbq2Bwt+Ej6MFIJ4LPIAw=
+chainmaker.org/chainmaker/store/v2 v2.0.0-20210922083030-e886493a2be9/go.mod h1:oQN1MIGs7WidEbm7YxarOvUtJT0NkLYge3iYzO/FaVs=
+chainmaker.org/chainmaker/store/v2 v2.0.0-20210924123413-a094cadfa400 h1:9nPLezr5pggXnU6wxF9it1DREgsAX6X3xcVQwUUEXnM=
+chainmaker.org/chainmaker/store/v2 v2.0.0-20210924123413-a094cadfa400/go.mod h1:PSgr05n0ekNEVN60doeaFL2euVsWUIVXhOMHUYB2GG0=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20210907033606-84c6c841cbdb/go.mod h1:XcBXE+g1t1FtajaiIE6sVQbzdWK2ekt6oL+jj2I67gU=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b h1:W704oIALGrIrunMS5BQLhPtYiUw9PAIOmFxYlLQNxXk=
 chainmaker.org/chainmaker/utils/v2 v2.0.0-20210916084713-abd13154c26b/go.mod h1:PeCAziKqYULDbYprzWlsLMZ/JANvdjRJYUkPhCLmeAY=
