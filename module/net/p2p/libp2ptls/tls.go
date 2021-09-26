@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"net"
 
+	tjx509 "github.com/tjfoc/gmsm/x509"
+
 	"chainmaker.org/chainmaker-go/net/p2p/revoke"
 	cmx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
@@ -272,11 +274,11 @@ func parsePublicKeyToPubKey(publicKey gocrypto.PublicKey) (crypto.PubKey, error)
 	switch p := publicKey.(type) {
 	case *ecdsa.PublicKey:
 		if p.Curve == sm2.P256Sm2() {
-			b, err := sm2.MarshalPKIXPublicKey(p)
+			b, err := tjx509.MarshalPKIXPublicKey(p)
 			if err != nil {
 				return nil, err
 			}
-			pub, err := sm2.ParseSm2PublicKey(b)
+			pub, err := tjx509.ParseSm2PublicKey(b)
 			if err != nil {
 				return nil, err
 			}
