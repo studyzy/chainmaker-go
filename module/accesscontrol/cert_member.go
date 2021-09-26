@@ -14,6 +14,7 @@ import (
 
 	"strings"
 
+	"chainmaker.org/chainmaker/common/v2/cert"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/crypto/pkcs11"

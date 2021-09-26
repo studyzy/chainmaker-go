@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"crypto/sha256"
 	"encoding/pem"
 	"fmt"
@@ -9,10 +8,12 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/common/v2/cert"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
 	"chainmaker.org/chainmaker/common/v2/crypto/pkcs11"
+	"chainmaker.org/chainmaker/localconf/v2"
+	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/mr-tron/base58"
@@ -100,7 +101,7 @@ func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId,
 				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 			}
 
-			sk, err = pkcs11.NewPrivateKey(p11Handle, certMember.cert.PublicKey)
+			sk, err = cert.ParseP11PrivKey(p11Handle, skPEM)
 			if err != nil {
 				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 			}

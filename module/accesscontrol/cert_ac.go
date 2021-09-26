@@ -609,7 +609,7 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 
 	crlPEM, rest := pem.Decode(data)
 	if crlPEM == nil {
-		cp.log.Debug("verify member's related material failed: empty CRL")
+		cp.acService.log.Debug("verify member's related material failed: empty CRL")
 		return false, fmt.Errorf("empty CRL")
 	}
 	orgInfos := cp.acService.getAllOrgInfos()
