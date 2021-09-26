@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 
 	"chainmaker.org/chainmaker-go/consensus"
 	"chainmaker.org/chainmaker-go/core/common"
@@ -165,6 +166,39 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		}
 	}
 
+	startPoolTick := utils.CurrentTimeMillisSeconds()
+	newBlock := new(commonpb.Block)
+	if v.chainConf.ChainConfig().Block.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
+		newBlock.Header = block.Header
+		newBlock.Dag = block.Dag
+		newBlock.Txs = make([]*commonpb.Transaction, len(block.Txs))
+		newBlock.AdditionalData = block.AdditionalData
+
+		txIds := utils.GetTxIds(block.Txs)
+		txsMap := make(map[string]*commonpb.Transaction)
+		maxRetryTime := 500
+		for i := 0; i < maxRetryTime; i++ {
+			txsMap, _ = v.txPool.GetTxsByTxIds(txIds)
+			if len(txsMap) == len(block.Txs) {
+				break
+			}
+			v.log.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]", block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
+			if i+1 == maxRetryTime {
+				v.log.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]", block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
+				return fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
+			}
+			time.Sleep(time.Millisecond * 20)
+		}
+
+		for i, tx := range block.Txs {
+			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
+			newBlock.Txs[i].Result = block.Txs[i].Result
+		}
+	} else {
+		newBlock = block
+	}
+	lastPool := utils.CurrentTimeMillisSeconds() - startPoolTick
+
 	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(block)
 	if err != nil {
 		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
@@ -205,8 +239,8 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
 	}
 	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	v.log.Infof("verify success [%d,%x](%v,consensusCheckUsed: %d, total: %d)", block.Header.BlockHeight,
-		block.Header.BlockHash, timeLasts, consensusCheckUsed, elapsed)
+	v.log.Infof("verify success [%d,%x](%v,pool: %d,consensusCheckUsed: %d, total: %d)", block.Header.BlockHeight,
+		block.Header.BlockHash, timeLasts, lastPool, consensusCheckUsed, elapsed)
 	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
 		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
 	}

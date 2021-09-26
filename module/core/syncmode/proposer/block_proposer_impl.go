@@ -316,8 +316,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 	_, rwSetMap, _ := bp.proposalCache.GetProposedBlock(block)
 
 	newBlock := new(commonpb.Block)
-	if bp.chainConf.ChainConfig().Block.ConsensusMessageTurbo == "true" {
-
+	if bp.chainConf.ChainConfig().Block.ConsensusMessageTurbo {
 		newBlock.Header = block.Header
 		newBlock.Dag = block.Dag
 		newTxs := make([]*commonpb.Transaction, len(block.Txs))
