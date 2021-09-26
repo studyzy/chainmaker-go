@@ -2,7 +2,7 @@
 # how to use
 
 step1. change `crypto_config[0].count=n` in file `chainmaker-cryptogen/config/crypto_config_template.yml`
-<br> change `IMAGE` in file create_docker_conpose_yml.sh
+<br> change `IMAGE` in file create_docker_compose_yml.sh
 
 `crypto_config_template.yml`
 ```yaml
@@ -11,7 +11,7 @@ crypto_config:
     host_name: wx-org
     count: 5                # change this
 ```
-`create_docker_conpose_yml.sh`
+`create_docker_compose_yml.sh`
 ```yaml
 P2P_PORT=$1
 RPC_PORT=$2
@@ -32,7 +32,7 @@ step3. change and execute
 cd chainmaker-go
 cp -r build/config script/docker/multi_node/
 cd script/docker/multi_node
-./create_docker_conpose_yml.sh 11301 12301 20 ./config 6
+./create_docker_compose_yml.sh 11301 12301 20 ./config 6
 ```
 step4. run docker with compose 
 ```sh

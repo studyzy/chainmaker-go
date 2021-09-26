@@ -19,8 +19,8 @@ function show_help() {
     echo "    config_dir: all node config path"
     echo "    server_node_count: number of nodes per server"
     echo ""
-    echo "    eg: ./create_docker_conpose_yml.sh 11301 12301 20 ../../../build/config 10"
-    echo "    eg: ./create_docker_conpose_yml.sh 11301 12301 20 /mnt/d/develop/workspace/go/chainmaker-go/build/config 10"
+    echo "    eg: ./create_docker_compose_yml.sh 11301 12301 20 ../../../build/config 10"
+    echo "    eg: ./create_docker_compose_yml.sh 11301 12301 20 /mnt/d/develop/workspace/go/chainmaker-go/build/config 10"
 }
 if [ ! $# -eq 2 ] && [ ! $# -eq 3 ] && [ ! $# -eq 4 ] && [ ! $# -eq 5 ]; then
     echo "invalid params"
