@@ -180,8 +180,8 @@ func createCrl() error {
 	if err != nil {
 		return fmt.Errorf("parse ca cert file failed, %s", err.Error())
 	}
-	block, rest := pem.Decode(issuerPrivKeyRaw)
-	if len(rest) != 0 {
+	block, _ := pem.Decode(issuerPrivKeyRaw)
+	if block == nil {
 		return errors.New("pem.Decode failed, invalid cert")
 	}
 	issuerPrivKey, err := asym.PrivateKeyFromDER(block.Bytes)
@@ -200,7 +200,7 @@ func createCrl() error {
 	if err != nil {
 		return fmt.Errorf("create crl failed, %s", err.Error())
 	}
-	err = ioutil.WriteFile(crlPath, pem.EncodeToMemory(&pem.Block{Type: "CRL", Bytes: crlBytes}), os.ModePerm)
+	err = ioutil.WriteFile(crlPath, pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crlBytes}), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("write crl file failed, %s", err.Error())
 	}

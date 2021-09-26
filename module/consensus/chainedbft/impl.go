@@ -14,15 +14,15 @@ import (
 	"sync"
 	"time"
 
-	"chainmaker.org/chainmaker-go/chainconf"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/message"
 	timeservice "chainmaker.org/chainmaker-go/consensus/chainedbft/time_service"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/types"
 	"chainmaker.org/chainmaker-go/consensus/chainedbft/utils"
 	"chainmaker.org/chainmaker-go/consensus/governance"
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
 	"chainmaker.org/chainmaker/common/v2/wal"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/consensus"
@@ -150,7 +150,7 @@ func New(chainID string, id string, singer protocol.SigningMember, ac protocol.A
 	service.smr = newChainedBftSMR(chainID, service.nextEpoch, chainStore, service.timerService, service)
 	epoch := service.nextEpoch
 	service.nextEpoch = nil
-	walDirPath := path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, chainID, WalDirSuffix)
+	walDirPath := path.Join(localconf.ChainMakerConfig.GetStorePath(), chainID, WalDirSuffix)
 	if service.wal, err = wal.Open(walDirPath, nil); err != nil {
 		return nil, err
 	}

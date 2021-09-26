@@ -13,7 +13,7 @@ import (
 
 	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/localconf/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 
 	"chainmaker.org/chainmaker/common/v2/bitmap"

@@ -172,3 +172,6 @@ resource_policies:
       org_list:
       role_list:
         - admin
+
+disabled_native_contract:
+  - CONTRACT_NAME

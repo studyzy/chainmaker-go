@@ -293,3 +293,16 @@ func testGetValidEndorsements(provider protocol.AccessControlProvider,
 	}
 	return test1CertACProvider.(*certACProvider).GetValidEndorsements(principal)
 }
+
+func TestVerifyRelatedMaterial(t *testing.T) {
+	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
+	certProvider, err := newCertACProvider(testChainConfig, testOrg1, nil, logger)
+	require.Nil(t, err)
+	require.NotNil(t, certProvider)
+	isRevoked, err := certProvider.VerifyRelatedMaterial(pbac.VerifyType_CRL, []byte(""))
+	require.NotNil(t, err)
+	require.Equal(t, false, isRevoked)
+	certProvider.VerifyRelatedMaterial(pbac.VerifyType_CRL, []byte(testCRL))
+	require.NotNil(t, err)
+	require.Equal(t, false, isRevoked)
+}

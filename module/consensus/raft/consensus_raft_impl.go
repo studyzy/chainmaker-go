@@ -20,14 +20,13 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 
-	"github.com/thoas/go-funk"
-
-	"chainmaker.org/chainmaker-go/chainconf"
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/chainconf/v2"
 	commonErrors "chainmaker.org/chainmaker/common/v2/errors"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
@@ -35,13 +34,13 @@ import (
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	netpb "chainmaker.org/chainmaker/pb-go/v2/net"
 	"chainmaker.org/chainmaker/protocol/v2"
+	"chainmaker.org/chainmaker/raftwal/v2/wal"
 	"chainmaker.org/chainmaker/utils/v2"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/client/pkg/v3/fileutil"
 	etcdraft "go.etcd.io/etcd/raft/v3"
 	"go.etcd.io/etcd/raft/v3/raftpb"
 	"go.etcd.io/etcd/server/v3/etcdserver/api/snap"
-	"go.etcd.io/etcd/server/v3/wal"
 	"go.etcd.io/etcd/server/v3/wal/walpb"
 )
 
@@ -50,6 +49,7 @@ var (
 	walDir                  = "raftwal"
 	snapDir                 = "snap"
 	snapshotCatchUpEntriesN = uint64(5)
+	defaultSnapCount        = uint64(10)
 )
 
 // mustMarshal marshals protobuf message to byte slice or panic
@@ -130,10 +130,14 @@ func New(config ConsensusRaftImplConfig) (*ConsensusRaftImpl, error) {
 	consensus.msgbus = config.MsgBus
 	consensus.closeC = make(chan struct{})
 	consensus.Id = computeRaftIdFromNodeId(config.NodeId)
+
 	consensus.snapCount = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.SnapCount
+	if consensus.snapCount == 0 {
+		consensus.snapCount = defaultSnapCount
+	}
 	consensus.asyncWalSave = localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.AsyncWalSave
-	consensus.waldir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, walDir)
-	consensus.snapdir = path.Join(localconf.ChainMakerConfig.StorageConfig.StorePath, consensus.chainID, snapDir)
+	consensus.waldir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, walDir)
+	consensus.snapdir = path.Join(localconf.ChainMakerConfig.GetStorePath(), consensus.chainID, snapDir)
 	consensus.idToNodeId = make(map[uint64]string)
 
 	consensus.proposedBlockC = make(chan *common.Block, DefaultChanCap)
@@ -162,7 +166,7 @@ func (consensus *ConsensusRaftImpl) Start() error {
 	walExist := wal.Exist(consensus.waldir)
 	consensus.wal = consensus.replayWAL()
 
-	consensus.peers = consensus.getPeersFromChainConf()
+	consensus.peers, consensus.idToNodeId = consensus.getPeersFromChainConf()
 	c := &etcdraft.Config{
 		ID:              consensus.Id,
 		ElectionTick:    10,
@@ -204,7 +208,6 @@ func (consensus *ConsensusRaftImpl) Start() error {
 // Start stops the raft instance
 func (consensus *ConsensusRaftImpl) Stop() error {
 	consensus.logger.Infof("ConsensusRaftImpl stopping")
-	close(consensus.closeC)
 	return nil
 }
 
@@ -235,7 +238,6 @@ func (consensus *ConsensusRaftImpl) OnMessage(message *msgbus.Message) {
 
 func (consensus *ConsensusRaftImpl) OnQuit() {
 	// do nothing
-	//panic("implement me")
 }
 
 func (consensus *ConsensusRaftImpl) saveSnap(snap raftpb.Snapshot) error {
@@ -305,20 +307,23 @@ func (consensus *ConsensusRaftImpl) serve() {
 	consensus.confState = snapshot.Metadata.ConfState
 	consensus.snapshotIndex = snapshot.Metadata.Index
 	consensus.appliedIndex = snapshot.Metadata.Index
-
-	// block := consensus.ledgerCache.GetLastCommittedBlock()
-	// if block.AdditionalData != nil {
-	//   additionalData := &AdditionalData{}
-	//   json.Unmarshal(block.AdditionalData.ExtraData[protocol.RAFTAddtionalDataKey], additionalData)
-	//   consensus.appliedIndex = additionalData.AppliedIndex
-	// }
 	consensus.logger.InfoDynamic(func() string {
 		return fmt.Sprintf("[%x] begin serve with snap: %v, appliedIndex: %v",
 			consensus.Id, describeSnapshot(snapshot), consensus.appliedIndex)
 	})
 
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
+	tickTime := localconf.ChainMakerConfig.ConsensusConfig.RaftConfig.Ticker
+	if tickTime == 0 {
+		tickTime = time.Nanosecond
+	}
+	ticker := time.NewTicker(tickTime * time.Second)
+	defer func() {
+		ticker.Stop()
+		consensus.wal.Close()
+		consensus.node.Stop()
+		consensus.msgbus.UnRegister(msgbus.ProposedBlock, consensus)
+		consensus.msgbus.UnRegister(msgbus.RecvConsensusMsg, consensus)
+	}()
 
 	for {
 		select {
@@ -328,7 +333,10 @@ func (consensus *ConsensusRaftImpl) serve() {
 			consensus.node.Tick()
 			consensus.logger.Debugf("[%x] status: %s", consensus.Id, consensus.node.Status())
 		case ready := <-consensus.node.Ready():
-			consensus.NodeReady(ready)
+			if exit := consensus.NodeReady(ready); exit {
+				consensus.logger.Debugf("exit consensus when process ready message")
+				return
+			}
 		case block := <-consensus.proposedBlockC:
 			consensus.ProposeBlock(block)
 		case cc := <-consensus.confChangeC:
@@ -342,7 +350,7 @@ func (consensus *ConsensusRaftImpl) serve() {
 	}
 }
 
-func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) {
+func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) (exit bool) {
 	consensus.logger.DebugDynamic(func() string {
 		return fmt.Sprintf("[%x] receive from raft ready, %v", consensus.Id, describeReady(ready))
 	})
@@ -372,8 +380,9 @@ func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) {
 	consensus.sendMessages(ready.Messages)
 	ok, configChanged := consensus.publishEntries(consensus.entriesToApply(ready.CommittedEntries))
 	if !ok {
+		consensus.maybeTriggerSnapshot(configChanged)
 		consensus.logger.Infof("[%x] is deleted from consensus nodes", consensus.Id)
-		return
+		return true
 	}
 	consensus.maybeTriggerSnapshot(configChanged)
 	if ready.SoftState != nil {
@@ -381,6 +390,7 @@ func (consensus *ConsensusRaftImpl) NodeReady(ready etcdraft.Ready) {
 	}
 	consensus.node.Advance()
 	consensus.sendProposeState(consensus.isLeader)
+	return false
 }
 
 func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
@@ -402,10 +412,12 @@ func (consensus *ConsensusRaftImpl) ProposeBlock(block *common.Block) {
 		consensus.logger.Fatalf("[%x] get serialize member failed: %v", consensus.Id, err)
 		return
 	}
+
 	signature := &common.EndorsementEntry{
 		Signer:    serializeMember,
 		Signature: sig,
 	}
+
 	additionalData := AdditionalData{
 		Signature: mustMarshal(signature),
 	}
@@ -442,6 +454,7 @@ func (consensus *ConsensusRaftImpl) entriesToApply(ents []raftpb.Entry) (nents [
 		consensus.logger.Fatalf("first index of committed entry[%d] should <= progress.appliedIndex[%d]+1",
 			firstIdx, consensus.appliedIndex)
 	}
+	consensus.logger.Debugf("appliedIndex: %d, firstIndex: %d, entry num: %d", consensus.appliedIndex, firstIdx, len(ents))
 	if consensus.appliedIndex-firstIdx+1 < uint64(len(ents)) {
 		nents = ents[consensus.appliedIndex-firstIdx+1:]
 	}
@@ -469,22 +482,21 @@ func (consensus *ConsensusRaftImpl) publishEntries(ents []raftpb.Entry) (ok bool
 
 		case raftpb.EntryConfChange:
 			configChanged = true
-
 			var cc raftpb.ConfChange
 			if err := cc.Unmarshal(ents[i].Data); err != nil {
 				consensus.logger.Panicf("[%x] unmarshal config change error: %v", consensus.Id, err)
 			}
 			consensus.confState = *consensus.node.ApplyConfChange(cc)
-			consensus.peers = consensus.getPeersFromChainConf()
-
+			consensus.peers, consensus.idToNodeId = consensus.getPeersFromChainConf()
 			switch cc.Type {
+			// todo. may be check the delete node logic
 			case raftpb.ConfChangeRemoveNode:
 				if cc.NodeID == consensus.Id {
+					consensus.appliedIndex = ents[i].Index
 					return false, configChanged
 				}
 			}
 		}
-
 		consensus.appliedIndex = ents[i].Index
 	}
 	return true, configChanged
@@ -507,10 +519,12 @@ func (consensus *ConsensusRaftImpl) publishSnapshot(snapshot raftpb.Snapshot) {
 
 	snapshotData := &SnapshotHeight{}
 	json.Unmarshal(snapshot.Data, snapshotData)
+
 	for {
 		// Loop until catch up to snapshotData.Height from Sync module
 		current, _ := consensus.ledgerCache.CurrentHeight()
-		if current > snapshotData.Height {
+		consensus.logger.Debugf("publishSnapshot current height: %d, snapshot height: %d", current, snapshotData.Height)
+		if current >= snapshotData.Height {
 			break
 		}
 		time.Sleep(500 * time.Microsecond)
@@ -522,11 +536,9 @@ func (consensus *ConsensusRaftImpl) getSnapshot() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	snapshotData := SnapshotHeight{
+	data, err := json.Marshal(SnapshotHeight{
 		Height: height,
-	}
-
-	data, err := json.Marshal(snapshotData)
+	})
 	consensus.logger.Infof("getSnapshot data: %s", data)
 	return data, err
 }
@@ -550,18 +562,27 @@ func (consensus *ConsensusRaftImpl) maybeTriggerSnapshot(configChanged bool) {
 		consensus.logger.Fatalf("save snapshot error: %v", err)
 	}
 
-	compactIndex := uint64(1)
-	if consensus.appliedIndex > snapshotCatchUpEntriesN {
-		compactIndex = consensus.appliedIndex - snapshotCatchUpEntriesN
-	}
-
-	if err := consensus.raftStorage.Compact(compactIndex); err != nil {
-		consensus.logger.Fatalf("compact snapshot error: %v", err)
-	}
-
+	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, snapshotIndex: %v",
+		consensus.appliedIndex, string(data), consensus.snapshotIndex)
 	consensus.snapshotIndex = consensus.appliedIndex
-	consensus.logger.Infof("trigger snapshot appliedIndex: %v, data: %v, compactIndex: %v, snapshotIndex: %v",
-		consensus.appliedIndex, string(data), compactIndex, consensus.snapshotIndex)
+
+	if consensus.appliedIndex < snapshotCatchUpEntriesN+1 {
+		return
+	}
+
+	compactIndex := consensus.appliedIndex - snapshotCatchUpEntriesN
+
+	first, _ := consensus.raftStorage.FirstIndex()
+	if compactIndex <= first {
+		return
+	}
+	if err := consensus.raftStorage.Compact(compactIndex); err != nil {
+		last, _ := consensus.raftStorage.LastIndex()
+		consensus.logger.Fatalf("compact snapshot error: %v, compact "+
+			"index: %d, first: %d, last: %d", err, compactIndex, first, last)
+	}
+
+	consensus.logger.Infof("compact entries compactIndex:%d", compactIndex)
 }
 
 func (consensus *ConsensusRaftImpl) sendMessages(msgs []raftpb.Message) {
@@ -627,7 +648,8 @@ func (consensus *ConsensusRaftImpl) replayWAL() *wal.WAL {
 		walsnap.Index, walsnap.Term = snapshot.Metadata.Index, snapshot.Metadata.Term
 	}
 
-	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap)
+	w, err := wal.Open(consensus.logger.Logger().Desugar(), consensus.waldir, walsnap,
+		consensus.chainConf.ChainConfig().Block.BlockSize*1024*1024)
 	if err != nil {
 		consensus.logger.Fatalf("open wal error: %v", err)
 	}
@@ -687,14 +709,15 @@ func (consensus *ConsensusRaftImpl) Verify(
 	return nil
 }
 
-func (consensus *ConsensusRaftImpl) getPeersFromChainConf() []uint64 {
-	orgs := consensus.chainConf.ChainConfig().Consensus.Nodes
-	peers := []uint64{}
-	idToNodeId := make(map[uint64]string)
-	var builder strings.Builder
-	fmt.Fprintf(&builder, "[")
+func (consensus *ConsensusRaftImpl) getPeersFromChainConf() ([]uint64, map[uint64]string) {
+	var (
+		peers      []uint64
+		idToNodeId = make(map[uint64]string)
+		builder    strings.Builder
+	)
 
-	for _, org := range orgs {
+	fmt.Fprintf(&builder, "[")
+	for _, org := range consensus.chainConf.ChainConfig().Consensus.Nodes {
 		for _, nodeId := range org.NodeId {
 			id := computeRaftIdFromNodeId(nodeId)
 			idToNodeId[id] = nodeId
@@ -707,15 +730,14 @@ func (consensus *ConsensusRaftImpl) getPeersFromChainConf() []uint64 {
 	consensus.logger.InfoDynamic(func() string {
 		return fmt.Sprintf("[%x] getPeersFromChainConf peers: %v", consensus.Id, builder.String())
 	})
-	consensus.idToNodeId = idToNodeId
 	sort.Slice(peers, func(i, j int) bool {
 		return peers[i] < peers[j]
 	})
-	return peers
+	return peers, idToNodeId
 }
 
-func (consensus *ConsensusRaftImpl) processConfigChange() {
-	peers := consensus.getPeersFromChainConf()
+func (consensus *ConsensusRaftImpl) processConfigChange() bool {
+	peers, idToNodes := consensus.getPeersFromChainConf()
 	removed, added := computeUpdatedNodes(consensus.peers, peers)
 	consensus.logger.Debugf("[%x] processConfigChange removed: %v, added: %v", consensus.Id, removed, added)
 
@@ -733,8 +755,10 @@ func (consensus *ConsensusRaftImpl) processConfigChange() {
 				NodeID: node,
 			}
 			consensus.confChangeC <- cc
+			consensus.peers, consensus.idToNodeId = peers, idToNodes
 		}
 	}
+	return len(removed) != 0 || len(added) != 0
 }
 
 // VerifyBlockSignatures verifies whether the signatures in block

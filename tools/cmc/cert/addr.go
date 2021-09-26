@@ -47,8 +47,8 @@ func getAddr() error {
 		return fmt.Errorf("read cert file [%s] failed, %s", certPath, err)
 	}
 
-	block, rest := pem.Decode(certBytes)
-	if len(rest) != 0 {
+	block, _ := pem.Decode(certBytes)
+	if block == nil {
 		return errors.New("pem.Decode failed, invalid cert")
 	}
 	cert, err := bcx509.ParseCertificate(block.Bytes)
@@ -80,8 +80,8 @@ func certToUserAddrInStake() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("read cert content failed, reason: %s", err)
 			}
-			block, rest := pem.Decode(certContent)
-			if len(rest) != 0 {
+			block, _ := pem.Decode(certContent)
+			if block == nil {
 				return errors.New("pem.Decode failed, invalid cert")
 			}
 			cert, err := bcx509.ParseCertificate(block.Bytes)

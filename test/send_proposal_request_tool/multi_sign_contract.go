@@ -8,19 +8,18 @@ SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"strconv"
+
 	"time"
 
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
 	"chainmaker.org/chainmaker/utils/v2"
-	"github.com/gogo/protobuf/proto"
+
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +51,7 @@ var (
 	requestTimeout  int
 	reqTimestamp    int64
 	memberNum       int
-	timestamp		int64
+	timestamp       int64
 )
 
 var (

@@ -14,7 +14,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +67,7 @@ func getContract() error {
 	}
 
 	contractInfo := &common.PrivateGetContract{}
-	if err = proto.Unmarshal(resp.ContractResult.Result, contractInfo); err != nil {
+	if err = contractInfo.Unmarshal(resp.ContractResult.Result); err != nil {
 		return fmt.Errorf("GetContract unmarshal contract info payload failed, %s", err.Error())
 	}
 

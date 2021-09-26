@@ -17,40 +17,46 @@ import (
 
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 )
 
 func getNodeStatusReq(t *testing.T) []byte {
-	bz, err := proto.Marshal(&syncPb.SyncMsg{Type: syncPb.SyncMsg_NODE_STATUS_REQ})
+	msg := &syncPb.SyncMsg{Type: syncPb.SyncMsg_NODE_STATUS_REQ}
+	bz, err := msg.Marshal()
 	require.NoError(t, err)
 	return bz
 }
 
 func getNodeStatusResp(t *testing.T, height uint64) []byte {
-	bz, err := proto.Marshal(&syncPb.BlockHeightBCM{BlockHeight: height})
+	msg := &syncPb.BlockHeightBCM{BlockHeight: height}
+	bz, err := msg.Marshal()
 	require.NoError(t, err)
-	bz, err = proto.Marshal(&syncPb.SyncMsg{Type: syncPb.SyncMsg_NODE_STATUS_RESP, Payload: bz})
+	msg2 := &syncPb.SyncMsg{Type: syncPb.SyncMsg_NODE_STATUS_RESP, Payload: bz}
+	bz, err = msg2.Marshal()
 	require.NoError(t, err)
 	return bz
 }
 
 func getBlockReq(t *testing.T, height, batchSize uint64) []byte {
-	bz, err := proto.Marshal(&syncPb.BlockSyncReq{BlockHeight: height, BatchSize: batchSize})
+	msg := &syncPb.BlockSyncReq{BlockHeight: height, BatchSize: batchSize}
+	bz, err := msg.Marshal()
 	require.NoError(t, err)
-	bz, err = proto.Marshal(&syncPb.SyncMsg{Type: syncPb.SyncMsg_BLOCK_SYNC_REQ, Payload: bz})
+	msg2 := &syncPb.SyncMsg{Type: syncPb.SyncMsg_BLOCK_SYNC_REQ, Payload: bz}
+	bz, err = msg2.Marshal()
 	require.NoError(t, err)
 	return bz
 }
 
 func getBlockResp(t *testing.T, height uint64) []byte {
-	bz, err := proto.Marshal(&syncPb.SyncBlockBatch{
+	msg := &syncPb.SyncBlockBatch{
 		Data: &syncPb.SyncBlockBatch_BlockBatch{BlockBatch: &syncPb.BlockBatch{Batches: []*commonPb.Block{
 			{Header: &commonPb.BlockHeader{BlockHeight: height}},
 		}}},
-	})
+	}
+	bz, err := msg.Marshal()
 	require.NoError(t, err)
-	bz, err = proto.Marshal(&syncPb.SyncMsg{Type: syncPb.SyncMsg_BLOCK_SYNC_RESP, Payload: bz})
+	msg2 := &syncPb.SyncMsg{Type: syncPb.SyncMsg_BLOCK_SYNC_RESP, Payload: bz}
+	bz, err = msg2.Marshal()
 	require.NoError(t, err)
 	return bz
 }
