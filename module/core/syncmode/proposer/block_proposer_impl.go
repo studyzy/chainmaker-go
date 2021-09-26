@@ -323,14 +323,6 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 		for i, _ := range block.Txs {
 			newPayload := &commonpb.Payload{
 				TxId:           block.Txs[i].Payload.TxId,
-				//ChainId:        block.Txs[i].Payload.TxId,
-				//TxType:         block.Txs[i].Payload.TxType,
-				//Timestamp:      block.Txs[i].Payload.Timestamp,
-				//ExpirationTime: block.Txs[i].Payload.ExpirationTime,
-				//ContractName:   block.Txs[i].Payload.ContractName,
-				//Method:         block.Txs[i].Payload.Method,
-				//Sequence:       block.Txs[i].Payload.Sequence,
-				//Limit:          block.Txs[i].Payload.Limit,
 			}
 
 			newTxs[i] = &commonpb.Transaction{

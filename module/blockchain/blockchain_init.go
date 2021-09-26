@@ -329,6 +329,7 @@ func (bc *Blockchain) initTxPool() (err error) {
 	if strings.ToUpper(localconf.ChainMakerConfig.TxPoolConfig.PoolType) == string(txpool.BATCH) {
 		txType = txpool.BATCH
 	} else if bc.chainConf.ChainConfig().Block.ConsensusMessageTurbo {
+		bc.log.Warnf("invaild consensus message setting.")
 		bc.chainConf.ChainConfig().Block.ConsensusMessageTurbo = false
 	}
 	txpoolLogger := logger.GetLoggerByChain(logger.MODULE_TXPOOL, bc.chainId)
