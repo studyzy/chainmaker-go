@@ -741,7 +741,7 @@ func (acs *accessControlService) newPkMember(member *pbac.Member, adminList, con
 	if err != nil {
 		return nil, fmt.Errorf("new public key member failed: %s", err.Error())
 	}
-	if pkMember.GetOrgId() != member.OrgId {
+	if pkMember.GetOrgId() != member.OrgId && member.OrgId != "" {
 		return nil, fmt.Errorf("new public key member failed: member orgId does not match on chain")
 	}
 	cached := &memberCached{

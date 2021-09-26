@@ -215,7 +215,10 @@ func (cp *certACProvider) initTrustMembers(trustMembers []*config.TrustMemberCon
 func (cp *certACProvider) loadTrustMembers(memberInfo string) (*trustMemberCached, bool) {
 	tempSyncMap := *cp.trustMembers
 	cached, ok := tempSyncMap.Load(string(memberInfo))
-	return cached.(*trustMemberCached), ok
+	if ok {
+		return cached.(*trustMemberCached), ok
+	}
+	return nil, ok
 }
 
 func (cp *certACProvider) loadCRL() error {
@@ -521,8 +524,8 @@ func (cp *certACProvider) NewMember(pbMember *pbac.Member) (protocol.Member, err
 			member:    remoteMember,
 			certChain: certChain,
 		})
+		return remoteMember, nil
 	}
-
 	return memberCache.member, nil
 }
 

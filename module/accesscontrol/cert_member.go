@@ -140,7 +140,6 @@ func newCertMemberFromParam(orgId, role, hashType string, isCompressed bool, cer
 
 func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed bool) (*certificateMember, error) {
 	var member certificateMember
-	member.orgId = orgId
 	member.isCompressed = isCompressed
 
 	var cert *bcx509.Certificate
@@ -159,12 +158,16 @@ func newMemberFromCertPem(orgId, hashType string, certPEM []byte, isCompressed b
 	}
 
 	member.hashType = hashType
+	member.orgId = orgId
 
 	orgIdFromCert := ""
 	if len(cert.Subject.Organization) > 0 {
 		orgIdFromCert = cert.Subject.Organization[0]
 	}
-	if orgIdFromCert != orgId {
+	if member.orgId == "" {
+		member.orgId = orgIdFromCert
+	}
+	if orgIdFromCert != member.orgId {
 		return nil, fmt.Errorf(
 			"setup cert member failed, organization information in certificate "+
 				"and in input parameter do not match [certificate: %s, parameter: %s]",
