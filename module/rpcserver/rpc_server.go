@@ -262,6 +262,9 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 				BlackListInterceptor(),
 				RateLimitInterceptor(),
 			),
+			grpc_middleware.WithStreamServerChain(
+				BlackListStreamInterceptor(),
+			),
 		}
 	} else {
 		opts = []grpc.ServerOption{
@@ -270,6 +273,9 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 				LoggingInterceptor,
 				BlackListInterceptor(),
 				RateLimitInterceptor(),
+			),
+			grpc_middleware.WithStreamServerChain(
+				BlackListStreamInterceptor(),
 			),
 		}
 	}
