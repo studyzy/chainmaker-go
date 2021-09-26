@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	logger2 "chainmaker.org/chainmaker/logger/v2"
-	"chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -142,7 +141,7 @@ func TestVerifySelfPrincipal(t *testing.T) {
 	require.NotNil(t, endorsement)
 	principal, err := test1CertACProvider.CreatePrincipalForTargetOrg(protocol.ResourceNameUpdateSelfConfig,
 		[]*common.EndorsementEntry{endorsement}, []byte(testMsg), testOrg1)
-
+	require.NotNil(t, err)
 	ok, err := test1CertACProvider.VerifyPrincipal(principal)
 	require.Nil(t, err)
 	require.Equal(t, true, ok)
@@ -236,7 +235,7 @@ func testCreateEndorsementEntry(orgMember *orgMember, roleType protocol.Role, ha
 	var (
 		sigResource    []byte
 		err            error
-		signerResource *accesscontrol.Member
+		signerResource *pbac.Member
 	)
 	switch roleType {
 	case protocol.RoleConsensusNode:

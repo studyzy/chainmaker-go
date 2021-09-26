@@ -213,8 +213,7 @@ func (cp *certACProvider) initTrustMembers(trustMembers []*config.TrustMemberCon
 }
 
 func (cp *certACProvider) loadTrustMembers(memberInfo string) (*trustMemberCached, bool) {
-	var tempSyncMap sync.Map
-	tempSyncMap = *cp.trustMembers
+	tempSyncMap := *cp.trustMembers
 	cached, ok := tempSyncMap.Load(string(memberInfo))
 	return cached.(*trustMemberCached), ok
 }
@@ -588,7 +587,7 @@ func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberSta
 	}
 
 	var certChain []*bcx509.Certificate
-	cert := member.(*certMember).cert
+	cert := member.(*certificateMember).cert
 
 	certChain = append(certChain, cert)
 	err = cp.checkCRL(certChain)
@@ -850,7 +849,7 @@ func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certifica
 	if mem == nil {
 		return nil, fmt.Errorf("invalid member: member should not be nil")
 	}
-	certMember, ok := mem.(*certMember)
+	certMember, ok := mem.(*certificateMember)
 	if !ok {
 		return nil, fmt.Errorf("invalid member: member type err")
 	}

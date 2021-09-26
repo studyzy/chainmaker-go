@@ -288,15 +288,30 @@ func (bc *Blockchain) initAC() (err error) {
 	acFactory := accesscontrol.ACFactory()
 	bc.ac, err = acFactory.NewACProvider(bc.chainConf, nodeConfig.OrgId, bc.store, acLog)
 	if err != nil {
-		bc.log.Errorf("get organization information failed, %s", err.Error())
+		bc.log.Errorf("new ac provider failed, %s", err.Error())
 		return
 	}
 
-	bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
-		nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
+	authType, err := accesscontrol.ConvertAuthType(bc.chainConf.ChainConfig().AuthType)
 	if err != nil {
-		bc.log.Errorf("initialize identity failed, %s", err.Error())
+		bc.log.Errorf("convert authType failed, %s", err.Error())
 		return
+	}
+	if authType == accesscontrol.PermissionedWithCert {
+
+		bc.identity, err = accesscontrol.InitCertSigningMember(bc.chainConf.ChainConfig(), nodeConfig.OrgId,
+			nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword, nodeConfig.CertFile)
+		if err != nil {
+			bc.log.Errorf("initialize identity failed, %s", err.Error())
+			return
+		}
+	} else {
+		bc.identity, err = accesscontrol.InitPKSigningMember(bc.ac, nodeConfig.OrgId,
+			nodeConfig.PrivKeyFile, nodeConfig.PrivKeyPassword)
+		if err != nil {
+			bc.log.Errorf("initialize identity failed, %s", err.Error())
+			return
+		}
 	}
 
 	bc.initModules[moduleNameAccessControl] = struct{}{}

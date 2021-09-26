@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 package accesscontrol
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"sync"
@@ -21,7 +20,6 @@ import (
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
 	"github.com/gogo/protobuf/proto"
-	"github.com/mr-tron/base58"
 )
 
 var _ protocol.Member = (*pkMember)(nil)
@@ -95,7 +93,7 @@ func (pm *pkMember) GetMember() (*pbac.Member, error) {
 	}, nil
 }
 
-type signingPkMember struct {
+type signingPKMember struct {
 	// Extends Identity
 	pkMember
 
@@ -104,7 +102,7 @@ type signingPkMember struct {
 }
 
 // When using public key instead of certificate, hashType is used to specify the hash algorithm while the signature algorithm is decided by the public key itself.
-func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
+func (spm *signingPKMember) Sign(hashType string, msg []byte) ([]byte, error) {
 	hash, ok := bccrypto.HashAlgoMap[hashType]
 	if !ok {
 		return nil, fmt.Errorf("sign failed: unsupport hash type")
@@ -113,12 +111,6 @@ func (spm *signingPkMember) Sign(hashType string, msg []byte) ([]byte, error) {
 		Hash: hash,
 		UID:  bccrypto.CRYPTO_DEFAULT_UID,
 	})
-}
-
-func loadSyncMap(syncMap *sync.Map, key string) (interface{}, bool) {
-	var tempSyncMap sync.Map
-	tempSyncMap = *syncMap
-	return tempSyncMap.Load(key)
 }
 
 func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
@@ -227,8 +219,3 @@ func newPkMemberFromParam(orgId, pkPEM string, role protocol.Role, hashType stri
 	return &pkMember, nil
 }
 
-func pubkeyHash(pubkey string) string {
-	pkHash := sha256.Sum256([]byte(pubkey))
-	strPkHash := base58.Encode(pkHash[:])
-	return strPkHash
-}

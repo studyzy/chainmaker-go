@@ -18,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/logger/v2"
-	logger2 "chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -712,7 +711,7 @@ func initOrgMember(t *testing.T, info *orgMemberInfo) *orgMember {
 	td, cleanFunc, err := createTempDirWithCleanFunc()
 	require.Nil(t, err)
 	defer cleanFunc()
-	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
+	logger := logger.GetLogger(logger.MODULE_ACCESS)
 	certProvider, err := newCertACProvider(testChainConfig, info.orgId, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, certProvider)

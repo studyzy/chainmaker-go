@@ -26,8 +26,10 @@ var NilPkACProvider ACProvider = (*pkACProvider)(nil)
 
 const (
 	AdminPublicKey = "public"
-	// chainconfig DPoS the consensus list key
-	DPOS_CONSENSUS_KEY = "stake.candidate"
+	// chainconfig the DPoS of orgId
+	DposOrgId = "dpos_org_id"
+	// chainconfig the DPoS config of nodeId key prefix
+	DposNodeIdKeyPrefix = "stake.nodeID:"
 )
 
 var (
@@ -127,12 +129,10 @@ func newPkACProvider(chainConfig *config.ChainConfig, localOrgId string,
 	if err != nil {
 		return nil, fmt.Errorf("new publick AC provider failed: %s", err.Error())
 	}
-
 	err = pkAcProvider.initConsensusMember(chainConfig)
 	if err != nil {
 		return nil, fmt.Errorf("new publick AC provider failed: %s", err.Error())
 	}
-
 	return pkAcProvider, nil
 }
 
@@ -175,20 +175,40 @@ func (p *pkACProvider) initConsensusMember(chainConfig *config.ChainConfig) erro
 	return fmt.Errorf("public chain mode does not support other consensus")
 }
 
-func (p *pkACProvider) initDPoSMember(dposConf []*config.ConfigKeyValue) error {
-	if len(dposConf) == 0 {
+func (p *pkACProvider) updateConsensusMember(chainConfig *config.ChainConfig) error {
+	if chainConfig.Consensus.Type == consensus.ConsensusType_DPOS {
+		return p.updateDPoSMember(chainConfig.Consensus.Nodes)
+	}
+	return fmt.Errorf("public chain mode does not support other consensus")
+}
+
+func (p *pkACProvider) initDPoSMember(consensusConf []*config.ConfigKeyValue) error {
+	if len(consensusConf) == 0 {
 		return fmt.Errorf("init dpos consensus member failed: DPoS config can't be empty in chain config")
+	}
+	var consensusMember sync.Map
+
+	for _, kvPair := range consensusConf {
+		if strings.HasPrefix(kvPair.Key, DposNodeIdKeyPrefix) {
+			consensusMember.Store(kvPair.Value, struct{}{})
+		}
+	}
+	p.consensusMember = &consensusMember
+	return nil
+}
+
+func (p *pkACProvider) updateDPoSMember(consensusConf []*config.OrgConfig) error {
+	if len(consensusConf) == 0 {
+		return fmt.Errorf("update dpos consensus member failed: DPoS config can't be empty in chain config")
 	}
 
 	var consensusMember sync.Map
-
-	for _, conf := range dposConf {
-		ok := strings.HasPrefix(conf.Key, DPOS_CONSENSUS_KEY)
-		if ok {
-			consensusMember.Store(conf.Value, struct{}{})
-		}
+	if consensusConf[0].OrgId != DposOrgId {
+		return fmt.Errorf("update dpos consensus member failed: DPoS node config orgId do not match")
 	}
-
+	for _, nodeId := range consensusConf[0].NodeId {
+		consensusMember.Store(nodeId, struct{}{})
+	}
 	p.consensusMember = &consensusMember
 	return nil
 }
@@ -199,10 +219,6 @@ func (p *pkACProvider) lookUpMemberInCache(memberInfo string) (*memberCached, bo
 		return ret.(*memberCached), true
 	}
 	return nil, false
-}
-
-func (p *pkACProvider) addMemberToCache(memberInfo string, member *memberCached) {
-	p.memberCache.Add(memberInfo, member)
 }
 
 func (p *pkACProvider) getMemberFromCache(member *pbac.Member) protocol.Member {
@@ -226,7 +242,7 @@ func (p *pkACProvider) Watch(chainConfig *config.ChainConfig) error {
 		return fmt.Errorf("new publick AC provider failed: %s", err.Error())
 	}
 
-	err = p.initConsensusMember(chainConfig)
+	err = p.updateConsensusMember(chainConfig)
 	if err != nil {
 		return fmt.Errorf("new publick AC provider failed: %s", err.Error())
 	}
@@ -462,12 +478,12 @@ func (p *pkACProvider) refineEndorsements(endorsements []*common.EndorsementEntr
 
 		remoteMember, err := p.NewMember(endorsement.Signer)
 		if err != nil {
-			err = fmt.Errorf("new member failed: [%s]", err.Error())
+			p.log.Infof("new member failed: [%s]", err.Error())
 			continue
 		}
 
 		if err := remoteMember.Verify(p.hashType, msg, endorsement.Signature); err != nil {
-			err = fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
+			p.log.Infof("signer member verify signature failed: [%s]", err.Error())
 			p.log.Debugf("information for invalid signature:\norganization: %s\npubkey: %s\nmessage: %s\n"+
 				"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 			continue
