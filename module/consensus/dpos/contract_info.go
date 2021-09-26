@@ -13,7 +13,7 @@ import (
 
 	"chainmaker.org/chainmaker-go/vm/native/dposmgr"
 
-	configPb "chainmaker.org/chainmaker-go/pb/protogo/config"
+	configPb "chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	commonpb "chainmaker.org/chainmaker/pb-go/v2/common"
 	dpospb "chainmaker.org/chainmaker/pb-go/v2/consensus/dpos"
@@ -138,7 +138,7 @@ func (impl *DPoSImpl) createEpochRwSet(epoch *syscontract.Epoch) (*commonpb.TxRW
 	return rw, nil
 }
 
-func (impl *DPoSImpl) createValidatorsRwSet(epoch *commonpb.Epoch) (*commonpb.TxRWSet, error) {
+func (impl *DPoSImpl) createValidatorsRwSet(epoch *syscontract.Epoch) (*commonpb.TxRWSet, error) {
 
 	nodeIDs, err := impl.getNodeIDsFromValidators(epoch)
 	if err != nil || len(nodeIDs) == 0 {
@@ -168,8 +168,8 @@ func (impl *DPoSImpl) createValidatorsRwSet(epoch *commonpb.Epoch) (*commonpb.Tx
 		TxId: "",
 		TxWrites: []*commonpb.TxWrite{
 			{
-				ContractName: commonpb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String(),
-				Key:          []byte(commonpb.ContractName_SYSTEM_CONTRACT_CHAIN_CONFIG.String()),
+				ContractName: syscontract.SystemContract_CHAIN_CONFIG.String(),
+				Key:          []byte(syscontract.SystemContract_CHAIN_CONFIG.String()),
 				Value:        pbccPayload,
 			},
 		},
