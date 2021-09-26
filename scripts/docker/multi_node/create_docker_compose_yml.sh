@@ -12,9 +12,15 @@ TEMPLATE_FILE="tpl_docker-compose_services.yml"
 
 function show_help() {
     echo "Usage:  "
-    echo "  create_yml.sh P2P_PORT(default:11301) RPC_PORT(default:12301) node_count config_dir(relative current dir or absolutely dir) server_count(default:1)"
-    echo "    eg: ./create_docker_conpose_yml.sh 11301 12301 20 ../../../build/config 10"
-    echo "    eg: ./create_docker_conpose_yml.sh 11301 12301 20 /mnt/d/develop/workspace/go/chainmaker-go/build/config 10"
+    echo "  create_yml.sh P2P_PORT(default:11301) RPC_PORT(default:12301) node_count config_dir(relative current dir or absolutely dir) server_node_count(default:99)"
+    echo "    P2P_PORT: peer to peer connect"
+    echo "    RPC_PORT: sdk to peer connect"
+    echo "    node_count: total node count"
+    echo "    config_dir: all node config path"
+    echo "    server_node_count: number of nodes per server"
+    echo ""
+    echo "    eg: ./create_docker_compose_yml.sh 11301 12301 20 ../../../build/config 10"
+    echo "    eg: ./create_docker_compose_yml.sh 11301 12301 20 /mnt/d/develop/workspace/go/chainmaker-go/build/config 10"
 }
 if [ ! $# -eq 2 ] && [ ! $# -eq 3 ] && [ ! $# -eq 4 ] && [ ! $# -eq 5 ]; then
     echo "invalid params"
@@ -61,7 +67,7 @@ function check_params() {
     fi
 
     if  [[ ! -n $SERVER_COUNT ]] ;then
-        SERVER_COUNT=1
+        SERVER_COUNT=99
     fi
 
     if  [[ ! -n $CONFIG_DIR ]] ;then
