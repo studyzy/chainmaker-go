@@ -7,13 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package consensus
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"chainmaker.org/chainmaker-go/consensus/dpos"
 	"chainmaker.org/chainmaker-go/consensus/tbft"
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/localconf/v2"
 	configpb "chainmaker.org/chainmaker/pb-go/v2/config"
 	consensuspb "chainmaker.org/chainmaker/pb-go/v2/consensus"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -37,12 +41,11 @@ func TestNewConsensusEngine(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	prePath := localconf.ChainMakerConfig.StorageConfig.StorePath
+	prePath := localconf.ChainMakerConfig.GetStorePath()
 	defer func() {
-		localconf.ChainMakerConfig.StorageConfig.StorePath = prePath
+		localconf.ChainMakerConfig.StorageConfig["store_path"] = prePath
 	}()
-	//localconf.ChainMakerConfig.StorageConfig.StorePath = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
-	localconf.ChainMakerConfig.StorageConfig.StorePath = t.TempDir()
+	localconf.ChainMakerConfig.StorageConfig["store_path"] = filepath.Join(os.TempDir(), fmt.Sprintf("%d", time.Now().Nanosecond()))
 
 	signer := mock.NewMockSigningMember(ctrl)
 	ledgerCache := mock.NewMockLedgerCache(ctrl)

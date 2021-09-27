@@ -16,11 +16,11 @@ import (
 	"strings"
 	"sync"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/net"
 	"chainmaker.org/chainmaker-go/subscriber"
 	"chainmaker.org/chainmaker/common/v2/helper"
 	"chainmaker.org/chainmaker/common/v2/msgbus"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -342,6 +342,25 @@ func (server *ChainMakerServer) GetBlockchain(chainId string) (*Blockchain, erro
 	}
 
 	return nil, fmt.Errorf(chainIdNotFoundErrorTemplate, chainId)
+}
+
+// GetAllAC get all protocol.AccessControlProvider of all the chains.
+func (server *ChainMakerServer) GetAllAC() ([]protocol.AccessControlProvider, error) {
+	var accessControls []protocol.AccessControlProvider
+	server.blockchains.Range(func(_, value interface{}) bool {
+		blockchain, ok := value.(*Blockchain)
+		if !ok {
+			panic("invalid blockchain obj")
+		}
+		accessControls = append(accessControls, blockchain.GetAccessControl())
+		return true
+	})
+
+	if len(accessControls) == 0 {
+		return nil, fmt.Errorf("all chain not found")
+	}
+
+	return accessControls, nil
 }
 
 // Version of chainmaker.

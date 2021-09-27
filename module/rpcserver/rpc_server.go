@@ -18,11 +18,11 @@ import (
 	"time"
 
 	"chainmaker.org/chainmaker-go/blockchain"
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker-go/monitor"
 	"chainmaker.org/chainmaker/common/v2/ca"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/hash"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/logger/v2"
 	apiPb "chainmaker.org/chainmaker/pb-go/v2/api"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -259,7 +259,11 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 				RecoveryInterceptor,
 				LoggingInterceptor,
 				MonitorInterceptor,
+				BlackListInterceptor(),
 				RateLimitInterceptor(),
+			),
+			grpc_middleware.WithStreamServerChain(
+				BlackListStreamInterceptor(),
 			),
 		}
 	} else {
@@ -267,7 +271,11 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			grpc_middleware.WithUnaryServerChain(
 				RecoveryInterceptor,
 				LoggingInterceptor,
+				BlackListInterceptor(),
 				RateLimitInterceptor(),
+			),
+			grpc_middleware.WithStreamServerChain(
+				BlackListStreamInterceptor(),
 			),
 		}
 	}
@@ -299,7 +307,19 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			log.Infof("need check client auth")
 		}
 
-		c, err := tlsRPCServer.GetCredentialsByCA(checkClientAuth)
+		acs, err := chainMakerServer.GetAllAC()
+		if err != nil {
+			log.Errorf("get all AccessControlProvider failed, %s", err.Error())
+			return nil, err
+		}
+
+		customVerify := ca.CustomVerify{
+			VerifyPeerCertificate:   createVerifyPeerCertificateFunc(acs),
+			GMVerifyPeerCertificate: createGMVerifyPeerCertificateFunc(acs),
+		}
+
+		//c, err := tlsRPCServer.GetCredentialsByCA(checkClientAuth)
+		c, err := tlsRPCServer.GetCredentialsByCA(checkClientAuth, customVerify)
 		if err != nil {
 			log.Errorf("new gRPC failed, GetTLSCredentialsByCA err: %v", err)
 			return nil, err

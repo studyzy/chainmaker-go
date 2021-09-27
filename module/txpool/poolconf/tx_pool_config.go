@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package poolconf
 
 import (
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"chainmaker.org/chainmaker/protocol/v2"
 )
 

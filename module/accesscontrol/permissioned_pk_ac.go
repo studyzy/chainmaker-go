@@ -14,9 +14,9 @@ import (
 
 	"encoding/hex"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/localconf/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 
 	"chainmaker.org/chainmaker/pb-go/v2/common"
@@ -235,12 +235,12 @@ func (pp *permissionedPkACProvider) refineEndorsements(endorsements []*common.En
 
 		remoteMember, err := pp.NewMember(endorsement.Signer)
 		if err != nil {
-			err = fmt.Errorf("new member failed: [%s]", err.Error())
+			pp.acService.log.Infof("new member failed: [%s]", err.Error())
 			continue
 		}
 
 		if err := remoteMember.Verify(pp.GetHashAlg(), msg, endorsement.Signature); err != nil {
-			err = fmt.Errorf("signer member verify signature failed: [%s]", err.Error())
+			pp.acService.log.Infof("signer member verify signature failed: [%s]", err.Error())
 			pp.acService.log.Debugf("information for invalid signature:\norganization: %s\npubkey: %s\nmessage: %s\n"+
 				"signature: %s", endorsement.Signer.OrgId, memInfo, hex.Dump(msg), hex.Dump(endorsement.Signature))
 			continue

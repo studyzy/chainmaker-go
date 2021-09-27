@@ -18,7 +18,6 @@ import (
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/logger/v2"
-	logger2 "chainmaker.org/chainmaker/logger/v2"
 	commonPb "chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -637,6 +636,16 @@ mrY0z9cE
 `,
 }
 
+var testCRL = `-----BEGIN CRL-----
+MIIBNjCB3AIBATAKBggqhkjOPQQDAjBfMQswCQYDVQQGEwJDTjEQMA4GA1UECBMH
+QmVpamluZzEQMA4GA1UEBxMHQmVpamluZzENMAsGA1UEChMEb3JnMTELMAkGA1UE
+CxMCY2ExEDAOBgNVBAMTB2NhLm9yZzgXDTIxMDYxODA4NDEyOFoXDTIxMDYxODA5
+NDEyOFowGzAZAggmTrsNBHY7GBcNMjMwNjE3MTI1MTU3WqAvMC0wKwYDVR0jBCQw
+IoAgYmqb9hiWkAJKn8GnweOVQtp6C7q8FNl+8qmkiGcuoIowCgYIKoZIzj0EAwID
+SQAwRgIhAPmTMGrCxxhq/dvwk1HJp4h17qfeHxv1T7ETg/ri23zoAiEAnz6XlUcn
+7YojGXHlfoxpmV8ao6sZIm+j4ylNoBaawOI=
+-----END CRL-----`
+
 func createTempDirWithCleanFunc() (string, func(), error) {
 	var td = filepath.Join("./temp")
 	err := os.MkdirAll(td, os.ModePerm)
@@ -712,7 +721,7 @@ func initOrgMember(t *testing.T, info *orgMemberInfo) *orgMember {
 	td, cleanFunc, err := createTempDirWithCleanFunc()
 	require.Nil(t, err)
 	defer cleanFunc()
-	logger := logger2.GetLogger(logger2.MODULE_ACCESS)
+	logger := logger.GetLogger(logger.MODULE_ACCESS)
 	certProvider, err := newCertACProvider(testChainConfig, info.orgId, nil, logger)
 	require.Nil(t, err)
 	require.NotNil(t, certProvider)

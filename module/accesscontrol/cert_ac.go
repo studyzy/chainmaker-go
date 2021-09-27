@@ -19,10 +19,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"chainmaker.org/chainmaker-go/localconf"
 	"chainmaker.org/chainmaker/common/v2/concurrentlru"
 	bcx509 "chainmaker.org/chainmaker/common/v2/crypto/x509"
 	"chainmaker.org/chainmaker/common/v2/json"
+	"chainmaker.org/chainmaker/localconf/v2"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/common"
 	"chainmaker.org/chainmaker/pb-go/v2/config"
@@ -213,10 +213,12 @@ func (cp *certACProvider) initTrustMembers(trustMembers []*config.TrustMemberCon
 }
 
 func (cp *certACProvider) loadTrustMembers(memberInfo string) (*trustMemberCached, bool) {
-	var tempSyncMap sync.Map
-	tempSyncMap = *cp.trustMembers
+	tempSyncMap := *cp.trustMembers
 	cached, ok := tempSyncMap.Load(string(memberInfo))
-	return cached.(*trustMemberCached), ok
+	if ok {
+		return cached.(*trustMemberCached), ok
+	}
+	return nil, ok
 }
 
 func (cp *certACProvider) loadCRL() error {
@@ -522,8 +524,8 @@ func (cp *certACProvider) NewMember(pbMember *pbac.Member) (protocol.Member, err
 			member:    remoteMember,
 			certChain: certChain,
 		})
+		return remoteMember, nil
 	}
-
 	return memberCache.member, nil
 }
 
@@ -588,7 +590,7 @@ func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberSta
 	}
 
 	var certChain []*bcx509.Certificate
-	cert := member.(*certMember).cert
+	cert := member.(*certificateMember).cert
 
 	certChain = append(certChain, cert)
 	err = cp.checkCRL(certChain)
@@ -605,14 +607,18 @@ func (cp *certACProvider) GetMemberStatus(pbMember *pbac.Member) (pbac.MemberSta
 func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data []byte) (bool, error) {
 
 	if verifyType != pbac.VerifyType_CRL {
-		return false, fmt.Errorf("verify related material failed: cert member should use the CRL")
+		return false, fmt.Errorf("verify related material failed: only CRL allowed in permissionedWithCert mode")
 	}
 
-	crlPEM, _ := pem.Decode(data)
+	crlPEM, rest := pem.Decode(data)
 	if crlPEM == nil {
+		cp.acService.log.Debug("verify member's related material failed: empty CRL")
 		return false, fmt.Errorf("empty CRL")
 	}
 	orgInfos := cp.acService.getAllOrgInfos()
+
+	var err1, err2 error
+
 	for crlPEM != nil {
 		crl, err := x509.ParseCRL(crlPEM.Bytes)
 		if err != nil {
@@ -627,8 +633,8 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 		for _, org := range orgInfos {
 			orgs = append(orgs, org.(*organization))
 		}
-		err1 := cp.checkCRLAgainstTrustedCerts(crl, orgs, false)
-		err2 := cp.checkCRLAgainstTrustedCerts(crl, orgs, true)
+		err1 = cp.checkCRLAgainstTrustedCerts(crl, orgs, false)
+		err2 = cp.checkCRLAgainstTrustedCerts(crl, orgs, true)
 		if err1 != nil && err2 != nil {
 			return false, fmt.Errorf(
 				"invalid CRL: \n\t[verification against trusted root certs: %v], "+
@@ -637,8 +643,8 @@ func (cp *certACProvider) VerifyRelatedMaterial(verifyType pbac.VerifyType, data
 				err2,
 			)
 		}
+		crlPEM, rest = pem.Decode(rest)
 	}
-
 	return true, nil
 }
 
@@ -850,7 +856,7 @@ func (cp *certACProvider) verifyMember(mem protocol.Member) ([]*bcx509.Certifica
 	if mem == nil {
 		return nil, fmt.Errorf("invalid member: member should not be nil")
 	}
-	certMember, ok := mem.(*certMember)
+	certMember, ok := mem.(*certificateMember)
 	if !ok {
 		return nil, fmt.Errorf("invalid member: member type err")
 	}

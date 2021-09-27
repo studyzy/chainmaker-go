@@ -9,7 +9,7 @@ package cmd
 import (
 	"fmt"
 
-	"chainmaker.org/chainmaker-go/localconf"
+	"chainmaker.org/chainmaker/localconf/v2"
 	"github.com/spf13/cobra"
 )
 
