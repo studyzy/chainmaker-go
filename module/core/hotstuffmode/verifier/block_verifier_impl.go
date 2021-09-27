@@ -218,7 +218,9 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	return nil
 }
 
-func (v *BlockVerifierImpl) consensusMessageTurbo(block *commonpb.Block, mode protocol.VerifyMode) (*commonpb.Block, error) {
+func (v *BlockVerifierImpl) consensusMessageTurbo(
+	block *commonpb.Block, mode protocol.VerifyMode) (*commonpb.Block, error) {
+
 	if v.chainConf.ChainConfig().Block.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
 		newBlock := &commonpb.Block{
 			Header:         block.Header,
