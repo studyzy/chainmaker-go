@@ -22,9 +22,7 @@ BUILD_CONFIG_PATH=${BUILD_PATH}/config
 CRYPTOGEN_TOOL_PATH=${PROJECT_PATH}/tools/chainmaker-cryptogen
 CRYPTOGEN_TOOL_BIN=${CRYPTOGEN_TOOL_PATH}/bin/chainmaker-cryptogen
 CRYPTOGEN_TOOL_CONF=${CRYPTOGEN_TOOL_PATH}/config/crypto_config_template.yml
-
-BC_YML_TRUST_ROOT_LINE=122
-BC_YML_TRUST_ROOT_LINE_END=142
+CRYPTOGEN_TOOL_P11_KEYS_CONF=${CRYPTOGEN_TOOL_PATH}/config/pkcs11_keys.yml
 
 function show_help() {
     echo "Usage:  "
@@ -112,10 +110,12 @@ function generate_certs() {
     fi
 
     cp $CRYPTOGEN_TOOL_CONF crypto_config.yml
+    cp $CRYPTOGEN_TOOL_P11_KEYS_CONF pkcs11_keys.yml
 
     xsed "s%count: 4%count: ${NODE_CNT}%g" crypto_config.yml
-
-    ${CRYPTOGEN_TOOL_BIN} generate -c ./crypto_config.yml
+    
+    
+    ${CRYPTOGEN_TOOL_BIN} generate -c ./crypto_config.yml  -p ./pkcs11_keys.yml
 }
 
 function generate_config() {
@@ -125,13 +125,17 @@ function generate_config() {
     PPROF_PORT=24321
     TRUSTED_PORT=13301
 
-    read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT,5-DPOS): " tmp
-    if  [ ! -z "$tmp" ] ;then
-      if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] || [ $tmp -eq 5 ] ;then
-          CONSENSUS_TYPE=$tmp
-      else
-        echo "unknown consensus type [" $tmp "], so use default"
-      fi
+    if  [ $NODE_CNT -eq 1 ]; then
+        CONSENSUS_TYPE=0
+    else
+        read -p "input consensus type (0-SOLO,1-TBFT(default),3-HOTSTUFF,4-RAFT,5-DPOS): " tmp
+        if  [ ! -z "$tmp" ] ;then
+          if  [ $tmp -eq 0 ] || [ $tmp -eq 1 ] || [ $tmp -eq 3 ] || [ $tmp -eq 4 ] || [ $tmp -eq 5 ] ;then
+              CONSENSUS_TYPE=$tmp
+          else
+            echo "unknown consensus type [" $tmp "], so use default"
+          fi
+        fi
     fi
 
     read -p "input log level (DEBUG|INFO(default)|WARN|ERROR): " tmp
@@ -152,10 +156,7 @@ function generate_config() {
     mkdir -p ${BUILD_PATH}/config
     cd ${BUILD_PATH}/config
 
-    node_count=$(ls -l $BUILD_CRYPTO_CONFIG_PATH|grep "^d"| wc -l)
-    echo "config node total $node_count"
-    for ((i = 1; i < $node_count + 1; i = i + 1)); do
-#    for ((i = 1; i < $NODE_CNT + 1; i = i + 1)); do
+    for ((i = 1; i < $NODE_CNT + 1; i = i + 1)); do
         echo "begin generate node$i config..."
         mkdir -p ${BUILD_PATH}/config/node$i
         mkdir -p ${BUILD_PATH}/config/node$i/chainconfig
@@ -201,13 +202,8 @@ function generate_config() {
             xsed "s%#\(.*\)genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%\1genesis: ../config/{org_path$j}/chainconfig/bc${j}.yml%g" node$i/chainmaker.yml
 
             if  [ $NODE_CNT -eq 1 ]; then
-                if [ $CONSENSUS_TYPE -eq 0 ]; then
-                    cp $CONFIG_TPL_PATH/chainconfig/bc_solo.tpl node$i/chainconfig/bc$j.yml
-                    xsed "s%{consensus_type}%0%g" node$i/chainconfig/bc$j.yml
-                else
-                    cp $CONFIG_TPL_PATH/chainconfig/bc_1.yml node$i/chainconfig/bc$j.yml
-                    xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
-                fi
+                cp $CONFIG_TPL_PATH/chainconfig/bc_solo.tpl node$i/chainconfig/bc$j.yml
+                xsed "s%{consensus_type}%0%g" node$i/chainconfig/bc$j.yml
             elif [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
                 cp $CONFIG_TPL_PATH/chainconfig/bc_4_7.tpl node$i/chainconfig/bc$j.yml
                 xsed "s%{consensus_type}%$CONSENSUS_TYPE%g" node$i/chainconfig/bc$j.yml
@@ -243,11 +239,6 @@ function generate_config() {
                xsed "s%{epochValidatorNum}%$NODE_CNT%g" node$i/chainconfig/bc$j.yml
             fi
 
-            if [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
-              xsed "${BC_YML_TRUST_ROOT_LINE},${BC_YML_TRUST_ROOT_LINE_END}d" node$i/chainconfig/bc$j.yml
-            fi
-            echo "begin node$i chain$CHAIN_CNT cert config..."
-
             c=0
             for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
             do
@@ -266,20 +257,13 @@ function generate_config() {
                 if  [ $j -eq 1 ]; then
                     xsed "s%{org${c}_peerid}%$peerId%g" node$i/chainmaker.yml
                 fi
-                # cp ca
-                mkdir -p $BUILD_CONFIG_PATH/node$i/certs/ca/$file
-                cp $BUILD_CRYPTO_CONFIG_PATH/$file/ca/ca.crt $BUILD_CONFIG_PATH/node$i/certs/ca/$file
+
+                for ((k = 1; k < $NODE_CNT + 1; k = k + 1)); do
+                    mkdir -p $BUILD_CONFIG_PATH/node$k/certs/ca/$file
+                    cp $BUILD_CRYPTO_CONFIG_PATH/$file/ca/ca.crt $BUILD_CONFIG_PATH/node$k/certs/ca/$file
+                done
 
                 if  [ $c -eq $i ]; then
-                    if [ $c -gt $NODE_CNT ]; then
-                      xsed "s%{node_cert_path}%node\/common1\/common1.sign%g" node$i/chainmaker.yml
-                      xsed "s%{net_cert_path}%node\/common1\/common1.tls%g" node$i/chainmaker.yml
-                      xsed "s%{rpc_cert_path}%node\/common1\/common1.tls%g" node$i/chainmaker.yml
-                    else
-                      xsed "s%{node_cert_path}%node\/consensus1\/consensus1.sign%g" node$i/chainmaker.yml
-                      xsed "s%{net_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
-                      xsed "s%{rpc_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
-                    fi
                     xsed "s%{org_path}%$file%g" node$i/chainconfig/bc$j.yml
                     xsed "s%{node_cert_path}%node\/consensus1\/consensus1.sign%g" node$i/chainmaker.yml
                     xsed "s%{net_cert_path}%node\/consensus1\/consensus1.tls%g" node$i/chainmaker.yml
@@ -294,33 +278,6 @@ function generate_config() {
 
             done
         done
-
-        echo "begin node$i trust config..."
-        if  [ $NODE_CNT -eq 4 ] || [ $NODE_CNT -eq 7 ]; then
-          for ((k = 1; k < $CHAIN_CNT + 1; k = k + 1)); do
-            for file in `ls -tr $BUILD_CRYPTO_CONFIG_PATH`
-            do
-                org_id_tmp=" - org_id: \"${file}\""
-                org_root="   root:"
-                org_root_tmp="     - \"../config/wx-org${i}.chainmaker.org/certs/ca/${file}/ca.crt\""
-                if [ "${system}" = "Linux" ]; then
-                  xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root_tmp}" node$i/chainconfig/bc$k.yml
-                  xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_root}" node$i/chainconfig/bc$k.yml
-                  xsed "${BC_YML_TRUST_ROOT_LINE}i\ ${org_id_tmp}"   node$i/chainconfig/bc$k.yml
-                else
-                  xsed "${BC_YML_TRUST_ROOT_LINE}i\\
- ${org_root_tmp}\\
-" node$i/chainconfig/bc$k.yml
-                  xsed "${BC_YML_TRUST_ROOT_LINE}i\\
- ${org_root}\\
-"  node$i/chainconfig/bc$k.yml
-                  xsed "${BC_YML_TRUST_ROOT_LINE}i\\
- ${org_id_tmp}\\
-"    node$i/chainconfig/bc$k.yml
-                fi
-            done
-          done
-        fi
     done
 }
 

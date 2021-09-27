@@ -3,11 +3,13 @@ chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848/go.mod
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080817-79b5a4160dae h1:2UCnOwsKI8Bh1BlG7J+9+29TVgxNU4xf70g27SWTNxk=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080817-79b5a4160dae/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
+chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210924090707-3cfec86e5534 h1:8NBaZ96jP/7OmY+qLp5jShVMlkyEDkU7t54VmuuMBz4=
+chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210924090707-3cfec86e5534/go.mod h1:zmhmvLiYlRduHQKrQtRHljn/xem1ipl+2zajpmibzOg=
 chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210913154622-9f9774ed7d1b/go.mod h1:SPqpohsoeMrRFhPHnDQMRiWylLr5PfMQIlxbrPppzhI=
-chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921 h1:vCRGAxU1WoyzMrOOmcLPuXI/iE/emDycwvYG5LfjzoY=
 chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210914062957-13e84972a921/go.mod h1:SPqpohsoeMrRFhPHnDQMRiWylLr5PfMQIlxbrPppzhI=
+chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210924065026-b084e62e6efc h1:71bDD99OjTpT5hK838n2a265D2UNIwu28wJs80Y19Co=
+chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210924065026-b084e62e6efc/go.mod h1:SPqpohsoeMrRFhPHnDQMRiWylLr5PfMQIlxbrPppzhI=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97/go.mod h1:/6mAB4cPLK2GB9epL3uU8srK/iMXZb2dbg2lcJa+3bg=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d h1:D27rC2lDGsVH1piY1jCR8eTIPsqJGCWeWgt9XeXN4l0=
 chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d/go.mod h1:/6mAB4cPLK2GB9epL3uU8srK/iMXZb2dbg2lcJa+3bg=
@@ -1208,8 +1210,9 @@ github.com/tidwall/tinylru v1.0.2/go.mod h1:HDVL7TsWeezQ4g44Um84TOVBMFcq7Xa9giqN
 github.com/tinylib/msgp v1.0.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/tjfoc/gmsm v1.2.3/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/tjfoc/gmsm v1.3.0/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
-github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
+github.com/tjfoc/gmsm v1.4.1 h1:aMe1GlZb+0bLjn+cKTPEvvn9oUEBlJitaZiiBwsbgho=
+github.com/tjfoc/gmsm v1.4.1/go.mod h1:j4INPkHWMrhJb38G+J6W4Tw0AbuN8Thu3PbdVYhVcTE=
 github.com/tjfoc/gmtls v1.2.1/go.mod h1:+mIfCjj3QuRGrW527hj12JLjI6DTt2MvBDxb3/86ykM=
 github.com/tklauser/go-sysconf v0.3.5/go.mod h1:MkWzOF4RMCshBAMXuhXJs64Rte09mITnppBXY/rYEFI=
 github.com/tklauser/numcpus v0.2.2/go.mod h1:x3qojaO3uyYt0i56EW/VUYs7uBvdl2fkfZFu0T9wgjM=
@@ -1350,6 +1353,7 @@ golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+golang.org/x/crypto v0.0.0-20201012173705-84dcc777aaee/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
 golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 h1:It14KIkyBFYkHkwZ7k45minvA9aorojkyjGk9KJ5B/w=
 golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
@@ -1427,6 +1431,7 @@ golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7/go.mod h1:qpuaurCH72eLCgpAm/
 golang.org/x/net v0.0.0-20200625001655-4c5254603344/go.mod h1:/O7V0waA8r7cgGh81Ro3o1hOxt32SMVPicZroKQ2sZA=
 golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc/go.mod h1:/O7V0waA8r7cgGh81Ro3o1hOxt32SMVPicZroKQ2sZA=
 golang.org/x/net v0.0.0-20200822124328-c89045814202/go.mod h1:/O7V0waA8r7cgGh81Ro3o1hOxt32SMVPicZroKQ2sZA=
+golang.org/x/net v0.0.0-20201010224723-4f7140c49acb/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
 golang.org/x/net v0.0.0-20201021035429-f5854403a974/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
 golang.org/x/net v0.0.0-20201110031124-69a78807bb2b/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
 golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
@@ -1652,6 +1657,7 @@ google.golang.org/grpc v1.26.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8
 google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.27.1/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.29.1/go.mod h1:itym6AZVZYACWQqET3MqgPpjcuV5QH3BxFS3IjizoKk=
+google.golang.org/grpc v1.31.0/go.mod h1:N36X2cJ7JwdamYAgDz+s+rVMFjt3numwzf/HckM8pak=
 google.golang.org/grpc v1.33.1/go.mod h1:fr5YgcSWrqhRRxogOsw7RzIpsmvOZ6IcH4kBYTpR3n0=
 google.golang.org/grpc v1.34.0/go.mod h1:WotjhfgOW/POjDeRt8vscBtXq+2VjORFy659qA51WJ8=
 google.golang.org/grpc v1.36.0/go.mod h1:qjiiYl8FncCW8feJPdyg3v6XW24KsRHe+dy9BAGRRjU=

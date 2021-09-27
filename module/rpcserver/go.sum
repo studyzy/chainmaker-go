@@ -3,7 +3,6 @@ chainmaker.org/chainmaker/chainconf/v2 v2.0.0-20210913144615-f27c44059848/go.mod
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210901114756-9114511c2b70/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210906095952-6d8f2c6cede0/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210909033927-2a4cfc146579/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
-chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080817-79b5a4160dae h1:2UCnOwsKI8Bh1BlG7J+9+29TVgxNU4xf70g27SWTNxk=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080817-79b5a4160dae/go.mod h1:5PBx3EAorpJ+2PMtC15DHGUDLjLfXiEFp6LX67xxCAo=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210927080800-f6c870cf28da h1:+PTVs+zcVV4cDGzXbjH2zJUNVubtHZv6REYlF9dcScI=
 chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210927080800-f6c870cf28da/go.mod h1:zmhmvLiYlRduHQKrQtRHljn/xem1ipl+2zajpmibzOg=
@@ -1209,8 +1208,8 @@ github.com/tidwall/tinylru v1.0.2/go.mod h1:HDVL7TsWeezQ4g44Um84TOVBMFcq7Xa9giqN
 github.com/tinylib/msgp v1.0.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/tjfoc/gmsm v1.2.3/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/tjfoc/gmsm v1.3.0/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
-github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
+github.com/tjfoc/gmsm v1.4.1 h1:aMe1GlZb+0bLjn+cKTPEvvn9oUEBlJitaZiiBwsbgho=
 github.com/tjfoc/gmsm v1.4.1/go.mod h1:j4INPkHWMrhJb38G+J6W4Tw0AbuN8Thu3PbdVYhVcTE=
 github.com/tjfoc/gmtls v1.2.1/go.mod h1:+mIfCjj3QuRGrW527hj12JLjI6DTt2MvBDxb3/86ykM=
 github.com/tklauser/go-sysconf v0.3.5/go.mod h1:MkWzOF4RMCshBAMXuhXJs64Rte09mITnppBXY/rYEFI=

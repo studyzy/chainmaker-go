@@ -14,6 +14,8 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"chainmaker.org/chainmaker/common/v2/cert"
+
 	"chainmaker.org/chainmaker/pb-go/v2/config"
 
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
@@ -249,15 +251,15 @@ func NewCertSigningMember(hashType string, member *pbac.Member, privateKeyPem,
 		return nil, err
 	}
 	var sk bccrypto.PrivateKey
-	p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
-	if p11Config.Enabled {
+	nodeConfig := localconf.ChainMakerConfig.NodeConfig
+	if nodeConfig.P11Config.Enabled {
 		var p11Handle *pkcs11.P11Handle
 		p11Handle, err = getP11Handle()
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
 		}
 
-		sk, err = pkcs11.NewPrivateKey(p11Handle, certMember.cert.PublicKey)
+		sk, err = cert.ParseP11PrivKey(p11Handle, []byte(privateKeyPem))
 		if err != nil {
 			return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
 		}
@@ -314,15 +316,15 @@ func InitCertSigningMember(chainConfig *config.ChainConfig, localOrgId,
 			return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 		}
 		var sk bccrypto.PrivateKey
-		p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
-		if p11Config.Enabled {
+		nodeConfig := localconf.ChainMakerConfig.NodeConfig
+		if nodeConfig.P11Config.Enabled {
 			var p11Handle *pkcs11.P11Handle
 			p11Handle, err = getP11Handle()
 			if err != nil {
 				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 			}
 
-			sk, err = pkcs11.NewPrivateKey(p11Handle, certMember.cert.PublicKey)
+			sk, err = cert.ParseP11PrivKey(p11Handle, skPEM)
 			if err != nil {
 				return nil, fmt.Errorf("fail to initialize identity management service: [%s]", err.Error())
 			}
