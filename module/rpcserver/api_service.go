@@ -38,6 +38,7 @@ var _ apiPb.RpcNodeServer = (*ApiService)(nil)
 type ApiService struct {
 	chainMakerServer      *blockchain.ChainMakerServer
 	log                   *logger.CMLogger
+	logBrief              *logger.CMLogger
 	subscriberRateLimiter *rate.Limiter
 	metricQueryCounter    *prometheus.CounterVec
 	metricInvokeCounter   *prometheus.CounterVec
@@ -47,6 +48,7 @@ type ApiService struct {
 // NewApiService - new ApiService object
 func NewApiService(ctx context.Context, chainMakerServer *blockchain.ChainMakerServer) *ApiService {
 	log := logger.GetLogger(logger.MODULE_RPC)
+	logBrief := logger.GetLogger(logger.MODULE_BRIEF)
 
 	tokenBucketSize := localconf.ChainMakerConfig.RpcConfig.SubscriberConfig.RateLimitConfig.TokenBucketSize
 	tokenPerSecond := localconf.ChainMakerConfig.RpcConfig.SubscriberConfig.RateLimitConfig.TokenPerSecond
@@ -67,6 +69,7 @@ func NewApiService(ctx context.Context, chainMakerServer *blockchain.ChainMakerS
 	apiService := ApiService{
 		chainMakerServer:      chainMakerServer,
 		log:                   log,
+		logBrief:              logBrief,
 		subscriberRateLimiter: subscriberRateLimiter,
 		ctx:                   ctx,
 	}
@@ -87,11 +90,19 @@ func (s *ApiService) SendRequest(ctx context.Context, req *commonPb.TxRequest) (
 		return fmt.Sprintf("SendRequest[%s],payload:%#v,\n----signer:%v\n----endorsers:%+v",
 			req.Payload.TxId, req.Payload, req.Sender, req.Endorsers)
 	})
-	return s.invoke(&commonPb.Transaction{
+
+	resp := s.invoke(&commonPb.Transaction{
 		Payload:   req.Payload,
 		Sender:    req.Sender,
 		Endorsers: req.Endorsers,
-		Result:    nil}, protocol.RPC), nil
+		Result:    nil}, protocol.RPC)
+
+	// audit log format: ip:port|orgId|chainId|TxType|TxId|Timestamp|ContractName|Method|retCode|retCodeMsg|retMsg
+	s.logBrief.Infof("|%s|%s|%s|%s|%s|%d|%s|%s|%d|%s|%s", GetClientAddr(ctx), req.Sender.Signer.OrgId,
+		req.Payload.ChainId, req.Payload.TxType, req.Payload.TxId, req.Payload.Timestamp, req.Payload.ContractName,
+		req.Payload.Method, resp.Code, resp.Code, resp.Message)
+
+	return resp, nil
 }
 
 // validate tx
