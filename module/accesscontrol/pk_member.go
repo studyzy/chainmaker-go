@@ -15,6 +15,7 @@ import (
 	commonCert "chainmaker.org/chainmaker/common/v2/cert"
 	bccrypto "chainmaker.org/chainmaker/common/v2/crypto"
 	"chainmaker.org/chainmaker/common/v2/crypto/asym"
+	"chainmaker.org/chainmaker/common/v2/helper"
 	pbac "chainmaker.org/chainmaker/pb-go/v2/accesscontrol"
 	"chainmaker.org/chainmaker/pb-go/v2/syscontract"
 	"chainmaker.org/chainmaker/protocol/v2"
@@ -125,15 +126,14 @@ func newPkMemberFromAcs(member *pbac.Member, adminList, consensusList *sync.Map,
 	}
 
 	var nodeId string
-	//TODO
-	// pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("new public key member failed: parse the public key from PEM failed")
-	// }
-	// nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
-	// }
+	pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: parse the public key from PEM failed")
+	}
+	nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
+	}
 
 	consensusMember, ok := loadSyncMap(consensusList, nodeId)
 	if ok {
@@ -174,15 +174,15 @@ func publicNewPkMemberFromAcs(member *pbac.Member, adminList, consensusList *syn
 	}
 
 	var nodeId string
-	// pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("new public key member failed: parse the public key from PEM failed")
-	// }
+	pk, err := asym.PublicKeyFromPEM(member.MemberInfo)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: parse the public key from PEM failed")
+	}
 
-	// nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
-	// }
+	nodeId, err = helper.CreateLibp2pPeerIdWithPublicKey(pk)
+	if err != nil {
+		return nil, fmt.Errorf("new public key member failed: create libp2p peer id with pk failed")
+	}
 	_, ok = loadSyncMap(consensusList, nodeId)
 	if ok {
 		return newPkMemberFromParam("", string(member.MemberInfo),
