@@ -90,10 +90,10 @@ func (server *ChainMakerServer) initNet() error {
 
 	var certPath string
 	var pubKeyMode bool
-	switch authType {
-	case localconf.AuthTypePermissionedWithKey, localconf.AuthTypePublic:
+	switch strings.ToLower(authType) {
+	case strings.ToLower(localconf.AuthTypePermissionedWithKey), strings.ToLower(localconf.AuthTypePublic):
 		pubKeyMode = true
-	case localconf.AuthTypePermissionedWithCert:
+	case strings.ToLower(localconf.AuthTypePermissionedWithCert), strings.ToLower(localconf.AuthTypeIdentity):
 		pubKeyMode = false
 		certPath = localconf.ChainMakerConfig.NetConfig.TLSConfig.CertFile
 		if !filepath.IsAbs(certPath) {

@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+auth_type: "permissionedWithCert"   # permissionedWithCert / permissionedWithKey / public
+
 log:
   config_file: ../config/wx-org2/log.yml          # config file of logger configuration.
 

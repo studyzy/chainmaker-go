@@ -9,6 +9,7 @@ package blockchain
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -200,6 +201,22 @@ func (bc *Blockchain) initChainConf() (err error) {
 		bc.log.Errorf("init chain config failed, %s", err)
 		return err
 	}
+
+	authType := bc.chainConf.ChainConfig().AuthType
+
+	if authType == "" {
+		return errors.New("empty auth type of blockchain config")
+	}
+	authType = strings.ToLower(authType)
+	localAuthType := strings.ToLower(localconf.ChainMakerConfig.AuthType)
+	if authType != localAuthType &&
+		!(authType == strings.ToLower(localconf.AuthTypeIdentity) &&
+			localAuthType == strings.ToLower(localconf.AuthTypePermissionedWithCert)) &&
+		!(authType == strings.ToLower(localconf.AuthTypePermissionedWithCert) &&
+			localAuthType == strings.ToLower(localconf.AuthTypeIdentity)) {
+		return errors.New("auth type of chain config mismatch the local config")
+	}
+
 	bc.chainNodeList, err = bc.chainConf.GetConsensusNodeIdList()
 	if err != nil {
 		bc.log.Errorf("load node list of chain config failed, %s", err)

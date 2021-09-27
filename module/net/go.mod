@@ -3,19 +3,15 @@ module chainmaker.org/chainmaker-go/net
 go 1.15
 
 require (
-	chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210924095027-68dc6768bbe4
-	chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210924103608-c46c04c92f64
+	chainmaker.org/chainmaker/chainmaker-net-common v0.0.6-0.20210927030734-2bd16ae09e3a
+	chainmaker.org/chainmaker/chainmaker-net-libp2p v0.0.11-0.20210927031054-38227d7e6acf
 	//chainmaker.org/chainmaker/chainmaker-net-liquid v0.0.7-0.20210909125039-43c3ce7f4308
-	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210916080251-890936d14d9e
-	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907133316-af00cea33c97
+	chainmaker.org/chainmaker/common/v2 v2.0.1-0.20210927025216-3d740cb6258e
+	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
 	chainmaker.org/chainmaker/pb-go/v2 v2.0.1-0.20210901132412-435b75070bf2
-	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210917094712-7d18b2f609a1
+	chainmaker.org/chainmaker/protocol/v2 v2.0.1-0.20210927025305-781859ac4056
 	github.com/gogo/protobuf v1.3.2
 	github.com/stretchr/testify v1.7.0
 )
 
-replace (
-	chainmaker.org/chainmaker-go/localconf => ./../conf/localconf
-
-	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
-)
+replace github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
