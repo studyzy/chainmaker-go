@@ -132,8 +132,16 @@ func InitPKSigningMember(ac protocol.AccessControlProvider,
 		var sk bccrypto.PrivateKey
 		p11Config := localconf.ChainMakerConfig.NodeConfig.P11Config
 		if p11Config.Enabled {
-			//TODO 硬件加密
+			var p11Handle *pkcs11.P11Handle
+			p11Handle, err = getP11Handle()
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+			}
 
+			sk, err = cert.ParseP11PrivKey(p11Handle, []byte(skPEM))
+			if err != nil {
+				return nil, fmt.Errorf("fail to initialize identity management service: [%v]", err)
+			}
 		} else {
 			sk, err = asym.PrivateKeyFromPEM(skPEM, []byte(localPrivKeyPwd))
 			if err != nil {
