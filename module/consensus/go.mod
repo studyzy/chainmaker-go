@@ -28,5 +28,5 @@ require (
 
 replace (
 	chainmaker.org/chainmaker-go/accesscontrol => ../accesscontrol
-	github.com/libp2p/go-libp2p-core => ../net/p2p/libp2pcore
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 )

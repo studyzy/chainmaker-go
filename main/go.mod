@@ -6,7 +6,7 @@ require (
 	chainmaker.org/chainmaker-go/blockchain v0.0.0
 	chainmaker.org/chainmaker-go/monitor v0.0.0
 	chainmaker.org/chainmaker-go/rpcserver v0.0.0-00010101000000-000000000000
-	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210924065026-b084e62e6efc
+	chainmaker.org/chainmaker/localconf/v2 v2.0.0-20210927063633-0994fcdf3928
 	chainmaker.org/chainmaker/logger/v2 v2.0.0-20210907134457-53647922a89d
 	code.cloudfoundry.org/bytefmt v0.0.0-20200131002437-cf55d5288a48
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
@@ -26,7 +26,5 @@ replace (
 	chainmaker.org/chainmaker-go/subscriber => ./../module/subscriber
 	chainmaker.org/chainmaker-go/sync => ./../module/sync
 	chainmaker.org/chainmaker-go/txpool => ./../module/txpool
-	github.com/libp2p/go-libp2p => ./../module/net/p2p/libp2p
-	github.com/libp2p/go-libp2p-core => ./../module/net/p2p/libp2pcore
-	github.com/libp2p/go-libp2p-pubsub => ./../module/net/p2p/libp2ppubsub
+	github.com/libp2p/go-libp2p-core => chainmaker.org/chainmaker/libp2p-core v0.0.2
 )
