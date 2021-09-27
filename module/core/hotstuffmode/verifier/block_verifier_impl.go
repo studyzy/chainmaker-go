@@ -167,12 +167,65 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 	}
 
 	startPoolTick := utils.CurrentTimeMillisSeconds()
-	newBlock := new(commonpb.Block)
+	newBlock, err := v.consensusMessageTurbo(block, mode)
+	lastPool := utils.CurrentTimeMillisSeconds() - startPoolTick
+
+	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(newBlock)
+	if err != nil {
+		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
+			newBlock.Header.BlockHeight, newBlock.Header.BlockHash, newBlock.Header.PreBlockHash, err.Error())
+		if protocol.CONSENSUS_VERIFY == mode {
+			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(newBlock, isValid, txRWSetMap))
+		}
+
+		// rollback sql
+		if sqlErr := v.storeHelper.RollBack(newBlock, v.blockchainStore); sqlErr != nil {
+			v.log.Errorf("block [%d] rollback sql failed: %s", newBlock.Header.BlockHeight, sqlErr)
+		}
+		return err
+	}
+
+	// sync mode, need to verify consensus vote signature
+	beginConsensCheck := utils.CurrentTimeMillisSeconds()
+	if protocol.SYNC_VERIFY == mode {
+		if err = v.verifyVoteSig(newBlock); err != nil {
+			v.log.Warnf("verify failed [%d](%x), votesig %s",
+				newBlock.Header.BlockHeight, newBlock.Header.BlockHash, err.Error())
+			return err
+		}
+	}
+	consensusCheckUsed := utils.CurrentTimeMillisSeconds() - beginConsensCheck
+
+	// verify success, cache block and read write set
+	v.log.Debugf("set proposed block(%d,%x)", newBlock.Header.BlockHeight, newBlock.Header.BlockHash)
+	if err = v.proposalCache.SetProposedBlock(newBlock, txRWSetMap, contractEventMap, false); err != nil {
+		return err
+	}
+
+	// mark transactions in block as pending status in txpool
+	v.txPool.AddTxsToPendingCache(newBlock.Txs, newBlock.Header.BlockHeight)
+
+	isValid = true
+	if protocol.CONSENSUS_VERIFY == mode {
+		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(newBlock, isValid, txRWSetMap))
+	}
+	elapsed := utils.CurrentTimeMillisSeconds() - startTick
+	v.log.Infof("verify success [%d,%x](%v,pool: %d,consensusCheckUsed: %d, total: %d)", newBlock.Header.BlockHeight,
+		newBlock.Header.BlockHash, timeLasts, lastPool, consensusCheckUsed, elapsed)
+	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
+		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
+	}
+	return nil
+}
+
+func (v *BlockVerifierImpl) consensusMessageTurbo(block *commonpb.Block, mode protocol.VerifyMode) (*commonpb.Block, error) {
 	if v.chainConf.ChainConfig().Block.ConsensusMessageTurbo && protocol.SYNC_VERIFY != mode {
-		newBlock.Header = block.Header
-		newBlock.Dag = block.Dag
-		newBlock.Txs = make([]*commonpb.Transaction, len(block.Txs))
-		newBlock.AdditionalData = block.AdditionalData
+		newBlock := &commonpb.Block{
+			Header:         block.Header,
+			Dag:            block.Dag,
+			Txs:            make([]*commonpb.Transaction, len(block.Txs)),
+			AdditionalData: block.AdditionalData,
+		}
 
 		txIds := utils.GetTxIds(block.Txs)
 		txsMap := make(map[string]*commonpb.Transaction)
@@ -182,10 +235,12 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			if len(txsMap) == len(block.Txs) {
 				break
 			}
-			v.log.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]", block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
+			v.log.Debugf("txs map is not map with tx count,height[%d],map[%d],txcount[%d],retry[%d]",
+				block.Header.BlockHeight, len(txsMap), block.Header.TxCount, i+1)
 			if i+1 == maxRetryTime {
-				v.log.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]", block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
-				return fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
+				v.log.Debugf("get txs by branchId fail,height[%d],map[%d],txcount[%d]",
+					block.Header.BlockHeight, len(txsMap), block.Header.TxCount)
+				return nil, fmt.Errorf("block[%d] verify time out error", block.Header.BlockHeight)
 			}
 			time.Sleep(time.Millisecond * 20)
 		}
@@ -194,57 +249,10 @@ func (v *BlockVerifierImpl) VerifyBlock(block *commonpb.Block, mode protocol.Ver
 			newBlock.Txs[i] = txsMap[tx.Payload.TxId]
 			newBlock.Txs[i].Result = block.Txs[i].Result
 		}
-	} else {
-		newBlock = block
-	}
-	lastPool := utils.CurrentTimeMillisSeconds() - startPoolTick
-
-	txRWSetMap, contractEventMap, timeLasts, err := v.validateBlock(block)
-	if err != nil {
-		v.log.Warnf("verify failed [%d](%x),preBlockHash:%x, %s",
-			block.Header.BlockHeight, block.Header.BlockHash, block.Header.PreBlockHash, err.Error())
-		if protocol.CONSENSUS_VERIFY == mode {
-			v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
-		}
-
-		// rollback sql
-		if sqlErr := v.storeHelper.RollBack(block, v.blockchainStore); sqlErr != nil {
-			v.log.Errorf("block [%d] rollback sql failed: %s", block.Header.BlockHeight, sqlErr)
-		}
-		return err
+		return newBlock, nil
 	}
 
-	// sync mode, need to verify consensus vote signature
-	beginConsensCheck := utils.CurrentTimeMillisSeconds()
-	if protocol.SYNC_VERIFY == mode {
-		if err = v.verifyVoteSig(block); err != nil {
-			v.log.Warnf("verify failed [%d](%x), votesig %s",
-				block.Header.BlockHeight, block.Header.BlockHash, err.Error())
-			return err
-		}
-	}
-	consensusCheckUsed := utils.CurrentTimeMillisSeconds() - beginConsensCheck
-
-	// verify success, cache block and read write set
-	v.log.Debugf("set proposed block(%d,%x)", block.Header.BlockHeight, block.Header.BlockHash)
-	if err = v.proposalCache.SetProposedBlock(block, txRWSetMap, contractEventMap, false); err != nil {
-		return err
-	}
-
-	// mark transactions in block as pending status in txpool
-	v.txPool.AddTxsToPendingCache(block.Txs, block.Header.BlockHeight)
-
-	isValid = true
-	if protocol.CONSENSUS_VERIFY == mode {
-		v.msgBus.Publish(msgbus.VerifyResult, parseVerifyResult(block, isValid, txRWSetMap))
-	}
-	elapsed := utils.CurrentTimeMillisSeconds() - startTick
-	v.log.Infof("verify success [%d,%x](%v,pool: %d,consensusCheckUsed: %d, total: %d)", block.Header.BlockHeight,
-		block.Header.BlockHash, timeLasts, lastPool, consensusCheckUsed, elapsed)
-	if localconf.ChainMakerConfig.MonitorConfig.Enabled {
-		v.metricBlockVerifyTime.WithLabelValues(v.chainId).Observe(float64(elapsed) / 1000)
-	}
-	return nil
+	return block, nil
 }
 
 func (v *BlockVerifierImpl) validateBlock(block *commonpb.Block) (map[string]*commonpb.TxRWSet,

@@ -322,7 +322,7 @@ func (bp *BlockProposerImpl) proposing(height uint64, preHash []byte) *commonpb.
 		newTxs := make([]*commonpb.Transaction, len(block.Txs))
 		for i, _ := range block.Txs {
 			newPayload := &commonpb.Payload{
-				TxId:           block.Txs[i].Payload.TxId,
+				TxId: block.Txs[i].Payload.TxId,
 			}
 
 			newTxs[i] = &commonpb.Transaction{
