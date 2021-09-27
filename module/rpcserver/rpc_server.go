@@ -259,7 +259,11 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 				RecoveryInterceptor,
 				LoggingInterceptor,
 				MonitorInterceptor,
+				BlackListInterceptor(),
 				RateLimitInterceptor(),
+			),
+			grpc_middleware.WithStreamServerChain(
+				BlackListStreamInterceptor(),
 			),
 		}
 	} else {
@@ -267,7 +271,11 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 			grpc_middleware.WithUnaryServerChain(
 				RecoveryInterceptor,
 				LoggingInterceptor,
+				BlackListInterceptor(),
 				RateLimitInterceptor(),
+			),
+			grpc_middleware.WithStreamServerChain(
+				BlackListStreamInterceptor(),
 			),
 		}
 	}

@@ -28,11 +28,11 @@ node:
   cert_cache_size:   1000
   pkcs11:
     enabled: false
-    library: # path to the so file of pkcs11 interface
-    label: # label for the slot to be used
-    password: # password to logon the HSM
-    session_cache_size: 10 # size of HSM session cache, default to 10
-    hash: "SHA256" # hash algorithm used to compute SKI
+    library: /usr/local/lib64/pkcs11/libupkcs11.so      # path to the so file of pkcs11 interface
+    label: HSM                                          # label for the slot to be used
+    password: 11111111                                  # password to logon the HSM
+    session_cache_size: 10                              # size of HSM session cache, default to 10
+    hash: "SHA256"                                      # hash algorithm used to compute SKI
 
 net:
   provider: LibP2P
@@ -76,6 +76,9 @@ rpc:
   # 检查链配置TrustRoots证书变化时间间隔，单位：s，最小值为10s
   check_chain_conf_trust_roots_change_interval: 60
   ratelimit:
+    enabled: false
+    # 限速类型：0-全局限速；1-基于来源IP限速
+    type: 0
     # 每秒补充令牌数，取值：-1-不受限；0-默认值（10000）
     token_per_second: -1
     # 令牌桶大小，取值：-1-不受限；0-默认值（10000）
@@ -97,6 +100,9 @@ rpc:
     mode:           twoway
     priv_key_file:  ../config/{org_path}/certs/{rpc_cert_path}.key
     cert_file:      ../config/{org_path}/certs/{rpc_cert_path}.crt
+  blacklist:
+    addresses:
+      #- "127.0.0.1"
 
 monitor:
   enabled: true

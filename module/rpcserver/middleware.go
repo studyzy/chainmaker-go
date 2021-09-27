@@ -10,9 +10,11 @@ package rpcserver
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"chainmaker.org/chainmaker/localconf/v2"
@@ -20,6 +22,7 @@ import (
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
@@ -29,11 +32,42 @@ const (
 	UNKNOWN = "unknown"
 )
 
+const (
+	rateLimitTypeGlobal = 0
+)
+
+func getClientAddr(ctx context.Context) (string, error) {
+	pr, ok := peer.FromContext(ctx)
+	if !ok {
+		return UNKNOWN, fmt.Errorf("getClientAddr FromContext failed")
+	}
+
+	if pr.Addr == net.Addr(nil) {
+		return UNKNOWN, fmt.Errorf("getClientAddr failed, peer.Addr is nil")
+	}
+
+	return pr.Addr.String(), nil
+}
+
+func getClientIp(ctx context.Context) string {
+	addr, err := getClientAddr(ctx)
+	if err == nil {
+		addr = strings.Split(addr, ":")[0]
+	}
+
+	return addr
+}
+
 // LoggingInterceptor - set logging interceptor
 func LoggingInterceptor(ctx context.Context, req interface{},
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
-	log.Debugf("call gRPC method: %s", info.FullMethod)
+	addr, err := getClientAddr(ctx)
+	if err != nil {
+		log.Warn(err)
+	}
+
+	log.Debugf("[%s] call gRPC method: %s", addr, info.FullMethod)
 	log.DebugDynamic(func() string {
 		str := fmt.Sprintf("req detail: %+v", req)
 		if len(str) > 1024 {
@@ -42,7 +76,7 @@ func LoggingInterceptor(ctx context.Context, req interface{},
 		return str
 	})
 	resp, err := handler(ctx, req)
-	log.Debugf("call gRPC method: %s, resp detail: %+v", info.FullMethod, resp)
+	log.Debugf("[%s] call gRPC method: %s, resp detail: %+v", addr, info.FullMethod, resp)
 	return resp, err
 }
 
@@ -78,13 +112,25 @@ func MonitorInterceptor(ctx context.Context, req interface{},
 	return resp, err
 }
 
-// RateLimitInterceptor - set ratelimit interceptor
-func RateLimitInterceptor() grpc.UnaryServerInterceptor {
+func getRateLimitBucket(bucketMap *sync.Map, tokenBucketSize, tokenPerSecond int, peerIpAddr string) *rate.Limiter {
+	rateLimitType := localconf.ChainMakerConfig.RpcConfig.RateLimitConfig.Type
+	var (
+		bucket interface{}
+		ok     bool
+	)
 
-	tokenBucketSize := localconf.ChainMakerConfig.RpcConfig.RateLimitConfig.TokenBucketSize
-	tokenPerSecond := localconf.ChainMakerConfig.RpcConfig.RateLimitConfig.TokenPerSecond
+	if rateLimitType == rateLimitTypeGlobal {
+		if bucket, ok = bucketMap.Load(rateLimitTypeGlobal); ok {
+			log.Debug("get rateLimit bucket from global")
+			return bucket.(*rate.Limiter)
+		}
+	} else {
+		if bucket, ok = bucketMap.Load(peerIpAddr); ok {
+			log.Debugf("get rateLimit bucket from peerIpAddr [%s]", peerIpAddr)
+			return bucket.(*rate.Limiter)
+		}
+	}
 
-	var bucket *rate.Limiter
 	if tokenBucketSize >= 0 && tokenPerSecond >= 0 {
 		if tokenBucketSize == 0 {
 			tokenBucketSize = rateLimitDefaultTokenBucketSize
@@ -95,18 +141,87 @@ func RateLimitInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		bucket = rate.NewLimiter(rate.Limit(tokenPerSecond), tokenBucketSize)
+	} else {
+		return nil
 	}
+
+	if rateLimitType == rateLimitTypeGlobal {
+		if bucket, ok = bucketMap.LoadOrStore(rateLimitTypeGlobal, bucket); !ok {
+			log.Debug("create rateLimit bucket from global")
+		}
+	} else {
+		if bucket, ok = bucketMap.LoadOrStore(peerIpAddr, bucket); !ok {
+			log.Debugf("create rateLimit bucket from peerIpAddr [%s]", peerIpAddr)
+		}
+	}
+
+	return bucket.(*rate.Limiter)
+}
+
+// RateLimitInterceptor - set ratelimit interceptor
+func RateLimitInterceptor() grpc.UnaryServerInterceptor {
+
+	tokenBucketSize := localconf.ChainMakerConfig.RpcConfig.RateLimitConfig.TokenBucketSize
+	tokenPerSecond := localconf.ChainMakerConfig.RpcConfig.RateLimitConfig.TokenPerSecond
+	enabled := localconf.ChainMakerConfig.RpcConfig.RateLimitConfig.Enabled
+
+	bucketMap := sync.Map{}
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (
 		interface{}, error) {
 
-		if tokenBucketSize >= 0 && tokenPerSecond >= 0 && !bucket.Allow() {
-			errMsg := fmt.Sprintf("%s is rejected by ratelimit, try later pls", info.FullMethod)
-			log.Warn(errMsg)
-			return nil, status.Error(codes.ResourceExhausted, errMsg)
+		if enabled {
+			ipAddr := getClientIp(ctx)
+			bucket := getRateLimitBucket(&bucketMap, tokenBucketSize, tokenPerSecond, ipAddr)
+			if bucket != nil && !bucket.Allow() {
+				errMsg := fmt.Sprintf("%s is rejected by ratelimit, try later pls", info.FullMethod)
+				log.Warn(errMsg)
+				return nil, status.Error(codes.ResourceExhausted, errMsg)
+			}
 		}
 
 		return handler(ctx, req)
+	}
+}
+
+// BlackListInterceptor - set ip blacklist interceptor
+func BlackListInterceptor() grpc.UnaryServerInterceptor {
+
+	blackIps := localconf.ChainMakerConfig.RpcConfig.BlackList.Addresses
+
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (
+		interface{}, error) {
+
+		ipAddr := getClientIp(ctx)
+		for _, blackIp := range blackIps {
+			if ipAddr == blackIp {
+				errMsg := fmt.Sprintf("%s is rejected by black list [%s]", info.FullMethod, ipAddr)
+				log.Warn(errMsg)
+				return nil, status.Error(codes.ResourceExhausted, errMsg)
+			}
+		}
+
+		return handler(ctx, req)
+	}
+}
+
+// BlackListStreamInterceptor - set ip blacklist interceptor
+func BlackListStreamInterceptor() grpc.StreamServerInterceptor {
+
+	blackIps := localconf.ChainMakerConfig.RpcConfig.BlackList.Addresses
+
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+
+		ipAddr := getClientIp(ss.Context())
+		for _, blackIp := range blackIps {
+			if ipAddr == blackIp {
+				errMsg := fmt.Sprintf("%s is rejected by black list [%s]", info.FullMethod, ipAddr)
+				log.Warn(errMsg)
+				return status.Error(codes.ResourceExhausted, errMsg)
+			}
+		}
+
+		return handler(srv, ss)
 	}
 }
 
