@@ -338,7 +338,7 @@ func (bc *Blockchain) initAC() (err error) {
 			return
 		}
 	default:
-		err := fmt.Errorf("auth type doesn't exist")
+		err = fmt.Errorf("auth type doesn't exist")
 		bc.log.Errorf("initialize identity failed, %s", err.Error())
 		return
 	}
