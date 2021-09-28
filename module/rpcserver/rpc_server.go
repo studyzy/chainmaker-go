@@ -338,6 +338,12 @@ func newGrpc(chainMakerServer *blockchain.ChainMakerServer) (*grpc.Server, error
 		opts = append(opts, grpc.Creds(*c))
 	}
 
+	//params := grpc.KeepaliveParams(keepalive.ServerParameters{
+	//	Time:    10 * time.Second,
+	//	Timeout: 10 * time.Second,
+	//})
+	//opts = append(opts, params)
+
 	server := grpc.NewServer(opts...)
 
 	return server, nil
